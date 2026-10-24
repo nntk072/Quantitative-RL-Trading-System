@@ -44,6 +44,7 @@ def _env_stub(risk_mode: str, fixed_risk_usd: float, equity: float, **kw: object
     stub.fixed_risk_usd = fixed_risk_usd
     stub.risk_band_max_usd = kw.get("risk_band_max_usd", 0.0)
     stub.risk_band_hold_below_usd = kw.get("risk_band_hold_below_usd", 0.0)
+    stub.risk_frac_range = kw.get("risk_frac_range", (0.0, 0.01))
     initial_balance = kw.get("initial_balance", 100_000.0)
     if not isinstance(initial_balance, (int, float)):
         raise TypeError("initial_balance must be numeric")
@@ -57,6 +58,7 @@ def _env_stub(risk_mode: str, fixed_risk_usd: float, equity: float, **kw: object
     for name in (
         "_sizing_equity",
         "_risk_budget_usd",
+        "_risk_band_action_unit",
         "_modeled_execution_reserve_usd",
         "_lots_with_execution_reserve",
         "_compute_lots_for",
@@ -95,11 +97,11 @@ def test_dollar_band_maps_action_to_all_in_budget_independent_of_equity() -> Non
         risk_band_max_usd=900.0,
         risk_band_hold_below_usd=100.0,
     )
-    assert env._risk_budget_usd(100.0 / 900.0) == pytest.approx(100.0)
-    assert env._risk_budget_usd(500.0 / 900.0) == pytest.approx(500.0)
-    assert env._risk_budget_usd(1.0) == pytest.approx(900.0)
+    assert env._risk_budget_usd(0.01 * 100.0 / 900.0) == pytest.approx(100.0)
+    assert env._risk_budget_usd(0.01 * 500.0 / 900.0) == pytest.approx(500.0)
+    assert env._risk_budget_usd(0.01) == pytest.approx(900.0)
     env.account.equity = 125_000.0
-    assert env._risk_budget_usd(500.0 / 900.0) == pytest.approx(500.0)
+    assert env._risk_budget_usd(0.01 * 500.0 / 900.0) == pytest.approx(500.0)
 
 
 def test_explicit_risk_usd_beats_max_loss_cap() -> None:

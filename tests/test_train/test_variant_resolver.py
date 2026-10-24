@@ -243,10 +243,10 @@ def test_dollar_band_q5_pair_differs_only_by_q5_objective() -> None:
         "env.risk_band_max_usd": "900",
         "env.risk_band_hold_below_usd": "100",
         "env.risk_floor": "0",
-        "strategy.risk.risk_frac_range": "[0.0,1.0]",
     }
     assert {key: q5_off[key] for key in shared} == shared
     assert {key: q5_on[key] for key in shared} == shared
+    assert q5_off["env.risk_floor"] == "0"
     assert q5_off["constrained_rl.enabled"] == "false"
     assert q5_on["constrained_rl.enabled"] == "true"
     assert q5_on["constrained_rl.episode_cost_budget"] == "0.1"

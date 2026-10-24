@@ -203,7 +203,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         ):
             return float(self.fixed_risk_usd)
         if self.risk_mode == "dollar_band":
-            requested = float(np.clip(risk_frac, 0.0, 1.0)) * float(self.risk_band_max_usd)
+            requested = self._risk_band_action_unit(risk_frac) * float(self.risk_band_max_usd)
             self._last_requested_risk_usd = requested
             self._last_approved_risk_usd = requested
             self._last_execution_reserve_usd = 0.0
@@ -212,8 +212,15 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         self._last_requested_risk_usd = requested
         if not bool(getattr(self, "repeated_payout_policy", False)):
             self._last_approved_risk_usd = requested
-            self._last_execution_reserve_usd = 0.0
-            return requested
+        self._last_execution_reserve_usd = 0.0
+        return requested
+
+    def _risk_band_action_unit(self, risk_frac: float) -> float:
+        """Normalize the configured risk-action range to the dollar band [0, 1]."""
+        low, high = self.risk_frac_range
+        if high <= low:
+            raise ValueError("dollar-band risk action requires a nonempty risk_frac_range")
+        return float(np.clip((float(risk_frac) - low) / (high - low), 0.0, 1.0))
         decision = approve_dynamic_risk(
             equity=self.account.equity,
             risk_frac=risk_frac,

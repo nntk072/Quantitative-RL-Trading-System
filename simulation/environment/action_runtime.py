@@ -227,7 +227,8 @@ class ActionDecodingMixin(RuntimeMixinBase):
         if (
             self.risk_mode == "dollar_band"
             and discrete_action in (1, -1)
-            and risk_frac * self.risk_band_max_usd < self.risk_band_hold_below_usd
+            and self._risk_band_action_unit(risk_frac) * self.risk_band_max_usd
+            < self.risk_band_hold_below_usd
         ):
             self._entry_diag["hold_risk_floor"] += 1
             discrete_action = 0

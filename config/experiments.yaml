@@ -134,7 +134,6 @@ variants:
       - "env.risk_band_max_usd=900"
       - "env.risk_band_hold_below_usd=100"
       - "env.risk_floor=0"
-      - "strategy.risk.risk_frac_range=[0.0,1.0]"
       - "constrained_rl.enabled=false"
 
   - name: ladder_a4a_dollar_band_q5_on
@@ -155,7 +154,6 @@ variants:
       - "env.risk_band_max_usd=900"
       - "env.risk_band_hold_below_usd=100"
       - "env.risk_floor=0"
-      - "strategy.risk.risk_frac_range=[0.0,1.0]"
       - "constrained_rl.enabled=true"
       - "constrained_rl.episode_cost_budget=0.1"
       - "constrained_rl.cost_discount_gamma=1.0"
