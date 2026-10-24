@@ -1,0 +1,88 @@
+{
+  "analysis_script_sha256": "785010eebf429351edcbfa07088d37cd832269423d69f3b4d6a0b76bd4e550bb",
+  "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+  "control": {
+    "breach_events": [
+      {
+        "equity": 89977.27376488411,
+        "fill_time": "2025-11-11 13:37:00.048000+00:00",
+        "reason": "max_drawdown",
+        "session_id": 224,
+        "time": "2025-11-11 16:36:00+03:00"
+      }
+    ],
+    "completed_trade_count_from_environment_metric": 1057,
+    "completed_trade_ledger_rows": 1057,
+    "description": "Direction is the sign of the previous completed NY session return; same P6 A4B TradingEnv, bars, features, bid/ask tickbook, risk settings, and seeded latency.",
+    "done": false,
+    "end_equity": 89977.27376488411,
+    "ending_balance": 89977.27376488411,
+    "fill_count": 1057,
+    "incomplete_positions": 0,
+    "limitation": "Rule baseline is exposed to the same training interval and simulator; it is an in-sample descriptive reference, not an out-of-sample benchmark or a matched-entry experiment.",
+    "opened_trades": 1057,
+    "seed": 50,
+    "steps_executed": 99492,
+    "strategy": "SessionMomentumStrategy",
+    "trade_log_rows": 59080,
+    "truncated": true
+  },
+  "inputs": {
+    "policy_equity_sha256": {
+      "ladder_a4a_entry_fsm_hidden_qgrid025": "811672680ac1d0fe4eaf7f4d74912018a127ce9dd7d932aa15d207dc6afe7e37",
+      "ladder_a4b_entry_fsm_qgrid025": "cc67ca871755fd03deea790347d7acfe54aa798b396204b3adc569037a46a970"
+    },
+    "policy_trades_sha256": {
+      "ladder_a4a_entry_fsm_hidden_qgrid025": "c0f40c147d5e2f1204592bb2854a52265b4947b79ea87ddcc26ed3662c92fbd9",
+      "ladder_a4b_entry_fsm_qgrid025": "f7117ab5c21833fe90324b604acae738b5d599a5a329df77df5749fe2f8e5a2d"
+    },
+    "run_manifest": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+    "run_manifest_sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+    "training_bars_sha256": "d12adb317ce86d9f9ff2d763a400730d8fba717f9bc12bba54bd1bf0c705cb4f",
+    "training_ticks_sha256": "4ba1598ea06eaa45cc7a8f43cae4fa0de60988e950a09f4ee3e2f1f88051672c"
+  },
+  "p6_net_expectancy": {
+    "ladder_a4a_entry_fsm_hidden_qgrid025": {
+      "available_trade_count": 987,
+      "first_entry_month": "2024-12",
+      "full_available_window_mean_net_r": -0.012245628596330582,
+      "last_entry_month": "2025-12",
+      "post_q1_mean_net_r": -0.09570335537958193,
+      "post_q1_trade_count": 706,
+      "q1_2025_mean_net_r": 0.23431442994039733,
+      "q1_2025_trade_count": 269
+    },
+    "ladder_a4b_entry_fsm_qgrid025": {
+      "available_trade_count": 825,
+      "first_entry_month": "2024-12",
+      "full_available_window_mean_net_r": -0.0315450591289401,
+      "last_entry_month": "2025-10",
+      "post_q1_mean_net_r": -0.12992647389286427,
+      "post_q1_trade_count": 547,
+      "q1_2025_mean_net_r": 0.19773326533146388,
+      "q1_2025_trade_count": 266
+    }
+  },
+  "period": "training partition 2024-12-30 through 2025-12-31; no 2026 bars or ticks",
+  "policy_monthly_notes": {
+    "ladder_a4a_entry_fsm_hidden_qgrid025": {
+      "evaluation_steps": 99492,
+      "policy_entry_intents": "Only rows recorded as open or reject are available; no-op and in-position action vectors are not in trades.csv.",
+      "policy_steps_are_monthly_equity_rows": true,
+      "policy_steps_source": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/equity.csv",
+      "training_equity_sha256": "811672680ac1d0fe4eaf7f4d74912018a127ce9dd7d932aa15d207dc6afe7e37",
+      "training_terminal_time": null,
+      "training_trade_ledger_sha256": "c0f40c147d5e2f1204592bb2854a52265b4947b79ea87ddcc26ed3662c92fbd9"
+    },
+    "ladder_a4b_entry_fsm_qgrid025": {
+      "evaluation_steps": 99492,
+      "policy_entry_intents": "Only rows recorded as open or reject are available; no-op and in-position action vectors are not in trades.csv.",
+      "policy_steps_are_monthly_equity_rows": true,
+      "policy_steps_source": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/equity.csv",
+      "training_equity_sha256": "cc67ca871755fd03deea790347d7acfe54aa798b396204b3adc569037a46a970",
+      "training_terminal_time": "2025-10-28 19:31:00+03:00",
+      "training_trade_ledger_sha256": "f7117ab5c21833fe90324b604acae738b5d599a5a329df77df5749fe2f8e5a2d"
+    }
+  },
+  "report_sha256": "56df018f27e9111108cce0d18fbc51c8446c9643095998f59ea2df3560ea6883"
+}

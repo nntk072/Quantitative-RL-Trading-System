@@ -1,0 +1,924 @@
+{
+  "analysis_script_sha256": "7d3d0b8a0cc9f4d061c474b03220df3478b94cdf99ee4f246aa0a492104c37cc",
+  "analysis_window": {
+    "end_exclusive_utc": "2025-12-31T21:00:00+00:00",
+    "partition": "training only; 2026 is not opened or used",
+    "start_utc": "2024-12-29T21:00:00+00:00"
+  },
+  "arms": {
+    "ladder_a4a_entry_fsm_hidden_qgrid025": {
+      "fills": {
+        "all_close_fills_tick": true,
+        "all_entry_fills_tick": true,
+        "close_tick_quote_checks": 1033,
+        "entry_tick_quote_checks": 987,
+        "raw_bid_ask_vs_recorded_net_mismatches": [],
+        "stop_and_target_fill_rows": 799,
+        "stop_and_target_fill_sources": {
+          "tick": 799
+        }
+      },
+      "input_hashes": {
+        "config_yaml": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "source_feature_cache": "4a97305f1d4b21c3eca61fab78ad76ea8ec09f586c058094d81877ec8b82aeca",
+        "training_bars_parquet": "d12adb317ce86d9f9ff2d763a400730d8fba717f9bc12bba54bd1bf0c705cb4f",
+        "training_ticks_parquet": "4ba1598ea06eaa45cc7a8f43cae4fa0de60988e950a09f4ee3e2f1f88051672c",
+        "training_trades_csv": "c0f40c147d5e2f1204592bb2854a52265b4947b79ea87ddcc26ed3662c92fbd9"
+      },
+      "manifest": {
+        "configured_cost_model_slippage_points_recorded": 5.0,
+        "configured_slippage_points": 5.0,
+        "effective_tick_fill_slippage_points": 0.0,
+        "effective_tick_fill_slippage_points_recorded": 0.0,
+        "effective_tick_slippage_basis": "source-hash-matched simulation/environment/factory.py sets zero; reanalysis cost override records zero",
+        "fill_delay_ms": 0,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+        "randomized_fill_latency_ms": 30.0,
+        "reanalysis_manifest_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/reanalysis_manifest.json",
+        "reanalysis_manifest_sha256": "4a6f40cc6230742870147f998a95879da01a11555f8d5bd02d3d01a1b75165be",
+        "sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+        "tick_execution": true,
+        "tick_fill_slippage_points_explicit_field": null
+      },
+      "march_april_decomposition": {
+        "april_actual_gross_mean_r": -0.06737368368943747,
+        "april_actual_minus_ema_mean_r": 0.04088315524080801,
+        "april_ema_reference_gross_mean_r": -0.1082568389302455,
+        "bootstrap_95pct_ci": {
+          "actual_gross_change_r": [
+            -0.5836972820559079,
+            0.14286408943295925
+          ],
+          "entry_cohort_component_r": [
+            -0.4609515142905639,
+            0.22434539708066958
+          ],
+          "exit_outcome_component_r": [
+            -0.3473762375069133,
+            0.14062903384611425
+          ]
+        },
+        "entry_cohort_component_r": -0.1276497974822435,
+        "exit_outcome_component_r": -0.09007212497527162,
+        "march_actual_gross_mean_r": 0.15034823876807765,
+        "march_actual_minus_ema_mean_r": 0.13095528021607963,
+        "march_ema_reference_gross_mean_r": 0.01939295855199801,
+        "march_to_april_actual_gross_change_r": -0.21772192245751512,
+        "paired_entries_april": 90,
+        "paired_entries_march": 100,
+        "point_estimates_add_exactly": true,
+        "reference_interpretation": "conditional frozen-entry EMA21-exit reference; not an account-path or causal policy counterfactual"
+      },
+      "monthly": [
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.8921420589355565,
+            -0.2012441729991961
+          ],
+          "actual_gross_mid_mean_r": -0.5872682944587281,
+          "actual_gross_mid_median_r": -0.9424066924066923,
+          "actual_historical_net_ci95_mean_r": [
+            -0.9409050214475774,
+            -0.23644205842468363
+          ],
+          "actual_historical_net_mean_r": -0.6292040150466962,
+          "actual_historical_net_median_r": -0.9930232558139536,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            0.0,
+            0.5213444329715309
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.17378147765717697,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.9479296427018988,
+            -0.5434543133187505
+          ],
+          "ema_reference_gross_mean_r": -0.761049772115905,
+          "ema_reference_gross_median_r": -0.9542926659714981,
+          "entry_month": "2024-12",
+          "gross_mid_pnl_usd_sum": -3349.0405375044847,
+          "historical_net_pnl_usd_sum": -3593.535986402904,
+          "mid_to_bid_ask_drag_mean_r": 0.041935720587967996,
+          "n": 12
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.10452741041805637,
+            0.7824460164479988
+          ],
+          "actual_gross_mid_mean_r": 0.3015199172644943,
+          "actual_gross_mid_median_r": -0.12389964788732394,
+          "actual_historical_net_ci95_mean_r": [
+            -0.14770229616807068,
+            0.7345743559344984
+          ],
+          "actual_historical_net_mean_r": 0.256879265746539,
+          "actual_historical_net_median_r": -0.12588028169014084,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.1899574081742489,
+            0.19367822683299193
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.00359013031521902,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.0821590293402997,
+            0.7507594208668629
+          ],
+          "ema_reference_gross_mean_r": 0.29792978694927535,
+          "ema_reference_gross_median_r": -0.07220216606498193,
+          "entry_month": "2025-01",
+          "gross_mid_pnl_usd_sum": 7742.281654204601,
+          "historical_net_pnl_usd_sum": 6148.857363400492,
+          "mid_to_bid_ask_drag_mean_r": 0.044640651517955286,
+          "n": 81
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.031213669267358874,
+            0.8765666940538147
+          ],
+          "actual_gross_mid_mean_r": 0.3898235116746615,
+          "actual_gross_mid_median_r": -0.04686153896525122,
+          "actual_historical_net_ci95_mean_r": [
+            -0.06668801484168084,
+            0.8412092472013104
+          ],
+          "actual_historical_net_mean_r": 0.35384919048358976,
+          "actual_historical_net_median_r": -0.07352101253098478,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.10710078240376189,
+            0.37590362576454484
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.12787408886653967,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.13666977232277053,
+            0.7364851878124921
+          ],
+          "ema_reference_gross_mean_r": 0.26194942280812183,
+          "ema_reference_gross_median_r": -0.10483351911114305,
+          "entry_month": "2025-02",
+          "gross_mid_pnl_usd_sum": 23566.082680624153,
+          "historical_net_pnl_usd_sum": 21944.713885951045,
+          "mid_to_bid_ask_drag_mean_r": 0.03597432119107177,
+          "n": 88
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.12092472628421974,
+            0.4461536845580331
+          ],
+          "actual_gross_mid_mean_r": 0.15034823876807765,
+          "actual_gross_mid_median_r": -0.2876178986619873,
+          "actual_historical_net_ci95_mean_r": [
+            -0.16103221352745237,
+            0.40694062233823736
+          ],
+          "actual_historical_net_mean_r": 0.11084632365941326,
+          "actual_historical_net_median_r": -0.33470078338664067,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.03359845841662807,
+            0.31085971790193645
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.13095528021607963,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.2117820682165734,
+            0.26880098844425776
+          ],
+          "ema_reference_gross_mean_r": 0.01939295855199801,
+          "ema_reference_gross_median_r": -0.2876178986619873,
+          "entry_month": "2025-03",
+          "gross_mid_pnl_usd_sum": 6401.431261368212,
+          "historical_net_pnl_usd_sum": 4316.865484152845,
+          "mid_to_bid_ask_drag_mean_r": 0.039501915108664375,
+          "n": 100
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.286405470792482,
+            0.17113601956712618
+          ],
+          "actual_gross_mid_mean_r": -0.06737368368943747,
+          "actual_gross_mid_median_r": -0.35101694288641716,
+          "actual_historical_net_ci95_mean_r": [
+            -0.3165684195630564,
+            0.1394525287419449
+          ],
+          "actual_historical_net_mean_r": -0.09810458615105673,
+          "actual_historical_net_median_r": -0.37092161705446514,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.1416323696691761,
+            0.19339155743564498
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.04088315524080801,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.33595273553713156,
+            0.14862855938667338
+          ],
+          "ema_reference_gross_mean_r": -0.1082568389302455,
+          "ema_reference_gross_median_r": -0.44067599067599067,
+          "entry_month": "2025-04",
+          "gross_mid_pnl_usd_sum": -1466.8063570038603,
+          "historical_net_pnl_usd_sum": -2994.3760523085066,
+          "mid_to_bid_ask_drag_mean_r": 0.03073090246161932,
+          "n": 90
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.1779866771526327,
+            0.77868320294453
+          ],
+          "actual_gross_mid_mean_r": 0.24839767495968113,
+          "actual_gross_mid_median_r": -0.4736842105263158,
+          "actual_historical_net_ci95_mean_r": [
+            -0.22089226033928186,
+            0.7311906164112104
+          ],
+          "actual_historical_net_mean_r": 0.20394329389443028,
+          "actual_historical_net_median_r": -0.48047538200339557,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            0.025284955386389675,
+            0.683485797740872
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.3025432872483222,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.34096625469063657,
+            0.29360807584023996
+          ],
+          "ema_reference_gross_mean_r": -0.05414561228864101,
+          "ema_reference_gross_median_r": -0.8727272727272727,
+          "entry_month": "2025-05",
+          "gross_mid_pnl_usd_sum": 12469.181444612546,
+          "historical_net_pnl_usd_sum": 10697.89832233638,
+          "mid_to_bid_ask_drag_mean_r": 0.04445438106525084,
+          "n": 73
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.2963510705289004,
+            0.1297962162733755
+          ],
+          "actual_gross_mid_mean_r": -0.08662448170612785,
+          "actual_gross_mid_median_r": -0.15714014352047279,
+          "actual_historical_net_ci95_mean_r": [
+            -0.3424816835555387,
+            0.08519656688123627
+          ],
+          "actual_historical_net_mean_r": -0.13144957364516685,
+          "actual_historical_net_median_r": -0.1686787674124103,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.11877121595422276,
+            0.23315640499559237
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.05844337670153047,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.3608904451332755,
+            0.08952644446402383
+          ],
+          "ema_reference_gross_mean_r": -0.14506785840765837,
+          "ema_reference_gross_median_r": -0.4998270644185041,
+          "entry_month": "2025-06",
+          "gross_mid_pnl_usd_sum": -10125.99870876625,
+          "historical_net_pnl_usd_sum": -12405.426521669611,
+          "mid_to_bid_ask_drag_mean_r": 0.044825091939038976,
+          "n": 104
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.2336357382774945,
+            0.3278241582582153
+          ],
+          "actual_gross_mid_mean_r": 0.028959833578141966,
+          "actual_gross_mid_median_r": 0.026115342763873773,
+          "actual_historical_net_ci95_mean_r": [
+            -0.26907715922533154,
+            0.2939282356296481
+          ],
+          "actual_historical_net_mean_r": -0.005308409897263476,
+          "actual_historical_net_median_r": 0.02176278563656148,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.029068771346921502,
+            0.3127347184615744
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.12797313998598384,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.36881218222283685,
+            0.20262583372013046
+          ],
+          "ema_reference_gross_mean_r": -0.0990133064078419,
+          "ema_reference_gross_median_r": -0.11870773854244929,
+          "entry_month": "2025-07",
+          "gross_mid_pnl_usd_sum": 167.39374093938676,
+          "historical_net_pnl_usd_sum": -555.0940639251437,
+          "mid_to_bid_ask_drag_mean_r": 0.03426824347540547,
+          "n": 45
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.4156698541572665,
+            0.08203373988176325
+          ],
+          "actual_gross_mid_mean_r": -0.17727837454300516,
+          "actual_gross_mid_median_r": -0.13636363636363635,
+          "actual_historical_net_ci95_mean_r": [
+            -0.4540333226999682,
+            0.04338973614979177
+          ],
+          "actual_historical_net_mean_r": -0.21453881442194322,
+          "actual_historical_net_median_r": -0.1590909090909091,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.5156578798520763,
+            0.12434324782634182
+          ],
+          "actual_minus_ema_exit_delta_mean_r": -0.12507785287955175,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.4361695828200277,
+            0.49155627623248865
+          ],
+          "ema_reference_gross_mean_r": -0.05220052166345339,
+          "ema_reference_gross_median_r": -0.4758064516129033,
+          "entry_month": "2025-08",
+          "gross_mid_pnl_usd_sum": -1915.6005415550933,
+          "historical_net_pnl_usd_sum": -2825.84130629434,
+          "mid_to_bid_ask_drag_mean_r": 0.037260439878938054,
+          "n": 55
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.2573960441218585,
+            0.20173213281635874
+          ],
+          "actual_gross_mid_mean_r": -0.03466326765388085,
+          "actual_gross_mid_median_r": -0.18243092797933724,
+          "actual_historical_net_ci95_mean_r": [
+            -0.28816722737426614,
+            0.16946339926071058
+          ],
+          "actual_historical_net_mean_r": -0.06665583642908818,
+          "actual_historical_net_median_r": -0.18939061396644846,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.12175430219907588,
+            0.09609681217917758
+          ],
+          "actual_minus_ema_exit_delta_mean_r": -0.012565573418128072,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.24332582487065224,
+            0.21181760541647468
+          ],
+          "ema_reference_gross_mean_r": -0.02209769423575278,
+          "ema_reference_gross_median_r": -0.18243092797933724,
+          "entry_month": "2025-09",
+          "gross_mid_pnl_usd_sum": -2712.7184302173305,
+          "historical_net_pnl_usd_sum": -3755.95785559556,
+          "mid_to_bid_ask_drag_mean_r": 0.031992568775207356,
+          "n": 62
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.34155202899247483,
+            -0.005491588810234222
+          ],
+          "actual_gross_mid_mean_r": -0.17428676586484323,
+          "actual_gross_mid_median_r": -0.4479368670545141,
+          "actual_historical_net_ci95_mean_r": [
+            -0.3730911645588613,
+            -0.03633054845737278
+          ],
+          "actual_historical_net_mean_r": -0.20571311087869407,
+          "actual_historical_net_median_r": -0.47236586942469294,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.118644523178773,
+            0.11940512797163898
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.0022467321629070485,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.3643333196208959,
+            0.021062729061448907
+          ],
+          "ema_reference_gross_mean_r": -0.1765334980277503,
+          "ema_reference_gross_median_r": -0.7908538535337384,
+          "entry_month": "2025-10",
+          "gross_mid_pnl_usd_sum": -8816.168447334794,
+          "historical_net_pnl_usd_sum": -10613.246975720805,
+          "mid_to_bid_ask_drag_mean_r": 0.03142634501385084,
+          "n": 122
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.2449344935737845,
+            0.2424324038703389
+          ],
+          "actual_gross_mid_mean_r": -0.008560090464676717,
+          "actual_gross_mid_median_r": -0.16321650680005356,
+          "actual_historical_net_ci95_mean_r": [
+            -0.2723329480472163,
+            0.21544929643592095
+          ],
+          "actual_historical_net_mean_r": -0.03606801620293372,
+          "actual_historical_net_median_r": -0.1673948216985933,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.29718982615657286,
+            0.18321372611151768
+          ],
+          "actual_minus_ema_exit_delta_mean_r": -0.03839655753077664,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.2700238273080355,
+            0.37528082529050866
+          ],
+          "ema_reference_gross_mean_r": 0.029836467066099916,
+          "ema_reference_gross_median_r": -0.34114139253196085,
+          "entry_month": "2025-11",
+          "gross_mid_pnl_usd_sum": -1840.245806879746,
+          "historical_net_pnl_usd_sum": -2830.169967354359,
+          "mid_to_bid_ask_drag_mean_r": 0.027507925738257027,
+          "n": 80
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.39943087943147015,
+            0.07673624521587115
+          ],
+          "actual_gross_mid_mean_r": -0.16554036407517111,
+          "actual_gross_mid_median_r": -0.8636363636363636,
+          "actual_historical_net_ci95_mean_r": [
+            -0.4460683981387608,
+            0.03404871951865343
+          ],
+          "actual_historical_net_mean_r": -0.21067526691950944,
+          "actual_historical_net_median_r": -0.9605263157894737,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.023345395435643675,
+            0.274091670303387
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.12318969738109137,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.4965755829331825,
+            -0.06917236328802305
+          ],
+          "ema_reference_gross_mean_r": -0.2887300614562625,
+          "ema_reference_gross_median_r": -0.9,
+          "entry_month": "2025-12",
+          "gross_mid_pnl_usd_sum": -4183.069665803695,
+          "historical_net_pnl_usd_sum": -5689.001208237783,
+          "mid_to_bid_ask_drag_mean_r": 0.04513490284433827,
+          "n": 75
+        }
+      ],
+      "replay": {
+        "actual_training_entries": 987,
+        "completed_ema21_replays": 987,
+        "incomplete_ema21_replays": [],
+        "paired_cohort": 987,
+        "source_match": {
+          "checked": 18,
+          "mismatches": [],
+          "missing": []
+        }
+      },
+      "source_hash_match": {
+        "checked": 18,
+        "mismatches": [],
+        "missing": []
+      }
+    },
+    "ladder_a4b_entry_fsm_qgrid025": {
+      "fills": {
+        "all_close_fills_tick": true,
+        "all_entry_fills_tick": true,
+        "close_tick_quote_checks": 853,
+        "entry_tick_quote_checks": 825,
+        "raw_bid_ask_vs_recorded_net_mismatches": [],
+        "stop_and_target_fill_rows": 646,
+        "stop_and_target_fill_sources": {
+          "tick": 646
+        }
+      },
+      "input_hashes": {
+        "config_yaml": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "source_feature_cache": "4a97305f1d4b21c3eca61fab78ad76ea8ec09f586c058094d81877ec8b82aeca",
+        "training_bars_parquet": "d12adb317ce86d9f9ff2d763a400730d8fba717f9bc12bba54bd1bf0c705cb4f",
+        "training_ticks_parquet": "4ba1598ea06eaa45cc7a8f43cae4fa0de60988e950a09f4ee3e2f1f88051672c",
+        "training_trades_csv": "f7117ab5c21833fe90324b604acae738b5d599a5a329df77df5749fe2f8e5a2d"
+      },
+      "manifest": {
+        "configured_cost_model_slippage_points_recorded": 5.0,
+        "configured_slippage_points": 5.0,
+        "effective_tick_fill_slippage_points": 0.0,
+        "effective_tick_fill_slippage_points_recorded": 0.0,
+        "effective_tick_slippage_basis": "source-hash-matched simulation/environment/factory.py sets zero; reanalysis cost override records zero",
+        "fill_delay_ms": 0,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+        "randomized_fill_latency_ms": 30.0,
+        "reanalysis_manifest_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/reanalysis_manifest.json",
+        "reanalysis_manifest_sha256": "9f8a20e36ee26746855f6b842ea1fc113e33cb431859ead71fd04785e2a7db2f",
+        "sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+        "tick_execution": true,
+        "tick_fill_slippage_points_explicit_field": null
+      },
+      "march_april_decomposition": {
+        "april_actual_gross_mean_r": -0.09330323410514649,
+        "april_actual_minus_ema_mean_r": 0.026378737443024214,
+        "april_ema_reference_gross_mean_r": -0.11968197154817066,
+        "bootstrap_95pct_ci": {
+          "actual_gross_change_r": [
+            -0.5655796837055083,
+            0.11180292302738001
+          ],
+          "entry_cohort_component_r": [
+            -0.46536624935409854,
+            0.15051073664208534
+          ],
+          "exit_outcome_component_r": [
+            -0.28433107026644383,
+            0.14565764170351025
+          ]
+        },
+        "entry_cohort_component_r": -0.15953389086597045,
+        "exit_outcome_component_r": -0.06422653771305041,
+        "march_actual_gross_mean_r": 0.13045719447387444,
+        "march_actual_minus_ema_mean_r": 0.09060527515607462,
+        "march_ema_reference_gross_mean_r": 0.03985191931779978,
+        "march_to_april_actual_gross_change_r": -0.22376042857902093,
+        "paired_entries_april": 104,
+        "paired_entries_march": 100,
+        "point_estimates_add_exactly": true,
+        "reference_interpretation": "conditional frozen-entry EMA21-exit reference; not an account-path or causal policy counterfactual"
+      },
+      "monthly": [
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.8921420589355566,
+            -0.2014981354518985
+          ],
+          "actual_gross_mid_mean_r": -0.5873929691301942,
+          "actual_gross_mid_median_r": -0.9424066924066924,
+          "actual_historical_net_ci95_mean_r": [
+            -0.9409050214475775,
+            -0.2366939953551366
+          ],
+          "actual_historical_net_mean_r": -0.6293284283456854,
+          "actual_historical_net_median_r": -0.9930232558139536,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            0.0,
+            0.5209704089571329
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.17365680298571096,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.9479296427018988,
+            -0.5434543133187505
+          ],
+          "ema_reference_gross_mean_r": -0.761049772115905,
+          "ema_reference_gross_median_r": -0.9542926659714981,
+          "entry_month": "2024-12",
+          "gross_mid_pnl_usd_sum": -3209.191229239697,
+          "historical_net_pnl_usd_sum": -3443.827942681035,
+          "mid_to_bid_ask_drag_mean_r": 0.04193545921549111,
+          "n": 12
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.12442337090805325,
+            0.7592015433034851
+          ],
+          "actual_gross_mid_mean_r": 0.2744310811476892,
+          "actual_gross_mid_median_r": -0.1736526946107785,
+          "actual_historical_net_ci95_mean_r": [
+            -0.16834749103124094,
+            0.7141088038104842
+          ],
+          "actual_historical_net_mean_r": 0.2305887835937445,
+          "actual_historical_net_median_r": -0.19999999999999998,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.19142557488172052,
+            0.17114726726634896
+          ],
+          "actual_minus_ema_exit_delta_mean_r": -0.011315194598974159,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.08970379203600905,
+            0.7505893824748994
+          ],
+          "ema_reference_gross_mean_r": 0.2857462757466634,
+          "ema_reference_gross_median_r": -0.1526315789473684,
+          "entry_month": "2025-01",
+          "gross_mid_pnl_usd_sum": 7078.674703672942,
+          "historical_net_pnl_usd_sum": 5523.5048253073455,
+          "mid_to_bid_ask_drag_mean_r": 0.04384229755394479,
+          "n": 83
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.05993751763795113,
+            0.8062190458864905
+          ],
+          "actual_gross_mid_mean_r": 0.3296477023323413,
+          "actual_gross_mid_median_r": -0.1103448275862069,
+          "actual_historical_net_ci95_mean_r": [
+            -0.0938796978150325,
+            0.7693077962968
+          ],
+          "actual_historical_net_mean_r": 0.2957719640318227,
+          "actual_historical_net_median_r": -0.13333333333333333,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.1268853732147288,
+            0.34186062190540917
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.10487384081657768,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.13661451554710885,
+            0.6711109804726564
+          ],
+          "ema_reference_gross_mean_r": 0.22477386151576367,
+          "ema_reference_gross_median_r": -0.1103448275862069,
+          "entry_month": "2025-02",
+          "gross_mid_pnl_usd_sum": 19922.481968720243,
+          "historical_net_pnl_usd_sum": 18470.03924250151,
+          "mid_to_bid_ask_drag_mean_r": 0.03387573830051873,
+          "n": 83
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.12676481294527092,
+            0.41470047084945283
+          ],
+          "actual_gross_mid_mean_r": 0.13045719447387444,
+          "actual_gross_mid_median_r": -0.2523465781453448,
+          "actual_historical_net_ci95_mean_r": [
+            -0.16788144325802723,
+            0.37448568849433655
+          ],
+          "actual_historical_net_mean_r": 0.08909106525247314,
+          "actual_historical_net_median_r": -0.30526471645832015,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.06242410881686205,
+            0.25455865389497667
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.09060527515607462,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.1805020964891316,
+            0.2755350977471931
+          ],
+          "ema_reference_gross_mean_r": 0.03985191931779978,
+          "ema_reference_gross_median_r": -0.23217649615997682,
+          "entry_month": "2025-03",
+          "gross_mid_pnl_usd_sum": 5550.067221655731,
+          "historical_net_pnl_usd_sum": 3511.449137508543,
+          "mid_to_bid_ask_drag_mean_r": 0.04136612922140128,
+          "n": 100
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.2892117955528994,
+            0.11124369128622166
+          ],
+          "actual_gross_mid_mean_r": -0.09330323410514649,
+          "actual_gross_mid_median_r": -0.33249607535321823,
+          "actual_historical_net_ci95_mean_r": [
+            -0.32134932127716187,
+            0.07882256419057616
+          ],
+          "actual_historical_net_mean_r": -0.1250624087133458,
+          "actual_historical_net_median_r": -0.3529565672422815,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.1257498206333699,
+            0.1593531001985806
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.026378737443024214,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.31788146269485357,
+            0.10383325201003658
+          ],
+          "ema_reference_gross_mean_r": -0.11968197154817066,
+          "ema_reference_gross_median_r": -0.3748882615855093,
+          "entry_month": "2025-04",
+          "gross_mid_pnl_usd_sum": -5075.5168139258785,
+          "historical_net_pnl_usd_sum": -6910.394810093218,
+          "mid_to_bid_ask_drag_mean_r": 0.03175917460819937,
+          "n": 104
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.3321887967926804,
+            0.35760449332841554
+          ],
+          "actual_gross_mid_mean_r": -0.015522584168352026,
+          "actual_gross_mid_median_r": -0.5305343511450382,
+          "actual_historical_net_ci95_mean_r": [
+            -0.37287521679064967,
+            0.31517752960765805
+          ],
+          "actual_historical_net_mean_r": -0.056282316061275615,
+          "actual_historical_net_median_r": -0.5648854961832062,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.04943801028201923,
+            0.23383916859380385
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.08882677567179095,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.4071952394871813,
+            0.2601331833160697
+          ],
+          "ema_reference_gross_mean_r": -0.10434935984014301,
+          "ema_reference_gross_median_r": -0.9047619047619045,
+          "entry_month": "2025-05",
+          "gross_mid_pnl_usd_sum": 1850.2326914004439,
+          "historical_net_pnl_usd_sum": 472.8146672990115,
+          "mid_to_bid_ask_drag_mean_r": 0.040759731892923534,
+          "n": 67
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.32173257503594066,
+            0.16451303641909953
+          ],
+          "actual_gross_mid_mean_r": -0.08893478311490768,
+          "actual_gross_mid_median_r": -0.7640929846409299,
+          "actual_historical_net_ci95_mean_r": [
+            -0.36730718399985174,
+            0.12263822712633819
+          ],
+          "actual_historical_net_mean_r": -0.13335135809103632,
+          "actual_historical_net_median_r": -0.8152760481527606,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.048391776364654776,
+            0.21515301436072132
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.08129530282192435,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.3923006436502921,
+            0.0678891330084951
+          ],
+          "ema_reference_gross_mean_r": -0.17023008593683203,
+          "ema_reference_gross_median_r": -0.7914141414141415,
+          "entry_month": "2025-06",
+          "gross_mid_pnl_usd_sum": -8274.250941153368,
+          "historical_net_pnl_usd_sum": -10331.768880439276,
+          "mid_to_bid_ask_drag_mean_r": 0.04441657497612863,
+          "n": 102
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.21468472658709445,
+            0.30436286531257606
+          ],
+          "actual_gross_mid_mean_r": 0.029926505394916626,
+          "actual_gross_mid_median_r": -0.015075376884422112,
+          "actual_historical_net_ci95_mean_r": [
+            -0.2492630251851837,
+            0.27258047042942773
+          ],
+          "actual_historical_net_mean_r": -0.002567227700426552,
+          "actual_historical_net_median_r": -0.025125628140703522,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.0024290067066239426,
+            0.3370159796319041
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.1553997995423683,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.38283619825341214,
+            0.15820253979386095
+          ],
+          "ema_reference_gross_mean_r": -0.12547329414745165,
+          "ema_reference_gross_median_r": -0.11870773854244923,
+          "entry_month": "2025-07",
+          "gross_mid_pnl_usd_sum": 574.9637516066111,
+          "historical_net_pnl_usd_sum": -58.40219757328788,
+          "mid_to_bid_ask_drag_mean_r": 0.03249373309534321,
+          "n": 47
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.409933453087719,
+            0.12441573361744691
+          ],
+          "actual_gross_mid_mean_r": -0.15291264344346914,
+          "actual_gross_mid_median_r": -0.19910991609104817,
+          "actual_historical_net_ci95_mean_r": [
+            -0.4485813830555394,
+            0.08699495705969414
+          ],
+          "actual_historical_net_mean_r": -0.1906859399499659,
+          "actual_historical_net_median_r": -0.21187589819665292,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.5457783647989067,
+            0.12388104182893536
+          ],
+          "actual_minus_ema_exit_delta_mean_r": -0.1369002778092892,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.41521028294406914,
+            0.5446050246054314
+          ],
+          "ema_reference_gross_mean_r": -0.016012365634179935,
+          "ema_reference_gross_median_r": -0.3688313237156816,
+          "entry_month": "2025-08",
+          "gross_mid_pnl_usd_sum": -1920.607420858402,
+          "historical_net_pnl_usd_sum": -2670.932843717833,
+          "mid_to_bid_ask_drag_mean_r": 0.03777329650649675,
+          "n": 52
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.3027899266995626,
+            0.11834725756801671
+          ],
+          "actual_gross_mid_mean_r": -0.09680431000194122,
+          "actual_gross_mid_median_r": -0.20909384590534646,
+          "actual_historical_net_ci95_mean_r": [
+            -0.3333368563299755,
+            0.08614655180774125
+          ],
+          "actual_historical_net_mean_r": -0.12847711090428882,
+          "actual_historical_net_median_r": -0.21811262539739362,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.05778380457625293,
+            0.11036806455309983
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.018986930813776857,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.32158593034542376,
+            0.09538926080732556
+          ],
+          "ema_reference_gross_mean_r": -0.11579124081571812,
+          "ema_reference_gross_median_r": -0.2204382082430863,
+          "entry_month": "2025-09",
+          "gross_mid_pnl_usd_sum": -3923.2241366940943,
+          "historical_net_pnl_usd_sum": -4829.5124468031245,
+          "mid_to_bid_ask_drag_mean_r": 0.03167280090234756,
+          "n": 64
+        },
+        {
+          "actual_gross_mid_ci95_mean_r": [
+            -0.3330102784454216,
+            0.0004963471754289658
+          ],
+          "actual_gross_mid_mean_r": -0.16969736808372504,
+          "actual_gross_mid_median_r": -0.3217821782178217,
+          "actual_historical_net_ci95_mean_r": [
+            -0.3660051354960677,
+            -0.032099602147556354
+          ],
+          "actual_historical_net_mean_r": -0.20208714715878248,
+          "actual_historical_net_median_r": -0.3292079207920791,
+          "actual_minus_ema_exit_delta_ci95_mean_r": [
+            -0.08851439845881617,
+            0.12591536440487006
+          ],
+          "actual_minus_ema_exit_delta_mean_r": 0.017767995888385,
+          "actual_minus_ema_exit_delta_median_r": 0.0,
+          "ema_reference_gross_ci95_mean_r": [
+            -0.3574527416934711,
+            -0.005579473380860887
+          ],
+          "ema_reference_gross_mean_r": -0.18746536397210997,
+          "ema_reference_gross_median_r": -0.41608391608391604,
+          "entry_month": "2025-10",
+          "gross_mid_pnl_usd_sum": -8304.813731843766,
+          "historical_net_pnl_usd_sum": -9789.017764306544,
+          "mid_to_bid_ask_drag_mean_r": 0.03238977907505743,
+          "n": 111
+        }
+      ],
+      "replay": {
+        "actual_training_entries": 825,
+        "completed_ema21_replays": 825,
+        "incomplete_ema21_replays": [],
+        "paired_cohort": 825,
+        "source_match": {
+          "checked": 18,
+          "mismatches": [],
+          "missing": []
+        }
+      },
+      "source_hash_match": {
+        "checked": 18,
+        "mismatches": [],
+        "missing": []
+      }
+    }
+  },
+  "bootstrap": {
+    "resamples": 10000,
+    "seed": 20261025
+  },
+  "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+  "report_sha256_before_provenance": "18b7728cf3aab1615f25b42bf98964b147b49cbc83f8f6aa6d49d5f62e5e0962"
+}
