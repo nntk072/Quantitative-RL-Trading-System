@@ -368,11 +368,23 @@ def evaluate_model(
 
     n_sessions = len(env.all_sessions)
     days_traded = len(env.sessions_with_trades)
-    fail_time = env.breach_events[0]["time"] if env.breach_events else None
+    breach_events = list(env.breach_events)
+    # In chronological account mode a daily-loss limit blocks only that
+    # session, and evaluation resumes next session. Episodic and repeated-
+    # payout modes terminate on that same event, so it remains a failure there.
+    daily_loss_is_session_scoped = not bool(getattr(env, "episodic", False)) and not bool(
+        getattr(env, "repeated_payout_policy", False)
+    )
+    hard_breach_events = [
+        event
+        for event in breach_events
+        if event.get("reason") != "daily_loss" or not daily_loss_is_session_scoped
+    ]
+    fail_time = hard_breach_events[0]["time"] if hard_breach_events else None
     episode_equity = final_info.get("episode_equity", {})
     completed_data_split = bool(episode_equity.get("completed_data_split", False))
     episode_end_reason = episode_equity.get("episode_end_reason")
-    survived_full_year = len(env.breach_events) == 0 and completed_data_split
+    survived_full_year = not hard_breach_events and completed_data_split
 
     constraint_cost_summary = None
     constraint_cost_frame = None

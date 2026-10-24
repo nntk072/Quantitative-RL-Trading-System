@@ -206,6 +206,41 @@ def test_evaluate_model_reports_bar_close_exposure_fraction() -> None:
     assert result["exposure_measure"] == "fraction_of_evaluation_steps_with_position_at_bar_close"
 
 
+@pytest.mark.parametrize(
+    ("breach_reason", "episodic", "repeated_payout", "survived", "fail_time"),
+    [
+        ("daily_loss", False, False, True, None),
+        ("daily_loss", True, False, False, "2025-01-06T16:41:00+03:00"),
+        ("daily_loss", False, True, False, "2025-01-06T16:41:00+03:00"),
+        ("max_drawdown", False, False, False, "2025-01-06T16:41:00+03:00"),
+    ],
+)
+def test_evaluate_model_distinguishes_session_stop_from_year_failure(
+    breach_reason: str,
+    episodic: bool,
+    repeated_payout: bool,
+    survived: bool,
+    fail_time: str | None,
+) -> None:
+    env = _ExposureEnv()
+    setattr(env, "episodic", episodic)
+    setattr(env, "repeated_payout_policy", repeated_payout)
+    breach_time = "2025-01-06T16:41:00+03:00"
+    env.breach_events = [{"time": breach_time, "reason": breach_reason}]
+
+    result = evaluate_model(
+        _ScriptedModel({}),
+        bars=pd.DataFrame(),
+        features=pd.DataFrame(),
+        env=env,  # type: ignore[arg-type]
+    )
+
+    assert result["completed_data_split"] is True
+    assert result["survived_full_year"] is survived
+    assert result["fail_time"] == fail_time
+    assert result["breach_events"] == env.breach_events
+
+
 def test_evaluate_model_seeds_environment_execution_rng() -> None:
     env = _ExposureEnv()
 
