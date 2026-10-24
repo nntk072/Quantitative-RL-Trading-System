@@ -95,8 +95,10 @@ def _prepare_training_configuration() -> TrainingConfigurationStage:
     lagrangian_cb = _build_lagrangian_callback(cfg, algo=args.algo, mvp=args.mvp)
     if lagrangian_cb is not None:
         log.info(
-            "Q5 primal-dual PPO enabled: episode_cost_budget=%.4f dual_lr=%.4f lambda_max=%.3f",
+            "Q5 primal-dual PPO enabled: episode_cost_budget_fraction_of_max_loss=%.4f "
+            "cost_discount_gamma=%.4f dual_lr=%.4f lambda_max=%.3f",
             lagrangian_cb.episode_cost_budget,
+            lagrangian_cb.cost_discount_gamma,
             lagrangian_cb.dual_learning_rate,
             lagrangian_cb.lambda_max,
         )

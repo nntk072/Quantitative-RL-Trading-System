@@ -22,7 +22,7 @@ passed straight into ``evaluation.calculate_metrics`` and
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -34,6 +34,7 @@ from trading.execution.costs import COST_US100, CostModel
 
 BAR_CLOSE_EXPOSURE_MEASURE = "fraction_of_evaluation_steps_with_position_at_bar_close"
 CONSTRAINT_COST_SCHEMA = "q5_discounted_constraint_cost_v1"
+Q5_MAX_LOSS_FRACTION_COST_SCHEMA = "q5_max_loss_fraction_cost_v1"
 
 
 def _finite_constraint_cost(constraints: dict[str, Any], key: str) -> float:
@@ -302,18 +303,41 @@ def evaluate_model(
     constrained_state = getattr(model, "_constrained_rl_state", None)
     constraint_rows: list[dict[str, Any]] = []
     constraint_discount_gamma: float | None = None
+    q5_cost_v3_limits: tuple[float, float, float] | None = None
     if constrained_state is not None:
-        if not isinstance(constrained_state, dict) or constrained_state.get("version") != 2:
-            raise ValueError("Q5 evaluation requires a version-2 constrained-RL checkpoint state")
-        gamma_value = constrained_state.get("gamma")
+        if not isinstance(constrained_state, dict) or constrained_state.get("version") not in {
+            2,
+            3,
+        }:
+            raise ValueError("Q5 evaluation requires a supported constrained-RL checkpoint state")
+        state_version = int(constrained_state["version"])
+        gamma_key = "gamma" if state_version == 2 else "cost_discount_gamma"
+        gamma_value = constrained_state.get(gamma_key)
         if (
             isinstance(gamma_value, bool)
             or not isinstance(gamma_value, (int, float))
             or not np.isfinite(float(gamma_value))
             or not 0.0 < float(gamma_value) <= 1.0
         ):
-            raise ValueError("Q5 checkpoint gamma must be finite and in (0, 1]")
+            raise ValueError(f"Q5 checkpoint {gamma_key} must be finite and in (0, 1]")
         constraint_discount_gamma = float(gamma_value)
+        if state_version == 3:
+            raw_daily_limit = constrained_state.get("daily_loss_limit_usd")
+            raw_max_loss_limit = constrained_state.get("max_loss_limit_usd")
+            raw_trailing_limit = constrained_state.get("trailing_dd_limit_usd")
+            for value in (raw_daily_limit, raw_max_loss_limit, raw_trailing_limit):
+                if (
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not np.isfinite(float(value))
+                ):
+                    raise ValueError("Q5 checkpoint loss-limit metadata is missing or invalid")
+            daily_limit = float(cast(float, raw_daily_limit))
+            max_loss_limit = float(cast(float, raw_max_loss_limit))
+            trailing_limit = float(cast(float, raw_trailing_limit))
+            if daily_limit < 0.0 or max_loss_limit <= 0.0 or trailing_limit < 0.0:
+                raise ValueError("Q5 checkpoint loss-limit metadata is outside valid bounds")
+            q5_cost_v3_limits = (daily_limit, max_loss_limit, trailing_limit)
     discount_factor = 1.0
     while not (done or truncated):
         action = action_fn(obs)
@@ -336,6 +360,17 @@ def evaluate_model(
                 "max_loss_cost": _finite_constraint_cost(raw_constraints, "max_loss_cost"),
                 "trailing_cost": _finite_constraint_cost(raw_constraints, "trailing_cost"),
             }
+            if q5_cost_v3_limits is not None:
+                daily_limit, max_loss_limit, trailing_limit = q5_cost_v3_limits
+                component_costs = {
+                    "daily_cost": component_costs["daily_cost"] * daily_limit / max_loss_limit,
+                    "max_loss_cost": component_costs["max_loss_cost"],
+                    "trailing_cost": (
+                        component_costs["trailing_cost"] * trailing_limit / max_loss_limit
+                        if trailing_limit > 0.0
+                        else 0.0
+                    ),
+                }
             breach_indicator = float(
                 any(
                     bool(raw_constraints.get(key, False))
@@ -400,8 +435,21 @@ def evaluate_model(
             for key in ("daily_cost", "max_loss_cost", "trailing_cost")
         }
         constraint_cost_summary = {
-            "schema": CONSTRAINT_COST_SCHEMA,
-            "definition": "per_step_max_of_normalized_daily_max_loss_trailing_costs_and_breach_indicator",
+            "schema": (
+                Q5_MAX_LOSS_FRACTION_COST_SCHEMA
+                if q5_cost_v3_limits is not None
+                else CONSTRAINT_COST_SCHEMA
+            ),
+            "cost_unit": (
+                "fraction_of_max_loss_limit"
+                if q5_cost_v3_limits is not None
+                else "max_of_original_normalized_constraint_units"
+            ),
+            "definition": (
+                "per_step_max_limit_increase_normalized_to_max_loss_limit_and_breach_indicator"
+                if q5_cost_v3_limits is not None
+                else "per_step_max_of_normalized_daily_max_loss_trailing_costs_and_breach_indicator"
+            ),
             "discount_gamma": constraint_discount_gamma,
             "n_steps": len(constraint_cost_frame),
             "undiscounted_total": float(constraint_cost_frame["step_cost"].sum()),

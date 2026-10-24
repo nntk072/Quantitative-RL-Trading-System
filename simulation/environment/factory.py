@@ -411,6 +411,8 @@ def make_env(
         entry_cooldown_bars=int(cfg.env.get("entry_cooldown_bars", 0)),
         reward_mode=str(cfg.env.get("reward_mode", "dsr")),
         fixed_risk_usd=float(cfg.env.get("fixed_risk_usd", 0.0)),
+        risk_band_max_usd=float(cfg.env.get("risk_band_max_usd", 0.0)),
+        risk_band_hold_below_usd=float(cfg.env.get("risk_band_hold_below_usd", 0.0)),
         risk_mode=str(cfg.env.get("risk_mode", "dynamic")),
         entry_intensity_threshold=float(cfg.env.get("entry_intensity_threshold", 0.0)),
         peak_trailing_dd_limit=float(cfg.env.get("peak_trailing_dd_limit", 0.0)),

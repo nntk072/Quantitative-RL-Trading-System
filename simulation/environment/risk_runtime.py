@@ -196,11 +196,18 @@ class RiskRuntimeMixin(RuntimeMixinBase):
 
         ``fixed``  -> ``fixed_risk_usd``, independent of equity and risk_frac.
         ``dynamic`` -> live equity times the agent's chosen fraction.
+        ``dollar_band`` -> normalized action coordinate times its dollar ceiling.
         """
         if uses_fixed_risk_budget(
             self.risk_mode, bool(getattr(self, "repeated_payout_policy", False))
         ):
             return float(self.fixed_risk_usd)
+        if self.risk_mode == "dollar_band":
+            requested = float(np.clip(risk_frac, 0.0, 1.0)) * float(self.risk_band_max_usd)
+            self._last_requested_risk_usd = requested
+            self._last_approved_risk_usd = requested
+            self._last_execution_reserve_usd = 0.0
+            return requested
         requested = max(0.0, float(self.account.equity) * float(risk_frac))
         self._last_requested_risk_usd = requested
         if not bool(getattr(self, "repeated_payout_policy", False)):
@@ -239,9 +246,9 @@ class RiskRuntimeMixin(RuntimeMixinBase):
     def _compute_lots_for(self, risk_frac: float, entry_price: float, sl_price: float) -> float:
         """Lot size for one trade under the active sizing mode.
 
-        Both sizing modes honor the resolved per-trade policy and the configured
-        $900 sizing ceiling. The percentage limit is recalculated from current
-        equity for each decision; no minimum trade-risk threshold is imposed.
+        Every sizing mode honors the resolved per-trade policy and configured
+        ceiling. Dynamic risk scales with equity; dollar-band risk is independent
+        of equity and includes the modeled reserve within its dollar budget.
         """
         if bool(getattr(self, "repeated_payout_policy", False)):
             approved_total_risk = self._risk_budget_usd(risk_frac)

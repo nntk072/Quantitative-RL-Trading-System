@@ -199,13 +199,14 @@ if _SB3_AVAILABLE:
         """Primal-dual PPO shaping for annual account-survival risk.
 
         The environment's hard account guardrails remain unchanged. This
-        callback adds the largest per-step increase among the normalized daily,
-        max-loss, and trailing risk costs, then updates a nonnegative Lagrange
-        multiplier from completed full-split episodes. It is a learning
-        objective, not a risk guarantee.
+        callback adds the largest per-step increase among daily, maximum-loss,
+        and enabled trailing costs, normalized to the maximum-loss limit. Its
+        default cost discount is 1 so late-year costs retain their weight. The
+        budget is a fraction of the maximum-loss limit per full-split episode.
+        This is a learning objective, not a risk guarantee.
         """
 
-        _STATE_VERSION = 2
+        _STATE_VERSION = 3
 
         def __init__(
             self,
@@ -215,11 +216,26 @@ if _SB3_AVAILABLE:
             lambda_initial: float = 0.0,
             lambda_max: float = 100.0,
             gamma: float = 0.99,
+            cost_discount_gamma: float | None = None,
+            daily_loss_limit_usd: float = 5_000.0,
+            max_loss_limit_usd: float = 10_000.0,
+            trailing_dd_limit_usd: float = 0.0,
             verbose: int = 0,
         ) -> None:
             super().__init__(verbose=verbose)
+            cost_gamma = gamma if cost_discount_gamma is None else cost_discount_gamma
             configured_values = np.asarray(
-                [episode_cost_budget, dual_learning_rate, lambda_initial, lambda_max, gamma],
+                [
+                    episode_cost_budget,
+                    dual_learning_rate,
+                    lambda_initial,
+                    lambda_max,
+                    gamma,
+                    cost_gamma,
+                    daily_loss_limit_usd,
+                    max_loss_limit_usd,
+                    trailing_dd_limit_usd,
+                ],
                 dtype=np.float64,
             )
             if not np.isfinite(configured_values).all():
@@ -228,8 +244,12 @@ if _SB3_AVAILABLE:
                 raise ValueError("episode_cost_budget must be nonnegative")
             if dual_learning_rate <= 0.0:
                 raise ValueError("dual_learning_rate must be positive")
-            if not 0.0 < gamma <= 1.0:
-                raise ValueError("gamma must be in (0, 1]")
+            if not 0.0 < gamma <= 1.0 or not 0.0 < cost_gamma <= 1.0:
+                raise ValueError("PPO gamma and cost_discount_gamma must be in (0, 1]")
+            if daily_loss_limit_usd < 0.0 or max_loss_limit_usd <= 0.0:
+                raise ValueError("Q5 loss limits must be nonnegative and max loss positive")
+            if trailing_dd_limit_usd < 0.0:
+                raise ValueError("Q5 trailing limit must be nonnegative")
             if lambda_initial < 0.0 or lambda_max <= 0.0 or lambda_initial > lambda_max:
                 raise ValueError("Lagrange multiplier bounds are invalid")
             self.episode_cost_budget = float(episode_cost_budget)
@@ -237,6 +257,10 @@ if _SB3_AVAILABLE:
             self.lambda_initial = float(lambda_initial)
             self.lambda_max = float(lambda_max)
             self.gamma = float(gamma)
+            self.cost_discount_gamma = float(cost_gamma)
+            self.daily_loss_limit_usd = float(daily_loss_limit_usd)
+            self.max_loss_limit_usd = float(max_loss_limit_usd)
+            self.trailing_dd_limit_usd = float(trailing_dd_limit_usd)
             self.lagrange_multiplier = self.lambda_initial
             self._episode_costs: np.ndarray[Any, Any] = np.zeros(0, dtype=np.float64)
             self._episode_cost_discounts: np.ndarray[Any, Any] = np.ones(0, dtype=np.float64)
@@ -254,6 +278,10 @@ if _SB3_AVAILABLE:
                 "lambda_initial": self.lambda_initial,
                 "lambda_max": self.lambda_max,
                 "gamma": self.gamma,
+                "cost_discount_gamma": self.cost_discount_gamma,
+                "daily_loss_limit_usd": self.daily_loss_limit_usd,
+                "max_loss_limit_usd": self.max_loss_limit_usd,
+                "trailing_dd_limit_usd": self.trailing_dd_limit_usd,
             }
 
         def _persist_state(self) -> None:
@@ -284,19 +312,24 @@ if _SB3_AVAILABLE:
             self._episode_cost_discounts = np.ones(int(self.model.n_envs), dtype=np.float64)
             self._persist_state()
 
-        @staticmethod
-        def _episode_cost(info: Any) -> float:
+        def _episode_cost(self, info: Any) -> float:
             if not isinstance(info, dict):
                 return 0.0
             constraints = info.get("constraints", {})
             if not isinstance(constraints, dict):
                 return 0.0
-            cost_fields = ("daily_cost", "max_loss_cost", "trailing_cost")
+            daily_cost = max(0.0, float(constraints.get("daily_cost", 0.0)))
+            max_loss_cost = max(0.0, float(constraints.get("max_loss_cost", 0.0)))
+            trailing_cost = max(0.0, float(constraints.get("trailing_cost", 0.0)))
+            # All episode costs use units of the configured maximum-loss limit.
+            # Thus 0.10 means cumulative limit-equivalent risk increments of
+            # $1,000 when the hard maximum-loss limit is $10,000.
             costs = [
-                max(0.0, float(constraints.get(key, 0.0)))
-                for key in cost_fields
-                if isinstance(constraints.get(key, 0.0), (int, float, np.integer, np.floating))
+                daily_cost * self.daily_loss_limit_usd / self.max_loss_limit_usd,
+                max_loss_cost,
             ]
+            if self.trailing_dd_limit_usd > 0.0:
+                costs.append(trailing_cost * self.trailing_dd_limit_usd / self.max_loss_limit_usd)
             breached = any(
                 bool(constraints.get(key, False))
                 for key in ("daily_breach", "max_loss_breach", "trailing_breach")
@@ -321,7 +354,7 @@ if _SB3_AVAILABLE:
 
             done_values = np.asarray(dones, dtype=bool)
             self._episode_costs += self._episode_cost_discounts * costs
-            self._episode_cost_discounts *= self.gamma
+            self._episode_cost_discounts *= self.cost_discount_gamma
             for index, done in enumerate(done_values):
                 if done:
                     self._completed_costs.append(float(self._episode_costs[index]))

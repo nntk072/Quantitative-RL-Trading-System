@@ -48,7 +48,7 @@ def _overrides_by_key(resolved: dict[str, list[str]]) -> dict[str, str]:
 
 def test_every_variant_resolves_and_declares_reward_mode() -> None:
     names = _all_names()
-    assert len(names) == len(set(names)) == 31
+    assert len(names) == len(set(names)) == 33
     for name in names:
         resolved = resolve_variant(
             name, vae_path="placeholder.pth"
@@ -225,7 +225,7 @@ def test_quarter_grid_campaign_uses_the_matched_pair_and_locked_split() -> None:
 
 def test_consistency_table_covers_all_variants() -> None:
     rows = consistency_table(_all_names())
-    assert len(rows) == 31
+    assert len(rows) == 33
     by_name = {r["variant"]: r for r in rows}
     # The confound this module makes visible: baseline-named rungs and PO3 rungs
     # differ in reward mode and PD context.
@@ -233,6 +233,24 @@ def test_consistency_table_covers_all_variants() -> None:
     assert by_name["ladder_a0_flat_po3"]["reward_mode"] == "pnl"
     assert by_name["ladder_a0_flat"]["include_pd_context"] is False
     assert by_name["ladder_a0_flat_po3"]["include_pd_context"] is True
+
+
+def test_dollar_band_q5_pair_differs_only_by_q5_objective() -> None:
+    q5_off = _overrides_by_key(resolve_variant("ladder_a4a_dollar_band_q5_off"))
+    q5_on = _overrides_by_key(resolve_variant("ladder_a4a_dollar_band_q5_on"))
+    shared = {
+        "env.risk_mode": "dollar_band",
+        "env.risk_band_max_usd": "900",
+        "env.risk_band_hold_below_usd": "100",
+        "env.risk_floor": "0",
+        "strategy.risk.risk_frac_range": "[0.0,1.0]",
+    }
+    assert {key: q5_off[key] for key in shared} == shared
+    assert {key: q5_on[key] for key in shared} == shared
+    assert q5_off["constrained_rl.enabled"] == "false"
+    assert q5_on["constrained_rl.enabled"] == "true"
+    assert q5_on["constrained_rl.episode_cost_budget"] == "0.1"
+    assert q5_on["constrained_rl.cost_discount_gamma"] == "1.0"
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX launcher requires Linux/WSL")

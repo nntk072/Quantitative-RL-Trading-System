@@ -217,6 +217,8 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         entry_cooldown_bars=int(env.get("entry_cooldown_bars", 0)),
         reward_mode=str(env.get("reward_mode", "dsr")),
         fixed_risk_usd=float(env.get("fixed_risk_usd", 0.0)),
+        risk_band_max_usd=float(env.get("risk_band_max_usd", 0.0)),
+        risk_band_hold_below_usd=float(env.get("risk_band_hold_below_usd", 0.0)),
         risk_mode=str(env.get("risk_mode", "dynamic")),
         entry_intensity_threshold=float(env.get("entry_intensity_threshold", 0.0)),
         peak_trailing_dd_limit=float(env.get("peak_trailing_dd_limit", 0.0)),

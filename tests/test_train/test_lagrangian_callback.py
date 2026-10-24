@@ -159,8 +159,32 @@ def test_q5_discounted_cost_matches_ppo_reward_discount() -> None:
     assert callback._on_step()
     callback._on_rollout_end()
 
-    assert model.logger.values["constrained_rl/mean_completed_episode_cost"] == pytest.approx(0.28)
-    assert callback.lagrange_multiplier == pytest.approx(2.115)
+    assert model.logger.values["constrained_rl/mean_completed_episode_cost"] == pytest.approx(0.14)
+    assert callback.lagrange_multiplier == pytest.approx(2.045)
+
+
+def test_q5_cost_uses_max_loss_limit_units_and_can_be_undiscounted() -> None:
+    callback = LagrangianRiskCallback(
+        episode_cost_budget=0.1,
+        gamma=0.99,
+        cost_discount_gamma=1.0,
+        daily_loss_limit_usd=5_000.0,
+        max_loss_limit_usd=10_000.0,
+    )
+    model = _model()
+    callback.init_callback(model)  # type: ignore[arg-type]
+    callback._on_training_start()
+    assert callback._episode_cost(
+        {"constraints": {"daily_cost": 0.2, "max_loss_cost": 0.01}}
+    ) == pytest.approx(0.1)
+    callback.locals = {
+        "rewards": np.array([0.0, 0.0], dtype=np.float32),
+        "dones": np.array([False, True]),
+        "infos": [{}, {"constraints": {"max_loss_cost": 0.2}}],
+    }
+    assert callback._on_step()
+    callback._on_rollout_end()
+    assert model.logger.values["constrained_rl/mean_completed_episode_cost"] == pytest.approx(0.2)
 
 
 def test_q5_resume_is_rejected_without_training_environment_state() -> None:
@@ -197,12 +221,16 @@ def test_q5_multiplier_state_survives_sb3_checkpoint_roundtrip(tmp_path: Path) -
         model,
         "_constrained_rl_state",
         {
-            "version": 2,
+            "version": 3,
             "episode_cost_budget": 1.0,
             "dual_learning_rate": 0.1,
             "lambda_initial": 0.0,
             "lambda_max": 100.0,
             "gamma": 0.99,
+            "cost_discount_gamma": 1.0,
+            "daily_loss_limit_usd": 5_000.0,
+            "max_loss_limit_usd": 10_000.0,
+            "trailing_dd_limit_usd": 0.0,
             "lagrange_multiplier": 2.5,
             "dual_updates": 7,
         },

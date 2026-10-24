@@ -50,6 +50,10 @@ def _build_lagrangian_callback(cfg: Any, *, algo: str, mvp: bool) -> Any | None:
         lambda_initial=float(constrained.get("lambda_initial", 0.0)),
         lambda_max=float(constrained.get("lambda_max", 100.0)),
         gamma=float(cfg.ppo.gamma),
+        cost_discount_gamma=float(constrained.get("cost_discount_gamma", 1.0)),
+        daily_loss_limit_usd=float(cfg.ftmo.daily_loss_limit),
+        max_loss_limit_usd=float(cfg.ftmo.max_loss_limit),
+        trailing_dd_limit_usd=float(cfg.ftmo.trailing_dd_limit),
     )
 
 

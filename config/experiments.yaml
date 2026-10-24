@@ -114,6 +114,52 @@ variants:
     price_grid_increment: 0.25
     price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025_v1"
 
+  # New sizing family: same hidden-state A4a policy with learned dollar-band
+  # risk selection; Q5 is the only difference between these two arms.
+  - name: ladder_a4a_dollar_band_q5_off
+    reward_mode: dsr
+    arch: tcn
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    price_grid_increment: 0.25
+    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025_v1"
+    config_overrides:
+      - "env.risk_mode=dollar_band"
+      - "env.risk_band_max_usd=900"
+      - "env.risk_band_hold_below_usd=100"
+      - "env.risk_floor=0"
+      - "strategy.risk.risk_frac_range=[0.0,1.0]"
+      - "constrained_rl.enabled=false"
+
+  - name: ladder_a4a_dollar_band_q5_on
+    reward_mode: dsr
+    arch: tcn
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    price_grid_increment: 0.25
+    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025_v1"
+    config_overrides:
+      - "env.risk_mode=dollar_band"
+      - "env.risk_band_max_usd=900"
+      - "env.risk_band_hold_below_usd=100"
+      - "env.risk_floor=0"
+      - "strategy.risk.risk_frac_range=[0.0,1.0]"
+      - "constrained_rl.enabled=true"
+      - "constrained_rl.episode_cost_budget=0.1"
+      - "constrained_rl.cost_discount_gamma=1.0"
+
   # ===== LADDER x STRATEGY (A4b under each strategy) =====
   - name: ladder_a4b_po3_ifvg
     reward_mode: pnl   # effective value before the resolver fix; see CHANGES.md

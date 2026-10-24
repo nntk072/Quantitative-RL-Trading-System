@@ -155,7 +155,8 @@ def _training_protocol_manifest(
         "constrained_rl": {
             "enabled": bool(cfg.get("constrained_rl", {}).get("enabled", False)),
             "method": "primal_dual_scalarized_return_ppo",
-            "cost": "gamma_discounted_sum_of_max_daily_max_loss_trailing_normalized_risk_increments_per_episode",
+            "cost": "max_per_step_increase_normalized_to_max_loss_limit",
+            "cost_unit": "fraction_of_max_loss_limit",
             "episode_cost_budget": float(
                 cfg.get("constrained_rl", {}).get("episode_cost_budget", 1.0)
             ),
@@ -164,7 +165,9 @@ def _training_protocol_manifest(
             ),
             "lambda_initial": float(cfg.get("constrained_rl", {}).get("lambda_initial", 0.0)),
             "lambda_max": float(cfg.get("constrained_rl", {}).get("lambda_max", 100.0)),
-            "cost_discount_gamma": float(cfg.ppo.gamma),
+            "cost_discount_gamma": float(
+                cfg.get("constrained_rl", {}).get("cost_discount_gamma", 1.0)
+            ),
         },
         "seed": int(seed),
         "worker_seeds": [int(seed + index) for index in range(n_envs)],
@@ -191,6 +194,11 @@ def _training_protocol_manifest(
             "mode": str(cfg.env.get("risk_mode", "dynamic")),
             "ftmo": ftmo,
             "risk_per_trade_limit": float(cfg.get("ftmo", {}).get("risk_per_trade_limit", 1000.0)),
+            "risk_band_max_usd": float(cfg.env.get("risk_band_max_usd", 0.0)),
+            "risk_band_hold_below_usd": float(cfg.env.get("risk_band_hold_below_usd", 0.0)),
+            "risk_band_budget_includes_execution_reserve": (
+                str(cfg.env.get("risk_mode", "dynamic")) == "dollar_band"
+            ),
         },
         "ppo": {
             "requested_n_envs": cfg.get("quality_execution", {}).get("requested_n_envs", n_envs),

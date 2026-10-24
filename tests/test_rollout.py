@@ -286,6 +286,35 @@ def test_q5_evaluation_reports_discounted_constraint_costs() -> None:
     assert result["constraint_costs"]["discount_factor"].tolist() == pytest.approx([1.0, 0.9, 0.81])
 
 
+def test_q5_v3_evaluation_reports_undiscounted_max_loss_fraction_costs() -> None:
+    model = _ScriptedModel({})
+    setattr(
+        model,
+        "_constrained_rl_state",
+        {
+            "version": 3,
+            "cost_discount_gamma": 1.0,
+            "daily_loss_limit_usd": 5_000.0,
+            "max_loss_limit_usd": 10_000.0,
+            "trailing_dd_limit_usd": 0.0,
+        },
+    )
+    result = evaluate_model(
+        model,
+        bars=pd.DataFrame(),
+        features=pd.DataFrame(),
+        env=_ExposureEnv(),  # type: ignore[arg-type]
+    )
+
+    summary = result["constraint_cost_summary"]
+    assert summary["schema"] == "q5_max_loss_fraction_cost_v1"
+    assert summary["cost_unit"] == "fraction_of_max_loss_limit"
+    assert summary["discount_gamma"] == pytest.approx(1.0)
+    assert summary["undiscounted_total"] == pytest.approx(0.15)
+    assert summary["discounted_total"] == pytest.approx(0.15)
+    assert result["constraint_costs"]["discount_factor"].tolist() == [1.0, 1.0, 1.0]
+
+
 def test_evaluate_model_does_not_mark_step_capped_rollout_as_full_survival():
     bars = _make_bars(120)
     features = _make_features(bars)

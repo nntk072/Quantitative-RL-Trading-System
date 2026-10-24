@@ -294,13 +294,15 @@ env:
   # for position size rather than for decisions.
   fixed_risk_usd: 0                   # >0 = every trade risks exactly this many
                                       # dollars, so 1R is a fixed known amount
+  risk_band_max_usd: 0                # dollar_band action ceiling; budget includes modeled reserve
+  risk_band_hold_below_usd: 0         # dollar_band requests below this amount become holds
   # How the per-trade dollar risk is chosen.
   #   fixed   -> always `fixed_risk_usd`, independent of equity and of the
   #              agent's risk_frac. Makes 1R a constant and the cumulative-R
   #              reward a clean objective.
-  #   dynamic -> live equity x agent's risk_frac, plus the max_loss_per_trade_usd
-  #              cap. Risk drifts as the account compounds.
-  risk_mode: dynamic                 # "fixed" | "dynamic"
+  #   dynamic     -> live equity x agent's risk_frac; dollar risk drifts with equity.
+  #   dollar_band -> normalized agent action x risk_band_max_usd; equity independent.
+  risk_mode: dynamic                 # "fixed" | "dynamic" | "dollar_band"
   risk_floor: 0.0005                 # near-zero requests become holds; sub-$250 choices stay available
   # EMA-21 exit. It was chosen on 92% of trades in the first 20M run, which
   # collapsed exits onto one non-structural mode and left the structural target
@@ -374,10 +376,11 @@ ppo:
 # account guardrails remain active independently of this learned penalty.
 constrained_rl:
   enabled: false
-  episode_cost_budget: 1.0
+  episode_cost_budget: 1.0         # fraction of the configured max-loss limit
   dual_learning_rate: 0.1
   lambda_initial: 0.0
   lambda_max: 100.0
+  cost_discount_gamma: 1.0         # undiscounted over the complete chronological train year
 
 # Runtime provenance for staged quality experiments. The requested shape is
 # recorded before hardware-aware scaling and compared with the effective shape.

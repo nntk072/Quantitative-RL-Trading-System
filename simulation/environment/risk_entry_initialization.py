@@ -19,6 +19,8 @@ class RiskEntryInitializationMixin(RuntimeMixinBase):
         max_entries_per_session: int,
         risk_mode: str,
         fixed_risk_usd: float,
+        risk_band_max_usd: float,
+        risk_band_hold_below_usd: float,
         open_manipulation_bars: int,
         entry_cooldown_bars: int,
         allow_ema_exit: bool,
@@ -52,10 +54,19 @@ class RiskEntryInitializationMixin(RuntimeMixinBase):
         self.max_entries_per_session = int(max_entries_per_session)
         # Sizing mode. "fixed" risks exactly fixed_risk_usd every trade so 1R is
         # a known constant; "dynamic" risks a fraction of live equity instead.
-        if risk_mode not in ("fixed", "dynamic"):
-            raise ValueError(f"risk_mode must be 'fixed' or 'dynamic', got {risk_mode!r}")
+        if risk_mode not in ("fixed", "dynamic", "dollar_band"):
+            raise ValueError(
+                f"risk_mode must be 'fixed', 'dynamic', or 'dollar_band', got {risk_mode!r}"
+            )
         self.risk_mode = risk_mode
         self.fixed_risk_usd = float(fixed_risk_usd)
+        self.risk_band_max_usd = float(risk_band_max_usd)
+        self.risk_band_hold_below_usd = float(risk_band_hold_below_usd)
+        if self.risk_mode == "dollar_band":
+            if self.risk_band_max_usd <= 0.0:
+                raise ValueError("risk_mode='dollar_band' requires risk_band_max_usd > 0")
+            if not 0.0 <= self.risk_band_hold_below_usd < self.risk_band_max_usd:
+                raise ValueError("dollar-band hold threshold must be in [0, risk_band_max_usd)")
         if self.risk_mode == "fixed" and self.fixed_risk_usd <= 0.0:
             raise ValueError(
                 "risk_mode='fixed' requires fixed_risk_usd > 0, otherwise every "

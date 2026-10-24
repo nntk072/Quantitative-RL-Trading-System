@@ -180,6 +180,16 @@ def resolve_variant(
             overrides.append(f"env.{key}={_fmt(matches[0][key])}")
     overrides.extend(_data_price_grid_overrides(matches[0]))
     overrides.extend(variant_ftmo_overrides(name, required=experiments_path is None))
+    declared_overrides = declared.get("config_overrides", [])
+    if not isinstance(declared_overrides, list) or any(
+        not isinstance(item, str) for item in declared_overrides
+    ):
+        raise VariantError(f"{name}: config_overrides must be a list of key=value strings")
+    for item in declared_overrides:
+        key, separator, value = item.partition("=")
+        if not separator or not key.strip() or not value.strip():
+            raise VariantError(f"{name}: invalid config override {item!r}; expected key=value")
+        overrides.append(f"{key.strip()}={value.strip()}")
     # strategy_actions implies full_po3, which already sets include_strategy_state.
     if strategy == "baseline":
         overrides.append("strategy.name=baseline")
