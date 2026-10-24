@@ -1,0 +1,138 @@
+{
+  "bootstrap_seed": 20261024,
+  "cohort": {
+    "candidate_entries": 1356,
+    "paired_complete": 1062,
+    "structural_eligible": 1062,
+    "structural_ineligible": 294,
+    "unresolved": 0
+  },
+  "ema_control": {
+    "exact_entries": 1355,
+    "known_max_drawdown_boundary_rows": 1,
+    "passed": true,
+    "unexpected_mismatches": []
+  },
+  "primary_gross": {
+    "losses": 172,
+    "mean": 0.006937840370204837,
+    "median": 0.0,
+    "n": 1062,
+    "paired_bootstrap_95pct_mean_ci": [
+      -0.041615811480135906,
+      0.05267246262299408
+    ],
+    "quantiles": {
+      "0.05": -0.7577896563477556,
+      "0.25": 0.0,
+      "0.5": 0.0,
+      "0.75": 0.0,
+      "0.95": 1.0652419130872661
+    },
+    "std": 0.7939789409792763,
+    "ties": 693,
+    "wins": 197
+  },
+  "primary_historical_net": {
+    "losses": 172,
+    "mean": 0.006979407130464283,
+    "median": 0.0,
+    "n": 1062,
+    "paired_bootstrap_95pct_mean_ci": [
+      -0.041619168464652946,
+      0.052776169627306434
+    ],
+    "quantiles": {
+      "0.05": -0.7577927465826133,
+      "0.25": 0.0,
+      "0.5": 0.0,
+      "0.75": 0.0,
+      "0.95": 1.0652411268050601
+    },
+    "std": 0.7942218461902313,
+    "ties": 693,
+    "wins": 197
+  },
+  "primary_stress": {
+    "losses": 172,
+    "mean": 0.00697940713046429,
+    "median": 0.0,
+    "n": 1062,
+    "paired_bootstrap_95pct_mean_ci": [
+      -0.041619168464652946,
+      0.05277616962730644
+    ],
+    "quantiles": {
+      "0.05": -0.7577927465826135,
+      "0.25": 0.0,
+      "0.5": 0.0,
+      "0.75": 0.0,
+      "0.95": 1.0652411268050601
+    },
+    "std": 0.7942218461902313,
+    "ties": 693,
+    "wins": 197
+  },
+  "provenance": {
+    "analysis_script_sha256": "e046691351e9c2a26879f30c17210e7dfb34e1d778be3ebf35ac299cc745c70f",
+    "archived_training_source_commit": "cbf7825170dee7f68ad578a19023e0847b11393f",
+    "bars_rows": 351432,
+    "checkpoint_used": false,
+    "costs": {
+      "commission_per_lot": 0.0,
+      "configured_slippage_points_used_for_stress": 5.0,
+      "effective_tick_slippage_points": 0.0,
+      "raw_tick_bid_ask_in_historical_net": true
+    },
+    "counterfactual_equity_curve": false,
+    "current_git_commit": "f3b8c91f71aa4be6ca3b0d5eea09952bea065022",
+    "entry_generation_count": 0,
+    "excluded_source_changes": "factory sizing-cap resolution is outside replay because quantity is frozen; new percentage guardrail fields are inactive under the archived fixed-USD mode; episode reward limit kwargs are not called",
+    "execution_methods_match_archived": true,
+    "features_rows": 351432,
+    "frozen_checkpoint_sha256": "a0dd1b68c5b8a1a2267c06d3c753fa1b9266b203dd780cd7c27cfdf0e58c5bfc",
+    "input_sha256": {
+      "bars": "6d8f5921f680c8dc1ef246a7bf0792512da01ebe789e05199f5703f376dc40b2",
+      "config": "ea2361cb70bfde81e3b95a177f44783fbbaffffc4bd29fbe72805d277cf742b0",
+      "features": "2ecb2c35c2fa964239029c5500ddc9c31296418862f9759f0286fa385287f9c8",
+      "schedule": "7e9f5def3385185905f7265f946a0835ccb43c53f1351c057aa23f00480e6cbc",
+      "ticks": "bbaded3dd7dbd49b7ae59fdb2e7a131ed04b9239ae641dd3729f9e2c51a41fd1",
+      "trades": "581b2a22e2ef97efafe53785399b28f4fa197bf7cc5fa5f40eb50446a8b1222f"
+    },
+    "output_sha256": {
+      "fixed_entry_shadow_report.md": "65c7ed35d5dac6e4303cb48f1eb4b47986d00943772428f328cb98e1bf3c84e0",
+      "paired_delta_r.png": "196e8798d2e4414aa9a68e880de271040713a7d768902f6f3a66a849c4bf8d43",
+      "paired_trades.csv": "3673cf2a77832ba14623a51b940d0821c29a01c507f2d9615e4143f0f7e8a395",
+      "shadow_events.jsonl": "c7fea235575d9f05d0bc9962c559d23c94b513ee108483630cd26ae350d17c54"
+    },
+    "policy_inference_count": 0,
+    "relevant_source_sha256": {
+      "simulation/environment/action_runtime.py": "32a9ca4e0c0f9588998d0745acaddfe2422b02f798fa653c62d3b4397632bf5f",
+      "simulation/environment/ema_exit_runtime.py": "70b8ad30b1ee7975a3e8f153a55a5a1de1a24b44f56bc4d442b0c4375e797b26",
+      "simulation/environment/entry_execution_runtime.py": "96a6d45afdc01b8b858a1ad85030ce332bbb9b1a25ee8b1c0b00beb4d1177cce",
+      "simulation/environment/entry_runtime.py": "b37be7bb4e97e2818c62e5e7b678c354fc3d133190c0ff00b3b17244779d0d95",
+      "simulation/environment/episode_runtime.py": "166259ae0d408d6c8fc228d5b4131dbf859f19f296ee353ade5430fd5ce1aa0d",
+      "simulation/environment/factory.py": "899731c67cdcb7d5fa6e971f99bf00ae11d9708b9c8950694e8e7c9a0d498152",
+      "simulation/environment/fill_quote_runtime.py": "252a62983cea410136854216d777870c11942c26657c1f9e29f74d39328cc7f7",
+      "simulation/environment/market_access.py": "a6518f1e5ca4f5d5be6391ccaaf03cbe023971a07573ecdfcf39a29b70a8915b",
+      "simulation/environment/position_runtime.py": "fdc8a1564475b945a26a0b618d37f17170c106c57e70b7ea212dd9334997d4ca",
+      "simulation/environment/protective_level_runtime.py": "ec3f598e4faf0264aa5a5b907ed2116ff85f71bedcad3d5decd64359f38fe89e",
+      "simulation/environment/tick_quote_runtime.py": "a6937a16402edf9eca1998e72cd982e5329aa220cbff5772f81ba6bce930b00e",
+      "simulation/environment/trade_accounting_runtime.py": "0c7e53341e28c346e9e21ea2b664391ac0abf4541e68dfa1f3a35c8c4cdecb0a",
+      "trading/execution/broker.py": "d93cd2948e08c297976a25c853ba80d6031a91e8d3021510d2d84438d49d1080",
+      "trading/execution/costs.py": "c280b42c87c7b99c728f9856d40b139ca561fe813ac2be09aadcbf7ed6dbb605",
+      "trading/orders/entries.py": "d95cbbb088907f807904ccdbc85f08d1b3f6bbda7525ef6bd99747d35db6933d",
+      "trading/orders/selection.py": "792c755c48658168b9f45ed752f1c6c800527b17701227bc7363094d34d9c71f",
+      "trading/orders/targets.py": "87ed953c5ee494b9086b7f25078d3fb3ce655a2af02dadb7c768df45e03cbc72",
+      "trading/positions/multi_tp.py": "5ecf0e4b188461c27f2484b87bf156cdec8c15b3d99ce338b39f772ef4d0e516"
+    },
+    "tick_end_utc": "2025-12-31T20:49:59.919000+00:00",
+    "tick_rows": 56245046,
+    "tick_start_utc": "2024-12-29T22:05:00.196000+00:00",
+    "training_boundary": "2025-12-31 23:59 Etc/GMT-3"
+  },
+  "reproducibility": {
+    "identical_outputs": true,
+    "mismatch_count": 0
+  }
+}
