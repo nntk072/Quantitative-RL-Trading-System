@@ -1,0 +1,81 @@
+from __future__ import annotations
+import json
+from pathlib import Path
+import pandas as pd
+
+ROOT=Path(__file__).resolve().parents[2]
+OUT=Path(__file__).resolve().parent
+V2=ROOT/'outputs/exit_semantics_counterfactual_20261024_g0_v2_repro_job21190658/training'
+V3=OUT/'training'
+KEY=['decision_utc','bar_key']
+v2cols=['type','position_id','bar','time','decision_time','direction','price','fill_time','actual_tick_time',
+        'sl_price','lots','modeled_stop_risk_usd','action_exit','exit_u','exit_mode','tp_price','tp_menu',
+        'tp_references','target_distance','entry_state','entry_setup_types','session','volatility_regime',
+        'trend_regime','risk_cash','level_type','manipulation','entry_origin_bar']
+v2=pd.read_csv(V2/'trades.csv',usecols=lambda c:c in v2cols,low_memory=False)
+v2=v2.loc[v2.type.eq('open')].copy()
+pos=pd.read_csv(V2/'positions.csv',usecols=['position_id','exit_time','exit_price','net_pnl','position_net_pnl',
+                                             'holding_seconds','exit_reason','fill_count','completed'])
+v2=v2.merge(pos,on='position_id',how='left',validate='one_to_one')
+v2['decision_raw']=v2.decision_time.where(v2.decision_time.notna(),v2.time)
+v2['decision_utc']=pd.to_datetime(v2.decision_raw,format='mixed',utc=True,errors='coerce').astype('string')
+v2['bar_key']=pd.to_numeric(v2.bar,errors='coerce').round(6)
+for c in ['direction','price','sl_price','lots','modeled_stop_risk_usd','net_pnl','holding_seconds','fill_count']:
+    if c in v2: v2[c]=pd.to_numeric(v2[c],errors='coerce')
+v2['initial_risk_distance']=abs(v2.price-v2.sl_price)
+v2['v2_realized_r']=v2.net_pnl/v2.modeled_stop_risk_usd.replace(0,pd.NA)
+v2['v2_outcome']=v2.net_pnl.map(lambda x:'win' if x>1e-9 else 'loss' if x< -1e-9 else 'breakeven')
+v2['fill_price_key']=v2.price.round(8)
+v2['stop_key']=v2.sl_price.round(8)
+v2['size_key']=v2.lots.round(8)
+
+v3cols=['type','bar','time','decision_time','position_id','entry_rejection_reason','exit_mode','direction','price','sl_price','lots']
+v3=pd.read_csv(V3/'trades.csv',usecols=lambda c:c in v3cols,low_memory=False)
+v3=v3.loc[v3.type.isin(['open','reject'])].copy()
+v3['decision_raw']=v3.decision_time.where(v3.decision_time.notna(),v3.time)
+v3['decision_utc']=pd.to_datetime(v3.decision_raw,format='mixed',utc=True,errors='coerce').astype('string')
+v3['bar_key']=pd.to_numeric(v3.bar,errors='coerce').round(6)
+for c in ['price','sl_price','lots']:
+    if c in v3:v3[c]=pd.to_numeric(v3[c],errors='coerce')
+v3=v3.rename(columns={'type':'v3_counterpart_type','position_id':'v3_position_id',
+                      'entry_rejection_reason':'v3_rejection_reason','exit_mode':'v3_exit_mode',
+                      'direction':'v3_direction','price':'v3_entry_price','sl_price':'v3_initial_stop','lots':'v3_lots'})
+v3['v3_price_key']=v3.v3_entry_price.round(8)
+v3['v3_stop_key']=v3.v3_initial_stop.round(8)
+v3['v3_size_key']=v3.v3_lots.round(8)
+v3=v3.drop_duplicates(KEY,keep='first')
+cohort=v2.merge(v3[KEY+['v3_counterpart_type','v3_position_id','v3_rejection_reason','v3_exit_mode',
+                         'v3_direction','v3_entry_price','v3_initial_stop','v3_lots','v3_price_key','v3_stop_key','v3_size_key']],
+                on=KEY,how='left',validate='one_to_one')
+cohort['v3_decision_status']=cohort.v3_counterpart_type.fillna('no_open_or_rejection_row')
+cohort['same_decision_same_side']=cohort.direction.eq(cohort.v3_direction)
+cohort['same_decision_same_fill_stop_size']=(
+    cohort.v3_counterpart_type.eq('open')
+    & cohort.fill_price_key.eq(cohort.v3_price_key)
+    & cohort.stop_key.eq(cohort.v3_stop_key)
+    & cohort.size_key.eq(cohort.v3_size_key)
+)
+keep=['position_id','decision_utc','bar','direction','price','fill_time','actual_tick_time','sl_price',
+      'initial_risk_distance','lots','modeled_stop_risk_usd','action_exit','exit_u','exit_mode','tp_price',
+      'tp_menu','tp_references','target_distance','entry_state','entry_setup_types','session',
+      'volatility_regime','trend_regime','risk_cash','level_type','manipulation','entry_origin_bar',
+      'exit_time','exit_price','exit_reason','net_pnl','holding_seconds','fill_count','completed',
+      'v2_realized_r','v2_outcome','v3_counterpart_type','v3_rejection_reason','v3_position_id',
+      'v3_exit_mode','v3_direction','v3_entry_price','v3_initial_stop','v3_lots',
+      'same_decision_same_side','same_decision_same_fill_stop_size']
+cohort[keep].to_csv(OUT/'phase2_fixed_v2_entry_cohort.csv',index=False)
+status=cohort.groupby(['v3_decision_status','v3_rejection_reason'],dropna=False).size().rename('positions').reset_index()
+summary={
+    'fixed_v2_entry_count':int(len(cohort)),
+    'v2_position_outcomes':cohort.v2_outcome.value_counts().to_dict(),
+    'counterpart_status_counts':cohort.v3_decision_status.value_counts(dropna=False).to_dict(),
+    'counterpart_rejection_reasons':status.to_dict('records'),
+    'same_decision_open_count':int(cohort.v3_counterpart_type.eq('open').sum()),
+    'same_decision_reject_count':int(cohort.v3_counterpart_type.eq('reject').sum()),
+    'same_decision_no_event_count':int(cohort.v3_counterpart_type.isna().sum()),
+    'same_decision_no_valid_tp_count':int(cohort.v3_rejection_reason.eq('no_valid_tp').sum()),
+    'same_decision_exact_fill_stop_size_count':int(cohort.same_decision_same_fill_stop_size.sum()),
+    'limitation':'Counterpart event comparison is from the v3 closed-loop replay. It does not compute an isolated v3 exit for v2 entries without a v3 open.',
+}
+(OUT/'phase2_fixed_v2_entry_cohort_summary.json').write_text(json.dumps(summary,indent=2,sort_keys=True,default=str)+'\n')
+print(json.dumps(summary,indent=2,default=str))

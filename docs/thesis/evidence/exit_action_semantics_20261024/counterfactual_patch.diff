@@ -1,0 +1,29 @@
+--- archived/simulation/environment/action_runtime.py
++++ counterfactual/simulation/environment/action_runtime.py
+@@ -86,3 +86,3 @@
+         # Extract exit dim
+         if u.size > exit_idx and self.allow_ema_exit:
+-            self._selected_exit_mode = "ema_21" if float(u[exit_idx]) >= 0.5 else "structural"
++            self._selected_exit_mode = "ema_21" if float(u[exit_idx]) >= 0.625 else "structural"
+--- archived/evaluation/reanalysis/runner.py
++++ counterfactual/evaluation/reanalysis/runner.py
+@@ -427,6 +427,19 @@
+                     "observation_schema": expected_observation_schema.to_dict(),
+                 },
+             },
++        )
++        save_run(
++            run_dir=output_dir,
++            train_result=train_result,
++            train_metrics=train_m,
++            train_bars=train_bars,
++            train_secondary=train_sec,
++            train_features=train_feat,
++            cfg=cfg,
++            save_plots=False,
++            save_html=False,
++            save_csv=True,
++            report_profile="campaign_fast",
+         )
+         log.info("Train-only screen written to %s", report_path)
+         return

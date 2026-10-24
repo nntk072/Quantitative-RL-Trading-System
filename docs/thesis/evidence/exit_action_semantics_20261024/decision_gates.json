@@ -1,0 +1,21 @@
+{
+  "G0": {
+    "caveat": "full source tick identity through 2026 was not reloaded",
+    "evidence": "checkpoint identity and all 25 compared text outputs match; training data identities match",
+    "status": "PASS_FOR_TRAIN_PARTITION"
+  },
+  "G1": {
+    "caveat": "not a production schema migration; later account and execution streams diverge",
+    "evidence": "same frozen checkpoint/source, deterministic mode and full training calendar; temporary decoder threshold was the only semantic change",
+    "status": "PASS_FOR_CLOSED_LOOP_DECODER_CONTRAST"
+  },
+  "G2": {
+    "evidence": "v3 did not improve terminal PnL and breached earlier; complete fixed-v2-entry shadow is missing",
+    "next_evidence": "fixed-entry replay of the original v2 cohort on identical future ticks with eligibility, EMA/feature state, MAE/MFE, R, duration and cost sensitivity",
+    "status": "NOT_MET_NO_GO"
+  },
+  "G3": {
+    "evidence": "no 2M semantic pilot or 20M campaign started",
+    "status": "NOT_REACHED"
+  }
+}

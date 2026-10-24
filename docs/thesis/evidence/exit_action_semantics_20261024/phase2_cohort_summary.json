@@ -1,0 +1,176 @@
+{
+  "exact_common_entry_count": 53,
+  "exact_common_entry_outcome_counts": {
+    "v2": {
+      "loss": 28,
+      "win": 25
+    },
+    "v3": {
+      "loss": 25,
+      "win": 28
+    }
+  },
+  "exact_common_entry_pnl": {
+    "delta_v3_minus_v2": {
+      "loss_rate": 0.18867924528301888,
+      "mean_usd": 95.06677668987638,
+      "median_usd": 0.0,
+      "n": 53,
+      "sum_usd": 5038.539164563448,
+      "win_rate": 0.3018867924528302
+    },
+    "v2": {
+      "loss_rate": 0.5283018867924528,
+      "mean_usd": -89.90384664098754,
+      "median_usd": -8.225829789124832,
+      "n": 53,
+      "sum_usd": -4764.903871972339,
+      "win_rate": 0.4716981132075472
+    },
+    "v3": {
+      "loss_rate": 0.4716981132075472,
+      "mean_usd": 5.162930048888857,
+      "median_usd": 29.07771774747077,
+      "n": 53,
+      "sum_usd": 273.6352925911094,
+      "win_rate": 0.5283018867924528
+    }
+  },
+  "exact_common_entry_share_of_v2": 0.03908554572271387,
+  "exact_common_entry_share_of_v3": 0.07817109144542773,
+  "first_open_vs_counterpart_rejection": {
+    "v2_open_v3_reject": {
+      "bar": 1031.0,
+      "counterpart_arm": "v3",
+      "counterpart_rejection_reason": "entry_cooldown",
+      "decision_time_utc": "2024-12-30 15:16:00+00:00",
+      "source_arm": "v2"
+    },
+    "v3_open_v2_reject": {
+      "bar": 1035.0,
+      "counterpart_arm": "v2",
+      "counterpart_rejection_reason": "entry_state_not_armed",
+      "decision_time_utc": "2024-12-30 15:20:00+00:00",
+      "source_arm": "v3"
+    }
+  },
+  "first_v2_open_v3_no_valid_tp": {
+    "bar": 3655.0,
+    "decision_time_utc": "2025-01-02 13:30:00+00:00",
+    "v2_action": "open_ema_mode",
+    "v3_action": "reject_no_valid_tp"
+  },
+  "limitations": [
+    "The common-entry set is an exact intersection from two closed-loop policy replays, not a per-v2-entry controlled shadow replay.",
+    "After the first exit divergence, account state and action streams can differ; exact later matches are descriptive, not randomized pairs.",
+    "This ledger does not independently recompute MAE/MFE, counterfactual target availability, or outcomes under alternative costs on a common future path."
+  ],
+  "matching_definition": "same UTC decision timestamp, bar, side, filled price, initial stop, and lots in both closed-loop replays",
+  "open_vs_reject_counts": {
+    "v2_open_v3_reject_same_decision": 219,
+    "v3_open_v2_reject_same_decision": 172
+  },
+  "paired_monthly": [
+    {
+      "delta_v3_minus_v2": -565.8383582786637,
+      "entry_month": "2024-12",
+      "n": 3,
+      "v2_mean_r": -0.17212999973831203,
+      "v2_pnl": -447.2951157572554,
+      "v2_win_rate": 0.3333333333333333,
+      "v3_mean_r": -0.3947879189500356,
+      "v3_pnl": -1013.133474035919,
+      "v3_win_rate": 0.3333333333333333
+    },
+    {
+      "delta_v3_minus_v2": 839.1107725704992,
+      "entry_month": "2025-03",
+      "n": 23,
+      "v2_mean_r": -0.009370182546022746,
+      "v2_pnl": -215.51419855852316,
+      "v2_win_rate": 0.5217391304347826,
+      "v3_mean_r": 0.027112894522259817,
+      "v3_pnl": 623.5965740119759,
+      "v3_win_rate": 0.6086956521739131
+    },
+    {
+      "delta_v3_minus_v2": 4765.266750271613,
+      "entry_month": "2025-04",
+      "n": 27,
+      "v2_mean_r": -0.15192942806135412,
+      "v2_pnl": -4102.094557656562,
+      "v2_win_rate": 0.4444444444444444,
+      "v3_mean_r": 0.024561933059816732,
+      "v3_pnl": 663.1721926150519,
+      "v3_win_rate": 0.48148148148148145
+    }
+  ],
+  "replay_positions": {
+    "v2": 1356,
+    "v3": 678
+  },
+  "same_open_decision_counts": {
+    "v2_opened_positions": 1356,
+    "v2_v3_same_open_decisions": 427,
+    "v3_opened_positions": 678,
+    "v3_v2_same_open_decisions": 427
+  },
+  "same_open_signature_counts": {
+    "same_decision": 427,
+    "same_fill_price": 394,
+    "same_initial_stop": 427,
+    "same_position_size": 53,
+    "same_side": 427,
+    "same_side_fill_stop_size": 53
+  },
+  "scope": "training split only; no new training; 2026 test split not evaluated",
+  "unmatched_admission_reason_counts": [
+    {
+      "counterpart_rejection_reason": "entry_cooldown",
+      "n": 64,
+      "source_arm": "v2"
+    },
+    {
+      "counterpart_rejection_reason": "entry_state_not_armed",
+      "n": 14,
+      "source_arm": "v2"
+    },
+    {
+      "counterpart_rejection_reason": "no_valid_sl",
+      "n": 1,
+      "source_arm": "v2"
+    },
+    {
+      "counterpart_rejection_reason": "no_valid_tp",
+      "n": 86,
+      "source_arm": "v2"
+    },
+    {
+      "counterpart_rejection_reason": "soft_brick",
+      "n": 54,
+      "source_arm": "v2"
+    },
+    {
+      "counterpart_rejection_reason": "entry_cooldown",
+      "n": 67,
+      "source_arm": "v3"
+    },
+    {
+      "counterpart_rejection_reason": "entry_state_not_armed",
+      "n": 41,
+      "source_arm": "v3"
+    },
+    {
+      "counterpart_rejection_reason": "no_valid_sl",
+      "n": 1,
+      "source_arm": "v3"
+    },
+    {
+      "counterpart_rejection_reason": "soft_brick",
+      "n": 63,
+      "source_arm": "v3"
+    }
+  ],
+  "unmatched_admission_rows": 391,
+  "v2_open_v3_no_valid_tp_count": 86
+}

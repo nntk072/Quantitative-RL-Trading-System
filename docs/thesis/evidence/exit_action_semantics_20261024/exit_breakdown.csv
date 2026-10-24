@@ -1,0 +1,16 @@
+arm,final_reason,outcome,positions
+v2,ema_21_exit,loss,4
+v2,ema_21_exit,win,182
+v2,max_drawdown,loss,1
+v2,session_end,loss,2
+v2,session_end,win,14
+v2,structure_sl,breakeven,2
+v2,structure_sl,loss,813
+v2,structure_sl,win,338
+v3,max_drawdown,loss,1
+v3,session_end,loss,3
+v3,session_end,win,4
+v3,structure_sl,breakeven,1
+v3,structure_sl,loss,360
+v3,structure_sl,win,225
+v3,structure_tp3,win,84

@@ -1,0 +1,289 @@
+from __future__ import annotations
+import csv, difflib, hashlib, json, zipfile
+from pathlib import Path
+from typing import Any
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(__file__).resolve().parent
+V2 = ROOT / "outputs/exit_semantics_counterfactual_20261024_g0_v2_repro_job21190658"
+V3 = OUT
+CAMPAIGN = ROOT / "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_entry_levels_pilot2m_v3"
+RUN = CAMPAIGN / "runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261024_000407_563894_rl_train_seed50_tcn"
+CONFIG = CAMPAIGN / "runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/resolved_config.json"
+TMP = Path("/tmp/exit_semantics_v2_src_21190658")
+
+def readj(p: Path) -> dict[str, Any]:
+    return json.loads(p.read_text())
+def sha(p: Path) -> str:
+    h = hashlib.sha256()
+    with p.open("rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+def zip_member_hash(suffix: str) -> dict[str, str]:
+    with zipfile.ZipFile(CAMPAIGN / "source_snapshot.zip") as z:
+        name = next(n for n in z.namelist() if n.endswith(suffix))
+        return {"member": name, "sha256": hashlib.sha256(z.read(name)).hexdigest()}
+def usd(x: Any) -> str:
+    return "USD " + f"{float(x):,.2f}"
+def pct(x: Any) -> str:
+    return f"{float(x):.2f}%"
+
+g0 = readj(V2 / "g0_reproduction_comparison.json")
+p1 = readj(V3 / "phase1_comparison.json")
+co = readj(V3 / "phase2_cohort_summary.json")
+fixed = readj(OUT / "phase2_fixed_v2_entry_cohort_summary.json")
+man = readj(RUN / "run_manifest.json")
+source_hash = sha(CAMPAIGN / "source_snapshot.zip")
+checkpoint_hash = sha(RUN / "model/ppo_final.zip")
+provenance = {
+    "run_id": "exit_semantics_counterfactual_20261024_g0_g1_job21190658",
+    "repository": str(ROOT), "main_head_observed": "785163c",
+    "source_commit": man.get("source", {}).get("head"),
+    "campaign_fingerprint": "9fafe8eccf1e38c2bc2863bc5e77661385e24e4ce8da47e38d8d8e5d12fd278f",
+    "variant": "ladder_a4a_entry_fsm_hidden", "seed": man.get("seed"),
+    "completed_steps": man.get("completed_steps"),
+    "checkpoint": man.get("checkpoint", {}).get("path"),
+    "action_schema": man.get("action_schema"), "observation_schema": man.get("observation_schema"),
+    "policy_distribution": man.get("training_protocol", {}).get("action_distribution"),
+    "evaluation": {"action_mode": "deterministic", "seed": 50},
+    "calendar": {"start": p1["v2"]["screen"]["start"], "end": p1["v2"]["screen"]["end"], "test_evaluated": False},
+    "train_partition_identity": g0.get("training_input_identity"),
+    "source_manifest_full_tick_identity": g0.get("tick_identity_scope", {}).get("source_manifest_full_tick_record"),
+    "full_tick_identity_reloaded": g0.get("tick_identity_scope", {}).get("full_tick_identity_reloaded"),
+    "execution_protocol": man.get("execution_protocol"),
+    "hashes": {
+        "source_snapshot_sha256": source_hash,
+        "checkpoint_sha256": checkpoint_hash,
+        "run_manifest_sha256": sha(RUN / "run_manifest.json"),
+        "resolved_config_sha256": sha(CONFIG),
+        "archived_action_runtime": zip_member_hash("simulation/environment/action_runtime.py"),
+        "counterfactual_action_runtime_sha256": sha(TMP / "simulation/environment/action_runtime.py"),
+        "archived_runner": zip_member_hash("evaluation/reanalysis/runner.py"),
+        "export_adapter_runner_sha256": sha(TMP / "evaluation/reanalysis/runner.py"),
+    },
+    "intervention": {
+        "v2": "EMA if normalized exit >= 0.5, equivalent raw >= 0",
+        "v3": "EMA if normalized exit >= 0.625, equivalent raw >= +0.25; otherwise structural",
+        "runner_change": "temporary CSV export adapter only",
+        "main_source_changed": False,
+    },
+}
+(OUT / "provenance.json").write_text(json.dumps(provenance, indent=2, sort_keys=True, default=str) + "\n")
+with zipfile.ZipFile(CAMPAIGN / "source_snapshot.zip") as archive:
+    patch_parts = []
+    for suffix, temp_path in (
+        ("simulation/environment/action_runtime.py", TMP / "simulation/environment/action_runtime.py"),
+        ("evaluation/reanalysis/runner.py", TMP / "evaluation/reanalysis/runner.py"),
+    ):
+        member = next(n for n in archive.namelist() if n.endswith(suffix))
+        original = archive.read(member).decode("utf-8").splitlines(keepends=True)
+        changed = temp_path.read_text().splitlines(keepends=True)
+        patch_parts.extend(difflib.unified_diff(original, changed, fromfile=f"archived/{member}", tofile=f"counterfactual/{suffix}"))
+(OUT / "counterfactual_patch.diff").write_text("".join(patch_parts))
+provenance["hashes"]["counterfactual_patch_diff_sha256"] = sha(OUT / "counterfactual_patch.diff")
+(OUT / "provenance.json").write_text(json.dumps(provenance, indent=2, sort_keys=True, default=str) + "\n")
+
+action_rows = []
+for arm, d in (("v2", p1["v2"]), ("v3", p1["v3"])):
+    raw = d["decisions"]["action_exit_min"]
+    action_rows.append({
+        "arm": arm, "raw_action_exit": raw, "normalized_exit_u": (raw + 1) / 2,
+        "action_rows": d["decisions"]["action_rows"], "unique_values": d["decisions"]["unique_action_exit"],
+        "raw_ema_threshold": 0 if arm == "v2" else 0.25,
+        "selected_mode": "EMA" if arm == "v2" else "structural",
+        "opened_positions": d["ledger"]["positions_opened"],
+    })
+pd.DataFrame(action_rows).to_csv(OUT / "action_histograms.csv", index=False)
+
+slices = []
+for arm, d in (("v2", p1["v2"]), ("v3", p1["v3"])):
+    for r in d["equity"]["monthly"]:
+        slices.append({"arm": arm, "period": r["month"], "type": "month",
+                       "net_pnl_usd": r["net_pnl"], "start_equity": r["start_equity"], "end_equity": r["end_equity"]})
+    eq = pd.read_csv((V2 if arm == "v2" else V3) / "training/equity.csv", low_memory=False)
+    times = pd.to_datetime(eq.iloc[:, 0], format="mixed", utc=True)
+    vals = pd.to_numeric(eq["equity"], errors="coerce")
+    cut = pd.Timestamp("2025-03-20 18:55:00+00:00")
+    before, after = vals.loc[times.le(cut)], vals.loc[times.gt(cut)]
+    if len(before) and len(after):
+        split_equity = float(before.iloc[-1])
+        for period, start, end in (("through_2025-03-20_peak_date", float(vals.iloc[0]), split_equity),
+                                   ("after_2025-03-20_peak_date", split_equity, float(vals.iloc[-1]))):
+            slices.append({"arm": arm, "period": period, "type": "fixed_peak_date_cut",
+                           "net_pnl_usd": end-start, "start_equity": start, "end_equity": end})
+pd.DataFrame(slices).to_csv(OUT / "time_slice_comparison.csv", index=False)
+
+exit_rows = []
+for arm, d in (("v2", p1["v2"]), ("v3", p1["v3"])):
+    for r in d["ledger"]["position_outcome_by_final_reason"]:
+        exit_rows.append({"arm": arm, "final_reason": r["final_reason"], "outcome": r["outcome"], "positions": r["positions"]})
+pd.DataFrame(exit_rows).to_csv(OUT / "exit_breakdown.csv", index=False)
+
+gates = {
+    "G0": {"status": "PASS_FOR_TRAIN_PARTITION", "evidence": "checkpoint identity and all 25 compared text outputs match; training data identities match",
+           "caveat": "full source tick identity through 2026 was not reloaded"},
+    "G1": {"status": "PASS_FOR_CLOSED_LOOP_DECODER_CONTRAST", "evidence": "same frozen checkpoint/source, deterministic mode and full training calendar; temporary decoder threshold was the only semantic change",
+           "caveat": "not a production schema migration; later account and execution streams diverge"},
+    "G2": {"status": "NOT_MET_NO_GO", "evidence": "v3 did not improve terminal PnL and breached earlier; complete fixed-v2-entry shadow is missing",
+           "next_evidence": "fixed-entry replay of the original v2 cohort on identical future ticks with eligibility, EMA/feature state, MAE/MFE, R, duration and cost sensitivity"},
+    "G3": {"status": "NOT_REACHED", "evidence": "no 2M semantic pilot or 20M campaign started"},
+}
+(OUT / "decision_gates.json").write_text(json.dumps(gates, indent=2, sort_keys=True) + "\n")
+
+fig, (ax, ad) = plt.subplots(2, 1, figsize=(13, 8), sharex=True, gridspec_kw={"height_ratios": [2, 1]})
+colors = {"v2": "#1f77b4", "v3": "#d95f02"}
+for arm in ("v2", "v3"):
+    df = pd.read_csv((V2 if arm == "v2" else V3) / "training/equity.csv", low_memory=False)
+    t = pd.to_datetime(df.iloc[:, 0], format="mixed", utc=True)
+    y = pd.to_numeric(df["equity"], errors="coerce")
+    dd = (y / y.cummax() - 1) * 100
+    ax.plot(t, y, label="v2 legacy decoder" if arm == "v2" else "v3 structural-neutral", color=colors[arm], lw=1)
+    ad.plot(t, dd, color=colors[arm], lw=0.9)
+ax.axhline(90_000, color="#555", ls="--", lw=1, label="USD 90k initial-equity floor")
+ax.axhline(100_000, color="#999", ls=":", lw=0.8)
+ax.axvline(pd.Timestamp("2025-06-12", tz="UTC"), color=colors["v3"], ls=":", lw=1)
+ax.axvline(pd.Timestamp("2025-11-12", tz="UTC"), color=colors["v2"], ls=":", lw=1)
+ax.set_ylabel("Equity (USD)")
+ax.set_title("Frozen seed-50 checkpoint: deterministic decoder replays, training split only")
+ax.grid(alpha=0.25); ax.legend(loc="best", ncol=2, fontsize=9)
+ad.axhline(0, color="#555", lw=0.7)
+ad.set_ylabel("Drawdown from own peak (%)"); ad.set_xlabel("UTC date"); ad.grid(alpha=0.25)
+ad.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+ad.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y", tz=mdates.UTC))
+fig.tight_layout()
+plot_name = "exit_semantics_equity_v2_vs_v3_train2025.png"
+fig.savefig(OUT / plot_name, dpi=160, bbox_inches="tight")
+plt.close(fig)
+
+metrics, monthly = {}, {}
+for arm, d in (("v2", p1["v2"]), ("v3", p1["v3"])):
+    m, e = d["metrics"], d["equity"]
+    metrics[arm] = {"n": int(m["n_trades"]), "return": float(m["total_return_pct"]), "pnl": float(m["total_pnl"]),
+                    "equity": float(m["final_equity"]), "win": float(m["win_rate"]*100),
+                    "pf": float(m["profit_factor"]), "exp": float(m["expectancy"]),
+                    "mdd": float(m["max_drawdown"]*100), "peak": float(e["peak"]),
+                    "peak_time": e["peak_time"], "fail": d["screen"]["fail_time"]}
+    monthly[arm] = {r["month"]: float(r["net_pnl"]) for r in e["monthly"]}
+months = list(dict.fromkeys(r["month"] for r in p1["v2"]["equity"]["monthly"]))
+month_table = ["| Month | v2 net PnL | v3 net PnL |", "|---|---:|---:|"]
+for month in months:
+    month_table.append(f"| {month} | {usd(monthly['v2'].get(month,0))} | {usd(monthly['v3'].get(month,0))} |")
+exit_table = ["| Arm | Final exit reason | Win | Loss | BE | Total |", "|---|---|---:|---:|---:|---:|"]
+for arm, d in (("v2", p1["v2"]), ("v3", p1["v3"])):
+    group = {}
+    for r in d["ledger"]["position_outcome_by_final_reason"]:
+        group.setdefault(r["final_reason"], {})[r["outcome"]] = int(r["positions"])
+    for reason, counts in sorted(group.items()):
+        exit_table.append(f"| {arm} | {reason} | {counts.get('win',0)} | {counts.get('loss',0)} | {counts.get('breakeven',0)} | {sum(counts.values())} |")
+raw = float(p1["v2"]["decisions"]["action_exit_min"])
+risk = man.get("execution_protocol", {}).get("trading_policy", {})
+pair = co["exact_common_entry_pnl"]
+rpt = f"""# Exit-action semantics: frozen-checkpoint result
+
+**Decision:** Do not start the proposed fresh 2M-step pair from this evidence. The decoder mapping changes behavior, but the structural-neutral decode did not improve the complete replay and reached the hard loss floor sooner. The full fixed-entry shadow required for stronger attribution is incomplete.
+
+## Scope and provenance
+
+No training was run. Both arms use the same archived seed-50 checkpoint, source snapshot, deterministic evaluation policy, and full selected training interval: {p1['v2']['screen']['start']} to {p1['v2']['screen']['end']}. The 2026 split was not evaluated.
+
+- Archived commit: {provenance['source_commit']}; source snapshot SHA-256: {source_hash}.
+- Checkpoint SHA-256: {checkpoint_hash}; schema {man.get('action_schema',{}).get('version')}, {man.get('action_schema',{}).get('width')} coordinates.
+- PPO distribution: {man.get('training_protocol',{}).get('action_distribution')}; deterministic evaluation, seed 50. This preserves the archived convention and does not measure stochastic rollout performance.
+- Execution used tick data, archived spread and five-point slippage, plus randomized fill latency capped at 30 ms. Initial seed was matched; event divergence can alter later random consumption.
+- Main checkout remained on main at {provenance['main_head_observed']}; no tracked source/configuration files changed.
+
+![Equity and drawdown, training split only]({plot_name})
+
+## Historical reproduction
+
+The v2 replay matched all 25 compared common text artifacts byte-for-byte, including equity, fills, trades, positions, metrics, breach events, and summaries. The checkpoint matches its archived manifest. Training bars, features, secondary series, and replayed training ticks matched their recorded identities.
+
+The selected replay contains {g0['training_input_identity']['train_bars']['rows']:,} bars and {g0['training_input_identity']['primary_ticks']['rows']:,} ticks. The full raw tick identity through 2026 was not reloaded; the selected training partition was checked. The 2026 split was not evaluated.
+
+## Action mapping
+
+The checkpoint is Gaussian, not hybrid. Across {p1['v2']['decisions']['action_rows']:,} action-bearing v2 decisions, the raw exit output had one unique value: {raw:.9f}; normalized, it is {(raw+1)/2:.6f}. The deterministic diagnostic action vector was constant across the replay.
+
+- v2 selects EMA when normalized exit is at least 0.5, equivalent to raw at least 0. This selected EMA for all {p1['v2']['ledger']['positions_opened']:,} v2 positions.
+- The counterfactual selects EMA only at normalized 0.625, equivalent to raw +0.25. The same output selected structural mode for all {p1['v3']['ledger']['positions_opened']:,} v3 positions.
+- The archived run did not activate the exit-mode prior. The mapping issue is real; that does not establish it as the cause of the equity decline.
+
+The first two positions matched. First economic divergence was e2:p3: both arms entered short at 21,148.8496 with stop 21,174.75. v2 closed by EMA-21 for +USD 641.02; v3 remained structural and stopped for +USD 75.19. The first same-decision v2 open rejected in v3 specifically for no valid structural TP occurred at bar 3655 on 2025-01-02 13:30 UTC. This admission comparison follows the earlier account-path divergence.
+
+## Complete sequential replay
+
+| Metric | v2 legacy | v3 structural-neutral |
+|---|---:|---:|
+| Positions | {metrics['v2']['n']:,} | {metrics['v3']['n']:,} |
+| Return | {pct(metrics['v2']['return'])} | {pct(metrics['v3']['return'])} |
+| Net PnL | {usd(metrics['v2']['pnl'])} | {usd(metrics['v3']['pnl'])} |
+| Final equity | {usd(metrics['v2']['equity'])} | {usd(metrics['v3']['equity'])} |
+| Win rate | {pct(metrics['v2']['win'])} | {pct(metrics['v3']['win'])} |
+| Profit factor | {metrics['v2']['pf']:.3f} | {metrics['v3']['pf']:.3f} |
+| Expectancy per position | {usd(metrics['v2']['exp'])} | {usd(metrics['v3']['exp'])} |
+| Max peak drawdown | {pct(metrics['v2']['mdd'])} | {pct(metrics['v3']['mdd'])} |
+| Hard-loss breach time | {metrics['v2']['fail']} | {metrics['v3']['fail']} |
+
+V3 halved position count and raised win rate but had worse expectancy and profit factor. It finished USD 195.88 below v2 and breached the initial-equity loss limit about five months earlier. Its smaller maximum drawdown partly reflects stopping earlier, not full-year survival.
+
+### Monthly net PnL
+
+{chr(10).join(month_table)}
+
+V2 peaked at {usd(metrics['v2']['peak'])} on {metrics['v2']['peak_time']}, not in April. The path was not a linear monthly decline: April lost about USD 20.1k, May lost USD 4.3k, June recovered USD 5.3k, then July through November lost money. December was flat after the hard-loss stop. V3 hit its stop in June; its later flat line is not continued trading evidence.
+
+## Exit results and entry eligibility
+
+These counts are final positions; partial target events are separate.
+
+{chr(10).join(exit_table)}
+
+All v2 positions were assigned EMA mode, but only 186 ended by EMA-21. 1,153 ended at the shared structural stop and 16 at session end. The loss is not simply poor EMA exits; most positions closed at stops. V3 logged 120 TP1 events, 72 TP2 events, and 84 TP3 final exits; partial exits make event counts exceed position counts.
+
+The full original v2 entry cohort contains {fixed['fixed_v2_entry_count']:,} positions ({fixed['v2_position_outcomes'].get('win',0)} wins, {fixed['v2_position_outcomes'].get('loss',0)} losses, {fixed['v2_position_outcomes'].get('breakeven',0)} breakeven). At those exact decision times, the v3 sequential log has {fixed['same_decision_open_count']} opens, {fixed['same_decision_reject_count']} rejections, and {fixed['same_decision_no_event_count']} timestamps with no open/rejection row. Of the rejections, {fixed['same_decision_no_valid_tp_count']} are specifically no-valid-TP.
+
+Only 53 same-decision positions also match side, fill price, stop, and size. These exact pairs cover {co['exact_common_entry_share_of_v2']*100:.1f}% of v2 positions and {co['exact_common_entry_share_of_v3']*100:.1f}% of v3 positions. Their net PnL was {usd(pair['v2']['sum_usd'])} under v2 and {usd(pair['v3']['sum_usd'])} under v3, a {usd(pair['delta_v3_minus_v2']['sum_usd'])} v3 difference. This small descriptive intersection is concentrated in March and April; it is not a full fixed-v2-entry shadow. The remaining 1,303 v2 positions comprise 374 same-decision v3 opens with a different signature, 219 same-decision v3 rejections, and 710 decision times with no v3 open/rejection row. They lack comparable same-decision v3 exit outcomes.
+
+At same-decision times, 219 v2 opens aligned with v3 rejections and 172 v3 opens aligned with v2 rejections. Of the v2-open/v3-reject matches, 86 were specifically no-valid-TP. Other mismatches include cooldown, armed-state, and soft-brick rejections, so all reduced activity cannot be attributed to target availability.
+
+## Risk interpretation
+
+The effective execution policy records account floor {usd(risk.get('account_floor',90000))}, daily loss limit {usd(risk.get('daily_loss_limit',5000))}, and peak trailing drawdown limit {float(risk.get('trailing_dd_limit',0)):.0%}. The v2 39.50% peak drawdown was diagnostic, not an active peak stop. The failure was the USD 10,000 maximum loss from initial equity. The ledger labels this guard event max_drawdown, but the effective floor is based on initial equity, not the running peak. v2's breach-close accounting ended slightly above USD 90,000; v3 ended below the floor after the breach close.
+
+The archived manifest also records a 7% trailing limit in its training-risk section while effective execution records zero. Reconcile this difference before another pilot.
+
+## Root-cause decision and gates
+
+**Confirmed:** the near-neutral Gaussian output was decoded as EMA by v2. The threshold change altered selected exit mode and entry eligibility.
+
+**Not confirmed:** that this mapping caused the year-long loss. V3 did not restore profitability or survival; most v2 positions ended at the stop and the deterministic action vector was constant. One checkpoint/seed cannot distinguish exit decoding from entry quality, reward, architecture, regime sensitivity, or execution.
+
+- **G0:** pass for the selected training partition; full raw-tick hash caveat is recorded above.
+- **G1:** pass for this frozen closed-loop decoder contrast; no production action-schema migration was performed.
+- **G2:** not met; no-go for a fresh 2M pilot because aggregate results did not improve and full fixed-entry shadow evidence is missing.
+- **G3:** not reached. No 20M campaign.
+
+Next discriminating work is a fixed-entry shadow for the full original v2 cohort on identical future ticks, with no-structural-target labels, MAE/MFE, R, holding time, exit reasons, and cost sensitivity. Neither decoder should be declared economically superior yet.
+
+## Reproducible artifacts
+
+- provenance.json and decision_gates.json
+- counterfactual_patch.diff records the temporary decoder and CSV-export changes
+- action_histograms.csv, time_slice_comparison.csv, exit_breakdown.csv
+- phase2_fixed_v2_entry_cohort.csv and its summary, phase2_common_entry_cohort.csv, and phase2_unmatched_entry_cohort.csv
+- Per-arm full trade and equity ledgers in each training directory
+- phase2_entry_cohort.py and this report builder
+
+All generated files are in an ignored output directory. The main checkout has no tracked changes; the user's pre-existing untracked file is preserved.
+"""
+(OUT / "exit_semantics_findings.md").write_text(rpt)
+print("report", OUT / "exit_semantics_findings.md")
+print("plot", OUT / plot_name)
+print("source_snapshot_sha256", source_hash)
+print("checkpoint_sha256", checkpoint_hash)

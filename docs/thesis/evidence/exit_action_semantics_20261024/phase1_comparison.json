@@ -1,0 +1,497 @@
+{
+  "comparison": {
+    "first_v2_open_vs_v3_no_valid_tp": null,
+    "matched_v2_open_v3_no_valid_tp_decisions": 0,
+    "positions_v2": 1356,
+    "positions_v3": 678,
+    "v2_minus_v3_pnl": 195.88109880640695,
+    "v2_minus_v3_return_pct": 0.19588109880640836
+  },
+  "v2": {
+    "decisions": {
+      "action_exit_max": 0.0765432491898536,
+      "action_exit_min": 0.0765432491898536,
+      "action_rows": 83512,
+      "entry_funnel": {
+        "hold_low_intensity": 0,
+        "hold_no_context": 0,
+        "hold_risk_floor": 0,
+        "opened": 1356,
+        "rejected_blackout": 0,
+        "rejected_cooldown": 5466,
+        "rejected_ema": 0,
+        "rejected_entry_pending": 0,
+        "rejected_entry_state": 70145,
+        "rejected_gate": 0,
+        "rejected_manipulation": 0,
+        "rejected_overnight": 103,
+        "rejected_rr": 0,
+        "rejected_session_cap": 0,
+        "rejected_sl": 615,
+        "rejected_sl_already_hit": 0,
+        "rejected_soft_brick": 5827,
+        "rejected_terminal": 0
+      },
+      "n_steps": 99492,
+      "raw_exit_0_to_025": 83512,
+      "raw_exit_ge_025": 0,
+      "unique_action_exit": 1
+    },
+    "equity": {
+      "final": 90008.88548764227,
+      "initial": 100000.0,
+      "max_drawdown_pct": 39.50408915451429,
+      "monthly": [
+        {
+          "end_equity": 96280.28155779856,
+          "month": "2024-12",
+          "net_pnl": -3719.7184422014398,
+          "start_equity": 100000.0
+        },
+        {
+          "end_equity": 104209.32520351167,
+          "month": "2025-01",
+          "net_pnl": 7929.0436457131145,
+          "start_equity": 96280.28155779856
+        },
+        {
+          "end_equity": 110742.03520862936,
+          "month": "2025-02",
+          "net_pnl": 6532.710005117682,
+          "start_equity": 104209.32520351167
+        },
+        {
+          "end_equity": 143444.3986235744,
+          "month": "2025-03",
+          "net_pnl": 32702.36341494505,
+          "start_equity": 110742.03520862936
+        },
+        {
+          "end_equity": 123345.72715049288,
+          "month": "2025-04",
+          "net_pnl": -20098.67147308153,
+          "start_equity": 143444.3986235744
+        },
+        {
+          "end_equity": 119089.8973202995,
+          "month": "2025-05",
+          "net_pnl": -4255.829830193383,
+          "start_equity": 123345.72715049288
+        },
+        {
+          "end_equity": 124425.21348889417,
+          "month": "2025-06",
+          "net_pnl": 5335.316168594669,
+          "start_equity": 119089.8973202995
+        },
+        {
+          "end_equity": 120100.20151126692,
+          "month": "2025-07",
+          "net_pnl": -4325.011977627248,
+          "start_equity": 124425.21348889417
+        },
+        {
+          "end_equity": 116742.90165213712,
+          "month": "2025-08",
+          "net_pnl": -3357.2998591297946,
+          "start_equity": 120100.20151126692
+        },
+        {
+          "end_equity": 104733.85307125688,
+          "month": "2025-09",
+          "net_pnl": -12009.048580880248,
+          "start_equity": 116742.90165213712
+        },
+        {
+          "end_equity": 95421.54211639806,
+          "month": "2025-10",
+          "net_pnl": -9312.31095485881,
+          "start_equity": 104733.85307125688
+        },
+        {
+          "end_equity": 90008.88548764227,
+          "month": "2025-11",
+          "net_pnl": -5412.656628755794,
+          "start_equity": 95421.54211639806
+        },
+        {
+          "end_equity": 90008.88548764227,
+          "month": "2025-12",
+          "net_pnl": 0.0,
+          "start_equity": 90008.88548764227
+        }
+      ],
+      "peak": 148785.07361850698,
+      "peak_time": "2025-03-20 18:55:00+00:00",
+      "rows": 99493,
+      "trough_time": "2025-11-12 14:47:00.267000+00:00"
+    },
+    "ledger": {
+      "close_event_net_pnl_sum": -9991.114512357635,
+      "close_event_rows": 1356,
+      "exit_mode_on_open": {
+        "ema_21": 1356
+      },
+      "position_count_reconstructed": 1356,
+      "position_outcome_by_final_reason": [
+        {
+          "final_reason": "ema_21_exit",
+          "outcome": "loss",
+          "positions": 4
+        },
+        {
+          "final_reason": "ema_21_exit",
+          "outcome": "win",
+          "positions": 182
+        },
+        {
+          "final_reason": "max_drawdown",
+          "outcome": "loss",
+          "positions": 1
+        },
+        {
+          "final_reason": "session_end",
+          "outcome": "loss",
+          "positions": 2
+        },
+        {
+          "final_reason": "session_end",
+          "outcome": "win",
+          "positions": 14
+        },
+        {
+          "final_reason": "structure_sl",
+          "outcome": "breakeven",
+          "positions": 2
+        },
+        {
+          "final_reason": "structure_sl",
+          "outcome": "loss",
+          "positions": 813
+        },
+        {
+          "final_reason": "structure_sl",
+          "outcome": "win",
+          "positions": 338
+        }
+      ],
+      "positions_opened": 1356,
+      "reason_event_counts": {
+        "confirmed_swing": 1222,
+        "ema_21_exit": 186,
+        "max_drawdown": 1,
+        "session_end": 16,
+        "structure_sl": 1153
+      },
+      "risk_on_open": {
+        "approved_risk_usd": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "n": 1356
+        },
+        "execution_reserve_usd": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "n": 1356
+        },
+        "modeled_stop_risk_usd": {
+          "max": 1000.0,
+          "mean": 947.3189883375543,
+          "median": 974.4309568692545,
+          "min": 771.5942180431795,
+          "n": 1356
+        },
+        "requested_risk_usd": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "n": 1356
+        }
+      },
+      "rows": 86090,
+      "unique_position_ids": 1356
+    },
+    "metrics": {
+      "activity_status": "ACTIVE",
+      "avg_trade": -7.368078548936309,
+      "breach_count": 1,
+      "breach_rate": 0.003861003861003861,
+      "calmar": -0.2499898991234102,
+      "expectancy": -7.368078548936309,
+      "extras": {
+        "entry_active": 1.0,
+        "fill_count": 1356.0,
+        "incomplete_positions": 0.0
+      },
+      "final_equity": 90008.88548764227,
+      "initial_balance": 100000.0,
+      "max_consec_loss": 12,
+      "max_drawdown": 0.3950408915451429,
+      "n_trades": 1356,
+      "profit_factor": 0.9720932869838803,
+      "sharpe": -0.2168493480732379,
+      "sortino": -0.3144711242768687,
+      "total_pnl": -9991.11451235773,
+      "total_return_pct": -9.99111451235773,
+      "turnover": 0.013629099534640627,
+      "win_rate": 0.3938053097345133
+    },
+    "screen": {
+      "bars": 351432,
+      "data_parity": "train_only_verified_full_tick_identity_not_reloaded",
+      "end": "2025-12-31 23:49:00+03:00",
+      "fail_time": "2025-11-12 17:46:00+03:00",
+      "start": "2024-12-30 01:05:00+03:00",
+      "survived": false,
+      "test_evaluated": false
+    }
+  },
+  "v3": {
+    "decisions": {
+      "action_exit_max": 0.0765432491898536,
+      "action_exit_min": 0.0765432491898536,
+      "action_rows": 80245,
+      "entry_funnel": {
+        "hold_low_intensity": 0,
+        "hold_no_context": 0,
+        "hold_risk_floor": 0,
+        "opened": 678,
+        "rejected_blackout": 0,
+        "rejected_cooldown": 2741,
+        "rejected_ema": 0,
+        "rejected_entry_pending": 0,
+        "rejected_entry_state": 72231,
+        "rejected_gate": 0,
+        "rejected_manipulation": 0,
+        "rejected_overnight": 127,
+        "rejected_rr": 530,
+        "rejected_session_cap": 0,
+        "rejected_sl": 430,
+        "rejected_sl_already_hit": 0,
+        "rejected_soft_brick": 3508,
+        "rejected_terminal": 0
+      },
+      "n_steps": 99492,
+      "raw_exit_0_to_025": 80245,
+      "raw_exit_ge_025": 0,
+      "unique_action_exit": 1
+    },
+    "equity": {
+      "final": 89813.00438883586,
+      "initial": 100000.0,
+      "max_drawdown_pct": 27.4629501145492,
+      "monthly": [
+        {
+          "end_equity": 97369.32424925196,
+          "month": "2024-12",
+          "net_pnl": -2630.675750748036,
+          "start_equity": 100000.0
+        },
+        {
+          "end_equity": 98157.17060545002,
+          "month": "2025-01",
+          "net_pnl": 787.8463561980607,
+          "start_equity": 97369.32424925196
+        },
+        {
+          "end_equity": 93566.75765496452,
+          "month": "2025-02",
+          "net_pnl": -4590.412950485508,
+          "start_equity": 98157.17060545002
+        },
+        {
+          "end_equity": 120235.09020633764,
+          "month": "2025-03",
+          "net_pnl": 26668.332551373125,
+          "start_equity": 93566.75765496452
+        },
+        {
+          "end_equity": 109916.31599036568,
+          "month": "2025-04",
+          "net_pnl": -10318.774215971964,
+          "start_equity": 120235.09020633764
+        },
+        {
+          "end_equity": 97666.98421137176,
+          "month": "2025-05",
+          "net_pnl": -12249.331778993917,
+          "start_equity": 109916.31599036568
+        },
+        {
+          "end_equity": 89813.00438883586,
+          "month": "2025-06",
+          "net_pnl": -7853.979822535897,
+          "start_equity": 97666.98421137176
+        },
+        {
+          "end_equity": 89813.00438883586,
+          "month": "2025-07",
+          "net_pnl": 0.0,
+          "start_equity": 89813.00438883586
+        },
+        {
+          "end_equity": 89813.00438883586,
+          "month": "2025-08",
+          "net_pnl": 0.0,
+          "start_equity": 89813.00438883586
+        },
+        {
+          "end_equity": 89813.00438883586,
+          "month": "2025-09",
+          "net_pnl": 0.0,
+          "start_equity": 89813.00438883586
+        },
+        {
+          "end_equity": 89813.00438883586,
+          "month": "2025-10",
+          "net_pnl": 0.0,
+          "start_equity": 89813.00438883586
+        },
+        {
+          "end_equity": 89813.00438883586,
+          "month": "2025-11",
+          "net_pnl": 0.0,
+          "start_equity": 89813.00438883586
+        },
+        {
+          "end_equity": 89813.00438883586,
+          "month": "2025-12",
+          "net_pnl": 0.0,
+          "start_equity": 89813.00438883586
+        }
+      ],
+      "peak": 123816.73162979048,
+      "peak_time": "2025-03-28 18:12:00+00:00",
+      "rows": 99493,
+      "trough_time": "2025-06-12 16:12:00.586000+00:00"
+    },
+    "ledger": {
+      "close_event_net_pnl_sum": -10186.995611164168,
+      "close_event_rows": 870,
+      "exit_mode_on_open": {
+        "structural": 678
+      },
+      "position_count_reconstructed": 678,
+      "position_outcome_by_final_reason": [
+        {
+          "final_reason": "max_drawdown",
+          "outcome": "loss",
+          "positions": 1
+        },
+        {
+          "final_reason": "session_end",
+          "outcome": "loss",
+          "positions": 3
+        },
+        {
+          "final_reason": "session_end",
+          "outcome": "win",
+          "positions": 4
+        },
+        {
+          "final_reason": "structure_sl",
+          "outcome": "breakeven",
+          "positions": 1
+        },
+        {
+          "final_reason": "structure_sl",
+          "outcome": "loss",
+          "positions": 360
+        },
+        {
+          "final_reason": "structure_sl",
+          "outcome": "win",
+          "positions": 225
+        },
+        {
+          "final_reason": "structure_tp3",
+          "outcome": "win",
+          "positions": 84
+        }
+      ],
+      "positions_opened": 678,
+      "reason_event_counts": {
+        "confirmed_swing": 443,
+        "favorable_excursion_reached_alpha_initial_r": 579,
+        "max_drawdown": 1,
+        "new_confirmed_favorable_swing": 321,
+        "session_end": 7,
+        "structure_sl": 586,
+        "structure_tp1": 120,
+        "structure_tp2": 72,
+        "structure_tp3": 84
+      },
+      "risk_on_open": {
+        "approved_risk_usd": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "n": 678
+        },
+        "execution_reserve_usd": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "n": 678
+        },
+        "modeled_stop_risk_usd": {
+          "max": 1000.0,
+          "mean": 883.2459670619698,
+          "median": 859.5869429800887,
+          "min": 774.4466719862153,
+          "n": 678
+        },
+        "requested_risk_usd": {
+          "max": 0.0,
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "n": 678
+        }
+      },
+      "rows": 82458,
+      "unique_position_ids": 678
+    },
+    "metrics": {
+      "activity_status": "ACTIVE",
+      "avg_trade": -15.0250672731035,
+      "breach_count": 1,
+      "breach_rate": 0.003861003861003861,
+      "calmar": -0.36665285280131754,
+      "expectancy": -15.0250672731035,
+      "extras": {
+        "entry_active": 1.0,
+        "fill_count": 870.0,
+        "incomplete_positions": 0.0
+      },
+      "final_equity": 89813.00438883586,
+      "initial_balance": 100000.0,
+      "max_consec_loss": 7,
+      "max_drawdown": 0.274629501145492,
+      "n_trades": 678,
+      "profit_factor": 0.949909982107567,
+      "sharpe": -0.448799039178251,
+      "sortino": -0.6407635134490659,
+      "total_pnl": -10186.995611164137,
+      "total_return_pct": -10.186995611164138,
+      "turnover": 0.006814549767320314,
+      "win_rate": 0.4616519174041298
+    },
+    "screen": {
+      "bars": 351432,
+      "data_parity": "train_only_verified_full_tick_identity_not_reloaded",
+      "end": "2025-12-31 23:49:00+03:00",
+      "fail_time": "2025-06-12 19:11:00+03:00",
+      "start": "2024-12-30 01:05:00+03:00",
+      "survived": false,
+      "test_evaluated": false
+    }
+  }
+}

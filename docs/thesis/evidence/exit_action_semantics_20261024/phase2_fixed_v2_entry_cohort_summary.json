@@ -1,0 +1,56 @@
+{
+  "counterpart_rejection_reasons": [
+    {
+      "positions": 710,
+      "v3_decision_status": "no_open_or_rejection_row",
+      "v3_rejection_reason": NaN
+    },
+    {
+      "positions": 427,
+      "v3_decision_status": "open",
+      "v3_rejection_reason": NaN
+    },
+    {
+      "positions": 64,
+      "v3_decision_status": "reject",
+      "v3_rejection_reason": "entry_cooldown"
+    },
+    {
+      "positions": 14,
+      "v3_decision_status": "reject",
+      "v3_rejection_reason": "entry_state_not_armed"
+    },
+    {
+      "positions": 1,
+      "v3_decision_status": "reject",
+      "v3_rejection_reason": "no_valid_sl"
+    },
+    {
+      "positions": 86,
+      "v3_decision_status": "reject",
+      "v3_rejection_reason": "no_valid_tp"
+    },
+    {
+      "positions": 54,
+      "v3_decision_status": "reject",
+      "v3_rejection_reason": "soft_brick"
+    }
+  ],
+  "counterpart_status_counts": {
+    "no_open_or_rejection_row": 710,
+    "open": 427,
+    "reject": 219
+  },
+  "fixed_v2_entry_count": 1356,
+  "limitation": "Counterpart event comparison is from the v3 closed-loop replay. It does not compute an isolated v3 exit for v2 entries without a v3 open.",
+  "same_decision_exact_fill_stop_size_count": 53,
+  "same_decision_no_event_count": 710,
+  "same_decision_no_valid_tp_count": 86,
+  "same_decision_open_count": 427,
+  "same_decision_reject_count": 219,
+  "v2_position_outcomes": {
+    "breakeven": 2,
+    "loss": 820,
+    "win": 534
+  }
+}

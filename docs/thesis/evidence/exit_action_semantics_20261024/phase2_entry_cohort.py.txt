@@ -1,0 +1,217 @@
+"""Reproducible paired-entry diagnostics for the frozen v2/v3 replays."""
+from __future__ import annotations
+import json
+from pathlib import Path
+from typing import Any
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[2]
+ARMS = {
+    "v2": ROOT / "outputs/exit_semantics_counterfactual_20261024_g0_v2_repro_job21190658/training",
+    "v3": ROOT / "outputs/exit_semantics_counterfactual_20261024_g1_v3_structural_neutral_job21190658/training",
+}
+OUT = ROOT / "outputs/exit_semantics_counterfactual_20261024_g1_v3_structural_neutral_job21190658"
+DECISION_KEY = ["decision_key_utc", "bar_key"]
+
+def norm_time(values: pd.Series) -> pd.Series:
+    return pd.to_datetime(values, format="mixed", utc=True, errors="coerce").astype("string")
+
+def load_arm(root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
+    trades = pd.read_csv(root / "trades.csv", low_memory=False)
+    positions = pd.read_csv(root / "positions.csv", low_memory=False)
+    opens = trades.loc[trades["type"].eq("open")].copy()
+    summary_cols = ["position_id", "exit_time", "exit_price", "net_pnl", "holding_seconds",
+                    "exit_reason", "fill_count", "completed", "reconstruction_status"]
+    opens = opens.drop(columns=[c for c in summary_cols[1:] if c in opens.columns], errors="ignore")
+    opens = opens.merge(positions[summary_cols], on="position_id", how="left", validate="one_to_one")
+    for col in ("bar", "direction", "price", "sl_price", "lots", "modeled_stop_risk_usd",
+                "net_pnl", "holding_seconds", "fill_count"):
+        if col in opens:
+            opens[col] = pd.to_numeric(opens[col], errors="coerce")
+    opens["decision_key"] = opens["decision_time"].where(opens["decision_time"].notna(), opens["time"])
+    opens["decision_key_utc"] = norm_time(opens["decision_key"])
+    dt = pd.to_datetime(opens["decision_key"], format="mixed", utc=True, errors="coerce")
+    opens["entry_month"] = dt.dt.strftime("%Y-%m")
+    peak_date = pd.Timestamp("2025-03-20 18:55:00+00:00")
+    opens["phase"] = ["through_peak_date" if pd.notna(t) and t <= peak_date else "after_peak_date" for t in dt]
+    opens["outcome"] = opens["net_pnl"].map(lambda x: "win" if x > 1e-9 else "loss" if x < -1e-9 else "breakeven")
+    opens["price_key"] = opens["price"].round(8)
+    opens["sl_key"] = opens["sl_price"].round(8)
+    opens["lots_key"] = opens["lots"].round(8)
+    opens["bar_key"] = opens["bar"].round(6)
+    decisions = trades.loc[trades["type"].isin(["open", "reject"])].copy()
+    decisions["decision_key"] = decisions["decision_time"].where(decisions["decision_time"].notna(), decisions["time"])
+    decisions["decision_key_utc"] = norm_time(decisions["decision_key"])
+    decisions["bar_key"] = pd.to_numeric(decisions["bar"], errors="coerce").round(6)
+    if "entry_rejection_reason" not in decisions:
+        decisions["entry_rejection_reason"] = pd.NA
+    return opens, decisions
+
+def safe_summary(values: pd.Series) -> dict[str, Any]:
+    x = pd.to_numeric(values, errors="coerce").dropna()
+    return {"n": int(len(x)), "sum_usd": float(x.sum()) if len(x) else 0.0,
+            "mean_usd": float(x.mean()) if len(x) else None,
+            "median_usd": float(x.median()) if len(x) else None,
+            "win_rate": float((x > 0).mean()) if len(x) else None,
+            "loss_rate": float((x < 0).mean()) if len(x) else None}
+
+opens: dict[str, pd.DataFrame] = {}
+decisions: dict[str, pd.DataFrame] = {}
+for arm, root in ARMS.items():
+    opens[arm], decisions[arm] = load_arm(root)
+
+exact_keys = ["decision_key_utc", "bar_key", "direction", "price_key", "sl_key", "lots_key"]
+matched = opens["v2"].merge(opens["v3"], on=exact_keys, how="inner",
+                             suffixes=("_v2", "_v3"), validate="one_to_one")
+fields = {
+    "position_id_v2": "position_id_v2", "position_id_v3": "position_id_v3",
+    "decision_key_utc": "decision_time_utc", "bar_key": "bar", "direction": "direction",
+    "price_key": "entry_price", "sl_key": "initial_stop", "lots_key": "lots",
+    "entry_mode_v2": "entry_mode_v2", "entry_mode_v3": "entry_mode_v3",
+    "exit_time_v2": "exit_time_v2", "exit_time_v3": "exit_time_v3",
+    "exit_reason_v2": "exit_reason_v2", "exit_reason_v3": "exit_reason_v3",
+    "net_pnl_v2": "net_pnl_v2", "net_pnl_v3": "net_pnl_v3",
+    "holding_seconds_v2": "holding_seconds_v2", "holding_seconds_v3": "holding_seconds_v3",
+    "modeled_stop_risk_usd_v2": "risk_usd_v2", "modeled_stop_risk_usd_v3": "risk_usd_v3",
+    "entry_month_v2": "entry_month", "phase_v2": "phase",
+    "fill_count_v2": "fill_count_v2", "fill_count_v3": "fill_count_v3",
+    "outcome_v2": "outcome_v2", "outcome_v3": "outcome_v3",
+}
+kept = [c for c in fields if c in matched.columns]
+selected = matched[kept].rename(columns={c: fields[c] for c in kept}).copy()
+selected["delta_v3_minus_v2_usd"] = pd.to_numeric(selected["net_pnl_v3"], errors="coerce") - pd.to_numeric(selected["net_pnl_v2"], errors="coerce")
+for arm in ("v2", "v3"):
+    risk = pd.to_numeric(selected[f"risk_usd_{arm}"], errors="coerce").replace(0, pd.NA)
+    selected[f"realized_r_{arm}"] = pd.to_numeric(selected[f"net_pnl_{arm}"], errors="coerce") / risk
+selected.to_csv(OUT / "phase2_common_entry_cohort.csv", index=False)
+
+# Same-decision opens whose counterpart replay rejected the entry.
+unmatched_rows: list[pd.DataFrame] = []
+for source, other in (("v2", "v3"), ("v3", "v2")):
+    own = decisions[source].loc[decisions[source]["type"].eq("open")].copy()
+    own_cols = DECISION_KEY + ["position_id", "entry_mode", "price", "sl_price", "lots"]
+    own = own[own_cols].drop_duplicates(DECISION_KEY)
+    rej = decisions[other].loc[decisions[other]["type"].eq("reject"),
+                               DECISION_KEY + ["entry_rejection_reason"]].drop_duplicates(DECISION_KEY)
+    x = own.merge(rej, on=DECISION_KEY, how="inner", validate="one_to_one")
+    if not x.empty:
+        x["source_arm"] = source
+        x["counterpart_arm"] = other
+        x = x.rename(columns={"decision_key_utc": "decision_time_utc", "bar_key": "bar",
+                              "entry_rejection_reason": "counterpart_rejection_reason"})
+        unmatched_rows.append(x)
+unmatched = pd.concat(unmatched_rows, ignore_index=True) if unmatched_rows else pd.DataFrame()
+unmatched.to_csv(OUT / "phase2_unmatched_entry_cohort.csv", index=False)
+
+open_decision_sets = {
+    arm: set(map(tuple, frame.loc[frame["type"].eq("open"), DECISION_KEY].dropna().itertuples(index=False, name=None)))
+    for arm, frame in decisions.items()
+}
+open_vs_reject_counts: dict[str, int] = {}
+first: dict[str, Any] = {}
+for source, other in (("v2", "v3"), ("v3", "v2")):
+    rejects = decisions[other].loc[decisions[other]["type"].eq("reject")].copy()
+    reject_set = set(map(tuple, rejects[DECISION_KEY].dropna().itertuples(index=False, name=None)))
+    keys = open_decision_sets[source] & reject_set
+    open_vs_reject_counts[f"{source}_open_{other}_reject_same_decision"] = len(keys)
+    if keys:
+        tuples = list(zip(rejects["decision_key_utc"], rejects["bar_key"]))
+        subset = rejects.loc[[key in keys for key in tuples]].sort_values(["bar_key", "decision_key_utc"])
+        row = subset.iloc[0]
+        first[f"{source}_open_{other}_reject"] = {
+            "bar": float(row["bar_key"]), "decision_time_utc": str(row["decision_key_utc"]),
+            "counterpart_rejection_reason": str(row["entry_rejection_reason"]),
+            "source_arm": source, "counterpart_arm": other,
+        }
+
+# Structural-target admission changes are isolated from unrelated closed-loop rejections.
+v2_open = decisions["v2"].loc[decisions["v2"]["type"].eq("open"), DECISION_KEY].drop_duplicates()
+v3_no_tp = decisions["v3"].loc[
+    decisions["v3"]["type"].eq("reject") & decisions["v3"]["entry_rejection_reason"].eq("no_valid_tp"),
+    DECISION_KEY + ["entry_rejection_reason"],
+].drop_duplicates(DECISION_KEY)
+v2_open_v3_no_tp = v2_open.merge(v3_no_tp, on=DECISION_KEY, how="inner", validate="one_to_one")
+first_structural_admission_difference = None
+if not v2_open_v3_no_tp.empty:
+    v2_open_v3_no_tp = v2_open_v3_no_tp.sort_values(["bar_key", "decision_key_utc"])
+    row = v2_open_v3_no_tp.iloc[0]
+    first_structural_admission_difference = {
+        "bar": float(row["bar_key"]),
+        "decision_time_utc": str(row["decision_key_utc"]),
+        "v2_action": "open_ema_mode",
+        "v3_action": "reject_no_valid_tp",
+    }
+
+monthly = selected.groupby("entry_month", dropna=False).agg(
+    n=("position_id_v2", "size"),
+    v2_pnl=("net_pnl_v2", "sum"), v3_pnl=("net_pnl_v3", "sum"),
+    delta_v3_minus_v2=("delta_v3_minus_v2_usd", "sum"),
+    v2_mean_r=("realized_r_v2", "mean"), v3_mean_r=("realized_r_v3", "mean"),
+    v2_win_rate=("outcome_v2", lambda s: float((s == "win").mean())),
+    v3_win_rate=("outcome_v3", lambda s: float((s == "win").mean())),
+).reset_index()
+monthly.to_csv(OUT / "phase2_common_entry_monthly.csv", index=False)
+
+same_open_decision_counts = {}
+for arm, other in (("v2", "v3"), ("v3", "v2")):
+    a = set(map(tuple, opens[arm][DECISION_KEY].dropna().itertuples(index=False, name=None)))
+    b = set(map(tuple, opens[other][DECISION_KEY].dropna().itertuples(index=False, name=None)))
+    same_open_decision_counts[f"{arm}_opened_positions"] = int(len(a))
+    same_open_decision_counts[f"{arm}_{other}_same_open_decisions"] = int(len(a & b))
+decision_pairs = opens["v2"].merge(opens["v3"], on=DECISION_KEY, how="inner", suffixes=("_v2", "_v3"), validate="one_to_one")
+same_open_signature_counts = {"same_decision": int(len(decision_pairs))}
+for field, left, right in (
+    ("same_side", "direction_v2", "direction_v3"),
+    ("same_fill_price", "price_key_v2", "price_key_v3"),
+    ("same_initial_stop", "sl_key_v2", "sl_key_v3"),
+    ("same_position_size", "lots_key_v2", "lots_key_v3"),
+):
+    same_open_signature_counts[field] = int(decision_pairs[left].eq(decision_pairs[right]).sum())
+same_open_signature_counts["same_side_fill_stop_size"] = int((
+    decision_pairs["direction_v2"].eq(decision_pairs["direction_v3"])
+    & decision_pairs["price_key_v2"].eq(decision_pairs["price_key_v3"])
+    & decision_pairs["sl_key_v2"].eq(decision_pairs["sl_key_v3"])
+    & decision_pairs["lots_key_v2"].eq(decision_pairs["lots_key_v3"])
+).sum())
+
+summary = {
+    "scope": "training split only; no new training; 2026 test split not evaluated",
+    "matching_definition": "same UTC decision timestamp, bar, side, filled price, initial stop, and lots in both closed-loop replays",
+    "replay_positions": {arm: int(len(opens[arm])) for arm in ("v2", "v3")},
+    "exact_common_entry_count": int(len(selected)),
+    "exact_common_entry_share_of_v2": float(len(selected) / len(opens["v2"])) if len(opens["v2"]) else None,
+    "exact_common_entry_share_of_v3": float(len(selected) / len(opens["v3"])) if len(opens["v3"]) else None,
+    "exact_common_entry_pnl": {
+        "v2": safe_summary(selected["net_pnl_v2"]),
+        "v3": safe_summary(selected["net_pnl_v3"]),
+        "delta_v3_minus_v2": safe_summary(selected["delta_v3_minus_v2_usd"]),
+    },
+    "exact_common_entry_outcome_counts": {
+        arm: selected[f"outcome_{arm}"].value_counts(dropna=False).to_dict() for arm in ("v2", "v3")
+    },
+    "same_open_decision_counts": same_open_decision_counts,
+    "same_open_signature_counts": same_open_signature_counts,
+    "open_vs_reject_counts": open_vs_reject_counts,
+    "first_open_vs_counterpart_rejection": first,
+    "v2_open_v3_no_valid_tp_count": int(len(v2_open_v3_no_tp)),
+    "first_v2_open_v3_no_valid_tp": first_structural_admission_difference,
+    "unmatched_admission_rows": int(len(unmatched)),
+    "unmatched_admission_reason_counts": (
+        unmatched.groupby(["source_arm", "counterpart_rejection_reason"], dropna=False).size().rename("n").reset_index().to_dict("records")
+        if not unmatched.empty else []
+    ),
+    "paired_monthly": monthly.to_dict("records"),
+    "limitations": [
+        "The common-entry set is an exact intersection from two closed-loop policy replays, not a per-v2-entry controlled shadow replay.",
+        "After the first exit divergence, account state and action streams can differ; exact later matches are descriptive, not randomized pairs.",
+        "This ledger does not independently recompute MAE/MFE, counterfactual target availability, or outcomes under alternative costs on a common future path.",
+    ],
+}
+(OUT / "phase2_cohort_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True, default=str) + "\n")
+print(json.dumps({k: summary[k] for k in (
+    "replay_positions", "exact_common_entry_count", "exact_common_entry_share_of_v2",
+    "exact_common_entry_share_of_v3", "exact_common_entry_pnl", "exact_common_entry_outcome_counts",
+    "same_open_decision_counts", "same_open_signature_counts", "open_vs_reject_counts", "first_open_vs_counterpart_rejection",
+    "v2_open_v3_no_valid_tp_count", "first_v2_open_v3_no_valid_tp",
+    "unmatched_admission_rows", "unmatched_admission_reason_counts",
+)}, indent=2, default=str))
