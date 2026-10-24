@@ -250,7 +250,10 @@ def test_report_figure_contract_rejects_missing_required_plots(tmp_path: Path) -
         ]
     }
 
-    with pytest.raises(RuntimeError, match="required training figures were not generated"):
+    with pytest.raises(
+        RuntimeError,
+        match="required training/testing comparison figures were not generated",
+    ):
         _validate_report_figures(report, tmp_path)
 
 

@@ -57,7 +57,9 @@ def _parse_run(value: str) -> tuple[str, Path]:
     return label, path
 
 
-def _campaign_manifest(run_dir: Path) -> tuple[Path, dict[str, Any]]:
+def _campaign_manifest(
+    run_dir: Path, *, allow_failed_source_campaign: bool = False
+) -> tuple[Path, dict[str, Any]]:
     for parent in (run_dir, *run_dir.parents):
         candidate = parent / "campaign.json"
         if candidate.is_file():
@@ -67,25 +69,44 @@ def _campaign_manifest(run_dir: Path) -> tuple[Path, dict[str, Any]]:
             jobs = value.get("jobs")
             if not isinstance(jobs, list) or not jobs:
                 raise ValueError(f"campaign manifest has no job records: {candidate}")
-            unfinished = [
-                str(job.get("key", "unknown")) if isinstance(job, dict) else str(job)
-                for job in jobs
-                if not isinstance(job, dict) or job.get("status") != "succeeded"
+            unsuccessful = [
+                job for job in jobs if not isinstance(job, dict) or job.get("status") != "succeeded"
             ]
-            if unfinished:
+            if unsuccessful and not allow_failed_source_campaign:
+                failed_keys = [
+                    str(job.get("key", "unknown")) if isinstance(job, dict) else str(job)
+                    for job in unsuccessful
+                ]
                 raise ValueError(
-                    f"source campaign is not fully successful; unfinished jobs: "
-                    f"{', '.join(unfinished)}"
+                    "source campaign is not fully successful; unsuccessful jobs: "
+                    f"{', '.join(failed_keys)}"
                 )
+            if unsuccessful:
+                nonterminal = [
+                    str(job.get("key", "unknown"))
+                    for job in unsuccessful
+                    if not isinstance(job, dict)
+                    or job.get("status") != "failed"
+                    or not job.get("failure_reason")
+                ]
+                if nonterminal:
+                    raise ValueError(
+                        "diagnostic opt-in accepts only terminal failed jobs with recorded "
+                        f"failure reasons; rejected: {', '.join(nonterminal)}"
+                    )
             return candidate, value
     raise ValueError(f"could not find a completed campaign.json above {run_dir}")
 
 
-def _source_identity(label: str, run_dir: Path) -> dict[str, Any]:
+def _source_identity(
+    label: str, run_dir: Path, *, allow_failed_source_campaign: bool = False
+) -> dict[str, Any]:
     run_manifest_path = run_dir / "run_manifest.json"
     if not run_manifest_path.is_file():
         raise FileNotFoundError(f"source run manifest is missing: {run_manifest_path}")
-    campaign_path, campaign = _campaign_manifest(run_dir)
+    campaign_path, campaign = _campaign_manifest(
+        run_dir, allow_failed_source_campaign=allow_failed_source_campaign
+    )
     from evaluation.reanalysis.checkpoint import resolve_checkpoint
 
     checkpoint = resolve_checkpoint(run_dir, None).resolve()
@@ -95,6 +116,17 @@ def _source_identity(label: str, run_dir: Path) -> dict[str, Any]:
     datasets = manifest.get("datasets")
     if not isinstance(datasets, dict):
         raise ValueError(f"source run manifest lacks dataset identities: {run_manifest_path}")
+    jobs = campaign["jobs"]
+    unsuccessful_jobs = [
+        {
+            "key": job.get("key"),
+            "status": job.get("status"),
+            "failure_reason": job.get("failure_reason"),
+            "exit_code": job.get("exit_code"),
+        }
+        for job in jobs
+        if isinstance(job, dict) and job.get("status") != "succeeded"
+    ]
     return {
         "label": label,
         "source_run": str(run_dir),
@@ -104,6 +136,13 @@ def _source_identity(label: str, run_dir: Path) -> dict[str, Any]:
         "campaign_manifest": str(campaign_path.resolve()),
         "campaign_manifest_sha256": _sha256(campaign_path),
         "campaign_fingerprint": campaign.get("fingerprint"),
+        "source_campaign_job_statuses": {
+            str(job.get("key", "unknown")): str(job.get("status", "unknown"))
+            for job in jobs
+            if isinstance(job, dict)
+        },
+        "source_campaign_unsuccessful_jobs": unsuccessful_jobs,
+        "source_campaign_diagnostic_only": bool(unsuccessful_jobs),
         "checkpoint": str(checkpoint),
         "checkpoint_sha256": _sha256(checkpoint),
     }
@@ -168,19 +207,19 @@ def _load_equity(path: Path) -> pd.Series:
 def _align_paths(paths: list[pd.Series], labels: list[str]) -> tuple[pd.DataFrame, list[int]]:
     if not paths:
         raise ValueError("at least one stochastic replay is required")
-    longest_index = max(paths, key=len).index
-    if any(path.index[0] != longest_index[0] for path in paths):
+    if any(path.index[0] != paths[0].index[0] for path in paths):
         raise ValueError("stochastic replay equity paths do not share a start timestamp")
+    shared_index = paths[0].index
+    for path in paths[1:]:
+        shared_index = shared_index.union(path.index)
+    shared_index = shared_index.sort_values()
     aligned: list[pd.Series] = []
-    terminal_lengths: list[int] = []
-    for path, label in zip(paths, labels, strict=True):
-        if not path.index.equals(longest_index[: len(path)]):
-            raise ValueError(
-                f"{label}: equity timestamps are not an exact prefix of the shared dataset"
-            )
-        terminal_lengths.append(len(path))
-        aligned.append(path.reindex(longest_index).ffill())
-    return pd.concat(aligned, axis=1), terminal_lengths
+    terminal_positions: list[int] = []
+    for path, _label in zip(paths, labels, strict=True):
+        terminal_position = shared_index.searchsorted(path.index[-1])
+        terminal_positions.append(int(terminal_position) + 1)
+        aligned.append(path.reindex(shared_index).ffill())
+    return pd.concat(aligned, axis=1), terminal_positions
 
 
 def _plot_split(
@@ -202,13 +241,15 @@ def _plot_split(
 
     fig, ax = plt.subplots(figsize=(15, 6))
     for column in range(len(replay_records)):
+        replay_color = plt.get_cmap("tab20")(column % 20)
         ax.plot(
             matrix.index,
             values[:, column],
-            color="#667085",
-            alpha=0.22,
-            linewidth=0.75,
-            label="Individual stochastic replays" if column == 0 else None,
+            color=replay_color,
+            alpha=0.72,
+            linewidth=1.0,
+            label=replay_labels[column],
+            drawstyle="steps-post",
         )
         terminal = terminal_lengths[column]
         if terminal < len(matrix.index):
@@ -217,8 +258,8 @@ def _plot_split(
                 values[terminal - 1, column],
                 marker="x",
                 s=22,
-                color="#667085",
-                alpha=0.75,
+                color=replay_color,
+                alpha=0.9,
                 label="Replay ended early"
                 if not any(length < len(matrix.index) for length in terminal_lengths[:column])
                 else None,
@@ -232,6 +273,7 @@ def _plot_split(
         alpha=0.2,
         label="25th–75th percentile",
         zorder=2,
+        step="post",
     )
     ax.plot(
         matrix.index,
@@ -240,6 +282,7 @@ def _plot_split(
         linewidth=2.4,
         label="Pointwise median stochastic equity",
         zorder=4,
+        drawstyle="steps-post",
     )
     ax.axhline(
         initial_balance,
@@ -277,10 +320,11 @@ def _plot_split(
         ax.plot(
             matrix.index,
             drawdowns[:, column],
-            color="#667085",
-            alpha=0.2,
-            linewidth=0.7,
-            label="Individual stochastic replays" if column == 0 else None,
+            color=plt.get_cmap("tab20")(column % 20),
+            alpha=0.72,
+            linewidth=0.9,
+            label=replay_labels[column],
+            drawstyle="steps-post",
         )
     ax.fill_between(
         matrix.index,
@@ -289,6 +333,7 @@ def _plot_split(
         color="#5271ff",
         alpha=0.2,
         label="25th–75th percentile",
+        step="post",
     )
     ax.plot(
         matrix.index,
@@ -296,6 +341,7 @@ def _plot_split(
         color="#b42318",
         linewidth=2.2,
         label="Pointwise median drawdown",
+        drawstyle="steps-post",
     )
     ax.axhline(0.0, color="#98a2b3", linewidth=0.8)
     ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=100))
@@ -388,6 +434,113 @@ def _plot_split(
     return summary
 
 
+def _plot_paired_train_test_equity(
+    label: str, replay_records: list[dict[str, Any]], output_dir: Path
+) -> dict[str, str]:
+    """Plot every seeded equity path in two split panels with a common y-axis."""
+    split_matrices: dict[str, pd.DataFrame] = {}
+    split_terminal_lengths: dict[str, list[int]] = {}
+    replay_labels = [f"seed {record['seed']}" for record in replay_records]
+    for split in SPLITS:
+        paths = [
+            _load_equity(Path(record["output"]) / split / "equity.csv") for record in replay_records
+        ]
+        matrix, terminal_lengths = _align_paths(paths, replay_labels)
+        split_matrices[split] = matrix
+        split_terminal_lengths[split] = terminal_lengths
+
+    initial_balance = float(replay_records[0]["initial_balance"])
+    all_values = np.concatenate(
+        [matrix.to_numpy(dtype=float).ravel() for matrix in split_matrices.values()]
+        + [np.asarray([initial_balance])]
+    )
+    lower = float(np.min(all_values))
+    upper = float(np.max(all_values))
+    margin = max((upper - lower) * 0.06, 1.0)
+
+    fig, axes = plt.subplots(1, 2, figsize=(18, 6.5), sharey=True)
+    for axis, split in zip(axes, SPLITS, strict=True):
+        matrix = split_matrices[split]
+        values = matrix.to_numpy(dtype=float)
+        median = np.median(values, axis=1)
+        lower_band = np.quantile(values, 0.25, axis=1)
+        upper_band = np.quantile(values, 0.75, axis=1)
+        for column, record in enumerate(replay_records):
+            replay_color = plt.get_cmap("tab20")(column % 20)
+            axis.plot(
+                matrix.index,
+                values[:, column],
+                color=replay_color,
+                alpha=0.65,
+                linewidth=0.95,
+                label=f"Stochastic seed {record['seed']}",
+                drawstyle="steps-post",
+            )
+            terminal = split_terminal_lengths[split][column]
+            if terminal < len(matrix.index):
+                axis.scatter(
+                    matrix.index[terminal - 1],
+                    values[terminal - 1, column],
+                    marker="x",
+                    s=26,
+                    color=replay_color,
+                    label="Replay ended early"
+                    if not any(
+                        length < len(matrix.index)
+                        for length in split_terminal_lengths[split][:column]
+                    )
+                    else None,
+                    zorder=3,
+                )
+        axis.fill_between(
+            matrix.index,
+            lower_band,
+            upper_band,
+            color="#5271ff",
+            alpha=0.2,
+            label="25th–75th percentile",
+            zorder=2,
+            step="post",
+        )
+        axis.plot(
+            matrix.index,
+            median,
+            color="#b42318",
+            linewidth=2.5,
+            label="Pointwise median",
+            zorder=4,
+            drawstyle="steps-post",
+        )
+        axis.axhline(
+            initial_balance,
+            color="#98a2b3",
+            linewidth=0.9,
+            linestyle="--",
+            label="Initial balance",
+        )
+        split_label = "Training · in-sample" if split == "training" else "Testing · report-only"
+        date_range = (
+            f"{matrix.index[0].strftime('%Y-%m-%d')} to {matrix.index[-1].strftime('%Y-%m-%d')}"
+        )
+        axis.set_title(f"{split_label} · {date_range}")
+        axis.set_xlabel("Date")
+        axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))  # type: ignore[no-untyped-call]
+        axis.grid(True, alpha=0.25)
+        axis.legend(loc="best", fontsize=8)
+    axes[0].set_ylabel("Account equity (USD)")
+    axes[0].set_ylim(lower - margin, upper + margin)
+    fig.suptitle(
+        f"{label}: {len(replay_records)} stochastic action replays from one checkpoint "
+        "(shared equity scale)"
+    )
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    figure_path = output_dir / f"{label}_train_test_stochastic_equity.png"
+    fig.savefig(figure_path, dpi=160, bbox_inches="tight")
+    plt.close(fig)
+    return {"path": str(figure_path.resolve()), "sha256": _sha256(figure_path)}
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -420,6 +573,14 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Acknowledge that the historical test split has already been inspected.",
     )
+    parser.add_argument(
+        "--allow-failed-source-campaign",
+        action="store_true",
+        help=(
+            "Allow only terminal failed source jobs with recorded failure reasons; resulting "
+            "plots are diagnostic-only and cannot establish campaign acceptance."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -434,7 +595,12 @@ def main() -> int:
     if len(set(labels)) != len(labels):
         raise SystemExit("--run labels must be unique")
 
-    sources = [_source_identity(label, path) for label, path in runs]
+    sources = [
+        _source_identity(
+            label, path, allow_failed_source_campaign=args.allow_failed_source_campaign
+        )
+        for label, path in runs
+    ]
     dataset_identities = [
         json.dumps(source["source_datasets"], sort_keys=True) for source in sources
     ]
@@ -449,7 +615,11 @@ def main() -> int:
                 f"refusing to use an unrecognized output directory: {output_root}"
             )
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        if manifest.get("sources") != sources or manifest.get("seeds") != args.seeds:
+        if (
+            manifest.get("sources") != sources
+            or manifest.get("seeds") != args.seeds
+            or manifest.get("reanalysis_seeds", args.seeds) != args.seeds
+        ):
             raise FileExistsError(
                 f"existing ensemble output has a different identity: {output_root}"
             )
@@ -458,12 +628,21 @@ def main() -> int:
         manifest = {
             "artifact_role": "stochastic_equity_ensemble",
             "sources": sources,
-            "seeds": args.seeds,
+            "seeds": list(args.seeds),
+            "reanalysis_seeds": list(args.seeds),
             "policy_action_mode": "stochastic",
             "seed_controls": "sampled policy actions and seeded execution randomness",
             "median_definition": "pointwise median across replay equity values; not a replay",
             "band_definition": "pointwise 25th to 75th percentile across replay equity values",
             "historical_holdout_inspected": True,
+            "source_campaign_acceptance": (
+                "failed; diagnostic-only stochastic replay"
+                if any(source["source_campaign_diagnostic_only"] for source in sources)
+                else "succeeded"
+            ),
+            "candidate_ranking_permitted": not any(
+                source["source_campaign_diagnostic_only"] for source in sources
+            ),
             "replays": [],
             "summaries": [],
         }
@@ -516,6 +695,7 @@ def main() -> int:
     all_datasets = {
         json.dumps((record["dataset_identity"], record["evaluated_datasets"]), sort_keys=True)
         for record in all_replays
+        if record.get("evaluated_datasets") is not None
     }
     if len(all_balances) != 1 or len(all_datasets) != 1:
         raise ValueError("replays do not share the same balance and evaluated datasets")
@@ -529,8 +709,77 @@ def main() -> int:
             summaries.append(_plot_split(label, split, label_replays, figures_dir))
 
     manifest["summaries"] = summaries
+    manifest["paired_training_testing_equity"] = {
+        label: _plot_paired_train_test_equity(
+            label,
+            [completed[(label, seed)] for seed in args.seeds],
+            figures_dir,
+        )
+        for label in labels
+    }
     manifest["complete"] = True
     _write_json(output_root / "ensemble_manifest.json", manifest)
+    report_lines = [
+        "# Stochastic Equity Ensemble",
+        "",
+        "This report contains seeded action-sampling replays of fixed checkpoints. Each thin line is one replay; the bold red line is the pointwise median across replay equity values, and the shaded band is the 25th–75th percentile. Equity paths are aligned on the union of recorded timestamps with the last observed balance carried forward, then drawn as stepwise account-balance curves. The pointwise median is a summary curve, not one executable replay. The paired training/testing equity figure uses the same vertical account-balance range in both panels.",
+        "",
+        f"Replay seeds: {', '.join(str(seed) for seed in args.seeds)}.",
+        "",
+        f"Source campaign acceptance: {manifest['source_campaign_acceptance']}.",
+        "",
+        (
+            "These replays change sampled policy actions. They do not retrain the policy or "
+            "create independent training seeds. Percentile bands summarize only the selected "
+            "action-sampling seeds; they are descriptive, not confidence intervals or estimates "
+            "of training-seed uncertainty."
+        ),
+        "",
+    ]
+    for label in labels:
+        source = next(source for source in sources if source["label"] == label)
+        paired_figure = manifest["paired_training_testing_equity"][label]
+        if source["source_campaign_diagnostic_only"]:
+            report_lines.extend(
+                [
+                    f"## {label}",
+                    "",
+                    "**Diagnostic only:** the source campaign failed its training-survival gate. These plots describe stochastic replay variability and do not convert the campaign into an accepted result.",
+                    "",
+                ]
+            )
+        else:
+            report_lines.extend([f"## {label}", ""])
+        report_lines.extend(
+            [
+                f"![{label} paired training and testing stochastic equity ensemble]({Path(paired_figure['path']).relative_to(output_root).as_posix()})",
+                "",
+            ]
+        )
+        for split in SPLITS:
+            summary = next(
+                item for item in summaries if item["label"] == label and item["split"] == split
+            )
+            returns = summary["return_pct"]
+            drawdowns = summary["maximum_drawdown_pct"]
+            figures = summary["figures"]
+            report_lines.extend(
+                [
+                    f"### {split.capitalize()}",
+                    "",
+                    f"{summary['replay_count']} stochastic replays; median final return {returns['median']:.2f}% (25th–75th percentile {returns['p25']:.2f}% to {returns['p75']:.2f}%); median maximum drawdown {drawdowns['median']:.2f}%.",
+                    "",
+                    f"![{label} {split} stochastic equity ensemble]({Path(figures['equity']['path']).relative_to(output_root).as_posix()})",
+                    "",
+                    f"![{label} {split} stochastic drawdown ensemble]({Path(figures['drawdown']['path']).relative_to(output_root).as_posix()})",
+                    "",
+                    f"![{label} {split} stochastic outcomes]({Path(figures['outcomes']['path']).relative_to(output_root).as_posix()})",
+                    "",
+                ]
+            )
+    (output_root / "stochastic_equity_ensemble_report.md").write_text(
+        "\n".join(report_lines).rstrip() + "\n", encoding="utf-8"
+    )
     print(f"Stochastic equity plots and provenance written to {output_root}")
     return 0
 

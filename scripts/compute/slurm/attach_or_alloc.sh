@@ -125,7 +125,7 @@ if ! tmux list-windows -t "$SESSION" -F '#{window_name}' 2>/dev/null | grep -qx 
 fi
 
 SRUN_CMD=$(cat <<EOF
-cd $REPO && \
+cd $REPO && export TRITON_REPO=$REPO && \
 srun --partition=$PARTITION --gpus=$GPUS --time=$TIME --mem=$MEM --ntasks=1 --cpus-per-task=$CPUS --immediate=60 --pty bash -lc '
   echo "=== allocated on \$(hostname) ==="
   nvidia-smi -L 2>/dev/null || true
@@ -137,13 +137,6 @@ srun --partition=$PARTITION --gpus=$GPUS --time=$TIME --mem=$MEM --ntasks=1 --cp
 '
 EOF
 )
-
-PANE_TAIL=$(tmux capture-pane -t "$SESSION:$WINDOW" -p 2>/dev/null | tail -5 || true)
-if echo "$PANE_TAIL" | grep -Eqi 'srun:|CUDA True|gpuarm|gh200|h200'; then
-  echo "Window $SESSION:$WINDOW already looks GPU-backed — not sending another srun."
-  echo "Attach with: tmux attach -t $SESSION"
-  exit 0
-fi
 
 tmux send-keys -t "$SESSION:$WINDOW" C-c 2>/dev/null || true
 sleep 0.2

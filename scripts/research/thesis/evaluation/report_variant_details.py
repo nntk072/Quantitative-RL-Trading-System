@@ -1253,11 +1253,88 @@ def _markdown_config_results(
             "",
             "## Equity and drawdown figures",
             "",
+            "For equity, the paired training and testing panels use the same vertical account-balance range, so their values can be compared directly.",
+            "The single line in the original paired plot is one saved stochastic replay. Multi-seed ensemble figures are shown separately when available.",
+            "",
         ]
     )
     for variant in variants:
         label = str(variant.get("variant", "variant"))
         lines.extend([f"### {label}", ""])
+        comparison_figures = variant.get("comparison_figures", {})
+        for figure_name, link in comparison_figures.items():
+            image_path = (report_dir / link).resolve()
+            lines.extend(
+                [
+                    f"#### Training/testing {figure_name.replace('_', ' ')}",
+                    "",
+                    f"![{label} {figure_name}]({image_path.as_posix()})",
+                    "",
+                ]
+            )
+        ensemble = variant.get("stochastic_ensemble", {})
+        if ensemble:
+            lines.extend(["#### Multi-seed stochastic action replays", ""])
+            lines.extend(
+                [
+                    f"Seeds: {', '.join(str(seed) for seed in ensemble.get('seeds', []))}.",
+                    "",
+                    "These are repeated stochastic action replays of one fixed checkpoint. Their "
+                    "percentiles describe only the selected replay seeds; they are not confidence "
+                    "intervals or variation across independently trained models.",
+                    "",
+                    "| Split | Median final return | Return 25th–75th percentile | Median maximum drawdown | Drawdown 25th–75th percentile |",
+                    "|---|---:|---:|---:|---:|",
+                ]
+            )
+            for split, values in ensemble.get("summaries", {}).items():
+                returns = values["return_pct"]
+                drawdowns = values["maximum_drawdown_pct"]
+                lines.append(
+                    f"| {split.capitalize()} | {returns['median']:.2f}% | "
+                    f"{returns['p25']:.2f}% to {returns['p75']:.2f}% | "
+                    f"{drawdowns['median']:.2f}% | "
+                    f"{drawdowns['p25']:.2f}% to {drawdowns['p75']:.2f}% |"
+                )
+            lines.extend(
+                [
+                    "",
+                    f"[Open the full stochastic ensemble report]({ensemble['report_path']})",
+                    "",
+                    "Thin lines are individual stochastic action replays; the bold line is the pointwise median and the shaded area is the 25th–75th percentile. The pointwise median is not an individual replay.",
+                    "",
+                ]
+            )
+            if ensemble.get("backend_mismatch"):
+                replay_backends = ", ".join(ensemble.get("replay_evaluation_backends", []))
+                lines.extend(
+                    [
+                        "**Backend limitation:** the original saved evaluation used `{}`; "
+                        "these seeded replays use `{}`. They are kept separate because "
+                        "cross-backend parity has not been established, so differences "
+                        "cannot be attributed to action sampling alone.".format(
+                            ensemble.get("source_saved_evaluation_backend"), replay_backends
+                        ),
+                        "",
+                    ]
+                )
+            if ensemble.get("diagnostic_only"):
+                lines.extend(
+                    [
+                        "**Diagnostic only:** the source campaign failed its training-survival gate. These paths describe action-sampling variability and do not establish an accepted training result.",
+                        "",
+                    ]
+                )
+            for figure_name, link in ensemble.get("figures", {}).items():
+                image_path = (report_dir / link).resolve()
+                lines.extend(
+                    [
+                        f"##### {figure_name.replace('_', ' ').title()}",
+                        "",
+                        f"![{label} {figure_name}]({image_path.as_posix()})",
+                        "",
+                    ]
+                )
         for split_name in ("training", "testing"):
             detail = variant.get("splits", {}).get(split_name, {})
             generated = detail.get("generated_figures", {})
@@ -1289,6 +1366,14 @@ def _markdown(report: dict[str, Any], campaign_dir: Path, be_tolerance: float) -
         "Training and testing sections are kept separate; interpretation should follow the saved split configuration.",
         "",
     ]
+    if any(variant.get("stochastic_ensemble") for variant in report.get("variants", [])):
+        lines.extend(
+            [
+                "The main report is artifact-driven. Attached stochastic ensemble figures were generated separately from persisted checkpoint replays; seeds and diagnostic status are shown with each variant.",
+                "The original paired equity chart contains one saved action-sampling seed; the ensemble figures show multiple replay seeds.",
+                "",
+            ]
+        )
     project_context = report.get("project_context")
     if isinstance(project_context, dict):
         from scripts.research.thesis.evaluation.project_report_markdown import (
@@ -1339,6 +1424,85 @@ def _markdown(report: dict[str, Any], campaign_dir: Path, be_tolerance: float) -
                 "",
                 f"## {variant['variant']}",
                 "",
+                "### Training and testing comparison figures",
+                "",
+                "Training is the in-sample split; testing is report-only. Dates come from the saved equity timelines. For equity, the paired panels use the same vertical account-balance range, so values can be compared directly.",
+                "",
+            ]
+        )
+        for name, path in variant.get("comparison_figures", {}).items():
+            lines.extend(
+                [
+                    f"#### {name.replace('_', ' ').title()}",
+                    "",
+                    f"![{name.replace('_', ' ')}]({path})",
+                    "",
+                ]
+            )
+        ensemble = variant.get("stochastic_ensemble", {})
+        if ensemble:
+            lines.extend(["### Multi-seed stochastic action replays", ""])
+            lines.extend(
+                [
+                    f"Seeds: {', '.join(str(seed) for seed in ensemble.get('seeds', []))}.",
+                    "",
+                    "These are repeated stochastic action replays of one fixed checkpoint. Their "
+                    "percentiles describe only the selected replay seeds; they are not confidence "
+                    "intervals or variation across independently trained models.",
+                    "",
+                    "| Split | Median final return | Return 25th–75th percentile | Median maximum drawdown | Drawdown 25th–75th percentile |",
+                    "|---|---:|---:|---:|---:|",
+                ]
+            )
+            for split, values in ensemble.get("summaries", {}).items():
+                returns = values["return_pct"]
+                drawdowns = values["maximum_drawdown_pct"]
+                lines.append(
+                    f"| {split.capitalize()} | {returns['median']:.2f}% | "
+                    f"{returns['p25']:.2f}% to {returns['p75']:.2f}% | "
+                    f"{drawdowns['median']:.2f}% | "
+                    f"{drawdowns['p25']:.2f}% to {drawdowns['p75']:.2f}% |"
+                )
+            lines.extend(
+                [
+                    "",
+                    f"[Open the full stochastic ensemble report]({ensemble['report_path']})",
+                    "",
+                    "Thin lines are individual stochastic action replays; the bold line is the pointwise median and the shaded area is the 25th–75th percentile. The pointwise median is not an individual replay.",
+                    "",
+                ]
+            )
+            if ensemble.get("backend_mismatch"):
+                replay_backends = ", ".join(ensemble.get("replay_evaluation_backends", []))
+                lines.extend(
+                    [
+                        "**Backend limitation:** the original saved evaluation used `{}`; "
+                        "these seeded replays use `{}`. They are kept separate because "
+                        "cross-backend parity has not been established, so differences "
+                        "cannot be attributed to action sampling alone.".format(
+                            ensemble.get("source_saved_evaluation_backend"), replay_backends
+                        ),
+                        "",
+                    ]
+                )
+            if ensemble.get("diagnostic_only"):
+                lines.extend(
+                    [
+                        "**Diagnostic only:** the source campaign failed its training-survival gate. These paths describe action-sampling variability and do not establish an accepted training result.",
+                        "",
+                    ]
+                )
+            for name, path in ensemble.get("figures", {}).items():
+                lines.extend(
+                    [
+                        f"#### {name.replace('_', ' ').title()}",
+                        "",
+                        f"![{name.replace('_', ' ')}]({path})",
+                        "",
+                    ]
+                )
+        lines.extend(
+            [
                 "### Run and training configuration",
                 "",
             ]
@@ -2295,6 +2459,40 @@ def _validate_report_figures(report: dict[str, Any], report_dir: Path) -> None:
         figure_links.extend(training_figures.values())
         figure_links.extend(training.get("figure_links", {}).values())
         figure_links.extend(variant.get("example_figure_links", {}).values())
+        comparison_figures = variant.get("comparison_figures", {})
+        required_comparison_figures = {
+            "train_test_equity",
+            "train_test_drawdown",
+            "train_test_monthly_pnl",
+            "train_test_metrics",
+            "train_test_outcomes",
+            "train_test_exit_reasons_by_outcome",
+            "train_test_approved_risk_distribution",
+            "train_test_setup_mix",
+            "train_test_sl_tp_references",
+        }
+        missing_comparison = required_comparison_figures - set(comparison_figures)
+        if missing_comparison:
+            raise RuntimeError(
+                f"required training/testing comparison figures were not generated for "
+                f"{variant.get('variant')}: " + ", ".join(sorted(missing_comparison))
+            )
+        figure_links.extend(comparison_figures.values())
+        ensemble = variant.get("stochastic_ensemble", {})
+        if ensemble:
+            required_ensemble_figures = {
+                f"{split}_{kind}_ensemble"
+                for split in ("training", "testing")
+                for kind in ("equity", "drawdown", "outcomes")
+            }
+            required_ensemble_figures.add("training_testing_equity_ensemble")
+            missing_ensemble = required_ensemble_figures - set(ensemble.get("figures", {}))
+            if missing_ensemble:
+                raise RuntimeError(
+                    f"stochastic ensemble figures are incomplete for {variant.get('variant')}: "
+                    + ", ".join(sorted(missing_ensemble))
+                )
+            figure_links.extend(ensemble["figures"].values())
         for split, detail in variant.get("splits", {}).items():
             generated = detail.get("generated_figures", {})
             missing_required = required_split_figures - set(generated)
@@ -2330,6 +2528,112 @@ def _validate_report_figures(report: dict[str, Any], report_dir: Path) -> None:
             "report generation stopped because referenced figures are missing or empty: "
             + ", ".join(missing[:12])
         )
+
+
+def _attach_stochastic_ensemble(
+    report: dict[str, Any], ensemble_dir: Path, report_dir: Path
+) -> None:
+    """Attach complete, hash-checked stochastic ensemble figures to report variants."""
+    manifest_path = ensemble_dir / "ensemble_manifest.json"
+    manifest = _json(manifest_path)
+    if not manifest or manifest.get("complete") is not True:
+        raise ValueError(f"stochastic ensemble is missing or incomplete: {manifest_path}")
+    if manifest.get("artifact_role") != "stochastic_equity_ensemble":
+        raise ValueError(f"unrecognized stochastic ensemble manifest: {manifest_path}")
+    ensemble_report_path = ensemble_dir / "stochastic_equity_ensemble_report.md"
+    if not ensemble_report_path.is_file() or ensemble_report_path.stat().st_size == 0:
+        raise ValueError(f"stochastic ensemble Markdown report is missing: {ensemble_report_path}")
+    sources = manifest.get("sources")
+    summaries = manifest.get("summaries")
+    if not isinstance(sources, list) or not isinstance(summaries, list):
+        raise ValueError("stochastic ensemble manifest lacks source or summary records")
+    source_by_label = {
+        str(source.get("label")): source for source in sources if isinstance(source, dict)
+    }
+    replay_records = manifest.get("replays")
+    if not isinstance(replay_records, list):
+        raise ValueError("stochastic ensemble manifest lacks replay provenance records")
+    summary_by_identity = {
+        (str(summary.get("label")), str(summary.get("split"))): summary
+        for summary in summaries
+        if isinstance(summary, dict)
+    }
+    for variant in report.get("variants", []):
+        if not isinstance(variant, dict):
+            continue
+        label = str(variant.get("run_key", ""))
+        source = source_by_label.get(label)
+        if source is None:
+            continue
+        source_run_manifest = _json(Path(str(source["source_run"])) / "run_manifest.json") or {}
+        execution_protocol = source_run_manifest.get("execution_protocol")
+        source_backend = (
+            str(execution_protocol.get("data_source"))
+            if isinstance(execution_protocol, dict) and execution_protocol.get("data_source")
+            else None
+        )
+        replay_backends: set[str] = set()
+        for replay in replay_records:
+            if not isinstance(replay, dict) or str(replay.get("label")) != label:
+                continue
+            replay_manifest = _json(Path(str(replay["reanalysis_manifest"]))) or {}
+            backend = replay_manifest.get("evaluation_backend")
+            if backend:
+                replay_backends.add(str(backend))
+        figures: dict[str, str] = {}
+        variant_summaries: dict[str, dict[str, Any]] = {}
+        paired_figures = manifest.get("paired_training_testing_equity")
+        paired_record = paired_figures.get(label) if isinstance(paired_figures, dict) else None
+        if not isinstance(paired_record, dict):
+            raise ValueError(f"paired train/test ensemble figure is missing for {label}")
+        paired_path = Path(str(paired_record.get("path", ""))).resolve()
+        try:
+            paired_path.relative_to(ensemble_dir.resolve())
+        except ValueError as error:
+            raise ValueError(
+                f"paired ensemble figure escapes its output directory: {paired_path}"
+            ) from error
+        if not paired_path.is_file() or _sha256(paired_path) != paired_record.get("sha256"):
+            raise ValueError(f"paired ensemble figure is missing or hash-mismatched: {paired_path}")
+        figures["training_testing_equity_ensemble"] = os.path.relpath(paired_path, report_dir)
+        for split in ("training", "testing"):
+            summary = summary_by_identity.get((label, split))
+            if summary is None:
+                raise ValueError(f"ensemble summary is missing for {label} {split}")
+            recorded_figures = summary.get("figures")
+            if not isinstance(recorded_figures, dict):
+                raise ValueError(f"ensemble figures are missing for {label} {split}")
+            variant_summaries[split] = {
+                key: summary[key] for key in ("replay_count", "return_pct", "maximum_drawdown_pct")
+            }
+            for kind in ("equity", "drawdown", "outcomes"):
+                record = recorded_figures.get(kind)
+                if not isinstance(record, dict):
+                    raise ValueError(f"ensemble {kind} figure is missing for {label} {split}")
+                image_path = Path(str(record.get("path", ""))).resolve()
+                try:
+                    image_path.relative_to(ensemble_dir.resolve())
+                except ValueError as error:
+                    raise ValueError(
+                        f"ensemble figure escapes its output directory: {image_path}"
+                    ) from error
+                if not image_path.is_file() or _sha256(image_path) != record.get("sha256"):
+                    raise ValueError(f"ensemble figure is missing or hash-mismatched: {image_path}")
+                key = f"{split}_{kind}_ensemble"
+                figures[key] = os.path.relpath(image_path, report_dir)
+        variant["stochastic_ensemble"] = {
+            "seeds": manifest.get("seeds", []),
+            "replay_count": len(manifest.get("seeds", [])),
+            "summaries": variant_summaries,
+            "diagnostic_only": bool(source.get("source_campaign_diagnostic_only")),
+            "source_saved_evaluation_backend": source_backend,
+            "replay_evaluation_backends": sorted(replay_backends),
+            "backend_mismatch": bool(
+                source_backend and replay_backends and source_backend not in replay_backends
+            ),
+            "figures": figures,
+            "report_path": os.path.relpath(ensemble_report_path.resolve(), report_dir),
+        }
 
 
 def _validate_markdown_images(markdown: str, report_dir: Path) -> None:
@@ -2371,6 +2675,11 @@ def main() -> int:
         default="full",
         help="config-results writes a concise local-preview report with absolute figure paths",
     )
+    parser.add_argument(
+        "--stochastic-ensemble-dir",
+        type=Path,
+        help="attach hash-checked stochastic ensemble figures from a completed ensemble run",
+    )
     args = parser.parse_args()
     if args.be_tolerance < 0 or not math.isfinite(args.be_tolerance):
         parser.error("--be-tolerance must be finite and non-negative")
@@ -2401,6 +2710,18 @@ def main() -> int:
         report_dir / f"{out_stem.stem}_figures",
         report_dir,
     )
+    from scripts.research.thesis.evaluation.report_train_test_figures import (
+        generate_train_test_figures,
+    )
+
+    generate_train_test_figures(
+        report,
+        campaign_dir,
+        report_dir / f"{out_stem.stem}_figures",
+        report_dir,
+    )
+    if args.stochastic_ensemble_dir is not None:
+        _attach_stochastic_ensemble(report, args.stochastic_ensemble_dir.resolve(), report_dir)
     _validate_report_figures(report, report_dir)
     markdown = (
         _markdown(report, campaign_dir, args.be_tolerance)
