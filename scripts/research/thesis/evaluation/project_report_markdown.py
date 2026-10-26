@@ -201,6 +201,7 @@ def render_project_context(context: dict[str, Any]) -> str:
         checkpoint = _dict(run.get("checkpoint"))
         action = _dict(model.get("action_schema"))
         observation = _dict(model.get("observation_schema"))
+        regime_observation = _dict(observation.get("regime_observation"))
         lines.extend(
             [
                 f"#### {run.get('variant')} (seed {_plain(run.get('seed'))})",
@@ -222,6 +223,21 @@ def render_project_context(context: dict[str, Any]) -> str:
                 f"| Checkpoint SHA-256 | {_inline(checkpoint.get('sha256') or 'not recorded')} |",
             ]
         )
+        if regime_observation:
+            regime_features = regime_observation.get("features", [])
+            feature_names = (
+                ", ".join(_inline(str(name)) for name in regime_features)
+                if isinstance(regime_features, list)
+                else _plain(regime_features)
+            )
+            lines.append(
+                "Completed-D1 regime context: "
+                f"schema {_inline(regime_observation.get('version') or 'not recorded')}; "
+                f"features {feature_names or 'not recorded'}; "
+                f"availability {_plain(regime_observation.get('availability'))}; "
+                f"normalization {_plain(regime_observation.get('normalization_semantics'))}. "
+                "Missing coordinates are zero-filled and accompanied by per-feature validity masks."
+            )
         if training.get("reward"):
             lines.append(f"| Reward settings | {_plain(training['reward'])} |")
         if training.get("risk"):

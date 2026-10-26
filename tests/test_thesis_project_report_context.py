@@ -107,7 +107,16 @@ def test_report_context_explains_data_model_source_and_evaluation_action_modes(
             "metrics_protocol": {"historical_test_role": "previously_inspected_holdout"},
             "learning_result": {"backend": "stable_baselines3"},
             "action_schema": {"version": "overlay-action-v2", "width": 12},
-            "observation_schema": {"version": "account-state-v1", "observation_width": 6},
+            "observation_schema": {
+                "version": "account-state-v1",
+                "observation_width": 6,
+                "regime_observation": {
+                    "version": "slow-regime-observation-v1",
+                    "features": ["D1_ret_5", "D1_adx"],
+                    "availability": "last completed D1 feature value at the decision row",
+                    "normalization_semantics": "train-only statistics on D1 source bars",
+                },
+            },
             "completed_steps": 1024,
         },
     )
@@ -163,6 +172,10 @@ def test_report_context_explains_data_model_source_and_evaluation_action_modes(
     assert "Training dates" in markdown
     assert "| Modes match |" in markdown
     assert "stochastic" in markdown
+    assert "Completed-D1 regime context" in markdown
+    assert "D1_ret_5" in markdown and "D1_adx" in markdown
+    assert "last completed D1 feature value" in markdown
+    assert "train-only statistics on D1 source bars" in markdown
 
     repeated_variants = [variants[0], {**variants[0], "variant": "ladder_a1"}]
     repeated_context = build_project_context(
