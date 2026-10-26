@@ -120,6 +120,16 @@ def evaluate_checkpoint_split(provider: Any, *, stochastic: bool, **kwargs: Any)
     return evaluate_model(provider, deterministic=not stochastic, **kwargs)
 
 
+def resolve_replay_eod_risk(
+    eod_risk: dict[str, Any], *, disable_peak_eod_dd_policy: bool
+) -> dict[str, Any]:
+    """Copy replay EOD settings, optionally removing the training-only peak-DD policy."""
+    resolved = dict(eod_risk)
+    if disable_peak_eod_dd_policy:
+        resolved["peak_trailing_dd_limit_usd"] = 0.0
+    return resolved
+
+
 def evaluate_train_split(
     provider: Any,
     *,
@@ -332,6 +342,10 @@ def main() -> None:
         env_vae=None,
         pre_ny_by_date=None,
         tick_fill_slippage_points=args.tick_fill_slippage_points,
+    )
+    eval_common["eod_risk"] = resolve_replay_eod_risk(
+        dict(eval_common["eod_risk"]),
+        disable_peak_eod_dd_policy=args.disable_peak_eod_dd_policy,
     )
     if args.tick_fill_slippage_points and not eval_common["tick_execution_required"]:
         raise ValueError("tick-fill slippage override requires tick execution in the saved config")
@@ -650,6 +664,14 @@ def main() -> None:
             "position_sizing_cost_model_unchanged": True,
             "trigger_quote_unchanged": True,
             "opposite_quote_side_unchanged": True,
+        },
+        "evaluation_risk_overrides": {
+            "peak_eod_drawdown_policy_disabled": bool(args.disable_peak_eod_dd_policy),
+            "effective_peak_eod_drawdown_limit_usd": float(
+                eval_common["eod_risk"].get("peak_trailing_dd_limit_usd", 0.0)
+            ),
+            "daily_loss_limit_usd": float(eval_common["guardrail_kwargs"]["daily_loss_limit"]),
+            "maximum_loss_limit_usd": float(eval_common["guardrail_kwargs"]["max_loss_limit"]),
         },
         "reanalysis_timestamp": datetime.now().isoformat(),
         "validity_note": "Historical inspected holdout; not pristine OOS evidence.",

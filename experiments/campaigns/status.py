@@ -160,6 +160,13 @@ def logged_steps(log_path: pathlib.Path) -> int | None:
         text = log_path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
+    progress_matches = re.findall(
+        r"^.*\bTRAIN_PROGRESS\s+step=([\d,]+)/[\d,]+\b",
+        text,
+        re.MULTILINE,
+    )
+    if progress_matches:
+        return int(progress_matches[-1].replace(",", ""))
     # Stable-Baselines table field; prefer the latest total over progress rows.
     matches = re.findall(r"^\|\s*total_timesteps\s*\|\s*([\d,]+)\s*\|", text, re.MULTILINE)
     if not matches:
@@ -173,11 +180,19 @@ def recent_fps(log_path: pathlib.Path, sample_count: int = 5) -> tuple[float, in
         text = log_path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
-    matches = re.findall(r"^\|\s*fps\s*\|\s*([\d,]+)\s*\|", text, re.MULTILINE)
-    values = [int(value.replace(",", "")) for value in matches[-sample_count:]]
+    progress_matches = re.findall(
+        r"^.*\bTRAIN_PROGRESS\s+step=[\d,]+/[\d,]+\s+recent_fps=([\d.]+)\b",
+        text,
+        re.MULTILINE,
+    )
+    if progress_matches:
+        values = [float(value) for value in progress_matches[-sample_count:]]
+    else:
+        matches = re.findall(r"^\|\s*fps\s*\|\s*([\d,]+)\s*\|", text, re.MULTILINE)
+        values = [float(value.replace(",", "")) for value in matches[-sample_count:]]
     if not values:
         return None
-    return float(statistics.median(values)), len(values)
+    return statistics.median(values), len(values)
 
 
 def estimate_remaining_seconds(steps: int | None, target: int, fps: float | None) -> int | None:

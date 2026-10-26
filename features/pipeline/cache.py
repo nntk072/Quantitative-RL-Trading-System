@@ -40,7 +40,13 @@ def feature_cache_content_hash(
     if cfg is not None:
         payload: dict[str, Any] = {}
         if hasattr(cfg, "features"):
-            payload["features"] = OmegaConf.to_container(cfg.features, resolve=True)
+            feature_payload = OmegaConf.to_container(cfg.features, resolve=True)
+            if isinstance(feature_payload, dict):
+                # False is the historical behavior, so keep its existing cache
+                # identity. The opt-in treatment remains part of the hash.
+                if feature_payload.get("normalize_d1_technical_on_source") is False:
+                    feature_payload.pop("normalize_d1_technical_on_source")
+            payload["features"] = feature_payload
         cost_point_size = OmegaConf.select(cfg, "costs.point_size", default=None)
         if cost_point_size is not None:
             payload["costs.point_size"] = float(cost_point_size)

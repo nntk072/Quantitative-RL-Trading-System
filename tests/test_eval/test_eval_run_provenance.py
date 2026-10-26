@@ -61,6 +61,39 @@ def test_checkpoint_reanalysis_parses_tick_fill_slippage_override() -> None:
     assert args.tick_fill_slippage_points == 10.0
 
 
+def test_checkpoint_reanalysis_can_disable_only_peak_eod_training_policy() -> None:
+    args = eval_run.build_reanalysis_parser().parse_args(
+        ["--run", "source", "--output", "out", "--disable-peak-eod-dd-policy"]
+    )
+    source = {
+        "peak_trailing_dd_limit_usd": 10_000.0,
+        "max_loss_usd": 1100.0,
+        "respect_planned_risk": True,
+    }
+
+    resolved = eval_run.resolve_replay_eod_risk(
+        source, disable_peak_eod_dd_policy=args.disable_peak_eod_dd_policy
+    )
+
+    assert resolved == {
+        "peak_trailing_dd_limit_usd": 0.0,
+        "max_loss_usd": 1100.0,
+        "respect_planned_risk": True,
+    }
+    assert source["peak_trailing_dd_limit_usd"] == 10_000.0
+
+
+def test_checkpoint_reanalysis_preserves_source_eod_policy_by_default() -> None:
+    args = eval_run.build_reanalysis_parser().parse_args(["--run", "source", "--output", "out"])
+
+    resolved = eval_run.resolve_replay_eod_risk(
+        {"peak_trailing_dd_limit_usd": 10_000.0},
+        disable_peak_eod_dd_policy=args.disable_peak_eod_dd_policy,
+    )
+
+    assert resolved == {"peak_trailing_dd_limit_usd": 10_000.0}
+
+
 def test_train_only_screen_is_explicit_opt_in() -> None:
     default_args = eval_run.build_reanalysis_parser().parse_args(
         ["--run", "source", "--output", "out"]

@@ -81,6 +81,90 @@ def test_cache_hash_changes_when_feature_flag_flips() -> None:
     assert feature_cache_content_hash(cfg_a, bars) != feature_cache_content_hash(cfg_b, bars)
 
 
+def test_d1_source_normalization_flag_has_distinct_cache_identity() -> None:
+    bars = _bars()
+    historical = _cfg()
+    explicit_default = _cfg(normalize_d1_technical_on_source=False)
+    treatment = _cfg(normalize_d1_technical_on_source=True)
+
+    assert feature_cache_content_hash(historical, bars) == feature_cache_content_hash(
+        explicit_default, bars
+    )
+    assert feature_cache_content_hash(historical, bars) != feature_cache_content_hash(
+        treatment, bars
+    )
+
+
+def test_d1_technical_features_are_normalized_before_m1_alignment() -> None:
+    day_starts = pd.date_range("2025-01-06 16:30", periods=12, freq="D", tz="Etc/GMT-3")
+    m1_index = pd.DatetimeIndex(
+        [day + pd.Timedelta(minutes=minute) for day in day_starts for minute in range(10)]
+    )
+    m1_close = 20_000.0 + np.cumsum(np.random.default_rng(13).normal(0.0, 2.0, len(m1_index)))
+    primary = pd.DataFrame(
+        {
+            "open": m1_close - 0.5,
+            "high": m1_close + 1.0,
+            "low": m1_close - 1.0,
+            "close": m1_close,
+            "tickvol": 100,
+            "volume": 1000,
+            "vol": 0,
+            "spread": 0.6,
+        },
+        index=m1_index,
+    )
+    daily_index = pd.date_range("2025-01-06", periods=16, freq="D", tz="Etc/GMT-3")
+    daily_close = 20_000.0 + np.cumsum(
+        np.random.default_rng(21).normal(0.0, 35.0, len(daily_index))
+    )
+    daily = pd.DataFrame(
+        {
+            "open": daily_close - 3.0,
+            "high": daily_close + 8.0,
+            "low": daily_close - 8.0,
+            "close": daily_close,
+            "tickvol": 1000,
+            "volume": 10000,
+            "vol": 0,
+            "spread": 0.6,
+        },
+        index=daily_index,
+    )
+    cfg = _cfg(
+        htf_timeframes=["D1"],
+        zscore_window=3,
+        normalize_d1_technical_on_source=True,
+    )
+    train_mask = pd.Series(np.arange(len(primary)) < 90, index=primary.index)
+
+    features = build_features(
+        primary,
+        cfg=cfg,
+        train_mask=train_mask,
+        timeframe_bars={"D1": daily},
+        force=True,
+    )
+
+    same_session = features.loc["2025-01-15 16:35":"2025-01-15 16:39", "D1_ret_5"]
+    assert same_session.notna().all()
+    assert same_session.nunique() == 1
+
+    future_changed = daily.copy()
+    future_changed.loc["2025-01-15":, ["open", "high", "low", "close"]] *= 10.0
+    poisoned = build_features(
+        primary,
+        cfg=cfg,
+        train_mask=train_mask,
+        timeframe_bars={"D1": future_changed},
+        force=True,
+    )
+    pd.testing.assert_series_equal(
+        same_session,
+        poisoned.loc["2025-01-15 16:35":"2025-01-15 16:39", "D1_ret_5"],
+    )
+
+
 def test_feature_cache_hit_and_miss(tmp_path: Path) -> None:
     bars = _bars()
     cfg = _cfg()

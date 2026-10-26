@@ -118,6 +118,14 @@ def build_reanalysis_parser() -> argparse.ArgumentParser:
         help="Evaluation-only adverse price adjustment on the executed tick side.",
     )
     parser.add_argument(
+        "--disable-peak-eod-dd-policy",
+        action="store_true",
+        help=(
+            "Disable the source run's fixed-dollar peak EOD drawdown policy for this replay; "
+            "daily and initial-equity hard loss limits remain active."
+        ),
+    )
+    parser.add_argument(
         "--force", action="store_true", help="Force the data pipeline to rebuild caches"
     )
     parser.add_argument(

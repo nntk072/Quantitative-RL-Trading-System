@@ -1,0 +1,40 @@
+{
+  "protocol_version": 1,
+  "status": "treatment_preflight_passed_control_is_existing_result",
+  "research_question": "Does making the existing completed-D1 technical features available to the TCN improve sustainable DSR PPO behavior?",
+  "matched_policy": {
+    "algorithm": "PPO",
+    "variant": "sustainable_growth_ppo_dsr",
+    "seed": 50,
+    "requested_environment_steps": 2000000,
+    "n_envs": 8,
+    "reward_mode": "dsr",
+    "train_start": "2024-12-30",
+    "train_end": "2025-12-31",
+    "test_start": "2026-01-01",
+    "data_profile": "normal",
+    "evaluation_actions": "stochastic",
+    "randomized_fill_latency_ms": 0.0,
+    "risk_policy": "existing matched DSR config; no new risk-policy intervention"
+  },
+  "R0_control": {
+    "status": "completed_existing_development_result",
+    "campaign_id": "sustainable_growth_seed50_train2025_20261025_2m_normal_v1",
+    "campaign_spec": "config/campaigns/sustainable_growth_seed50_train2025_2m_normal_v1.yaml",
+    "run_dir": "outputs/gpu_campaigns/sustainable_growth_seed50_train2025_20261025_2m_normal_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261026_002028_229373_rl_train_seed50_tcn",
+    "run_manifest_sha256": "c16920488059b8f40f3aff7b269786026f49be84c81e99782e6720e712b40ca1",
+    "feature_cache_identity": "US100.cash_features_v24-native-source-timeframes_d00db1fafe2610ac.parquet",
+    "normalize_d1_technical_on_source": false
+  },
+  "R1_treatment": {
+    "status": "preflight_passed_not_started",
+    "campaign_id": "regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_v1",
+    "campaign_spec": "config/campaigns/regime_d1_norm_r1_seed50_train2025_2m.yaml",
+    "campaign_preflight": "docs/research/regime_attribution_20261026/r1_campaign_preflight.json",
+    "normalize_d1_technical_on_source": true,
+    "validated_feature_cache_hash": "15a7206755fde49b",
+    "validated_feature_cache_sha256": "66fbe9afa0db50fb18bad777fff7b0ef9c8099f3903669e177b9cf347646ddc5"
+  },
+  "only_intended_difference": "Normalize D1 technical indicators on the causal D1 source index using the M1 training-mask boundary, then align to M1; exclude those already-normalized D1 columns from the shared M1 rolling z-score.",
+  "holdout_note": "2026 has been inspected previously and is report-only; this pair is a development comparison, not confirmatory out-of-sample evidence."
+}

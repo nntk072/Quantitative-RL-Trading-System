@@ -1,0 +1,86 @@
+{
+  "baseline_availability": {
+    "D1_adx": {
+      "entry_count": 1110,
+      "finite_at_entries": 0,
+      "unique_finite_values": 0
+    },
+    "D1_ema_200_dist": {
+      "entry_count": 1110,
+      "finite_at_entries": 0,
+      "unique_finite_values": 0
+    },
+    "D1_ema_21_dist": {
+      "entry_count": 1110,
+      "finite_at_entries": 0,
+      "unique_finite_values": 0
+    },
+    "D1_ema_50_dist": {
+      "entry_count": 1110,
+      "finite_at_entries": 0,
+      "unique_finite_values": 0
+    },
+    "D1_realized_vol": {
+      "entry_count": 1110,
+      "finite_at_entries": 0,
+      "unique_finite_values": 0
+    },
+    "D1_ret_30": {
+      "entry_count": 1110,
+      "finite_at_entries": 0,
+      "unique_finite_values": 0
+    },
+    "D1_ret_5": {
+      "entry_count": 1110,
+      "finite_at_entries": 0,
+      "unique_finite_values": 0
+    }
+  },
+  "baseline_feature_cache": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/data_modes/normal/train_test_2025_2026_v1/US100.cash_features_v24-native-source-timeframes_d00db1fafe2610ac.parquet",
+  "baseline_feature_cache_sha256": "1dbc6e39909a350e9ee4634db983bf099945606c767eaa66e18a95a6242bed54",
+  "entry_count": 1110,
+  "entry_ledger_sha256": "18b8afe2848a0f14ff93a1361026365cdd6b3d36526ac94f5fe72a082b4e8e33",
+  "manifest_sha256": "c16920488059b8f40f3aff7b269786026f49be84c81e99782e6720e712b40ca1",
+  "normalization_policy": "D1 technical features normalized on completed D1 source bars using the M1 training-mask boundary, then causally aligned to M1",
+  "run_dir": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/sustainable_growth_seed50_train2025_20261025_2m_normal_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261026_002028_229373_rl_train_seed50_tcn",
+  "treatment_availability": {
+    "D1_adx": {
+      "entry_count": 1110,
+      "finite_at_entries": 1083,
+      "unique_finite_values": 205
+    },
+    "D1_ema_200_dist": {
+      "entry_count": 1110,
+      "finite_at_entries": 1096,
+      "unique_finite_values": 207
+    },
+    "D1_ema_21_dist": {
+      "entry_count": 1110,
+      "finite_at_entries": 1096,
+      "unique_finite_values": 207
+    },
+    "D1_ema_50_dist": {
+      "entry_count": 1110,
+      "finite_at_entries": 1096,
+      "unique_finite_values": 207
+    },
+    "D1_realized_vol": {
+      "entry_count": 1110,
+      "finite_at_entries": 990,
+      "unique_finite_values": 189
+    },
+    "D1_ret_30": {
+      "entry_count": 1110,
+      "finite_at_entries": 937,
+      "unique_finite_values": 180
+    },
+    "D1_ret_5": {
+      "entry_count": 1110,
+      "finite_at_entries": 1064,
+      "unique_finite_values": 202
+    }
+  },
+  "treatment_cache_hash_sidecar": "15a7206755fde49b",
+  "treatment_feature_cache": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/data_modes/normal/train_test_2025_2026_v1/US100.cash_features_v24-native-source-timeframes_15a7206755fde49b.parquet",
+  "treatment_feature_cache_sha256": "66fbe9afa0db50fb18bad777fff7b0ef9c8099f3903669e177b9cf347646ddc5"
+}

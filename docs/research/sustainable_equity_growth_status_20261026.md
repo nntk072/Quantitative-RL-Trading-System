@@ -1,36 +1,21 @@
 # Sustainable equity growth research status
 
 **Updated:** 2026-10-26
-**Purpose:** Current handoff for an agent continuing the reward-alignment and
-peak-EOD-drawdown experiments. The dated execution plan remains the research
-protocol; this file records the current run state and latest observed results.
+**Purpose:** Current handoff for reward-alignment work and the regime-aware
+research plan. This file records the current run state and latest results.
 
-## Active DSR + peak EOD drawdown run
+## Skipped DSR 1-env attempt
 
-The current experiment is a 2M-step, seed-50 PPO + DSR training run with a
-**$10,000 peak EOD trailing drawdown policy**:
+The user chose to skip this experiment and proceed to the regime-aware plan.
+The run was interrupted before its first checkpoint and is not a result:
 
-- Campaign: `sustainable_growth_dsr_peak_eod_dd10k_seed50_train2025_20261026_2m_normal_v1`
-- Campaign specification: `config/campaigns/sustainable_growth_dsr_peak_eod_dd10k_seed50_train2025_20261026_2m_normal_v1.yaml`
+- Campaign: `sustainable_growth_dsr_peak_eod_dd10k_seed50_train2025_20261026_2m_normal_1env_v1`
+- The 1-env campaign YAML and variant list were removed after the user asked to delete the idea.
 - Variant: `sustainable_growth_ppo_dsr`
-- Data profile: normal; training dates 2024-12-30 through 2025-12-31; 2026 is
-  previously inspected and report-only.
-- Training and final evaluation use stochastic PPO actions. Added randomized
-  fill latency is zero.
-- The $10,000 EOD rule is applied at NY session end. If the peak-to-EOD-equity
-  loss reaches the limit, it closes any open position and blocks new entries
-  until equity exceeds the prior EOD peak. This rule does **not** terminate
-  training or a full replay. The separate $10,000 maximum-loss rule against
-  initial $100,000 equity is the $90,000 hard stop.
-- Scheduler state at the time of this note: job `21204379` holds the two-GH200
-  allocation and is due to end at 02:57 EET. It has no active training workers.
-  Job `21206400` is queued with `afterany:21204379`, requesting one GH200,
-  48 CPUs, 512 GB RAM, and six hours. Do not submit a duplicate or cancel either
-  job. The batch script validates the corrected EOD report and then starts the
-  campaign once the dependency and allocation permit it.
-- Campaign logs and generated outputs are under `outputs/gpu_campaigns/`; that
-  directory is ignored by Git. The campaign YAML and variant definition are
-  tracked so the run can be understood from the repository.
+- Job `21206675` on `gpuarm1`, one GH200, 48 CPUs, 512 GB RAM, six-hour allocation.
+- Reached 310,000 / 2,000,000 steps; interrupted before any checkpoint. Do not report it as a completed benchmark or resume it.
+- Fingerprint: `e0b215578736a6a17d167e6b19aa3e712801d99d56e4c6b4471d2cb689e1dcb0`.
+- Logs, attempt metadata, and the allocation are preserved. No `scancel` was used. At the latest check, the allocation remained RUNNING with no active trainer; reuse it for independent work.
 
 ## Repository validation before handoff
 
@@ -78,14 +63,32 @@ now derives EOD status from the train/test replay results and reports the
 observed value and PASS/MISS independently from hard-loss survival. A focused
 regression test covers that distinction.
 
-## Handoff sequence
+## Regime-aware work now in progress
 
-1. Preserve the dependency chain and wait for job `21206400` to start; do not
-   launch another campaign while it is pending.
-2. Confirm the full-tree Ruff format/lint and Mypy gate and focused pytest gate
-   pass before committing this repository state.
-3. When the DSR campaign finishes, report actual train and report-only test
-   results, EOD policy fit, hard-loss survival, completed data coverage, and
-   episode-end reasons. Do not treat the EOD policy as an episode stop.
-4. Keep 2026 report-only. The single-seed 2M screen is diagnostic, not a
-   superiority or generalization claim.
+The completed 2M DSR replay is the R0 control. Its reproducible report is
+`docs/research/regime_attribution_20261026.md`; the report generator saves
+machine-readable trade, regime, and entry-intent tables beside it. The
+interrupted 1-env attempt is not a prerequisite and must not be relaunched.
+
+The D1 technical normalization repair is implemented as the opt-in feature
+`features.normalize_d1_technical_on_source`. On the actual matched dataset, a
+new cache rebuild changed the seven D1 technical channels from 0/1,110 finite
+entry values to 990–1,096/1,110 finite values (84.4%–98.7%). It used the
+completed-D1 as-of alignment and training-mask boundary. The cache identity is
+`15a7206755fde49b`; detailed source hashes and counts are in
+`docs/research/regime_attribution_20261026/d1_feature_rebuild_check.json`.
+This proves feature availability, not improved policy performance.
+
+R1 is prepared, not started: one DSR PPO run, seed 50, 2M steps, 8 envs, same
+normal data and dates, with only D1 source normalization enabled. Its dry-run
+preflight passed. `matched_pair.json` records the existing R0 run and planned
+R1 configuration; the actual R1 campaign should use the next suitable
+one-GH200 allocation after the current allocation ends. Keep 2026 report-only.
+
+The regime-attribution implementation and cache treatment passed the full
+agent gate on `gpuarm1` (aarch64/GH200): full-tree Ruff format, full-tree Ruff
+lint, full-tree Mypy across 766 files, and 85 scoped campaign, replay, feature,
+and research tests. `git diff --check` also passed. The full pytest suite was
+not run. The D1 cache rebuild and the gate establish feature-path availability
+and code correctness; R1 training and its matched replay are still required to
+measure any policy effect.

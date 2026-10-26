@@ -221,6 +221,7 @@ features:
   smt_swing_period: 5                  # bars for swing high/low detection
   smt_corr_window: 20
   zscore_window: 252                   # rolling train-only normalisation window
+  normalize_d1_technical_on_source: false # experimental: normalize D1 technical features before M1 alignment
   # Higher timeframes whose own indicator blocks are causally aligned onto
   # the M1 spine (Chain A). Each listed TF gets the same build_indicators()
   # call as M1, forward-filled with {TF}_{indicator} column names.

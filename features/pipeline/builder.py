@@ -210,6 +210,30 @@ def _enabled(feat_cfg: object, key: str, default: bool) -> bool:
     return default
 
 
+def _source_train_mask(
+    source_bars: pd.DataFrame,
+    primary: pd.DataFrame,
+    train_mask: pd.Series | None,
+    timeframe: str,
+    scheduled_closes: dict[str, str],
+    session_start: str,
+) -> pd.Series | None:
+    """Map the M1 training boundary to completed source-timeframe bars."""
+    if train_mask is None:
+        return None
+    aligned_mask = train_mask.reindex(primary.index).fillna(False).astype(bool)
+    train_rows = primary.index[aligned_mask.to_numpy()]
+    if len(train_rows) == 0:
+        return pd.Series(False, index=source_bars.index, dtype=bool)
+    training_end = train_rows.max()
+    available_at = timeframe_close_times(source_bars, timeframe, scheduled_closes, session_start)
+    return pd.Series(
+        pd.DatetimeIndex(available_at).tz_convert(training_end.tz) <= training_end,
+        index=source_bars.index,
+        dtype=bool,
+    )
+
+
 def build_features(
     primary: pd.DataFrame,
     secondary: pd.DataFrame | None = None,
@@ -356,14 +380,35 @@ def build_features(
     # Run the same indicator build on each HTF's own bars, then causally
     # forward-fill onto the M1 spine. Done BEFORE normalisation so HTF
     # columns are z-scored like the M1 ones.
+    d1_source_normalized_columns: list[str] = []
     if feat_cfg is not None:
+        window = int(feat_cfg.zscore_window)
+        normalize_d1_on_source = bool(getattr(feat_cfg, "normalize_d1_technical_on_source", False))
         htf_cfg_tfs = getattr(feat_cfg, "htf_timeframes", None)
         htf_tfs = list(htf_cfg_tfs) if htf_cfg_tfs is not None else list(_DEFAULT_HTF_TIMEFRAMES)
         if htf_tfs:
             htf_blocks: dict[str, pd.DataFrame] = {}
             for tf in htf_tfs:
-                tf_bars = primary_tf_bars(str(tf))
-                htf_blocks[str(tf)] = build_indicators(tf_bars, feat_cfg)
+                tf_name = str(tf).upper()
+                tf_bars = primary_tf_bars(tf_name)
+                block = build_indicators(tf_bars, feat_cfg)
+                if tf_name == "D1" and normalize_d1_on_source:
+                    daily_train_mask = _source_train_mask(
+                        tf_bars,
+                        primary,
+                        train_mask,
+                        tf_name,
+                        scheduled_closes,
+                        session_start,
+                    )
+                    block = rolling_zscore(
+                        block,
+                        window=window,
+                        train_mask=daily_train_mask,
+                        mode=normalization_mode,
+                    )
+                    d1_source_normalized_columns = [f"D1_{column}" for column in block.columns]
+                htf_blocks[tf_name] = block
             feat = align_blocks(feat, htf_blocks)
 
     # --- Chain B variant blocks (opt-in via config flags) ---
@@ -400,7 +445,21 @@ def build_features(
 
     # --- normalisation ---
     window = feat_cfg.zscore_window if feat_cfg is not None else 252
-    feat = rolling_zscore(feat, window=window, train_mask=train_mask, mode=normalization_mode)
+    if feat_cfg is not None and d1_source_normalized_columns:
+        source_normalized_columns = [
+            column for column in d1_source_normalized_columns if column in feat
+        ]
+        original_columns = list(feat.columns)
+        source_normalized = feat[source_normalized_columns]
+        feat = rolling_zscore(
+            feat.drop(columns=source_normalized_columns),
+            window=window,
+            train_mask=train_mask,
+            mode=normalization_mode,
+        )
+        feat = pd.concat([feat, source_normalized], axis=1).reindex(columns=original_columns)
+    else:
+        feat = rolling_zscore(feat, window=window, train_mask=train_mask, mode=normalization_mode)
     if len(_fvg_raw.columns) > 0:
         feat = pd.concat([feat, _fvg_raw], axis=1)
 

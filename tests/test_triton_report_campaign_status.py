@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 from experiments.campaigns.status import (
     elapsed_for_job,
     estimate_remaining_seconds,
+    logged_steps,
     recent_fps,
 )
 
@@ -49,6 +50,23 @@ def test_recent_fps_returns_none_when_no_samples_exist(tmp_path: Path) -> None:
     log.write_text("training has not started\n", encoding="utf-8")
 
     assert recent_fps(log) is None
+
+
+def test_progress_logger_steps_and_fps_are_reported(tmp_path: Path) -> None:
+    log = tmp_path / "worker.log"
+    log.write_text(
+        "\n".join(
+            (
+                "2026-10-26 03:00:00 INFO TRAIN_PROGRESS step=1,000/2,000,000 recent_fps=120.0 eta_seconds=16658",
+                "2026-10-26 03:00:08 INFO TRAIN_PROGRESS step=2,000/2,000,000 recent_fps=130.5 eta_seconds=15310",
+                "2026-10-26 03:00:16 INFO TRAIN_PROGRESS step=3,000/2,000,000 recent_fps=140.5 eta_seconds=14249",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    assert logged_steps(log) == 3_000
+    assert recent_fps(log) == (130.5, 3)
 
 
 def test_estimated_remaining_uses_target_steps_and_recent_fps() -> None:
