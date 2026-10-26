@@ -134,9 +134,9 @@ execution:
   # Fill on the tick that crosses SL or TP. 0 = that tick, not a later one.
   # A prop-firm stop fills at the level or worse; a later tick can bounce back.
   fill_delay_ms: 0
-  # Direct/legacy runs default to no additional random latency.
-  # The thesis variant resolver forces 30 ms (seeded uniform in [0, 30)).
-  randomized_fill_latency_ms: 30.0
+  # Zero added latency: use the first available real quote at or after the
+  # decision time. A run may set another value explicitly in its YAML config.
+  randomized_fill_latency_ms: 0.0
   max_tick_quote_wait_ms: 60000
 
 trading_policy:
@@ -244,7 +244,9 @@ features:
   # ["M1"] + htf_timeframes (M1_fvg_* included).
   smt: {enabled: false, timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]}
   structure:
-    enabled: false
+    # Keep causal swing references and their ATR distances available in every
+    # feature cache and on every configured higher-timeframe stream.
+    enabled: true
     timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
     swing_candidate_count: 1 # 1 preserves latest-only; 2/3 selects recent unswept swings
     candidate_price_increment: null # defaults to costs.point_size
@@ -287,7 +289,8 @@ env:
   # Overlay: intensity does not gate entry (0 = follow context_direction).
   # A positive band lets PPO park at "never trade"; seed-50 20M did that at 0.1.
   entry_intensity_threshold: 0.0
-  reward_mode: dsr                     # dsr | rr | pnl | equity_delta_r; default stays dsr
+  reward_mode: dsr                     # dsr | rr | pnl | equity_delta_r | equity_log_growth
+  equity_log_growth_scale: 100.0       # k for k * log(E_after / E_before); fixed per run
   # "rr" scores the agent on cumulative realized R instead of Sharpe or dollar PnL.
   # Only meaningful with `fixed_risk_usd`: under fractional sizing the same edge
   # yields different dollar PnL as equity drifts, so the reward would partly pay
@@ -336,6 +339,8 @@ env:
     max_age_hours: 8
     stale_bars: 60
     progress_threshold_atr: 0.25
+    # Optional fixed-dollar EOD peak drawdown policy. 0 disables it.
+    peak_trailing_dd_limit_usd: 0.0
     # Breakeven management: once favorable excursion reaches this many stop
     # distances, the stop moves to entry +/- `breakeven_buffer_pts`. 0 = off.
     breakeven_trigger_r: 1.0
@@ -402,9 +407,14 @@ sac:
 
 encoder:
   windows:
+    m3: 20
     m5: 24                    # closed M5 bars when agent.arch is mtf
+    m10: 12
     m15: 16
+    m30: 8
     h1: 12
+    h4: 6
+    d1: 5
 
 agent:
   type: "ppo"                 # "ppo" | "sac"
@@ -449,6 +459,9 @@ backtest:
     validation_mode: false             # set true to relax global FTMO limits for viz testing
 
 risk:
+  # Structural target candidates use the full supported HTF ladder. M1 swing
+  # levels are already available as the unprefixed primary-timeframe fields.
+  target_timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
   min_lot: 0.01
   max_lot: 100.0
   default_risk_frac: 0.01              # 1% equity fallback for baselines
@@ -465,6 +478,8 @@ risk:
 
 training:
   mode: "full"           # "full" = all data / "mvp" = M1-only minimal slice
+  # Cheap step/FPS heartbeat, independent of dashboard and policy cadence.
+  progress_log_every: 0
   # Traverse each training split chronologically through its end after a risk
   # breach; risk_terminated is available only for an explicit legacy replay.
   episode_mode: "full_split"

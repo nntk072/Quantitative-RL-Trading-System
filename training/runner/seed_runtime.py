@@ -39,6 +39,7 @@ from learning.rl.callbacks import (
     LearningDiagnosticsCallback,
     PeriodicCheckpointCallback,
     ProgressLoggerCallback,
+    TrainingProgressCallback,
 )
 from learning.rl.checkpoint import is_sb3_box_model, load_sb3_training_checkpoint
 from learning.rl.ppo import install_post_update_std_clip
@@ -265,6 +266,7 @@ class SeedRunner:
             | AuxiliaryTrainerCallback
             | BestCheckpointEvalCallback
             | ProgressLoggerCallback
+            | TrainingProgressCallback
             | LearningDiagnosticsCallback
             | LagrangianRiskCallback
             | ClipLogStdCallback
@@ -272,6 +274,15 @@ class SeedRunner:
             | EarlyAbortCallback
             | TrainingDashboardCallback
         ] = [c for c in (lagrangian_cb, checkpoint_callback, aux_cb) if c is not None]
+
+        progress_log_every = int(cfg.training.get("progress_log_every", 0))
+        if progress_log_every > 0:
+            callbacks.append(
+                TrainingProgressCallback(
+                    log_every=progress_log_every,
+                    total_timesteps=timesteps,
+                )
+            )
 
         callbacks.append(EpisodeEquityCallback(log_path=seed_model_dir / "episode_equity.csv"))
         if bool(cfg.get("quality_diagnostics", {}).get("enabled", False)):

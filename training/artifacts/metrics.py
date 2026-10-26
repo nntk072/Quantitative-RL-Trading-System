@@ -52,6 +52,11 @@ def _write_evaluation_artifacts(
                 str(result["fail_time"]) if result.get("fail_time") is not None else None
             ),
             "max_trailing_dd": float(result.get("max_trailing_dd", metrics.max_drawdown)),
+            "peak_eod_trailing_dd_limit_usd": float(
+                result.get("peak_eod_trailing_dd_limit_usd", 0.0)
+            ),
+            "max_peak_eod_trailing_dd_usd": float(result.get("max_peak_eod_trailing_dd_usd", 0.0)),
+            "peak_eod_dd_policy_ok": bool(result.get("peak_eod_dd_policy_ok", True)),
             "breach_events": int(result.get("n_breach_sessions", 0)),
             "entry_diagnostics": result.get("entry_diag", {}),
         }
@@ -87,6 +92,30 @@ def _write_evaluation_artifacts(
         "retraining_recommended": peak_dd_enabled and not peak_dd_policy_ok,
     }
     train_payload["peak_dd_policy_fit"] = peak_dd_policy_fit
+    eod_dd_limit = float(train_payload["peak_eod_trailing_dd_limit_usd"])
+    eod_dd_observed = float(train_payload["max_peak_eod_trailing_dd_usd"])
+    eod_dd_enabled = eod_dd_limit > 0.0
+    eod_dd_policy_fit = {
+        "enabled": eod_dd_enabled,
+        "status": "DISABLED"
+        if not eod_dd_enabled
+        else ("PASS" if train_payload["peak_eod_dd_policy_ok"] else "MISS"),
+        "limit_usd": eod_dd_limit,
+        "observed_usd": eod_dd_observed,
+        "retraining_recommended": eod_dd_enabled and not train_payload["peak_eod_dd_policy_ok"],
+    }
+    train_payload["peak_eod_dd_policy_fit"] = eod_dd_policy_fit
+    test_eod_dd_limit = float(test_payload["peak_eod_trailing_dd_limit_usd"])
+    test_eod_dd_enabled = test_eod_dd_limit > 0.0
+    test_eod_dd_policy_fit = {
+        "enabled": test_eod_dd_enabled,
+        "status": "DISABLED"
+        if not test_eod_dd_enabled
+        else ("PASS" if test_payload["peak_eod_dd_policy_ok"] else "MISS"),
+        "limit_usd": test_eod_dd_limit,
+        "observed_usd": float(test_payload["max_peak_eod_trailing_dd_usd"]),
+    }
+    test_payload["peak_eod_dd_policy_fit"] = test_eod_dd_policy_fit
     train_payload["zero_trade_diagnosis"] = classify_zero_trade_cause(
         int(train_metrics.n_trades),
         train_result.get("entry_state_diagnostics"),
@@ -111,6 +140,8 @@ def _write_evaluation_artifacts(
         "test_report_only": test_payload,
         "train_equity_gate": train_gate,
         "peak_dd_policy_fit": peak_dd_policy_fit,
+        "peak_eod_dd_policy_fit": eod_dd_policy_fit,
+        "test_peak_eod_dd_policy_fit": test_eod_dd_policy_fit,
         "hard_risk_ok": hard_risk_ok,
         "train_activity_gate": train_activity_gate,
         "train_survival_ok": bool(train_gate.get("ok")),
@@ -145,6 +176,20 @@ def _write_evaluation_artifacts(
             f"test={test_payload['policy_action_mode']}; "
             f"action RNG seeds: train={train_payload['action_rng_seed']}, "
             f"test={test_payload['action_rng_seed']}."
+        ),
+        (
+            "Peak EOD drawdown rule: "
+            f"train limit=${train_payload['peak_eod_trailing_dd_limit_usd']:,.0f}, "
+            f"observed=${train_payload['max_peak_eod_trailing_dd_usd']:,.2f} "
+            f"({eod_dd_policy_fit['status']}); report-only test limit="
+            f"${test_payload['peak_eod_trailing_dd_limit_usd']:,.0f}, observed="
+            f"${test_payload['max_peak_eod_trailing_dd_usd']:,.2f} "
+            f"({test_eod_dd_policy_fit['status']})."
+        ),
+        (
+            "A peak EOD drawdown breach closes any open position and blocks entries "
+            "until a later EOD equity high; it does not terminate the replay. "
+            "The separate configured hard-loss guardrail controls replay termination."
         ),
         (
             "Both final replays use stochastic policy actions, matching PPO training."

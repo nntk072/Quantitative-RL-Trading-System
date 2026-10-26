@@ -60,6 +60,16 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
         peak_dd_block = self._apply_peak_trailing_dd(
             fill_bid, fill_ask, bar_time, fill_time=fill_time
         )
+        peak_dd_block = (
+            self._apply_peak_eod_trailing_dd(
+                fill_bid,
+                fill_ask,
+                bar_time,
+                is_eod=self._is_ny_session_boundary(),
+                fill_time=fill_time,
+            )
+            or peak_dd_block
+        )
 
         # A delayed entry becomes active only when its scheduled quote is the
         # market bar being processed. It cannot be marked or stopped earlier.

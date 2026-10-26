@@ -105,6 +105,9 @@ def test_evaluation_artifacts_separate_train_and_report_only_test(tmp_path: Path
             "days_traded": 80,
             "completed_data_split": True,
             "episode_end_reason": "data_end",
+            "peak_eod_trailing_dd_limit_usd": 10_000.0,
+            "max_peak_eod_trailing_dd_usd": 10_660.88,
+            "peak_eod_dd_policy_ok": False,
         },
         test_result={
             "policy_action_mode": "stochastic",
@@ -114,6 +117,9 @@ def test_evaluation_artifacts_separate_train_and_report_only_test(tmp_path: Path
             "completed_data_split": False,
             "episode_end_reason": "max_episode_steps",
             "fail_time": "2026-02-16",
+            "peak_eod_trailing_dd_limit_usd": 10_000.0,
+            "max_peak_eod_trailing_dd_usd": 11_449.77,
+            "peak_eod_dd_policy_ok": False,
         },
         train_metrics=train_metrics,
         test_metrics=test_metrics,
@@ -126,6 +132,7 @@ def test_evaluation_artifacts_separate_train_and_report_only_test(tmp_path: Path
     train = json.loads((evaluation_dir / "train_in_sample.json").read_text())
     test = json.loads((evaluation_dir / "test_report_only.json").read_text())
     summary = (evaluation_dir / "summary.md").read_text()
+    summary_json = json.loads((evaluation_dir / "summary.json").read_text())
 
     assert train["role"] == "in_sample_training_evaluation"
     assert train["policy_action_mode"] == "stochastic"
@@ -133,6 +140,12 @@ def test_evaluation_artifacts_separate_train_and_report_only_test(tmp_path: Path
     assert train["metrics"]["total_pnl"] == -1000.0
     assert train["equity_gate"]["ok"] is False
     assert train["activity_gate"]["status"] == "ACTIVE"
+    assert train["peak_eod_dd_policy_fit"]["enabled"] is True
+    assert train["peak_eod_dd_policy_fit"]["status"] == "MISS"
+    assert summary_json["peak_eod_dd_policy_fit"]["observed_usd"] == pytest.approx(10_660.88)
+    assert summary_json["test_peak_eod_dd_policy_fit"]["status"] == "MISS"
+    assert "(MISS); report-only test limit=$10,000, observed=$11,449.77 (MISS)" in summary
+    assert "it does not terminate the replay" in summary
     assert train["zero_trade_diagnosis"] is None
     assert train["peak_dd_policy_fit"]["status"] == "DISABLED"
     assert test["role"] == "report_only_test_evaluation"
@@ -388,6 +401,8 @@ class TestBuildTrainingLog:
             test_bars=49925,
             test_m=test_m,
             test_result=test_result,
+            environment_reward_mode="equity_log_growth",
+            equity_log_growth_scale=25.0,
             action_schema={
                 "version": "overlay-action-v2",
                 "key": "6_dir",
@@ -400,6 +415,8 @@ class TestBuildTrainingLog:
         assert log["algo"] == "ppo"
         assert log["arch"] == "tcn"
         assert log["reward"] == "dsr"
+        assert log["environment_reward_mode"] == "equity_log_growth"
+        assert log["equity_log_growth_scale"] == 25.0
         assert log["timesteps"] == 8192
         assert log["train_bars"] == 11700
         assert log["test_bars"] == 49925

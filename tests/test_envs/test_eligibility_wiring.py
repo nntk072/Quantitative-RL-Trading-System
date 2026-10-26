@@ -50,6 +50,25 @@ def test_evaluation_tick_fill_slippage_override_does_not_change_cost_model() -> 
     assert "tick_fill_slippage_points" in inspect.signature(evaluate_model).parameters
 
 
+def test_dollar_band_sizing_config_reaches_evaluation_environment() -> None:
+    cfg = load_config(
+        [
+            "env.risk_mode=dollar_band",
+            "env.risk_band_max_usd=900.0",
+            "env.risk_band_hold_below_usd=100.0",
+        ]
+    )
+
+    eval_kwargs = training_environments.build_eval_common(cfg)[0]
+
+    assert eval_kwargs["risk_mode"] == "dollar_band"
+    assert eval_kwargs["risk_band_max_usd"] == 900.0
+    assert eval_kwargs["risk_band_hold_below_usd"] == 100.0
+    parameters = inspect.signature(evaluate_model).parameters
+    assert "risk_band_max_usd" in parameters
+    assert "risk_band_hold_below_usd" in parameters
+
+
 def test_tick_execution_preflight_reports_train_and_test_gaps() -> None:
     index = pd.DatetimeIndex(
         [

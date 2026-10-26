@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from simulation.environment.env import TradingEnv
-from simulation.environment.observations import closed_window, run_starts
+from simulation.environment.observations import closed_window, run_starts, timeframe_starts
 from trading.strategies import PO3IFVGStrategy
 
 
@@ -20,6 +20,45 @@ def test_closed_m5_window_ends_on_the_candle_that_closed_at_1035() -> None:
     newest = window[mask > 0][-3:, 0]
     np.testing.assert_array_equal(newest, [10 * 60 + 25, 10 * 60 + 30, 10 * 60 + 35])
     assert not np.any(window == 10 * 60 + 40)
+
+
+def test_closed_window_column_selection_matches_materialized_branch() -> None:
+    """Column-selecting the tail window preserves values and padding exactly."""
+    block = np.arange(120, dtype=np.float32).reshape(30, 4)
+    block[8, 3] = np.nan
+    starts = np.asarray([0, 3, 6, 9, 12, 15, 18, 21, 24, 27], dtype=np.int64)
+    columns = np.asarray([1, 3], dtype=np.int64)
+
+    for decision, length in ((0, 4), (5, 4), (18, 3), (29, 4)):
+        expected, expected_mask = closed_window(block[:, columns], starts, decision, length)
+        actual, actual_mask = closed_window(block, starts, decision, length, columns=columns)
+        np.testing.assert_array_equal(actual, expected)
+        np.testing.assert_array_equal(actual_mask, expected_mask)
+
+
+def test_timeframe_starts_preserve_equal_consecutive_candles() -> None:
+    """Candle windows count source bars even when every feature value repeats."""
+    index = pd.date_range("2020-01-02 09:00", "2020-01-02 11:00", freq="1min")
+    starts = timeframe_starts(index, "M3")
+    decision = int(index.searchsorted(pd.Timestamp("2020-01-02 10:37")))
+    repeated_features = np.zeros((len(index), 1), dtype=np.float32)
+    window, mask = closed_window(repeated_features, starts, decision, 4)
+
+    assert int(mask.sum()) == 4
+    np.testing.assert_array_equal(window[:, 0], np.zeros(4, dtype=np.float32))
+    assert int(np.count_nonzero(starts <= decision)) == 32
+
+
+def test_timeframe_starts_include_scheduled_short_candle_close() -> None:
+    index = pd.date_range("2020-01-02 09:00", "2020-01-02 11:00", freq="1min")
+    starts = timeframe_starts(
+        index,
+        "M5",
+        {"2020-01-02": "10:37"},
+        session_start="09:00",
+    )
+
+    assert pd.Timestamp("2020-01-02 10:37") in index[starts]
 
 
 def _day() -> tuple[pd.DataFrame, pd.DataFrame, int]:
@@ -110,6 +149,11 @@ def test_column_ownership_and_closed_bars() -> None:
     assert obs["seq_m5"].shape == (24, 1)
     assert obs["seq_m15"].shape == (16, 1)
     assert obs["seq_h1"].shape == (12, 1)
+    assert obs["seq_m3"].shape == (20, 1)
+    assert obs["seq_m10"].shape == (12, 1)
+    assert obs["seq_m30"].shape == (8, 1)
+    assert obs["seq_h4"].shape == (6, 1)
+    assert obs["seq_d1"].shape == (5, 1)
     assert obs["seq"].shape[1] == base["seq"].shape[1] - 3
     np.testing.assert_array_equal(obs["seq"], base["seq"][:, mtf._m1_idx])
     assert np.any(obs["seq"] == 3.0)

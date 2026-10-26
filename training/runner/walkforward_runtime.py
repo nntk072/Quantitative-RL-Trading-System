@@ -193,6 +193,7 @@ def run_walk_forward_validation(
             max_entries_per_session=int(cfg.env.get("max_entries_per_session", 0)),
             entry_cooldown_bars=int(cfg.env.get("entry_cooldown_bars", 0)),
             reward_mode=str(cfg.env.get("reward_mode", "dsr")),
+            equity_log_growth_scale=float(cfg.env.get("equity_log_growth_scale", 100.0)),
             entry_intensity_threshold=float(cfg.env.get("entry_intensity_threshold", 0.0)),
             agent_direction_control=bool(cfg.env.get("agent_direction_control", False)),
             direction_override_threshold=float(cfg.env.get("direction_override_threshold", 0.0)),

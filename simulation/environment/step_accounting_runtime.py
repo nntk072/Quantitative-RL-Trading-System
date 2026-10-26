@@ -48,10 +48,14 @@ class StepAccountingRuntimeMixin(RuntimeMixinBase):
         reward_parts = {
             key: float(value) for key, value in getattr(self.reward_fn, "last_parts", {}).items()
         }
-        if self.peak_trailing_dd_limit > 0.0 and self._peak_dd_fired:
-            # Penalty each bar the training peak-DD ceiling is still hit.
+        if (
+            self.peak_trailing_dd_limit > 0.0 or self._peak_eod_trailing_dd_limit_usd > 0.0
+        ) and self._peak_dd_fired:
+            # Penalize the percentage guard each active bar and the EOD guard
+            # at its trigger boundary.
             reward -= 1.0
-            reward_parts["peak_dd"] = float(reward_parts.get("peak_dd", 0.0)) - 1.0
+            part = "peak_eod_dd" if self._peak_eod_dd_locked else "peak_dd"
+            reward_parts[part] = float(reward_parts.get(part, 0.0)) - 1.0
         return done, valuation_time, pnl_step, float(reward), reward_parts
 
 

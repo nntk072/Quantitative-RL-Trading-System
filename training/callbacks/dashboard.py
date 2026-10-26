@@ -51,6 +51,7 @@ _CLOSE_LABELS: dict[str, str] = {
 
 _PART_LABELS: tuple[tuple[str, str], ...] = (
     ("pnl", "PnL reward contribution"),
+    ("equity_growth", "log equity growth"),
     ("dsr", "differential Sharpe"),
     ("soft_daily", "daily penalty"),
     ("soft_year", "year penalty"),

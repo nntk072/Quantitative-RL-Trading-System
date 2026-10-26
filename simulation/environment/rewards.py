@@ -24,6 +24,8 @@ REWARD_PART_KEYS: tuple[str, ...] = (
     "breach",
     "sweep",
     "peak_dd",
+    "peak_eod_dd",
+    "equity_growth",
 )
 
 
@@ -416,4 +418,53 @@ class EquityDeltaReward:
             raise ValueError("equity_delta_r received a non-finite equity change")
         reward = raw
         self.last_parts = fit_reward_parts({"pnl": raw}, raw, reward)
+        return reward
+
+
+class EquityLogGrowthReward:
+    """Scaled log change in after-cost account equity for one transition.
+
+    The transition endpoints are supplied by the environment's equity ledger,
+    so realized and unrealized PnL use the same valuation as the account and
+    already include modeled execution costs. No cost is subtracted again here.
+    """
+
+    def __init__(self, scale: float = 100.0, *, breach_penalty: float = -10.0) -> None:
+        if isinstance(scale, bool) or not np.isfinite(scale) or scale <= 0.0:
+            raise ValueError("equity_log_growth scale must be finite and positive")
+        if not np.isfinite(breach_penalty) or breach_penalty >= 0.0:
+            raise ValueError("equity_log_growth breach_penalty must be finite and negative")
+        self.scale = float(scale)
+        self.breach_penalty = float(breach_penalty)
+        self.last_parts: dict[str, float] = empty_reward_parts()
+
+    def reset(self) -> None:
+        self.last_parts = empty_reward_parts()
+
+    def __call__(
+        self,
+        step_pnl: float,  # noqa: ARG002
+        *,
+        previous_equity: float | None = None,
+        equity: float | None = None,
+        **_: object,
+    ) -> float:
+        if previous_equity is None or equity is None:
+            raise ValueError("equity_log_growth requires previous_equity and equity")
+        before = float(previous_equity)
+        after = float(equity)
+        if not np.isfinite(before) or not np.isfinite(after):
+            raise ValueError("equity_log_growth requires finite equity endpoints")
+        if before <= 0.0:
+            raise ValueError("equity_log_growth requires positive previous_equity")
+        if after <= 0.0:
+            self.last_parts = fit_reward_parts(
+                {"breach": self.breach_penalty}, self.breach_penalty, self.breach_penalty
+            )
+            return self.breach_penalty
+
+        reward = self.scale * float(np.log(after) - np.log(before))
+        if not np.isfinite(reward):
+            raise ValueError("equity_log_growth produced a non-finite reward")
+        self.last_parts = fit_reward_parts({"equity_growth": reward}, reward, reward)
         return reward

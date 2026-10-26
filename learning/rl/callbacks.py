@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -89,6 +90,49 @@ except ImportError:
 
 
 if _SB3_AVAILABLE:
+
+    class TrainingProgressCallback(_Base):
+        """Log a cheap step/FPS heartbeat without running dashboard work."""
+
+        def __init__(self, log_every: int, total_timesteps: int, verbose: int = 0) -> None:
+            super().__init__(verbose=verbose)
+            self.log_every = max(0, int(log_every))
+            self.total_timesteps = max(0, int(total_timesteps))
+            self._started_at = 0.0
+            self._started_step = 0
+            self._last_logged_at = 0.0
+            self._last_logged_step = 0
+            self._next_log = self.log_every
+
+        def _on_training_start(self) -> None:
+            self._started_at = time.monotonic()
+            self._started_step = int(self.num_timesteps)
+            self._last_logged_at = self._started_at
+            self._last_logged_step = self._started_step
+
+        def _on_step(self) -> bool:
+            step = int(self.num_timesteps)
+            if self.log_every <= 0 or step < self._next_log:
+                return True
+            now = time.monotonic()
+            interval_seconds = max(now - self._last_logged_at, 1e-9)
+            interval_steps = max(step - self._last_logged_step, 0)
+            recent_fps = interval_steps / interval_seconds
+            total_seconds = max(now - self._started_at, 1e-9)
+            average_fps = max(step - self._started_step, 0) / total_seconds
+            remaining_steps = max(self.total_timesteps - step, 0)
+            eta_seconds = remaining_steps / average_fps if average_fps > 0 else float("inf")
+            log.info(
+                "TRAIN_PROGRESS step=%d/%d recent_fps=%.1f eta_seconds=%.0f",
+                step,
+                self.total_timesteps,
+                recent_fps,
+                eta_seconds,
+            )
+            self._last_logged_at = now
+            self._last_logged_step = step
+            self._next_log = self.log_every * (1 + step // self.log_every)
+            return True
 
     class LearningDiagnosticsCallback(_Base):
         """Write per-PPO-rollout action, advantage, reward, and funnel diagnostics."""
@@ -887,6 +931,12 @@ if _SB3_AVAILABLE:
             return False
 
 else:
+
+    class TrainingProgressCallback:  # type: ignore[no-redef]
+        """Stub — stable-baselines3 is not installed."""
+
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            raise ImportError("stable-baselines3 is required for TrainingProgressCallback")
 
     class LearningDiagnosticsCallback:  # type: ignore[no-redef]
         """Stub — stable-baselines3 is not installed."""

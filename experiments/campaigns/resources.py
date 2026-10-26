@@ -202,7 +202,9 @@ def resolve_worker_nodes(raw: str | None, *, dry_run: bool) -> list[str]:
         if not requested or len(requested) != len(set(requested)):
             raise ValueError("worker node list is empty or contains duplicates")
         return requested
-    job_node_list = os.getenv("SLURM_JOB_NODELIST") or os.getenv("SLURM_NODELIST")
+    # Inside an `srun` control step SLURM_JOB_NODELIST may describe only that
+    # step's nodes; SLURM_NODELIST retains the full parent allocation.
+    job_node_list = os.getenv("SLURM_NODELIST") or os.getenv("SLURM_JOB_NODELIST")
     if not job_node_list:
         raise ValueError("--worker-nodes requires an existing multi-node Slurm allocation")
     allocated = set(expand_slurm_hosts(job_node_list))

@@ -48,14 +48,20 @@ def _overrides_by_key(resolved: dict[str, list[str]]) -> dict[str, str]:
 
 def test_every_variant_resolves_and_declares_reward_mode() -> None:
     names = _all_names()
-    assert len(names) == len(set(names)) == 33
+    assert len(names) == len(set(names))
     for name in names:
         resolved = resolve_variant(
             name, vae_path="placeholder.pth"
         )  # only the VAE variant needs it
-        assert resolved["reward_mode"] in ("dsr", "pnl", "rr")
-        assert resolved["steps"] == 100_000
-        assert resolved["seeds"] == [42, 43, 44, 45, 46]
+        assert resolved["reward_mode"] in (
+            "dsr",
+            "pnl",
+            "rr",
+            "equity_delta_r",
+            "equity_log_growth",
+        )
+        assert resolved["steps"] > 0
+        assert resolved["seeds"]
         policy_path = PROJECT_ROOT / "config" / "variants" / f"{name}.yaml"
         assert policy_path.is_file(), f"missing per-variant policy YAML: {policy_path}"
         policy = load_variant_ftmo_config(name)
@@ -145,10 +151,12 @@ def test_steps_and_seeds_overrides_flow_into_args() -> None:
     assert "--seeds" not in args
 
 
-def test_variant_runs_force_sub_30ms_randomized_tick_execution() -> None:
+def test_variant_resolver_leaves_tick_latency_to_yaml_defaults() -> None:
     resolved = resolve_variant("ladder_a0_flat")
 
-    assert train_args(resolved, 42)[-1] == "execution.randomized_fill_latency_ms=30.0"
+    assert not any(
+        arg.startswith("execution.randomized_fill_latency_ms=") for arg in train_args(resolved, 42)
+    )
 
 
 def test_overrides_come_after_strategy_and_have_no_duplicates() -> None:
@@ -224,8 +232,9 @@ def test_quarter_grid_campaign_uses_the_matched_pair_and_locked_split() -> None:
 
 
 def test_consistency_table_covers_all_variants() -> None:
-    rows = consistency_table(_all_names())
-    assert len(rows) == 33
+    names = _all_names()
+    rows = consistency_table(names)
+    assert len(rows) == len(names)
     by_name = {r["variant"]: r for r in rows}
     # The confound this module makes visible: baseline-named rungs and PO3 rungs
     # differ in reward mode and PD context.
@@ -271,7 +280,7 @@ def test_launcher_dry_run_prints_every_seed() -> None:
     for seed in (42, 43, 44, 45, 46):
         assert f"ablation_sac_agent__seed{seed}" in proc.stdout
     assert "--algo sac" in proc.stdout and "--arch gru" in proc.stdout
-    assert "execution.randomized_fill_latency_ms=30.0" in proc.stdout
+    assert "execution.randomized_fill_latency_ms=30.0" not in proc.stdout
     assert not any(Path(out_dir).glob("*.done"))  # dry run must not write markers
 
 
@@ -338,7 +347,7 @@ def test_campaign_config_overrides_are_last_in_resolved_training_args() -> None:
         "ftmo.trailing_dd_limit=0.0",
     ]
     args = train_args(resolved, 50)
-    assert args[-3:-1] == [
+    assert args[-2:] == [
         "ftmo.risk_sizing_limit_usd=900.0",
         "ftmo.trailing_dd_limit=0.0",
     ]

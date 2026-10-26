@@ -216,6 +216,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         open_manipulation_bars=int(env.get("open_manipulation_bars", 10)),
         entry_cooldown_bars=int(env.get("entry_cooldown_bars", 0)),
         reward_mode=str(env.get("reward_mode", "dsr")),
+        equity_log_growth_scale=float(env.get("equity_log_growth_scale", 100.0)),
         fixed_risk_usd=float(env.get("fixed_risk_usd", 0.0)),
         risk_band_max_usd=float(env.get("risk_band_max_usd", 0.0)),
         risk_band_hold_below_usd=float(env.get("risk_band_hold_below_usd", 0.0)),

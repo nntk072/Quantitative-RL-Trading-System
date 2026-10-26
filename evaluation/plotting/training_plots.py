@@ -500,6 +500,7 @@ _EVALUATION_CHARTS: tuple[tuple[str, tuple[tuple[str, str], ...], str, str, floa
 
 _REWARD_PLOT_COLS: tuple[tuple[str, str], ...] = (
     ("pnl", "PnL reward contribution"),
+    ("equity_growth", "Log equity growth reward"),
     ("dsr", "Differential Sharpe reward"),
     ("soft_daily", "Daily penalty"),
     ("soft_year", "Year penalty"),

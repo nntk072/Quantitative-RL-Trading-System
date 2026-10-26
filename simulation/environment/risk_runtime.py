@@ -179,6 +179,74 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             self._note_close(pnl)
         return True
 
+    def _apply_peak_eod_trailing_dd(
+        self,
+        fill_bid: float,
+        fill_ask: float,
+        bar_time: Any,
+        *,
+        is_eod: bool,
+        fill_time: Any | None = None,
+    ) -> bool:
+        """Apply a fixed-dollar trailing rule using completed NY-session equity.
+
+        The watermark and diagnostic are updated at every session end. When
+        enabled, a configured dollar drawdown closes an open position at that
+        session's quote and blocks entries until a later EOD high is made.
+        """
+        limit = self._peak_eod_trailing_dd_limit_usd
+        if not is_eod:
+            return bool(self._peak_eod_dd_locked)
+
+        drawdown_usd = max(0.0, float(self.account.peak_eod_equity) - float(self.account.equity))
+        if limit > 0.0 and drawdown_usd >= limit:
+            self._peak_eod_dd_locked = True
+            self._peak_dd_fired = True
+            if self.position is not None:
+                execution_meta: dict[str, Any] = {}
+                if getattr(self, "tick_execution_required", False):
+                    order_time = (
+                        pd.Timestamp(fill_time)
+                        if fill_time is not None
+                        else pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step)
+                    )
+                    quote, execution_meta = self._resolve_randomized_tick_quote(order_time)
+                    fill_bid, fill_ask = quote.bid, quote.ask
+                    fill_time = quote.tick_time
+                pnl, fill_price = self._close_at_quote(
+                    self.position,
+                    (fill_bid, fill_ask),
+                    tick_fill=bool(execution_meta),
+                )
+                record = {
+                    "type": "close",
+                    "pnl": pnl,
+                    "price": fill_price,
+                    "reason": "peak_eod_dd_behavior",
+                    "bar": self.step_idx,
+                    "time": bar_time,
+                    "decision_time": bar_time,
+                    "fill_time": fill_time if fill_time is not None else bar_time,
+                    "equity": self.account.equity,
+                    "peak_eod_equity": self.account.peak_eod_equity,
+                    "peak_eod_drawdown_usd": max(
+                        0.0,
+                        float(self.account.peak_eod_equity) - float(self.account.equity),
+                    ),
+                    **execution_meta,
+                }
+                self._stamp_exit(record, fill_price)
+                self.trade_log.append(record)
+                self.position = None
+                self.sessions_with_trades.add(self._current_session_id())
+                self._note_close(pnl)
+
+        elif limit > 0.0 and float(self.account.equity) > float(self.account.peak_eod_equity):
+            self._peak_eod_dd_locked = False
+
+        self.account.record_eod_equity()
+        return self._peak_eod_dd_locked if limit > 0.0 else False
+
     def _sizing_equity(self) -> float:
         """Equity basis for lot sizing (dynamic risk mode only).
 

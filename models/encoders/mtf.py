@@ -18,11 +18,12 @@ from models.encoders.common import (
 )
 from models.encoders.tcn import _TemporalBlock
 
-_MTF_STREAMS: tuple[tuple[str, str], ...] = (
-    ("seq", "seq_mask"),
-    ("seq_m5", "mask_m5"),
-    ("seq_m15", "mask_m15"),
-    ("seq_h1", "mask_h1"),
+_AVAILABLE_MTF_TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
+
+_MTF_STREAMS: tuple[tuple[str, str], ...] = (("seq", "seq_mask"),) + tuple(
+    (f"seq_{timeframe.lower()}", f"mask_{timeframe.lower()}")
+    for timeframe in _AVAILABLE_MTF_TIMEFRAMES
+    if timeframe != "M1"
 )
 
 
@@ -57,7 +58,7 @@ class _CausalTCN(nn.Module):
 
 
 class MTFEncoder(BaseFeaturesExtractor):
-    """Four causal TCNs, one per window, fused back to the 128-wide latent.
+    """One causal TCN per configured timeframe window, fused to one latent.
 
     The account embedding is unchanged, so ``features_dim`` stays 160 and the
     actor and critic are the same heads used by ``TCNEncoder``.
@@ -82,9 +83,13 @@ class MTFEncoder(BaseFeaturesExtractor):
         self.kernel_size = kernel_size
         resolved_account_dim = _resolve_account_dim(observation_space, account_dim)
         self.account_mlp = AccountMLP(resolved_account_dim)
-        self._keys = _MTF_STREAMS
+        self._keys = tuple(pair for pair in _MTF_STREAMS if pair[0] in spaces_map)
+        if not self._keys or self._keys[0][0] != "seq":
+            raise ValueError("MTFEncoder requires the M1 'seq' observation stream")
         self.branches = nn.ModuleList()
-        for seq_key, _mask_key in _MTF_STREAMS:
+        for seq_key, mask_key in self._keys:
+            if mask_key not in spaces_map:
+                raise ValueError(f"missing mask observation for {seq_key}: {mask_key}")
             box = spaces_map[seq_key]
             shape = getattr(box, "shape", None)
             if shape is None or len(shape) < 2:
@@ -93,7 +98,7 @@ class MTFEncoder(BaseFeaturesExtractor):
             self.branches.append(
                 _CausalTCN(n_features, latent_dim, self.channels, kernel_size, dropout)
             )
-        width = latent_dim * len(_MTF_STREAMS)
+        width = latent_dim * len(self._keys)
         self.fuse = nn.Sequential(nn.LayerNorm(width), nn.Linear(width, latent_dim))
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:

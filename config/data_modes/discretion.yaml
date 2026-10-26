@@ -1,0 +1,12 @@
+profile: discretion
+data:
+  cache_dir: cache/data_modes/discretion/train_test_2025_2026_qgrid025_v1
+  datasets:
+    training:
+      raw_dir: data/discretion/training
+    testing:
+      raw_dir: data/discretion/testing
+  price_discretization:
+    enabled: true
+    increment: 0.25
+    rounding: nearest_half_away_from_zero

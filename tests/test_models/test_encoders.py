@@ -561,6 +561,37 @@ def test_mtf_encoder_returns_160() -> None:
     assert encoder(obs).shape == (batch, 160)
 
 
+def test_mtf_encoder_accepts_additional_timeframe_windows() -> None:
+    observation_space = spaces.Dict(
+        {
+            "seq": spaces.Box(low=-1.0, high=1.0, shape=(60, 3), dtype=np.float32),
+            "seq_mask": spaces.Box(low=0.0, high=1.0, shape=(60,), dtype=np.float32),
+            "seq_m3": spaces.Box(low=-1.0, high=1.0, shape=(20, 2), dtype=np.float32),
+            "mask_m3": spaces.Box(low=0.0, high=1.0, shape=(20,), dtype=np.float32),
+            "seq_m10": spaces.Box(low=-1.0, high=1.0, shape=(12, 2), dtype=np.float32),
+            "mask_m10": spaces.Box(low=0.0, high=1.0, shape=(12,), dtype=np.float32),
+            "seq_h4": spaces.Box(low=-1.0, high=1.0, shape=(6, 2), dtype=np.float32),
+            "mask_h4": spaces.Box(low=0.0, high=1.0, shape=(6,), dtype=np.float32),
+            "account": spaces.Box(low=-1.0, high=1.0, shape=(6,), dtype=np.float32),
+        }
+    )
+    encoder = MTFEncoder(observation_space, latent_dim=16, channels=(8, 8), dropout=0.0)
+    observations = {
+        "seq": torch.randn(2, 60, 3),
+        "seq_mask": torch.ones(2, 60),
+        "seq_m3": torch.randn(2, 20, 2),
+        "mask_m3": torch.ones(2, 20),
+        "seq_m10": torch.randn(2, 12, 2),
+        "mask_m10": torch.ones(2, 12),
+        "seq_h4": torch.randn(2, 6, 2),
+        "mask_h4": torch.ones(2, 6),
+        "account": torch.randn(2, 6),
+    }
+
+    assert len(encoder.branches) == 4
+    assert encoder(observations).shape == (2, 48)
+
+
 def test_mtf_pad_prefix_does_not_change_the_branch() -> None:
     torch.manual_seed(0)
     encoder = MTFEncoder(_mtf_space(), latent_dim=128, channels=(8, 8), dropout=0.0)

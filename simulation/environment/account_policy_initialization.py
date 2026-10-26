@@ -84,6 +84,13 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
         self._eod_max_age_hours = float(eod.get("max_age_hours", 8.0))
         self._eod_stale_bars = int(eod.get("stale_bars", 60))
         self._eod_progress_atr = float(eod.get("progress_threshold_atr", 0.25))
+        # Optional account policy: a fixed dollar trailing loss measured from
+        # the highest completed NY-session equity. The environment checks it
+        # only at session end and holds new entries until an EOD high is made.
+        self._peak_eod_trailing_dd_limit_usd = float(eod.get("peak_trailing_dd_limit_usd", 0.0))
+        if self._peak_eod_trailing_dd_limit_usd < 0.0:
+            raise ValueError("eod_risk.peak_trailing_dd_limit_usd must be nonnegative")
+        self._peak_eod_dd_locked = False
         # Risk/sizing alignment: the intraday adverse-excursion cut never
         # fires closer than the trade's own planned loss at the structural
         # stop. Without this, a $500 cutoff flattens a position sized to

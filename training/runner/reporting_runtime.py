@@ -55,6 +55,8 @@ def finalize_training_run(
             algo=args.algo,
             arch=args.arch,
             reward=args.reward,
+            environment_reward_mode=str(cfg.env.get("reward_mode", "dsr")),
+            equity_log_growth_scale=float(cfg.env.get("equity_log_growth_scale", 100.0)),
             timesteps=timesteps,
             train_bars=train_bar_count,
             test_bars=test_bar_count,

@@ -156,16 +156,12 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             decision = int(self.step_idx)
             for key, _, seq_key in HTF_BRANCHES:
                 cols = self._htf_idx[key]
-                block = (
-                    self._obs_features_arr[:, cols]
-                    if cols.size
-                    else np.zeros((self._obs_features_arr.shape[0], 0), dtype=np.float32)
-                )
                 window, mask = closed_window(
-                    np.asarray(block),
+                    self._obs_features_arr,
                     self._htf_starts[key],
                     decision,
                     int(self._mtf_windows.get(key, DEFAULT_HTF_WINDOWS[key])),
+                    columns=cols,
                 )
                 obs[seq_key] = window
                 obs[f"mask_{key}"] = mask

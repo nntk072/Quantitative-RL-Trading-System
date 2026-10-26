@@ -32,6 +32,7 @@ from configuration.paths import repository_root
 from training.configuration.variant_risk_policy import variant_ftmo_overrides
 
 PROJECT_ROOT = repository_root(__file__)
+# Retained for the standalone tick-coverage audit only; training uses YAML values.
 THESIS_RANDOMIZED_FILL_LATENCY_MS = 30.0
 EXPERIMENTS_PATH = PROJECT_ROOT / "config" / "experiments.yaml"
 DEFAULT_BASE = "config/base/default.yaml"
@@ -44,7 +45,7 @@ PREBUILT_FEATURE_CACHES: dict[str, str] = {}
 STRATEGIES = ("baseline", "po3_ifvg", "distribution")
 ALGOS = ("ppo", "sac")
 ARCHS = ("tcn", "lite_tcn", "gru", "transformer", "mtf")
-REWARD_MODES = ("dsr", "pnl", "rr")
+REWARD_MODES = ("dsr", "pnl", "rr", "equity_delta_r", "equity_log_growth")
 
 LADDER_FLAGS: tuple[str, ...] = (
     "entry_state_machine",
@@ -58,6 +59,10 @@ LADDER_FLAGS: tuple[str, ...] = (
     "candidate_max_age_bars",
     "peak_trailing_dd_limit",
     "risk_floor",
+    "risk_mode",
+    "risk_band_max_usd",
+    "risk_band_hold_below_usd",
+    "equity_log_growth_scale",
 )
 
 # Feature regime applied to every variant that uses strategy actions or a
@@ -242,13 +247,9 @@ def train_args(resolved: dict[str, Any], seed: int) -> list[str]:
     ]
     if resolved["use_vae"]:
         args += ["--use-vae", "--vae-path", str(resolved["vae_path"])]
-    # Every new variant run uses the thesis tick-fill contract. The value is
-    # emitted last so a base or variant config cannot silently disable it.
-    return (
-        args
-        + list(resolved["overrides"])
-        + [f"execution.randomized_fill_latency_ms={THESIS_RANDOMIZED_FILL_LATENCY_MS:.1f}"]
-    )
+    # Execution policy comes from the selected YAML configuration. In
+    # particular, do not silently replace its configured default with latency.
+    return args + list(resolved["overrides"])
 
 
 def consistency_table(names: list[str], **kwargs: Any) -> list[dict[str, Any]]:

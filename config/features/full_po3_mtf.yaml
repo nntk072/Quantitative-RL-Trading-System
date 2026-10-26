@@ -1,6 +1,11 @@
 features:
   # Chain A multi-timeframe spine (identical across all three Chain B variants).
   htf_timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+  # Cache causal swing levels and ATR distances at every encoder timeframe;
+  # structural target selection consumes the matching raw level columns.
+  structure:
+    enabled: true
+    timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
   # Chain F combined config: all three additive blocks enabled simultaneously.
   # technical + structure            (base, always on)
   # + PO3 time-of-day phase tag      (include_po3)

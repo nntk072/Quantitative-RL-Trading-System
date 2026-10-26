@@ -65,6 +65,24 @@ def test_configured_peak_drawdown_limit_reports_policy_miss() -> None:
 
 
 @pytest.mark.unit
+def test_configured_eod_dollar_drawdown_limit_reports_policy_miss() -> None:
+    eq = pd.Series([100_000.0, 112_000.0, 101_500.0])
+    result = assess_train_equity(
+        eq,
+        initial=100_000.0,
+        breached=False,
+        peak_eod_trailing_dd_limit_usd=10_000.0,
+        max_peak_eod_trailing_dd_usd=10_500.0,
+    )
+    assert result["ok"] is False
+    assert result["reason"] == "peak_eod_trailing_dd"
+    assert result["peak_eod_dd_policy_enabled"] is True
+    assert result["peak_eod_dd_policy_ok"] is False
+    assert result["max_peak_eod_trailing_dd_usd"] == pytest.approx(10_500.0)
+    assert result["peak_eod_trailing_dd_limit_usd"] == pytest.approx(10_000.0)
+
+
+@pytest.mark.unit
 def test_gate_fails_when_the_account_dies_on_the_cap() -> None:
     eq = pd.Series([100_000.0, 101_800.0, 89_845.0, 89_845.0])
     result = assess_train_equity(eq, initial=100_000.0, breached=True, peak_trailing_dd_limit=0.10)
@@ -160,6 +178,76 @@ def test_peak_dd_flattens_at_the_quote_and_leaves_the_stop() -> None:
     assert close["reason"] == "peak_dd_behavior"
     assert close["price"] == pytest.approx(100.0)
     assert close["price"] != pytest.approx(90.0)
+
+
+@pytest.mark.unit
+def test_eod_dollar_drawdown_flattens_locks_and_tracks_recovery() -> None:
+    from tests.test_envs.test_ny_steps_eod import _make_env
+
+    env = _make_env(
+        eod_risk={
+            "max_age_hours": 1000.0,
+            "stale_bars": 10_000,
+            "max_loss_usd": 1e12,
+            "peak_trailing_dd_limit_usd": 10_000.0,
+        }
+    )
+    env.reset()
+    position = env.broker.open_position(env.account, (20_000.0, 20_000.6), 0.1, 1)
+    assert position is not None
+    env.position = position
+    env.account.peak_eod_equity = 110_000.0
+    env.account.equity = 100_000.0
+
+    blocked = env._apply_peak_eod_trailing_dd(
+        20_000.6, 20_000.6, env.bars.index[env.step_idx], is_eod=True
+    )
+    assert blocked is True
+    assert env.position is None
+    assert env.trade_log[-1]["reason"] == "peak_eod_dd_behavior"
+    assert env.account.max_peak_eod_drawdown_usd == pytest.approx(10_000.0)
+    assert (
+        env._apply_peak_eod_trailing_dd(
+            20_000.6, 20_000.6, env.bars.index[env.step_idx], is_eod=False
+        )
+        is True
+    )
+
+    env.account.equity = 110_001.0
+    assert (
+        env._apply_peak_eod_trailing_dd(
+            20_000.6, 20_000.6, env.bars.index[env.step_idx], is_eod=True
+        )
+        is False
+    )
+    assert env.account.peak_eod_equity == pytest.approx(110_001.0)
+    env._peak_eod_dd_locked = True
+    env.reset()
+    assert env._peak_eod_dd_locked is False
+    assert env.account.max_peak_eod_drawdown_usd == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_disabled_eod_drawdown_still_records_control_diagnostic() -> None:
+    from tests.test_envs.test_ny_steps_eod import _make_env
+
+    env = _make_env(
+        eod_risk={
+            "max_age_hours": 1000.0,
+            "stale_bars": 10_000,
+            "max_loss_usd": 1e12,
+            "peak_trailing_dd_limit_usd": 0.0,
+        }
+    )
+    env.reset()
+    env.account.peak_eod_equity = 105_000.0
+    env.account.equity = 100_000.0
+    blocked = env._apply_peak_eod_trailing_dd(
+        20_000.0, 20_000.0, env.bars.index[env.step_idx], is_eod=True
+    )
+    assert blocked is False
+    assert env.account.max_peak_eod_drawdown_usd == pytest.approx(5_000.0)
+    assert env.account.peak_eod_equity == pytest.approx(105_000.0)
 
 
 def _failing_episode(*, trades: int = 2) -> dict[str, float | int | str]:

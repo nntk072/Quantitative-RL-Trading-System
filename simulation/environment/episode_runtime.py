@@ -360,6 +360,8 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             "realized_r": self._last_realized_close_r,
             "equity": float(self.account.equity),
         }
+        if self.reward_mode == "equity_log_growth":
+            reward_kwargs["previous_equity"] = float(self.equity_curve[-2])
 
         if self.use_sweep_reward and isinstance(self.reward_fn, CompositeReward):
             position_changed = (

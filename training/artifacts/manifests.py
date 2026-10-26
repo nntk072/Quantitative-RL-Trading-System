@@ -38,6 +38,8 @@ def _build_training_log(
     test_bars: int,
     test_m: Any,
     test_result: dict[str, Any],
+    environment_reward_mode: str = "dsr",
+    equity_log_growth_scale: float = 100.0,
     train_result: dict[str, Any] | None = None,
     strategy: str = "baseline",
     strategy_actions: bool = False,
@@ -55,7 +57,11 @@ def _build_training_log(
         "mvp": mvp,
         "algo": algo,
         "arch": arch,
+        # `reward` is the legacy CLI selector (DSR/sweep shaping); the
+        # environment objective is recorded separately to avoid ambiguity.
         "reward": reward,
+        "environment_reward_mode": environment_reward_mode,
+        "equity_log_growth_scale": equity_log_growth_scale,
         "strategy": strategy,
         "strategy_actions": strategy_actions,
         "timesteps": timesteps,
@@ -189,10 +195,14 @@ def _training_protocol_manifest(
             "mode": str(cfg.env.get("reward_mode", "dsr")),
             "dsr_eta": float(cfg.env.get("reward_dsr_eta", 0.01)),
             "fixed_risk_usd": float(cfg.env.get("fixed_risk_usd", 0.0)),
+            "equity_log_growth_scale": float(cfg.env.get("equity_log_growth_scale", 100.0)),
         },
         "risk": {
             "mode": str(cfg.env.get("risk_mode", "dynamic")),
             "ftmo": ftmo,
+            "eod_peak_trailing_dd_limit_usd": float(
+                cfg.env.get("eod_risk", {}).get("peak_trailing_dd_limit_usd", 0.0)
+            ),
             "risk_per_trade_limit": float(cfg.get("ftmo", {}).get("risk_per_trade_limit", 1000.0)),
             "risk_band_max_usd": float(cfg.env.get("risk_band_max_usd", 0.0)),
             "risk_band_hold_below_usd": float(cfg.env.get("risk_band_hold_below_usd", 0.0)),

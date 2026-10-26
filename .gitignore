@@ -170,6 +170,10 @@ cython_debug/
 # Tracked-on-purpose developer example (see data/examples/README.md)
 !/data/examples/
 !/data/examples/**
+!/data/normal/
+!/data/normal/README.md
+!/data/discretion/
+!/data/discretion/README.md
 
 # Derived caches and all generated runs, checkpoints, reports, and logs.
 /cache/

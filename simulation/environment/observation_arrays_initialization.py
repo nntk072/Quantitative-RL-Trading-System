@@ -10,7 +10,12 @@ import pandas as pd
 from features import attach_reachable_r, select_legacy_obs_columns, select_obs_columns
 
 from .mixin_base import RuntimeMixinBase
-from .observations import DEFAULT_HTF_WINDOWS, HTF_BRANCHES, run_starts, split_obs_columns
+from .observations import (
+    DEFAULT_HTF_WINDOWS,
+    HTF_BRANCHES,
+    split_obs_columns,
+    timeframe_starts,
+)
 
 
 class ObservationArraysInitializationMixin(RuntimeMixinBase):
@@ -24,6 +29,9 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         obs_features_mmap: str | None,
         mtf: bool,
         mtf_windows: dict[str, int] | None,
+        target_timeframes: tuple[str, ...],
+        scheduled_session_closes: dict[str, str] | None,
+        session_start: str,
     ) -> None:
         # Model-facing observation frame: the strategy's raw price-level
         # columns stay in ``features`` for execution/risk but must not enter
@@ -87,22 +95,18 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         self._mtf_windows = dict(DEFAULT_HTF_WINDOWS)
         if mtf_windows:
             self._mtf_windows.update({str(k): int(v) for k, v in mtf_windows.items()})
-        self._m1_idx, self._htf_idx = split_obs_columns(self._obs_columns)
-        self._htf_starts: dict[str, np.ndarray[Any, Any]] = {}
-        if self.mtf:
-            for key, _, _ in HTF_BRANCHES:
-                cols = self._htf_idx[key]
-                block = (
-                    self._obs_features_arr[:, cols]
-                    if cols.size
-                    else np.zeros((len(self._obs_features_arr), 0), dtype=np.float32)
-                )
-                self._htf_starts[key] = run_starts(np.asarray(block, dtype=np.float64))
+        # Keep structural TP candidate sources fixed while the encoder gains
+        # additional observation streams; these are separate experiment factors.
+        self._target_timeframes = tuple(str(tf).upper() for tf in target_timeframes)
         if self._bundle_arrays is not None:
             assert bundle_data is not None
             self._features_cols = list(bundle_data.manifest["column_names"]["features_num"])
             self._features_arr = self._bundle_arrays["features_num"]
             self._bar_times = self._bundle_arrays["bar_time_ns"].view("datetime64[ns]")
+            self._bar_time_index = pd.to_datetime(self._bundle_arrays["bar_time_ns"], utc=True)
+            bundle_timezone = bundle_data.manifest.get("labels", {}).get("bar_timezone")
+            if bundle_timezone:
+                self._bar_time_index = self._bar_time_index.tz_convert(str(bundle_timezone))
             self._session_ids_arr = (
                 self._bundle_arrays["bar_session_id"] if self._bundle_has_session_id else None
             )
@@ -112,11 +116,22 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
             self._features_cols = list(_feat_numeric.columns)
             self._features_arr = _feat_numeric.to_numpy()
             self._bar_times = bars.index.to_numpy()
+            self._bar_time_index = pd.DatetimeIndex(bars.index)
             self._session_ids_arr = (
                 bars["session_id"].to_numpy(dtype=np.int64)
                 if "session_id" in bars.columns
                 else None
             )
+        self._m1_idx, self._htf_idx = split_obs_columns(self._obs_columns)
+        self._htf_starts: dict[str, np.ndarray[Any, Any]] = {}
+        if self.mtf:
+            for key, _, _ in HTF_BRANCHES:
+                self._htf_starts[key] = timeframe_starts(
+                    self._bar_time_index,
+                    key.upper(),
+                    scheduled_session_closes,
+                    session_start,
+                )
         self._features_col_to_idx = {c: i for i, c in enumerate(self._features_cols)}
         self._sync_bar_arrays()
 

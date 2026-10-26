@@ -133,7 +133,7 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                 buffer_pts=self.sl_buffer_pts,
                 max_tp_distance=self._max_tp_here(),
                 rr_bounds=self.rr_ratio_range,
-                htf=tuple(self._mtf_windows.keys()),
+                htf=self._target_timeframes,
                 tp_selections=(self._selected_tp_selections if self.allow_multi_tp else None),
                 tp_z=(
                     self._selected_tp_z if (self.allow_multi_tp and self.allow_simplex) else None
@@ -316,7 +316,7 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                         stop_dist=sl_d,
                         max_tp_distance=float("inf"),
                         rr_bounds=None,
-                        htf=tuple(self._mtf_windows.keys()),
+                        htf=self._target_timeframes,
                     )
                     if targets:
                         self.position.entry_tp_ref_price = float(targets[0][1])

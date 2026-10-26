@@ -87,6 +87,58 @@ def _default_cfg() -> dict[str, Any]:
 class TestBuildFeaturesPipeline:
     """End-to-end build_features pipeline tests."""
 
+    def test_default_config_enables_all_timeframe_swing_levels_and_targets(self) -> None:
+        cfg = OmegaConf.load("config/base/default.yaml")
+        all_timeframes = ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+
+        assert cfg.features.structure.enabled is True
+        assert list(cfg.features.structure.timeframes) == all_timeframes
+        assert list(cfg.risk.target_timeframes) == all_timeframes
+
+    def test_all_timeframe_swing_levels_are_built(self, deterministic_bars: pd.DataFrame) -> None:
+        merged = OmegaConf.merge(
+            OmegaConf.create(_default_cfg()),
+            OmegaConf.create(
+                {
+                    "features": {
+                        "htf_timeframes": [
+                            "M3",
+                            "M5",
+                            "M10",
+                            "M15",
+                            "M30",
+                            "H1",
+                            "H4",
+                            "D1",
+                        ],
+                        "structure": {
+                            "enabled": True,
+                            "timeframes": [
+                                "M3",
+                                "M5",
+                                "M10",
+                                "M15",
+                                "M30",
+                                "H1",
+                                "H4",
+                                "D1",
+                            ],
+                        },
+                    }
+                }
+            ),
+        )
+        assert isinstance(merged, DictConfig)
+        cfg = merged
+        feat = build_features(deterministic_bars, cfg=cfg)
+        cols = set(map(str, feat.columns))
+
+        for timeframe in ("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"):
+            assert f"{timeframe}_last_swing_high" in cols
+            assert f"{timeframe}_last_swing_low" in cols
+            assert f"{timeframe}_dist_to_swing_high_atr" in cols
+            assert f"{timeframe}_dist_to_swing_low_atr" in cols
+
     def test_pipeline_produces_frame(self, deterministic_bars: pd.DataFrame) -> None:
         """build_features returns a DataFrame with the same length as input."""
         cfg = OmegaConf.create(_default_cfg())

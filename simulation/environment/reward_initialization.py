@@ -5,7 +5,13 @@ from __future__ import annotations
 from typing import Any
 
 from .mixin_base import RuntimeMixinBase
-from .rewards import DSRReward, EquityDeltaReward, PnLReward, RMultipleReward
+from .rewards import (
+    DSRReward,
+    EquityDeltaReward,
+    EquityLogGrowthReward,
+    PnLReward,
+    RMultipleReward,
+)
 from .sweep_reward import CompositeReward, SweepConfirmationReward
 
 
@@ -23,6 +29,7 @@ class RewardInitializationMixin(RuntimeMixinBase):
         dsr_weight: float,
         sweep_weight: float,
         strategy_weight: float,
+        equity_log_growth_scale: float,
     ) -> bool:
         # Resolve trader/strategy action flag early (needed for reward + spaces).
         _strategy_actions = (
@@ -42,20 +49,31 @@ class RewardInitializationMixin(RuntimeMixinBase):
         # A hard risk breach receives the same terminal penalty in training and
         # evaluation. The guardrail also ends the episodic training trajectory.
         self.reward_fn: (
-            DSRReward | CompositeReward | PnLReward | RMultipleReward | EquityDeltaReward
+            DSRReward
+            | CompositeReward
+            | PnLReward
+            | RMultipleReward
+            | EquityDeltaReward
+            | EquityLogGrowthReward
         )
         breach_penalty = -10.0
+        if self.reward_mode in ("equity_delta_r", "equity_log_growth"):
+            if use_sweep_reward or strategy_reward is not None:
+                raise ValueError(
+                    f"reward_mode={self.reward_mode!r} cannot be combined with sweep or "
+                    "strategy reward shaping"
+                )
         if self.reward_mode == "equity_delta_r":
             if self.risk_mode != "fixed" or self.fixed_risk_usd <= 0.0:
                 raise ValueError(
                     "reward_mode='equity_delta_r' requires risk_mode='fixed' and fixed_risk_usd > 0"
                 )
-            if use_sweep_reward or strategy_reward is not None:
-                raise ValueError(
-                    "reward_mode='equity_delta_r' cannot be combined with sweep or "
-                    "strategy reward shaping"
-                )
             self.reward_fn = EquityDeltaReward(self.fixed_risk_usd, breach_penalty=breach_penalty)
+            self.dsr_reward = DSRReward(eta=dsr_eta, breach_penalty=breach_penalty)
+        elif self.reward_mode == "equity_log_growth":
+            self.reward_fn = EquityLogGrowthReward(
+                scale=equity_log_growth_scale, breach_penalty=breach_penalty
+            )
             self.dsr_reward = DSRReward(eta=dsr_eta, breach_penalty=breach_penalty)
         else:
             self.reward_fn = DSRReward(eta=dsr_eta, breach_penalty=breach_penalty)
@@ -64,7 +82,7 @@ class RewardInitializationMixin(RuntimeMixinBase):
             if self.reward_mode in ("pnl", "rr")
             else None
         )
-        if self.reward_mode == "equity_delta_r":
+        if self.reward_mode in ("equity_delta_r", "equity_log_growth"):
             pass
         elif (
             use_sweep_reward

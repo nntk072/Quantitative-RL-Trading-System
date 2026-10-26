@@ -42,6 +42,10 @@ fi
 
 # shellcheck source=/dev/null
 source "$venv/bin/activate"
+# Venvs copied from the previous checkout can have a stale baked-in path.
+# Keep the active environment anchored to the current repository and its bin dir.
+export VIRTUAL_ENV="$venv"
+export PATH="$venv/bin:$PATH"
 
 # A resumed campaign keeps the recorded Git identity only while its own source
 # hashes still match. This lets documentation-only commits coexist with an

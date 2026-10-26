@@ -139,7 +139,10 @@ def evaluate_model(
     open_manipulation_bars: int = 10,
     entry_cooldown_bars: int = 0,
     reward_mode: str = "dsr",
+    equity_log_growth_scale: float = 100.0,
     fixed_risk_usd: float = 0.0,
+    risk_band_max_usd: float = 0.0,
+    risk_band_hold_below_usd: float = 0.0,
     risk_mode: str = "dynamic",
     allow_ema_exit: bool = True,
     entry_intensity_threshold: float = 0.0,
@@ -166,6 +169,9 @@ def evaluate_model(
     risk_floor: float = 0.0005,
     mtf: bool = False,
     mtf_windows: dict[str, int] | None = None,
+    target_timeframes: tuple[str, ...] = ("M5", "M15", "H1"),
+    scheduled_session_closes: dict[str, str] | None = None,
+    session_start: str = "16:30",
     env: TradingEnv | None = None,
     legacy_sequence_columns: bool = False,
     trading_policy: dict[str, Any] | None = None,
@@ -256,7 +262,10 @@ def evaluate_model(
             open_manipulation_bars=open_manipulation_bars,
             entry_cooldown_bars=entry_cooldown_bars,
             reward_mode=reward_mode,
+            equity_log_growth_scale=equity_log_growth_scale,
             fixed_risk_usd=fixed_risk_usd,
+            risk_band_max_usd=risk_band_max_usd,
+            risk_band_hold_below_usd=risk_band_hold_below_usd,
             risk_mode=risk_mode,
             allow_ema_exit=allow_ema_exit,
             entry_intensity_threshold=entry_intensity_threshold,
@@ -282,6 +291,9 @@ def evaluate_model(
             risk_floor=risk_floor,
             mtf=mtf,
             mtf_windows=mtf_windows,
+            target_timeframes=target_timeframes,
+            scheduled_session_closes=scheduled_session_closes,
+            session_start=session_start,
             trading_policy=trading_policy,
         )
 
@@ -479,6 +491,13 @@ def evaluate_model(
         "exposure_measure": BAR_CLOSE_EXPOSURE_MEASURE,
         "fail_time": fail_time,
         "max_trailing_dd": float(max_drawdown(env.equity_curve)),
+        "peak_eod_trailing_dd_limit_usd": float(
+            episode_equity.get("peak_eod_trailing_dd_limit_usd", 0.0)
+        ),
+        "max_peak_eod_trailing_dd_usd": float(
+            episode_equity.get("max_peak_eod_trailing_dd_usd", 0.0)
+        ),
+        "peak_eod_dd_policy_ok": bool(episode_equity.get("peak_eod_dd_policy_ok", True)),
         "action_counts": dict(action_counts),
         "entry_diag": dict(env._entry_diag),
         "trading_policy_mode": getattr(getattr(env, "trading_policy", None), "mode", "legacy"),

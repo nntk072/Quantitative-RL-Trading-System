@@ -26,6 +26,8 @@ def assess_equity_snapshot(
     max_peak_trailing_dd: float,
     breached: bool,
     peak_trailing_dd_limit: float = 0.0,
+    peak_eod_trailing_dd_limit_usd: float = 0.0,
+    max_peak_eod_trailing_dd_usd: float = 0.0,
 ) -> dict[str, Any]:
     """Report policy fit and hard-risk survival separately with equity diagnostics."""
     end = float(end_equity)
@@ -40,6 +42,11 @@ def assess_equity_snapshot(
         reasons.append("peak_trailing_dd")
     if not hard_risk_ok:
         reasons.append("max_loss_stopped_trading")
+    eod_dd_limit = float(peak_eod_trailing_dd_limit_usd)
+    eod_dd_observed = float(max_peak_eod_trailing_dd_usd)
+    eod_dd_ok = eod_dd_limit <= 0.0 or eod_dd_observed <= eod_dd_limit
+    if not eod_dd_ok:
+        reasons.append("peak_eod_trailing_dd")
     return {
         "ok": not reasons,
         "end_equity": end,
@@ -50,6 +57,10 @@ def assess_equity_snapshot(
         "peak_dd_policy_enabled": peak_dd_policy_enabled,
         "peak_dd_policy_ok": peak_dd_policy_ok,
         "hard_risk_ok": hard_risk_ok,
+        "max_peak_eod_trailing_dd_usd": eod_dd_observed,
+        "peak_eod_trailing_dd_limit_usd": eod_dd_limit,
+        "peak_eod_dd_policy_enabled": eod_dd_limit > 0.0,
+        "peak_eod_dd_policy_ok": eod_dd_ok,
         "breached": bool(breached),
         "reason": "ok" if not reasons else ",".join(reasons),
     }
@@ -61,12 +72,14 @@ def assess_train_equity(
     initial: float,
     breached: bool,
     peak_trailing_dd_limit: float = 0.0,
+    peak_eod_trailing_dd_limit_usd: float = 0.0,
+    max_peak_eod_trailing_dd_usd: float = 0.0,
 ) -> dict[str, Any]:
     """Return policy-fit and hard-risk diagnostics plus PnL/drawdown metrics.
 
-    ``peak_trailing_dd_limit`` activates the environment's peak-drawdown
-    behavior and reports whether the path fit that policy. With a zero limit,
-    measured drawdown is report-only. A policy miss is a diagnostic, not a
+    ``peak_trailing_dd_limit`` activates the intraday percentage rule, while
+    ``peak_eod_trailing_dd_limit_usd`` activates the fixed-dollar EOD rule.
+    A zero limit disables that rule. A policy miss is a diagnostic, not a
     reason to stop PPO optimization.
     """
     if equity is None or len(equity) == 0:
@@ -90,6 +103,8 @@ def assess_train_equity(
         slope=equity_slope(equity),
         max_peak_trailing_dd=_max_peak_trailing_dd(equity),
         peak_trailing_dd_limit=float(peak_trailing_dd_limit),
+        peak_eod_trailing_dd_limit_usd=float(peak_eod_trailing_dd_limit_usd),
+        max_peak_eod_trailing_dd_usd=float(max_peak_eod_trailing_dd_usd),
         breached=bool(breached),
     )
 

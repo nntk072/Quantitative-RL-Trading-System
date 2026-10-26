@@ -158,6 +158,45 @@ variants:
       - "constrained_rl.episode_cost_budget=0.1"
       - "constrained_rl.cost_discount_gamma=1.0"
 
+  # Matched 2M architecture comparison on the normal-resolution dataset.
+  # Both arms use the same A4a dollar-band policy with Q5 disabled; only the
+  # encoder changes from the single-window TCN to correlated timeframe TCNs.
+  - name: rq_mtf_control_tcn
+    reward_mode: dsr
+    arch: tcn
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    config_overrides:
+      - "env.risk_mode=dollar_band"
+      - "env.risk_band_max_usd=900"
+      - "env.risk_band_hold_below_usd=100"
+      - "env.risk_floor=0"
+      - "constrained_rl.enabled=false"
+
+  - name: rq_mtf_treatment_mtf
+    reward_mode: dsr
+    arch: mtf
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    config_overrides:
+      - "env.risk_mode=dollar_band"
+      - "env.risk_band_max_usd=900"
+      - "env.risk_band_hold_below_usd=100"
+      - "env.risk_floor=0"
+      - "constrained_rl.enabled=false"
+
   # ===== LADDER x STRATEGY (A4b under each strategy) =====
   - name: ladder_a4b_po3_ifvg
     reward_mode: pnl   # effective value before the resolver fix; see CHANGES.md
@@ -351,3 +390,133 @@ variants:
     strategy: distribution
     include_pd_context: true
     arch: tcn
+
+  # ===== SUSTAINABLE EQUITY GROWTH SCREEN (2M, one development seed) =====
+  # Keep the current A4a overlay, dollar-band sizing, hard loss limits, PPO
+  # geometry, and execution conditions fixed across reward comparisons.
+  - name: sustainable_growth_ppo_dsr
+    reward_mode: dsr
+    algo: ppo
+    arch: tcn
+    steps: 2000000
+    seeds: [50]
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    risk_mode: dollar_band
+    risk_band_max_usd: 900.0
+    risk_band_hold_below_usd: 100.0
+    risk_floor: 0.0
+    config_overrides:
+      - env.n_envs=8
+      - constrained_rl.enabled=false
+      - execution.randomized_fill_latency_ms=0.0
+      - training.progress_log_every=1000
+
+  - name: sustainable_growth_ppo_log
+    reward_mode: equity_log_growth
+    algo: ppo
+    arch: tcn
+    steps: 2000000
+    seeds: [50]
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    risk_mode: dollar_band
+    risk_band_max_usd: 900.0
+    risk_band_hold_below_usd: 100.0
+    risk_floor: 0.0
+    equity_log_growth_scale: 100.0
+    config_overrides:
+      - env.n_envs=8
+      - constrained_rl.enabled=false
+      - execution.randomized_fill_latency_ms=0.0
+      - training.progress_log_every=1000
+
+  - name: sustainable_growth_ppo_log_eod_dd10k
+    reward_mode: equity_log_growth
+    algo: ppo
+    arch: tcn
+    steps: 2000000
+    seeds: [50]
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    risk_mode: dollar_band
+    risk_band_max_usd: 900.0
+    risk_band_hold_below_usd: 100.0
+    risk_floor: 0.0
+    equity_log_growth_scale: 100.0
+    config_overrides:
+      - env.n_envs=8
+      - env.eod_risk.peak_trailing_dd_limit_usd=10000.0
+      - constrained_rl.enabled=false
+      - execution.randomized_fill_latency_ms=0.0
+      - training.progress_log_every=1000
+
+  - name: sustainable_growth_ppo_log_q5
+    reward_mode: equity_log_growth
+    algo: ppo
+    arch: tcn
+    steps: 2000000
+    seeds: [50]
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    risk_mode: dollar_band
+    risk_band_max_usd: 900.0
+    risk_band_hold_below_usd: 100.0
+    risk_floor: 0.0
+    equity_log_growth_scale: 100.0
+    config_overrides:
+      - env.n_envs=8
+      - constrained_rl.enabled=true
+      - constrained_rl.episode_cost_budget=0.1
+      - constrained_rl.cost_discount_gamma=0.99
+      - execution.randomized_fill_latency_ms=0.0
+      - training.progress_log_every=1000
+
+  - name: sustainable_growth_sac_log
+    reward_mode: equity_log_growth
+    algo: sac
+    arch: tcn
+    steps: 2000000
+    seeds: [50]
+    strategy_actions: true
+    agent_direction_control: true
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    risk_mode: dollar_band
+    risk_band_max_usd: 900.0
+    risk_band_hold_below_usd: 100.0
+    risk_floor: 0.0
+    equity_log_growth_scale: 100.0
+    config_overrides:
+      - env.n_envs=8
+      - constrained_rl.enabled=false
+      - execution.randomized_fill_latency_ms=0.0
+      - training.progress_log_every=1000

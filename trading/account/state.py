@@ -31,6 +31,8 @@ class AccountState:
     balance: float = field(init=False)
     equity: float = field(init=False)
     peak_equity: float = field(init=False)  # informational HWM only
+    peak_eod_equity: float = field(init=False)  # high-water mark at completed NY sessions
+    max_peak_eod_drawdown_usd: float = field(init=False)
     session_start_balance: float = field(init=False)
     session_start_equity: float = field(init=False)
     daily_loss: float = field(init=False)  # positive = loss so far today
@@ -41,6 +43,8 @@ class AccountState:
         self.balance = self.initial_balance
         self.equity = self.initial_balance
         self.peak_equity = self.initial_balance
+        self.peak_eod_equity = self.initial_balance
+        self.max_peak_eod_drawdown_usd = 0.0
         self.session_start_balance = self.initial_balance
         self.session_start_equity = self.initial_balance
         self.daily_loss = 0.0
@@ -120,6 +124,13 @@ class AccountState:
         if self.peak_equity <= 0:
             return 0.0
         return max(0.0, (self.peak_equity - self.equity) / self.peak_equity)
+
+    def record_eod_equity(self) -> float:
+        """Record end-of-session equity and return drawdown from the prior EOD peak."""
+        drawdown_usd = max(0.0, self.peak_eod_equity - self.equity)
+        self.max_peak_eod_drawdown_usd = max(self.max_peak_eod_drawdown_usd, drawdown_usd)
+        self.peak_eod_equity = max(self.peak_eod_equity, self.equity)
+        return drawdown_usd
 
     def to_array(self) -> list[float]:
         """Return a fixed-length array for the env observation."""

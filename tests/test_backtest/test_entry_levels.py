@@ -155,6 +155,31 @@ def test_session_extremes_are_structural_order_candidates(
     assert expected_targets <= target_levels
 
 
+def test_target_menu_uses_every_configured_timeframe_swing_level() -> None:
+    timeframes = ("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
+    values = {"last_swing_high": 109.0}
+    values.update(
+        {
+            f"{timeframe}_last_swing_high": 110.0 + offset
+            for offset, timeframe in enumerate(timeframes)
+        }
+    )
+    row = _row(**values)
+
+    targets = target_menu(
+        direction=1,
+        entry_price=100.0,
+        row=row,
+        stop_dist=1.0,
+        max_tp_distance=float("nan"),
+        htf=timeframes,
+    )
+
+    names = {name for name, _price, _distance in targets}
+    assert "last_swing_high" in names
+    assert {f"{timeframe}_last_swing_high" for timeframe in timeframes} <= names
+
+
 def test_mtf_swing_candidates_require_causal_provenance_and_are_audited() -> None:
     decision_at = pd.Timestamp("2026-01-05 10:00:00", tz="UTC")
     confirmed_at = pd.Timestamp("2026-01-05 09:55:00", tz="UTC")

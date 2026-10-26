@@ -69,7 +69,15 @@ def parse_train_args() -> argparse.Namespace:
         default=None,
         help="Encoder architecture",
     )
-    parser.add_argument("--reward", choices=["dsr", "sweep"], default="dsr", help="Reward function")
+    parser.add_argument(
+        "--reward",
+        choices=["dsr", "sweep"],
+        default="dsr",
+        help=(
+            "Legacy sweep-shaping selector; the economic objective is configured "
+            "separately with env.reward_mode"
+        ),
+    )
     parser.add_argument(
         "--strategy",
         choices=["baseline", "po3_ifvg", "distribution"],

@@ -94,6 +94,8 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
                 initial=float(self._ep_start_equity),
                 breached=bool(self.breach_log),
                 peak_trailing_dd_limit=float(self.peak_trailing_dd_limit),
+                peak_eod_trailing_dd_limit_usd=float(self._peak_eod_trailing_dd_limit_usd),
+                max_peak_eod_trailing_dd_usd=float(self.account.max_peak_eod_drawdown_usd),
             )
             completed_data_split = self._ny_pos >= len(self._ny_indices)
             if done:
@@ -121,6 +123,8 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
                 "slope": float(gate["slope"]),
                 "max_peak_trailing_dd": float(gate["max_peak_trailing_dd"]),
                 "peak_trailing_dd_limit": float(self.peak_trailing_dd_limit),
+                "max_peak_eod_trailing_dd_usd": float(self.account.max_peak_eod_drawdown_usd),
+                "peak_eod_trailing_dd_limit_usd": float(self._peak_eod_trailing_dd_limit_usd),
             }
 
         return obs, float(reward), done, truncated, info

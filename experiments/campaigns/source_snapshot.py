@@ -102,6 +102,7 @@ def campaign_source_files(
         "compute",
         "config",
         "scripts/compute/slurm",
+        "scripts/data",
         "scripts/research",
         "pyproject.toml",
         "uv.lock",

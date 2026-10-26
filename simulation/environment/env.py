@@ -101,6 +101,7 @@ class TradingEnv(
         open_manipulation_bars: int = 10,
         entry_cooldown_bars: int = 0,
         reward_mode: str = "dsr",
+        equity_log_growth_scale: float = 100.0,
         fixed_risk_usd: float = 0.0,
         risk_band_max_usd: float = 0.0,
         risk_band_hold_below_usd: float = 0.0,
@@ -129,6 +130,9 @@ class TradingEnv(
         allow_simplex: bool = True,
         mtf: bool = False,
         mtf_windows: dict[str, int] | None = None,
+        target_timeframes: tuple[str, ...] = ("M5", "M15", "H1"),
+        scheduled_session_closes: dict[str, str] | None = None,
+        session_start: str = "16:30",
         entry_state_machine: bool = False,
         candidate_max_age_bars: int = 5,
         arm_requires_retest: bool = False,
@@ -220,6 +224,7 @@ class TradingEnv(
             dsr_weight,
             sweep_weight,
             strategy_weight,
+            equity_log_growth_scale,
         )
         self._initialize_strategy_runtime(
             strategy, resolved_strategy_actions, sl_buffer_pts, bundle_data, bars, features
@@ -233,6 +238,9 @@ class TradingEnv(
             obs_features_mmap,
             mtf,
             mtf_windows,
+            target_timeframes,
+            scheduled_session_closes,
+            session_start,
         )
         self._initialize_action_and_episode_contracts(
             continuous_actions,
@@ -288,6 +296,8 @@ class TradingEnv(
             self._ny_pos = max(0, len(self._ny_indices) - 1)
         self.step_idx = int(self._ny_indices[self._ny_pos]) if len(self._ny_indices) else 0
         self.account = self._create_account()
+        self._peak_eod_dd_locked = False
+        self._peak_dd_fired = False
         self.position: Position | None = None
         self._pending_entry_order: dict[str, Any] | None = None
         self.equity_curve = [self.initial_balance]

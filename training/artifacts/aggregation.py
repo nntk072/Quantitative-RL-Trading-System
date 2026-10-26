@@ -87,6 +87,10 @@ def _aggregate_seed_results(
         "algo": algo,
         "arch": arch,
         "reward": reward,
+        # The CLI reward selector controls legacy sweep shaping. Keep the
+        # environment objective explicit for growth-reward comparisons.
+        "environment_reward_mode": str(cfg.env.get("reward_mode", "dsr")),
+        "equity_log_growth_scale": float(cfg.env.get("equity_log_growth_scale", 100.0)),
         "strategy": strategy,
         "strategy_actions": strategy_actions,
         "mvp": mvp,

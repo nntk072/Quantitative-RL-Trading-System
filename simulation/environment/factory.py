@@ -233,7 +233,10 @@ def build_eval_common(
         "open_manipulation_bars": int(cfg.env.get("open_manipulation_bars", 10)),
         "entry_cooldown_bars": int(cfg.env.get("entry_cooldown_bars", 0)),
         "reward_mode": str(cfg.env.get("reward_mode", "dsr")),
+        "equity_log_growth_scale": float(cfg.env.get("equity_log_growth_scale", 100.0)),
         "fixed_risk_usd": float(cfg.env.get("fixed_risk_usd", 0.0)),
+        "risk_band_max_usd": float(cfg.env.get("risk_band_max_usd", 0.0)),
+        "risk_band_hold_below_usd": float(cfg.env.get("risk_band_hold_below_usd", 0.0)),
         "risk_mode": str(cfg.env.get("risk_mode", "dynamic")),
         "observation_schema_version": observation_schema_version,
         "observation_age_scale_bars": float(cfg.env.get("observation_age_scale_bars", 60.0)),
@@ -262,6 +265,11 @@ def build_eval_common(
         "risk_floor": float(cfg.env.get("risk_floor", 0.0005)),
         "mtf": use_mtf,
         "mtf_windows": mtf_windows,
+        "target_timeframes": tuple(
+            str(tf) for tf in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
+        ),
+        "scheduled_session_closes": scheduled_session_closes(cfg),
+        "session_start": str(cfg.session.get("start", "16:30")),
         "trading_policy": policy.to_dict(),
     }
     return eval_common, strategy, strategy_reward, strategy_weight, strategy_actions
@@ -321,6 +329,13 @@ def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
         for key, value in dict(raw).items():
             windows[str(key)] = int(value)
     return str(chosen) == "mtf", windows
+
+
+def scheduled_session_closes(cfg: Any) -> dict[str, str]:
+    """Read session close dates with the feature builder's shared loader."""
+    from features.pipeline.builder import _scheduled_close_map
+
+    return _scheduled_close_map(cfg)
 
 
 def cost_model(cfg: Any) -> CostModel:
@@ -410,6 +425,7 @@ def make_env(
         open_manipulation_bars=int(cfg.env.get("open_manipulation_bars", 10)),
         entry_cooldown_bars=int(cfg.env.get("entry_cooldown_bars", 0)),
         reward_mode=str(cfg.env.get("reward_mode", "dsr")),
+        equity_log_growth_scale=float(cfg.env.get("equity_log_growth_scale", 100.0)),
         fixed_risk_usd=float(cfg.env.get("fixed_risk_usd", 0.0)),
         risk_band_max_usd=float(cfg.env.get("risk_band_max_usd", 0.0)),
         risk_band_hold_below_usd=float(cfg.env.get("risk_band_hold_below_usd", 0.0)),
@@ -439,5 +455,10 @@ def make_env(
         obs_features_mmap=obs_features_mmap,
         mtf=use_mtf,
         mtf_windows=mtf_windows,
+        target_timeframes=tuple(
+            str(tf) for tf in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
+        ),
+        scheduled_session_closes=scheduled_session_closes(cfg),
+        session_start=str(cfg.session.get("start", "16:30")),
         trading_policy=policy.to_dict(),
     )

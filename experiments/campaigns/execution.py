@@ -158,13 +158,13 @@ STOP = False
 _CACHE_FILE_HASHES: dict[tuple[str, int, int, int], str] = {}
 
 
-def normalize_campaign_config_overrides(value: Any) -> dict[str, bool | int | float]:
+def normalize_campaign_config_overrides(value: Any) -> dict[str, bool | int | float | str]:
     """Validate simple scalar config overrides declared by a campaign spec."""
     if value is None:
         return {}
     if not isinstance(value, dict):
         raise ValueError("campaign config_overrides must be a mapping")
-    normalized: dict[str, bool | int | float] = {}
+    normalized: dict[str, bool | int | float | str] = {}
     for raw_key, raw_value in value.items():
         key = str(raw_key).strip()
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", key):
@@ -175,12 +175,82 @@ def normalize_campaign_config_overrides(value: Any) -> dict[str, bool | int | fl
             normalized[key] = raw_value
         elif isinstance(raw_value, float) and math.isfinite(raw_value):
             normalized[key] = raw_value
+        elif isinstance(raw_value, str) and key in {
+            "data.cache_dir",
+            "data.datasets.training.raw_dir",
+            "data.datasets.testing.raw_dir",
+            "data.price_discretization.rounding",
+        }:
+            relative_path = pathlib.PurePosixPath(raw_value)
+            if key != "data.price_discretization.rounding" and (
+                not raw_value.strip() or relative_path.is_absolute() or ".." in relative_path.parts
+            ):
+                raise ValueError(f"campaign {key} must be a non-empty relative path")
+            if key == "data.price_discretization.rounding" and not raw_value.strip():
+                raise ValueError("campaign data.price_discretization.rounding must not be empty")
+            normalized[key] = raw_value
         else:
-            raise ValueError(f"campaign config override {key!r} must be a finite number or boolean")
+            raise ValueError(
+                f"campaign config override {key!r} must be a finite number, boolean, "
+                "or supported relative data path/string"
+            )
     return dict(sorted(normalized.items()))
 
 
-def campaign_config_override_lines(values: dict[str, bool | int | float]) -> str:
+def load_campaign_data_profile(profile: Any) -> dict[str, bool | int | float | str]:
+    """Load an explicit reusable data mode from ``config/data_modes``."""
+    if profile is None:
+        return {}
+    if not isinstance(profile, str) or not profile.strip():
+        raise ValueError("campaign data_profile must be a relative YAML path")
+    profile_path = (ROOT / profile).resolve()
+    try:
+        relative = profile_path.relative_to(ROOT.resolve())
+    except ValueError:
+        raise ValueError("campaign data_profile must stay inside the repository") from None
+    if relative.parts[:2] != ("config", "data_modes") or profile_path.suffix not in {
+        ".yaml",
+        ".yml",
+    }:
+        raise ValueError("campaign data_profile must be a YAML file under config/data_modes")
+    import yaml
+
+    try:
+        raw = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise ValueError(f"cannot load campaign data profile {relative}: {exc}") from exc
+    if (
+        not isinstance(raw, dict)
+        or raw.get("profile") != profile_path.stem
+        or not isinstance(raw.get("data"), dict)
+    ):
+        raise ValueError(f"{relative} must contain a data mapping")
+
+    flattened: dict[str, Any] = {}
+
+    def visit(prefix: str, value: Any) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                visit(f"{prefix}.{key}" if prefix else str(key), child)
+        else:
+            flattened[prefix] = value
+
+    visit("data", raw["data"])
+    allowed = {
+        "data.cache_dir",
+        "data.datasets.training.raw_dir",
+        "data.datasets.testing.raw_dir",
+        "data.price_discretization.enabled",
+        "data.price_discretization.increment",
+        "data.price_discretization.rounding",
+    }
+    unexpected = set(flattened) - allowed
+    if unexpected:
+        raise ValueError(f"{relative} contains unsupported data settings: {sorted(unexpected)}")
+    return normalize_campaign_config_overrides(flattened)
+
+
+def campaign_config_override_lines(values: dict[str, bool | int | float | str]) -> str:
     """Serialize validated scalar overrides for the isolated trainer process."""
     lines = []
     for key, value in values.items():
@@ -236,7 +306,7 @@ def main() -> int:
     import yaml
 
     evaluation: dict[str, Any] = {"locked_oos_role": "unspecified", "deterministic": False}
-    config_overrides: dict[str, bool | int | float] = {}
+    config_overrides: dict[str, bool | int | float | str] = {}
     if args.campaign_spec:
         if any(
             value is not None
@@ -271,7 +341,11 @@ def main() -> int:
         if listed != [str(name) for name in spec_variants]:
             raise ValueError("campaign spec variants do not match its authoritative variant file")
         evaluation = validate_campaign_evaluation(spec.get("evaluation", {}))
-        config_overrides = normalize_campaign_config_overrides(spec.get("config_overrides", {}))
+        profile_overrides = load_campaign_data_profile(spec.get("data_profile"))
+        campaign_overrides = normalize_campaign_config_overrides(spec.get("config_overrides", {}))
+        config_overrides = normalize_campaign_config_overrides(
+            {**profile_overrides, **campaign_overrides}
+        )
         default_config = yaml.safe_load(
             (ROOT / "config" / "base" / "default.yaml").read_text(encoding="utf-8")
         )
@@ -410,6 +484,19 @@ def main() -> int:
     source_hashes = {str(path.relative_to(ROOT)): sha256_file(path) for path in source_files}
     raw_config = yaml.safe_load((ROOT / "config" / "base" / "default.yaml").read_text())
     data_config = raw_config["data"]
+    for key, value in config_overrides.items():
+        if not key.startswith("data."):
+            continue
+        cursor = data_config
+        parts = key.split(".")[1:]
+        for part in parts[:-1]:
+            child = cursor.get(part)
+            if not isinstance(child, dict):
+                raise ValueError(f"campaign override {key!r} does not match the base data YAML")
+            cursor = child
+        if parts[-1] not in cursor:
+            raise ValueError(f"campaign override {key!r} is not declared in the base data YAML")
+        cursor[parts[-1]] = value
     data_inputs = campaign_data_inputs(data_config)
     missing_inputs = [path for path, digest in data_inputs.items() if digest == "MISSING"]
     if missing_inputs and not args.test_worker:

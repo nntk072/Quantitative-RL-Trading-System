@@ -10,6 +10,10 @@ from pathlib import Path
 import yaml
 
 from configuration import load_config
+from experiments.campaigns.execution import (
+    load_campaign_data_profile,
+    normalize_campaign_config_overrides,
+)
 from market_data.loading.pipeline import BAR_CACHE_VERSION, build_tick_books, run_pipeline
 from market_data.loading.ticks import TICK_CACHE_VERSION
 from market_data.transforms.price_grid import (
@@ -31,13 +35,26 @@ def _campaign_data_overrides() -> list[str]:
     spec = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
     if not isinstance(spec, dict) or not isinstance(spec.get("variants"), list):
         raise ValueError("campaign spec must contain a variants list")
-    data_prefixes = ("data.cache_dir=", "data.price_discretization.")
+    data_prefixes = (
+        "data.cache_dir=",
+        "data.datasets.training.raw_dir=",
+        "data.datasets.testing.raw_dir=",
+        "data.price_discretization.",
+    )
+    profile = load_campaign_data_profile(spec.get("data_profile"))
+    explicit = normalize_campaign_config_overrides(spec.get("config_overrides", {}))
+    profile_and_campaign = {**profile, **explicit}
+    config_overrides = [
+        f"{key}={str(value).lower() if isinstance(value, bool) else value}"
+        for key, value in sorted(profile_and_campaign.items())
+    ]
     policies: list[tuple[str, ...]] = []
     for name in spec["variants"]:
         resolved = resolve_variant(
             str(name),
             steps=int(spec.get("timesteps", 100_000)),
             seeds=[int(seed) for seed in spec.get("seeds", [42])],
+            config_overrides=config_overrides,
         )
         policies.append(
             tuple(

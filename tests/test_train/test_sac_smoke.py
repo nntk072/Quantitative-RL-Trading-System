@@ -147,3 +147,42 @@ def test_sac_rejects_discrete_action_space() -> None:
     )
     with pytest.raises(ValueError, match="continuous"):
         build_agent(env, cfg, arch="tcn", algo="sac")
+
+
+def test_sac_accepts_the_same_strategy_overlay_action_schema(sac_cfg: Any) -> None:
+    pytest.importorskip("torch")
+    pytest.importorskip("stable_baselines3")
+
+    from simulation.environment.env import TradingEnv
+
+    bars = _make_bars(n=128)
+    features = _make_features(bars)
+    ppo_contract = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=10,
+        continuous_actions=False,
+        strategy_actions=True,
+        agent_direction_control=True,
+        allow_agent_sl_mode=True,
+        allow_agent_tp_mode=True,
+        allow_multi_tp=True,
+    )
+    sac_env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=10,
+        continuous_actions=True,
+        strategy_actions=True,
+        agent_direction_control=True,
+        allow_agent_sl_mode=True,
+        allow_agent_tp_mode=True,
+        allow_multi_tp=True,
+    )
+    assert ppo_contract.action_space.shape == sac_env.action_space.shape
+    assert ppo_contract.action_schema.to_dict() == sac_env.action_schema.to_dict()
+
+    model = build_agent(sac_env, sac_cfg, arch="tcn", algo="sac")
+    observation, _ = sac_env.reset(seed=50)
+    action, _ = model.predict(observation, deterministic=True)
+    assert np.asarray(action).shape[-1] == sac_env.action_space.shape[0]
