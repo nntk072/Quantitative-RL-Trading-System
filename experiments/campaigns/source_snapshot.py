@@ -92,6 +92,8 @@ def campaign_source_files(
         "market_data",
         "features",
         "trading",
+        "decisioning",
+        "learning",
         "simulation",
         "models",
         "training",

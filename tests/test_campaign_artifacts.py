@@ -604,18 +604,27 @@ def test_campaign_source_files_include_untracked_runtime_modules(tmp_path: Path)
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     tracked = root / "configuration" / "tracked.py"
     untracked = root / "configuration" / "runtime_module.py"
+    decisioning = root / "decisioning" / "observations.py"
+    learning = root / "learning" / "policy.py"
     documentation = root / "docs" / "mutable_status.md"
     tracked.parent.mkdir()
     tracked.write_text("VALUE = 1\n", encoding="utf-8")
     untracked.write_text("VALUE = 2\n", encoding="utf-8")
+    decisioning.parent.mkdir()
+    decisioning.write_text("VALUE = 3\n", encoding="utf-8")
+    learning.parent.mkdir()
+    learning.write_text("VALUE = 4\n", encoding="utf-8")
     documentation.parent.mkdir()
     documentation.write_text("status updates do not alter runtime identity\n", encoding="utf-8")
     subprocess.run(["git", "-C", str(root), "add", "configuration/tracked.py"], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "learning/policy.py"], check=True)
 
     sources = controller.campaign_source_files(root)
 
     assert tracked.resolve() in sources
     assert untracked.resolve() in sources
+    assert decisioning.resolve() in sources
+    assert learning.resolve() in sources
     assert documentation.resolve() not in sources
 
 
