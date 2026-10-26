@@ -161,13 +161,37 @@ Treatment cache identity: `15a7206755fde49b`; SHA-256: `66fbe9afa0db50fb18bad777
 
 The reproducible source path is: higher-timeframe bars are causally aligned to the M1 spine, then the shared 252-row z-score is applied after alignment. A D1 value is constant across M1 rows between daily updates. Once the rolling window contains only the same D1 value, its standard deviation is zero; `rolling_zscore` replaces zero standard deviation with missing, and the observation builder converts missing values to zero. A direct June 2, 2025 reproduction retained a D1 return for 251 M1 rows and produced missing values from 05:16 local time onward, including the NY trading session.
 
+## R1 startup failure and recovery
+
+The first R1 campaign reached the feature-cache read but did not enter PPO
+training. Its one attempt completed zero PPO steps and produced no checkpoint.
+PyArrow rejected the D1 treatment cache because the footer did not contain
+Parquet's `PAR1` marker. The captured file hash was
+`ab794818fc9a72374ed7c7b57b6e3d838c9cffb2963e27446c02d54e897896a5`, different
+from the earlier successful rebuild hash. The corrupt cache was removed after
+capturing its hash and footer bytes, then rebuilt once from the saved R0 config
+and the same market data. The regenerated cache read successfully, reproduced
+the same entry availability counts, and again hashed to
+`66fbe9afa0db50fb18bad777fff7b0ef9c8099f3903669e177b9cf347646ddc5`.
+
+The earlier duplicate cache rebuild had a terminated writer, which is the
+likely cause of the truncated cache; the direct cause is not proven. The failed
+campaign manifest, fingerprint, log, and attempt provenance remain preserved.
+The campaign controller treats failed jobs as terminal on `--resume`, so the
+retry uses an explicit new campaign ID while preserving the failed attempt as
+infrastructure evidence. The retry has the same scientific settings and is the
+single planned R1 development screen; the failed startup is not a result or an
+additional seed. See `r1_startup_recovery.json` for hashes and status, and
+`r1_retry_campaign_preflight.json` for the passing retry preflight. The retry
+has not started at the time of this report.
+
 ## Finding and limits
 
 1. The existing `trend_regime` field is not a slow trend label: the open ledger records it as `flat` for every accepted trade. It is derived from same-day Asia/London premium-discount bias.
 2. The policy did not receive the cached normalized D1 momentum/trend indicators during its NY entry decisions, despite those columns appearing in the feature schema. This is a demonstrated feature-normalization defect, not proof that it alone caused the equity decline.
 3. The regime/side tables show whether observed trade expectancy is concentrated by the causal D1 labels. They remain descriptive single-seed, in-sample associations; low-count cells and the hard-loss stop limit inference.
 4. This analysis cannot isolate transaction-cost drag because the saved position outcomes do not provide a comparable mid-price gross counterfactual. Do not attribute the loss to costs from this report.
-5. The minimum justified next experiment is a matched TCN run that corrects only D1 technical-feature normalization on the D1 source index before alignment. Keep the PPO, action schema, risk limits, and training protocol fixed; defer a new encoder and extra indicator family unless the repaired-input results justify them.
+5. The minimum justified experiment is the prepared matched TCN run that corrects only D1 technical-feature normalization on the D1 source index before alignment. Keep the PPO, action schema, risk limits, and training protocol fixed; defer a new encoder and extra indicator family unless the repaired-input results justify them.
 
 ## Provenance outputs
 

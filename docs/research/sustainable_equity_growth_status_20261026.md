@@ -79,11 +79,18 @@ completed-D1 as-of alignment and training-mask boundary. The cache identity is
 `docs/research/regime_attribution_20261026/d1_feature_rebuild_check.json`.
 This proves feature availability, not improved policy performance.
 
-R1 is prepared, not started: one DSR PPO run, seed 50, 2M steps, 8 envs, same
-normal data and dates, with only D1 source normalization enabled. Its dry-run
-preflight passed. `matched_pair.json` records the existing R0 run and planned
-R1 configuration; the actual R1 campaign should use the next suitable
-one-GH200 allocation after the current allocation ends. Keep 2026 report-only.
+The first R1 startup attempt failed before PPO training because the treatment
+feature-cache Parquet footer was corrupted; it completed zero PPO steps and
+created no checkpoint. Its campaign fingerprint, manifest, log, and attempt
+provenance are preserved in
+`docs/research/regime_attribution_20261026/r1_startup_recovery.json`. The
+corrupted derived cache was rebuilt once from the same saved config and data;
+its regenerated SHA-256 matches the earlier valid rebuild and the treatment
+availability counts are unchanged. A retry campaign with the same scientific
+settings passed dry-run preflight and has not started. Use that retry as the
+single R1 development screen; the failed startup is not a result or a second
+seed. `matched_pair.json` records R0, the failed startup, and the preflighted
+retry. Keep 2026 report-only.
 
 The regime-attribution implementation and cache treatment passed the full
 agent gate on `gpuarm1` (aarch64/GH200): full-tree Ruff format, full-tree Ruff

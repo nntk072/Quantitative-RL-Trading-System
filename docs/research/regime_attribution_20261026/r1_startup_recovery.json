@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "failed_startup_campaign": {
+    "campaign_id": "regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_v1",
+    "campaign_spec": "config/campaigns/regime_d1_norm_r1_seed50_train2025_2m.yaml",
+    "campaign_fingerprint": "5131a6bbaf31d300ad47c6811c101bdced95e178c94d0fa97817555a8a001636",
+    "campaign_manifest_sha256": "bb87dea64b5c50fcfc034e94fca7e3ff6ce5d1391ff075f7c130dfc249481fbb",
+    "attempt": 1,
+    "attempt_provenance_sha256": "1ddb7f0474146f851565a062ecd3e518c331be405aea8a674f9446ff38283cd7",
+    "worker_log_sha256": "cd8bfa7322eb5d62ba393207be3f8805f51c554c1b5a071530d22aa36eb6e45b",
+    "status": "failed_before_ppo_training",
+    "training_steps_completed": 0,
+    "checkpoint_created": false,
+    "failure": "pyarrow.lib.ArrowInvalid: Parquet magic bytes not found in footer while reading the treatment feature cache",
+    "corrupt_cache_sha256": "ab794818fc9a72374ed7c7b57b6e3d838c9cffb2963e27446c02d54e897896a5",
+    "expected_cache_sha256": "66fbe9afa0db50fb18bad777fff7b0ef9c8099f3903669e177b9cf347646ddc5",
+    "corrupt_cache_footer_magic_hex": "86b10200",
+    "recovery": {
+      "corrupt_cache_removed_after_hash_capture": true,
+      "cache_rebuilt_from_same_saved_R0_config_and_market_data": true,
+      "rebuilt_cache_sha256": "66fbe9afa0db50fb18bad777fff7b0ef9c8099f3903669e177b9cf347646ddc5",
+      "rebuilt_entry_availability_matches_prior_check": true,
+      "failed_campaign_and_fingerprint_preserved": true,
+      "retry_uses_new_campaign_id_because_failed_jobs_are_terminal_on_resume": true
+    },
+    "causal_note": "A previously dispatched duplicate cache rebuild had one terminated writer. This is the likely source of the truncated Parquet file; the direct causal link is not proven."
+  },
+  "retry_campaign_id": "regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_retry1_v1",
+  "retry_campaign_spec": "config/campaigns/regime_d1_norm_r1_seed50_train2025_2m_retry1.yaml",
+  "scientific_interpretation": "The failed startup produced no training evidence and is excluded from the R0/R1 policy comparison. The retry is the single planned R1 development screen, not an additional seed or statistical replicate."
+}

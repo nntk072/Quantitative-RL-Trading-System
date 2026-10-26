@@ -27,10 +27,11 @@
     "normalize_d1_technical_on_source": false
   },
   "R1_treatment": {
-    "status": "preflight_passed_not_started",
-    "campaign_id": "regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_v1",
-    "campaign_spec": "config/campaigns/regime_d1_norm_r1_seed50_train2025_2m.yaml",
-    "campaign_preflight": "docs/research/regime_attribution_20261026/r1_campaign_preflight.json",
+    "status": "retry_preflight_passed_not_started",
+    "campaign_id": "regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_retry1_v1",
+    "campaign_spec": "config/campaigns/regime_d1_norm_r1_seed50_train2025_2m_retry1.yaml",
+    "failed_startup_attempt": "docs/research/regime_attribution_20261026/r1_startup_recovery.json",
+    "campaign_preflight": "docs/research/regime_attribution_20261026/r1_retry_campaign_preflight.json",
     "normalize_d1_technical_on_source": true,
     "validated_feature_cache_hash": "15a7206755fde49b",
     "validated_feature_cache_sha256": "66fbe9afa0db50fb18bad777fff7b0ef9c8099f3903669e177b9cf347646ddc5"
