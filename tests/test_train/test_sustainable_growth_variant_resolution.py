@@ -88,6 +88,35 @@ def test_registered_growth_screen_has_matched_reward_and_q5_arms() -> None:
     assert eod_dd_overrides["env.eod_risk.peak_trailing_dd_limit_usd"] == "10000.0"
 
 
+def test_regime_context_r2_variants_are_matched_except_for_representation() -> None:
+    control = resolve_variant("regime_d1_norm_tcn_control")
+    treatment = resolve_variant("regime_d1_norm_tcn_regime")
+
+    assert control["arch"] == "tcn"
+    assert treatment["arch"] == "tcn_regime"
+    for key in ("algo", "strategy", "strategy_actions", "reward_mode", "steps", "seeds"):
+        assert control[key] == treatment[key], f"R2 variants differ at {key}"
+    assert control["steps"] == 2_000_000
+    assert control["seeds"] == [50]
+
+    control_overrides = {
+        item.split("=", 1)[0]: item.split("=", 1)[1] for item in control["overrides"]
+    }
+    treatment_overrides = {
+        item.split("=", 1)[0]: item.split("=", 1)[1] for item in treatment["overrides"]
+    }
+    assert control_overrides.keys() == treatment_overrides.keys()
+    differences = {
+        key for key in control_overrides if control_overrides[key] != treatment_overrides[key]
+    }
+    assert differences == {"env.regime_observation"}
+    assert control_overrides["env.regime_observation"] == "false"
+    assert treatment_overrides["env.regime_observation"] == "true"
+    assert control_overrides["features.normalize_d1_technical_on_source"] == "true"
+    assert control_overrides["env.risk_mode"] == "dollar_band"
+    assert control_overrides["env.risk_band_max_usd"] == "900.0"
+
+
 def test_legacy_equity_delta_reward_is_resolvable(tmp_path: Path) -> None:
     path = Path(__file__).resolve().parents[2] / "config" / "experiments.yaml"
     contents = yaml.safe_load(path.read_text(encoding="utf-8"))
