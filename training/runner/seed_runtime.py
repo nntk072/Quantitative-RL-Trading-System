@@ -1050,6 +1050,7 @@ class SeedRunner:
                 "entry_state_machine",
                 "entry_state_observation",
                 "arm_requires_retest",
+                "regime_observation",
             )
         }
         oos_role = (

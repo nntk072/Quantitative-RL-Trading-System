@@ -265,6 +265,7 @@ def build_eval_common(
         "risk_floor": float(cfg.env.get("risk_floor", 0.0005)),
         "mtf": use_mtf,
         "mtf_windows": mtf_windows,
+        "regime_observation": regime_observation_enabled(cfg),
         "target_timeframes": tuple(
             str(tf) for tf in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),
@@ -301,6 +302,23 @@ def tick_execution_required(cfg: Any) -> bool:
     """Whether the effective config forbids candle-priced execution fills."""
     costs = cfg.get("costs", {}) if hasattr(cfg, "get") else {}
     return bool(costs.get("use_tick_execution", False)) if hasattr(costs, "get") else False
+
+
+def regime_observation_enabled(cfg: Any) -> bool:
+    """Resolve the opt-in D1 branch and require its train-only source scaling."""
+    env_cfg = cfg.get("env", {}) if hasattr(cfg, "get") else {}
+    enabled = bool(env_cfg.get("regime_observation", False)) if hasattr(env_cfg, "get") else False
+    features_cfg = cfg.get("features", {}) if hasattr(cfg, "get") else {}
+    source_normalized = (
+        bool(features_cfg.get("normalize_d1_technical_on_source", False))
+        if hasattr(features_cfg, "get")
+        else False
+    )
+    if enabled and not source_normalized:
+        raise ValueError(
+            "env.regime_observation requires features.normalize_d1_technical_on_source=true"
+        )
+    return enabled
 
 
 def max_tick_quote_wait_ms(cfg: Any) -> int:
@@ -455,6 +473,7 @@ def make_env(
         obs_features_mmap=obs_features_mmap,
         mtf=use_mtf,
         mtf_windows=mtf_windows,
+        regime_observation=regime_observation_enabled(cfg),
         target_timeframes=tuple(
             str(tf) for tf in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),

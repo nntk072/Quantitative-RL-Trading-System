@@ -130,7 +130,12 @@ def _observation_schema_manifest(env: Any) -> dict[str, Any] | None:
     if not callable(to_dict):
         return None
     result = to_dict()
-    return result if isinstance(result, dict) else None
+    if not isinstance(result, dict):
+        return None
+    regime_schema = getattr(env, "regime_observation_schema", None)
+    if isinstance(regime_schema, dict):
+        result["regime_observation"] = regime_schema
+    return result
 
 
 def _sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:

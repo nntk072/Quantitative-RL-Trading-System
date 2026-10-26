@@ -154,6 +154,7 @@ def _aggregate_seed_results(
             "entry_state_machine",
             "entry_state_observation",
             "arm_requires_retest",
+            "regime_observation",
         )
     }
     aggregated["env_flags"] = env_flags

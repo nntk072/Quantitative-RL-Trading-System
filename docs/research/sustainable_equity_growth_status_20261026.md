@@ -4,16 +4,6 @@
 **Purpose:** Current handoff for reward-alignment work and the regime-aware
 research plan. This file records the current run state and latest results.
 
-## 1-env proposal discarded
-
-The user removed the proposed 1-env benchmark from active scope. The campaign
-controller rejected `n_envs=1` before PPO training because that setting is not
-in its memory-profiled choices (`4, 8, 16, 32, 64`). It produced no training
-result and is not to be recreated or resumed. Its historical launch logs are
-retained as operational evidence. Allocation `21206675` was reused for R1; at
-the latest check its only active process was the persistent worker manager,
-with the GH200 idle.
-
 ## Repository validation before handoff
 
 On 2026-10-26 the current tree passed the required commit gate on `gpuarm1`
@@ -131,3 +121,26 @@ policy action, and their open-event share is not a learned abstention rate.
 They support a bounded finding that input normalization changed entry-intent
 behavior without repairing the negative edge, not a causal explanation of why
 performance falls after the early training months.
+
+The D1 outcome table shows conditional performance differences by trend state
+and side, while the recorded entry direction mix changes only modestly across
+those states. This does not prove that PPO adapts to regime: the action ledger
+omits no-op and in-position decisions, several cells are small, and the runs
+stop early at the account floor. It is sufficient to test the separate
+representation hypothesis with an opt-in completed-D1 input branch.
+
+## Regime-context implementation in progress
+
+The implementation defines the optional `tcn_regime` architecture. Its
+separate seven-value input uses the last completed D1 return, EMA-distance,
+ADX, and realized-volatility channels with per-feature validity masks. It
+requires D1 source-index train-only normalization, leaves existing TCN behavior
+unchanged, and keeps the action, execution, and account-risk contracts fixed.
+The matched two-arm screen is prepared in
+`config/campaigns/regime_tcn_context_r2_seed50_train2025_2m.yaml`; it must wait
+for a suitable GH200 allocation after the currently active allocation ends.
+The current implementation passed full-tree Ruff format, full-tree Ruff lint,
+and full-tree Mypy (772 files), plus 73 focused environment/model/config tests
+and 7 D1 source-normalization tests on the existing GH200 allocation. The
+checkpoint test verifies deterministic action parity after saving and loading
+the new PPO architecture. R2 has not started; no training result is claimed.

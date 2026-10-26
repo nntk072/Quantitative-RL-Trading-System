@@ -271,6 +271,7 @@ features:
 
 env:
   obs_window: 60                       # T in [T, F] obs
+  regime_observation: false             # separate completed-D1 context branch for tcn_regime
   observation_schema_version: account-state-v1 # account-state-v2 is an opt-in new lineage
   observation_age_scale_bars: 60       # v2 position-age normalization scale
   data_source: frames                   # frames remains default until bundle gates pass

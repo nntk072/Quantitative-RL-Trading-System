@@ -1,4 +1,4 @@
-> **Execution note for this repository (2026-10-26):** This document preserves the attached research plan. Its embedded agent permissions and historical job/config details are proposals/context, not standalone authorization or current state. Follow the repository `AGENTS.md`, `.agents/rules/triton-slurm.md`, and the user's current instructions when they differ. The user discarded the proposed DSR PPO 1-env experiment before training: `n_envs=1` is not supported by the memory-profiled campaign controller, so it produced no benchmark result and is not part of the active work. Do not recreate or resume it. The existing GH200 allocation was reused for the matched R0/R1 development screen. Continue from the completed evidence and reports below, then make only minimal, causally valid, empirically justified changes. Keep the work focused and defer speculative extensions.
+> **Execution note for this repository (2026-10-26):** This document preserves the attached research plan. Its embedded agent permissions and historical job/config details are proposals/context, not standalone authorization or current state. Follow the repository `AGENTS.md`, `.agents/rules/triton-slurm.md`, and the user's current instructions when they differ. The matched R0/R1 development screen and reports are complete. R2 compares the existing TCN sequence pathway with the same pathway plus a compact, separate, completed-D1 context branch while holding source-normalized D1 inputs constant. Continue with this minimal matched experiment and defer speculative extensions.
 
 ### Verified preflight finding from the completed 2M run
 
@@ -596,6 +596,26 @@ The report must explicitly answer:
 8. Is there sufficient evidence to justify a slow-regime observation?
 
 Do not train before this report exists unless an existing running campaign must be allowed to finish independently.
+
+The existing R0/R1 artifacts answer this gate descriptively. R1 has large
+trend-by-side expectancy differences, but the saved entry direction mix shifts
+only modestly across regimes and omits no-op and in-position decisions. The
+report supports a falsifiable representation screen, not a claim that regime
+conditioning is the established cause of losses.
+
+## Current implementation handoff
+
+The first `tcn_regime` implementation uses seven already-built D1 channels:
+5- and 30-day returns, 21/50/200 EMA distances, ADX, and realized volatility.
+It reads the last completed D1 values already causally aligned to each M1 row,
+preserves per-coordinate warmup masks, and requires source-index train-only D1
+normalization. It fuses this small independent vector through a 16-unit MLP
+with the existing TCN and account branch. The existing TCN, action schema,
+execution, and risk behavior remain unchanged. The matched R2 screen pairs this
+against the same source-normalized TCN control; it is prepared in
+`config/campaigns/regime_tcn_context_r2_seed50_train2025_2m.yaml` and may run
+only after correctness and quality gates pass and suitable allocation time is
+available.
 
 ---
 
@@ -1507,16 +1527,17 @@ The mission is successful at the engineering level when:
 
 1. A causal slow-regime representation exists.
 2. Existing baseline behavior remains available unchanged.
-3. Regime attribution can explain where expectancy changes.
+3. Regime attribution can describe where expectancy changes; it does not by itself establish a causal explanation.
 4. PPO decisions can be analyzed by market regime.
 5. `tcn_regime` is implemented and tested.
 6. Training chronology is automatically validated.
 7. EOD capital-stop semantics are scientifically accurate.
-8. R0/R1 are isolated matched experiments.
-9. The implementation passes repository quality gates.
-10. The research can proceed without changing multiple factors simultaneously.
+8. R0/R1 are isolated matched experiments (completed and reported).
+9. R2 compares the regular TCN pathway with and without the additional D1 context branch under matched settings.
+10. The implementation passes repository quality gates.
+11. The research can proceed without changing multiple factors simultaneously.
 
-The regime hypothesis is supported only if empirical results show that R1 materially improves behavior relative to R0.
+R0/R1 did not show that source normalization alone repairs sustainable performance. The separate representation hypothesis remains untested until R2 reports matched training and report-only evaluation results.
 
 A negative result is acceptable.
 
@@ -1527,30 +1548,18 @@ A negative result is acceptable.
 Execute autonomously in this order:
 
 ```text
-1. Inspect git/repository/Slurm state.
-2. Read current research handoffs and latest commits.
-3. Audit actual observation and encoder contracts.
-4. Audit historical data/prehistory availability.
-5. Implement causal slow-regime feature machinery.
-6. Add causality/unit tests.
-7. Build existing-ledger regime attribution.
-8. Generate regime-attribution report.
-9. Decide whether evidence supports representation intervention.
-10. Implement optional regime observation.
-11. Implement tcn_regime.
-12. Add schema/checkpoint/provenance support.
-13. Add coverage reporting/gate.
-14. Audit/correct EOD capital-stop semantics and terminology.
-15. Add R0/R1 variants and campaign specification.
-16. Produce resolved-config parity report.
-17. Run Ruff/Mypy/focused tests.
-18. Run GPU model/environment smoke tests.
-19. Fix all demonstrated issues.
-20. Commit implementation.
-21. If infrastructure is safe and all gates pass, run the matched 2M R0/R1 development screen.
-22. Generate overall/monthly/regime/action reports.
-23. Update research status with actual results.
-24. Do not proceed to gamma/reward/Q5/SAC experiments until the representation result has been interpreted.
+1. Verify the current branch, working tree, live allocations, and worker topology.
+2. Keep completed R0/R1 artifacts and reports as the evidence baseline.
+3. Preserve the existing TCN and keep `tcn_regime` optional.
+4. Verify causal completed-D1 values, per-feature masks, source-index train-only normalization, and checkpoint schema compatibility.
+5. Resolve and compare the R2 control/treatment configurations before launch.
+6. Pass full-tree Ruff format, Ruff lint, Mypy, and focused environment/model/feature/config tests.
+7. Commit the tested implementation so the campaign has a stable source identity.
+8. After the current allocation ends, reuse or request one suitable GH200 allocation within the repository GPU-hour limit.
+9. Run the matched 2M R2 development screen once; preserve its fingerprints, logs, checkpoints, and report artifacts.
+10. Generate matched training/report-only results with monthly, regime, action, risk, exit, and equity diagnostics.
+11. Update the research status with observed results and limitations.
+12. Interpret R2 before considering another representation, reward, gamma, Q5, SAC, or broader robustness experiment.
 ```
 
 ---
@@ -1573,8 +1582,8 @@ so that it can learn:
 
 > The same intraday setup can have different expected value depending on the larger market regime, and therefore direction, selectivity, and risk should change accordingly.
 
-The first scientific question is:
+The next scientific question is:
 
-> **Does explicit slow-regime context prevent or materially reduce the post-Q1 expectancy collapse under otherwise matched PPO training?**
+> **Does a separate completed-D1 context branch improve on a TCN that already receives the same source-normalized D1 channels, under otherwise matched PPO training?**
 
 Answer that question rigorously before adding more complex RL algorithms.

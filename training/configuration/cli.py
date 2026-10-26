@@ -65,7 +65,7 @@ def parse_train_args() -> argparse.Namespace:
     parser.add_argument("--algo", choices=["ppo", "sac"], default="ppo", help="RL algorithm")
     parser.add_argument(
         "--arch",
-        choices=["tcn", "lite_tcn", "gru", "transformer", "mtf"],
+        choices=["tcn", "tcn_regime", "lite_tcn", "gru", "transformer", "mtf"],
         default=None,
         help="Encoder architecture",
     )

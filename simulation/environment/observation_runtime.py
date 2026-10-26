@@ -152,6 +152,12 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             "seq_mask": seq_mask,
             "account": account_state,
         }
+        if self.regime_observation:
+            raw_regime = np.asarray(
+                self._obs_features_arr[self.step_idx, self._regime_idx], dtype=np.float32
+            )
+            obs["regime_mask"] = np.isfinite(raw_regime).astype(np.float32)
+            obs["regime"] = np.nan_to_num(raw_regime, nan=0.0, posinf=0.0, neginf=0.0)
         if self.mtf:
             decision = int(self.step_idx)
             for key, _, seq_key in HTF_BRANCHES:

@@ -44,7 +44,7 @@ PREBUILT_FEATURE_CACHES: dict[str, str] = {}
 
 STRATEGIES = ("baseline", "po3_ifvg", "distribution")
 ALGOS = ("ppo", "sac")
-ARCHS = ("tcn", "lite_tcn", "gru", "transformer", "mtf")
+ARCHS = ("tcn", "tcn_regime", "lite_tcn", "gru", "transformer", "mtf")
 REWARD_MODES = ("dsr", "pnl", "rr", "equity_delta_r", "equity_log_growth")
 
 LADDER_FLAGS: tuple[str, ...] = (

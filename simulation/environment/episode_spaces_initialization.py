@@ -102,6 +102,20 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
                     shape=(length,),
                     dtype=np.float32,
                 )
+        if self.regime_observation:
+            regime_width = int(self._regime_idx.size)
+            observation_space.spaces["regime"] = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(regime_width,),
+                dtype=np.float32,
+            )
+            observation_space.spaces["regime_mask"] = spaces.Box(
+                low=0.0,
+                high=1.0,
+                shape=(regime_width,),
+                dtype=np.float32,
+            )
         # Add VAE latent to observation space if enabled
         if use_vae and vae_latent_dim > 0:
             observation_space.spaces["vae_z"] = spaces.Box(

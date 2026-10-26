@@ -7,6 +7,7 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
+from decisioning.regime_observations import REGIME_FEATURES, regime_observation_schema
 from features import attach_reachable_r, select_legacy_obs_columns, select_obs_columns
 
 from .mixin_base import RuntimeMixinBase
@@ -32,6 +33,7 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         target_timeframes: tuple[str, ...],
         scheduled_session_closes: dict[str, str] | None,
         session_start: str,
+        regime_observation: bool,
     ) -> None:
         # Model-facing observation frame: the strategy's raw price-level
         # columns stay in ``features`` for execution/risk but must not enter
@@ -123,6 +125,21 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                 else None
             )
         self._m1_idx, self._htf_idx = split_obs_columns(self._obs_columns)
+        self.regime_observation = bool(regime_observation)
+        self.regime_observation_schema = regime_observation_schema() if regime_observation else None
+        missing_regime = [name for name in REGIME_FEATURES if name not in self._obs_columns]
+        self._regime_idx = np.asarray(
+            [
+                self._obs_columns.index(name)
+                for name in REGIME_FEATURES
+                if name in self._obs_columns
+            ],
+            dtype=np.int64,
+        )
+        if self.regime_observation and missing_regime:
+            raise ValueError(
+                f"regime observation is missing required D1 features: {missing_regime}"
+            )
         self._htf_starts: dict[str, np.ndarray[Any, Any]] = {}
         if self.mtf:
             for key, _, _ in HTF_BRANCHES:

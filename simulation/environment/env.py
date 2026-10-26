@@ -133,6 +133,7 @@ class TradingEnv(
         target_timeframes: tuple[str, ...] = ("M5", "M15", "H1"),
         scheduled_session_closes: dict[str, str] | None = None,
         session_start: str = "16:30",
+        regime_observation: bool = False,
         entry_state_machine: bool = False,
         candidate_max_age_bars: int = 5,
         arm_requires_retest: bool = False,
@@ -241,6 +242,7 @@ class TradingEnv(
             target_timeframes,
             scheduled_session_closes,
             session_start,
+            regime_observation,
         )
         self._initialize_action_and_episode_contracts(
             continuous_actions,

@@ -310,9 +310,12 @@ def encoder_for(arch: str) -> type[Any]:
         LiteTCNEncoder,
         MTFEncoder,
         TCNEncoder,
+        TCNRegimeEncoder,
         TransformerEncoder,
     )
 
+    if arch == "tcn_regime":
+        return TCNRegimeEncoder
     if arch == "transformer":
         return TransformerEncoder
     if arch == "gru":
@@ -334,11 +337,26 @@ def validate_model_architecture(model: Any, expected_arch: str, *, use_vae: bool
         raise ValueError(
             "checkpoint does not expose a feature extractor for architecture validation"
         )
-    if not isinstance(extractor, expected):
+    architecture_matches = (
+        type(extractor) is expected
+        if expected_arch in {"tcn", "tcn_regime"}
+        else isinstance(extractor, expected)
+    )
+    if not architecture_matches:
         raise ValueError(
             f"checkpoint encoder {type(extractor).__name__} does not match requested "
             f"architecture {expected_arch!r} ({expected.__name__})"
         )
+    if expected_arch == "tcn_regime":
+        from decisioning.regime_observations import regime_observation_schema
+
+        expected_regime_schema = regime_observation_schema()
+        actual_regime_schema = getattr(model, "_regime_observation_schema", None)
+        if actual_regime_schema != expected_regime_schema:
+            raise ValueError(
+                "checkpoint regime observation schema differs from the current D1 feature "
+                "order or semantics"
+            )
 
 
 def build_agent(
@@ -395,6 +413,12 @@ def build_agent(
 
     if use_vae and vae is None:
         raise ValueError("use_vae=True requires a constructed VAE instance passed via vae=")
+    regime_enabled = "regime" in getattr(env.observation_space, "spaces", {})
+    if (arch == "tcn_regime") != regime_enabled:
+        raise ValueError(
+            "tcn_regime requires the versioned regime observation branch, and other "
+            "architectures must not receive it"
+        )
 
     # Infer F from the env's observation space
     n_features: int = env.observation_space["seq"].shape[1]
@@ -495,6 +519,9 @@ def build_agent(
             policy_kwargs=policy_kwargs,
             **sac_kwargs,
         )
+        regime_schema = getattr(env, "regime_observation_schema", None)
+        if isinstance(regime_schema, dict):
+            setattr(model, "_regime_observation_schema", regime_schema)
         return _finalize_cuda_policy(model, device)
 
     # Default to PPO
@@ -534,6 +561,9 @@ def build_agent(
         schema_manifest = observation_schema.to_dict()
         setattr(ppo_model, "_observation_schema", schema_manifest)
         setattr(ppo_model.policy, "_observation_schema", schema_manifest)
+    regime_schema = getattr(env, "regime_observation_schema", None)
+    if isinstance(regime_schema, dict):
+        setattr(ppo_model, "_regime_observation_schema", regime_schema)
     from learning.rl.ppo import _layout_key
 
     if isinstance(env.action_space, spaces.Box):

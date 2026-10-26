@@ -103,9 +103,15 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         )
     cfg = dict(spec.config)
     env = _block(cfg, "env")
+    features = _block(cfg, "features")
     risk = _block(cfg, "risk")
     account = _block(cfg, "account")
     strategy_actions = bool(env.get("strategy_actions", False))
+    regime_observation = bool(env.get("regime_observation", False))
+    if regime_observation and not bool(features.get("normalize_d1_technical_on_source", False)):
+        raise ValueError(
+            "env.regime_observation requires features.normalize_d1_technical_on_source=true"
+        )
     policy = resolve_trading_policy_mapping(cfg)
     ftmo = _block(cfg, "ftmo")
     strategy, strategy_reward, strategy_weight = _strategy(cfg, strategy_actions)
@@ -239,5 +245,6 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         max_tick_quote_wait_ms=int(execution.get("max_tick_quote_wait_ms", 60_000)),
         mtf=spec.arch == "mtf",
         mtf_windows=windows,
+        regime_observation=regime_observation,
         trading_policy=policy.to_dict(),
     )
