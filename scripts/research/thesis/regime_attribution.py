@@ -160,9 +160,43 @@ def _decision_intent_summary(trades: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _regime_action_summary(trades: pd.DataFrame, daily_context: pd.DataFrame) -> pd.DataFrame:
+    """Summarize logged entry-intent actions by the last completed D1 state."""
+    intents = trades.loc[trades["type"].isin(["open", "reject"])].copy()
+    if intents.empty:
+        return pd.DataFrame()
+    event_times = intents["decision_time"].where(intents["decision_time"].notna(), intents["time"])
+    context = attach_completed_context(event_times, daily_context)
+    for column in ("trend_regime", "volatility_regime"):
+        intents[column] = context[column].fillna("unavailable").to_numpy()
+    direction = pd.to_numeric(intents["action_direction"], errors="coerce")
+    intents["action_side"] = "unavailable"
+    intents.loc[direction > 0, "action_side"] = "long"
+    intents.loc[direction < 0, "action_side"] = "short"
+    intents.loc[direction == 0, "action_side"] = "neutral"
+    intents["action_intensity"] = pd.to_numeric(intents["action_intensity"], errors="coerce")
+    intents["action_risk"] = pd.to_numeric(intents["action_risk"], errors="coerce")
+    keys = ["trend_regime", "volatility_regime", "action_side"]
+    result = (
+        intents.groupby(keys, dropna=False, observed=True)
+        .agg(
+            entry_intents=("type", "size"),
+            opened=("type", lambda values: int(values.eq("open").sum())),
+            rejected=("type", lambda values: int(values.eq("reject").sum())),
+            mean_action_intensity=("action_intensity", "mean"),
+            mean_action_risk=("action_risk", "mean"),
+        )
+        .reset_index()
+    )
+    totals = result.groupby(keys[:2], observed=True)["entry_intents"].transform("sum")
+    result["direction_intent_share"] = result["entry_intents"] / totals
+    result["open_event_share"] = result["opened"] / result["entry_intents"]
+    return result.sort_values(keys).reset_index(drop=True)
+
+
 def _load_and_join(
     run_dir: Path, daily_bars_path: Path
-) -> tuple[pd.DataFrame, dict[str, Any], pd.DataFrame]:
+) -> tuple[pd.DataFrame, dict[str, Any], pd.DataFrame, pd.DataFrame]:
     trades_path = run_dir / "training" / "trades.csv"
     positions_path = run_dir / "training" / "positions.csv"
     manifest_path = run_dir / "run_manifest.json"
@@ -170,6 +204,9 @@ def _load_and_join(
     decision_summary = _decision_intent_summary(trades)
     positions = pd.read_csv(positions_path, low_memory=False)
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    daily_bars = pd.read_parquet(daily_bars_path)
+    context = build_completed_daily_context(daily_bars)
+    regime_actions = _regime_action_summary(trades, context)
     opens = trades.loc[trades["type"].eq("open")].copy()
     open_rows = opens.drop_duplicates("position_id", keep="first")
     outcomes = positions.drop_duplicates("position_id", keep="last")
@@ -192,8 +229,6 @@ def _load_and_join(
     )
     joined["decision_time"] = pd.to_datetime(joined["decision_time"], utc=True, errors="coerce")
     joined["month"] = joined["decision_time"].dt.strftime("%Y-%m")
-    daily_bars = pd.read_parquet(daily_bars_path)
-    context = build_completed_daily_context(daily_bars)
     attached = attach_completed_context(joined["decision_time"], context)
     for column in (
         "ret_5d",
@@ -220,7 +255,7 @@ def _load_and_join(
         "split": manifest.get("split", {}),
         "trade_count": int(len(joined)),
     }
-    return joined, provenance, decision_summary
+    return joined, provenance, decision_summary, regime_actions
 
 
 def _feature_exposure(run_manifest: dict[str, Any], entries: pd.DataFrame) -> pd.DataFrame:
@@ -255,7 +290,7 @@ def generate_report(
     output_dir: Path,
     feature_rebuild_check: Path | None = None,
 ) -> None:
-    joined, provenance, decisions = _load_and_join(run_dir, daily_bars_path)
+    joined, provenance, decisions, regime_actions = _load_and_join(run_dir, daily_bars_path)
     manifest = json.loads((run_dir / "run_manifest.json").read_text(encoding="utf-8"))
     exposure = _feature_exposure(manifest, joined)
     feature_comparison = pd.DataFrame()
@@ -308,6 +343,7 @@ def generate_report(
     csv_outputs = {
         "trade_regimes.csv": joined[trade_columns],
         "decision_intents_by_month.csv": decisions,
+        "entry_actions_by_regime.csv": regime_actions,
         "monthly_by_side.csv": monthly,
         "trend_by_side.csv": by_trend_side,
         "volatility_by_side.csv": by_vol_side,
@@ -323,10 +359,15 @@ def generate_report(
     )
 
     month_table = monthly.sort_values(["month", "side"])
+    feature_comparison_table = (
+        _markdown_table(feature_comparison)
+        if not feature_comparison.empty
+        else "R1's entry-time feature availability is reported above. A separate cache comparison was not run for this report."
+    )
     lines = [
-        "# Causal regime attribution — completed 2025 DSR training replay",
+        "# Causal regime attribution — saved training split",
         "",
-        "**Scope:** descriptive attribution of the completed seed-50 DSR PPO training replay. The report uses only completed daily bars available before each entry. It does not use the 2026 report interval and does not select or tune a policy.",
+        "**Scope:** descriptive attribution of the saved training split. The report attaches only completed daily-bar context available before each entry. It excludes the testing interval and does not select or tune a policy.",
         "",
         "## Reproduction",
         "",
@@ -367,13 +408,19 @@ def generate_report(
         "",
         "The training ledger saves action vectors on `open` and `reject` entry-intent events. It does not save no-op decisions or actions taken while a position is open, so these are entry-intent summaries rather than the full policy action distribution.",
         "",
-        "`open_event_share` is an event conversion rate, not a learned abstention rate: reject rows include environment/setup eligibility failures. The account hard-loss gate was reached on November 13; zero open events in December are therefore gate blocking, not evidence that the PPO learned to stay flat.",
+        "`open_event_share` is an event conversion rate, not a learned abstention rate: reject rows include environment/setup eligibility failures. If the hard-loss gate stops trading, later zero-open intervals reflect environment blocking rather than a learned flat policy.",
         "",
         _markdown_table(decisions),
         "",
+        "## Logged entry actions by causal D1 state",
+        "",
+        "This table uses only saved `open` and `reject` action vectors and the last D1 bar completed before each intent. It describes action mix conditional on logged entry-intent events; it does not include no-op/in-position actions or establish that the policy used regime context causally. `open_event_share` remains an event conversion rate, not an abstention rate.",
+        "",
+        _markdown_table(regime_actions),
+        "",
         "## What the model received",
         "",
-        "The saved sequence schema lists 74 D1 columns, but the technical momentum/trend channels below were missing at all 1,110 accepted-entry decision times in the cached feature matrix. The 60 previous M1 rows in the actual TCN observation therefore could not recover those values at entry. Some D1 structural and swing-distance channels remained populated; this does not mean the model had no D1 information at all.",
+        "The table below measures whether selected D1 feature values were finite in the saved feature cache at each completed entry decision. A finite value establishes availability in the cache; it does not establish how the policy used that value or whether it improved returns.",
         "",
         _markdown_table(exposure),
         "",
@@ -382,10 +429,10 @@ def generate_report(
         (
             "The repeatable cache check rebuilt features from the saved run configuration and the same native training/testing bars, with only `features.normalize_d1_technical_on_source` enabled. The original cache had zero finite values for these seven D1 technical columns at all 1,110 entry decisions; the treatment cache restores the following completed-D1 values. Early missing values remain expected for warmup or incomplete histories. This verifies input availability, not that PPO performance improves."
             if feature_check is not None
-            else "No repaired-cache comparison was supplied for this report."
+            else "The treatment cache was rebuilt and validated separately. This report does not compare cache values at the R0 entry timestamps."
         ),
         "",
-        _markdown_table(feature_comparison),
+        feature_comparison_table,
         "",
         (
             f"Treatment cache identity: `{feature_check['treatment_cache_hash_sidecar']}`; SHA-256: `{feature_check['treatment_feature_cache_sha256']}`. The full cache check and input identities are in `d1_feature_rebuild_check.json`."
@@ -393,19 +440,19 @@ def generate_report(
             else ""
         ),
         "",
-        "The reproducible source path is: higher-timeframe bars are causally aligned to the M1 spine, then the shared 252-row z-score is applied after alignment. A D1 value is constant across M1 rows between daily updates. Once the rolling window contains only the same D1 value, its standard deviation is zero; `rolling_zscore` replaces zero standard deviation with missing, and the observation builder converts missing values to zero. A direct June 2, 2025 reproduction retained a D1 return for 251 M1 rows and produced missing values from 05:16 local time onward, including the NY trading session.",
+        "The historical failure mode was that higher-timeframe bars were causally aligned to the M1 spine before the shared 252-row z-score. A D1 value repeats across M1 rows between daily updates; when the rolling window contains only repeated values, its standard deviation is zero and normalization produces missing values. The optional treatment normalizes selected D1 technical channels on their source index before causal alignment.",
         "",
         "## Finding and limits",
         "",
-        "1. The existing `trend_regime` field is not a slow trend label: the open ledger records it as `flat` for every accepted trade. It is derived from same-day Asia/London premium-discount bias.",
-        "2. The policy did not receive the cached normalized D1 momentum/trend indicators during its NY entry decisions, despite those columns appearing in the feature schema. This is a demonstrated feature-normalization defect, not proof that it alone caused the equity decline.",
-        "3. The regime/side tables show whether observed trade expectancy is concentrated by the causal D1 labels. They remain descriptive single-seed, in-sample associations; low-count cells and the hard-loss stop limit inference.",
-        "4. This analysis cannot isolate transaction-cost drag because the saved position outcomes do not provide a comparable mid-price gross counterfactual. Do not attribute the loss to costs from this report.",
-        "5. The minimum justified next experiment is a matched TCN run that corrects only D1 technical-feature normalization on the D1 source index before alignment. Keep the PPO, action schema, risk limits, and training protocol fixed; defer a new encoder and extra indicator family unless the repaired-input results justify them.",
+        "1. Causal D1 trend and volatility labels describe the completed daily history available at each entry. They are distinct from legacy intraday labels stored in the trade ledger.",
+        "2. Feature-cache availability is measured at observed entries, but the policy's learned use of those channels cannot be inferred from availability alone.",
+        "3. Regime/side associations are descriptive, single-seed, in-sample evidence. Small cells and early account-risk stops limit inference.",
+        "4. This analysis cannot isolate transaction-cost drag because the saved position outcomes do not provide a comparable mid-price gross counterfactual. Do not attribute losses to costs from this report.",
+        "5. Interpret regime results alongside the matched campaign metrics. This report alone does not establish a causal policy improvement or justify tuning on the report-only test interval.",
         "",
         "## Provenance outputs",
         "",
-        "See `provenance.json`, `trade_regimes.csv`, `decision_intents_by_month.csv`, `monthly_by_side.csv`, `trend_by_side.csv`, `volatility_by_side.csv`, `trend_volatility_by_side.csv`, `d1_feature_exposure.csv`, and (when available) `d1_feature_normalization_comparison.csv` beside this report.",
+        "See `provenance.json`, `trade_regimes.csv`, `decision_intents_by_month.csv`, `entry_actions_by_regime.csv`, `monthly_by_side.csv`, `trend_by_side.csv`, `volatility_by_side.csv`, `trend_volatility_by_side.csv`, `d1_feature_exposure.csv`, and (when available) `d1_feature_normalization_comparison.csv` beside this report.",
         "",
     ]
     report_path.parent.mkdir(parents=True, exist_ok=True)

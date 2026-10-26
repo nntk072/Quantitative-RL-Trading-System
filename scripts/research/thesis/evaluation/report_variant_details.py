@@ -1358,9 +1358,10 @@ def _markdown(report: dict[str, Any], campaign_dir: Path, be_tolerance: float) -
     lines = [
         "# Project, training, and evaluation report",
         "",
-        f"Campaign: `{report['campaign_id']}`  ",
-        f"Campaign fingerprint: `{report.get('fingerprint') or 'Not recorded in campaign manifest'}`  ",
-        f"Campaign source revision: `{report.get('campaign_git_sha') or 'Not recorded in campaign manifest'}`  ",
+        f"- **Campaign:** `{report['campaign_id']}`",
+        f"- **Fingerprint:** `{report.get('fingerprint') or 'Not recorded in campaign manifest'}`",
+        f"- **Source revision:** `{report.get('campaign_git_sha') or 'Not recorded in campaign manifest'}`",
+        "",
         "Generated from saved run artifacts. This report did not load a checkpoint or replay a market.",
         f"Break-even means an explicit break-even exit or absolute net PnL no greater than {_display(be_tolerance)} account-currency units.",
         "Training and testing sections are kept separate; interpretation should follow the saved split configuration.",

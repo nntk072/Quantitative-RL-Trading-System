@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from scripts.research.thesis.regime_attribution import (
     _decision_intent_summary,
+    _regime_action_summary,
     attach_completed_context,
     build_completed_daily_context,
 )
@@ -69,3 +70,30 @@ def test_decision_intent_summary_counts_logged_open_and_reject_rows() -> None:
     assert result.loc[0, "opened"] == 1
     assert result.loc[0, "rejected"] == 1
     assert result.loc[0, "open_event_share"] == 0.5
+
+
+def test_regime_action_summary_uses_only_completed_daily_context() -> None:
+    events = pd.DataFrame(
+        {
+            "type": ["open", "reject", "reject"],
+            "decision_time": [
+                "2025-01-10T22:00:00Z",
+                "2025-01-10T22:01:00Z",
+                "2025-01-10T22:02:00Z",
+            ],
+            "time": [None, None, None],
+            "action_direction": [1.0, -1.0, 0.0],
+            "action_intensity": [0.8, 0.4, 0.3],
+            "action_risk": [0.5, 0.2, 0.1],
+        }
+    )
+
+    result = _regime_action_summary(events, build_completed_daily_context(_daily_bars()))
+
+    assert set(result["action_side"]) == {"long", "short", "neutral"}
+    assert set(result["trend_regime"]) == {"warmup"}
+    assert set(result["volatility_regime"]) == {"warmup"}
+    assert result["entry_intents"].sum() == 3
+    assert result["opened"].sum() == 1
+    assert result["rejected"].sum() == 2
+    assert result["direction_intent_share"].sum() == 1.0

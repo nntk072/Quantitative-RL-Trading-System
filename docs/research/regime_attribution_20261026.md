@@ -1,6 +1,6 @@
-# Causal regime attribution — completed 2025 DSR training replay
+# Causal regime attribution — saved training split
 
-**Scope:** descriptive attribution of the completed seed-50 DSR PPO training replay. The report uses only completed daily bars available before each entry. It does not use the 2026 report interval and does not select or tune a policy.
+**Scope:** descriptive attribution of the saved training split. The report attaches only completed daily-bar context available before each entry. It excludes the testing interval and does not select or tune a policy.
 
 ## Reproduction
 
@@ -109,7 +109,7 @@ Trend is bull/bear only when completed 20-day and 60-day log returns agree; othe
 
 The training ledger saves action vectors on `open` and `reject` entry-intent events. It does not save no-op decisions or actions taken while a position is open, so these are entry-intent summaries rather than the full policy action distribution.
 
-`open_event_share` is an event conversion rate, not a learned abstention rate: reject rows include environment/setup eligibility failures. The account hard-loss gate was reached on November 13; zero open events in December are therefore gate blocking, not evidence that the PPO learned to stay flat.
+`open_event_share` is an event conversion rate, not a learned abstention rate: reject rows include environment/setup eligibility failures. If the hard-loss gate stops trading, later zero-open intervals reflect environment blocking rather than a learned flat policy.
 
 | month | logged_entry_intents | opened | rejected | open_event_share | long_intent_share | short_intent_share | neutral_intent_share | mean_action_intensity | mean_action_risk |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -127,9 +127,36 @@ The training ledger saves action vectors on `open` and `reject` entry-intent eve
 | 2025-11 | 4191 | 34 | 4157 | 0.0081 | 0.3827 | 0.6173 | 0.0000 | -0.1596 | 0.3993 |
 | 2025-12 | 6715 | 0 | 6715 | 0.0000 | 0.3525 | 0.6475 | 0.0000 | -0.1656 | 0.4083 |
 
+## Logged entry actions by causal D1 state
+
+This table uses only saved `open` and `reject` action vectors and the last D1 bar completed before each intent. It describes action mix conditional on logged entry-intent events; it does not include no-op/in-position actions or establish that the policy used regime context causally. `open_event_share` remains an event conversion rate, not an abstention rate.
+
+| trend_regime | volatility_regime | action_side | entry_intents | opened | rejected | mean_action_intensity | mean_action_risk | direction_intent_share | open_event_share |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| bear | high | long | 164 | 2 | 162 | -0.1628 | 0.3808 | 0.2966 | 0.0122 |
+| bear | high | short | 389 | 17 | 372 | -0.1855 | 0.3888 | 0.7034 | 0.0437 |
+| bear | warmup | long | 1618 | 62 | 1556 | -0.1752 | 0.4319 | 0.4155 | 0.0383 |
+| bear | warmup | short | 2276 | 39 | 2237 | -0.1886 | 0.4056 | 0.5845 | 0.0171 |
+| bull | high | long | 1851 | 20 | 1831 | -0.1420 | 0.4085 | 0.3795 | 0.0108 |
+| bull | high | short | 3026 | 20 | 3006 | -0.1750 | 0.4005 | 0.6205 | 0.0066 |
+| bull | low | long | 6048 | 148 | 5900 | -0.1749 | 0.4084 | 0.3643 | 0.0245 |
+| bull | low | short | 10554 | 188 | 10366 | -0.1732 | 0.4025 | 0.6357 | 0.0178 |
+| bull | mid | long | 3272 | 78 | 3194 | -0.1485 | 0.4053 | 0.3623 | 0.0238 |
+| bull | mid | short | 5758 | 80 | 5678 | -0.1772 | 0.3916 | 0.6377 | 0.0139 |
+| mixed | high | long | 2200 | 31 | 2169 | -0.1484 | 0.3972 | 0.3482 | 0.0141 |
+| mixed | high | short | 4118 | 34 | 4084 | -0.1683 | 0.4173 | 0.6518 | 0.0083 |
+| mixed | low | long | 34 | 2 | 32 | -0.2781 | 0.6205 | 0.3091 | 0.0588 |
+| mixed | low | short | 76 | 5 | 71 | -0.2272 | 0.4135 | 0.6909 | 0.0658 |
+| mixed | mid | long | 655 | 14 | 641 | -0.1656 | 0.3984 | 0.3364 | 0.0214 |
+| mixed | mid | short | 1292 | 27 | 1265 | -0.1684 | 0.3990 | 0.6636 | 0.0209 |
+| unavailable | unavailable | long | 27 | 1 | 26 | -0.0842 | 0.4335 | 0.2872 | 0.0370 |
+| unavailable | unavailable | short | 67 | 3 | 64 | -0.1314 | 0.3667 | 0.7128 | 0.0448 |
+| warmup | warmup | long | 4853 | 173 | 4680 | -0.1721 | 0.4114 | 0.3805 | 0.0356 |
+| warmup | warmup | short | 7902 | 166 | 7736 | -0.1696 | 0.4074 | 0.6195 | 0.0210 |
+
 ## What the model received
 
-The saved sequence schema lists 74 D1 columns, but the technical momentum/trend channels below were missing at all 1,110 accepted-entry decision times in the cached feature matrix. The 60 previous M1 rows in the actual TCN observation therefore could not recover those values at entry. Some D1 structural and swing-distance channels remained populated; this does not mean the model had no D1 information at all.
+The table below measures whether selected D1 feature values were finite in the saved feature cache at each completed entry decision. A finite value establishes availability in the cache; it does not establish how the policy used that value or whether it improved returns.
 
 | feature | finite_at_decisions | trades | unique_finite_entry_values |
 | --- | --- | --- | --- |
@@ -159,40 +186,16 @@ The repeatable cache check rebuilt features from the saved run configuration and
 
 Treatment cache identity: `15a7206755fde49b`; SHA-256: `66fbe9afa0db50fb18bad777fff7b0ef9c8099f3903669e177b9cf347646ddc5`. The full cache check and input identities are in `d1_feature_rebuild_check.json`.
 
-The reproducible source path is: higher-timeframe bars are causally aligned to the M1 spine, then the shared 252-row z-score is applied after alignment. A D1 value is constant across M1 rows between daily updates. Once the rolling window contains only the same D1 value, its standard deviation is zero; `rolling_zscore` replaces zero standard deviation with missing, and the observation builder converts missing values to zero. A direct June 2, 2025 reproduction retained a D1 return for 251 M1 rows and produced missing values from 05:16 local time onward, including the NY trading session.
-
-## R1 startup failure and recovery
-
-The first R1 campaign reached the feature-cache read but did not enter PPO
-training. Its one attempt completed zero PPO steps and produced no checkpoint.
-PyArrow rejected the D1 treatment cache because the footer did not contain
-Parquet's `PAR1` marker. The captured file hash was
-`ab794818fc9a72374ed7c7b57b6e3d838c9cffb2963e27446c02d54e897896a5`, different
-from the earlier successful rebuild hash. The corrupt cache was removed after
-capturing its hash and footer bytes, then rebuilt once from the saved R0 config
-and the same market data. The regenerated cache read successfully, reproduced
-the same entry availability counts, and again hashed to
-`66fbe9afa0db50fb18bad777fff7b0ef9c8099f3903669e177b9cf347646ddc5`.
-
-The earlier duplicate cache rebuild had a terminated writer, which is the
-likely cause of the truncated cache; the direct cause is not proven. The failed
-campaign manifest, fingerprint, log, and attempt provenance remain preserved.
-The campaign controller treats failed jobs as terminal on `--resume`, so the
-retry uses an explicit new campaign ID while preserving the failed attempt as
-infrastructure evidence. The retry has the same scientific settings and is the
-single planned R1 development screen; the failed startup is not a result or an
-additional seed. See `r1_startup_recovery.json` for hashes and status, and
-`r1_retry_campaign_preflight.json` for the passing retry preflight. The retry
-has not started at the time of this report.
+The historical failure mode was that higher-timeframe bars were causally aligned to the M1 spine before the shared 252-row z-score. A D1 value repeats across M1 rows between daily updates; when the rolling window contains only repeated values, its standard deviation is zero and normalization produces missing values. The optional treatment normalizes selected D1 technical channels on their source index before causal alignment.
 
 ## Finding and limits
 
-1. The existing `trend_regime` field is not a slow trend label: the open ledger records it as `flat` for every accepted trade. It is derived from same-day Asia/London premium-discount bias.
-2. The policy did not receive the cached normalized D1 momentum/trend indicators during its NY entry decisions, despite those columns appearing in the feature schema. This is a demonstrated feature-normalization defect, not proof that it alone caused the equity decline.
-3. The regime/side tables show whether observed trade expectancy is concentrated by the causal D1 labels. They remain descriptive single-seed, in-sample associations; low-count cells and the hard-loss stop limit inference.
-4. This analysis cannot isolate transaction-cost drag because the saved position outcomes do not provide a comparable mid-price gross counterfactual. Do not attribute the loss to costs from this report.
-5. The minimum justified experiment is the prepared matched TCN run that corrects only D1 technical-feature normalization on the D1 source index before alignment. Keep the PPO, action schema, risk limits, and training protocol fixed; defer a new encoder and extra indicator family unless the repaired-input results justify them.
+1. Causal D1 trend and volatility labels describe the completed daily history available at each entry. They are distinct from legacy intraday labels stored in the trade ledger.
+2. Feature-cache availability is measured at observed entries, but the policy's learned use of those channels cannot be inferred from availability alone.
+3. Regime/side associations are descriptive, single-seed, in-sample evidence. Small cells and early account-risk stops limit inference.
+4. This analysis cannot isolate transaction-cost drag because the saved position outcomes do not provide a comparable mid-price gross counterfactual. Do not attribute losses to costs from this report.
+5. Interpret regime results alongside the matched campaign metrics. This report alone does not establish a causal policy improvement or justify tuning on the report-only test interval.
 
 ## Provenance outputs
 
-See `provenance.json`, `trade_regimes.csv`, `decision_intents_by_month.csv`, `monthly_by_side.csv`, `trend_by_side.csv`, `volatility_by_side.csv`, `trend_volatility_by_side.csv`, `d1_feature_exposure.csv`, and (when available) `d1_feature_normalization_comparison.csv` beside this report.
+See `provenance.json`, `trade_regimes.csv`, `decision_intents_by_month.csv`, `entry_actions_by_regime.csv`, `monthly_by_side.csv`, `trend_by_side.csv`, `volatility_by_side.csv`, `trend_volatility_by_side.csv`, `d1_feature_exposure.csv`, and (when available) `d1_feature_normalization_comparison.csv` beside this report.
