@@ -147,13 +147,57 @@ def _sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:
 
 
 def _training_protocol_manifest(
-    *, model: Any, cfg: Any, args: Any, seed: int, requested_steps: int
+    *, model: Any, cfg: Any, args: Any, seed: int, requested_steps: int, algo: str = "ppo"
 ) -> dict[str, Any]:
-    """Persist the effective PPO/reward/risk protocol for later reproduction."""
+    """Persist the effective optimizer/reward/risk protocol for later reproduction."""
     n_envs = int(model.n_envs)
-    n_steps = int(model.n_steps)
-    batch_size = int(cfg.ppo.batch_size)
-    minibatches = (n_envs * n_steps + batch_size - 1) // batch_size
+    if algo == "ppo":
+        n_steps = int(model.n_steps)
+        batch_size = int(cfg.ppo.batch_size)
+        minibatches = (n_envs * n_steps + batch_size - 1) // batch_size
+        optimizer_protocol = {
+            "ppo": {
+                "requested_n_envs": cfg.get("quality_execution", {}).get(
+                    "requested_n_envs", n_envs
+                ),
+                "effective_n_envs": cfg.get("quality_execution", {}).get(
+                    "effective_n_envs", n_envs
+                ),
+                "exact_n_envs_required": bool(
+                    cfg.get("quality_execution", {}).get("exact_n_envs", False)
+                ),
+                "logical_n_envs": n_envs,
+                "n_steps_per_env": n_steps,
+                "aggregate_rollout_steps": int(n_envs * n_steps),
+                "batch_size": batch_size,
+                "epochs": int(cfg.ppo.n_epochs),
+                "minibatches_per_epoch": minibatches,
+                "updates_per_rollout": int(minibatches * int(cfg.ppo.n_epochs)),
+                "learning_rate": float(cfg.ppo.learning_rate),
+                "gamma": float(cfg.ppo.gamma),
+                "gae_lambda": float(cfg.ppo.gae_lambda),
+                "clip_range": float(cfg.ppo.clip_range),
+                "entropy_coefficient": float(model.ent_coef),
+                "actor_architecture": str(cfg.ppo.get("actor_arch", "shared")),
+            }
+        }
+    elif algo == "sac":
+        optimizer_protocol = {
+            "sac": {
+                "logical_n_envs": n_envs,
+                "learning_rate": float(cfg.sac.learning_rate),
+                "buffer_size": int(cfg.sac.buffer_size),
+                "batch_size": int(cfg.sac.batch_size),
+                "tau": float(cfg.sac.tau),
+                "gamma": float(cfg.sac.gamma),
+                "train_freq": cfg.sac.train_freq,
+                "gradient_steps": int(cfg.sac.gradient_steps),
+                "learning_starts": int(cfg.sac.learning_starts),
+                "entropy_coefficient": str(cfg.sac.ent_coef),
+            }
+        }
+    else:
+        raise ValueError(f"unsupported training algorithm for protocol manifest: {algo}")
     quality_variant = str(cfg.get("quality_variant_id", ""))
     quality_lineage = None
     if quality_variant:
@@ -165,7 +209,7 @@ def _training_protocol_manifest(
         "quality_variant": quality_lineage,
         "constrained_rl": {
             "enabled": bool(cfg.get("constrained_rl", {}).get("enabled", False)),
-            "method": "primal_dual_scalarized_return_ppo",
+            "method": f"primal_dual_scalarized_return_{algo}",
             "cost": "max_per_step_increase_normalized_to_max_loss_limit",
             "cost_unit": "fraction_of_max_loss_limit",
             "episode_cost_budget": float(
@@ -181,6 +225,7 @@ def _training_protocol_manifest(
             ),
         },
         "seed": int(seed),
+        "algorithm": algo,
         "worker_seeds": [int(seed + index) for index in range(n_envs)],
         "requested_steps": int(requested_steps),
         "completed_steps": int(model.num_timesteps),
@@ -195,7 +240,11 @@ def _training_protocol_manifest(
             cfg.env.get("observation_schema_version", "account-state-v1")
         ),
         "observation_age_scale_bars": float(cfg.env.get("observation_age_scale_bars", 60.0)),
-        "action_distribution": str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian")),
+        "action_distribution": str(
+            cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian")
+            if algo == "ppo"
+            else "squashed_diagonal_gaussian"
+        ),
         "reward": {
             "mode": str(cfg.env.get("reward_mode", "dsr")),
             "dsr_eta": float(cfg.env.get("reward_dsr_eta", 0.01)),
@@ -215,26 +264,7 @@ def _training_protocol_manifest(
                 str(cfg.env.get("risk_mode", "dynamic")) == "dollar_band"
             ),
         },
-        "ppo": {
-            "requested_n_envs": cfg.get("quality_execution", {}).get("requested_n_envs", n_envs),
-            "effective_n_envs": cfg.get("quality_execution", {}).get("effective_n_envs", n_envs),
-            "exact_n_envs_required": bool(
-                cfg.get("quality_execution", {}).get("exact_n_envs", False)
-            ),
-            "logical_n_envs": n_envs,
-            "n_steps_per_env": n_steps,
-            "aggregate_rollout_steps": int(n_envs * n_steps),
-            "batch_size": batch_size,
-            "epochs": int(cfg.ppo.n_epochs),
-            "minibatches_per_epoch": minibatches,
-            "updates_per_rollout": int(minibatches * int(cfg.ppo.n_epochs)),
-            "learning_rate": float(cfg.ppo.learning_rate),
-            "gamma": float(cfg.ppo.gamma),
-            "gae_lambda": float(cfg.ppo.gae_lambda),
-            "clip_range": float(cfg.ppo.clip_range),
-            "entropy_coefficient": float(model.ent_coef),
-            "actor_architecture": str(cfg.ppo.get("actor_arch", "shared")),
-        },
+        **optimizer_protocol,
         "environment": {
             "vector_backend": str(cfg.env.get("vector_backend", "subproc")),
             "strategy_actions": bool(cfg.env.get("strategy_actions", False)),

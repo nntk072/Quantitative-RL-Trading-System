@@ -186,6 +186,29 @@ def test_dashboard_log_waits_for_the_interval() -> None:
     assert cb._should_log()
 
 
+def test_dashboard_train_wrapper_forwards_off_policy_update_arguments(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    calls: list[tuple[int, int]] = []
+
+    def train(*, batch_size: int, gradient_steps: int) -> None:
+        calls.append((batch_size, gradient_steps))
+
+    model = SimpleNamespace(train=train, num_timesteps=0)
+    callback = TrainingDashboardCallback(total_timesteps=10, log_every=10)
+    setattr(callback, "model", model)
+    monkeypatch.setattr(callback, "_apply_prior_interval", lambda: None)
+    monkeypatch.setattr(callback, "_maybe_eval", lambda: None)
+    monkeypatch.setattr(callback, "_should_log", lambda: False)
+
+    callback._on_training_start()
+    model.train(batch_size=64, gradient_steps=3)
+
+    assert calls == [(64, 3)]
+
+
 def test_snapshot_row_keeps_behavior_and_omits_eval_until_recorded() -> None:
     row = snapshot_row(_sample_snapshot(with_eval=False))
     for key in REWARD_PART_KEYS:

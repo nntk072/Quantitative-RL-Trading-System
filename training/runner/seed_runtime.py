@@ -243,7 +243,7 @@ class SeedRunner:
                 "run config; do not resume under a silently changed stop menu"
             )
         setattr(model, "stop_candidate_schema", stop_candidate_schema)
-        _log_effective_ppo(model, cfg)
+        _log_effective_ppo(model, cfg, algo=args.algo)
 
         aux_cb = None
         aux_cfg = getattr(cfg, "auxiliary", None)
@@ -427,7 +427,7 @@ class SeedRunner:
 
         progress_log = seed_model_dir / "training_log.csv"
         callbacks.append(ProgressLoggerCallback(log_path=progress_log))
-        if is_sb3_box_model(model):
+        if args.algo == "ppo" and is_sb3_box_model(model):
             callbacks.append(
                 ClipLogStdCallback(
                     log_std_min=float(cfg.ppo.get("log_std_min", -0.7)),
@@ -512,13 +512,17 @@ class SeedRunner:
             )
 
         log_every = int(dash.get("log_every", 100_000))
-        log_interval = ppo_log_interval(
-            n_steps=int(model.n_steps),
-            n_envs=int(model.n_envs),
-            log_every=log_every,
-        )
-        log.info("SB3 log every %d rollouts (~%d env steps)", log_interval, log_every)
-        if is_sb3_box_model(model):
+        if args.algo == "ppo":
+            log_interval = ppo_log_interval(
+                n_steps=int(model.n_steps),
+                n_envs=int(model.n_envs),
+                log_every=log_every,
+            )
+            log.info("SB3 log every %d rollouts (~%d env steps)", log_interval, log_every)
+        else:
+            log_interval = int(cfg.sac.get("log_interval", 4))
+            log.info("SB3 off-policy episode log interval=%d", log_interval)
+        if args.algo == "ppo" and is_sb3_box_model(model):
             install_post_update_std_clip(
                 model,
                 float(cfg.ppo.get("log_std_min", -0.7)),
@@ -951,13 +955,16 @@ class SeedRunner:
                     "observation_visibility": "feature row is available after its bar closes",
                 },
             },
-            training_architecture=_training_architecture_provenance(model, cfg, args.arch),
+            training_architecture=_training_architecture_provenance(
+                model, cfg, args.arch, algo=args.algo
+            ),
             training_protocol=_training_protocol_manifest(
                 model=model,
                 cfg=cfg,
                 args=args,
                 seed=int(seed),
                 requested_steps=int(timesteps),
+                algo=args.algo,
             ),
             metrics_protocol={
                 "annualization": {

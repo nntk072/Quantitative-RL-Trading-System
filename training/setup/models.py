@@ -38,8 +38,34 @@ def _validate_q5_resume_state(cfg: Any, *, resume_checkpoint: str | Path | None)
         )
 
 
-def _log_effective_ppo(model: Any, cfg: Any) -> None:
-    """Print the PPO settings the run actually uses, after the n_envs split."""
+def _log_effective_ppo(model: Any, cfg: Any, *, algo: str = "ppo") -> None:
+    """Log the effective optimizer settings without labeling SAC as PPO."""
+    if algo == "sac":
+        n_envs = int(model.n_envs)
+        requested_n_envs = int(cfg.env.get("n_envs", 1))
+        if n_envs != requested_n_envs:
+            raise RuntimeError(
+                f"effective SAC n_envs={n_envs} does not match resolved config "
+                f"n_envs={requested_n_envs}"
+            )
+        log.info(
+            "SAC effective: logical_n_envs=%d learning_rate=%s batch_size=%s "
+            "buffer_size=%s learning_starts=%s train_freq=%s gradient_steps=%s "
+            "gamma=%s tau=%s ent_coef=%s reward_mode=%s",
+            n_envs,
+            cfg.sac.learning_rate,
+            cfg.sac.batch_size,
+            cfg.sac.buffer_size,
+            cfg.sac.learning_starts,
+            cfg.sac.train_freq,
+            cfg.sac.gradient_steps,
+            cfg.sac.gamma,
+            cfg.sac.tau,
+            cfg.sac.ent_coef,
+            cfg.env.get("reward_mode", "dsr"),
+        )
+        return
+
     n_steps = int(model.n_steps)
     n_envs = int(model.n_envs)
     aggregate_rollout_steps = n_steps * n_envs
@@ -79,9 +105,17 @@ def _log_effective_ppo(model: Any, cfg: Any) -> None:
     )
 
 
-def _training_architecture_provenance(model: Any, cfg: Any, arch: str) -> dict[str, Any]:
+def _training_architecture_provenance(
+    model: Any, cfg: Any, arch: str, *, algo: str = "ppo"
+) -> dict[str, Any]:
     """Describe the actual encoder, policy heads, and vectorization used."""
-    extractor = model.policy.features_extractor
+    policy = model.policy
+    extractor = getattr(policy, "features_extractor", None)
+    if extractor is None:
+        actor = getattr(policy, "actor", None)
+        extractor = getattr(actor, "features_extractor", None)
+    if extractor is None:
+        raise RuntimeError(f"{algo} policy does not expose its encoder for provenance")
     env = model.get_env()
     remotes = getattr(env, "remotes", None)
     physical_workers = len(remotes) if remotes is not None else 1
@@ -99,29 +133,46 @@ def _training_architecture_provenance(model: Any, cfg: Any, arch: str) -> dict[s
             if hasattr(extractor, key)
         },
     }
-    return {
+    result = {
+        "algorithm": algo,
         **encoder_spec,
         "quality_variant_id": str(cfg.get("quality_variant_id", "")) or None,
-        "actor_architecture": str(cfg.ppo.get("actor_arch", "shared")),
-        "semantic_head_width": int(cfg.ppo.get("semantic_head_width", 64)),
         "policy_head_architecture": [int(width) for width in head_cfg.get(arch, [256, 128])],
-        "policy_parameter_count": sum(parameter.numel() for parameter in model.policy.parameters()),
+        "policy_parameter_count": sum(parameter.numel() for parameter in policy.parameters()),
         "configured_vector_backend": str(cfg.env.get("vector_backend", "subproc")),
         "vector_backend": type(env).__name__,
         "logical_n_envs": int(model.n_envs),
-        "sb3_n_steps_per_env": int(model.n_steps),
-        "aggregate_rollout_steps": int(model.n_envs * model.n_steps),
-        "batch_size": int(cfg.ppo.batch_size),
-        "n_epochs": int(cfg.ppo.n_epochs),
-        "minibatches_per_epoch": int(
-            (model.n_envs * model.n_steps + int(cfg.ppo.batch_size) - 1) // int(cfg.ppo.batch_size)
-        ),
-        "updates_per_rollout": int(
-            (
-                (model.n_envs * model.n_steps + int(cfg.ppo.batch_size) - 1)
-                // int(cfg.ppo.batch_size)
-            )
-            * int(cfg.ppo.n_epochs)
-        ),
         "physical_worker_count": int(physical_workers),
     }
+    if algo == "ppo":
+        n_steps = int(model.n_steps)
+        batch_size = int(cfg.ppo.batch_size)
+        minibatches = (int(model.n_envs) * n_steps + batch_size - 1) // batch_size
+        result.update(
+            {
+                "actor_architecture": str(cfg.ppo.get("actor_arch", "shared")),
+                "semantic_head_width": int(cfg.ppo.get("semantic_head_width", 64)),
+                "sb3_n_steps_per_env": n_steps,
+                "aggregate_rollout_steps": int(model.n_envs * n_steps),
+                "batch_size": batch_size,
+                "n_epochs": int(cfg.ppo.n_epochs),
+                "minibatches_per_epoch": minibatches,
+                "updates_per_rollout": int(minibatches * int(cfg.ppo.n_epochs)),
+            }
+        )
+    elif algo == "sac":
+        result["sac"] = {
+            key: cfg.sac.get(key)
+            for key in (
+                "learning_rate",
+                "buffer_size",
+                "batch_size",
+                "tau",
+                "gamma",
+                "train_freq",
+                "gradient_steps",
+                "learning_starts",
+                "ent_coef",
+            )
+        }
+    return result

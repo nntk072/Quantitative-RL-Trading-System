@@ -169,6 +169,17 @@ def test_q2_training_log_rejects_effective_environment_count_mismatch() -> None:
         _log_effective_ppo(model, cfg)
 
 
+def test_sac_effective_log_does_not_require_ppo_rollout_fields(caplog) -> None:
+    cfg = load_config(["env.n_envs=1", "sac.batch_size=8", "sac.buffer_size=64"])
+    model = SimpleNamespace(n_envs=1)
+    caplog.set_level(logging.INFO, logger="training.setup.models")
+
+    _log_effective_ppo(model, cfg, algo="sac")
+
+    assert "SAC effective: logical_n_envs=1" in caplog.text
+    assert "buffer_size=64" in caplog.text
+
+
 def test_q6_has_three_explicit_arms_with_only_visibility_changed() -> None:
     registry = load_quality_registry()
     stage = next(stage for stage in registry.stages if stage.id == "q6_entry_fsm")

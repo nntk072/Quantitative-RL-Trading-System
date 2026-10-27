@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from training.callbacks.debug_trace import FlightRecorder
+from training.callbacks.debug_trace import FlightRecorder, install_flight_recorder
 
 pytestmark = pytest.mark.unit
 
@@ -80,3 +80,26 @@ def test_healthy_record_and_the_first_update_write_no_incident(tmp_path: Path) -
         recorder.record(_healthy(explained_variance=0.1))
     assert _incidents(tmp_path) == []
     assert (tmp_path / "debug.jsonl").exists()
+
+
+def test_flight_recorder_forwards_off_policy_update_arguments(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    calls: list[tuple[int, int]] = []
+
+    def train(*, batch_size: int, gradient_steps: int) -> None:
+        calls.append((batch_size, gradient_steps))
+        raise RuntimeError("stop after validating forwarded arguments")
+
+    model = SimpleNamespace(
+        train=train,
+        learn=lambda *args, **kwargs: None,
+        get_env=lambda: None,
+        num_timesteps=0,
+    )
+    install_flight_recorder(model, tmp_path)
+
+    with pytest.raises(RuntimeError, match="stop after validating"):
+        model.train(batch_size=128, gradient_steps=2)
+
+    assert calls == [(128, 2)]

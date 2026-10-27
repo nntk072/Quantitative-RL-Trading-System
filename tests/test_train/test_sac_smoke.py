@@ -123,6 +123,36 @@ def test_sac_smoke_learns_a_few_steps(sac_cfg: Any, arch: str) -> None:
     assert -1.0 <= float(arr[0]) <= 1.0
 
 
+def test_sac_training_callbacks_forward_update_arguments(sac_cfg: Any, tmp_path: Any) -> None:
+    """Dashboard and flight-recorder wrappers preserve SAC's train signature."""
+    pytest.importorskip("torch")
+    pytest.importorskip("stable_baselines3")
+
+    from simulation.environment.env import TradingEnv
+    from training.callbacks.dashboard import TrainingDashboardCallback
+    from training.callbacks.debug_trace import install_flight_recorder
+
+    sac_cfg.sac.learning_starts = 4
+    sac_cfg.sac.buffer_size = 64
+    sac_cfg.sac.batch_size = 4
+    bars = _make_bars(n=64)
+    env = TradingEnv(
+        bars=bars,
+        features=_make_features(bars),
+        obs_window=10,
+        continuous_actions=True,
+        max_risk_frac=0.01,
+        max_episode_steps=64,
+    )
+    model = build_agent(env, sac_cfg, algo="sac")
+    install_flight_recorder(model, tmp_path)
+    dashboard = TrainingDashboardCallback(total_timesteps=16, eval_every=0, log_every=8)
+
+    model.learn(total_timesteps=16, callback=dashboard, progress_bar=False)
+
+    assert model.num_timesteps >= 16
+
+
 def test_sac_rejects_discrete_action_space() -> None:
     """SAC must raise on a Discrete env — guards against silent misconfig."""
     pytest.importorskip("torch")

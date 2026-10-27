@@ -166,3 +166,40 @@ def test_training_protocol_records_growth_scale() -> None:
     assert manifest["reward"]["mode"] == "equity_log_growth"
     assert manifest["reward"]["equity_log_growth_scale"] == 25.0
     assert manifest["risk"]["eod_peak_trailing_dd_limit_usd"] == 10_000.0
+
+
+def test_sac_training_protocol_uses_sac_fields_without_ppo_geometry() -> None:
+    cfg = OmegaConf.create(
+        {
+            "env": {"reward_mode": "equity_log_growth", "risk_mode": "dollar_band"},
+            "sac": {
+                "learning_rate": 3e-4,
+                "buffer_size": 64,
+                "batch_size": 8,
+                "tau": 0.005,
+                "gamma": 0.99,
+                "train_freq": 1,
+                "gradient_steps": 1,
+                "learning_starts": 4,
+                "ent_coef": "auto",
+            },
+            "ftmo": {},
+            "constrained_rl": {"enabled": False},
+        }
+    )
+    model = SimpleNamespace(n_envs=2, num_timesteps=8)
+
+    manifest = _training_protocol_manifest(
+        model=model,
+        cfg=cfg,
+        args=SimpleNamespace(),
+        seed=50,
+        requested_steps=8,
+        algo="sac",
+    )
+
+    assert manifest["algorithm"] == "sac"
+    assert manifest["sac"]["buffer_size"] == 64
+    assert manifest["sac"]["entropy_coefficient"] == "auto"
+    assert manifest["action_distribution"] == "squashed_diagonal_gaussian"
+    assert "ppo" not in manifest
