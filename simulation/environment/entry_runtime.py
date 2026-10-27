@@ -130,6 +130,7 @@ class EntryRuntimeMixin(RuntimeMixinBase):
             "ema_runner_fraction": float(placed.ema_runner_fraction),
             "entry_ideas": idea_context["ideas"],
             "entry_idea_timeframes": idea_context["timeframes"],
+            "entry_idea_gap_reactions": idea_context["gap_reactions"],
             "entry_idea_zones": idea_context["zones"],
             "entry_idea_overlap_count": len(idea_context["ideas"]),
             # risk_cash is set unconditionally on the open row from the filled

@@ -288,7 +288,11 @@ def build_ifvg_zone_features(
     conf = detect_ifvg_confirmation(bars, fvg, ifvg_config)
     inverse_opposing = bool(ifvg_config and ifvg_config.inverse_opposing_fvg)
     reaction_buffer_fraction = (
-        ifvg_config.close_through_threshold if ifvg_config is not None else 0.1
+        ifvg_config.close_through_threshold
+        if ifvg_config is not None and ifvg_config.close_through_buffer_enabled
+        else 0.1
+        if ifvg_config is None
+        else 0.0
     )
     atr_arr = atr(bars, atr_period).to_numpy(dtype=float)
     close = bars["close"].to_numpy(dtype=float)

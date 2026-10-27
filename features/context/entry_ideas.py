@@ -307,7 +307,7 @@ def entry_idea_context(
     """Return idea names and source timeframes present for the chosen side."""
     side = "long" if int(direction) == 1 else "short" if int(direction) == -1 else ""
     if not side:
-        return {"ideas": [], "timeframes": {}, "zones": []}
+        return {"ideas": [], "timeframes": {}, "gap_reactions": {}, "zones": []}
 
     source_side = "bull" if side == "long" else "bear"
     source_suffixes = {
@@ -355,9 +355,42 @@ def entry_idea_context(
             if code in tf_by_code:
                 active_tfs.add(tf_by_code[code])
         timeframes[idea] = sorted(active_tfs) or ["M1"]
+    gap_reactions: dict[str, list[str]] = {}
+    for label, suffixes in (
+        ("FVG", (f"fvg_retest_{source_side}",)),
+        ("IFVG", (f"ifvg_retest_{source_side}", f"ifvg_{source_side}_confirmed")),
+    ):
+        active_tfs = {
+            _timeframe_for_column(str(column))
+            for suffix in suffixes
+            for column, value in _row_items(row)
+            if (column == suffix or column.endswith(f"_{suffix}"))
+            and _row_positive({column: value}, column)
+        }
+        if label == "IFVG" and _row_positive(row, f"ifvg_{source_side}_confirmed"):
+            tf_by_code = {
+                1: "M1",
+                3: "M3",
+                5: "M5",
+                10: "M10",
+                15: "M15",
+                30: "M30",
+                60: "H1",
+                240: "H4",
+                1440: "D1",
+            }
+            try:
+                code = int(float(_row_first_value(row, f"ifvg_{source_side}_confirmation_tf_code")))
+            except (TypeError, ValueError):
+                code = 0
+            if code in tf_by_code:
+                active_tfs.add(tf_by_code[code])
+        if active_tfs:
+            gap_reactions[label] = sorted(active_tfs)
     return {
         "ideas": ideas,
         "timeframes": timeframes,
+        "gap_reactions": gap_reactions,
         "zones": _zone_contexts(row, ideas, timeframes, side) if include_zones else [],
     }
 

@@ -28,15 +28,20 @@ class IFVGConfig:
         When true, a bullish IFVG is a close above an existing bearish FVG;
         a bearish IFVG is a close below an existing bullish FVG. False keeps
         the historical same-orientation confirmation behavior.
+    close_through_buffer_enabled : bool
+        Whether confirmation also requires ``close_through_threshold`` beyond
+        the far edge. A later close beyond the passing wick is always required.
     """
 
     close_through_threshold: float = 0.1
     inverse_opposing_fvg: bool = False
+    close_through_buffer_enabled: bool = True
 
     def __post_init__(self) -> None:
         if self.close_through_threshold < 0.0:
             raise ValueError("close_through_threshold must be nonnegative")
-        self.close_through_threshold = max(self.close_through_threshold, 0.1)
+        if not np.isfinite(self.close_through_threshold):
+            raise ValueError("close_through_threshold must be finite")
 
 
 def detect_ifvg_confirmation(
@@ -47,8 +52,8 @@ def detect_ifvg_confirmation(
     """Detect IFVG (Imbalanced FVG) confirmation.
 
     An FVG becomes an IFVG after price passes through the zone and a later
-    candle closes beyond the most extreme passing wick, with at least a 10%
-    zone-height buffer beyond the far boundary.
+    candle closes beyond the most extreme passing wick. An optional fractional
+    buffer can require additional distance beyond the far boundary.
 
     Bullish IFVG confirmation: Price closes above the FVG zone (above bar1_high)
     Bearish IFVG confirmation: Price closes below the FVG zone (below bar1_low)
@@ -104,7 +109,7 @@ def detect_ifvg_confirmation(
     origin_bull = np.full(n, np.nan)
     origin_bear = np.full(n, np.nan)
 
-    threshold = config.close_through_threshold
+    threshold = config.close_through_threshold if config.close_through_buffer_enabled else 0.0
     max_age = 50  # bars; zones older than this are dropped
 
     for i in range(n):

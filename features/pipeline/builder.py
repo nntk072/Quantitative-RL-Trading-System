@@ -449,12 +449,31 @@ def build_features(
                 if cfg is not None
                 else None
             )
-            reaction_buffer_fraction = float(configured_buffer_fraction or 0.1)
+            configured_buffer_enabled = (
+                OmegaConf.select(cfg, "features.gap_reaction_buffer_enabled")
+                if cfg is not None
+                else None
+            )
+            buffer_enabled = (
+                True if configured_buffer_enabled is None else bool(configured_buffer_enabled)
+            )
+            reaction_buffer_fraction = (
+                (
+                    float(configured_buffer_fraction)
+                    if configured_buffer_fraction is not None
+                    else 0.1
+                )
+                if buffer_enabled
+                else 0.0
+            )
             for tf in fvg_tfs:
                 tf_bars = primary_tf_bars(str(tf))
                 fvg_blocks[str(tf)] = build_fvg_zone_features(
                     tf_bars,
-                    fvg_config=FVGConfig(reaction_buffer_fraction=reaction_buffer_fraction),
+                    fvg_config=FVGConfig(
+                        reaction_buffer_fraction=reaction_buffer_fraction,
+                        reaction_buffer_enabled=buffer_enabled,
+                    ),
                 )
             feat = align_blocks(feat, fvg_blocks)
             # Zone prices and the retest flag must stay raw. The distance

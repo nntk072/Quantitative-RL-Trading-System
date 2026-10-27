@@ -10,6 +10,8 @@ import pytest
 from omegaconf import DictConfig, OmegaConf
 
 from features import build_features
+from features.po3.fvg import build_fvg_zone_features
+from features.po3.fvg_detection import FVGConfig
 from features.po3.ifvg_state import build_po3_ifvg_state
 from features.po3.state import (
     align_ifvg_zone_timeframes,
@@ -217,14 +219,13 @@ class TestPO3StateGuards:
 
 class TestIFVGZones:
     def build_frame(self) -> pd.DataFrame:
-        # Single bullish FVG: bar1 high 100.5 (bar 1), bar3 low 100.9 (bar 3),
-        # confirmed same bar (close-through), retest into zone at bar 8.
+        # Single bullish FVG confirmed after a later close beyond the passing wick.
         rows = [
             (100.0, 99.0, 99.5),
             (100.5, 99.5, 100.0),
             (101.2, 99.8, 100.0),
-            (102.5, 100.9, 102.0),  # FVG zone 100.5-100.9 + close-through
-            (103.0, 100.6, 102.5),  # above the zone low, and no second FVG
+            (102.5, 100.9, 102.0),  # FVG zone 100.5-100.9; wick passes through
+            (103.2, 100.6, 102.8),  # confirms beyond the prior passing wick
             (103.5, 102.0, 103.0),
             (103.2, 102.0, 102.5),
             (103.0, 101.5, 101.8),
@@ -262,19 +263,18 @@ class TestIFVGZones:
         assert zones["ifvg_bull_active"].iloc[start + 2] == 0
 
     def test_bearish_zone(self) -> None:
-        # Bearish FVG (bar3 high 99.0 < bar1 low 99.5), confirmed same bar,
-        # later retest back up into the zone (98.5-99.0 after re-confirmation).
+        # Bearish FVG, followed by a close beyond the passing wick and later retest.
         rows = [
             (101.0, 100.0, 100.5),
             (100.5, 99.5, 100.0),
             (100.2, 99.0, 99.5),
-            (99.0, 97.5, 98.0),  # bearish FVG zone 99.0-99.5 + close-through
-            (98.5, 97.0, 97.5),
-            (97.8, 96.0, 96.5),
-            (97.0, 95.8, 96.2),
-            (96.5, 95.5, 96.0),
-            (99.5, 98.2, 98.7),  # close inside the active zone
-            (99.0, 98.0, 98.5),
+            (99.0, 97.5, 98.0),  # bearish FVG zone 99.0-99.5; wick passes through
+            (100.0, 96.0, 98.5),  # passes the zone; next close must clear its wick
+            (100.0, 95.0, 95.5),  # confirms below the passing wick and 10% buffer
+            (98.8, 95.8, 96.2),  # leaves the zone without creating a newer gap
+            (98.9, 95.5, 96.0),
+            (99.5, 99.0, 99.2),  # close inside the active zone
+            (99.3, 99.0, 99.1),
         ]
         bars = make_bars(rows)
         zones = build_ifvg_zone_features(bars, max_age_bars=50)
@@ -310,7 +310,7 @@ class TestIFVGZones:
         bars.loc[bars.index[8], "close"] = 101.1
         bars.loc[bars.index[9], "low"] = 100.8
         bars.loc[bars.index[9], "high"] = 102.5
-        bars.loc[bars.index[9], "close"] = 102.1
+        bars.loc[bars.index[9], "close"] = 102.2
         zones = build_ifvg_zone_features(bars, max_age_bars=50)
         assert zones["price_in_ifvg_bull"].iloc[8] == 0
         assert zones["ifvg_retest_bull"].iloc[8] == 0
@@ -326,8 +326,8 @@ class TestIFVGZones:
         bars.loc[bars.index[8], "high"] = 102.0
         bars.loc[bars.index[8], "close"] = 100.7
         bars.loc[bars.index[9], "low"] = 100.8
-        bars.loc[bars.index[9], "high"] = 102.1
-        bars.loc[bars.index[9], "close"] = 102.05
+        bars.loc[bars.index[9], "high"] = 102.5
+        bars.loc[bars.index[9], "close"] = 102.2
 
         zones = build_ifvg_zone_features(bars, max_age_bars=50)
 
@@ -339,6 +339,37 @@ class TestIFVGZones:
         full = build_ifvg_zone_features(bars, max_age_bars=50)
         short = build_ifvg_zone_features(bars.iloc[:8], max_age_bars=50)
         pd.testing.assert_frame_equal(full.iloc[:8], short, check_freq=False)
+
+    def test_fvg_reaction_buffer_is_optional(self) -> None:
+        bars = make_bars(
+            [
+                (100.0, 99.0, 99.5),
+                (100.5, 99.5, 100.0),
+                (101.2, 99.8, 100.0),
+                (102.5, 100.9, 102.0),
+                (103.0, 101.2, 102.0),
+                (100.91, 100.6, 100.8),
+                (101.0, 100.91, 100.92),
+            ]
+        )
+        bars.loc[bars.index[5], "open"] = 100.8
+        bars.loc[bars.index[6], "open"] = 100.91
+        enabled = build_fvg_zone_features(
+            bars,
+            fvg_config=FVGConfig(reaction_buffer_fraction=0.1, reaction_buffer_enabled=True),
+        )
+        disabled = build_fvg_zone_features(
+            bars,
+            fvg_config=FVGConfig(reaction_buffer_fraction=0.1, reaction_buffer_enabled=False),
+        )
+        lower = build_fvg_zone_features(
+            bars,
+            fvg_config=FVGConfig(reaction_buffer_fraction=0.02, reaction_buffer_enabled=True),
+        )
+
+        assert enabled["fvg_retest_bull"].iloc[6] == 0
+        assert disabled["fvg_retest_bull"].iloc[6] == 1
+        assert lower["fvg_retest_bull"].iloc[6] == 1
 
 
 class TestBuildFeaturesIntegration:

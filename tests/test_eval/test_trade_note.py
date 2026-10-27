@@ -93,11 +93,13 @@ def test_entry_reason_lists_overlapping_ideas_and_timeframes() -> None:
                 "standard_deviation": ["M15"],
                 "fvg_retest": ["M3"],
             },
+            "entry_idea_gap_reactions": {"FVG": ["M3"], "IFVG": ["H1"]},
         }
     )
     assert "Order Block reaction (M5, H1)" in text
     assert "Fib-like swing retracement (0.5-0.786) (M15)" in text
-    assert "Fair Value Gap retest (M3)" in text
+    assert "FVG reaction (M3)" in text
+    assert "IFVG reaction (H1)" in text
     assert "3 entry ideas overlap" in text
 
 
@@ -124,7 +126,7 @@ def test_entry_reason_lists_only_linked_fvg_zone_values() -> None:
 
 
 def test_entry_reason_distinguishes_inactive_from_unrecorded_ideas() -> None:
-    assert "no named entry-idea signal active" in entry_reason(
+    assert "No named setup signal was active at this entry" in entry_reason(
         {**_OPEN_EMA, "entry_ideas": [], "entry_idea_timeframes": {}}
     )
     unrecorded = {**_OPEN_EMA, "level_type": None}

@@ -118,6 +118,12 @@ def append_po3_state_features(
     gap_reaction_buffer = (
         OmegaConf.select(cfg, "features.gap_reaction_buffer_fraction") if cfg else None
     )
+    configured_buffer_enabled = (
+        OmegaConf.select(cfg, "features.gap_reaction_buffer_enabled") if cfg else None
+    )
+    gap_reaction_buffer_enabled = (
+        True if configured_buffer_enabled is None else bool(configured_buffer_enabled)
+    )
     inverse_opposing = bool(
         (OmegaConf.select(cfg, "strategy.ifvg.require_opposing_fvg") if cfg else False) or False
     )
@@ -130,6 +136,7 @@ def append_po3_state_features(
             else 0.1
         ),
         inverse_opposing_fvg=inverse_opposing,
+        close_through_buffer_enabled=gap_reaction_buffer_enabled,
     )
     ifvg_zones = build_ifvg_zone_features(primary, ifvg_config=ifvg_config)
     state_ifvg_zones = ifvg_zones.copy()

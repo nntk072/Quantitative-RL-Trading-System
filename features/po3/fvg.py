@@ -29,9 +29,9 @@ def build_fvg_zone_features(
       active zone edge, normalised by ATR and capped at 5.0 (cap value = no
       active zone nearby)
     - ``fvg_retest_bull`` / ``fvg_retest_bear``: 1 when a later candle closes
-      beyond the most extreme retest wick and at least 10% of zone height
-      beyond the far boundary. A body close through the far zone boundary
-      invalidates the zone immediately.
+      beyond the most extreme retest wick, optionally with a configured
+      fraction of zone height beyond the far boundary. A body close through
+      the far zone boundary invalidates the zone immediately.
     - ``fvg_*_low`` / ``fvg_*_high``: live zone bounds. ``fvg_*_origin`` is the
       low (bull) or high (bear) of candle 1 in the 1-2-3 that left the gap.
       Candle 2 is the displacement candle the gap belongs to.
@@ -79,7 +79,11 @@ def build_fvg_zone_features(
     if fvg_config is not None and fvg_config.reaction_buffer_fraction < 0.0:
         raise ValueError("reaction_buffer_fraction must be nonnegative")
     reaction_buffer_fraction = (
-        0.1 if fvg_config is None else max(fvg_config.reaction_buffer_fraction, 0.1)
+        0.1
+        if fvg_config is None
+        else fvg_config.reaction_buffer_fraction
+        if fvg_config.reaction_buffer_enabled
+        else 0.0
     )
 
     signals = detect_fvg(bars, fvg_config)

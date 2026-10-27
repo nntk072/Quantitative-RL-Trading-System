@@ -56,14 +56,14 @@ _ENTRY_IDEA_LABELS: dict[str, str] = {
     "po3": "PO3 setup",
     "order_block": "Order Block reaction",
     "standard_deviation": "Fib-like swing retracement (0.5-0.786)",
-    "fvg_retest": "FVG/IFVG reaction",
+    "fvg_retest": "Gap reaction (type not recorded)",
 }
 
 _ENTRY_SETUP_LABELS: dict[str, str] = {
     "po3": "PO3 setup",
     "order_block": "Order Block reaction",
     "standard_deviation": "swing retracement",
-    "fvg_retest": "FVG/IFVG reaction",
+    "fvg_retest": "Gap reaction (type not recorded)",
     "sweep": "liquidity sweep context",
     "swing": "swing context",
 }
@@ -155,9 +155,26 @@ def entry_reason(open_row: Any) -> str:
     if _text(raw_ideas):
         idea_names = [str(value) for value in _sequence_value(raw_ideas)]
         timeframe_map = _mapping_value(open_row.get("entry_idea_timeframes"))
+        gap_reactions = _mapping_value(open_row.get("entry_idea_gap_reactions"))
         if idea_names:
             for idea in idea_names:
                 label = _ENTRY_IDEA_LABELS.get(idea, idea.replace("_", " "))
+                if idea == "fvg_retest" and gap_reactions:
+                    reaction_labels: list[str] = []
+                    for family in ("FVG", "IFVG"):
+                        raw_gap_timeframes = gap_reactions.get(family, [])
+                        gap_timeframes = (
+                            [raw_gap_timeframes]
+                            if isinstance(raw_gap_timeframes, str)
+                            else [str(value) for value in _sequence_value(raw_gap_timeframes)]
+                        )
+                        if gap_timeframes:
+                            reaction_labels.append(
+                                f"{family} reaction ({', '.join(gap_timeframes)})"
+                            )
+                    if reaction_labels:
+                        parts.extend(reaction_labels)
+                        continue
                 raw_timeframes = timeframe_map.get(idea, [])
                 timeframes = (
                     [raw_timeframes]
@@ -186,7 +203,7 @@ def entry_reason(open_row: Any) -> str:
                     + "; policy chose to trigger at this signal bar"
                 )
             else:
-                parts.append("no named entry-idea signal or saved candidate")
+                parts.append("No named setup signal was active at this entry")
         zones = _sequence_value(open_row.get("entry_idea_zones"))
         if zones:
             zone_text: list[str] = []

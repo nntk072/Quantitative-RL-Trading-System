@@ -100,6 +100,42 @@ class TestDetectIFVGConfirmation:
         ifvg_result = detect_ifvg_confirmation(sample_bars, fvg_result, config=config)
         assert isinstance(ifvg_result, pd.DataFrame)
 
+    def test_optional_buffer_can_be_enabled_or_disabled(self) -> None:
+        bars = pd.DataFrame(
+            {
+                "high": [10.0, 11.0, 12.05, 12.1],
+                "low": [9.0, 10.5, 12.01, 12.04],
+                "close": [9.5, 10.8, 12.02, 12.06],
+            },
+            index=pd.date_range("2025-01-01", periods=4, freq="min"),
+        )
+        fvg = detect_fvg(bars)
+
+        enabled = detect_ifvg_confirmation(
+            bars,
+            fvg,
+            IFVGConfig(close_through_threshold=0.1, close_through_buffer_enabled=True),
+        )
+        disabled = detect_ifvg_confirmation(
+            bars,
+            fvg,
+            IFVGConfig(close_through_threshold=0.1, close_through_buffer_enabled=False),
+        )
+        lower = detect_ifvg_confirmation(
+            bars,
+            fvg,
+            IFVGConfig(close_through_threshold=0.02, close_through_buffer_enabled=True),
+        )
+
+        assert enabled["ifvg_bullish_confirmed"].sum() == 0
+        assert disabled["ifvg_bullish_confirmed"].iloc[3] == 1
+        assert lower["ifvg_bullish_confirmed"].iloc[3] == 1
+
+    def test_fvg_buffer_fraction_is_not_forced_to_ten_percent(self) -> None:
+        config = FVGConfig(reaction_buffer_fraction=0.0)
+
+        assert config.reaction_buffer_fraction == 0.0
+
     def test_ifvg_binary_values(self, sample_bars: pd.DataFrame) -> None:
         """Test that IFVG signals are binary (0 or 1)."""
         fvg_result = detect_fvg(sample_bars)
@@ -113,18 +149,14 @@ class TestDetectEntryTrigger:
 
     @pytest.fixture()
     def bullish_close_through_bars(self) -> pd.DataFrame:
-        """Bars with a bullish FVG (zone [10, 12]) confirmed by a close above it.
-
-        Bar 2 is the FVG (bar3.low 12 > bar1.high 10) and confirms immediately
-        (close 13). Bars 3+ pull back into the zone so ltf_fvg entries can fire.
-        """
+        """FVG [10, 12.1], swept by two candles, then confirmed beyond their wick."""
         idx = pd.date_range("2025-01-01", periods=10, freq="1min")
         return pd.DataFrame(
             {
-                "open": [9, 10, 11, 12, 11, 13, 14, 14, 13, 12],
-                "high": [10, 11, 13, 13, 12, 14, 15, 15, 14, 13],
-                "low": [9, 10, 12, 11, 10, 12, 13, 13, 12, 11],
-                "close": [9, 10, 13, 12, 11, 13, 14, 14, 13, 12],
+                "open": [9, 10, 11, 12, 13.2, 13.6, 12.5, 13.5, 13, 12],
+                "high": [10, 11, 13, 13.5, 14, 14.5, 13, 14.2, 14, 13],
+                "low": [9, 10, 12.1, 11, 13, 12.5, 11.8, 13.2, 12, 11],
+                "close": [9, 10, 12.5, 12, 13.6, 13.5, 12, 14, 13, 12],
             },
             index=idx,
         )
@@ -180,9 +212,8 @@ class TestDetectEntryTrigger:
     ) -> None:
         """The ltf_fvg entry fires when price re-enters a confirmed IFVG zone.
 
-        Reuses the bullish close-through fixture (zone [10, 12], confirmed at
-        bar 2 by a close of 13). Price re-entering the zone (close 12 at bar 3)
-        must produce an ltf_fvg long entry, not a retest/close_through tag.
+        Reuses the bullish close-through fixture. Price first re-enters the
+        confirmed zone at bar 6, producing an LTF-FVG entry.
         """
         fvg = detect_fvg(bullish_close_through_bars)
         ifvg = detect_ifvg_confirmation(bullish_close_through_bars, fvg)
@@ -190,8 +221,8 @@ class TestDetectEntryTrigger:
 
         assert entry["entry_long"].sum() > 0
         first = entry.index[entry["entry_long"] == 1][0]
-        assert first == bullish_close_through_bars.index[3]
-        assert entry.loc[bullish_close_through_bars.index[2], "entry_long"] == 0
+        assert first == bullish_close_through_bars.index[6]
+        assert entry.loc[bullish_close_through_bars.index[4], "entry_long"] == 0
         fired = entry.loc[entry["entry_trigger_type"] != ""]
         assert set(fired["entry_trigger_type"].unique()) == {"ltf_fvg"}
 
@@ -350,14 +381,14 @@ class TestIFVGConfirmationBehavior:
 
     @pytest.fixture()
     def bullish_close_through_bars(self) -> pd.DataFrame:
-        """Bars with a bullish FVG (zone [10, 12]) confirmed by closes above it."""
+        """Bars with a bullish FVG and causal wick-plus-buffer confirmation."""
         idx = pd.date_range("2025-01-01", periods=10, freq="1min")
         return pd.DataFrame(
             {
-                "open": [9, 10, 11, 12, 11, 13, 14, 14, 13, 12],
-                "high": [10, 11, 13, 13, 12, 14, 15, 15, 14, 13],
-                "low": [9, 10, 12, 11, 10, 12, 13, 13, 12, 11],
-                "close": [9, 10, 13, 12, 11, 13, 14, 14, 13, 12],
+                "open": [9, 10, 11, 12, 13.2, 13.6, 12.5, 13.5, 13, 12],
+                "high": [10, 11, 13, 13.5, 14, 14.5, 13, 14.2, 14, 13],
+                "low": [9, 10, 12.1, 11, 13, 12.5, 11.8, 13.2, 12, 11],
+                "close": [9, 10, 12.5, 12, 13.6, 13.5, 12, 14, 13, 12],
             },
             index=idx,
         )
@@ -372,17 +403,17 @@ class TestIFVGConfirmationBehavior:
         # Zone bounds must be populated and match the FVG gap [bar1.high, bar3.low].
         confirmed = ifvg[ifvg["ifvg_bullish_confirmed"] == 1].iloc[0]
         assert confirmed["ifvg_bullish_low"] == 10.0
-        assert confirmed["ifvg_bullish_high"] == 12.0
+        assert confirmed["ifvg_bullish_high"] == 12.1
 
     def test_bearish_ifvg_fires_on_close_through(self) -> None:
         """A bearish FVG with closes below it must confirm."""
         idx = pd.date_range("2025-01-01", periods=10, freq="1min")
         bars = pd.DataFrame(
             {
-                "open": [13, 12, 11, 10, 11, 9, 8, 8, 9, 10],
-                "high": [14, 13, 12, 11, 12, 10, 9, 9, 10, 11],
-                "low": [12, 11, 9, 9, 10, 8, 7, 7, 8, 9],
-                "close": [13, 12, 9, 10, 11, 9, 8, 8, 9, 10],
+                "open": [13, 12, 11, 11, 10, 9, 8, 8, 9, 10],
+                "high": [14, 13, 11.9, 12.2, 10.5, 10, 9, 9, 10, 11],
+                "low": [12, 11, 10, 9.8, 9.0, 8, 7, 7, 8, 9],
+                "close": [13, 12, 10.5, 10.2, 9.7, 9, 8, 8, 9, 10],
             },
             index=idx,
         )
@@ -390,9 +421,9 @@ class TestIFVGConfirmationBehavior:
         ifvg = detect_ifvg_confirmation(bars, fvg)
         assert ifvg["ifvg_bearish_confirmed"].sum() > 0
         confirmed = ifvg[ifvg["ifvg_bearish_confirmed"] == 1].iloc[0]
-        # Bearish FVG zone is [bar3.high, bar1.low] = [9, 10].
-        assert confirmed["ifvg_bearish_low"] == 9.0
-        assert confirmed["ifvg_bearish_high"] == 10.0
+        # Bearish FVG zone is [bar3.high, bar1.low] = [11.9, 12].
+        assert confirmed["ifvg_bearish_low"] == 11.9
+        assert confirmed["ifvg_bearish_high"] == 12.0
 
     def test_zero_threshold_still_requires_strictly_beyond_far_edge(self) -> None:
         bars = pd.DataFrame(
@@ -661,7 +692,7 @@ class TestMTFCausality:
         M5[0] (00:00, bars 0-4):  high 11, low 9
         M5[1] (00:05, bars 5-9):  high 11, low 9
         M5[2] (00:10, bars 10-14): low 12   -> FVG [11, 12] forms here
-        M5[3] (00:15, bars 15-19): close 13 -> IFVG confirmed (close > zone high)
+        M5[3] (00:15, bars 15-19): close 15 -> IFVG confirms beyond prior pass wick
         M5[4] (00:20, bars 20-24): close 13 (zone stays unfilled)
         """
         idx = pd.date_range("2025-01-01", periods=25, freq="1min")
@@ -714,7 +745,7 @@ class TestMTFCausality:
                     13,
                     14,
                     13,
-                    14,
+                    16,
                     14,
                     13,
                     14,
@@ -768,7 +799,7 @@ class TestMTFCausality:
                     12,
                     13,
                     12,
-                    13,
+                    15,
                     13,
                     12,
                     13,

@@ -58,6 +58,22 @@ def test_entry_ideas_are_multi_hot_and_keep_source_timeframes() -> None:
         "standard_deviation": ["H1"],
         "fvg_retest": ["M15"],
     }
+    assert context["gap_reactions"] == {"FVG": ["M15"]}
+
+
+def test_gap_reaction_context_keeps_fvg_and_ifvg_distinct() -> None:
+    row = pd.Series(
+        {
+            "entry_idea_fvg_retest_long": 1.0,
+            "M3_fvg_retest_bull": 1.0,
+            "H1_ifvg_retest_bull": 1.0,
+        }
+    )
+
+    context = entry_idea_context(row, 1)
+
+    assert context["ideas"] == ["fvg_retest"]
+    assert context["gap_reactions"] == {"FVG": ["M3"], "IFVG": ["H1"]}
 
 
 def test_entry_ideas_handle_duplicate_input_columns_and_keep_overlapping_contexts() -> None:

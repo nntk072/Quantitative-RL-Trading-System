@@ -17,11 +17,14 @@ class FVGConfig:
         Number of bars to look back for FVG detection.
     reaction_buffer_fraction : float
         Follow-through close buffer as a fraction of the gap height.
+    reaction_buffer_enabled : bool
+        Whether retest confirmation also requires the configured fraction.
     """
 
     min_imbalance_pts: float = 0.0
     lookback_bars: int = 3
     reaction_buffer_fraction: float = 0.1
+    reaction_buffer_enabled: bool = True
 
 
 def detect_fvg(
