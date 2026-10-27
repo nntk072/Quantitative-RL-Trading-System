@@ -14,6 +14,29 @@ from trading.orders.targets import (
     normalize_timeframe,
 )
 
+_STOP_TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
+
+
+def _timeframe_rank_for_stop(name: str) -> int:
+    """Return the source timeframe rank; session/day/week references are HTF."""
+    candidate = str(name).split("|", 1)[0]
+    for rank, timeframe in enumerate(_STOP_TIMEFRAMES):
+        if candidate.startswith(f"{timeframe}_"):
+            return rank
+    if candidate.startswith(
+        (
+            "asian_",
+            "london_",
+            "prev_day_",
+            "ctx_prev_day_",
+            "ctx_prev_week_",
+            "yesterday_",
+            "lastweek_",
+        )
+    ):
+        return len(_STOP_TIMEFRAMES) - 1
+    return 0
+
 
 def _flag(row: Any, name: str) -> bool:
     value = finite_level(row, name)
@@ -65,9 +88,16 @@ def stop_menu(
     buffer: float,
     manipulation: str,
     htf: tuple[str, ...] = ("M5", "M15", "H1"),
+    min_timeframe: str = "M1",
+    standard_deviation_timeframes: tuple[str, ...] | None = None,
     price_increment: float | None = None,
 ) -> tuple[list[tuple[str, float, float]], list[dict[str, Any]]]:
-    """Build eligible structural stops and an audit trail for rejected levels."""
+    """Build structural stops and audit every rejected level.
+
+    Standard-deviation stops may use only level 1. When a
+    standard-deviation entry is active, that level must also come from one of
+    the entry's active standard-deviation timeframes.
+    """
     early_audit: list[dict[str, Any]] = []
     candidate_meta: dict[str, dict[str, Any]] = {}
     candidate_schema_active = False
@@ -175,6 +205,79 @@ def stop_menu(
                 if level is not None:
                     raw.append((column_name, level))
     raw.extend(deviation_candidates(row))
+    raw_deviation_candidates = [item for item in raw if "standard_deviation_level_" in item[0]]
+    invalid_deviation_candidates = [
+        item
+        for item in raw_deviation_candidates
+        if not (
+            item[0] == "standard_deviation_level_1_price"
+            or item[0].endswith("_standard_deviation_level_1_price")
+        )
+    ]
+    for name, level in invalid_deviation_candidates:
+        early_audit.append(
+            {
+                "name": name,
+                "reference_price": float(level),
+                "stop_price": float("nan"),
+                "distance": float("nan"),
+                "status": "rejected",
+                "reason": "standard_deviation_stop_level_must_be_1",
+            }
+        )
+    raw = [item for item in raw if item not in invalid_deviation_candidates]
+    normalized_floor = normalize_timeframe(min_timeframe)
+    minimum_rank = _STOP_TIMEFRAMES.index(normalized_floor)
+    sd_timeframes = tuple(
+        normalize_timeframe(timeframe) for timeframe in (standard_deviation_timeframes or ())
+    )
+    if sd_timeframes:
+        expected_sd_stops = {
+            "standard_deviation_level_1_price"
+            if timeframe == "M1"
+            else f"{timeframe}_standard_deviation_level_1_price"
+            for timeframe in sd_timeframes
+        }
+        if sweep_anchor is not None:
+            early_audit.append(
+                {
+                    "name": sweep_anchor[0],
+                    "reference_price": float(sweep_anchor[1]),
+                    "stop_price": float("nan"),
+                    "distance": float("nan"),
+                    "status": "rejected",
+                    "reason": "standard_deviation_entry_requires_level_1_stop",
+                    "timeframes": list(sd_timeframes),
+                }
+            )
+            sweep_anchor = None
+        rejected_sd_candidates = [item for item in raw if item[0] not in expected_sd_stops]
+        for name, level in rejected_sd_candidates:
+            early_audit.append(
+                {
+                    "name": name,
+                    "reference_price": float(level),
+                    "stop_price": float("nan"),
+                    "distance": float("nan"),
+                    "status": "rejected",
+                    "reason": "standard_deviation_entry_requires_level_1_stop",
+                    "timeframes": list(sd_timeframes),
+                }
+            )
+        raw = [item for item in raw if item[0] in expected_sd_stops]
+    if sweep_anchor is not None and _timeframe_rank_for_stop(sweep_anchor[0]) < minimum_rank:
+        early_audit.append(
+            {
+                "name": sweep_anchor[0],
+                "reference_price": float(sweep_anchor[1]),
+                "stop_price": float("nan"),
+                "distance": float("nan"),
+                "status": "rejected",
+                "reason": "below_entry_timeframe_floor",
+                "timeframe_floor": normalized_floor,
+            }
+        )
+        sweep_anchor = None
     if sweep_anchor is not None:
         # A live sweep is the invalidation event for this setup. Do not let a
         # stale pivot, session level, or another timeframe replace its wick.
@@ -200,6 +303,25 @@ def stop_menu(
     )
     if (direction == 1 and smt_bullish) or (direction == -1 and smt_bearish):
         raw = [("smt_swing", px) if name == swing else (name, px) for name, px in raw]
+    before_floor_filter = list(raw)
+    if not sd_timeframes:
+        raw = [
+            (name, price) for name, price in raw if _timeframe_rank_for_stop(name) >= minimum_rank
+        ]
+    below_floor = {name for name, _ in before_floor_filter} - {name for name, _ in raw}
+    for name in sorted(below_floor):
+        level = next(float(px) for candidate, px in before_floor_filter if candidate == name)
+        early_audit.append(
+            {
+                "name": name,
+                "reference_price": level,
+                "stop_price": float("nan"),
+                "distance": float("nan"),
+                "status": "rejected",
+                "reason": "below_entry_timeframe_floor",
+                "timeframe_floor": normalized_floor,
+            }
+        )
     before_filter = list(raw)
     if (
         manipulation == "against"

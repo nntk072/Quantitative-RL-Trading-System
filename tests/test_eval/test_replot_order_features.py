@@ -57,9 +57,13 @@ def test_replot_rebuilds_all_timeframes_used_by_overlapping_trade_ideas() -> Non
         [
             {
                 "type": "open",
-                "entry_ideas": "['po3', 'fvg_retest', 'order_block', 'standard_deviation']",
+                "entry_ideas": (
+                    "['po3', 'fvg_retest', 'ifvg_retest', 'ifvg_unretested', "
+                    "'order_block', 'standard_deviation']"
+                ),
                 "entry_idea_timeframes": (
-                    "{'po3': ['M15'], 'fvg_retest': ['M5'], "
+                    "{'po3': ['M15'], 'fvg_retest': ['M5'], 'ifvg_retest': ['M10'], "
+                    "'ifvg_unretested': ['M30'], "
                     "'order_block': ['M3'], 'standard_deviation': ['H1']}"
                 ),
             }
@@ -92,6 +96,6 @@ def test_replot_rebuilds_all_timeframes_used_by_overlapping_trade_ideas() -> Non
 
     assert list(chart_config.features.order_blocks.timeframes) == ["M3"]
     assert list(chart_config.features.fvg_timeframes) == ["M5", "M15"]
-    assert list(chart_config.features.ifvg_mtf.timeframes) == ["M5", "M15"]
+    assert list(chart_config.features.ifvg_mtf.timeframes) == ["M10", "M15", "M30"]
     assert list(chart_config.features.po3_state_mtf.timeframes) == ["M15"]
     assert list(chart_config.features.entry_ideas.timeframes) == ["H1"]

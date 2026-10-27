@@ -144,7 +144,9 @@ def _feature_zones(
             "po3": ("fvg", "ifvg"),
             "order_block": ("ob",),
             "standard_deviation": (),
-            "fvg_retest": ("fvg", "ifvg"),
+            "fvg_retest": ("fvg",),
+            "ifvg_retest": ("ifvg",),
+            "ifvg_unretested": ("ifvg",),
         }
         for idea in ideas:
             for tf in tf_values(timeframe_map.get(idea, ("M1",))):
@@ -340,6 +342,10 @@ def _feature_zones(
             if idea == "po3"
             else "FVG/IFVG · "
             if idea == "fvg_retest"
+            else "IFVG retest · "
+            if idea == "ifvg_retest"
+            else "IFVG unretested · "
+            if idea == "ifvg_unretested"
             else f"{idea.replace('_', ' ').upper()} · "
             if idea
             else ""

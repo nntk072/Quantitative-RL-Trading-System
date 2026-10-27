@@ -33,6 +33,13 @@ Helper scripts: [`scripts/compute/slurm/`](../../scripts/compute/slurm/) (`statu
 - Keep the thesis aggregate cap of 2 GH200 GPUs and budget of at most 12
   GH200 GPU-hours per request. Do not exceed one GH200 per node for the
   two-node layout.
+- For one task, default to one GH200 allocation. If one GH200 for up to 12
+  hours can finish the task, run all its variants and evaluation stages there;
+  do not request another allocation for that task. If the current allocation is
+  shorter and needs more time, the user authorizes extending it when Slurm
+  permits or queuing one 1-GH200 successor before it ends with a dependency
+  that prevents overlap. Never run more than one GH200 for this task at once.
+  Use two GPUs only when the user directly asks for or approves that shape.
 
 Triton emails when many jobs last &lt; ~120s. Prefer one long shell (hours),
 never a burst of short diagnostic jobs.
@@ -180,10 +187,11 @@ automatically; inspect the trace and step topology first.
 - Before any GH200 request, inspect all active and pending campaign jobs with
   `squeue` and `scontrol show job`. Never request more than 2 GH200 in one job,
   combine allocations to run more than 2 simultaneously, or request a 2-GH200
-  allocation on one node plus any additional GH200 on another. To avoid an idle
-  gap, one successor request for 2 GH200 may be queued while the current pair
-  runs only when it has an explicit Slurm dependency on the current job's
-  termination, guaranteeing no allocation overlap. Do not create multiple
+  allocation on one node plus any additional GH200 on another. A dependency
+  prevents overlap but does not itself authorize follow-on GPU time. Do not
+  queue a successor for the same task when one allocation is sufficient; ask
+  the user before requesting another allocation if the first cannot finish.
+  Do not create multiple
   pending successors or submit an unchained overlapping request. Confirm the
   dependency and aggregate requested GRES in `scontrol show job`; no more than
   2 GH200s may be allocated concurrently.
@@ -236,7 +244,17 @@ requested walltime; the one-minute limit is not a runtime limit.
 
 For this thesis work, first reuse any current user allocation. If none exists,
 inspect each candidate node's allocated/free CPUs, host RAM, and GPU type/count
-before requesting. When the task needs a new GPU allocation, prefer, in order:
+before requesting. Default to **one GH200 for a task** when its workload fits
+within that allocation. If one GH200 with up to 12 hours is sufficient, run all
+variants and plotting/evaluation stages for that task in the same allocation;
+run sequentially when necessary. Do not request another allocation when that
+is enough. If the current allocation is shorter and needs more time, the user
+authorizes extending it when Slurm permits or queuing one 1-GH200 successor
+before it ends with a dependency that guarantees no overlap. Keep only one
+GH200 active for the task at any time. Use two GH200s only when the user
+directly asks for that shape or approves it after seeing a concrete estimate.
+
+When the user explicitly requests a multi-GPU allocation, prefer, in order:
 
 1. Two GPUs on different nodes, one GPU per node.
 2. Two GPUs on the same node when the two-node shape is unavailable.
@@ -245,11 +263,14 @@ before requesting. When the task needs a new GPU allocation, prefer, in order:
    eligible inventory.
 
 The user's allocation budget is at most **12 GH200 GPU-hours per request**:
-request up to 12 hours with one GH200, or up to 6 hours with two GH200s. Keep
-the existing GH200 aggregate cap; prefer one GPU on `gpuarm1` and one on
-`gpuarm2`, but two on one node are permitted if the preferred two-node shape is
-unavailable. A shorter bounded task may
-request less when that is sufficient, but do not exceed the GPU-hour budget.
+request up to 12 hours with one GH200, or up to 6 hours with two GH200s when
+two GPUs are explicitly requested. Keep the existing GH200 aggregate cap;
+prefer one GPU on `gpuarm1` and one on `gpuarm2`, but two on one node are
+permitted if the preferred two-node shape is unavailable. A shorter bounded
+task may request less when that is sufficient, but do not exceed the GPU-hour
+budget. A follow-on request is allowed only as one dependency-queued GH200
+successor when the current shorter allocation cannot finish the task; do not
+queue another successor or overlap GH200 allocations.
 Do not request resources that are already provided by a reusable allocation.
 Smaller validation or inspection work should share that allocation instead of
 creating another Slurm job/step.
@@ -275,10 +296,12 @@ current direction is to preserve pending jobs as well; stop polling after the
 one-minute cutoff, then inspect alternatives using fresh per-node CPU/RAM/GPU
 checks without canceling or overlapping the pending request.
 
-This timer starts when a request is eligible to run. A previously approved
-successor held behind an explicit `afterany`/`afterok` dependency is waiting on
-its predecessor, not waiting for free resources; preserve that single chained
-request and start its 60-second resource timer only after the dependency clears.
+This timer starts when a request is eligible to run. Preserve any successor
+already pending under the no-cancellation rule. The user authorizes one
+dependency-queued, one-GH200 continuation when the current shorter allocation
+needs more time; create it before the current allocation ends and ensure the
+dependency prevents overlap. Do not add a successor when one 12-hour
+one-GH200 allocation is sufficient.
 
 When the preferred GPU family is unavailable within the limit, search for a
 compatible NVIDIA GPU **no lower than A100**. Candidate families are A100,

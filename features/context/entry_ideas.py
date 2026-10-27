@@ -13,7 +13,16 @@ import numpy as np
 import pandas as pd
 
 _TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
-ENTRY_IDEA_NAMES = ("po3", "order_block", "standard_deviation", "fvg_retest")
+_TIMEFRAME_CODES = dict(zip((1, 3, 5, 10, 15, 30, 60, 240, 1440), _TIMEFRAMES))
+ENTRY_IDEA_NAMES = (
+    "po3",
+    "order_block",
+    "standard_deviation",
+    "fvg_retest",
+    "ifvg_retest",
+    "ifvg_unretested",
+)
+_TIMEFRAME_RANK = {timeframe: rank for rank, timeframe in enumerate(_TIMEFRAMES)}
 
 
 class _FeatureRowLike(Protocol):
@@ -55,7 +64,45 @@ def _positive_any(frame: pd.DataFrame, suffix: str) -> pd.Series:
     return _positive_any_positions(frame, _matching_positions(frame.columns, suffix))
 
 
-def _po3_direction(frame: pd.DataFrame, side: str) -> pd.Series:
+def _timeframe_signal(frame: pd.DataFrame, suffix: str, timeframe: str) -> pd.Series:
+    """Read one timeframe's event without pooling it with the other windows."""
+    prefix = "" if timeframe == "M1" else f"{timeframe}_"
+    positions = [
+        position
+        for position, column in enumerate(frame.columns)
+        if str(column) == f"{prefix}{suffix}"
+    ]
+    signal = _positive_any_positions(frame, positions)
+    if suffix.startswith("ifvg_") and suffix.endswith("_confirmed"):
+        bare_positions = [
+            position for position, column in enumerate(frame.columns) if str(column) == suffix
+        ]
+        if bare_positions:
+            code_positions = _matching_positions(
+                frame.columns,
+                f"{suffix.removesuffix('_confirmed')}_confirmation_tf_code",
+            )
+            if code_positions:
+                expected_code = next(
+                    code for code, tf_name in _TIMEFRAME_CODES.items() if tf_name == timeframe
+                )
+                code_values = pd.to_numeric(
+                    frame.iloc[:, code_positions[0]], errors="coerce"
+                ).fillna(0.0)
+                if expected_code == 1:
+                    signal |= _positive_any_positions(frame, bare_positions) & code_values.isin(
+                        [0, expected_code]
+                    )
+                else:
+                    signal |= _positive_any_positions(frame, bare_positions) & code_values.eq(
+                        expected_code
+                    )
+            elif timeframe == "M1":
+                signal |= _positive_any_positions(frame, bare_positions)
+    return signal
+
+
+def _po3_direction(frame: pd.DataFrame, side: str, timeframe: str | None = None) -> pd.Series:
     """Require a distribution armed by an IFVG from the active PO3 leg.
 
     A sweep or manipulation flag alone is context, never an entry idea. The
@@ -73,6 +120,14 @@ def _po3_direction(frame: pd.DataFrame, side: str) -> pd.Series:
             "_po3_distribution_direction"
         ):
             continue
+        if timeframe is not None:
+            expected = (
+                "po3_distribution_direction"
+                if timeframe == "M1"
+                else f"{timeframe}_po3_distribution_direction"
+            )
+            if column != expected:
+                continue
         prefix = column.removesuffix("po3_distribution_direction")
         direction = pd.to_numeric(frame.iloc[:, position], errors="coerce")
         active_column = f"{prefix}po3_distribution"
@@ -85,6 +140,19 @@ def _po3_direction(frame: pd.DataFrame, side: str) -> pd.Series:
         if not active_positions:
             active = direction.notna() & direction.ne(0.0)
         signals |= active & (direction * distribution_sign > 0.0)
+    if timeframe is not None:
+        distribution_column = (
+            "po3_distribution_after_ifvg"
+            if timeframe == "M1"
+            else f"{timeframe}_po3_distribution_after_ifvg"
+        )
+        gap_column = (
+            f"ifvg_{gap_side}_active"
+            if timeframe == "M1"
+            else f"{timeframe}_ifvg_{gap_side}_active"
+        )
+        active_distribution = _positive_any(frame, distribution_column)
+        active_gap = _positive_any(frame, gap_column)
     return signals & active_distribution & active_gap
 
 
@@ -97,16 +165,41 @@ def build_entry_idea_features(features: pd.DataFrame) -> pd.DataFrame:
         ideas[f"entry_idea_order_block_{side}"] = _positive_any(
             features, f"ob_{source_side}_retest"
         ).astype("float64")
-        ideas[f"entry_idea_fvg_retest_{side}"] = (
-            _positive_any(features, f"fvg_retest_{source_side}")
-            | _positive_any(features, f"ifvg_retest_{source_side}")
-            # A body close through an IFVG is itself the directional reaction
-            # signal. The policy must not need a later retest of that zone.
-            | _positive_any(features, f"ifvg_{source_side}_confirmed")
+        ideas[f"entry_idea_fvg_retest_{side}"] = _positive_any(
+            features, f"fvg_retest_{source_side}"
+        ).astype("float64")
+        ideas[f"entry_idea_ifvg_retest_{side}"] = _positive_any(
+            features, f"ifvg_retest_{source_side}"
+        ).astype("float64")
+        # A confirmed body close through an IFVG is the distinct unretested
+        # reaction idea; it does not require a later zone retest.
+        ideas[f"entry_idea_ifvg_unretested_{side}"] = _positive_any(
+            features, f"ifvg_{source_side}_confirmed"
         ).astype("float64")
         ideas[f"entry_idea_standard_deviation_{side}"] = _positive_any(
             features, f"standard_deviation_entry_{side}"
         ).astype("float64")
+        for timeframe in _TIMEFRAMES:
+            timeframe_ideas = {
+                "po3": _po3_direction(features, side, timeframe),
+                "order_block": _timeframe_signal(features, f"ob_{source_side}_retest", timeframe),
+                "standard_deviation": _timeframe_signal(
+                    features, f"standard_deviation_entry_{side}", timeframe
+                ),
+                "fvg_retest": _timeframe_signal(features, f"fvg_retest_{source_side}", timeframe),
+                "ifvg_retest": _timeframe_signal(features, f"ifvg_retest_{source_side}", timeframe),
+                "ifvg_unretested": _timeframe_signal(
+                    features, f"ifvg_{source_side}_confirmed", timeframe
+                ),
+            }
+            for idea, values in timeframe_ideas.items():
+                ideas[f"entry_idea_{idea}_{timeframe}_{side}"] = values.astype("float64")
+            ideas[f"entry_idea_overlap_{timeframe}_{side}"] = (
+                pd.concat([values.astype("float64") for values in timeframe_ideas.values()], axis=1)
+                .sum(axis=1)
+                .ge(2)
+                .astype("float64")
+            )
     ideas["entry_idea_long_count"] = ideas[
         [f"entry_idea_{idea}_long" for idea in ENTRY_IDEA_NAMES]
     ].sum(axis=1)
@@ -179,9 +272,11 @@ def _zone_contexts(
         "po3": ("fvg", "ifvg"),
         "order_block": ("ob",),
         "standard_deviation": (),
-        # Keep both active gap types available to the chart. The plot config
-        # decides whether the FVG, IFVG, or both are shown for this idea.
-        "fvg_retest": ("fvg", "ifvg"),
+        # Keep gap families separate in the trade context so plots can show
+        # the exact active FVG or IFVG tied to the selected idea.
+        "fvg_retest": ("fvg",),
+        "ifvg_retest": ("ifvg",),
+        "ifvg_unretested": ("ifvg",),
     }
     source_side = "bull" if side == "long" else "bear"
     contexts: list[dict[str, Any]] = []
@@ -307,17 +402,22 @@ def entry_idea_context(
     """Return idea names and source timeframes present for the chosen side."""
     side = "long" if int(direction) == 1 else "short" if int(direction) == -1 else ""
     if not side:
-        return {"ideas": [], "timeframes": {}, "gap_reactions": {}, "zones": []}
+        return {
+            "ideas": [],
+            "timeframes": {},
+            "stop_timeframe_floor": "M1",
+            "standard_deviation_timeframes": [],
+            "gap_reactions": {},
+            "zones": [],
+        }
 
     source_side = "bull" if side == "long" else "bear"
     source_suffixes = {
         "order_block": (f"ob_{source_side}_retest",),
         "standard_deviation": (f"standard_deviation_entry_{side}",),
-        "fvg_retest": (
-            f"fvg_retest_{source_side}",
-            f"ifvg_retest_{source_side}",
-            f"ifvg_{source_side}_confirmed",
-        ),
+        "fvg_retest": (f"fvg_retest_{source_side}",),
+        "ifvg_retest": (f"ifvg_retest_{source_side}",),
+        "ifvg_unretested": (f"ifvg_{source_side}_confirmed",),
     }
     ideas: list[str] = []
     timeframes: dict[str, list[str]] = {}
@@ -336,29 +436,20 @@ def entry_idea_context(
                 and _row_positive({column: value}, column)
             }
         )
-        if idea == "fvg_retest" and _row_positive(row, f"ifvg_{source_side}_confirmed"):
-            tf_by_code = {
-                1: "M1",
-                3: "M3",
-                5: "M5",
-                10: "M10",
-                15: "M15",
-                30: "M30",
-                60: "H1",
-                240: "H4",
-                1440: "D1",
-            }
+        if idea == "ifvg_unretested" and _row_positive(row, f"ifvg_{source_side}_confirmed"):
             try:
                 code = int(float(_row_first_value(row, f"ifvg_{source_side}_confirmation_tf_code")))
             except (TypeError, ValueError):
                 code = 0
-            if code in tf_by_code:
-                active_tfs.add(tf_by_code[code])
+            if code in _TIMEFRAME_CODES:
+                if code != 1:
+                    active_tfs.discard("M1")
+                active_tfs.add(_TIMEFRAME_CODES[code])
         timeframes[idea] = sorted(active_tfs) or ["M1"]
     gap_reactions: dict[str, list[str]] = {}
     for label, suffixes in (
         ("FVG", (f"fvg_retest_{source_side}",)),
-        ("IFVG", (f"ifvg_retest_{source_side}", f"ifvg_{source_side}_confirmed")),
+        ("IFVG", (f"ifvg_retest_{source_side}",)),
     ):
         active_tfs = {
             _timeframe_for_column(str(column))
@@ -368,28 +459,33 @@ def entry_idea_context(
             and _row_positive({column: value}, column)
         }
         if label == "IFVG" and _row_positive(row, f"ifvg_{source_side}_confirmed"):
-            tf_by_code = {
-                1: "M1",
-                3: "M3",
-                5: "M5",
-                10: "M10",
-                15: "M15",
-                30: "M30",
-                60: "H1",
-                240: "H4",
-                1440: "D1",
-            }
             try:
                 code = int(float(_row_first_value(row, f"ifvg_{source_side}_confirmation_tf_code")))
             except (TypeError, ValueError):
                 code = 0
-            if code in tf_by_code:
-                active_tfs.add(tf_by_code[code])
+            if code in _TIMEFRAME_CODES:
+                active_tfs.add(_TIMEFRAME_CODES[code])
+            elif code == 0:
+                active_tfs.add("M1")
         if active_tfs:
             gap_reactions[label] = sorted(active_tfs)
+    active_timeframes = [
+        timeframe
+        for values in timeframes.values()
+        for timeframe in values
+        if timeframe in _TIMEFRAME_RANK
+    ]
+    stop_timeframe_floor = (
+        max(active_timeframes, key=_TIMEFRAME_RANK.__getitem__) if active_timeframes else "M1"
+    )
+    standard_deviation_timeframes = sorted(
+        timeframes.get("standard_deviation", []), key=_TIMEFRAME_RANK.__getitem__
+    )
     return {
         "ideas": ideas,
         "timeframes": timeframes,
+        "stop_timeframe_floor": stop_timeframe_floor,
+        "standard_deviation_timeframes": standard_deviation_timeframes,
         "gap_reactions": gap_reactions,
         "zones": _zone_contexts(row, ideas, timeframes, side) if include_zones else [],
     }

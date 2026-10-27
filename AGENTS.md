@@ -218,16 +218,26 @@ Helpers: [`scripts/compute/slurm/`](scripts/compute/slurm/) (`status.sh`, `find_
   sum to more than 2 (for example, 1 on gpuarm1 plus 2 on gpuarm2, or 2 on
   gpuarm1 plus 1 on gpuarm2). Prefer one GH200 on each of two nodes; if that
   layout is unavailable, two GH200s on one eligible node are permitted within
-  the same aggregate cap. A
-  single 2-GH200 successor may be queued only with a
-  Slurm dependency that guarantees it starts after the active allocation ends;
-  include the pending successor in the aggregate check. This cap does not
+  the same aggregate cap. Do not queue a successor when one 12-hour, one-GH200
+  allocation is sufficient. If a shorter current allocation needs more time,
+  the user authorizes extension when Slurm permits or one one-GH200 successor
+  queued before it ends with a dependency that guarantees no overlap. Never run
+  more than one GH200 at a time for this task. This cap does not
   apply to other GPU families. The
   2026-10-16 V100 probe uses 1 V100 shared by 2 trainers;
   `.venv-x86` cu130 is incompatible with V100, so use `.venv-v100` only after
   checking `sm_70` support and a real CUDA operation. Match venv architecture
   (`.venv` on GH200/aarch64, `.venv-x86` on H100/H200 x86_64). Login has no GPU
   and not enough RAM for `n_envs=64`.
+- **Single-GH200 default for one task:** when one GH200 allocation with up to
+  12 hours can complete the task, use that one allocation for all of its
+  variants, plotting, and evaluation, running stages sequentially if needed.
+  Do not request another allocation when that is sufficient. If the current
+  allocation is shorter and needs more time, the user authorizes extension when
+  Slurm permits or one dependency-chained one-GH200 continuation before it ends;
+  never overlap GPUs. Use two GH200s only when the user directly asks for that
+  shape or approves it after a concrete resource estimate. The aggregate
+  two-GH200 cap above remains a ceiling, not a default.
 - **Never `scancel`** when a train finishes or for any other reason; keep the
   GPU bash + tmux allocation available for subsequent work.
 - Login SSH for `ls` / `squeue` / `sinfo` / `tmux capture-pane` / inspect-only

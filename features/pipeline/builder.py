@@ -91,8 +91,9 @@ from market_data.transforms.resample import resample
 # v25: context-qualified order-block zones across the configured timeframe ladder.
 # v26: separate, overlapping PO3, Order Block, FVG-retest, and swing-retracement ideas.
 # v31: a confirmed IFVG body-close is a directional entry idea; cache identity
-#      also includes strategy.ifvg settings, including its close-through buffer,
-#      so confirmation thresholds cannot silently reuse stale feature values.
+#      also includes strategy.ifvg settings, including its close-through buffer.
+# v32: expose FVG retest, IFVG retest, and unretested IFVG as separate ideas.
+# v33: retain per-timeframe idea and same-timeframe overlap flags for the policy.
 
 
 _DEFAULT_HTF_TIMEFRAMES = ("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")

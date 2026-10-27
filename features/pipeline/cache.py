@@ -13,7 +13,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from configuration.paths import repository_root
 
-FEATURE_CACHE_VERSION = "v31-ifvg-confirmation-entry"
+FEATURE_CACHE_VERSION = "v33-timeframe-entry-ideas"
 
 
 def feature_cache_content_hash(

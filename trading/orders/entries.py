@@ -175,6 +175,8 @@ def place_strategy_order(
     max_tp_distance: float,
     rr_bounds: tuple[float, float] | None = None,
     htf: tuple[str, ...] = ("M5", "M15", "H1"),
+    entry_timeframe_floor: str = "M1",
+    standard_deviation_timeframes: tuple[str, ...] | None = None,
     tp_selections: tuple[Any, Any, Any] | None = None,
     tp_z: tuple[float, float] | None = None,
     allow_multi_tp: bool = False,
@@ -203,6 +205,8 @@ def place_strategy_order(
         buffer=buf,
         manipulation=state,
         htf=htf,
+        min_timeframe=entry_timeframe_floor,
+        standard_deviation_timeframes=standard_deviation_timeframes,
         price_increment=price_increment,
     )
     empty = OrderGeometry(

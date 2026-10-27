@@ -151,7 +151,7 @@ def test_po3_context_records_only_the_ifvg_used_for_distribution() -> None:
     ]
 
 
-def test_fvg_retest_context_records_active_fvg_and_ifvg_for_plot_controls() -> None:
+def test_fvg_retest_context_records_only_its_active_fvg_for_plot_controls() -> None:
     row = pd.Series(
         {
             "entry_idea_fvg_retest_long": 1.0,
@@ -168,11 +168,8 @@ def test_fvg_retest_context_records_active_fvg_and_ifvg_for_plot_controls() -> N
     context = entry_idea_context(row, 1, include_zones=True)
 
     assert context["ideas"] == ["fvg_retest"]
-    assert [zone["family"] for zone in context["zones"]] == ["fvg", "ifvg"]
-    assert [(zone["low"], zone["high"]) for zone in context["zones"]] == [
-        (100.0, 101.0),
-        (102.0, 103.0),
-    ]
+    assert [zone["family"] for zone in context["zones"]] == ["fvg"]
+    assert [(zone["low"], zone["high"]) for zone in context["zones"]] == [(100.0, 101.0)]
 
 
 @pytest.mark.parametrize(

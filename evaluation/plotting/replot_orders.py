@@ -102,7 +102,12 @@ def _chart_feature_config(
     ob_tfs = merge_timeframes(order_block_timeframes, ideas.get("order_block", ()))
     fvg_tfs = merge_timeframes(fvg_timeframes, ideas.get("fvg_retest", ()), ideas.get("po3", ()))
     po3_tfs = merge_timeframes(ideas.get("po3", ()))
-    ifvg_tfs = merge_timeframes(ifvg_timeframes, po3_tfs, ideas.get("fvg_retest", ()))
+    ifvg_tfs = merge_timeframes(
+        ifvg_timeframes,
+        po3_tfs,
+        ideas.get("ifvg_retest", ()),
+        ideas.get("ifvg_unretested", ()),
+    )
     sd_tfs = merge_timeframes(standard_deviation_timeframes, ideas.get("standard_deviation", ()))
     if ob_tfs:
         features.order_blocks.enabled = True

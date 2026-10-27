@@ -5,6 +5,7 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
+from features.context.entry_ideas import entry_idea_context
 from trading.execution.broker import Position
 from trading.risk.sizing import compute_sl_tp_long, compute_sl_tp_short
 
@@ -121,6 +122,8 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
         if self.strategy_actions:
             from trading.orders.entries import place_strategy_order
 
+            entry_context = entry_idea_context(feat_row, discrete_action)
+
             placed = place_strategy_order(
                 self.strategy,
                 direction=discrete_action,
@@ -134,6 +137,8 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                 max_tp_distance=self._max_tp_here(),
                 rr_bounds=self.rr_ratio_range,
                 htf=self._target_timeframes,
+                entry_timeframe_floor=str(entry_context["stop_timeframe_floor"]),
+                standard_deviation_timeframes=tuple(entry_context["standard_deviation_timeframes"]),
                 tp_selections=(self._selected_tp_selections if self.allow_multi_tp else None),
                 tp_z=(
                     self._selected_tp_z if (self.allow_multi_tp and self.allow_simplex) else None

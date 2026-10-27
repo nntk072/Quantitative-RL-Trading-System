@@ -133,6 +133,14 @@ evaluation:
       enabled: true
       timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
       show_fvg: true
+      show_ifvg: false
+    ifvg_retest:
+      enabled: true
+      timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+      show_ifvg: true
+    ifvg_unretested:
+      enabled: true
+      timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
       show_ifvg: true
     standard_deviation:
       enabled: true
