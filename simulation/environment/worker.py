@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from omegaconf import OmegaConf
+
 from trading.execution.costs import CostModel
 from trading.policy.config import resolve_trading_policy_mapping
 from trading.strategies import BaselineStrategy, DistributionStrategy, PO3IFVGStrategy
@@ -181,6 +183,9 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
     windows = {str(key): int(value) for key, value in (encoder.get("windows", {}) or {}).items()}
     costs = _block(cfg, "costs")
     execution = _block(cfg, "execution")
+    from features.pipeline.builder import scheduled_close_map
+
+    session = _block(cfg, "session")
     return TradingEnv.from_bundle(
         spec.bundle_dir,
         obs_window=int(env.get("obs_window", 60)),
@@ -191,6 +196,8 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         rr_ratio_range=rr_ratio_range,
         swing_buffer_pts=float(risk.get("swing_buffer_pts", 1.0)),
         sl_mode=str(risk.get("sl_mode", "fixed")),
+        tp_mode=str(risk.get("tp_mode", "fixed")),
+        tp_reference=str(risk.get("tp_reference", "structural")),
         contract_size=float(account.get("contract_size", 1.0)),
         max_loss_per_trade_usd=max_loss,
         dsr_eta=float(env.get("reward_dsr_eta", 0.01)),
@@ -249,5 +256,10 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         mtf=spec.arch in {"mtf", "mtf_reasoning"},
         mtf_windows=windows,
         regime_observation=regime_observation,
+        target_timeframes=tuple(
+            str(value) for value in risk.get("target_timeframes", ["M5", "M15", "H1"])
+        ),
+        scheduled_session_closes=scheduled_close_map(OmegaConf.create(cfg)),
+        session_start=str(session.get("start", "16:30")),
         trading_policy=policy.to_dict(),
     )

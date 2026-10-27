@@ -154,6 +154,51 @@ def test_evaluation_worker_disables_training_trailing_guardrails(tmp_path: Path)
     assert evaluation_env.guardrails.max_loss_limit == training_env.guardrails.max_loss_limit
 
 
+def test_bundle_worker_forwards_execution_reference_configuration(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Bundle workers preserve the configured TP and session-reference semantics."""
+    from configuration import load_config
+    from simulation.environment.env import TradingEnv
+    from simulation.environment.spec import EnvSpec
+    from simulation.environment.worker import make_bundle_env
+
+    schedule = tmp_path / "session_schedule.csv"
+    schedule.write_text(
+        "session_date,scheduled_ny_close_broker_time\n2025-06-02,20:00\n",
+        encoding="utf-8",
+    )
+    cfg = load_config()
+    cfg.data.session_schedule_file = str(schedule)
+    cfg.risk.target_timeframes = ["M3", "M10", "H4", "D1"]
+    cfg.risk.tp_mode = "trailing"
+    cfg.risk.tp_reference = "structural"
+    cfg.session.start = "16:15"
+    spec = EnvSpec.from_cfg(
+        cfg,
+        algo="ppo",
+        reward="dsr",
+        arch="mtf_reasoning",
+        bundle_dir=str(tmp_path / "bundle"),
+    )
+    captured: dict[str, Any] = {}
+    expected = object()
+
+    def capture_from_bundle(cls: Any, /, bundle_path: Any, **kwargs: Any) -> object:
+        captured["bundle_path"] = bundle_path
+        captured.update(kwargs)
+        return expected
+
+    monkeypatch.setattr(TradingEnv, "from_bundle", classmethod(capture_from_bundle))
+
+    assert make_bundle_env(spec) is expected
+    assert captured["tp_mode"] == "trailing"
+    assert captured["tp_reference"] == "structural"
+    assert captured["target_timeframes"] == ("M3", "M10", "H4", "D1")
+    assert captured["scheduled_session_closes"] == {"2025-06-02": "20:00"}
+    assert captured["session_start"] == "16:15"
+
+
 def test_worker_import_does_not_load_torch_or_sb3() -> None:
     """Bundle worker imports remain independent of the training stack."""
     result = subprocess.run(
