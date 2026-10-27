@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 import gymnasium as gym
 import numpy as np
+import pytest
 from omegaconf import OmegaConf
 from scripts.research.benchmarks.measure_ppo_throughput import (
     _apply_profile_overrides,
@@ -12,6 +14,9 @@ from scripts.research.benchmarks.measure_ppo_throughput import (
     _process_tree_cpu_seconds,
     _StepTimingWrapper,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+FPS_PROBE_SCRIPT = REPO_ROOT / "scripts" / "research" / "benchmarks" / "run_fps_probe.sh"
 
 
 def test_profile_overrides_are_explicit_and_preserve_production_defaults() -> None:
@@ -99,3 +104,51 @@ def test_variant_config_uses_production_strategy_merge_and_cli_override(
     assert cfg.env.vector_backend == "sharded_bundle"
     assert cfg.env.vector_shards == 4
     assert cfg.ppo.total_timesteps > 0
+
+
+@pytest.mark.parametrize(
+    ("config_path", "expected_distribution"),
+    [
+        ("config/research/thesis_mtf_reasoning_2m.yaml", "thesis_hybrid_v1"),
+        (
+            "config/research/thesis_mtf_reasoning_conditioned_2m.yaml",
+            "thesis_conditioned_v1",
+        ),
+    ],
+)
+def test_cd_standalone_configs_resolve_through_production_loader(
+    tmp_path: Path,
+    config_path: str,
+    expected_distribution: str,
+) -> None:
+    cfg, bundle_path, algo, arch = _prepare_bundle(
+        tmp_path,
+        config_path=Path(config_path),
+    )
+
+    assert bundle_path == tmp_path
+    assert algo == "ppo"
+    assert arch == "mtf_reasoning"
+    assert cfg.ppo.policy_distribution == expected_distribution
+    assert cfg.env.n_envs == 8
+    assert cfg.ppo.n_steps == 2048
+
+
+def test_fps_probe_launcher_is_repo_relative_and_architecture_aware() -> None:
+    result = subprocess.run(
+        ["bash", "-n", str(FPS_PROBE_SCRIPT)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    source = FPS_PROBE_SCRIPT.read_text(encoding="utf-8")
+
+    assert result.returncode == 0, result.stderr
+    assert 'dirname "${BASH_SOURCE[0]}")/../../..' in source
+    assert 'export TRITON_REPO="$REPO_ROOT"' in source
+    assert 'source "$REPO_ROOT/scripts/compute/slurm/activate_venv.sh"' in source
+    assert '"$VIRTUAL_ENV/bin/python"' in source
+    assert '--config "$CONFIG_PATH"' in source
+    assert 'PROFILE_ARGS+=(--n-envs "$N_ENVS")' in source
+    assert "--n-envs 64" not in source
+    assert ".venv-x86/bin/python" not in source
