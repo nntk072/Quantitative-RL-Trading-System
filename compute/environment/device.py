@@ -244,15 +244,11 @@ def scale_training_cfg(
         vram_bytes=vram,
         arch=arch,
     )
-    sac_cfg = cfg.get("sac")
-    if sac_cfg is not None:
-        sac_cfg.batch_size = suggest_batch_size(
-            current=int(sac_cfg.get("batch_size", cfg.ppo.batch_size)),
-            n_steps=n_steps,
-            n_envs=n_envs,
-            vram_bytes=vram,
-            arch=arch,
-        )
+    # SAC updates from a replay buffer; its minibatch is independent of PPO's
+    # rollout geometry. Keep the explicit SAC setting instead of inflating it
+    # to fill VRAM based on PPO's (n_steps * n_envs) batch. Large automatic
+    # SAC batches can multiply update cost and make fixed-step campaigns
+    # impractical without improving the environment-step budget.
 
 
 def _gpu_n_envs_target(vram_bytes: int, available_ram_bytes: int) -> int:

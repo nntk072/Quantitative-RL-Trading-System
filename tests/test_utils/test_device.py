@@ -342,6 +342,40 @@ def test_scale_training_cfg_cpu_keeps_n_envs(monkeypatch: pytest.MonkeyPatch) ->
     assert int(cfg.ppo.n_epochs) == 10
 
 
+def test_scale_training_cfg_preserves_configured_sac_batch_size(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """PPO rollout geometry must not inflate SAC replay minibatches."""
+    import torch
+
+    from compute.environment import device as device_mod
+
+    monkeypatch.setattr(device_mod, "_read_meminfo", lambda: (256 * _GiB, 200 * _GiB))
+    monkeypatch.setattr(device_mod, "_read_cgroup_memory_limit", lambda: None)
+    monkeypatch.setattr(device_mod, "_read_slurm_memory_limit", lambda: None)
+    monkeypatch.setattr(device_mod, "_read_cgroup_cpu_count", lambda: 48)
+    monkeypatch.setenv("QUANT_RL_MAX_N_ENVS", "8")
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(
+        torch.cuda,
+        "get_device_properties",
+        lambda _index: type("Props", (), {"total_memory": 80 * _GiB})(),
+    )
+    cfg = OmegaConf.create(
+        {
+            "env": {"n_envs": 8, "data_source": "bundle"},
+            "ppo": {"n_steps": 2048, "batch_size": 512, "n_epochs": 10},
+            "sac": {"batch_size": 512},
+        }
+    )
+
+    scale_training_cfg(cfg, torch.device("cuda:0"), "tcn")
+
+    assert int(cfg.ppo.n_steps) == 8192
+    assert int(cfg.ppo.batch_size) == 4096
+    assert int(cfg.sac.batch_size) == 512
+
+
 def test_scale_training_cfg_preserves_exact_quality_geometry(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
