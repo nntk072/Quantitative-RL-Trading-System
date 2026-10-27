@@ -23,7 +23,8 @@ from gymnasium import spaces
 from omegaconf import DictConfig
 
 from compute.environment.precision import get_autocast_dtype
-from decisioning.actions import ActionSchema, DiscreteActionSchema
+from decisioning.actions import SCHEMA_VERSION, ActionSchema, DiscreteActionSchema
+from decisioning.thesis import ThesisActionSchema
 from models.runtime.precision import enable_extractor_autocast
 
 try:
@@ -58,7 +59,7 @@ def persist_action_schema(model: Any, env: Any) -> None:
     if isinstance(action_space, spaces.Box):
         width = int(action_space.shape[0])
         schema = getattr(env, "action_schema", None)
-        if isinstance(schema, ActionSchema):
+        if isinstance(schema, (ActionSchema, ThesisActionSchema)):
             if width != schema.width:
                 raise ValueError(
                     f"action space width {width} disagrees with declared schema width "
@@ -79,13 +80,12 @@ def persist_action_schema(model: Any, env: Any) -> None:
                 "action width alone cannot identify coordinate meanings"
             )
 
-        from decisioning.actions import SCHEMA_VERSION
-
         setattr(model, "_action_layout_key", layout_key)
-        setattr(model, "_action_schema_version", SCHEMA_VERSION)
+        schema_version = schema.version if schema is not None else SCHEMA_VERSION
+        setattr(model, "_action_schema_version", schema_version)
         if policy is not None:
             setattr(policy, "_action_layout_key", layout_key)
-            setattr(policy, "_action_schema_version", SCHEMA_VERSION)
+            setattr(policy, "_action_schema_version", schema_version)
         if schema_manifest is not None:
             setattr(model, "_action_schema", schema_manifest)
             if policy is not None:
@@ -101,7 +101,7 @@ def persist_action_schema(model: Any, env: Any) -> None:
 
 def validate_model_action_schema(
     model: Any,
-    expected_schema: ActionSchema,
+    expected_schema: ActionSchema | ThesisActionSchema,
     *,
     allow_legacy: bool = False,
     legacy_layout_key: str | None = None,
@@ -140,6 +140,8 @@ def validate_model_action_schema(
                 f"legacy action layout {layout!r} differs from {expected_schema.key!r}"
             )
         migration: str | None = None
+        if isinstance(expected_schema, ThesisActionSchema):
+            raise ValueError("thesis action checkpoints require versioned schema metadata")
         if legacy_layout_key == "legacy4_no_exit_v1":
             if actual_width != 4 or expected_schema.key != "5":
                 raise ValueError(
@@ -265,6 +267,17 @@ def validate_model_observation_schema(
     setattr(model, "_observation_schema", expected_schema.to_dict())
 
 
+def validate_model_thesis_observation_schema(
+    model: Any, expected_schema: dict[str, Any] | None
+) -> None:
+    """Fail closed when the optional candidate-mask observation meaning differs."""
+    actual = getattr(model, "_thesis_observation_schema", None)
+    if actual != expected_schema:
+        raise ValueError(
+            "checkpoint thesis observation schema differs from the configured candidate mask"
+        )
+
+
 def build_vector_env(
     env: Any,
     cfg: DictConfig,
@@ -357,6 +370,7 @@ def encoder_for(arch: str) -> type[Any]:
         GRUEncoder,
         LiteTCNEncoder,
         MTFEncoder,
+        MTFReasoningEncoder,
         TCNEncoder,
         TCNRegimeEncoder,
         TransformerEncoder,
@@ -370,6 +384,8 @@ def encoder_for(arch: str) -> type[Any]:
         return GRUEncoder
     if arch == "mtf":
         return MTFEncoder
+    if arch == "mtf_reasoning":
+        return MTFReasoningEncoder
     if arch == "lite_tcn":
         return LiteTCNEncoder
     return TCNEncoder
@@ -387,7 +403,7 @@ def validate_model_architecture(model: Any, expected_arch: str, *, use_vae: bool
         )
     architecture_matches = (
         type(extractor) is expected
-        if expected_arch in {"tcn", "tcn_regime"}
+        if expected_arch in {"tcn", "tcn_regime", "mtf", "mtf_reasoning"}
         else isinstance(extractor, expected)
     )
     if not architecture_matches:
@@ -472,6 +488,14 @@ def build_agent(
     n_features: int = env.observation_space["seq"].shape[1]
     account_dim: int = int(env.observation_space["account"].shape[0])
     agent_cfg = cfg.get("agent", {})
+    thesis_enabled = bool(getattr(env, "thesis_actions", False))
+    configured_distribution = str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian"))
+    if thesis_enabled and algo != "ppo":
+        raise ValueError("thesis actions currently require PPO's masked categorical distribution")
+    if thesis_enabled and configured_distribution != "thesis_hybrid_v1":
+        raise ValueError("env.thesis_actions requires ppo.policy_distribution='thesis_hybrid_v1'")
+    if configured_distribution == "thesis_hybrid_v1" and not thesis_enabled:
+        raise ValueError("thesis_hybrid_v1 requires env.thesis_actions=true")
 
     # Choose feature extractor based on architecture / VAE use
     extractor_cls: Any
@@ -484,13 +508,23 @@ def build_agent(
             "account_dim": account_dim,
         }
     else:
-        if arch == "mtf" and "seq_m5" not in env.observation_space.spaces:
-            raise ValueError("arch 'mtf' requires an environment built with mtf=True")
+        if arch in {"mtf", "mtf_reasoning"} and "seq_m5" not in env.observation_space.spaces:
+            raise ValueError(f"arch {arch!r} requires an environment built with mtf=True")
         extractor_cls = encoder_for(arch)
 
         latent_dim = 128
         if arch == "mtf":
             extractor_kwargs = dict(latent_dim=latent_dim, account_dim=account_dim)
+        elif arch == "mtf_reasoning":
+            reasoning_cfg = agent_cfg.get("mtf_reasoning", {})
+            latent_dim = int(reasoning_cfg.get("latent_dim", 128))
+            extractor_kwargs = dict(
+                latent_dim=latent_dim,
+                account_dim=account_dim,
+                attention_heads=int(reasoning_cfg.get("attention_heads", 4)),
+                feedforward_dim=int(reasoning_cfg.get("feedforward_dim", 256)),
+                dropout=float(reasoning_cfg.get("dropout", 0.1)),
+            )
         elif arch == "lite_tcn":
             lite_cfg = agent_cfg.get("lite_tcn", {})
             latent_dim = int(lite_cfg.get("latent_dim", 128))
@@ -570,6 +604,9 @@ def build_agent(
         regime_schema = getattr(env, "regime_observation_schema", None)
         if isinstance(regime_schema, dict):
             setattr(model, "_regime_observation_schema", regime_schema)
+        thesis_schema = getattr(env, "thesis_observation_schema", None)
+        if isinstance(thesis_schema, dict):
+            setattr(model, "_thesis_observation_schema", thesis_schema)
         persist_action_schema(model, env)
         return _finalize_cuda_policy(model, device)
 
@@ -597,7 +634,11 @@ def build_agent(
     if device is not None:
         ppo_kwargs["device"] = device
     policy, policy_kwargs, ppo_kwargs["ent_coef"] = _ppo_policy_and_ent_coef(
-        cfg, policy_kwargs, env.action_space, getattr(env, "action_schema", None)
+        cfg,
+        policy_kwargs,
+        env.action_space,
+        getattr(env, "action_schema", None),
+        env.observation_space,
     )
     ppo_model = PPO(
         policy,
@@ -613,6 +654,9 @@ def build_agent(
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
         setattr(ppo_model, "_regime_observation_schema", regime_schema)
+    thesis_schema = getattr(env, "thesis_observation_schema", None)
+    if isinstance(thesis_schema, dict):
+        setattr(ppo_model, "_thesis_observation_schema", thesis_schema)
     persist_action_schema(ppo_model, env)
     from learning.rl.rollout_buffer import install_single_copy_add
 
@@ -624,7 +668,8 @@ def _ppo_policy_and_ent_coef(
     cfg: DictConfig,
     policy_kwargs: dict[str, Any],
     action_space: spaces.Space[Any],
-    action_schema: ActionSchema | None = None,
+    action_schema: ActionSchema | ThesisActionSchema | None = None,
+    observation_space: spaces.Space[Any] | None = None,
 ) -> tuple[Any, dict[str, Any], float]:
     """Box overlay: clamp Gaussian std. Discrete: keep categorical entropy coef."""
     ent_coef = float(cfg.ppo.ent_coef)
@@ -638,17 +683,29 @@ def _ppo_policy_and_ent_coef(
 
     actor_arch = str(cfg.ppo.get("actor_arch", "shared"))
     policy_distribution = str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian"))
-    if policy_distribution == "hybrid_v1":
+    if policy_distribution in {"hybrid_v1", "thesis_hybrid_v1"}:
         if actor_arch != "shared":
-            raise ValueError("hybrid_v1 policy distribution requires ppo.actor_arch='shared'")
-        if not isinstance(action_schema, ActionSchema):
-            raise ValueError("hybrid_v1 requires a declared strategy ActionSchema")
+            raise ValueError("hybrid PPO distributions require ppo.actor_arch='shared'")
+        thesis_distribution = policy_distribution == "thesis_hybrid_v1"
+        if thesis_distribution:
+            if not isinstance(action_schema, ThesisActionSchema):
+                raise ValueError("thesis_hybrid_v1 requires the thesis action schema")
+            observation_spaces = getattr(observation_space, "spaces", {})
+            if "thesis_mask" not in observation_spaces:
+                raise ValueError("thesis_hybrid_v1 requires the thesis_mask observation")
+        elif not isinstance(action_schema, ActionSchema):
+            raise ValueError("hybrid_v1 requires a declared legacy strategy ActionSchema")
+        if not thesis_distribution and not isinstance(action_schema, ActionSchema):
+            raise ValueError("hybrid_v1 cannot consume a thesis action schema")
         if "exit" in action_schema.names and not bool(cfg.env.get("allow_ema_exit", True)):
-            raise ValueError("hybrid_v1 requires the EMA/structural exit coordinate to be active")
+            raise ValueError(
+                "hybrid policy requires the EMA/structural exit coordinate to be active"
+            )
         from learning.rl.hybrid import HybridClampedStdMultiInputPolicy
 
         kwargs = dict(policy_kwargs)
         kwargs["hybrid_action_coordinates"] = action_schema.names
+        kwargs["thesis_mask_key"] = "thesis_mask" if thesis_distribution else None
         kwargs["sl_mode_defer_threshold"] = float(cfg.env.get("sl_mode_defer_threshold", 0.1))
         kwargs["tp_mode_defer_threshold"] = float(cfg.env.get("tp_mode_defer_threshold", 0.1))
         kwargs["log_std_init"] = float(cfg.ppo.get("log_std_init", 0.0))

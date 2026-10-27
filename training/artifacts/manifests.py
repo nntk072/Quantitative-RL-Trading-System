@@ -135,6 +135,9 @@ def _observation_schema_manifest(env: Any) -> dict[str, Any] | None:
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
         result["regime_observation"] = regime_schema
+    thesis_schema = getattr(env, "thesis_observation_schema", None)
+    if isinstance(thesis_schema, dict):
+        result["thesis_observation"] = thesis_schema
     return result
 
 

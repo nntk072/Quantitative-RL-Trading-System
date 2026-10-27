@@ -335,7 +335,8 @@ env:
   # null = full train-split year (last NY bar truncates; FTMO fail terminates).
   max_episode_steps: null
   reward_dsr_eta: 0.01                 # differential Sharpe damping
-  strategy_actions: false              # Idea 1/2 trader Box[-1,1]^5 [intensity, stop, risk, target, exit]
+  strategy_actions: false              # legacy Idea 1/2 trader Box action interface
+  thesis_actions: false                # versioned primary-thesis action + eligibility mask
   entry_state_machine: false           # A4 persistent opportunity lifecycle
   candidate_max_age_bars: 5            # last valid candidate age, in bars
   arm_requires_retest: false           # require a current directional gap retest to arm
@@ -413,7 +414,7 @@ env:
 
 ppo:
   actor_arch: shared                # shared | semantic_heads; opt-in Q4A treatment
-  policy_distribution: clamped_diagonal_gaussian  # hybrid_v1 is an opt-in Q4B treatment
+  policy_distribution: clamped_diagonal_gaussian  # hybrid_v1 / thesis_hybrid_v1 are opt-in
   semantic_head_width: 64
   n_steps: 2048
   batch_size: 512
@@ -476,19 +477,25 @@ encoder:
 
 agent:
   type: "ppo"                 # "ppo" | "sac"
-  arch: "tcn"                 # "tcn" | "lite_tcn" | "gru" | "transformer" | "mtf"
+  arch: "tcn"                 # tcn | lite_tcn | gru | transformer | mtf | mtf_reasoning
   lite_tcn:
     channels: 96
     dilations: [1, 4, 10]
     kernel_size: 3
     dropout: 0.1
     latent_dim: 128
+  mtf_reasoning:
+    latent_dim: 128
+    attention_heads: 4
+    feedforward_dim: 256
+    dropout: 0.1
   head_arch:
     tcn: [256, 128]
     lite_tcn: [128, 64]
     gru: [256, 128]
     transformer: [256, 128]
     mtf: [256, 128]
+    mtf_reasoning: [256, 128]
   use_narrative: false        # true to condition on the VAE narrative embedding
 
 device: "auto"

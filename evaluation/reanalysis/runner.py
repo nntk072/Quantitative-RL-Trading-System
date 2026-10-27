@@ -22,6 +22,7 @@ from configuration.paths import repository_root
 from decisioning.actions import build_action_schema, build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.observations import build_observation_schema
+from decisioning.thesis import build_thesis_action_schema
 from evaluation import calculate_metrics, evaluation_periods_per_year
 from evaluation.reanalysis.checkpoint import resolve_checkpoint
 from evaluation.reanalysis.cli import build_reanalysis_parser
@@ -264,6 +265,13 @@ def main() -> None:
         expected_observation_schema,
         allow_legacy_v1=bool(args.allow_legacy_observation_schema),
     )
+    from decisioning.thesis import thesis_observation_schema
+    from learning.rl.agent import validate_model_thesis_observation_schema
+
+    validate_model_thesis_observation_schema(
+        model,
+        thesis_observation_schema() if bool(cfg.env.get("thesis_actions", False)) else None,
+    )
     is_overlay = bool(cfg.env.get("strategy_actions", False))
     if is_overlay:
         if args.legacy_action_layout == "legacy4_no_exit_v1":
@@ -277,13 +285,22 @@ def main() -> None:
             cfg.env.allow_multi_tp = False
             cfg.env.allow_simplex = False
         multi_tp = bool(cfg.env.get("allow_multi_tp", False))
-        schema = build_action_schema(
-            has_direction=bool(cfg.env.get("agent_direction_control", False)),
-            has_sl_mode=bool(cfg.env.get("allow_agent_sl_mode", True)),
-            has_tp_mode=bool(cfg.env.get("allow_agent_tp_mode", False)),
-            has_multi_tp=multi_tp,
-            has_simplex=multi_tp and bool(cfg.env.get("allow_simplex", True)),
-        )
+        schema: Any
+        if bool(cfg.env.get("thesis_actions", False)):
+            schema = build_thesis_action_schema(
+                has_sl_mode=bool(cfg.env.get("allow_agent_sl_mode", True)),
+                has_tp_mode=bool(cfg.env.get("allow_agent_tp_mode", False)),
+                has_multi_tp=multi_tp,
+                has_simplex=multi_tp and bool(cfg.env.get("allow_simplex", True)),
+            )
+        else:
+            schema = build_action_schema(
+                has_direction=bool(cfg.env.get("agent_direction_control", False)),
+                has_sl_mode=bool(cfg.env.get("allow_agent_sl_mode", True)),
+                has_tp_mode=bool(cfg.env.get("allow_agent_tp_mode", False)),
+                has_multi_tp=multi_tp,
+                has_simplex=multi_tp and bool(cfg.env.get("allow_simplex", True)),
+            )
         model = validate_sb3_overlay_action_schema(
             model,
             schema,

@@ -26,8 +26,9 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
     ) -> tuple[Any, str | None, int, float, float, str, EntryCandidate | None]:
         # Decode action (discrete or continuous)
         self._note_session_open(session_id, feat_row)
-        self._arm_po3_confirm(session_id)
-        entry_machine = self.entry_state_machine
+        if not self.thesis_actions:
+            self._arm_po3_confirm(session_id)
+        entry_machine = None if self.thesis_actions else self.entry_state_machine
         entry_state_for_action = entry_machine.state if entry_machine is not None else None
         discrete_action, risk_frac, rr_ratio, tp_mode = self._decode_action(action, feat_row)
         self._selected_tp_mode = tp_mode
@@ -90,7 +91,7 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
                 risk_frac = 0.0
                 self._reject("entry_cooldown")
 
-        if self.strategy_actions:
+        if self.strategy_actions and not self.thesis_actions:
             discrete_action, risk_frac = self._lock_unconfirmed_side(
                 discrete_action,
                 feat_row,
@@ -130,7 +131,9 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
         # Revalidate only fresh actions; session levels are order references,
         # not a universal breakout rule.
         if discrete_action != 0:  # Only check for long/short entries
-            if entry_machine is None or entry_state_for_action != "ARMED":
+            if self.thesis_actions:
+                gate_ok = True
+            elif entry_machine is None or entry_state_for_action != "ARMED":
                 gate_ok = self.strategy.validate_entry(
                     direction=discrete_action,
                     row=feat_row,

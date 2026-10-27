@@ -15,6 +15,7 @@ from decisioning.actions import (
     build_discrete_trading_action_schema,
 )
 from decisioning.observations import OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3
+from decisioning.thesis import ThesisActionSchema, build_thesis_action_schema
 
 from .mixin_base import RuntimeMixinBase
 
@@ -46,7 +47,7 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
                 "repeated-payout mode requires a continuous risk action coordinate "
                 "(strategy_actions=true or continuous_actions=true)"
             )
-        self.action_schema: ActionSchema | DiscreteActionSchema
+        self.action_schema: ActionSchema | DiscreteActionSchema | ThesisActionSchema
 
         # VAE for narrative embedding
         self.use_vae = use_vae
@@ -84,7 +85,19 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
             for param in vae.parameters():
                 param.requires_grad = False
 
-        if self.strategy_actions:
+        if self.thesis_actions:
+            self.action_schema = build_thesis_action_schema(
+                has_sl_mode=self.allow_agent_sl_mode,
+                has_tp_mode=self.allow_agent_tp_mode,
+                has_multi_tp=self.allow_multi_tp,
+                has_simplex=self.allow_multi_tp and self.allow_simplex,
+            )
+            self.action_space = spaces.Box(
+                low=np.full(self.action_schema.width, -1.0, dtype=np.float32),
+                high=np.full(self.action_schema.width, 1.0, dtype=np.float32),
+                dtype=np.float32,
+            )
+        elif self.strategy_actions:
             # Trader-like Box (no free long/short dim).
             # PPO's unsquashed Gaussian mean sits near 0; a [0,1] box clipped
             # deterministic mean to 0 (always hold). Affine-map to unit interval

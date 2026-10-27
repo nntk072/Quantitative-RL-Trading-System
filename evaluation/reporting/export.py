@@ -45,7 +45,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -233,17 +233,28 @@ def _action_schema_manifest(cfg: Any) -> dict[str, Any] | None:
         env = cfg.env
         if not bool(env.get("strategy_actions", False)):
             return None
-        from decisioning.actions import build_action_schema
-
+        schema: Any
         multi_tp = bool(env.get("allow_multi_tp", False))
-        schema = build_action_schema(
-            has_direction=bool(env.get("agent_direction_control", False)),
-            has_sl_mode=bool(env.get("allow_agent_sl_mode", True)),
-            has_tp_mode=bool(env.get("allow_agent_tp_mode", False)),
-            has_multi_tp=multi_tp,
-            has_simplex=multi_tp and bool(env.get("allow_simplex", True)),
-        )
-        return schema.to_dict()
+        if bool(env.get("thesis_actions", False)):
+            from decisioning.thesis import build_thesis_action_schema
+
+            schema = build_thesis_action_schema(
+                has_sl_mode=bool(env.get("allow_agent_sl_mode", True)),
+                has_tp_mode=bool(env.get("allow_agent_tp_mode", False)),
+                has_multi_tp=multi_tp,
+                has_simplex=multi_tp and bool(env.get("allow_simplex", True)),
+            )
+        else:
+            from decisioning.actions import build_action_schema
+
+            schema = build_action_schema(
+                has_direction=bool(env.get("agent_direction_control", False)),
+                has_sl_mode=bool(env.get("allow_agent_sl_mode", True)),
+                has_tp_mode=bool(env.get("allow_agent_tp_mode", False)),
+                has_multi_tp=multi_tp,
+                has_simplex=multi_tp and bool(env.get("allow_simplex", True)),
+            )
+        return cast(dict[str, Any], schema.to_dict())
     except (AttributeError, KeyError, TypeError, ValueError):
         return None
 

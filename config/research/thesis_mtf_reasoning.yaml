@@ -1,0 +1,17 @@
+# Opt-in thesis-conditioned MTF reasoning policy; load as a config overlay.
+# This is an implementation config, not authorization or a full campaign spec.
+env:
+  strategy_actions: true
+  thesis_actions: true
+  agent_direction_control: false
+
+features:
+  entry_ideas:
+    enabled: true
+
+agent:
+  arch: mtf_reasoning
+
+ppo:
+  policy_distribution: thesis_hybrid_v1
+  actor_arch: shared

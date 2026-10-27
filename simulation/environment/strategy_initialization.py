@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from decisioning.thesis import ThesisCandidate
 from trading.strategies import BaselineStrategy, TradingStrategy
 
 from .action_diagnostics import _empty_decision
@@ -14,6 +15,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class StrategyInitializationMixin(RuntimeMixinBase):
+    _selected_thesis: ThesisCandidate | None
+
     def _initialize_strategy_runtime(
         self,
         strategy: TradingStrategy | None,
@@ -28,6 +31,7 @@ class StrategyInitializationMixin(RuntimeMixinBase):
         self.strategy_actions = strategy_actions
         self.sl_buffer_pts = float(sl_buffer_pts)
         self._selected_sl_anchor = 0.0
+        self._selected_thesis = None
         self._selected_tp_fraction = 0.0
         self._selected_exit_mode = "structural"
         self._selected_sl_mode = "fixed"

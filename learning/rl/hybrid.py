@@ -10,9 +10,10 @@ from stable_baselines3.common.distributions import Distribution as SB3Distributi
 from torch import nn
 from torch.distributions import Categorical, Normal
 
+from decisioning.thesis import THESIS_CATEGORY_COUNT, thesis_center
 from learning.rl.ppo import ClampedStdMultiInputPolicy, clip_policy_log_std
 
-_CATEGORICAL_COORDINATES = {"sl_mode", "tp_mode", "exit"}
+_CATEGORICAL_COORDINATES = {"thesis", "sl_mode", "tp_mode", "exit"}
 
 
 def _normal_distribution(means: torch.Tensor, scales: torch.Tensor) -> Normal:
@@ -29,6 +30,8 @@ def _categorical_distribution(logits: torch.Tensor) -> Categorical:
 
 def _encoded_centers(name: str, threshold: float) -> tuple[float, ...]:
     """Return normalized raw-Box values that the existing env decoder maps exactly."""
+    if name == "thesis":
+        return tuple(thesis_center(candidate_id) for candidate_id in range(THESIS_CATEGORY_COUNT))
     if name == "exit":
         return (-0.5, 0.5)  # structural, EMA-21
     if name in {"sl_mode", "tp_mode"}:
@@ -109,12 +112,22 @@ class HybridBoxDistribution(SB3Distribution):
         means: torch.Tensor,
         log_std: torch.Tensor,
         logits: dict[str, torch.Tensor],
+        masks: dict[str, torch.Tensor] | None = None,
     ) -> HybridBoxDistribution:
         self.mean = means
         self.normal = _normal_distribution(means, log_std.exp().expand_as(means))
-        self.categorical = {
-            name: _categorical_distribution(value) for name, value in logits.items()
-        }
+        self.categorical = {}
+        for name, values in logits.items():
+            if name == "thesis":
+                if masks is None or name not in masks:
+                    raise ValueError("thesis categorical distribution requires thesis_mask")
+                mask = masks[name].to(device=values.device) > 0.0
+                if mask.shape != values.shape or not bool(mask.any(dim=1).all()):
+                    raise ValueError(
+                        "thesis_mask must match logits and allow at least one category"
+                    )
+                values = values.masked_fill(~mask, torch.finfo(values.dtype).min)
+            self.categorical[name] = _categorical_distribution(values)
         return self
 
     def _pack(self, continuous: torch.Tensor, classes: dict[str, torch.Tensor]) -> torch.Tensor:
@@ -215,6 +228,7 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         hybrid_action_coordinates: Sequence[str],
         sl_mode_defer_threshold: float = 0.1,
         tp_mode_defer_threshold: float = 0.1,
+        thesis_mask_key: str | None = None,
         **kwargs: Any,
     ) -> None:
         self.hybrid_action_coordinates = tuple(str(value) for value in hybrid_action_coordinates)
@@ -222,6 +236,8 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
             "sl_mode": float(sl_mode_defer_threshold),
             "tp_mode": float(tp_mode_defer_threshold),
         }
+        self.thesis_mask_key = thesis_mask_key
+        self._distribution_masks: dict[str, torch.Tensor] | None = None
         super().__init__(*args, **kwargs)
 
     def _build(self, lr_schedule: Any) -> None:
@@ -254,7 +270,42 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
     def _get_action_dist_from_latent(self, latent_pi: torch.Tensor) -> HybridBoxDistribution:
         clip_policy_log_std(self, self.log_std_min, self.log_std_max)
         means, logits = self.action_net(latent_pi)
-        return self.hybrid_distribution.proba_distribution(means, self.log_std, logits)
+        return self.hybrid_distribution.proba_distribution(
+            means, self.log_std, logits, masks=self._distribution_masks
+        )
+
+    def _set_distribution_mask(self, obs: Any) -> None:
+        if "thesis" not in self.hybrid_action_coordinates:
+            self._distribution_masks = None
+            return
+        if not isinstance(obs, dict) or self.thesis_mask_key not in obs:
+            raise ValueError("thesis hybrid policy requires the thesis_mask observation")
+        self._distribution_masks = {"thesis": obs[self.thesis_mask_key]}
+
+    def forward(
+        self, obs: Any, deterministic: bool = False
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        self._set_distribution_mask(obs)
+        try:
+            return super().forward(obs, deterministic=deterministic)
+        finally:
+            self._distribution_masks = None
+
+    def evaluate_actions(
+        self, obs: Any, actions: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
+        self._set_distribution_mask(obs)
+        try:
+            return super().evaluate_actions(obs, actions)
+        finally:
+            self._distribution_masks = None
+
+    def get_distribution(self, obs: Any) -> SB3Distribution:
+        self._set_distribution_mask(obs)
+        try:
+            return super().get_distribution(obs)
+        finally:
+            self._distribution_masks = None
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
         data = super()._get_constructor_parameters()
@@ -262,6 +313,7 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
             hybrid_action_coordinates=self.hybrid_action_coordinates,
             sl_mode_defer_threshold=self.hybrid_thresholds["sl_mode"],
             tp_mode_defer_threshold=self.hybrid_thresholds["tp_mode"],
+            thesis_mask_key=self.thesis_mask_key,
         )
         return data
 

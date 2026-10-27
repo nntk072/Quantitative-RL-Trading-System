@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 
 from decisioning.actions import ActionSchema
+from decisioning.thesis import ThesisActionSchema
 
 _DECISION_KEYS: tuple[str, ...] = (
     "action_direction",
@@ -38,7 +39,7 @@ def _at(values: np.ndarray[Any, Any], index: int) -> float:
 def _decision_from_action(
     raw: np.ndarray[Any, Any],
     unit: np.ndarray[Any, Any],
-    schema: ActionSchema,
+    schema: ActionSchema | ThesisActionSchema,
 ) -> dict[str, float]:
     """Record raw/unit action coordinates using the versioned layout."""
     result = _empty_decision()

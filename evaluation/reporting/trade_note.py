@@ -56,7 +56,9 @@ _ENTRY_IDEA_LABELS: dict[str, str] = {
     "po3": "PO3 setup",
     "order_block": "Order Block reaction",
     "standard_deviation": "Fib-like swing retracement (0.5-0.786)",
-    "fvg_retest": "Gap reaction (type not recorded)",
+    "fvg_retest": "FVG retest",
+    "ifvg_retest": "IFVG retest",
+    "ifvg_unretested": "IFVG unretested",
 }
 
 _ENTRY_SETUP_LABELS: dict[str, str] = {
@@ -151,8 +153,25 @@ def entry_reason(open_row: Any) -> str:
     the strategy offered, not a filter that blocked other trades.
     """
     parts: list[str] = []
+    primary_idea = _text(open_row.get("primary_idea"))
+    if primary_idea:
+        primary_tf = _text(open_row.get("primary_setup_timeframe"))
+        primary_direction = _number(open_row.get("primary_direction"))
+        side = "long" if primary_direction is not None and primary_direction > 0 else "short"
+        primary_label = _ENTRY_IDEA_LABELS.get(
+            primary_idea, primary_idea.replace("_", " ").capitalize()
+        )
+        parts.append(
+            f"Primary thesis: {primary_label}"
+            + (f" ({primary_tf}, {side})" if primary_tf else f" ({side})")
+        )
+        supporting = [
+            str(value) for value in _sequence_value(open_row.get("supporting_idea_timeframes"))
+        ]
+        if supporting:
+            parts.append("Supporting context: " + "; ".join(supporting))
     raw_ideas = open_row.get("entry_ideas")
-    if _text(raw_ideas):
+    if _text(raw_ideas) and not primary_idea:
         idea_names = [str(value) for value in _sequence_value(raw_ideas)]
         timeframe_map = _mapping_value(open_row.get("entry_idea_timeframes"))
         gap_reactions = _mapping_value(open_row.get("entry_idea_gap_reactions"))
@@ -444,6 +463,24 @@ def _short_reference(value: Any) -> str:
 
 def _plot_reason(open_row: Any) -> str:
     """Short, plot-only reason that keeps FVG and IFVG reactions distinct."""
+    primary_idea = _text(open_row.get("primary_idea"))
+    if primary_idea:
+        primary_tf = _text(open_row.get("primary_setup_timeframe"))
+        primary_direction = _number(open_row.get("primary_direction"))
+        side = "long" if primary_direction is not None and primary_direction > 0 else "short"
+        labels = {
+            "po3": "PO3",
+            "order_block": "OB reaction",
+            "standard_deviation": "Fib retracement",
+            "fvg_retest": "FVG retest",
+            "ifvg_retest": "IFVG retest",
+            "ifvg_unretested": "IFVG unretested",
+        }
+        reason = f"{labels.get(primary_idea, primary_idea)} {primary_tf} {side}".strip()
+        supporting = _sequence_value(open_row.get("supporting_idea_timeframes"))
+        if supporting:
+            reason += "; context: " + ", ".join(str(value) for value in supporting)
+        return reason
     setup_types = {str(value) for value in _sequence_value(open_row.get("entry_setup_types"))}
     raw_ideas = [str(value) for value in _sequence_value(open_row.get("entry_ideas"))]
     zones = _sequence_value(open_row.get("entry_idea_zones"))

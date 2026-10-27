@@ -200,6 +200,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         use_sweep_reward=spec.reward == "sweep",
         strategy=strategy,
         strategy_actions=strategy_actions,
+        thesis_actions=bool(env.get("thesis_actions", False)),
         entry_state_machine=bool(env.get("entry_state_machine", False)),
         candidate_max_age_bars=int(env.get("candidate_max_age_bars", 5)),
         arm_requires_retest=bool(env.get("arm_requires_retest", False)),

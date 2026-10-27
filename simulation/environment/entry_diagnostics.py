@@ -25,6 +25,7 @@ def _empty_entry_diag(entry_state_machine: bool = False) -> dict[str, int]:
         "rejected_soft_brick": 0,
         "rejected_terminal": 0,
         "rejected_entry_pending": 0,
+        "rejected_thesis_inactive": 0,
         "rejected_sl": 0,
         "rejected_rr": 0,
         "rejected_ema": 0,
@@ -54,6 +55,7 @@ _REJECTION_COUNTERS: dict[str, str] = {
     "sl_already_hit": "rejected_sl_already_hit",
     "terminal_no_fill_bar": "rejected_terminal",
     "entry_pending": "rejected_entry_pending",
+    "thesis_inactive": "rejected_thesis_inactive",
 }
 
 

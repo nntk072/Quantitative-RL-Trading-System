@@ -26,6 +26,16 @@ def test_observation_schema_bump_changes_default_bundle_identity() -> None:
     assert bundle_key(config, sources) != bundle_key(config, sources, bundle_version=2)
 
 
+def test_thesis_mask_mode_changes_bundle_identity() -> None:
+    from simulation.environment.shared_bundle import bundle_key
+
+    _, config = _fixture_bundle_inputs()
+    sources = {"bars": {"size": 32}}
+    thesis_config = {**config, "env": {**config["env"], "thesis_actions": True}}
+
+    assert bundle_key(config, sources) != bundle_key(thesis_config, sources)
+
+
 def _fixture_bundle_inputs() -> tuple[dict[str, np.ndarray[Any, Any]], dict[str, Any]]:
     """Return deterministic source arrays and an observation-relevant config."""
     bars = _make_deterministic_bars(n=32)

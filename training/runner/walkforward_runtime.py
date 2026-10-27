@@ -180,6 +180,7 @@ def run_walk_forward_validation(
             eod_risk=dict(cfg.env.get("eod_risk", {})),
             strategy=strategy_from_cfg(cfg)[0],
             strategy_actions=bool(cfg.env.get("strategy_actions", False)),
+            thesis_actions=bool(cfg.env.get("thesis_actions", False)),
             entry_state_machine=bool(cfg.env.get("entry_state_machine", False)),
             candidate_max_age_bars=int(cfg.env.get("candidate_max_age_bars", 5)),
             arm_requires_retest=bool(cfg.env.get("arm_requires_retest", False)),

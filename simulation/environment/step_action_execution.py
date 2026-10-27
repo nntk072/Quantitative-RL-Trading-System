@@ -99,6 +99,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                         if isinstance(feat_row, pd.Series):
                             stored_feat_row = feat_row.copy()
                         selected_names = (
+                            "_selected_thesis",
                             "_selected_sl_anchor",
                             "_selected_tp_fraction",
                             "_selected_exit_mode",
@@ -125,10 +126,22 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             "decision_action": dict(self._decision_action),
                             "selected": {name: getattr(self, name) for name in selected_names},
                         }
+                        thesis = self._selected_thesis if self.thesis_actions else None
                         self.trade_log.append(
                             {
                                 "type": "order_submit",
                                 "direction": discrete_action,
+                                "thesis_candidate_id": (
+                                    int(thesis.candidate_id) if thesis is not None else None
+                                ),
+                                "thesis_schema_version": (
+                                    str(self.action_schema.version) if thesis is not None else ""
+                                ),
+                                "primary_idea": thesis.idea if thesis is not None else "",
+                                "primary_setup_timeframe": (
+                                    thesis.setup_timeframe if thesis is not None else ""
+                                ),
+                                "primary_direction": thesis.direction if thesis is not None else 0,
                                 "time": bar_time,
                                 "decision_time": bar_time,
                                 "signal_bar": self.step_idx,

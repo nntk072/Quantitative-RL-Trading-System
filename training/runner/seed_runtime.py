@@ -203,13 +203,17 @@ class SeedRunner:
             resume_env = build_vector_env(train_env, cfg, env_factory)
             model = load_sb3_training_checkpoint(resume_path, env=resume_env, device=device)
             validate_model_architecture(model, args.arch, use_vae=args.use_vae)
-            from learning.rl.agent import validate_model_observation_schema
+            from learning.rl.agent import (
+                validate_model_observation_schema,
+                validate_model_thesis_observation_schema,
+            )
 
             validate_model_observation_schema(
                 model,
                 train_env.observation_schema,
                 allow_legacy_v1=bool(args.allow_legacy_observation_schema),
             )
+            validate_model_thesis_observation_schema(model, train_env.thesis_observation_schema)
             if int(model.num_timesteps) > int(timesteps):
                 raise ValueError(
                     f"resume checkpoint has {model.num_timesteps} steps, exceeding requested {timesteps}"
@@ -1050,6 +1054,7 @@ class SeedRunner:
             key: bool(cfg.env.get(key, False))
             for key in (
                 "strategy_actions",
+                "thesis_actions",
                 "allow_agent_sl_mode",
                 "allow_agent_tp_mode",
                 "allow_multi_tp",

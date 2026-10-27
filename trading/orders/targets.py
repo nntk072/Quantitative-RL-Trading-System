@@ -23,6 +23,22 @@ def normalize_timeframe(tf: str) -> str:
     return str(tf).upper()
 
 
+_TARGET_TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H2", "H4", "D1", "W1")
+
+
+def _target_timeframe(name: str) -> str:
+    """Resolve a structural reference's timeframe, conservatively by source."""
+    head = str(name).split("|", 1)[0]
+    for timeframe in _TARGET_TIMEFRAMES:
+        if head.startswith(f"{timeframe}_"):
+            return timeframe
+    if head.startswith(("prev_day_", "ctx_prev_day_", "yesterday_")):
+        return "D1"
+    if head.startswith(("lastweek_", "ctx_prev_week_")):
+        return "W1"
+    return "M1"
+
+
 def collapse_levels(
     items: list[tuple[str, float]], *, price_increment: float | None = None
 ) -> list[tuple[str, float]]:
@@ -65,6 +81,7 @@ def target_menu(
     front_run_pts: float = 0.0,
     price_increment: float | None = None,
     source_prices: dict[str, float] | None = None,
+    min_timeframe: str | None = None,
 ) -> list[tuple[str, float, float]]:
     if not np.isfinite(front_run_pts) or front_run_pts < 0.0:
         raise ValueError("front_run_pts must be finite and nonnegative")
@@ -125,7 +142,14 @@ def target_menu(
     if not isinstance(decision_at, pd.Timestamp):
         decision_at = None
     available: list[tuple[str, float]] = []
+    minimum_rank = (
+        _TARGET_TIMEFRAMES.index(normalize_timeframe(min_timeframe))
+        if min_timeframe is not None
+        else 0
+    )
     for name, level in raw:
+        if _TARGET_TIMEFRAMES.index(_target_timeframe(name)) < minimum_rank:
+            continue
         confirmed_at = row.get(f"{name}_confirmed_at") if hasattr(row, "get") else None
         if confirmed_at is not None and not pd.isna(confirmed_at):
             if decision_at is None:

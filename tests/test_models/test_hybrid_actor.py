@@ -11,6 +11,7 @@ from gymnasium import spaces
 from stable_baselines3 import PPO
 
 from decisioning.actions import build_action_schema
+from decisioning.thesis import THESIS_CATEGORY_COUNT, thesis_id_from_box
 from learning.rl.hybrid import (
     HybridActorHeads,
     HybridBoxDistribution,
@@ -83,6 +84,103 @@ def test_hybrid_distribution_deterministic_mode_uses_valid_category_codes() -> N
     actions = distribution.mode()
     assert actions.shape == (3, len(coordinates))
     assert torch.isfinite(distribution.log_prob(actions)).all()
+
+
+def test_thesis_hybrid_distribution_samples_only_each_rows_valid_candidates() -> None:
+    coordinates = ("thesis", "risk", "exit")
+    actor = HybridActorHeads(4, coordinates, {})
+    distribution = HybridBoxDistribution(actor, len(coordinates))
+    latent = torch.randn(3, 4)
+    means, logits = actor(latent)
+    masks = torch.zeros((3, THESIS_CATEGORY_COUNT), dtype=torch.float32)
+    masks[0, 0] = 1.0
+    masks[1, 0] = 1.0
+    masks[1, 5] = 1.0
+    masks[1, 37] = 1.0
+    masks[2, 2] = 1.0
+    distribution.proba_distribution(
+        means, torch.zeros(len(actor.continuous_indices)), logits, masks={"thesis": masks}
+    )
+
+    for deterministic in (False, True):
+        actions = distribution.get_actions(deterministic=deterministic)
+        assert torch.isfinite(actions).all()
+        selected = [thesis_id_from_box(float(value.detach())) for value in actions[:, 0]]
+        assert selected[0] == 0
+        assert selected[1] in {0, 5, 37}
+        assert selected[2] == 2
+    assert torch.isfinite(distribution.log_prob(actions)).all()
+    assert torch.isfinite(distribution.entropy()).all()
+
+
+class _ThesisOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):
+    def __init__(self) -> None:
+        self.observation_space = spaces.Dict(
+            {
+                "seq": spaces.Box(-1.0, 1.0, (8, 3), dtype=np.float32),
+                "seq_mask": spaces.Box(0.0, 1.0, (8,), dtype=np.float32),
+                "account": spaces.Box(-10.0, 10.0, (6,), dtype=np.float32),
+                "thesis_mask": spaces.Box(0.0, 1.0, (THESIS_CATEGORY_COUNT,), dtype=np.float32),
+            }
+        )
+        self.action_space = spaces.Box(-1.0, 1.0, (3,), dtype=np.float32)
+
+    def reset(
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, object] | None = None,
+    ) -> tuple[dict[str, npt.NDArray[np.float32]], dict[str, object]]:
+        super().reset(seed=seed)
+        observation = {
+            "seq": np.zeros((8, 3), dtype=np.float32),
+            "seq_mask": np.ones(8, dtype=np.float32),
+            "account": np.zeros(6, dtype=np.float32),
+        }
+        mask = np.zeros(THESIS_CATEGORY_COUNT, dtype=np.float32)
+        mask[[0, 12, 51]] = 1.0
+        observation["thesis_mask"] = mask
+        return observation, {}
+
+    def step(
+        self, action: npt.NDArray[np.float32]
+    ) -> tuple[dict[str, npt.NDArray[np.float32]], float, bool, bool, dict[str, object]]:
+        del action
+        observation, _ = self.reset()
+        return observation, 0.0, True, False, {}
+
+
+def test_thesis_hybrid_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
+    env = _ThesisOverlayEnv()
+    model = PPO(
+        HybridClampedStdMultiInputPolicy,
+        env,
+        policy_kwargs={
+            "hybrid_action_coordinates": ("thesis", "risk", "exit"),
+            "thesis_mask_key": "thesis_mask",
+            "net_arch": {"pi": [32], "vf": [32]},
+            "features_extractor_class": TCNEncoder,
+            "features_extractor_kwargs": {
+                "seq_len": 8,
+                "n_features": 3,
+                "account_dim": 6,
+            },
+        },
+        n_steps=2,
+        batch_size=2,
+        n_epochs=1,
+        device="cpu",
+    )
+    model.learn(total_timesteps=4)
+    observation, _ = env.reset()
+    for deterministic in (False, True):
+        action, _ = model.predict(observation, deterministic=deterministic)
+        assert thesis_id_from_box(float(action[0])) in {0, 12, 51}
+    checkpoint = tmp_path / "thesis_hybrid_policy.zip"
+    model.save(checkpoint)
+    loaded = PPO.load(checkpoint, device="cpu")
+    action, _ = loaded.predict(observation, deterministic=True)
+    assert thesis_id_from_box(float(action[0])) in {0, 12, 51}
 
 
 class _HybridOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):

@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 from gymnasium import spaces
 
+from decisioning.thesis import THESIS_CATEGORY_COUNT
+
 from .entry_diagnostics import _empty_entry_diag
 from .mixin_base import RuntimeMixinBase
 from .observations import DEFAULT_HTF_WINDOWS, HTF_BRANCHES
@@ -114,6 +116,13 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
                 low=0.0,
                 high=1.0,
                 shape=(regime_width,),
+                dtype=np.float32,
+            )
+        if self.thesis_actions:
+            observation_space.spaces["thesis_mask"] = spaces.Box(
+                low=0.0,
+                high=1.0,
+                shape=(THESIS_CATEGORY_COUNT,),
                 dtype=np.float32,
             )
         # Add VAE latent to observation space if enabled

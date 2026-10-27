@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from features.context.entry_ideas import entry_idea_context
+from features.context.thesis_candidates import active_thesis_candidates
 from trading.execution.broker import Position
 from trading.risk.sizing import compute_sl_tp_long, compute_sl_tp_short
 
@@ -123,6 +124,17 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
             from trading.orders.entries import place_strategy_order
 
             entry_context = entry_idea_context(feat_row, discrete_action)
+            selected_thesis = self._selected_thesis if self.thesis_actions else None
+            timeframe_floor = (
+                str(selected_thesis.setup_timeframe)
+                if selected_thesis is not None
+                else str(entry_context["stop_timeframe_floor"])
+            )
+            sd_timeframes = (
+                (str(selected_thesis.setup_timeframe),)
+                if selected_thesis is not None and str(selected_thesis.idea) == "standard_deviation"
+                else tuple(entry_context["standard_deviation_timeframes"])
+            )
 
             placed = place_strategy_order(
                 self.strategy,
@@ -137,8 +149,8 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                 max_tp_distance=self._max_tp_here(),
                 rr_bounds=self.rr_ratio_range,
                 htf=self._target_timeframes,
-                entry_timeframe_floor=str(entry_context["stop_timeframe_floor"]),
-                standard_deviation_timeframes=tuple(entry_context["standard_deviation_timeframes"]),
+                entry_timeframe_floor=timeframe_floor,
+                standard_deviation_timeframes=sd_timeframes,
                 tp_selections=(self._selected_tp_selections if self.allow_multi_tp else None),
                 tp_z=(
                     self._selected_tp_z if (self.allow_multi_tp and self.allow_simplex) else None
@@ -149,6 +161,7 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                     self.ema_runner_fraction if self._selected_exit_mode == "ema_21" else 0.0
                 ),
                 price_increment=float(self.cost_model.point_size),
+                thesis=selected_thesis,
             )
             sl_price = placed.sl_price
             tp_price = placed.tp_price
@@ -272,6 +285,15 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
         self._position_sequence += 1
         self.position.position_id = f"e{self._episode_identity}:p{self._position_sequence}"
         self.position.initial_size = float(self.position.size)
+        thesis = self._selected_thesis if self.thesis_actions else None
+        if thesis is not None:
+            from decisioning.thesis import THESIS_ACTION_VERSION
+
+            self.position.thesis_candidate_id = int(thesis.candidate_id)
+            self.position.thesis_schema_version = THESIS_ACTION_VERSION
+            self.position.primary_idea = str(thesis.idea or "")
+            self.position.primary_setup_timeframe = str(thesis.setup_timeframe or "")
+            self.position.thesis_decision_time = bar_time
         self.position.sl_price = sl_price
         self.position.sl_initial_price = sl_price
         self.position.breakeven_done = False
@@ -415,6 +437,15 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
         sweep_delay: float,
     ) -> None:
         assert self.position is not None
+        thesis = self._selected_thesis if self.thesis_actions else None
+        primary_id = int(thesis.candidate_id) if thesis is not None else None
+        supporting = [
+            f"{candidate.idea}@{candidate.setup_timeframe}:{'long' if candidate.direction == 1 else 'short'}"
+            for candidate in active_thesis_candidates(feat_row)
+            if thesis is None or candidate.candidate_id != primary_id
+        ]
+        from decisioning.thesis import THESIS_ACTION_VERSION
+
         self.trade_log.append(
             {
                 "type": "open",
@@ -426,6 +457,12 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                 "strategy": self.strategy.name,
                 "variant_id": str(getattr(self.strategy, "variant_id", self.strategy.name)),
                 "direction": discrete_action,
+                "thesis_candidate_id": primary_id,
+                "thesis_schema_version": THESIS_ACTION_VERSION if thesis is not None else "",
+                "primary_idea": thesis.idea if thesis is not None else "",
+                "primary_setup_timeframe": thesis.setup_timeframe if thesis is not None else "",
+                "primary_direction": thesis.direction if thesis is not None else 0,
+                "supporting_idea_timeframes": supporting,
                 "price": self.position.entry_price,
                 "bar": self.step_idx if decision_bar_idx is None else decision_bar_idx,
                 "signal_bar": signal_bar,

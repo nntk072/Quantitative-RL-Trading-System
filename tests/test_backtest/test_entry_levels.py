@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from decisioning.thesis import thesis_candidate, thesis_candidate_id
 from evaluation.reporting.geometry import geometry_summary
 from features.technical.swings import recent_unswept_swing_candidates
 from simulation.environment.env import TradingEnv
@@ -180,6 +181,94 @@ def test_target_menu_uses_every_configured_timeframe_swing_level() -> None:
     names = {name for name, _price, _distance in targets}
     assert "last_swing_high" in names
     assert {f"{timeframe}_last_swing_high" for timeframe in timeframes} <= names
+
+
+def test_target_menu_applies_selected_thesis_timeframe_floor() -> None:
+    row = _row(
+        last_swing_high=102.0,
+        M3_last_swing_high=103.0,
+        M5_last_swing_high=104.0,
+        H1_last_swing_high=106.0,
+    )
+    targets = target_menu(
+        direction=1,
+        entry_price=100.0,
+        row=row,
+        stop_dist=1.0,
+        max_tp_distance=float("nan"),
+        htf=("M3", "M5", "H1"),
+        min_timeframe="M5",
+    )
+    names = {name for name, _price, _distance in targets}
+    assert "last_swing_high" not in names
+    assert "M3_last_swing_high" not in names
+    assert {"M5_last_swing_high", "H1_last_swing_high"} <= names
+
+
+def test_strategy_order_uses_selected_thesis_for_stop_and_target_floor() -> None:
+    row = _row(
+        last_swing_low=95.0,
+        M3_last_swing_low=94.0,
+        M5_last_swing_low=93.0,
+        H1_last_swing_low=90.0,
+        last_swing_high=102.0,
+        M3_last_swing_high=103.0,
+        M5_last_swing_high=108.0,
+        H1_last_swing_high=110.0,
+    )
+    thesis = thesis_candidate(thesis_candidate_id("fvg_retest", "M5", 1))
+    geometry = place_strategy_order(
+        _Menu(),
+        direction=1,
+        entry_price=100.0,
+        feat_row=row,
+        min_dist=1.0,
+        sl_fraction=1.0,
+        tp_fraction=0.0,
+        exit_mode="structural",
+        buffer_pts=0.0,
+        max_tp_distance=float("nan"),
+        htf=("M3", "M5", "H1"),
+        thesis=thesis,
+    )
+    assert not geometry.rejected
+    sl_names = {part for name, _price in geometry.sl_menu for part in name.split("|")}
+    tp_names = {part for name, _price in geometry.tp_menu for part in name.split("|")}
+    assert "last_swing_low" not in sl_names
+    assert "M3_last_swing_low" not in sl_names
+    assert {"M5_last_swing_low", "H1_last_swing_low"} & sl_names
+    assert "last_swing_high" not in tp_names
+    assert "M3_last_swing_high" not in tp_names
+    assert {"M5_last_swing_high", "H1_last_swing_high"} <= tp_names
+
+
+def test_standard_deviation_thesis_uses_its_own_timeframe_level_one_stop() -> None:
+    row = _row(
+        M5_standard_deviation_level_1_price=95.0,
+        H1_standard_deviation_level_1_price=92.0,
+        M5_last_swing_low=94.0,
+        H1_last_swing_low=90.0,
+        M5_last_swing_high=105.0,
+        H1_last_swing_high=108.0,
+    )
+    thesis = thesis_candidate(thesis_candidate_id("standard_deviation", "M5", 1))
+    geometry = place_strategy_order(
+        _Menu(),
+        direction=1,
+        entry_price=100.0,
+        feat_row=row,
+        min_dist=1.0,
+        sl_fraction=1.0,
+        tp_fraction=0.0,
+        exit_mode="structural",
+        buffer_pts=0.0,
+        max_tp_distance=float("nan"),
+        htf=("M3", "M5", "H1"),
+        thesis=thesis,
+    )
+    assert not geometry.rejected
+    sd_stops = [name for name, _price in geometry.sl_menu if "standard_deviation" in name]
+    assert sd_stops == ["M5_standard_deviation_level_1_price"]
 
 
 def test_mtf_swing_candidates_require_causal_provenance_and_are_audited() -> None:

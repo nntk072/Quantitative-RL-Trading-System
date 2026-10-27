@@ -13,6 +13,7 @@ from models.encoders import (
     GRUEncoder,
     LiteTCNEncoder,
     MTFEncoder,
+    MTFReasoningEncoder,
     TCNEncoder,
     TransformerEncoder,
 )
@@ -620,8 +621,47 @@ def test_mtf_pad_prefix_does_not_change_the_branch() -> None:
     assert torch.allclose(first, second, atol=1e-5)
 
 
+def test_mtf_reasoning_encoder_interacts_across_valid_timeframe_tokens() -> None:
+    torch.manual_seed(7)
+    encoder = MTFReasoningEncoder(
+        _mtf_space(), latent_dim=16, channels=(8, 8), dropout=0.0, attention_heads=4
+    )
+    encoder.eval()
+    obs = {
+        "seq": torch.randn(2, 8, 3),
+        "seq_mask": torch.tensor([[0, 0, 1, 1, 1, 1, 1, 1]]).expand(2, -1).clone(),
+        "seq_m5": torch.randn(2, 6, 2),
+        "mask_m5": torch.tensor([[0, 0, 1, 1, 1, 1]]).expand(2, -1).clone(),
+        "seq_m15": torch.randn(2, 4, 1),
+        "mask_m15": torch.ones(2, 4),
+        "seq_h1": torch.randn(2, 4, 1),
+        "mask_h1": torch.ones(2, 4),
+        "account": torch.randn(2, 6),
+    }
+    with torch.no_grad():
+        reference = encoder(obs)
+        changed = {key: value.clone() for key, value in obs.items()}
+        changed["seq_m5"][:, -1] += 2.0
+        alternative = encoder(changed)
+        padded = {key: value.clone() for key, value in obs.items()}
+        padded["seq"][:, :2] = 1e6
+        padded["seq_m5"][:, :2] = -1e6
+        ignored = encoder(padded)
+    assert reference.shape == (2, 48)
+    assert not torch.allclose(reference, alternative)
+    assert torch.allclose(reference, ignored, atol=1e-5)
+
+    encoder.train()
+    encoder(obs).sum().backward()
+    assert all(
+        parameter.grad is None or torch.isfinite(parameter.grad).all()
+        for parameter in encoder.parameters()
+    )
+
+
 def test_tcn_arch_is_the_single_sequence_extractor() -> None:
     assert encoder_for("tcn") is TCNEncoder
     assert encoder_for("mtf") is MTFEncoder
+    assert encoder_for("mtf_reasoning") is MTFReasoningEncoder
     assert encoder_for("gru") is GRUEncoder
     assert encoder_for("transformer") is TransformerEncoder

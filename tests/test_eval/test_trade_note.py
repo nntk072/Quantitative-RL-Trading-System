@@ -7,7 +7,12 @@ import math
 import pandas as pd
 import pytest
 
-from evaluation.reporting.trade_note import build_trade_note, entry_reason, pretty_ref
+from evaluation.reporting.trade_note import (
+    build_trade_note,
+    build_trade_plot_note,
+    entry_reason,
+    pretty_ref,
+)
 from trading.orders.entries import reference_timeframe
 
 _OPEN_EMA = {
@@ -247,6 +252,34 @@ def test_note_reports_stop_target_changes_and_actual_exit_fills() -> None:
 def test_short_direction_is_labelled() -> None:
     joined = "\n".join(_note(_OPEN_EMA, direction=-1))
     assert "Short" in joined
+
+
+def test_thesis_report_separates_primary_idea_from_supporting_context() -> None:
+    row = {
+        **_OPEN_EMA,
+        "primary_idea": "fvg_retest",
+        "primary_setup_timeframe": "M5",
+        "primary_direction": 1,
+        "supporting_idea_timeframes": ["po3@H1:long", "ifvg_retest@M3:long"],
+        "entry_ideas": ["po3", "fvg_retest", "ifvg_retest"],
+        "entry_idea_timeframes": {"po3": ["H1"], "fvg_retest": ["M5"]},
+    }
+    reason = entry_reason(row)
+    assert "Primary thesis: FVG retest (M5, long)" in reason
+    assert "Supporting context: po3@H1:long; ifvg_retest@M3:long" in reason
+    assert "3 entry ideas overlap" not in reason
+
+    note = build_trade_plot_note(
+        row,
+        _CLOSE,
+        entry_price=100.0,
+        exit_price=99.0,
+        direction=1,
+        pnl=-1.0,
+        lots=1.0,
+        close_reason_detail="stop_close",
+    )
+    assert note[1] == "REASON FVG retest M5 long; context: po3@H1:long, ifvg_retest@M3:long"
 
 
 @pytest.mark.parametrize("bad", [None, "", "not-a-menu", 3, float("nan")])

@@ -90,6 +90,11 @@ class Position:
     tp_mode_overridden: bool = False
     tp_breakeven_done: bool = False
     tp_initial_price: float | None = None
+    thesis_candidate_id: int | None = None
+    thesis_schema_version: str = ""
+    primary_idea: str = ""
+    primary_setup_timeframe: str = ""
+    thesis_decision_time: object | None = None
     tp1_price: float | None = None
     tp2_price: float | None = None
     tp3_price: float | None = None

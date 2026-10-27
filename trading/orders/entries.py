@@ -184,6 +184,7 @@ def place_strategy_order(
     target_front_run_pts: float = 0.0,
     price_increment: float | None = None,
     ema_runner_fraction: float = 0.0,
+    thesis: Any | None = None,
 ) -> OrderGeometry:
     """Pick the stop, then a structural target or an EMA-21 exit.
 
@@ -194,6 +195,11 @@ def place_strategy_order(
     runner_fraction = float(ema_runner_fraction)
     if not 0.0 <= runner_fraction < 1.0:
         raise ValueError("ema_runner_fraction must be in [0, 1)")
+    if thesis is not None:
+        entry_timeframe_floor = str(thesis.setup_timeframe)
+        standard_deviation_timeframes = (
+            (str(thesis.setup_timeframe),) if str(thesis.idea) == "standard_deviation" else None
+        )
     state = manipulation_state(feat_row)
     buf = stop_buffer(buffer_pts)
     stops, stop_audit = stop_menu(
@@ -255,6 +261,7 @@ def place_strategy_order(
         front_run_pts=target_front_run_pts,
         price_increment=price_increment,
         source_prices=source_prices,
+        min_timeframe=(entry_timeframe_floor if thesis is not None else None),
     )
     tp_fallback_reason: str | None = None
     if rr_bounds is not None and targets and sl_dist > 1e-12:

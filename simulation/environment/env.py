@@ -89,6 +89,7 @@ class TradingEnv(
         normalize_account: bool = True,
         strategy: TradingStrategy | None = None,
         strategy_actions: bool = False,
+        thesis_actions: bool = False,
         trader_actions: bool | None = None,
         sl_buffer_pts: float = 0.0,
         strategy_reward: Any = None,
@@ -229,6 +230,8 @@ class TradingEnv(
             strategy_weight,
             equity_log_growth_scale,
         )
+        if thesis_actions and not resolved_strategy_actions:
+            raise ValueError("env.thesis_actions requires strategy_actions=true")
         self._initialize_strategy_runtime(
             strategy, resolved_strategy_actions, sl_buffer_pts, bundle_data, bars, features
         )
@@ -245,6 +248,7 @@ class TradingEnv(
             scheduled_session_closes,
             session_start,
             regime_observation,
+            thesis_actions,
         )
         self._initialize_action_and_episode_contracts(
             continuous_actions,
@@ -342,6 +346,7 @@ class TradingEnv(
         self._pending_realized_r: float | None = None
         self._opened_this_step = False
         self._selected_sl_anchor = 0.0
+        self._selected_thesis = None
         self._selected_tp_fraction = 0.0
         self._selected_exit_mode = "structural"
         self._selected_sl_mode = "fixed"
