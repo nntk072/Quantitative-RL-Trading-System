@@ -13,7 +13,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from configuration.paths import repository_root
 
-FEATURE_CACHE_VERSION = "v30-directional-swing-fib"
+FEATURE_CACHE_VERSION = "v31-ifvg-confirmation-entry"
 
 
 def feature_cache_content_hash(
@@ -47,6 +47,10 @@ def feature_cache_content_hash(
                 if feature_payload.get("normalize_d1_technical_on_source") is False:
                     feature_payload.pop("normalize_d1_technical_on_source")
             payload["features"] = feature_payload
+        if hasattr(cfg, "strategy") and hasattr(cfg.strategy, "ifvg"):
+            ifvg_payload = OmegaConf.to_container(cfg.strategy.ifvg, resolve=True)
+            if isinstance(ifvg_payload, dict):
+                payload["strategy.ifvg"] = ifvg_payload
         cost_point_size = OmegaConf.select(cfg, "costs.point_size", default=None)
         if cost_point_size is not None:
             payload["costs.point_size"] = float(cost_point_size)

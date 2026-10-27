@@ -49,14 +49,23 @@ _LEVEL_ENTRY: dict[str, str] = {
 _MANIPULATION: dict[str, str] = {
     "done": 'manipulation "done" (phase completed)',
     "none": "no manipulation yet",
-    "against": 'manipulation "against" (side not confirmed)',
+    "against": "PO3 manipulation is currently against this trade direction",
 }
 
 _ENTRY_IDEA_LABELS: dict[str, str] = {
     "po3": "PO3 setup",
     "order_block": "Order Block reaction",
     "standard_deviation": "Fib-like swing retracement (0.5-0.786)",
-    "fvg_retest": "Fair Value Gap retest",
+    "fvg_retest": "FVG/IFVG reaction",
+}
+
+_ENTRY_SETUP_LABELS: dict[str, str] = {
+    "po3": "PO3 setup",
+    "order_block": "Order Block reaction",
+    "standard_deviation": "swing retracement",
+    "fvg_retest": "FVG/IFVG reaction",
+    "sweep": "liquidity sweep context",
+    "swing": "swing context",
 }
 
 
@@ -160,7 +169,24 @@ def entry_reason(open_row: Any) -> str:
             if len(idea_names) > 1:
                 parts.append(f"{len(idea_names)} entry ideas overlap at the signal")
         else:
-            parts.append("no named entry-idea signal active at the signal bar")
+            candidate_types = [
+                str(value) for value in _sequence_value(open_row.get("entry_setup_types"))
+            ]
+            candidate_parts = [
+                _ENTRY_SETUP_LABELS.get(value, value.replace("_", " ")) for value in candidate_types
+            ]
+            if candidate_parts:
+                origin_time = _clock(open_row.get("entry_origin_time"))
+                origin_text = f" formed at {origin_time}" if origin_time else " formed earlier"
+                parts.append(
+                    "candidate"
+                    + origin_text
+                    + ": "
+                    + " + ".join(candidate_parts)
+                    + "; policy chose to trigger at this signal bar"
+                )
+            else:
+                parts.append("no named entry-idea signal or saved candidate")
         zones = _sequence_value(open_row.get("entry_idea_zones"))
         if zones:
             zone_text: list[str] = []
@@ -186,7 +212,14 @@ def entry_reason(open_row: Any) -> str:
         parts.append(level or "strategy offered this side (no swept level)")
     state = _text(open_row.get("manipulation")).lower()
     if state:
-        parts.append(_MANIPULATION.get(state, f"manipulation {state}"))
+        manipulation_text = _MANIPULATION.get(state, f"manipulation {state}")
+        if state == "against":
+            direction = _number(open_row.get("direction"))
+            side = "long" if direction is not None and direction > 0 else "short"
+            manipulation_text = f"PO3 context currently opposes this {side}"
+            if _text(open_row.get("strategy")) == "baseline":
+                manipulation_text += "; baseline entry logic does not require PO3 confirmation"
+        parts.append(manipulation_text)
     phase = _number(open_row.get("distribution_phase"))
     if phase is not None and phase > 0.0:
         parts.append("PO3 distribution active")
@@ -377,4 +410,183 @@ def build_trade_note(
     return lines
 
 
-__all__ = ["build_trade_note", "entry_reason", "pretty_ref"]
+def _short_reference(value: Any) -> str:
+    text = pretty_ref(value)
+    for long, short in (
+        ("Inverse Fair Value Gap", "IFVG"),
+        ("Fair Value Gap", "FVG"),
+        ("Order Block", "OB"),
+        ("Asia session", "Asia"),
+        ("London session", "London"),
+        ("bullish", "bull"),
+        ("bearish", "bear"),
+    ):
+        text = text.replace(long, short)
+    return text
+
+
+def _plot_reason(open_row: Any) -> str:
+    """Short, plot-only reason that keeps FVG and IFVG reactions distinct."""
+    setup_types = {str(value) for value in _sequence_value(open_row.get("entry_setup_types"))}
+    raw_ideas = [str(value) for value in _sequence_value(open_row.get("entry_ideas"))]
+    zones = _sequence_value(open_row.get("entry_idea_zones"))
+    families = {str(zone.get("family", "")).lower() for zone in zones if isinstance(zone, Mapping)}
+    reasons: list[str] = []
+    labels = {
+        "po3": "PO3",
+        "order_block": "OB reaction",
+        "standard_deviation": "Fib retracement",
+        "sweep": "liquidity sweep",
+        "swing": "swing",
+    }
+    for idea in (*raw_ideas, *sorted(setup_types)):
+        if idea in {"fvg_retest", "fvg_reaction", "ifvg_reaction", "ifvg"}:
+            if idea in {"ifvg_reaction", "ifvg"}:
+                gap_reasons = ["IFVG reaction"]
+            elif idea == "fvg_reaction":
+                gap_reasons = ["FVG reaction"]
+            elif "ifvg_reaction" in setup_types or "ifvg" in setup_types:
+                gap_reasons = ["IFVG reaction"]
+            elif "fvg_reaction" in setup_types:
+                gap_reasons = ["FVG reaction"]
+            elif _number(open_row.get("ifvg_zone_low")) is not None:
+                gap_reasons = ["IFVG reaction"]
+            elif families == {"fvg"}:
+                gap_reasons = ["FVG reaction"]
+            elif families == {"ifvg"}:
+                gap_reasons = ["IFVG reaction"]
+            else:
+                gap_reasons = ["Gap reaction type unrecorded"]
+            reasons.extend(gap_reasons)
+        elif idea in labels:
+            reasons.append(labels[idea])
+
+    timeframes = _mapping_value(open_row.get("entry_idea_timeframes"))
+    tf_tags: list[str] = []
+    for idea, values in timeframes.items():
+        label = labels.get(str(idea))
+        if label not in reasons:
+            continue
+        vals = [values] if isinstance(values, str) else _sequence_value(values)
+        tf_tags.extend(str(value) for value in vals)
+    if not reasons:
+        reasons.append("setup not recorded")
+    result = " + ".join(dict.fromkeys(reasons))
+    if tf_tags:
+        result += " (" + ", ".join(dict.fromkeys(tf_tags)) + ")"
+    if _text(open_row.get("manipulation")).lower() == "against":
+        result += " · PO3 opposing"
+    return result
+
+
+def _clip_plot_line(text: str, max_chars: int = 150) -> str:
+    return text if len(text) <= max_chars else text[: max_chars - 1].rstrip() + "…"
+
+
+def build_trade_plot_note(
+    open_row: Any,
+    close_row: Any,
+    *,
+    entry_price: float,
+    exit_price: float,
+    direction: int,
+    pnl: float,
+    lots: float,
+    close_reason_detail: str,
+    position_events: Any = None,
+    signal_time: Any = None,
+    entry_fill_time: Any = None,
+) -> list[str]:
+    """Build five compact rows intended to live inside a trade chart."""
+    side = "Long" if direction == 1 else "Short" if direction == -1 else "Flat"
+    signal = _clock(signal_time) if _text(signal_time) else "?"
+    fill_time = entry_fill_time if _text(entry_fill_time) else open_row.get("time")
+    fill_source = "tick" if _text(open_row.get("fill_quote_source")) == "tick" else "logged"
+    entry_line = (
+        f"ENTRY {side} {signal}→{_clock(fill_time)} @ {entry_price:.2f}"
+        f" · {lots:.2f} lots · {fill_source}"
+    )
+    reason_line = f"REASON {_plot_reason(open_row)}"
+
+    stop_parts: list[str] = []
+    sl_price = _number(open_row.get("sl_price"))
+    if sl_price is not None:
+        ref = _short_reference(open_row.get("sl_ref"))
+        stop_parts.append(f"{sl_price:.2f}" + (f" {ref}" if ref else ""))
+    for _, event in position_events.iterrows() if hasattr(position_events, "iterrows") else ():
+        kind = _text(event.get("type"))
+        when = event.get("actual_tick_time", event.get("effective_time", event.get("time")))
+        clock = _clock(when)
+        if kind == "sl_update":
+            price = _number(event.get("price"))
+            if price is not None:
+                stop_parts.append(f"move {clock}→{price:.2f}")
+        elif "stop" in kind or "sl" in _text(event.get("reason")):
+            price = _number(event.get("price"))
+            realized = _number(event.get("pnl"))
+            fill = f"fill {clock}"
+            if price is not None:
+                fill += f" @ {price:.2f}"
+            if realized is not None:
+                fill += f" ${realized:+.2f}"
+            stop_parts.append(fill)
+    stop_line = "SL " + (" · ".join(stop_parts) if stop_parts else "not recorded")
+
+    target_parts: list[str] = []
+    target_legs = _sequence_value(open_row.get("tp_legs"))
+    if target_legs:
+        for leg in target_legs:
+            if not isinstance(leg, Mapping):
+                continue
+            price = _number(leg.get("executed_price"))
+            number = leg.get("leg", "?")
+            ref = _short_reference(leg.get("reference"))
+            if price is not None:
+                target_parts.append(f"TP{number} {price:.2f}" + (f" {ref}" if ref else ""))
+    else:
+        tp_price = _number(open_row.get("tp_price"))
+        if tp_price is not None:
+            ref = _short_reference(open_row.get("tp_ref"))
+            target_parts.append(f"TP1 {tp_price:.2f}" + (f" {ref}" if ref else ""))
+    for _, event in position_events.iterrows() if hasattr(position_events, "iterrows") else ():
+        kind = _text(event.get("type"))
+        when = event.get("actual_tick_time", event.get("effective_time", event.get("time")))
+        clock = _clock(when)
+        slot = _number(event.get("tp_slot"))
+        slot_text = f"TP{int(slot)}" if slot is not None else "TP"
+        if kind == "tp_update":
+            price = _number(event.get("price"))
+            if price is not None:
+                target_parts.append(f"{slot_text} move {clock}→{price:.2f}")
+        elif kind in {"tp_partial_close", "tp_close"}:
+            price = _number(event.get("price"))
+            realized = _number(event.get("pnl"))
+            fill = f"{slot_text} fill {clock}"
+            if price is not None:
+                fill += f" @ {price:.2f}"
+            if realized is not None:
+                fill += f" ${realized:+.2f}"
+            target_parts.append(fill)
+    if not target_parts and _text(open_row.get("exit_mode")) == "ema_21":
+        target_parts.append("EMA21 runner after partial")
+    target_line = "TP " + (" · ".join(target_parts) if target_parts else "not recorded")
+
+    reason = _text(close_reason_detail).lower().replace("_", " ")
+    if "stop" in reason or reason in {"sl", "structure sl"}:
+        reason = "SL hit"
+    elif "tp" in reason or "target" in reason:
+        reason = "TP hit"
+    elif "breakeven" in reason or reason == "be":
+        reason = "BE"
+    elif "ema" in reason:
+        reason = "EMA exit"
+    elif not reason:
+        reason = "closed"
+    exit_line = f"EXIT {_clock(close_row.get('time'))} @ {exit_price:.2f} · {reason} · ${pnl:+.2f}"
+    return [
+        _clip_plot_line(line)
+        for line in (entry_line, reason_line, stop_line, target_line, exit_line)
+    ]
+
+
+__all__ = ["build_trade_note", "build_trade_plot_note", "entry_reason", "pretty_ref"]

@@ -1,0 +1,12 @@
+profile: normal_v31
+data:
+  cache_dir: cache/data_modes/normal/train_test_2025_2026_v31
+  datasets:
+    training:
+      raw_dir: data/normal/training
+    testing:
+      raw_dir: data/normal/testing
+  price_discretization:
+    enabled: false
+    increment: 0.25
+    rounding: nearest_half_away_from_zero

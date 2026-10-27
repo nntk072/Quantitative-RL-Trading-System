@@ -147,16 +147,15 @@ def test_swing_ray_ends_at_first_later_candle_that_sweeps_it() -> None:
     assert ray.t1 == idx[3]
 
 
-def test_sweep_x_sits_on_the_right_end_of_the_line() -> None:
+def test_sweep_label_uses_legend_instead_of_overlapping_the_line() -> None:
     idx = pd.date_range("2026-03-02 16:30", periods=8, freq="1min")
     line = SweepLine(t0=idx[1], t1=idx[5], price=101.5, side="high", label="X")
     fig, ax = plt.subplots()
     draw_overlays_mpl(ax, OverlayEvents(sweeps=[line]))
-    ann = cast(Any, ax.texts[0])
-    assert ann.get_text() == "X"
-    assert ann.get_ha() == "left"
-    assert ann.get_va() == "center"
-    assert ann.xy[1] == 101.5
+    assert not ax.texts
+    sweep_line = next(line for line in ax.lines if line.get_label() == "X")
+    assert list(cast(Any, sweep_line.get_xdata())) == [idx[1], idx[5]]
+    assert list(cast(Any, sweep_line.get_ydata())) == [101.5, 101.5]
     plt.close(fig)
 
 
@@ -198,8 +197,7 @@ def test_order_png_legend_omits_vwap(tmp_path, monkeypatch) -> None:
     orig = Figure.savefig
 
     def _save(self, *args, **kwargs):
-        legend = self.axes[0].get_legend()
-        if legend is not None:
+        for legend in self.legends:
             labels.extend(t.get_text() for t in legend.get_texts())
         return orig(self, *args, **kwargs)
 
@@ -475,7 +473,7 @@ def test_linked_zone_plot_shows_only_saved_zone_and_timeframe() -> None:
     )
 
     assert len(zones) == 1
-    assert zones[0].label == "PO3 · M5 Bull Inverse Fair Value Gap"
+    assert zones[0].label == "PO3 · M5 Bull IFVG"
     assert (zones[0].low, zones[0].high) == (100.0, 101.5)
 
 
@@ -524,7 +522,7 @@ def test_plot_config_selects_zone_family_per_entry_idea() -> None:
     )
 
     assert len(zones) == 1
-    assert "Inverse Fair Value Gap" in zones[0].label
+    assert "IFVG" in zones[0].label
 
 
 def test_plot_config_selects_timeframe_per_entry_idea() -> None:
@@ -966,10 +964,12 @@ def test_selected_mtf_zone_families_create_timeframe_labeled_bands() -> None:
     assert {zone.label for zone in levels.zones} == {
         "M1 Bull Order Block",
         "M5 Bull Order Block",
-        "M1 Bear Fair Value Gap",
-        "M1 Bear Inverse Fair Value Gap",
+        "M1 Bear FVG",
+        "M1 Bear IFVG",
     }
-    assert [seg.label for seg in levels.segs if "Swing" in seg.label] == ["M5 Swing High"]
+    # Synthetic aligned feature values have no matching source wick at 110;
+    # omit them instead of drawing a level that appears to float in space.
+    assert [seg.label for seg in levels.segs if "Swing" in seg.label] == []
 
 
 def test_ema_exit_without_target_does_not_fabricate_a_tp_band() -> None:

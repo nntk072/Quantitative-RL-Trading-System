@@ -115,16 +115,21 @@ def append_po3_state_features(
     close_threshold = (
         OmegaConf.select(cfg, "strategy.ifvg.close_through_threshold") if cfg else None
     )
+    gap_reaction_buffer = (
+        OmegaConf.select(cfg, "features.gap_reaction_buffer_fraction") if cfg else None
+    )
     inverse_opposing = bool(
         (OmegaConf.select(cfg, "strategy.ifvg.require_opposing_fvg") if cfg else False) or False
     )
-    ifvg_config = (
-        IFVGConfig(
-            close_through_threshold=float(close_threshold),
-            inverse_opposing_fvg=inverse_opposing,
-        )
-        if close_threshold is not None
-        else IFVGConfig(inverse_opposing_fvg=inverse_opposing)
+    ifvg_config = IFVGConfig(
+        close_through_threshold=(
+            float(gap_reaction_buffer)
+            if gap_reaction_buffer is not None
+            else float(close_threshold)
+            if close_threshold is not None
+            else 0.1
+        ),
+        inverse_opposing_fvg=inverse_opposing,
     )
     ifvg_zones = build_ifvg_zone_features(primary, ifvg_config=ifvg_config)
     state_ifvg_zones = ifvg_zones.copy()

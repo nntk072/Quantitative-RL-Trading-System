@@ -287,6 +287,9 @@ def build_ifvg_zone_features(
     fvg = detect_fvg(bars, fvg_config)
     conf = detect_ifvg_confirmation(bars, fvg, ifvg_config)
     inverse_opposing = bool(ifvg_config and ifvg_config.inverse_opposing_fvg)
+    reaction_buffer_fraction = (
+        ifvg_config.close_through_threshold if ifvg_config is not None else 0.1
+    )
     atr_arr = atr(bars, atr_period).to_numpy(dtype=float)
     close = bars["close"].to_numpy(dtype=float)
     high = bars["high"].to_numpy(dtype=float)
@@ -364,12 +367,21 @@ def build_ifvg_zone_features(
             if (
                 bull_pending_retest is not None
                 and i > bull_pending_retest[0]
-                and close[i] > bull_pending_retest[1]
+                and close[i]
+                > max(
+                    bull_pending_retest[1],
+                    bull_zh + (bull_zh - bull_zl) * reaction_buffer_fraction,
+                )
             ):
                 values[i, 5] = 1.0
                 bull_pending_retest = None
             if bull_left and low[i] <= bull_zh and high[i] >= bull_zl:
-                bull_pending_retest = (i, high[i])
+                bull_pending_retest = (
+                    i if bull_pending_retest is None else bull_pending_retest[0],
+                    high[i]
+                    if bull_pending_retest is None
+                    else max(bull_pending_retest[1], high[i]),
+                )
             values[i, 12] = bull_origin
             if low[i] > bull_zh:
                 bull_left = True
@@ -388,12 +400,19 @@ def build_ifvg_zone_features(
             if (
                 bear_pending_retest is not None
                 and i > bear_pending_retest[0]
-                and close[i] < bear_pending_retest[1]
+                and close[i]
+                < min(
+                    bear_pending_retest[1],
+                    bear_zl - (bear_zh - bear_zl) * reaction_buffer_fraction,
+                )
             ):
                 values[i, 11] = 1.0
                 bear_pending_retest = None
             if bear_left and low[i] <= bear_zh and high[i] >= bear_zl:
-                bear_pending_retest = (i, low[i])
+                bear_pending_retest = (
+                    i if bear_pending_retest is None else bear_pending_retest[0],
+                    low[i] if bear_pending_retest is None else min(bear_pending_retest[1], low[i]),
+                )
             values[i, 13] = bear_origin
             if high[i] < bear_zl:
                 bear_left = True

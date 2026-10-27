@@ -490,6 +490,13 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                     {
                         "entry_setup_types": list(entry_candidate.setup_types),
                         "entry_origin_bar": entry_candidate.origin_bar,
+                        "entry_origin_time": (
+                            self.bars.index[entry_candidate.origin_bar]
+                            if self.bars is not None
+                            and 0 <= entry_candidate.origin_bar < len(self.bars)
+                            else None
+                        ),
+                        "entry_setup_levels": dict(entry_candidate.setup_levels_snapshot),
                         "entry_state": "ARMED",
                     }
                     if entry_candidate is not None

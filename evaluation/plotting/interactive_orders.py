@@ -250,7 +250,7 @@ def plot_per_trade_orders(
     )
     from .order_chart import draw_order_levels_plotly
     from .order_window import _session_end_positions, prepare_order_chart
-    from .overlay_events import confirmed_pivots
+    from .overlay_events import candidate_sweep_line, confirmed_pivots
     from .plots import _trade_filename
 
     orders_dir = Path(orders_dir)
@@ -312,6 +312,14 @@ def plot_per_trade_orders(
         t_open = prepared.t_open
         t_close = prepared.t_close
         overlays = break_overlay_gaps(overlays)
+        selected_sweep = candidate_sweep_line(bars, open_row, features, events)
+        if selected_sweep is None or not (
+            window.index[0] <= selected_sweep.t0 <= window.index[-1]
+            and window.index[0] <= selected_sweep.t1 <= window.index[-1]
+        ):
+            events.sweeps = []
+        else:
+            events.sweeps = [selected_sweep]
 
         direction = int(open_row["direction"]) if pd.notna(open_row.get("direction")) else 0
         pnl = float(close_row["pnl"]) if pd.notna(close_row.get("pnl")) else 0.0
@@ -341,7 +349,7 @@ def plot_per_trade_orders(
             row=1,
             col=1,
         )
-        ema_colors = {9: "#00897b", 21: "#6a1b9a", 50: "#0066cc", 200: "#ef6c00"}
+        ema_colors = {21: "#6a1b9a", 50: "#0066cc"}
         for timeframe in ema_timeframes:
             tf = str(timeframe).upper()
             for period, color in ema_colors.items():
@@ -394,41 +402,31 @@ def plot_per_trade_orders(
         # Bottom panel: MACD (left) + RSI (right)
         draw_macd_rsi_plotly(fig, window, overlays, row=2)
 
-        close_reason = close_type if close_type != "close" else "normal"
         dir_label = "Long" if direction == 1 else "Short"
+        close_reason = close_type if close_type != "close" else "normal"
 
-        # Calculate trade info
-        duration_mins = int((t_close - t_open).total_seconds() / 60)
-        duration_secs = int((t_close - t_open).total_seconds() % 60)
         lots_val = float(open_row.get("lots", 1.0)) if pd.notna(open_row.get("lots")) else 1.0
-
-        # Reconciliation: recompute PnL from the entry/exit prices shown on
-        # this chart and compare to the logged PnL. A mismatch flags a
-        # pairing bug or a stale/fallback exit price rather than a "weird"
-        # strategy result.
-        pnl_calc = (metrics.exit_price - metrics.entry_price) * direction * lots_val * contract_size
         close_reason_detail = (
             str(close_row.get("reason")) if pd.notna(close_row.get("reason")) else close_type
         )
 
-        from evaluation.reporting.trade_note import build_trade_note
+        from evaluation.reporting.trade_note import build_trade_plot_note
 
         from .plots import _close_time_label
 
-        # Same caption as the PNG renderer, shown under the two subplots.
-        note_lines = build_trade_note(
+        position_id = open_row.get("position_id")
+        note_lines = build_trade_plot_note(
             open_row,
             close_row,
             entry_price=metrics.entry_price,
             exit_price=metrics.exit_price,
             direction=direction,
             pnl=pnl,
-            pnl_calc=pnl_calc,
-            duration_mins=duration_mins,
-            duration_secs=duration_secs,
             lots=lots_val,
             close_reason_detail=close_reason_detail,
-            extra_notes=levels.notes,
+            position_events=trades.loc[trades["position_id"].eq(position_id)]
+            if "position_id" in trades.columns and position_id is not None and pd.notna(position_id)
+            else None,
         )
 
         # Title keeps the headline; the detail lives in the note block.
@@ -457,26 +455,35 @@ def plot_per_trade_orders(
             yaxis_title="Price",
             xaxis_rangeslider_visible=False,
             hovermode="x unified",
-            legend={"groupclick": "togglegroup"},
-            height=680 + 22 * len(note_lines),
-            margin=dict(b=40 + 18 * len(note_lines)),
+            legend={
+                "groupclick": "togglegroup",
+                "orientation": "h",
+                "x": 0.5,
+                "xanchor": "center",
+                "y": -0.18,
+                "yanchor": "top",
+                "font": {"size": 8},
+            },
+            height=800,
+            margin=dict(b=150),
             xaxis=dict(rangebreaks=rangebreaks, tickformat=tickformat),
             xaxis2=dict(rangebreaks=rangebreaks, tickformat=tickformat),
         )
-        # Caption under both subplots, matching the PNG renderer.
-        for i, line in enumerate(note_lines):
-            fig.add_annotation(
-                x=0,
-                y=-0.12 - 0.045 * i,
-                xref="paper",
-                yref="paper",
-                text=line,
-                showarrow=False,
-                xanchor="left",
-                yanchor="top",
-                align="left",
-                font=dict(family="Courier New, monospace", size=11),
-            )
+        fig.add_annotation(
+            x=0.99,
+            y=0.99,
+            xref="x domain",
+            yref="y domain",
+            text="<br>".join(note_lines),
+            showarrow=False,
+            xanchor="right",
+            yanchor="top",
+            align="left",
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="#666",
+            borderpad=4,
+            font=dict(family="Courier New, monospace", size=9),
+        )
         fig.update_yaxes(range=list(levels.ylim), row=1, col=1)
 
         fname = _trade_filename(seq_i + 1, open_row, close_row, "html")

@@ -1,0 +1,47 @@
+schema_version: 1
+campaign_id: sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1
+variant_file: config/campaigns/variant_list_sustainable_growth_ppo_three_policy_v31_20261027.txt
+variants:
+  - sustainable_growth_ppo_dsr
+  - sustainable_growth_ppo_log
+  - sustainable_growth_ppo_log_q5
+seeds: [50]
+timesteps: 2000000
+data_source: bundle
+data_profile: config/data_modes/normal_v31.yaml
+config_overrides:
+  data.cache_dir: cache/data_modes/normal/train_test_2025_2026_v31
+  env.regime_observation: false
+  env.n_envs: 8
+  env.strategy_actions: true
+  env.agent_direction_control: true
+  env.direction_override_threshold: 0.0
+  env.allow_ema_exit: true
+  env.allow_multi_tp: true
+  env.ema_runner_fraction: 0.25
+  env.entry_cooldown_bars: 0
+  risk.min_sl_points: 0.0
+  risk.min_sl_atr_mult: 0.5
+  features.normalize_d1_technical_on_source: true
+  features.vwap_session: false
+  features.include_fvg_ifvg: true
+  features.gap_reaction_buffer_fraction: 0.1
+  features.include_strategy_state: true
+  features.po3_state_mtf.enabled: true
+  features.entry_ideas.enabled: true
+  features.order_blocks.enabled: true
+  features.ifvg_mtf.enabled: true
+  strategy.entry.enforce_gate: false
+  execution.randomized_fill_latency_ms: 0.0
+  training.progress_log_every: 1000
+  output.max_order_charts: 200
+  output.save_html: false
+split:
+  train_start: "2024-12-30"
+  train_end: "2025-12-31"
+  test_start: "2026-01-01"
+evaluation:
+  locked_oos_role: final_report_only
+  locked_oos_exposure: previously_inspected_holdout
+  selection_allowed: false
+  deterministic: false

@@ -107,17 +107,21 @@ def _draw_sweeps_mpl(ax: Any, sweeps: list[SweepLine]) -> None:
             label=line.label if _first_legend(ax, line.label) else None,
             zorder=3,
         )
-        ax.annotate(
-            line.label,
-            xy=(line.t1, line.price),
-            xytext=(3, 0),
-            textcoords="offset points",
-            ha="left",
-            va="center",
-            fontsize=9,
+        ax.scatter(
+            [line.t0],
+            [line.price],
+            s=18,
             color=SWEEP_COLOR,
-            fontweight="bold",
-            zorder=6,
+            marker="o",
+            zorder=5,
+        )
+        ax.scatter(
+            [line.t1],
+            [line.price],
+            s=25,
+            color=SWEEP_COLOR,
+            marker="x",
+            zorder=5,
         )
 
 
@@ -132,20 +136,6 @@ def _draw_smt_mpl(ax: Any, segments: list[SmtSegment]) -> None:
             linestyle="-.",
             label=seg.label if _first_legend(ax, seg.label) else None,
             zorder=4,
-        )
-        mid_t = seg.t0 + (seg.t1 - seg.t0) * 0.5
-        mid_p = (seg.p0 + seg.p1) / 2.0
-        ax.annotate(
-            seg.label,
-            xy=(mid_t, mid_p),
-            xytext=(0, -3),
-            textcoords="offset points",
-            ha="center",
-            va="center",
-            fontsize=7,
-            color=color,
-            fontweight="bold",
-            zorder=6,
         )
 
 
@@ -207,15 +197,16 @@ def draw_overlays_plotly(fig: Any, events: OverlayEvents, *, row: int = 1, col: 
             row=row,
             col=col,
         )
-        fig.add_annotation(
-            x=line.t1,
-            y=line.price,
-            text=line.label,
-            showarrow=False,
-            xanchor="left",
-            yanchor="middle",
-            xshift=4,
-            font=dict(size=11, color=SWEEP_COLOR),
+        fig.add_trace(
+            go.Scatter(
+                x=[line.t0, line.t1],
+                y=[line.price, line.price],
+                mode="markers",
+                name=f"{line.label} endpoints",
+                showlegend=False,
+                marker=dict(color=SWEEP_COLOR, size=6, symbol=["circle-open", "x"]),
+                hovertemplate="Sweep level endpoint: %{y:.2f}<extra></extra>",
+            ),
             row=row,
             col=col,
         )
@@ -231,20 +222,6 @@ def draw_overlays_plotly(fig: Any, events: OverlayEvents, *, row: int = 1, col: 
                 line=dict(color=color, width=1.6, dash="dashdot"),
                 hovertemplate=f"{seg.label}<extra></extra>",
             ),
-            row=row,
-            col=col,
-        )
-        mid_t = seg.t0 + (seg.t1 - seg.t0) * 0.5
-        mid_p = (seg.p0 + seg.p1) / 2.0
-        fig.add_annotation(
-            x=mid_t,
-            y=mid_p,
-            text=seg.label,
-            showarrow=False,
-            xanchor="center",
-            yanchor="middle",
-            yshift=-4,
-            font=dict(size=8, color=color),
             row=row,
             col=col,
         )

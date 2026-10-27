@@ -100,6 +100,9 @@ def build_entry_idea_features(features: pd.DataFrame) -> pd.DataFrame:
         ideas[f"entry_idea_fvg_retest_{side}"] = (
             _positive_any(features, f"fvg_retest_{source_side}")
             | _positive_any(features, f"ifvg_retest_{source_side}")
+            # A body close through an IFVG is itself the directional reaction
+            # signal. The policy must not need a later retest of that zone.
+            | _positive_any(features, f"ifvg_{source_side}_confirmed")
         ).astype("float64")
         ideas[f"entry_idea_standard_deviation_{side}"] = _positive_any(
             features, f"standard_deviation_entry_{side}"
@@ -310,7 +313,11 @@ def entry_idea_context(
     source_suffixes = {
         "order_block": (f"ob_{source_side}_retest",),
         "standard_deviation": (f"standard_deviation_entry_{side}",),
-        "fvg_retest": (f"fvg_retest_{source_side}",),
+        "fvg_retest": (
+            f"fvg_retest_{source_side}",
+            f"ifvg_retest_{source_side}",
+            f"ifvg_{source_side}_confirmed",
+        ),
     }
     ideas: list[str] = []
     timeframes: dict[str, list[str]] = {}
@@ -329,6 +336,24 @@ def entry_idea_context(
                 and _row_positive({column: value}, column)
             }
         )
+        if idea == "fvg_retest" and _row_positive(row, f"ifvg_{source_side}_confirmed"):
+            tf_by_code = {
+                1: "M1",
+                3: "M3",
+                5: "M5",
+                10: "M10",
+                15: "M15",
+                30: "M30",
+                60: "H1",
+                240: "H4",
+                1440: "D1",
+            }
+            try:
+                code = int(float(_row_first_value(row, f"ifvg_{source_side}_confirmation_tf_code")))
+            except (TypeError, ValueError):
+                code = 0
+            if code in tf_by_code:
+                active_tfs.add(tf_by_code[code])
         timeframes[idea] = sorted(active_tfs) or ["M1"]
     return {
         "ideas": ideas,

@@ -6,6 +6,7 @@ These are inputs to the window and to deviation levels. Drawing lives in
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -112,6 +113,177 @@ class OverlayEvents:
         return OverlayEvents(swings=swings, sweeps=sweeps, smt=smt)
 
 
+def candidate_sweep_line(
+    bars: pd.DataFrame,
+    open_row: pd.Series,
+    features: pd.DataFrame | None = None,
+    events: OverlayEvents | None = None,
+) -> SweepLine | None:
+    """Return only the sweep that created this entry candidate, if recorded."""
+    raw_types = open_row.get("entry_setup_types", ())
+    if isinstance(raw_types, str):
+        try:
+            raw_types = ast.literal_eval(raw_types)
+        except (SyntaxError, ValueError):
+            raw_types = ()
+    if not isinstance(raw_types, (list, tuple, set)) or "sweep" not in raw_types:
+        return None
+    origin_value = open_row.get("entry_origin_bar")
+    if origin_value is None or pd.isna(origin_value):
+        return None
+    try:
+        direction = int(float(open_row.get("direction", 0)))
+        origin_bar = int(float(origin_value))
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if direction not in (-1, 1) or not 0 <= origin_bar < len(bars.index):
+        return None
+    side: Side = "low" if direction == 1 else "high"
+
+    def matching_recorded_event() -> SweepLine | None:
+        if events is None:
+            return None
+        index = pd.DatetimeIndex(bars.index)
+        origin_time = pd.Timestamp(index[origin_bar])
+        signal_value = open_row.get(
+            "signal_time", open_row.get("decision_time", open_row.get("time"))
+        )
+        if signal_value is None or pd.isna(signal_value):
+            return None
+        try:
+            signal_time = _align_origin_ts(pd.Timestamp(signal_value), index)
+        except (TypeError, ValueError):
+            return None
+        matches = [
+            event
+            for event in events.sweeps
+            if event.side == side and origin_time <= event.t1 <= signal_time
+        ]
+        if not matches:
+            return None
+        return max(matches, key=lambda event: event.t1)
+
+    sweep_name = f"sweep_{side}"
+    level_name = f"{sweep_name}_level"
+    pivot_name = f"{sweep_name}_pivot_bar"
+    tf_name = f"{sweep_name}_ref_tf_code"
+    snapshot = open_row.get("entry_setup_levels", {})
+    if isinstance(snapshot, str):
+        try:
+            snapshot = ast.literal_eval(snapshot)
+        except (SyntaxError, ValueError):
+            snapshot = {}
+    snapshot = snapshot if isinstance(snapshot, dict) else {}
+
+    row: pd.Series | None = None
+    if isinstance(features, pd.DataFrame) and origin_bar < len(features.index):
+        row = features.iloc[origin_bar]
+    level = snapshot.get(level_name)
+    pivot_bar = snapshot.get(pivot_name)
+    timeframe_code = snapshot.get(tf_name)
+    if row is not None:
+        try:
+            fired = float(row.get(sweep_name, 0.0)) > 0.0
+        except (TypeError, ValueError):
+            fired = False
+        if fired:
+            level = row.get(level_name, level)
+            pivot_ns = row.get(f"{sweep_name}_pivot_time_ns")
+            if pivot_ns is not None and pd.notna(pivot_ns):
+                try:
+                    pivot_time = pd.Timestamp(int(float(pivot_ns)), unit="ns", tz="UTC")
+                    index = pd.DatetimeIndex(bars.index)
+                    if index.tz is None:
+                        pivot_time = pivot_time.tz_localize(None)
+                    else:
+                        pivot_time = pivot_time.tz_convert(index.tz)
+                    pivot_bar = index.get_indexer(pd.DatetimeIndex([pivot_time]), method="nearest")[
+                        0
+                    ]
+                except (TypeError, ValueError, OverflowError):
+                    pivot_bar = None
+            if pivot_bar is None:
+                fallback_pivot_time = row.get(f"last_swing_{side}_time")
+                if fallback_pivot_time is not None and pd.notna(fallback_pivot_time):
+                    try:
+                        timestamp = pd.Timestamp(fallback_pivot_time)
+                        index = pd.DatetimeIndex(bars.index)
+                        if index.tz is None and timestamp.tzinfo is not None:
+                            timestamp = timestamp.tz_localize(None)
+                        elif index.tz is not None and timestamp.tzinfo is None:
+                            timestamp = timestamp.tz_localize(index.tz)
+                        elif index.tz is not None:
+                            timestamp = timestamp.tz_convert(index.tz)
+                        pivot_bar = index.get_indexer(
+                            pd.DatetimeIndex([timestamp]), method="nearest"
+                        )[0]
+                    except (TypeError, ValueError, OverflowError):
+                        pivot_bar = None
+            timeframe_code = row.get(tf_name, timeframe_code)
+    if level is None or pd.isna(level):
+        return matching_recorded_event()
+    try:
+        level_value = float(level)
+    except (TypeError, ValueError, OverflowError):
+        return matching_recorded_event()
+    if pivot_bar is None or pd.isna(pivot_bar):
+        pivot_bar = -1
+    try:
+        pivot_index = int(float(pivot_bar))
+    except (TypeError, ValueError, OverflowError):
+        # Older trade ledgers do not persist a pivot bar. Recover it from the
+        # exact source wick instead of dropping an otherwise recorded sweep.
+        pivot_index = -1
+    if not np.isfinite(level_value):
+        return matching_recorded_event()
+    wick_name = "low" if side == "low" else "high"
+    wick_values = bars[wick_name].to_numpy(dtype=float)
+    swept_wick = wick_values[origin_bar]
+    crosses_level = swept_wick <= level_value if side == "low" else swept_wick >= level_value
+    if not crosses_level:
+        return matching_recorded_event()
+    pivot_is_exact = 0 <= pivot_index < origin_bar and np.isclose(
+        wick_values[pivot_index], level_value, atol=1e-8, rtol=0.0
+    )
+    if not pivot_is_exact:
+        prior_wicks = np.flatnonzero(
+            np.isclose(wick_values[:origin_bar], level_value, atol=1e-8, rtol=0.0)
+        )
+        if not len(prior_wicks):
+            return matching_recorded_event()
+        pivot_index = int(prior_wicks[-1])
+    # Anchor the horizontal level to the actual wick values at both endpoints.
+    # A nearby pivot timestamp or a tolerance-based match can otherwise leave
+    # an orange sweep line visibly floating beside its source candle.
+    level_value = float(wick_values[pivot_index])
+    event_time = pd.Timestamp(bars.index[origin_bar])
+    pivot_time = pd.Timestamp(bars.index[pivot_index])
+    timeframe_by_code = {
+        1: "M1",
+        3: "M3",
+        5: "M5",
+        10: "M10",
+        15: "M15",
+        30: "M30",
+        60: "H1",
+        240: "H4",
+        1440: "D1",
+    }
+    if timeframe_code is None or pd.isna(timeframe_code):
+        timeframe_code = 1
+    try:
+        timeframe = timeframe_by_code.get(int(float(timeframe_code)), "M1")
+    except (TypeError, ValueError, OverflowError):
+        timeframe = "M1"
+    return SweepLine(
+        t0=pivot_time,
+        t1=event_time,
+        price=level_value,
+        side=side,
+        label=f"{timeframe} liquidity sweep",
+    )
+
+
 def _bar_pad(index: pd.DatetimeIndex) -> pd.Timedelta:
     """Extend sweep lines ~0.75 bars past each of the two candles."""
     if len(index) < 2:
@@ -130,28 +302,6 @@ def _align_origin_ts(ts: pd.Timestamp, index: pd.DatetimeIndex) -> pd.Timestamp:
     if out.tzinfo is None:
         return out.tz_localize(index.tz)
     return out.tz_convert(index.tz)
-
-
-def _bar_that_prints(
-    wick: pd.Series,
-    origin_i: int,
-    price: float,
-    swing_period: int,
-) -> int:
-    """Index of the candle whose wick is ``price``, or -1.
-
-    The structure timestamp can land on the confirmation bar. Search a few
-    bars around it for the candle that actually printed the level.
-    """
-    if origin_i < 0 or origin_i >= len(wick) or np.isnan(price):
-        return -1
-    lo = max(0, origin_i - swing_period)
-    hi = min(len(wick), origin_i + swing_period + 1)
-    values = wick.to_numpy(dtype=float)
-    for j in range(lo, hi):
-        if np.isfinite(values[j]) and np.isclose(values[j], price, atol=0.05, rtol=0.0):
-            return j
-    return -1
 
 
 def _swing_origins(
@@ -190,12 +340,10 @@ def _swing_origins(
             origin_i = i - swing_period
         if origin_i < 0 or origin_i >= len(wick):
             continue
-        # Swing rays represent the pivot candle's actual wick. This also keeps
-        # the ray price identical to the price used by the next-wick-crossing
-        # search below, even if a cached structure value differs slightly.
-        matched = _bar_that_prints(wick, origin_i, price, swing_period)
-        if matched >= 0:
-            origin_i = matched
+        # ``last_swing_*_time`` is the confirmed pivot's source candle, not its
+        # later confirmation candle. Keep that exact wick location: searching
+        # nearby candles for a similar price can attach the swing to the wrong
+        # candle when multiple wicks are close or equal.
         draw_px = float(wick.iloc[origin_i])
         if not np.isfinite(draw_px):
             continue
@@ -250,16 +398,42 @@ def _sweep_lines(
     label = "Liquidity sweep"
     events = sweeps[col].to_numpy(dtype=float)
     levels = sweeps[lvl_col].to_numpy(dtype=float)
+    wick = None
+    if side == "high":
+        wick = sweeps.get("sweep_high_wick")
+    else:
+        wick = sweeps.get("sweep_low_wick")
     lines: list[SweepLine] = []
     origin_i_arr = np.array([o[0] for o in origins], dtype=int)
+    origin_prices = np.array([o[1] for o in origins], dtype=float)
     for i, fired in enumerate(events):
         if fired != 1.0:
             continue
         price = float(levels[i])
         if np.isnan(price):
             continue
-        prior = origin_i_arr[origin_i_arr < i]
-        origin_i = int(prior[-1]) if len(prior) else i
+        prior_mask = (origin_i_arr < i) & np.isclose(origin_prices, price, atol=1e-8, rtol=0.0)
+        prior = origin_i_arr[prior_mask]
+        # A sweep must connect to the candle that printed the level it took.
+        # If that pivot is outside the available history, omit the misleading
+        # line instead of attaching it to an unrelated recent swing.
+        if not len(prior):
+            continue
+        origin_i = int(prior[-1])
+        actual_sweep_wick = (
+            float(wick.iloc[i])
+            if isinstance(wick, pd.Series) and pd.notna(wick.iloc[i])
+            else float("nan")
+        )
+        if np.isfinite(actual_sweep_wick):
+            crosses_level = (
+                actual_sweep_wick >= price if side == "high" else actual_sweep_wick <= price
+            )
+            if not crosses_level:
+                continue
+        # Use the exact source wick value after matching, keeping the line
+        # attached to the wick despite floating-point serialization noise.
+        price = float(origin_prices[np.flatnonzero(origin_i_arr == origin_i)[-1]])
         # Endpoints are the candles themselves. A time pad draws the X
         # between bars, off the wick the sweep took.
         t0 = pd.Timestamp(index[origin_i])

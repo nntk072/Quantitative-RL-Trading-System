@@ -138,6 +138,16 @@ class EntryStateMachine:
         if evidence.bar < candidate.origin_bar:
             raise ValueError("entry evidence bars must be monotonic")
 
+        # An armed trigger is still the same market opportunity. Do not let a
+        # policy keep an old setup alive indefinitely after it has left the
+        # candidate state; otherwise it can enter several bars after the
+        # named evidence disappeared.
+        age = evidence.bar - candidate.origin_bar
+        if age > self.candidate_max_age_bars:
+            self.candidate_expired += 1
+            self._clear()
+            return self.state
+
         opposing_evidence = evidence.direction == -candidate.direction and (
             evidence.evidence_detected or evidence.retest_confirmed
         )
@@ -147,11 +157,7 @@ class EntryStateMachine:
             return self.state
 
         if self.state == "CANDIDATE":
-            age = evidence.bar - candidate.origin_bar
-            if age > self.candidate_max_age_bars:
-                self.candidate_expired += 1
-                self._clear()
-            elif evidence.arm_condition and (
+            if evidence.arm_condition and (
                 not self.arm_requires_retest
                 or (evidence.retest_confirmed and evidence.direction == candidate.direction)
             ):

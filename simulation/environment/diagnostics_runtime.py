@@ -139,6 +139,10 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
                 setup_types.add("swing")
             active_idea_names = entry_idea_context(feat_row, direction)["ideas"]
             setup_types.update(active_idea_names)
+            if flagged(f"fvg_retest_{suffix}"):
+                setup_types.add("fvg_reaction")
+            if flagged(f"ifvg_retest_{suffix}") or flagged(f"ifvg_{suffix}_confirmed"):
+                setup_types.add("ifvg_reaction")
             if not isinstance(self.strategy, BaselineStrategy):
                 if any(
                     flagged(stem) for stem in (f"ifvg_{suffix}_active", f"ifvg_retest_{suffix}")
@@ -152,6 +156,46 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
 
         snapshot: dict[str, float] = {}
         if direction in (-1, 1):
+            if flagged(sweep_stem):
+                sweep_prefix = sweep_stem
+                for suffix in ("level", "wick", "ref_tf_code"):
+                    column = f"{sweep_prefix}_{suffix}"
+                    try:
+                        value = float(feat_row.get(column, np.nan))
+                    except (TypeError, ValueError):
+                        continue
+                    if np.isfinite(value):
+                        snapshot[column] = value
+                pivot_value = feat_row.get(f"{sweep_prefix}_pivot_time_ns", np.nan)
+                try:
+                    pivot_ns = int(float(pivot_value))
+                except (TypeError, ValueError, OverflowError):
+                    pivot_ns = 0
+                pivot_time: pd.Timestamp | None = None
+                if pivot_ns > 0:
+                    pivot_time = pd.Timestamp(pivot_ns, unit="ns", tz="UTC")
+                else:
+                    pivot_value = feat_row.get(
+                        f"last_swing_{'low' if direction == 1 else 'high'}_time"
+                    )
+                    if pivot_value is not None and not pd.isna(pivot_value):
+                        try:
+                            pivot_time = pd.Timestamp(pivot_value)
+                        except (TypeError, ValueError):
+                            pivot_time = None
+                if pivot_time is not None and self.bars is not None:
+                    index = pd.DatetimeIndex(self.bars.index)
+                    if index.tz is None and pivot_time.tzinfo is not None:
+                        pivot_time = pivot_time.tz_localize(None)
+                    elif index.tz is not None and pivot_time.tzinfo is None:
+                        pivot_time = pivot_time.tz_localize(index.tz)
+                    elif index.tz is not None:
+                        pivot_time = pivot_time.tz_convert(index.tz)
+                    pivot_bar = int(
+                        index.get_indexer(pd.DatetimeIndex([pivot_time]), method="nearest")[0]
+                    )
+                    if pivot_bar >= 0:
+                        snapshot[f"{sweep_prefix}_pivot_bar"] = float(pivot_bar)
             geometry_stems = (
                 f"ifvg_{suffix}_low",
                 f"ifvg_{suffix}_high",

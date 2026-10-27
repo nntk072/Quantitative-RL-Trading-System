@@ -46,6 +46,7 @@ from features.pipeline.session_stage import append_session_features
 from features.pipeline.structure_stage import append_structure_features
 from features.po3.entries import build_po3_phase_features
 from features.po3.fvg import build_fvg_zone_features
+from features.po3.fvg_detection import FVGConfig
 from features.po3.trigger_rules import detect_po3_entries
 from features.technical.indicators import (
     atr,
@@ -89,6 +90,9 @@ from market_data.transforms.resample import resample
 # v22: causal completed prior-NY levels use the configured NY session window.
 # v25: context-qualified order-block zones across the configured timeframe ladder.
 # v26: separate, overlapping PO3, Order Block, FVG-retest, and swing-retracement ideas.
+# v31: a confirmed IFVG body-close is a directional entry idea; cache identity
+#      also includes strategy.ifvg settings, including its close-through buffer,
+#      so confirmation thresholds cannot silently reuse stale feature values.
 
 
 _DEFAULT_HTF_TIMEFRAMES = ("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
@@ -440,9 +444,18 @@ def build_features(
             else:
                 fvg_tfs = ["M1", *[str(t) for t in htf_tfs]]
             fvg_blocks: dict[str, pd.DataFrame] = {}
+            configured_buffer_fraction = (
+                OmegaConf.select(cfg, "features.gap_reaction_buffer_fraction")
+                if cfg is not None
+                else None
+            )
+            reaction_buffer_fraction = float(configured_buffer_fraction or 0.1)
             for tf in fvg_tfs:
                 tf_bars = primary_tf_bars(str(tf))
-                fvg_blocks[str(tf)] = build_fvg_zone_features(tf_bars)
+                fvg_blocks[str(tf)] = build_fvg_zone_features(
+                    tf_bars,
+                    fvg_config=FVGConfig(reaction_buffer_fraction=reaction_buffer_fraction),
+                )
             feat = align_blocks(feat, fvg_blocks)
             # Zone prices and the retest flag must stay raw. The distance
             # columns above are normalised with the rest of the matrix.

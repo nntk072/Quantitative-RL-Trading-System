@@ -21,6 +21,8 @@ from evaluation.plotting.chart_levels import (
 from evaluation.plotting.overlay_events import OverlayEvents
 from evaluation.reporting.trade_note import pretty_ref
 from features.context.swing_retracement import SWING_LEVELS, level_token
+from features.technical.structure import TIMEFRAME_CONFIG, structure_levels
+from market_data.transforms.resample import resample
 from trading.orders.levels import DEVIATION_KS
 
 _ENTRY_LINE = "#546e7a"
@@ -159,10 +161,86 @@ def _feature_zones(
                 for side in ("bull", "bear"):
                     selected.append({"family": family, "timeframe": tf, "side": side})
 
+    # A candidate can be triggered a few bars after its setup signal. Preserve
+    # its IFVG on the chart even when the signal bar no longer has an active
+    # entry-idea flag.
+    if not selected:
+        setup_types = parse(open_row.get("entry_setup_types"), ())
+        setup_types = set(setup_types) if isinstance(setup_types, (list, tuple, set)) else set()
+        if "fvg_retest" in setup_types:
+            direction_value = open_row.get("direction", 0)
+            try:
+                long_trade = float(direction_value) > 0.0
+            except (TypeError, ValueError):
+                long_trade = str(direction_value).lower() in {"long", "buy", "1"}
+            side = "bull" if long_trade else "bear"
+            snapshot = parse(open_row.get("entry_setup_levels"), {})
+            origin_time = open_row.get("entry_origin_time")
+            if (origin_time is None or pd.isna(origin_time)) and isinstance(features, pd.DataFrame):
+                origin_bar_value = open_row.get("entry_origin_bar")
+                try:
+                    origin_bar = (
+                        int(float(origin_bar_value))
+                        if origin_bar_value is not None and pd.notna(origin_bar_value)
+                        else -1
+                    )
+                except (TypeError, ValueError, OverflowError):
+                    origin_bar = -1
+                if 0 <= origin_bar < len(features.index):
+                    origin_time = features.index[origin_bar]
+            try:
+                origin_time_ns = (
+                    int(pd.Timestamp(origin_time).value)
+                    if origin_time is not None and not pd.isna(origin_time)
+                    else None
+                )
+            except (TypeError, ValueError, OverflowError):
+                origin_time_ns = None
+            if isinstance(snapshot, Mapping):
+                for timeframe in ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"):
+                    prefix = "" if timeframe == "M1" else f"{timeframe}_"
+                    low = snapshot.get(f"{prefix}ifvg_{side}_low")
+                    high = snapshot.get(f"{prefix}ifvg_{side}_high")
+                    if low is not None and high is not None and pd.notna(low) and pd.notna(high):
+                        selected.append(
+                            {
+                                "idea": "fvg_retest",
+                                "family": "ifvg",
+                                "timeframe": timeframe,
+                                "side": side,
+                                "low": low,
+                                "high": high,
+                                "start_time_ns": origin_time_ns,
+                            }
+                        )
+            if not selected:
+                low = open_row.get("ifvg_zone_low")
+                high = open_row.get("ifvg_zone_high")
+                try:
+                    if (
+                        low is not None
+                        and high is not None
+                        and np.isfinite(float(low))
+                        and np.isfinite(float(high))
+                    ):
+                        selected.append(
+                            {
+                                "idea": "fvg_retest",
+                                "family": "ifvg",
+                                "timeframe": "M1",
+                                "side": side,
+                                "low": float(low),
+                                "high": float(high),
+                                "start_time_ns": origin_time_ns,
+                            }
+                        )
+                except (TypeError, ValueError):
+                    pass
+
     labels = {
         "ob": ("Order Block", "#2e7d32"),
-        "fvg": ("Fair Value Gap", "#1976d2"),
-        "ifvg": ("Inverse Fair Value Gap", "#ef6c00"),
+        "fvg": ("FVG", "#1976d2"),
+        "ifvg": ("IFVG", "#ef6c00"),
     }
     zones: list[ZoneBand] = []
     index = pd.DatetimeIndex(aligned.index)
@@ -258,7 +336,13 @@ def _feature_zones(
             color = "#c62828"
         idea = str(item.get("idea", ""))
         idea_prefix = (
-            "PO3 · " if idea == "po3" else f"{idea.replace('_', ' ').upper()} · " if idea else ""
+            "PO3 · "
+            if idea == "po3"
+            else "FVG/IFVG · "
+            if idea == "fvg_retest"
+            else f"{idea.replace('_', ' ').upper()} · "
+            if idea
+            else ""
         )
         zones.append(
             ZoneBand(
@@ -278,21 +362,65 @@ def _feature_swing_segments(
     window: pd.DataFrame,
     timeframes: tuple[str, ...],
     lower_timeframe_swings: tuple[object, ...] = (),
+    bars: pd.DataFrame | None = None,
 ) -> list[LevelSeg]:
-    """Draw selected aligned MTF swing levels, preferring lower TF duplicates."""
+    """Draw selected MTF swings from their actual source wick candles.
+
+    Aligned feature values only say when an MTF level became available. They
+    do not identify the pivot candle, so using the first visible feature row as
+    the line origin makes levels appear to float in space. Rebuild the small
+    structure trace from the supplied M1 bars, map each pivot to the M1 wick
+    inside its source timeframe candle, and omit pivots outside the chart.
+    """
     ladder = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
+    durations = {
+        "M3": pd.Timedelta(minutes=3),
+        "M5": pd.Timedelta(minutes=5),
+        "M10": pd.Timedelta(minutes=10),
+        "M15": pd.Timedelta(minutes=15),
+        "M30": pd.Timedelta(minutes=30),
+        "H1": pd.Timedelta(hours=1),
+        "H4": pd.Timedelta(hours=4),
+        "D1": pd.Timedelta(days=1),
+    }
     rank = {timeframe: index for index, timeframe in enumerate(ladder)}
     aligned = features.reindex(window.index)
+    if bars is None or bars.empty or window.empty:
+        return []
     segments: list[LevelSeg] = []
     for timeframe in sorted(
         {str(value).upper() for value in timeframes if str(value).upper() != "M1"},
         key=lambda value: rank.get(value, len(rank)),
     ):
+        config = TIMEFRAME_CONFIG.get(timeframe)
+        duration = durations.get(timeframe)
+        if config is None or duration is None:
+            continue
+        source_bars = resample(bars, timeframe)  # type: ignore[arg-type]
+        if source_bars.empty:
+            continue
+        source_levels = structure_levels(
+            source_bars,
+            swing_period=int(config["left"]),
+            atr_mult=float(config["atr_mult"]),
+        )
         prefix = f"{timeframe}_"
         for side, color in (("high", "#8e24aa"), ("low", "#00838f")):
             column = f"{prefix}last_swing_{side}"
             if column not in aligned.columns:
                 continue
+            source_price_column = f"last_swing_{side}"
+            source_time_column = f"last_swing_{side}_time"
+            source_prices = pd.to_numeric(
+                source_levels[source_price_column], errors="coerce"
+            ).to_numpy(dtype=float)
+            source_times = source_levels[source_time_column]
+            changes = np.flatnonzero(
+                source_levels[source_price_column]
+                .ne(source_levels[source_price_column].shift())
+                .to_numpy()
+                & np.isfinite(source_prices)
+            )
             values = pd.to_numeric(aligned[column], errors="coerce").to_numpy(dtype=float)
             start: int | None = None
             current: float | None = None
@@ -302,8 +430,50 @@ def _feature_swing_segments(
                 )
                 if value != current:
                     if start is not None and current is not None:
-                        t0 = pd.Timestamp(aligned.index[start])
                         t1 = pd.Timestamp(aligned.index[max(start, idx - 1)])
+                        visible_start = pd.Timestamp(aligned.index[start])
+                        matching_changes = [
+                            source_i
+                            for source_i in changes
+                            if source_prices[source_i] == current
+                            and pd.Timestamp(source_levels.index[source_i]) <= visible_start
+                        ]
+                        if not matching_changes:
+                            start = idx if value is not None else None
+                            current = value
+                            continue
+                        source_i = matching_changes[-1]
+                        pivot_time = source_times.iloc[source_i]
+                        if pd.isna(pivot_time):
+                            start = idx if value is not None else None
+                            current = value
+                            continue
+                        pivot_time = pd.Timestamp(pivot_time)
+                        source_bucket = bars.loc[
+                            (bars.index >= pivot_time) & (bars.index < pivot_time + duration)
+                        ]
+                        wick_column = "high" if side == "high" else "low"
+                        if source_bucket.empty:
+                            start = idx if value is not None else None
+                            current = value
+                            continue
+                        wick_values = pd.to_numeric(source_bucket[wick_column], errors="coerce")
+                        exact_wicks = source_bucket.loc[
+                            np.isclose(
+                                wick_values.to_numpy(dtype=float), current, atol=1e-8, rtol=0.0
+                            )
+                        ]
+                        if exact_wicks.empty:
+                            start = idx if value is not None else None
+                            current = value
+                            continue
+                        t0 = pd.Timestamp(exact_wicks.index[0])
+                        chart_start = pd.Timestamp(window.index[0])
+                        chart_end = pd.Timestamp(window.index[-1])
+                        if t0 < chart_start or t0 > chart_end or t1 <= t0:
+                            start = idx if value is not None else None
+                            current = value
+                            continue
                         overlaps_lower = any(
                             existing.label.endswith(f"Swing {side.title()}")
                             and max(t0, existing.t0) <= min(t1, existing.t1)
@@ -326,6 +496,7 @@ def _feature_swing_segments(
                                     t1=t1,
                                     color=color,
                                     linestyle="--",
+                                    mark=t0,
                                 )
                             )
                     start = idx if value is not None else None
@@ -689,7 +860,7 @@ def order_levels(
         lower_swings = (
             tuple(events.swings) if "M1" in {str(tf).upper() for tf in swing_timeframes} else ()
         )
-        segs.extend(_feature_swing_segments(features, window, swing_timeframes, lower_swings))
+        segs.extend(_feature_swing_segments(features, window, swing_timeframes, lower_swings, bars))
         segs.extend(
             _retracement_segments(
                 features,

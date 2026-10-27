@@ -15,10 +15,13 @@ class FVGConfig:
         Minimum price imbalance required to count as FVG (in price units).
     lookback_bars : int
         Number of bars to look back for FVG detection.
+    reaction_buffer_fraction : float
+        Follow-through close buffer as a fraction of the gap height.
     """
 
     min_imbalance_pts: float = 0.0
     lookback_bars: int = 3
+    reaction_buffer_fraction: float = 0.1
 
 
 def detect_fvg(

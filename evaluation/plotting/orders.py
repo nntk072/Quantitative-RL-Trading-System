@@ -292,7 +292,7 @@ def _per_trade_equity(
     # Trades can combine timestamps emitted by different market-data paths,
     # some naive and some timezone-aware. Normalize them before constructing
     # the index so report export remains robust across both paths.
-    times = pd.to_datetime([c["time"] for _, c in pairs], utc=True)
+    times = pd.to_datetime([c["time"] for _, c in pairs], utc=True, format="mixed")
     vals = np.empty(len(pairs), dtype=float)
     need_fallback = False
     for i, (_, close_row) in enumerate(pairs):
@@ -555,7 +555,7 @@ def plot_per_trade_orders(
     secondary_bars : Optional US500 (or correlated) bars for SMT lines.
     """
 
-    from evaluation.reporting.trade_note import build_trade_note
+    from evaluation.reporting.trade_note import build_trade_plot_note
 
     from .chart_indicators import (
         break_overlay_gaps,
@@ -571,21 +571,36 @@ def plot_per_trade_orders(
     )
     from .order_chart import draw_order_levels_mpl
     from .order_window import _session_end_positions, prepare_order_chart
-    from .overlay_events import confirmed_pivots
+    from .overlay_events import candidate_sweep_line, confirmed_pivots
 
     orders_dir = Path(orders_dir)
     orders_dir.mkdir(parents=True, exist_ok=True)
+    trades = trades.copy()
 
     # Normalize event and tick timestamps to the candle index timezone before
     # creating markers or captions. R1 ledgers store tick instants in UTC while
     # their minute bars are in the configured local market timezone.
     if isinstance(bars.index, pd.DatetimeIndex) and bars.index.tz is not None:
-        trades = trades.copy()
         for column in ("time", "actual_tick_time", "fill_time", "effective_time"):
             if column not in trades.columns:
                 continue
             timestamps = pd.to_datetime(trades[column], errors="coerce", utc=True)
             trades[column] = timestamps.dt.tz_convert(bars.index.tz)
+
+    # Older ledgers recorded the candidate's bar but not its timestamp. Recover
+    # the source candle directly from the run's bar index so the chart caption
+    # can distinguish setup time from the later policy trigger.
+    if "entry_origin_time" not in trades.columns:
+        trades["entry_origin_time"] = pd.NaT
+    if {"type", "entry_origin_bar"}.issubset(trades.columns):
+        open_rows = trades["type"].astype(str).eq("open")
+        origin_bars = pd.to_numeric(trades["entry_origin_bar"], errors="coerce")
+        for row_index in trades.index[open_rows & origin_bars.notna()]:
+            if pd.notna(trades.at[row_index, "entry_origin_time"]):
+                continue
+            origin_bar = int(float(cast(Any, origin_bars.at[row_index])))
+            if 0 <= origin_bar < len(bars.index):
+                trades.at[row_index, "entry_origin_time"] = bars.index[origin_bar]
 
     pairs = _pair_trades(trades)
     if not pairs:
@@ -644,6 +659,14 @@ def plot_per_trade_orders(
         t_close = prepared.t_close
         close_row_for_plot = close_row.copy()
         close_row_for_plot["time"] = t_close
+        selected_sweep = candidate_sweep_line(bars, open_row, features, events)
+        if selected_sweep is None or not (
+            window.index[0] <= selected_sweep.t0 <= window.index[-1]
+            and window.index[0] <= selected_sweep.t1 <= window.index[-1]
+        ):
+            events.sweeps = []
+        else:
+            events.sweeps = [selected_sweep]
         overlays = break_overlay_gaps(overlays)
 
         direction = int(open_row["direction"]) if pd.notna(open_row.get("direction")) else 0
@@ -711,7 +734,9 @@ def plot_per_trade_orders(
                 label="M1 EMA 50",
                 zorder=3,
             )
-        ema_colors = {9: "#00897b", 21: "#6a1b9a", 50: "#0066cc", 200: "#ef6c00"}
+        # Keep the chart readable: the feature set retains all EMA periods,
+        # while trade charts show only the two requested context lines.
+        ema_colors = {21: "#6a1b9a", 50: "#0066cc"}
         for timeframe in ema_timeframes:
             tf = str(timeframe).upper()
             for period, color in ema_colors.items():
@@ -750,7 +775,6 @@ def plot_per_trade_orders(
 
         # Formatting
         ax_price.set_ylabel("Price")
-        ax_price.legend(loc="upper left", fontsize=8)
         ax_price.grid(True, alpha=0.3)
 
         # Format x-axis in the bars' own timezone. Use month/day when the
@@ -762,70 +786,65 @@ def plot_per_trade_orders(
         plt.setp(ax_price.xaxis.get_majorticklabels(), rotation=45, ha="right")
 
         # --- Bottom panel: MACD (left) + RSI (right) ---
-        draw_macd_rsi_mpl(ax_osc, window, overlays)
+        ax_rsi = draw_macd_rsi_mpl(ax_osc, window, overlays)
+        legend_handles: list[Any] = []
+        legend_labels: list[str] = []
+        for legend_axis in (ax_price, ax_osc, ax_rsi):
+            handles, labels = legend_axis.get_legend_handles_labels()
+            for handle, label in zip(handles, labels, strict=False):
+                if label and not label.startswith("_") and label not in legend_labels:
+                    legend_handles.append(handle)
+                    legend_labels.append(label)
+            legend = legend_axis.get_legend()
+            if legend is not None:
+                legend.remove()
+        if legend_handles:
+            fig.legend(
+                legend_handles,
+                legend_labels,
+                loc="lower center",
+                bbox_to_anchor=(0.5, 0.015),
+                ncol=min(6, len(legend_labels)),
+                fontsize=7,
+                frameon=True,
+            )
         ax_osc.set_xlabel("Time (M1)")
         ax_osc.xaxis.set_major_formatter(mdates.DateFormatter(date_fmt, tz=axis_tz))
         ax_osc.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=4, maxticks=12))
         plt.setp(ax_osc.xaxis.get_majorticklabels(), rotation=45, ha="right")
 
-        # --- Trade note below both subplots ---
-        duration_mins = int((t_close - t_open).total_seconds() / 60)
-        duration_secs = int((t_close - t_open).total_seconds() % 60)
+        # --- Compact trade note inside the price panel ---
         lots_val = float(open_row.get("lots", 1.0)) if pd.notna(open_row.get("lots")) else 1.0
-
-        # Reconciliation: recompute PnL from the entry/exit prices shown on
-        # this chart and compare to the logged PnL. A mismatch flags a
-        # pairing bug or a stale/fallback exit price rather than a "weird"
-        # strategy result.
-        pnl_calc = _position_pnl_from_fills(
-            position_events, direction, metrics.entry_price, lots_val, contract_size
-        )
         close_reason_detail = (
             str(close_row.get("reason")) if pd.notna(close_row.get("reason")) else close_type
         )
 
-        note_lines = build_trade_note(
+        note_lines = build_trade_plot_note(
             open_row,
             close_row,
             entry_price=metrics.entry_price,
             exit_price=metrics.exit_price,
             direction=direction,
             pnl=pnl,
-            pnl_calc=pnl_calc,
-            duration_mins=duration_mins,
-            duration_secs=duration_secs,
             lots=lots_val,
             close_reason_detail=close_reason_detail,
-            extra_notes=levels.notes,
             position_events=position_events,
             signal_time=open_row.get("signal_time", open_row.get("decision_time")),
             entry_fill_time=open_row.get("actual_tick_time", open_row.get("time")),
         )
-        # The caption sits under the two subplots so it never covers candles.
-        # Its block height is derived from the real line count and the figure is
-        # grown to fit: with a fixed note_top/0.028 step, 6+ note lines spilled
-        # to y<0, note_bottom clamped to 0, and tight_layout reserved no room --
-        # so bbox_inches="tight" pulled the note onto the rotated x tick labels.
-        line_in = _NOTE_FONT_PT * 1.35 / 72.0
-        n_note_lines = len(note_lines)
-        note_h_in = n_note_lines * line_in + 0.22
-        fig_h_in = max(9.0, note_h_in + 7.0)
-        fig.set_size_inches(fig.get_figwidth(), fig_h_in)
-
-        note_top = note_h_in / fig_h_in
-        for i, line in enumerate(note_lines):
-            fig.text(
-                0.012,
-                note_top - i * line_in / fig_h_in,
-                line,
-                fontsize=_NOTE_FONT_PT,
-                family="monospace",
-                ha="left",
-                va="top",
-            )
-        # Reserve the note band (plus a gap) and a little left padding so the
-        # 45-degree tick labels cannot reach the figure edge.
-        note_bottom = min(0.9, note_top + 0.006)
+        ax_price.text(
+            0.99,
+            0.985,
+            "\n".join(note_lines),
+            transform=ax_price.transAxes,
+            fontsize=_NOTE_FONT_PT,
+            family="monospace",
+            ha="right",
+            va="top",
+            zorder=20,
+            clip_on=True,
+            bbox={"boxstyle": "round,pad=0.35", "facecolor": "white", "alpha": 0.9},
+        )
 
         # --- Title ---
         dir_label = "Long" if direction == 1 else "Short"
@@ -840,7 +859,7 @@ def plot_per_trade_orders(
         # Save
         fname = _trade_filename(seq_i + 1, open_row, close_row_for_plot, "png", pnl_override=pnl)
         try:
-            fig.tight_layout(rect=(0.008, note_bottom, 0.995, 0.96))
+            fig.tight_layout(rect=(0.008, 0.14, 0.995, 0.94))
             fig.savefig(str(orders_dir / fname), dpi=dpi, bbox_inches="tight")
             plt.close(fig)
         except Exception as exc:
