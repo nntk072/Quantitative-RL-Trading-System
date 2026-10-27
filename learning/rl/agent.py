@@ -677,5 +677,23 @@ def _finalize_cuda_policy(model: Any, device: str | torch.device | None) -> Any:
     dev = device if isinstance(device, torch.device) else torch.device(device)
     if dev.type != "cuda":
         return model
-    enable_extractor_autocast(model.policy.features_extractor, get_autocast_dtype(dev))
+    policy = getattr(model, "policy", None)
+    if policy is None:
+        return model
+
+    # PPO exposes one extractor on the policy. SAC keeps separate feature
+    # extractors on its actor, critic, and target critic instead.
+    extractors = [getattr(policy, "features_extractor", None)]
+    for component_name in ("actor", "critic", "critic_target"):
+        component = getattr(policy, component_name, None)
+        if component is not None:
+            extractors.append(getattr(component, "features_extractor", None))
+
+    autocast_dtype = get_autocast_dtype(dev)
+    seen_extractors: set[int] = set()
+    for extractor in extractors:
+        if extractor is None or id(extractor) in seen_extractors:
+            continue
+        seen_extractors.add(id(extractor))
+        enable_extractor_autocast(extractor, autocast_dtype)
     return model

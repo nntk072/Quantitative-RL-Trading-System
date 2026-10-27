@@ -83,6 +83,37 @@ class TestSACAgentBuild:
 
         assert isinstance(model, SAC)
 
+    def test_cuda_finalization_wraps_sac_extractors(
+        self, cfg: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """SAC has actor/critic extractors instead of one policy extractor."""
+        import torch
+
+        from learning.rl import agent
+
+        model = build_agent(make_env(), cfg, algo="sac", device="cpu")
+        assert model.policy.features_extractor is None
+
+        observed: list[tuple[Any, torch.dtype | None]] = []
+
+        def record_extractor(extractor: Any, dtype: torch.dtype | None) -> None:
+            observed.append((extractor, dtype))
+
+        monkeypatch.setattr(agent, "get_autocast_dtype", lambda _device: torch.bfloat16)
+        monkeypatch.setattr(agent, "enable_extractor_autocast", record_extractor)
+
+        assert agent._finalize_cuda_policy(model, "cuda") is model
+
+        policy = model.policy
+        expected = [
+            policy.actor.features_extractor,
+            policy.critic.features_extractor,
+            policy.critic_target.features_extractor,
+        ]
+        unique_expected = list({id(extractor): extractor for extractor in expected}.values())
+        assert [extractor for extractor, _dtype in observed] == unique_expected
+        assert all(dtype == torch.bfloat16 for _extractor, dtype in observed)
+
     def test_sac_rejects_discrete_action_space(self, cfg: Any) -> None:
         """SAC requires a continuous Box action space."""
         env = make_env(continuous=False)
