@@ -501,6 +501,9 @@ agent:
     mtf_reasoning: [256, 128]
   use_narrative: false        # true to condition on the VAE narrative embedding
 
+compute:
+  cudnn_benchmark: true # shape autotuning; disable when variable MTF suffix shapes make it costly
+
 device: "auto"
 
 quality_diagnostics:

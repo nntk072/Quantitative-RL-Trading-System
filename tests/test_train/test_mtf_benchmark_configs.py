@@ -21,8 +21,13 @@ def test_exact_environment_config_preserves_resolved_ppo_geometry(monkeypatch) -
         algo="ppo",
     )
     scale_call: dict[str, object] = {}
+    configure_call: dict[str, object] = {}
     monkeypatch.setattr(configuration_stage, "parse_train_args", lambda: args)
-    monkeypatch.setattr(configuration_stage, "configure_accelerator_for_training", lambda _: None)
+    monkeypatch.setattr(
+        configuration_stage,
+        "configure_accelerator_for_training",
+        lambda device, **kwargs: configure_call.update(device=device, **kwargs),
+    )
     monkeypatch.setattr(configuration_stage, "_setup_rngs", lambda _: None)
     monkeypatch.setattr(configuration_stage, "_validate_q5_resume_state", lambda *_, **__: None)
     monkeypatch.setattr(configuration_stage, "get_device", lambda _: torch.device("cpu"))
@@ -45,6 +50,7 @@ def test_exact_environment_config_preserves_resolved_ppo_geometry(monkeypatch) -
         monkeypatch.setattr(configuration_stage, "scale_training_cfg", record_scale)
         resolved = configuration_stage._prepare_training_configuration().cfg
 
+        assert configure_call["cudnn_benchmark"] is False
         assert scale_call["preserve_ppo_geometry"] is True
         assert resolved.quality_execution.requested_n_envs == 8
         assert resolved.quality_execution.effective_n_envs == 8

@@ -1,6 +1,9 @@
 # Matched Variant D benchmark: exact 2M steps and 8 parallel environments.
 # Its only policy treatment difference from Variant C is thesis-conditioned
 # execution through the existing thesis_conditioned_v1 distribution.
+compute:
+  cudnn_benchmark: false # matched runtime setting; keep C and D on the same cuDNN mode
+
 env:
   n_envs: 8
   strategy_actions: true

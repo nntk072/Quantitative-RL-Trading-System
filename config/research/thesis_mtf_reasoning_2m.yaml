@@ -1,5 +1,8 @@
 # Matched Variant C benchmark: exact 2M steps and 8 parallel environments.
 # This overlay is intentionally separate from the general research config.
+compute:
+  cudnn_benchmark: false # measured GH200 setting for the variable-length MTF TCN workload
+
 env:
   n_envs: 8
   strategy_actions: true

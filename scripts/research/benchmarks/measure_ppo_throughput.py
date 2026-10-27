@@ -323,7 +323,9 @@ def _train_probe(
     # This probe always instantiates the shared-bundle backend; make the
     # hardware scaler use the same worker memory estimate as that backend.
     cfg.env.data_source = "bundle"
-    configure_cuda_for_training()
+    configure_cuda_for_training(
+        cudnn_benchmark=bool(cfg.get("compute", {}).get("cudnn_benchmark", True))
+    )
     scale_training_cfg(cfg, torch.device(device), arch)
     if matmul_precision is not None:
         torch.set_float32_matmul_precision(matmul_precision)

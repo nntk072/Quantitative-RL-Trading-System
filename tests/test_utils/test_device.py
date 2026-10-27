@@ -250,8 +250,10 @@ def test_autocast_dtype_tracks_device_capabilities(
     assert str(get_autocast_dtype("cuda:0")) == expected
 
 
+@pytest.mark.parametrize("cudnn_benchmark", [True, False])
 def test_configure_cuda_enables_nvidia_tf32_and_allocator(
     monkeypatch: pytest.MonkeyPatch,
+    cudnn_benchmark: bool,
 ) -> None:
     from types import SimpleNamespace
 
@@ -280,11 +282,11 @@ def test_configure_cuda_enables_nvidia_tf32_and_allocator(
             compute_capability=(8, 0),
         ),
     )
-    configure_cuda_for_training()
+    configure_cuda_for_training(cudnn_benchmark=cudnn_benchmark)
     assert __import__("os").environ["PYTORCH_CUDA_ALLOC_CONF"] == "expandable_segments:True"
     assert cuda_matmul.allow_tf32 is True
     assert cudnn.allow_tf32 is True
-    assert cudnn.benchmark is True
+    assert cudnn.benchmark is cudnn_benchmark
 
 
 def test_configure_rocm_skips_cuda_allocator_and_tf32(

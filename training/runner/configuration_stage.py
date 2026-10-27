@@ -32,7 +32,10 @@ def _prepare_training_configuration() -> TrainingConfigurationStage:
         )
 
     cfg = load_merged_config(args)
-    configure_accelerator_for_training(cfg.get("device"))
+    configure_accelerator_for_training(
+        cfg.get("device"),
+        cudnn_benchmark=bool(cfg.get("compute", {}).get("cudnn_benchmark", True)),
+    )
     _setup_rngs(args.seed)
     try:
         _validate_q5_resume_state(cfg, resume_checkpoint=args.resume_checkpoint)

@@ -49,7 +49,9 @@ def get_autocast_context(
     return torch.autocast(device_type="cuda", dtype=chosen_dtype, enabled=True)
 
 
-def configure_accelerator_for_training(device_hint: str | torch.device | None = None) -> None:
+def configure_accelerator_for_training(
+    device_hint: str | torch.device | None = None, *, cudnn_benchmark: bool = True
+) -> None:
     """Configure allocator and backend kernels before PPO's first GPU allocation."""
     if isinstance(device_hint, torch.device) and device_hint.type == "cpu":
         return
@@ -68,12 +70,14 @@ def configure_accelerator_for_training(device_hint: str | torch.device | None = 
             torch.backends.cuda.matmul.allow_tf32 = True
             torch.backends.cudnn.allow_tf32 = True
             torch.set_float32_matmul_precision("high")
-    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = bool(cudnn_benchmark)
 
 
-def configure_cuda_for_training(device_hint: str | torch.device | None = None) -> None:
+def configure_cuda_for_training(
+    device_hint: str | torch.device | None = None, *, cudnn_benchmark: bool = True
+) -> None:
     """Backward-compatible alias for accelerator-wide training setup."""
-    configure_accelerator_for_training(device_hint)
+    configure_accelerator_for_training(device_hint, cudnn_benchmark=cudnn_benchmark)
 
 
 __all__ = [
