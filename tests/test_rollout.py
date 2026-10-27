@@ -79,6 +79,32 @@ def _make_features(bars: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def test_evaluate_model_forwards_thesis_mode_to_the_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    received: dict[str, Any] = {}
+
+    class _CapturedEnvironmentConstruction(Exception):
+        pass
+
+    def capture_environment(**kwargs: Any) -> None:
+        received.update(kwargs)
+        raise _CapturedEnvironmentConstruction
+
+    monkeypatch.setattr("evaluation.rollout.model.TradingEnv", capture_environment)
+    bars = _make_bars(20)
+
+    with pytest.raises(_CapturedEnvironmentConstruction):
+        evaluate_model(
+            _ScriptedModel({}),
+            bars=bars,
+            features=_make_features(bars),
+            thesis_actions=True,
+        )
+
+    assert received["thesis_actions"] is True
+
+
 def test_evaluate_model_produces_trades_and_valid_equity():
     """A model that enters/holds/exits repeatedly must produce real trades,
     not the flat 100k-equity/zero-trade result the hardcoded hold-stub gave.

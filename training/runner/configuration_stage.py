@@ -49,14 +49,14 @@ def _prepare_training_configuration() -> TrainingConfigurationStage:
     device = get_device(cfg.get("device"))
     requested_n_envs = int(cfg.env.n_envs)
     quality_variant = str(cfg.get("quality_variant_id", ""))
-    exact_n_envs = False
-    preserve_ppo_geometry = False
+    exact_n_envs = bool(cfg.get("quality_execution", {}).get("exact_n_envs", False))
+    preserve_ppo_geometry = exact_n_envs
     if quality_variant:
         from training.configuration.quality import quality_variant_resource_contract
 
         resource_contract = quality_variant_resource_contract(quality_variant)
-        exact_n_envs = bool(resource_contract.get("exact_n_envs", False))
-        preserve_ppo_geometry = exact_n_envs and "aggregate_rollout_steps" in resource_contract
+        exact_n_envs = exact_n_envs or bool(resource_contract.get("exact_n_envs", False))
+        preserve_ppo_geometry = exact_n_envs
     cfg.quality_execution.requested_n_envs = requested_n_envs
     cfg.quality_execution.exact_n_envs = exact_n_envs
     scale_training_cfg(

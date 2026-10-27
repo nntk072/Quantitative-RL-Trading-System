@@ -246,6 +246,7 @@ if _SB3_AVAILABLE:
                 valid = masks[np.arange(len(masks)), thesis_ids] > 0.0
                 no_trade = thesis_ids == 0
                 trade_ids = thesis_ids[~no_trade]
+                trade_eligible_steps = masks[:, 1:].sum(axis=1) > 0
                 selected_ideas = {
                     THESIS_CANDIDATES[int(candidate_id)].idea for candidate_id in trade_ids
                 }
@@ -262,6 +263,11 @@ if _SB3_AVAILABLE:
                             else float("nan")
                         ),
                         "thesis/no_trade_rate": float(np.mean(no_trade)),
+                        "thesis/no_trade_rate_when_eligible": float(
+                            np.sum(no_trade & trade_eligible_steps)
+                            / max(1, int(np.sum(trade_eligible_steps)))
+                        ),
+                        "thesis/trade_eligible_step_rate": float(np.mean(trade_eligible_steps)),
                         "thesis/no_trade_count": float(np.sum(no_trade)),
                         "thesis/selected_trade_count": float(len(trade_ids)),
                         "thesis/selected_idea_count": float(len(selected_ideas)),

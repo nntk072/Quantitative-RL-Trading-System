@@ -45,6 +45,7 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
             "selection_by_timeframe": [],
             "selection_matrix": [],
             "execution_by_opened_thesis": [],
+            "performance_by_idea_timeframe": [],
         }
     else:
         selected = pd.to_numeric(decisions["thesis_candidate_id"], errors="raise").astype(int)
@@ -127,17 +128,21 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
         matrix_rows: list[dict[str, Any]] = []
         for idea in THESIS_IDEAS:
             idea_ids = {item.candidate_id for item in THESIS_CANDIDATES if item.idea == idea}
-            eligible_count = sum(len(values & idea_ids) for values in eligible_ids)
+            eligible_occurrences = sum(len(values & idea_ids) for values in eligible_ids)
+            eligible_steps = sum(bool(values & idea_ids) for values in eligible_ids)
             selected_count = int(
                 sum(THESIS_CANDIDATES[int(value)].idea == idea for value in selected_trade)
             )
             idea_rows.append(
                 {
                     "idea": idea,
-                    "eligible_count": eligible_count,
+                    "eligible_candidate_occurrences": eligible_occurrences,
+                    "eligible_steps": eligible_steps,
                     "selected_count": selected_count,
                     "selection_share": float(selected_count / max(1, len(selected_trade))),
-                    "selection_rate_given_eligible": float(selected_count / max(1, eligible_count)),
+                    "selection_rate_given_eligible_step": float(
+                        selected_count / max(1, eligible_steps)
+                    ),
                 }
             )
             for timeframe in THESIS_TIMEFRAMES:
@@ -146,7 +151,8 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
                     for item in THESIS_CANDIDATES
                     if item.idea == idea and item.setup_timeframe == timeframe
                 }
-                cell_eligible = sum(len(values & cell_ids) for values in eligible_ids)
+                cell_eligible_occurrences = sum(len(values & cell_ids) for values in eligible_ids)
+                cell_eligible_steps = sum(bool(values & cell_ids) for values in eligible_ids)
                 cell_selected = int(
                     sum(
                         THESIS_CANDIDATES[int(value)].idea == idea
@@ -158,10 +164,12 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
                     {
                         "idea": idea,
                         "timeframe": timeframe,
-                        "eligible_count": cell_eligible,
+                        "eligible_candidate_occurrences": cell_eligible_occurrences,
+                        "eligible_steps": cell_eligible_steps,
                         "selected_count": cell_selected,
-                        "selection_rate_given_eligible": float(
-                            cell_selected / max(1, cell_eligible)
+                        "selection_share": float(cell_selected / max(1, len(selected_trade))),
+                        "selection_rate_given_eligible_step": float(
+                            cell_selected / max(1, cell_eligible_steps)
                         ),
                     }
                 )
@@ -169,7 +177,8 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
             tf_ids = {
                 item.candidate_id for item in THESIS_CANDIDATES if item.setup_timeframe == timeframe
             }
-            eligible_count = sum(len(values & tf_ids) for values in eligible_ids)
+            eligible_occurrences = sum(len(values & tf_ids) for values in eligible_ids)
+            eligible_steps = sum(bool(values & tf_ids) for values in eligible_ids)
             selected_count = int(
                 sum(
                     THESIS_CANDIDATES[int(value)].setup_timeframe == timeframe
@@ -179,10 +188,13 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
             timeframe_rows.append(
                 {
                     "timeframe": timeframe,
-                    "eligible_count": eligible_count,
+                    "eligible_candidate_occurrences": eligible_occurrences,
+                    "eligible_steps": eligible_steps,
                     "selected_count": selected_count,
                     "selection_share": float(selected_count / max(1, len(selected_trade))),
-                    "selection_rate_given_eligible": float(selected_count / max(1, eligible_count)),
+                    "selection_rate_given_eligible_step": float(
+                        selected_count / max(1, eligible_steps)
+                    ),
                 }
             )
         decision_metrics.update(
@@ -331,6 +343,45 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
                     }
             execution_by_opened_thesis.append(summary)
     decision_metrics["execution_by_opened_thesis"] = execution_by_opened_thesis
+    performance_by_thesis: list[dict[str, Any]] = []
+    if not opens.empty and {"primary_idea", "primary_setup_timeframe"}.issubset(opens.columns):
+        for (idea, timeframe), group in opens.groupby(
+            ["primary_idea", "primary_setup_timeframe"], dropna=False, sort=True
+        ):
+            performance_row: dict[str, Any] = {
+                "idea": str(idea),
+                "setup_timeframe": str(timeframe),
+                "trade_count": int(len(group)),
+            }
+            pnl = pd.to_numeric(
+                group.get("position_net_pnl", pd.Series(index=group.index, dtype=float)),
+                errors="coerce",
+            ).dropna()
+            if not pnl.empty:
+                winners = pnl[pnl > 0.0]
+                losers = pnl[pnl < 0.0]
+                performance_row.update(
+                    {
+                        "completed_trade_count": int(len(pnl)),
+                        "net_pnl": float(pnl.sum()),
+                        "mean_pnl": float(pnl.mean()),
+                        "median_pnl": float(pnl.median()),
+                        "win_rate": float((pnl > 0.0).mean()),
+                        "profit_factor": (
+                            float(winners.sum() / abs(losers.sum())) if not losers.empty else None
+                        ),
+                    }
+                )
+            realized_r = pd.to_numeric(
+                group.get("position_realized_r", pd.Series(index=group.index, dtype=float)),
+                errors="coerce",
+            ).dropna()
+            if not realized_r.empty:
+                performance_row["mean_realized_r"] = float(realized_r.mean())
+                performance_row["median_realized_r"] = float(realized_r.median())
+                performance_row["realized_r_trade_count"] = int(len(realized_r))
+            performance_by_thesis.append(performance_row)
+    decision_metrics["performance_by_idea_timeframe"] = performance_by_thesis
     decision_metrics["structural_violations"] = {
         "sl_wrong_side": sl_side_violations,
         "sl_below_primary_timeframe": sl_timeframe_floor_violations,

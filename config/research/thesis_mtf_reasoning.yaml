@@ -6,6 +6,7 @@ env:
   agent_direction_control: false
 
 features:
+  include_strategy_state: true
   entry_ideas:
     enabled: true
 

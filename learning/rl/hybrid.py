@@ -563,20 +563,29 @@ class ThesisConditionedHybridBoxDistribution(SB3Distribution):
 
     def entropy(self) -> torch.Tensor:
         """Exact entropy of the hierarchical policy via the chain rule."""
-        if self.thesis is None or self.market_latent is None or self.log_std is None:
+        if (
+            self.thesis is None
+            or self.market_latent is None
+            or self.log_std is None
+            or self.mask is None
+        ):
             raise RuntimeError("call proba_distribution before evaluating entropy")
         batch = self.market_latent.shape[0]
-        count = THESIS_CATEGORY_COUNT
-        ids = torch.arange(count, device=self.market_latent.device).repeat(batch)
-        latent = self.market_latent.repeat_interleave(count, dim=0)
-        means, logits = self.actor.execution(latent, ids)
+        row_ids, thesis_ids = self.mask.nonzero(as_tuple=True)
+        means, logits = self.actor.execution(self.market_latent[row_ids], thesis_ids)
         normal = _normal_distribution(means, self.log_std.exp().expand_as(means))
-        conditional = cast(torch.Tensor, normal.entropy()).sum(dim=1).reshape(batch, count)  # type: ignore[no-untyped-call]
+        conditional = cast(torch.Tensor, normal.entropy()).sum(dim=1)  # type: ignore[no-untyped-call]
         for values in logits.values():
             dist = _categorical_distribution(values)
-            conditional = conditional + cast(torch.Tensor, dist.entropy()).reshape(batch, count)  # type: ignore[no-untyped-call]
-        probs = self.thesis.probs
-        return self.thesis_entropy() + (probs * conditional).sum(dim=1)
+            conditional = conditional + cast(
+                torch.Tensor,
+                dist.entropy(),  # type: ignore[no-untyped-call]
+            )
+        conditional_weight = self.thesis.probs[row_ids, thesis_ids] * conditional
+        conditional_by_row = conditional_weight.new_zeros(batch).index_add(
+            0, row_ids, conditional_weight
+        )
+        return self.thesis_entropy() + conditional_by_row
 
 
 class ThesisConditionedClampedStdMultiInputPolicy(HybridClampedStdMultiInputPolicy):

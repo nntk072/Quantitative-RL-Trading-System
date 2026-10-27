@@ -2,13 +2,19 @@
 
 ## Scope
 
-Variant D changes only the policy factorization. The reference is Variant C
-(`config/research/thesis_mtf_reasoning.yaml`, `thesis_hybrid_v1`); D uses
-`config/research/thesis_mtf_reasoning_conditioned.yaml` and
-`thesis_conditioned_v1`. Both use the same 109-candidate thesis catalog, mask,
+Variant D changes only the policy factorization. The matched 2M configs are
+Variant C (`config/research/thesis_mtf_reasoning_2m.yaml`,
+`thesis_hybrid_v1`) and D
+(`config/research/thesis_mtf_reasoning_conditioned_2m.yaml`,
+`thesis_conditioned_v1`). Both resolve to 2,000,000 timesteps, 8 environments,
+2,048 rollout steps, batch size 512, and 15 PPO epochs. Both use the same
+109-candidate thesis catalog, mask,
 NO_TRADE action, action/observation schemas, MTF encoder, reward, simulator,
 execution settings, and train/test partition. The D execution actor receives
 the market latent and the selected primary-thesis embedding.
+Both enable `features.include_strategy_state` because the configured
+`PO3IFVGStrategy` requires causal sweep, manipulation, distribution, and IFVG
+state columns at environment startup.
 
 Do not interpret a short learning smoke as an economic comparison. Its purpose
 is to verify valid PPO learning and usable diagnostic artifacts before a
@@ -31,9 +37,12 @@ separately authorized benchmark-length run.
 
 Each split should contain `thesis_decisions.csv`,
 `thesis_policy_metrics.json`, and selection tables by idea, timeframe, and
-idea-by-timeframe. The existing exporter remains responsible for equity,
-drawdown, trade, execution, and learning figures. Keep training and testing in
-their existing separate output folders.
+idea-by-timeframe. It also contains `thesis_performance_by_idea_timeframe.csv`,
+selection and performance heatmaps, and positions with primary-thesis and
+structural SL/TP provenance. Training output separately includes
+`learning_diagnostics.csv`, `thesis_activity.png`, and `thesis_entropy.png`.
+Keep rollout-time learning diagnostics separate from train/test replay
+diagnostics and keep training and testing in their existing output folders.
 
 The decision trace records the selected category, the eligible category IDs,
 mask-validity, thesis entropy, and execution coordinates. Trade-level checks
@@ -55,6 +64,9 @@ Before a benchmark-length run:
    checkpoint reload.
 6. Train/test reporting emits all eight decisive metrics; invalid choices and
    structural violations are exactly zero in both splits.
+
+The 2M overlays explicitly pin `quality_execution.exact_n_envs: true` so
+hardware-aware scaling cannot silently change the matched environment count.
 
 Economic superiority requires a matched, adequately trained comparison and
 uncertainty analysis. A passing implementation smoke is not evidence of

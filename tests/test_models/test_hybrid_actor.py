@@ -156,7 +156,50 @@ def test_thesis_conditioned_distribution_masks_and_conditions_execution() -> Non
     torch.autograd.backward(objective)
     assert actor.thesis_logits.weight.grad is not None
     assert actor.thesis_embedding.weight.grad is not None
+    assert actor.execution_body[0].weight.grad is not None
+    assert actor.continuous_mean.weight.grad is not None
+    assert actor.execution_categorical_logits["sl_mode"].weight.grad is not None
+    assert actor.execution_categorical_logits["exit"].weight.grad is not None
     assert torch.isfinite(actor.thesis_embedding.weight.grad).all()
+
+
+def test_thesis_conditioned_entropy_matches_full_category_reference() -> None:
+    torch.manual_seed(17)
+    coordinates = ("thesis", "risk", "sl_mode", "exit")
+    actor = ThesisConditionedActorHeads(8, coordinates, {"sl_mode": 0.1})
+    distribution = ThesisConditionedHybridBoxDistribution(actor, len(coordinates))
+    latent = torch.randn(3, 8)
+    thesis_logits = actor.thesis(latent)
+    masks = torch.zeros((3, THESIS_CATEGORY_COUNT), dtype=torch.float32)
+    masks[0, 0] = 1.0
+    masks[1, [0, 5]] = 1.0
+    masks[2, [0, 12, 31, 84]] = 1.0
+    log_std = torch.zeros(len(actor.continuous_indices))
+    distribution.proba_distribution(
+        latent,
+        log_std,
+        thesis_logits,
+        masks={"thesis": masks},
+    )
+
+    actual = distribution.entropy()
+    with torch.no_grad():
+        all_ids = torch.arange(THESIS_CATEGORY_COUNT).repeat(len(latent))
+        all_latent = latent.repeat_interleave(THESIS_CATEGORY_COUNT, dim=0)
+        means, logits = actor.execution(all_latent, all_ids)
+        normal = torch.distributions.Normal(means, log_std.exp().expand_as(means))
+        normal_entropy = normal.entropy()  # type: ignore[no-untyped-call]
+        conditional = normal_entropy.sum(dim=1)
+        for values in logits.values():
+            categorical = torch.distributions.Categorical(logits=values)
+            conditional += categorical.entropy()  # type: ignore[no-untyped-call]
+        conditional = conditional.reshape(len(latent), THESIS_CATEGORY_COUNT)
+        assert distribution.thesis is not None
+        probs = distribution.thesis.probs
+        reference = distribution.thesis_entropy() + (probs * conditional).sum(dim=1)
+
+    assert torch.allclose(actual, reference, atol=1e-6, rtol=1e-6)
+    assert torch.isfinite(actual).all()
 
 
 def test_thesis_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:

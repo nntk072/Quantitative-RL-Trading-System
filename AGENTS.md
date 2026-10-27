@@ -19,20 +19,26 @@ python market_data/commands/prepare.py       # raw CSV → parquet → features
 thesis-train train --mvp   # smoke test (30 days)
 
 # Local (implementation): scoped checks only
-uv run ruff format --check <touched paths>
-uv run ruff check <touched paths>
-uv run pytest <relevant test files> -q
+.venv/bin/ruff format --check <touched paths>  # ARM/GH200; use matching venv tools
+.venv/bin/ruff check <touched paths>
+.venv/bin/pytest <relevant test files> -q
 
 # Agent commit/push gate — REQUIRED (do not skip)
 # Format/lint/types MUST be full-tree (`.`). Never substitute path-scoped mypy/ruff.
-uv run ruff format --check .    # if fails: uv run ruff format . then re-check
-uv run ruff check .
-uv run mypy .                   # REQUIRED full tree — not mypy <touched paths>
-uv run pytest <relevant test paths> -q   # NOT tests/ -v — keep scoped
+.venv/bin/ruff format --check . # ARM/GH200; if needed: .venv/bin/ruff format .
+.venv/bin/ruff check .
+.venv/bin/mypy .                # REQUIRED full tree — not mypy <touched paths>
+.venv/bin/pytest <relevant test paths> -q # NOT tests/ -v — keep scoped
 
 # Full suite: GitHub CI / Orchestra phase 9 only (not agent default)
-# uv run pytest tests/ -v
+# .venv/bin/pytest tests/ -v
 ```
+
+On ARM64/GH200, use the active `.venv/bin` tools for Ruff, Mypy, and pytest.
+The login-host `uv` may be an x86-64 executable and fail with `Exec format
+error` inside an ARM allocation. Use `uv run` only when `command -v uv` points
+to a binary built for the compute node's architecture. Preserve the full-tree
+Ruff/Mypy requirements and scoped-pytest rule regardless of invocation style.
 
 Full rule: `.agents/rules/ci-verification.md` (all agents). Commit checklist:
 `.agents/rules/git-commit-rules.md`.

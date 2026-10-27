@@ -12,16 +12,27 @@ Two layers:
 Agents must **not** run `pytest tests/ -v` by default — it is too heavy. Prefer the
 smallest relevant test set for the change.
 
+## Architecture-aware tool invocation
+
+Use tools built for the compute node. On ARM64/GH200, run Ruff, Mypy, and pytest
+from `.venv/bin` (for example, `.venv/bin/ruff`, `.venv/bin/mypy`, and
+`.venv/bin/pytest`). On x86_64 use `.venv-x86/bin` equivalents, or `uv run`
+only when `command -v uv` resolves to a native x86_64 executable. The Triton
+login host may expose an x86_64 `uv` which fails with `Exec format error` on an
+ARM node. Verify `uname -m` and the tool binary before starting a gate. An
+architecture mismatch is an invocation failure, not a lint, type, or test
+result.
+
 ## Hard rule — agent commit / push
 
 **Do not** `git commit` or `git push` until this gate passes. If any step fails,
 fix and re-run; do not skip with `--no-verify` unless the user explicitly requests it.
 
 ```bash
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy .
-uv run pytest <relevant test paths> -q
+.venv/bin/ruff format --check .
+.venv/bin/ruff check .
+.venv/bin/mypy .
+.venv/bin/pytest <relevant test paths> -q
 ```
 
 **Full tree is mandatory for format / lint / types.** At commit/push you MUST run
@@ -31,9 +42,9 @@ path-scoped commands.
 
 | Forbidden at commit/push | Required instead |
 |--------------------------|------------------|
-| `uv run mypy <touched package>` or `mypy <touched files>` | `uv run mypy .` |
-| `uv run ruff check <touched paths>` only | `uv run ruff check .` |
-| `uv run ruff format --check <touched paths>` only | `uv run ruff format --check .` |
+| `mypy <touched files>` | `.venv/bin/mypy .` on ARM; matching full-tree Mypy on other architectures |
+| `ruff check <touched paths>` only | `.venv/bin/ruff check .` on ARM; matching full-tree Ruff on other architectures |
+| `ruff format --check <touched paths>` only | `.venv/bin/ruff format --check .` on ARM; matching full-tree Ruff on other architectures |
 
 Scoped ruff/mypy is allowed **only while editing** (see Local work below). A scoped
 pass earlier in the chat does **not** satisfy the commit gate — re-run the full-tree
@@ -56,8 +67,8 @@ Only **pytest** stays scoped at commit time.
 
 If `ruff format --check .` reports files that would be reformatted:
 
-1. Run `uv run ruff format .` (or only the listed paths).
-2. Re-run `uv run ruff format --check .` until it exits 0.
+1. Run the architecture-matched formatter, such as `.venv/bin/ruff format .` on ARM (or only the listed paths).
+2. Re-run the architecture-matched `ruff format --check .` until it exits 0.
 3. Include the formatting diff in the commit (do not push unformatted code).
 
 Ruff format handles Python source, not YAML. Do not pass YAML/config files in a
@@ -75,9 +86,9 @@ gate on the **final** tree you are about to commit.
 When the user asks only for format/lint/types before commit:
 
 ```bash
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy .
+.venv/bin/ruff format --check .
+.venv/bin/ruff check .
+.venv/bin/mypy .
 ```
 
 ## Local work (implementation)
@@ -86,9 +97,9 @@ While editing, prefer scoped checks only — do **not** run full-tree ruff/mypy 
 every edit:
 
 ```bash
-uv run ruff format --check <touched paths>
-uv run ruff check <touched paths>
-uv run pytest <relevant test files> -q
+.venv/bin/ruff format --check <touched paths>
+.venv/bin/ruff check <touched paths>
+.venv/bin/pytest <relevant test files> -q
 ```
 
 When you are about to commit or push, stop using this section and switch to the
@@ -99,10 +110,10 @@ When you are about to commit or push, stop using this section and switch to the
 GitHub CI and Orchestra phase 9 still run the full suite:
 
 ```bash
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy .
-uv run pytest tests/ -v
+.venv/bin/ruff format --check .
+.venv/bin/ruff check .
+.venv/bin/mypy .
+.venv/bin/pytest tests/ -v
 ```
 
 ## Out of scope unless explicitly requested

@@ -8,7 +8,11 @@ from omegaconf import OmegaConf
 from stable_baselines3 import PPO
 
 from configuration.loader import load_config
-from decisioning.thesis import THESIS_CATEGORY_COUNT, thesis_id_from_box
+from decisioning.thesis import (
+    THESIS_CATEGORY_COUNT,
+    build_thesis_action_schema,
+    thesis_id_from_box,
+)
 from features.context.thesis_candidates import thesis_candidate_feature_columns
 from learning.rl.agent import build_agent
 from learning.rl.hybrid import (
@@ -46,6 +50,7 @@ def test_mtf_reasoning_research_overlay_is_opt_in_and_complete() -> None:
     assert config.env.strategy_actions is True
     assert config.env.thesis_actions is True
     assert config.env.agent_direction_control is False
+    assert config.features.include_strategy_state is True
     assert config.features.entry_ideas.enabled is True
     assert config.agent.arch == "mtf_reasoning"
     assert config.ppo.policy_distribution == "thesis_hybrid_v1"
@@ -61,6 +66,48 @@ def test_mtf_reasoning_conditioned_overlay_is_opt_in_and_complete() -> None:
     assert config.ppo.policy_distribution == "thesis_conditioned_v1"
     assert config.ppo.thesis_conditioned.embedding_dim == 32
     assert config.ppo.thesis_conditioned.execution_hidden_dim == 128
+
+
+def test_mtf_reasoning_2m_configs_are_matched_except_for_execution_conditioning() -> None:
+    control = load_config(config_path="config/research/thesis_mtf_reasoning_2m.yaml")
+    treatment = load_config(config_path="config/research/thesis_mtf_reasoning_conditioned_2m.yaml")
+
+    for config in (control, treatment):
+        assert config.env.n_envs == 8
+        assert config.env.strategy_actions is True
+        assert config.env.thesis_actions is True
+        assert config.features.include_strategy_state is True
+        assert config.agent.arch == "mtf_reasoning"
+        assert config.ppo.n_steps == 2048
+        assert config.ppo.batch_size == 512
+        assert config.ppo.n_epochs == 15
+        assert config.ppo.total_timesteps == 2_000_000
+        assert config.ppo.checkpoint_freq == 250_000
+        assert config.quality_execution.requested_n_envs == 8
+        assert config.quality_execution.exact_n_envs is True
+
+    assert control.ppo.policy_distribution == "thesis_hybrid_v1"
+    assert treatment.ppo.policy_distribution == "thesis_conditioned_v1"
+    assert control.ppo.thesis_conditioned == treatment.ppo.thesis_conditioned
+    control_resolved = OmegaConf.to_container(control, resolve=True)
+    treatment_resolved = OmegaConf.to_container(treatment, resolve=True)
+    assert isinstance(control_resolved, dict)
+    assert isinstance(treatment_resolved, dict)
+    control_resolved["ppo"].pop("policy_distribution")
+    treatment_resolved["ppo"].pop("policy_distribution")
+    assert control_resolved == treatment_resolved
+    action_schemas = [
+        build_thesis_action_schema(
+            has_sl_mode=bool(config.env.get("allow_agent_sl_mode", False)),
+            has_tp_mode=bool(config.env.get("allow_agent_tp_mode", False)),
+            has_multi_tp=bool(config.env.get("allow_multi_tp", False)),
+            has_simplex=bool(
+                config.env.get("allow_multi_tp", False) and config.env.get("allow_simplex", False)
+            ),
+        ).to_dict()
+        for config in (control, treatment)
+    ]
+    assert action_schemas[0] == action_schemas[1]
 
 
 @pytest.mark.parametrize(

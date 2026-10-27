@@ -462,6 +462,9 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                 "primary_idea": thesis.idea if thesis is not None else "",
                 "primary_setup_timeframe": thesis.setup_timeframe if thesis is not None else "",
                 "primary_direction": thesis.direction if thesis is not None else 0,
+                "thesis_decision_time": (
+                    self.position.thesis_decision_time if thesis is not None else None
+                ),
                 "supporting_idea_timeframes": supporting,
                 "price": self.position.entry_price,
                 "bar": self.step_idx if decision_bar_idx is None else decision_bar_idx,

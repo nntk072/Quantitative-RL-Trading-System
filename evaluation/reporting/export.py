@@ -80,10 +80,22 @@ _EMPTY_TRADE_COLUMNS = (
 _POSITION_COLUMNS = (
     "position_id",
     "direction",
+    "thesis_candidate_id",
+    "thesis_schema_version",
+    "primary_idea",
+    "primary_setup_timeframe",
+    "primary_direction",
+    "thesis_decision_time",
     "entry_time",
     "exit_time",
     "entry_price",
     "exit_price",
+    "sl_price",
+    "sl_ref",
+    "sl_timeframe",
+    "tp_price",
+    "tp_ref",
+    "tp_timeframe",
     "close_pnl",
     "net_pnl",
     "position_net_pnl",
@@ -92,6 +104,20 @@ _POSITION_COLUMNS = (
     "holding_seconds",
     "exit_reason",
     "reconstruction_status",
+)
+_POSITION_ENTRY_METADATA = (
+    "thesis_candidate_id",
+    "thesis_schema_version",
+    "primary_idea",
+    "primary_setup_timeframe",
+    "primary_direction",
+    "thesis_decision_time",
+    "sl_price",
+    "sl_ref",
+    "sl_timeframe",
+    "tp_price",
+    "tp_ref",
+    "tp_timeframe",
 )
 _BREACH_EVENT_COLUMNS = ("time", "session_id", "reason", "equity", "fill_time")
 
@@ -123,6 +149,7 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
             {
                 "position_id": None,
                 "direction": event.get("direction"),
+                **{key: event.get(key) for key in _POSITION_ENTRY_METADATA},
                 "entry_time": event.get("time") if is_open else None,
                 "exit_time": event.get("time") if is_close else None,
                 "entry_price": event.get("price") if is_open else None,
@@ -145,6 +172,7 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
             closes = events.loc[events["type"].astype(str).isin(_CLOSE_EVENT_TYPES)]
             entry = opens.iloc[0] if not opens.empty else None
             last_close = closes.iloc[-1] if not closes.empty else None
+            entry_metadata = entry if entry is not None else events.iloc[0]
             pnl_values = pd.to_numeric(closes.get("pnl", pd.Series(dtype=float)), errors="coerce")
             if "net_pnl" in closes.columns:
                 net_values = pd.to_numeric(closes["net_pnl"], errors="coerce")
@@ -185,6 +213,7 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
                         if entry is not None
                         else events.iloc[0].get("direction")
                     ),
+                    **{key: entry_metadata.get(key) for key in _POSITION_ENTRY_METADATA},
                     "entry_time": entry_time,
                     "exit_time": exit_time,
                     "entry_price": None if entry is None else entry.get("price"),
@@ -488,6 +517,7 @@ def _write_split(
             ("selection_matrix", "thesis_selection_matrix.csv"),
             ("execution_action_by_thesis", "thesis_action_by_idea_timeframe.csv"),
             ("execution_by_opened_thesis", "thesis_execution_by_idea_timeframe.csv"),
+            ("performance_by_idea_timeframe", "thesis_performance_by_idea_timeframe.csv"),
         ):
             rows = thesis_policy_metrics.get(key)
             if isinstance(rows, list):
@@ -539,6 +569,9 @@ def _write_split(
         )
     (split_dir / "summary.txt").write_text(summary_text)
     if save_plots and isinstance(thesis_policy_metrics, dict):
+        from evaluation.reporting.thesis_plots import write_thesis_heatmaps
+
+        write_thesis_heatmaps(thesis_policy_metrics, split_dir, dpi)
         entropy_months = thesis_policy_metrics.get("thesis_entropy_by_month", [])
         if entropy_months:
             import matplotlib.pyplot as plt

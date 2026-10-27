@@ -27,7 +27,11 @@ def test_thesis_policy_report_counts_abstention_diversity_and_invalid_choices() 
                 "idea": "fvg_retest",
                 "setup_timeframe": "M5",
                 "selection_valid": True,
-                "eligible_candidate_ids": [0, thesis_candidate_id("fvg_retest", "M5", 1)],
+                "eligible_candidate_ids": [
+                    0,
+                    thesis_candidate_id("fvg_retest", "M5", 1),
+                    thesis_candidate_id("fvg_retest", "M5", -1),
+                ],
                 "thesis_entropy_nats": 1.0,
                 "time": "2025-01-02T00:00:00Z",
             },
@@ -58,6 +62,8 @@ def test_thesis_policy_report_counts_abstention_diversity_and_invalid_choices() 
                 "sl_ref": "M5_swing_low",
                 "tp_timeframe": "M5",
                 "tp_ref": "M5_swing_high",
+                "position_net_pnl": 120.0,
+                "position_realized_r": 0.6,
             }
         ]
     )
@@ -72,10 +78,27 @@ def test_thesis_policy_report_counts_abstention_diversity_and_invalid_choices() 
     assert report["selected_timeframe_count"] == 2
     assert report["trade_thesis_eligible_steps"] == 3
     assert report["no_trade_rate_when_trade_thesis_eligible"] == 1 / 3
-    assert report["eligible_trade_thesis_count_max"] == 1
+    assert report["eligible_trade_thesis_count_max"] == 2
     assert len(report["selection_by_idea"]) == 6
     assert len(report["selection_by_timeframe"]) == 9
     assert len(report["selection_matrix"]) == 54
+    fvg_idea = next(row for row in report["selection_by_idea"] if row["idea"] == "fvg_retest")
+    assert fvg_idea["eligible_candidate_occurrences"] == 3
+    assert fvg_idea["eligible_steps"] == 2
+    assert fvg_idea["selection_rate_given_eligible_step"] == 0.5
+    fvg_cell = next(
+        row
+        for row in report["selection_matrix"]
+        if row["idea"] == "fvg_retest" and row["timeframe"] == "M5"
+    )
+    assert fvg_cell["eligible_candidate_occurrences"] == 3
+    assert fvg_cell["eligible_steps"] == 2
+    fvg_performance = next(
+        row for row in report["performance_by_idea_timeframe"] if row["idea"] == "fvg_retest"
+    )
+    assert fvg_performance["trade_count"] == 1
+    assert fvg_performance["net_pnl"] == 120.0
+    assert fvg_performance["mean_realized_r"] == 0.6
     assert len(report["thesis_entropy_by_month"]) == 2
     assert report["structural_violations"]["total"] == 0
 
@@ -194,15 +217,18 @@ def test_thesis_decision_diagnostics_export_to_split_artifacts(tmp_path) -> None
         run_dir=tmp_path / "thesis-diagnostics",
         train_result=result,
         train_metrics=calculate_metrics(equity, trades=trades, initial_balance=100_000.0),
-        save_plots=False,
+        save_plots=True,
         save_html=False,
         save_csv=True,
+        report_profile="campaign_fast",
     )
 
     split = run_dir / "training"
     assert len(pd.read_csv(split / "thesis_decisions.csv")) == 2
     assert len(pd.read_csv(split / "thesis_selection_matrix.csv")) == 54
     assert len(pd.read_csv(split / "thesis_selection_by_idea.csv")) == 6
+    assert (split / "thesis_selection_heatmap.png").is_file()
+    assert (split / "thesis_performance_heatmap.png").is_file()
     diagnostics = json.loads((split / "thesis_policy_metrics.json").read_text())
     assert diagnostics["no_trade_count"] == 1
     assert diagnostics["invalid_selection_count"] == 0

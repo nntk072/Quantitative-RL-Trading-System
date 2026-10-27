@@ -1000,6 +1000,62 @@ def test_position_export_does_not_merge_events_without_position_ids() -> None:
     ]
 
 
+def test_position_export_preserves_thesis_and_structural_provenance() -> None:
+    decision_time = pd.Timestamp("2025-01-02T10:00:00Z")
+    trades = pd.DataFrame(
+        [
+            {
+                "type": "open",
+                "position_id": "p-thesis",
+                "direction": 1,
+                "thesis_candidate_id": 17,
+                "thesis_schema_version": "thesis-action-v1",
+                "primary_idea": "fvg_retest",
+                "primary_setup_timeframe": "M5",
+                "primary_direction": 1,
+                "thesis_decision_time": decision_time,
+                "time": decision_time + pd.Timedelta(minutes=1),
+                "price": 100.0,
+                "sl_price": 98.0,
+                "sl_ref": "M5_swing_low",
+                "sl_timeframe": "M5",
+                "tp_price": 104.0,
+                "tp_ref": "H1_swing_high",
+                "tp_timeframe": "H1",
+            },
+            {
+                "type": "close",
+                "position_id": "p-thesis",
+                "direction": 1,
+                "price": 103.0,
+                "pnl": 3.0,
+                "net_pnl": 2.5,
+                "position_net_pnl": 2.5,
+                "position_complete": True,
+                "reason": "take_profit",
+                "time": decision_time + pd.Timedelta(minutes=4),
+            },
+        ]
+    )
+
+    positions = _position_summaries(trades)
+
+    assert len(positions) == 1
+    position = positions.iloc[0]
+    assert position["thesis_candidate_id"] == 17
+    assert position["thesis_schema_version"] == "thesis-action-v1"
+    assert position["primary_idea"] == "fvg_retest"
+    assert position["primary_setup_timeframe"] == "M5"
+    assert position["primary_direction"] == 1
+    assert position["thesis_decision_time"] == decision_time
+    assert position["sl_price"] == pytest.approx(98.0)
+    assert position["sl_ref"] == "M5_swing_low"
+    assert position["sl_timeframe"] == "M5"
+    assert position["tp_price"] == pytest.approx(104.0)
+    assert position["tp_ref"] == "H1_swing_high"
+    assert position["tp_timeframe"] == "H1"
+
+
 def test_export_records_declared_action_coordinate_schema(tmp_path, synthetic_result) -> None:
     metrics = calculate_metrics(synthetic_result["equity"], trades=synthetic_result["trades"])
     cfg = OmegaConf.create(

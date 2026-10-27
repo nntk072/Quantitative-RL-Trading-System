@@ -623,6 +623,16 @@ class SeedRunner:
                 dpi=getattr(cfg.output, "dpi", 150),
                 save_html=getattr(cfg.output, "save_html", False),
             )
+            if bool(cfg.env.get("thesis_actions", False)):
+                from evaluation.reporting.thesis_plots import write_thesis_learning_plots
+
+                thesis_plots = write_thesis_learning_plots(
+                    seed_model_dir / "learning_diagnostics.csv",
+                    seed_model_dir,
+                    dpi=getattr(cfg.output, "dpi", 150),
+                )
+                if thesis_plots:
+                    log.info("Saved thesis learning plots: %s", thesis_plots)
             save_dashboard_plots(
                 seed_model_dir / "dashboard_log.csv",
                 out_dir=seed_model_dir,
