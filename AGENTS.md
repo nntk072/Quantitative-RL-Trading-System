@@ -35,10 +35,9 @@ thesis-train train --mvp   # smoke test (30 days)
 ```
 
 On ARM64/GH200, use the active `.venv/bin` tools for Ruff, Mypy, and pytest.
-The login-host `uv` may be an x86-64 executable and fail with `Exec format
-error` inside an ARM allocation. Use `uv run` only when `command -v uv` points
-to a binary built for the compute node's architecture. Preserve the full-tree
-Ruff/Mypy requirements and scoped-pytest rule regardless of invocation style.
+Do not use `uv run` for these checks on ARM. The login-host `uv` may be an
+x86-64 executable and fail with `Exec format error` inside an ARM allocation.
+Preserve the full-tree Ruff/Mypy requirements and scoped-pytest rule.
 
 Full rule: `.agents/rules/ci-verification.md` (all agents). Commit checklist:
 `.agents/rules/git-commit-rules.md`.

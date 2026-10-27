@@ -15,13 +15,13 @@ smallest relevant test set for the change.
 ## Architecture-aware tool invocation
 
 Use tools built for the compute node. On ARM64/GH200, run Ruff, Mypy, and pytest
-from `.venv/bin` (for example, `.venv/bin/ruff`, `.venv/bin/mypy`, and
-`.venv/bin/pytest`). On x86_64 use `.venv-x86/bin` equivalents, or `uv run`
-only when `command -v uv` resolves to a native x86_64 executable. The Triton
-login host may expose an x86_64 `uv` which fails with `Exec format error` on an
-ARM node. Verify `uname -m` and the tool binary before starting a gate. An
-architecture mismatch is an invocation failure, not a lint, type, or test
-result.
+directly from the active `.venv/bin` executables (`.venv/bin/ruff`,
+`.venv/bin/mypy`, and `.venv/bin/pytest`). Do not invoke these checks through
+`uv run` on ARM, even if a `uv` executable is available. On x86_64, use the
+`.venv-x86/bin` executables. The Triton login host may expose an x86-64 `uv`
+which fails with `Exec format error` on an ARM node. Verify `uname -m` and the
+tool binary before starting a gate. An architecture mismatch is an invocation
+failure, not a lint, type, or test result.
 
 ## Hard rule — agent commit / push
 
