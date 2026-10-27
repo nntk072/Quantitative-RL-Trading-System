@@ -262,6 +262,17 @@ def test_extract_window_eod_close_excludes_next_session():
     assert not any(ts.normalize() == pd.Timestamp("2024-12-31") for ts in window.index)
 
 
+def test_order_chart_event_time_falls_back_to_recorded_bar():
+    """A close event with a missing time uses its recorded bar timestamp."""
+    from evaluation.plotting.order_window import _event_timestamp
+
+    index = pd.date_range("2025-01-02 16:30", periods=4, freq="1min", tz="Etc/GMT-3")
+    event = pd.Series({"time": pd.NaT, "actual_tick_time": pd.NaT, "bar": 2})
+
+    assert _event_timestamp(event, index) == index[2]
+    assert _event_timestamp(pd.Series({"time": pd.NaT, "bar": 9}), index) is None
+
+
 def test_extract_window_pre_entry_stays_in_session():
     """Pre-entry context must not reach into the prior calendar day's NY bars."""
     from evaluation.plotting.plots import _extract_window
@@ -493,6 +504,42 @@ def test_plot_per_trade_orders_png_datetime_axis_and_info(
     file_size = png_file.stat().st_size
     # Datetime-axis chart with 2 panels should be reasonably large (>100KB)
     assert file_size > 50000, f"PNG file too small: {file_size} bytes (expected >50KB)"
+
+
+def test_target_update_plot_ignores_missing_partial_close_time() -> None:
+    """A missing partial-close timestamp must not break target-update charts."""
+    from matplotlib import pyplot as plt
+
+    from evaluation.plotting.orders import _draw_target_updates
+
+    start = pd.Timestamp("2025-01-21 19:04:00", tz="Etc/GMT-3")
+    events = pd.DataFrame(
+        [
+            {
+                "type": "tp_update",
+                "tp_slot": "TP1",
+                "time": start,
+                "effective_time": start,
+                "price": 21140.0,
+            },
+            {
+                "type": "tp_partial_close",
+                "tp_slot": "TP1",
+                "time": pd.NaT,
+                "effective_time": pd.NaT,
+                "price": 21140.0,
+            },
+        ]
+    )
+    figure, axis = plt.subplots()
+    try:
+        _draw_target_updates(axis, events)
+        assert len(axis.lines) == 1
+        x_data = np.asarray(axis.lines[0].get_xdata(), dtype=object)
+        assert x_data.size == 2
+        assert bool(pd.notna(x_data).all())
+    finally:
+        plt.close(figure)
 
 
 def test_macd_backtest_fills_within_bar_and_charts_render(tmp_path):

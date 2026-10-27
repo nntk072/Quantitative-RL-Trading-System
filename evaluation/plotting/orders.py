@@ -475,11 +475,16 @@ def _draw_target_updates(ax: Any, events: pd.DataFrame) -> None:
         if pd.isna(start_value) or pd.isna(update.get("price")):
             continue
         start = pd.Timestamp(start_value)
-        end = (
-            pd.Timestamp(matches.iloc[0]["time"])
-            if not matches.empty
-            else pd.Timestamp(events.iloc[-1]["time"])
-        )
+        matching_times = matches["time"].dropna() if "time" in matches else pd.Series(dtype=object)
+        event_times = events["time"].dropna() if "time" in events else pd.Series(dtype=object)
+        if not matching_times.empty:
+            end = pd.Timestamp(matching_times.iloc[0])
+        elif not event_times.empty:
+            end = pd.Timestamp(event_times.iloc[-1])
+        else:
+            # A malformed or incomplete close timestamp should not prevent
+            # the valid target update itself from being rendered.
+            end = start
         price = float(update["price"])
         ax.plot(
             [start, end],
@@ -637,6 +642,8 @@ def plot_per_trade_orders(
         events = prepared.events
         t_open = prepared.t_open
         t_close = prepared.t_close
+        close_row_for_plot = close_row.copy()
+        close_row_for_plot["time"] = t_close
         overlays = break_overlay_gaps(overlays)
 
         direction = int(open_row["direction"]) if pd.notna(open_row.get("direction")) else 0
@@ -831,7 +838,7 @@ def plot_per_trade_orders(
         fig.suptitle(title, fontsize=11, fontweight="bold")
 
         # Save
-        fname = _trade_filename(seq_i + 1, open_row, close_row, "png", pnl_override=pnl)
+        fname = _trade_filename(seq_i + 1, open_row, close_row_for_plot, "png", pnl_override=pnl)
         try:
             fig.tight_layout(rect=(0.008, note_bottom, 0.995, 0.96))
             fig.savefig(str(orders_dir / fname), dpi=dpi, bbox_inches="tight")

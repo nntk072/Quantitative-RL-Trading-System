@@ -9,6 +9,7 @@ from scripts.research.thesis.evaluation.report_variant_details import (
     _flatten_markdown_rows,
     _markdown_config_results,
     _report_value,
+    _trade_chart,
     _trade_outcome_caption,
     _validate_markdown_images,
     _validate_report_figures,
@@ -275,3 +276,24 @@ def test_selected_trade_chart_gets_an_outcome_banner(tmp_path: Path) -> None:
 
     annotated = mpimg.imread(chart_path)
     assert annotated.shape[0] > original_height
+
+
+def test_selected_trade_chart_lookup_uses_candle_timezone(tmp_path: Path) -> None:
+    orders_dir = tmp_path / "training" / "orders"
+    orders_dir.mkdir(parents=True)
+    expected = orders_dir / "trade_0001_20250106_1718_1817_L_p278.6.png"
+    expected.touch()
+    trade = {
+        "direction": 1,
+        "chart_entry_time": "2025-01-06T14:18:00.008+00:00",
+        "chart_exit_time": "2025-01-06T15:17:01.208+00:00",
+    }
+
+    result = _trade_chart(
+        tmp_path / "training",
+        trade,
+        tmp_path,
+        chart_timezone="Etc/GMT-3",
+    )
+
+    assert result == "training/orders/trade_0001_20250106_1718_1817_L_p278.6.png"

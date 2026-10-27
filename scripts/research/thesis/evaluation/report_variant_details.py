@@ -20,7 +20,6 @@ import re
 import statistics
 import sys
 from collections import Counter
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -388,18 +387,45 @@ def _classify_trades(
     }
 
 
-def _trade_chart(split_dir: Path, trade: dict[str, Any], report_dir: Path) -> str | None:
+def _trade_chart(
+    split_dir: Path,
+    trade: dict[str, Any],
+    report_dir: Path,
+    *,
+    chart_timezone: Any = None,
+) -> str | None:
     """Find the generated candle chart for a selected, fully described trade."""
+    from pandas import Timestamp, isna
+
     order_dir = split_dir / "orders"
     if not order_dir.is_dir():
         return None
+    entry_value = trade.get("chart_entry_time")
+    exit_value = trade.get("chart_exit_time")
+    if entry_value is None or exit_value is None:
+        return None
     try:
-        entry = datetime.fromisoformat(str(trade.get("chart_entry_time")))
-        exit_ = datetime.fromisoformat(str(trade.get("chart_exit_time")))
+        entry = Timestamp(str(entry_value))
+        exit_ = Timestamp(str(exit_value))
     except (TypeError, ValueError):
         return None
+    if isna(entry) or isna(exit_):
+        return None
+    if chart_timezone is not None:
+        entry = (
+            entry.tz_localize(chart_timezone)
+            if entry.tzinfo is None
+            else entry.tz_convert(chart_timezone)
+        )
+        exit_ = (
+            exit_.tz_localize(chart_timezone)
+            if exit_.tzinfo is None
+            else exit_.tz_convert(chart_timezone)
+        )
+    entry_dt = entry.to_pydatetime()
+    exit_dt = exit_.to_pydatetime()
     side = "L" if (_number(trade.get("direction")) or 0) > 0 else "S"
-    pattern = f"trade_*_{entry:%Y%m%d}_{entry:%H%M}_{exit_:%H%M}_{side}_*.png"
+    pattern = f"trade_*_{entry_dt:%Y%m%d}_{entry_dt:%H%M}_{exit_dt:%H%M}_{side}_*.png"
     matches = sorted(order_dir.glob(pattern))
     return os.path.relpath(matches[0], report_dir) if matches else None
 
@@ -2411,7 +2437,12 @@ def _plot_variant_figures(
                         for rank, trade in enumerate(examples.get(category, []), start=1):
                             if not trade.get("position_id"):
                                 continue
-                            chart = _trade_chart(out_dir, trade, report_dir)
+                            chart = _trade_chart(
+                                out_dir,
+                                trade,
+                                report_dir,
+                                chart_timezone=chart_bars.index.tz,
+                            )
                             if chart is None:
                                 raise RuntimeError(
                                     "a selected typical trade has no generated candle figure: "

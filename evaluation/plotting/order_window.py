@@ -33,11 +33,38 @@ class PreparedOrderChart:
 def _align_ts(ts: pd.Timestamp, index: pd.DatetimeIndex) -> pd.Timestamp:
     """Localize/convert ``ts`` to match ``index`` timezone."""
     out = pd.Timestamp(ts)
+    if pd.isna(out):
+        raise ValueError("cannot align a missing timestamp to a bar index")
     if index.tz is None:
         return out.tz_localize(None) if out.tzinfo is not None else out
     if out.tzinfo is None:
         return out.tz_localize(index.tz)
     return out.tz_convert(index.tz)
+
+
+def _event_timestamp(row: pd.Series, index: pd.DatetimeIndex) -> pd.Timestamp | None:
+    """Resolve an event time from its timestamps, then its recorded bar.
+
+    Some replay ledgers preserve a valid event bar while leaving ``time``
+    empty. Recovering from that bar keeps the chart anchored to observed data.
+    """
+    for column in ("time", "actual_tick_time", "fill_time", "effective_time"):
+        value = row.get(column)
+        if value is None or pd.isna(value):
+            continue
+        timestamp = pd.Timestamp(value)
+        if not pd.isna(timestamp):
+            return timestamp
+
+    bar = row.get("bar")
+    if pd.notna(bar):
+        try:
+            position = int(bar)
+        except (TypeError, ValueError, OverflowError):
+            position = -1
+        if 0 <= position < len(index):
+            return pd.Timestamp(index[position])
+    return None
 
 
 def _ny_session_positions(
@@ -261,7 +288,12 @@ def prepare_order_chart(
     if pd.isna(entry_time) or not str(entry_time).strip():
         entry_time = open_row["time"]
     t_open = pd.Timestamp(entry_time)
-    t_close = pd.Timestamp(close_row["time"])
+    resolved_close = _event_timestamp(close_row, pd.DatetimeIndex(bars.index))
+    if resolved_close is None:
+        return None
+    t_close = resolved_close
+    metric_close_row = close_row.copy()
+    metric_close_row["time"] = t_close
     window = _extract_window(
         bars,
         t_open,
@@ -274,7 +306,7 @@ def prepare_order_chart(
     metrics = compute_trade_metrics(
         bars,
         open_row,
-        close_row,
+        metric_close_row,
         max_loss_per_trade_usd=max_loss_per_trade_usd,
         take_profit_per_trade_usd=take_profit_per_trade_usd,
         lots=lots,
