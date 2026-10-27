@@ -202,6 +202,12 @@ def plot_per_trade_orders(
     show_vwap: bool = False,
     secondary_bars: pd.DataFrame | None = None,
     features: pd.DataFrame | None = None,
+    order_block_timeframes: tuple[str, ...] = (),
+    fvg_timeframes: tuple[str, ...] = (),
+    ifvg_timeframes: tuple[str, ...] = (),
+    ema_timeframes: tuple[str, ...] = ("M1",),
+    swing_timeframes: tuple[str, ...] = ("M1",),
+    entry_idea_plot_config: dict[str, Any] | None = None,
 ) -> None:
     """Generate one M1 candlestick HTML per trade in *orders_dir* with MT5-style overlays.
 
@@ -230,7 +236,12 @@ def plot_per_trade_orders(
 
     from evaluation.metrics.trade_pairs import pair_trades as _pair_trades
 
-    from .chart_indicators import break_overlay_gaps, compute_chart_overlays_full
+    from .chart_indicators import (
+        break_overlay_gaps,
+        compute_chart_overlays_full,
+        compute_mtf_ema_overlays,
+        select_ema_overlays,
+    )
     from .chart_overlays import (
         VWAP_COLOR,
         build_overlay_events,
@@ -260,8 +271,12 @@ def plot_per_trade_orders(
     # Compute EMA50/MACD/RSI/VWAP once on the full history so indicators are
     # warmed up and match the strategy's real signals, then slice per trade.
     full_overlays = compute_chart_overlays_full(bars)
+    full_overlays.update(compute_mtf_ema_overlays(bars, ema_timeframes))
+    full_overlays = select_ema_overlays(full_overlays, ema_timeframes)
     overlay_events = build_overlay_events(bars, secondary=secondary_bars)
     confirmed_events = confirmed_pivots(overlay_events, bars)
+    if "M1" not in {str(tf).upper() for tf in swing_timeframes}:
+        confirmed_events.swings = []
     session_end_positions = _session_end_positions(pd.DatetimeIndex(bars.index))
 
     for seq_i, (open_row, close_row) in enumerate(pairs):
@@ -279,6 +294,11 @@ def plot_per_trade_orders(
             show_mae_mfe=show_mae_mfe,
             show_sl_tp=show_sl_tp,
             features=features,
+            order_block_timeframes=order_block_timeframes,
+            fvg_timeframes=fvg_timeframes,
+            ifvg_timeframes=ifvg_timeframes,
+            swing_timeframes=swing_timeframes,
+            entry_idea_plot_config=entry_idea_plot_config,
             confirmed_events=confirmed_events,
             session_end_positions=session_end_positions,
         )
@@ -321,20 +341,40 @@ def plot_per_trade_orders(
             row=1,
             col=1,
         )
+        ema_colors = {9: "#00897b", 21: "#6a1b9a", 50: "#0066cc", 200: "#ef6c00"}
+        for timeframe in ema_timeframes:
+            tf = str(timeframe).upper()
+            for period, color in ema_colors.items():
+                key = f"{tf}_ema_{period}"
+                if key not in overlays or (tf == "M1" and period == 50):
+                    continue
+                fig.add_trace(
+                    go.Scatter(
+                        x=overlays[key].index,
+                        y=overlays[key].to_numpy(),
+                        name=f"{tf} EMA {period}",
+                        legendgroup=f"{tf} EMA",
+                        line=dict(color=color, width=1.2),
+                        connectgaps=False,
+                    ),
+                    row=1,
+                    col=1,
+                )
 
         # Top panel: EMA50 overlay
-        ema = overlays["ema50"]
-        fig.add_trace(
-            go.Scatter(
-                x=ema.index,
-                y=ema.to_numpy(),
-                name="EMA50",
-                line=dict(color="#0066cc", width=2),
-                connectgaps=False,
-            ),
-            row=1,
-            col=1,
-        )
+        ema = overlays.get("ema50")
+        if ema is not None:
+            fig.add_trace(
+                go.Scatter(
+                    x=ema.index,
+                    y=ema.to_numpy(),
+                    name="M1 EMA 50",
+                    line=dict(color="#0066cc", width=2),
+                    connectgaps=False,
+                ),
+                row=1,
+                col=1,
+            )
         if show_vwap:
             vwap = overlays["vwap"]
             fig.add_trace(
@@ -417,6 +457,7 @@ def plot_per_trade_orders(
             yaxis_title="Price",
             xaxis_rangeslider_visible=False,
             hovermode="x unified",
+            legend={"groupclick": "togglegroup"},
             height=680 + 22 * len(note_lines),
             margin=dict(b=40 + 18 * len(note_lines)),
             xaxis=dict(rangebreaks=rangebreaks, tickformat=tickformat),

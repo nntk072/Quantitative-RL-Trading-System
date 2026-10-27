@@ -72,6 +72,10 @@ def stop_menu(
     candidate_meta: dict[str, dict[str, Any]] = {}
     candidate_schema_active = False
     raw = list(strategy.sl_candidates(direction=direction, row=row))
+    sweep_name = "sweep_low_wick" if direction == 1 else "sweep_high_wick"
+    sweep_flag = "sweep_low" if direction == 1 else "sweep_high"
+    sweep_level = finite_level(row, sweep_name) if _flag(row, sweep_flag) else None
+    sweep_anchor = (sweep_name, sweep_level) if sweep_level is not None else None
     if not raw and hasattr(strategy, "sl_reference"):
         ref = strategy.sl_reference(direction=direction, row=row)
         if ref is not None and np.isfinite(float(ref)):
@@ -161,7 +165,32 @@ def stop_menu(
         level = finite_level(row, name)
         if level is not None:
             raw.append((name, level))
+    ob_stem = "ob_bull_low" if direction == 1 else "ob_bear_high"
+    row_columns = getattr(row, "index", ())
+    for column in row_columns:
+        column_name = str(column)
+        if column_name == ob_stem or column_name.endswith(f"_{ob_stem}"):
+            if _flag(row, column_name.removesuffix("_low").removesuffix("_high") + "_active"):
+                level = finite_level(row, column_name)
+                if level is not None:
+                    raw.append((column_name, level))
     raw.extend(deviation_candidates(row))
+    if sweep_anchor is not None:
+        # A live sweep is the invalidation event for this setup. Do not let a
+        # stale pivot, session level, or another timeframe replace its wick.
+        for name, level in raw:
+            if name != sweep_anchor[0]:
+                early_audit.append(
+                    {
+                        "name": name,
+                        "reference_price": float(level),
+                        "stop_price": float("nan"),
+                        "distance": float("nan"),
+                        "status": "rejected",
+                        "reason": "active_sweep_wick_is_stop_anchor",
+                    }
+                )
+        raw = [sweep_anchor]
     smt_tfs = [normalize_timeframe(str(tf)) for tf in htf]
     smt_bullish = _flag(row, "smt_bullish") or any(
         _flag(row, f"{tf}_smt_bullish") for tf in smt_tfs

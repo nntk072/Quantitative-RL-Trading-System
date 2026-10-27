@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Any, cast
 
 import pandas as pd
 
@@ -117,6 +117,56 @@ def compute_chart_overlays_full(bars: pd.DataFrame) -> dict[str, pd.Series]:
     )
 
 
+def compute_mtf_ema_overlays(
+    bars: pd.DataFrame,
+    timeframes: tuple[str, ...],
+    periods: tuple[int, ...] = (9, 21, 50, 200),
+) -> dict[str, pd.Series]:
+    """Compute raw-price EMA lines for selected TFs on the completed-bar M1 spine."""
+    from features.technical.indicators import ema
+    from market_data.transforms.align import align_timeframes
+    from market_data.transforms.resample import resample
+
+    overlays: dict[str, pd.Series] = {}
+    for timeframe in timeframes:
+        tf = str(timeframe).upper()
+        source = bars if tf == "M1" else resample(bars, cast(Any, tf))
+        if source.empty:
+            continue
+        block = pd.DataFrame(
+            {f"ema_{period}": ema(source["close"], period) for period in periods},
+            index=source.index,
+        )
+        if tf == "M1":
+            aligned = block.rename(
+                columns={f"ema_{period}": f"M1_ema_{period}" for period in periods}
+            ).reindex(bars.index)
+        else:
+            aligned = align_timeframes(bars[[]], {tf: block})
+        for period in periods:
+            name = f"{tf}_ema_{period}"
+            overlays[name] = aligned[name]
+    return overlays
+
+
+def select_ema_overlays(
+    overlays: dict[str, pd.Series], timeframes: tuple[str, ...]
+) -> dict[str, pd.Series]:
+    """Keep EMA lines only for the selected chart timeframes."""
+    selected = {str(timeframe).upper() for timeframe in timeframes}
+    result = dict(overlays)
+    for name in tuple(result):
+        if name == "ema50":
+            timeframe = "M1"
+        elif "_ema_" in name:
+            timeframe = name.split("_ema_", maxsplit=1)[0].upper()
+        else:
+            continue
+        if timeframe not in selected:
+            result.pop(name)
+    return result
+
+
 def slice_overlays(overlays: dict[str, pd.Series], index: pd.Index) -> dict[str, pd.Series]:
     """Slice a full-history overlays dict down to a trade window's index."""
     return {key: series.reindex(index) for key, series in overlays.items()}
@@ -133,7 +183,9 @@ def break_overlay_gaps(overlays: dict[str, pd.Series]) -> dict[str, pd.Series]:
     Histogram bars stay on the candle index.
     """
     out = dict(overlays)
-    for key in _LINE_KEYS:
+    for key in tuple(out):
+        if key not in _LINE_KEYS and "_ema_" not in key:
+            continue
         series = out.get(key)
         if series is not None:
             out[key] = _break_series_gaps(series)

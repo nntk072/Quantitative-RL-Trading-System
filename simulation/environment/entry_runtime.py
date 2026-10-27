@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from features.context.entry_ideas import entry_idea_context
 from trading.execution.broker import Position
 
 from .market_view import BarView, FeatureRow
@@ -81,6 +82,11 @@ class EntryRuntimeMixin(RuntimeMixinBase):
             except (TypeError, ValueError):
                 session = ""
         tp_legs: list[dict[str, Any]] = []
+        idea_context = entry_idea_context(
+            feat_row,
+            int(getattr(self.position, "direction", 0)),
+            include_zones=True,
+        )
         fraction_index = 0
         for leg_index, (price, reference) in enumerate(
             (
@@ -112,13 +118,20 @@ class EntryRuntimeMixin(RuntimeMixinBase):
             "sl_timeframe": reference_timeframe(str(placed.sl_ref)),
             "sl_index": int(placed.sl_index),
             "tp_timeframe": (
-                "" if placed.exit_mode == "ema_21" else reference_timeframe(str(placed.tp_ref))
+                ""
+                if str(placed.tp_ref).lower() == "ema_21"
+                else reference_timeframe(str(placed.tp_ref))
             ),
             "tp_index": float("nan") if int(placed.tp_index) < 0 else int(placed.tp_index),
             "stop_distance": stop_distance,
             "target_distance": target_distance,
             "tp_references": [asdict(reference) for reference in placed.tp_references],
             "tp_legs": tp_legs,
+            "ema_runner_fraction": float(placed.ema_runner_fraction),
+            "entry_ideas": idea_context["ideas"],
+            "entry_idea_timeframes": idea_context["timeframes"],
+            "entry_idea_zones": idea_context["zones"],
+            "entry_idea_overlap_count": len(idea_context["ideas"]),
             # risk_cash is set unconditionally on the open row from the filled
             # lots, not here: reporting the requested budget let risk_cash read
             # 500.0 on trades that really risked $0.82, because min_lot and

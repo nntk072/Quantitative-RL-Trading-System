@@ -250,13 +250,15 @@ def _action_schema_manifest(cfg: Any) -> dict[str, Any] | None:
 
 def _extract_trade_chart_config(cfg: Any) -> dict[str, Any]:
     """Extract trade chart configuration from OmegaConf."""
-    config = {
+    config: dict[str, Any] = {
         "max_loss_per_trade_usd": None,
         "take_profit_per_trade_usd": None,
         "lots": 1.0,  # fallback only (per-trade lots are in trade log)
         "contract_size": 1.0,
         "show_mae_mfe": True,
         "show_sl_tp": True,
+        "breakeven_buffer_pts": 0.0,
+        "entry_idea_plot_config": None,
     }
     if cfg is not None:
         try:
@@ -279,6 +281,13 @@ def _extract_trade_chart_config(cfg: Any) -> dict[str, Any]:
                 if hasattr(cfg.output, "trade_chart_show_sl_tp")
                 else True
             )
+            config["breakeven_buffer_pts"] = float(cfg.env.get("breakeven_buffer_pts", 0.0))
+            from omegaconf import OmegaConf
+
+            plot_config = OmegaConf.select(cfg, "evaluation.trade_idea_plots")
+            if plot_config is not None:
+                resolved = OmegaConf.to_container(plot_config, resolve=True)
+                config["entry_idea_plot_config"] = resolved if isinstance(resolved, dict) else None
         except Exception:
             pass
     return config
@@ -308,10 +317,12 @@ def _write_split(
     contract_size: float = 1.0,
     show_mae_mfe: bool = True,
     show_sl_tp: bool = True,
+    breakeven_buffer_pts: float = 0.0,
     secondary_bars: pd.DataFrame | None = None,
     features: pd.DataFrame | None = None,
     phase_timings: dict[str, float] | None = None,
     phase_prefix: str = "",
+    entry_idea_plot_config: dict[str, Any] | None = None,
 ) -> None:
     """Write all data + charts for one split into *split_dir*."""
     split_dir.mkdir(parents=True, exist_ok=True)
@@ -534,8 +545,10 @@ def _write_split(
                 contract_size=contract_size,
                 show_mae_mfe=show_mae_mfe,
                 show_sl_tp=show_sl_tp,
+                breakeven_buffer_pts=breakeven_buffer_pts,
                 secondary_bars=secondary_bars,
                 features=features,
+                entry_idea_plot_config=entry_idea_plot_config,
             )
             if phase_timings is not None:
                 phase_timings[f"{phase_prefix}order_png"] = time.perf_counter() - order_start
@@ -596,6 +609,7 @@ def _write_split(
                     show_sl_tp=show_sl_tp,
                     secondary_bars=secondary_bars,
                     features=features,
+                    entry_idea_plot_config=entry_idea_plot_config,
                 )
         except ImportError:
             log.warning("plotly not available — skipping interactive HTML charts")

@@ -142,6 +142,11 @@ def detect_liquidity_sweeps(
             "sweep_low": ev_l,
             "sweep_high_level": lv_h,
             "sweep_low_level": lv_l,
+            # Actual extreme of the bar that took liquidity. The old level is
+            # context for detecting the event; a sweep-linked stop belongs
+            # beyond this wick instead.
+            "sweep_high_wick": np.where(ev_h == 1.0, high, np.nan),
+            "sweep_low_wick": np.where(ev_l == 1.0, low, np.nan),
             "sweep_high_reclaimed": rec_h,
             "sweep_low_reclaimed": rec_l,
             "sweep_high_age": age_h,

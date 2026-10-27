@@ -140,6 +140,9 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
                 ),
                 allow_multi_tp=self.allow_multi_tp,
                 allow_simplex=self.allow_simplex,
+                ema_runner_fraction=(
+                    self.ema_runner_fraction if self._selected_exit_mode == "ema_21" else 0.0
+                ),
                 price_increment=float(self.cost_model.point_size),
             )
             sl_price = placed.sl_price
@@ -296,6 +299,7 @@ class EntryExecutionRuntimeMixin(RuntimeMixinBase):
             self.position.tp2_ref = placed.tp2_ref
             self.position.tp3_ref = placed.tp3_ref
             self.position.tp_lot_fractions = placed.tp_lot_fractions
+            self.position.ema_runner_fraction = placed.ema_runner_fraction
             self.position.tp_initial_price = (
                 placed.tp3_price if placed.tp3_price is not None else placed.tp_price
             )

@@ -4,14 +4,11 @@ from __future__ import annotations
 
 import math
 
+import pandas as pd
 import pytest
 
-from evaluation.reporting.trade_note import (
-    OPTION_CAP,
-    build_trade_note,
-    entry_reason,
-    pretty_ref,
-)
+from evaluation.reporting.trade_note import build_trade_note, entry_reason, pretty_ref
+from trading.orders.entries import reference_timeframe
 
 _OPEN_EMA = {
     "time": "2025-10-27 17:44:00+03:00",
@@ -54,7 +51,10 @@ def test_pretty_ref_maps_names_to_plain_language() -> None:
     assert pretty_ref("H1_last_swing_high") == "swing high (H1)"
     assert pretty_ref("ema_21") == "EMA-21 exit"
     assert pretty_ref("asian_low") == "Asia session low"
-    assert pretty_ref("H1_fvg_bull_high") == "fair-value gap (bullish)"
+    assert pretty_ref("dev_0") == "swing low (0x range projection)"
+    assert pretty_ref("H1_fvg_bull_high") == "Fair Value Gap (bullish) (H1)"
+    assert pretty_ref("M30_fvg_bear_low") == "Fair Value Gap (bearish) (M30)"
+    assert pretty_ref("M15_ifvg_bear_high") == "Inverse Fair Value Gap (bearish) (M15)"
     assert pretty_ref("asian_low|H1_last_swing_low") == ("Asia session low + swing low (H1)")
 
 
@@ -63,6 +63,12 @@ def test_pretty_ref_is_safe_on_empty_and_nan() -> None:
     assert pretty_ref(None) == ""
     assert pretty_ref(float("nan")) == ""
     assert pretty_ref(math.nan) == ""
+
+
+def test_reference_timeframes_cover_all_configured_candle_frames() -> None:
+    assert reference_timeframe("M30_fvg_bull_high") == "M30"
+    assert reference_timeframe("D1_last_swing_low") == "D1"
+    assert reference_timeframe("london_low") == ""
 
 
 def test_entry_reason_names_the_level_and_manipulation_state() -> None:
@@ -74,7 +80,55 @@ def test_entry_reason_names_the_level_and_manipulation_state() -> None:
 
 def test_entry_reason_mentions_distribution_phase() -> None:
     text = entry_reason({**_OPEN_EMA, "distribution_phase": 1.0})
-    assert "distribution phase 1" in text
+    assert "PO3 distribution active" in text
+
+
+def test_entry_reason_lists_overlapping_ideas_and_timeframes() -> None:
+    text = entry_reason(
+        {
+            **_OPEN_EMA,
+            "entry_ideas": ["order_block", "standard_deviation", "fvg_retest"],
+            "entry_idea_timeframes": {
+                "order_block": ["M5", "H1"],
+                "standard_deviation": ["M15"],
+                "fvg_retest": ["M3"],
+            },
+        }
+    )
+    assert "Order Block reaction (M5, H1)" in text
+    assert "Fib-like swing retracement (0.5-0.786) (M15)" in text
+    assert "Fair Value Gap retest (M3)" in text
+    assert "3 entry ideas overlap" in text
+
+
+def test_entry_reason_lists_only_linked_fvg_zone_values() -> None:
+    text = entry_reason(
+        {
+            **_OPEN_EMA,
+            "entry_ideas": ["po3"],
+            "entry_idea_timeframes": {"po3": ["M5"]},
+            "entry_idea_zones": [
+                {
+                    "idea": "po3",
+                    "family": "ifvg",
+                    "timeframe": "M5",
+                    "side": "bull",
+                    "low": 100.0,
+                    "high": 101.5,
+                }
+            ],
+        }
+    )
+    assert "PO3 setup (M5)" in text
+    assert "FVG → IFVG bull (M5) 100.00-101.50" in text
+
+
+def test_entry_reason_distinguishes_inactive_from_unrecorded_ideas() -> None:
+    assert "no named entry-idea signal active" in entry_reason(
+        {**_OPEN_EMA, "entry_ideas": [], "entry_idea_timeframes": {}}
+    )
+    unrecorded = {**_OPEN_EMA, "level_type": None}
+    assert "strategy offered this side" in entry_reason(unrecorded)
 
 
 def test_entry_reason_degrades_when_columns_are_empty() -> None:
@@ -84,45 +138,108 @@ def test_entry_reason_degrades_when_columns_are_empty() -> None:
 
 
 def test_note_has_direction_open_close_pnl_and_volume() -> None:
-    joined = "\n".join(_note(_OPEN_EMA))
-    assert "Long" in joined
+    lines = _note(_OPEN_EMA)
+    joined = "\n".join(lines)
+    assert "ENTRY: Long" in joined
     assert "17:44" in joined and "17:48" in joined
-    assert "PnL -21.53" in joined
-    assert "Volume 1.49" in joined
-    assert "PnL logged -21.53 / calc -21.53" in joined
+    assert "RESULT: Net realized PnL $-21.53" in joined
+    assert "Volume 1.49 lots" in joined
+    assert "Fill-price calc $-21.53" in joined
+    assert sum(line.startswith("ENTRY:") for line in lines) == 1
+    assert sum(line.startswith("STOP LOSS (SL):") for line in lines) == 1
+    assert sum(line.startswith("TAKE PROFIT (TP):") for line in lines) == 1
+    assert "ENTRY: Long" in joined and "RESULT: Net realized PnL" in joined
 
 
 def test_ema_note_says_no_fixed_target() -> None:
     joined = "\n".join(_note(_OPEN_EMA))
-    assert "no fixed target" in joined
-    assert "TP options (0)  none - exit on EMA-21" in joined
+    assert "No fixed TP; EMA-21 closed the full position" in joined
+    assert "EMA-21 closed the full position" in joined
 
 
-def test_note_lists_options_and_marks_the_chosen_one() -> None:
+def test_note_names_the_initial_stop() -> None:
     joined = "\n".join(_note(_OPEN_EMA))
-    assert "SL options (3)" in joined
-    assert "* swing low (M5) 25683.39" in joined
+    assert "STOP LOSS (SL)" in joined
+    assert "SL 1 initial 25683.39" in joined
 
 
-def test_option_line_is_capped() -> None:
-    menu = [["london_low", 25700.0 - i] for i in range(OPTION_CAP + 4)]
-    menu[0] = ["M5_last_swing_low", 25683.39]
-    joined = "\n".join(_note({**_OPEN_EMA, "sl_menu": menu}))
-    assert "more)" in joined or "(+" in joined
-    assert joined.count(" 257") <= OPTION_CAP + 1
-
-
-def test_structural_note_shows_tp_and_rr() -> None:
+def test_structural_note_shows_numbered_targets_with_source_and_size() -> None:
     row = {
         **_OPEN_EMA,
         "tp_price": 25876.83,
         "tp_ref": "H1_last_swing_low",
         "exit_mode": "structural",
-        "tp_menu": [["H1_last_swing_low", 25876.83], ["asian_low", 25840.10]],
+        "tp_legs": str(
+            [
+                {
+                    "leg": 1,
+                    "executed_price": 25876.83,
+                    "reference": "H1_last_swing_low",
+                    "lot_fraction": 0.6,
+                },
+                {
+                    "leg": 2,
+                    "executed_price": 25840.10,
+                    "reference": "asian_low",
+                    "lot_fraction": 0.4,
+                },
+            ]
+        ),
     }
     joined = "\n".join(_note(row))
-    assert "TP 25876.83" in joined
-    assert "TP options (2)" in joined
+    assert "TP 1 25876.83 (swing low (H1)) (60.0% of entry size)" in joined
+    assert "TP 2 25840.10 (Asia session low) (40.0% of entry size)" in joined
+
+
+def test_note_reports_stop_target_changes_and_actual_exit_fills() -> None:
+    events = pd.DataFrame(
+        [
+            {
+                "type": "tp_update",
+                "tp_slot": 1,
+                "effective_time": "2025-10-27 17:45:00+03:00",
+                "price": 25740.0,
+                "reason": "swing_target_updated",
+            },
+            {
+                "type": "tp_partial_close",
+                "tp_slot": 1,
+                "time": "2025-10-27 17:46:01.123+03:00",
+                "actual_tick_time": "2025-10-27 17:46:01.123+03:00",
+                "price": 25740.0,
+                "size": 0.5,
+                "pnl": 12.34,
+                "fill_quote_source": "tick",
+                "reason": "structure_tp1",
+            },
+            {
+                "type": "sl_update",
+                "effective_time": "2025-10-27 17:46:01.123+03:00",
+                "price": 25746.25,
+                "reason": "post_partial_breakeven",
+            },
+            {
+                "type": "stop_close",
+                "time": "2025-10-27 17:47:02.500+03:00",
+                "actual_tick_time": "2025-10-27 17:47:02.500+03:00",
+                "price": 25746.25,
+                "size": 0.5,
+                "pnl": -3.21,
+                "fill_quote_source": "tick",
+                "reason": "structure_sl",
+            },
+        ]
+    )
+    joined = "\n".join(_note(_OPEN_EMA, position_events=events))
+
+    assert "TP 1 updated 17:45:00 to 25740.00" in joined
+    assert "TP 1 partial fill 17:46:01.123 @ 25740.00 (tick fill)" in joined
+    assert "realized $+12.34" in joined
+    assert "STOP LOSS (SL): SL 1 initial" in joined
+    assert "SL 2 moved 17:46:01.123 to 25746.25" in joined
+    assert "SL fill 17:47:02.500 @ 25746.25 (tick fill)" in joined
+    assert "realized $-3.21" in joined
+    assert "{" not in joined and "}" not in joined
 
 
 def test_short_direction_is_labelled() -> None:
@@ -134,4 +251,3 @@ def test_short_direction_is_labelled() -> None:
 def test_menu_parsing_tolerates_junk(bad: object) -> None:
     joined = "\n".join(_note({**_OPEN_EMA, "sl_menu": bad}))
     assert joined  # never raises, still produces the note
-    assert "SL options" not in joined

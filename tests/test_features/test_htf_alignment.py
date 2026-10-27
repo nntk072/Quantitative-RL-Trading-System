@@ -16,7 +16,7 @@ from features import build_features
 from features.technical.indicators import build_indicators
 from market_data.transforms.resample import resample
 
-HTF_TFS = ["M5", "M10", "M15", "H1"]
+HTF_TFS = ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def feat_cfg():
     """Minimal features config matching config/default.yaml keys."""
     return OmegaConf.create(
         {
-            "ema_periods": [9, 21],
+            "ema_periods": [9, 21, 50, 200],
             "macd_fast": 12,
             "macd_slow": 26,
             "macd_signal": 9,
@@ -61,8 +61,43 @@ def test_htf_columns_present(m1_bars, feat_cfg):
     for tf in HTF_TFS:
         htf_cols = [c for c in feat.columns if str(c).startswith(f"{tf}_")]
         assert htf_cols, f"no {tf}_* columns in feature matrix"
-        for native in ["ema_9", "rsi"]:
+        for native in [
+            "ema_9",
+            "ema_21",
+            "ema_50",
+            "ema_200",
+            "rsi",
+            "macd",
+            "macd_signal",
+            "macd_hist",
+        ]:
             assert f"{tf}_{native}" in [str(c) for c in feat.columns]
+
+
+def test_order_blocks_are_built_for_primary_and_configured_timeframes(m1_bars, feat_cfg):
+    all_timeframes = ["M1", *HTF_TFS]
+    config = OmegaConf.create(
+        {
+            "features": {
+                **cast(dict[str, Any], OmegaConf.to_container(feat_cfg, resolve=True)),
+                "order_blocks": {
+                    "enabled": True,
+                    "timeframes": all_timeframes,
+                    "swing_period": 3,
+                    "impulse_atr": 0.0,
+                },
+            }
+        }
+    )
+
+    features = build_features(m1_bars, cfg=config)
+
+    for timeframe in all_timeframes:
+        prefix = "" if timeframe == "M1" else f"{timeframe}_"
+        assert f"{prefix}ob_bull_active" in features.columns
+        assert f"{prefix}ob_bear_retest" in features.columns
+        assert f"{prefix}ob_bull_low" in features.columns
+    assert "po3_distribution" not in features.columns
 
 
 def test_build_features_uses_supplied_native_timeframe_bars(m1_bars, feat_cfg) -> None:

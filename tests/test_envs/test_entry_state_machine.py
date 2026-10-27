@@ -137,6 +137,15 @@ def _market_fixture(
     retest_bull = np.zeros(n)
     retest_bear = np.zeros(n)
     (retest_bull if candidate_direction == 1 else retest_bear)[11] = 1.0
+    distribution = np.zeros(n)
+    distribution_direction = np.zeros(n)
+    distribution_after_ifvg = np.zeros(n)
+    distribution[10] = 1.0
+    distribution_direction[10] = float(candidate_direction)
+    distribution_after_ifvg[10] = 1.0
+    ifvg_bull_active = np.zeros(n)
+    ifvg_bear_active = np.zeros(n)
+    (ifvg_bull_active if candidate_direction == 1 else ifvg_bear_active)[10] = 1.0
     features = pd.DataFrame(
         {
             "asian_high": np.full(n, 90.0),
@@ -146,26 +155,27 @@ def _market_fixture(
             "volume_spike": np.full(n, 2.0),
             "sweep_low": sweep_low,
             "sweep_high": sweep_high,
-            "sweep_low_level": np.full(n, 95.0),
-            "sweep_high_level": np.full(n, 110.0),
-            "po3_manipulation_low": np.full(n, 95.0),
-            "po3_manipulation_high": np.full(n, 105.0),
+            "sweep_low_level": np.full(n, 97.0),
+            "sweep_high_level": np.full(n, 104.0),
+            "po3_manipulation_low": np.full(n, 99.0),
+            "po3_manipulation_high": np.full(n, 101.0),
             "po3_manipulation_end": np.zeros(n) if manipulation_active else np.ones(n),
             "po3_manipulation_active": np.ones(n) if manipulation_active else np.zeros(n),
-            "po3_distribution": np.zeros(n),
-            "po3_distribution_direction": np.zeros(n),
+            "po3_distribution": distribution,
+            "po3_distribution_direction": distribution_direction,
+            "po3_distribution_after_ifvg": distribution_after_ifvg,
             "ifvg_bull_low": np.full(n, 98.0),
             "ifvg_bull_high": np.full(n, 99.0),
-            "ifvg_bull_active": np.ones(n) if candidate_direction == 1 else np.zeros(n),
+            "ifvg_bull_active": ifvg_bull_active,
             "ifvg_retest_bull": retest_bull,
             "ifvg_bear_low": np.full(n, 101.0),
             "ifvg_bear_high": np.full(n, 102.0),
-            "ifvg_bear_active": np.ones(n) if candidate_direction == -1 else np.zeros(n),
+            "ifvg_bear_active": ifvg_bear_active,
             "ifvg_retest_bear": retest_bear,
-            "last_swing_high": np.full(n, 105.0),
-            "last_swing_low": np.full(n, 95.0),
-            "prev_day_high": np.full(n, 108.0),
-            "prev_day_low": np.full(n, 90.0),
+            "last_swing_high": np.full(n, 102.0),
+            "last_swing_low": np.full(n, 99.0),
+            "prev_day_high": np.full(n, 103.0),
+            "prev_day_low": np.full(n, 98.0),
             "atr_5": np.ones(n),
         },
         index=index,
@@ -246,7 +256,17 @@ def test_env_uses_armed_candidate_after_per_bar_setup_disappears(
     execution_direction: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     bars, features = _market_fixture(execution_direction)
-    bars.loc[bars.index[13], "open"] = 102.0
+    bars.loc[bars.index[13] :, ["open", "high", "low", "close"]] = [
+        102.0,
+        103.0,
+        101.0,
+        102.0,
+    ]
+    # The order is filled after this gap setup is observed, so give the fixture
+    # structural targets beyond the next-bar fill price.
+    features["last_swing_high"] = 105.0
+    features["prev_day_high"] = 106.0
+    features["sweep_high_level"] = 108.0
     env = TradingEnv(
         bars,
         features,
@@ -290,7 +310,7 @@ def test_env_uses_armed_candidate_after_per_bar_setup_disappears(
     assert tuple(observation["account"][6:]) == entry_state_one_hot("ARMED")
     entry_setup = getattr(env.strategy, "entry_setup")
     assert callable(entry_setup)
-    assert entry_setup(features.iloc[11], 1) is False
+    assert entry_setup(features.iloc[12], 1) is False
     armed_observation = observation
 
     observation, _, _, _, info = env.step(action)  # bar 12: request the stored long

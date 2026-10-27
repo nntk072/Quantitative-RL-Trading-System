@@ -21,6 +21,8 @@ MTF_RAW_SUFFIXES = (
     ),
     "sweep_high_level",
     "sweep_low_level",
+    "sweep_high_wick",
+    "sweep_low_wick",
     "sweep_high_pivot_time_ns",
     "sweep_low_pivot_time_ns",
     "sweep_high_confirmed_at_ns",
@@ -57,6 +59,29 @@ MTF_RAW_SUFFIXES = (
     "fvg_bear_high",
     "fvg_bull_origin",
     "fvg_bear_origin",
+    "ob_bull_low",
+    "ob_bull_high",
+    "ob_bull_mid",
+    "ob_bear_low",
+    "ob_bear_high",
+    "ob_bear_mid",
+    "standard_deviation_band_low",
+    "standard_deviation_band_high",
+    "standard_deviation_level_1_price",
+    "standard_deviation_level_0_786_price",
+    "standard_deviation_level_0_707_price",
+    "standard_deviation_level_0_5_price",
+    "standard_deviation_level_0_price",
+    "standard_deviation_level_neg_0_5_price",
+    "standard_deviation_level_neg_1_price",
+    "standard_deviation_level_neg_1_5_price",
+    "standard_deviation_level_neg_2_price",
+    "standard_deviation_level_neg_2_25_price",
+    "standard_deviation_level_neg_2_5_price",
+    "standard_deviation_level_neg_3_price",
+    "standard_deviation_level_neg_4_price",
+    "standard_deviation_level_neg_6_price",
+    "standard_deviation_level_neg_8_price",
     "asian_high",
     "asian_low",
     "london_high",
@@ -106,7 +131,10 @@ def select_legacy_obs_columns(
     mtf_raw = {
         c
         for c in features.columns
-        if any(str(c).endswith(f"_{stem}") for stem in MTF_RAW_SUFFIXES)
+        if (
+            (str(c) in MTF_RAW_SUFFIXES and not str(c).endswith(OBSERVATION_METADATA_SUFFIXES))
+            or any(str(c).endswith(f"_{stem}") for stem in MTF_RAW_SUFFIXES)
+        )
         and str(c) not in raw_columns
     }
     kept = features.drop(columns=drop_cols + sorted(mtf_raw))

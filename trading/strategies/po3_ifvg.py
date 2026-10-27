@@ -1,4 +1,4 @@
-"""Idea 1 strategy: PO3 manipulation/distribution + IFVG entry zones."""
+"""PO3-after-gap and independent structure ideas as entry contexts."""
 
 from __future__ import annotations
 
@@ -12,11 +12,12 @@ from .types import FeatureRow
 
 
 class PO3IFVGStrategy(TradingStrategy):
-    """A sell-side sweep or a confirmed swing low offers the long.
+    """Require a post-sweep IFVG for PO3, with OB/SD/FVG ideas independent.
 
-    The short is the mirror. Gaps, candles, and the other technical columns
-    stay on the row for the network. ``enforce_gate`` still only affects
-    :meth:`validate_entry`. The overlay reads :meth:`context_direction`.
+    A liquidity sweep alone is never an entry signal. PO3 becomes eligible
+    only after the active setup has a confirmed IFVG and the gap remains live.
+    Order-block reactions, swing retracements, and FVG/IFVG retests are
+    separate ideas and can qualify independently.
     """
 
     name = "po3_ifvg"
@@ -150,25 +151,18 @@ class PO3IFVGStrategy(TradingStrategy):
     def entry_gap(self, row: pd.Series, direction: int) -> bool:
         """A live gap on any timeframe.
 
-        An FVG counts only on the bar that retests it and holds. An IFVG
-        counts on that same retest when ``require_price_retest`` is set, and
-        on a close inside the still-live zone when it is not. A filled gap
-        is not live, so it never counts.
+        When retests are configured, require their confirmation flags. With
+        retests disabled, a still-live matching FVG or IFVG is sufficient.
+        The PO3 path separately requires an IFVG armed by the current setup.
         """
         if direction == 1:
-            ifvg = (
-                _any(row, "ifvg_retest_bull")
-                if self.require_price_retest
-                else _any(row, "price_in_ifvg_bull")
-            )
-            return ifvg or _any(row, "fvg_retest_bull")
+            if self.require_price_retest:
+                return _any(row, "ifvg_retest_bull") or _any(row, "fvg_retest_bull")
+            return _any(row, "ifvg_bull_active") or _any(row, "fvg_bull_active")
         if direction == -1:
-            ifvg = (
-                _any(row, "ifvg_retest_bear")
-                if self.require_price_retest
-                else _any(row, "price_in_ifvg_bear")
-            )
-            return ifvg or _any(row, "fvg_retest_bear")
+            if self.require_price_retest:
+                return _any(row, "ifvg_retest_bear") or _any(row, "fvg_retest_bear")
+            return _any(row, "ifvg_bear_active") or _any(row, "fvg_bear_active")
         return False
 
     def context_direction(self, row: pd.Series) -> int:
@@ -188,25 +182,53 @@ class PO3IFVGStrategy(TradingStrategy):
         if self.entry_mode == "preconfirmation_exploratory":
             return self._fvg_candidate_direction(row)
 
-        swept_low = self._flag_any(row, self._sweep_low, "sweep_low")
-        swept_high = self._flag_any(row, self._sweep_high, "sweep_high")
-        if swept_low or swept_high:
-            if swept_low and swept_high:
-                return 0
-            return 1 if swept_low else -1
-        swing_low = self._flag_any(row, self._swing_low, "swing_low_event")
-        swing_high = self._flag_any(row, self._swing_high, "swing_high_event")
-        if swing_low and swing_high:
-            return 0
-        if swing_low:
-            return 1
-        if swing_high:
-            return -1
-        return 0
+        return self._independent_idea_direction(row)
 
     def entry_setup(self, row: pd.Series, direction: int) -> bool:
-        """True when this bar's sweep or protected swing matches ``direction``."""
+        """True when a qualified PO3 or independent idea matches the side."""
         return self.context_direction(row) == direction and direction != 0
+
+    def _independent_idea_direction(self, row: pd.Series) -> int:
+        """Resolve simultaneous, independent long/short idea contexts."""
+        po3_long = self._po3_ready(row, 1)
+        po3_short = self._po3_ready(row, -1)
+        if self.require_price_retest:
+            long_gap = _any(row, "fvg_retest_bull") or _any(row, "ifvg_retest_bull")
+            short_gap = _any(row, "fvg_retest_bear") or _any(row, "ifvg_retest_bear")
+        else:
+            long_gap = _any(row, "fvg_bull_active") or _any(row, "ifvg_bull_active")
+            short_gap = _any(row, "fvg_bear_active") or _any(row, "ifvg_bear_active")
+        long_idea = (
+            po3_long
+            or _any(row, "ob_bull_retest")
+            or _any(row, "standard_deviation_entry_long")
+            or long_gap
+        )
+        short_idea = (
+            po3_short
+            or _any(row, "ob_bear_retest")
+            or _any(row, "standard_deviation_entry_short")
+            or short_gap
+        )
+        return 0 if long_idea == short_idea else (1 if long_idea else -1)
+
+    @staticmethod
+    def _po3_ready(row: pd.Series, direction: int) -> bool:
+        """PO3 requires a same-leg post-IFVG distribution and a live IFVG."""
+        if not _any(row, "po3_distribution_after_ifvg"):
+            return False
+        expected_sign = float(direction)
+        matching_distribution = False
+        for column in _columns(row, "po3_distribution_direction"):
+            try:
+                value = float(row.get(column, np.nan))
+            except (TypeError, ValueError):
+                continue
+            if np.isfinite(value) and value * expected_sign > 0.0:
+                matching_distribution = True
+                break
+        side = "bull" if direction == 1 else "bear"
+        return matching_distribution and _any(row, f"ifvg_{side}_active")
 
     def _confirmed_ifvg_direction(self, row: pd.Series) -> int:
         confirmed = _flag(row, "po3_ifvg_confirmed")

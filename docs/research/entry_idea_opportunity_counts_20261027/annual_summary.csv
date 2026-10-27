@@ -1,0 +1,4 @@
+year,m1_rows,idea_timeframe_active_bars_sum,idea_timeframe_episode_starts_sum,idea_timeframe_both_sides_bars_sum,unique_bars_any_idea,unique_bars_directionally_unambiguous,unique_bars_with_both_directions,cache_entry_idea_rows_with_both_directions,unique_bars_2plus_ideas,unique_bars_3plus_ideas,po3_signal_episode_starts,order_block_signal_episode_starts,standard_deviation_signal_episode_starts,fvg_ifvg_reaction_signal_episode_starts,po3_unique_bars,order_block_unique_bars,standard_deviation_unique_bars,fvg_ifvg_reaction_unique_bars
+2024,2730,4871,912,146,2145,1204,941,941,1088,273,95,119,330,368,581,352,1503,1101
+2025,348702,826328,120161,39669,306509,133782,172727,172727,192707,68576,14421,17339,42150,46251,77544,95533,224074,180353
+2026,279355,666786,95297,30572,247931,109323,138608,138608,155410,50956,11172,13500,34375,36250,59145,69937,184346,147388

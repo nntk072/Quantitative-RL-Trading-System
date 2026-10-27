@@ -7,15 +7,12 @@ only turns an open/close row into plain-language lines.
 
 from __future__ import annotations
 
+import ast
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
-# Cap the printed ladder so the note stays a few lines.
-OPTION_CAP: int = 4
-STAR: str = "*"
-
-_SIDE_TF: tuple[str, ...] = ("M5", "M15", "H1")
+_SIDE_TF: tuple[str, ...] = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H2", "H4", "D1", "W1")
 
 _SIMPLE: dict[str, str] = {
     "last_swing_low": "swing low (M1)",
@@ -26,12 +23,14 @@ _SIMPLE: dict[str, str] = {
     "london_high": "London session high",
     "prev_day_high": "previous day high",
     "prev_day_low": "previous day low",
+    "yesterday_high": "previous day high",
+    "yesterday_low": "previous day low",
     "prev_day_high_low": "previous day high/low",
     "ctx_prev_week_high": "previous week high",
     "ctx_prev_week_low": "previous week low",
     "sweep_high_level": "swept liquidity high",
     "sweep_low_level": "swept liquidity low",
-    "smt_swing": "SMT swing",
+    "smt_swing": "Smart Money Technique divergence (SMT) swing",
     "sl_reference": "strategy stop reference",
     "ema_21": "EMA-21 exit",
 }
@@ -51,6 +50,13 @@ _MANIPULATION: dict[str, str] = {
     "done": 'manipulation "done" (phase completed)',
     "none": "no manipulation yet",
     "against": 'manipulation "against" (side not confirmed)',
+}
+
+_ENTRY_IDEA_LABELS: dict[str, str] = {
+    "po3": "PO3 setup",
+    "order_block": "Order Block reaction",
+    "standard_deviation": "Fib-like swing retracement (0.5-0.786)",
+    "fvg_retest": "Fair Value Gap retest",
 }
 
 
@@ -100,16 +106,32 @@ def pretty_ref(name: Any) -> str:
         if hit is not None:
             out.append(f"swing {'low' if hit[1].endswith('low') else 'high'} ({hit[0]})")
             continue
-        if "ifvg" in part:
-            out.append(f"inverse gap ({'bullish' if 'bull' in part else 'bearish'})")
+        timeframe = next((tf for tf in _SIDE_TF if part.startswith(f"{tf}_")), None)
+        ref_name = part[len(timeframe) + 1 :] if timeframe else part
+        suffix = f" ({timeframe})" if timeframe else ""
+        if "ifvg" in ref_name:
+            out.append(
+                f"Inverse Fair Value Gap ({'bullish' if 'bull' in ref_name else 'bearish'}){suffix}"
+            )
             continue
-        if "fvg" in part:
-            out.append(f"fair-value gap ({'bullish' if 'bull' in part else 'bearish'})")
+        if "fvg" in ref_name:
+            out.append(f"Fair Value Gap ({'bullish' if 'bull' in ref_name else 'bearish'}){suffix}")
             continue
         if part.startswith("dev"):
-            out.append(f"deviation {part.split('_', 1)[-1]}")
+            deviation = part.split("_", 1)[-1]
+            try:
+                multiple = float(deviation)
+            except ValueError:
+                out.append(f"range projection {deviation}x")
+                continue
+            if multiple == 0.0:
+                out.append("swing low (0x range projection)")
+            elif multiple == 1.0:
+                out.append("swing high (1x range projection)")
+            else:
+                out.append(f"range projection {multiple:g}x")
             continue
-        out.append(part.replace("_", " "))
+        out.append((f"{timeframe} " if timeframe else "") + ref_name.replace("_", " "))
     return " + ".join(out)
 
 
@@ -120,66 +142,85 @@ def entry_reason(open_row: Any) -> str:
     the strategy offered, not a filter that blocked other trades.
     """
     parts: list[str] = []
-    level = _LEVEL_ENTRY.get(_text(open_row.get("level_type")))
-    if level is None:
-        level = pretty_ref(open_row.get("level_type"))
-    parts.append(level or "strategy offered this side (no swept level)")
+    raw_ideas = open_row.get("entry_ideas")
+    if _text(raw_ideas):
+        idea_names = [str(value) for value in _sequence_value(raw_ideas)]
+        timeframe_map = _mapping_value(open_row.get("entry_idea_timeframes"))
+        if idea_names:
+            for idea in idea_names:
+                label = _ENTRY_IDEA_LABELS.get(idea, idea.replace("_", " "))
+                raw_timeframes = timeframe_map.get(idea, [])
+                timeframes = (
+                    [raw_timeframes]
+                    if isinstance(raw_timeframes, str)
+                    else [str(value) for value in _sequence_value(raw_timeframes)]
+                )
+                timeframe_text = f" ({', '.join(timeframes)})" if timeframes else ""
+                parts.append(label + timeframe_text)
+            if len(idea_names) > 1:
+                parts.append(f"{len(idea_names)} entry ideas overlap at the signal")
+        else:
+            parts.append("no named entry-idea signal active at the signal bar")
+        zones = _sequence_value(open_row.get("entry_idea_zones"))
+        if zones:
+            zone_text: list[str] = []
+            for zone in zones:
+                if not isinstance(zone, Mapping):
+                    continue
+                family = _text(zone.get("family")).upper()
+                if _text(zone.get("idea")) == "po3" and family in {"FVG", "IFVG"}:
+                    family = "FVG → IFVG" if family == "IFVG" else "FVG origin"
+                timeframe = _text(zone.get("timeframe"))
+                side = _text(zone.get("side"))
+                low = _number(zone.get("low"))
+                high = _number(zone.get("high"))
+                if low is None or high is None:
+                    continue
+                zone_text.append(f"{family} {side} ({timeframe}) {low:.2f}-{high:.2f}")
+            if zone_text:
+                parts.append("linked zones: " + "; ".join(zone_text))
+    else:
+        level = _LEVEL_ENTRY.get(_text(open_row.get("level_type")))
+        if level is None:
+            level = pretty_ref(open_row.get("level_type"))
+        parts.append(level or "strategy offered this side (no swept level)")
     state = _text(open_row.get("manipulation")).lower()
     if state:
         parts.append(_MANIPULATION.get(state, f"manipulation {state}"))
     phase = _number(open_row.get("distribution_phase"))
     if phase is not None and phase > 0.0:
-        parts.append(f"distribution phase {int(phase)}")
+        parts.append("PO3 distribution active")
     return "Entry: " + ", ".join(parts)
 
 
-def _menu_pairs(raw: Any) -> list[tuple[str, float]]:
-    """Normalize a logged ``sl_menu`` / ``tp_menu`` cell into pairs."""
-    if raw is None or isinstance(raw, (str, bytes, float, int, bool)):
+def _sequence_value(raw: Any) -> list[Any]:
+    if isinstance(raw, str):
+        try:
+            raw = ast.literal_eval(raw)
+        except (SyntaxError, ValueError):
+            return []
+    if raw is None or isinstance(raw, (bytes, float, int, bool)):
         return []
     try:
-        items: Iterable[Any] = list(raw)
+        return list(raw)
     except TypeError:
         return []
-    out: list[tuple[str, float]] = []
-    for item in items:
-        if isinstance(item, (list, tuple)) and len(item) >= 2:
-            name = _text(item[0])
-            price = _number(item[1])
-            if name and price is not None:
-                out.append((name, price))
-    return out
 
 
-def _format_options(
-    menu: Sequence[tuple[str, float]],
-    chosen_name: str,
-    entry_price: float,
-    label: str,
-) -> str:
-    """One line listing the ladder, ``*`` marking the agent's choice."""
-    if not menu:
-        return f"{label} options (0)  none"
-    pick = next((i for i, (name, _) in enumerate(menu) if name == chosen_name), None)
-    near = sorted(range(len(menu)), key=lambda i: abs(menu[i][1] - entry_price))
-    if pick is None:
-        shown = near[: OPTION_CAP + 1]
-    else:
-        rest = [i for i in near if i != pick][:OPTION_CAP]
-        shown = [pick, *rest]
-    body = " . ".join(
-        (STAR + " " if i == pick else "")
-        + (pretty_ref(menu[i][0]) or menu[i][0])
-        + f" {menu[i][1]:.2f}"
-        for i in shown
-    )
-    more = "" if len(shown) >= len(menu) else f"  (+{len(menu) - len(shown)} more)"
-    return f"{label} options ({len(menu)})  {body}{more}"
+def _mapping_value(raw: Any) -> Mapping[str, Any]:
+    if isinstance(raw, str):
+        try:
+            raw = ast.literal_eval(raw)
+        except (SyntaxError, ValueError):
+            return {}
+    return raw if isinstance(raw, Mapping) else {}
 
 
 def _clock(value: Any) -> str:
     text = _text(value)
-    return text[11:16] if len(text) >= 16 else text
+    if len(text) >= 23 and text[19] == ".":
+        return text[11:23]
+    return text[11:19] if len(text) >= 19 else (text[11:16] if len(text) >= 16 else text)
 
 
 def build_trade_note(
@@ -196,16 +237,23 @@ def build_trade_note(
     lots: float,
     close_reason_detail: str,
     extra_notes: Sequence[str] | None = None,
+    position_events: Any = None,
+    signal_time: Any = None,
+    entry_fill_time: Any = None,
 ) -> list[str]:
     """Caption lines shown under both subplots of one trade chart."""
     dir_label = "Long" if direction == 1 else "Short" if direction == -1 else "Flat"
+    fill_source = _text(open_row.get("fill_quote_source"))
+    fill_kind = "tick fill" if fill_source == "tick" else "logged fill"
+    signal = _clock(signal_time) if _text(signal_time) else "not recorded"
+    entry_time_value = entry_fill_time if _text(entry_fill_time) else open_row.get("time")
+    entry_time = _clock(entry_time_value)
     lines = [
-        f"{dir_label} - Open {_clock(open_row.get('time'))}"
-        f" -> Close {_clock(close_row.get('time'))}"
-        f" ({duration_mins}m{duration_secs:02d}s)"
-        f" - PnL {pnl:+.2f} - Volume {lots:.2f} lots",
-        entry_reason(open_row),
-        f"PnL logged {pnl:+.2f} / calc {pnl_calc:+.2f} / closed: {close_reason_detail}",
+        f"ENTRY: {dir_label} | Signal {signal} | {fill_kind} {entry_time} @ {entry_price:.2f}"
+        f" | Volume {lots:.2f} lots | Reason: {entry_reason(open_row).removeprefix('Entry: ')}",
+        f"RESULT: Net realized PnL ${pnl:+.2f} | Fill-price calc ${pnl_calc:+.2f}"
+        f" | Difference ${pnl - pnl_calc:+.2f} | Closed {_clock(close_row.get('time'))}"
+        f" ({duration_mins}m{duration_secs:02d}s), {close_reason_detail}",
     ]
 
     exit_mode = _text(open_row.get("exit_mode"))
@@ -215,35 +263,118 @@ def build_trade_note(
     tp_price = _number(open_row.get("tp_price"))
     ema_exit = exit_mode == "ema_21" or tp_ref.lower() == "ema_21"
 
-    stop = (
-        f"SL {sl_price:.2f} {pretty_ref(sl_ref) or 'stop'}"
-        if sl_price is not None
-        else (f"SL {pretty_ref(sl_ref) or 'stop'}")
-    )
-    if ema_exit and tp_price is None:
-        target = f"Exit {exit_price:.2f} EMA-21 exit (no fixed target)"
-    elif tp_price is not None:
-        target = f"TP {tp_price:.2f} {pretty_ref(tp_ref) or 'target'}"
-    else:
-        target = f"Exit {exit_price:.2f}"
-    lines.append(f"{stop}  |  {target}")
-
-    sl_menu = _menu_pairs(open_row.get("sl_menu"))
-    tp_menu = _menu_pairs(open_row.get("tp_menu"))
-    if sl_menu:
-        lines.append(_format_options(sl_menu, sl_ref, entry_price, "SL"))
-    if ema_exit:
-        lines.append(
-            f"TP options ({len(tp_menu)})  listed but not used (EMA-21 exit)"
-            if tp_menu
-            else "TP options (0)  none - exit on EMA-21"
+    stop_activity: list[str] = []
+    target_activity: list[str] = []
+    if sl_price is not None:
+        distance = abs(entry_price - sl_price)
+        stop_activity.append(
+            f"SL 1 initial {sl_price:.2f} ({pretty_ref(sl_ref) or 'stop'}, {distance:.2f} points from entry)"
         )
-    elif tp_menu:
-        lines.append(_format_options(tp_menu, tp_ref, entry_price, "TP"))
+    else:
+        stop_activity.append("SL 1 initial price not recorded")
 
+    target_legs = _sequence_value(open_row.get("tp_legs"))
+    target_fraction_total = 0.0
+    target_count = 0
+    if target_legs:
+        for leg in target_legs:
+            if not isinstance(leg, dict):
+                continue
+            leg_number = leg.get("leg", "?")
+            target_price = _number(leg.get("executed_price"))
+            fraction = _number(leg.get("lot_fraction"))
+            if fraction is not None:
+                target_fraction_total += fraction
+            target_count += 1
+            reference = pretty_ref(leg.get("reference"))
+            if target_price is not None:
+                fraction_text = f" ({fraction:.1%} of entry size)" if fraction is not None else ""
+                target_activity.append(
+                    f"TP {leg_number} {target_price:.2f}"
+                    + (f" ({reference})" if reference else "")
+                    + fraction_text
+                )
+    elif tp_price is not None and not ema_exit:
+        target_activity.append(f"TP 1 {tp_price:.2f} ({pretty_ref(tp_ref) or 'target'})")
+    runner_fraction = _number(open_row.get("ema_runner_fraction")) or 0.0
+    if ema_exit and runner_fraction > 0.0 and target_count:
+        target_activity.append(
+            f"TP {target_count + 1} EMA-21 runner exit after TP {target_count} partial target(s)"
+            f" ({runner_fraction:.1%} of entry size; target legs close {target_fraction_total:.1%})"
+        )
+    if ema_exit and tp_price is None:
+        target_activity.append("No fixed TP; EMA-21 closed the full position in this run")
+
+    if position_events is not None and hasattr(position_events, "iterrows"):
+        sl_updates = position_events.loc[position_events["type"].eq("sl_update")]
+        for update_i, (_, update) in enumerate(sl_updates.iterrows(), start=2):
+            effective = update.get("effective_time")
+            if not _text(effective):
+                effective = update.get("time")
+            reconstructed = (
+                " (reconstructed from saved config)"
+                if "reconstructed" in _text(update.get("reason"))
+                else ""
+            )
+            stop_activity.append(
+                f"SL {update_i} moved {_clock(effective)} to {float(update['price']):.2f}"
+                f" ({_text(update.get('reason')).replace('_', ' ')}{reconstructed})"
+            )
+        tp_updates = position_events.loc[position_events["type"].eq("tp_update")]
+        for _, update in tp_updates.iterrows():
+            effective = update.get("effective_time")
+            if not _text(effective):
+                effective = update.get("time")
+            slot = _number(update.get("tp_slot"))
+            target_activity.append(
+                f"TP {int(slot) if slot is not None else '?'} updated {_clock(effective)} "
+                f"to {float(update['price']):.2f} ({_text(update.get('reason')).replace('_', ' ')})"
+            )
+        for _, fill in position_events.loc[
+            position_events["type"].isin(
+                ["tp_partial_close", "tp_close", "stop_close", "close", "forced_close", "eod_close"]
+            )
+        ].iterrows():
+            kind = _text(fill.get("type"))
+            reason = _text(fill.get("reason")).replace("_", " ")
+            fill_time = fill.get("actual_tick_time")
+            if not _text(fill_time):
+                fill_time = fill.get("time")
+            source_value = _text(fill.get("fill_quote_source"))
+            source = "tick fill" if source_value == "tick" else source_value or "logged execution"
+            tp_slot = _number(fill.get("tp_slot"))
+            size = _number(fill.get("size"))
+            size_text = f" | {size:.2f} lots" if size is not None else ""
+            fill_pnl = _number(fill.get("pnl"))
+            pnl_text = f" | realized ${fill_pnl:+.2f}" if fill_pnl is not None else ""
+            if kind == "tp_partial_close":
+                label = f"TP {int(tp_slot) if tp_slot is not None else '?'} partial fill"
+                target_activity.append(
+                    f"{label} {_clock(fill_time)} @ {float(fill['price']):.2f} ({source})"
+                    f"{size_text}{pnl_text} ({reason})"
+                )
+            elif kind == "tp_close":
+                label = f"TP {int(tp_slot) if tp_slot is not None else '?'} fill"
+                target_activity.append(
+                    f"{label} {_clock(fill_time)} @ {float(fill['price']):.2f} ({source})"
+                    f"{size_text}{pnl_text} ({reason})"
+                )
+            elif "stop" in kind or "sl" in reason:
+                stop_activity.append(
+                    f"SL fill {_clock(fill_time)} @ {float(fill['price']):.2f} ({source})"
+                    f"{size_text}{pnl_text} ({reason})"
+                )
+            else:
+                target_activity.append(
+                    f"Other exit fill {_clock(fill_time)} @ {float(fill['price']):.2f} ({source})"
+                    f"{size_text}{pnl_text} ({reason})"
+                )
+
+    lines.append("STOP LOSS (SL): " + "; ".join(stop_activity))
+    lines.append("TAKE PROFIT (TP): " + "; ".join(target_activity or ["no fixed target recorded"]))
     for note in extra_notes or ():
-        lines.append(f"note: {note}")
+        lines.append(f"Context: {note}")
     return lines
 
 
-__all__ = ["OPTION_CAP", "STAR", "build_trade_note", "entry_reason", "pretty_ref"]
+__all__ = ["build_trade_note", "entry_reason", "pretty_ref"]

@@ -190,16 +190,15 @@ def _swing_origins(
             origin_i = i - swing_period
         if origin_i < 0 or origin_i >= len(wick):
             continue
-        # A stored level that misses the wick still belongs on this pivot.
-        # Draw the candle's high or low so the ray is not thrown away.
+        # Swing rays represent the pivot candle's actual wick. This also keeps
+        # the ray price identical to the price used by the next-wick-crossing
+        # search below, even if a cached structure value differs slightly.
         matched = _bar_that_prints(wick, origin_i, price, swing_period)
         if matched >= 0:
             origin_i = matched
-            draw_px = price
-        else:
-            draw_px = float(wick.iloc[origin_i])
-            if not np.isfinite(draw_px):
-                continue
+        draw_px = float(wick.iloc[origin_i])
+        if not np.isfinite(draw_px):
+            continue
         out.append((origin_i, draw_px))
     return out
 
@@ -208,13 +207,24 @@ def _rays_from_origins(
     index: pd.DatetimeIndex,
     origins: list[tuple[int, float]],
     side: Side,
+    bars: pd.DataFrame,
 ) -> list[SwingRay]:
     last_i = len(index) - 1
+    wick = bars["high" if side == "high" else "low"].to_numpy(dtype=float)
+    next_cross = np.full(len(wick), len(wick), dtype=int)
+    stack: list[int] = []
+    for i in range(len(wick) - 1, -1, -1):
+        while stack and (
+            (wick[stack[-1]] < wick[i]) if side == "high" else (wick[stack[-1]] > wick[i])
+        ):
+            stack.pop()
+        if stack:
+            next_cross[i] = stack[-1]
+        stack.append(i)
     rays: list[SwingRay] = []
-    for k, (origin_i, price) in enumerate(origins):
-        end_i = origins[k + 1][0] if k + 1 < len(origins) else last_i
-        if end_i <= origin_i:
-            end_i = last_i
+    for origin_i, price in origins:
+        candidate = int(next_cross[origin_i])
+        end_i = candidate if candidate < len(wick) and candidate > origin_i else last_i
         origin_ts = pd.Timestamp(index[origin_i])
         rays.append(
             SwingRay(
@@ -237,7 +247,7 @@ def _sweep_lines(
 ) -> list[SweepLine]:
     col = "sweep_high" if side == "high" else "sweep_low"
     lvl_col = "sweep_high_level" if side == "high" else "sweep_low_level"
-    label = "X"
+    label = "Liquidity sweep"
     events = sweeps[col].to_numpy(dtype=float)
     levels = sweeps[lvl_col].to_numpy(dtype=float)
     lines: list[SweepLine] = []
@@ -269,7 +279,7 @@ def _smt_segments(
     side: Side,
 ) -> list[SmtSegment]:
     col = "smt_bearish" if side == "high" else "smt_bullish"
-    label = "SMT"
+    label = "SMT divergence (M1)"
     flags = smt[col].to_numpy(dtype=float)
     segs: list[SmtSegment] = []
     origin_i_arr = np.array([o[0] for o in origins], dtype=int)
@@ -312,8 +322,8 @@ def build_overlay_events(
     low_origins = _swing_origins(levels, bars["low"], idx, swing_period, "low")
 
     events = OverlayEvents(
-        swings=_rays_from_origins(idx, high_origins, "high")
-        + _rays_from_origins(idx, low_origins, "low"),
+        swings=_rays_from_origins(idx, high_origins, "high", bars)
+        + _rays_from_origins(idx, low_origins, "low", bars),
         sweeps=_sweep_lines(idx, sweeps, high_origins, "high", pad)
         + _sweep_lines(idx, sweeps, low_origins, "low", pad),
     )

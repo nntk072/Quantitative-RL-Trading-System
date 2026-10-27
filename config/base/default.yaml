@@ -114,6 +114,31 @@ evaluation:
   deterministic: false
   periods_per_year: 98280
   annualization_convention: "252 sessions/year x 390 NY-session M1 bars/session"
+  # Per-entry-idea chart controls. Each idea can independently select source
+  # timeframes and context overlays; overlapping ideas honor every enabled
+  # block. `standard_deviation` is the Fib-like swing-retracement idea.
+  trade_idea_plots:
+    po3:
+      enabled: true
+      timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+      show_manipulation: true
+      show_distribution: true
+      show_fvg: true
+      show_ifvg: true
+    order_block:
+      enabled: true
+      timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+      show_zone: true
+    fvg_retest:
+      enabled: true
+      timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+      show_fvg: true
+      show_ifvg: true
+    standard_deviation:
+      enabled: true
+      timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+      levels: ${features.entry_ideas.levels}
+      max_chart_range_fraction: 0.15
 
 costs:
   # spread in price units (same unit as bar close prices)
@@ -204,7 +229,7 @@ live_risk_overrides:
 
 features:
   window: 60                           # look-back bars fed to encoder
-  ema_periods: [9, 13, 21, 50, 200]
+  ema_periods: [9, 21, 50, 200]
   rsi_period: 14
   macd_fast: 12
   macd_slow: 26
@@ -225,7 +250,7 @@ features:
   # Higher timeframes whose own indicator blocks are causally aligned onto
   # the M1 spine (Chain A). Each listed TF gets the same build_indicators()
   # call as M1, forward-filled with {TF}_{indicator} column names.
-  htf_timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+  htf_timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"] # M1 is the primary stream.
   # Chain B/F opt-in feature blocks (all off by default; enabled by the
   # per-variant config files in config/features_*_mtf.yaml).
   include_po3: false            # PO3 time-of-day phase tag (accum/manip/distrib)
@@ -252,10 +277,28 @@ features:
     swing_candidate_count: 1 # 1 preserves latest-only; 2/3 selects recent unswept swings
     candidate_price_increment: null # defaults to costs.point_size
   liquidity: {enabled: false, timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]}
+  # Context-qualified last opposing candle before displacement through confirmed
+  # structure. Each source stream is aligned only after its candle closes.
+  order_blocks:
+    enabled: false
+    timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+    swing_period: 5
+    impulse_atr: 0.5
+    search_bars: 10
+    max_age_bars: 240
+  # Multi-hot entry context; signals may overlap and do not gate PPO actions.
+  entry_ideas:
+    enabled: false
+    timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+    retracement_low: 0.5
+    retracement_high: 0.786
+    # Fib-like impulse coordinates: 0 at the impulse end, 1 at its origin;
+    # negative values project beyond the impulse end. Mirrored for down legs.
+    levels: [1.0, 0.786, 0.707, 0.5, 0.0, -0.5, -1.0, -1.5, -2.0, -2.25, -2.5, -3.0, -4.0, -6.0, -8.0]
   po3_state_mtf: {enabled: false, timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]}
   # IFVG confirmations can be merged from any supported resample timeframe;
   # every source is exposed only after its candle closes.
-  ifvg_mtf: {enabled: false, timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]}
+  ifvg_mtf: {enabled: false, timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]}
   # CT-anchored session levels (additive to the legacy broker-tz levels in
   # structure.detect_session_levels; new columns carry a _ct suffix).
   # Windows are resolved per bar in `tz` via tz-aware conversion, so US DST
@@ -319,13 +362,16 @@ env:
   tp_mode_defer_threshold: 0.1        # agent veto threshold
   allow_multi_tp: false               # opt-in multi-TP levels
   allow_simplex: true                 # disable z1/z2 for 9-D multi-TP
+  # When >0 and EMA exit is selected, close this many structural partial
+  # targets first, reserve the configured remainder as an EMA-21 runner.
+  ema_runner_fraction: 0.25           # fraction of initial size reserved after partial TPs
   tp_breakeven_alpha: 0.5             # alpha for breakeven TP: TP = entry + alpha * R
   # Training behavior, not an FTMO kill. 0 = off. 0.10 = flatten at 10% from peak.
   peak_trailing_dd_limit: 0.0
   max_entries_per_session: 0
   # First NY minutes are the open manipulation. 0 disables the blackout.
   open_manipulation_bars: 10
-  entry_cooldown_bars: 15
+  entry_cooldown_bars: 0              # disabled; allow a new entry as soon as the account is flat
   sl_buffer_pts: 0.0                   # structural stop buffer (0 = exact)
   block_overnight: true                # force-close positions at last NY bar (no gap hold)
   eod_risk:
@@ -471,10 +517,9 @@ risk:
   tp_mode: fixed                       # fixed | breakeven | trailing
   tp_reference: structural             # anchor for TP distance ratios
   min_sl_atr_mult: 0.5                 # reject/tighten stops inside noise
-  # Absolute minimum |entry - SL| in price points. Sized as ~2x the worst
-  # expected fill slippage (costs.slippage_points), so a 5-point slip still
-  # leaves the stop meaningful rather than whipsawing on the fill itself.
-  min_sl_points: 10.0
+  # No fixed point-distance floor. Structural stop distance is screened by
+  # min_sl_atr_mult; execution slippage is configured separately under costs.
+  min_sl_points: 0.0
   swing_buffer_pts: 1.0
   rr_ratio_default: 2.0
 

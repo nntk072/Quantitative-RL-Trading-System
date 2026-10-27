@@ -24,13 +24,16 @@ import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
 from configuration.paths import repository_root
+from features.context.entry_ideas import build_entry_idea_features
 from features.context.liquidity import detect_bos, detect_liquidity_sweeps, detect_mss
+from features.context.order_blocks import build_order_block_features
 from features.context.premium_discount import (
     build_htf_pd_distance_features,
     build_pd_context_features,
     build_trader_context_features,
 )
 from features.context.smt import smt_divergence
+from features.context.swing_retracement import SWING_LEVELS, build_swing_retracement_features
 from features.pipeline.cache import (
     feature_cache_content_hash,
 )
@@ -84,6 +87,8 @@ from market_data.transforms.resample import resample
 # v16: SL modes (state machine + agent veto), prev-NY session H/L, swing
 #      history columns (swing_high_{1..3}/swing_low_{1..3}), TF-SMT enablement.
 # v22: causal completed prior-NY levels use the configured NY session window.
+# v25: context-qualified order-block zones across the configured timeframe ladder.
+# v26: separate, overlapping PO3, Order Block, FVG-retest, and swing-retracement ideas.
 
 
 _DEFAULT_HTF_TIMEFRAMES = ("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
@@ -477,6 +482,49 @@ def build_features(
         default_timeframes=_MTF_LIGHT_TFS,
     )
 
+    # Context-qualified order blocks are calculated on each source timeframe,
+    # then aligned only after that source candle is complete. Price boundaries
+    # remain raw metadata for stop/target selection; flags and ATR distances are
+    # available to the policy as features.
+    if feat_cfg is not None and _enabled(feat_cfg, "order_blocks", False):
+        ob_cfg = getattr(feat_cfg, "order_blocks", None)
+        ob_blocks: dict[str, pd.DataFrame] = {}
+        ob_tfs = _htf_list(feat_cfg, "order_blocks", ("M1", *_DEFAULT_HTF_TIMEFRAMES))
+        swing_period = int(getattr(ob_cfg, "swing_period", 5))
+        impulse_atr = float(getattr(ob_cfg, "impulse_atr", 0.5))
+        search_bars = int(getattr(ob_cfg, "search_bars", 10))
+        max_age_bars = int(getattr(ob_cfg, "max_age_bars", 240))
+        if "M1" in {str(tf).upper() for tf in ob_tfs}:
+            feat = pd.concat(
+                [
+                    feat,
+                    build_order_block_features(
+                        primary,
+                        swing_period=swing_period,
+                        impulse_atr=impulse_atr,
+                        search_bars=search_bars,
+                        max_age_bars=max_age_bars,
+                    ),
+                ],
+                axis=1,
+            )
+        for timeframe in ob_tfs:
+            tf_name = str(timeframe).upper()
+            if tf_name == "M1":
+                continue
+            tf_bars = primary_tf_bars(tf_name)
+            if tf_bars.empty:
+                continue
+            ob_blocks[tf_name] = build_order_block_features(
+                tf_bars,
+                swing_period=swing_period,
+                impulse_atr=impulse_atr,
+                search_bars=search_bars,
+                max_age_bars=max_age_bars,
+            )
+        if ob_blocks:
+            feat = align_blocks(feat, ob_blocks)
+
     # --- Full PO3 pipeline (Chain F): HTF FVG -> LTF IFVG -> entry triggers ---
     # Added AFTER normalization so the 0/1 entry signals and the numeric
     # trigger code keep their raw meaning (exactly like structure levels).
@@ -656,9 +704,59 @@ def build_features(
     clock = ny_session_clock(pd.DatetimeIndex(feat.index), session_start, session_end)
     feat = pd.concat([feat, clock], axis=1)
 
+    # The fib-like swing retracement idea is calculated independently on each
+    # configured timeframe. Higher-timeframe signals are visible only after
+    # that source candle closes.
+    if feat_cfg is not None and _enabled(feat_cfg, "entry_ideas", False):
+        idea_timeframes = _htf_list(
+            feat_cfg,
+            "entry_ideas",
+            ("M1", *_DEFAULT_HTF_TIMEFRAMES),
+        )
+        retracement_low = float(getattr(feat_cfg.entry_ideas, "retracement_low", 0.5))
+        retracement_high = float(getattr(feat_cfg.entry_ideas, "retracement_high", 0.786))
+        raw_levels = getattr(feat_cfg.entry_ideas, "levels", SWING_LEVELS)
+        retracement_levels = tuple(float(value) for value in raw_levels)
+        if not 0.0 <= retracement_low < retracement_high <= 1.0:
+            raise ValueError("entry-idea retracement bounds must satisfy 0 <= low < high <= 1")
+        retracement_blocks: dict[str, pd.DataFrame] = {}
+        for timeframe in idea_timeframes:
+            tf_name = str(timeframe).upper()
+            if tf_name not in TIMEFRAME_CONFIG:
+                raise ValueError(f"unsupported entry-idea timeframe: {tf_name}")
+            tf_bars = primary_tf_bars(tf_name)
+            if tf_bars.empty:
+                continue
+            tf_config = TIMEFRAME_CONFIG[tf_name]
+            block = build_swing_retracement_features(
+                tf_bars,
+                swing_period=int(tf_config["left"]),
+                atr_mult=float(tf_config["atr_mult"]),
+                retracement_low=retracement_low,
+                retracement_high=retracement_high,
+                level_values=retracement_levels,
+            )
+            if tf_name == "M1":
+                feat = pd.concat([feat, block], axis=1)
+            elif not tf_bars.empty:
+                retracement_blocks[tf_name] = block
+        if retracement_blocks:
+            feat = align_blocks(feat, retracement_blocks)
+
+        # Add explicit directional multi-hot flags after all source families
+        # exist. Concurrent ideas stay visible together; none gates another.
+        feat = pd.concat([feat, build_entry_idea_features(feat)], axis=1)
+
     # Drop leading NaNs from warmup
     feat = feat.dropna(how="all")
     feat.columns = feat.columns.map(str)
+    duplicate_columns = feat.columns[feat.columns.duplicated()].unique().tolist()
+    if duplicate_columns:
+        sample = duplicate_columns[:20]
+        raise ValueError(
+            "feature builder produced duplicate column names "
+            f"({len(duplicate_columns)} unique duplicates): {sample}"
+        )
 
     if cache_path:
         path = Path(cache_path)

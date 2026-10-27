@@ -98,6 +98,7 @@ class Position:
     tp3_ref: str = ""
     tp_lot_fractions: tuple[float, ...] = ()
     tp_hit_mask: int = 0
+    ema_runner_fraction: float = 0.0
     entry_tp_ref_price: float | None = None
     entry_setup_types: tuple[str, ...] = ()
     entry_origin_bar: int | None = None

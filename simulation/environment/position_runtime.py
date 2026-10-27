@@ -16,7 +16,47 @@ from .position_constants import _PRICE_TOL, _SL_MODE_RANK, _TP_MODE_RANK
 class PositionRuntimeMixin(RuntimeMixinBase):
     position: Position | None
 
-    def _apply_breakeven(self, pos: Position, favorable: float) -> None:
+    def _record_stop_update(
+        self,
+        pos: Position,
+        previous: float | None,
+        *,
+        reference: str,
+        reference_price: float | None,
+        reason: str,
+        event_time: Any = None,
+        bar_idx: int | None = None,
+    ) -> None:
+        """Record every stop mutation with the first bar on which it applies."""
+        if not hasattr(self, "trade_log") or previous == pos.sl_price:
+            return
+        effective_time = None
+        if bar_idx is not None and bar_idx + 1 < self._n_bars:
+            effective_time = self._bar_time(bar_idx + 1)
+        self.trade_log.append(
+            {
+                "type": "sl_update",
+                "position_id": pos.position_id,
+                "time": event_time,
+                "effective_time": effective_time,
+                "direction": pos.direction,
+                "previous_price": previous,
+                "price": pos.sl_price,
+                "reference": reference,
+                "reference_price": reference_price,
+                "buffer_points": getattr(self, "sl_buffer_pts", None),
+                "reason": reason,
+            }
+        )
+
+    def _apply_breakeven(
+        self,
+        pos: Position,
+        favorable: float,
+        *,
+        event_time: Any = None,
+        bar_idx: int | None = None,
+    ) -> None:
         """Move the stop to breakeven once the trade has earned its risk.
 
         Only ever tightens toward entry: never widens a stop and never rewrites
@@ -34,6 +74,7 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         if favorable < self._breakeven_trigger_r * risk_pts:
             return
         buffer = self._breakeven_buffer_pts
+        previous = pos.sl_price
         if pos.direction == 1:
             new_sl = pos.entry_price + buffer
             if pos.sl_price is None or new_sl > float(pos.sl_price):
@@ -44,6 +85,15 @@ class PositionRuntimeMixin(RuntimeMixinBase):
             if pos.sl_price is None or new_sl < float(pos.sl_price):
                 pos.sl_price = new_sl
                 pos.breakeven_done = True
+        self._record_stop_update(
+            pos,
+            previous,
+            reference="entry",
+            reference_price=pos.entry_price,
+            reason="breakeven_trigger",
+            event_time=event_time,
+            bar_idx=bar_idx,
+        )
 
     def _apply_trailing_stop(
         self,
@@ -87,23 +137,14 @@ class PositionRuntimeMixin(RuntimeMixinBase):
                     reference_name = "last_swing_high"
                     reference_price = float(swing)
         if reference_name is not None and hasattr(self, "trade_log"):
-            effective_time = None
-            if bar_idx is not None and bar_idx + 1 < self._n_bars:
-                effective_time = self._bar_time(bar_idx + 1)
-            self.trade_log.append(
-                {
-                    "type": "sl_update",
-                    "position_id": pos.position_id,
-                    "time": event_time,
-                    "effective_time": effective_time,
-                    "direction": pos.direction,
-                    "previous_price": previous,
-                    "price": pos.sl_price,
-                    "reference": reference_name,
-                    "reference_price": reference_price,
-                    "buffer_points": buf,
-                    "reason": "confirmed_swing",
-                }
+            self._record_stop_update(
+                pos,
+                previous,
+                reference=reference_name,
+                reference_price=reference_price,
+                reason="confirmed_swing",
+                event_time=event_time,
+                bar_idx=bar_idx,
             )
 
     def _reorder_tp_levels_safe(self, pos: Position) -> None:
@@ -329,7 +370,7 @@ class PositionRuntimeMixin(RuntimeMixinBase):
             if _SL_MODE_RANK.get(default_mode, 0) > _SL_MODE_RANK.get(pos.sl_mode, 0):
                 pos.sl_mode = default_mode
         if pos.sl_mode != "fixed":
-            self._apply_breakeven(pos, pos.best_favorable)
+            self._apply_breakeven(pos, pos.best_favorable, event_time=bar_time, bar_idx=bar_idx)
         self._apply_trailing_stop(
             pos,
             feat_row if feat_row is not None else bar,

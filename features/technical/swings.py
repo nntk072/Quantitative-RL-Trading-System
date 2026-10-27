@@ -26,8 +26,9 @@ TIMEFRAME_CONFIG: dict[str, dict[str, float | int]] = {
 def detect_pivots(df: pd.DataFrame, left: int = 2, right: int = 2) -> pd.DataFrame:
     """Detect fractal pivots; features populate only from the confirmation bar.
 
-    A pivot at bar ``i`` is known at bar ``i + right``. Structural price is
-    close; liquidity extreme is high/low.
+    A pivot at bar ``i`` is known at bar ``i + right``. High pivots use the
+    highest wick and low pivots use the lowest wick; both become visible only
+    at the confirmation bar.
 
     Args:
         df: OHLC frame with a DatetimeIndex.
@@ -38,7 +39,6 @@ def detect_pivots(df: pd.DataFrame, left: int = 2, right: int = 2) -> pd.DataFra
         Frame with pivot high/low event, price, extreme, and location columns.
     """
     n = len(df)
-    close = df["close"].to_numpy(dtype=float)
     high = df["high"].to_numpy(dtype=float)
     low = df["low"].to_numpy(dtype=float)
 
@@ -53,16 +53,18 @@ def detect_pivots(df: pd.DataFrame, left: int = 2, right: int = 2) -> pd.DataFra
 
     for i in range(left, n - right):
         conf = i + right
-        left_c = close[i - left : i]
-        right_c = close[i + 1 : i + right + 1]
-        if left_c.size and right_c.size and close[i] > left_c.max() and close[i] > right_c.max():
+        left_h = high[i - left : i]
+        right_h = high[i + 1 : i + right + 1]
+        left_l = low[i - left : i]
+        right_l = low[i + 1 : i + right + 1]
+        if left_h.size and right_h.size and high[i] > left_h.max() and high[i] > right_h.max():
             ev_h[conf] = True
-            price_h[conf] = close[i]
+            price_h[conf] = high[i]
             ext_h[conf] = high[i]
             loc_h[conf] = i
-        if left_c.size and right_c.size and close[i] < left_c.min() and close[i] < right_c.min():
+        if left_l.size and right_l.size and low[i] < left_l.min() and low[i] < right_l.min():
             ev_l[conf] = True
-            price_l[conf] = close[i]
+            price_l[conf] = low[i]
             ext_l[conf] = low[i]
             loc_l[conf] = i
 
@@ -376,32 +378,40 @@ def retained_swing_levels(
     swept_h_loc = np.full(n, np.nan)
     swept_l_loc = np.full(n, np.nan)
 
-    # Retained sets are lists of (level, location); oldest first.
-    highs: list[tuple[float, float]] = []
-    lows: list[tuple[float, float]] = []
+    # Each retained level is (price, pivot location, sweep already emitted).
+    # A wick sweep is an event, but only a body close through the level
+    # invalidates it. Keeping these states separate avoids repeating an event
+    # while preserving a level that has not been invalidated by close.
+    highs: list[tuple[float, float, bool]] = []
+    lows: list[tuple[float, float, bool]] = []
+    close = bars["close"].to_numpy(dtype=float)
 
     for t in range(n):
         # A swing enters the retained set only on its confirmation bar.
         if ev_h[t] and np.isfinite(px_h[t]) and np.isfinite(loc_h[t]):
-            highs.append((float(px_h[t]), float(loc_h[t])))
+            highs.append((float(px_h[t]), float(loc_h[t]), False))
         if ev_l[t] and np.isfinite(px_l[t]) and np.isfinite(loc_l[t]):
-            lows.append((float(px_l[t]), float(loc_l[t])))
+            lows.append((float(px_l[t]), float(loc_l[t]), False))
 
-        # Sweep detection: price takes out any retained level this bar.
-        # A high is swept when high[t] exceeds it; a low when low[t] falls
-        # below it. Record the first swept level as the event for this bar.
-        if highs:
-            swept_idx = next((i for i, (lv, _) in enumerate(highs) if high[t] > lv), None)
-            if swept_idx is not None:
-                lv, lc = highs.pop(swept_idx)
-                swept_h[t] = lv
-                swept_h_loc[t] = lc
-        if lows:
-            swept_idx = next((i for i, (lv, _) in enumerate(lows) if low[t] < lv), None)
-            if swept_idx is not None:
-                lv, lc = lows.pop(swept_idx)
-                swept_l[t] = lv
-                swept_l_loc[t] = lc
+        # A body close through invalidates a level. A wick beyond it marks a
+        # one-time sweep event while the level remains available until close
+        # confirms invalidation.
+        highs = [(lv, lc, close[t] > lv) for lv, lc, _ in highs]
+        lows = [(lv, lc, close[t] < lv) for lv, lc, _ in lows]
+        highs = [item for item in highs if not item[2]]
+        lows = [item for item in lows if not item[2]]
+        high_events = [i for i, (lv, _loc, swept) in enumerate(highs) if not swept and high[t] > lv]
+        low_events = [i for i, (lv, _loc, swept) in enumerate(lows) if not swept and low[t] < lv]
+        if high_events:
+            swept_idx = high_events[0]
+            lv, lc, _ = highs[swept_idx]
+            swept_h[t], swept_h_loc[t] = lv, lc
+            highs[swept_idx] = (lv, lc, True)
+        if low_events:
+            swept_idx = low_events[0]
+            lv, lc, _ = lows[swept_idx]
+            swept_l[t], swept_l_loc[t] = lv, lc
+            lows[swept_idx] = (lv, lc, True)
 
         # Cap size so the output matrix stays fixed-width.
         if len(highs) > k:
@@ -411,10 +421,10 @@ def retained_swing_levels(
 
         n_h[t] = len(highs)
         n_l[t] = len(lows)
-        for i, (lv, lc) in enumerate(highs):
+        for i, (lv, lc, _swept) in enumerate(highs):
             out_h[t, i] = lv
             loc_hh[t, i] = lc
-        for i, (lv, lc) in enumerate(lows):
+        for i, (lv, lc, _swept) in enumerate(lows):
             out_l[t, i] = lv
             loc_ll[t, i] = lc
 
@@ -467,8 +477,7 @@ def recent_unswept_swing_candidates(
     low_prices = swings["swing_low_extreme"].to_numpy(dtype=float)
     high_locations = swings["swing_high_location"].to_numpy(dtype=float)
     low_locations = swings["swing_low_location"].to_numpy(dtype=float)
-    bar_high = bars["high"].to_numpy(dtype=float)
-    bar_low = bars["low"].to_numpy(dtype=float)
+    bar_close = bars["close"].to_numpy(dtype=float)
     times_ms = (
         pd.DatetimeIndex(bars.index).to_numpy(dtype="datetime64[ns]").view(np.int64) // 1_000_000
     )
@@ -504,11 +513,10 @@ def recent_unswept_swing_candidates(
         if low_events[t] and np.isfinite(low_prices[t]) and np.isfinite(low_locations[t]):
             lows = add_distinct(lows, (float(low_prices[t]), int(low_locations[t]), t))
 
-        # Remove every swept level on this completed bar. The legacy retained
-        # helper records one sweep event per bar; candidate validity must not
-        # leave any other crossed level available to the stop menu.
-        highs = [candidate for candidate in highs if not bar_high[t] > candidate[0]]
-        lows = [candidate for candidate in lows if not bar_low[t] < candidate[0]]
+        # A wick sweep is still useful context. Remove candidates only after a
+        # completed candle body closes through the swing level.
+        highs = [candidate for candidate in highs if bar_close[t] <= candidate[0]]
+        lows = [candidate for candidate in lows if bar_close[t] >= candidate[0]]
         highs = highs[-count:]
         lows = lows[-count:]
 

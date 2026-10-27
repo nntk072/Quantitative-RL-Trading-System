@@ -5,6 +5,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from features.context.entry_ideas import entry_idea_context
 from simulation.environment.diagnostics import new_debug_window, summarize_window, wiring_from_env
 from trading.strategies import BaselineStrategy
 
@@ -75,6 +76,13 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
 
         bull_retest = flagged("ifvg_retest_bull") or flagged("fvg_retest_bull")
         bear_retest = flagged("ifvg_retest_bear") or flagged("fvg_retest_bear")
+        try:
+            idea_long_count = float(feat_row.get("entry_idea_long_count", 0.0) or 0.0)
+            idea_short_count = float(feat_row.get("entry_idea_short_count", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            idea_long_count = idea_short_count = 0.0
+        idea_long = np.isfinite(idea_long_count) and idea_long_count > 0.0
+        idea_short = np.isfinite(idea_short_count) and idea_short_count > 0.0
         sweep_low = flagged("sweep_low")
         sweep_high = flagged("sweep_high")
         setup_predicate = getattr(self.strategy, "entry_setup", None)
@@ -85,13 +93,16 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         )
         direction = context_direction
         if direction not in (-1, 1):
-            direction = (
-                1
-                if bull_retest and not bear_retest
-                else -1
-                if bear_retest and not bull_retest
-                else 0
-            )
+            if idea_long != idea_short:
+                direction = 1 if idea_long else -1
+            else:
+                direction = (
+                    1
+                    if bull_retest and not bear_retest
+                    else -1
+                    if bear_retest and not bull_retest
+                    else 0
+                )
         baseline_sweep_setup = (
             isinstance(self.strategy, BaselineStrategy)
             and self.entry_state_machine is not None
@@ -118,6 +129,7 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         )
 
         setup_types: set[str] = set()
+        active_idea_names: list[str] = []
         if direction in (-1, 1):
             sweep_stem = "sweep_low" if direction == 1 else "sweep_high"
             swing_stem = "swing_low_event" if direction == 1 else "swing_high_event"
@@ -125,15 +137,16 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
                 setup_types.add("sweep")
             if flagged(swing_stem):
                 setup_types.add("swing")
+            active_idea_names = entry_idea_context(feat_row, direction)["ideas"]
+            setup_types.update(active_idea_names)
             if not isinstance(self.strategy, BaselineStrategy):
-                for setup_type, stems in (
-                    ("ifvg", (f"ifvg_{suffix}_active", f"ifvg_retest_{suffix}")),
-                    ("fvg", (f"fvg_{suffix}_active", f"fvg_retest_{suffix}")),
+                if any(
+                    flagged(stem) for stem in (f"ifvg_{suffix}_active", f"ifvg_retest_{suffix}")
                 ):
-                    if any(flagged(stem) for stem in stems):
-                        setup_types.add(setup_type)
+                    setup_types.add("ifvg")
         if distribution_arm:
             setup_types.add("distribution")
+        setup_matches = setup_matches or bool(active_idea_names)
         if setup_matches and not setup_types:
             setup_types.add(str(getattr(self.strategy, "name", "strategy")))
 
@@ -161,7 +174,12 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         return EntryEvidence(
             bar=self.step_idx,
             evidence_detected=setup_matches,
-            invalidated=conflicting_sweeps or conflicting_swings or (bull_retest and bear_retest),
+            invalidated=(
+                conflicting_sweeps
+                or conflicting_swings
+                or (bull_retest and bear_retest)
+                or (idea_long and idea_short)
+            ),
             arm_condition=(
                 setup_matches
                 or retest_confirmed
@@ -192,6 +210,10 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         from trading.orders.entries import manipulation_state
 
         if manipulation_state(feat_row) != "against":
+            return discrete_action, risk_frac
+        # PO3 manipulation state must not veto a separately active idea such as
+        # an Order Block reaction, FVG retest, or swing retracement.
+        if entry_idea_context(feat_row, discrete_action)["ideas"]:
             return discrete_action, risk_frac
         if (
             isinstance(self.strategy, BaselineStrategy)

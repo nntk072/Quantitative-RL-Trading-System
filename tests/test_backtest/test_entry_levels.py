@@ -62,6 +62,7 @@ def _place(
     max_tp: float = float("nan"),
     stops: list[tuple[str, float]] | None = None,
     price_increment: float | None = None,
+    ema_runner_fraction: float = 0.0,
 ) -> OrderGeometry:
     return place_strategy_order(
         _Menu(stops),
@@ -75,6 +76,7 @@ def _place(
         buffer_pts=buffer_pts,
         max_tp_distance=max_tp,
         price_increment=price_increment,
+        ema_runner_fraction=ema_runner_fraction,
     )
 
 
@@ -346,7 +348,7 @@ def test_mtf_short_swing_candidate_and_ifvg_stops_coexist() -> None:
 def test_recent_swing_window_drops_levels_displaced_by_three_newer_swings() -> None:
     idx = pd.date_range("2026-01-05 09:00", periods=6, freq="5min", tz="UTC")
     prices = [120.0, 115.0, 110.0, 105.0]
-    bars = pd.DataFrame({"high": [100.0] * 6, "low": [99.0] * 6}, index=idx)
+    bars = pd.DataFrame({"high": [100.0] * 6, "low": [99.0] * 6, "close": [99.5] * 6}, index=idx)
     swings = pd.DataFrame(
         {
             "swing_high_event": [False, True, True, True, True, False],
@@ -442,6 +444,60 @@ def test_exit_mode_split_at_one_half() -> None:
     )
     assert missing_ema.rejected is True
     assert missing_ema.sl_price is None
+
+
+def test_ema_runner_keeps_a_partial_target_then_reserves_runner_size() -> None:
+    row = _row(last_swing_low=90.0, last_swing_high=120.0, ema_21=101.0)
+    placed = _place(row, exit_mode="ema_21", ema_runner_fraction=0.25)
+
+    assert not placed.rejected
+    assert placed.tp_price == pytest.approx(120.0)
+    assert placed.tp3_price == pytest.approx(120.0)
+    assert placed.tp_lot_fractions == pytest.approx((0.75,))
+    assert placed.ema_runner_fraction == pytest.approx(0.25)
+
+
+def test_active_sweep_anchors_stop_beyond_the_swept_wick() -> None:
+    row = _row(
+        sweep_low=1.0,
+        sweep_low_wick=94.0,
+        last_swing_low=90.0,
+        asian_low=92.0,
+        ema_21=101.0,
+        last_swing_high=110.0,
+    )
+    placed = _place(row, exit_mode="structural", buffer_pts=1.0)
+
+    assert not placed.rejected
+    assert placed.sl_ref == "sweep_low_wick"
+    assert placed.sl_price == pytest.approx(93.0)
+
+
+def test_extreme_swing_extensions_are_tp_references_for_all_exit_modes() -> None:
+    from trading.orders.targets import deviation_candidates
+
+    row = pd.Series(
+        {
+            "standard_deviation_level_neg_4_price": 106.0,
+            "standard_deviation_level_neg_6_price": 108.0,
+            "standard_deviation_level_neg_8_price": 110.0,
+        }
+    )
+    targets = target_menu(
+        direction=1,
+        entry_price=100.0,
+        row=row,
+        stop_dist=1.0,
+        max_tp_distance=20.0,
+    )
+
+    assert {name for name, _, _ in targets} == {
+        "standard_deviation_level_neg_4_price",
+        "standard_deviation_level_neg_6_price",
+        "standard_deviation_level_neg_8_price",
+    }
+    # The shared candidate helper remains conservative for protective stops.
+    assert deviation_candidates(row) == [("standard_deviation_level_neg_4_price", 106.0)]
 
 
 def test_buffer_manipulation_and_reach_filters() -> None:

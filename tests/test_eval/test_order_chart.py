@@ -30,8 +30,14 @@ from evaluation.plotting.chart_overlays import (
     build_overlay_events,
     draw_overlays_mpl,
 )
-from evaluation.plotting.order_chart import draw_order_levels_mpl, order_levels
-from evaluation.plotting.overlay_events import _swing_origins
+from evaluation.plotting.order_chart import (
+    _feature_zones,
+    _retracement_segments,
+    draw_order_levels_mpl,
+    order_levels,
+)
+from evaluation.plotting.orders import _position_events
+from evaluation.plotting.overlay_events import _rays_from_origins, _swing_origins
 from evaluation.plotting.plots import plot_per_trade_orders
 from evaluation.plotting.plots_interactive import (
     plot_per_trade_orders as plot_per_trade_orders_html,
@@ -130,6 +136,17 @@ def test_swing_off_the_wick_still_draws_on_that_candle() -> None:
     assert price == 112.0
 
 
+def test_swing_ray_ends_at_first_later_candle_that_sweeps_it() -> None:
+    idx = pd.date_range("2026-03-02 16:30", periods=6, freq="1min")
+    high = np.array([10.0, 9.0, 9.5, 10.1, 11.0, 12.0])
+    bars = pd.DataFrame({"open": high, "high": high, "low": high - 1.0, "close": high}, index=idx)
+
+    ray = _rays_from_origins(idx, [(0, 10.0)], "high", bars)[0]
+
+    assert ray.t0 == idx[0]
+    assert ray.t1 == idx[3]
+
+
 def test_sweep_x_sits_on_the_right_end_of_the_line() -> None:
     idx = pd.date_range("2026-03-02 16:30", periods=8, freq="1min")
     line = SweepLine(t0=idx[1], t1=idx[5], price=101.5, side="high", label="X")
@@ -190,12 +207,52 @@ def test_order_png_legend_omits_vwap(tmp_path, monkeypatch) -> None:
     plot_per_trade_orders(bars, trades, orders_dir=tmp_path, max_charts=1, dpi=72, show_sl_tp=False)
     assert labels
     assert "VWAP" not in labels
-    assert "EMA50" in labels
+    assert "M1 EMA 50" in labels
 
 
 def test_both_plotters_call_prepare_order_chart() -> None:
     assert "prepare_order_chart" in inspect.getsource(plot_per_trade_orders)
     assert "prepare_order_chart" in inspect.getsource(plot_per_trade_orders_html)
+
+
+def test_legacy_partial_trade_reconstructs_post_partial_breakeven_stop() -> None:
+    trades = pd.DataFrame(
+        [
+            {
+                "type": "open",
+                "position_id": "p1",
+                "direction": -1,
+                "time": "2025-01-01 10:00:00+00:00",
+                "price": 100.0,
+                "sl_price": 110.0,
+            },
+            {
+                "type": "tp_partial_close",
+                "position_id": "p1",
+                "time": "2025-01-01 10:01:00+00:00",
+                "actual_tick_time": "2025-01-01 10:01:00.1+00:00",
+                "price": 95.0,
+                "pnl": 1.0,
+            },
+            {
+                "type": "stop_close",
+                "position_id": "p1",
+                "time": "2025-01-01 10:02:00+00:00",
+                "price": 98.0,
+                "pnl": 1.0,
+            },
+        ]
+    )
+    events = _position_events(
+        trades,
+        trades.iloc[0],
+        trades.iloc[-1],
+        breakeven_buffer_pts=2.0,
+    )
+
+    update = events.loc[events["type"].eq("sl_update")].iloc[0]
+    assert update["price"] == 98.0
+    assert update["reason"] == "post_partial_breakeven_reconstructed_from_config"
 
 
 def test_trade_like_13_keeps_mfe_on_the_wick_and_off_the_rr_target() -> None:
@@ -238,9 +295,285 @@ def test_trade_like_13_keeps_mfe_on_the_wick_and_off_the_rr_target() -> None:
     assert levels.green is not None
     assert levels.green[1] <= levels.ylim[1]
     assert levels.green[1] < 21800
-    mfe = next(seg for seg in levels.segs if seg.label == "MFE")
-    assert mfe.price == 21699.45
-    assert mfe.mark == idx[8]
+
+
+def test_only_selected_deviation_is_plotted() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=8, freq="1min")
+    close = np.full(8, 105.0)
+    bars = pd.DataFrame(
+        {"open": close, "high": close + 1.0, "low": close - 1.0, "close": close},
+        index=idx,
+    )
+    metrics = TradeChartMetrics(
+        entry_price=105.0,
+        exit_price=105.0,
+        direction=1,
+        mae_price=104.0,
+        mfe_price=106.0,
+        mae_time=idx[2],
+        mfe_time=idx[3],
+        sl_price=100.0,
+        tp_price=110.0,
+        mae_drawn=False,
+        mfe_drawn=False,
+    )
+    events = OverlayEvents(
+        swings=[
+            SwingRay(idx[0], idx[-1], 100.0, "low", origin=idx[0]),
+            SwingRay(idx[0], idx[-1], 110.0, "high", origin=idx[0]),
+        ]
+    )
+
+    levels = order_levels(
+        bars,
+        metrics,
+        events,
+        bars,
+        idx[2],
+        idx[5],
+        pd.Series({"direction": 1, "sl_ref": "dev_0", "tp_ref": "target"}),
+        show_mae_mfe=False,
+    )
+
+    assert levels.deviations == [(0.0, 100.0)]
+    assert any(
+        name == "Selected range projection 0x" for name, _price, _color in levels.off_chart_levels
+    )
+
+
+def test_unselected_deviation_is_not_plotted() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=8, freq="1min")
+    close = np.full(8, 105.0)
+    bars = pd.DataFrame(
+        {"open": close, "high": close + 1.0, "low": close - 1.0, "close": close},
+        index=idx,
+    )
+    metrics = TradeChartMetrics(
+        entry_price=105.0,
+        exit_price=105.0,
+        direction=1,
+        mae_price=105.0,
+        mfe_price=105.0,
+        mae_time=idx[2],
+        mfe_time=idx[2],
+        sl_price=100.0,
+        tp_price=110.0,
+    )
+    events = OverlayEvents(
+        swings=[
+            SwingRay(idx[0], idx[-1], 100.0, "low", origin=idx[0]),
+            SwingRay(idx[0], idx[-1], 110.0, "high", origin=idx[0]),
+        ]
+    )
+
+    levels = order_levels(
+        bars,
+        metrics,
+        events,
+        bars,
+        idx[2],
+        idx[5],
+        pd.Series({"direction": 1, "sl_ref": "last_swing_low", "tp_ref": "target"}),
+        show_mae_mfe=False,
+    )
+
+    assert levels.deviations == []
+    assert not any(
+        name.startswith("Selected range projection") for name, *_ in levels.off_chart_levels
+    )
+
+
+def test_fib_like_plot_shows_nearby_requested_level_values_for_its_timeframe() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min")
+    window = pd.DataFrame({"low": [98.0] * 4, "high": [102.0] * 4}, index=idx)
+    features = pd.DataFrame(
+        {
+            "M5_standard_deviation_leg_start_time_ns": idx[0].value,
+            "M5_standard_deviation_leg_end_time_ns": idx[1].value,
+            "M5_standard_deviation_level_1_price": [97.0] * 4,
+            "M5_standard_deviation_level_0_786_price": [98.5] * 4,
+            "M5_standard_deviation_level_0_707_price": [99.0] * 4,
+            "M5_standard_deviation_level_0_5_price": [100.0] * 4,
+            "M5_standard_deviation_level_0_price": [101.0] * 4,
+            "M5_standard_deviation_level_neg_0_5_price": [103.0] * 4,
+            "M5_standard_deviation_level_neg_8_price": [150.0] * 4,
+        },
+        index=idx,
+    )
+    open_row = pd.Series(
+        {
+            "entry_ideas": ["standard_deviation"],
+            "entry_idea_timeframes": {"standard_deviation": ["M5"]},
+        }
+    )
+
+    segments = _retracement_segments(
+        features,
+        window,
+        open_row,
+        idx[2],
+        idx[3],
+        98.0,
+        102.0,
+        entry_idea_plot_config={
+            "standard_deviation": {
+                "timeframes": "M5",
+                "levels": [0.786, 0.5],
+                "max_chart_range_fraction": 0.15,
+            }
+        },
+    )
+
+    labels = {segment.label for segment in segments}
+    assert "Fib/SD: 0.786 (M5)" in labels
+    assert "Fib/SD: 0.5 (M5)" in labels
+    assert len(segments) == 2
+    assert not any("-8" in label for label in labels)
+    assert all(segment.t0 == idx[0] and segment.t1 == idx[3] for segment in segments)
+
+
+def test_linked_zone_plot_shows_only_saved_zone_and_timeframe() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min")
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(
+        {
+            "M5_ifvg_bull_active": [1.0] * 4,
+            "M5_ifvg_bull_low": [100.0] * 4,
+            "M5_ifvg_bull_high": [101.5] * 4,
+            "M5_ifvg_bear_active": [1.0] * 4,
+            "M5_ifvg_bear_low": [102.0] * 4,
+            "M5_ifvg_bear_high": [103.0] * 4,
+        },
+        index=idx,
+    )
+    open_row = pd.Series(
+        {
+            "time": idx[2],
+            "direction": 1,
+            "entry_ideas": ["po3"],
+            "entry_idea_timeframes": {"po3": ["M5"]},
+            "entry_idea_zones": [
+                {
+                    "idea": "po3",
+                    "family": "ifvg",
+                    "timeframe": "M5",
+                    "side": "bull",
+                    "low": 100.0,
+                    "high": 101.5,
+                }
+            ],
+        }
+    )
+
+    zones = _feature_zones(
+        features,
+        window,
+        open_row,
+        order_block_timeframes=(),
+        fvg_timeframes=(),
+        ifvg_timeframes=(),
+    )
+
+    assert len(zones) == 1
+    assert zones[0].label == "PO3 · M5 Bull Inverse Fair Value Gap"
+    assert (zones[0].low, zones[0].high) == (100.0, 101.5)
+
+
+def test_plot_config_selects_zone_family_per_entry_idea() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min")
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(
+        {
+            "M5_fvg_bull_active": 1.0,
+            "M5_fvg_bull_low": 100.0,
+            "M5_fvg_bull_high": 101.5,
+            "M5_ifvg_bull_active": 1.0,
+            "M5_ifvg_bull_low": 100.0,
+            "M5_ifvg_bull_high": 101.5,
+        },
+        index=idx,
+    )
+    open_row = pd.Series(
+        {
+            "time": idx[2],
+            "direction": 1,
+            "entry_ideas": ["po3"],
+            "entry_idea_timeframes": {"po3": ["M5"]},
+            "entry_idea_zones": [
+                {
+                    "idea": "po3",
+                    "family": family,
+                    "timeframe": "M5",
+                    "side": "bull",
+                    "low": 100.0,
+                    "high": 101.5,
+                }
+                for family in ("fvg", "ifvg")
+            ],
+        }
+    )
+
+    zones = _feature_zones(
+        features,
+        window,
+        open_row,
+        order_block_timeframes=(),
+        fvg_timeframes=(),
+        ifvg_timeframes=(),
+        entry_idea_plot_config={"po3": {"show_fvg": False, "show_ifvg": True}},
+    )
+
+    assert len(zones) == 1
+    assert "Inverse Fair Value Gap" in zones[0].label
+
+
+def test_plot_config_selects_timeframe_per_entry_idea() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min")
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(
+        {
+            "M5_ob_bull_active": 1.0,
+            "M5_ob_bull_low": 100.0,
+            "M5_ob_bull_high": 101.0,
+            "H1_ob_bull_active": 1.0,
+            "H1_ob_bull_low": 102.0,
+            "H1_ob_bull_high": 103.0,
+        },
+        index=idx,
+    )
+    open_row = pd.Series(
+        {
+            "time": idx[2],
+            "direction": 1,
+            "entry_ideas": ["order_block"],
+            "entry_idea_timeframes": {"order_block": ["M5", "H1"]},
+            "entry_idea_zones": [
+                {
+                    "idea": "order_block",
+                    "family": "ob",
+                    "timeframe": timeframe,
+                    "side": "bull",
+                    "low": low,
+                    "high": high,
+                }
+                for timeframe, low, high in (("M5", 100.0, 101.0), ("H1", 102.0, 103.0))
+            ],
+        }
+    )
+
+    zones = _feature_zones(
+        features,
+        window,
+        open_row,
+        order_block_timeframes=(),
+        fvg_timeframes=(),
+        ifvg_timeframes=(),
+        entry_idea_plot_config={"order_block": {"timeframes": "H1", "show_zone": True}},
+    )
+
+    assert len(zones) == 1
+    assert "H1" in zones[0].label
+    assert (zones[0].low, zones[0].high) == (102.0, 103.0)
 
 
 def test_isolated_spike_is_ignored_and_news_is_kept() -> None:
@@ -496,6 +829,7 @@ def test_order_chart_shades_active_manipulation_and_marks_the_end() -> None:
         {
             "po3_manipulation_active": [1.0, 1.0, 1.0, 0.0, 0.0, 0.0],
             "po3_manipulation_end": [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+            "po3_distribution": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],
             "asian_high": 110.0,
             "asian_low": 90.0,
             "london_high": 112.0,
@@ -524,14 +858,15 @@ def test_order_chart_shades_active_manipulation_and_marks_the_end() -> None:
         metrics,
         OverlayEvents(),
         window,
-        idx[1],
         idx[4],
+        idx[5],
         pd.Series({"direction": 1}),
         show_mae_mfe=False,
         features=features,
     )
     assert levels.manip_spans == [(idx[0], idx[2])]
     assert levels.manip_ends == [idx[3]]
+    assert levels.distribution_spans == [(idx[3], idx[4])]
     labels = {seg.label for seg in levels.segs}
     assert {
         "Asian high",
@@ -546,9 +881,99 @@ def test_order_chart_shades_active_manipulation_and_marks_the_end() -> None:
     draw_order_levels_mpl(ax, levels)
     plt.close(fig)
 
+    po3_levels = order_levels(
+        window,
+        metrics,
+        OverlayEvents(),
+        window,
+        idx[4],
+        idx[5],
+        pd.Series(
+            {
+                "direction": 1,
+                "entry_ideas": ["po3"],
+                "entry_idea_timeframes": {"po3": ["M1"]},
+            }
+        ),
+        show_mae_mfe=False,
+        features=features,
+        entry_idea_plot_config={
+            "po3": {
+                "timeframes": ["M1"],
+                "show_manipulation": True,
+                "show_distribution": False,
+                "show_fvg": False,
+                "show_ifvg": False,
+            }
+        },
+    )
+    assert po3_levels.manip_spans == [(idx[0], idx[2])]
+    assert po3_levels.distribution_spans == []
+    assert "PO3 M1 manipulation high" in {segment.label for segment in po3_levels.segs}
 
-def test_ema_exit_without_target_still_paints_a_green_band() -> None:
-    """An ema_21 exit has no tp_price, so green used to be None."""
+
+def test_selected_mtf_zone_families_create_timeframe_labeled_bands() -> None:
+    idx = pd.date_range("2025-01-06 16:00", periods=5, freq="1min")
+    window = pd.DataFrame({"open": 100.0, "high": 102.0, "low": 98.0, "close": 100.0}, index=idx)
+    features = pd.DataFrame(
+        {
+            "ob_bull_active": 1.0,
+            "ob_bull_low": 98.5,
+            "ob_bull_high": 99.0,
+            "M5_ob_bull_active": 1.0,
+            "M5_ob_bull_low": 98.0,
+            "M5_ob_bull_high": 98.5,
+            "M1_fvg_bear_active": 1.0,
+            "M1_fvg_bear_low": 101.0,
+            "M1_fvg_bear_high": 101.5,
+            "ifvg_bear_active": 1.0,
+            "ifvg_bear_low": 101.5,
+            "ifvg_bear_high": 102.0,
+            "M5_last_swing_high": 110.0,
+            "H1_last_swing_high": 110.0,
+        },
+        index=idx,
+    )
+    metrics = TradeChartMetrics(
+        entry_price=100.0,
+        exit_price=101.0,
+        direction=1,
+        mae_price=99.0,
+        mfe_price=101.0,
+        mae_time=idx[1],
+        mfe_time=idx[3],
+        sl_price=None,
+        tp_price=None,
+        mae_drawn=False,
+        mfe_drawn=False,
+    )
+
+    levels = order_levels(
+        window,
+        metrics,
+        OverlayEvents(),
+        window,
+        idx[0],
+        idx[-1],
+        pd.Series({"direction": 1}),
+        features=features,
+        order_block_timeframes=("M1", "M5"),
+        fvg_timeframes=("M1",),
+        ifvg_timeframes=("M1",),
+        swing_timeframes=("M1", "M5", "H1"),
+    )
+
+    assert {zone.label for zone in levels.zones} == {
+        "M1 Bull Order Block",
+        "M5 Bull Order Block",
+        "M1 Bear Fair Value Gap",
+        "M1 Bear Inverse Fair Value Gap",
+    }
+    assert [seg.label for seg in levels.segs if "Swing" in seg.label] == ["M5 Swing High"]
+
+
+def test_ema_exit_without_target_does_not_fabricate_a_tp_band() -> None:
+    """A realized EMA exit is not a planned TP level."""
     idx = pd.date_range("2025-10-27 17:44", periods=40, freq="1min")
     close = np.linspace(25744.0, 25730.0, 40)
     bars = pd.DataFrame(
@@ -584,12 +1009,8 @@ def test_ema_exit_without_target_still_paints_a_green_band() -> None:
         idx[6],
         open_row,
     )
-    assert levels.green is not None
-    lo, hi = levels.green
-    assert lo <= metrics.entry_price <= hi
-    assert hi <= levels.ylim[1]
-    # Built from entry -> exit, so the far edge is the realized exit price.
-    assert hi == pytest.approx(max(metrics.entry_price, metrics.exit_price))
+    assert levels.green is None
+    assert any("no fixed TP level" in note for note in levels.notes)
     assert levels.red is not None
 
 

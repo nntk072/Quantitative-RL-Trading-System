@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 from unittest import mock
 
@@ -144,6 +145,77 @@ class TestTPExecution:
         assert env.position is None
         assert env.trade_log[-1]["reason"] == "ema_21_exit"
         assert env.trade_log[-1]["price"] == pytest.approx(100.6)
+
+    def test_ema_runner_waits_for_structural_tp_partials_to_finish(self) -> None:
+        env = _make_tp_env()
+        env.reset(seed=42)
+        pos = env.broker.open_position(env.account, (100.0, 100.0), 1.0, 1)
+        assert pos is not None
+        pos.exit_mode = "ema_21"
+        pos.stop_distance = 1.0
+        pos.best_favorable = 2.0
+        pos.ema_runner_fraction = 0.25
+        env.position = pos
+        bar = BarView(open=100.0, high=102.0, low=99.5, close=100.5, spread=0.6)
+
+        with mock.patch.object(env, "_ema21_at", return_value=101.0):
+            env._maybe_ema_exit(bar, env.step_idx, env._bar_time(env.step_idx))
+            assert env.position is pos
+            pos.tp_hit_mask = 1
+            pos.tp2_price = 101.5
+            env._maybe_ema_exit(bar, env.step_idx, env._bar_time(env.step_idx))
+            assert env.position is pos
+            pos.tp2_price = None
+            env._maybe_ema_exit(bar, env.step_idx, env._bar_time(env.step_idx))
+
+        assert env.position is None
+        assert env.trade_log[-1]["reason"] == "ema_21_exit"
+
+    def test_final_runner_tp_close_reserves_configured_size(self) -> None:
+        env = _make_tp_env()
+        pos = Position(
+            direction=1,
+            size=1.0,
+            entry_price=100.0,
+            margin_used=0.0,
+            initial_size=1.0,
+            tp_initial_size=1.0,
+            tp3_price=101.0,
+            tp_lot_fractions=(0.75,),
+            ema_runner_fraction=0.25,
+        )
+
+        assert env._target_close_size(pos, 3, is_final=True) == pytest.approx(0.75)
+
+    def test_tick_ema_exit_uses_next_observed_bar_after_timestamp_gap(self) -> None:
+        bars = _make_deterministic_bars()
+        bars = bars.drop(index=bars.index[1:3])
+        env = _make_tp_env(bars=bars, features=_make_features(bars))
+        env.reset(seed=42)
+        env.tick_execution_required = True
+
+        pos = env.broker.open_position(env.account, (100.0, 100.0), 1.0, 1)
+        assert pos is not None
+        pos.exit_mode = "ema_21"
+        pos.stop_distance = 1.0
+        pos.best_favorable = 2.0
+        env.position = pos
+        bar = BarView(open=100.0, high=102.0, low=99.5, close=100.5, spread=0.6)
+        next_bar_time = env._bar_time(1)
+        quote = SimpleNamespace(bid=100.0, ask=100.6, tick_time=next_bar_time)
+
+        with (
+            mock.patch.object(env, "_ema21_at", return_value=101.0),
+            mock.patch.object(
+                env,
+                "_resolve_randomized_tick_quote",
+                return_value=(quote, {"fill_quote_source": "tick"}),
+            ) as resolve_quote,
+        ):
+            env._maybe_ema_exit(bar, 0, env._bar_time(0))
+
+        resolve_quote.assert_called_once_with(next_bar_time)
+        assert env.trade_log[-1]["reason"] == "ema_21_exit"
 
     def _enter_multi_tp(
         self,

@@ -70,6 +70,7 @@ class OrderGeometry:
     tp_indices: tuple[int | None, int | None, int | None] = (None, None, None)
     tp_references: tuple[TargetReference, ...] = ()
     sl_candidate_audit: tuple[dict[str, Any], ...] = ()
+    ema_runner_fraction: float = 0.0
 
 
 def _menu_pairs(
@@ -180,6 +181,7 @@ def place_strategy_order(
     allow_simplex: bool = True,
     target_front_run_pts: float = 0.0,
     price_increment: float | None = None,
+    ema_runner_fraction: float = 0.0,
 ) -> OrderGeometry:
     """Pick the stop, then a structural target or an EMA-21 exit.
 
@@ -187,6 +189,9 @@ def place_strategy_order(
     not fall back to a structural target. No survivor means no order.
     """
     mode = "ema_21" if exit_mode == "ema_21" else "structural"
+    runner_fraction = float(ema_runner_fraction)
+    if not 0.0 <= runner_fraction < 1.0:
+        raise ValueError("ema_runner_fraction must be in [0, 1)")
     state = manipulation_state(feat_row)
     buf = stop_buffer(buffer_pts)
     stops, stop_audit = stop_menu(
@@ -252,6 +257,113 @@ def place_strategy_order(
         rr_lo, rr_hi = map(float, rr_bounds)
         if not any(rr_lo <= dist / sl_dist <= rr_hi for _, _, dist in targets):
             tp_fallback_reason = "no_structural_reference_within_rr_window"
+    if mode == "ema_21" and runner_fraction > 0.0:
+        if finite_level(feat_row, "ema_21") is None or not targets:
+            return _with_menus(
+                OrderGeometry(
+                    sl_price=sl_price,
+                    tp_price=None,
+                    sl_ref=sl_name,
+                    tp_ref="",
+                    sl_buffer=buf,
+                    planned_rr=None,
+                    exit_mode=mode,
+                    manipulation=state,
+                    n_sl=len(stops),
+                    n_tp=len(targets),
+                    rejected=True,
+                    reject_kind="ema_runner_target" if targets else "tp",
+                    sl_index=sl_at,
+                    ema_runner_fraction=runner_fraction,
+                ),
+                stops,
+                targets,
+                row=feat_row,
+                source_prices=source_prices,
+                fallback_reason=tp_fallback_reason,
+                stop_audit=stop_audit,
+            )
+        if allow_multi_tp or tp_selections is not None:
+            raw1, raw2, raw3 = (
+                tp_selections
+                if tp_selections is not None
+                else (tp_fraction, tp_fraction, tp_fraction)
+            )
+            tp1_idx, tp2_idx, tp3_idx = decode_tp_selections(raw1, raw2, raw3, len(targets))
+        else:
+            tp1_idx, tp2_idx, tp3_idx = None, None, select_index(tp_fraction, len(targets))
+        selected_slots = [tp1_idx, tp2_idx, tp3_idx]
+        active_slots = [(slot, idx) for slot, idx in enumerate(selected_slots) if idx is not None]
+        if not active_slots:
+            return _with_menus(
+                OrderGeometry(
+                    sl_price=sl_price,
+                    tp_price=None,
+                    sl_ref=sl_name,
+                    tp_ref="",
+                    sl_buffer=buf,
+                    planned_rr=None,
+                    exit_mode=mode,
+                    manipulation=state,
+                    n_sl=len(stops),
+                    n_tp=len(targets),
+                    rejected=True,
+                    reject_kind="tp",
+                    sl_index=sl_at,
+                    ema_runner_fraction=runner_fraction,
+                ),
+                stops,
+                targets,
+                stop_audit=stop_audit,
+            )
+        if tp_z is not None and allow_simplex and len(active_slots) > 1:
+            raw_fractions = decode_tp_fractions(tp_z[0], tp_z[1], (tp1_idx, tp2_idx, tp3_idx))
+        else:
+            raw_fractions = tuple(1.0 / len(active_slots) for _ in active_slots)
+        fractions = tuple(float(frac) * (1.0 - runner_fraction) for frac in raw_fractions)
+        prices: list[float | None] = [None, None, None]
+        refs = ["", "", ""]
+        indices: list[int | None] = [None, None, None]
+        for slot, target_idx in active_slots:
+            name, price, _distance = targets[target_idx]
+            prices[slot] = float(price)
+            refs[slot] = str(name)
+            indices[slot] = target_idx
+        first_idx = active_slots[0][1]
+        first_name, first_price, first_distance = targets[first_idx]
+        return _with_menus(
+            OrderGeometry(
+                sl_price=sl_price,
+                tp_price=float(first_price),
+                sl_ref=sl_name,
+                tp_ref=str(first_name),
+                sl_buffer=buf,
+                planned_rr=first_distance / sl_dist if sl_dist > 1e-12 else None,
+                exit_mode=mode,
+                manipulation=state,
+                n_sl=len(stops),
+                n_tp=len(targets),
+                rejected=False,
+                reject_kind="",
+                sl_index=sl_at,
+                tp_index=first_idx,
+                tp1_price=prices[0],
+                tp2_price=prices[1],
+                tp3_price=prices[2],
+                tp1_ref=refs[0],
+                tp2_ref=refs[1],
+                tp3_ref=refs[2],
+                tp_lot_fractions=fractions,
+                tp_indices=(indices[0], indices[1], indices[2]),
+                ema_runner_fraction=runner_fraction,
+            ),
+            stops,
+            targets,
+            row=feat_row,
+            source_prices=source_prices,
+            fallback_reason=tp_fallback_reason,
+            stop_audit=stop_audit,
+        )
     if mode == "ema_21":
         ema = finite_level(feat_row, "ema_21")
         if ema is None:
@@ -445,11 +557,13 @@ def place_strategy_order(
 
 
 def reference_timeframe(name: str) -> str:
-    """Timeframe prefix of a level name. Unprefixed names are M1."""
+    """Timeframe prefix of candle-derived levels; session/day levels have none."""
     head = str(name).split("|", 1)[0]
-    for prefix in ("H1_", "M15_", "M5_"):
+    for prefix in ("M1_", "M3_", "M5_", "M10_", "M15_", "M30_", "H1_", "H2_", "H4_", "D1_", "W1_"):
         if head.startswith(prefix):
             return prefix[:-1]
+    if head.startswith(("asian_", "london_", "prev_day_", "ctx_prev_week_")):
+        return ""
     return "M1" if head else ""
 
 

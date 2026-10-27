@@ -13,7 +13,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from configuration.paths import repository_root
 
-FEATURE_CACHE_VERSION = "v24-native-source-timeframes"
+FEATURE_CACHE_VERSION = "v30-directional-swing-fib"
 
 
 def feature_cache_content_hash(

@@ -40,6 +40,17 @@ def test_campaign_policy_overrides_are_sorted_and_shell_safe() -> None:
     ]
 
 
+def test_campaign_accepts_a_repository_relative_prebuilt_feature_cache() -> None:
+    values = normalize_campaign_config_overrides(
+        {"data.prebuilt_feature_cache": "cache/normal/US100_features.parquet"}
+    )
+
+    assert values == {"data.prebuilt_feature_cache": "cache/normal/US100_features.parquet"}
+    assert campaign_config_override_lines(values) == (
+        "data.prebuilt_feature_cache=cache/normal/US100_features.parquet"
+    )
+
+
 @pytest.mark.parametrize(
     "value",
     [
@@ -47,6 +58,8 @@ def test_campaign_policy_overrides_are_sorted_and_shell_safe() -> None:
         {"bad key": 0},
         {"ftmo.trailing_dd_limit": float("nan")},
         {"ftmo.trailing_dd_limit": "0"},
+        {"data.prebuilt_feature_cache": "/tmp/features.parquet"},
+        {"data.prebuilt_feature_cache": "cache/../outside.parquet"},
     ],
 )
 def test_campaign_policy_override_validation_rejects_unsupported_values(value: object) -> None:

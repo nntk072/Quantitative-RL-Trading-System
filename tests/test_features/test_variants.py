@@ -89,8 +89,9 @@ def test_fvg_zone_features_in_zone(fvg_bars):
 
 def test_fvg_retest_holds_and_a_fill_ends_the_zone():
     idx = pd.date_range("2025-01-06 17:00", periods=8, freq="1min", tz="Etc/GMT-3")
-    # Candle 1 is bar 1 (low 99). The gap is 100-101. Bar 5 retests and holds.
-    # Bar 6 trades through the low. Bar 7 returns to the same prices.
+    # Candle 1 is bar 1 (low 99). The gap is 100-101. Bar 5 retests and holds;
+    # bar 6 confirms above the retest candle despite a wick through the zone.
+    # Bar 7 body-closes through the distal edge and invalidates the zone.
     rows = [
         (100.0, 98.0, 99.0),
         (100.0, 99.0, 99.5),
@@ -98,12 +99,12 @@ def test_fvg_retest_holds_and_a_fill_ends_the_zone():
         (104.0, 101.0, 103.0),
         (105.0, 102.0, 104.0),
         (103.0, 100.4, 101.2),
-        (102.0, 99.5, 100.0),
-        (103.0, 100.4, 101.2),
+        (103.3, 99.5, 103.2),
+        (103.3, 99.5, 99.9),
     ]
     bars = pd.DataFrame(
         {
-            "open": [99.0, 99.0, 99.5, 102.0, 103.0, 104.0, 101.2, 100.0],
+            "open": [99.0, 99.0, 99.5, 102.0, 103.0, 102.5, 101.2, 103.2],
             "high": [r[0] for r in rows],
             "low": [r[1] for r in rows],
             "close": [r[2] for r in rows],
@@ -111,11 +112,12 @@ def test_fvg_retest_holds_and_a_fill_ends_the_zone():
         index=idx,
     )
     feats = build_fvg_zone_features(bars)
-    assert feats["fvg_retest_bull"].iloc[5] == 1.0
+    assert feats["fvg_retest_bull"].iloc[6] == 1.0
     assert feats["fvg_in_bull"].iloc[5] == 0.0
-    assert feats["fvg_bull_low"].iloc[5] == pytest.approx(100.0)
-    assert feats["fvg_bull_origin"].iloc[5] == pytest.approx(99.0)
-    assert feats["fvg_retest_bull"].iloc[6] == 0.0
+    assert feats["fvg_bull_low"].iloc[6] == pytest.approx(100.0)
+    assert feats["fvg_bull_origin"].iloc[6] == pytest.approx(99.0)
+    assert feats["fvg_bull_active"].iloc[6] == 1.0
+    assert feats["fvg_retest_bull"].iloc[7] == 0.0
     assert feats["fvg_bull_active"].iloc[7] == 0.0
     assert feats["fvg_retest_bull"].iloc[7] == 0.0
 

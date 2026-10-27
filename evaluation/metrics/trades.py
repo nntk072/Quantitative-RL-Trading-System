@@ -96,7 +96,10 @@ def compute_trade_metrics(
     TradeChartMetrics
         Computed metrics for chart rendering.
     """
-    t_open = pd.Timestamp(open_row["time"])
+    entry_time = open_row.get("actual_tick_time")
+    if pd.isna(entry_time) or not str(entry_time).strip():
+        entry_time = open_row["time"]
+    t_open = pd.Timestamp(entry_time)
     t_close = pd.Timestamp(close_row["time"])
     bars_tz = bars.index.tz if isinstance(bars.index, pd.DatetimeIndex) else None
     if bars_tz is not None:

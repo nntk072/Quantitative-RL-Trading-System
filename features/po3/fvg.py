@@ -28,9 +28,10 @@ def build_fvg_zone_features(
     - ``fvg_bull_dist`` / ``fvg_bear_dist``: distance from close to the nearest
       active zone edge, normalised by ATR and capped at 5.0 (cap value = no
       active zone nearby)
-    - ``fvg_retest_bull`` / ``fvg_retest_bear``: 1 only when price has left a
-      still-live zone, tags the near edge, and closes back on the trade side.
-      The fill bar is not a retest.
+    - ``fvg_retest_bull`` / ``fvg_retest_bear``: 1 when a later candle closes
+      beyond the high (bullish) or low (bearish) of a candle that retested a
+      still-live zone. A body close through the far zone boundary invalidates
+      the zone immediately.
     - ``fvg_*_low`` / ``fvg_*_high``: live zone bounds. ``fvg_*_origin`` is the
       low (bull) or high (bear) of candle 1 in the 1-2-3 that left the gap.
       Candle 2 is the displacement candle the gap belongs to.
@@ -119,13 +120,13 @@ def build_fvg_zone_features(
 
     for zone in zones:
         start_i = int(idx.searchsorted(zone.start_ts, side="left"))
-        end_i = int(idx.searchsorted(zone.end_ts, side="right"))  # exclusive
+        end_i = int(idx.searchsorted(zone.end_ts, side="left" if zone.invalidated else "right"))
         if start_i >= n:
             continue
-        fill_i = int(idx.searchsorted(zone.end_ts, side="left")) if zone.invalidated else None
         origin_i = start_i - 2
         mid = 0.5 * (zone.zone_low + zone.zone_high)
         left = False
+        pending_retest: tuple[int, float] | None = None
         bull = zone.side == "bullish"
         for i in range(start_i, min(end_i, n)):
             if bull:
@@ -139,7 +140,6 @@ def build_fvg_zone_features(
             values[i, dist_col] = dist
             if zone.zone_low <= close[i] <= zone.zone_high:
                 values[i, in_col] = 1.0
-            is_fill = fill_i is not None and i == fill_i
             if bull:
                 values[i, bull_active] = 1.0
                 values[i, bull_lo] = zone.zone_low
@@ -147,12 +147,14 @@ def build_fvg_zone_features(
                 if origin_i >= 0:
                     values[i, bull_origin] = low[origin_i]
                 if (
-                    not is_fill
-                    and left
-                    and zone.zone_low < low[i] <= zone.zone_high
-                    and close[i] >= zone.zone_high
+                    pending_retest is not None
+                    and i > pending_retest[0]
+                    and close[i] > pending_retest[1]
                 ):
                     values[i, bull_retest] = 1.0
+                    pending_retest = None
+                if left and low[i] <= zone.zone_high and high[i] >= zone.zone_low:
+                    pending_retest = (i, high[i])
                 if low[i] > zone.zone_high:
                     left = True
             else:
@@ -162,12 +164,14 @@ def build_fvg_zone_features(
                 if origin_i >= 0:
                     values[i, bear_origin] = high[origin_i]
                 if (
-                    not is_fill
-                    and left
-                    and zone.zone_low <= high[i] < zone.zone_high
-                    and close[i] <= zone.zone_low
+                    pending_retest is not None
+                    and i > pending_retest[0]
+                    and close[i] < pending_retest[1]
                 ):
                     values[i, bear_retest] = 1.0
+                    pending_retest = None
+                if left and low[i] <= zone.zone_high and high[i] >= zone.zone_low:
+                    pending_retest = (i, low[i])
                 if high[i] < zone.zone_low:
                     left = True
     return pd.DataFrame(values, index=idx, columns=out.columns)

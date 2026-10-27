@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
@@ -138,6 +139,92 @@ class TestBuildFeaturesPipeline:
             assert f"{timeframe}_last_swing_low" in cols
             assert f"{timeframe}_dist_to_swing_high_atr" in cols
             assert f"{timeframe}_dist_to_swing_low_atr" in cols
+
+    def test_all_entry_idea_contexts_reach_observation_without_raw_prices(
+        self, deterministic_bars: pd.DataFrame, tmp_path: Path
+    ) -> None:
+        cfg = cast(
+            DictConfig,
+            OmegaConf.merge(
+                OmegaConf.create(_default_cfg()),
+                OmegaConf.create(
+                    {
+                        "features": {
+                            "htf_timeframes": ["M5"],
+                            "include_fvg_ifvg": True,
+                            "fvg_timeframes": ["M1", "M5"],
+                            "order_blocks": {"enabled": True, "timeframes": ["M1", "M5"]},
+                            "entry_ideas": {
+                                "enabled": True,
+                                "timeframes": ["M1", "M5"],
+                                "retracement_low": 0.5,
+                                "retracement_high": 0.786,
+                            },
+                        },
+                    }
+                ),
+            ),
+        )
+
+        cache_path = tmp_path / "features.parquet"
+        features = build_features(deterministic_bars, cfg=cfg, cache_path=cache_path)
+        observation = select_obs_columns(features)
+
+        assert features.columns.is_unique
+        assert cache_path.is_file()
+        pd.testing.assert_frame_equal(pd.read_parquet(cache_path), features, check_freq=False)
+        for column in (
+            "entry_idea_po3_long",
+            "entry_idea_order_block_long",
+            "entry_idea_standard_deviation_long",
+            "entry_idea_fvg_retest_long",
+            "M5_ob_bull_retest",
+            "M5_fvg_retest_bull",
+            "M5_standard_deviation_entry_long",
+            "M5_standard_deviation_leg_direction",
+            "M5_standard_deviation_level_0_786_distance",
+        ):
+            assert column in observation.columns
+        assert "standard_deviation_band_low" in features
+        assert "M5_standard_deviation_band_low" in features
+        assert "standard_deviation_band_low" not in observation
+        assert "M5_standard_deviation_band_low" not in observation
+        assert "M5_standard_deviation_level_0_786_price" not in observation
+
+    def test_replot_feature_config_rebuilds_recorded_swing_retracement(self) -> None:
+        from evaluation.plotting.replot_orders import (
+            _chart_feature_config,
+            _standard_deviation_timeframes,
+        )
+
+        trades = pd.DataFrame(
+            [
+                {
+                    "type": "open",
+                    "entry_ideas": "['standard_deviation']",
+                    "entry_idea_timeframes": "{'standard_deviation': ['M5', 'H1']}",
+                },
+                {
+                    "type": "open",
+                    "entry_ideas": "['order_block']",
+                    "entry_idea_timeframes": "{'order_block': ['M3']}",
+                },
+            ]
+        )
+
+        timeframes = _standard_deviation_timeframes(trades)
+        config = _chart_feature_config(
+            OmegaConf.create(_default_cfg()),
+            order_block_timeframes=(),
+            fvg_timeframes=(),
+            ifvg_timeframes=(),
+            swing_timeframes=(),
+            standard_deviation_timeframes=timeframes,
+        )
+
+        assert timeframes == ("M5", "H1")
+        assert config.features.entry_ideas.enabled is True
+        assert list(config.features.entry_ideas.timeframes) == ["M5", "H1"]
 
     def test_pipeline_produces_frame(self, deterministic_bars: pd.DataFrame) -> None:
         """build_features returns a DataFrame with the same length as input."""
@@ -361,4 +448,4 @@ class TestBuildFeaturesPipeline:
 
 
 # Structural targets and the PO3 event columns changed the feature matrix.
-_GOLDEN_HASH = "c8ed94bff2fd07aabab1e3f0bcead83ffaa5d6d02f0e1ce8ce277a875e364780"
+_GOLDEN_HASH = "5713f00b9cf22a2dd9b577ae4b3d84f1e09229e567ece5a4ccbd0e4f781ceb63"

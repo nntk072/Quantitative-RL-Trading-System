@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from trading.orders.levels import deviation_levels as build_deviation_levels
+from features.context.swing_retracement import SWING_LEVELS, level_token
 
 _PRICE_TOL = 1e-4
 
@@ -81,6 +81,7 @@ def target_menu(
         ]
         gap_suffixes = ("ifvg_bear_low", "fvg_bear_low")
         swing_name = "last_swing_high"
+        ob_target_stem = "ob_bear_high"
     else:
         names = [
             "last_swing_low",
@@ -92,6 +93,7 @@ def target_menu(
         ]
         gap_suffixes = ("ifvg_bull_high", "fvg_bull_high")
         swing_name = "last_swing_low"
+        ob_target_stem = "ob_bull_low"
     raw: list[tuple[str, float]] = []
     for name in names:
         level = finite_level(row, name)
@@ -102,8 +104,19 @@ def target_menu(
         level = finite_level(row, f"{tf_up}_{swing_name}")
         if level is not None:
             raw.append((f"{tf_up}_{swing_name}", level))
+    row_columns = getattr(row, "index", ())
+    for column in row_columns:
+        column_name = str(column)
+        if column_name == ob_target_stem or column_name.endswith(f"_{ob_target_stem}"):
+            active_name = column_name.removesuffix("_low").removesuffix("_high") + "_active"
+            if finite_level(row, active_name) == 1.0:
+                level = finite_level(row, column_name)
+                if level is not None:
+                    raw.append((column_name, level))
     raw.extend(suffixed_levels(row, gap_suffixes))
-    raw.extend(deviation_candidates(row))
+    # TP extensions belong to the confirmed swing leg and are available to
+    # every entry idea. The stop menu keeps its separate, nearer-level cap.
+    raw.extend(deviation_candidates(row, allow_extreme_extension=True))
     if source_prices is not None:
         source_prices.update((name, float(price)) for name, price in raw)
     # A known confirmation after the decision is never eligible. The pivot
@@ -168,17 +181,36 @@ def target_menu(
     return menu
 
 
-def deviation_candidates(row: Any) -> list[tuple[str, float]]:
-    lo = finite_level(row, "last_swing_low")
-    hi = finite_level(row, "last_swing_high")
-    if lo is None or hi is None:
-        lo = finite_level(row, "asian_low")
-        hi = finite_level(row, "asian_high")
-    if lo is None or hi is None or hi <= lo:
-        return []
+def deviation_candidates(
+    row: Any, *, allow_extreme_extension: bool = False
+) -> list[tuple[str, float]]:
+    """Use extensions of already-created swing legs as TP levels.
+
+    Prices are precomputed from the latest *confirmed* swing source on each
+    timeframe. Recomputing from current bars or session ranges here could make
+    target choices disagree with the feature/plot source.
+    """
+    columns = getattr(row, "index", ())
+    levels_by_name = {
+        f"standard_deviation_level_{level_token(level)}_price": level for level in SWING_LEVELS
+    }
+    minimum_level = -8.0 if allow_extreme_extension else -4.0
     out: list[tuple[str, float]] = []
-    for k, price in build_deviation_levels(lo, hi, lo, hi):
-        out.append((f"dev_{k:g}", float(price)))
+    for raw_column in columns:
+        column = str(raw_column)
+        if not any(column == name or column.endswith(f"_{name}") for name in levels_by_name):
+            continue
+        level = finite_level(row, column)
+        configured_level = next(
+            (
+                value
+                for name, value in levels_by_name.items()
+                if column == name or column.endswith(f"_{name}")
+            ),
+            None,
+        )
+        if level is not None and configured_level is not None and configured_level >= minimum_level:
+            out.append((column, level))
     return out
 
 

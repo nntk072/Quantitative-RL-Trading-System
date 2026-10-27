@@ -1,4 +1,12 @@
-> **Execution note for this repository (2026-10-26):** This document preserves the attached research plan. Its embedded agent permissions and historical job/config details are proposals/context, not standalone authorization or current state. Follow the repository `AGENTS.md`, `.agents/rules/triton-slurm.md`, and the user's current instructions when they differ. The matched R0/R1 development screen and reports are complete. R2 compares the existing TCN sequence pathway with the same pathway plus a compact, separate, completed-D1 context branch while holding source-normalized D1 inputs constant. Continue with this minimal matched experiment and defer speculative extensions.
+> **Execution note for this repository (2026-10-26):** This document preserves the attached research plan. Its embedded agent permissions and historical job/config details are proposals/context, not standalone authorization or current state. Follow the repository `AGENTS.md`, `.agents/rules/triton-slurm.md`, and the user's current instructions when they differ. The matched R0/R1 development screen and reports are complete. The matched one-seed R2 2M screen is also complete: both arms failed training survival; the treatment's terminal training equity and drawdown were slightly worse, with mixed secondary metrics. Preserve this descriptive result and interpret it before considering further experiments. Its 2026 report-only interval was previously exposed and cannot establish a treatment benefit. Defer speculative extensions.
+
+### Current active scope correction (2026-10-26)
+
+The proposed DSR PPO 1-environment rerun is removed from the active goal and
+must not be launched. Its interrupted attempt is historical evidence only.
+Continue this regime-aware plan from the existing R0/R1 evidence and the
+completed matched R2 campaign. DSR remains the R0 control inside that matched
+screen; this does not authorize a separate DSR rerun.
 
 ### Verified preflight finding from the completed 2M run
 

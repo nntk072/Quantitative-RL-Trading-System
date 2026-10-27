@@ -1,0 +1,242 @@
+{
+  "all_input_bars_retained_in_order": true,
+  "bars_per_symbol_timeframe": {
+    "US100.cash": {
+      "D1": 466,
+      "H1": 10636,
+      "H4": 2781,
+      "M1": 630787,
+      "M10": 63331,
+      "M15": 42519,
+      "M3": 210746,
+      "M30": 21265,
+      "M5": 126179
+    },
+    "US500.cash": {
+      "D1": 466,
+      "H1": 10636,
+      "H4": 2781,
+      "M1": 628929,
+      "M10": 63328,
+      "M15": 42518,
+      "M3": 210741,
+      "M30": 21264,
+      "M5": 126177
+    }
+  },
+  "cache_bytes": 1279943130,
+  "cache_hash": "63a6192edd31d705",
+  "cache_path": "cache/data_modes/normal/train_test_2025_2026_v1/US100.cash_features_v30-directional-swing-fib_63a6192edd31d705.parquet",
+  "campaign_id": "regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1",
+  "campaign_spec": "config/campaigns/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1.yaml",
+  "directional_swing_fields_by_timeframe": {
+    "D1": {
+      "direction": "D1_standard_deviation_leg_direction",
+      "level_0": "D1_standard_deviation_level_0_price",
+      "level_1": "D1_standard_deviation_level_1_price"
+    },
+    "H1": {
+      "direction": "H1_standard_deviation_leg_direction",
+      "level_0": "H1_standard_deviation_level_0_price",
+      "level_1": "H1_standard_deviation_level_1_price"
+    },
+    "H4": {
+      "direction": "H4_standard_deviation_leg_direction",
+      "level_0": "H4_standard_deviation_level_0_price",
+      "level_1": "H4_standard_deviation_level_1_price"
+    },
+    "M1": {
+      "direction": "standard_deviation_leg_direction",
+      "level_0": "standard_deviation_level_0_price",
+      "level_1": "standard_deviation_level_1_price"
+    },
+    "M10": {
+      "direction": "M10_standard_deviation_leg_direction",
+      "level_0": "M10_standard_deviation_level_0_price",
+      "level_1": "M10_standard_deviation_level_1_price"
+    },
+    "M15": {
+      "direction": "M15_standard_deviation_leg_direction",
+      "level_0": "M15_standard_deviation_level_0_price",
+      "level_1": "M15_standard_deviation_level_1_price"
+    },
+    "M3": {
+      "direction": "M3_standard_deviation_leg_direction",
+      "level_0": "M3_standard_deviation_level_0_price",
+      "level_1": "M3_standard_deviation_level_1_price"
+    },
+    "M30": {
+      "direction": "M30_standard_deviation_leg_direction",
+      "level_0": "M30_standard_deviation_level_0_price",
+      "level_1": "M30_standard_deviation_level_1_price"
+    },
+    "M5": {
+      "direction": "M5_standard_deviation_leg_direction",
+      "level_0": "M5_standard_deviation_level_0_price",
+      "level_1": "M5_standard_deviation_level_1_price"
+    }
+  },
+  "entry_idea_timeframes": [
+    "M1",
+    "M3",
+    "M5",
+    "M10",
+    "M15",
+    "M30",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "feature_cache_version": "v30-directional-swing-fib",
+  "feature_columns": 1442,
+  "feature_rows": 630787,
+  "index_end": "2026-10-16 23:49:00+03:00",
+  "index_start": "2024-12-30 01:05:00+03:00",
+  "order_block_timeframes": [
+    "M1",
+    "M3",
+    "M5",
+    "M10",
+    "M15",
+    "M30",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "required_context_columns_present": true,
+  "resolved_data_profile": {
+    "bar_timestamp_convention": "open",
+    "cache_dir": "cache/data_modes/normal/train_test_2025_2026_v1",
+    "datasets": {
+      "testing": {
+        "m1_files": {
+          "US100.cash": "US100.cash_M1_202412300105_202610162349.csv",
+          "US500.cash": "US500.cash_M1_202412300105_202610162349.csv"
+        },
+        "raw_dir": "data/normal/testing",
+        "tick_files": {
+          "US100.cash": "US100.cash_202412300105_202610162349.csv",
+          "US500.cash": "US500.cash_202412300105_202610162349.csv"
+        },
+        "timeframe_files": {
+          "D1": {
+            "US500.cash": "US500.cash_D1_202412300000_202610160000.csv"
+          },
+          "H1": {
+            "US100.cash": "US100.cash_H1_202412300100_202610162300.csv",
+            "US500.cash": "US500.cash_H1_202412300100_202610162300.csv"
+          },
+          "H4": {
+            "US100.cash": "US100.cash_H4_202412300000_202610162000.csv",
+            "US500.cash": "US500.cash_H4_202412300000_202610162000.csv"
+          },
+          "M10": {
+            "US100.cash": "US100.cash_M10_202412300100_202610162340.csv",
+            "US500.cash": "US500.cash_M10_202412300100_202610162340.csv"
+          },
+          "M15": {
+            "US100.cash": "US100.cash_M15_202412300100_202610162345.csv",
+            "US500.cash": "US500.cash_M15_202412300100_202610162345.csv"
+          },
+          "M3": {
+            "US100.cash": "US100.cash_M3_202412300103_202610162348.csv",
+            "US500.cash": "US500.cash_M3_202412300103_202610162348.csv"
+          },
+          "M30": {
+            "US100.cash": "US100.cash_M30_202412300100_202610162330.csv",
+            "US500.cash": "US500.cash_M30_202412300100_202610162330.csv"
+          },
+          "M5": {
+            "US100.cash": "US100.cash_M5_202412300105_202610162345.csv",
+            "US500.cash": "US500.cash_M5_202412300105_202610162345.csv"
+          }
+        }
+      },
+      "training": {
+        "m1_files": {
+          "US100.cash": "US100.cash_M1_202412300105_202610162349.csv",
+          "US500.cash": "US500.cash_M1_202412300105_202610162349.csv"
+        },
+        "raw_dir": "data/normal/training",
+        "tick_files": {
+          "US100.cash": "US100.cash_202412300105_202610162349.csv",
+          "US500.cash": "US500.cash_202412300105_202610162349.csv"
+        },
+        "timeframe_files": {
+          "D1": {
+            "US500.cash": "US500.cash_D1_202412300000_202610160000.csv"
+          },
+          "H1": {
+            "US100.cash": "US100.cash_H1_202412300100_202610162300.csv",
+            "US500.cash": "US500.cash_H1_202412300100_202610162300.csv"
+          },
+          "H4": {
+            "US100.cash": "US100.cash_H4_202412300000_202610162000.csv",
+            "US500.cash": "US500.cash_H4_202412300000_202610162000.csv"
+          },
+          "M10": {
+            "US100.cash": "US100.cash_M10_202412300100_202610162340.csv",
+            "US500.cash": "US500.cash_M10_202412300100_202610162340.csv"
+          },
+          "M15": {
+            "US100.cash": "US100.cash_M15_202412300100_202610162345.csv",
+            "US500.cash": "US500.cash_M15_202412300100_202610162345.csv"
+          },
+          "M3": {
+            "US100.cash": "US100.cash_M3_202412300103_202610162348.csv",
+            "US500.cash": "US500.cash_M3_202412300103_202610162348.csv"
+          },
+          "M30": {
+            "US100.cash": "US100.cash_M30_202412300100_202610162330.csv",
+            "US500.cash": "US500.cash_M30_202412300100_202610162330.csv"
+          },
+          "M5": {
+            "US100.cash": "US100.cash_M5_202412300105_202610162345.csv",
+            "US500.cash": "US500.cash_M5_202412300105_202610162345.csv"
+          }
+        }
+      }
+    },
+    "derived_timeframes": {
+      "US100.cash": [
+        "D1"
+      ]
+    },
+    "prebuilt_feature_cache": null,
+    "price_discretization": {
+      "enabled": false,
+      "increment": 0.25,
+      "rounding": "nearest_half_away_from_zero"
+    },
+    "primary": "US100.cash",
+    "raw_dir": "data",
+    "require_native_timeframes": true,
+    "secondary": "US500.cash",
+    "session_schedule_file": "config/ny_session_schedule.csv",
+    "split": {
+      "test_start": "2026-01-01",
+      "train_end": "2025-12-31",
+      "train_start": "2024-12-30"
+    },
+    "symbols": [
+      "US100.cash",
+      "US500.cash"
+    ],
+    "timeframes": [
+      "M1",
+      "M3",
+      "M5",
+      "M10",
+      "M15",
+      "M30",
+      "H1",
+      "H4",
+      "D1"
+    ],
+    "timestamp_clock": "ftmo_mt5_us_dst",
+    "tz": "Etc/GMT-3"
+  },
+  "testing_rows_from_2026": 279355,
+  "training_rows_through_2025": 351432,
+  "variant": "sustainable_growth_ppo_log"
+}

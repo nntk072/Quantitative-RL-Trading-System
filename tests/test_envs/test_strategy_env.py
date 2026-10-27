@@ -226,6 +226,12 @@ class TestPO3EntryModes:
         assert strategy.context_direction(pd.Series({"fvg_retest_bull": 1.0})) == 1
         assert strategy.context_direction(pd.Series({"po3_ifvg_confirmed": 1.0})) == 0
 
+    def test_live_gap_can_qualify_without_retest_when_configured(self) -> None:
+        strategy = PO3IFVGStrategy(require_price_retest=False)
+        assert strategy.context_direction(pd.Series({"sweep_low": 1.0})) == 0
+        assert strategy.context_direction(pd.Series({"fvg_bull_active": 1.0})) == 1
+        assert strategy.context_direction(pd.Series({"ifvg_bear_active": 1.0})) == -1
+
     def test_new_entry_mode_rejects_conflicting_legacy_retest_flag(self) -> None:
         with pytest.raises(ValueError, match="conflicts"):
             PO3IFVGStrategy(

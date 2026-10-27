@@ -120,11 +120,11 @@ def build_fvg_zones(
             end_ts = bars.index[end_iloc]
 
             for j in range(i + 1, end_iloc + 1):
-                if side == "bullish" and bars["low"].iloc[j] <= zone_low:
+                if side == "bullish" and bars["close"].iloc[j] < zone_low:
                     invalidated = True
                     end_ts = bars.index[j]
                     break
-                if side == "bearish" and bars["high"].iloc[j] >= zone_high:
+                if side == "bearish" and bars["close"].iloc[j] > zone_high:
                     invalidated = True
                     end_ts = bars.index[j]
                     break
@@ -159,9 +159,9 @@ def _invalidate_zone_on_tf(
     end_ts = bars.index[n - 1]
     invalidated = False
     for j in range(start_i + 1, n):
-        if side == "bullish" and float(bars["low"].iloc[j]) <= zone_low:
+        if side == "bullish" and float(bars["close"].iloc[j]) < zone_low:
             return bars.index[j], True
-        if side == "bearish" and float(bars["high"].iloc[j]) >= zone_high:
+        if side == "bearish" and float(bars["close"].iloc[j]) > zone_high:
             return bars.index[j], True
     return end_ts, invalidated
 

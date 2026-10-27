@@ -337,7 +337,14 @@ def _close_time_label(t_open: pd.Timestamp, t_close: pd.Timestamp) -> str:
     return pd.Timestamp(t_close).strftime("%Y-%m-%d %H:%M")
 
 
-def _trade_filename(idx: int, open_row: pd.Series, close_row: pd.Series, ext: str) -> str:
+def _trade_filename(
+    idx: int,
+    open_row: pd.Series,
+    close_row: pd.Series,
+    ext: str,
+    *,
+    pnl_override: float | None = None,
+) -> str:
     """Build a descriptive filename for a per-trade chart.
 
     Format: ``trade_NNNN_YYYYMMDD_HHMMopen_HHMMclose_{L|S}_{p|m}PnL.{ext}``
@@ -348,9 +355,150 @@ def _trade_filename(idx: int, open_row: pd.Series, close_row: pd.Series, ext: st
     t_o = t_open.strftime("%H%M")
     t_c = t_close.strftime("%H%M")
     side = "L" if open_row.get("direction", 0) == 1 else "S"
-    pnl = float(close_row["pnl"]) if pd.notna(close_row.get("pnl")) else 0.0
+    pnl = (
+        float(pnl_override)
+        if pnl_override is not None
+        else (float(close_row["pnl"]) if pd.notna(close_row.get("pnl")) else 0.0)
+    )
     sign = "p" if pnl >= 0 else "m"
     return f"trade_{idx:04d}_{date}_{t_o}_{t_c}_{side}_{sign}{abs(pnl):.1f}.{ext}"
+
+
+_EXIT_TYPES = {"tp_partial_close", "close", "forced_close", "eod_close", "stop_close", "tp_close"}
+
+
+def _position_events(
+    trades: pd.DataFrame,
+    open_row: pd.Series,
+    close_row: pd.Series,
+    *,
+    breakeven_buffer_pts: float = 0.0,
+) -> pd.DataFrame:
+    """Return lifecycle rows for one position, including partials and SL changes."""
+    position_id = open_row.get("position_id")
+    if position_id is not None and pd.notna(position_id) and "position_id" in trades.columns:
+        events: pd.DataFrame = trades.loc[trades["position_id"] == position_id].copy()
+    else:
+        events = pd.DataFrame([open_row.to_dict(), close_row.to_dict()])
+    # Old trade ledgers did not emit the automatic post-partial stop update.
+    # Reconstruct it only when the run's saved config supplies a positive
+    # buffer, and label it as reconstructed in the chart note.
+    if (
+        breakeven_buffer_pts > 0.0
+        and "type" in events
+        and not events["type"].eq("sl_update").any()
+        and events["type"].eq("tp_partial_close").any()
+        and pd.notna(open_row.get("sl_price"))
+        and pd.notna(open_row.get("price"))
+    ):
+        direction = int(open_row.get("direction", 0))
+        entry = float(open_row["price"])
+        initial_sl = float(open_row["sl_price"])
+        stop = entry + direction * breakeven_buffer_pts
+        tightens = stop > initial_sl if direction == 1 else stop < initial_sl
+        if direction in (-1, 1) and tightens:
+            partial = events.loc[events["type"].eq("tp_partial_close")].iloc[0]
+            reconstructed: dict[str, object] = {column: None for column in events.columns}
+            reconstructed.update(
+                {
+                    "type": "sl_update",
+                    "position_id": open_row.get("position_id"),
+                    "time": partial.get("time"),
+                    "effective_time": partial.get("actual_tick_time", partial.get("time")),
+                    "direction": direction,
+                    "previous_price": initial_sl,
+                    "price": stop,
+                    "reference": "entry",
+                    "reference_price": entry,
+                    "reason": "post_partial_breakeven_reconstructed_from_config",
+                }
+            )
+            events = pd.concat([events, pd.DataFrame([reconstructed])], ignore_index=True)
+    if "bar" in events.columns:
+        events = events.sort_values("bar", kind="stable")
+    elif "time" in events.columns:
+        events = events.sort_values("time", kind="stable")
+    return events
+
+
+def _position_pnl_from_fills(
+    events: pd.DataFrame, direction: int, entry: float, initial_lots: float, contract: float
+) -> float:
+    exits = events.loc[events["type"].isin(_EXIT_TYPES)]
+    logged = (
+        pd.to_numeric(exits["pnl"], errors="coerce")
+        if "pnl" in exits.columns
+        else pd.Series(dtype=float)
+    )
+    if logged.notna().any():
+        return float(logged.fillna(0.0).sum())
+    if "price" not in exits or "size" not in exits:
+        return 0.0
+    return float(((exits["price"] - entry) * direction * exits["size"] * contract).sum())
+
+
+def _clock_label(value: object) -> str:
+    text = str(value)
+    return text[11:23] if len(text) >= 19 else text
+
+
+def _draw_position_fills(ax: Any, events: pd.DataFrame) -> None:
+    """Mark actual logged partial/final fills and stop changes distinctly."""
+    for _, event in events.iterrows():
+        event_type = event.get("type")
+        if event_type in _EXIT_TYPES:
+            when, price = event.get("time"), event.get("price")
+            if pd.notna(when) and pd.notna(price):
+                partial = event_type == "tp_partial_close"
+                ax.scatter(
+                    [pd.Timestamp(when)],
+                    [float(price)],
+                    marker="s" if partial else "X",
+                    s=36,
+                    color="#00897b" if partial else "#c62828",
+                    zorder=8,
+                    label="Partial exit fill" if partial else "Final exit fill",
+                )
+
+
+def _draw_target_updates(ax: Any, events: pd.DataFrame) -> None:
+    """Show changed structural targets through their matching partial fill."""
+    if "type" not in events or "tp_slot" not in events:
+        return
+    updates = events.loc[events["type"].eq("tp_update")]
+    for update_i, (_, update) in enumerate(updates.iterrows()):
+        slot = update.get("tp_slot")
+        matches = events.loc[
+            events["type"].eq("tp_partial_close") & (events["tp_slot"].astype(str) == str(slot))
+        ]
+        start_value = update.get("effective_time", update.get("time"))
+        if pd.isna(start_value) or pd.isna(update.get("price")):
+            continue
+        start = pd.Timestamp(start_value)
+        end = (
+            pd.Timestamp(matches.iloc[0]["time"])
+            if not matches.empty
+            else pd.Timestamp(events.iloc[-1]["time"])
+        )
+        price = float(update["price"])
+        ax.plot(
+            [start, end],
+            [price, price],
+            color="#00897b",
+            linewidth=1.3,
+            linestyle="--",
+            zorder=6,
+            label="Updated take-profit level" if update_i == 0 else None,
+        )
+        ax.scatter([start], [price], marker="s", s=28, color="#00897b", zorder=8)
+        ax.annotate(
+            f"TP {slot} updated {price:.2f}",
+            xy=(start, price),
+            xytext=(5, 7),
+            textcoords="offset points",
+            fontsize=7,
+            color="#00695c",
+        )
 
 
 def plot_per_trade_orders(
@@ -369,6 +517,13 @@ def plot_per_trade_orders(
     show_vwap: bool = False,
     secondary_bars: pd.DataFrame | None = None,
     features: pd.DataFrame | None = None,
+    breakeven_buffer_pts: float = 0.0,
+    order_block_timeframes: tuple[str, ...] = (),
+    fvg_timeframes: tuple[str, ...] = (),
+    ifvg_timeframes: tuple[str, ...] = (),
+    ema_timeframes: tuple[str, ...] = ("M1",),
+    swing_timeframes: tuple[str, ...] = ("M1",),
+    entry_idea_plot_config: dict[str, Any] | None = None,
 ) -> None:
     """Generate 2-panel PNG per trade with datetime axes, EMA50, MACD, and trade info.
 
@@ -397,7 +552,12 @@ def plot_per_trade_orders(
 
     from evaluation.reporting.trade_note import build_trade_note
 
-    from .chart_indicators import break_overlay_gaps, compute_chart_overlays_full
+    from .chart_indicators import (
+        break_overlay_gaps,
+        compute_chart_overlays_full,
+        compute_mtf_ema_overlays,
+        select_ema_overlays,
+    )
     from .chart_overlays import (
         VWAP_COLOR,
         build_overlay_events,
@@ -410,6 +570,17 @@ def plot_per_trade_orders(
 
     orders_dir = Path(orders_dir)
     orders_dir.mkdir(parents=True, exist_ok=True)
+
+    # Normalize event and tick timestamps to the candle index timezone before
+    # creating markers or captions. R1 ledgers store tick instants in UTC while
+    # their minute bars are in the configured local market timezone.
+    if isinstance(bars.index, pd.DatetimeIndex) and bars.index.tz is not None:
+        trades = trades.copy()
+        for column in ("time", "actual_tick_time", "fill_time", "effective_time"):
+            if column not in trades.columns:
+                continue
+            timestamps = pd.to_datetime(trades[column], errors="coerce", utc=True)
+            trades[column] = timestamps.dt.tz_convert(bars.index.tz)
 
     pairs = _pair_trades(trades)
     if not pairs:
@@ -426,8 +597,12 @@ def plot_per_trade_orders(
     # Compute EMA50/MACD/RSI/VWAP once on the full history so indicators are
     # warmed up and match the strategy's real signals, then slice per trade.
     full_overlays = compute_chart_overlays_full(bars)
+    full_overlays.update(compute_mtf_ema_overlays(bars, ema_timeframes))
+    full_overlays = select_ema_overlays(full_overlays, ema_timeframes)
     overlay_events = build_overlay_events(bars, secondary=secondary_bars)
     confirmed_events = confirmed_pivots(overlay_events, bars)
+    if "M1" not in {str(tf).upper() for tf in swing_timeframes}:
+        confirmed_events.swings = []
     session_end_positions = _session_end_positions(pd.DatetimeIndex(bars.index))
 
     for seq_i, (open_row, close_row) in enumerate(pairs):
@@ -445,6 +620,11 @@ def plot_per_trade_orders(
             show_mae_mfe=show_mae_mfe,
             show_sl_tp=show_sl_tp,
             features=features,
+            order_block_timeframes=order_block_timeframes,
+            fvg_timeframes=fvg_timeframes,
+            ifvg_timeframes=ifvg_timeframes,
+            swing_timeframes=swing_timeframes,
+            entry_idea_plot_config=entry_idea_plot_config,
             confirmed_events=confirmed_events,
             session_end_positions=session_end_positions,
         )
@@ -460,7 +640,19 @@ def plot_per_trade_orders(
         overlays = break_overlay_gaps(overlays)
 
         direction = int(open_row["direction"]) if pd.notna(open_row.get("direction")) else 0
-        pnl = float(close_row["pnl"]) if pd.notna(close_row.get("pnl")) else 0.0
+        position_events = _position_events(
+            trades,
+            open_row,
+            close_row,
+            breakeven_buffer_pts=breakeven_buffer_pts,
+        )
+        pnl = _position_pnl_from_fills(
+            position_events,
+            direction,
+            metrics.entry_price,
+            float(open_row.get("lots", lots) or lots),
+            contract_size,
+        )
         close_type = str(close_row["type"])
 
         # Create 2-panel figure: price + dual-axis MACD/RSI
@@ -501,22 +693,32 @@ def plot_per_trade_orders(
             )
             ax_price.add_patch(rect)
 
-        # HTF/LTF imbalance boxes, same geometry as the PO3 sample figure.
-        from evaluation.plotting.po3_plots import _draw_zones
-        from features.po3.zones import build_fvg_zones_for_plot
-
-        _draw_zones(ax_price, build_fvg_zones_for_plot(window), window)
-
         # EMA50
-        ema = overlays["ema50"]
-        ax_price.plot(
-            ema.index,
-            ema.to_numpy(),
-            color="#0066cc",
-            linewidth=2,
-            label="EMA50",
-            zorder=3,
-        )
+        ema = overlays.get("ema50")
+        if ema is not None:
+            ax_price.plot(
+                ema.index,
+                ema.to_numpy(),
+                color="#0066cc",
+                linewidth=2,
+                label="M1 EMA 50",
+                zorder=3,
+            )
+        ema_colors = {9: "#00897b", 21: "#6a1b9a", 50: "#0066cc", 200: "#ef6c00"}
+        for timeframe in ema_timeframes:
+            tf = str(timeframe).upper()
+            for period, color in ema_colors.items():
+                key = f"{tf}_ema_{period}"
+                if key not in overlays or (tf == "M1" and period == 50):
+                    continue
+                ax_price.plot(
+                    overlays[key].index,
+                    overlays[key].to_numpy(),
+                    color=color,
+                    linewidth=1.1,
+                    label=f"{tf} EMA {period}",
+                    zorder=3,
+                )
         if show_vwap:
             vwap = overlays["vwap"]
             ax_price.plot(
@@ -529,7 +731,9 @@ def plot_per_trade_orders(
                 zorder=3,
             )
         draw_overlays_mpl(ax_price, events)
-        draw_order_levels_mpl(ax_price, levels)
+        draw_order_levels_mpl(ax_price, levels, position_events)
+        _draw_position_fills(ax_price, position_events)
+        _draw_target_updates(ax_price, position_events)
         # Structure lines must not stretch a one-minute trade across later months.
         pad = float(pd.Timedelta("30s") / pd.Timedelta("1D"))
         ax_price.set_xlim(
@@ -566,7 +770,9 @@ def plot_per_trade_orders(
         # this chart and compare to the logged PnL. A mismatch flags a
         # pairing bug or a stale/fallback exit price rather than a "weird"
         # strategy result.
-        pnl_calc = (metrics.exit_price - metrics.entry_price) * direction * lots_val * contract_size
+        pnl_calc = _position_pnl_from_fills(
+            position_events, direction, metrics.entry_price, lots_val, contract_size
+        )
         close_reason_detail = (
             str(close_row.get("reason")) if pd.notna(close_row.get("reason")) else close_type
         )
@@ -584,6 +790,9 @@ def plot_per_trade_orders(
             lots=lots_val,
             close_reason_detail=close_reason_detail,
             extra_notes=levels.notes,
+            position_events=position_events,
+            signal_time=open_row.get("signal_time", open_row.get("decision_time")),
+            entry_fill_time=open_row.get("actual_tick_time", open_row.get("time")),
         )
         # The caption sits under the two subplots so it never covers candles.
         # Its block height is derived from the real line count and the figure is
@@ -622,7 +831,7 @@ def plot_per_trade_orders(
         fig.suptitle(title, fontsize=11, fontweight="bold")
 
         # Save
-        fname = _trade_filename(seq_i + 1, open_row, close_row, "png")
+        fname = _trade_filename(seq_i + 1, open_row, close_row, "png", pnl_override=pnl)
         try:
             fig.tight_layout(rect=(0.008, note_bottom, 0.995, 0.96))
             fig.savefig(str(orders_dir / fname), dpi=dpi, bbox_inches="tight")

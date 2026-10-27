@@ -214,13 +214,11 @@ def build_ifvg_zone_features(
 
     Reuses :func:`features.po3.config.detect_fvg` +
     :func:`features.po3.config.detect_ifvg_confirmation` (no second
-    IFVG implementation). A confirmed zone stays live until it is filled or
-    it reaches ``max_age_bars``. A bull zone is filled when a bar's low trades
-    through its low; a bear zone when a bar's high trades through its high.
-    The fill bar is the last live bar. The most recent confirmed zone per
-    side is the active one. ``ifvg_retest_*`` is 1 only on a bar that tags a
-    still-live zone after price has traded away, and closes back on the
-    trade side of the near edge.
+    IFVG implementation). A confirmed zone stays live until a candle body
+    closes through its far boundary or it reaches ``max_age_bars``. A bull
+    zone invalidates on a close below its low; a bear zone on a close above
+    its high. ``ifvg_retest_*`` confirms only after a later candle closes
+    beyond the high (bullish) or low (bearish) of a candle that retested it.
 
     Parameters
     ----------
@@ -330,23 +328,30 @@ def build_ifvg_zone_features(
     bear_start, bear_zl, bear_zh = -1, np.nan, np.nan
     bull_dead = bear_dead = False
     bull_left = bear_left = False
+    bull_pending_retest: tuple[int, float] | None = None
+    bear_pending_retest: tuple[int, float] | None = None
     bull_origin = bear_origin = float("nan")
     bull_origin_bar = bear_origin_bar = float("nan")
     for i in range(n):
         if conf_bull[i] == 1:
             bull_start, bull_zl, bull_zh = i, bull_low[i], bull_high[i]
             bull_dead = bull_left = False
+            bull_pending_retest = None
             bull_origin = _candle1(i, bull_zl, bull_zh, bull=not inverse_opposing)
             bull_origin_bar = bull_fvg_origin[i]
             values[i, 18] = 1.0
         if conf_bear[i] == 1:
             bear_start, bear_zl, bear_zh = i, bear_low[i], bear_high[i]
             bear_dead = bear_left = False
+            bear_pending_retest = None
             bear_origin = _candle1(i, bear_zl, bear_zh, bull=inverse_opposing)
             bear_origin_bar = bear_fvg_origin[i]
             values[i, 19] = 1.0
 
         a = atr_arr[i] if not np.isnan(atr_arr[i]) and atr_arr[i] > 0 else 1.0
+        if bull_start >= 0 and not bull_dead and close[i] < bull_zl:
+            bull_dead = True
+            bull_pending_retest = None
         if bull_start >= 0 and not bull_dead and i - bull_start < max_age_bars:
             values[i, 0] = 1.0
             values[i, 14] = float(i - bull_start)
@@ -356,15 +361,21 @@ def build_ifvg_zone_features(
             if bull_zl <= close[i] <= bull_zh:
                 values[i, 3] = 1.0
             values[i, 4] = min(abs(close[i] - bull_zl), abs(close[i] - bull_zh)) / a
-            # Once price has left the zone, any later non-filling overlap is a
-            # retest; no fixed midpoint depth or near-edge close is required.
-            if bull_left and bull_zl < low[i] <= bull_zh:
+            if (
+                bull_pending_retest is not None
+                and i > bull_pending_retest[0]
+                and close[i] > bull_pending_retest[1]
+            ):
                 values[i, 5] = 1.0
+                bull_pending_retest = None
+            if bull_left and low[i] <= bull_zh and high[i] >= bull_zl:
+                bull_pending_retest = (i, high[i])
             values[i, 12] = bull_origin
             if low[i] > bull_zh:
                 bull_left = True
-            if low[i] <= bull_zl:
-                bull_dead = True
+        if bear_start >= 0 and not bear_dead and close[i] > bear_zh:
+            bear_dead = True
+            bear_pending_retest = None
         if bear_start >= 0 and not bear_dead and i - bear_start < max_age_bars:
             values[i, 6] = 1.0
             values[i, 15] = float(i - bear_start)
@@ -374,13 +385,18 @@ def build_ifvg_zone_features(
             if bear_zl <= close[i] <= bear_zh:
                 values[i, 9] = 1.0
             values[i, 10] = min(abs(close[i] - bear_zl), abs(close[i] - bear_zh)) / a
-            if bear_left and bear_zl <= high[i] < bear_zh:
+            if (
+                bear_pending_retest is not None
+                and i > bear_pending_retest[0]
+                and close[i] < bear_pending_retest[1]
+            ):
                 values[i, 11] = 1.0
+                bear_pending_retest = None
+            if bear_left and low[i] <= bear_zh and high[i] >= bear_zl:
+                bear_pending_retest = (i, low[i])
             values[i, 13] = bear_origin
             if high[i] < bear_zl:
                 bear_left = True
-            if high[i] >= bear_zh:
-                bear_dead = True
 
     return pd.DataFrame(values, index=idx, columns=out.columns)
 

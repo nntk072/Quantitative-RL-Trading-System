@@ -24,6 +24,7 @@ class RiskEntryInitializationMixin(RuntimeMixinBase):
         open_manipulation_bars: int,
         entry_cooldown_bars: int,
         allow_ema_exit: bool,
+        ema_runner_fraction: float,
         reward_mode: str,
         entry_intensity_threshold: float,
         peak_trailing_dd_limit: float,
@@ -81,6 +82,9 @@ class RiskEntryInitializationMixin(RuntimeMixinBase):
         # structural target choice effectively untrained. Off forces every exit
         # onto a structural target at least 1R away.
         self.allow_ema_exit = bool(allow_ema_exit)
+        self.ema_runner_fraction = float(ema_runner_fraction)
+        if not 0.0 <= self.ema_runner_fraction < 1.0:
+            raise ValueError("ema_runner_fraction must be in [0, 1)")
         self.reward_mode = str(reward_mode or "dsr").lower()
         # 0 = intensity never holds; entry follows context_direction.
         self.entry_intensity_threshold = float(entry_intensity_threshold)

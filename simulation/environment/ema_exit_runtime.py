@@ -38,6 +38,14 @@ class EmaExitRuntimeMixin(RuntimeMixinBase):
         pos = self.position
         if pos is None or pos.exit_mode != "ema_21":
             return
+        runner_fraction = float(getattr(pos, "ema_runner_fraction", 0.0))
+        if runner_fraction > 0.0:
+            # In the opt-in runner policy, EMA can manage only the size left
+            # after the agent's configured structural TP ladder has completed.
+            if pos.tp_hit_mask == 0 or any(
+                getattr(pos, f"tp{slot}_price") is not None for slot in (1, 2, 3)
+            ):
+                return
         risk = float(pos.stop_distance)
         if risk <= 1e-12:
             return
@@ -57,7 +65,12 @@ class EmaExitRuntimeMixin(RuntimeMixinBase):
             fill_time = quote.tick_time
             execution_meta = dict(execution["metadata"])
         elif getattr(self, "tick_execution_required", False):
-            order_time = pd.Timestamp(log_time) + pd.Timedelta(minutes=self._minutes_per_step)
+            next_market_idx = idx + 1
+            order_time = (
+                self._bar_time(next_market_idx)
+                if next_market_idx < self._n_bars
+                else pd.Timestamp(log_time) + pd.Timedelta(minutes=self._minutes_per_step)
+            )
             quote, execution_meta = self._resolve_randomized_tick_quote(order_time)
             fill_quote = (quote.bid, quote.ask)
             fill_time = quote.tick_time

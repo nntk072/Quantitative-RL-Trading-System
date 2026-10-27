@@ -10,7 +10,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from evaluation.plotting.chart_indicators import compute_chart_overlays_full
+from evaluation.plotting.chart_indicators import (
+    compute_chart_overlays_full,
+    compute_mtf_ema_overlays,
+    select_ema_overlays,
+)
 from evaluation.plotting.chart_overlays import (
     OverlayEvents,
     build_overlay_events,
@@ -111,6 +115,31 @@ def test_overlays_include_rsi_and_vwap() -> None:
     assert overlays["rsi"].dropna().between(0, 100).all()
     vwap = compute_vwap_for_chart(bars)
     assert vwap.notna().any()
+
+
+def test_selected_timeframe_ema_overlays_use_completed_source_bars() -> None:
+    bars = _ohlc(n=180)
+    overlays = compute_mtf_ema_overlays(bars, ("M1", "M5"), periods=(9, 21))
+
+    assert {"M1_ema_9", "M1_ema_21", "M5_ema_9", "M5_ema_21"} == set(overlays)
+    first_visible = overlays["M5_ema_9"].first_valid_index()
+    assert first_visible is not None
+    assert first_visible >= bars.index[0] + pd.Timedelta(minutes=5)
+
+
+def test_ema_chart_selection_can_hide_m1_and_keep_only_requested_timeframe() -> None:
+    bars = _ohlc(n=180)
+    overlays = compute_chart_overlays_full(bars)
+    overlays.update(compute_mtf_ema_overlays(bars, ("M1", "M5")))
+
+    hidden = select_ema_overlays(overlays, ())
+    assert not any("ema" in key for key in hidden)
+
+    m5_only = select_ema_overlays(overlays, ("M5",))
+    assert "ema50" not in m5_only
+    assert "M1_ema_9" not in m5_only
+    assert "M5_ema_9" in m5_only
+    assert "rsi" in m5_only
 
 
 def test_swing_rays_start_at_swing_origin() -> None:

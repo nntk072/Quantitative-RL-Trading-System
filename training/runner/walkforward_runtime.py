@@ -202,6 +202,8 @@ def run_walk_forward_validation(
             allow_agent_tp_mode=bool(cfg.env.get("allow_agent_tp_mode", False)),
             tp_mode_defer_threshold=float(cfg.env.get("tp_mode_defer_threshold", 0.1)),
             allow_multi_tp=bool(cfg.env.get("allow_multi_tp", False)),
+            allow_ema_exit=bool(cfg.env.get("allow_ema_exit", True)),
+            ema_runner_fraction=float(cfg.env.get("ema_runner_fraction", 0.0)),
             allow_simplex=bool(cfg.env.get("allow_simplex", True)),
             tp_breakeven_alpha=float(cfg.env.get("tp_breakeven_alpha", 0.5)),
             tickbook=ticks_covering(primary_ticks, fold_test_bars),

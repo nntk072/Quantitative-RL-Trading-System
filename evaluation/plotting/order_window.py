@@ -240,6 +240,11 @@ def prepare_order_chart(
     show_mae_mfe: bool = True,
     show_sl_tp: bool = True,
     features: pd.DataFrame | None = None,
+    order_block_timeframes: tuple[str, ...] = (),
+    fvg_timeframes: tuple[str, ...] = (),
+    ifvg_timeframes: tuple[str, ...] = (),
+    swing_timeframes: tuple[str, ...] = ("M1",),
+    entry_idea_plot_config: dict[str, Any] | None = None,
     confirmed_events: OverlayEvents | None = None,
     session_end_positions: np.ndarray[Any, Any] | None = None,
 ) -> PreparedOrderChart | None:
@@ -252,7 +257,10 @@ def prepare_order_chart(
 
     Returns ``None`` when fewer than three bars remain. Does not draw.
     """
-    t_open = pd.Timestamp(open_row["time"])
+    entry_time = open_row.get("actual_tick_time")
+    if pd.isna(entry_time) or not str(entry_time).strip():
+        entry_time = open_row["time"]
+    t_open = pd.Timestamp(entry_time)
     t_close = pd.Timestamp(close_row["time"])
     window = _extract_window(
         bars,
@@ -286,6 +294,11 @@ def prepare_order_chart(
         show_mae_mfe=show_mae_mfe,
         show_sl_tp=show_sl_tp,
         features=features,
+        order_block_timeframes=order_block_timeframes,
+        fvg_timeframes=fvg_timeframes,
+        ifvg_timeframes=ifvg_timeframes,
+        swing_timeframes=swing_timeframes,
+        entry_idea_plot_config=entry_idea_plot_config,
     )
     events = marked.clip(pd.Timestamp(window.index[0]), pd.Timestamp(window.index[-1]))
     return PreparedOrderChart(

@@ -179,6 +179,7 @@ def normalize_campaign_config_overrides(value: Any) -> dict[str, bool | int | fl
             "data.cache_dir",
             "data.datasets.training.raw_dir",
             "data.datasets.testing.raw_dir",
+            "data.prebuilt_feature_cache",
             "data.price_discretization.rounding",
         }:
             relative_path = pathlib.PurePosixPath(raw_value)

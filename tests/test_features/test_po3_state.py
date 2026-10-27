@@ -289,6 +289,9 @@ class TestIFVGZones:
     def test_fill_ends_the_zone(self) -> None:
         bars = self.build_frame()
         bars.loc[bars.index[6], "low"] = 100.4
+        # A wick through is not invalidation; the next completed body close is.
+        bars.loc[bars.index[7], "low"] = 99.8
+        bars.loc[bars.index[7], "close"] = 100.0
         zones = build_ifvg_zone_features(bars, max_age_bars=50)
         assert zones["ifvg_bull_active"].iloc[6] == 1
         assert zones["ifvg_bull_active"].iloc[7] == 0
@@ -305,9 +308,13 @@ class TestIFVGZones:
         bars.loc[bars.index[8], "low"] = 100.7
         bars.loc[bars.index[8], "high"] = 102.0
         bars.loc[bars.index[8], "close"] = 101.1
+        bars.loc[bars.index[9], "low"] = 100.8
+        bars.loc[bars.index[9], "high"] = 102.5
+        bars.loc[bars.index[9], "close"] = 102.1
         zones = build_ifvg_zone_features(bars, max_age_bars=50)
         assert zones["price_in_ifvg_bull"].iloc[8] == 0
-        assert zones["ifvg_retest_bull"].iloc[8] == 1
+        assert zones["ifvg_retest_bull"].iloc[8] == 0
+        assert zones["ifvg_retest_bull"].iloc[9] == 1
         assert zones["ifvg_bull_origin"].iloc[8] == pytest.approx(99.5)
 
     def test_retest_accepts_a_touch_deep_inside_the_zone(self) -> None:
@@ -318,10 +325,14 @@ class TestIFVGZones:
         bars.loc[bars.index[8], "low"] = 100.6
         bars.loc[bars.index[8], "high"] = 102.0
         bars.loc[bars.index[8], "close"] = 100.7
+        bars.loc[bars.index[9], "low"] = 100.8
+        bars.loc[bars.index[9], "high"] = 102.1
+        bars.loc[bars.index[9], "close"] = 102.05
 
         zones = build_ifvg_zone_features(bars, max_age_bars=50)
 
-        assert zones["ifvg_retest_bull"].iloc[8] == 1
+        assert zones["ifvg_retest_bull"].iloc[8] == 0
+        assert zones["ifvg_retest_bull"].iloc[9] == 1
 
     def test_causality(self) -> None:
         bars = self.build_frame()

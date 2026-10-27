@@ -227,6 +227,8 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         risk_band_max_usd=float(env.get("risk_band_max_usd", 0.0)),
         risk_band_hold_below_usd=float(env.get("risk_band_hold_below_usd", 0.0)),
         risk_mode=str(env.get("risk_mode", "dynamic")),
+        allow_ema_exit=bool(env.get("allow_ema_exit", True)),
+        ema_runner_fraction=float(env.get("ema_runner_fraction", 0.0)),
         entry_intensity_threshold=float(env.get("entry_intensity_threshold", 0.0)),
         peak_trailing_dd_limit=float(env.get("peak_trailing_dd_limit", 0.0)),
         agent_direction_control=bool(env.get("agent_direction_control", False)),
