@@ -525,12 +525,11 @@ if _SB3_AVAILABLE:
             orig = getattr(self.model, "train")
             callback = self
 
-            def _train_and_report() -> None:
+            def _train_and_report(*args: Any, **kwargs: Any) -> Any:
                 callback._apply_prior_interval()
                 callback._maybe_eval()
                 if not callback._should_log():
-                    orig()
-                    return
+                    return orig(*args, **kwargs)
                 snapshot = callback._snapshot()
                 norms: list[float] = []
                 real_clip = torch.nn.utils.clip_grad_norm_
@@ -545,7 +544,7 @@ if _SB3_AVAILABLE:
 
                 torch.nn.utils.clip_grad_norm_ = _cap
                 try:
-                    orig()
+                    result = orig(*args, **kwargs)
                 finally:
                     torch.nn.utils.clip_grad_norm_ = real_clip
                 if norms:
@@ -575,6 +574,7 @@ if _SB3_AVAILABLE:
                         snapshot_row(snapshot, record_eval=callback._eval_just_ran),
                     )
                 callback._advance_log()
+                return result
 
             setattr(self.model, "train", _train_and_report)
 

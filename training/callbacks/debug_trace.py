@@ -338,10 +338,10 @@ def install_flight_recorder(
 
     train = model.train
 
-    def _train() -> None:
+    def _train(*args: Any, **kwargs: Any) -> Any:
         rollout = collect_rollout(model)
         try:
-            train()
+            result = train(*args, **kwargs)
         except DebugStepError as exc:
             recorder.capture(exc.reason, exc.snapshot)
             if exc.original is not None:
@@ -357,6 +357,7 @@ def install_flight_recorder(
         for collector in collectors:
             snapshot.update(dict(collector(model, snapshot)))
         recorder.record(snapshot)
+        return result
 
     model.train = _train
     learn = model.learn
