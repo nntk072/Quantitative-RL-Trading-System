@@ -34,8 +34,47 @@ STRAT_YAML = {
     "po3_ifvg": "config/2_po3_ifvg.yaml",
     "distribution": "config/3_distribution.yaml",
 }
-# Active variants use fresh content-hashed caches built from the selected split.
-EXPECTED_DIFF_KEYS: set[str] = set()
+# Deliberate changes from the former YAML merge path. Keep these explicit so
+# every other effective-config difference remains a test failure.
+RISK_BAND_DIFFS = {
+    "env.risk_band_hold_below_usd",
+    "env.risk_band_max_usd",
+    "env.risk_floor",
+    "env.risk_mode",
+}
+LOGGING_DIFFS = {"training.progress_log_every"}
+GROWTH_DIFFS = {"env.reward_mode"}
+CONSTRAINT_DIFFS = {
+    "constrained_rl.enabled",
+    "constrained_rl.episode_cost_budget",
+}
+EXPECTED_DIFFS_BY_VARIANT = {
+    "ladder_a4a_dollar_band_q5_off": RISK_BAND_DIFFS
+    | {"data.cache_dir", "data.price_discretization.enabled"},
+    "ladder_a4a_dollar_band_q5_on": RISK_BAND_DIFFS
+    | CONSTRAINT_DIFFS
+    | {"data.cache_dir", "data.price_discretization.enabled"},
+    "rq_mtf_control_tcn": RISK_BAND_DIFFS,
+    "rq_mtf_treatment_mtf": RISK_BAND_DIFFS,
+    "sustainable_growth_ppo_dsr": RISK_BAND_DIFFS | LOGGING_DIFFS,
+    "regime_d1_norm_tcn_control": RISK_BAND_DIFFS
+    | LOGGING_DIFFS
+    | {"features.normalize_d1_technical_on_source"},
+    "regime_d1_norm_tcn_regime": RISK_BAND_DIFFS
+    | LOGGING_DIFFS
+    | {"features.normalize_d1_technical_on_source", "env.regime_observation"},
+    "sustainable_growth_ppo_log": RISK_BAND_DIFFS | LOGGING_DIFFS | GROWTH_DIFFS,
+    "sustainable_growth_ppo_log_eod_dd10k": RISK_BAND_DIFFS
+    | LOGGING_DIFFS
+    | GROWTH_DIFFS
+    | {"env.eod_risk.peak_trailing_dd_limit_usd"},
+    "sustainable_growth_ppo_log_q5": RISK_BAND_DIFFS
+    | LOGGING_DIFFS
+    | GROWTH_DIFFS
+    | CONSTRAINT_DIFFS
+    | {"constrained_rl.cost_discount_gamma"},
+    "sustainable_growth_sac_log": RISK_BAND_DIFFS | LOGGING_DIFFS | GROWTH_DIFFS,
+}
 
 
 def _flatten(cfg) -> dict[str, object]:
@@ -84,9 +123,9 @@ def test_resolver_matches_legacy_config(name: str) -> None:
     legacy = _flatten(_legacy(name))
     new = _flatten(_new(name))
     diff = {k for k in set(legacy) | set(new) if legacy.get(k) != new.get(k)}
-    expected_diff = set(EXPECTED_DIFF_KEYS)
+    expected_diff = set(EXPECTED_DIFFS_BY_VARIANT.get(name, set()))
     resolved = resolve_variant(name, vae_path="placeholder.pth")
-    if name.endswith("_qgrid025"):
+    if "data.price_discretization.enabled=true" in resolved["overrides"]:
         expected_diff.update({"data.cache_dir", "data.price_discretization.enabled"})
         assert str(new["data.cache_dir"]).endswith("train_test_2025_2026_qgrid025_v1")
         assert new["data.price_discretization.enabled"] is True

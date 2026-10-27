@@ -1,4 +1,4 @@
-"""Overlay direction follows distribution, context, then higher-timeframe bias."""
+"""A side is offered only when an independent entry idea is present."""
 
 from __future__ import annotations
 
@@ -9,22 +9,22 @@ from simulation.environment.po3_reward import PO3Reward
 from trading.strategies.po3_ifvg import PO3IFVGStrategy
 
 
-def test_sell_side_sweep_sets_the_long() -> None:
+def test_sell_side_sweep_alone_does_not_set_the_long() -> None:
     strategy = PO3IFVGStrategy(enforce_gate=False)
     row = pd.Series({"sweep_low": 1.0, "htf_day_bias": -1.0})
-    assert strategy.context_direction(row) == 1
+    assert strategy.context_direction(row) == 0
 
 
 def test_buy_side_sweep_on_a_higher_timeframe_sets_the_short() -> None:
     strategy = PO3IFVGStrategy(enforce_gate=False)
-    row = pd.Series({"H1_sweep_high": 1.0, "ifvg_retest_bull": 1.0})
+    row = pd.Series({"H1_sweep_high": 1.0, "ifvg_retest_bear": 1.0})
     assert strategy.context_direction(row) == -1
 
 
-def test_protected_swing_sets_the_side_when_there_is_no_sweep() -> None:
+def test_protected_swing_alone_does_not_set_a_side() -> None:
     strategy = PO3IFVGStrategy(enforce_gate=False)
     row = pd.Series({"M15_swing_low_event": 1.0, "ny_manip_confirmed": 0.0})
-    assert strategy.context_direction(row) == 1
+    assert strategy.context_direction(row) == 0
 
 
 def test_gap_retest_alone_does_not_set_the_side() -> None:

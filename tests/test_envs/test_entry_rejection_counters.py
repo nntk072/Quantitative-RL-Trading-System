@@ -243,6 +243,7 @@ def test_sl_already_hit_counts_and_names_the_reason() -> None:
     closes = np.asarray(bars["close"])
     closes[1:] = 97.0
     bars["close"] = closes
+    bars["open"] = closes
     bars["high"] = closes + 0.05
     bars["low"] = closes - 0.05
     feats = _features(bars)
@@ -276,7 +277,7 @@ def test_config_slippage_reaches_sl_tp_fills() -> None:
 
     Pins the wiring ``default.yaml -> cost_model -> TradingEnv.cost_model ->
     _sl_tp_fill_quote``: a 5-point slippage must worsen both sides by exactly
-    5 points, and ``min_sl_points=10`` keeps its 2x sizing margin over it.
+    5 points. Stops use the configured ATR floor rather than a fixed point floor.
     """
     from omegaconf import OmegaConf
 
@@ -286,8 +287,8 @@ def test_config_slippage_reaches_sl_tp_fills() -> None:
 
     cfg = load_config([])
     assert float(cfg.costs.slippage_points) == 5.0
-    assert float(cfg.risk.min_sl_points) == 10.0
-    assert float(cfg.risk.min_sl_points) >= 2 * float(cfg.costs.slippage_points)
+    assert float(cfg.risk.min_sl_points) == 0.0
+    assert float(cfg.risk.min_sl_atr_mult) > 0.0
 
     model = cost_model(cfg)
     assert isinstance(model, CostModel)

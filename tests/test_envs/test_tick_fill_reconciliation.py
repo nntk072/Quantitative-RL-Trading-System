@@ -132,6 +132,7 @@ def test_tick_tp_partial_then_stop_reconciles_commissions_and_reward(direction: 
     )
     env._stamp_exit = MethodType(TradingEnv._stamp_exit, env)
     env._note_close = MethodType(TradingEnv._note_close, env)
+    env._target_close_size = TradingEnv._target_close_size
     env._adverse_tick_fill_quote = MethodType(TradingEnv._adverse_tick_fill_quote, env)
     env._close_at_quote = MethodType(TradingEnv._close_at_quote, env)
 
@@ -182,6 +183,7 @@ def test_tick_crosses_three_tp_slots_once_with_exact_remaining_quantity() -> Non
     )
     env._stamp_exit = MethodType(TradingEnv._stamp_exit, env)
     env._note_close = MethodType(TradingEnv._note_close, env)
+    env._target_close_size = TradingEnv._target_close_size
     env._adverse_tick_fill_quote = MethodType(TradingEnv._adverse_tick_fill_quote, env)
     env._close_at_quote = MethodType(TradingEnv._close_at_quote, env)
 
@@ -246,6 +248,7 @@ def test_tick_and_bar_match_for_identical_unambiguous_target_crossings() -> None
             "_close_at_quote",
         ):
             setattr(env, method, MethodType(getattr(TradingEnv, method), env))
+        env._target_close_size = TradingEnv._target_close_size
         return env
 
     tick_env = make_env(True)

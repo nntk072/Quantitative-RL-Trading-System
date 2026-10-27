@@ -579,18 +579,18 @@ class TestBuildFVGZones:
         assert len(starts) <= 3
 
     def test_zone_invalidation_on_fill(self) -> None:
-        """A zone is marked invalidated when price trades back through the gap."""
+        """A zone is invalidated only after its candle body closes through it."""
         idx = pd.date_range("2025-01-01", periods=10, freq="1min")
         bars = pd.DataFrame(
             {
                 "open": [9, 10, 11, 12, 12, 11, 10, 10, 11, 11],
                 "high": [10, 11, 13, 13, 13, 12, 11, 11, 12, 12],
                 "low": [9, 10, 12, 12, 12, 11, 10, 10, 11, 11],
-                "close": [9, 10, 13, 12, 12, 11, 10, 10, 11, 11],
+                "close": [9, 10, 13, 12, 12, 11, 9.5, 10, 11, 11],
             },
             index=idx,
         )
-        # Hand-build an HTF FVG signal run that is later filled (low <= 10).
+        # Hand-build an HTF FVG signal run that later closes below its lower edge.
         signals = pd.DataFrame(
             {
                 "htf_fvg_bullish": [0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -865,10 +865,10 @@ class TestBuildFVGZonesForPlot:
         low[30:45] = 110.0
         close[30:45] = 112.0
         open_[30:45] = 111.0
-        # later fill: dip through zone_low=100 on M15 starting 17:00
+        # Later M15 candle closes below zone_low=100, invalidating the zone.
         high[60:75] = 105.0
         low[60:75] = 99.0
-        close[60:75] = 100.0
+        close[60:75] = 99.5
         open_[60:75] = 104.0
         return pd.DataFrame(
             {"open": open_, "high": high, "low": low, "close": close},

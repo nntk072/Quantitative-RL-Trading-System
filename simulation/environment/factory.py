@@ -352,9 +352,9 @@ def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
 
 def scheduled_session_closes(cfg: Any) -> dict[str, str]:
     """Read session close dates with the feature builder's shared loader."""
-    from features.pipeline.builder import _scheduled_close_map
+    from features.pipeline.builder import scheduled_close_map
 
-    return _scheduled_close_map(cfg)
+    return scheduled_close_map(cfg)
 
 
 def cost_model(cfg: Any) -> CostModel:

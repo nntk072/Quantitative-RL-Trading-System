@@ -83,8 +83,9 @@ def test_latency_env_constructs_and_steps(trending_bars, latency):
     """Env accepts fill_latency_bars and steps without error."""
     env = _make_env(trending_bars, latency)
     obs, _ = env.reset(seed=42)
-    # f0, the two swings, and the derived reachable_r column.
-    assert obs["seq"].shape == (10, 4)
+    # Raw absolute swing prices stay in execution context, not the model tensor.
+    # The sequence contains f0 and the derived reachable_r column.
+    assert obs["seq"].shape == (10, 2)
     for _ in range(20):
         obs, *_ = env.step(0)  # hold
     assert env.fill_latency_bars == latency

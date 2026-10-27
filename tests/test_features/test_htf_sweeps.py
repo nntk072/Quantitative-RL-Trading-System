@@ -159,8 +159,10 @@ def test_real_m1_sweep_waits_until_resampled_m5_pivot_is_confirmed() -> None:
     group_closes = [110.0, 109.0, 108.0, 100.0, 108.0, 109.0, 110.0, 111.0]
     close = [group_closes[i // 5] for i in range(len(idx))]
     low = [value - 0.2 for value in close]
-    low[25] = 99.0  # Crosses the eventual reference while its M5 confirmation is pending.
-    low[35] = 99.0  # Crosses again after the confirming M5 candle has closed.
+    # Do not cross the candidate inside its right-hand confirmation bars:
+    # that M5 candle would make it cease to be a pivot. The later M1 bar
+    # crosses the still-unswept reference after the confirming M5 close.
+    low[35] = 99.0
     bars = pd.DataFrame(
         {
             "open": close,

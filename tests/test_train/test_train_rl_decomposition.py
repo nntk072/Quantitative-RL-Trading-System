@@ -524,4 +524,5 @@ class TestCostModel:
         model = cost_model(cfg)
         assert model.slippage_points == float(cfg.costs.slippage_points) == 5.0
         assert model.spread_points == float(cfg.costs.spread_us100)
-        assert float(cfg.risk.min_sl_points) >= 2 * model.slippage_points
+        assert float(cfg.risk.min_sl_points) == 0.0
+        assert float(cfg.risk.min_sl_atr_mult) > 0.0

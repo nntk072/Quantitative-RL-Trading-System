@@ -6,14 +6,11 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from configuration import load_config
-from experiments.campaigns.execution import (
-    load_campaign_data_profile,
-    normalize_campaign_config_overrides,
-)
 from market_data.loading.pipeline import BAR_CACHE_VERSION, build_tick_books, run_pipeline
 from market_data.loading.ticks import TICK_CACHE_VERSION
 from market_data.transforms.price_grid import (
@@ -21,7 +18,80 @@ from market_data.transforms.price_grid import (
     configured_price_grid_increment,
     tick_cache_filename,
 )
-from training.configuration.variant_resolution import resolve_variant
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def _flatten_data(value: Any, prefix: str = "data") -> dict[str, bool | int | float | str]:
+    """Flatten only scalar data settings from a campaign profile."""
+    if not isinstance(value, dict):
+        raise ValueError("campaign data settings must be mappings")
+    result: dict[str, bool | int | float | str] = {}
+    for key, item in value.items():
+        path = f"{prefix}.{key}"
+        if isinstance(item, dict):
+            result.update(_flatten_data(item, path))
+        elif isinstance(item, (bool, int, float, str)):
+            result[path] = item
+        else:
+            raise ValueError(f"unsupported campaign data setting {path}: {item!r}")
+    return result
+
+
+def _campaign_profile_overrides(profile: Any) -> dict[str, bool | int | float | str]:
+    if profile is None:
+        return {}
+    if not isinstance(profile, str) or not profile.strip():
+        raise ValueError("campaign data_profile must be a relative YAML path")
+    path = (ROOT / profile).resolve()
+    try:
+        relative = path.relative_to(ROOT)
+    except ValueError:
+        raise ValueError("campaign data_profile must stay inside this repository") from None
+    if relative.parts[:2] != ("config", "data_modes") or path.suffix not in {".yaml", ".yml"}:
+        raise ValueError("campaign data_profile must be a YAML file under config/data_modes")
+    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("campaign data_profile must contain a mapping")
+    return _flatten_data(payload.get("data", {}))
+
+
+def _variant_data_overrides(name: str, experiments: dict[str, Any]) -> dict[str, str]:
+    defaults = experiments.get("defaults") or {}
+    matches = [item for item in experiments.get("variants", []) if item.get("name") == name]
+    if len(matches) != 1:
+        raise ValueError(f"variant {name!r} must be declared once in config/experiments.yaml")
+    variant = {**defaults, **matches[0]}
+    overrides: dict[str, str] = {}
+    if "price_grid_increment" in variant:
+        increment = float(variant["price_grid_increment"])
+        cache_dir = str(variant.get("price_grid_cache_dir", "")).strip()
+        relative_cache = Path(cache_dir)
+        if (
+            increment <= 0
+            or not relative_cache.parts
+            or relative_cache.is_absolute()
+            or ".." in relative_cache.parts
+        ):
+            raise ValueError("price-grid variant needs a positive increment and relative cache dir")
+        overrides.update(
+            {
+                "data.price_discretization.enabled": "true",
+                "data.price_discretization.increment": f"{increment:.12g}",
+                "data.price_discretization.rounding": "nearest_half_away_from_zero",
+                "data.cache_dir": cache_dir,
+            }
+        )
+    variant_overrides = variant.get("config_overrides", [])
+    if not isinstance(variant_overrides, list):
+        raise ValueError(f"variant {name!r} config_overrides must be a list")
+    for entry in variant_overrides:
+        if isinstance(entry, str) and entry.startswith("data."):
+            key, separator, value = entry.partition("=")
+            if not separator or not value.strip():
+                raise ValueError(f"invalid data override in variant {name!r}: {entry!r}")
+            overrides[key] = value.strip()
+    return overrides
 
 
 def _campaign_data_overrides() -> list[str]:
@@ -41,29 +111,31 @@ def _campaign_data_overrides() -> list[str]:
         "data.datasets.testing.raw_dir=",
         "data.price_discretization.",
     )
-    profile = load_campaign_data_profile(spec.get("data_profile"))
-    explicit = normalize_campaign_config_overrides(spec.get("config_overrides", {}))
-    profile_and_campaign = {**profile, **explicit}
-    config_overrides = [
-        f"{key}={str(value).lower() if isinstance(value, bool) else value}"
-        for key, value in sorted(profile_and_campaign.items())
+    profile = _campaign_profile_overrides(spec.get("data_profile"))
+    raw_explicit = spec.get("config_overrides", {})
+    if not isinstance(raw_explicit, dict):
+        raise ValueError("campaign config_overrides must be a mapping")
+    explicit = {
+        str(key): str(value).lower() if isinstance(value, bool) else str(value)
+        for key, value in raw_explicit.items()
+        if str(key).startswith(data_prefixes)
+    }
+    experiments = yaml.safe_load((ROOT / "config" / "experiments.yaml").read_text(encoding="utf-8"))
+    policies = [
+        tuple(
+            f"{key}={value}"
+            for key, value in sorted(_variant_data_overrides(str(name), experiments).items())
+        )
+        for name in spec["variants"]
     ]
-    policies: list[tuple[str, ...]] = []
-    for name in spec["variants"]:
-        resolved = resolve_variant(
-            str(name),
-            steps=int(spec.get("timesteps", 100_000)),
-            seeds=[int(seed) for seed in spec.get("seeds", [42])],
-            config_overrides=config_overrides,
-        )
-        policies.append(
-            tuple(
-                override for override in resolved["overrides"] if override.startswith(data_prefixes)
-            )
-        )
     if policies and any(policy != policies[0] for policy in policies[1:]):
         raise ValueError("campaign variants must share one data transform and cache policy")
-    return list(policies[0]) if policies else []
+    variant = dict(item.partition("=")[::2] for item in policies[0]) if policies else {}
+    values = {**profile, **variant, **explicit}
+    return [
+        f"{key}={str(value).lower() if isinstance(value, bool) else value}"
+        for key, value in sorted(values.items())
+    ]
 
 
 def main() -> None:

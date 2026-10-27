@@ -307,7 +307,7 @@ def _expanded_stop_schema_config():
                 "include_pd_context": True,
                 "structure": {
                     "enabled": True,
-                    "timeframes": ["M5", "M15", "H1"],
+                    "timeframes": ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"],
                     "swing_candidate_count": 3,
                     "candidate_price_increment": None,
                 },
@@ -326,8 +326,8 @@ def test_stop_candidate_schema_records_expanded_multitimeframe_contract() -> Non
     schema = build_stop_candidate_schema(cfg)
     assert schema["menu"] == "recent_confirmed_unswept_mtf_swings_v1"
     assert schema["candidate_count_per_side_per_timeframe"] == 3
-    assert schema["timeframes"] == ["M5", "M15", "H1"]
-    assert schema["stop_menu_timeframes"] == ["M5", "M15", "H1", "M30"]
+    assert schema["timeframes"] == ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+    assert schema["stop_menu_timeframes"] == ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
     assert schema["deduplication"]["price_increment"] == 0.1
     assert schema["feature_stop_sources"]["structure"]["swing_candidate_count"] == 3
     assert schema["strategy_config"]["manipulation_filter"] == "against"

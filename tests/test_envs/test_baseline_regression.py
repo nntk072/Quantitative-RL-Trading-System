@@ -175,9 +175,13 @@ class TestBaselineObservation:
         env = TradingEnv(bars, features, obs_window=20)
         env.reset()
         seq_cols = set(env._obs_features.columns)
-        expected_cols = set(features.columns)
+        from features.pipeline.schema import OBS_RAW_PRICE_COLUMNS
+
+        raw_price_columns = set(features.columns) & set(OBS_RAW_PRICE_COLUMNS)
+        expected_cols = set(features.columns) - raw_price_columns
         assert expected_cols <= seq_cols
         assert seq_cols - expected_cols == {"reachable_r"}
+        assert not (seq_cols & raw_price_columns)
 
     def test_extra_col_in_obs(self, bars: pd.DataFrame, features: pd.DataFrame) -> None:
         env = TradingEnv(bars, features, obs_window=20)

@@ -35,7 +35,7 @@ def _request() -> FitRequest:
 def _learner(checkpoint: Path) -> ReferenceTorchLearner:
     rng = np.random.default_rng(13)
     observations = {
-        "seq": rng.normal(size=(16, 10, 4)).astype(np.float32),
+        "seq": rng.normal(size=(16, 10, 2)).astype(np.float32),
         "account": np.zeros((16, 6), dtype=np.float32),
     }
     labels = np.zeros(16, dtype=np.int64)
@@ -66,7 +66,7 @@ def test_supervised_learner_fits_self_describing_artifact_and_provider(tmp_path:
     decision = provider.predict(
         DecisionInput(
             observation={
-                "seq": np.zeros((10, 4), dtype=np.float32),
+                "seq": np.zeros((10, 2), dtype=np.float32),
                 "account": np.zeros(6, dtype=np.float32),
             },
             schema_version="account-state-v1",

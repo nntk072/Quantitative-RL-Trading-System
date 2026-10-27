@@ -376,6 +376,21 @@ class TestSessionCaps:
         feats["po3_distribution_direction"] = 1.0
         feats["sweep_low"] = 0.0
         feats["sweep_high"] = 0.0
+        for column in (
+            "ifvg_bull_active",
+            "ifvg_bear_active",
+            "ifvg_retest_bull",
+            "ifvg_retest_bear",
+            "fvg_bull_active",
+            "fvg_bear_active",
+            "fvg_retest_bull",
+            "fvg_retest_bear",
+            "ob_bull_retest",
+            "ob_bear_retest",
+            "standard_deviation_entry_long",
+            "standard_deviation_entry_short",
+        ):
+            feats[column] = 0.0
         env = TradingEnv(
             bars,
             feats,
@@ -642,6 +657,21 @@ def test_unconfirmed_leg_does_not_invent_a_side() -> None:
     feats["po3_manipulation_end"] = 0.0
     feats["sweep_low"] = 0.0
     feats["sweep_high"] = 0.0
+    for column in (
+        "ifvg_bull_active",
+        "ifvg_bear_active",
+        "ifvg_retest_bull",
+        "ifvg_retest_bear",
+        "fvg_bull_active",
+        "fvg_bear_active",
+        "fvg_retest_bull",
+        "fvg_retest_bear",
+        "ob_bull_retest",
+        "ob_bear_retest",
+        "standard_deviation_entry_long",
+        "standard_deviation_entry_short",
+    ):
+        feats[column] = 0.0
     env = _policy_env(feats, bars, direction_control=True)
     env.reset()
     _obs, _reward, _done, _trunc, info = env.step(
@@ -660,14 +690,36 @@ def test_manipulation_end_alone_does_not_open_idea1() -> None:
     feats["po3_distribution_direction"] = 1.0
     feats["sweep_low"] = 0.0
     feats["sweep_high"] = 0.0
-    env = _policy_env(feats, bars, direction_control=True)
+    for column in (
+        "ifvg_bull_active",
+        "ifvg_bear_active",
+        "ifvg_retest_bull",
+        "ifvg_retest_bear",
+        "fvg_bull_active",
+        "fvg_bear_active",
+        "fvg_retest_bull",
+        "fvg_retest_bear",
+        "ob_bull_retest",
+        "ob_bear_retest",
+        "standard_deviation_entry_long",
+        "standard_deviation_entry_short",
+    ):
+        feats[column] = 0.0
+    env = _policy_env(
+        feats,
+        bars,
+        direction_control=True,
+        strategy=PO3IFVGStrategy(enforce_gate=True),
+    )
     env.reset()
     _obs, _reward, _done, _trunc, info = env.step(
         np.array([-1.0, 0.9, 0.0, 0.5, 0.0, -1.0], dtype=np.float32)
     )
-    assert env.position is not None
-    assert info["entry_rejection_reason"] == ""
-    plain = _policy_env(feats, bars)
+    assert env.position is None
+    # Exercise the gated strategy contract: a manipulation-end marker by
+    # itself is not one of the four qualified entry ideas. The ungated PPO
+    # control may still propose arbitrary actions from its action space.
+    plain = _policy_env(feats, bars, strategy=PO3IFVGStrategy(enforce_gate=True))
     plain.reset()
     plain.step(np.array([0.9, 0.0, 0.5, 0.0, -1.0], dtype=np.float32))
     assert plain.position is None

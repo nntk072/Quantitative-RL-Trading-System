@@ -176,7 +176,7 @@ def _resample_pair(
     return pri_tf, sec_tf
 
 
-def _scheduled_close_map(cfg: DictConfig | None) -> dict[str, str]:
+def scheduled_close_map(cfg: DictConfig | None) -> dict[str, str]:
     if cfg is None:
         return {}
     schedule_value = OmegaConf.select(cfg, "data.session_schedule_file")
@@ -303,7 +303,7 @@ def build_features(
     }
     if secondary is not None:
         secondary_timeframe_frames["M1"] = secondary
-    scheduled_closes = _scheduled_close_map(cfg)
+    scheduled_closes = scheduled_close_map(cfg)
     session_start = str(OmegaConf.select(cfg, "session.start") or "16:30") if cfg else "16:30"
 
     def primary_tf_bars(tf: str) -> pd.DataFrame:

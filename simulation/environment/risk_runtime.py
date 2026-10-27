@@ -276,6 +276,23 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             self._last_approved_risk_usd = requested
             self._last_execution_reserve_usd = 0.0
             return requested
+        if bool(getattr(self, "repeated_payout_policy", False)):
+            decision = approve_dynamic_risk(
+                equity=self.account.equity,
+                risk_frac=risk_frac,
+                max_agent_risk_frac=self.trading_policy.max_agent_risk_frac,
+                daily_capacity=self.account.remaining_daily_capacity(
+                    self.guardrails.daily_loss_limit
+                ),
+                account_capacity=self.account.remaining_account_capacity(
+                    self.trading_policy.account_floor
+                ),
+                execution_reserve_usd=self.trading_policy.execution_reserve_usd,
+            )
+            self._last_requested_risk_usd = decision.requested_usd
+            self._last_approved_risk_usd = decision.approved_usd
+            self._last_execution_reserve_usd = decision.execution_reserve_usd
+            return decision.approved_usd
         requested = max(0.0, float(self.account.equity) * float(risk_frac))
         self._last_requested_risk_usd = requested
         if not bool(getattr(self, "repeated_payout_policy", False)):
@@ -289,20 +306,6 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         if high <= low:
             raise ValueError("dollar-band risk action requires a nonempty risk_frac_range")
         return float(np.clip((float(risk_frac) - low) / (high - low), 0.0, 1.0))
-        decision = approve_dynamic_risk(
-            equity=self.account.equity,
-            risk_frac=risk_frac,
-            max_agent_risk_frac=self.trading_policy.max_agent_risk_frac,
-            daily_capacity=self.account.remaining_daily_capacity(self.guardrails.daily_loss_limit),
-            account_capacity=self.account.remaining_account_capacity(
-                self.trading_policy.account_floor
-            ),
-            execution_reserve_usd=self.trading_policy.execution_reserve_usd,
-        )
-        self._last_requested_risk_usd = decision.requested_usd
-        self._last_approved_risk_usd = decision.approved_usd
-        self._last_execution_reserve_usd = decision.execution_reserve_usd
-        return decision.approved_usd
 
     def _modeled_execution_reserve_usd(self, lots: float) -> float:
         """Variable execution loss allowance implied by the active cost model.

@@ -65,9 +65,21 @@ def test_negative_pnl_eventually_negative():
 
 def test_soft_penalty_near_daily_limit():
     r = DSRReward(eta=0.01)
-    val_safe = r(0.0, daily_loss=100.0, daily_loss_limit=5000.0, initial_balance=100_000.0)
+    val_safe = r(
+        0.0,
+        daily_loss=100.0,
+        daily_loss_limit=5000.0,
+        soft_daily_loss_limit=2000.0,
+        initial_balance=100_000.0,
+    )
     r.reset()
-    val_near = r(0.0, daily_loss=4999.0, daily_loss_limit=5000.0, initial_balance=100_000.0)
+    val_near = r(
+        0.0,
+        daily_loss=4999.0,
+        daily_loss_limit=5000.0,
+        soft_daily_loss_limit=2000.0,
+        initial_balance=100_000.0,
+    )
     assert val_near < val_safe
 
 
