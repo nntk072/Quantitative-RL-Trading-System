@@ -24,7 +24,7 @@ from omegaconf import DictConfig
 
 from compute.environment.precision import get_autocast_dtype
 from decisioning.actions import SCHEMA_VERSION, ActionSchema, DiscreteActionSchema
-from decisioning.thesis import ThesisActionSchema
+from decisioning.thesis import ThesisActionSchema, validate_thesis_observation_schema
 from models.runtime.precision import enable_extractor_autocast
 
 try:
@@ -272,10 +272,7 @@ def validate_model_thesis_observation_schema(
 ) -> None:
     """Fail closed when the optional candidate-mask observation meaning differs."""
     actual = getattr(model, "_thesis_observation_schema", None)
-    if actual != expected_schema:
-        raise ValueError(
-            "checkpoint thesis observation schema differs from the configured candidate mask"
-        )
+    validate_thesis_observation_schema(actual, expected_schema)
 
 
 def build_vector_env(

@@ -356,6 +356,11 @@ class TestParseTrainArgs:
             args = parse_train_args()
         assert args.algo == "sac"
 
+    def test_mtf_reasoning_architecture(self) -> None:
+        with patch("sys.argv", ["train_rl", "--arch", "mtf_reasoning"]):
+            args = parse_train_args()
+        assert args.arch == "mtf_reasoning"
+
     def test_sweep_reward(self) -> None:
         with patch("sys.argv", ["train_rl", "--reward", "sweep"]):
             args = parse_train_args()

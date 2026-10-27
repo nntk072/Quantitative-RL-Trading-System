@@ -118,6 +118,29 @@ def test_controls_run_declared_algo_and_arch() -> None:
     assert args[args.index("--arch") + 1] == "gru"
 
 
+def test_mtf_reasoning_arch_resolves_for_a_campaign_variant() -> None:
+    experiments = _write_experiments(
+        {
+            "defaults": {"steps": 8, "seeds": [41]},
+            "variants": [
+                {
+                    "name": "mtf_reasoning_probe",
+                    "reward_mode": "dsr",
+                    "strategy": "baseline",
+                    "strategy_actions": True,
+                    "arch": "mtf_reasoning",
+                }
+            ],
+        }
+    )
+
+    resolved = resolve_variant("mtf_reasoning_probe", experiments_path=experiments)
+    args = train_args(resolved, 41)
+
+    assert resolved["arch"] == "mtf_reasoning"
+    assert args[args.index("--arch") + 1] == "mtf_reasoning"
+
+
 def test_vae_variant_requires_vae_path() -> None:
     try:
         resolve_variant("ablation_conditional_narrative")

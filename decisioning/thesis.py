@@ -175,6 +175,16 @@ def thesis_observation_schema() -> dict[str, object]:
     }
 
 
+def validate_thesis_observation_schema(
+    actual_schema: object, expected_schema: dict[str, object] | None
+) -> None:
+    """Reject checkpoints whose thesis-mask meaning differs from the config."""
+    if actual_schema != expected_schema:
+        raise ValueError(
+            "checkpoint thesis observation schema differs from the configured candidate mask"
+        )
+
+
 __all__ = [
     "NO_TRADE_ID",
     "THESIS_ACTION_VERSION",
@@ -193,4 +203,5 @@ __all__ = [
     "thesis_center",
     "thesis_id_from_box",
     "thesis_observation_schema",
+    "validate_thesis_observation_schema",
 ]

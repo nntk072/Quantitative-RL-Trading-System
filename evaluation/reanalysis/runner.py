@@ -265,11 +265,10 @@ def main() -> None:
         expected_observation_schema,
         allow_legacy_v1=bool(args.allow_legacy_observation_schema),
     )
-    from decisioning.thesis import thesis_observation_schema
-    from learning.rl.agent import validate_model_thesis_observation_schema
+    from decisioning.thesis import thesis_observation_schema, validate_thesis_observation_schema
 
-    validate_model_thesis_observation_schema(
-        model,
+    validate_thesis_observation_schema(
+        getattr(model, "_thesis_observation_schema", None),
         thesis_observation_schema() if bool(cfg.env.get("thesis_actions", False)) else None,
     )
     is_overlay = bool(cfg.env.get("strategy_actions", False))

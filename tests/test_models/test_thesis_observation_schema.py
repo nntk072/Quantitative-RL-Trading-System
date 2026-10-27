@@ -4,21 +4,20 @@ from types import SimpleNamespace
 
 import pytest
 
-from decisioning.thesis import thesis_observation_schema
-from learning.rl.agent import validate_model_thesis_observation_schema
+from decisioning.thesis import thesis_observation_schema, validate_thesis_observation_schema
 from training.artifacts.manifests import _observation_schema_manifest
 
 
 def test_thesis_observation_schema_is_checkpoint_checked() -> None:
     expected = thesis_observation_schema()
     model = SimpleNamespace(_thesis_observation_schema=expected)
-    validate_model_thesis_observation_schema(model, expected)
-    validate_model_thesis_observation_schema(SimpleNamespace(), None)
+    validate_thesis_observation_schema(model._thesis_observation_schema, expected)
+    validate_thesis_observation_schema(None, None)
 
     with pytest.raises(ValueError, match="thesis observation schema"):
-        validate_model_thesis_observation_schema(SimpleNamespace(), expected)
+        validate_thesis_observation_schema(None, expected)
     with pytest.raises(ValueError, match="thesis observation schema"):
-        validate_model_thesis_observation_schema(model, None)
+        validate_thesis_observation_schema(model._thesis_observation_schema, None)
 
 
 def test_training_observation_manifest_records_thesis_mask_schema() -> None:

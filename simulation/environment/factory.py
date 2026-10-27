@@ -335,7 +335,7 @@ def max_tick_quote_wait_ms(cfg: Any) -> int:
 
 
 def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
-    """``mtf`` is on only when the selected architecture is the multi-window encoder."""
+    """Enable multi-window observations for each architecture that consumes them."""
     from simulation.environment.observations import DEFAULT_HTF_WINDOWS
 
     chosen = arch
@@ -348,7 +348,7 @@ def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
     if raw:
         for key, value in dict(raw).items():
             windows[str(key)] = int(value)
-    return str(chosen) == "mtf", windows
+    return str(chosen) in {"mtf", "mtf_reasoning"}, windows
 
 
 def scheduled_session_closes(cfg: Any) -> dict[str, str]:

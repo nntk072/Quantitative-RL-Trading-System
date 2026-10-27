@@ -215,6 +215,82 @@ def test_worker_factory_matches_strategy_actions(tmp_path: Path) -> None:
     np.testing.assert_array_equal(frames._max_tp_dist, shared._max_tp_dist)
 
 
+def test_mtf_reasoning_worker_preserves_mtf_and_thesis_observations(tmp_path: Path) -> None:
+    import pandas as pd
+
+    from configuration import load_config
+    from features.context.thesis_candidates import thesis_candidate_feature_columns
+    from simulation.environment.bundles import build_env_bundle
+    from simulation.environment.spec import EnvSpec
+    from simulation.environment.worker import make_bundle_env
+    from trading.strategies import BaselineStrategy, PO3IFVGStrategy
+    from training.setup.environments import make_env
+
+    bars = _make_deterministic_bars(n=96)
+    features = _make_features(bars)
+    columns = [name for _, name in thesis_candidate_feature_columns()]
+    features = pd.concat(
+        [
+            features,
+            pd.DataFrame(
+                0.0,
+                index=features.index,
+                columns=list(PO3IFVGStrategy.required_features),
+            ),
+            pd.DataFrame(0.0, index=features.index, columns=columns),
+        ],
+        axis=1,
+    )
+    config = load_config(config_path="config/research/thesis_mtf_reasoning.yaml")
+    config.costs.use_tick_execution = False
+    config.execution.randomized_fill_latency_ms = 0.0
+    bundle_path = build_env_bundle(
+        tmp_path,
+        bars,
+        features,
+        config,
+        raw_columns=list(BaselineStrategy().raw_columns),
+        feature_config_hash="mtf-reasoning-thesis-worker-v1",
+        tickbook=None,
+        pre_ny_by_date=None,
+    )
+    spec = EnvSpec.from_cfg(
+        config,
+        algo="ppo",
+        reward="dsr",
+        arch="mtf_reasoning",
+        bundle_dir=str(bundle_path),
+    )
+
+    env = make_bundle_env(spec)
+    observation, _ = env.reset(seed=41)
+    shared = make_env(bars, features, config, algo="ppo", reward="dsr", arch="mtf_reasoning")
+    shared_observation, _ = shared.reset(seed=41)
+    assert set(observation) == set(shared_observation)
+    for key in observation:
+        np.testing.assert_array_equal(observation[key], shared_observation[key])
+
+    assert {
+        "seq_m3",
+        "seq_m5",
+        "seq_m10",
+        "seq_m15",
+        "seq_m30",
+        "seq_h1",
+        "seq_h4",
+        "seq_d1",
+        "mask_m3",
+        "mask_m5",
+        "mask_m10",
+        "mask_m15",
+        "mask_m30",
+        "mask_h1",
+        "mask_h4",
+        "mask_d1",
+        "thesis_mask",
+    } <= set(observation)
+
+
 @pytest.mark.parametrize("name", ["po3_ifvg", "distribution", "unrecognized"])
 def test_worker_recreates_named_strategy(name: str) -> None:
     """Each strategy name reconstructs its existing class and reward type."""
