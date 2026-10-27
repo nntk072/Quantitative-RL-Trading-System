@@ -142,6 +142,68 @@ def test_thesis_policy_report_flags_stop_floor_and_wrong_side_targets() -> None:
     assert violations["total"] == 1
 
 
+def test_session_composite_stops_and_lower_timeframe_targets_are_valid() -> None:
+    decisions = pd.DataFrame()
+    trades = pd.DataFrame(
+        [
+            {
+                "type": "open",
+                "primary_idea": "po3",
+                "primary_setup_timeframe": "M1",
+                "primary_direction": -1,
+                "thesis_candidate_id": thesis_candidate_id("po3", "M1", -1),
+                "thesis_schema_version": "thesis-overlay-action-v1",
+                "price": 100.0,
+                "sl_price": 101.0,
+                "tp_price": 99.0,
+                "sl_ref": "london_high|M5_last_swing_high|M10_last_swing_high",
+                "sl_timeframe": "",
+                "tp_ref": "M1_last_swing_low",
+                "tp_timeframe": "M1",
+            },
+            {
+                "type": "open",
+                "primary_idea": "ifvg_unretested",
+                "primary_setup_timeframe": "M1",
+                "primary_direction": -1,
+                "thesis_candidate_id": thesis_candidate_id("ifvg_unretested", "M1", -1),
+                "thesis_schema_version": "thesis-overlay-action-v1",
+                "price": 100.0,
+                "sl_price": 101.0,
+                "tp_price": 99.0,
+                "sl_ref": "asian_high",
+                "sl_timeframe": "",
+                "tp_ref": "M1_last_swing_low",
+                "tp_timeframe": "M1",
+            },
+            {
+                "type": "open",
+                "primary_idea": "fvg_retest",
+                "primary_setup_timeframe": "M5",
+                "primary_direction": 1,
+                "thesis_candidate_id": thesis_candidate_id("fvg_retest", "M5", 1),
+                "thesis_schema_version": "thesis-overlay-action-v1",
+                "price": 100.0,
+                "sl_price": 98.0,
+                "tp_price": 102.0,
+                "sl_ref": "M5_last_swing_low",
+                "sl_timeframe": "M5",
+                "tp_ref": "M1_last_swing_high",
+                "tp_timeframe": "M1",
+            },
+        ]
+    )
+
+    report = summarize_thesis_decisions(decisions, trades)
+
+    violations = report["structural_violations"]
+    assert violations["sl_below_primary_timeframe"] == 0
+    assert violations["tp_wrong_side"] == 0
+    assert violations["tp_below_primary_timeframe"] == 1
+    assert violations["total"] == 0
+    assert report["semantic_violation_count"] == 0
+
+
 def test_m1_standard_deviation_stop_uses_unprefixed_level_one_name() -> None:
     decisions = pd.DataFrame()
     trades = pd.DataFrame(

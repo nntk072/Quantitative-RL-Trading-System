@@ -146,8 +146,8 @@ if _SB3_AVAILABLE:
             self._reward_parts: dict[str, float] = {}
             self._constraints: dict[str, float] = {}
             self._window_steps = 0
-            self._thesis_entropy_sum = 0.0
-            self._thesis_entropy_count = 0
+            self._thesis_entropy_sum: Any = 0.0
+            self._thesis_entropy_count: Any = 0
 
         def _on_step(self) -> bool:
             infos = self.locals.get("infos") or []
@@ -179,16 +179,41 @@ if _SB3_AVAILABLE:
             if policy_entropy is not None:
                 detach = getattr(policy_entropy, "detach", None)
                 if callable(detach):
-                    policy_entropy = detach().cpu().numpy()
-                entropy_values = np.asarray(policy_entropy, dtype=np.float64).reshape(-1)
-                finite = entropy_values[np.isfinite(entropy_values)]
-                self._thesis_entropy_sum += float(finite.sum())
-                self._thesis_entropy_count += int(finite.size)
+                    # Keep this reduction on the policy device. Copying entropy
+                    # to CPU on every vector step synchronizes CUDA and can
+                    # dominate short-rollout training throughput.
+                    entropy_values = detach().reshape(-1)
+                    import torch
+
+                    finite_mask = torch.isfinite(entropy_values)
+                    self._thesis_entropy_sum = (
+                        self._thesis_entropy_sum
+                        + torch.where(
+                            finite_mask, entropy_values, torch.zeros_like(entropy_values)
+                        ).sum()
+                    )
+                    self._thesis_entropy_count = self._thesis_entropy_count + finite_mask.sum()
+                else:
+                    entropy_values = np.asarray(policy_entropy, dtype=np.float64).reshape(-1)
+                    finite = entropy_values[np.isfinite(entropy_values)]
+                    self._thesis_entropy_sum += float(finite.sum())
+                    self._thesis_entropy_count += int(finite.size)
             return True
 
         def _on_rollout_end(self) -> None:
             model: Any = self.model
             buffer = model.rollout_buffer
+            entropy_sum = self._thesis_entropy_sum
+            if hasattr(entropy_sum, "item"):
+                entropy_sum = float(entropy_sum.item())
+            entropy_count = self._thesis_entropy_count
+            if hasattr(entropy_count, "item"):
+                entropy_count = int(entropy_count.item())
+            entropy_mean = (
+                float(entropy_sum) / int(entropy_count) if entropy_count else float("nan")
+            )
+            self._thesis_entropy_sum = 0.0
+            self._thesis_entropy_count = 0
             raw_actions = np.asarray(buffer.actions, dtype=np.float64)
             if isinstance(model.action_space, spaces.Box):
                 actions = raw_actions.reshape(-1, raw_actions.shape[-1])
@@ -257,11 +282,7 @@ if _SB3_AVAILABLE:
                 eligible_counts = masks[:, 1:].sum(axis=1)
                 row.update(
                     {
-                        "thesis/entropy_mean_nats": (
-                            self._thesis_entropy_sum / self._thesis_entropy_count
-                            if self._thesis_entropy_count
-                            else float("nan")
-                        ),
+                        "thesis/entropy_mean_nats": (entropy_mean),
                         "thesis/no_trade_rate": float(np.mean(no_trade)),
                         "thesis/no_trade_rate_when_eligible": float(
                             np.sum(no_trade & trade_eligible_steps)

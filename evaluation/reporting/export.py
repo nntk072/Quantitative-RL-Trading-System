@@ -560,7 +560,7 @@ def _write_split(
             f"SL side/floor/SD-level-1 = {structure.get('sl_wrong_side', 0)}/"
             f"{structure.get('sl_below_primary_timeframe', 0)}/"
             f"{structure.get('standard_deviation_sl_not_level_1_on_setup_timeframe', 0)}; "
-            f"TP wrong-side/timeframe = {structure.get('tp_wrong_side', 0)}/"
+            f"TP wrong-side = {structure.get('tp_wrong_side', 0)}; allowed lower-timeframe TP refs = "
             f"{structure.get('tp_below_primary_timeframe', 0)}; semantic violations: "
             f"{thesis_policy_metrics.get('semantic_violation_count', 0)}\n"
             "Monthly thesis entropy (see thesis_policy_metrics.json for detail):\n"

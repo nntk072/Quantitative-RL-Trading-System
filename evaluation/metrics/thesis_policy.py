@@ -18,6 +18,35 @@ from decisioning.thesis import (
 
 _STRUCTURAL_TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H2", "H4", "D1", "W1")
 _TIMEFRAME_RANK = {name: index for index, name in enumerate(_STRUCTURAL_TIMEFRAMES)}
+_SESSION_REFERENCE_PREFIXES = ("asian_", "london_", "prev_day_", "ctx_prev_week_")
+
+
+def _reference_timeframes(reference: object) -> tuple[list[str], bool]:
+    """Return candle timeframes and whether a reference contains session levels.
+
+    SL/TP source strings can combine several references with ``|``. Session
+    highs/lows have no candle timeframe, but remain valid structural anchors.
+    Unprefixed candle references follow the execution resolver and mean M1.
+    """
+    if reference is None or reference is pd.NA or reference is pd.NaT:
+        return [], False
+    if isinstance(reference, (float, np.floating)) and np.isnan(reference):
+        return [], False
+    timeframes: list[str] = []
+    has_session_reference = False
+    for source in str(reference or "").split("|"):
+        source = source.strip()
+        if not source:
+            continue
+        if source.startswith(_SESSION_REFERENCE_PREFIXES):
+            has_session_reference = True
+            continue
+        matched = next(
+            (tf for tf in _STRUCTURAL_TIMEFRAMES if source.startswith(f"{tf}_")),
+            None,
+        )
+        timeframes.append(matched or "M1")
+    return timeframes, has_session_reference
 
 
 def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) -> dict[str, Any]:
@@ -220,7 +249,7 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
     sl_side_violations = 0
     sl_timeframe_floor_violations = 0
     sd_timeframe_violations = 0
-    tp_timeframe_floor_violations = 0
+    allowed_lower_timeframe_tp_references = 0
     tp_side_violations = 0
     trades_with_any_violation = 0
     semantic_violations: Counter[str] = Counter()
@@ -244,10 +273,21 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
         tp_side_violations += row_tp_side
         setup_tf = str(trade_row.get("primary_setup_timeframe", "")).upper()
         sl_tf = str(trade_row.get("sl_timeframe", "")).upper()
+        sl_reference_tfs, has_session_sl_reference = _reference_timeframes(
+            trade_row.get("sl_ref", "")
+        )
+        if sl_tf in _TIMEFRAME_RANK and sl_tf not in sl_reference_tfs:
+            sl_reference_tfs.append(sl_tf)
         row_sl_floor = 0
-        if setup_tf in _TIMEFRAME_RANK and sl_tf in _TIMEFRAME_RANK:
-            row_sl_floor = int(_TIMEFRAME_RANK[sl_tf] < _TIMEFRAME_RANK[setup_tf])
+        if setup_tf in _TIMEFRAME_RANK and sl_reference_tfs:
+            row_sl_floor = int(
+                any(_TIMEFRAME_RANK[tf] < _TIMEFRAME_RANK[setup_tf] for tf in sl_reference_tfs)
+            )
             sl_timeframe_floor_violations += row_sl_floor
+        elif setup_tf in _TIMEFRAME_RANK and has_session_sl_reference:
+            # Session anchors (Asian/London/day/week) are valid structure refs
+            # without a candle-timeframe label.
+            pass
         else:
             semantic_violations["missing_primary_or_sl_timeframe"] += 1
         selected_refs = [
@@ -255,22 +295,42 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
             for reference in trade_row.get("tp_references", [])
             if isinstance(reference, dict) and reference.get("reason") == "selected"
         ]
-        selected_tfs = [str(reference.get("timeframe", "")).upper() for reference in selected_refs]
+        selected_tfs: list[str] = []
+        has_session_tp_reference = False
+        for reference in selected_refs:
+            reference_tf = str(reference.get("timeframe", "")).upper()
+            if reference_tf in _TIMEFRAME_RANK:
+                selected_tfs.append(reference_tf)
+                continue
+            source_names = reference.get("sources") or [reference.get("name", "")]
+            if isinstance(source_names, str):
+                source_names = [source_names]
+            parsed_tfs, has_session = _reference_timeframes("|".join(map(str, source_names)))
+            selected_tfs.extend(parsed_tfs)
+            has_session_tp_reference = has_session_tp_reference or has_session
         if not selected_tfs:
             fallback_tf = str(trade_row.get("tp_timeframe", "")).upper()
             if fallback_tf:
                 selected_tfs = [fallback_tf]
-        row_tp_floor = 0
-        if setup_tf in _TIMEFRAME_RANK and selected_tfs:
-            row_tp_floor = int(
-                any(
-                    tf not in _TIMEFRAME_RANK or _TIMEFRAME_RANK[tf] < _TIMEFRAME_RANK[setup_tf]
-                    for tf in selected_tfs
-                )
+        if not selected_tfs and not has_session_tp_reference:
+            tp_reference_tfs, has_session_tp_reference = _reference_timeframes(
+                trade_row.get("tp_ref", "")
             )
-        elif str(trade_row.get("tp_ref", "")).lower() not in {"", "ema_21"}:
+            selected_tfs.extend(tp_reference_tfs)
+        row_tp_floor = int(
+            setup_tf in _TIMEFRAME_RANK
+            and any(
+                tf in _TIMEFRAME_RANK and _TIMEFRAME_RANK[tf] < _TIMEFRAME_RANK[setup_tf]
+                for tf in selected_tfs
+            )
+        )
+        allowed_lower_timeframe_tp_references += row_tp_floor
+        if (
+            not selected_tfs
+            and not has_session_tp_reference
+            and str(trade_row.get("tp_ref", "")).lower() not in {"", "ema_21"}
+        ):
             semantic_violations["missing_primary_or_tp_timeframe"] += 1
-        tp_timeframe_floor_violations += row_tp_floor
         row_sd = 0
         if str(trade_row.get("primary_idea", "")) == "standard_deviation":
             sl_ref = str(trade_row.get("sl_ref", "")).upper()
@@ -297,9 +357,7 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
             semantic_violations["candidate_fields_disagree"] += 1
         if not trade_row.get("thesis_schema_version"):
             semantic_violations["missing_thesis_schema_version"] += 1
-        trades_with_any_violation += int(
-            any((row_sl_side, row_sl_floor, row_sd, row_tp_side, row_tp_floor))
-        )
+        trades_with_any_violation += int(any((row_sl_side, row_sl_floor, row_sd, row_tp_side)))
 
     open_counts = Counter(
         (str(row.get("primary_idea", "")), str(row.get("primary_setup_timeframe", "")))
@@ -385,7 +443,8 @@ def summarize_thesis_decisions(decisions: pd.DataFrame, trades: pd.DataFrame) ->
     decision_metrics["structural_violations"] = {
         "sl_wrong_side": sl_side_violations,
         "sl_below_primary_timeframe": sl_timeframe_floor_violations,
-        "tp_below_primary_timeframe": tp_timeframe_floor_violations,
+        # Informational only: lower-timeframe TPs are explicitly allowed.
+        "tp_below_primary_timeframe": allowed_lower_timeframe_tp_references,
         "standard_deviation_sl_not_level_1_on_setup_timeframe": sd_timeframe_violations,
         "tp_wrong_side": tp_side_violations,
         "total": trades_with_any_violation,
