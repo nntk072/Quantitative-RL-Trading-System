@@ -290,7 +290,11 @@ class SeedRunner:
             )
 
         callbacks.append(EpisodeEquityCallback(log_path=seed_model_dir / "episode_equity.csv"))
-        if bool(cfg.get("quality_diagnostics", {}).get("enabled", False)):
+        thesis_diagnostics_enabled = bool(cfg.env.get("thesis_actions", False))
+        if (
+            bool(cfg.get("quality_diagnostics", {}).get("enabled", False))
+            or thesis_diagnostics_enabled
+        ):
             callbacks.append(
                 LearningDiagnosticsCallback(log_path=seed_model_dir / "learning_diagnostics.csv")
             )

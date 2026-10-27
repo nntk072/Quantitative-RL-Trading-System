@@ -77,6 +77,20 @@ def test_manipulation_changes_the_stop_family() -> None:
     assert _share(done, "fvg") > 0.0
 
 
+def test_thesis_fields_are_available_as_diversity_conditioners() -> None:
+    report = diversity_report(
+        pd.DataFrame(
+            [
+                _open(primary_idea="fvg_retest", primary_setup_timeframe="M5"),
+                _open(primary_idea="order_block", primary_setup_timeframe="H1"),
+            ]
+        )
+    )
+
+    assert set(report.by_conditioner["primary_idea"].index) == {"fvg_retest", "order_block"}
+    assert set(report.by_conditioner["primary_setup_timeframe"].index) == {"M5", "H1"}
+
+
 def test_nearest_targets_warn_and_a_spread_does_not() -> None:
     flat = diversity_report(pd.DataFrame([_open(planned_rr=1.0) for _ in range(8)]))
     spread = diversity_report(

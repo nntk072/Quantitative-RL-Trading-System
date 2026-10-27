@@ -5,6 +5,7 @@ from __future__ import annotations
 import gymnasium as gym
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 import pytest
 import torch
 from gymnasium import spaces
@@ -12,10 +13,14 @@ from stable_baselines3 import PPO
 
 from decisioning.actions import build_action_schema
 from decisioning.thesis import THESIS_CATEGORY_COUNT, thesis_id_from_box
+from learning.rl.callbacks import LearningDiagnosticsCallback
 from learning.rl.hybrid import (
     HybridActorHeads,
     HybridBoxDistribution,
     HybridClampedStdMultiInputPolicy,
+    ThesisConditionedActorHeads,
+    ThesisConditionedClampedStdMultiInputPolicy,
+    ThesisConditionedHybridBoxDistribution,
     _encoded_centers,
 )
 from models.encoders import TCNEncoder
@@ -111,6 +116,105 @@ def test_thesis_hybrid_distribution_samples_only_each_rows_valid_candidates() ->
         assert selected[2] == 2
     assert torch.isfinite(distribution.log_prob(actions)).all()
     assert torch.isfinite(distribution.entropy()).all()
+
+
+def test_thesis_conditioned_distribution_masks_and_conditions_execution() -> None:
+    torch.manual_seed(91)
+    coordinates = ("thesis", "risk", "sl_mode", "exit")
+    actor = ThesisConditionedActorHeads(8, coordinates, {"sl_mode": 0.1})
+    distribution = ThesisConditionedHybridBoxDistribution(actor, len(coordinates))
+    latent = torch.randn(2, 8)
+    thesis_logits = actor.thesis(latent)
+    masks = torch.zeros((2, THESIS_CATEGORY_COUNT), dtype=torch.float32)
+    masks[0, [0, 5, 31]] = 1.0
+    masks[1, [0, 12]] = 1.0
+    distribution.proba_distribution(
+        latent,
+        torch.zeros(len(actor.continuous_indices), requires_grad=True),
+        thesis_logits,
+        masks={"thesis": masks},
+    )
+
+    assert distribution.thesis is not None
+    assert torch.all(distribution.thesis.probs[~masks.bool()] == 0.0)
+    first, _ = actor.execution(latent[:1], torch.tensor([5]))
+    second, _ = actor.execution(latent[:1], torch.tensor([31]))
+    assert not torch.allclose(first, second)
+    # The selector receives only market latent; changing a proposed execution
+    # thesis cannot feed back into primary-thesis logits.
+    assert torch.equal(actor.thesis(latent), thesis_logits)
+
+    for deterministic in (False, True):
+        actions = distribution.get_actions(deterministic=deterministic)
+        selected = [thesis_id_from_box(float(value.detach())) for value in actions[:, 0]]
+        assert selected[0] in {0, 5, 31}
+        assert selected[1] in {0, 12}
+        assert torch.isfinite(distribution.log_prob(actions)).all()
+        assert torch.isfinite(distribution.entropy()).all()
+        assert torch.isfinite(distribution.thesis_entropy()).all()
+    objective = -distribution.log_prob(actions).mean() - distribution.entropy().mean()
+    torch.autograd.backward(objective)
+    assert actor.thesis_logits.weight.grad is not None
+    assert actor.thesis_embedding.weight.grad is not None
+    assert torch.isfinite(actor.thesis_embedding.weight.grad).all()
+
+
+def test_thesis_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
+    env = _ThesisOverlayEnv()
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    diagnostics_path = tmp_path / "learning_diagnostics.csv"
+    model = PPO(
+        ThesisConditionedClampedStdMultiInputPolicy,
+        env,
+        policy_kwargs={
+            "hybrid_action_coordinates": ("thesis", "risk", "exit"),
+            "thesis_mask_key": "thesis_mask",
+            "thesis_embedding_dim": 16,
+            "thesis_execution_hidden_dim": 32,
+            "net_arch": {"pi": [32], "vf": [32]},
+            "features_extractor_class": TCNEncoder,
+            "features_extractor_kwargs": {
+                "seq_len": 8,
+                "n_features": 3,
+                "account_dim": 6,
+            },
+        },
+        n_steps=2,
+        batch_size=2,
+        n_epochs=1,
+        device=device,
+    )
+    model.learn(
+        total_timesteps=4,
+        callback=LearningDiagnosticsCallback(diagnostics_path),
+    )
+    training_diagnostics = pd.read_csv(diagnostics_path)
+    assert len(training_diagnostics) == 2
+    assert training_diagnostics["thesis/entropy_mean_nats"].notna().all()
+    assert (training_diagnostics["thesis/invalid_selection_count"] == 0).all()
+    observation, _ = env.reset()
+    predicted, _ = model.predict(observation, deterministic=True)
+    assert thesis_id_from_box(float(predicted[0])) in {0, 12, 51}
+    observation_tensor, _ = model.policy.obs_to_tensor(observation)
+    _, log_prob, entropy = model.policy.evaluate_actions(
+        observation_tensor, torch.as_tensor(predicted, device=model.device).reshape(1, -1)
+    )
+    stored_action_distribution = model.policy.get_distribution(observation_tensor)
+    expected_log_prob = stored_action_distribution.log_prob(
+        torch.as_tensor(predicted, device=model.device).reshape(1, -1)
+    )
+    assert torch.isfinite(log_prob).all()
+    assert entropy is not None
+    assert torch.isfinite(entropy).all()
+    assert torch.allclose(log_prob, expected_log_prob)
+
+    checkpoint = tmp_path / "thesis_conditioned_policy.zip"
+    model.save(checkpoint)
+    loaded = PPO.load(checkpoint, device=device)
+    assert loaded.policy.thesis_embedding_dim == 16
+    assert loaded.policy.thesis_execution_hidden_dim == 32
+    loaded_action, _ = loaded.predict(observation, deterministic=True)
+    assert np.allclose(loaded_action, predicted)
 
 
 class _ThesisOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):

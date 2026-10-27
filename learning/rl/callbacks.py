@@ -146,6 +146,8 @@ if _SB3_AVAILABLE:
             self._reward_parts: dict[str, float] = {}
             self._constraints: dict[str, float] = {}
             self._window_steps = 0
+            self._thesis_entropy_sum = 0.0
+            self._thesis_entropy_count = 0
 
         def _on_step(self) -> bool:
             infos = self.locals.get("infos") or []
@@ -171,6 +173,17 @@ if _SB3_AVAILABLE:
                             self._constraints[metric_key] = self._constraints.get(
                                 metric_key, 0.0
                             ) + float(value)
+            policy_entropy = getattr(
+                getattr(self.model, "policy", None), "last_thesis_entropy", None
+            )
+            if policy_entropy is not None:
+                detach = getattr(policy_entropy, "detach", None)
+                if callable(detach):
+                    policy_entropy = detach().cpu().numpy()
+                entropy_values = np.asarray(policy_entropy, dtype=np.float64).reshape(-1)
+                finite = entropy_values[np.isfinite(entropy_values)]
+                self._thesis_entropy_sum += float(finite.sum())
+                self._thesis_entropy_count += int(finite.size)
             return True
 
         def _on_rollout_end(self) -> None:
@@ -199,7 +212,11 @@ if _SB3_AVAILABLE:
                 if isinstance(schema, dict)
                 else []
             )
+            if not raw_names:
+                raw_names = getattr(getattr(model, "policy", None), "hybrid_action_coordinates", [])
             names = raw_names if isinstance(raw_names, list) else []
+            if isinstance(raw_names, tuple):
+                names = list(raw_names)
             if len(names) != actions.shape[1]:
                 names = [f"coordinate_{index}" for index in range(actions.shape[1])]
             for index, name in enumerate(names):
@@ -210,6 +227,68 @@ if _SB3_AVAILABLE:
                     bins = np.digitize(coordinate, [-1.0 / 3.0, 1.0 / 3.0])
                     for bin_index, label in enumerate(("low", "mid", "high")):
                         row[f"action/{name}_hist/{label}"] = float(np.mean(bins == bin_index))
+            thesis_index = names.index("thesis") if "thesis" in names else None
+            observations = getattr(buffer, "observations", {})
+            thesis_mask = (
+                observations.get("thesis_mask") if isinstance(observations, dict) else None
+            )
+            if thesis_index is not None and thesis_mask is not None:
+                from decisioning.thesis import THESIS_CANDIDATES, THESIS_CATEGORY_COUNT
+
+                thesis_ids = np.floor(
+                    np.clip((actions[:, thesis_index] + 1.0) * 0.5, 0.0, 1.0)
+                    * THESIS_CATEGORY_COUNT
+                ).astype(np.int64)
+                thesis_ids = np.clip(thesis_ids, 0, THESIS_CATEGORY_COUNT - 1)
+                masks = np.asarray(thesis_mask, dtype=np.float32).reshape(-1, THESIS_CATEGORY_COUNT)
+                if len(masks) != len(thesis_ids):
+                    raise ValueError("rollout thesis mask and thesis action counts differ")
+                valid = masks[np.arange(len(masks)), thesis_ids] > 0.0
+                no_trade = thesis_ids == 0
+                trade_ids = thesis_ids[~no_trade]
+                selected_ideas = {
+                    THESIS_CANDIDATES[int(candidate_id)].idea for candidate_id in trade_ids
+                }
+                selected_timeframes = {
+                    THESIS_CANDIDATES[int(candidate_id)].setup_timeframe
+                    for candidate_id in trade_ids
+                }
+                eligible_counts = masks[:, 1:].sum(axis=1)
+                row.update(
+                    {
+                        "thesis/entropy_mean_nats": (
+                            self._thesis_entropy_sum / self._thesis_entropy_count
+                            if self._thesis_entropy_count
+                            else float("nan")
+                        ),
+                        "thesis/no_trade_rate": float(np.mean(no_trade)),
+                        "thesis/no_trade_count": float(np.sum(no_trade)),
+                        "thesis/selected_trade_count": float(len(trade_ids)),
+                        "thesis/selected_idea_count": float(len(selected_ideas)),
+                        "thesis/selected_timeframe_count": float(len(selected_timeframes)),
+                        "thesis/eligible_trade_candidate_mean": float(np.mean(eligible_counts)),
+                        "thesis/invalid_selection_count": float(np.sum(~valid)),
+                    }
+                )
+                for idea in sorted(item for item in selected_ideas if item is not None):
+                    row[f"thesis/selected_idea/{idea}_count"] = float(
+                        sum(
+                            THESIS_CANDIDATES[int(candidate_id)].idea == idea
+                            for candidate_id in trade_ids
+                        )
+                    )
+                for timeframe in sorted(item for item in selected_timeframes if item is not None):
+                    row[f"thesis/selected_timeframe/{timeframe}_count"] = float(
+                        sum(
+                            THESIS_CANDIDATES[int(candidate_id)].setup_timeframe == timeframe
+                            for candidate_id in trade_ids
+                        )
+                    )
+                model.logger.record("thesis/entropy_mean_nats", row["thesis/entropy_mean_nats"])
+                model.logger.record("thesis/no_trade_rate", row["thesis/no_trade_rate"])
+                model.logger.record(
+                    "thesis/invalid_selection_count", row["thesis/invalid_selection_count"]
+                )
             for key, value in self._funnel.items():
                 row[f"entry_funnel/{key}"] = float(value)
                 model.logger.record(f"entry_funnel/{key}", float(value))
@@ -234,6 +313,8 @@ if _SB3_AVAILABLE:
             self._reward_parts.clear()
             self._constraints.clear()
             self._window_steps = 0
+            self._thesis_entropy_sum = 0.0
+            self._thesis_entropy_count = 0
 
         def _on_training_end(self) -> None:
             if self._rows:

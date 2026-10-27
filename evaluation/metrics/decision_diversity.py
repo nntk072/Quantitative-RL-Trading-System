@@ -19,6 +19,8 @@ _CONDITIONERS: tuple[str, ...] = (
     "volatility_regime",
     "trend_regime",
     "direction",
+    "primary_idea",
+    "primary_setup_timeframe",
 )
 _RR_PCTS: tuple[int, ...] = (10, 25, 50, 75, 90, 95)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 from gymnasium import spaces
 from omegaconf import OmegaConf
 from stable_baselines3 import PPO
@@ -10,7 +11,10 @@ from configuration.loader import load_config
 from decisioning.thesis import THESIS_CATEGORY_COUNT, thesis_id_from_box
 from features.context.thesis_candidates import thesis_candidate_feature_columns
 from learning.rl.agent import build_agent
-from learning.rl.hybrid import HybridClampedStdMultiInputPolicy
+from learning.rl.hybrid import (
+    HybridClampedStdMultiInputPolicy,
+    ThesisConditionedClampedStdMultiInputPolicy,
+)
 from models.encoders import MTFReasoningEncoder
 from simulation.environment.factory import build_eval_common, make_env
 from tests.test_envs.test_account_normalization import _make_bars, _make_features
@@ -48,8 +52,28 @@ def test_mtf_reasoning_research_overlay_is_opt_in_and_complete() -> None:
     assert config.ppo.actor_arch == "shared"
 
 
-def test_mtf_reasoning_overlay_builds_real_env_and_agent(tmp_path) -> None:
-    config = load_config(config_path="config/research/thesis_mtf_reasoning.yaml")
+def test_mtf_reasoning_conditioned_overlay_is_opt_in_and_complete() -> None:
+    config = load_config(config_path="config/research/thesis_mtf_reasoning_conditioned.yaml")
+
+    assert config.env.strategy_actions is True
+    assert config.env.thesis_actions is True
+    assert config.agent.arch == "mtf_reasoning"
+    assert config.ppo.policy_distribution == "thesis_conditioned_v1"
+    assert config.ppo.thesis_conditioned.embedding_dim == 32
+    assert config.ppo.thesis_conditioned.execution_hidden_dim == 128
+
+
+@pytest.mark.parametrize(
+    ("overlay", "expected_policy"),
+    [
+        ("thesis_mtf_reasoning.yaml", HybridClampedStdMultiInputPolicy),
+        ("thesis_mtf_reasoning_conditioned.yaml", ThesisConditionedClampedStdMultiInputPolicy),
+    ],
+)
+def test_mtf_reasoning_overlay_builds_real_env_and_agent(
+    tmp_path, overlay, expected_policy
+) -> None:
+    config = load_config(config_path=f"config/research/{overlay}")
     config.costs.use_tick_execution = False
     config.execution.randomized_fill_latency_ms = 0.0
     config.ppo.n_steps = 2
@@ -113,7 +137,7 @@ def test_mtf_reasoning_overlay_builds_real_env_and_agent(tmp_path) -> None:
         seed=41,
     )
     assert isinstance(model.policy.features_extractor, MTFReasoningEncoder)
-    assert isinstance(model.policy, HybridClampedStdMultiInputPolicy)
+    assert type(model.policy) is expected_policy
     model.learn(total_timesteps=2)
     action, _ = model.predict(observation, deterministic=False)
     assert thesis_id_from_box(float(action[0])) == 0
@@ -122,7 +146,7 @@ def test_mtf_reasoning_overlay_builds_real_env_and_agent(tmp_path) -> None:
     model.save(checkpoint)
     loaded = PPO.load(checkpoint, env=env, device="cpu")
     assert isinstance(loaded.policy.features_extractor, MTFReasoningEncoder)
-    assert isinstance(loaded.policy, HybridClampedStdMultiInputPolicy)
+    assert type(loaded.policy) is expected_policy
     assert getattr(loaded, "_thesis_observation_schema", None) == env.thesis_observation_schema
     loaded_action, _ = loaded.predict(observation, deterministic=True)
     assert thesis_id_from_box(float(loaded_action[0])) == 0

@@ -1,0 +1,20 @@
+# Variant D: thesis-conditioned execution over the existing thesis MTF policy.
+# This opt-in overlay leaves action and observation schemas unchanged.
+env:
+  strategy_actions: true
+  thesis_actions: true
+  agent_direction_control: false
+
+features:
+  entry_ideas:
+    enabled: true
+
+agent:
+  arch: mtf_reasoning
+
+ppo:
+  policy_distribution: thesis_conditioned_v1
+  actor_arch: shared
+  thesis_conditioned:
+    embedding_dim: 32
+    execution_hidden_dim: 128

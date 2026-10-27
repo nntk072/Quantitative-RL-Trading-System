@@ -394,6 +394,9 @@ def _write_split(
                 save_plots=save_plots,
                 dpi=dpi,
             )
+        thesis_decisions = result.get("thesis_decisions")
+        if isinstance(thesis_decisions, pd.DataFrame):
+            thesis_decisions.to_csv(split_dir / "thesis_decisions.csv", index=False)
         breach_frame = pd.DataFrame.from_records(breach_events, columns=_BREACH_EVENT_COLUMNS)
         breach_frame.to_csv(split_dir / "breach_events.csv", index=False)
         cycle_events = result.get("cycle_events")
@@ -473,12 +476,101 @@ def _write_split(
         "cycle_successes": int(result.get("cycle_successes", 0)),
         "cycle_failures": int(result.get("cycle_failures", 0)),
     }
+    thesis_policy_metrics = result.get("thesis_policy_metrics")
+    if isinstance(thesis_policy_metrics, dict):
+        evaluation_diagnostics["thesis_policy"] = thesis_policy_metrics
+        (split_dir / "thesis_policy_metrics.json").write_text(
+            json.dumps(thesis_policy_metrics, indent=2)
+        )
+        for key, filename in (
+            ("selection_by_idea", "thesis_selection_by_idea.csv"),
+            ("selection_by_timeframe", "thesis_selection_by_timeframe.csv"),
+            ("selection_matrix", "thesis_selection_matrix.csv"),
+            ("execution_action_by_thesis", "thesis_action_by_idea_timeframe.csv"),
+            ("execution_by_opened_thesis", "thesis_execution_by_idea_timeframe.csv"),
+        ):
+            rows = thesis_policy_metrics.get(key)
+            if isinstance(rows, list):
+                pd.DataFrame.from_records(rows).to_csv(split_dir / filename, index=False)
     if result.get("constraint_cost_summary") is not None:
         evaluation_diagnostics["constraint_cost_summary"] = result["constraint_cost_summary"]
     (split_dir / "evaluation_diagnostics.json").write_text(
         json.dumps(evaluation_diagnostics, indent=2)
     )
-    (split_dir / "summary.txt").write_text(build_summary_table(metrics))
+    summary_text = build_summary_table(metrics)
+    if isinstance(thesis_policy_metrics, dict):
+        structure = thesis_policy_metrics.get("structural_violations", {})
+        entropy_months = thesis_policy_metrics.get("thesis_entropy_by_month", [])
+        monthly = (
+            "\n".join(
+                f"  {row['month']}: mean {row['mean']:.3f} nats (n={row['count']})"
+                for row in entropy_months
+            )
+            or "  no entropy observations"
+        )
+        no_trade_rate = thesis_policy_metrics.get("no_trade_rate")
+        mean_entropy = thesis_policy_metrics.get("thesis_entropy_mean_nats")
+        summary_text += (
+            "\n\nTHESIS POLICY DIAGNOSTICS\n"
+            f"Policy: {thesis_policy_metrics.get('policy_class', 'unknown')}; "
+            "Variant D execution conditioning active: "
+            f"{bool(thesis_policy_metrics.get('variant_d_execution_conditioning_active', False))}\n"
+            f"Decision bars: {thesis_policy_metrics.get('decision_steps', 0)}; "
+            f"NO_TRADE: {thesis_policy_metrics.get('no_trade_count', 0)} "
+            f"({float(no_trade_rate or 0.0):.1%}); "
+            f"opened trades: {thesis_policy_metrics.get('opened_trade_count', 0)}\n"
+            f"Selected ideas/timeframes: {thesis_policy_metrics.get('selected_idea_count', 0)} / "
+            f"{thesis_policy_metrics.get('selected_timeframe_count', 0)}; invalid thesis choices: "
+            f"{thesis_policy_metrics.get('invalid_selection_count', 0)}\n"
+            f"Eligible trade-thesis steps: {thesis_policy_metrics.get('trade_thesis_eligible_steps', 0)}; "
+            f"NO_TRADE rate when eligible: "
+            f"{float(thesis_policy_metrics.get('no_trade_rate_when_trade_thesis_eligible') or 0.0):.1%}\n"
+            f"Mean thesis entropy: {float(mean_entropy or 0.0):.3f} nats\n"
+            f"Structural violations: {structure.get('total', 0)} unique trades; "
+            f"SL side/floor/SD-level-1 = {structure.get('sl_wrong_side', 0)}/"
+            f"{structure.get('sl_below_primary_timeframe', 0)}/"
+            f"{structure.get('standard_deviation_sl_not_level_1_on_setup_timeframe', 0)}; "
+            f"TP wrong-side/timeframe = {structure.get('tp_wrong_side', 0)}/"
+            f"{structure.get('tp_below_primary_timeframe', 0)}; semantic violations: "
+            f"{thesis_policy_metrics.get('semantic_violation_count', 0)}\n"
+            "Monthly thesis entropy (see thesis_policy_metrics.json for detail):\n"
+            f"{monthly}\n"
+            "Raw decision trace: thesis_decisions.csv; per-trade open rows: trades.csv."
+        )
+    (split_dir / "summary.txt").write_text(summary_text)
+    if save_plots and isinstance(thesis_policy_metrics, dict):
+        entropy_months = thesis_policy_metrics.get("thesis_entropy_by_month", [])
+        if entropy_months:
+            import matplotlib.pyplot as plt
+
+            months = [str(row["month"]) for row in entropy_months]
+            fig, left = plt.subplots(figsize=(12, 5))
+            left.plot(
+                months,
+                [float(row["mean"]) for row in entropy_months],
+                marker="o",
+                color="#245c9f",
+                label="Mean masked thesis entropy",
+            )
+            left.set_ylabel("Entropy (nats)")
+            left.set_xlabel("Month")
+            left.tick_params(axis="x", rotation=45)
+            left.grid(True, alpha=0.25)
+            right = left.twinx()
+            right.plot(
+                months,
+                [float(row.get("no_trade_rate", 0.0)) for row in entropy_months],
+                marker="s",
+                color="#d17c00",
+                label="NO_TRADE rate",
+            )
+            right.set_ylabel("NO_TRADE rate")
+            handles_left, labels_left = left.get_legend_handles_labels()
+            handles_right, labels_right = right.get_legend_handles_labels()
+            left.legend(handles_left + handles_right, labels_left + labels_right, loc="best")
+            fig.tight_layout()
+            fig.savefig(split_dir / "thesis_policy_dynamics.png", dpi=dpi)
+            plt.close(fig)
     if not trades.empty:
         opens = trades[trades.get("type", pd.Series(dtype=str)) == "open"]
         closes = trades[trades.get("type", pd.Series(dtype=str)).astype(str).str.contains("close")]

@@ -311,6 +311,7 @@ def evaluate_model(
         model, continuous_actions, deterministic, strategy_actions=strategy_actions
     )
     action_counts: Counter[str] = Counter()
+    thesis_decision_rows: list[dict[str, Any]] = []
     reward_sum = 0.0
     reward_attribution = RewardAttribution()
     n_steps = 0
@@ -357,12 +358,52 @@ def evaluate_model(
     discount_factor = 1.0
     while not (done or truncated):
         action = action_fn(obs)
+        thesis_record: dict[str, Any] | None = None
+        policy = getattr(model, "policy", None)
+        coordinates = tuple(getattr(policy, "hybrid_action_coordinates", ()))
+        if strategy_actions and "thesis" in coordinates and isinstance(obs, dict):
+            from decisioning.thesis import THESIS_CANDIDATES, thesis_id_from_box
+
+            values = np.asarray(action, dtype=np.float32).reshape(-1)
+            thesis_index = coordinates.index("thesis")
+            selected_id = thesis_id_from_box(float(values[thesis_index]))
+            mask = np.asarray(obs.get("thesis_mask", []), dtype=np.float32).reshape(-1)
+            is_valid = selected_id < len(mask) and bool(mask[selected_id] > 0.0)
+            candidate = THESIS_CANDIDATES[selected_id]
+            raw_entropy = getattr(policy, "last_thesis_entropy", None)
+            entropy_value = (
+                float(np.asarray(raw_entropy.detach().cpu()).reshape(-1)[0])
+                if raw_entropy is not None
+                else float("nan")
+            )
+            thesis_record = {
+                "step": n_steps + 1,
+                "thesis_candidate_id": selected_id,
+                "idea": candidate.idea or "",
+                "setup_timeframe": candidate.setup_timeframe or "",
+                "direction": int(candidate.direction),
+                "is_no_trade": bool(candidate.is_no_trade),
+                "selection_valid": is_valid,
+                "eligible_thesis_count": int(np.count_nonzero(mask)),
+                "eligible_candidate_ids": np.flatnonzero(mask).astype(int).tolist(),
+                "thesis_entropy_nats": entropy_value,
+            }
+            thesis_record.update(
+                {
+                    f"action_{name}": float(values[index])
+                    for index, name in enumerate(coordinates)
+                    if name != "thesis"
+                }
+            )
         if strategy_actions:
             action_key = str(tuple(np.round(np.asarray(action).reshape(-1), 4)))
         else:
             action_key = str(action)
         action_counts[action_key] += 1
         obs, reward, done, truncated, info = env.step(action)
+        if thesis_record is not None:
+            thesis_record["time"] = str(env.equity_times[-1]) if env.equity_times else ""
+            thesis_decision_rows.append(thesis_record)
         final_info = info
         reward_sum += float(reward)
         reward_attribution.add(float(reward), info.get("reward_parts"))
@@ -416,6 +457,17 @@ def evaluate_model(
         index=pd.DatetimeIndex(env.equity_times),
     )
     trades_df = pd.DataFrame(env.trade_log)
+    thesis_decisions = pd.DataFrame.from_records(thesis_decision_rows)
+    thesis_metrics: dict[str, Any] | None = None
+    if thesis_decision_rows:
+        from evaluation.metrics.thesis_policy import summarize_thesis_decisions
+
+        thesis_metrics = summarize_thesis_decisions(thesis_decisions, trades_df)
+        policy_class = type(getattr(model, "policy", None)).__name__
+        thesis_metrics["policy_class"] = policy_class
+        thesis_metrics["variant_d_execution_conditioning_active"] = (
+            policy_class == "ThesisConditionedClampedStdMultiInputPolicy"
+        )
 
     n_sessions = len(env.all_sessions)
     days_traded = len(env.sessions_with_trades)
@@ -503,6 +555,11 @@ def evaluate_model(
         ),
         "peak_eod_dd_policy_ok": bool(episode_equity.get("peak_eod_dd_policy_ok", True)),
         "action_counts": dict(action_counts),
+        **(
+            {"thesis_decisions": thesis_decisions, "thesis_policy_metrics": thesis_metrics}
+            if thesis_metrics is not None
+            else {}
+        ),
         "entry_diag": dict(env._entry_diag),
         "trading_policy_mode": getattr(getattr(env, "trading_policy", None), "mode", "legacy"),
         "cumulative_payouts": float(getattr(env, "cumulative_payouts", 0.0)),

@@ -489,10 +489,14 @@ def build_agent(
     configured_distribution = str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian"))
     if thesis_enabled and algo != "ppo":
         raise ValueError("thesis actions currently require PPO's masked categorical distribution")
-    if thesis_enabled and configured_distribution != "thesis_hybrid_v1":
-        raise ValueError("env.thesis_actions requires ppo.policy_distribution='thesis_hybrid_v1'")
-    if configured_distribution == "thesis_hybrid_v1" and not thesis_enabled:
-        raise ValueError("thesis_hybrid_v1 requires env.thesis_actions=true")
+    thesis_distributions = {"thesis_hybrid_v1", "thesis_conditioned_v1"}
+    if thesis_enabled and configured_distribution not in thesis_distributions:
+        raise ValueError(
+            "env.thesis_actions requires ppo.policy_distribution='thesis_hybrid_v1' "
+            "or 'thesis_conditioned_v1'"
+        )
+    if configured_distribution in thesis_distributions and not thesis_enabled:
+        raise ValueError(f"{configured_distribution} requires env.thesis_actions=true")
 
     # Choose feature extractor based on architecture / VAE use
     extractor_cls: Any
@@ -680,16 +684,20 @@ def _ppo_policy_and_ent_coef(
 
     actor_arch = str(cfg.ppo.get("actor_arch", "shared"))
     policy_distribution = str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian"))
-    if policy_distribution in {"hybrid_v1", "thesis_hybrid_v1"}:
+    if policy_distribution in {"hybrid_v1", "thesis_hybrid_v1", "thesis_conditioned_v1"}:
         if actor_arch != "shared":
             raise ValueError("hybrid PPO distributions require ppo.actor_arch='shared'")
-        thesis_distribution = policy_distribution == "thesis_hybrid_v1"
+        thesis_distribution = policy_distribution in {
+            "thesis_hybrid_v1",
+            "thesis_conditioned_v1",
+        }
+        conditioned_distribution = policy_distribution == "thesis_conditioned_v1"
         if thesis_distribution:
             if not isinstance(action_schema, ThesisActionSchema):
-                raise ValueError("thesis_hybrid_v1 requires the thesis action schema")
+                raise ValueError(f"{policy_distribution} requires the thesis action schema")
             observation_spaces = getattr(observation_space, "spaces", {})
             if "thesis_mask" not in observation_spaces:
-                raise ValueError("thesis_hybrid_v1 requires the thesis_mask observation")
+                raise ValueError(f"{policy_distribution} requires the thesis_mask observation")
         elif not isinstance(action_schema, ActionSchema):
             raise ValueError("hybrid_v1 requires a declared legacy strategy ActionSchema")
         if not thesis_distribution and not isinstance(action_schema, ActionSchema):
@@ -698,7 +706,10 @@ def _ppo_policy_and_ent_coef(
             raise ValueError(
                 "hybrid policy requires the EMA/structural exit coordinate to be active"
             )
-        from learning.rl.hybrid import HybridClampedStdMultiInputPolicy
+        from learning.rl.hybrid import (
+            HybridClampedStdMultiInputPolicy,
+            ThesisConditionedClampedStdMultiInputPolicy,
+        )
 
         kwargs = dict(policy_kwargs)
         kwargs["hybrid_action_coordinates"] = action_schema.names
@@ -709,8 +720,16 @@ def _ppo_policy_and_ent_coef(
         kwargs["log_std_min"] = float(cfg.ppo.get("log_std_min", -0.7))
         kwargs["log_std_max"] = float(cfg.ppo.get("log_std_max", 0.0))
         kwargs["mode_prior_coef"] = float(cfg.ppo.get("mode_prior_coef", 1e-3))
+        if conditioned_distribution:
+            conditioned_cfg = cfg.ppo.get("thesis_conditioned", {})
+            kwargs["thesis_embedding_dim"] = int(conditioned_cfg.get("embedding_dim", 32))
+            kwargs["thesis_execution_hidden_dim"] = int(
+                conditioned_cfg.get("execution_hidden_dim", 128)
+            )
         return (
-            HybridClampedStdMultiInputPolicy,
+            ThesisConditionedClampedStdMultiInputPolicy
+            if conditioned_distribution
+            else HybridClampedStdMultiInputPolicy,
             kwargs,
             float(cfg.ppo.get("ent_coef_continuous", 0.001)),
         )
