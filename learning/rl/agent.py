@@ -486,7 +486,8 @@ def build_agent(
     account_dim: int = int(env.observation_space["account"].shape[0])
     agent_cfg = cfg.get("agent", {})
     thesis_enabled = bool(getattr(env, "thesis_actions", False))
-    configured_distribution = str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian"))
+    ppo_cfg = cfg.get("ppo", {})
+    configured_distribution = str(ppo_cfg.get("policy_distribution", "clamped_diagonal_gaussian"))
     if thesis_enabled and algo != "ppo":
         raise ValueError("thesis actions currently require PPO's masked categorical distribution")
     thesis_distributions = {"thesis_hybrid_v1", "thesis_conditioned_v1"}
