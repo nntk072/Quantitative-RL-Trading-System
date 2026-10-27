@@ -51,6 +51,54 @@ def bind_discrete_action_schema(model: Any, schema: DiscreteActionSchema) -> Non
         setattr(policy, "_action_schema", manifest)
 
 
+def persist_action_schema(model: Any, env: Any) -> None:
+    """Persist the environment's action semantics on an SB3 model and policy."""
+    action_space = env.action_space
+    policy = getattr(model, "policy", None)
+    if isinstance(action_space, spaces.Box):
+        width = int(action_space.shape[0])
+        schema = getattr(env, "action_schema", None)
+        if isinstance(schema, ActionSchema):
+            if width != schema.width:
+                raise ValueError(
+                    f"action space width {width} disagrees with declared schema width "
+                    f"{schema.width}"
+                )
+            layout_key = schema.key
+            schema_manifest = schema.to_dict()
+        elif width == 1 and not bool(getattr(env, "strategy_actions", False)):
+            # The scalar Box belongs to the continuous directional action mode,
+            # not to the strategy-overlay coordinate schema.
+            from learning.rl.ppo import _layout_key
+
+            layout_key = _layout_key(width)
+            schema_manifest = None
+        else:
+            raise ValueError(
+                "Box strategy actions require a declarative ActionSchema; "
+                "action width alone cannot identify coordinate meanings"
+            )
+
+        from decisioning.actions import SCHEMA_VERSION
+
+        setattr(model, "_action_layout_key", layout_key)
+        setattr(model, "_action_schema_version", SCHEMA_VERSION)
+        if policy is not None:
+            setattr(policy, "_action_layout_key", layout_key)
+            setattr(policy, "_action_schema_version", SCHEMA_VERSION)
+        if schema_manifest is not None:
+            setattr(model, "_action_schema", schema_manifest)
+            if policy is not None:
+                setattr(policy, "_action_schema", schema_manifest)
+    elif isinstance(action_space, spaces.Discrete):
+        schema = getattr(env, "action_schema", None)
+        if not isinstance(schema, DiscreteActionSchema):
+            raise ValueError(
+                "discrete trading actions require a declared categorical action schema"
+            )
+        bind_discrete_action_schema(model, schema)
+
+
 def validate_model_action_schema(
     model: Any,
     expected_schema: ActionSchema,
@@ -522,6 +570,7 @@ def build_agent(
         regime_schema = getattr(env, "regime_observation_schema", None)
         if isinstance(regime_schema, dict):
             setattr(model, "_regime_observation_schema", regime_schema)
+        persist_action_schema(model, env)
         return _finalize_cuda_policy(model, device)
 
     # Default to PPO
@@ -564,46 +613,7 @@ def build_agent(
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
         setattr(ppo_model, "_regime_observation_schema", regime_schema)
-    from learning.rl.ppo import _layout_key
-
-    if isinstance(env.action_space, spaces.Box):
-        width = int(env.action_space.shape[0])
-        schema = getattr(env, "action_schema", None)
-        if isinstance(schema, ActionSchema):
-            if width != schema.width:
-                raise ValueError(
-                    f"action space width {width} disagrees with declared schema width "
-                    f"{schema.width}"
-                )
-            layout_key = schema.key
-        elif width == 1 and not bool(getattr(env, "strategy_actions", False)):
-            # The scalar Box belongs to the continuous directional action mode,
-            # not to the strategy-overlay coordinate schema.
-            layout_key = _layout_key(width)
-        else:
-            raise ValueError(
-                "Box strategy actions require a declarative ActionSchema; "
-                "action width alone cannot identify coordinate meanings"
-            )
-        setattr(ppo_model.policy, "_action_layout_key", layout_key)
-        from decisioning.actions import SCHEMA_VERSION
-
-        setattr(ppo_model.policy, "_action_schema_version", SCHEMA_VERSION)
-        # The policy itself is excluded from SB3's model data during save;
-        # persist the semantics on the model so save/load can recover them.
-        setattr(ppo_model, "_action_layout_key", layout_key)
-        setattr(ppo_model, "_action_schema_version", SCHEMA_VERSION)
-        if isinstance(schema, ActionSchema):
-            schema_manifest = schema.to_dict()
-            setattr(ppo_model, "_action_schema", schema_manifest)
-            setattr(ppo_model.policy, "_action_schema", schema_manifest)
-    elif isinstance(env.action_space, spaces.Discrete):
-        schema = getattr(env, "action_schema", None)
-        if not isinstance(schema, DiscreteActionSchema):
-            raise ValueError(
-                "discrete trading actions require a declared categorical action schema"
-            )
-        bind_discrete_action_schema(ppo_model, schema)
+    persist_action_schema(ppo_model, env)
     from learning.rl.rollout_buffer import install_single_copy_add
 
     install_single_copy_add(ppo_model.rollout_buffer)

@@ -183,6 +183,11 @@ def test_sac_accepts_the_same_strategy_overlay_action_schema(sac_cfg: Any) -> No
     assert ppo_contract.action_schema.to_dict() == sac_env.action_schema.to_dict()
 
     model = build_agent(sac_env, sac_cfg, arch="tcn", algo="sac")
+    from decisioning.adapters.sb3 import SB3DecisionProvider
+
+    provider = SB3DecisionProvider(model, input_schema_version="test-observation-v1")
+    assert model._action_schema == sac_env.action_schema.to_dict()
+    assert provider.metadata.action_schema.coordinates == sac_env.action_schema.names
     observation, _ = sac_env.reset(seed=50)
     action, _ = model.predict(observation, deterministic=True)
     assert np.asarray(action).shape[-1] == sac_env.action_space.shape[0]
