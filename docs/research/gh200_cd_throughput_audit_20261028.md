@@ -176,3 +176,10 @@ repeatable. Full training-split replay also costs about 50 minutes and both 100k
 checkpoints fail the max-loss survival gate. Do not start 2M/full training from this
 evidence. Preserve 2026 as report-only and apply the attached plan's WP2 evaluation
 decoupling work before estimating the next campaign again.
+
+The first WP2 preparation change makes the active-prior controller cadence explicit at
+`training.dashboard.prior_every`, independently of dashboard logging cadence. Its default
+remains 100,000 steps, so existing configurations retain their behavior. This does not
+yet defer online evaluation: sampled dashboard evaluation can consume policy RNG, so a
+throughput-deferred C/D lineage still needs RNG isolation and matched trajectory tests
+before it can be used for training or described as semantics-preserving.

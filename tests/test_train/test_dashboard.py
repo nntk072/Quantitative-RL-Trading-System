@@ -270,7 +270,11 @@ def test_training_interval_sets_the_prior_and_eval_does_not() -> None:
             self.num_timesteps = 50_000
             self.rollout_buffer = None
 
-    cb = TrainingDashboardCallback(total_timesteps=1_000_000, log_every=100_000)
+    cb = TrainingDashboardCallback(
+        total_timesteps=1_000_000,
+        log_every=10_000,
+        prior_every=100_000,
+    )
     cb.model = _Model()  # type: ignore[assignment]
     cb._prior_opens = _prior_book(10, n_sl=5, sl_index=4, stop_u=1.0)
     cb._apply_prior_interval()

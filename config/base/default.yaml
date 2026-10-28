@@ -572,6 +572,7 @@ training:
     eval_every: 100000
     eval_bars: 20000
     log_every: 100000
+    prior_every: 100000  # active prior cadence, independent of dashboard logging/evaluation
     # Warning shares are printed only. The prior floors gate the training loss.
     # Neither enters the environment reward.
     diversity:
