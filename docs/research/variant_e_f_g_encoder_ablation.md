@@ -86,9 +86,10 @@ Attempt41 hardware: one NVIDIA GH200 144 GiB HBM3e, one gpuarm1 allocation with
 
 ## Work status
 
-- Baseline: checkout is `main` at `44ec01129c0276abdce6a228f8bd20b693d7f721`;
-  it is newer than the attached reference SHA. E/F/G code, configuration,
-  registration, tests, and this evidence report are included in that commit.
+- Implementation baseline: E/F/G code, configuration, registration, initial
+  tests and evidence report landed on `main` at
+  `44ec01129c0276abdce6a228f8bd20b693d7f721`, newer than the attached reference
+  SHA. This handoff follow-up records the final readiness gaps and trace check.
   The active C/D throughput diagnostic is separate and must be preserved. The
   untracked `campaign_worker_dispatch.log` is user-owned and excluded from this
   work.
