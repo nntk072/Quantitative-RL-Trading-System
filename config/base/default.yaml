@@ -573,6 +573,7 @@ training:
     eval_bars: 20000
     log_every: 100000
     prior_every: 100000  # active prior cadence, independent of dashboard logging/evaluation
+    isolate_eval_rng: false # observer-only replay must not advance learner RNG when enabled
     # Warning shares are printed only. The prior floors gate the training loss.
     # Neither enters the environment reward.
     diversity:

@@ -9,6 +9,9 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import random
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -460,6 +463,25 @@ def policy_from_logger(values: dict[str, Any], grad_norm: float | None) -> dict[
     }
 
 
+@contextmanager
+def preserve_global_rng_state(torch_module: Any) -> Iterator[None]:
+    """Restore Python, NumPy, and Torch RNG state after observer-only work."""
+    python_state = random.getstate()
+    numpy_state = np.random.get_state()
+    torch_cpu_state = torch_module.random.get_rng_state()
+    torch_cuda_states = (
+        torch_module.cuda.get_rng_state_all() if torch_module.cuda.is_available() else None
+    )
+    try:
+        yield
+    finally:
+        random.setstate(python_state)
+        np.random.set_state(numpy_state)
+        torch_module.random.set_rng_state(torch_cpu_state)
+        if torch_cuda_states is not None:
+            torch_module.cuda.set_rng_state_all(torch_cuda_states)
+
+
 try:
     import torch
     from stable_baselines3.common.callbacks import BaseCallback as _Base
@@ -486,12 +508,14 @@ if _SB3_AVAILABLE:
             verbose: int = 0,
             diversity: DiversityThresholds | None = None,
             prior_every: int | None = None,
+            isolate_eval_rng: bool = False,
         ) -> None:
             super().__init__(verbose=verbose)
             self.total_timesteps = int(total_timesteps)
             self.eval_every = int(eval_every)
             self.log_every = int(log_every)
             self._eval_fn = eval_fn
+            self._isolate_eval_rng = bool(isolate_eval_rng)
             self._log_path = Path(log_path) if log_path is not None else None
             self._eval_log_path = (
                 self._log_path.parent / "dashboard_train_prefix_evaluations.jsonl"
@@ -704,7 +728,11 @@ if _SB3_AVAILABLE:
             if int(self.num_timesteps) < self._next_eval:
                 return
             try:
-                self._last_eval = dict(self._eval_fn())
+                if self._isolate_eval_rng:
+                    with preserve_global_rng_state(torch):
+                        self._last_eval = dict(self._eval_fn())
+                else:
+                    self._last_eval = dict(self._eval_fn())
             except Exception as exc:
                 log.warning("Dashboard eval skipped: %s", exc)
                 return

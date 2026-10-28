@@ -1,0 +1,43 @@
+==========================================
+  Metric                        Value
+------------------------------------------
+  Activity Status              ACTIVE
+  Sharpe                      -1.1491
+  Sortino                     -1.6060
+  Calmar                      -0.8936
+  Max Drawdown                 11.22%
+  Total Return                -10.14%
+  Profit Factor                0.7947
+  Expectancy                 -30.0846
+  Win Rate                     45.10%
+  Total Trades                    337
+  Total PnL                 -10138.51
+  Avg Trade PnL              -30.0846
+  Max Consec Loss                  12
+  Turnover                   0.003387
+  Breach Count                      5
+  Breach Rate                   1.93%
+==========================================
+
+THESIS POLICY DIAGNOSTICS
+Policy: HybridClampedStdMultiInputPolicy; Variant D execution conditioning active: False
+Decision bars: 99492; NO_TRADE: 73298 (73.7%); opened trades: 337
+Selected ideas/timeframes: 4 / 9; invalid thesis choices: 0
+Eligible trade-thesis steps: 70716; NO_TRADE rate when eligible: 63.0%
+Mean thesis entropy: 0.562 nats
+Structural violations: 0 unique trades; SL side/floor/SD-level-1 = 0/0/0; TP wrong-side = 0; allowed lower-timeframe TP refs = 0; semantic violations: 0
+Monthly thesis entropy (see thesis_policy_metrics.json for detail):
+  2024-12: mean 0.469 nats (n=737)
+  2025-01: mean 0.557 nats (n=7734)
+  2025-02: mean 0.657 nats (n=7639)
+  2025-03: mean 0.537 nats (n=8211)
+  2025-04: mean 0.579 nats (n=8211)
+  2025-05: mean 0.523 nats (n=8421)
+  2025-06: mean 0.577 nats (n=8030)
+  2025-07: mean 0.524 nats (n=8646)
+  2025-08: mean 0.584 nats (n=8211)
+  2025-09: mean 0.598 nats (n=8421)
+  2025-10: mean 0.477 nats (n=8993)
+  2025-11: mean 0.475 nats (n=7473)
+  2025-12: mean 0.662 nats (n=8424)
+Raw decision trace: thesis_decisions.csv; per-trade open rows: trades.csv.

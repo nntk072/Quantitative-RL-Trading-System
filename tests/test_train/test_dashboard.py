@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import pickle
+import random
 from typing import Any
 
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 
 from decisioning.actions import build_action_schema
 from evaluation.metrics import calculate_metrics
@@ -318,6 +321,53 @@ def test_training_interval_sets_the_prior_and_eval_does_not() -> None:
     cb.model.num_timesteps = 300_000
     cb._apply_prior_interval()
     assert cb.model.policy.names == set()
+
+
+@pytest.mark.parametrize("raises", [False, True])
+def test_dashboard_eval_can_restore_global_rng_state(raises: bool) -> None:
+    class _Model:
+        num_timesteps = 10
+
+    def _consume_rng() -> dict[str, float]:
+        random.random()
+        np.random.random()
+        torch.rand(3)
+        if torch.cuda.is_available():
+            torch.rand(3, device="cuda")
+        if raises:
+            raise RuntimeError("expected evaluation failure")
+        return {"return_pct": 0.0}
+
+    if torch.cuda.is_available():
+        torch.cuda.get_rng_state_all()
+    python_state = random.getstate()
+    numpy_state = pickle.dumps(np.random.get_state())
+    torch_cpu_state = torch.random.get_rng_state().clone()
+    torch_cuda_states = (
+        [state.clone() for state in torch.cuda.get_rng_state_all()]
+        if torch.cuda.is_available()
+        else None
+    )
+
+    cb = TrainingDashboardCallback(
+        total_timesteps=10,
+        eval_every=10,
+        eval_fn=_consume_rng,
+        isolate_eval_rng=True,
+    )
+    cb.model = _Model()  # type: ignore[assignment]
+    cb.num_timesteps = 10
+    cb._maybe_eval()
+
+    assert random.getstate() == python_state
+    assert pickle.dumps(np.random.get_state()) == numpy_state
+    assert torch.equal(torch.random.get_rng_state(), torch_cpu_state)
+    if torch_cuda_states is not None:
+        assert all(
+            torch.equal(actual, expected)
+            for actual, expected in zip(torch.cuda.get_rng_state_all(), torch_cuda_states)
+        )
+    assert cb._eval_just_ran is (not raises)
 
 
 def test_prior_direction_coordinate_uses_schema_names_not_action_width(monkeypatch) -> None:

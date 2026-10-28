@@ -518,6 +518,7 @@ class SeedRunner:
                     log_path=seed_model_dir / "dashboard_log.csv",
                     log_every=int(dash.get("log_every", 100_000)),
                     prior_every=int(dash.get("prior_every", 100_000)),
+                    isolate_eval_rng=bool(dash.get("isolate_eval_rng", False)),
                 )
             )
 

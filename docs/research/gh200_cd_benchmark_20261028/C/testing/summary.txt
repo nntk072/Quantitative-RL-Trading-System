@@ -1,0 +1,40 @@
+==========================================
+  Metric                        Value
+------------------------------------------
+  Activity Status              ACTIVE
+  Sharpe                      -1.6506
+  Sortino                     -2.2597
+  Calmar                      -0.9137
+  Max Drawdown                 13.73%
+  Total Return                -10.23%
+  Profit Factor                0.7449
+  Expectancy                 -36.0058
+  Win Rate                     44.72%
+  Total Trades                    284
+  Total PnL                 -10225.65
+  Avg Trade PnL              -36.0058
+  Max Consec Loss                   7
+  Turnover                   0.003592
+  Breach Count                      2
+  Breach Rate                   0.98%
+==========================================
+
+THESIS POLICY DIAGNOSTICS
+Policy: HybridClampedStdMultiInputPolicy; Variant D execution conditioning active: False
+Decision bars: 79069; NO_TRADE: 59107 (74.8%); opened trades: 284
+Selected ideas/timeframes: 4 / 9; invalid thesis choices: 0
+Eligible trade-thesis steps: 57465; NO_TRADE rate when eligible: 65.3%
+Mean thesis entropy: 0.551 nats
+Structural violations: 0 unique trades; SL side/floor/SD-level-1 = 0/0/0; TP wrong-side = 0; allowed lower-timeframe TP refs = 0; semantic violations: 0
+Monthly thesis entropy (see thesis_policy_metrics.json for detail):
+  2026-01: mean 0.501 nats (n=7727)
+  2026-02: mean 0.628 nats (n=7639)
+  2026-03: mean 0.579 nats (n=8602)
+  2026-04: mean 0.497 nats (n=8211)
+  2026-05: mean 0.496 nats (n=8030)
+  2026-06: mean 0.506 nats (n=8421)
+  2026-07: mean 0.590 nats (n=8812)
+  2026-08: mean 0.575 nats (n=8211)
+  2026-09: mean 0.591 nats (n=8421)
+  2026-10: mean 0.513 nats (n=4692)
+Raw decision trace: thesis_decisions.csv; per-trade open rows: trades.csv.
