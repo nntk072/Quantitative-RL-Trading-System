@@ -1,0 +1,9 @@
+node=gpuarm1 arch=aarch64 job=21264865
+cc=missing
+gcc=missing
+clang=missing
+nvcc=missing
+ptxas=missing
+name, driver_version
+NVIDIA GH200 144G HBM3e, 580.173.02
+2.14.0+cu130 13.0 /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/__init__.py

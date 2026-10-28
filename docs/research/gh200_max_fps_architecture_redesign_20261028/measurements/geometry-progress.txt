@@ -1,0 +1,13 @@
+case=E8-env-timing started=2026-10-28T19:38:37+02:00 envs=8 rollout=2048 batch=512 timesteps=65536 backend=subproc shards=0 timed_env=yes
+case=E8-env-timing finished=2026-10-28T19:43:40+02:00 sstat=01:23:07|34677816K|0|170918703289|7150433511
+case=E16-fixed started=2026-10-28T19:43:40+02:00 envs=16 rollout=2048 batch=512 timesteps=65536 backend=subproc shards=0 timed_env=no
+case=E16-fixed finished=2026-10-28T19:47:18+02:00 sstat=01:30:12|34677816K|0|176993713077|7150433511
+case=E32-fixed started=2026-10-28T19:47:18+02:00 envs=32 rollout=2048 batch=512 timesteps=65536 backend=subproc shards=0 timed_env=no
+case=E32-fixed finished=2026-10-28T19:50:02+02:00 sstat=01:37:01|34677816K|0|185424454734|7150433511
+case=E64-fixed started=2026-10-28T19:50:02+02:00 envs=64 rollout=2048 batch=512 timesteps=65536 backend=subproc shards=0 timed_env=no
+case=E64-fixed finished=2026-10-28T19:52:12+02:00 sstat=01:44:34|34677816K|0|194496253407|7150433511
+case=E64-sharded16-fixed started=2026-10-28T19:52:12+02:00 envs=64 rollout=2048 batch=512 timesteps=65536 backend=sharded_bundle shards=16 timed_env=no
+case=E64-sharded16-fixed finished=2026-10-28T19:54:33+02:00 sstat=01:51:09|34677816K|0|202590517088|7196702729
+case=E64-high started=2026-10-28T19:54:33+02:00 envs=64 rollout=16384 batch=4096 timesteps=262144 backend=sharded_bundle shards=16 timed_env=no
+case=E64-high finished=2026-10-28T19:59:35+02:00 sstat=02:09:08|34677816K|0|227790197828|25967348602
+matrix_complete=2026-10-28T19:59:35+02:00

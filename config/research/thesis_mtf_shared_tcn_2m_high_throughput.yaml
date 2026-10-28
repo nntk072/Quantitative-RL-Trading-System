@@ -1,0 +1,19 @@
+# Variant E high-throughput geometry screen.
+# This is a separate PPO learning setup: the larger rollout and minibatch alter
+# optimizer-update frequency. Do not label it a behaviorally matched C/D run.
+
+env:
+  data_source: bundle
+  n_envs: 64
+  vector_backend: sharded_bundle
+  vector_shards: 16
+
+ppo:
+  n_steps: 16384 # aggregate rollout: 256 transitions per environment
+  batch_size: 4096
+  n_epochs: 15
+  total_timesteps: 2000000
+
+quality_execution:
+  requested_n_envs: 64
+  exact_n_envs: true

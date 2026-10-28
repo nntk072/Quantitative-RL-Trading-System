@@ -1,0 +1,8 @@
+source=/scratch/work/nguyenl37/Quantitative-RL-Trading-System commit=3fbbb74fdbe581807df38c1feaab7307839506f5 label=baseline repeat=2 started=2026-10-28T20:26:57+02:00
+label=baseline repeat=2 finished=2026-10-28T20:31:42+02:00 sstat=03:06:48|34677816K|0|297493633276|25967348602
+source=/scratch/work/nguyenl37/Quantitative-RL-Trading-System commit=3fbbb74fdbe581807df38c1feaab7307839506f5 label=baseline repeat=3 started=2026-10-28T20:31:42+02:00
+label=baseline repeat=3 finished=2026-10-28T20:36:28+02:00 sstat=03:23:25|34677816K|0|318289350824|25967348602
+source=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps commit=3fbbb74fdbe581807df38c1feaab7307839506f5 label=hotpath repeat=2 started=2026-10-28T20:36:28+02:00
+label=hotpath repeat=2 finished=2026-10-28T20:41:08+02:00 sstat=03:40:04|34677816K|0|345040520765|25967348602
+source=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps commit=3fbbb74fdbe581807df38c1feaab7307839506f5 label=hotpath repeat=3 started=2026-10-28T20:41:08+02:00
+label=hotpath repeat=3 finished=2026-10-28T20:45:50+02:00 sstat=03:56:59|34677816K|0|371792852509|25967348602

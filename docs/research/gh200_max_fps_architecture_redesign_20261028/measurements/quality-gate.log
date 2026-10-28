@@ -1,0 +1,16 @@
+started=2026-10-28T20:51:53+02:00 node=gpuarm1 arch=aarch64 job=21264865
+python=Python 3.12.15
+800 files already formatted
+All checks passed!
+Success: no issues found in 800 source files
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2
+collected 4 items
+
+tests/test_train/test_mtf_benchmark_configs.py ....                      [100%]
+
+============================== 4 passed in 2.76s ===============================
+gate_exit=0 finished=2026-10-28T20:52:58+02:00

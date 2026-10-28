@@ -94,3 +94,21 @@ def test_efg_encoder_ids_are_available_from_training_cli() -> None:
     ):
         with patch("sys.argv", ["train", "--arch", arch]):
             assert parse_train_args().arch == arch
+
+
+def test_high_throughput_config_is_separate_and_has_measured_geometry() -> None:
+    baseline = load_config(config_path="config/research/thesis_mtf_shared_tcn_2m.yaml")
+    high = load_config(config_path="config/research/thesis_mtf_shared_tcn_2m_high_throughput.yaml")
+
+    assert baseline.env.n_envs == 8
+    assert baseline.ppo.n_steps == 2048
+    assert baseline.ppo.batch_size == 512
+    assert high.env.data_source == "bundle"
+    assert high.env.n_envs == 64
+    assert high.env.vector_backend == "sharded_bundle"
+    assert high.env.vector_shards == 16
+    assert high.ppo.n_steps == 16384
+    assert high.ppo.n_steps // high.env.n_envs == 256
+    assert high.ppo.batch_size == 4096
+    assert high.ppo.n_epochs == 15
+    assert high.quality_execution.exact_n_envs is True

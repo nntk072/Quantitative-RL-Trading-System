@@ -1,0 +1,9 @@
+2026-10-28T20:04:57+02:00
+repo=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+commit=3fbbb74fdbe581807df38c1feaab7307839506f5
+tracked_patch_sha256=8e9e4f070220eb55312a0781bd607b8e317368baeaad1a1ff8112cbc74384eb8  -
+job=21264865 node=gpuarm1 arch=aarch64
+d5b21c5b227eccea9d73181ae5156ba0e97bb771ee23d4df30e71e93ba820ef3  config/research/thesis_mtf_shared_tcn_2m.yaml
+d85e0dc8fa241c66d4d727dd4be5d463fc58dbbbd53a43fd00d75100387b052e  /scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/shared_env/e9d5a63f864394ddad5acfb73f184444a6293295e1bbeff6313d1bc5d842a28c/manifest.json
+name, utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+NVIDIA GH200 144G HBM3e, 0 %, 31 MiB, 146831 MiB
