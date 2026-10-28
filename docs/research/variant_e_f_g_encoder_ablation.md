@@ -97,8 +97,10 @@ Attempt41 hardware: one NVIDIA GH200 144 GiB HBM3e, one gpuarm1 allocation with
   `_CausalTCN` branches, one four-head Transformer layer, masked pooling and the
   account embedding. D config resolves to `thesis_conditioned_v1`; C uses
   `thesis_hybrid_v1`.
-- E/F/G implementation and factory/worker/CLI registrations are local edits on
-  this checkout; see the implementation status and results below.
+- E/F/G implementation, config overlays and factory/worker/CLI registrations
+  are committed at `44ec0112`. Follow-up trace coverage and readiness reporting
+  are committed at `4b2e2cdf`; the baseline wording correction is at
+  `4b3b8955`.
 - Active C/D runtime repeats used allocation `21247526` (one GH200 on gpuarm1).
   They are 20,480-step warmed diagnostic probes, not policy-quality training.
   Results are recorded in scratch under
@@ -154,6 +156,16 @@ and architecture mismatch rejection. The focused GH200 encoder/model suite
 passed 65 tests. The follow-up MTF factory, bundle-worker, and variant resolver
 suite passed 42 tests.
 
+The resolved `resolved_config_yaml` captured in each attempt42 core-run JSON
+was parsed and compared after excluding only `agent.arch`. D/E/F/G were
+identical in every other resolved value, including data bundle/splits, action
+schema, policy distribution, PPO geometry, reward, risk, execution, callbacks
+and report settings. The resolved-config SHA-256 values are D
+`fa7d49acbdd0e367be29147cbe8cbc4f94f3a4839ce44e6adb9f9577894f4565`, E
+`7d15f4492769de29347ca5af0dbd888bc5cd61ad984f0932426cc73491a9a216`, F
+`909681319291b83eae61b9927c2138024e62093b1d7c8e40b60c1493b399db54`, and G
+`ee94f565624bfa28ec70f77e87cbc162e5f72d82bb1e6dfc6b7a182de1b7afe8`.
+
 The isolated PPO-core matrix completed with two 65,536-step repeats per arm on
 the same GH200, shared bundle, seed 42, 8 environments, aggregate rollout
 2,048, batch 512, 15 epochs, and two warm-up rollouts excluded from the rate.
@@ -162,12 +174,12 @@ callbacks. Exact per-run geometry, config, source, and bundle hashes are in the
 scratch JSON records under
 `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt42/core/`.
 
-| Arm | Encoder | Total policy params | Core steps/s, mean ± sample SD | Speedup vs D | Mean run seconds | Peak GPU allocated | Peak cgroup RAM |
-|---|---|---:|---:|---:|---:|---:|---:|
-| D | Independent nine-stream TCNs | 8,871,904 | 81.90 ± 2.41 | 1.00× | 791.96 | 1.11 GiB | 15.47 GiB |
-| E | Shared TCN | 1,326,240 | 209.16 ± 1.01 | 2.55× | 314.04 | 1.60 GiB | 14.70 GiB |
-| F | M1 TCN + history-aware HTF summaries | 1,433,312 | 184.82 ± 7.20 | 2.26× | 354.98 | 0.62 GiB | 14.71 GiB |
-| G | M1 TCN + latest-valid HTF state | 1,425,120 | 199.11 ± 9.95 | 2.43× | 330.22 | 0.62 GiB | 14.69 GiB |
+| Arm | Encoder | Total policy params | Core steps/s, mean ± sample SD | Speedup vs D | Mean rollout s | Mean PPO update s | Mean core-run wall s | Peak GPU allocated | Peak cgroup RAM |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| D | Independent nine-stream TCNs | 8,871,904 | 81.90 ± 2.41 | 1.00× | 480.34 | 270.20 | 791.96 | 1.11 GiB | 15.47 GiB |
+| E | Shared TCN | 1,326,240 | 209.16 ± 1.01 | 2.55× | 215.65 | 78.09 | 314.04 | 1.60 GiB | 14.70 GiB |
+| F | M1 TCN + history-aware HTF summaries | 1,433,312 | 184.82 ± 7.20 | 2.26× | 243.00 | 89.68 | 354.98 | 0.62 GiB | 14.71 GiB |
+| G | M1 TCN + latest-valid HTF state | 1,425,120 | 199.11 ± 9.95 | 2.43× | 226.54 | 82.41 | 330.22 | 0.62 GiB | 14.69 GiB |
 
 The repeated throughput measurement favors E, followed by G and F. The repeats
 are engineering measurements, not independent statistical samples. E's
@@ -204,12 +216,12 @@ aggregate rollouts, batch 512, 15 epochs, seed 42, and bundle manifest were
 used. These short pilots do not establish policy quality or long-horizon
 survival.
 
-| Arm | PPO learn seconds | Prefix evaluation seconds | Prepare assets/model seconds | Train phase wall seconds | Best checkpoint status | Prefix ending equity | NO_TRADE action rate | Distinct thesis categories | Invalid thesis selections | Mean thesis entropy (nats) |
-|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|
-| D | 394.26 | 206.01 | 40.28 | 399.16 | No active checkpoint | Not reported | 53.8% | 20 | 0 | 0.631 |
-| E | 197.13 | 95.02 | 40.93 | 202.03 | Active checkpoint available | $98,089.60 | 74.6% | 14 | 0 | 0.652 |
-| F | 232.74 | 115.96 | 40.59 | 237.65 | Active checkpoint available | $102,253.41 | 65.4% | 15 | 0 | 0.641 |
-| G | 218.57 | 107.55 | 40.95 | 223.47 | Active checkpoint available | $111,270.66 | 67.0% | 14 | 0 | 0.655 |
+| Arm | PPO learn seconds | Prefix evaluation seconds | Prepare assets/model seconds | Train phase wall seconds | Best checkpoint status | Executed prefix trades | Prefix ending equity | NO_TRADE action rate | Thesis categories | Invalid thesis selections | Mean thesis entropy (nats) |
+|---|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|
+| D | 394.26 | 206.01 | 40.28 | 399.16 | No active checkpoint | 0 | Not reported | 53.8% | 20 | 0 | 0.631 |
+| E | 197.13 | 95.02 | 40.93 | 202.03 | Active checkpoint available | 275 | $98,089.60 | 74.6% | 14 | 0 | 0.652 |
+| F | 232.74 | 115.96 | 40.59 | 237.65 | Active checkpoint available | 201 | $102,253.41 | 65.4% | 15 | 0 | 0.641 |
+| G | 218.57 | 107.55 | 40.95 | 223.47 | Active checkpoint available | 176 | $111,270.66 | 67.0% | 14 | 0 | 0.655 |
 
 Each prefix evaluation made 5,293 decisions; 69.5% of decisions had at least one
 eligible thesis and the p50/p95 eligible-candidate counts were 2/5. Every arm
@@ -256,14 +268,18 @@ not used to select a variant.
 
 | Arm | Encoder/config/checkpoint gates | Bounded policy screen | Economic/robustness gate | 2M disposition |
 |---|---|---|---|---|
-| D | Pass: original encoder and policy; checkpoint behavior retained | Technically viable, but this 20,480-step pilot produced no active best checkpoint | Not established | **NO-GO pending explicit authorization and full-run review** |
-| E | Pass: shared TCN, all nine streams, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories and zero invalid selections in the short prefix | Not established | **NO-GO pending explicit authorization and full-run review** |
-| F | Pass: history-aware HTF summaries, matched config, mask/gradient/save-load tests | Technically viable; 15 thesis categories and zero invalid selections in the short prefix | Not established | **NO-GO pending explicit authorization and full-run review** |
-| G | Pass: latest-valid HTF snapshot semantics, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories and zero invalid selections in the short prefix | Not established | **NO-GO pending explicit authorization and full-run review** |
+| D | Pass: original encoder and policy; checkpoint behavior retained | Pipeline completed, but no active best checkpoint and 0 executed trades in the short prefix; retain as a warning | Not established | **GO for seed-42 2M engineering run after fresh allocation; no quality claim** |
+| E | Pass: shared TCN, all nine streams, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories, 275 executed trades and zero invalid selections in the short prefix | Not established | **GO for seed-42 2M engineering run after fresh allocation; no quality claim** |
+| F | Pass: history-aware HTF summaries, matched config, mask/gradient/save-load tests | Technically viable; 15 thesis categories, 201 executed trades and zero invalid selections in the short prefix | Not established | **GO for seed-42 2M engineering run after fresh allocation; no quality claim** |
+| G | Pass: latest-valid HTF snapshot semantics, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories, 176 executed trades and zero invalid selections in the short prefix | Not established | **GO for seed-42 2M engineering run after fresh allocation; no quality claim** |
 
 These bounded pilots are not the sustained development-quality or robustness
 gate. The 2026 slice is report-only, and no untouched confirmatory period is
-claimed. E's faster core result does not make E the scientific winner.
+claimed. E's faster core result does not make E the scientific winner. D's
+zero executed trades in this short prefix is a material engineering warning;
+the plan itself treats a short zero-trade pilot as a warning rather than a
+scientific failure, so the longer matched run must report its opportunity
+funnel and actual trades.
 
 ### Callback-inclusive 2M runtime planning estimate
 
@@ -287,9 +303,11 @@ falls inside this run.
 
 These rows cannot be added into one 12-hour single-GH200 campaign: the four-arm
 matrix is estimated at about 24.9 aggregate GH200-hours including reserve.
-Allocation shape, campaign ordering and user GO must be settled before Stage B.
-Do not use this estimate as proof that the matched multi-arm campaign fits the
-current task's resource limit.
+The user's instruction on 2026-10-28 to finish this plan authorizes the
+seed-42 engineering benchmark in Stage B once the remaining correctness and
+quality gates pass. The estimate still requires multiple bounded allocations;
+it is not a claim that the four-arm matrix fits a single 12-GH200-hour request.
+Do not extend the results into a multi-seed quality claim.
 
 ### Raw evidence inventory
 
@@ -307,6 +325,7 @@ Raw profiling and test artifacts remain outside Git in
 | Full-tree format/lint/type gate | `full-quality-gate-final2.log` | `fc966fb4d632b015d91243d41e5165f68588d286a5bc173357566a96b5b7eb40` |
 | Focused integration test gate (138 tests before the added fixed-action regression) | `final-quality-gate2.log` | `244c227b5484790da805194ddca74d0349a843c8f57f75bda6252daf1de9b516` |
 | Final format/lint/type and focused test gate | `../attempt47_commit_gate.log` | `5ec9824604985c81492e181f46021ce46ee19e4e081329809bc77302442f9acd` |
+| Final gate with all-HTF-masked regression (142 tests) | `../attempt53_efg_all_masked_gate.log` | `14c018a909cce41e925ba416332a373431403d560cb39b6b970606ed1eb629cb` |
 | Fixed-action D/E/F/G simulator trace test | `../attempt45_parity_test2.log` | `6e4849227aa7f82a80ede312f18e734362f15eb50a9cd196447f003ad6ffbfbb` |
 
 The two repeated core-run JSON files per arm are in `core/{D,E,F,G}-r{1,2}.json`;
@@ -321,11 +340,14 @@ adding large run artifacts to Git.
 ### Final verification
 
 On the existing GH200 allocation, full-tree Ruff format and lint checks passed,
-Mypy passed all 800 source files, and the scoped encoder/environment/bundle/
-checkpoint/resolver suite passed 139 tests. The new trace test used the same
-fixed ten-step eligible PO3/M1-long selection followed by ten NO_TRADE actions
-across D/E/F/G, comparing observations, rewards, termination flags and info.
-It confirms environment trace parity for an eligible thesis action; the
-synthetic fixture does not require or claim a successful fill. GitHub Actions
-for `44ec01129c0276abdce6a228f8bd20b693d7f721` reported 15/15 checks passed.
-No 2M or 20M campaign was started.
+Mypy passed all 800 source files, and the scoped suite passed 142 tests. The
+added all-masked HTF test checks that E/F/G return finite, identical features
+when all eight HTF streams are masked, regardless of their masked payloads.
+The rerun log is `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt53_efg_all_masked_gate.log`.
+The trace test used the
+same fixed ten-step eligible PO3/M1-long selection followed by ten NO_TRADE
+actions across D/E/F/G, comparing observations, rewards, termination flags and
+info. It confirms environment transition parity for an eligible thesis
+action; the synthetic fixture does not require or claim an executed fill, so
+actual-fill parity remains unverified. GitHub Actions for
+`44ec01129c0276abdce6a228f8bd20b693d7f721` reported 15/15 checks passed.

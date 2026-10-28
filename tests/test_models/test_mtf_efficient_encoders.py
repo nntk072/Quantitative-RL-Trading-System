@@ -101,6 +101,28 @@ def test_efficient_mtf_encoder_batch_output_shapes(factory, batch_size: int) -> 
     assert torch.isfinite(output).all()
 
 
+@pytest.mark.parametrize("factory", _encoder_factories())
+def test_efficient_mtf_encoders_ignore_all_masked_htf_values(factory) -> None:
+    encoder = factory().eval()
+    observed = _observations(batch_size=3)
+    perturbed = {key: value.clone() for key, value in observed.items()}
+
+    # Keep M1 available but make every higher-timeframe stream unavailable.
+    # Changing masked HTF payloads must not change the resulting representation.
+    for seq_key, mask_key, _, _ in _STREAMS[1:]:
+        observed[mask_key].zero_()
+        perturbed[mask_key].zero_()
+        perturbed[seq_key] = torch.randn_like(perturbed[seq_key])
+
+    with torch.no_grad():
+        expected = encoder(observed)
+        actual = encoder(perturbed)
+
+    assert torch.isfinite(expected).all()
+    assert torch.isfinite(actual).all()
+    torch.testing.assert_close(actual, expected)
+
+
 def test_shared_tcn_uses_one_temporal_core_for_all_nine_streams() -> None:
     encoder = SharedTCNMTFReasoningEncoder(
         _space(),

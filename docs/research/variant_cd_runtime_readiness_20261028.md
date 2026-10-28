@@ -152,6 +152,20 @@ without silently changing the C/D research semantics. The pstats file, top-
 function summary and JSON are in
 `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt44/`.
 
+Attempt52 used PyTorch profiler on one D encoder forward with the real 512-row
+observation batch saved for attempt42's microbenchmark. Its masks had mixed
+valid lengths in M1 and a few D1 windows; the other seven HTF masks were full.
+That single profiled call recorded 17 `aten::item` / device-to-host scalar
+reads, 9 `aten::_unique2` reductions and 23 `aten::nonzero` operations. The
+profile showed 134.2 ms aggregate CPU operator time and 9.5 ms CUDA operator
+time for that instrumented forward. These are profiler-instrumented single-
+call measurements, not ordinary inference latency or a training FPS estimate.
+They confirm that valid-suffix grouping introduces frequent synchronization
+and dynamic grouping work. Raw output is
+`/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt52_profile_suffix_ops.log`;
+the bounded profiling script is alongside it. No production encoder code was
+changed.
+
 ## Estimated 2M wall time
 
 Linear scaling of the attempt-39 training wall times to 2,000,000 steps gives
