@@ -335,6 +335,24 @@ def test_mtf_reasoning_worker_preserves_mtf_and_thesis_observations(tmp_path: Pa
         "thesis_mask",
     } <= set(observation)
 
+    for arch in (
+        "mtf_shared_tcn_reasoning",
+        "mtf_m1_tcn_htf_lite_reasoning",
+        "mtf_m1_tcn_htf_snapshot_reasoning",
+    ):
+        variant_spec = EnvSpec.from_cfg(
+            config,
+            algo="ppo",
+            reward="dsr",
+            arch=arch,
+            bundle_dir=str(bundle_path),
+        )
+        variant_env = make_bundle_env(variant_spec)
+        variant_observation, _ = variant_env.reset(seed=41)
+        assert "seq_m3" in variant_observation
+        assert "mask_d1" in variant_observation
+        variant_env.close()
+
 
 @pytest.mark.parametrize("name", ["po3_ifvg", "distribution", "unrecognized"])
 def test_worker_recreates_named_strategy(name: str) -> None:

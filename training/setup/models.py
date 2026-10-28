@@ -123,6 +123,7 @@ def _training_architecture_provenance(
     encoder_spec = {
         "arch": arch,
         "encoder_class": type(extractor).__name__,
+        "encoder_parameter_count": sum(parameter.numel() for parameter in extractor.parameters()),
         "encoder_channels": getattr(extractor, "channels", None),
         "encoder_dilations": list(extractor.dilations) if hasattr(extractor, "dilations") else None,
         "encoder_kernel_size": getattr(extractor, "kernel_size", None),
@@ -133,6 +134,9 @@ def _training_architecture_provenance(
             if hasattr(extractor, key)
         },
     }
+    encoder_provenance = getattr(extractor, "encoder_provenance", None)
+    if isinstance(encoder_provenance, dict):
+        encoder_spec["encoder_specific"] = encoder_provenance
     result = {
         "algorithm": algo,
         **encoder_spec,

@@ -348,7 +348,14 @@ def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
     if raw:
         for key, value in dict(raw).items():
             windows[str(key)] = int(value)
-    return str(chosen) in {"mtf", "mtf_reasoning"}, windows
+    mtf_architectures = {
+        "mtf",
+        "mtf_reasoning",
+        "mtf_shared_tcn_reasoning",
+        "mtf_m1_tcn_htf_lite_reasoning",
+        "mtf_m1_tcn_htf_snapshot_reasoning",
+    }
+    return str(chosen) in mtf_architectures, windows
 
 
 def scheduled_session_closes(cfg: Any) -> dict[str, str]:

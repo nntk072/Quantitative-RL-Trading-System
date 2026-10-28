@@ -25,7 +25,8 @@ import platform
 import random
 import subprocess
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -98,6 +99,26 @@ def _process_tree_cpu_seconds() -> float:
     return process_tree_cpu_usec(process_ids) / 1_000_000.0
 
 
+@contextmanager
+def _time_method_calls(instance: Any, method_name: str, samples: list[float]) -> Iterator[None]:
+    """Time a class method without adding a closure to the serialized instance."""
+    owner = type(instance)
+    original_method = getattr(owner, method_name)
+
+    def timed_method(target: Any, *args: Any, **kwargs: Any) -> Any:
+        started = time.perf_counter()
+        try:
+            return original_method(target, *args, **kwargs)
+        finally:
+            samples.append(time.perf_counter() - started)
+
+    setattr(owner, method_name, timed_method)
+    try:
+        yield
+    finally:
+        setattr(owner, method_name, original_method)
+
+
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -140,6 +161,15 @@ def _parse_args() -> argparse.Namespace:
         type=int,
         default=None,
         help="Total env steps (default: resolved config ppo.total_timesteps).",
+    )
+    parser.add_argument(
+        "--warmup-rollouts",
+        type=int,
+        default=0,
+        help=(
+            "Initial complete PPO rollouts to exclude from the warmed PPO-core rate. "
+            "They still count toward total training transitions."
+        ),
     )
     parser.add_argument("--config", type=Path, default=None, help="Production base config.")
     parser.add_argument("--seed", type=int, default=42, help="Training RNG seed (default: 42).")
@@ -296,6 +326,23 @@ def _apply_profile_overrides(
         cfg.ppo.batch_size = batch_size
 
 
+def _scale_profile_config(cfg: Any, device: Any, arch: str) -> None:
+    """Use production's exact-geometry contract when scaling a benchmark config."""
+    requested_n_envs = int(cfg.env.n_envs)
+    exact_n_envs = bool(cfg.get("quality_execution", {}).get("exact_n_envs", False))
+    scale_training_cfg(
+        cfg,
+        device,
+        arch,
+        preserve_ppo_geometry=exact_n_envs,
+    )
+    if exact_n_envs and int(cfg.env.n_envs) != requested_n_envs:
+        raise ValueError(
+            "exact_n_envs benchmark config changed environment count during scaling: "
+            f"requested {requested_n_envs}, got {cfg.env.n_envs}"
+        )
+
+
 def _train_probe(
     n_envs: int | None,
     rollout_steps_per_env: int | None,
@@ -313,6 +360,7 @@ def _train_probe(
     measure_env_steps: bool = False,
     update_semaphore_dir: Path | None = None,
     update_semaphore_slots: int = 0,
+    warmup_rollouts: int = 0,
 ) -> dict[str, Any]:
     import torch
 
@@ -326,7 +374,7 @@ def _train_probe(
     configure_cuda_for_training(
         cudnn_benchmark=bool(cfg.get("compute", {}).get("cudnn_benchmark", True))
     )
-    scale_training_cfg(cfg, torch.device(device), arch)
+    _scale_profile_config(cfg, torch.device(device), arch)
     if matmul_precision is not None:
         torch.set_float32_matmul_precision(matmul_precision)
     _apply_profile_overrides(
@@ -438,6 +486,8 @@ def _train_probe(
         "update_calls": 0,
     }
     optimizer_timing = {"optimizer_steps": 0}
+    rollout_call_seconds: list[float] = []
+    update_call_seconds: list[float] = []
     original_train = model.train
     original_optimizer_step = model.policy.optimizer.step
 
@@ -471,12 +521,14 @@ def _train_probe(
             update_timing["update_compute_seconds"] += compute_elapsed
             update_timing["update_semaphore_wait_seconds"] += max(elapsed - compute_elapsed, 0.0)
             update_timing["update_calls"] += 1
+            update_call_seconds.append(elapsed)
 
     model.train = _timed_train
 
     cpu_seconds_before = _process_tree_cpu_seconds()
     started = time.monotonic()
-    model.learn(total_timesteps=total_timesteps, progress_bar=False)
+    with _time_method_calls(model, "collect_rollouts", rollout_call_seconds):
+        model.learn(total_timesteps=total_timesteps, progress_bar=False)
     if device == "cuda":
         torch.cuda.synchronize()
     training_seconds = time.monotonic() - started
@@ -502,6 +554,13 @@ def _train_probe(
     actual_env_steps = int(model.num_timesteps)
     update_seconds = float(update_timing["update_seconds"])
     rollout_and_framework_seconds = max(training_seconds - update_seconds, 0.0)
+    completed_rollouts = len(rollout_call_seconds)
+    measured_rollout_seconds = sum(rollout_call_seconds[warmup_rollouts:])
+    measured_update_seconds = sum(update_call_seconds[warmup_rollouts:])
+    measured_rollout_count = max(completed_rollouts - warmup_rollouts, 0)
+    measured_env_steps = measured_rollout_count * nominal_env_steps
+    measured_core_seconds = measured_rollout_seconds + measured_update_seconds
+    measured_core_fps = measured_env_steps / max(measured_core_seconds, 1e-9)
     process_tree_cpu_seconds = max(cpu_seconds_after - cpu_seconds_before, 0.0)
     average_cpu_cores = process_tree_cpu_seconds / max(training_seconds, 1e-9)
     allocated_cpus = int(os.environ.get("SLURM_CPUS_PER_TASK", "0")) or None
@@ -571,6 +630,16 @@ def _train_probe(
         if logical_envs_per_worker is not None
         else [1] * physical_worker_count,
         "total_timesteps": total_timesteps,
+        "warmup_rollouts_excluded_from_core_rate": warmup_rollouts,
+        "completed_rollouts": completed_rollouts,
+        "rollout_call_seconds": rollout_call_seconds,
+        "update_call_seconds": update_call_seconds,
+        "measured_rollout_count": measured_rollout_count,
+        "measured_env_steps_after_warmup": measured_env_steps,
+        "measured_rollout_seconds_after_warmup": measured_rollout_seconds,
+        "measured_update_seconds_after_warmup": measured_update_seconds,
+        "measured_ppo_core_seconds_after_warmup": measured_core_seconds,
+        "measured_ppo_core_steps_per_second": measured_core_fps,
         "rollout_steps_per_env": rollout_steps_per_env,
         "aggregate_rollout_size": nominal_env_steps,
         "n_epochs": int(model.n_epochs),
@@ -663,11 +732,12 @@ def main() -> None:
         or (args.rollout_steps_per_env is not None and args.rollout_steps_per_env < 1)
         or (args.batch_size is not None and args.batch_size < 1)
         or (args.total_timesteps is not None and args.total_timesteps < 1)
+        or args.warmup_rollouts < 0
         or args.update_semaphore_slots < 0
     ):
         raise SystemExit(
             "n_envs, rollout steps, batch size, and total_timesteps must be positive; "
-            "update semaphore slots cannot be negative"
+            "warmup rollouts and update semaphore slots cannot be negative"
         )
     if (args.update_semaphore_slots > 0) != (args.update_semaphore_dir is not None):
         raise SystemExit(
@@ -690,6 +760,7 @@ def main() -> None:
         args.measure_env_steps,
         args.update_semaphore_dir,
         args.update_semaphore_slots,
+        args.warmup_rollouts,
     )
     print(json.dumps(report, indent=2, default=_json_default))
 

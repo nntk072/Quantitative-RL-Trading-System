@@ -362,30 +362,36 @@ class LegacyFourToFiveActionAdapter:
 
 
 def encoder_for(arch: str) -> type[Any]:
-    """Feature extractor selected by ``agent.arch``. Unknown names stay on the TCN."""
+    """Resolve a declared encoder ID, failing closed for unknown architecture names."""
     from models.encoders import (
         GRUEncoder,
         LiteTCNEncoder,
+        M1TCNHTFLiteReasoningEncoder,
+        M1TCNHTFSnapshotReasoningEncoder,
         MTFEncoder,
         MTFReasoningEncoder,
+        SharedTCNMTFReasoningEncoder,
         TCNEncoder,
         TCNRegimeEncoder,
         TransformerEncoder,
     )
 
-    if arch == "tcn_regime":
-        return TCNRegimeEncoder
-    if arch == "transformer":
-        return TransformerEncoder
-    if arch == "gru":
-        return GRUEncoder
-    if arch == "mtf":
-        return MTFEncoder
-    if arch == "mtf_reasoning":
-        return MTFReasoningEncoder
-    if arch == "lite_tcn":
-        return LiteTCNEncoder
-    return TCNEncoder
+    encoders = {
+        "tcn": TCNEncoder,
+        "tcn_regime": TCNRegimeEncoder,
+        "transformer": TransformerEncoder,
+        "gru": GRUEncoder,
+        "mtf": MTFEncoder,
+        "mtf_reasoning": MTFReasoningEncoder,
+        "lite_tcn": LiteTCNEncoder,
+        "mtf_shared_tcn_reasoning": SharedTCNMTFReasoningEncoder,
+        "mtf_m1_tcn_htf_lite_reasoning": M1TCNHTFLiteReasoningEncoder,
+        "mtf_m1_tcn_htf_snapshot_reasoning": M1TCNHTFSnapshotReasoningEncoder,
+    }
+    try:
+        return encoders[arch]
+    except KeyError as exc:
+        raise ValueError(f"unknown encoder architecture: {arch!r}") from exc
 
 
 def validate_model_architecture(model: Any, expected_arch: str, *, use_vae: bool = False) -> None:
@@ -400,7 +406,16 @@ def validate_model_architecture(model: Any, expected_arch: str, *, use_vae: bool
         )
     architecture_matches = (
         type(extractor) is expected
-        if expected_arch in {"tcn", "tcn_regime", "mtf", "mtf_reasoning"}
+        if expected_arch
+        in {
+            "tcn",
+            "tcn_regime",
+            "mtf",
+            "mtf_reasoning",
+            "mtf_shared_tcn_reasoning",
+            "mtf_m1_tcn_htf_lite_reasoning",
+            "mtf_m1_tcn_htf_snapshot_reasoning",
+        }
         else isinstance(extractor, expected)
     )
     if not architecture_matches:
@@ -510,7 +525,14 @@ def build_agent(
             "account_dim": account_dim,
         }
     else:
-        if arch in {"mtf", "mtf_reasoning"} and "seq_m5" not in env.observation_space.spaces:
+        mtf_architectures = {
+            "mtf",
+            "mtf_reasoning",
+            "mtf_shared_tcn_reasoning",
+            "mtf_m1_tcn_htf_lite_reasoning",
+            "mtf_m1_tcn_htf_snapshot_reasoning",
+        }
+        if arch in mtf_architectures and "seq_m5" not in env.observation_space.spaces:
             raise ValueError(f"arch {arch!r} requires an environment built with mtf=True")
         extractor_cls = encoder_for(arch)
 
@@ -526,6 +548,30 @@ def build_agent(
                 attention_heads=int(reasoning_cfg.get("attention_heads", 4)),
                 feedforward_dim=int(reasoning_cfg.get("feedforward_dim", 256)),
                 dropout=float(reasoning_cfg.get("dropout", 0.1)),
+            )
+        elif arch in {
+            "mtf_shared_tcn_reasoning",
+            "mtf_m1_tcn_htf_lite_reasoning",
+            "mtf_m1_tcn_htf_snapshot_reasoning",
+        }:
+            reasoning_cfg = agent_cfg.get(arch, {})
+            latent_dim = int(reasoning_cfg.get("latent_dim", 128))
+            extractor_kwargs = dict(
+                latent_dim=latent_dim,
+                channels=tuple(
+                    int(value) for value in reasoning_cfg.get("channels", [128, 128, 256, 256])
+                ),
+                kernel_size=int(reasoning_cfg.get("kernel_size", 3)),
+                dropout=float(reasoning_cfg.get("dropout", 0.1)),
+                account_dim=account_dim,
+                attention_heads=int(reasoning_cfg.get("attention_heads", 4)),
+                feedforward_dim=int(reasoning_cfg.get("feedforward_dim", 256)),
+                adapter_dim=int(
+                    reasoning_cfg.get(
+                        "adapter_dim",
+                        64 if arch == "mtf_shared_tcn_reasoning" else 32,
+                    )
+                ),
             )
         elif arch == "lite_tcn":
             lite_cfg = agent_cfg.get("lite_tcn", {})

@@ -253,7 +253,14 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         fill_delay_ms=int(execution.get("fill_delay_ms", 0)),
         randomized_fill_latency_ms=float(execution.get("randomized_fill_latency_ms", 0.0)),
         max_tick_quote_wait_ms=int(execution.get("max_tick_quote_wait_ms", 60_000)),
-        mtf=spec.arch in {"mtf", "mtf_reasoning"},
+        mtf=spec.arch
+        in {
+            "mtf",
+            "mtf_reasoning",
+            "mtf_shared_tcn_reasoning",
+            "mtf_m1_tcn_htf_lite_reasoning",
+            "mtf_m1_tcn_htf_snapshot_reasoning",
+        },
         mtf_windows=windows,
         regime_observation=regime_observation,
         target_timeframes=tuple(

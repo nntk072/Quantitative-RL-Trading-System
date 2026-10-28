@@ -1,0 +1,39 @@
+# Variant E: encoder-only treatment against Variant D.
+compute:
+  cudnn_benchmark: false
+
+env:
+  n_envs: 8
+  strategy_actions: true
+  thesis_actions: true
+  agent_direction_control: false
+
+features:
+  include_strategy_state: true
+  entry_ideas:
+    enabled: true
+
+agent:
+  arch: mtf_shared_tcn_reasoning
+
+ppo:
+  policy_distribution: thesis_conditioned_v1
+  actor_arch: shared
+  thesis_conditioned:
+    embedding_dim: 32
+    execution_hidden_dim: 128
+  n_steps: 2048
+  batch_size: 512
+  n_epochs: 15
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01
+  ent_coef_continuous: 0.001
+  total_timesteps: 2000000
+  checkpoint_freq: 250000
+
+quality_execution:
+  requested_n_envs: 8
+  exact_n_envs: true

@@ -480,7 +480,7 @@ encoder:
 
 agent:
   type: "ppo"                 # "ppo" | "sac"
-  arch: "tcn"                 # tcn | lite_tcn | gru | transformer | mtf | mtf_reasoning
+  arch: "tcn"                 # encoder architecture ID selected by a run config
   lite_tcn:
     channels: 96
     dilations: [1, 4, 10]
@@ -492,6 +492,30 @@ agent:
     attention_heads: 4
     feedforward_dim: 256
     dropout: 0.1
+  mtf_shared_tcn_reasoning:
+    latent_dim: 128
+    channels: [128, 128, 256, 256]
+    kernel_size: 3
+    dropout: 0.1
+    adapter_dim: 64
+    attention_heads: 4
+    feedforward_dim: 256
+  mtf_m1_tcn_htf_lite_reasoning:
+    latent_dim: 128
+    channels: [128, 128, 256, 256]
+    kernel_size: 3
+    dropout: 0.1
+    adapter_dim: 32
+    attention_heads: 4
+    feedforward_dim: 256
+  mtf_m1_tcn_htf_snapshot_reasoning:
+    latent_dim: 128
+    channels: [128, 128, 256, 256]
+    kernel_size: 3
+    dropout: 0.1
+    adapter_dim: 32
+    attention_heads: 4
+    feedforward_dim: 256
   head_arch:
     tcn: [256, 128]
     lite_tcn: [128, 64]
@@ -499,6 +523,9 @@ agent:
     transformer: [256, 128]
     mtf: [256, 128]
     mtf_reasoning: [256, 128]
+    mtf_shared_tcn_reasoning: [256, 128]
+    mtf_m1_tcn_htf_lite_reasoning: [256, 128]
+    mtf_m1_tcn_htf_snapshot_reasoning: [256, 128]
   use_narrative: false        # true to condition on the VAE narrative embedding
 
 compute:

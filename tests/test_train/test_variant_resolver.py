@@ -14,6 +14,7 @@ import pytest
 import yaml
 
 from training.configuration.variant_resolution import (
+    ARCHS,
     PREBUILT_FEATURE_CACHES,
     PROJECT_ROOT,
     VariantError,
@@ -25,6 +26,14 @@ from training.configuration.variant_resolution import (
 from training.configuration.variant_risk_policy import load_variant_ftmo_config
 
 LAUNCHER = PROJECT_ROOT / "scripts" / "research" / "frozen-launches" / "train_one_variant.sh"
+
+
+def test_e_f_g_architectures_are_registered_for_variant_resolution() -> None:
+    assert {
+        "mtf_shared_tcn_reasoning",
+        "mtf_m1_tcn_htf_lite_reasoning",
+        "mtf_m1_tcn_htf_snapshot_reasoning",
+    }.issubset(ARCHS)
 
 
 def _all_names() -> list[str]:

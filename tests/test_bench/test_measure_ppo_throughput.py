@@ -12,7 +12,9 @@ from scripts.research.benchmarks.measure_ppo_throughput import (
     _json_default,
     _prepare_bundle,
     _process_tree_cpu_seconds,
+    _scale_profile_config,
     _StepTimingWrapper,
+    _time_method_calls,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -60,6 +62,33 @@ def test_batch_size_override_is_applied_after_hardware_scaling() -> None:
     assert cfg.ppo.batch_size == 8192
 
 
+def test_exact_quality_geometry_is_preserved_during_probe_scaling(monkeypatch) -> None:
+    cfg = OmegaConf.create(
+        {
+            "env": {"n_envs": 8},
+            "ppo": {"n_steps": 2048, "batch_size": 512},
+            "quality_execution": {"exact_n_envs": True},
+        }
+    )
+    observed: dict[str, bool] = {}
+
+    def fake_scale(_cfg, _device, _arch, *, preserve_ppo_geometry=False):
+        observed["preserve_ppo_geometry"] = preserve_ppo_geometry
+        if not preserve_ppo_geometry:
+            cfg.env.n_envs = 64
+            cfg.ppo.n_steps = 8192
+
+    monkeypatch.setattr(
+        "scripts.research.benchmarks.measure_ppo_throughput.scale_training_cfg",
+        fake_scale,
+    )
+    _scale_profile_config(cfg, "cuda", "mtf_reasoning")
+
+    assert observed["preserve_ppo_geometry"] is True
+    assert cfg.env.n_envs == 8
+    assert cfg.ppo.n_steps == 2048
+
+
 def test_numpy_scalars_are_json_serializable() -> None:
     assert _json_default(np.int64(7)) == 7
     assert _json_default(np.float32(1.5)) == 1.5
@@ -79,6 +108,22 @@ def test_environment_step_timer_records_wrapped_steps() -> None:
     assert metrics["steps"] == 1
     assert metrics["seconds"] >= 0.0
     env.close()
+
+
+def test_class_method_timer_restores_class_without_mutating_instance() -> None:
+    class Meter:
+        def increment(self, value: int) -> int:
+            return value + 1
+
+    meter = Meter()
+    calls: list[float] = []
+    with _time_method_calls(meter, "increment", calls):
+        assert meter.increment(4) == 5
+        assert "increment" not in vars(meter)
+
+    assert len(calls) == 1
+    assert calls[0] >= 0.0
+    assert meter.increment(8) == 9
 
 
 def test_variant_config_uses_production_strategy_merge_and_cli_override(

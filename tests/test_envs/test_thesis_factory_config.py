@@ -20,7 +20,7 @@ from learning.rl.hybrid import (
     ThesisConditionedClampedStdMultiInputPolicy,
 )
 from models.encoders import MTFReasoningEncoder
-from simulation.environment.factory import build_eval_common, make_env
+from simulation.environment.factory import build_eval_common, make_env, mtf_settings
 from tests.test_envs.test_account_normalization import _make_bars, _make_features
 from trading.strategies import PO3IFVGStrategy
 
@@ -42,6 +42,23 @@ def test_thesis_observation_mode_defaults_off() -> None:
     eval_common, *_ = build_eval_common(config, arch="tcn")
 
     assert eval_common["thesis_actions"] is False
+
+
+@pytest.mark.parametrize(
+    "arch",
+    [
+        "mtf_shared_tcn_reasoning",
+        "mtf_m1_tcn_htf_lite_reasoning",
+        "mtf_m1_tcn_htf_snapshot_reasoning",
+    ],
+)
+def test_e_f_g_architectures_enable_mtf_observations(arch: str) -> None:
+    config = OmegaConf.create({"agent": {"arch": arch}})
+
+    use_mtf, windows = mtf_settings(config, arch)
+
+    assert use_mtf is True
+    assert set(windows) == {"m3", "m5", "m10", "m15", "m30", "h1", "h4", "d1"}
 
 
 def test_mtf_reasoning_research_overlay_is_opt_in_and_complete() -> None:
