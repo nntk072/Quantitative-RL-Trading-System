@@ -1,5 +1,10 @@
 # Variant C/D 100k checkpoint replay: full 2025 training split
 
+**Pilot lineage:** attempt21 (these figures apply only to its checkpoints).
+The later attempt32/attempt35 train-and-report-only replay uses different
+checkpoints, callback scheduling, and RNG isolation; its results are reported
+separately in [`variant_cd_runtime_readiness_20261028.md`](variant_cd_runtime_readiness_20261028.md).
+
 **Run date:** 2026-10-28  
 **Purpose:** Diagnose the two matched 100k production-path checkpoints and measure the cost of a full training-split replay.  
 **Result class:** Exploratory, unselected training-only evidence. This is not a 2M benchmark, a full training run, or a confirmatory test result.
@@ -73,7 +78,10 @@ These are one-seed, short-training diagnostics. The full-replay wrapper did not 
 - Shared training-bundle manifest SHA-256: `d85e0dc8fa241c66d4d727dd4be5d463fc58dbbbd53a43fd00d75100387b052e`.
 - C checkpoint SHA-256: `10d26b0499c5057c66f999127ff11ef546f45823411855b4747a7d7bc2f91cf0`.
 - D checkpoint SHA-256: `bccec331ff62364c90c154deddc85091e3f0ec65fdeb591a479e538e55041ffd`.
+- C resolved-config SHA-256: `79acdb13af243ae4cf84baca74cca197ed9852c9bce8c8f57de1d6b827d831b8`.
+- D resolved-config SHA-256: `da9f6cb123ae77aecf28ea9e618e1e2e9b2bfbad9dad32d4772792b1f1fedc78`.
 - The checkpoints were produced from source SHA `16001061f1524ee35dfabb755cf4901d53a9cfbf`; this replay ran on repository `main` at `d166b92` (the intervening commit changed the throughput launcher, its tests, and documentation, not policy or environment code).
+- This attempt used the canonical dashboard cadence then present in its resolved config (`eval_every=100000`); `isolate_eval_rng` was unset and therefore false. The later attempt32 lineage deferred dashboard evaluation while keeping its prior cadence and enabled evaluation RNG isolation.
 - No 2026 test/report-only data was evaluated.
 
 Machine-readable replay JSON and full equity/trade ledgers remain in the preserved scratch campaign directory:

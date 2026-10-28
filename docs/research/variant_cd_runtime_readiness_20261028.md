@@ -9,8 +9,11 @@
 The 100k C/D pilots and their full 2025 training-split replays are complete.
 Both policies traded, but both failed the configured account-survival gate in
 the replay. The policies and configs remain a matched experimental pair; no
-architecture or action-schema changes are proposed here. A fresh 2M C/D run
-remains gated on the user's explicit acceptance.
+architecture or action-schema changes are proposed here. The user accepted the
+seed-42 matched 2M C/D benchmark **after two GH200s are actually available**.
+This is a resource-contingent approval: do not start C/D on the current single
+GH200 allocation. The corrected runtime estimate below replaces the earlier
+10.05-hour estimate quoted with the acceptance request.
 
 ## Existing 100k checkpoint train and report-only replay
 
@@ -51,6 +54,27 @@ The attempt-35 ledger, report tables, and plots are preserved at
 `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt35/{C,D}/report/`.
 Each arm has separate `training/equity.png` and `testing/equity.png`; the test
 figures are report-only exploratory artifacts.
+
+### Reconcile the two 100k replay reports
+
+The standalone training-only report linked below and the attempt-35 train/test
+table above are **different pilot lineages**, not duplicate replays of the
+same checkpoint. Do not merge their metrics or present one as a correction of
+the other.
+
+| Evidence | Standalone training-only report | Attempt-35 train/test report above |
+|---|---|---|
+| Training run | attempt21 | attempt32, replayed by attempt35 |
+| Source | `16001061f1524ee35dfabb755cf4901d53a9cfbf`, clean | `ce9c30472e9402b50d8ca84cf8f29704436e0d0a` plus dirty patch SHA-256 `346718bb40ca211b6f6ff6c3e05e50c4062872a0e667603473c2c6fa88305e72` |
+| C checkpoint / config SHA-256 | `10d26b0499c5057c66f999127ff11ef546f45823411855b4747a7d7bc2f91cf0` / `79acdb13af243ae4cf84baca74cca197ed9852c9bce8c8f57de1d6b827d831b8` | `feef2d48f80b381147dac6ebbe92a9f7ec03fa1999719a5c1ff6060bd77afdc6` / `bdbd72e6cefb6c0a5ed1b0cc4170b645bb925f4d9b5e26b89bf8c6fa1251bfee` |
+| D checkpoint / config SHA-256 | `bccec331ff62364c90c154deddc85091e3f0ec65fdeb591a479e538e55041ffd` / `da9f6cb123ae77aecf28ea9e618e1e2e9b2bfbad9dad32d4772792b1f1fedc78` | `2b6c36a2574125d70f643c3726a757d6a99d7af097eca97a43f4317838c8f893` / `3e0e785961ac8cd1b1a0831593e45e1c6b1788c89f252a0b57d580525c9d4f3e` |
+| Dashboard / RNG schedule | `eval_every=100000`; `isolate_eval_rng` unset (effective false) | dashboard replay deferred (`eval_every=0`), prior cadence retained at 100000, `isolate_eval_rng=true`; best-prefix selection remained online |
+| Replay scope | 2025 training split only | 2025 training plus exposed 2026 report-only interval |
+
+The checkpoints therefore differ both by model weights and by training callback
+schedule/RNG isolation. The attempt-35 table supplies the later, broader replay
+for its own attempt32 checkpoints; the standalone report remains valid for
+attempt21 only. Neither is the result of the proposed 2M comparison.
 
 ## Runtime measurements
 
@@ -152,6 +176,41 @@ without silently changing the C/D research semantics. The pstats file, top-
 function summary and JSON are in
 `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt44/`.
 
+Attempt55 adds the missing C-side stack profile using the same 20,480-step
+diagnostic, seed 42, bundle, PPO geometry and benchmark-source hash. Current
+main and attempt44's source differ only by documentation; the training,
+simulation, model, and learning files are unchanged. Both profiles use the same
+GH200 model, but were collected in separate runs with 48 CPUs allocated for C
+and 64 for D. Their profiler-instrumented elapsed times are therefore useful
+for hot-path comparison, not as a clean throughput A/B result.
+
+| Measure | C, attempt55 | D, attempt44 |
+|---|---:|---:|
+| PPO `.learn()` wall | 258.4 s | 275.5 s |
+| Profiled rollout/framework | 170.8 s | 178.1 s |
+| Profiled PPO updates | 87.6 s | 97.3 s |
+| `MTFReasoningEncoder.forward` cumulative | 168.1 s | 171.7 s |
+| `_encode_valid_suffix` cumulative | 153.9 s | 157.7 s |
+| `torch.conv1d` self time | 63.4 s | 64.8 s |
+| `posix.read` self / `SubprocVecEnv.step_wait` | 19.6 / 19.0 s | 20.9 / 20.2 s |
+| Mean trainer process-tree CPU | 1.19 cores | 1.17 cores |
+| Allocated CPUs | 48 | 64 |
+| Peak allocated GPU memory | 1.09 GiB | 1.10 GiB |
+
+The C core measured 77.33 steps/s after warm-up versus D's 71.87 steps/s in
+these individual profiled attempts. This direction is consistent with the
+three-repeat unprofiled diagnostic (88.07 versus 81.79 steps/s), but one
+profiled run per arm does not establish a significant architecture or policy
+effect. The actionable diagnosis is more stable: both arms spend most of the
+profiled rollout time in the shared nine-stream encoder's valid-suffix/TCN
+work; IPC is measurable but substantially smaller, and CPU allocation,
+aggregate host CPU use, and GPU memory do not indicate resource exhaustion.
+Do not modify the matched C/D architecture as a runtime shortcut before the
+approved benchmark.
+
+Attempt55 artifacts are under
+`/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt55_cprofile/`.
+
 Attempt52 used PyTorch profiler on one D encoder forward with the real 512-row
 observation batch saved for attempt42's microbenchmark. Its masks had mixed
 valid lengths in M1 and a few D1 windows; the other seven HTF masks were full.
@@ -168,24 +227,44 @@ changed.
 
 ## Estimated 2M wall time
 
-Linear scaling of the attempt-39 training wall times to 2,000,000 steps gives
-approximately **6.54 hours for C** and **6.40 hours for D** on separate GH200s.
-These estimates include the measured single best-prefix replay, but not setup,
-full reporting, or chronological replays.
+The previous 10.05-hour estimate omitted the dashboard replay cadence enabled
+by the current canonical config. It is superseded below.
 
-The full 2025 train replay previously took 50.5 minutes per arm. A 2026 replay
-is estimated at 40.1 minutes per arm from its bar count; that duration has not
-been measured. If C and D train and replay in parallel on two GH200s, the
-estimated critical path is about 8.04 hours before final export. A 25% runtime
-reserve raises the estimate to about 10.05 hours, so one 12-hour paired
-allocation appears feasible based on measured throughput. This estimate is
-not a guarantee; preserve several minutes for setup, result checks, and
-checkpoint/report writes.
+The current base config sets `training.dashboard.eval_every=100000`,
+`prior_every=100000`, and `isolate_eval_rng=false`; the C/D 2M overlays do not
+override those keys. A fresh canonical run therefore performs dashboard
+evaluation during training, unlike attempt39's throughput profile (dashboard
+disabled) and unlike attempt32 (dashboard deferred, RNG isolated). Do not
+silently alter these settings to make the estimate fit.
 
-## Required controls before accepting a 2M run
+Using attempt39's measured 100,352-step wall times and adding twenty observed
+dashboard replay costs from attempt21 gives a conservative training estimate
+of **7.72 hours for C** and **7.54 hours for D**. Attempt21's own measured
+`learn()`/best-evaluation timing projects a lower **6.06/6.19-hour** training
+estimate at the same cadence. This spread reflects distinct measured
+throughput lineages and should be treated as runtime uncertainty, not as two
+different config predictions.
 
-1. Preserve the matched C/D configs, seed, bundle identity, and eight-env
-   geometry. Do not adopt E/F/G encoders inside this pair.
+The 2025 full-split replay took about 50.5 minutes per arm. A 2026 replay is
+estimated at 40.1 minutes per arm from its bar count; this duration has not
+been measured. Adding both final replays and a 25% reserve yields a paired
+critical-path estimate of **about 9.46–11.54 hours** when C and D run in
+parallel. The upper estimate leaves little margin inside a 12-hour allocation;
+setup, reporting, checkpoint verification, or slower-than-measured execution
+could exceed it. At the documented cap of 12 GH200 GPU-hours per request, a
+two-GH200 request covers six hours of wall time, so this estimate requires a
+second allocation window queued with an explicit non-overlapping dependency
+if the first window is six hours. This is a planning range, not authorization
+or a guarantee.
+
+## Required controls before starting the accepted 2M run
+
+1. The user has approved this seed-42 comparison once two GH200s are
+   available. Preserve the matched C/D configs (C SHA-256
+   `fa27bb63debc77cf3461ff29e385b0d2fc80a7c121a7cc4a908ae9c10298b569`; D
+   SHA-256 `d97017d8c354cdb5b24544359c50396f7a53096429f21c6f502d9325a9079f39`),
+   bundle identity, and eight-env geometry. Do not adopt E/F/G encoders inside
+   this pair.
 2. Keep the observed 100k account-survival failures visible in the report. A
    larger run may clarify learning behavior; it must not be described as
    passing survival unless its full training replay does so.
@@ -234,8 +313,22 @@ now records the parent as `TIMEOUT` after 12:05:04; this was scheduler
 termination, not a manual cancellation. At 16:47 EET, gpuarm1 had one GH200
 allocated to another user's job and one available, with 8/144 CPUs and 64G of
 1.1T host memory allocated; gpuarm2 was still drained and not responding. No
-user-owned training or evaluation allocation remained. A two-GH200 request is
-not currently eligible, so none was submitted.
+user-owned training or evaluation allocation remained. At 18:11 EET, job
+`21264865` was RUNNING on gpuarm1 at 1:04 elapsed of 6:00, using one GH200,
+48 CPUs and 256 GiB. Another user's job `21261802` held gpuarm1's second GH200
+at 3:00 elapsed of 4:00, with 8 CPUs and 64 GiB. The node had 56/144 CPUs
+allocated and 327,680/1,100,000 MiB host memory allocated. gpuarm2 remained
+`DOWN*` (not schedulable). Neither two free GPUs nor a paired C/D allocation
+was currently available; C/D remains unstarted.
+
+At 18:16 EET, the live inventory still showed job `21264865` RUNNING on
+gpuarm1 (1 GH200, 48 CPUs, 256 GiB; 1:09 elapsed of 6:00). The second GH200
+remained assigned to another user's job `21261802` (8 CPUs, 64 GiB; 3:05 of
+4:00). gpuarm1 had 56/144 CPUs allocated and 327,680/1,100,000 MiB host RAM
+allocated, leaving 88 CPUs and 772,320 MiB unallocated. Both configured GH200s
+were allocated. gpuarm2 remained `DOWN+NOT_RESPONDING`, with no jobs and no
+schedulable CPUs or GPUs. No new request was made; the matched C/D campaign
+still lacks two simultaneously available GH200s.
 
 ## Evidence paths
 
@@ -243,6 +336,9 @@ not currently eligible, so none was submitted.
   `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt39/`
 - Repeated core throughput and profiler outputs:
   `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt41/core/`
+- Matched C/D runtime stack profiles:
+  D: `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt44/`; C:
+  `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt55_cprofile/`
 - Earlier full training replay and complete trade/equity ledgers:
   `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt23/`
 - Matched 100k train/test replay report:

@@ -268,10 +268,10 @@ not used to select a variant.
 
 | Arm | Encoder/config/checkpoint gates | Bounded policy screen | Economic/robustness gate | 2M disposition |
 |---|---|---|---|---|
-| D | Pass: original encoder and policy; checkpoint behavior retained | Pipeline completed, but no active best checkpoint and 0 executed trades in the short prefix; retain as a warning | Not established | **GO for seed-42 2M engineering run after fresh allocation; no quality claim** |
-| E | Pass: shared TCN, all nine streams, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories, 275 executed trades and zero invalid selections in the short prefix | Not established | **GO for seed-42 2M engineering run after fresh allocation; no quality claim** |
-| F | Pass: history-aware HTF summaries, matched config, mask/gradient/save-load tests | Technically viable; 15 thesis categories, 201 executed trades and zero invalid selections in the short prefix | Not established | **GO for seed-42 2M engineering run after fresh allocation; no quality claim** |
-| G | Pass: latest-valid HTF snapshot semantics, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories, 176 executed trades and zero invalid selections in the short prefix | Not established | **GO for seed-42 2M engineering run after fresh allocation; no quality claim** |
+| D | Pass: original encoder and policy; checkpoint behavior retained | Pipeline completed, but no active best checkpoint and 0 executed trades in the short prefix; retain as a warning | Not established | **HOLD: 10.82-hour estimate lacks substantial 12-hour margin; opportunity/trade viability unresolved** |
+| E | Pass: shared TCN, all nine streams, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories, 275 executed trades and zero invalid selections in the short prefix | Not established | **HOLD: runtime estimate passes duration screening, but no 2M evidence and explicit Stage B GO required** |
+| F | Pass: history-aware HTF summaries, matched config, mask/gradient/save-load tests | Technically viable; 15 thesis categories, 201 executed trades and zero invalid selections in the short prefix | Not established | **HOLD: runtime estimate passes duration screening, but no 2M evidence and explicit Stage B GO required** |
+| G | Pass: latest-valid HTF snapshot semantics, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories, 176 executed trades and zero invalid selections in the short prefix | Not established | **HOLD: runtime estimate passes duration screening, but no 2M evidence and explicit Stage B GO required** |
 
 These bounded pilots are not the sustained development-quality or robustness
 gate. The 2026 slice is report-only, and no untouched confirmatory period is
@@ -290,24 +290,47 @@ a full-run measurement. For each arm, estimated PPO time is
 report-only test), each budgeted at 20 times the measured prefix evaluation,
 then add 25% reserve for checkpoint, final artifact and timing variability.
 The 20x replay factor is a conservative planning assumption; checkpoint and
-report overhead were not directly measured at 2M. The 2M callback frequency is
-one best-checkpoint evaluation at the terminal 2M step; no 5M viability callback
-falls inside this run.
+report overhead were not directly measured at 2M. A 2M run has one terminal
+best-checkpoint evaluation and 20 dashboard evaluations (`eval_every=100000`);
+there is no 5M viability callback inside this run. The 20,480-step pilot ended
+before its first dashboard interval. Each arm's actual dashboard evaluation
+function was timed on the GH200 for one warm-up plus three measured 20,000-bar
+calls. Python, NumPy, CPU Torch and CUDA RNG states were restored around each
+call, matching the configured isolated dashboard behavior. The warm-up was
+excluded from the median.
 
-| Arm | Scaled PPO learning | Two replay allowances | With 25% reserve | Interpretation |
-|---|---:|---:|---:|---|
-| D | 5.11 h | 2.29 h | 9.24 h | Fits a single 12 h one-GH200 window only if observed throughput holds; modest headroom remains |
-| E | 2.77 h | 1.06 h | 4.78 h | Runtime appears feasible for one arm; training quality remains unknown |
-| F | 3.17 h | 1.29 h | 5.57 h | Runtime appears feasible for one arm; training quality remains unknown |
-| G | 3.01 h | 1.20 h | 5.26 h | Runtime appears feasible for one arm; training quality remains unknown |
+| Arm | Scaled PPO core | 20 dashboard calls | Two final replay allowances | With 25% reserve | Interpretation |
+|---|---:|---:|---:|---:|---|
+| D | 5.11 h | 1.26 h (median 226.03 s/call) | 2.29 h | 10.82 h | No substantial margin inside a 12-hour single-GH200 window; HOLD |
+| E | 2.77 h | 0.55 h (median 99.84 s/call) | 1.06 h | 5.48 h | Runtime estimate only; explicit Stage B GO still required |
+| F | 3.17 h | 0.71 h (median 128.72 s/call) | 1.29 h | 6.47 h | Runtime estimate only; explicit Stage B GO still required |
+| G | 3.01 h | 0.62 h (median 111.74 s/call) | 1.20 h | 6.04 h | Runtime estimate only; explicit Stage B GO still required |
 
-These rows cannot be added into one 12-hour single-GH200 campaign: the four-arm
-matrix is estimated at about 24.9 aggregate GH200-hours including reserve.
-The user's instruction on 2026-10-28 to finish this plan authorizes the
-seed-42 engineering benchmark in Stage B once the remaining correctness and
-quality gates pass. The estimate still requires multiple bounded allocations;
-it is not a claim that the four-arm matrix fits a single 12-GH200-hour request.
-Do not extend the results into a multi-seed quality claim.
+The prior 9.24/4.78/5.57/5.26-hour values excluded dashboard replays and are
+superseded. The measured callback medians add 3.15 aggregate hours across 20
+calls per arm. With the PPO core, two final replay allowances and 25% reserve,
+the four-arm 2M matrix is **28.81 aggregate GH200-hours**. D by itself is
+estimated at 10.82 hours with reserve and does not meet the plan's substantial-
+margin speed gate within a 12-hour one-GH200 window. The raw per-repeat timings
+and initial-policy dashboard summaries are at
+`/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt54_efg_stage_a/dashboard/dashboard-callback-timing.json`.
+Those initial-policy replay summaries are timing-harness diagnostics, not
+trained-policy or benchmark results.
+
+For transparency, each isolated replay of the initialized, untrained policy
+produced the same summary within its arm. These are not training outcomes:
+
+| Arm | Dashboard replay | Trades | Net return | Maximum drawdown |
+|---|---:|---:|---:|---:|
+| D | 226.03 s | 351 | -2.90% | 9.12% |
+| E | 99.84 s | 351 | -2.89% | 9.12% |
+| F | 128.72 s | 350 | -2.97% | 9.19% |
+| G | 111.74 s | 352 | -3.04% | 9.26% |
+
+The user's direction to finish this plan covers the remaining Stage A work;
+it is not treated as automatic Stage B approval. The attached plan requires
+explicit GO after the readiness gates, and these short results do not establish
+policy quality. Do not extend the results into a multi-seed quality claim.
 
 ### Raw evidence inventory
 
@@ -327,6 +350,11 @@ Raw profiling and test artifacts remain outside Git in
 | Final format/lint/type and focused test gate | `../attempt47_commit_gate.log` | `5ec9824604985c81492e181f46021ce46ee19e4e081329809bc77302442f9acd` |
 | Final gate with all-HTF-masked regression (142 tests) | `../attempt53_efg_all_masked_gate.log` | `14c018a909cce41e925ba416332a373431403d560cb39b6b970606ed1eb629cb` |
 | Fixed-action D/E/F/G simulator trace test | `../attempt45_parity_test2.log` | `6e4849227aa7f82a80ede312f18e734362f15eb50a9cd196447f003ad6ffbfbb` |
+| Direct 20,000-bar dashboard callback timings | `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt54_efg_stage_a/dashboard/dashboard-callback-timing.json` | `f0f26ff6a62285756424397b426044be884d9d892ae467864bea449c657bb365` |
+| Synthetic actual-fill parity rerun | `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt54_efg_stage_a/actual_fill_parity_rerun.log` | `4ba8c0096c98e1865b84407e829c489b3a83b0a2414443096f25b3fb8a68211d` |
+| Fixed-action D/E/F/G bar and tick fill parity test (2 passed) | `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt55_cprofile/efg_tick_fill_parity.log` | `c5b0048eae18b8683bcf3191403e3515edd31c99cc8b81024ac36fe209fa601d` |
+| Latest full-tree quality gate (142 focused tests) | `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt54_efg_stage_a/quality-gate.log` | `87187c3979dd97285ccc4b54d1752bb6fa9da9d050a42fd8e0ce6ec53caedd7d` |
+| Attempt56 full-tree Ruff/Mypy and focused factory gate (12 passed) | `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt56/quality-gate2.log` | `2bb90132d60cd9450b8d0d28a090fc13f13f8a8fae45441e3893f8e51564f872` |
 
 The two repeated core-run JSON files per arm are in `core/{D,E,F,G}-r{1,2}.json`;
 GPU utilization samples are in `core/gpu-samples.csv`; encoder latency inputs
@@ -344,10 +372,48 @@ Mypy passed all 800 source files, and the scoped suite passed 142 tests. The
 added all-masked HTF test checks that E/F/G return finite, identical features
 when all eight HTF streams are masked, regardless of their masked payloads.
 The rerun log is `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt53_efg_all_masked_gate.log`.
-The trace test used the
-same fixed ten-step eligible PO3/M1-long selection followed by ten NO_TRADE
-actions across D/E/F/G, comparing observations, rewards, termination flags and
-info. It confirms environment transition parity for an eligible thesis
-action; the synthetic fixture does not require or claim an executed fill, so
-actual-fill parity remains unverified. GitHub Actions for
+The original trace test used the same fixed ten-step eligible PO3/M1-long
+selection followed by ten NO_TRADE actions across D/E/F/G, comparing
+observations, rewards, termination flags and info; it did not exercise an
+executed fill. The fixed-action simulator parity test now creates valid swing
+stop/target references and runs with tick execution both disabled and enabled.
+Across D/E/F/G it verifies identical observations and transition outputs,
+actual `bar_open` and `tick` entry fills, the filled quote and thesis identity,
+position fields, account balance/equity, and the equity curve (`2 passed`). The
+tick case uses one shared deterministic TickBook with zero randomized latency;
+it verifies tick entry-fill parity, not a tick stop/target exit. GitHub Actions for
 `44ec01129c0276abdce6a228f8bd20b693d7f721` reported 15/15 checks passed.
+
+The later attempt56 full-tree gate passed on ARM GH200: Ruff format found all
+800 files formatted, Ruff lint passed, Mypy passed all 800 source files, and
+the focused factory/parity file passed 12 tests in 6.65 seconds. Mypy initially
+flagged the generic DataFrame index type in the new TickBook fixture; the test
+now constructs a typed `DatetimeIndex` before timezone conversion. The complete
+gate output is retained at
+`/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt56/quality-gate2.log`.
+
+### Stage A gate status
+
+The implementation and bounded encoder/core screens are complete. The actual-
+fill parity gate is closed for both the bar-open and deterministic TickBook
+entry-fill fixtures. The dashboard
+timing and callback-inclusive runtime estimate gates are also closed with the
+measurements above. No 2M trained-policy evidence exists: Stage B remains
+gated because D fails the substantial-margin single-GH200 runtime check, and
+the plan requires explicit user GO before any 2M E/F/G campaign.
+
+The timer harness prepared each 2M run configuration and model to construct the
+production-equivalent evaluation provider and dashboard inputs, then directly
+invoked only the dashboard evaluation function. It never called `model.learn`,
+made no training-step progress, and wrote no training checkpoint. The setup
+log's “Training PPO for 2000000 timesteps” line is emitted during preparation
+and is not evidence of a training run.
+
+No 2M E/F/G benchmark was started, and the present request is not treated as
+automatic approval for one. Stage B requires these checks, an allocation plan
+that passes the runtime gate, and explicit user GO. Current Slurm inventory
+at 18:16 EET showed both gpuarm1 GH200s allocated: Stage A job `21264865`
+held one GPU, 48 CPUs and 256 GiB host RAM through 23:07 EET; another user's
+job `21261802` held the second GPU, 8 CPUs and 64 GiB. gpuarm2 was
+`DOWN+NOT_RESPONDING` and not schedulable. The 2M experiment remains pending
+rather than silently changing callback cadence or starting a partial matrix.

@@ -10,6 +10,7 @@ from stable_baselines3 import PPO
 from configuration.loader import load_config
 from decisioning.thesis import (
     THESIS_CATEGORY_COUNT,
+    ThesisActionSchema,
     build_thesis_action_schema,
     thesis_candidate_id,
     thesis_center,
@@ -21,6 +22,7 @@ from learning.rl.hybrid import (
     HybridClampedStdMultiInputPolicy,
     ThesisConditionedClampedStdMultiInputPolicy,
 )
+from market_data.loading.ticks import TickBook
 from models.encoders import MTFReasoningEncoder
 from simulation.environment.factory import build_eval_common, make_env, mtf_settings
 from tests.test_envs.test_account_normalization import _make_bars, _make_features
@@ -87,7 +89,8 @@ def test_mtf_reasoning_conditioned_overlay_is_opt_in_and_complete() -> None:
     assert config.ppo.thesis_conditioned.execution_hidden_dim == 128
 
 
-def test_d_e_f_g_fixed_action_simulator_trace_is_identical() -> None:
+@pytest.mark.parametrize("use_tick_execution", [False, True], ids=["bar-open", "tick-fill"])
+def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: bool) -> None:
     """Encoder selection must not change environment transitions for fixed actions."""
     overlays = (
         "thesis_mtf_reasoning_conditioned_2m.yaml",
@@ -110,13 +113,39 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical() -> None:
     candidate_id = thesis_candidate_id("po3", "M1", 1)
     candidate_column = dict(thesis_candidate_feature_columns())[candidate_id]
     features[candidate_column] = 1.0
+    # Give the shared simulator a valid structural stop and a reachable target
+    # so this parity trace verifies an executed open/fill, not only a
+    # no-position transition for an eligible thesis.
+    features["last_swing_low"] = bars["close"] - 30.0
+    features["last_swing_high"] = bars["close"] + 60.0
+    tickbook = None
+    if use_tick_execution:
+        tick_times = (
+            pd.DatetimeIndex(bars.index)
+            .tz_convert("UTC")
+            .to_numpy(dtype="datetime64[ns]")
+            .astype(np.int64)
+            + 100_000_000
+        )
+        tick_mid = bars["close"].to_numpy(dtype=np.float64)
+        tickbook = TickBook(tick_times, tick_mid - 0.1, tick_mid + 0.1)
     envs = []
     try:
         for overlay in overlays:
             config = load_config(config_path=f"config/research/{overlay}")
-            config.costs.use_tick_execution = False
+            config.costs.use_tick_execution = use_tick_execution
             config.execution.randomized_fill_latency_ms = 0.0
-            envs.append(make_env(bars, features, config, algo="ppo", reward="dsr"))
+            config.env.open_manipulation_bars = 0
+            envs.append(
+                make_env(
+                    bars,
+                    features,
+                    config,
+                    algo="ppo",
+                    reward="dsr",
+                    tickbook=tickbook,
+                )
+            )
 
         observations = [env.reset(seed=41)[0] for env in envs]
         assert all(observation["thesis_mask"][candidate_id] == 1.0 for observation in observations)
@@ -126,22 +155,71 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical() -> None:
 
         entry_action = np.zeros(envs[0].action_space.shape, dtype=np.float32)
         entry_action[0] = thesis_center(candidate_id)
-        hold_action = np.zeros(envs[0].action_space.shape, dtype=np.float32)
-        actions = [entry_action] * 10 + [hold_action] * 10
-        for index, action in enumerate(actions):
-            transitions = [env.step(action) for env in envs]
-            reference = transitions[0]
-            for transition in transitions[1:]:
-                for key in reference[0]:
-                    np.testing.assert_array_equal(reference[0][key], transition[0][key])
-                assert reference[1:4] == transition[1:4]
-                assert reference[4] == transition[4]
-            if index < 10:
-                assert all(
-                    transition[4]["entry_rejection_reason"] != "thesis_inactive"
-                    for transition in transitions
-                )
-            observations = [transition[0] for transition in transitions]
+        schema = envs[0].action_schema
+        assert isinstance(schema, ThesisActionSchema)
+        entry_action[schema.indices["risk"]] = 1.0
+        entry_action[schema.indices["target"]] = -1.0
+        entry_action[schema.indices["exit"]] = -1.0
+        transitions = [env.step(entry_action) for env in envs]
+        reference = transitions[0]
+        for transition in transitions[1:]:
+            for key in reference[0]:
+                np.testing.assert_array_equal(reference[0][key], transition[0][key])
+            assert reference[1:4] == transition[1:4]
+            assert reference[4] == transition[4]
+        assert all(transition[4]["position"] for transition in transitions), [
+            {
+                "entry_rejection_reason": transition[4]["entry_rejection_reason"],
+                "entry_funnel": transition[4]["entry_funnel"],
+                "trade_log": env.trade_log,
+            }
+            for env, transition in zip(envs, transitions, strict=True)
+        ]
+        assert all(transition[4]["entry_rejection_reason"] == "" for transition in transitions)
+
+        open_records = [
+            [record for record in env.trade_log if record.get("type") == "open"] for env in envs
+        ]
+        assert all(len(records) == 1 for records in open_records)
+        reference_open = open_records[0][0]
+        assert reference_open["fill_quote_source"] == ("tick" if use_tick_execution else "bar_open")
+        for records in open_records[1:]:
+            for field in (
+                "direction",
+                "price",
+                "sl_price",
+                "tp_price",
+                "lots",
+                "fill_quote_source",
+                "thesis_candidate_id",
+            ):
+                assert records[0][field] == reference_open[field]
+        if use_tick_execution:
+            assert reference_open["actual_tick_time"] == reference_open["fill_time"]
+            assert reference_open["execution_latency_ns"] == 0
+            for records in open_records[1:]:
+                for field in (
+                    "actual_tick_time",
+                    "fill_time",
+                    "execution_order_time",
+                    "order_submission_time",
+                    "execution_latency_ns",
+                ):
+                    assert records[0][field] == reference_open[field]
+
+        # Include the account and position traces in the parity contract; equal
+        # open records alone would not catch divergent post-fill bookkeeping.
+        reference_position = envs[0].position
+        assert reference_position is not None
+        for env in envs[1:]:
+            position = env.position
+            assert position is not None
+            for field in ("direction", "entry_price", "size", "sl_price", "tp_price"):
+                assert getattr(position, field) == pytest.approx(getattr(reference_position, field))
+            assert position.position_id == reference_position.position_id
+            assert env.account.balance == pytest.approx(envs[0].account.balance)
+            assert env.account.equity == pytest.approx(envs[0].account.equity)
+            assert env.equity_curve == pytest.approx(envs[0].equity_curve)
     finally:
         for env in envs:
             env.close()
