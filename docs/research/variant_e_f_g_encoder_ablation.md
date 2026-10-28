@@ -20,9 +20,9 @@ probe is engineering evidence only, not economic evidence or approval for a
 |---|---|---|---|---|
 | C | `thesis_hybrid_v1` | Existing nine independent TCNs + attention | Full nine-stream histories | Existing control |
 | D | `thesis_conditioned_v1` | Existing nine independent TCNs + attention | Full nine-stream histories | Existing matched control |
-| E | `thesis_conditioned_v1` | One shared-weight TCN; per-timeframe input adapters | Full nine-stream histories | Planned |
-| F | `thesis_conditioned_v1` | D-sized M1 TCN + shared lightweight HTF history summaries | M1 sequence and history-aware M3-D1 summaries | Planned |
-| G | `thesis_conditioned_v1` | D-sized M1 TCN + shared latest-valid HTF adapters | M1 sequence and latest causally available M3-D1 rows | Planned |
+| E | `thesis_conditioned_v1` | One shared-weight TCN; per-timeframe input adapters | Full nine-stream histories | Implemented; bounded correctness and throughput evidence complete |
+| F | `thesis_conditioned_v1` | D-sized M1 TCN + shared lightweight HTF history summaries | M1 sequence and history-aware M3-D1 summaries | Implemented; bounded correctness and throughput evidence complete |
+| G | `thesis_conditioned_v1` | D-sized M1 TCN + shared latest-valid HTF adapters | M1 sequence and latest causally available M3-D1 rows | Implemented; bounded correctness and throughput evidence complete |
 
 All D/E/F/G encoders must produce the same 160-D extractor output (128-D market
 representation plus the existing 32-D account embedding) and use the same
@@ -86,10 +86,12 @@ Attempt41 hardware: one NVIDIA GH200 144 GiB HBM3e, one gpuarm1 allocation with
 
 ## Work status
 
-- Baseline: checkout is `main` at `9cd8bca`; it is newer than the attached
-  reference SHA. Existing local edits to the C/D throughput probe and its tests
-  are part of a live diagnostic and must be preserved. The untracked
-  `campaign_worker_dispatch.log` is user-owned and excluded from this work.
+- Baseline: checkout is `main` at `44ec01129c0276abdce6a228f8bd20b693d7f721`;
+  it is newer than the attached reference SHA. E/F/G code, configuration,
+  registration, tests, and this evidence report are included in that commit.
+  The active C/D throughput diagnostic is separate and must be preserved. The
+  untracked `campaign_worker_dispatch.log` is user-owned and excluded from this
+  work.
 - Existing D implementation: `MTFReasoningEncoder` reuses the nine independent
   `_CausalTCN` branches, one four-head Transformer layer, masked pooling and the
   account embedding. D config resolves to `thesis_conditioned_v1`; C uses
@@ -249,8 +251,80 @@ measurements, and explicit user authorization. No result here establishes
 economic improvement, multi-seed robustness, or OOS generalization; 2026 was
 not used to select a variant.
 
+### Per-variant gate disposition
+
+| Arm | Encoder/config/checkpoint gates | Bounded policy screen | Economic/robustness gate | 2M disposition |
+|---|---|---|---|---|
+| D | Pass: original encoder and policy; checkpoint behavior retained | Technically viable, but this 20,480-step pilot produced no active best checkpoint | Not established | **NO-GO pending explicit authorization and full-run review** |
+| E | Pass: shared TCN, all nine streams, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories and zero invalid selections in the short prefix | Not established | **NO-GO pending explicit authorization and full-run review** |
+| F | Pass: history-aware HTF summaries, matched config, mask/gradient/save-load tests | Technically viable; 15 thesis categories and zero invalid selections in the short prefix | Not established | **NO-GO pending explicit authorization and full-run review** |
+| G | Pass: latest-valid HTF snapshot semantics, matched config, mask/gradient/save-load tests | Technically viable; 14 thesis categories and zero invalid selections in the short prefix | Not established | **NO-GO pending explicit authorization and full-run review** |
+
+These bounded pilots are not the sustained development-quality or robustness
+gate. The 2026 slice is report-only, and no untouched confirmatory period is
+claimed. E's faster core result does not make E the scientific winner.
+
+### Callback-inclusive 2M runtime planning estimate
+
+This is a planning estimate from the 20,480-step attempt42 callback pilots, not
+a full-run measurement. For each arm, estimated PPO time is
+`(pilot PPO learn wall - one measured 5,293-decision prefix evaluation) ×
+(2,000,000 / 20,480)`. Add two full-split replay allowances (train and
+report-only test), each budgeted at 20 times the measured prefix evaluation,
+then add 25% reserve for checkpoint, final artifact and timing variability.
+The 20x replay factor is a conservative planning assumption; checkpoint and
+report overhead were not directly measured at 2M. The 2M callback frequency is
+one best-checkpoint evaluation at the terminal 2M step; no 5M viability callback
+falls inside this run.
+
+| Arm | Scaled PPO learning | Two replay allowances | With 25% reserve | Interpretation |
+|---|---:|---:|---:|---|
+| D | 5.11 h | 2.29 h | 9.24 h | Fits a single 12 h one-GH200 window only if observed throughput holds; modest headroom remains |
+| E | 2.77 h | 1.06 h | 4.78 h | Runtime appears feasible for one arm; training quality remains unknown |
+| F | 3.17 h | 1.29 h | 5.57 h | Runtime appears feasible for one arm; training quality remains unknown |
+| G | 3.01 h | 1.20 h | 5.26 h | Runtime appears feasible for one arm; training quality remains unknown |
+
+These rows cannot be added into one 12-hour single-GH200 campaign: the four-arm
+matrix is estimated at about 24.9 aggregate GH200-hours including reserve.
+Allocation shape, campaign ordering and user GO must be settled before Stage B.
+Do not use this estimate as proof that the matched multi-arm campaign fits the
+current task's resource limit.
+
+### Raw evidence inventory
+
+Raw profiling and test artifacts remain outside Git in
+`/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt42/`:
+
+| Evidence | Path | SHA-256 |
+|---|---|---|
+| Repeated D/E/F/G PPO-core summary | `core/core-summary.jsonl` | `034dd7aaba6d65a0d25dd267f34b72c3afa27c0d028b3477e528ce0e1ae7e210` |
+| Encoder microbenchmark, including per-run values | `microbench/encoder_microbench.json` | `eaf330a1c10e77d0f7e740d71e1313f6158879e454976aa28a320804e0abb5da` |
+| D callback pilot profile | `e2e/D-phase-profile.json` | `a647c02de08d8780898b07b1791f379d595abec62579cbee9476cdd71161d66d` |
+| E callback pilot profile | `e2e/E-phase-profile.json` | `12a0d454297a9201ce1b9c83cb149e3111f424d657266e931d7d47b1292dddcf` |
+| F callback pilot profile | `e2e/F-phase-profile.json` | `fd9c1d9dc48e26e38656b05fdd84987529d4372d72d8dee8bb28e3aa645aec5c` |
+| G callback pilot profile | `e2e/G-phase-profile.json` | `dcf6e938852d516f0abe7c7e210bc1a8ae3e714c5d2a2b487a19b93dc79ffbfc` |
+| Full-tree format/lint/type gate | `full-quality-gate-final2.log` | `fc966fb4d632b015d91243d41e5165f68588d286a5bc173357566a96b5b7eb40` |
+| Focused integration test gate (138 tests before the added fixed-action regression) | `final-quality-gate2.log` | `244c227b5484790da805194ddca74d0349a843c8f57f75bda6252daf1de9b516` |
+| Final format/lint/type and focused test gate | `../attempt47_commit_gate.log` | `5ec9824604985c81492e181f46021ce46ee19e4e081329809bc77302442f9acd` |
+| Fixed-action D/E/F/G simulator trace test | `../attempt45_parity_test2.log` | `6e4849227aa7f82a80ede312f18e734362f15eb50a9cd196447f003ad6ffbfbb` |
+
+The two repeated core-run JSON files per arm are in `core/{D,E,F,G}-r{1,2}.json`;
+GPU utilization samples are in `core/gpu-samples.csv`; encoder latency inputs
+and raw results are in `microbench/real_train_observations.npz` and
+`microbench/encoder_microbench.json`; callback-inclusive process, cgroup and
+GPU samples are in `e2e/{D,E,F,G}-{process,cgroup,gpu}-samples.csv`. These
+records include source/config/bundle identities and were produced on the
+existing GH200 allocation. The repository report links these paths without
+adding large run artifacts to Git.
+
 ### Final verification
 
 On the existing GH200 allocation, full-tree Ruff format and lint checks passed,
 Mypy passed all 800 source files, and the scoped encoder/environment/bundle/
-checkpoint/resolver suite passed 138 tests. No 2M or 20M campaign was started.
+checkpoint/resolver suite passed 139 tests. The new trace test used the same
+fixed ten-step eligible PO3/M1-long selection followed by ten NO_TRADE actions
+across D/E/F/G, comparing observations, rewards, termination flags and info.
+It confirms environment trace parity for an eligible thesis action; the
+synthetic fixture does not require or claim a successful fill. GitHub Actions
+for `44ec01129c0276abdce6a228f8bd20b693d7f721` reported 15/15 checks passed.
+No 2M or 20M campaign was started.

@@ -11,6 +11,8 @@ from configuration.loader import load_config
 from decisioning.thesis import (
     THESIS_CATEGORY_COUNT,
     build_thesis_action_schema,
+    thesis_candidate_id,
+    thesis_center,
     thesis_id_from_box,
 )
 from features.context.thesis_candidates import thesis_candidate_feature_columns
@@ -83,6 +85,66 @@ def test_mtf_reasoning_conditioned_overlay_is_opt_in_and_complete() -> None:
     assert config.ppo.policy_distribution == "thesis_conditioned_v1"
     assert config.ppo.thesis_conditioned.embedding_dim == 32
     assert config.ppo.thesis_conditioned.execution_hidden_dim == 128
+
+
+def test_d_e_f_g_fixed_action_simulator_trace_is_identical() -> None:
+    """Encoder selection must not change environment transitions for fixed actions."""
+    overlays = (
+        "thesis_mtf_reasoning_conditioned_2m.yaml",
+        "thesis_mtf_shared_tcn_2m.yaml",
+        "thesis_mtf_m1_htf_lite_2m.yaml",
+        "thesis_mtf_m1_htf_snapshot_2m.yaml",
+    )
+    bars = _make_bars(120)
+    features = _make_features(bars)
+    thesis_columns = [name for _, name in thesis_candidate_feature_columns()]
+    strategy_columns = list(PO3IFVGStrategy.required_features)
+    features = pd.concat(
+        [
+            features,
+            pd.DataFrame(0.0, index=features.index, columns=strategy_columns, dtype=np.float32),
+            pd.DataFrame(0.0, index=features.index, columns=thesis_columns, dtype=np.float32),
+        ],
+        axis=1,
+    )
+    candidate_id = thesis_candidate_id("po3", "M1", 1)
+    candidate_column = dict(thesis_candidate_feature_columns())[candidate_id]
+    features[candidate_column] = 1.0
+    envs = []
+    try:
+        for overlay in overlays:
+            config = load_config(config_path=f"config/research/{overlay}")
+            config.costs.use_tick_execution = False
+            config.execution.randomized_fill_latency_ms = 0.0
+            envs.append(make_env(bars, features, config, algo="ppo", reward="dsr"))
+
+        observations = [env.reset(seed=41)[0] for env in envs]
+        assert all(observation["thesis_mask"][candidate_id] == 1.0 for observation in observations)
+        for key in observations[0]:
+            for observation in observations[1:]:
+                np.testing.assert_array_equal(observations[0][key], observation[key])
+
+        entry_action = np.zeros(envs[0].action_space.shape, dtype=np.float32)
+        entry_action[0] = thesis_center(candidate_id)
+        hold_action = np.zeros(envs[0].action_space.shape, dtype=np.float32)
+        actions = [entry_action] * 10 + [hold_action] * 10
+        for index, action in enumerate(actions):
+            transitions = [env.step(action) for env in envs]
+            reference = transitions[0]
+            for transition in transitions[1:]:
+                for key in reference[0]:
+                    np.testing.assert_array_equal(reference[0][key], transition[0][key])
+                assert reference[1:4] == transition[1:4]
+                assert reference[4] == transition[4]
+            if index < 10:
+                assert all(
+                    transition[4]["entry_rejection_reason"] != "thesis_inactive"
+                    for transition in transitions
+                )
+            observations = [transition[0] for transition in transitions]
+    finally:
+        for env in envs:
+            env.close()
 
 
 def test_mtf_reasoning_2m_configs_are_matched_except_for_execution_conditioning() -> None:
