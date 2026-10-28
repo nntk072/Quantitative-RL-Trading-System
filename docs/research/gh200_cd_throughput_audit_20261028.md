@@ -98,8 +98,10 @@ thesis-dependent execution quality.
   measured PPO-core timing. Do not mix profiled time with throughput.
 - **WP3:** profile after warmup and optimize the measured high-cost path. The current
   evidence favors variable-shape cuDNN convolution autotuning over scalar-check removal.
-- **WP2:** still required before a campaign ETA is final. Production callbacks and final
-  evaluations were excluded from these pilots; measure their time separately.
+- **WP2:** the full 2025 training-split replay has now been measured. It takes about
+  50.5 minutes per arm. The production dashboard and best-prefix callbacks also remain
+  costly; decoupling their cadence from the active-prior controller is the next useful
+  runtime investigation.
 - **WP4:** defer until environment/IPC timings show that they are material; measured PPO
   update time dominated these runs.
 - **WP5:** no PPO geometry, objective, entropy approximation, or architecture changes
@@ -120,16 +122,25 @@ idea classes across four observed timeframes, and invalid thesis selections were
 These are bounded policy/engineering diagnostics only.
 
 In attempt 21 each evaluation callback took about 3.3–3.6 minutes, or approximately
-6.9 minutes combined per arm. GPU samples remained lightly utilized. Full-calendar model
-selection, final evaluation, and report export have not been timed end to end, so the
-campaign estimate remains a lower bound.
+6.9 minutes combined per arm. Attempt 23 then replayed all 99,492 NY-session bars in the
+2025 training split for each unselected 100k checkpoint. The replay took 3,046 seconds
+for C and 3,030 seconds for D. Both policies breached the $10,000 max-loss limit (C on
+January 16, D on February 26) and made no further position opens, although the chronological
+replay continued through year-end. Their net results were −$9,996 and −$9,973 respectively;
+this is a training-split failure of the 100k checkpoints, not a 2M result. See the
+[full replay report](variant_cd_100k_full_train_replay_20261028.md) and its equity figure.
+
+Adding the 50-minute replay to the existing 6.1–6.2 hour 2M training lower bound makes
+the currently approved six-hour paired allocation unfit even before report-only
+evaluation and the required time reserve. Defer online monitoring only as an explicitly
+recorded matched C/D schedule; it does not repair the negative economic result by itself.
 
 ## Slurm and artifact notes
 
-No allocation was canceled. The active allocation was reused, and all attempt logs,
-profiles, checkpoints, health JSON, and GPU samples remain under:
+No allocation was canceled. The active allocation was reused, and attempt logs, profiles,
+checkpoints, health JSON, and GPU samples remain under:
 
-`/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt12` through `attempt21`.
+`/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt12` through `attempt23`.
 
 The untracked repository file `campaign_worker_dispatch.log` was preserved. Earlier
 format/type-check failures and short validation commands are recorded in their per-attempt
@@ -140,7 +151,8 @@ The commit-candidate gate passed on `gpuarm1` (aarch64): full-tree Ruff format c
 full-tree Ruff lint, full-tree Mypy (`794` source files), and the 10 focused benchmark
 tests. Slurm step `21242906.22` completed successfully in 8 seconds, below the required
 120-second minimum. This was an operational violation; its log is retained at
-`attempt22/commit_gate.log`, and no further Slurm steps were started afterward.
+`attempt22/commit_gate.log`. The subsequent paired replay step `21242906.23` completed in
+50m54s and produced the C/D 2025 equity and trade ledgers under `attempt23`.
 
 ## Reproduction artifacts
 
@@ -153,10 +165,14 @@ tests. Slurm step `21242906.22` completed successfully in 8 seconds, below the r
 - Production callback runs: `attempt20/C-production-callback.json`,
   `attempt20/D-production-callback.json`, `attempt21/C-production-callback.json`,
   `attempt21/D-production-callback.json`, with per-arm GPU samples and launch logs.
+- Full 2025 training-split replay: `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt23/{C,D}/training_replay.json`,
+  `training_equity.csv`, and `training_trades.csv`.
 
 ## Next decision point
 
-The throughput candidate has passed one longer PPO-core repeat and one 100k production
-callback pilot, not a full campaign gate. The 32k and 100k production rates disagree at
-the 70 steps/s threshold, and complete evaluation/export timing is missing. Keep 2026
-report-only. Do not infer a trading-performance result from these throughput pilots.
+**NO-GO for 2M on the current six-hour paired allocation.** The 32k production repeat
+measured below the 70 steps/s gate, while the 100k repeat cleared it once; the rate is not
+repeatable. Full training-split replay also costs about 50 minutes and both 100k
+checkpoints fail the max-loss survival gate. Do not start 2M/full training from this
+evidence. Preserve 2026 as report-only and apply the attached plan's WP2 evaluation
+decoupling work before estimating the next campaign again.
