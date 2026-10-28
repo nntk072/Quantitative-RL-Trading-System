@@ -221,6 +221,22 @@ no new Slurm job or step was requested. At the latest inventory check, job
 and a 12-hour limit ending at 16:39 EET. No C/D training or evaluation was
 active; the persistent allocation shell was preserved.
 
+At 16:44 EET, Slurm still reported `21247526` RUNNING at 12:05 elapsed against
+its 12-hour limit. Inside its existing gpuarm1 shell, `nvidia-smi` showed the
+allocated GH200 at 0% utilization and 1 MiB used; the user process list
+contained only the interactive shell. The node inventory showed both of
+gpuarm1's GH200s allocated: one to this idle shell and one to another user's
+job. gpuarm2 remained `DOWN+DRAIN+NOT_RESPONDING`. No second GH200 was
+available for the matched C/D run, and no job was canceled or changed.
+
+At 16:44:18 EET, Slurm terminated step `21247526.0` for its time limit. `sacct`
+now records the parent as `TIMEOUT` after 12:05:04; this was scheduler
+termination, not a manual cancellation. At 16:47 EET, gpuarm1 had one GH200
+allocated to another user's job and one available, with 8/144 CPUs and 64G of
+1.1T host memory allocated; gpuarm2 was still drained and not responding. No
+user-owned training or evaluation allocation remained. A two-GH200 request is
+not currently eligible, so none was submitted.
+
 ## Evidence paths
 
 - C/D phase profiles and process/GPU telemetry:
