@@ -1,0 +1,129 @@
+/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/models/encoders/mtf_efficiency_common.py:118: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  self.cross_timeframe = nn.TransformerEncoder(layer, num_layers=1)
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0] Graph break from `Tensor.item()`, consider setting:
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]     torch._dynamo.config.capture_scalar_outputs = True
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0] or:
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]     env TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS=1
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0] to include these operations in the captured graph.
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0] 
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0] Graph break: from user code at:
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]   File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/learning/rl/hybrid.py", line 306, in forward
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]     return super().forward(obs, deterministic=deterministic)
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]   File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/learning/rl/ppo.py", line 301, in forward
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]     actions, values, log_prob = super().forward(obs, deterministic=deterministic)
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]   File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/stable_baselines3/common/policies.py", line 654, in forward
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]     distribution = self._get_action_dist_from_latent(latent_pi)
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]   File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/learning/rl/hybrid.py", line 646, in _get_action_dist_from_latent
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]     distribution = self.conditioned_distribution.proba_distribution(
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]   File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/learning/rl/hybrid.py", line 450, in proba_distribution
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]     if mask.shape != thesis_logits.shape or not bool(mask.any(dim=1).all()):
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0]                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0] 
+W1029 04:21:27.381000 1742749 torch/_dynamo/variables/tensor.py:1841] [0/0] 
+Using cuda device
+Traceback (most recent call last):
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/scripts/research/benchmarks/measure_ppo_throughput.py", line 1889, in <module>
+    main()
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/scripts/research/benchmarks/measure_ppo_throughput.py", line 1861, in main
+    report = _train_probe(
+             ^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/scripts/research/benchmarks/measure_ppo_throughput.py", line 1240, in _train_probe
+    model.policy(inference_obs_tensor)
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 563, in __call__
+    return super().__call__(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1783, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1794, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py", line 1278, in compile_wrapper
+    raise e.remove_dynamo_frames() from None  # see TORCHDYNAMO_VERBOSE=1
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1192, in _compile_fx_inner
+    raise InductorError(e, currentframe()).with_traceback(
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1169, in _compile_fx_inner
+    mb_compiled_graph = fx_codegen_and_compile(
+                        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py", line 2001, in fx_codegen_and_compile
+    return scheme.codegen_and_compile(gm, example_inputs, inputs_to_check, graph_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/compile_fx.py", line 1749, in codegen_and_compile
+    compiled_module = graph.compile_to_module()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/graph.py", line 3060, in compile_to_module
+    return self._compile_to_module()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/graph.py", line 3066, in _compile_to_module
+    self.codegen_with_cpp_wrapper() if self.cpp_wrapper else self.codegen()
+                                                             ^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/graph.py", line 3002, in codegen
+    self.scheduler.codegen()
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/scheduler.py", line 10015, in codegen
+    self._codegen_partitions()
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/scheduler.py", line 10167, in _codegen_partitions
+    self._codegen(partition)
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/scheduler.py", line 10363, in _codegen
+    self.get_backend(device).codegen_node(node)
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/codegen/cuda_combined_scheduling.py", line 205, in codegen_node
+    return self._triton_scheduling.codegen_node(node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/codegen/simd.py", line 3070, in codegen_node
+    return self._codegen_nodes(nodes, coalesce_analysis)  # type: ignore[arg-type]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/codegen/simd.py", line 3041, in _codegen_nodes
+    return self.codegen_node_schedule(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/codegen/simd.py", line 3167, in codegen_node_schedule
+    src_code = kernel.codegen_kernel()
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/codegen/triton.py", line 7327, in codegen_kernel
+    **self.inductor_meta_common(),
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/_inductor/codegen/triton.py", line 6968, in inductor_meta_common
+    "backend_hash": torch.utils._triton.triton_hash_with_backend(),
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/utils/_triton.py", line 278, in triton_hash_with_backend
+    backend = triton_backend()
+              ^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/torch/utils/_triton.py", line 248, in triton_backend
+    target = driver.active.get_current_target()
+             ^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/runtime/driver.py", line 39, in active
+    self._active = self.default
+                   ^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/runtime/driver.py", line 33, in default
+    self._default = _create_driver()
+                    ^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/runtime/driver.py", line 21, in _create_driver
+    return active_drivers[0]()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py", line 342, in __init__
+    self.utils = CudaUtils()  # TODO: make static
+                 ^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/backends/nvidia/driver.py", line 101, in __init__
+    mod = compile_module_from_file(
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/runtime/build.py", line 196, in compile_module_from_file
+    return _compile_so_from_file(src_path, name, library_dirs, include_dirs, libraries, ccflags, load_module=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/runtime/build.py", line 165, in _compile_so_from_file
+    return _compile_so(src=src, src_path=src_path, name=name, library_dirs=library_dirs, include_dirs=include_dirs,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/runtime/build.py", line 149, in _compile_so
+    so = _build(name, src_path, tmpdir, library_dirs or [], include_dirs or [], libraries or [], ccflags or [],
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/runtime/build.py", line 66, in _build
+    cc = _find_compiler(language)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib/python3.12/site-packages/triton/runtime/build.py", line 32, in _find_compiler
+    raise RuntimeError(
+torch._inductor.exc.InductorError: RuntimeError: Failed to find C compiler. Please specify via CC environment variable or set triton.knobs.build.impl.
+
+Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
+

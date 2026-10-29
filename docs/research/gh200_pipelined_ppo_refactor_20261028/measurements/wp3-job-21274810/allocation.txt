@@ -1,0 +1,36 @@
+job_id=21274810
+node=gpuarm1.int.triton.aalto.fi
+start=2026-10-29T03:34:12+02:00
+commit=e72c84444e0eef1822688a09ca1178813d53d3d9
+cpus=48
+mem=262144
+cuda_visible_devices=0
+
+slurm job:
+JobId=21274810 JobName=bash
+   UserId=nguyenl37(3249541) GroupId=nguyenl37(3249541) MCS_label=N/A
+   Priority=195676 Nice=0 Account=aalto_users QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=0 Reboot=0 ExitCode=0:0
+   RunTime=00:09:01 TimeLimit=06:00:00 TimeMin=N/A
+   SubmitTime=2026-10-29T03:25:09 EligibleTime=2026-10-29T03:25:09
+   AccrueTime=2026-10-29T03:25:09
+   StartTime=2026-10-29T03:25:11 EndTime=2026-10-29T09:25:11 Deadline=N/A
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-10-29T03:25:11 Scheduler=Backfill
+   Partition=gpu-grace-h200-141g AllocNode:Sid=login4:2084870
+   ReqNodeList=gpuarm1 ExcNodeList=(null)
+   NodeList=gpuarm1
+   BatchHost=gpuarm1
+   NumNodes=1 NumCPUs=48 NumTasks=1 CPUs/Task=48 ReqB:S:C:T=0:0:*:*
+   ReqTRES=cpu=48,mem=256G,node=1,billing=141,gres/gpu=1,gres/gpu:gh200=1
+   AllocTRES=cpu=48,mem=256G,node=1,billing=141,gres/gpu=1,gres/gpu:gh200=1
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=48 MinMemoryNode=256G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=NO Exclusive=NO Contiguous=0 Licenses=(null) LicensesAlloc=(null) Network=(null)
+   Command=bash
+   SubmitLine=srun --pty --immediate=60 --partition=gpu-grace-h200-141g --nodelist=gpuarm1 --nodes=1 --ntasks=1 --cpus-per-task=48 --mem=256G --gres=gpu:gh200:1 --time=06:00:00 bash -l
+   WorkDir=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+   TresPerNode=gres/gpu:gh200:1
+   TresPerTask=cpu=48
+

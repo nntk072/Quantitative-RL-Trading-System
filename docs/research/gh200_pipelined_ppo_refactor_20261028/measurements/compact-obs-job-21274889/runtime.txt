@@ -1,0 +1,4 @@
+architecture=aarch64
+torch=2.14.0+cu130
+cuda_available=True
+gpu=NVIDIA GH200 144G HBM3e

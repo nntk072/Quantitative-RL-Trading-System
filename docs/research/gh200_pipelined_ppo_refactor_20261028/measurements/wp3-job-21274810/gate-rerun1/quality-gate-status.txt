@@ -1,0 +1,6 @@
+ruff_format_exit=0
+ruff_format_write_exit=0
+ruff_fix_exit=0
+ruff_check_exit=0
+mypy_full_tree_exit=1
+focused_pytest_exit=0

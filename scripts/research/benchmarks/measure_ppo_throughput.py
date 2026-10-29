@@ -54,6 +54,11 @@ from scripts.research.benchmarks.measure_env_memory import (  # noqa: E402
     _load_train_slice,
     _tree_pss_mib,
 )  # noqa: E402
+from scripts.research.benchmarks.ppo_cohort_pipeline import (  # noqa: E402
+    CohortPolicyDispatch,
+    ParentIPCProbe,
+    summarize_cpu_gpu_overlap,
+)
 
 from compute.environment.device import scale_training_cfg  # noqa: E402
 from compute.environment.precision import configure_cuda_for_training  # noqa: E402
@@ -79,6 +84,7 @@ class _StepTiming(TypedDict):
     observation_construction_calls: int
     sampled_step_ms: list[float]
     sampled_decision_indices: list[int]
+    step_intervals_ns: list[tuple[int, int, int]]
 
 
 class _StepTimingWrapper(gym.Wrapper[Any, Any, Any, Any]):
@@ -92,6 +98,8 @@ class _StepTimingWrapper(gym.Wrapper[Any, Any, Any, Any]):
         self._observation_construction_calls = 0
         self._sampled_step_ms: list[float] = []
         self._sampled_decision_indices: list[int] = []
+        self._capture_step_intervals = os.environ.get("PPO_CAPTURE_STEP_INTERVALS") == "1"
+        self._step_intervals_ns: list[tuple[int, int, int]] = []
         observation_builder = getattr(env.unwrapped, "_get_observation", None)
         if callable(observation_builder):
 
@@ -107,11 +115,14 @@ class _StepTimingWrapper(gym.Wrapper[Any, Any, Any, Any]):
 
     def step(self, action: Any) -> Any:
         started = time.perf_counter()
+        started_ns = time.monotonic_ns()
         decision_index = getattr(self.env.unwrapped, "step_idx", None)
         try:
             return self.env.step(action)
         finally:
             elapsed = time.perf_counter() - started
+            if self._capture_step_intervals:
+                self._step_intervals_ns.append((self._step_count, started_ns, time.monotonic_ns()))
             self._step_seconds += elapsed
             self._step_count += 1
             # Systematic sampling keeps profiling memory bounded and avoids
@@ -129,6 +140,7 @@ class _StepTimingWrapper(gym.Wrapper[Any, Any, Any, Any]):
             "observation_construction_calls": self._observation_construction_calls,
             "sampled_step_ms": self._sampled_step_ms,
             "sampled_decision_indices": self._sampled_decision_indices,
+            "step_intervals_ns": self._step_intervals_ns,
         }
 
 
@@ -743,6 +755,12 @@ def _parse_args() -> argparse.Namespace:
         help="Override the effective PPO minibatch size after hardware scaling.",
     )
     parser.add_argument(
+        "--torch-compile-backend",
+        choices=("inductor", "cudagraphs"),
+        default="inductor",
+        help="Compile backend for an isolated learner benchmark.",
+    )
+    parser.add_argument(
         "--torch-compile-mode",
         choices=("default", "reduce-overhead", "max-autotune"),
         default=None,
@@ -765,6 +783,37 @@ def _parse_args() -> argparse.Namespace:
         help=(
             "Enable diagnostic CPU phase timings and CUDA NVTX/event annotations. "
             "This adds measurement overhead; keep profiled runs separate from baseline FPS runs."
+        ),
+    )
+    parser.add_argument(
+        "--cohort-count",
+        type=int,
+        choices=(1, 2, 4),
+        default=1,
+        help=(
+            "Use the benchmark-only rollout inference dispatcher with 2x32 or 4x16 "
+            "logical cohorts. The default 1 leaves stock sequential 64-env collection intact."
+        ),
+    )
+    parser.add_argument(
+        "--validate-cohort-thesis-masks",
+        action="store_true",
+        help="Validate every sampled thesis action against its mask; adds synchronization overhead.",
+    )
+    parser.add_argument(
+        "--compact-observation-transport",
+        action="store_true",
+        help=(
+            "Benchmark-only transport: send each worker's absolute market row index and account "
+            "state, then reconstruct market fields in the parent from the same immutable bundle."
+        ),
+    )
+    parser.add_argument(
+        "--validate-compact-market-observations",
+        action="store_true",
+        help=(
+            "Hash every worker market observation and compare it with parent reconstruction. "
+            "Use for correctness smoke only; hashing changes throughput."
         ),
     )
     parser.add_argument(
@@ -960,6 +1009,8 @@ def _validate_high_throughput_runtime_identity(
     vec_env: Any,
     parent_env: Any,
     config_path: Path | None,
+    *,
+    compact_observation_transport: bool = False,
 ) -> dict[str, Any] | None:
     """Fail closed if the high-throughput overlay does not build Variant E."""
     if config_path is None or config_path.name != "thesis_mtf_shared_tcn_2m_high_throughput.yaml":
@@ -973,6 +1024,8 @@ def _validate_high_throughput_runtime_identity(
         "sharded_bundle": "ShardedBundleVecEnv",
         "subproc": "SubprocVecEnv",
     }.get(str(cfg.env.vector_backend))
+    if compact_observation_transport:
+        expected_backend_class = "CompactObservationSubprocVecEnv"
     checks = {
         "variant_e_encoder": str(cfg.agent.arch) == "mtf_shared_tcn_reasoning",
         "thesis_conditioned_distribution": (
@@ -982,7 +1035,7 @@ def _validate_high_throughput_runtime_identity(
         "64_logical_envs": int(model.n_envs) == 64 and int(vec_env.num_envs) == 64,
         "256_steps_per_env": int(model.n_steps) == 256,
         "4096_minibatch": int(model.batch_size) == 4096,
-        "15_ppo_epochs": int(model.n_epochs) == 15,
+        "ppo_epoch_count_matches_resolved_config": int(model.n_epochs) == int(cfg.ppo.n_epochs),
         "conditioned_policy": policy_name == "ThesisConditionedClampedStdMultiInputPolicy",
         "109_way_thesis_mask": tuple(observations["thesis_mask"].shape) == (THESIS_CATEGORY_COUNT,),
         "configured_vector_backend": (
@@ -1021,17 +1074,28 @@ def _train_probe(
     seed: int = 42,
     batch_size: int | None = None,
     torch_compile_mode: str | None = None,
+    torch_compile_backend: str = "inductor",
     matmul_precision: str | None = None,
     measure_env_steps: bool = False,
     update_semaphore_dir: Path | None = None,
     update_semaphore_slots: int = 0,
     warmup_rollouts: int = 0,
     profile_phases: bool = False,
+    cohort_count: int = 1,
+    validate_cohort_thesis_masks: bool = False,
+    compact_observation_transport: bool = False,
+    validate_compact_market_observations: bool = False,
 ) -> dict[str, Any]:
     import torch
 
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested, but torch.cuda.is_available() is false")
+    if cohort_count not in {1, 2, 4}:
+        raise ValueError("cohort_count must be 1, 2, or 4")
+    if cohort_count > 1 and (n_envs is not None and n_envs != 64):
+        raise ValueError("WP3 cohort feasibility runs require exactly 64 logical environments")
+    if compact_observation_transport and cohort_count != 1:
+        raise ValueError("compact observation transport is compared with the sequential collector")
 
     cfg, bundle_path, algo, arch = _prepare_bundle(bundle_dir, variant, config_path, overrides)
     # This probe always instantiates the shared-bundle backend; make the
@@ -1085,19 +1149,71 @@ def _train_probe(
     if not isinstance(parent_env.observation_space, spaces.Dict):
         raise TypeError("PPO throughput probe requires a Dict observation space")
     env_fn: Callable[[], gym.Env[Any, Any]] = partial(make_bundle_env, spec)
-    if measure_env_steps or profile_phases:
+    capture_step_intervals = cohort_count > 1
+    if capture_step_intervals:
+        os.environ["PPO_CAPTURE_STEP_INTERVALS"] = "1"
+    else:
+        os.environ.pop("PPO_CAPTURE_STEP_INTERVALS", None)
+    if measure_env_steps or profile_phases or cohort_count > 1:
         env_fn = partial(_timed_env_from_factory, env_fn)
-    model = build_agent(parent_env, cfg, arch=arch, algo=algo, device=device, env_fn=env_fn)
+    if compact_observation_transport:
+        if str(cfg.env.vector_backend) != "subproc":
+            raise ValueError("compact observation transport requires env.vector_backend='subproc'")
+        from scripts.research.benchmarks.compact_observation_transport import (
+            CompactObservationSubprocVecEnv,
+        )
+
+        from learning.rl import agent as agent_module
+
+        dynamic_agent_module = cast(Any, agent_module)
+        previous_subproc_vec_env = dynamic_agent_module.SubprocVecEnv
+        dynamic_agent_module.SubprocVecEnv = partial(
+            CompactObservationSubprocVecEnv,
+            market_source=parent_env,
+            validate_market=validate_compact_market_observations,
+        )
+        try:
+            model = build_agent(parent_env, cfg, arch=arch, algo=algo, device=device, env_fn=env_fn)
+        finally:
+            dynamic_agent_module.SubprocVecEnv = previous_subproc_vec_env
+    else:
+        model = build_agent(parent_env, cfg, arch=arch, algo=algo, device=device, env_fn=env_fn)
     vec_env = model.get_env()
+    cohort_dispatch: CohortPolicyDispatch | None = None
+    if cohort_count > 1:
+        action_schema = getattr(parent_env, "action_schema", None)
+        action_coordinates = tuple(getattr(action_schema, "names", ()))
+        thesis_centers: tuple[float, ...] = ()
+        if "thesis" in action_coordinates:
+            from decisioning.thesis import THESIS_CATEGORY_COUNT, thesis_center
+
+            thesis_centers = tuple(
+                thesis_center(candidate_id) for candidate_id in range(THESIS_CATEGORY_COUNT)
+            )
+        cohort_dispatch = CohortPolicyDispatch(
+            vec_env,
+            model.policy,
+            cohort_count=cohort_count,
+            action_space=parent_env.action_space,
+            action_coordinates=action_coordinates,
+            thesis_centers=thesis_centers,
+            validate_thesis_actions=validate_cohort_thesis_masks,
+        )
     try:
         runtime_identity_validation = _validate_high_throughput_runtime_identity(
-            cfg, model, vec_env, parent_env, config_path
+            cfg,
+            model,
+            vec_env,
+            parent_env,
+            config_path,
+            compact_observation_transport=compact_observation_transport,
         )
     except BaseException:
         vec_env.close()
         parent_env.close()
         raise
     compile_warmup_seconds = 0.0
+    compile_parity: dict[str, float | bool] | None = None
     if torch_compile_mode is not None:
         if device != "cuda":
             raise ValueError("torch.compile mode probes require --device cuda")
@@ -1108,7 +1224,14 @@ def _train_probe(
         torch_rng_state = torch.get_rng_state()
         cuda_rng_state = torch.cuda.get_rng_state_all()
         compile_started = time.monotonic()
-        model.policy = torch.compile(model.policy, mode=torch_compile_mode)
+        eager_policy = model.policy
+        policy_was_training = eager_policy.training
+        eager_policy.set_training_mode(False)
+        model.policy = torch.compile(
+            eager_policy,
+            backend=torch_compile_backend,
+            mode=torch_compile_mode,
+        )
         inference_obs = {
             key: np.broadcast_to(space.sample(), (int(model.n_envs), *(space.shape or ()))).copy()
             for key, space in parent_env.observation_space.spaces.items()
@@ -1130,8 +1253,42 @@ def _train_probe(
                 (sample_count, *action_shape), dtype=torch.float32, device=model.device
             )
         with torch.no_grad():
-            model.policy(inference_obs_tensor)
-        model.policy.evaluate_actions(training_obs_tensor, sample_actions)
+            eager_actions, eager_values, eager_log_prob = eager_policy(
+                inference_obs_tensor, deterministic=True
+            )
+            parity_actions = eager_actions[:1].expand(sample_count, -1).clone()
+            eager_eval_values, eager_eval_log_prob, eager_entropy = eager_policy.evaluate_actions(
+                training_obs_tensor, parity_actions
+            )
+        with torch.no_grad():
+            compiled_actions, compiled_values, compiled_log_prob = model.policy(
+                inference_obs_tensor, deterministic=True
+            )
+            compiled_eval_values, compiled_eval_log_prob, compiled_entropy = (
+                model.policy.evaluate_actions(training_obs_tensor, parity_actions)
+            )
+            parity_pairs = (
+                ("actions", eager_actions, compiled_actions),
+                ("values", eager_values, compiled_values),
+                ("rollout_log_prob", eager_log_prob, compiled_log_prob),
+                ("eval_values", eager_eval_values, compiled_eval_values),
+                ("eval_log_prob", eager_eval_log_prob, compiled_eval_log_prob),
+                ("entropy", eager_entropy, compiled_entropy),
+            )
+            parity_errors: dict[str, float] = {}
+            for name, expected, actual in parity_pairs:
+                torch.testing.assert_close(actual, expected, atol=1e-5, rtol=1e-5)
+                if not bool(torch.isfinite(actual).all()):
+                    raise ValueError(f"compiled policy produced non-finite {name}")
+                parity_errors[name] = float((actual - expected).abs().max().item())
+            compile_parity = {"passed": True, **parity_errors}
+        eager_policy.set_training_mode(policy_was_training)
+        if policy_was_training:
+            # Capture the training-mode graph separately; dropout and other
+            # train/eval guards make this a distinct compiled specialization.
+            with torch.no_grad():
+                model.policy(inference_obs_tensor)
+            model.policy.evaluate_actions(training_obs_tensor, sample_actions)
         torch.cuda.synchronize()
         compile_warmup_seconds = time.monotonic() - compile_started
         # Compilation warmup must not advance the benchmark's seeded policy RNG.
@@ -1202,6 +1359,7 @@ def _train_probe(
         cpu_started = _process_tree_cpu_seconds() if profile_phases else 0.0
         event_pair: tuple[Any, Any] | None = None
         nvtx_pushed = False
+        update_completed = False
         if profile_phases and device == "cuda":
             try:
                 cuda_api = cast(Any, torch.cuda)
@@ -1220,7 +1378,9 @@ def _train_probe(
                 else nullcontext()
             )
             with phase_context:
-                return original_train(*args, **kwargs)
+                result = original_train(*args, **kwargs)
+                update_completed = True
+                return result
         finally:
             if event_pair is not None:
                 event_pair[1].record()
@@ -1245,6 +1405,8 @@ def _train_probe(
             update_timing["update_semaphore_wait_seconds"] += max(elapsed - compute_elapsed, 0.0)
             update_timing["update_calls"] += 1
             update_call_seconds.append(elapsed)
+            if update_completed and cohort_dispatch is not None:
+                cohort_dispatch.mark_policy_update_complete()
 
     model.train = _timed_train
 
@@ -1263,6 +1425,41 @@ def _train_probe(
         process_sampler.start()
     gpu_telemetry: dict[str, Any] | None = None
     process_tree_telemetry: dict[str, Any] | None = None
+    ipc_probe = (
+        ParentIPCProbe() if (measure_env_steps or profile_phases or cohort_count > 1) else None
+    )
+    original_collect_rollouts = model.collect_rollouts
+    if cohort_dispatch is not None:
+
+        def _observed_collect_rollouts(
+            env: Any, callback: Any, rollout_buffer: Any, n_rollout_steps: int
+        ) -> bool:
+            policy_version = cohort_dispatch.policy_version
+            before = cohort_dispatch._accepted_steps
+            rollout_started = time.monotonic()
+            try:
+                completed = original_collect_rollouts(
+                    env, callback, rollout_buffer, n_rollout_steps
+                )
+            finally:
+                rollout_call_seconds.append(time.monotonic() - rollout_started)
+            accepted = cohort_dispatch._accepted_steps - before
+            advantages = rollout_buffer.advantages
+            if isinstance(advantages, torch.Tensor):
+                gae_finite = bool(torch.isfinite(advantages).all().item())
+            else:
+                gae_finite = bool(np.isfinite(np.asarray(advantages)).all())
+            cohort_dispatch.record_rollout_completion(
+                version=policy_version,
+                accepted_steps=accepted,
+                expected_steps=n_rollout_steps,
+                buffer_full=bool(rollout_buffer.full and rollout_buffer.pos == n_rollout_steps),
+                gae_finite=gae_finite,
+                rollout_buffer=rollout_buffer,
+            )
+            return bool(completed)
+
+        model.collect_rollouts = _observed_collect_rollouts
     with ExitStack() as profile_stack:
         profile_stack.enter_context(
             _time_method_calls(
@@ -1370,12 +1567,19 @@ def _train_probe(
                         )
                     )
         try:
-            model.learn(total_timesteps=total_timesteps, progress_bar=False)
+            if ipc_probe is not None:
+                with ipc_probe:
+                    model.learn(total_timesteps=total_timesteps, progress_bar=False)
+            else:
+                model.learn(total_timesteps=total_timesteps, progress_bar=False)
         finally:
             if gpu_sampler is not None:
                 gpu_telemetry = gpu_sampler.stop()
             if process_sampler is not None:
                 process_tree_telemetry = process_sampler.stop()
+            if cohort_dispatch is not None:
+                cohort_dispatch.close()
+                model.collect_rollouts = original_collect_rollouts
     if device == "cuda":
         sync_started = time.perf_counter()
         torch.cuda.synchronize()
@@ -1394,7 +1598,7 @@ def _train_probe(
     env_step_shard_seconds: list[float] = []
     env_observation_seconds = 0.0
     env_observation_calls = 0
-    if measure_env_steps or profile_phases:
+    if measure_env_steps or profile_phases or cohort_count > 1:
         env_step_stats = vec_env.env_method("get_step_timing")
         env_observation_seconds = sum(
             float(item["observation_construction_seconds"]) for item in env_step_stats
@@ -1497,6 +1701,10 @@ def _train_probe(
         "seed": seed,
         "n_envs": int(model.n_envs),
         "vector_backend": vector_backend,
+        "compact_observation_transport": compact_observation_transport,
+        "compact_market_validation": (
+            validate_compact_market_observations if compact_observation_transport else False
+        ),
         "rollout_buffer_class": type(model.rollout_buffer).__name__,
         "rollout_buffer_on_device": bool(cfg.ppo.get("rollout_buffer_on_device", False)),
         "defer_metric_sync": bool(cfg.ppo.get("defer_metric_sync", False)),
@@ -1504,10 +1712,15 @@ def _train_probe(
         "policy_class": type(model.policy).__name__,
         "high_throughput_runtime_identity_validation": runtime_identity_validation,
         "torch_compile_mode": torch_compile_mode,
+        "torch_compile_backend": torch_compile_backend,
         "torch_compile_warmup_seconds": compile_warmup_seconds,
+        "torch_compile_parity": compile_parity,
         "matmul_precision": torch.get_float32_matmul_precision(),
-        "env_step_timing_enabled": measure_env_steps or profile_phases,
+        "env_step_timing_enabled": measure_env_steps or profile_phases or cohort_count > 1,
         "phase_profile_enabled": profile_phases,
+        "cohort_count": cohort_count,
+        "cohort_pipeline": cohort_dispatch.report() if cohort_dispatch is not None else None,
+        "ipc_transport": ipc_probe.report() if ipc_probe is not None else None,
         "gpu_telemetry": gpu_telemetry,
         "process_thread_telemetry": process_tree_telemetry,
         "allocation_cgroup_before": allocation_cgroup_before,
@@ -1530,6 +1743,14 @@ def _train_probe(
             key: _sample_summary(values, scale=1000.0)
             for key, values in method_wall_seconds.items()
         },
+        "collector_gpu_idle_gap_proxy": {
+            "measure": _sample_summary(method_wall_seconds["vec_step_wait"], scale=1000.0),
+            "interpretation": (
+                "Parent wait for all worker responses after action dispatch. Actions are copied "
+                "to CPU before dispatch, and no trainer GPU inference/update is submitted until "
+                "the wait returns; this is a collector idle-gap proxy, not an SM-active trace."
+            ),
+        },
         "env_step_calls": sum(int(item["steps"]) for item in env_step_stats),
         "env_step_cpu_seconds_total": sum(float(item["seconds"]) for item in env_step_stats),
         "env_observation_construction_seconds": env_observation_seconds,
@@ -1551,6 +1772,7 @@ def _train_probe(
             / max(sum(int(item["steps"]) for item in env_step_stats), 1)
         ),
         "env_step_shard_seconds": env_step_shard_seconds,
+        "cpu_step_overlap_with_later_cohort_inference": None,
         "configured_vector_backend": str(cfg.env.get("vector_backend", "subproc")),
         "physical_worker_count": physical_worker_count,
         "logical_envs_per_worker": logical_envs_per_worker
@@ -1648,6 +1870,22 @@ def _train_probe(
         **gpu_before,
         **gpu_after,
     }
+    if cohort_dispatch is not None:
+        overlap_intervals = [
+            (int(item[0]), int(item[1]), int(item[2]), int(item[3]), int(item[4]))
+            for item in cohort_dispatch.report()["inference_intervals_ns"]
+        ]
+        step_intervals = [
+            (env_index, int(item[0]), int(item[1]), int(item[2]))
+            for env_index, stats in enumerate(env_step_stats)
+            for item in stats["step_intervals_ns"]
+        ]
+        report["cpu_step_overlap_with_later_cohort_inference"] = summarize_cpu_gpu_overlap(
+            overlap_intervals,
+            step_intervals,
+            cohort_count=cohort_count,
+            cohort_size=cohort_dispatch.cohort_size,
+        )
     model.get_env().close()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, default=_json_default) + "\n")
@@ -1685,12 +1923,17 @@ def main() -> None:
         args.seed,
         args.batch_size,
         args.torch_compile_mode,
+        args.torch_compile_backend,
         args.matmul_precision,
         args.measure_env_steps,
         args.update_semaphore_dir,
         args.update_semaphore_slots,
         args.warmup_rollouts,
         args.profile_phases,
+        args.cohort_count,
+        args.validate_cohort_thesis_masks,
+        args.compact_observation_transport,
+        args.validate_compact_market_observations,
     )
     print(json.dumps(report, indent=2, default=_json_default))
 

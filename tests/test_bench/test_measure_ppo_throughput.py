@@ -18,6 +18,7 @@ from scripts.research.benchmarks.measure_ppo_throughput import (
     _apply_profile_overrides,
     _json_default,
     _NvidiaSmiSampler,
+    _parse_args,
     _prepare_bundle,
     _process_tree_cpu_seconds,
     _ProcessTreeSampler,
@@ -34,6 +35,19 @@ from scripts.research.benchmarks.measure_ppo_throughput import (
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FPS_PROBE_SCRIPT = REPO_ROOT / "scripts" / "research" / "benchmarks" / "run_fps_probe.sh"
 BATCH_SCRIPT = REPO_ROOT / "scripts" / "research" / "benchmarks" / "run_pipelined_ppo_wp0.sbatch"
+
+
+def test_compile_probe_backend_is_explicit_and_defaults_to_inductor(monkeypatch) -> None:
+    base_argv = ["measure_ppo_throughput.py", "--output", "probe.json"]
+    monkeypatch.setattr(sys, "argv", base_argv)
+    assert _parse_args().torch_compile_backend == "inductor"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [*base_argv, "--torch-compile-backend", "cudagraphs"],
+    )
+    args = _parse_args()
+    assert args.torch_compile_backend == "cudagraphs"
 
 
 def test_benchmark_imports_project_modules_from_its_own_checkout() -> None:
@@ -243,7 +257,7 @@ def test_high_throughput_runtime_identity_fails_closed_on_variant_mismatch() -> 
     cfg = OmegaConf.create(
         {
             "agent": {"arch": "mtf_shared_tcn_reasoning"},
-            "ppo": {"policy_distribution": "thesis_conditioned_v1"},
+            "ppo": {"policy_distribution": "thesis_conditioned_v1", "n_epochs": 15},
             "env": {"thesis_actions": True, "vector_backend": "sharded_bundle"},
         }
     )
@@ -288,6 +302,19 @@ def test_high_throughput_runtime_identity_fails_closed_on_variant_mismatch() -> 
     )
     assert subproc_result is not None
     assert subproc_result["vector_backend"] == "SubprocVecEnv"
+
+    for epochs in (10, 5):
+        cfg.ppo.n_epochs = epochs
+        model.n_epochs = epochs
+        geometry_result = _validate_high_throughput_runtime_identity(
+            cfg, model, subproc_env, parent_env, config_path
+        )
+        assert geometry_result is not None
+        assert geometry_result["ppo_epochs"] == epochs
+    cfg.ppo.n_epochs = 10
+    model.n_epochs = 5
+    with pytest.raises(RuntimeError, match="ppo_epoch_count_matches_resolved_config"):
+        _validate_high_throughput_runtime_identity(cfg, model, subproc_env, parent_env, config_path)
 
 
 def test_class_method_timer_restores_class_without_mutating_instance() -> None:

@@ -1,0 +1,76 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> scripts/research/benchmarks/measure_ppo_throughput.py:52:1
+   |
+50 |   os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+51 |
+52 | / from scripts.research.benchmarks.measure_env_memory import (  # noqa: E402
+53 | |     _cgroup_memory_bytes,
+54 | |     _load_train_slice,
+55 | |     _tree_pss_mib,
+56 | | )  # noqa: E402
+57 | |
+58 | | from compute.environment.device import scale_training_cfg  # noqa: E402
+59 | | from compute.environment.precision import configure_cuda_for_training  # noqa: E402
+60 | | from compute.slurm.resources import (  # noqa: E402
+61 | |     allocation_cgroup_file,
+62 | |     descendant_pids,
+63 | |     process_tree_cpu_usec,
+64 | |     read_process_table,
+65 | | )  # noqa: E402
+66 | | from learning.rl.agent import build_agent  # noqa: E402
+67 | | from simulation.environment.bundles import build_env_bundle  # noqa: E402
+68 | | from simulation.environment.spec import EnvSpec  # noqa: E402
+69 | | from simulation.environment.worker import make_bundle_env  # noqa: E402
+70 | | from training.configuration.cli import load_merged_config  # noqa: E402
+71 | | from training.runner.seed import _setup_rngs  # noqa: E402
+72 | | from training.setup.environments import strategy_from_cfg  # noqa: E402
+73 | | from scripts.research.benchmarks.ppo_cohort_pipeline import (  # noqa: E402
+74 | |     CohortPolicyDispatch,
+75 | |     ParentIPCProbe,
+76 | |     summarize_cpu_gpu_overlap,
+77 | | )
+   | |_^
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> scripts/research/benchmarks/ppo_cohort_pipeline.py:3:1
+   |
+ 1 |   """Inference/CPU-step overlap probe for one on-policy PPO rollout."""
+ 2 |
+ 3 | / from __future__ import annotations
+ 4 | |
+ 5 | | import time
+ 6 | | from types import TracebackType
+ 7 | | from multiprocessing.connection import Connection
+ 8 | | from contextlib import AbstractContextManager
+ 9 | | from typing import Any
+10 | |
+11 | | import numpy as np
+   | |__________________^
+   |
+help: Organize imports
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests/test_bench/test_ppo_cohort_pipeline.py:1:1
+   |
+ 1 | / from __future__ import annotations
+ 2 | |
+ 3 | | from types import SimpleNamespace
+ 4 | | from typing import Any
+ 5 | |
+ 6 | | import numpy as np
+ 7 | | import torch
+ 8 | | from gymnasium import spaces
+ 9 | |
+10 | | from scripts.research.benchmarks.ppo_cohort_pipeline import (
+11 | |     CohortPolicyDispatch,
+12 | |     ParentIPCProbe,
+13 | |     summarize_cpu_gpu_overlap,
+14 | | )
+   | |_^
+   |
+help: Organize imports
+
+Found 3 errors.
+[*] 3 fixable with the `--fix` option.

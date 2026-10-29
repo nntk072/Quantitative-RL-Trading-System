@@ -1,0 +1,5 @@
+scripts/research/benchmarks/measure_ppo_throughput.py:1361: error: Returning
+Any from function declared to return "bool"  [no-any-return]
+                return completed
+                ^~~~~~~~~~~~~~~~
+Found 1 error in 1 file (checked 808 source files)

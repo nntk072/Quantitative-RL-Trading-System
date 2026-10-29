@@ -1,0 +1,53 @@
+scripts/research/benchmarks/summarize_wp3_cohort_feasibility.py:54: error: Item
+"None" of "Any | None" has no attribute "__iter__" (not iterable)  [union-attr]
+    ...tem, dict) and item.get("policy_version") == 0 for item in completed),
+                                                                  ^~~~~~~~~
+scripts/research/benchmarks/summarize_wp3_cohort_feasibility.py:58: error: Item
+"None" of "Any | None" has no attribute "__iter__" (not iterable)  [union-attr]
+                for item in completed
+                            ^~~~~~~~~
+tests/test_bench/test_summarize_wp3_cohort_feasibility.py:9: error: Missing
+type arguments for generic type "dict"  [type-arg]
+    def _write(path: Path, value: dict) -> None:
+                                  ^
+scripts/research/benchmarks/ppo_cohort_pipeline.py:24: error:
+"type[Connection[_SendT_contra, _RecvT_co]]" has no attribute "_send_bytes" 
+[attr-defined]
+            self._original_send = Connection._send_bytes
+                                  ^~~~~~~~~~~~~~~~~~~~~~
+scripts/research/benchmarks/ppo_cohort_pipeline.py:25: error:
+"type[Connection[_SendT_contra, _RecvT_co]]" has no attribute "_recv_bytes" 
+[attr-defined]
+            self._original_recv = Connection._recv_bytes
+                                  ^~~~~~~~~~~~~~~~~~~~~~
+scripts/research/benchmarks/ppo_cohort_pipeline.py:56: error:
+"type[Connection[_SendT_contra, _RecvT_co]]" has no attribute "_send_bytes" 
+[attr-defined]
+            Connection._send_bytes = timed_send
+            ^~~~~~~~~~~~~~~~~~~~~~
+scripts/research/benchmarks/ppo_cohort_pipeline.py:57: error:
+"type[Connection[_SendT_contra, _RecvT_co]]" has no attribute "_recv_bytes" 
+[attr-defined]
+            Connection._recv_bytes = timed_recv
+            ^~~~~~~~~~~~~~~~~~~~~~
+scripts/research/benchmarks/ppo_cohort_pipeline.py:154: error: Need type
+annotation for "_forward_ms"  [var-annotated]
+            self._forward_ms = [[] for _ in range(cohort_count)]
+                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests/test_bench/test_ppo_cohort_pipeline.py:38: error: Missing type arguments
+for generic type "list"  [type-arg]
+    ....ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any], list]:
+                                                                       ^
+tests/test_bench/test_ppo_cohort_pipeline.py:139: error: Call to untyped
+function "forward" in typed context  [no-untyped-call]
+        actions, _, _ = policy.forward(observations)
+                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tests/test_bench/test_ppo_cohort_pipeline.py:180: error: Call to untyped
+function "forward" in typed context  [no-untyped-call]
+            policy.forward(
+            ^~~~~~~~~~~~~~~
+scripts/research/benchmarks/measure_ppo_throughput.py:1361: error: Returning
+Any from function declared to return "bool"  [no-any-return]
+                return completed
+                ^~~~~~~~~~~~~~~~
+Found 12 errors in 5 files (checked 808 source files)
