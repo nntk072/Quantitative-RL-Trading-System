@@ -1,0 +1,45 @@
+{
+  "account_rows": 64,
+  "account_unique_rows": 1,
+  "bundle_manifest_sha256": "d85e0dc8fa241c66d4d727dd4be5d463fc58dbbbd53a43fd00d75100387b052e",
+  "config_path": "config/research/thesis_mtf_shared_tcn_2m_high_throughput.yaml",
+  "host": "gpuarm1.int.triton.aalto.fi",
+  "iterations": 100,
+  "job_id": "21274446",
+  "latency_ms": {
+    "p50": 10.71319350739941,
+    "p95": 11.610299383755772
+  },
+  "market_reuse_factor": 64.0,
+  "market_sha256": "43f96f72ce2eb8b13922904bf9a60d2b128c3f7fab0523f5cc13fee044db9b5f",
+  "market_unique_rows": 1,
+  "max_abs_errors": {
+    "deterministic_action": 5.774199962615967e-08,
+    "entropy": 0.0,
+    "features": 0.00012415647506713867,
+    "forward_log_prob": 0.0,
+    "log_prob": 0.0,
+    "thesis_logits": 0.0,
+    "thesis_probs": 0.0,
+    "value": 5.581974983215332e-05
+  },
+  "mode": "full",
+  "n_envs": 64,
+  "observations_sha256": "99362ee83a09df48dc8b9da063abd2c768111c417dab87b3f5364c86a1745b42",
+  "parity_passed": true,
+  "parity_tolerances": {
+    "deterministic_action": 1e-05,
+    "entropy": 1e-05,
+    "features": 0.0002,
+    "forward_log_prob": 1e-05,
+    "log_prob": 1e-05,
+    "thesis_logits": 1e-05,
+    "thesis_probs": 1e-05,
+    "value": 0.0001
+  },
+  "policy_state_sha256": "d7db4a2d263a808c21f304648c6219f7878fe5404590d503c56da268ce71f1f8",
+  "resolved_config_sha256": "80e2dfc54460bdcce554e86d5b467011dc8555591945825064c454b7ea962ddd",
+  "seed": 42,
+  "source_commit": "248d5b1eeeb5ae0a7817d049607e8eb8d99e28a6",
+  "warmup": 20
+}

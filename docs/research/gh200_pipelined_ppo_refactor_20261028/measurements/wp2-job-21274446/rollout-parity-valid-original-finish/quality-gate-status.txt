@@ -1,0 +1,4 @@
+ruff_format_exit=0
+ruff_check_exit=0
+mypy_exit=0
+pytest_exit=0

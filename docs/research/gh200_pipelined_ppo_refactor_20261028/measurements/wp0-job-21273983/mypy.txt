@@ -1,0 +1,21 @@
+staged_mypy_env=/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv
+mypy 2.3.0 (compiled: yes)
+scripts/research/benchmarks/summarize_pipelined_ppo_wp0.py:292: error:
+Generator has incompatible item type "int"; expected "bool"  [misc]
+            sum(int(value) for value in requested_values)
+                ^~~~~~~~~~
+scripts/research/benchmarks/summarize_pipelined_ppo_wp0.py:292: error: Argument
+1 to "int" has incompatible type "Any | None"; expected
+"str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+            sum(int(value) for value in requested_values)
+                    ^~~~~
+scripts/research/benchmarks/summarize_pipelined_ppo_wp0.py:297: error:
+Generator has incompatible item type "int"; expected "bool"  [misc]
+            sum(int(value) for value in measured_values)
+                ^~~~~~~~~~
+scripts/research/benchmarks/summarize_pipelined_ppo_wp0.py:297: error: Argument
+1 to "int" has incompatible type "Any | None"; expected
+"str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"  [arg-type]
+            sum(int(value) for value in measured_values)
+                    ^~~~~
+Found 4 errors in 1 file (checked 802 source files)

@@ -1,0 +1,40 @@
+job_id=21273908
+job_name=ppo-pipeline-wp0
+dependency=afterany:21267207
+host=gpuarm1.int.triton.aalto.fi
+start=2026-10-29T02:21:55+02:00
+commit=248d5b1eeeb5ae0a7817d049607e8eb8d99e28a6
+
+Slurm allocation:
+JobId=21273908 JobName=ppo-pipeline-wp0
+   UserId=nguyenl37(3249541) GroupId=nguyenl37(3249541) MCS_label=N/A
+   Priority=197236 Nice=0 Account=aalto_users QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:00 TimeLimit=06:00:00 TimeMin=N/A
+   SubmitTime=2026-10-29T02:21:50 EligibleTime=2026-10-29T02:21:50
+   AccrueTime=2026-10-29T02:21:50
+   StartTime=2026-10-29T02:21:55 EndTime=2026-10-29T08:21:55 Deadline=N/A
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-10-29T02:21:55 Scheduler=Main
+   Partition=gpu-grace-h200-141g AllocNode:Sid=login4:2084870
+   ReqNodeList=gpuarm1 ExcNodeList=(null)
+   NodeList=gpuarm1
+   BatchHost=gpuarm1
+   NumNodes=1 NumCPUs=96 NumTasks=1 CPUs/Task=96 ReqB:S:C:T=0:0:*:*
+   ReqTRES=cpu=96,mem=512G,node=1,billing=282,gres/gpu=2,gres/gpu:gh200=2
+   AllocTRES=cpu=96,mem=512G,node=1,billing=282,gres/gpu=2,gres/gpu:gh200=2
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=96 MinMemoryNode=512G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=NO Exclusive=NO Contiguous=0 Licenses=(null) LicensesAlloc=(null) Network=(null)
+   Command=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/scripts/research/benchmarks/run_pipelined_ppo_wp0.sbatch
+   SubmitLine=sbatch --parsable --dependency=afterany:21267207 scripts/research/benchmarks/run_pipelined_ppo_wp0.sbatch
+   WorkDir=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+   StdErr=
+   StdIn=/dev/null
+   StdOut=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/docs/research/gh200_pipelined_ppo_refactor_20261028/slurm-21273908.out
+   TresPerNode=gres/gpu:gh200:2
+   TresPerTask=cpu=96
+
+benchmark_exit=1
+finish=2026-10-29T02:24:15+02:00

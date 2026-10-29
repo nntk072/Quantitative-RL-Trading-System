@@ -1,0 +1,12 @@
+/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/models/encoders/mtf_efficiency_common.py:118: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  self.cross_timeframe = nn.TransformerEncoder(layer, num_layers=1)
+Using cuda device
+Traceback (most recent call last):
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/scripts/research/benchmarks/measure_grouped_market_inference.py", line 399, in <module>
+    main()
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/scripts/research/benchmarks/measure_grouped_market_inference.py", line 394, in main
+    report = run(args)
+             ^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/scripts/research/benchmarks/measure_grouped_market_inference.py", line 374, in run
+    raise RuntimeError(f"policy parity failed: {errors}")
+RuntimeError: policy parity failed: {'features': 0.00022780895233154297, 'thesis_logits': 6.556510925292969e-07, 'thesis_probs': 3.2782554626464844e-07, 'deterministic_action': 3.2351817935705185e-07, 'value': 9.694695472717285e-05, 'forward_log_prob': 9.5367431640625e-07, 'log_prob': 9.5367431640625e-07, 'entropy': 9.5367431640625e-07}

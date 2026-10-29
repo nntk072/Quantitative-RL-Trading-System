@@ -196,6 +196,39 @@ def test_shared_tcn_masked_padding_values_do_not_change_output() -> None:
         torch.testing.assert_close(encoder(original), encoder(changed), rtol=0.0, atol=0.0)
 
 
+def test_grouped_market_encoding_matches_full_batch_and_preserves_accounts() -> None:
+    encoder = _encoder_factories()[0]().eval()
+    observations = _observations(batch_size=8)
+    representatives = torch.tensor([0, 1, 2], dtype=torch.long)
+    inverse = torch.tensor([0, 1, 2, 0, 1, 2, 0, 1], dtype=torch.long)
+    for seq_key, mask_key, _, _ in _STREAMS:
+        source_seq = observations[seq_key].clone()
+        source_mask = observations[mask_key].clone()
+        observations[seq_key] = source_seq[representatives][inverse]
+        observations[mask_key] = source_mask[representatives][inverse]
+
+    with torch.no_grad():
+        expected = encoder(observations)
+        actual = encoder.forward_with_market_groups(observations, representatives, inverse)
+
+    torch.testing.assert_close(actual, expected, rtol=1e-6, atol=1e-6)
+    assert torch.unique(observations["account"], dim=0).shape[0] == 8
+
+
+def test_grouped_market_encoding_rejects_training_or_gradient_mode() -> None:
+    encoder = _encoder_factories()[0]()
+    observations = _observations(batch_size=2)
+    representatives = torch.tensor([0], dtype=torch.long)
+    inverse = torch.zeros(2, dtype=torch.long)
+
+    with pytest.raises(RuntimeError, match="inference-only"):
+        encoder.forward_with_market_groups(observations, representatives, inverse)
+
+    encoder.eval()
+    with pytest.raises(RuntimeError, match="inference-only"):
+        encoder.forward_with_market_groups(observations, representatives, inverse)
+
+
 @pytest.mark.parametrize("factory", _encoder_factories())
 def test_all_encoders_ignore_nonfinite_masked_padding(factory) -> None:
     encoder = factory().eval()

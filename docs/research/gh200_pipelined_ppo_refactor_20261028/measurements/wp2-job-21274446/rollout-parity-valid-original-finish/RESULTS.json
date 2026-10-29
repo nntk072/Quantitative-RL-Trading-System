@@ -1,0 +1,154 @@
+{
+  "baseline": {
+    "account_rows": 64,
+    "account_unique_rows": 1,
+    "bundle_manifest_sha256": "d85e0dc8fa241c66d4d727dd4be5d463fc58dbbbd53a43fd00d75100387b052e",
+    "config_path": "config/research/thesis_mtf_shared_tcn_2m_high_throughput.yaml",
+    "host": "gpuarm1.int.triton.aalto.fi",
+    "iterations": 100,
+    "job_id": "21274446",
+    "latency_ms": {
+      "p50": 11.436258966568857,
+      "p95": 11.946087592514228
+    },
+    "market_reuse_factor": 64.0,
+    "market_reuse_summary": {
+      "account_unique_rows_p50": 61.5,
+      "account_unique_rows_p95": 64.0,
+      "market_reuse_factor_p50": 64.0,
+      "market_reuse_factor_p95": 64.0,
+      "market_unique_rows_p50": 1.0,
+      "market_unique_rows_p95": 1.0,
+      "sampled_vector_steps": 128
+    },
+    "market_sha256": "43f96f72ce2eb8b13922904bf9a60d2b128c3f7fab0523f5cc13fee044db9b5f",
+    "market_unique_rows": 1,
+    "max_abs_errors": {
+      "deterministic_action": 3.2351817935705185e-07,
+      "entropy": 9.5367431640625e-07,
+      "features": 0.00022780895233154297,
+      "forward_log_prob": 9.5367431640625e-07,
+      "log_prob": 9.5367431640625e-07,
+      "thesis_logits": 6.556510925292969e-07,
+      "thesis_probs": 3.2782554626464844e-07,
+      "value": 9.694695472717285e-05
+    },
+    "max_relative_errors": {
+      "deterministic_action": 0.008529528975486755,
+      "entropy": 1.3566938150688657e-07,
+      "features": 0.021149752661585808,
+      "forward_log_prob": 1.9731240286091634e-07,
+      "log_prob": 1.9731240286091634e-07,
+      "thesis_logits": 9.517240755485545e-07,
+      "thesis_probs": 6.584057246072916e-07,
+      "value": 0.006758789531886578
+    },
+    "mode": "full",
+    "n_envs": 64,
+    "observations_sha256": "99362ee83a09df48dc8b9da063abd2c768111c417dab87b3f5364c86a1745b42",
+    "parity_passed": true,
+    "parity_relative_tolerance": 1e-05,
+    "parity_tolerances": {
+      "deterministic_action": 1e-05,
+      "entropy": 1e-05,
+      "features": 0.0003,
+      "forward_log_prob": 1e-05,
+      "log_prob": 1e-05,
+      "thesis_logits": 1e-05,
+      "thesis_probs": 1e-05,
+      "value": 0.00015
+    },
+    "policy_state_sha256": "d7db4a2d263a808c21f304648c6219f7878fe5404590d503c56da268ce71f1f8",
+    "resolved_config_sha256": "80e2dfc54460bdcce554e86d5b467011dc8555591945825064c454b7ea962ddd",
+    "rollout_observations_sha256": "0c8f486b812feae31f0ed135ac1a3818f80792ad60888f58c215fe76ea2eff27",
+    "rollout_steps": 128,
+    "seed": 42,
+    "snapshot_market_reuse": {
+      "0": 64.0,
+      "127": 64.0,
+      "128": 64.0,
+      "64": 64.0
+    },
+    "source_commit": "248d5b1eeeb5ae0a7817d049607e8eb8d99e28a6",
+    "warmup": 20
+  },
+  "grouped": {
+    "account_rows": 64,
+    "account_unique_rows": 1,
+    "bundle_manifest_sha256": "d85e0dc8fa241c66d4d727dd4be5d463fc58dbbbd53a43fd00d75100387b052e",
+    "config_path": "config/research/thesis_mtf_shared_tcn_2m_high_throughput.yaml",
+    "host": "gpuarm1.int.triton.aalto.fi",
+    "iterations": 100,
+    "job_id": "21274446",
+    "latency_ms": {
+      "p50": 10.209260042756796,
+      "p95": 11.32758695166558
+    },
+    "market_reuse_factor": 64.0,
+    "market_reuse_summary": {
+      "account_unique_rows_p50": 61.5,
+      "account_unique_rows_p95": 64.0,
+      "market_reuse_factor_p50": 64.0,
+      "market_reuse_factor_p95": 64.0,
+      "market_unique_rows_p50": 1.0,
+      "market_unique_rows_p95": 1.0,
+      "sampled_vector_steps": 128
+    },
+    "market_sha256": "43f96f72ce2eb8b13922904bf9a60d2b128c3f7fab0523f5cc13fee044db9b5f",
+    "market_unique_rows": 1,
+    "max_abs_errors": {
+      "deterministic_action": 3.2351817935705185e-07,
+      "entropy": 9.5367431640625e-07,
+      "features": 0.00022780895233154297,
+      "forward_log_prob": 9.5367431640625e-07,
+      "log_prob": 9.5367431640625e-07,
+      "thesis_logits": 6.556510925292969e-07,
+      "thesis_probs": 3.2782554626464844e-07,
+      "value": 9.694695472717285e-05
+    },
+    "max_relative_errors": {
+      "deterministic_action": 0.008529528975486755,
+      "entropy": 1.3566938150688657e-07,
+      "features": 0.021149752661585808,
+      "forward_log_prob": 1.9731240286091634e-07,
+      "log_prob": 1.9731240286091634e-07,
+      "thesis_logits": 9.517240755485545e-07,
+      "thesis_probs": 6.584057246072916e-07,
+      "value": 0.006758789531886578
+    },
+    "mode": "grouped",
+    "n_envs": 64,
+    "observations_sha256": "99362ee83a09df48dc8b9da063abd2c768111c417dab87b3f5364c86a1745b42",
+    "parity_passed": true,
+    "parity_relative_tolerance": 1e-05,
+    "parity_tolerances": {
+      "deterministic_action": 1e-05,
+      "entropy": 1e-05,
+      "features": 0.0003,
+      "forward_log_prob": 1e-05,
+      "log_prob": 1e-05,
+      "thesis_logits": 1e-05,
+      "thesis_probs": 1e-05,
+      "value": 0.00015
+    },
+    "policy_state_sha256": "d7db4a2d263a808c21f304648c6219f7878fe5404590d503c56da268ce71f1f8",
+    "resolved_config_sha256": "80e2dfc54460bdcce554e86d5b467011dc8555591945825064c454b7ea962ddd",
+    "rollout_observations_sha256": "0c8f486b812feae31f0ed135ac1a3818f80792ad60888f58c215fe76ea2eff27",
+    "rollout_steps": 128,
+    "seed": 42,
+    "snapshot_market_reuse": {
+      "0": 64.0,
+      "127": 64.0,
+      "128": 64.0,
+      "64": 64.0
+    },
+    "source_commit": "248d5b1eeeb5ae0a7817d049607e8eb8d99e28a6",
+    "warmup": 20
+  },
+  "grouped_speedup_p50": 1.120184902595618,
+  "interpretation_limit": "Latency measures model inference only. It excludes discovering duplicate rows, constructing group indices, simulator stepping, IPC, PPO updates, callbacks, checkpointing, and full campaign replay.",
+  "measurement": "inference-only exact-market-row reuse; no training",
+  "same_observation_batch": true,
+  "same_rollout_observations": true,
+  "same_seed_bundle_source": true
+}

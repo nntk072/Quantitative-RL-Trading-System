@@ -1,0 +1,44 @@
+job_id=21273983
+job_name=ppo-pipeline-wp0
+dependency=none; user stopped predecessor 21267207 before this bounded repeat
+host=gpuarm1.int.triton.aalto.fi
+start=2026-10-29T02:30:08+02:00
+commit=248d5b1eeeb5ae0a7817d049607e8eb8d99e28a6
+
+Slurm allocation:
+JobId=21273983 JobName=ppo-pipeline-wp0
+   UserId=nguyenl37(3249541) GroupId=nguyenl37(3249541) MCS_label=N/A
+   Priority=197237 Nice=0 Account=aalto_users QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:01 TimeLimit=01:00:00 TimeMin=N/A
+   SubmitTime=2026-10-29T02:29:37 EligibleTime=2026-10-29T02:29:37
+   AccrueTime=2026-10-29T02:29:37
+   StartTime=2026-10-29T02:30:07 EndTime=2026-10-29T03:30:07 Deadline=N/A
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-10-29T02:30:07 Scheduler=Backfill
+   Partition=gpu-grace-h200-141g AllocNode:Sid=login4:2084870
+   ReqNodeList=gpuarm1 ExcNodeList=(null)
+   NodeList=gpuarm1
+   BatchHost=gpuarm1
+   NumNodes=1 NumCPUs=96 NumTasks=1 CPUs/Task=96 ReqB:S:C:T=0:0:*:*
+   ReqTRES=cpu=96,mem=512G,node=1,billing=282,gres/gpu=2,gres/gpu:gh200=2
+   AllocTRES=cpu=96,mem=512G,node=1,billing=282,gres/gpu=2,gres/gpu:gh200=2
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=96 MinMemoryNode=512G MinTmpDiskNode=0
+   Features=(null) DelayBoot=00:00:00
+   OverSubscribe=NO Exclusive=NO Contiguous=0 Licenses=(null) LicensesAlloc=(null) Network=(null)
+   Command=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/scripts/research/benchmarks/run_pipelined_ppo_wp0.sbatch
+   SubmitLine=sbatch --parsable scripts/research/benchmarks/run_pipelined_ppo_wp0.sbatch
+   WorkDir=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+   StdErr=
+   StdIn=/dev/null
+   StdOut=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps/docs/research/gh200_pipelined_ppo_refactor_20261028/slurm-21273983.out
+   TresPerNode=gres/gpu:gh200:2
+   TresPerTask=cpu=96
+
+benchmark_exit=0
+finish=2026-10-29T02:31:45+02:00
+ruff_format_exit=1
+ruff_check_exit=0
+mypy_exit=1
+focused_pytest_exit=0

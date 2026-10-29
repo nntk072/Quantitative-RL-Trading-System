@@ -1,0 +1,19 @@
+Local preflight record (x86 login; not GPU measurement)
+Date: 2026-10-28
+Implementation checkout: /scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+Branch: codex/gh200-max-fps
+HEAD: 248d5b1eeeb5ae0a7817d049607e8eb8d99e28a6
+Working-tree patch identity SHA-256: 0454c21492948f8ee65327fe66693129c50434b46845718d91c68d2fd6d4da50
+Initial identity reads stable: yes
+Current pre-benchmark working-tree patch identity SHA-256: 84d9c992bf50c1008d207d4479c1339a5f422799dac14e22c6c73f3add321a56
+Current identity includes six untracked source files; generated measurements are excluded
+Bundle manifest SHA-256: d85e0dc8fa241c66d4d727dd4be5d463fc58dbbbd53a43fd00d75100387b052e
+Bundle manifest: valid JSON; 74,432 bytes
+Full-tree Ruff format: pass (802 files; latest gate)
+Full-tree Ruff lint: pass (802 files; latest gate)
+Full-tree Mypy: pass (802 source files; latest gate)
+Focused tests: 34 passed
+GPU runtime / throughput: not measured
+Queued Slurm script job 21270275 SHA-256: 61bb248d924450e265961d04a303f36c4b75718cdac410596b029bb4e41e257c
+Queued Slurm script invokes direct venv/bin/mypy (node-local staging is not in this submitted snapshot)
+The recorded working-tree patch identity predates the on-disk batch Mypy staging update; the job JSON will provide its exact source identity.

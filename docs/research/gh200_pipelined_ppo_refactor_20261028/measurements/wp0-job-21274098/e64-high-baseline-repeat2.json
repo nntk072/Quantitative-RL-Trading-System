@@ -1,0 +1,269 @@
+{
+  "profile_scope": "ppo_core_without_production_callbacks",
+  "production_callbacks_included": false,
+  "callback_evaluation_seconds": null,
+  "checkpoint_seconds": null,
+  "git_sha": "3fbbb74fdbe581807df38c1feaab7307839506f5",
+  "working_tree_dirty": true,
+  "benchmark_source_sha256": "8e3780324d1422ee83e049325be2d212ce65d8a3fda4f3daa5cd0d01a5c94f61",
+  "variant": null,
+  "config_path": "config/research/thesis_mtf_shared_tcn_2m.yaml",
+  "python_version": "3.12.15",
+  "torch_version": "2.14.0+cu130",
+  "config_sha256": "359ffa9bd62d0cfd1c7ad11b6585f77d9cee700bf244b11e47a784166af954e7",
+  "resolved_config_yaml": "data:\n  raw_dir: data\n  cache_dir: cache/train_test_2025_2026\n  price_discretization:\n    enabled: false\n    increment: 0.25\n    rounding: nearest_half_away_from_zero\n  prebuilt_feature_cache: null\n  session_schedule_file: config/ny_session_schedule.csv\n  tz: Etc/GMT-3\n  timestamp_clock: ftmo_mt5_us_dst\n  bar_timestamp_convention: open\n  require_native_timeframes: true\n  symbols:\n  - US100.cash\n  - US500.cash\n  primary: US100.cash\n  secondary: US500.cash\n  timeframes:\n  - M1\n  - M3\n  - M5\n  - M10\n  - M15\n  - M30\n  - H1\n  - H4\n  - D1\n  derived_timeframes:\n    US100.cash:\n    - D1\n  split:\n    train_start: '2024-12-30'\n    train_end: '2025-12-31'\n    test_start: '2026-01-01'\n  datasets:\n    training:\n      raw_dir: data/training\n      m1_files:\n        US100.cash: US100.cash_M1_202412300105_202610162349.csv\n        US500.cash: US500.cash_M1_202412300105_202610162349.csv\n      timeframe_files:\n        M3:\n          US100.cash: US100.cash_M3_202412300103_202610162348.csv\n          US500.cash: US500.cash_M3_202412300103_202610162348.csv\n        M5:\n          US100.cash: US100.cash_M5_202412300105_202610162345.csv\n          US500.cash: US500.cash_M5_202412300105_202610162345.csv\n        M10:\n          US100.cash: US100.cash_M10_202412300100_202610162340.csv\n          US500.cash: US500.cash_M10_202412300100_202610162340.csv\n        M15:\n          US100.cash: US100.cash_M15_202412300100_202610162345.csv\n          US500.cash: US500.cash_M15_202412300100_202610162345.csv\n        M30:\n          US100.cash: US100.cash_M30_202412300100_202610162330.csv\n          US500.cash: US500.cash_M30_202412300100_202610162330.csv\n        H1:\n          US100.cash: US100.cash_H1_202412300100_202610162300.csv\n          US500.cash: US500.cash_H1_202412300100_202610162300.csv\n        H4:\n          US100.cash: US100.cash_H4_202412300000_202610162000.csv\n          US500.cash: US500.cash_H4_202412300000_202610162000.csv\n        D1:\n          US500.cash: US500.cash_D1_202412300000_202610160000.csv\n      tick_files:\n        US100.cash: US100.cash_202412300105_202610162349.csv\n        US500.cash: US500.cash_202412300105_202610162349.csv\n    testing:\n      raw_dir: data/testing\n      m1_files:\n        US100.cash: US100.cash_M1_202412300105_202610162349.csv\n        US500.cash: US500.cash_M1_202412300105_202610162349.csv\n      timeframe_files:\n        M3:\n          US100.cash: US100.cash_M3_202412300103_202610162348.csv\n          US500.cash: US500.cash_M3_202412300103_202610162348.csv\n        M5:\n          US100.cash: US100.cash_M5_202412300105_202610162345.csv\n          US500.cash: US500.cash_M5_202412300105_202610162345.csv\n        M10:\n          US100.cash: US100.cash_M10_202412300100_202610162340.csv\n          US500.cash: US500.cash_M10_202412300100_202610162340.csv\n        M15:\n          US100.cash: US100.cash_M15_202412300100_202610162345.csv\n          US500.cash: US500.cash_M15_202412300100_202610162345.csv\n        M30:\n          US100.cash: US100.cash_M30_202412300100_202610162330.csv\n          US500.cash: US500.cash_M30_202412300100_202610162330.csv\n        H1:\n          US100.cash: US100.cash_H1_202412300100_202610162300.csv\n          US500.cash: US500.cash_H1_202412300100_202610162300.csv\n        H4:\n          US100.cash: US100.cash_H4_202412300000_202610162000.csv\n          US500.cash: US500.cash_H4_202412300000_202610162000.csv\n        D1:\n          US500.cash: US500.cash_D1_202412300000_202610160000.csv\n      tick_files:\n        US100.cash: US100.cash_202412300105_202610162349.csv\n        US500.cash: US500.cash_202412300105_202610162349.csv\nsession:\n  tz: Etc/GMT-3\n  start: '16:30'\n  end: '23:00'\n  dst_flag: true\naccount:\n  initial_balance: 100000.0\n  currency: USD\n  leverage: 50\n  margin_pct: 0.02\n  contract_size: 1.0\nevaluation:\n  deterministic: false\n  periods_per_year: 98280\n  annualization_convention: 252 sessions/year x 390 NY-session M1 bars/session\n  trade_idea_plots:\n    po3:\n      enabled: true\n      timeframes:\n      - M1\n      - M3\n      - M5\n      - M10\n      - M15\n      - M30\n      - H1\n      - H4\n      - D1\n      show_manipulation: true\n      show_distribution: true\n      show_fvg: true\n      show_ifvg: true\n    order_block:\n      enabled: true\n      timeframes:\n      - M1\n      - M3\n      - M5\n      - M10\n      - M15\n      - M30\n      - H1\n      - H4\n      - D1\n      show_zone: true\n    fvg_retest:\n      enabled: true\n      timeframes:\n      - M1\n      - M3\n      - M5\n      - M10\n      - M15\n      - M30\n      - H1\n      - H4\n      - D1\n      show_fvg: true\n      show_ifvg: false\n    ifvg_retest:\n      enabled: true\n      timeframes:\n      - M1\n      - M3\n      - M5\n      - M10\n      - M15\n      - M30\n      - H1\n      - H4\n      - D1\n      show_ifvg: true\n    ifvg_unretested:\n      enabled: true\n      timeframes:\n      - M1\n      - M3\n      - M5\n      - M10\n      - M15\n      - M30\n      - H1\n      - H4\n      - D1\n      show_ifvg: true\n    standard_deviation:\n      enabled: true\n      timeframes:\n      - M1\n      - M3\n      - M5\n      - M10\n      - M15\n      - M30\n      - H1\n      - H4\n      - D1\n      levels:\n      - 1.0\n      - 0.786\n      - 0.707\n      - 0.5\n      - 0.0\n      - -0.5\n      - -1.0\n      - -1.5\n      - -2.0\n      - -2.25\n      - -2.5\n      - -3.0\n      - -4.0\n      - -6.0\n      - -8.0\n      max_chart_range_fraction: 0.15\ncosts:\n  spread_us100: 0.6\n  spread_us500: 1.53\n  slippage_points: 5.0\n  commission_per_lot: 0.0\n  point_size: 0.01\n  use_tick_execution: true\nexecution:\n  fill_delay_ms: 0\n  randomized_fill_latency_ms: 0.0\n  max_tick_quote_wait_ms: 60000\ntrading_policy:\n  mode: legacy\n  repeated_payout:\n    operating_balance: 100000.0\n    payout_target_balance: 110000.0\n    account_floor_equity: 90000.0\n    daily_loss_limit: 5000.0\n    trailing_dd_limit: 0.0\n    payout_trigger: realized_balance_flat\n    continue_after_payout: true\n    agent_risk_min_frac: 0.0\n    agent_risk_max_frac: 0.009\n    min_agent_risk_frac: null\n    max_agent_risk_frac: null\n    risk_floor: 0.0\n    reserve_cost_buffer_usd: 0.0\n    execution_reserve_usd: null\n    enforce_remaining_daily_capacity: true\n    enforce_remaining_account_capacity: true\n    repeated_eval: true\nftmo:\n  limit_value_mode: fixed_usd\n  daily_loss_limit: 5000.0\n  soft_daily_loss_limit: 5000.0\n  soft_max_loss_limit: 10000.0\n  max_loss_limit: 10000.0\n  trailing_dd_limit: 0.0\n  soft_trailing_dd_limit: 0.0\n  risk_per_trade_limit: 1000.0\n  risk_sizing_limit_usd: 900.0\n  risk_per_trade_limit_pct: 0.01\n  daily_loss_limit_pct: 0.05\n  soft_daily_loss_limit_pct: 0.05\n  max_loss_limit_initial_pct: 0.1\n  soft_max_loss_limit_initial_pct: 0.1\n  profit_target: 10000.0\nlive_risk_overrides:\n  risk_per_symbol: 0.01\n  max_total_risk: 0.02\n  default_lot_size: 0.1\n  stop_loss_pips: 50.0\n  interval_minutes: 1\nfeatures:\n  window: 60\n  ema_periods:\n  - 9\n  - 21\n  - 50\n  - 200\n  rsi_period: 14\n  macd_fast: 12\n  macd_slow: 26\n  macd_signal: 9\n  atr_period: 14\n  adx_period: 14\n  bb_period: 20\n  bb_std: 2.0\n  stoch_k: 14\n  stoch_d: 3\n  vwap_session: true\n  return_horizons:\n  - 1\n  - 5\n  - 15\n  - 30\n  realized_vol_period: 20\n  smt_swing_period: 5\n  smt_corr_window: 20\n  zscore_window: 252\n  normalize_d1_technical_on_source: false\n  htf_timeframes:\n  - M3\n  - M5\n  - M10\n  - M15\n  - M30\n  - H1\n  - H4\n  - D1\n  include_po3: false\n  include_fvg_ifvg: false\n  gap_reaction_buffer_enabled: true\n  gap_reaction_buffer_fraction: 0.1\n  include_po3_full: false\n  include_strategy_state: true\n  po3_reference_mode: m1_legacy\n  po3_reference_timeframes:\n  - M3\n  - M5\n  - M10\n  - M15\n  - M30\n  - H1\n  - H4\n  - D1\n  po3_phase_mode: legacy\n  include_pd_context: false\n  po3_htf: M15\n  po3_ltf: M5\n  smt:\n    enabled: false\n    timeframes:\n    - M3\n    - M5\n    - M10\n    - M15\n    - M30\n    - H1\n    - H4\n    - D1\n  structure:\n    enabled: true\n    timeframes:\n    - M3\n    - M5\n    - M10\n    - M15\n    - M30\n    - H1\n    - H4\n    - D1\n    swing_candidate_count: 1\n    candidate_price_increment: null\n  liquidity:\n    enabled: false\n    timeframes:\n    - M3\n    - M5\n    - M10\n    - M15\n    - M30\n    - H1\n    - H4\n    - D1\n  order_blocks:\n    enabled: false\n    timeframes:\n    - M1\n    - M3\n    - M5\n    - M10\n    - M15\n    - M30\n    - H1\n    - H4\n    - D1\n    swing_period: 5\n    impulse_atr: 0.5\n    search_bars: 10\n    max_age_bars: 240\n  entry_ideas:\n    enabled: true\n    timeframes:\n    - M1\n    - M3\n    - M5\n    - M10\n    - M15\n    - M30\n    - H1\n    - H4\n    - D1\n    retracement_low: 0.5\n    retracement_high: 0.786\n    levels:\n    - 1.0\n    - 0.786\n    - 0.707\n    - 0.5\n    - 0.0\n    - -0.5\n    - -1.0\n    - -1.5\n    - -2.0\n    - -2.25\n    - -2.5\n    - -3.0\n    - -4.0\n    - -6.0\n    - -8.0\n  po3_state_mtf:\n    enabled: false\n    timeframes:\n    - M1\n    - M3\n    - M5\n    - M10\n    - M15\n    - M30\n    - H1\n    - H4\n    - D1\n  ifvg_mtf:\n    enabled: false\n    timeframes:\n    - M1\n    - M3\n    - M5\n    - M10\n    - M15\n    - M30\n    - H1\n    - H4\n    - D1\n  include_session_ohlc: false\n  sessions:\n    tz: America/Chicago\n    asian:\n      start: '19:00'\n      end: '23:00'\n    london:\n      start: 02:00\n      end: 05:00\n    ny:\n      start: 08:30\n      end: '15:00'\n    week_start: MON\n    quadrant_ranges:\n    - yesterday\n    - lastweek\nenv:\n  obs_window: 60\n  regime_observation: false\n  observation_schema_version: account-state-v1\n  observation_age_scale_bars: 60\n  data_source: bundle\n  n_envs: 64\n  vector_backend: sharded_bundle\n  vector_shards: 16\n  action_type: discrete\n  max_episode_steps: null\n  reward_dsr_eta: 0.01\n  strategy_actions: true\n  thesis_actions: true\n  entry_state_machine: false\n  candidate_max_age_bars: 5\n  arm_requires_retest: false\n  entry_state_observation: true\n  strict_research_eligibility: false\n  entry_intensity_threshold: 0.0\n  reward_mode: dsr\n  equity_log_growth_scale: 100.0\n  fixed_risk_usd: 0\n  risk_band_max_usd: 0\n  risk_band_hold_below_usd: 0\n  risk_mode: dynamic\n  risk_floor: 0.0005\n  allow_ema_exit: true\n  allow_agent_sl_mode: true\n  sl_mode_defer_threshold: 0.1\n  allow_agent_tp_mode: false\n  tp_mode_defer_threshold: 0.1\n  allow_multi_tp: false\n  allow_simplex: true\n  ema_runner_fraction: 0.25\n  tp_breakeven_alpha: 0.5\n  peak_trailing_dd_limit: 0.0\n  max_entries_per_session: 0\n  open_manipulation_bars: 10\n  entry_cooldown_bars: 0\n  sl_buffer_pts: 0.0\n  block_overnight: true\n  eod_risk:\n    max_loss_usd: 1100.0\n    respect_planned_risk: true\n    planned_risk_mult: 1.1\n    max_age_hours: 8\n    stale_bars: 60\n    progress_threshold_atr: 0.25\n    peak_trailing_dd_limit_usd: 0.0\n    breakeven_trigger_r: 1.0\n    breakeven_buffer_pts: 2.0\n  agent_direction_control: false\n  direction_override_threshold: 0.0\nppo:\n  actor_arch: shared\n  policy_distribution: thesis_conditioned_v1\n  thesis_conditioned:\n    embedding_dim: 32\n    execution_hidden_dim: 128\n  semantic_head_width: 64\n  n_steps: 16384\n  batch_size: 4096\n  n_epochs: 15\n  rollout_buffer_on_device: true\n  learning_rate: 0.0003\n  gamma: 0.99\n  gae_lambda: 0.95\n  clip_range: 0.2\n  ent_coef: 0.01\n  ent_coef_continuous: 0.001\n  log_std_init: 0.0\n  log_std_min: -0.7\n  log_std_max: 0.0\n  mode_prior_coef: 0.001\n  checkpoint_freq: 250000\n  total_timesteps: 2000000\nconstrained_rl:\n  enabled: false\n  episode_cost_budget: 1.0\n  dual_learning_rate: 0.1\n  lambda_initial: 0.0\n  lambda_max: 100.0\n  cost_discount_gamma: 1.0\nquality_execution:\n  requested_n_envs: 8\n  effective_n_envs: null\n  exact_n_envs: true\nsac:\n  learning_rate: 0.0003\n  buffer_size: 100000\n  batch_size: 512\n  tau: 0.005\n  gamma: 0.99\n  train_freq: 1\n  gradient_steps: 1\n  ent_coef: 0.01\n  learning_starts: 500\nencoder:\n  windows:\n    m3: 20\n    m5: 24\n    m10: 12\n    m15: 16\n    m30: 8\n    h1: 12\n    h4: 6\n    d1: 5\nagent:\n  type: ppo\n  arch: mtf_shared_tcn_reasoning\n  lite_tcn:\n    channels: 96\n    dilations:\n    - 1\n    - 4\n    - 10\n    kernel_size: 3\n    dropout: 0.1\n    latent_dim: 128\n  mtf_reasoning:\n    latent_dim: 128\n    attention_heads: 4\n    feedforward_dim: 256\n    dropout: 0.1\n  mtf_shared_tcn_reasoning:\n    latent_dim: 128\n    channels:\n    - 128\n    - 128\n    - 256\n    - 256\n    kernel_size: 3\n    dropout: 0.1\n    adapter_dim: 64\n    attention_heads: 4\n    feedforward_dim: 256\n  mtf_m1_tcn_htf_lite_reasoning:\n    latent_dim: 128\n    channels:\n    - 128\n    - 128\n    - 256\n    - 256\n    kernel_size: 3\n    dropout: 0.1\n    adapter_dim: 32\n    attention_heads: 4\n    feedforward_dim: 256\n  mtf_m1_tcn_htf_snapshot_reasoning:\n    latent_dim: 128\n    channels:\n    - 128\n    - 128\n    - 256\n    - 256\n    kernel_size: 3\n    dropout: 0.1\n    adapter_dim: 32\n    attention_heads: 4\n    feedforward_dim: 256\n  head_arch:\n    tcn:\n    - 256\n    - 128\n    lite_tcn:\n    - 128\n    - 64\n    gru:\n    - 256\n    - 128\n    transformer:\n    - 256\n    - 128\n    mtf:\n    - 256\n    - 128\n    mtf_reasoning:\n    - 256\n    - 128\n    mtf_shared_tcn_reasoning:\n    - 256\n    - 128\n    mtf_m1_tcn_htf_lite_reasoning:\n    - 256\n    - 128\n    mtf_m1_tcn_htf_snapshot_reasoning:\n    - 256\n    - 128\n  use_narrative: false\ncompute:\n  cudnn_benchmark: false\ndevice: auto\nquality_diagnostics:\n  enabled: false\noutput:\n  report_profile: full\n  dir: outputs\n  save_plots: true\n  save_html: false\n  save_csv: true\n  max_order_charts: 0\n  dpi: 150\n  candle_tf: 15min\n  price_plot_max_points: 3000\n  trade_chart_show_mae_mfe: true\n  trade_chart_show_sl_tp: true\nbacktest:\n  validation:\n    max_loss_per_trade_usd: 900.0\n    take_profit_per_trade_usd: null\n    include_costs_in_trade_risk: true\n    validation_mode: false\nrisk:\n  target_timeframes:\n  - M3\n  - M5\n  - M10\n  - M15\n  - M30\n  - H1\n  - H4\n  - D1\n  min_lot: 0.01\n  max_lot: 100.0\n  default_risk_frac: 0.01\n  sl_mode: fixed\n  tp_mode: fixed\n  tp_reference: structural\n  min_sl_atr_mult: 0.5\n  min_sl_points: 0.0\n  swing_buffer_pts: 1.0\n  rr_ratio_default: 2.0\ntraining:\n  mode: full\n  progress_log_every: 0\n  episode_mode: full_split\n  use_m1_only: false\n  primary_only: false\n  max_days: null\n  total_timesteps_mvp: 8192\n  early_abort:\n    enabled: true\n    min_timesteps: 5000000\n    window: 4\n    stop_on_nonfinite: true\n    stop_on_no_trades: false\n    stop_on_equity_gate: false\n  dashboard:\n    enabled: true\n    eval_every: 100000\n    eval_bars: 20000\n    log_every: 100000\n    prior_every: 100000\n    isolate_eval_rng: false\n    diversity:\n      sl_top_share: 0.8\n      tp_top_share: 0.8\n      rr_p75: 1.25\n      ema_lo: 0.02\n      ema_hi: 0.98\n      action_std: 0.05\n      min_prior_trades: 50\n      min_prior_sl_choices: 30\n      min_prior_tp_choices: 30\n      min_prior_direction_choices: 30\n      rank_edge: 0.05\n      direction_min_share: 0.9\n      min_prior_risk_steps: 1000\n      risk_u_max: 0.05\n  debug:\n    enabled: true\n    ring_size: 5\n    ev_floor: 0.2\n    ev_windows: 5\n    std_min: 0.497\n    std_max: 1.0\n    part_vs_pnl: 10.0\n    corr_floor: 0.3\n    corr_windows: 3\nauxiliary:\n  aux_weight: 0.0\n  prediction_horizon: 5\n  lr: 0.0001\n  grad_steps: 4\nstrategy:\n  name: po3_ifvg\n  manipulation_filter: against\n  session:\n    timezone: Etc/GMT-3\n  liquidity:\n    swing_period: 5\n    require_reclaim: true\n    max_age_bars: 120\n  po3:\n    require_manipulation_sweep: true\n    require_distribution_confirmation: true\n  ifvg:\n    enabled: true\n    max_age_bars: 50\n    require_price_retest: true\n    close_through_threshold: 0.1\n    require_opposing_fvg: false\n  risk:\n    sl_mode: fixed\n    tp_mode: fixed\n    tp_reference: structural\n    sl_buffer_pts: 1.0\n    risk_frac_range:\n    - 0.0\n    - 0.01\n    rr_range:\n    - 1.5\n    - 5.0\n  tp:\n    mode: agent\n    allowed_targets:\n    - rr\n    - buyside_liquidity\n    - sellside_liquidity\n    - previous_day_high_low\n    invalid_target_policy: rr_fallback\n  entry:\n    mode: legacy\n    enforce_gate: false\n  reward:\n    entry_bonus: 0.01\n    manipulation_penalty: 0.02\n    invalid_ifvg_penalty: 0.01\n    distribution_bonus: 0.005\n    strategy_weight: 0.01\n  batch_windows: 256\n",
+  "bundle_manifest_sha256": "d85e0dc8fa241c66d4d727dd4be5d463fc58dbbbd53a43fd00d75100387b052e",
+  "arch": "mtf_shared_tcn_reasoning",
+  "algo": "ppo",
+  "seed": 42,
+  "n_envs": 64,
+  "vector_backend": "ShardedBundleVecEnv",
+  "rollout_buffer_class": "DeviceDictRolloutBuffer",
+  "rollout_buffer_on_device": true,
+  "defer_metric_sync": false,
+  "ppo_class": "PPO",
+  "torch_compile_mode": null,
+  "torch_compile_warmup_seconds": 0.0,
+  "matmul_precision": "high",
+  "env_step_timing_enabled": false,
+  "env_step_calls": 0,
+  "env_step_cpu_seconds_total": 0,
+  "env_step_wall_lower_bound_seconds": 0.0,
+  "env_step_mean_ms": 0.0,
+  "configured_vector_backend": "sharded_bundle",
+  "physical_worker_count": 16,
+  "logical_envs_per_worker": [
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+  ],
+  "total_timesteps": 262144,
+  "warmup_rollouts_excluded_from_core_rate": 2,
+  "completed_rollouts": 16,
+  "rollout_call_seconds": [
+    9.482493020012043,
+    10.487399804987945,
+    9.825307335006073,
+    11.000468949088827,
+    10.974590151105076,
+    10.308857914060354,
+    11.013302313047461,
+    11.118924998911098,
+    11.58741934900172,
+    11.421075131976977,
+    10.711581378011033,
+    10.57963163300883,
+    11.319664404029027,
+    10.484680647030473,
+    11.086345780990086,
+    10.566564550972544
+  ],
+  "update_call_seconds": [
+    6.57180824491661,
+    6.1609368700301275,
+    6.165554468985647,
+    6.13252227997873,
+    6.192516184062697,
+    6.1399595780530944,
+    6.20692437607795,
+    6.153899575932883,
+    6.137085126945749,
+    6.1599302649265155,
+    6.162431731005199,
+    6.141066545038484,
+    6.18822371494025,
+    6.2047335220268,
+    6.1689902319340035,
+    6.227118622045964
+  ],
+  "measured_rollout_count": 14,
+  "measured_env_steps_after_warmup": 229376,
+  "measured_rollout_seconds_after_warmup": 151.99841453623958,
+  "measured_update_seconds_after_warmup": 86.38095622195397,
+  "measured_ppo_core_seconds_after_warmup": 238.37937075819355,
+  "measured_ppo_core_steps_per_second": 962.2309148247297,
+  "rollout_steps_per_env": 256,
+  "aggregate_rollout_size": 16384,
+  "n_epochs": 15,
+  "batch_size": 4096,
+  "minibatches_per_epoch": 4,
+  "optimizer_steps": 960,
+  "ppo_epochs_completed": 240,
+  "configured_ppo_n_steps": 16384,
+  "effective_ppo_n_steps_per_env": 256,
+  "learning_rate": 0.0003,
+  "gamma": 0.99,
+  "gae_lambda": 0.95,
+  "clip_range": 0.2,
+  "ent_coef": 0.01,
+  "effective_ent_coef": 0.001,
+  "parameter_count": 1326240,
+  "feature_extractor_class": "SharedTCNMTFReasoningEncoder",
+  "encoder_spec": {
+    "channels": [
+      128,
+      128,
+      256,
+      256
+    ],
+    "dilations": null,
+    "kernel_size": 3,
+    "latent_dim": 128,
+    "parameters": {},
+    "receptive_field": null
+  },
+  "policy_head_architecture": [
+    256,
+    128
+  ],
+  "observation_shapes": {
+    "account": [
+      6
+    ],
+    "seq": [
+      60,
+      282
+    ],
+    "seq_mask": [
+      60
+    ],
+    "seq_m3": [
+      20,
+      60
+    ],
+    "mask_m3": [
+      20
+    ],
+    "seq_m5": [
+      24,
+      60
+    ],
+    "mask_m5": [
+      24
+    ],
+    "seq_m10": [
+      12,
+      60
+    ],
+    "mask_m10": [
+      12
+    ],
+    "seq_m15": [
+      16,
+      60
+    ],
+    "mask_m15": [
+      16
+    ],
+    "seq_m30": [
+      8,
+      60
+    ],
+    "mask_m30": [
+      8
+    ],
+    "seq_h1": [
+      12,
+      60
+    ],
+    "mask_h1": [
+      12
+    ],
+    "seq_h4": [
+      6,
+      60
+    ],
+    "mask_h4": [
+      6
+    ],
+    "seq_d1": [
+      5,
+      60
+    ],
+    "mask_d1": [
+      5
+    ],
+    "thesis_mask": [
+      109
+    ]
+  },
+  "action_space": {
+    "class": "Box",
+    "shape": [
+      6
+    ],
+    "n": null
+  },
+  "action_schema": {
+    "kind": "thesis_overlay",
+    "version": "thesis-overlay-action-v1",
+    "key": "thesis:thesis_stop_risk_target_sl_mode_exit",
+    "width": 6,
+    "coordinates": [
+      "thesis",
+      "stop",
+      "risk",
+      "target",
+      "sl_mode",
+      "exit"
+    ],
+    "categorical_coordinates": [
+      "thesis",
+      "sl_mode",
+      "exit"
+    ],
+    "has_thesis": true,
+    "thesis_candidate_schema_version": "thesis-candidate-v1",
+    "thesis_category_count": 109,
+    "has_direction": false,
+    "has_sl_mode": true,
+    "has_tp_mode": false,
+    "has_multi_tp": false,
+    "has_simplex": false
+  },
+  "device": "cuda",
+  "bundle_size_bytes": 5198840976,
+  "cgroup_start_bytes": 1502904320,
+  "cgroup_vecenv_ready_bytes": 4392509440,
+  "cgroup_after_training_bytes": 7935242240,
+  "trainer_tree_pss_mib": 6732.0380859375,
+  "process_tree_cpu_seconds": 907.01,
+  "average_cpu_cores_used": 3.345687866201888,
+  "allocated_cpus": 48,
+  "allocated_cpu_fraction": 0.06970183054587266,
+  "training_seconds": 271.09821246704087,
+  "total_wallclock_seconds": 271.09821246704087,
+  "env_steps_per_second": 966.970595690927,
+  "effective_total_timesteps": 262144,
+  "actual_env_steps": 262144,
+  "nominal_env_steps_per_rollout_window": 16384,
+  "update_seconds": 99.1137013369007,
+  "update_compute_seconds": 99.11367852136027,
+  "update_semaphore_wait_seconds": 2.2815540432929993e-05,
+  "update_semaphore_slots": null,
+  "update_calls": 16,
+  "rollout_and_framework_overhead_seconds": 171.98451113014016,
+  "rollout_steps_per_second": 1524.2302825842057,
+  "update_share_of_wallclock": 0.36560071877622796,
+  "gpu_name": "NVIDIA GH200 144G HBM3e",
+  "gpu_total_bytes": 153276645376,
+  "gpu_free_before_bytes": 152691609600,
+  "gpu_free_after_bytes": 138026475520,
+  "gpu_allocated_bytes": 1633233408,
+  "gpu_reserved_bytes": 14409531392,
+  "gpu_peak_allocated_bytes": 13019108352,
+  "gpu_peak_reserved_bytes": 14409531392
+}

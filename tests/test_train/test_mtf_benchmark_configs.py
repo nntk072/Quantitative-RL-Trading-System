@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+from typing import Any, cast
 from unittest.mock import patch
 
 import torch
@@ -97,16 +98,58 @@ def test_efg_encoder_ids_are_available_from_training_cli() -> None:
 
 
 def test_high_throughput_config_is_separate_and_has_measured_geometry() -> None:
-    baseline = load_config(config_path="config/research/thesis_mtf_shared_tcn_2m.yaml")
-    high = load_config(config_path="config/research/thesis_mtf_shared_tcn_2m_high_throughput.yaml")
+    from training.configuration.cli import load_merged_config
+
+    def production_resolve(config_path: str):
+        return load_merged_config(
+            Namespace(
+                config=config_path,
+                strategy="baseline",
+                variant=None,
+                quality_variant=None,
+                overrides=[],
+            )
+        )
+
+    baseline = production_resolve("config/research/thesis_mtf_shared_tcn_2m.yaml")
+    high = production_resolve("config/research/thesis_mtf_shared_tcn_2m_high_throughput.yaml")
+
+    baseline_tree = cast(dict[str, Any], OmegaConf.to_container(baseline, resolve=True))
+    high_tree = cast(dict[str, Any], OmegaConf.to_container(high, resolve=True))
+    assert isinstance(baseline_tree, dict)
+    assert isinstance(high_tree, dict)
+
+    def changed_paths(left: dict[str, Any], right: dict[str, Any], prefix: str = "") -> set[str]:
+        paths: set[str] = set()
+        for key in left.keys() | right.keys():
+            path = f"{prefix}.{key}" if prefix else str(key)
+            left_value = left.get(key)
+            right_value = right.get(key)
+            if isinstance(left_value, dict) and isinstance(right_value, dict):
+                paths.update(changed_paths(left_value, right_value, path))
+            elif left_value != right_value:
+                paths.add(path)
+        return paths
+
+    assert changed_paths(baseline_tree, high_tree) == {
+        "env.data_source",
+        "env.n_envs",
+        "env.vector_shards",
+        "ppo.n_steps",
+        "ppo.batch_size",
+        "quality_execution.requested_n_envs",
+    }
 
     assert baseline.env.n_envs == 8
     assert baseline.ppo.n_steps == 2048
     assert baseline.ppo.batch_size == 512
+    assert high.agent.arch == "mtf_shared_tcn_reasoning"
+    assert high.ppo.policy_distribution == "thesis_conditioned_v1"
+    assert high.env.thesis_actions is True
     assert high.env.data_source == "bundle"
     assert high.env.n_envs == 64
-    assert high.env.vector_backend == "sharded_bundle"
-    assert high.env.vector_shards == 16
+    assert high.env.vector_backend == "subproc"
+    assert high.env.vector_shards == 64
     assert high.ppo.n_steps == 16384
     assert high.ppo.n_steps // high.env.n_envs == 256
     assert high.ppo.batch_size == 4096

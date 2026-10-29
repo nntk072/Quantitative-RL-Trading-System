@@ -4,7 +4,7 @@
 # Usage (inside a GPU shell or training script):
 #   source scripts/compute/slurm/activate_venv.sh
 #
-# aarch64 (GH200) -> $REPO/.venv
+# aarch64 (GH200) -> ${AARCH64_VENV:-$REPO/.venv}
 # x86_64 MI210 (gpu-amd) -> ${MI210_VENV:-/scratch/work/nguyenl37/.venv-mi210}
 # other x86_64 (H100/H200, local, CI) -> ${X86_VENV:-$REPO/.venv-x86}
 #
@@ -15,7 +15,7 @@ REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
 machine="$(uname -m)"
 
 if [[ "$machine" == "aarch64" ]]; then
-  venv="$REPO/.venv"
+  venv="${AARCH64_VENV:-$REPO/.venv}"
 elif [[ "$machine" == "x86_64" ]]; then
   if [[ "${SLURM_JOB_PARTITION:-}" == "gpu-amd" ]]; then
     venv="${MI210_VENV:-/scratch/work/nguyenl37/.venv-mi210}"

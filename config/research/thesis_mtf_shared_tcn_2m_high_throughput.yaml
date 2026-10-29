@@ -1,18 +1,45 @@
-# Variant E high-throughput geometry screen.
-# This is a separate PPO learning setup: the larger rollout and minibatch alter
-# optimizer-update frequency. Do not label it a behaviorally matched C/D run.
+# Variant E high-throughput candidate using the measured 64-subprocess backend.
+# This is a complete Variant E overlay, not a fragment that silently inherits
+# default TCN settings. Geometry/backend changes make this a separate PPO
+# learning protocol; do not call it a matched C/D run or identical trajectory.
+
+compute:
+  cudnn_benchmark: false
 
 env:
-  data_source: bundle
   n_envs: 64
-  vector_backend: sharded_bundle
-  vector_shards: 16
+  data_source: bundle
+  vector_backend: subproc
+  vector_shards: 64
+  strategy_actions: true
+  thesis_actions: true
+  agent_direction_control: false
+
+features:
+  include_strategy_state: true
+  entry_ideas:
+    enabled: true
+
+agent:
+  arch: mtf_shared_tcn_reasoning
 
 ppo:
+  policy_distribution: thesis_conditioned_v1
+  actor_arch: shared
+  thesis_conditioned:
+    embedding_dim: 32
+    execution_hidden_dim: 128
   n_steps: 16384 # aggregate rollout: 256 transitions per environment
   batch_size: 4096
   n_epochs: 15
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01
+  ent_coef_continuous: 0.001
   total_timesteps: 2000000
+  checkpoint_freq: 250000
 
 quality_execution:
   requested_n_envs: 64

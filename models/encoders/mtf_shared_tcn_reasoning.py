@@ -110,12 +110,19 @@ class SharedTCNMTFReasoningEncoder(MTFReasoningOutput):
             "htf_summary_type": "shared_causal_tcn",
         }
 
-    def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+    def _market_tokens(
+        self,
+        observations: dict[str, torch.Tensor],
+        row_indices: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         adapted: list[torch.Tensor] = []
         masks: list[torch.Tensor] = []
         for adapter, (seq_key, mask_key, _, _) in zip(self.adapters, self.streams, strict=True):
             seq = observations[seq_key]
             mask = batch_mask(observations[mask_key], seq.shape[0], seq.shape[1]).to(seq.device)
+            if row_indices is not None:
+                seq = seq.index_select(0, row_indices)
+                mask = mask.index_select(0, row_indices)
             # Mask both input values and adapter bias so left padding is a stable neutral value.
             valid_rows = mask.unsqueeze(-1)
             clean_seq = torch.where(valid_rows, seq, torch.zeros_like(seq))
@@ -146,7 +153,43 @@ class SharedTCNMTFReasoningEncoder(MTFReasoningOutput):
         )
         tokens = torch.cat((m1_token[:, None, :], grouped_tokens), dim=1)
         valid = torch.stack([mask.any(dim=1) for mask in masks], dim=1)
+        return tokens, valid
+
+    def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        tokens, valid = self._market_tokens(observations)
         return self.finish(tokens, valid, observations["account"])
+
+    def forward_with_market_groups(
+        self,
+        observations: dict[str, torch.Tensor],
+        representative_rows: torch.Tensor,
+        inverse_rows: torch.Tensor,
+    ) -> torch.Tensor:
+        """Encode each unique market row once, then retain every account row.
+
+        This opt-in inference path is for a bounded A/B measurement. Callers must
+        provide representative and inverse row indices for identical market
+        observations. It deliberately rejects training/gradient mode: encoder
+        weights and dropout semantics change during PPO updates.
+        """
+        if self.training or torch.is_grad_enabled():
+            raise RuntimeError("grouped market encoding is inference-only")
+        batch_size = int(observations["account"].shape[0])
+        device = observations["account"].device
+        representatives = torch.as_tensor(representative_rows, dtype=torch.long, device=device)
+        inverse = torch.as_tensor(inverse_rows, dtype=torch.long, device=device)
+        if representatives.ndim != 1 or representatives.numel() == 0:
+            raise ValueError("representative_rows must be a non-empty vector")
+        if inverse.ndim != 1 or inverse.numel() != batch_size:
+            raise ValueError("inverse_rows must contain one group index per environment")
+        if bool((representatives < 0).any()) or bool((representatives >= batch_size).any()):
+            raise ValueError("representative row index is outside the observation batch")
+        if bool((inverse < 0).any()) or bool((inverse >= representatives.numel()).any()):
+            raise ValueError("inverse row index is outside the representative batch")
+
+        tokens, valid = self._market_tokens(observations, representatives)
+        market = self.encode_market(tokens, valid).index_select(0, inverse)
+        return self.combine_market_and_account(market, observations["account"])
 
 
 __all__ = ["SharedTCNMTFReasoningEncoder"]

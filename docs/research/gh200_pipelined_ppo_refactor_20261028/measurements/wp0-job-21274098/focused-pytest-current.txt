@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2
+collected 37 items
+
+tests/test_train/test_mtf_benchmark_configs.py ....                      [ 10%]
+tests/test_bench/test_measure_ppo_throughput.py ......................   [ 70%]
+tests/test_bench/test_summarize_pipelined_ppo_wp0.py ......              [ 86%]
+tests/test_compute_contracts.py .....                                    [100%]
+
+============================== 37 passed in 3.99s ==============================

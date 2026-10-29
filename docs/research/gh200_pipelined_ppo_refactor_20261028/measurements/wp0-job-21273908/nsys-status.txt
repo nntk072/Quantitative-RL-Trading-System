@@ -1,0 +1,1 @@
+nsys=not run in the short measurement scope; SM-active and detailed transfer metrics remain UNKNOWN

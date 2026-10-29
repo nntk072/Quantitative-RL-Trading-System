@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+
 import pytest
 
 from compute.contracts import ExecutionBackend, JobSpec, ResourceProfile
@@ -70,3 +75,47 @@ def test_device_capabilities_identify_rocm_backend(monkeypatch: pytest.MonkeyPat
     assert capabilities.device_name == "AMD Instinct MI210"
     assert capabilities.compute_capability == (9, 0)
     assert capabilities.supports_bfloat16
+
+
+def test_activate_venv_honors_aarch64_override() -> None:
+    repository = Path(__file__).resolve().parents[1]
+    activation_helper = repository / "scripts/compute/slurm/activate_venv.sh"
+
+    with tempfile.TemporaryDirectory(prefix="aarch64-venv-override-") as temporary:
+        root = Path(temporary)
+        fake_bin = root / "host-bin"
+        fake_bin.mkdir()
+        uname = fake_bin / "uname"
+        uname.write_text("#!/bin/sh\nprintf 'aarch64\\n'\n", encoding="utf-8")
+        uname.chmod(0o755)
+
+        venv = root / "shared-venv"
+        venv_bin = venv / "bin"
+        venv_bin.mkdir(parents=True)
+        python = venv_bin / "python"
+        python.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        python.chmod(0o755)
+        (venv_bin / "activate").write_text('export VIRTUAL_ENV="stale-path"\n', encoding="utf-8")
+
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "PATH": f"{fake_bin}:/usr/bin:/bin",
+                "TRITON_REPO": str(repository),
+                "AARCH64_VENV": str(venv),
+            }
+        )
+        completed = subprocess.run(
+            [
+                "bash",
+                "-c",
+                f'source "{activation_helper}"; printf "%s\\n" "$VIRTUAL_ENV"; command -v python',
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.splitlines() == [str(venv), str(python)]

@@ -1,0 +1,16 @@
+host=gpuarm1.int.triton.aalto.fi
+job_id=21273908
+commit=248d5b1eeeb5ae0a7817d049607e8eb8d99e28a6
+ M config/research/thesis_mtf_shared_tcn_2m_high_throughput.yaml
+ M scripts/compute/slurm/activate_venv.sh
+ M scripts/research/benchmarks/measure_ppo_throughput.py
+ M tests/test_bench/test_measure_ppo_throughput.py
+ M tests/test_compute_contracts.py
+ M tests/test_train/test_mtf_benchmark_configs.py
+?? docs/research/GH200_FULL_RESOURCE_PIPELINED_PPO_REFACTOR_PLAN_2026-10-28.md
+?? docs/research/gh200_pipelined_ppo_refactor_20261028/
+?? scripts/research/benchmarks/run_pipelined_ppo_wp0.sbatch
+?? scripts/research/benchmarks/run_pipelined_ppo_wp0.sh
+?? scripts/research/benchmarks/summarize_pipelined_ppo_wp0.py
+?? tests/test_bench/test_summarize_pipelined_ppo_wp0.py
+tracked_diff_sha256=7a63a4e9b0af049dc38f45c110ae2c4bb12ad7711bb0ee237d7a70c48c839f48

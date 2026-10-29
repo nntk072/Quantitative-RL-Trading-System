@@ -1,0 +1,8 @@
+architecture=aarch64
+python_executable=/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python
+checkout=/scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+venv=/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv
+torch=2.14.0+cu130
+cuda_available=True
+gpu=NVIDIA GH200 144G HBM3e
+cuda_capability=(9, 0)

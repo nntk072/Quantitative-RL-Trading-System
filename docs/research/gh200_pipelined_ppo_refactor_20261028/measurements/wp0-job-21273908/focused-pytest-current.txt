@@ -1,0 +1,71 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System-gh200-max-fps
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2
+collected 37 items
+
+tests/test_train/test_mtf_benchmark_configs.py ....                      [ 10%]
+tests/test_bench/test_measure_ppo_throughput.py ......................   [ 70%]
+tests/test_bench/test_summarize_pipelined_ppo_wp0.py FF....              [ 86%]
+tests/test_compute_contracts.py .....                                    [100%]
+
+=================================== FAILURES ===================================
+______ test_summary_reports_repeats_topology_and_unknown_hardware_metrics ______
+
+tmp_path = PosixPath('/tmp/pytest-of-nguyenl37/pytest-0/test_summary_reports_repeats_t0')
+
+    def test_summary_reports_repeats_topology_and_unknown_hardware_metrics(tmp_path: Path) -> None:
+        _write_cases(tmp_path)
+        for label in REQUIRED[:3]:
+            path = tmp_path / f"{label}.json"
+            payload = json.loads(path.read_text())
+            payload["git_sha"] = "historical-baseline-commit"
+            payload["benchmark_source_sha256"] = "historical-baseline-source"
+            payload["source_patch_identity_sha256"] = "historical-baseline-patch"
+            path.write_text(json.dumps(payload))
+
+        report = build_report(tmp_path)
+
+        assert "Mean ± sample SD" in report
+>       assert "Working-tree patch identity SHA-256" in report
+E       AssertionError: assert 'Working-tree patch identity SHA-256' in '# GH200 Pipelined PPO WP0/WP1 Measurement Results\n\n**Measurement directory:** `/tmp/pytest-of-nguyenl37/pytest-0/te...probe.\n- Any absent metric remains UNKNOWN. Do not infer occupancy or memory bandwidth from allocated/reserved HBM.\n'
+
+tests/test_bench/test_summarize_pipelined_ppo_wp0.py:96: AssertionError
+____________ test_summary_rejects_mismatched_fixed_policy_geometry _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-nguyenl37/pytest-0/test_summary_rejects_mismatche0')
+
+    def test_summary_rejects_mismatched_fixed_policy_geometry(tmp_path: Path) -> None:
+        _write_cases(tmp_path)
+        path = tmp_path / "e64-high-shards32.json"
+>       payload = json.loads(path.read_text())
+                             ^^^^^^^^^^^^^^^^
+
+tests/test_bench/test_summarize_pipelined_ppo_wp0.py:115:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../.tools/python/cpython-3.12.15-linux-aarch64-gnu/lib/python3.12/pathlib.py:1027: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PosixPath('/tmp/pytest-of-nguyenl37/pytest-0/test_summary_rejects_mismatche0/e64-high-shards32.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-nguyenl37/pytest-0/test_summary_rejects_mismatche0/e64-high-shards32.json'
+
+../.tools/python/cpython-3.12.15-linux-aarch64-gnu/lib/python3.12/pathlib.py:1013: FileNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_bench/test_summarize_pipelined_ppo_wp0.py::test_summary_reports_repeats_topology_and_unknown_hardware_metrics
+FAILED tests/test_bench/test_summarize_pipelined_ppo_wp0.py::test_summary_rejects_mismatched_fixed_policy_geometry
+========================= 2 failed, 35 passed in 4.55s =========================

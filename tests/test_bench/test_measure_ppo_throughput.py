@@ -1,24 +1,80 @@
 from __future__ import annotations
 
+import hashlib
+import os
 import subprocess
+import sys
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, cast
 
 import gymnasium as gym
 import numpy as np
 import pytest
+from gymnasium import spaces
 from omegaconf import OmegaConf
 from scripts.research.benchmarks.measure_ppo_throughput import (
+    PROJECT_ROOT,
     _apply_profile_overrides,
     _json_default,
+    _NvidiaSmiSampler,
     _prepare_bundle,
     _process_tree_cpu_seconds,
+    _ProcessTreeSampler,
+    _sample_summary,
     _scale_profile_config,
     _StepTimingWrapper,
+    _time_callable,
     _time_method_calls,
+    _time_tensor_backward,
+    _validate_high_throughput_runtime_identity,
+    _working_tree_patch_identity,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FPS_PROBE_SCRIPT = REPO_ROOT / "scripts" / "research" / "benchmarks" / "run_fps_probe.sh"
+BATCH_SCRIPT = REPO_ROOT / "scripts" / "research" / "benchmarks" / "run_pipelined_ppo_wp0.sbatch"
+
+
+def test_benchmark_imports_project_modules_from_its_own_checkout() -> None:
+    assert PROJECT_ROOT == REPO_ROOT
+    assert str(REPO_ROOT) == sys.path[0]
+
+
+def test_working_tree_identity_includes_dirty_sources_but_excludes_run_outputs(tmp_path) -> None:
+    def git(*args: str) -> None:
+        subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True, text=True)
+
+    git("init", "-q")
+    git("config", "user.email", "benchmark@example.invalid")
+    git("config", "user.name", "Benchmark Test")
+    tracked = tmp_path / "tracked.py"
+    tracked.write_text("VALUE = 1\n", encoding="utf-8")
+    git("add", "tracked.py")
+    git("commit", "-q", "-m", "baseline")
+    baseline = _working_tree_patch_identity(tmp_path)
+    assert baseline["working_tree_dirty"] is False
+
+    tracked.write_text("VALUE = 2\n", encoding="utf-8")
+    untracked = tmp_path / "new_source.py"
+    untracked.write_text("NEW_VALUE = 3\n", encoding="utf-8")
+    output = tmp_path / "measurements" / "case.json"
+    output.parent.mkdir()
+    output.write_text("{}\n", encoding="utf-8")
+    changed = _working_tree_patch_identity(tmp_path)
+
+    assert changed["working_tree_dirty"] is True
+    assert changed["patch_identity_sha256"] != baseline["patch_identity_sha256"]
+    assert changed["tracked_diff_sha256"] != baseline["tracked_diff_sha256"]
+    assert changed["untracked_source_sha256"] == {
+        "new_source.py": hashlib.sha256(untracked.read_bytes()).hexdigest()
+    }
+    stable_identity = changed["patch_identity_sha256"]
+    output.write_text('{"updated": true}\n', encoding="utf-8")
+    scheduler_output = tmp_path / "slurm-123.out"
+    scheduler_output.write_text("measurement progress\n", encoding="utf-8")
+    after_outputs = _working_tree_patch_identity(tmp_path)
+    assert after_outputs["patch_identity_sha256"] == stable_identity
 
 
 def test_profile_overrides_are_explicit_and_preserve_production_defaults() -> None:
@@ -102,12 +158,136 @@ def test_environment_step_timer_records_wrapped_steps() -> None:
     env = _StepTimingWrapper(gym.make("CartPole-v1"))
     env.reset(seed=1)
 
-    env.step(0)
+    for _ in range(8):
+        env.step(0)
 
     metrics = env.get_step_timing()
-    assert metrics["steps"] == 1
+    assert metrics["steps"] == 8
     assert metrics["seconds"] >= 0.0
+    assert len(metrics["sampled_step_ms"]) == 1
     env.close()
+
+
+def test_environment_wrapper_times_observation_construction() -> None:
+    class ObservationEnv(gym.Env[Any, Any]):
+        observation_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
+        action_space = spaces.Discrete(2)
+
+        def _get_observation(self) -> np.ndarray[Any, Any]:
+            return np.zeros(1, dtype=np.float32)
+
+        def reset(
+            self, *, seed: int | None = None, options: dict[str, Any] | None = None
+        ) -> tuple[np.ndarray[Any, Any], dict[str, Any]]:
+            del options
+            super().reset(seed=seed)
+            return self._get_observation(), {}
+
+        def step(
+            self, action: int
+        ) -> tuple[np.ndarray[Any, Any], float, bool, bool, dict[str, Any]]:
+            del action
+            return self._get_observation(), 0.0, False, False, {}
+
+    env = _StepTimingWrapper(ObservationEnv())
+    env.reset(seed=1)
+    for _ in range(2):
+        env.step(0)
+    metrics = env.get_step_timing()
+    assert metrics["observation_construction_calls"] == 3
+    assert metrics["observation_construction_seconds"] >= 0.0
+    env.close()
+
+
+def test_sample_summary_reports_bounded_sample_percentiles() -> None:
+    assert _sample_summary([]) == {
+        "sample_count": 0,
+        "total": 0.0,
+        "p50": None,
+        "p95": None,
+    }
+    summary = _sample_summary([1.0, 2.0, 3.0], scale=1000.0)
+
+    assert summary["sample_count"] == 3
+    assert summary["total"] == 6000.0
+    assert summary["p50"] == 2000.0
+    assert summary["p95"] == 2900.0
+
+
+def test_gpu_telemetry_keeps_unsupported_metrics_explicitly_unknown(monkeypatch) -> None:
+    sampler = _NvidiaSmiSampler()
+    monkeypatch.setattr(sampler, "executable", None)
+
+    report = sampler.stop()
+
+    assert report["available"] is False
+    assert report["sm_active_pct"] is None
+    assert report["dram_bandwidth"] is None
+
+
+def test_process_tree_sampler_tracks_profile_phase() -> None:
+    sampler = _ProcessTreeSampler(os.getpid(), interval_seconds=0.05)
+    assert sampler.current_phase() == "startup"
+    with sampler.phase("unit-test-phase"):
+        assert sampler.current_phase() == "unit-test-phase"
+
+    report = sampler.stop()
+
+    assert sampler.current_phase() == "startup"
+    assert report["available"] is False
+    assert report["ipc_bytes"] is None
+
+
+def test_high_throughput_runtime_identity_fails_closed_on_variant_mismatch() -> None:
+    policy_type = type("ThesisConditionedClampedStdMultiInputPolicy", (), {})
+    cfg = OmegaConf.create(
+        {
+            "agent": {"arch": "mtf_shared_tcn_reasoning"},
+            "ppo": {"policy_distribution": "thesis_conditioned_v1"},
+            "env": {"thesis_actions": True, "vector_backend": "sharded_bundle"},
+        }
+    )
+    model = SimpleNamespace(
+        n_envs=64,
+        n_steps=256,
+        batch_size=4096,
+        n_epochs=15,
+        policy=policy_type(),
+    )
+    vec_env = SimpleNamespace(num_envs=64)
+    parent_env = SimpleNamespace(
+        observation_space=spaces.Dict(
+            {"thesis_mask": spaces.Box(low=0, high=1, shape=(109,), dtype=np.float32)}
+        )
+    )
+    config_path = Path("config/research/thesis_mtf_shared_tcn_2m_high_throughput.yaml")
+
+    with pytest.raises(RuntimeError, match="configured_vector_backend"):
+        _validate_high_throughput_runtime_identity(cfg, model, vec_env, parent_env, config_path)
+
+    class ShardedBundleVecEnv:
+        num_envs = 64
+
+    vec_env_good = ShardedBundleVecEnv()
+    result = _validate_high_throughput_runtime_identity(
+        cfg, model, vec_env_good, parent_env, config_path
+    )
+
+    assert result is not None
+    assert result["passed"] is True
+    assert result["aggregate_rollout"] == 16384
+
+    cfg.env.vector_backend = "subproc"
+
+    class SubprocVecEnv:
+        num_envs = 64
+
+    subproc_env = SubprocVecEnv()
+    subproc_result = _validate_high_throughput_runtime_identity(
+        cfg, model, subproc_env, parent_env, config_path
+    )
+    assert subproc_result is not None
+    assert subproc_result["vector_backend"] == "SubprocVecEnv"
 
 
 def test_class_method_timer_restores_class_without_mutating_instance() -> None:
@@ -124,6 +304,32 @@ def test_class_method_timer_restores_class_without_mutating_instance() -> None:
     assert len(calls) == 1
     assert calls[0] >= 0.0
     assert meter.increment(8) == 9
+
+
+def test_callable_timer_restores_owner_attribute() -> None:
+    owner = SimpleNamespace(increment=lambda value: value + 1)
+    samples: list[float] = []
+    original = owner.increment
+    with _time_callable(owner, "increment", samples, range_name="unit-test"):
+        assert owner.increment(4) == 5
+    assert owner.increment is original
+    assert len(samples) == 1
+    assert samples[0] >= 0.0
+
+
+def test_tensor_backward_timer_restores_torch_method() -> None:
+    import torch
+
+    original = torch.Tensor.backward
+    samples: list[float] = []
+    tensor = torch.tensor(2.0, requires_grad=True)
+    with _time_tensor_backward(torch, samples, None):
+        backward_tensor = cast(Any, tensor * tensor)
+        backward_tensor.backward()
+    assert tensor.grad is not None
+    assert torch.Tensor.backward is original
+    assert len(samples) == 1
+    assert samples[0] >= 0.0
 
 
 def test_variant_config_uses_production_strategy_merge_and_cli_override(
@@ -197,3 +403,20 @@ def test_fps_probe_launcher_is_repo_relative_and_architecture_aware() -> None:
     assert 'PROFILE_ARGS+=(--n-envs "$N_ENVS")' in source
     assert "--n-envs 64" not in source
     assert ".venv-x86/bin/python" not in source
+
+
+def test_pipelined_batch_stages_full_tree_mypy_on_node_local_storage() -> None:
+    result = subprocess.run(
+        ["bash", "-n", str(BATCH_SCRIPT)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    source = BATCH_SCRIPT.read_text(encoding="utf-8")
+
+    assert result.returncode == 0, result.stderr
+    assert 'mktemp -d "/tmp/triton-mypy-${USER}-wp0-${SLURM_JOB_ID}-XXXXXX"' in source
+    assert '"$MYPY_STAGE/pythonbase/bin/python3.12" -m mypy .' in source
+    assert '--cache-dir "$MYPY_STAGE/cache" --no-color-output --show-error-codes' in source
+    assert '"$VIRTUAL_ENV/bin/mypy" .' not in source
+    assert "tests/test_compute_contracts.py" in source

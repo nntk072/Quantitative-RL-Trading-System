@@ -123,10 +123,8 @@ class MTFReasoningOutput(BaseFeaturesExtractor):
             persistent=True,
         )
 
-    def finish(
-        self, tokens: torch.Tensor, valid: torch.Tensor, account: torch.Tensor
-    ) -> torch.Tensor:
-        """Apply D-shaped timeframe attention, masked pooling, and account embedding."""
+    def encode_market(self, tokens: torch.Tensor, valid: torch.Tensor) -> torch.Tensor:
+        """Encode market tokens independently of the per-environment account state."""
         if tokens.ndim != 3 or tokens.shape[1:] != (len(_TIMEFRAME_IDS), self.latent_dim):
             raise ValueError("MTF tokens must have shape (batch, 9, latent_dim)")
         if valid.shape != tokens.shape[:2]:
@@ -141,5 +139,21 @@ class MTFReasoningOutput(BaseFeaturesExtractor):
         attended = self.cross_timeframe(tokens, src_key_padding_mask=~valid)
         weights = valid.to(dtype=attended.dtype).unsqueeze(-1)
         pooled = (attended * weights).sum(dim=1) / weights.sum(dim=1).clamp_min(1.0)
-        market = cast(torch.Tensor, self.market_norm(pooled))
+        return cast(torch.Tensor, self.market_norm(pooled))
+
+    def combine_market_and_account(
+        self, market: torch.Tensor, account: torch.Tensor
+    ) -> torch.Tensor:
+        """Keep the account embedding per environment after market encoding."""
+        if market.ndim != 2 or market.shape[1] != self.latent_dim:
+            raise ValueError("market representation must have shape (batch, latent_dim)")
+        if account.ndim != 2 or account.shape[0] != market.shape[0]:
+            raise ValueError("account batch must match the market representation batch")
+        return torch.cat((market, self.account_mlp(account)), dim=1)
+
+    def finish(
+        self, tokens: torch.Tensor, valid: torch.Tensor, account: torch.Tensor
+    ) -> torch.Tensor:
+        """Apply timeframe attention and pooling, then add the account embedding."""
+        market = self.encode_market(tokens, valid)
         return torch.cat((market, self.account_mlp(account)), dim=1)
