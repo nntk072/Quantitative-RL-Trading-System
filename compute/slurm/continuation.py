@@ -11,6 +11,8 @@ from typing import Any
 
 import yaml
 
+from artifacts.layout import CampaignArtifactLayout
+
 
 def resolve_handoff(repo: Path, source_campaign: Path, handoff_path: Path) -> tuple[str, str, str]:
     repo = repo.resolve()
@@ -28,7 +30,9 @@ def resolve_handoff(repo: Path, source_campaign: Path, handoff_path: Path) -> tu
         or handoff.get("schema") != "aalto.campaign_continuation_handoff.v1"
     ):
         raise ValueError("unsupported campaign continuation handoff schema")
-    source_manifest = json.loads((source_campaign / "campaign.json").read_text(encoding="utf-8"))
+    source_manifest = json.loads(
+        CampaignArtifactLayout(source_campaign).manifest.read_text(encoding="utf-8")
+    )
     if handoff.get("source_campaign_id") != source_campaign.name or handoff.get(
         "source_campaign_fingerprint"
     ) != source_manifest.get("fingerprint"):

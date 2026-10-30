@@ -7,7 +7,7 @@ policy evaluated in backtests.
 Contract:
 - Input: an ``MT5Data``-like data source returning M1 OHLCV bars.
 - Internally rebuilds the **exact** feature matrix used at training time
-  via :func:`features.pipeline.builder.build_features` (same config file),
+  via :func:`features.pipeline.feature_matrix_builder.build_features` (same config file),
   so train/live feature parity holds by construction.
 - Observations are built with the same dict contract as
   ``TradingEnv._get_observation``:
@@ -27,8 +27,9 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from omegaconf import OmegaConf
+from loguru import logger
 
+from configuration import load_config, load_config_overlay, merge_config_overlay
 from configuration.paths import repository_root
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.contracts import (
@@ -49,7 +50,7 @@ from decisioning.observations import (
 )
 from features import attach_reachable_r, select_obs_columns
 from live.runtime.contracts import LiveSignal, MarketDataSource
-from trading.policy.config import resolve_trading_policy
+from trading.policy import resolve_trading_policy
 
 DEFAULT_CONFIG = repository_root(__file__) / "config" / "base" / "default.yaml"
 
@@ -91,9 +92,9 @@ class RLStrategyAdapter:
     ) -> None:
         if (model is None) == (provider is None):
             raise ValueError("provide exactly one of model or provider")
-        cfg = OmegaConf.create(OmegaConf.load(config_path))
+        cfg = load_config(config_path=config_path)
         if features_config_path is not None:
-            cfg = OmegaConf.merge(cfg, OmegaConf.load(features_config_path))
+            cfg = merge_config_overlay(cfg, load_config_overlay(features_config_path))
         self.cfg = cfg
         env_cfg = getattr(self.cfg, "env", None)
         self.obs_window = int(getattr(env_cfg, "obs_window", obs_window))
@@ -144,7 +145,7 @@ class RLStrategyAdapter:
             self._features = build_features(
                 bars,
                 secondary=secondary,
-                cfg=self.cfg,  # type: ignore[arg-type]
+                cfg=self.cfg,
                 force=True,  # never read a stale cache in live mode
             )
         return self._features
@@ -334,7 +335,8 @@ class RLStrategyAdapter:
                 adapter.update_bars(bars, secondary_bars=secondary_bars)
                 try:
                     action = adapter.predict_signal()
-                except Exception:  # noqa: BLE001  (live loop must not crash)
+                except Exception as exc:  # noqa: BLE001  (live loop must not crash)
+                    logger.exception("Live policy inference failed for {}: {}", symbol, exc)
                     return symbol, LiveSignal.NONE
                 # Discrete contract: >0 → long, <0 → short, 0 → flat.
                 if action > 0:

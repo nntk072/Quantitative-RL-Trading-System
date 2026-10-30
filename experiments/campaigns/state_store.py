@@ -5,10 +5,11 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
-import os
 import pathlib
 import re
 from typing import Any, cast
+
+from artifacts.atomic import write_json_atomic
 
 
 def utc() -> str:
@@ -16,13 +17,7 @@ def utc() -> str:
 
 
 def atomic_json(path: pathlib.Path, value: object) -> None:
-    tmp = path.with_name(path.name + ".tmp")
-    with tmp.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, indent=2, sort_keys=True)
-        handle.write("\n")
-        handle.flush()
-        os.fsync(handle.fileno())
-    os.replace(tmp, path)
+    write_json_atomic(path, value, default=None)
 
 
 def record(path: pathlib.Path, value: dict[str, object]) -> None:

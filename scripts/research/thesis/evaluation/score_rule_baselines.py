@@ -16,12 +16,16 @@ from configuration.paths import repository_root
 ROOT = repository_root(__file__)
 
 from configuration import load_config  # noqa: E402
-from evaluation.rollout.runner import run_episode  # noqa: E402
-from market_data.loading.pipeline import run_pipeline  # noqa: E402
+from evaluation.rollout.episode_rollout import run_episode  # noqa: E402
+from market_data.loading import run_pipeline  # noqa: E402
 from market_data.splits.definitions import get_split_config, split_bars  # noqa: E402
 from simulation.environment.env import TradingEnv  # noqa: E402
-from trading.baselines import EMAMACDRSIStrategy, SessionMomentumStrategy  # noqa: E402
-from trading.baselines.cash_hold import fit_hold_lots, simulate_hold  # noqa: E402
+from trading.baselines import (  # noqa: E402  # noqa: E402
+    EMAMACDRSIStrategy,
+    SessionMomentumStrategy,
+    fit_hold_lots,
+    simulate_hold,
+)
 
 RULES = (
     "buy_and_hold",

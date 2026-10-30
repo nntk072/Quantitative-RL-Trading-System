@@ -1,7 +1,7 @@
 # Triton architecture, filesystems and Python environments
 
 This guide applies to agents working on Aalto Triton in
-`/scratch/work/nguyenl37/Aalto_MS_Thesis`. Consult the
+`/scratch/work/nguyenl37/Quantitative-RL-Trading-System`. Consult the
 [Slurm agent rules](../../.agents/rules/triton-slurm.md) before allocating,
 cancelling or adding compute steps.
 
@@ -29,6 +29,12 @@ Never execute ARM64 venv entrypoints from an x86_64 login shell or reuse
 compiled packages across architectures. GPU types, RAM, partitions, and
 availability change; inspect current Slurm state rather than hardcoding
 resource assumptions.
+
+Package-manager operations use `uv`, which must also match the node
+architecture. The login home may expose an x86-64 executable on an ARM64
+allocation. Pass an ARM64 binary as `THESIS_UV=/path/to/aarch64/uv` to
+`tools/setup-venv`, `tools/uv-install`, or `./tools/check deps`; Ruff, Mypy,
+pytest, and package build use the selected project Python directly.
 
 The x86 `.venv-x86` is built with torch 2.14.0+cu130 and does not include V100
 (`sm_70`) kernels. The isolated V100 environment uses the CUDA 12.6 wheel that

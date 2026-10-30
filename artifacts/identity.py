@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -20,3 +21,12 @@ def artifact_id(kind: str, semantic_inputs: Any) -> ArtifactId:
         semantic_inputs, sort_keys=True, separators=(",", ":"), default=str
     ).encode("utf-8")
     return ArtifactId(kind, hashlib.sha256(payload).hexdigest())
+
+
+def file_sha256(path: str | Path) -> str:
+    """Hash file contents in bounded memory for artifact provenance."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()

@@ -16,7 +16,7 @@ from typing import Any
 
 from .agent_output import extract_usable_output
 from .failures import failure_excerpt, inspect_live_log
-from .models import Model, codex_effort_for_role, get_effort_map
+from .model_provider_registry import Model, codex_effort_for_role, get_effort_map
 
 _ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\x07]*\x07")
 _OC_VARIANTS = frozenset({"low", "medium", "high"})

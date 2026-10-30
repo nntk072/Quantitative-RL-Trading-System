@@ -65,12 +65,17 @@ class MT5Trader(Trader):
 
             for position in position_list:
                 df_position = df_open_positions[df_open_positions["ticket"] == position]
-                price_close = mt5.symbol_info_tick(df_position["symbol"].item()).bid
                 type_position = df_position["type"].item()
                 symbol_position = df_position["symbol"].item()
                 volume_position = df_position["volume"].item()
+                tick = mt5.symbol_info_tick(symbol_position)
+                if tick is None:
+                    logger.error("Cannot close position {}: quote unavailable", position)
+                    continue
 
                 if type_position == 1:
+                    # A short position is closed by buying at the ask.
+                    price_close = tick.ask
                     close_request = {
                         "action": mt5.TRADE_ACTION_DEAL,
                         "symbol": symbol_position,
@@ -84,6 +89,8 @@ class MT5Trader(Trader):
                     mt5.order_send(close_request)
 
                 if type_position == 0:
+                    # A long position is closed by selling at the bid.
+                    price_close = tick.bid
                     close_request = {
                         "action": mt5.TRADE_ACTION_DEAL,
                         "symbol": symbol_position,

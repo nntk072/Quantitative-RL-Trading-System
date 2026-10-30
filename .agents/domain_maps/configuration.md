@@ -7,8 +7,13 @@ configuration identity. Domain packages resolve semantic settings from it.
 
 ## Boundary
 
-- Public loader: `configuration/loader.py`.
+- Public APIs: `configuration.load_config`, `configuration.load_config_overlay`,
+  and `configuration.merge_config_overlay`.
 - Canonical defaults: `config/base/default.yaml`.
+- YAML overlays are checked recursively for unknown keys, mapping/scalar shape
+  mismatches, and incompatible scalar types.
+- Real schema migrations belong here only when a released schema version has an
+  actual migration path; do not add a placeholder migration that always fails.
 - Depends on configuration formats and filesystem mechanics only.
 - Must not import training, model, or experiment workflows.
 
@@ -16,7 +21,8 @@ configuration identity. Domain packages resolve semantic settings from it.
 
 - YAML remains the single source of truth for configured runtime values.
 - CLI overrides apply last; resolved config and its identity are persisted.
-- Focused tests: `tests/test_config_typo_safety.py`.
+- Focused tests: `tests/test_configuration/test_config_typo_safety.py`,
+  `tests/test_training/test_variant_resolver.py`, and the training CLI config tests.
 
 ## Change Map
 
@@ -34,6 +40,6 @@ configuration identity. Domain packages resolve semantic settings from it.
 
 ## Verified Source Paths
 
-- `configuration/loader.py`
+- `configuration/configuration_loader.py`
 - `config/base/default.yaml`
-- `tests/test_config_typo_safety.py`
+- `tests/test_configuration/test_config_typo_safety.py`

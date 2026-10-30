@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from orchestra.failures import next_midnight_pacific
 from orchestra.health import HealthRegistry, ProbeFacts, RoutingStatus, derive_status
-from orchestra.models import Model
+from orchestra.model_provider_registry import Model
 
 
 def _model(**kwargs: object) -> Model:

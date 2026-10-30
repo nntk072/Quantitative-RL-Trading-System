@@ -10,7 +10,7 @@ from omegaconf import OmegaConf
 from evaluation.reporting.run_manifest import build_sequence_feature_schema
 
 
-def _entry_funnel_by_split(
+def entry_funnel_by_split(
     train_result: dict[str, Any] | None, test_result: dict[str, Any] | None
 ) -> dict[str, dict[str, Any]]:
     """Build separately labeled train and report-only test entry funnels."""
@@ -26,7 +26,7 @@ def _entry_funnel_by_split(
     return result
 
 
-def _build_training_log(
+def build_training_log(
     *,
     seed: int,
     mvp: bool,
@@ -83,7 +83,7 @@ def _build_training_log(
         ),
         "timestamp": datetime.now().isoformat(),
     }
-    log_dict["entry_funnel_by_split"] = _entry_funnel_by_split(train_result, test_result)
+    log_dict["entry_funnel_by_split"] = entry_funnel_by_split(train_result, test_result)
     if action_space_width is not None:
         log_dict["action_space_width"] = action_space_width
     if observation_account_dim is not None:
@@ -100,7 +100,7 @@ def _build_training_log(
     return log_dict
 
 
-def _action_space_width(env: Any) -> int | None:
+def action_space_width(env: Any) -> int | None:
     """Return the action space width for logging."""
     action_space = getattr(env, "action_space", None)
     if action_space is None:
@@ -113,7 +113,7 @@ def _action_space_width(env: Any) -> int | None:
     return None
 
 
-def _action_schema_manifest(env: Any) -> dict[str, Any] | None:
+def action_schema_manifest(env: Any) -> dict[str, Any] | None:
     """Return declared coordinate names and flags, never infer from width."""
     schema = getattr(env, "action_schema", None)
     to_dict = getattr(schema, "to_dict", None)
@@ -123,7 +123,7 @@ def _action_schema_manifest(env: Any) -> dict[str, Any] | None:
     return result if isinstance(result, dict) else None
 
 
-def _observation_schema_manifest(env: Any) -> dict[str, Any] | None:
+def observation_schema_manifest(env: Any) -> dict[str, Any] | None:
     """Return explicit account observation coordinate meanings."""
     schema = getattr(env, "observation_schema", None)
     to_dict = getattr(schema, "to_dict", None)
@@ -141,7 +141,7 @@ def _observation_schema_manifest(env: Any) -> dict[str, Any] | None:
     return result
 
 
-def _sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:
+def sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:
     """Return ordered model sequence coordinates from the effective environment."""
     columns = getattr(env, "_obs_columns", None)
     if not isinstance(columns, (list, tuple)):
@@ -149,7 +149,7 @@ def _sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:
     return build_sequence_feature_schema([str(column) for column in columns])
 
 
-def _training_protocol_manifest(
+def training_protocol_manifest(
     *, model: Any, cfg: Any, args: Any, seed: int, requested_steps: int, algo: str = "ppo"
 ) -> dict[str, Any]:
     """Persist the effective optimizer/reward/risk protocol for later reproduction."""
@@ -277,7 +277,7 @@ def _training_protocol_manifest(
     }
 
 
-def _observation_account_dim(env: Any) -> int:
+def observation_account_dim(env: Any) -> int:
     """Return the account observation dimension from the env's observation space."""
     obs_space = getattr(env, "observation_space", None)
     if obs_space is None:
@@ -288,7 +288,7 @@ def _observation_account_dim(env: Any) -> int:
     return int(account_space.shape[0])
 
 
-def _observation_space_shapes(env: Any) -> dict[str, list[int]]:
+def observation_space_shapes(env: Any) -> dict[str, list[int]]:
     """Return every observation branch shape for the run manifest."""
     obs_space = getattr(env, "observation_space", None)
     spaces_by_key = getattr(obs_space, "spaces", {})

@@ -12,7 +12,10 @@ import matplotlib.ticker as mticker
 import pandas as pd
 from matplotlib.figure import Figure
 
-from .common import (
+from .order_window import _extend_trade_window as _extend_trade_window
+from .order_window import _extract_window as _extract_window
+from .order_window import _structure_anchors as _structure_anchors
+from .plot_rendering import (
     CLOSE_COLOR,
     EQUITY_COLOR,
     LONG_COLOR,
@@ -20,9 +23,6 @@ from .common import (
     _apply_style,
     _save,
 )
-from .order_window import _extend_trade_window as _extend_trade_window
-from .order_window import _extract_window as _extract_window
-from .order_window import _structure_anchors as _structure_anchors
 
 
 def plot_baseline_comparison(

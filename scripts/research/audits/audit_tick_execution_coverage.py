@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 from configuration.paths import repository_root
-from market_data.loading.pipeline import BAR_CACHE_VERSION
+from market_data.loading import BAR_CACHE_VERSION
 
 ROOT = repository_root(__file__)
 
@@ -37,7 +37,9 @@ from market_data.transforms.sessions import add_session_id, add_session_labels  
 from training.configuration.variant_resolution import (  # noqa: E402
     THESIS_RANDOMIZED_FILL_LATENCY_MS,  # noqa: E402
 )
-from training.setup.data import _tick_execution_split_coverage  # noqa: E402
+from training.setup.tick_execution_preflight import (  # noqa: E402
+    tick_execution_split_coverage,
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -136,7 +138,7 @@ def audit_symbol(
     train_end, test_start = get_split_config(cfg)
     m1_index = pd.DatetimeIndex(m1_cache.index)
     train_mask = make_train_mask(m1_index, train_end)
-    coverage_cache = _tick_execution_split_coverage(
+    coverage_cache = tick_execution_split_coverage(
         cached_book,
         m1_index,
         train_mask,
@@ -145,7 +147,7 @@ def audit_symbol(
         max_latency_ns_exclusive=int(latency_ms * 1_000_000),
         max_quote_wait_ms=max_quote_wait_ms,
     )
-    coverage_rebuilt = _tick_execution_split_coverage(
+    coverage_rebuilt = tick_execution_split_coverage(
         rebuilt_book,
         m1_index,
         train_mask,
@@ -238,10 +240,10 @@ def main() -> int:
     source_paths = [
         Path(__file__).resolve(),
         ROOT / "config/base/default.yaml",
-        ROOT / "market_data/loading/pipeline.py",
+        ROOT / "market_data/loading/market_data_ingestion.py",
         ROOT / "market_data/transforms/cleaning.py",
         ROOT / "market_data/loading/bars.py",
-        ROOT / "market_data/loading/pipeline.py",
+        ROOT / "market_data/loading/market_data_ingestion.py",
         ROOT / "market_data/transforms/sessions.py",
         ROOT / "market_data/splits/definitions.py",
         ROOT / "market_data/loading/ticks.py",
@@ -277,7 +279,7 @@ def main() -> int:
                 float(args.latency_ms) == THESIS_RANDOMIZED_FILL_LATENCY_MS
             ),
             "max_tick_quote_wait_ms": args.max_quote_wait_ms,
-            "schedule": "NY-labeled M1 environment steps, each mapped to the next market-bar timestamp as in train_rl._tick_execution_split_coverage",
+            "schedule": "NY-labeled M1 environment steps, each mapped to the next market-bar timestamp by training.setup.tick_execution_preflight.tick_execution_split_coverage",
             "coverage_semantics": "Conservative preflight: every allowed latency draw must have a valid cached quote at/after arrival and within the quote-wait bound from each candidate environment step timestamp.",
         },
         "feed_identity_and_data_use_terms": "Unknown; no provider or publication-use terms are documented in the available repository evidence.",

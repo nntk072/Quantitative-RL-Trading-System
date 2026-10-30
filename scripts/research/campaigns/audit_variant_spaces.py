@@ -16,7 +16,7 @@ import pandas as pd
 from configuration import load_config
 from configuration.paths import repository_root
 from features import build_features, feature_cache_path
-from market_data.loading.pipeline import run_pipeline
+from market_data.loading import run_pipeline
 from market_data.splits.definitions import make_train_mask
 from training.configuration.cli import load_merged_config
 from training.configuration.variant_resolution import resolve_variant

@@ -24,6 +24,7 @@ from trading.orders.targets import (
     finite_level,
     target_menu,
 )
+from trading.orders.timeframes import source_timeframe as reference_timeframe
 
 
 @dataclass(frozen=True)
@@ -565,17 +566,6 @@ def place_strategy_order(
         fallback_reason=tp_fallback_reason,
         stop_audit=stop_audit,
     )
-
-
-def reference_timeframe(name: str) -> str:
-    """Timeframe prefix of candle-derived levels; session/day levels have none."""
-    head = str(name).split("|", 1)[0]
-    for prefix in ("M1_", "M3_", "M5_", "M10_", "M15_", "M30_", "H1_", "H2_", "H4_", "D1_", "W1_"):
-        if head.startswith(prefix):
-            return prefix[:-1]
-    if head.startswith(("asian_", "london_", "prev_day_", "ctx_prev_week_")):
-        return ""
-    return "M1" if head else ""
 
 
 def resolve_strategy_entry(

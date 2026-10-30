@@ -16,7 +16,11 @@ from matplotlib.figure import Figure
 
 from evaluation.metrics.trade_pairs import pair_trades as _pair_trades
 
-from .common import (
+from .order_window import _extend_trade_window as _extend_trade_window
+from .order_window import _extract_window as _extract_window
+from .order_window import _structure_anchors as _structure_anchors
+from .orders import _per_trade_equity
+from .plot_rendering import (
     BREACH_COLOR,
     EQUITY_COLOR,
     LONG_COLOR,
@@ -25,10 +29,6 @@ from .common import (
     _apply_style,
     _save,
 )
-from .order_window import _extend_trade_window as _extend_trade_window
-from .order_window import _extract_window as _extract_window
-from .order_window import _structure_anchors as _structure_anchors
-from .orders import _per_trade_equity
 from .plot_series import (
     apply_mpl_date_axis,
     daily_drawdown_usd,

@@ -21,7 +21,7 @@ and config details see [architecture.md](../architecture.md) and
 Arch-matching venvs (Triton shared NFS):
 
 ```bash
-cd Aalto_MS_Thesis
+cd Quantitative-RL-Trading-System
 tools/setup-venv                    # aarch64 -> .venv, x86_64 -> .venv-x86
 source scripts/compute/slurm/activate_venv.sh   # use inside GPU shell on Triton
 ```
@@ -35,16 +35,19 @@ source scripts/compute/slurm/activate_venv.sh   # use inside GPU shell on Triton
 
 ## CI gate (merge bar)
 
-Mirrors `.github/workflows/ci.yml` and `orchestra/ci_gate.py`:
+GitHub Actions runs the named `tools/check` gates in parallel. Orchestra phase 9
+uses the same dispatcher sequentially:
 
 ```bash
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy .
-uv run pytest tests/ -v
+./tools/check <gate>
+./tools/check full
 ```
 
-Local shortcut (not the merge bar): `pytest -m "not slow"`
+For direct Ruff, Mypy, or pytest checks on Triton, use the active architecture
+environment (`.venv/bin/...` on ARM/GH200, `.venv-x86/bin/...` on x86_64).
+Do not use a login-host `uv` binary when it does not match the compute node.
+
+Local shortcut (not the merge bar): `.venv/bin/pytest -m "not slow"`
 
 ---
 
@@ -52,11 +55,10 @@ Local shortcut (not the merge bar): `pytest -m "not slow"`
 
 ```bash
 # Raw CSV → parquet bar cache → feature cache
-python market_data/commands/prepare.py
+thesis-data prepare
 
 # Force rebuild (ignore cache)
-python market_data/commands/prepare.py --force
-# or: uv run thesis-train train --force
+thesis-data prepare --force
 ```
 
 ---
@@ -64,18 +66,18 @@ python market_data/commands/prepare.py --force
 ## Unit and integration tests
 
 ```bash
-# Full suite
-uv run pytest tests/ -v
+# Full local merge gate
+./tools/check full
 
 # By domain
-uv run pytest tests/test_features/ -v
-uv run pytest tests/test_envs/ -v
-uv run pytest tests/test_integration/ -v
-uv run pytest tests/test_orchestra/ -v
-uv run pytest tests/test_live/ -v
+.venv/bin/pytest tests/test_features/ -q
+.venv/bin/pytest tests/test_simulation/test_environment/ -q
+.venv/bin/pytest tests/integration/ -q
+.venv/bin/pytest tests/test_orchestra/ -q
+.venv/bin/pytest tests/test_live/ -q
 
 # Targeted
-uv run pytest tests/test_risk.py tests/test_macd_baseline.py -v
+.venv/bin/pytest tests/test_trading/test_risk.py tests/test_trading/test_macd_baseline.py -q
 ```
 
 ---
@@ -182,6 +184,21 @@ uv run python -m simulation.backtest.cross_validation.run
 uv run python scripts/research/benchmarks/compare_encoders.py
 ```
 
+## Campaign operations
+
+Use the installed campaign command for campaign workflows and cache-failure
+recovery. The former `compute/slurm/resume.py` command remains a compatibility
+adapter; recovery policy and provenance validation live in `experiments`.
+
+```bash
+uv run thesis-campaign --help
+uv run thesis-campaign recover-cache --campaign-dir outputs/gpu_campaigns/<campaign-id>
+```
+
+Recovery validates the campaign fingerprint, attempt logs, provenance, and
+checkpoint hashes before changing resumable state. It preserves prior
+manifests and recovery reports as immutable backups.
+
 ---
 
 ## Ablation matrix + OOS cost sensitivity
@@ -200,6 +217,9 @@ uv run thesis-campaign variants \
     --experiments config/experiments.yaml \
     --steps 8192 --seeds 42 \
     --variants ablation_baseline_unconditional ablation_pd_context
+
+# Inspect the named-cache rebuild plan without writing caches.
+uv run thesis-campaign rebuild-named-cache --plan-only
 
 uv run python scripts/research/thesis/evaluation/report_ablations.py --ablations-dir outputs/ablations
 
@@ -257,12 +277,23 @@ PAPER_TRADING=true RL_MODEL_PATH=outputs/<run>/model/ppo_final python live_tradi
 PAPER_TRADING=false RL_MODEL_PATH=outputs/<run>/model/ppo_final python live_trading_rl.py
 ```
 
+Live risk inputs come from the run's saved `live_risk_overrides` (or the
+repository defaults when the block is absent). Invalid values fail startup;
+when the broker cannot produce a valid risk-sized volume, the robot skips the
+entry instead of substituting a fixed lot size. Paper mode remains the default.
+
 ### Rule-based baseline (`live_trading.py`)
 
 ```bash
 PAPER_TRADING=true STRATEGY_TYPE=combined python live_trading.py --once
 # STRATEGY_TYPE: crossover | smc | trend_breakout | combined
 ```
+
+The root script is a compatibility entrypoint for
+`integrations/mt5/cli/multi_symbol_trading.py`. `--once` runs one cycle and
+exits; without it, the application runs an immediate cycle and starts the
+configured recurring schedule. The analogous `demo_trading.py --once` command
+is provided by `integrations/mt5/cli/single_symbol_demo.py`.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the paper-to-live promotion protocol.
 
@@ -297,11 +328,11 @@ uv run thesis-train train --mvp env.obs_window=30 \
 
 | Command | Purpose | Typical time |
 |---------|---------|--------------|
-| `pytest tests/ -v` | Full test suite | ~2 min |
-| `ruff check .` / `mypy .` | Lint + typecheck | <1 min |
+| `./tools/check full` | Local merge gate | varies by host |
+| `./tools/check quality` | Full-tree Ruff + Mypy | varies by host |
 | `run_baselines --strategy macd` | MACD baseline | ~10 s |
-| `train_rl --mvp` | RL smoke test | ~1 min |
-| `train_rl` (no `--mvp`) | Full RL training | 10+ min |
+| `uv run thesis-train train --mvp` | RL smoke test | varies by host |
+| `uv run thesis-train train` | Full RL training | campaign-specific |
 | `eval_run --run outputs/...` | Re-evaluate checkpoint | ~1 min |
 | `orchestra run "task"` | Multi-model pipeline | varies |
 

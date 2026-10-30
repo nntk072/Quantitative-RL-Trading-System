@@ -19,7 +19,7 @@ from torch import nn
 
 from features.technical.structure import detect_session_levels
 
-from .base import BaseStrategy
+from .step_indexed_strategy import BaseStrategy
 
 
 def build_sweep_dataset(

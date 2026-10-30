@@ -13,7 +13,7 @@ import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
 from features import build_features, feature_cache_path
-from market_data.loading.pipeline import BAR_CACHE_VERSION
+from market_data.loading import BAR_CACHE_VERSION
 from market_data.splits.definitions import (
     get_split_config,
     get_train_start_config,

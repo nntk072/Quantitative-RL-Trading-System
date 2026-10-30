@@ -9,7 +9,7 @@ import pandas as pd
 from market_data.loading.ticks import (
     TickExecutionUnavailable,
 )
-from trading.execution.broker import Position
+from trading.execution import Position
 
 from .market_view import BarView
 from .mixin_base import RuntimeMixinBase

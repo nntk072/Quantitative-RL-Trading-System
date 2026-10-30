@@ -4,42 +4,52 @@
 
 | File | Role |
 |------|------|
-| `market_data/loading/pipeline.py` | End-to-end pipeline orchestrator; owns `BAR_CACHE_VERSION` |
-| `market_data/loading/bars.py` | Load raw CSV bars |
-| `market_data/transforms/resample.py` | Resample M1 → higher timeframes |
-| `market_data/transforms/cleaning.py` | Clean bars (dedup, sort, validate) |
-| `market_data/transforms/sessions.py` | Session labels, NY mask, `get_session()` |
-| `market_data/splits/definitions.py` | Train/test date-based split |
-| `market_data/transforms/align.py` | Align HTF features to M1 spine |
-| `market_data/loading/ticks.py` | TickBook for accurate fill pricing |
+| `market_data/loading/market_data_ingestion.py` | Bar dataset pipeline; owns `run_pipeline()` and `BAR_CACHE_VERSION` |
+| `market_data/loading/tick_book_pipeline.py` | Configured tick-source selection, cache reuse, and multi-partition TickBook assembly |
+| `market_data/loading/bars.py` | Stream/load raw bar and tick CSV files |
+| `market_data/loading/ticks.py` | TickBook contract, tick ingestion, and timestamp/quote lookup |
+| `market_data/cache/bars.py` | Bar-cache path, identity, completion validation, and atomic parquet/manifest publication |
+| `market_data/cache/ticks.py` | Tick-cache semantic identity and atomic storage |
+| `market_data/transforms/price_grid.py` | Price-grid normalization and tick-cache filenames |
+| `market_data/transforms/resample.py` | Resample configured bars to higher timeframes |
+| `market_data/transforms/cleaning.py` | Clean bars (deduplicate, sort, validate) |
+| `market_data/transforms/sessions.py` | Session labels, NY mask, session IDs, and lookup |
+| `market_data/transforms/session_schedule.py` | Load the configured date-specific session-close calendar |
+| `market_data/transforms/align.py` | Align completed HTF bars to the M1 spine |
+| `market_data/splits/definitions.py` | Train/test date-based split and training-mask contracts |
+| `market_data/splits/walkforward.py` | Purged, non-overlapping walk-forward split generation |
+| `market_data/contracts.py` | Logical dataset/event schema contracts |
 
 ## Key Symbols
 
 | Symbol | File | Purpose |
 |--------|------|---------|
-| `run_pipeline()` | `pipeline.py` | Load, resample, clean, label, cache all symbols/TFs |
-| `BAR_CACHE_VERSION` | `pipeline.py` | Bar cache key (`v2-full-day`) |
-| `build_tick_books()` | `pipeline.py` | Build/load TickBook per symbol |
-| `load_bars()` | `loader.py` | Load raw CSV into DataFrame |
-| `resample()` | `resample.py` | Resample bars to higher timeframe |
-| `clean()` | `clean.py` | Dedup, sort, validate bars |
-| `get_session()` | `session.py` | Broker-tz session label (`asia`/`london`/`ny`/`closed`) |
-| `add_session_labels()` | `session.py` | Add session column |
-| `add_session_id()` | `session.py` | Add unique session_id per date |
-| `ny_session_mask()` | `session.py` | Boolean mask for NY window |
-| `filter_session()` | `session.py` | Mask-only helper (never drop feature bars) |
-| `split_train_test()` | `split.py` | Split bars+features at date boundary |
-| `align_timeframes()` | `align.py` | Forward-fill HTF features onto M1 |
-| `TickBook` | `ticks.py` | Tick data container with `quote_at()` |
+| `run_pipeline()` | `market_data.loading` | Load, resample, clean, label, and cache configured bar datasets |
+| `BAR_CACHE_VERSION` | `market_data.loading` | Bar-cache schema generation |
+| `bar_cache_path()` | `market_data.cache.bars` | Canonical versioned bar-cache path |
+| `build_tick_books()` | `market_data.loading` | Build/load configured TickBooks and join ordered tick partitions |
+| `TickBook` | `market_data.loading.ticks` | Tick data container with quote lookup and execution-time access |
+| `load_bars()` | `market_data.loading` | Load raw CSV bars |
+| `resample()` | `market_data.transforms` | Resample bars to supported higher timeframes |
+| `clean()` | `market_data.transforms` | Deduplicate, sort, and validate bars |
+| `scheduled_session_close_map()` | `market_data.transforms.session_schedule` | Resolve the configured date-specific session-close calendar |
+| `get_session()` | `market_data.transforms.sessions` | Broker-timezone session label (`asia`/`london`/`ny`/`closed`) |
+| `add_session_labels()` | `market_data.transforms.sessions` | Add session eligibility labels without dropping rows |
+| `add_session_id()` | `market_data.transforms.sessions` | Add unique session IDs |
+| `ny_session_mask()` | `market_data.transforms.sessions` | Boolean NY-session mask |
+| `filter_session()` | `market_data.transforms.sessions` | Mask-only helper (never drop feature bars) |
+| `split_train_test()` | `market_data.splits` | Split aligned bars/features at date boundaries |
+| `align_timeframes()` | `market_data.transforms.align` | Forward-fill completed HTF features onto the M1 spine |
 
 ## Direct Dependencies
 
-- `configuration/loader.py` (OmegaConf config)
+- `configuration.loader` (resolved configuration)
 - `pandas`, `omegaconf`
+- `artifacts.identity` and `artifacts.atomic` (source identities and atomic cache manifests)
 
 ## Consumers (Callers)
 
-- `features/pipeline/builder.py` (uses pipeline output)
+- `features/pipeline/feature_matrix_builder.py` (uses pipeline output)
 - `training/runner/training.py` (uses split + pipeline)
 - `training/runner/backtest.py` (uses pipeline)
 
@@ -47,10 +57,14 @@
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_data_split.py` | `split_train_test()`, `split_bars()` |
-| `tests/test_session_filter.py` | `filter_session()`, `ny_session_mask()`, cache versioning |
-| `tests/test_ticks.py` | `TickBook`, `build_tick_book()` |
-| `tests/test_causal_features.py` | Causal alignment verification |
+| `tests/integration/test_pipeline_splits.py` | `run_pipeline()` partition and cache behavior |
+| `tests/integration/test_bar_cache_manifest.py` | Bar-cache identity and atomic completion manifest |
+| `tests/integration/test_session_schedule.py` | Session-calendar loading and schema validation |
+| `tests/integration/test_price_grid.py` | Price-grid identity and normalization |
+| `tests/integration/test_resample_m10.py` | Higher-timeframe resampling semantics |
+| `tests/test_features/test_session_filter.py` | `filter_session()`, `ny_session_mask()`, cache versioning |
+| `tests/test_market_data/test_ticks.py` | `TickBook`, `build_tick_book()` |
+| `tests/test_features/test_causal_features.py` | Causal alignment verification |
 
 ## Do NOT Read For Data Tasks
 
@@ -66,13 +80,13 @@
 1. **M1 is the policy sequence, not the only source** — the thesis input uses the supplied M3–D1 bars as native higher-timeframe context; M1 resampling is not a substitute for those source files.
 2. **Session labels are eligibility flags** — `filter_session` is mask-only, never drops feature bars
 3. **Locked OOS split** — `train_end` / `test_start` in `default.yaml` must not be overridden by variants
-4. **Cache version bump** — `BAR_CACHE_VERSION` must change when bar schema changes
+4. **Semantic cache identity** — bar-cache reuse requires source identity plus partition, symbol/timeframe, timezone, NY session end, timestamp convention, and price-grid identity. Tick-cache reuse requires source bytes, timezone, session filter, and price-grid identity. Both parquet types and their atomic completion manifests are published together; incomplete or stale entries are rebuilt.
 ## Change Map
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add a market source | source adapter | `market_data/loading/bars.py` | `DatasetRef` and `MarketEventSchema`; `tests/test_dataset_source_contract.py` | one source and source contract tests | feature algorithms and training workflows |
-| Change session or split semantics | dataset policy | `market_data/splits/definitions.py` | partition identity; focused tests under `tests/test_data/` | one transform or split module | model and report code |
+| Add a market source | source adapter | `market_data/loading/bars.py` | `DatasetRef` and `MarketEventSchema`; `tests/test_market_data/test_dataset_source_contract.py` | one source and source contract tests | feature algorithms and training workflows |
+| Change session or split semantics | dataset policy | `market_data/splits/definitions.py` | partition identity; focused tests under `tests/integration/` | one transform or split module | model and report code |
 
 ## Axis of Change
 
@@ -84,7 +98,11 @@
 
 ## Verified Source Paths
 
-- `market_data/loading/pipeline.py`
+- `market_data/loading/market_data_ingestion.py`
+- `market_data/loading/tick_book_pipeline.py`
+- `market_data/cache/bars.py`
+- `market_data/cache/ticks.py`
+- `market_data/transforms/session_schedule.py`
 - `market_data/loading/bars.py`
 - `market_data/loading/ticks.py`
 - `market_data/splits/definitions.py`

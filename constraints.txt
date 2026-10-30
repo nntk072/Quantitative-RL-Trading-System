@@ -173,7 +173,7 @@ sympy==1.14.0
 ta-lib==0.6.7
 tenacity==9.1.2
 torch==2.14.0+cu130
-tornado==6.5.9
+tornado==6.6
 tqdm==4.67.1
 tree-sitter-c-sharp==0.23.5
 tree-sitter-embedded-template==0.25.0

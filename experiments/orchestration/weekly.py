@@ -11,6 +11,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from artifacts.atomic import write_json_atomic, write_text_atomic
+
 STRATEGIES = ("baseline", "po3_ifvg", "distribution")
 Runner = Callable[["RunSpec"], dict[str, Any]]
 
@@ -47,7 +49,7 @@ class RunSpec:
 
 
 def _json_dump(path: Path, value: Any) -> None:
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+    write_json_atomic(path, value, default=None)
 
 
 def _hash(value: Any) -> str:
@@ -227,7 +229,7 @@ class WeeklyOrchestrator:
         ]
         if run.config:
             command[5:5] = ["--config", run.config]
-        (run.run_dir / "command.json").write_text(json.dumps(command, indent=2) + "\n")
+        write_text_atomic(run.run_dir / "command.json", json.dumps(command, indent=2) + "\n")
         completed = subprocess.run(command, check=False, text=True, capture_output=True)
         (run.run_dir / "stdout.log").write_text(completed.stdout)
         (run.run_dir / "stderr.log").write_text(completed.stderr)

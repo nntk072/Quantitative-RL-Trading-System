@@ -12,8 +12,9 @@ from stable_baselines3 import PPO
 
 from configuration import load_config
 from features import build_features, feature_cache_path
-from market_data.loading.pipeline import prepare_data
+from market_data.loading import run_pipeline
 from simulation.environment.env import TradingEnv
+from training.configuration.strategy_overlays import merge_strategy_config
 from training.setup.environments import (
     guardrail_kwargs,
     max_loss_per_trade,
@@ -108,17 +109,13 @@ def main():
             "features.ifvg_mtf.enabled=true",
         ],
     )
-    # merge idea1 like train
-    from omegaconf import OmegaConf
-
-    idea = OmegaConf.load("config/2_po3_ifvg.yaml")
-    cfg = OmegaConf.merge(cfg, idea)
-    frames = prepare_data(cfg, force=False)
+    cfg = merge_strategy_config(cfg, "po3_ifvg")
+    frames = run_pipeline(cfg, force=False)
     primary_sym = cfg.data.primary
-    primary_m1 = frames[primary_sym]
+    primary_m1 = frames[primary_sym]["M1"]
     # secondary
     sec = cfg.data.get("secondary")
-    secondary_m1 = frames.get(sec) if sec else None
+    secondary_m1 = frames[sec]["M1"] if sec else None
     train_end = pd.Timestamp(cfg.data.split.train_end)
     if primary_m1.index.tz is not None and train_end.tzinfo is None:
         train_end = train_end.tz_localize(primary_m1.index.tz)

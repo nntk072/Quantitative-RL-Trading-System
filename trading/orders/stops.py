@@ -11,31 +11,17 @@ from trading.orders.targets import (
     collapse_levels,
     deviation_candidates,
     finite_level,
-    normalize_timeframe,
 )
-
-_STOP_TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
+from trading.orders.timeframes import (
+    normalize_timeframe,
+    reference_timeframe_index,
+    timeframe_index,
+)
 
 
 def _timeframe_rank_for_stop(name: str) -> int:
     """Return the source timeframe rank; session/day/week references are HTF."""
-    candidate = str(name).split("|", 1)[0]
-    for rank, timeframe in enumerate(_STOP_TIMEFRAMES):
-        if candidate.startswith(f"{timeframe}_"):
-            return rank
-    if candidate.startswith(
-        (
-            "asian_",
-            "london_",
-            "prev_day_",
-            "ctx_prev_day_",
-            "ctx_prev_week_",
-            "yesterday_",
-            "lastweek_",
-        )
-    ):
-        return len(_STOP_TIMEFRAMES) - 1
-    return 0
+    return reference_timeframe_index(name)
 
 
 def _flag(row: Any, name: str) -> bool:
@@ -227,7 +213,7 @@ def stop_menu(
         )
     raw = [item for item in raw if item not in invalid_deviation_candidates]
     normalized_floor = normalize_timeframe(min_timeframe)
-    minimum_rank = _STOP_TIMEFRAMES.index(normalized_floor)
+    minimum_rank = timeframe_index(normalized_floor)
     sd_timeframes = tuple(
         normalize_timeframe(timeframe) for timeframe in (standard_deviation_timeframes or ())
     )

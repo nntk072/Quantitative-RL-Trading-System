@@ -192,7 +192,7 @@ class TestBuildFeaturesPipeline:
         assert "M5_standard_deviation_level_0_786_price" not in observation
 
     def test_replot_feature_config_rebuilds_recorded_swing_retracement(self) -> None:
-        from evaluation.plotting.replot_orders import (
+        from evaluation.reporting.order_chart_regeneration import (
             _chart_feature_config,
             _standard_deviation_timeframes,
         )

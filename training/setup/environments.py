@@ -9,8 +9,8 @@ from omegaconf import OmegaConf
 
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.contracts import DecisionProvider
-from evaluation.rollout.model import evaluate_model
-from simulation.environment.factory import (
+from evaluation.rollout.trained_policy_rollout import evaluate_model
+from simulation.environment import (
     build_eval_common,
     cost_model,
     eval_guardrail_kwargs,
@@ -26,7 +26,7 @@ from simulation.environment.factory import (
     strategy_risk_ranges,
     tick_execution_required,
 )
-from trading.policy.config import resolve_trading_policy
+from trading.policy import resolve_trading_policy
 
 __all__ = [
     "build_eval_common",

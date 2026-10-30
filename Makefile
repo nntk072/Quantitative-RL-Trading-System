@@ -7,7 +7,7 @@
 # Recipes use bash features (process substitution).
 SHELL := bash
 
-UV ?= uv
+UV ?= $(if $(strip $(THESIS_UV)),$(THESIS_UV),uv)
 EXPORT = $(UV) export --frozen --no-hashes --no-emit-project --format requirements-txt
 
 # torch is installed from the PyTorch CPU index in an index-scoped step, so it is

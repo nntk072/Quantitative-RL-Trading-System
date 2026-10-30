@@ -16,6 +16,9 @@ import numpy as np
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
+from artifacts.atomic import write_json_atomic
+from artifacts.identity import file_sha256 as file_sha256
+
 STOP_CANDIDATE_SCHEMA_VERSION = "rq1-stop-menu-v1"
 SEQUENCE_FEATURE_SCHEMA_VERSION = "sequence-feature-columns-v1"
 # Python's hash secret is fixed before module import. Capture the startup
@@ -158,15 +161,6 @@ def build_stop_candidate_schema(cfg: DictConfig) -> dict[str, Any]:
         "menu_order": "ascending_distance_stable_source_insertion_ties",
         "selection_rule": "policy_fraction_selects_candidate_by_distance_with_stable_ties",
     }
-
-
-def file_sha256(path: Path) -> str:
-    """Hash a file without loading it all into memory."""
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def dataframe_sha256(frame: pd.DataFrame) -> str:
@@ -460,7 +454,4 @@ def _validate_named_schema(
 
 def write_run_manifest(path: Path, manifest: dict[str, Any]) -> None:
     """Atomically write a JSON manifest so interrupted writes are not valid artifacts."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    temporary.replace(path)
+    write_json_atomic(path, manifest, default=None)

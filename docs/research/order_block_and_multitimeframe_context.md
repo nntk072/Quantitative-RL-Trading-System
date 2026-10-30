@@ -99,7 +99,7 @@ their partials first; only after those selected levels are exhausted can the
 reserved fraction exit on EMA-21. A zero runner fraction preserves the prior
 immediate EMA behavior. This benchmark uses a 25% runner reserve in both arms.
 
-Regenerate charts with `evaluation.plotting.replot_orders`; it reads each
+Regenerate charts with `python -m evaluation.reporting.order_chart_regeneration`; it reads each
 run's saved config and per-trade idea/timeframe attribution. The CLI timeframe
 options remain available for legacy overlays. Plotly legends also allow
 individual rendered traces to be hidden or restored.

@@ -21,7 +21,6 @@ class MultiSymbolRobot:
         trader: Trader,
         strategies: dict[str, TradingStrategy],
         risk_manager: RiskManager,
-        default_lot_size: float = 0.1,
         stop_loss_pips: float = 50.0,
         paper_trading: bool = True,
     ):
@@ -33,7 +32,6 @@ class MultiSymbolRobot:
             trader: Trader instance for executing trades
             strategies: Dictionary mapping symbol names to TradingStrategy instances
             risk_manager: RiskManager instance
-            default_lot_size: Default lot size if risk-based sizing fails
             stop_loss_pips: Default stop loss in pips
             paper_trading: When True (the safe default), every signal and intended
                 order is logged but no orders are placed with the broker.
@@ -42,7 +40,6 @@ class MultiSymbolRobot:
         self.trader = trader
         self.strategies = strategies
         self.risk_manager = risk_manager
-        self.default_lot_size = default_lot_size
         self.stop_loss_pips = stop_loss_pips
         self.paper_trading = paper_trading
         self.magic_number = 20240101
@@ -82,16 +79,11 @@ class MultiSymbolRobot:
                 volatility_multiplier=volatility_multiplier,
             )
 
-            # Fallback to default if calculation fails
-            if position_size == 0.0:
-                position_size = self.default_lot_size
-                logger.warning(f"Using default lot size for {symbol}: {position_size}")
-
-            return position_size
+            return float(position_size) if position_size > 0.0 else 0.0
 
         except Exception as e:
             logger.error(f"Error calculating position size for {symbol}: {e}")
-            return self.default_lot_size
+            return 0.0
 
     def check_risk_before_trade(self, symbol: str, position_size: float) -> tuple[bool, str]:
         """
@@ -134,6 +126,11 @@ class MultiSymbolRobot:
                 if total_buy == 0:
                     # Calculate position size
                     position_size = self.calculate_position_size(symbol)
+                    if position_size <= 0.0:
+                        logger.warning(
+                            f"Refusing to open {symbol}: risk sizing did not produce a valid volume"
+                        )
+                        return
                     stop_price = self.risk_manager.calculate_stop_loss_price(
                         symbol, mt5.ORDER_TYPE_BUY, self.stop_loss_pips
                     )
@@ -190,6 +187,11 @@ class MultiSymbolRobot:
                 if total_sell == 0:
                     # Calculate position size
                     position_size = self.calculate_position_size(symbol)
+                    if position_size <= 0.0:
+                        logger.warning(
+                            f"Refusing to open {symbol}: risk sizing did not produce a valid volume"
+                        )
+                        return
                     stop_price = self.risk_manager.calculate_stop_loss_price(
                         symbol, mt5.ORDER_TYPE_SELL, self.stop_loss_pips
                     )

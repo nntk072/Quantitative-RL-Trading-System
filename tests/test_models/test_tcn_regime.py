@@ -16,8 +16,9 @@ from configuration import load_config
 from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.observations import build_observation_schema
 from decisioning.regime_observations import REGIME_FEATURES, regime_observation_schema
-from learning.rl.agent import build_agent, encoder_for, validate_model_architecture
+from learning.rl.agent import build_agent, validate_model_architecture
 from models.encoders import TCNEncoder, TCNRegimeEncoder
+from models.factory import encoder_for
 
 FloatArray = npt.NDArray[np.float32]
 

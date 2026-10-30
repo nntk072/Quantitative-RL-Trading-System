@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from features.technical.indicators import atr
 from features.technical.structure import detect_session_levels
 
-from .base import BaseStrategy
+from .step_indexed_strategy import BaseStrategy
 
 
 class MultiLevelBreakoutStrategy(BaseStrategy):

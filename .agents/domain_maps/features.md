@@ -4,7 +4,10 @@
 
 | File | Role |
 |------|------|
-| `features/pipeline/builder.py` | Full feature pipeline orchestrator; owns `FEATURE_CACHE_VERSION` |
+| `features/pipeline/feature_matrix_builder.py` | Full feature pipeline orchestrator; composes feature stages and schema selection |
+| `features/pipeline/feature_build_inputs.py` | Resolves source timeframes, pair resampling, raw FVG columns, and fit masks |
+| `features/pipeline/feature_cache_identity.py` | Feature cache version, content identity, and cache path construction |
+| `features/pipeline/schema.py` | Model-observation column selection and raw-price exclusion rules |
 | `features/pipeline/session_stage.py` | Session OHLC, prior-period, and previous-session feature assembly |
 | `features/pipeline/po3_stage.py` | PO3/IFVG state assembly and confirmed-sweep audit output |
 | `features/pipeline/structure_stage.py` | Swing, structure, and MTF BOS feature assembly |
@@ -18,44 +21,52 @@
 | `features/po3/trigger_rules.py` | HTF/LTF PO3 entry trigger construction |
 | `features/po3/zones.py` | FVG zone lifecycle and plotting records |
 | `features/po3/config.py` | Compatibility exports for the former combined PO3 module |
-| `features/po3/state.py` | PO3 manipulation/distribution state, IFVG zones |
+| `features/po3/po3_phase_state.py` | PO3 manipulation/distribution phases and IFVG-zone state |
+| `features/po3/ifvg_state.py` | Causal PO3 manipulation/reclaim/IFVG phase-state construction |
 | `features/pipeline/normalization.py` | Rolling z-score normalization with legacy masked-window and frozen-fold modes |
 | `features/context/session_levels.py` | CT-anchored session OHLC, prior period H/L, quadrants |
 | `features/context/reachability.py` | Causal take-profit room cap and risk-ratio reachability |
 | `features/pipeline/context.py` | Assembles policy context, reachable-R and fold-local feature views |
+| `features/context/entry_ideas.py` | Builds multi-hot entry-idea signals and source-timeframe context |
 | `market_data/transforms/align.py` | HTF → M1 alignment (used by features) |
 
 ## Key Symbols
 
 | Symbol | File | Purpose |
 |--------|------|---------|
-| `build_features()` | `build.py` | Full feature matrix construction |
-| `FEATURE_CACHE_VERSION` | `build.py` | Cache key; bump on schema change |
-| `build_indicators()` | `indicators.py` | Compute all technical indicators |
-| `smt_divergence()` | `smt.py` | SMT divergence between symbols |
-| `detect_pivots()` | `swings.py` | Detect fractal pivot points |
-| `detect_swings()` | `swings.py` | ATR-filtered zigzag swings |
-| `detect_bos()` | `liquidity.py` | Break of structure detection |
-| `detect_liquidity_sweeps()` | `liquidity.py` | Liquidity sweep detection |
-| `structure_levels()` | `structure.py` | Causal swing price levels for SL/TP |
-| `detect_session_levels()` | `structure.py` | Broker-tz session-based levels |
+| `build_features()` | `features/__init__.py` → `features/pipeline/feature_matrix_builder.py` | Public feature-matrix API and pipeline implementation |
+| `configured_feature_timeframes()` | `features.pipeline.feature_build_inputs` | Read nested or flat timeframe settings with a documented default |
+| `resample_market_pair()` | `features.pipeline.feature_build_inputs` | Reuse native timeframes or resample each symbol's own M1 bars |
+| `source_timeframe_training_mask()` | `features.pipeline.feature_build_inputs` | Restrict source-timeframe fits to candles completed by the training cutoff |
+| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | Cache version; bump when feature semantics/output schema change |
+| `feature_cache_content_hash()` | `features/pipeline/feature_cache_identity.py` | Content-sensitive feature-cache identity |
+| `MTF_RAW_SUFFIXES` | `features/pipeline/schema.py` | Raw price-level columns excluded from model sequence observations |
+| `build_indicators()` | `features/technical/indicators.py` | Compute configured technical indicators |
+| `smt_divergence()` | `features/context/smt.py` | SMT divergence between symbols |
+| `detect_pivots()` | `features/technical/swings.py` | Detect fractal pivot points |
+| `detect_swings()` | `features/technical/swings.py` | ATR-filtered zigzag swings |
+| `detect_bos()` | `features/context/liquidity.py` | Break-of-structure detection |
+| `detect_liquidity_sweeps()` | `features/context/liquidity.py` | Liquidity sweep detection |
+| `structure_levels()` | `features/technical/structure.py` | Causal swing price levels for SL/TP |
+| `detect_session_levels()` | `features/technical/structure.py` | Broker-timezone session-based levels |
 | `build_fvg_zones()` | `features/po3/zones.py` | Build FVG zone records |
 | `detect_fvg()` | `features/po3/fvg_detection.py` | Detect fair value gaps |
+| `build_po3_phase_features()` | `features/po3/entries.py` | Timestamp-derived accumulation/manipulation/distribution phase |
 | `detect_po3_entries()` | `features/po3/trigger_rules.py` | Detect PO3 entry signals |
-| `build_po3_state()` | `po3_state.py` | PO3 manipulation/distribution state |
-| `build_ifvg_zone_features()` | `po3_state.py` | IFVG active zone features |
-| `rolling_zscore()` | `normalize.py` | Train-mask normalization; `frozen_fold` holds final training statistics through validation |
-| `reachable_r_series()` | `context.py` | Reachable reward room from feature-owned session-range estimates |
-| `max_tp_distance()` | `reachability.py` | Causal session-range cap from already closed NY sessions |
-| `align_timeframes()` | `align.py` | Forward-fill HTF features onto M1 spine |
-| `MTF_RAW_SUFFIXES` | `build.py` | Raw price-level suffixes excluded from model seq |
+| `build_po3_state()` | `features/po3/po3_phase_state.py` | PO3 manipulation/distribution state |
+| `build_ifvg_zone_features()` | `features/po3/po3_phase_state.py` | IFVG active-zone state features |
+| `rolling_zscore()` | `features/pipeline/normalization.py` | Train-mask normalization; `frozen_fold` holds final training statistics through validation |
+| `reachable_r_series()` | `features/pipeline/context.py` | Reachable reward room from feature-owned session-range estimates |
+| `max_tp_distance()` | `features/context/reachability.py` | Causal session-range cap from already closed NY sessions |
+| `align_timeframes()` | `market_data/transforms/align.py` | Causally forward-fill completed HTF features onto an M1 spine |
 
 ## Direct Dependencies
 
-- `market_data/loading/pipeline.py` (input data)
+- `market_data.loading` (configured bar and timeframe inputs)
 - `market_data/transforms/resample.py` (HTF resampling)
 - `market_data/transforms/align.py` (HTF alignment)
-- `configuration/loader.py` (feature config)
+- `market_data.transforms.session_schedule` (known session closes)
+- `configuration.loader` (resolved feature config)
 - `market_data/transforms/sessions.py` (session eligibility and session clock)
 
 ## Consumers (Callers)
@@ -77,7 +88,7 @@
 | `tests/test_features/test_po3_state.py` | PO3 state features |
 | `tests/test_features/test_session_ohlc.py` | Session OHLC |
 | `tests/test_features/test_variants.py` | Feature variants |
-| `tests/test_causal_features.py` | Causal feature verification |
+| `tests/test_features/test_causal_features.py` | Causal feature verification |
 
 ## Do NOT Read For Feature Tasks
 
@@ -93,8 +104,8 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add a feature stage | feature transform | `features/pipeline/builder.py` | feature schema and cache identity; `tests/test_features/test_build_pipeline.py` | one stage plus causal regression | trading and training workflow semantics |
-| Change an input representation | input schema | `features/contracts.py` | `InputSchema`/`InputView`; `tests/test_input_view_contract.py` | view contract and consumer adapter | PPO-specific observation coordinates |
+| Add a feature stage | feature transform | `features/pipeline/feature_matrix_builder.py` | feature schema and cache identity; `tests/test_features/test_build_pipeline.py` | one stage plus causal regression | trading and training workflow semantics |
+| Change an input representation | input schema | `features/contracts.py` | `InputSchema`/`InputView`; `tests/test_market_data/test_input_view_contract.py` | view contract and consumer adapter | PPO-specific observation coordinates |
 
 ## Axis of Change
 
@@ -111,7 +122,7 @@
 5. **Raw price levels excluded from model seq** — `MTF_RAW_SUFFIXES` lists stems to exclude
 ## Verified Source Paths
 
-- `features/pipeline/builder.py`
+- `features/pipeline/feature_matrix_builder.py`
 - `features/contracts.py`
 - `features/input_view.py`
 - `features/pipeline/session_stage.py`

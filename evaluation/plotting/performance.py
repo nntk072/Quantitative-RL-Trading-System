@@ -15,16 +15,16 @@ from matplotlib.figure import Figure
 
 from evaluation.metrics.trade_pairs import pair_trades as _pair_trades
 
-from .common import (
+from .order_window import _extend_trade_window as _extend_trade_window
+from .order_window import _extract_window as _extract_window
+from .order_window import _structure_anchors as _structure_anchors
+from .plot_rendering import (
     EQUITY_COLOR,
     LONG_COLOR,
     SHORT_COLOR,
     _apply_style,
     _save,
 )
-from .order_window import _extend_trade_window as _extend_trade_window
-from .order_window import _extract_window as _extract_window
-from .order_window import _structure_anchors as _structure_anchors
 from .plot_series import (
     apply_mpl_date_axis,
     daily_pnl,

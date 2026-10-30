@@ -5,10 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 from gymnasium import spaces
 
-from learning.rl.agent import encoder_for
 from models.encoders import (
     GRUEncoder,
     LiteTCNEncoder,
@@ -17,6 +17,17 @@ from models.encoders import (
     TCNEncoder,
     TransformerEncoder,
 )
+from models.factory import encoder_for
+
+
+def test_legacy_encoder_core_path_reexports_registered_encoder_classes() -> None:
+    from models.encoders import core as legacy_encoder_exports
+
+    assert legacy_encoder_exports.GRUEncoder is GRUEncoder
+    assert legacy_encoder_exports.LiteTCNEncoder is LiteTCNEncoder
+    assert legacy_encoder_exports.MTFEncoder is MTFEncoder
+    assert legacy_encoder_exports.TCNEncoder is TCNEncoder
+    assert legacy_encoder_exports.TransformerEncoder is TransformerEncoder
 
 
 class TestTCNEncoder:
@@ -134,9 +145,12 @@ class TestLiteTCNEncoder:
             for parameter in encoder.parameters()
         )
 
+    @pytest.mark.gpu
+    @pytest.mark.skipif(
+        not torch.cuda.is_available() or not torch.cuda.is_bf16_supported(),
+        reason="requires a CUDA or ROCm device with BF16 support",
+    )
     def test_cuda_bf16_forward_and_gradients_are_finite_when_available(self) -> None:
-        if not torch.cuda.is_available() or not torch.cuda.is_bf16_supported():
-            return
         encoder = LiteTCNEncoder(self._space(), seq_len=60, n_features=194).cuda()
         obs = {
             "seq": torch.randn(2, 60, 194, device="cuda"),

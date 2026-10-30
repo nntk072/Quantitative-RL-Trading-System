@@ -33,7 +33,7 @@ files between different architectures, users, or compute nodes.
 From the *existing* allocated compute shell:
 
 ```bash
-cd /scratch/work/nguyenl37/Aalto_MS_Thesis
+cd /scratch/work/nguyenl37/Quantitative-RL-Trading-System
 uname -m
 source scripts/compute/slurm/activate_venv.sh
 command -v mypy
@@ -55,7 +55,7 @@ dependencies in the matching persistent virtual environment. It avoids
 changing the project's lockfile, source, or production settings.
 
 ```bash
-cd /scratch/work/nguyenl37/Aalto_MS_Thesis
+cd /scratch/work/nguyenl37/Quantitative-RL-Trading-System
 source scripts/compute/slurm/activate_venv.sh
 ENV_DIR="$(dirname "$(dirname "$(command -v python)")")"
 STAGE="$(mktemp -d "/tmp/triton-mypy-${USER}-XXXXXX")"

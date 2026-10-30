@@ -6,7 +6,7 @@ import backtrader as bt
 class MACDStrategy(bt.Strategy):
     """Backtrader implementation of the MACD baseline strategy.
 
-    Matches the logic in trading.baselines.rule_based.macd_baseline:
+    Matches the logic in trading.baselines.macd_baseline:
     - Long when MACD histogram > 0
     - Short when MACD histogram < 0
     - Flat when MACD histogram == 0
@@ -111,7 +111,7 @@ class MACDStrategy(bt.Strategy):
 class EMAMACDStrategy(bt.Strategy):
     """Backtrader implementation of the MACD + EMA50 baseline strategy.
 
-    Matches the logic in trading.baselines.rule_based.macd_ema50_baseline:
+    Matches the logic in trading.baselines.macd_ema50_baseline:
     - Long entry: close > EMA50 AND bullish MACD cross
     - Long exit: bearish MACD cross
     - Short entry: close < EMA50 AND bearish MACD cross

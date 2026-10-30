@@ -6,7 +6,7 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
-from .interactive_common import (
+from .interactive_plot_rendering import (
     _BREACH_COLOR,
     _EQUITY_COLOR,
     _LONG_COLOR,

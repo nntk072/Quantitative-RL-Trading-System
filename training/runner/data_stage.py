@@ -24,16 +24,13 @@ from features import (
 from features.context.policy_market import (
     attach_policy_market_context,
 )
-from market_data.loading.pipeline import build_tick_books, run_pipeline
+from market_data.loading import build_tick_books, run_pipeline
 from market_data.splits.definitions import (
     get_split_config,
     get_train_start_config,
     make_train_mask,
     split_bars,
     split_train_test,
-)
-from training.setup.data import (
-    _tick_execution_split_coverage,
 )
 from training.setup.environments import (
     max_tick_quote_wait_ms,
@@ -44,6 +41,7 @@ from training.setup.environments import (
 from training.setup.environments import (
     tick_execution_required as resolve_tick_execution_required,
 )
+from training.setup.tick_execution_preflight import tick_execution_split_coverage
 
 from .stages import TrainingConfigurationStage, TrainingDataStage
 
@@ -76,7 +74,7 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
     randomized_fill_latency_ms = resolve_randomized_fill_latency_ms(cfg)
     tick_execution_required = resolve_tick_execution_required(cfg)
     if tick_execution_required or randomized_fill_latency_ms > 0.0:
-        execution_coverage = _tick_execution_split_coverage(
+        execution_coverage = tick_execution_split_coverage(
             primary_ticks,
             cast(pd.DatetimeIndex, primary_m1.index),
             train_mask,

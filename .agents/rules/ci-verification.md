@@ -7,7 +7,7 @@ Two layers:
 | Layer | Who | Commands |
 |-------|-----|----------|
 | **Agent commit/push gate** | Any coding agent before `git commit` / `git push` | format + lint + mypy (full tree) + **scoped** pytest |
-| **Merge CI bar** | GitHub Actions + Orchestra phase 9 (`orchestra/ci_gate.py`) | same + `pytest tests/ -v` |
+| **Merge CI bar** | GitHub Actions named gates; Orchestra phase 9 | twelve named `./tools/check` gates plus `ci-success`; Orchestra runs `./tools/check full` |
 
 Agents must **not** run `pytest tests/ -v` by default — it is too heavy. Prefer the
 smallest relevant test set for the change.
@@ -22,6 +22,19 @@ directly from the active `.venv/bin` executables (`.venv/bin/ruff`,
 which fails with `Exec format error` on an ARM node. Verify `uname -m` and the
 tool binary before starting a gate. An architecture mismatch is an invocation
 failure, not a lint, type, or test result.
+
+Lock/export/sync operations still require `uv`. On ARM, `tools/check` prefers
+`THESIS_UV` or a `uv` executable inside the selected project environment; do
+not let it fall through to an x86 login-home binary. For a standalone native
+binary, pass it explicitly, for example:
+
+```bash
+THESIS_UV=/path/to/aarch64/uv ./tools/check deps
+```
+
+The venv setup helpers, `tools/uv-install`, and `make deps-check` honor the same
+`THESIS_UV` override. `tools/check build` uses the selected project Python's
+`build` module when a matched environment is active.
 
 ## Hard rule — agent commit / push
 
@@ -60,8 +73,9 @@ Only **pytest** stays scoped at commit time.
   (`features/foo.py` → `tests/**/test_*foo*`).
 - Cap to a small set (typically 1–few files). Do **not** expand to the whole tree
   “to be safe.”
-- Run `pytest tests/ -v` only when the user explicitly asks, or when you are the
-  Orchestra verification phase / reproducing a CI failure.
+- Run `./tools/check full` only when the user explicitly asks, or when you are
+  the Orchestra verification phase / reproducing a complete CI failure. Use the
+  named `./tools/check <gate>` command to reproduce one hosted gate.
 
 ### Format failures (common CI red)
 
@@ -107,20 +121,17 @@ When you are about to commit or push, stop using this section and switch to the
 
 ## Merge CI bar (not the agent default)
 
-GitHub CI and Orchestra phase 9 still run the full suite:
+GitHub Actions runs twelve named gates and a required-job aggregator. Orchestra
+uses the same dispatcher sequentially:
 
 ```bash
-.venv/bin/ruff format --check .
-.venv/bin/ruff check .
-.venv/bin/mypy .
-.venv/bin/pytest tests/ -v
+./tools/check full
 ```
 
 ## Out of scope unless explicitly requested
 
 - Nightly workflow subsets (`pytest -m slow`, integration-only paths)
-- `pytest -m "not slow"` as a substitute for the merge-bar suite
-- Agents substituting scoped pytest for GitHub’s full suite when debugging CI
+- Agents substituting scoped pytest for a named hosted gate when debugging CI
 
 ## Test discipline
 
@@ -134,4 +145,4 @@ GitHub CI and Orchestra phase 9 still run the full suite:
 - Pre-commit checklist: [git-commit-rules.md](git-commit-rules.md)
 - Feature workflow: [development-workflow.md](development-workflow.md)
 - Agent index: [README.md](README.md)
-- Full suite: `.github/workflows/ci.yml`, `orchestra/ci_gate.py`
+- Full gate: `.github/workflows/ci.yml`, `tools/check`, and Orchestra's adapter

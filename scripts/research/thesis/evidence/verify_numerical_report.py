@@ -19,7 +19,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from configuration.paths import repository_root
 from evaluation import calculate_metrics, evaluation_periods_per_year
-from evaluation.reporting.export import _fill_events, _position_summaries
+from evaluation.reporting.trade_event_export import _fill_events, _position_summaries
 
 _SPLITS = ("training", "testing")
 _ROOT = repository_root(__file__)

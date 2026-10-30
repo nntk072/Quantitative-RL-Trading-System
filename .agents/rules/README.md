@@ -1,4 +1,4 @@
-# Agent rules index & activation map (Aalto_MS_Thesis)
+# Agent rules index & activation map (Quantitative-RL-Trading-System)
 
 Single source of truth for all coding agents in this repo (Cursor, Cline, Windsurf, Kilo Code, Antigravity, Mistral Vibe). Rules live here — not in `.cursor/` or `.kilocode/` (local IDE folders; gitignored). Entry point for Cursor: root `AGENTS.md` and `.cursorrules`.
 

@@ -7,8 +7,8 @@ from collections.abc import Iterable
 import numpy as np
 import pandas as pd
 
-from .base import TradingStrategy, columns_matching
-from .types import FeatureRow
+from .feature_row_contract import FeatureRow
+from .strategy_contract import TradingStrategy, columns_matching
 
 _LOWER_RANK = {"": 0, "M1": 1, "M5": 2, "M15": 3}
 _StopGroup = tuple[str, str, str | None]

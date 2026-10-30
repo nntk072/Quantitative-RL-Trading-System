@@ -5,8 +5,8 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
-from trading.execution.broker import Position
-from trading.positions.multi_tp import reorder_remaining_targets
+from trading.execution import Position
+from trading.positions import reorder_remaining_targets
 
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase

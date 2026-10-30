@@ -28,11 +28,11 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 
 from configuration import load_config
 from features import build_features, feature_cache_path
-from market_data.loading.pipeline import build_tick_books, run_pipeline
+from market_data.loading import build_tick_books, run_pipeline
 from market_data.loading.ticks import TickBook, ticks_covering
 from market_data.splits.definitions import get_split_config, make_train_mask, split_train_test
-from training.setup.data import _publish_obs_memmap
 from training.setup.environments import make_env, strategy_from_cfg
+from training.setup.observation_memmap import publish_observation_memmap
 
 
 def _read_pss_kib(pid: int) -> int:
@@ -177,7 +177,7 @@ def _measure_env_count(
     cfg.env.n_envs = n_envs
     with tempfile.TemporaryDirectory(prefix="rl-mem-probe-") as temp_dir:
         if bundle_path is None:
-            mmap_path = _publish_obs_memmap(
+            mmap_path = publish_observation_memmap(
                 features, bars, cfg, Path(temp_dir) / "obs_features.npy"
             )
             env_fn = partial(

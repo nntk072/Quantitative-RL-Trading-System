@@ -22,7 +22,7 @@ The repository was audited directly on Triton at `/scratch/work/nguyenl37/Aalto_
 
 ## 2. Current implementation audit
 
-### Account accounting - `trading/account/state.py`
+### Account accounting - `trading/account/account_state.py`
 
 `AccountState` currently has `balance`, `equity`, `peak_equity`, `session_start_balance`, `daily_loss`, `max_drawdown`, and `open_pnl`.
 
@@ -129,7 +129,7 @@ Zero then remains a valid no-trade action. If action decoding needs numerical to
 
 `worker.py` mirrors this.
 
-`simulation/backtest/engine.py::run_backtest()` additionally calls the guardrail trade-risk check after sizing.
+`simulation.backtest.run_backtest()` additionally calls the guardrail trade-risk check after sizing.
 
 Repeated-payout mode must use one resolved risk contract across direct env construction, worker env construction, evaluation, and any standalone backtest used for comparison.
 
@@ -138,8 +138,8 @@ Repeated-payout mode must use one resolved risk contract across direct env const
 Relevant files:
 
 - `simulation/environment/env.py`
-- `tests/test_envs/test_tp_mode.py`
-- `tests/test_envs/test_risk_alignment.py`
+- `tests/test_simulation/test_environment/test_tp_mode.py`
+- `tests/test_simulation/test_environment/test_risk_alignment.py`
 
 Existing tests already cover initial-size-based partial closes, TP hit masks, final residual allocation, multiple target crossings, cooldown after full lifecycle, session-end partial closure, stop-before-target on ambiguous bars, tick partial TP then stop, multi-target tick crossing, bar/tick parity, and monotonic trailing behavior.
 
@@ -186,7 +186,7 @@ Repeated-payout state must be emitted by the environment and exported directly r
 
 ### Baselines
 
-`training/runner/baselines.py` calls `simulation.backtest.engine.run_backtest`, not `TradingEnv`.
+`training/runner/baselines.py` calls the public `simulation.backtest.run_backtest` API, not `TradingEnv`.
 
 If thesis comparisons require repeated-payout baseline parity, the same policy/accounting/risk rules must be propagated into `run_backtest()`. Otherwise explicitly document the methodological exception.
 
@@ -224,7 +224,7 @@ trading_policy:
     enforce_remaining_account_capacity: true
 ```
 
-`configuration/loader.py::load_config()` already merges defaults, variant fragments, then CLI overrides; no new loader architecture is required.
+`configuration/configuration_loader.py::load_config()` already merges defaults, variant fragments, then CLI overrides; no new loader architecture is required.
 
 Recommended ownership:
 
@@ -351,7 +351,7 @@ Legacy mode must preserve current FTMO limits, current training/eval trailing-DD
 
 ## 6. File-by-file implementation tasks
 
-### `trading/account/state.py`
+### `trading/account/account_state.py`
 
 - add session-start-equity support;
 - add canonical daily-loss/remaining-capacity accessors;
@@ -452,7 +452,7 @@ No action-width change if existing risk coordinate is reused. Only update action
 
 Record policy mode, observation schema, risk range, and repeated-payout metrics in run snapshots.
 
-### `simulation/backtest/engine.py`
+### `simulation/backtest/event_driven_backtest.py`
 
 If baseline parity is required, wire the same policy/account/risk transitions and emit the same cycle/payout events. Otherwise leave unchanged and document the methodological exception.
 
@@ -537,20 +537,20 @@ Tests must cover:
 
 Extend focused tests near:
 
-- `tests/test_guardrails.py`
-- `tests/test_backtest/`
-- `tests/test_envs/test_account_normalization.py`
-- `tests/test_risk.py`
-- `tests/test_envs/test_risk_alignment.py`
-- `tests/test_envs/test_fixed_risk_sizing.py`
-- `tests/test_envs/test_year_episode_survival.py`
-- `tests/test_envs/test_ny_steps_eod.py`
-- `tests/test_envs/test_trading_env_golden_traces.py`
-- `tests/test_envs/test_bundle_worker.py`
-- `tests/test_envs/test_observation_schema.py`
-- `tests/test_rollout.py`
-- `tests/test_eval/test_eval_run_provenance.py`
-- `tests/test_plots_export.py`
+- `tests/test_trading/test_guardrails.py`
+- `tests/test_simulation/test_backtest/`
+- `tests/test_simulation/test_environment/test_account_normalization.py`
+- `tests/test_trading/test_risk.py`
+- `tests/test_simulation/test_environment/test_risk_alignment.py`
+- `tests/test_simulation/test_environment/test_fixed_risk_sizing.py`
+- `tests/test_simulation/test_environment/test_year_episode_survival.py`
+- `tests/test_simulation/test_environment/test_ny_steps_eod.py`
+- `tests/test_simulation/test_environment/test_trading_env_golden_traces.py`
+- `tests/test_simulation/test_environment/test_bundle_worker.py`
+- `tests/test_simulation/test_environment/test_observation_schema.py`
+- `tests/integration/test_rollout.py`
+- `tests/integration/test_eval_run_provenance.py`
+- `tests/integration/test_plots_export.py`
 - relevant plotting tests.
 
 Acceptance criteria:

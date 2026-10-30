@@ -1,14 +1,5 @@
 """Compatibility exports for the split sequence encoder modules."""
 
-from models.encoders.common import (
-    ACCOUNT_DIM,
-    ACCOUNT_EMB_DIM,
-    AccountMLP,
-    BaseFeaturesExtractor,
-)
-from models.encoders.common import (
-    Chomp1d as _Chomp1d,
-)
 from models.encoders.gru import GRUEncoder
 from models.encoders.lite_tcn import (
     LiteTCNEncoder,
@@ -16,6 +7,15 @@ from models.encoders.lite_tcn import (
     _LiteTemporalBlock,
 )
 from models.encoders.mtf import _MTF_STREAMS, MTFEncoder, _CausalTCN
+from models.encoders.sequence_encoder_components import (
+    ACCOUNT_DIM,
+    ACCOUNT_EMB_DIM,
+    AccountMLP,
+    BaseFeaturesExtractor,
+)
+from models.encoders.sequence_encoder_components import (
+    Chomp1d as _Chomp1d,
+)
 from models.encoders.tcn import LegacyTCNEncoderV1, TCNEncoder, _TemporalBlock
 from models.encoders.transformer import TransformerEncoder, _PositionalEncoding
 

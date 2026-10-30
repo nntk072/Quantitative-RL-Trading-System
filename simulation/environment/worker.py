@@ -6,8 +6,8 @@ from typing import Any
 
 from omegaconf import OmegaConf
 
-from trading.execution.costs import CostModel
-from trading.policy.config import resolve_trading_policy_mapping
+from trading.execution import CostModel
+from trading.policy import resolve_trading_policy_mapping
 from trading.strategies import BaselineStrategy, DistributionStrategy, PO3IFVGStrategy
 
 from .distribution_reward import DistributionReward
@@ -183,7 +183,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
     windows = {str(key): int(value) for key, value in (encoder.get("windows", {}) or {}).items()}
     costs = _block(cfg, "costs")
     execution = _block(cfg, "execution")
-    from features.pipeline.builder import scheduled_close_map
+    from market_data.transforms import scheduled_session_close_map
 
     session = _block(cfg, "session")
     return TradingEnv.from_bundle(
@@ -266,7 +266,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         target_timeframes=tuple(
             str(value) for value in risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),
-        scheduled_session_closes=scheduled_close_map(OmegaConf.create(cfg)),
+        scheduled_session_closes=scheduled_session_close_map(OmegaConf.create(cfg)),
         session_start=str(session.get("start", "16:30")),
         trading_policy=policy.to_dict(),
     )

@@ -1782,13 +1782,13 @@ evaluation/reporting/plotting modules        # only for thesis fields
 Likely tests:
 
 ```text
-tests/test_decisioning/test_thesis.py        # follow actual test layout
+tests/integration/test_thesis.py        # follow actual test layout
 tests/test_features/test_entry_ideas.py
-tests/test_action_schema_contract.py
+tests/integration/test_action_schema_contract.py
 tests/test_models/test_hybrid_actor.py
 tests/test_models/test_encoders.py
-tests/test_backtest/test_entry_levels.py
-tests/test_backtest/test_target_reference_contract_unittest.py
+tests/test_simulation/test_backtest/test_entry_levels.py
+tests/test_simulation/test_backtest/test_target_reference_contract_unittest.py
 plus focused environment/checkpoint tests
 ```
 

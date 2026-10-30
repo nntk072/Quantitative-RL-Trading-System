@@ -16,17 +16,17 @@ PIPELINE_STAGES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     (
         "Configuration",
         "Defines data, date splits, features, trading rules, and learner settings.",
-        ("config/base/default.yaml", "configuration/loader.py"),
+        ("config/base/default.yaml", "configuration/configuration_loader.py"),
     ),
     (
         "Market data",
         "Loads bars and tick quotes; prepares timeframes and saved data caches.",
-        ("market_data/loading/pipeline.py", "market_data/loading/ticks.py"),
+        ("market_data/loading/market_data_ingestion.py", "market_data/loading/ticks.py"),
     ),
     (
         "Features and split",
         "Builds model inputs and assigns observations to configured date periods.",
-        ("features/pipeline/builder.py", "market_data/splits/definitions.py"),
+        ("features/pipeline/feature_matrix_builder.py", "market_data/splits/definitions.py"),
     ),
     (
         "Trading simulation",

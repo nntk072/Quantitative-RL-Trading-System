@@ -35,7 +35,7 @@
 - The evaluator now forwards both observation schema arguments into `TradingEnv`.
 - Verification before launch: all 18 identities resolved in campaign dry-run;
   `ruff format --check .`, `ruff check .`, `mypy .`, and
-  `pytest tests/test_rollout.py -q` passed.
+  `pytest tests/integration/test_rollout.py -q` passed.
 - The master plan and Triton operating rules are merged and pushed to `main` at
   `5aeb68f4aacab774df4fc78dd1940b16b51500b7`. This updated spec must also be
   committed before launch so the new campaign fingerprint matches the final

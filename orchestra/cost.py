@@ -7,6 +7,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from artifacts.atomic import write_text_atomic
+
 # Approximate cost per 1M tokens (USD) — update as pricing changes
 MODEL_COSTS: dict[str, dict[str, float]] = {
     "gemini/gemini-3.1-pro-preview": {"input": 1.25, "output": 10.00},
@@ -34,7 +36,7 @@ class CostTracker:
             self._data = json.loads(self.cost_file.read_text())
 
     def _save(self) -> None:
-        self.cost_file.write_text(json.dumps(self._data, indent=2, default=str))
+        write_text_atomic(self.cost_file, json.dumps(self._data, indent=2, default=str))
 
     def _today(self) -> str:
         return time.strftime("%Y-%m-%d")

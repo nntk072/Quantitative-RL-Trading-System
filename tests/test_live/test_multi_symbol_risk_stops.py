@@ -93,3 +93,43 @@ def test_multi_symbol_robot_submits_broker_stop(
     robot.trade_symbol(symbol)
 
     assert trader.open_calls == [{"symbol": symbol, "type": order_type, "sl": expected_stop}]
+
+
+def test_multi_symbol_robot_refuses_entry_when_risk_sizing_returns_zero() -> None:
+    class UnsizeableRisk(_Risk):
+        def calculate_position_size(self, *_args: Any, **_kwargs: Any) -> float:
+            return 0.0
+
+    trader = _Trader()
+    symbol = "US100.cash"
+    robot = MultiSymbolRobot(
+        symbol_manager=cast(Any, _Symbols()),
+        trader=trader,  # type: ignore[arg-type]
+        strategies=cast(Any, {symbol: _Strategy(symbol, Signal.BUY)}),
+        risk_manager=UnsizeableRisk(),  # type: ignore[arg-type]
+        paper_trading=False,
+    )
+
+    robot.trade_symbol(symbol)
+
+    assert trader.open_calls == []
+
+
+def test_multi_symbol_robot_refuses_entry_when_risk_sizing_raises() -> None:
+    class UnavailableRisk(_Risk):
+        def calculate_position_size(self, *_args: Any, **_kwargs: Any) -> float:
+            raise RuntimeError("symbol tick value unavailable")
+
+    trader = _Trader()
+    symbol = "US100.cash"
+    robot = MultiSymbolRobot(
+        symbol_manager=cast(Any, _Symbols()),
+        trader=trader,  # type: ignore[arg-type]
+        strategies=cast(Any, {symbol: _Strategy(symbol, Signal.BUY)}),
+        risk_manager=UnavailableRisk(),  # type: ignore[arg-type]
+        paper_trading=False,
+    )
+
+    robot.trade_symbol(symbol)
+
+    assert trader.open_calls == []

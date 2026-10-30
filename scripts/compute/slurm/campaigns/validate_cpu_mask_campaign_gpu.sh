@@ -45,5 +45,5 @@ export PYTHONPATH="$MYPY_STAGE/sitepkgs:$SITE"
 "$MYPY_STAGE/pythonbase/bin/python3.12" -m mypy . \
   --cache-dir "$MYPY_STAGE/cache" --no-color-output --show-error-codes
 
-"$PYTEST" tests/test_campaign_artifacts.py tests/test_campaign_checkpoint_migration.py -q
+"$PYTEST" tests/test_experiments/test_campaign_artifacts.py tests/test_experiments/test_campaign_checkpoint_migration.py -q
 echo "GPU CI gate passed host=$(hostname -f) arch=$(uname -m)"

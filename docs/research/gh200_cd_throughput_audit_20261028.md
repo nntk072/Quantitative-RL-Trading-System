@@ -175,7 +175,7 @@ Portable split summaries, thesis diagnostics, and figures are committed under [`
 | D training | [plot](gh200_cd_benchmark_20261028/D/training/equity.png) | [plot](gh200_cd_benchmark_20261028/D/training/drawdown.png) | [plot](gh200_cd_benchmark_20261028/D/training/monthly_heatmap.png) | [plot](gh200_cd_benchmark_20261028/D/training/thesis_selection_heatmap.png) | [plot](gh200_cd_benchmark_20261028/D/training/thesis_performance_heatmap.png) |
 | D testing | [plot](gh200_cd_benchmark_20261028/D/testing/equity.png) | [plot](gh200_cd_benchmark_20261028/D/testing/drawdown.png) | [plot](gh200_cd_benchmark_20261028/D/testing/monthly_heatmap.png) | [plot](gh200_cd_benchmark_20261028/D/testing/thesis_selection_heatmap.png) | [plot](gh200_cd_benchmark_20261028/D/testing/thesis_performance_heatmap.png) |
 
-Attempt 36 used the second approved GH200 allocation (`21252045`, gpuarm2) to rerun `tests/test_train/test_dashboard.py` with the ARM-native `.venv`; **19 tests passed in 16.75s**. The process ran in the existing allocation shell. No extra diagnostic `srun` step was created. This verifies the dashboard RNG-isolation unit coverage on the compute architecture used for the paired pilot.
+Attempt 36 used the second approved GH200 allocation (`21252045`, gpuarm2) to rerun `tests/test_training/test_dashboard.py` with the ARM-native `.venv`; **19 tests passed in 16.75s**. The process ran in the existing allocation shell. No extra diagnostic `srun` step was created. This verifies the dashboard RNG-isolation unit coverage on the compute architecture used for the paired pilot.
 
 ### Attempt 37: matched deferred-dashboard 100k repeat (complete)
 

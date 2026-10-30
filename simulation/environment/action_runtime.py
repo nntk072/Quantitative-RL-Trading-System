@@ -13,7 +13,7 @@ from decisioning.thesis import (
     thesis_candidate,
     thesis_id_from_box,
 )
-from trading.orders.selection import decode_tp_mode
+from trading.orders import decode_tp_mode
 
 from .action_diagnostics import _decision_from_action, _empty_decision
 from .market_view import FeatureRow

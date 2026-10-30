@@ -153,25 +153,26 @@ def _po3_direction(frame: pd.DataFrame, side: str, timeframe: str | None = None)
 
 def build_entry_idea_features(features: pd.DataFrame) -> pd.DataFrame:
     """Add multi-hot idea flags; do not select or gate the agent's action."""
-    ideas = pd.DataFrame(index=features.index)
-    ideas["entry_idea_po3_long"] = _po3_direction(features, "long").astype("float64")
-    ideas["entry_idea_po3_short"] = _po3_direction(features, "short").astype("float64")
+    columns: dict[str, pd.Series] = {
+        "entry_idea_po3_long": _po3_direction(features, "long").astype("float64"),
+        "entry_idea_po3_short": _po3_direction(features, "short").astype("float64"),
+    }
     for side, source_side in (("long", "bull"), ("short", "bear")):
-        ideas[f"entry_idea_order_block_{side}"] = _positive_any(
+        columns[f"entry_idea_order_block_{side}"] = _positive_any(
             features, f"ob_{source_side}_retest"
         ).astype("float64")
-        ideas[f"entry_idea_fvg_retest_{side}"] = _positive_any(
+        columns[f"entry_idea_fvg_retest_{side}"] = _positive_any(
             features, f"fvg_retest_{source_side}"
         ).astype("float64")
-        ideas[f"entry_idea_ifvg_retest_{side}"] = _positive_any(
+        columns[f"entry_idea_ifvg_retest_{side}"] = _positive_any(
             features, f"ifvg_retest_{source_side}"
         ).astype("float64")
         # A confirmed body close through an IFVG is the distinct unretested
         # reaction idea; it does not require a later zone retest.
-        ideas[f"entry_idea_ifvg_unretested_{side}"] = _positive_any(
+        columns[f"entry_idea_ifvg_unretested_{side}"] = _positive_any(
             features, f"ifvg_{source_side}_confirmed"
         ).astype("float64")
-        ideas[f"entry_idea_standard_deviation_{side}"] = _positive_any(
+        columns[f"entry_idea_standard_deviation_{side}"] = _positive_any(
             features, f"standard_deviation_entry_{side}"
         ).astype("float64")
         for timeframe in _TIMEFRAMES:
@@ -188,21 +189,28 @@ def build_entry_idea_features(features: pd.DataFrame) -> pd.DataFrame:
                 ),
             }
             for idea, values in timeframe_ideas.items():
-                ideas[f"entry_idea_{idea}_{timeframe}_{side}"] = values.astype("float64")
-            ideas[f"entry_idea_overlap_{timeframe}_{side}"] = (
+                columns[f"entry_idea_{idea}_{timeframe}_{side}"] = values.astype("float64")
+            columns[f"entry_idea_overlap_{timeframe}_{side}"] = (
                 pd.concat([values.astype("float64") for values in timeframe_ideas.values()], axis=1)
                 .sum(axis=1)
                 .ge(2)
                 .astype("float64")
             )
-    ideas["entry_idea_long_count"] = ideas[
-        [f"entry_idea_{idea}_long" for idea in ENTRY_IDEA_NAMES]
-    ].sum(axis=1)
-    ideas["entry_idea_short_count"] = ideas[
-        [f"entry_idea_{idea}_short" for idea in ENTRY_IDEA_NAMES]
-    ].sum(axis=1)
-    ideas["entry_idea_overlap_long"] = ideas["entry_idea_long_count"].ge(2).astype("float64")
-    ideas["entry_idea_overlap_short"] = ideas["entry_idea_short_count"].ge(2).astype("float64")
+    ideas = pd.DataFrame(columns, index=features.index)
+    summary = pd.DataFrame(
+        {
+            "entry_idea_long_count": ideas[
+                [f"entry_idea_{idea}_long" for idea in ENTRY_IDEA_NAMES]
+            ].sum(axis=1),
+            "entry_idea_short_count": ideas[
+                [f"entry_idea_{idea}_short" for idea in ENTRY_IDEA_NAMES]
+            ].sum(axis=1),
+        },
+        index=features.index,
+    )
+    summary["entry_idea_overlap_long"] = summary["entry_idea_long_count"].ge(2).astype("float64")
+    summary["entry_idea_overlap_short"] = summary["entry_idea_short_count"].ge(2).astype("float64")
+    ideas = pd.concat([ideas, summary], axis=1)
     return ideas
 
 

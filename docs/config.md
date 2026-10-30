@@ -1,8 +1,10 @@
 # Configuration Reference
 
-All runtime configuration flows through OmegaConf YAML files. The base is
-`config/base/default.yaml`; variant files under `config/` are merged over
-it at CLI time.
+All runtime configuration flows through the `configuration` package. The base
+is `config/base/default.yaml`; feature and strategy YAML files are partial
+overlays, validated against the default schema before OmegaConf merges them.
+Unknown nested keys, mapping/scalar shape changes, and incompatible scalar
+types fail at load time.
 
 ---
 
@@ -45,6 +47,7 @@ All off by default in `default.yaml`. Enable via variant YAML or CLI override.
 | `include_po3_full` | Full HTF-FVG → LTF-IFVG → entry-trigger pipeline |
 | `include_strategy_state` | Sweeps, BOS, PO3 state, IFVG zones (required for Idea 1/2 overlay) |
 | `include_session_ohlc` | CT-anchored session OHLC, prior-period H/L, quadrants |
+| `include_previous_session_pd` | Previous-session premium/discount context |
 | `smt` | `{enabled, timeframes}` — MTF SMT divergence |
 | `structure` | `{enabled, timeframes}` — MTF structure levels and BOS |
 | `liquidity` | `{enabled, timeframes}` — MTF liquidity sweeps |
@@ -121,12 +124,19 @@ uv run thesis-train train --mvp \
 
 | Constant | File | Current value | Busts |
 |----------|------|---------------|-------|
-| `BAR_CACHE_VERSION` | `market_data/loading/pipeline.py` | `v2-full-day` | Stale bar parquet caches |
-| `FEATURE_CACHE_VERSION` | `features/pipeline/builder.py` | `v21-causal-prior-ny-session` | Stale feature parquet caches |
-| Content hash | `feature_cache_content_hash()` | 16-hex digest of version + features cfg + tz keys + data identity + optional `train_mask` | Flag flip or data change must miss cache |
+| `BAR_CACHE_VERSION` | `market_data/loading/market_data_ingestion.py` | `v4-semantic-manifest` | Stale bar parquet caches; each entry also has a semantic manifest and atomic completion |
+| `TICK_CACHE_VERSION` | `market_data/loading/ticks.py` | `v4-semantic-manifest` | Stale tick parquet caches; each entry also has a semantic manifest and atomic completion |
+| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v33-timeframe-entry-ideas` | Stale feature parquet caches |
+| Content hash | `features.pipeline.feature_cache_identity.feature_cache_content_hash()` | 16-hex digest of feature version/config, session/timezone inputs, source data, timeframe bars, normalization mode, and optional `train_mask` | Flag flip or data change must miss cache |
 
-**Rule:** bump the relevant constant whenever feature semantics or output
-schema change. Feature flags and source-data identity also contribute to the
+**Rule:** bump the relevant constant whenever transform semantics or output
+schema change. Bar-cache identity includes source bytes, partition,
+symbol/timeframe, timezone, NY session end, timestamp convention, and price
+grid. Tick-cache identity includes source bytes, timezone, tick-session filter,
+and price grid. Both parquet types are published atomically and reused only
+when their completion manifest matches the identity and recorded row/order
+shape.
+Feature flags and source-data identity also contribute to the feature-cache
 content hash, so different resolved feature configurations use distinct cache
 paths.
 
@@ -134,6 +144,7 @@ Cache file pattern:
 
 ```
 cache/{symbol}_{tf}_{BAR_CACHE_VERSION}.parquet          # bars
+cache/{symbol}_{tf}_{BAR_CACHE_VERSION}.parquet.manifest.json
 cache/{symbol}_features_{FEATURE_CACHE_VERSION}_{content_hash}.parquet
 cache/{symbol}_features_{FEATURE_CACHE_VERSION}_{content_hash}.parquet.hash
 
@@ -145,8 +156,9 @@ cache/{symbol}_features_{FEATURE_CACHE_VERSION}_{content_hash}.parquet.hash
 
 1. `config/base/default.yaml` is always the base.
 2. `--config path/to/variant.yaml` merges over the base (OmegaConf).
-3. `--strategy po3_ifvg|distribution` additionally merges the strategy YAML
-   from `_STRATEGY_CONFIGS` in `train_rl.py`.
+3. `--strategy po3_ifvg|distribution` additionally applies the strategy YAML
+   through `training.configuration.strategy_overlays` and the shared
+   configuration schema validator.
 4. Positional `key=value` overrides on the CLI merge last.
 
 ```bash
@@ -168,7 +180,7 @@ train/live parity.
 |------|---------|
 | `config/vae.yaml` | VAE standalone training |
 | `config/wandb_sweep.yaml` | Weights & Biases sweep |
-| `config/symbols_config.yaml` | Live multi-symbol selection (`live_trading.py`) |
+| `config/symbols_config.yaml` | Live multi-symbol selection (`integrations/mt5/cli/multi_symbol_trading.py`, exposed by `live_trading.py`) |
 
 ---
 

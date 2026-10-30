@@ -16,7 +16,10 @@ import pandas as pd
 
 from configuration import load_config
 from configuration.paths import repository_root
-from market_data.loading.pipeline import BAR_CACHE_VERSION, build_tick_books, run_pipeline
+from market_data.cache.bars import bar_cache_is_complete
+from market_data.cache.storage import parquet_cache_manifest_path
+from market_data.cache.ticks import tick_cache_is_complete
+from market_data.loading import BAR_CACHE_VERSION, build_tick_books, run_pipeline
 from market_data.loading.ticks import TICK_CACHE_VERSION
 
 ROOT = repository_root(__file__)
@@ -95,20 +98,39 @@ def main() -> None:
         }
         expected.append(stage / f"{symbol}_ticks_{TICK_CACHE_VERSION}.parquet")
 
-    if len(expected) != 18 or any(not p.is_file() or p.stat().st_size == 0 for p in expected):
+    bar_caches = [path for path in expected if "_ticks_" not in path.name]
+    tick_caches = [path for path in expected if "_ticks_" in path.name]
+    if len(expected) != 18 or any(not bar_cache_is_complete(path) for path in bar_caches):
         raise RuntimeError("rebuilt cache set is incomplete")
+    if any(not path.is_file() or path.stat().st_size == 0 for path in tick_caches):
+        raise RuntimeError("rebuilt tick cache set is incomplete")
+    if any(not tick_cache_is_complete(path) for path in tick_caches):
+        raise RuntimeError("rebuilt tick cache manifests are incomplete")
 
     TARGET_CACHE.mkdir(parents=True, exist_ok=True)
     BACKUP.mkdir(parents=True)
     targets = [TARGET_CACHE / p.name for p in expected]
-    prior = [p for p in targets if p.is_file()]
+    companions = [
+        (
+            parquet_cache_manifest_path(source),
+            parquet_cache_manifest_path(target),
+        )
+        for source, target in zip(expected, targets, strict=True)
+    ]
+    companion_targets = [target for _, target in companions]
+    prior = [p for p in [*targets, *companion_targets] if p.is_file()]
     for path in prior:
         shutil.copy2(path, BACKUP / path.name)
     published: list[Path] = []
     try:
-        for source, target in zip(expected, targets, strict=True):
+        for source, target, (companion_source, companion_target) in zip(
+            expected, targets, companions, strict=True
+        ):
+            companion_target.unlink(missing_ok=True)
+            published.append(companion_target)
             os.replace(source, target)
             published.append(target)
+            os.replace(companion_source, companion_target)
         result = {
             "status": "passed",
             "created_at_utc": datetime.now(UTC).isoformat(),
@@ -143,7 +165,7 @@ def main() -> None:
                     "bytes": target.stat().st_size,
                     "sha256": sha256(target),
                 }
-                for target in targets
+                for target in [*targets, *companion_targets]
             },
         }
         REPORT.parent.mkdir(parents=True, exist_ok=True)

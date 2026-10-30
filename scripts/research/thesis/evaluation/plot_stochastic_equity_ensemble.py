@@ -663,7 +663,7 @@ def main() -> int:
                 command = [
                     sys.executable,
                     "-m",
-                    "evaluation.reanalysis.runner",
+                    "evaluation.reanalysis.checkpoint_reanalysis",
                     "--run",
                     source["source_run"],
                     "--output",

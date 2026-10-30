@@ -12,7 +12,7 @@ import pandas as pd
 
 from features.technical.indicators import macd, rsi
 
-from .base import BaseStrategy
+from .step_indexed_strategy import BaseStrategy
 
 
 def _ny_session_day(index: pd.DatetimeIndex, tz: str = "Etc/GMT-3") -> pd.Series:

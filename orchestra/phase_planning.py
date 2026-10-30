@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import click
 
-from .models import Model
+from .model_provider_registry import Model
 from .pipeline_base import PipelineMixinBase
 from .prompts import render_prompt
 from .routing import (

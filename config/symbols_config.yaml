@@ -50,7 +50,6 @@ volatility_config:
 # Trading configuration
 trading_config:
   max_symbols: 2               # Maximum number of symbols to trade simultaneously (1-3)
-  default_lot_size: 0.1        # Default lot size per symbol
   risk_per_symbol: 0.02        # Risk 2% of account balance per symbol
   max_total_risk: 0.05         # Maximum 5% total risk across all positions
 

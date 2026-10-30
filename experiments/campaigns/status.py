@@ -17,6 +17,7 @@ import sys
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from artifacts.layout import CampaignArtifactLayout
 from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
@@ -131,7 +132,7 @@ def latest_resource_sample(path: pathlib.Path) -> dict[str, str]:
 def manager_ready(campaign_dir: pathlib.Path, job_id: str | None, node: str) -> bool | None:
     if not job_id:
         return None
-    logs = sorted((campaign_dir / "logs").glob(f"worker_manager_*_{job_id}.log"))
+    logs = sorted(CampaignArtifactLayout(campaign_dir).logs.glob(f"worker_manager_*_{job_id}.log"))
     for path in logs:
         try:
             content = path.read_text(encoding="utf-8", errors="replace")
@@ -203,10 +204,12 @@ def estimate_remaining_seconds(steps: int | None, target: int, fps: float | None
 
 
 def latest_checkpoint(campaign_dir: pathlib.Path, key: str, now: dt.datetime) -> str:
+    try:
+        attempt_root = CampaignArtifactLayout(campaign_dir).run_attempts(key)
+    except ValueError:
+        return "none found"
     files = [
-        path
-        for path in (campaign_dir / "runs" / "attempts" / key).glob("**/*.zip")
-        if path.is_file() and "model" in path.parts
+        path for path in attempt_root.glob("**/*.zip") if path.is_file() and "model" in path.parts
     ]
     if not files:
         return "none found"
@@ -291,6 +294,7 @@ def elapsed_for_job(
 
 def render(campaign_path: pathlib.Path, job_id_arg: str | None, supervisor: str | None) -> str:
     campaign_dir = campaign_path.parent
+    campaign_artifacts = CampaignArtifactLayout(campaign_dir)
     campaign = json.loads(campaign_path.read_text(encoding="utf-8"))
     timezone = ZoneInfo("Europe/Helsinki")
     now = dt.datetime.now(timezone)
@@ -370,7 +374,7 @@ def render(campaign_path: pathlib.Path, job_id_arg: str | None, supervisor: str 
         gpu_type = gpu_type_match.group(1) if gpu_type_match else "GPU"
         gpu_total = parse_gres_count(gres)
         gpu_alloc = parse_gres_count(alloc_tres, gpu_type) or parse_gres_count(alloc_tres)
-        sample = latest_resource_sample(campaign_dir / "logs" / f"resources_{node}.csv")
+        sample = latest_resource_sample(campaign_artifacts.log(f"resources_{node}.csv"))
         if sample:
             sampled_at = dt.datetime.fromisoformat(
                 sample["timestamp_utc"].replace("Z", "+00:00")
@@ -479,7 +483,9 @@ def main() -> int:
     parser.add_argument("--job-id", help="Slurm allocation ID when automatic matching is ambiguous")
     parser.add_argument("--supervisor", help="persistent tmux supervisor/session name")
     args = parser.parse_args()
-    path = args.campaign / "campaign.json" if args.campaign.is_dir() else args.campaign
+    path = (
+        CampaignArtifactLayout(args.campaign).manifest if args.campaign.is_dir() else args.campaign
+    )
     try:
         print(render(path.resolve(), args.job_id, args.supervisor))
     except (OSError, ValueError, json.JSONDecodeError) as exc:

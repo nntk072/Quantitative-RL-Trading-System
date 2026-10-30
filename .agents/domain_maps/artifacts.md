@@ -8,8 +8,9 @@ artifacts.
 
 ## Boundary
 
-- Public contracts: `artifacts/contracts.py` (`ArtifactRef`, `ArtifactStore`).
-- Storage adapter: `artifacts/storage.py` (`FileSystemArtifactStore`).
+- Public contracts: `artifacts/contracts.py` (`ArtifactRef`, manifest contracts).
+- Identity and lookup: `artifacts/identity.py` and `artifacts/layout.py`.
+- Lifecycle promotion: `artifacts/promotion.py`.
 - Atomic byte/text/JSON writes: `artifacts/atomic.py`.
 - Depends only on the standard library. Producers may depend on `artifacts/`.
 - Must not infer scientific meaning from directory names or import workflow packages.
@@ -17,26 +18,31 @@ artifacts.
 ## Invariants and Tests
 
 - Logical keys and content digests are independent of physical layout.
-- Reads verify the declared digest; writes are atomic.
-- Focused tests: `tests/test_artifact_store_contract.py`, `tests/test_artifacts.py`.
+- Manifest validation binds the recorded identity to the source revision and run.
+- Writes are atomic; promotion requires explicit parent and revision identity.
+- Focused tests: `tests/test_artifacts/test_artifact_lifecycle.py`, `tests/test_artifacts/test_artifact_promotion.py`.
 
 ## Change Map
 
 | Task | Axis | Start file | Contract and test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add artifact storage backend | storage adapter | `artifacts/storage.py` | `ArtifactStore`; `tests/test_artifact_store_contract.py` | backend plus contract tests | producer-owned schemas and artifact meaning |
+| Change artifact identity or layout | identity contract | `artifacts/identity.py` | manifest identity; `tests/test_artifacts/test_artifact_lifecycle.py` | identity/layout plus artifact tests | producer-owned schemas and artifact meaning |
+| Change artifact promotion | lifecycle | `artifacts/promotion.py` | parent/source revision checks; `tests/test_artifacts/test_artifact_promotion.py` | promotion lifecycle plus tests | artifact bytes and producer semantics |
 
 ## Axis of Change
 
 - **Axis:** artifact identity, storage layout, and retention mechanics.
 - **Owner:** `artifacts/` owns opaque references and persistence mechanics; producer domains own schemas and meaning.
-- **Stable boundary:** `ArtifactRef` and `ArtifactStore`.
-- **Expected edit radius:** one storage or lifecycle adapter plus its contract test.
+- **Stable boundary:** artifact references, manifests, and atomic persistence functions.
+- **Expected edit radius:** one identity or lifecycle module plus its contract test.
 - **Must not depend on:** training, evaluation, model, trading, or campaign semantics.
 
 ## Verified Source Paths
 
 - `artifacts/contracts.py`
-- `artifacts/storage.py`
+- `artifacts/identity.py`
+- `artifacts/layout.py`
+- `artifacts/promotion.py`
 - `artifacts/atomic.py`
-- `tests/test_artifact_store_contract.py`
+- `tests/test_artifacts/test_artifact_lifecycle.py`
+- `tests/test_artifacts/test_artifact_promotion.py`

@@ -279,7 +279,7 @@ def test_build_agent_box_uses_clamped_policy() -> None:
 
 
 def test_build_agent_discrete_keeps_categorical_ent_coef() -> None:
-    from training.artifacts.manifests import _action_schema_manifest
+    from training.artifacts.manifests import action_schema_manifest
 
     env = make_env(continuous=False)
     model = build_agent(env, _ppo_cfg(), arch="tcn", algo="ppo")
@@ -288,7 +288,7 @@ def test_build_agent_discrete_keeps_categorical_ent_coef() -> None:
     assert getattr(model.policy, "log_std", None) is None
     assert env.action_schema.to_dict() == schema.to_dict()
     assert getattr(model, "_action_schema") == schema.to_dict()
-    assert _action_schema_manifest(env) == schema.to_dict()
+    assert action_schema_manifest(env) == schema.to_dict()
 
 
 def test_build_agent_width_11_multi_tp_sl_tp_simplex() -> None:

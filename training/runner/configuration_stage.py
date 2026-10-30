@@ -11,9 +11,7 @@ from training.runner.seed import _setup_rngs
 from training.setup.callbacks import (
     _build_lagrangian_callback,
 )
-from training.setup.models import (
-    _validate_q5_resume_state,
-)
+from training.setup.model_state import _validate_q5_resume_state
 
 from .stages import TrainingConfigurationStage
 

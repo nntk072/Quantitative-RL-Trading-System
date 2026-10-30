@@ -6,22 +6,17 @@ metrics so both entrypoints stay in sync without circular imports.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, cast
 
-import yaml
 from omegaconf import DictConfig, OmegaConf
 
+from configuration import load_config_overlay, merge_config_overlay
 from configuration.paths import repository_root
+from training.configuration.strategy_overlays import merge_strategy_config
 from training.configuration.variant_risk_policy import load_variant_ftmo_config
 
 _PROJECT_ROOT = repository_root(__file__)
-_STRATEGY_CONFIGS = {
-    "po3_ifvg": _PROJECT_ROOT / "config" / "2_po3_ifvg.yaml",
-    "distribution": _PROJECT_ROOT / "config" / "3_distribution.yaml",
-}
 _PD_CONTEXT_CONFIG = _PROJECT_ROOT / "config" / "features" / "pd_context.yaml"
-_EXPERIMENTS_CONFIG = _PROJECT_ROOT / "config" / "experiments.yaml"
 
 _LADDER_FLAGS: tuple[str, ...] = (
     "entry_state_machine",
@@ -35,32 +30,6 @@ _LADDER_FLAGS: tuple[str, ...] = (
     "candidate_max_age_bars",
     "peak_trailing_dd_limit",
 )
-
-
-def load_variant_config(
-    variant_name: str,
-    experiments_path: str | Path | None = None,
-) -> dict[str, Any]:
-    """Load a single variant dict from experiments.yaml.
-
-    Args:
-        variant_name: Name of the variant to look up.
-        experiments_path: Path to experiments YAML (default: config/experiments.yaml).
-
-    Returns:
-        The variant dict.
-
-    Raises:
-        SystemExit: If the variant is not found.
-    """
-    path = Path(experiments_path) if experiments_path else _EXPERIMENTS_CONFIG
-    raw = yaml.safe_load(path.read_text())
-    if not isinstance(raw, dict):
-        raise ValueError(f"expected mapping in {path}")
-    for variant in raw.get("variants", []):
-        if str(variant.get("name")) == variant_name:
-            return dict(variant)
-    raise SystemExit(f"unknown variant: {variant_name}")
 
 
 def merge_variant_cfg(
@@ -79,11 +48,9 @@ def merge_variant_cfg(
     if include_pd_context:
         pd_path = _PD_CONTEXT_CONFIG
         if pd_path.is_file():
-            cfg = cast(DictConfig, OmegaConf.merge(cfg, OmegaConf.load(pd_path)))
-    if strategy in _STRATEGY_CONFIGS:
-        strat_path = _STRATEGY_CONFIGS[strategy]
-        if strat_path.is_file():
-            cfg = cast(DictConfig, OmegaConf.merge(cfg, OmegaConf.load(strat_path)))
+            cfg = merge_config_overlay(cfg, load_config_overlay(pd_path))
+    if strategy != "baseline":
+        cfg = merge_strategy_config(cfg, strategy)
     for key in _LADDER_FLAGS:
         if variant is not None and key in variant:
             cfg.env[key] = variant[key]
@@ -95,7 +62,7 @@ def merge_variant_cfg(
         cfg.strategy.name = "baseline"
     if variant is not None and variant.get("name"):
         ftmo = load_variant_ftmo_config(str(variant["name"]))
-        cfg = cast(DictConfig, OmegaConf.merge(cfg, {"ftmo": ftmo}))
+        cfg = merge_config_overlay(cfg, {"ftmo": ftmo})
     return cfg
 
 

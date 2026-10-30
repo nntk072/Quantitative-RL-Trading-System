@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 
 from features.context.entry_ideas import entry_idea_context
-from trading.execution.broker import Position
+from trading.execution import Position
+from trading.orders import dynamic_tp, filter_sl_candidates, source_timeframe
 
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase
@@ -59,7 +60,6 @@ class EntryRuntimeMixin(RuntimeMixinBase):
     ) -> dict[str, Any]:
         """Action coordinates and context for one strategy open."""
         from market_data.transforms.sessions import get_session
-        from trading.orders.entries import reference_timeframe
 
         target = placed.tp_price
         stop_px = placed.sl_price
@@ -115,12 +115,12 @@ class EntryRuntimeMixin(RuntimeMixinBase):
             )
         return {
             **self._decision_action,
-            "sl_timeframe": reference_timeframe(str(placed.sl_ref)),
+            "sl_timeframe": source_timeframe(str(placed.sl_ref)),
             "sl_index": int(placed.sl_index),
             "tp_timeframe": (
                 ""
                 if str(placed.tp_ref).lower() == "ema_21"
-                else reference_timeframe(str(placed.tp_ref))
+                else source_timeframe(str(placed.tp_ref))
             ),
             "tp_index": float("nan") if int(placed.tp_index) < 0 else int(placed.tp_index),
             "stop_distance": stop_distance,
@@ -205,8 +205,6 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         candidates: list[tuple[str, float]],
         min_dist: float,
     ) -> list[tuple[str, float]]:
-        from trading.orders.entries import filter_sl_candidates
-
         return filter_sl_candidates(
             direction=direction,
             entry_price=entry_price,
@@ -238,8 +236,6 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         feat_row: FeatureRow | pd.Series | None = None,
         max_tp_distance: float | None = None,
     ) -> float | None:
-        from trading.orders.entries import dynamic_tp
-
         del feat_row
         tp, rejected = dynamic_tp(
             direction=direction,

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from trading.execution.broker import Broker
-from trading.execution.costs import CostModel
-from trading.policy.config import TradingPolicyConfig
-from trading.risk.guardrails import FTMOGuardrails
+from trading.execution import Broker, CostModel
+from trading.policy import TradingPolicyConfig
+from trading.risk import FTMOGuardrails
 
 from .mixin_base import RuntimeMixinBase
 from .position_constants import _SL_MODE_RANK, _TP_MODE_RANK

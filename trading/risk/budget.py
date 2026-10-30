@@ -13,6 +13,11 @@ class RiskBudgetDecision:
     execution_reserve_usd: float
 
 
+def risk_budget_from_equity(equity: float, risk_fraction: float) -> float:
+    """Resolve a non-negative dollar risk request from equity and a fraction."""
+    return max(0.0, float(equity) * float(risk_fraction))
+
+
 def approve_dynamic_risk(
     *,
     equity: float,
@@ -22,9 +27,9 @@ def approve_dynamic_risk(
     account_capacity: float,
     execution_reserve_usd: float,
 ) -> RiskBudgetDecision:
-    requested = max(0.0, float(equity) * float(risk_frac))
+    requested = risk_budget_from_equity(equity, risk_frac)
     policy_cap = min(
-        max(0.0, float(max_agent_risk_frac) * float(equity)),
+        risk_budget_from_equity(equity, max_agent_risk_frac),
         max(0.0, float(daily_capacity)),
         max(0.0, float(account_capacity)),
     )

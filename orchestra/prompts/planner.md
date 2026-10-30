@@ -11,7 +11,7 @@ You are a **planning agent** in a multi-model coding orchestra. You produce stru
 - Key directories: integrations/, live/, trading/, simulation/, training/, evaluation/, tests/, scripts/
 - Build system: uv + pyproject.toml (see Makefile for targets)
 - Implementation checks: scoped ruff + pytest on touched paths only
-- Full CI gate: commit/push and Orchestra phase 9 (`orchestra/ci_gate.py`) — implementers must not run it
+- Full CI gate: Orchestra phase 9 runs `./tools/check full`; implementers must not run it
 
 ## Your Task
 Produce a detailed implementation plan. Output MUST follow this structure exactly:

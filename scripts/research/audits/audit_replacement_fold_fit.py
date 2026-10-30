@@ -14,7 +14,7 @@ import sys
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -38,6 +38,7 @@ from trading.strategies import (  # noqa: E402
     DistributionStrategy,
     PO3IFVGStrategy,
 )
+from training.configuration.strategy_overlays import merge_strategy_config  # noqa: E402
 from training.configuration.variant_resolution import resolve_variant  # noqa: E402
 
 VARIANT_FILE = ROOT / "config/campaigns/variant_list.txt"
@@ -71,12 +72,7 @@ def resolve_report_path(report_path: Path, root: Path = ROOT) -> tuple[Path, Pat
 def config_for_variant(name: str) -> tuple[DictConfig, dict[str, Any]]:
     resolved = resolve_variant(name)
     cfg: DictConfig = load_config(config_path=ROOT / str(resolved["base_config"]))
-    strategy_path = {
-        "po3_ifvg": ROOT / "config/2_po3_ifvg.yaml",
-        "distribution": ROOT / "config/3_distribution.yaml",
-    }.get(str(resolved["strategy"]))
-    if strategy_path is not None:
-        cfg = cast(DictConfig, OmegaConf.merge(cfg, OmegaConf.load(strategy_path)))
+    cfg = merge_strategy_config(cfg, str(resolved["strategy"]))
     return apply_overrides(cfg, list(resolved["overrides"])), resolved
 
 
@@ -137,7 +133,7 @@ def main(report_path: Path = OUT) -> None:
         raise RuntimeError(f"expected five purged folds, got {len(folds)}")
 
     source_paths = [
-        ROOT / "features/pipeline/builder.py",
+        ROOT / "features/pipeline/feature_matrix_builder.py",
         ROOT / "features/pipeline/normalization.py",
         ROOT / "features/context/session_levels.py",
         ROOT / "market_data/splits/walkforward.py",

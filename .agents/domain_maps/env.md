@@ -29,19 +29,25 @@
 | `simulation/environment/tick_quote_runtime.py` | Tick exit lookup and randomized quote resolution |
 | `simulation/environment/fill_quote_runtime.py` | Stop, target, and bar quote construction |
 | `simulation/environment/trade_accounting_runtime.py` | Exit provenance and realized PnL/R bookkeeping |
+| `simulation/environment/entry_execution_runtime.py` | Entry quote resolution, opposite-position close, and entry orchestration |
+| `simulation/environment/entry_order_runtime.py` | Strategy and structural entry-level construction |
+| `simulation/environment/risk_runtime.py` | Account guardrails, sizing, reserve, and entry risk-capacity approval |
+| `simulation/environment/position_open_runtime.py` | Initialize selected thesis, protective levels, and position state |
+| `simulation/environment/trade_entry_record_runtime.py` | Persist entry fill and setup evidence into the trade ledger |
+| `simulation/environment/episode_runtime.py` | Episode reset, market progression, and transition mechanics |
 | `simulation/environment/ema_exit_runtime.py` | EMA-based protective exit decisions |
 | `simulation/environment/action_diagnostics.py` | Action coordinate telemetry |
 | `simulation/environment/entry_diagnostics.py` | Entry rejection and funnel contracts |
 | `simulation/environment/timebase.py` | Bar spacing and broker-clock semantics |
 | `simulation/environment/mixin_base.py` | Typing support for composed environment services |
 | `simulation/environment/position_constants.py` | Position mode ordering and price tolerance |
-| `simulation/environment/factory.py` | Builds environments and resolves shared risk, action, cost, and execution kwargs |
+| `simulation/environment/trading_environment_factory.py` | Builds environments and resolves shared risk, action, cost, and execution kwargs |
 | `decisioning/observation_state.py` | Stable account width and entry-state observation coordinates |
 | `simulation/environment/rewards.py` | Differential Sharpe Ratio (DSR) reward |
 | `simulation/environment/sweep_reward.py` | Sweep confirmation + CompositeReward |
 | `simulation/environment/po3_reward.py` | PO3 strategy alignment reward |
 | `simulation/environment/distribution_reward.py` | Distribution strategy alignment reward |
-| `trading/strategies/base.py` | TradingStrategy base class |
+| `trading/strategies/strategy_contract.py` | TradingStrategy contract and feature-column matching |
 | `trading/strategies/baseline.py` | Baseline (no-op) strategy |
 | `trading/strategies/po3_ifvg.py` | PO3 + IFVG strategy |
 | `trading/strategies/distribution.py` | Distribution strategy |
@@ -57,40 +63,40 @@
 | `CompositeReward` | `simulation/environment/sweep_reward.py` | Weighted composite of rewards |
 | `PO3Reward` | `simulation/environment/po3_reward.py` | PO3 alignment reward (entry transitions only) |
 | `DistributionReward` | `simulation/environment/distribution_reward.py` | Distribution alignment reward |
-| `TradingStrategy` | `trading/strategies/base.py` | Strategy semantics base class |
+| `TradingStrategy` | `trading/strategies/strategy_contract.py` | Strategy semantics contract |
 | `BaselineStrategy` | `trading/strategies/baseline.py` | No-op baseline (Idea 3) |
 | `PO3IFVGStrategy` | `trading/strategies/po3_ifvg.py` | PO3 + IFVG entry logic |
 | `DistributionStrategy` | `trading/strategies/distribution.py` | Distribution entry logic |
 
 ## Direct Dependencies
 
-- `simulation/backtest/engine.py` for event-driven replay
+- `simulation.backtest` for event-driven replay
 - `trading/` for broker execution, account state, risk, orders, and strategies
-- `features/pipeline/builder.py` (feature matrix, `MTF_RAW_SUFFIXES`)
+- `features/pipeline/feature_matrix_builder.py` (feature matrix, `MTF_RAW_SUFFIXES`)
 - `market_data/transforms/sessions.py` (`ny_session_mask`)
 - `features/context/reachability.py` (causal available-target distance used by environment entry checks)
 
 ## Consumers (Callers)
 
 - `training/runner/training.py` (creates env, trains model)
-- `evaluation/rollout/model.py` (evaluates model through env)
-- `evaluation/rollout/runner.py` (runs episodes)
+- `evaluation/rollout/trained_policy_rollout.py` (evaluates model through env)
+- `evaluation/rollout/episode_rollout.py` (runs episodes)
 
 ## Tests
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_envs/test_trading_env_decomposition.py` | Env structure |
-| `tests/test_envs/test_trading_env_golden_traces.py` | Golden trace regression |
-| `tests/test_envs/test_account_normalization.py` | Account state normalization |
-| `tests/test_envs/test_baseline_regression.py` | Overlay invariant (baseline unchanged) |
-| `tests/test_envs/test_continuous_actions.py` | Continuous action space |
-| `tests/test_envs/test_ny_steps_eod.py` | NY session + EOD logic |
-| `tests/test_envs/test_strategy_env.py` | Strategy-mode env wiring |
-| `tests/test_envs/test_sweep_reward.py` | Sweep reward |
-| `tests/test_envs/test_po3_reward.py` | PO3 reward |
-| `tests/test_envs/test_distribution_reward.py` | Distribution reward |
-| `tests/test_reward.py` | DSR reward |
+| `tests/test_simulation/test_environment/test_trading_env_decomposition.py` | Env structure |
+| `tests/test_simulation/test_environment/test_trading_env_golden_traces.py` | Golden trace regression |
+| `tests/test_simulation/test_environment/test_account_normalization.py` | Account state normalization |
+| `tests/test_simulation/test_environment/test_baseline_regression.py` | Overlay invariant (baseline unchanged) |
+| `tests/test_simulation/test_environment/test_continuous_actions.py` | Continuous action space |
+| `tests/test_simulation/test_environment/test_ny_steps_eod.py` | NY session + EOD logic |
+| `tests/test_simulation/test_environment/test_strategy_env.py` | Strategy-mode env wiring |
+| `tests/test_simulation/test_environment/test_sweep_reward.py` | Sweep reward |
+| `tests/test_simulation/test_environment/test_po3_reward.py` | PO3 reward |
+| `tests/test_simulation/test_environment/test_distribution_reward.py` | Distribution reward |
+| `tests/test_simulation/test_reward.py` | DSR reward |
 
 ## Do NOT Read For Env Tasks
 
@@ -105,8 +111,8 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Change a state transition | simulation service | `simulation/environment/step_runtime.py` | action/observation contracts; `tests/test_envs/test_sl_tp_fill.py` | one step or execution service plus golden checks | model family and learner workflow |
-| Change observation layout | schema evolution | `decisioning/observations.py` | versioned observation schema; `tests/test_envs/test_observation_schema.py` | schema and compatibility boundary | market-data source and report metrics |
+| Change a state transition | simulation service | `simulation/environment/step_runtime.py` | action/observation contracts; `tests/test_simulation/test_environment/test_sl_tp_fill.py` | one step or execution service plus golden checks | model family and learner workflow |
+| Change observation layout | schema evolution | `decisioning/observations.py` | versioned observation schema; `tests/test_simulation/test_environment/test_observation_schema.py` | schema and compatibility boundary | market-data source and report metrics |
 
 ## Axis of Change
 
@@ -140,6 +146,6 @@
 - `simulation/environment/timebase.py`
 - `simulation/environment/mixin_base.py`
 - `simulation/environment/position_constants.py`
-- `simulation/environment/factory.py`
+- `simulation/environment/trading_environment_factory.py`
 - `decisioning/observation_state.py`
-- `tests/test_envs/test_observation_schema.py`
+- `tests/test_simulation/test_environment/test_observation_schema.py`

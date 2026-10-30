@@ -11,6 +11,7 @@ import sys
 import zipfile
 from typing import Any
 
+from artifacts.layout import CampaignArtifactLayout
 from experiments.campaigns.constants import ROOT
 from experiments.campaigns.source_snapshot import sha256_file, verify_campaign_source_snapshot
 from experiments.campaigns.state_store import read_manifest
@@ -24,7 +25,7 @@ def latest_resumable_checkpoint(
     max_steps: int | None = None,
 ) -> pathlib.Path | None:
     """Return the newest intact PPO checkpoint from a verified interrupted attempt."""
-    attempt_out = campaign_out / "runs" / "attempts" / key / f"attempt{previous_attempt}"
+    attempt_out = CampaignArtifactLayout(campaign_out).attempt(key, previous_attempt)
     try:
         provenance = json.loads(
             (attempt_out / "attempt_provenance.json").read_text(encoding="utf-8")
@@ -87,7 +88,8 @@ def validate_initial_checkpoints(
         if not parent_dir.is_absolute():
             parent_dir = map_path.parent / parent_dir
         parent_dir = parent_dir.resolve()
-        parent_manifest_path = parent_dir / "campaign.json"
+        parent_artifacts = CampaignArtifactLayout(parent_dir)
+        parent_manifest_path = parent_artifacts.manifest
         try:
             parent_manifest = read_manifest(parent_manifest_path)
         except (OSError, ValueError) as exc:
@@ -117,7 +119,7 @@ def validate_initial_checkpoints(
         latest_attempt = int(parent_job.get("attempts", 0))
         if attempt < 1 or attempt > latest_attempt:
             raise ValueError(f"source attempt is outside recorded campaign attempts for {key}")
-        attempt_dir = parent_dir / "runs" / "attempts" / key / f"attempt{attempt}"
+        attempt_dir = parent_artifacts.attempt(key, attempt)
         provenance_path = attempt_dir / "attempt_provenance.json"
         if not provenance_path.is_file():
             raise ValueError(f"source attempt provenance is missing for {key}")
@@ -203,11 +205,12 @@ def build_initial_checkpoint_map(
     records: dict[str, dict[str, Any]] = {}
     for source_dir_raw in source_campaign_dirs:
         source_dir = source_dir_raw.resolve()
-        manifest = read_manifest(source_dir / "campaign.json")
+        source_artifacts = CampaignArtifactLayout(source_dir)
+        manifest = read_manifest(source_artifacts.manifest)
         snapshot = manifest.get("source_snapshot")
         if not isinstance(snapshot, dict) or not isinstance(snapshot.get("path"), str):
             raise ValueError(f"source campaign snapshot is missing: {source_dir}")
-        snapshot_path = (source_dir / snapshot["path"]).resolve()
+        snapshot_path = source_artifacts.recovery_checkpoint(snapshot["path"])
         if snapshot_path.parent != source_dir:
             raise ValueError(f"source snapshot path escapes campaign: {source_dir}")
         valid, reason = verify_campaign_source_snapshot(snapshot_path, snapshot)
@@ -249,14 +252,7 @@ def build_initial_checkpoint_map(
             match = re.fullmatch(r"ppo_ckpt_(\d+)_steps\.zip", checkpoint.name)
             if match is None:
                 continue
-            provenance_path = (
-                source_dir
-                / "runs"
-                / "attempts"
-                / key
-                / f"attempt{attempt}"
-                / "attempt_provenance.json"
-            )
+            provenance_path = source_artifacts.attempt(key, attempt) / "attempt_provenance.json"
             candidate = {
                 "key": key,
                 "source_campaign_dir": str(source_dir),
@@ -292,7 +288,7 @@ def archive_initial_checkpoints(
     """Copy validated bootstrap checkpoints into the successor campaign."""
     archived: dict[str, pathlib.Path] = {}
     for key, checkpoint in checkpoints.items():
-        destination = campaign_out / "bootstrap_checkpoints" / f"{key}.zip"
+        destination = CampaignArtifactLayout(campaign_out).bootstrap_checkpoint(key)
         destination.parent.mkdir(parents=True, exist_ok=True)
         expected_sha = str(checkpoint["checkpoint_sha256"])
         if destination.is_file():

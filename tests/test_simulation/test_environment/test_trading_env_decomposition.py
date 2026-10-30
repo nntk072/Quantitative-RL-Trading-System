@@ -1,0 +1,258 @@
+"""Characterization tests for TradingEnv._decode_action decomposition.
+
+Verifies that the extracted _decode_action() method produces identical
+results to the original inline action decoding logic.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from simulation.environment.env import TradingEnv
+from trading.strategies.feature_row_contract import FeatureRow
+
+
+def _make_simple_env(
+    episodic: bool = True,
+    *,
+    strategy_actions: bool = False,
+    strategy=None,
+) -> TradingEnv:
+    """Create a minimal TradingEnv for action decoding tests."""
+    n = 100
+    idx = pd.date_range("2025-01-06 16:30", periods=n, freq="1min", tz="Etc/GMT-3")
+    close = 20000.0 + np.cumsum(np.random.default_rng(0).normal(0, 2, n))
+    bars = pd.DataFrame(
+        {
+            "open": close - 0.5,
+            "high": close + 1.0,
+            "low": close - 1.0,
+            "close": close,
+            "tickvol": 50,
+            "volume": 2000,
+            "vol": 0,
+            "spread": 0.6,
+            "gap_flag": False,
+            "session_id": 0,
+        },
+        index=idx,
+    )
+    bars.index.name = "datetime"
+    features = pd.DataFrame(
+        {
+            "london_high": 20500.0,
+            "london_low": 19500.0,
+            "asian_high": 20300.0,
+            "asian_low": 19700.0,
+            "volume_spike": 1.0,
+            "last_swing_high": close + 5,
+            "last_swing_low": close - 5,
+        },
+        index=idx,
+    )
+    return TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=10,
+        episodic=episodic,
+        strategy_actions=strategy_actions,
+        strategy=strategy,
+        allow_agent_sl_mode=False,
+    )
+
+
+class TestDecodeActionDiscrete:
+    """Tests for discrete action decoding (default mode)."""
+
+    def test_hold_action(self) -> None:
+        """Action 0 = hold."""
+        env = _make_simple_env()
+        da, rf, rr, tp = env._decode_action(0)
+        assert da == 0
+        assert rf == env.risk_frac_range[0]
+        assert rr == env.rr_ratio_range[0]
+
+    def test_long_action_maps_to_direction_1(self) -> None:
+        """Actions 1-9 = enter long."""
+        env = _make_simple_env()
+        for action in [1, 5, 9]:
+            da, _, _, _ = env._decode_action(action)
+            assert da == 1
+
+    def test_short_action_maps_to_direction_neg1(self) -> None:
+        """Actions 10-18 = enter short."""
+        env = _make_simple_env()
+        for action in [10, 14, 18]:
+            da, _, _, _ = env._decode_action(action)
+            assert da == -1
+
+    def test_exit_action_maps_to_hold(self) -> None:
+        """Action 19 = exit (mapped to hold in decoding)."""
+        env = _make_simple_env()
+        da, _, _, _ = env._decode_action(19)
+        assert da == 0
+
+    def test_risk_variant_mapping(self) -> None:
+        """Actions 1-9 map to 3 risk levels × 3 rr levels."""
+        env = _make_simple_env()
+        r_lo, r_hi = env.risk_frac_range
+        rr_lo, rr_hi = env.rr_ratio_range
+        expected_risk = [r_lo, (r_lo + r_hi) / 2, r_hi]
+        expected_rr = [rr_lo, (rr_lo + rr_hi) / 2, rr_hi]
+        # Action 1: risk_variant=0, rr_variant=0
+        da, rf, rr, _ = env._decode_action(1)
+        assert da == 1
+        assert rf == pytest.approx(expected_risk[0])
+        assert rr == pytest.approx(expected_rr[0])
+        # Action 5: risk_variant=1, rr_variant=1
+        da, rf, rr, _ = env._decode_action(5)
+        assert da == 1
+        assert rf == pytest.approx(expected_risk[1])
+        assert rr == pytest.approx(expected_rr[1])
+        # Action 9: risk_variant=2, rr_variant=2
+        da, rf, rr, _ = env._decode_action(9)
+        assert da == 1
+        assert rf == pytest.approx(expected_risk[2])
+        assert rr == pytest.approx(expected_rr[2])
+
+
+def test_matched_entry_level_ties_use_stable_lexical_order() -> None:
+    env = _make_simple_env()
+    tied_time = pd.Timestamp("2025-01-06 17:00", tz="Etc/GMT-3")
+    env._level_crosses = {
+        (1, "london_low"): tied_time,
+        (1, "asian_low"): tied_time,
+        (1, "london_high"): tied_time,
+        (1, "asian_high"): tied_time,
+        (2, "new_york_low"): tied_time,
+    }
+
+    assert env._matched_entry_level(1, -1) == ("asian_low", tied_time)
+    assert env._matched_entry_level(1, 1) == ("asian_high", tied_time)
+    assert env._matched_entry_level(3, -1) == (None, None)
+
+
+def test_matched_entry_level_still_prefers_newer_crossing_time() -> None:
+    env = _make_simple_env()
+    earlier = pd.Timestamp("2025-01-06 17:00", tz="Etc/GMT-3")
+    later = pd.Timestamp("2025-01-06 17:01", tz="Etc/GMT-3")
+    env._level_crosses = {(1, "asian_low"): later, (1, "london_low"): earlier}
+
+    assert env._matched_entry_level(1, -1) == ("asian_low", later)
+
+
+class TestDecodeActionContinuous:
+    """Tests for continuous action decoding (SAC mode)."""
+
+    def _make_continuous_env(self) -> TradingEnv:
+        env = _make_simple_env()
+        env.continuous_actions = True
+        return env
+
+    def test_positive_action_is_long(self) -> None:
+        env = self._make_continuous_env()
+        da, rf, _, _ = env._decode_action(np.array([0.5]))
+        assert da == 1
+        assert rf > 0
+
+    def test_negative_action_is_short(self) -> None:
+        env = self._make_continuous_env()
+        da, rf, _, _ = env._decode_action(np.array([-0.5]))
+        assert da == -1
+        assert rf > 0
+
+    def test_zero_action_is_hold(self) -> None:
+        env = self._make_continuous_env()
+        da, rf, _, _ = env._decode_action(np.array([0.0]))
+        assert da == 0
+        assert rf == 0.0
+
+
+class TestDecodeActionStrategy:
+    """Tests for trader-like strategy (5-D Box [-1,1]^5) action decoding."""
+
+    def _make_strategy_env(self, *, ctx: int = 1) -> TradingEnv:
+        from trading.strategies.strategy_contract import TradingStrategy
+
+        class _CtxStrategy(TradingStrategy):
+            name = "ctx_test"
+            required_features = ()
+            raw_columns = ()
+
+            def __init__(self, direction: int) -> None:
+                self._direction = direction
+
+            def validate_entry(self, *, direction: int, row: pd.Series) -> bool:
+                return True
+
+            def sl_reference(self, *, direction: int, row: FeatureRow | pd.Series) -> float | None:
+                return None
+
+            def target_candidates(self, *, direction: int, row: pd.Series) -> dict[str, float]:
+                return {}
+
+            def context_direction(self, row: pd.Series) -> int:
+                return self._direction
+
+        env = _make_simple_env(strategy_actions=True, strategy=_CtxStrategy(ctx))
+        env.rr_ratio_range = (1.5, 5.0)
+        env.risk_frac_range = (0.005, 0.01)
+        return env
+
+    def test_intensity_without_context_is_hold(self) -> None:
+        env = self._make_strategy_env()
+        da, _, _, _ = env._decode_action(np.array([0.9, 0.5, 0.5, 0.5, 0.5]))
+        assert da == 0
+
+    def test_zero_action_maps_to_intensity_half_and_opens(self) -> None:
+        """PPO deterministic mean ~0 → affine intensity 0.5 → enter."""
+        env = self._make_strategy_env(ctx=1)
+        row = pd.Series({"context_trade_direction": 1.0, "htf_day_bias": 1.0})
+        da, _, _, _ = env._decode_action(np.zeros(5, dtype=np.float32), row)
+        assert da == 1
+
+    def test_intensity_with_long_context_opens_long(self) -> None:
+        env = self._make_strategy_env(ctx=1)
+        row = pd.Series({"context_trade_direction": 1.0, "htf_day_bias": 1.0})
+        # a=0.9 → u=0.95 intensity
+        da, _, _, _ = env._decode_action(np.array([0.9, 0.5, 0.5, 0.5, 0.5]), row)
+        assert da == 1
+
+    def test_weak_intensity_is_hold(self) -> None:
+        env = self._make_strategy_env(ctx=1)
+        row = pd.Series({"context_trade_direction": 1.0})
+        # a=-0.9 → u=0.05 < 0.1 threshold
+        env.entry_intensity_threshold = 0.1
+        da, _, _, _ = env._decode_action(np.array([-0.9, 0.5, 0.5, 0.5, 0.5]), row)
+        assert da == 0
+
+    def test_zero_threshold_opens_on_weak_intensity(self) -> None:
+        """Default threshold 0: PPO cannot park hold on dim 0."""
+        env = self._make_strategy_env(ctx=1)
+        row = pd.Series({"context_trade_direction": 1.0, "htf_day_bias": 1.0})
+        da, _, _, _ = env._decode_action(np.array([-1.0, 0.5, 0.5, 0.5, 0.5]), row)
+        assert da == 1
+        assert env.entry_intensity_threshold == pytest.approx(0.0)
+
+    def test_mild_intensity_still_opens_after_threshold_fix(self) -> None:
+        """Context long + any intensity enters when the hold band is off."""
+        env = self._make_strategy_env(ctx=1)
+        row = pd.Series({"context_trade_direction": 1.0, "htf_day_bias": 1.0})
+        # a=-0.566 → u≈0.217
+        da, _, _, _ = env._decode_action(np.array([-0.566, 0.5, 0.5, 0.5, 0.5]), row)
+        assert da == 1
+        assert env.entry_intensity_threshold == pytest.approx(0.0)
+
+    def test_rr_and_risk_mapping(self) -> None:
+        env = self._make_strategy_env(ctx=1)
+        row = pd.Series({"context_trade_direction": 1.0})
+        # a=-1 → u=0 → min risk and no extra reach; a=1 → u=1 → max risk, full reach
+        _, risk, frac, tp = env._decode_action(np.array([0.9, -1.0, -1.0, -1.0, 0.5]), row)
+        assert risk == pytest.approx(0.005)
+        assert frac == pytest.approx(0.0)
+        assert tp == "rr"
+        _, risk, frac, _ = env._decode_action(np.array([0.9, -1.0, 1.0, 1.0, 0.5]), row)
+        assert risk == pytest.approx(0.01)
+        assert frac == pytest.approx(1.0)

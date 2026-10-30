@@ -1,4 +1,4 @@
-# Aalto MS Thesis — Quantitative RL Trading System
+# Quantitative RL Trading System
 
 **Reinforcement-learning trading system** with multi-timeframe market features and
 PO3/IFVG strategy components. Configured runs can use US100 price bars, optional US500
@@ -71,8 +71,8 @@ learns position sizing, entry timing, and stop-loss/take-profit placement.
 | `features/` | Causal technical/context/PO3 feature construction and feature-cache semantics |
 | `trading/` | Broker-neutral account, policy, execution, order, position, risk, and strategy contracts |
 | `simulation/` | Gymnasium environment runtime plus event-driven backtesting |
-| `models/` | Reusable encoders, policy networks, auxiliary models, and model factories |
-| `learning/` | PPO/SAC backends, learner contracts, callbacks, and checkpoint loading |
+| `models/` | Reusable encoders, auxiliary models, and encoder registry |
+| `learning/` | PPO/SAC backends and SB3 policy adapters, learner contracts, callbacks, and checkpoint loading |
 | `decisioning/` | Versioned observation/action contracts and policy adapters |
 | `training/` | Training configuration, setup services, callbacks, runners, and training artifacts |
 | `evaluation/` | Rollout, metrics, reanalysis, reporting, provenance, and plotting |
@@ -80,7 +80,7 @@ learns position sizing, entry timing, and stop-loss/take-profit placement.
 | `live/` | Broker-neutral live/paper runtime |
 | `integrations/mt5/` | MetaTrader 5 adapters, broker domain objects, robots, and risk integration |
 | `compute/` | Slurm/Triton resource, continuation, resume, and worker-dispatch mechanics |
-| `artifacts/` | Cross-cutting artifact identity, manifests, layout, registry, atomic writes, retention, and promotion |
+| `artifacts/` | Cross-cutting artifact identity, manifests, layout, atomic writes, retention, and baseline promotion |
 | `orchestra/` | Multi-model task pipeline (triage → plan → implement → verify) |
 
 ---
@@ -105,8 +105,8 @@ The project uses **arch-matching virtualenvs** on Triton (shared NFS):
 Do not cross-activate (sourcing the wrong-arch venv gives "Exec format error").
 
 ```bash
-git clone https://github.com/nntk072/Aalto_MS_Thesis.git
-cd Aalto_MS_Thesis
+git clone git@github.com:nntk072/Quantitative-RL-Trading-System.git
+cd Quantitative-RL-Trading-System
 
 # x86_64 (local, H200, CI)
 tools/setup-venv-x86
@@ -124,7 +124,7 @@ source .venv/bin/activate
 ### One-time setup
 
 ```bash
-cd Aalto_MS_Thesis
+cd Quantitative-RL-Trading-System
 tools/setup-venv          # auto-detects arch (.venv or .venv-x86)
 source scripts/compute/slurm/activate_venv.sh
 ```
@@ -138,8 +138,8 @@ uv run thesis-data prepare
 ### Run tests
 
 ```bash
-uv run pytest tests/test_features/test_po3_state.py -q
-uv run pytest tests/test_envs/test_entry_state_machine.py -q
+.venv/bin/pytest tests/test_features/test_po3_state.py -q
+.venv/bin/pytest tests/test_simulation/test_environment/test_entry_state_machine.py -q
 ```
 
 Run the relevant test files for the change. GitHub CI and Orchestra coordinate
@@ -192,15 +192,15 @@ See [docs/operations/RUNNING_COMMANDS.md](docs/operations/RUNNING_COMMANDS.md) f
 ## Project Structure
 
 ```text
-Aalto_MS_Thesis/
+Quantitative-RL-Trading-System/
 ├── configuration/              # Config loading, merging, schemas, paths
 ├── artifacts/                  # Shared artifact lifecycle primitives
 ├── market_data/                # Bars/ticks, transforms, splits, cache identity
 ├── features/                   # Context, technical, PO3, causal pipeline
 ├── trading/                    # Account, execution, orders, policy, risk, strategies
 ├── simulation/                 # TradingEnv runtime and backtest engine
-├── models/                     # Reusable encoders, policy networks, auxiliary models
-├── learning/                   # PPO/SAC learning backends and checkpoint services
+├── models/                     # Reusable encoders, auxiliary models, encoder registry
+├── learning/                   # PPO/SAC learning backends, SB3 policies, checkpoints
 ├── decisioning/                # Observation/action contracts and policy adapters
 ├── training/                   # Training setup, callbacks, runners, artifacts
 ├── evaluation/                 # Rollout, metrics, reanalysis, reporting, plotting
@@ -228,7 +228,11 @@ Aalto_MS_Thesis/
 
 ## PO3 / FVG / IFVG Detection
 
-Located in `features/po3/config.py` — the single source of truth for all PO3 signal rules.
+PO3 rule implementations are split by responsibility under `features/po3/`:
+`fvg_detection.py` and `ifvg_detection.py` own gap detection, `trigger_rules.py`
+owns PO3 entry triggers, and `zones.py` owns FVG zone records. The old
+`config.py` path is a compatibility export only; new code should import from
+the focused modules.
 
 ### Detection Functions
 
@@ -305,7 +309,7 @@ Cross-validate the custom event-driven backtest engine against `backtrader`:
 uv run python -m simulation.backtest.cross_validation.run
 ```
 
-See `tests/test_backtest/test_engine_cross_validation.py` for unit tests.
+See `tests/test_simulation/test_backtest/test_engine_cross_validation.py` for unit tests.
 
 ---
 
@@ -332,10 +336,13 @@ plot_fvg_signals_interactive(bars, signals, out_path="chart.html")
 ## Testing
 
 ```bash
-uv run pytest tests/test_features/test_po3_state.py -q
-uv run pytest tests/test_envs/test_entry_state_machine.py -q
-uv run pytest tests/test_integration/test_strategy_integration.py -q
+.venv/bin/pytest tests/test_features/test_po3_state.py -q
+.venv/bin/pytest tests/test_simulation/test_environment/test_entry_state_machine.py -q
+.venv/bin/pytest tests/integration/test_strategy_integration.py -q
 ```
+
+Use the active architecture-matched virtual environment for test commands
+(`.venv` on ARM/GH200 and `.venv-x86` on x86_64).
 
 Keep local runs scoped to the affected behavior. GitHub CI and Orchestra run
 the broader verification gates; agent commit checks follow the scoped-test rule in
@@ -345,14 +352,12 @@ the broader verification gates; agent commit checks follow the scoped-test rule 
 
 ## CI / Code Quality
 
-Standard merge bar (mirrors `.github/workflows/ci.yml` and `orchestra/ci_gate.py`):
+Standard merge bar: GitHub Actions runs named `tools/check` gates in parallel;
+Orchestra's serial equivalent is:
 
 | Check | Command |
 |-------|---------|
-| Formatting | `uv run ruff format --check .` |
-| Linting | `uv run ruff check .` |
-| Type checking | `uv run mypy .` |
-| Tests | Broader verification gates in CI; scoped relevant test paths locally |
+| All required checks | `./tools/check full` |
 
 ---
 

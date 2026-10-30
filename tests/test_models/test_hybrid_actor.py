@@ -397,6 +397,7 @@ def test_hybrid_ppo_learns_and_roundtrips_policy(tmp_path) -> None:
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA or ROCm accelerator")
+@pytest.mark.gpu
 def test_hybrid_ppo_accelerator_update_and_roundtrip(tmp_path) -> None:
     coordinates = build_action_schema(
         has_direction=True,

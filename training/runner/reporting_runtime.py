@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from training.artifacts.aggregation import _aggregate_seed_results
-from training.artifacts.manifests import _build_training_log
+from artifacts.atomic import write_text_atomic
+from training.artifacts import aggregate_seed_results, build_training_log
 from training.callbacks.activity import classify_zero_trade_cause
 
 
@@ -31,7 +31,7 @@ def finalize_training_run(
     )
 
     if is_multi_seed:
-        training_log = _aggregate_seed_results(
+        training_log = aggregate_seed_results(
             seed_results=seed_results,
             seed=args.seed,
             mvp=args.mvp,
@@ -49,7 +49,7 @@ def finalize_training_run(
         )
     else:
         single = seed_results[0]
-        training_log = _build_training_log(
+        training_log = build_training_log(
             seed=single["seed"],
             mvp=args.mvp,
             algo=args.algo,
@@ -237,7 +237,7 @@ def finalize_training_run(
     training_log["feature_schema_sha256"] = hashlib.sha256(
         json.dumps(training_log["feature_columns"], separators=(",", ":")).encode()
     ).hexdigest()
-    (run_dir / "training_log.json").write_text(json.dumps(training_log, indent=2))
+    write_text_atomic(run_dir / "training_log.json", json.dumps(training_log, indent=2))
     if hard_survival_failure_seeds:
         raise SystemExit(f"TRAIN_SURVIVAL_FAILED: seeds={hard_survival_failure_seeds}")
     if inactive_seeds:

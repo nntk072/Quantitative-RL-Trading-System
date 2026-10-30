@@ -6,7 +6,7 @@ import argparse
 import logging
 
 from configuration import load_config
-from market_data.loading.pipeline import run_pipeline
+from market_data.loading import run_pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)

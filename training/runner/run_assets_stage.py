@@ -7,20 +7,18 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from omegaconf import OmegaConf
 
-from evaluation.reporting.export import build_run_dir
+from artifacts.layout import ArtifactLayout
 from market_data.loading.ticks import ticks_covering
+from training.artifacts import attach_run_log, write_run_config_snapshot
 from training.setup.callbacks import (
     _dashboard_block,
-)
-from training.setup.data import (
-    _publish_obs_memmap,
 )
 from training.setup.environments import (
     _training_episodic,
     strategy_from_cfg,
 )
+from training.setup.observation_memmap import publish_observation_memmap
 
 from .stages import (
     TrainingConfigurationStage,
@@ -61,12 +59,13 @@ def _prepare_run_assets(
         run_name = f"rl_train_seeds_{args.arch}"
     else:
         run_name = f"rl_train_seed{args.seed}_{args.arch}"
-    run_dir = build_run_dir(args.out, run_name)
+    run_dir = ArtifactLayout(Path(args.out)).timestamped_run(run_name)
+    attach_run_log(run_dir)
     model_dir = run_dir / "model"
     model_dir.mkdir(parents=True, exist_ok=True)
     # Store the resolved config before any model work so interrupted trials
     # still retain the exact invocation settings beside partial artifacts.
-    (run_dir / "config.yaml").write_text(OmegaConf.to_yaml(cfg), encoding="utf-8")
+    write_run_config_snapshot(run_dir, cfg)
     data_source = str(cfg.env.get("data_source", "frames"))
     obs_mmap: str | None
     bundle_path: Path | None = None
@@ -148,7 +147,9 @@ def _prepare_run_assets(
         dashboard_features = train_feat.iloc[:dashboard_count].copy()
         log.info("Built shared environment bundle: %s", bundle_path)
     elif data_source == "frames":
-        obs_mmap = _publish_obs_memmap(train_feat, train_bars, cfg, run_dir / "obs_features.npy")
+        obs_mmap = publish_observation_memmap(
+            train_feat, train_bars, cfg, run_dir / "obs_features.npy"
+        )
     else:
         raise ValueError(f"env.data_source must be 'frames' or 'bundle', got {data_source!r}")
     runtime_train_bars = train_bars

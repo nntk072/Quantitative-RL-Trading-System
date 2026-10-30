@@ -142,7 +142,7 @@ Avoid changing the currently running or historical campaign's configuration whil
 
 ### Verified follow-up (2026-10-11)
 
-- Existing tests/test_plots_export.py suite: 27 passed in 57.27 seconds under .venv-x86 Python 3.12, pytest 9.1.1 on login5.
+- Existing tests/integration/test_plots_export.py suite: 27 passed in 57.27 seconds under .venv-x86 Python 3.12, pytest 9.1.1 on login5.
 - Ruff check: passed for touched Python modules; initial format check requested reformat of export.py and test_plots_export.py, and both were formatted successfully.
 - Python compilation, Bash syntax and git diff whitespace check passed.
 - No Slurm allocations were listed for nguyenl37 during this verification. No remote GPU benchmarks or real-data evaluation parity tests were run. The originally measured 81-minute export remains the baseline and speedup remains unmeasured.

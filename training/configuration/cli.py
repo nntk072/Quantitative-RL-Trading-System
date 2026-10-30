@@ -4,21 +4,17 @@ from __future__ import annotations
 
 import argparse
 import logging
-from typing import cast
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from configuration import apply_overrides, load_config
-from configuration.paths import repository_root
-from training.configuration.variants import load_variant_config, merge_variant_cfg
+from training.configuration.strategy_overlays import (
+    merge_strategy_config,
+    strategy_overlay_path,
+)
+from training.configuration.variant_resolution import resolve_variant
 
 log = logging.getLogger(__name__)
-
-_CONFIG_DIR = repository_root(__file__) / "config"
-_STRATEGY_CONFIGS = {
-    "po3_ifvg": _CONFIG_DIR / "2_po3_ifvg.yaml",
-    "distribution": _CONFIG_DIR / "3_distribution.yaml",
-}
 
 
 def parse_train_args() -> argparse.Namespace:
@@ -62,7 +58,7 @@ def parse_train_args() -> argparse.Namespace:
         action="store_true",
         help="Explicitly resume an unversioned account-state-v1 checkpoint",
     )
-    parser.add_argument("--algo", choices=["ppo", "sac"], default="ppo", help="RL algorithm")
+    parser.add_argument("--algo", choices=["ppo", "sac"], default=None, help="RL algorithm")
     parser.add_argument(
         "--arch",
         choices=[
@@ -98,6 +94,7 @@ def parse_train_args() -> argparse.Namespace:
     parser.add_argument(
         "--use-vae",
         action="store_true",
+        default=None,
         help="Condition the policy on a frozen VAE narrative latent (requires --vae-path)",
     )
     parser.add_argument(
@@ -130,42 +127,57 @@ def parse_train_args() -> argparse.Namespace:
         default=None,
         help="Timesteps per WF fold (default: reuse main timesteps)",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.variant:
+        resolved = resolve_variant(args.variant, vae_path=args.vae_path)
+        args.resolved_variant = resolved
+        args.algo = args.algo or resolved["algo"]
+        args.arch = args.arch or resolved["arch"]
+        args.use_vae = resolved["use_vae"] if args.use_vae is None else args.use_vae
+        args.strategy = resolved["strategy"]
+    else:
+        args.algo = args.algo or "ppo"
+        args.use_vae = bool(args.use_vae)
+    return args
 
 
 def load_merged_config(args: argparse.Namespace) -> DictConfig:
-    """Load base config and merge strategy variant if requested.
+    """Load base config and resolve one experiment variant if requested.
 
-    CLI ``overrides`` apply *after* the strategy overlay merge: the Idea 1
-    variant pins ``env.reward_mode: pnl``, which used to clobber an explicit
-    ``env.reward_mode=rr`` override and silently ran every RR run as PnL.
+    CLI ``overrides`` apply *after* the declarative variant resolution so an
+    explicit command-line override remains the final value.
     """
-    cfg = load_config(None, config_path=args.config)
-    # Merge the strategy variant config (Idea 1/2) on top of the base config.
-    # Baseline (Idea 3) leaves cfg untouched.
-    if args.strategy in _STRATEGY_CONFIGS:
-        variant_path = _STRATEGY_CONFIGS[args.strategy]
-        cfg = cast(DictConfig, OmegaConf.merge(cfg, OmegaConf.load(variant_path)))
-        log.info("Merged strategy config: %s", variant_path)
-    elif args.strategy != "baseline":
-        raise ValueError(f"unknown strategy: {args.strategy}")
-
-    # Merge variant flags from experiments.yaml (--variant).
-    if getattr(args, "variant", None):
-        variant_dict = load_variant_config(args.variant)
-        variant_strategy = str(variant_dict.get("strategy", args.strategy))
-        include_pd = bool(variant_dict.get("include_pd_context", False))
-        cfg = merge_variant_cfg(
-            cfg,
-            strategy=variant_strategy,
-            include_pd_context=include_pd,
-            variant=variant_dict,
+    resolved = getattr(args, "resolved_variant", None)
+    if getattr(args, "variant", None) and resolved is None:
+        resolved = resolve_variant(args.variant, vae_path=getattr(args, "vae_path", None))
+        args.algo = getattr(args, "algo", None) or resolved["algo"]
+        args.arch = getattr(args, "arch", None) or resolved["arch"]
+        args.use_vae = (
+            resolved["use_vae"] if getattr(args, "use_vae", None) is None else args.use_vae
         )
+        args.strategy = resolved["strategy"]
+    config_path = args.config
+    if config_path is None and resolved is not None:
+        config_path = resolved["base_config"]
+    cfg = load_config(None, config_path=config_path)
+    selected_strategy = str(resolved["strategy"] if resolved is not None else args.strategy)
+
+    # Merge the selected strategy overlay exactly once. Baseline (Idea 3)
+    # leaves cfg untouched.
+    variant_path = strategy_overlay_path(selected_strategy)
+    cfg = merge_strategy_config(cfg, selected_strategy)
+    if variant_path is not None:
+        log.info("Merged strategy config: %s", variant_path)
+
+    # Use the same fully explicit override set as campaign launchers. This
+    # keeps reward, architecture-related flags, risk policy, and variant
+    # config_overrides from acquiring a second runtime interpretation.
+    if resolved is not None:
+        cfg = apply_overrides(cfg, list(resolved["overrides"]))
         log.info(
-            "Merged variant: %s (strategy=%s include_pd=%s)",
+            "Resolved variant: %s (strategy=%s)",
             args.variant,
-            variant_strategy,
-            include_pd,
+            selected_strategy,
         )
 
     quality_variant = getattr(args, "quality_variant", None)

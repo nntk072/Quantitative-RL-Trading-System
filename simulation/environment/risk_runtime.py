@@ -5,11 +5,16 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from trading.execution.broker import Position
-from trading.policy.legacy import uses_fixed_risk_budget
-from trading.risk.budget import approve_dynamic_risk
-from trading.risk.execution_reserve import modeled_execution_reserve_usd
-from trading.risk.sizing import compute_lots
+from trading.execution import Position
+from trading.policy import uses_fixed_risk_budget
+from trading.risk import (
+    approve_dynamic_risk,
+    compute_lots,
+    compute_lots_with_execution_reserve,
+    modeled_execution_reserve_usd,
+    risk_budget_from_equity,
+    stop_loss_risk_usd,
+)
 
 from .mixin_base import RuntimeMixinBase
 
@@ -198,7 +203,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         if not is_eod:
             return bool(self._peak_eod_dd_locked)
 
-        drawdown_usd = max(0.0, float(self.account.peak_eod_equity) - float(self.account.equity))
+        drawdown_usd = self.account.peak_eod_drawdown_usd
         if limit > 0.0 and drawdown_usd >= limit:
             self._peak_eod_dd_locked = True
             self._peak_dd_fired = True
@@ -229,10 +234,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                     "fill_time": fill_time if fill_time is not None else bar_time,
                     "equity": self.account.equity,
                     "peak_eod_equity": self.account.peak_eod_equity,
-                    "peak_eod_drawdown_usd": max(
-                        0.0,
-                        float(self.account.peak_eod_equity) - float(self.account.equity),
-                    ),
+                    "peak_eod_drawdown_usd": self.account.peak_eod_drawdown_usd,
                     **execution_meta,
                 }
                 self._stamp_exit(record, fill_price)
@@ -293,7 +295,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             self._last_approved_risk_usd = decision.approved_usd
             self._last_execution_reserve_usd = decision.execution_reserve_usd
             return decision.approved_usd
-        requested = max(0.0, float(self.account.equity) * float(risk_frac))
+        requested = risk_budget_from_equity(self.account.equity, risk_frac)
         self._last_requested_risk_usd = requested
         if not bool(getattr(self, "repeated_payout_policy", False)):
             self._last_approved_risk_usd = requested
@@ -377,29 +379,17 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         sl_price: float,
     ) -> float:
         """Size stop exposure so stop loss plus modeled costs fit the budget."""
-        stop_risk_per_lot = abs(float(entry_price) - float(sl_price)) * self.contract_size
-        if total_risk_budget_usd <= 0.0 or stop_risk_per_lot <= 0.0:
-            return 0.0
-        execution_reserve_per_lot = self._modeled_execution_reserve_usd(1.0)
-        all_in_risk_per_lot = stop_risk_per_lot + execution_reserve_per_lot
-        if all_in_risk_per_lot <= 0.0:
-            return 0.0
-        stop_risk_budget = total_risk_budget_usd * stop_risk_per_lot / all_in_risk_per_lot
-        lots = compute_lots(
-            self._sizing_equity(),
-            risk_frac,
-            entry_price,
-            sl_price,
+        return compute_lots_with_execution_reserve(
+            total_risk_budget_usd=total_risk_budget_usd,
+            equity=self._sizing_equity(),
+            risk_frac=risk_frac,
+            entry_price=entry_price,
+            sl_price=sl_price,
             contract_size=self.contract_size,
+            execution_reserve_per_lot=self._modeled_execution_reserve_usd(1.0),
             min_lot=self.min_lot,
             max_lot=self.max_lot,
-            max_loss_cap=None,
-            risk_usd=stop_risk_budget,
         )
-        lots_at_budget = total_risk_budget_usd / all_in_risk_per_lot
-        if lots_at_budget < self.min_lot:
-            return 0.0
-        return float(min(lots, lots_at_budget))
 
     def _actual_risk_usd(self, stop_distance: float) -> float:
         """Dollar risk the filled position really carries, in account currency.
@@ -411,7 +401,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         pos = self.position
         if pos is None or not np.isfinite(stop_distance) or stop_distance <= 0.0:
             return float("nan")
-        return float(pos.size) * float(stop_distance) * float(self.contract_size)
+        return stop_loss_risk_usd(stop_distance, pos.size, self.contract_size)
 
     def _eod_adverse_cut_usd(self, pos: Position) -> float:
         """Dollar adverse excursion that fires the intraday max-loss guard.
@@ -430,3 +420,28 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         if planned <= 0.0:
             return configured
         return float(max(configured, float(self._eod_planned_risk_mult) * planned))
+
+    def _entry_risk_capacity_allows(
+        self,
+        entry_price: float,
+        sl_price: float | None,
+        lots: float,
+        has_levels: bool,
+    ) -> bool:
+        if has_levels and self.repeated_payout_policy:
+            assert sl_price is not None
+            approved_risk = float(self._last_approved_risk_usd)
+            modeled_risk = stop_loss_risk_usd(
+                entry_price - float(sl_price), lots, self.contract_size
+            )
+            modeled_execution = self._modeled_execution_reserve_usd(lots)
+            self._last_execution_reserve_usd = (
+                float(self.trading_policy.execution_reserve_usd) + modeled_execution
+            )
+            if lots <= 0.0 or approved_risk <= 0.0:
+                self._reject("risk_capacity")
+                return False
+            if modeled_risk + modeled_execution > approved_risk + 1e-9:
+                self._reject("risk_rounding_cap")
+                return False
+        return True

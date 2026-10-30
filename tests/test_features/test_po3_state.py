@@ -13,7 +13,7 @@ from features import build_features
 from features.po3.fvg import build_fvg_zone_features
 from features.po3.fvg_detection import FVGConfig
 from features.po3.ifvg_state import build_po3_ifvg_state
-from features.po3.state import (
+from features.po3.po3_phase_state import (
     align_ifvg_zone_timeframes,
     build_distribution_after_ifvg,
     build_ifvg_zone_features,

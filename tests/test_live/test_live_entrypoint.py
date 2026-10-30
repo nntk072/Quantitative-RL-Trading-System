@@ -73,9 +73,9 @@ def test_load_risk_overrides_reads_repo_default_yaml() -> None:
     block = cfg.live_risk_overrides
     assert risk["risk_per_symbol"] == float(block.risk_per_symbol)
     assert risk["max_total_risk"] == float(block.max_total_risk)
-    assert risk["default_lot_size"] == float(block.default_lot_size)
     assert risk["stop_loss_pips"] == float(block.stop_loss_pips)
     assert risk["interval_minutes"] == float(block.interval_minutes)
+    assert "default_lot_size" not in risk
 
 
 def test_load_risk_overrides_missing_block_falls_back_with_defaults() -> None:
@@ -99,6 +99,14 @@ def test_load_risk_overrides_partial_block_warns_and_fills(monkeypatch: pytest.M
     assert risk["risk_per_symbol"] == 0.005
     assert risk["max_total_risk"] == live_trading_rl._LIVE_RISK_DEFAULTS["max_total_risk"]
     assert len(warnings) == len(live_trading_rl._LIVE_RISK_DEFAULTS) - 1
+
+
+@pytest.mark.parametrize("invalid", [0.0, -0.1, float("nan"), float("inf"), True, "bad"])
+def test_load_risk_overrides_rejects_invalid_values(invalid: object) -> None:
+    cfg = OmegaConf.create({"live_risk_overrides": {"risk_per_symbol": invalid}})
+
+    with pytest.raises(ValueError, match="risk_per_symbol must be a finite positive number"):
+        live_trading_rl.load_risk_overrides(cfg)
 
 
 # --- resolve_run_config: train/live parity ---------------------------------

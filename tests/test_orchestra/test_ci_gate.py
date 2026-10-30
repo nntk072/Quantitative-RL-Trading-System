@@ -1,33 +1,65 @@
-"""Tests for orchestra CI gate definitions."""
+"""Tests for Orchestra's adapter to the shared CI dispatcher."""
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from orchestra.ci_gate import CI_CHECKS, first_failure, gate_passed
 
+ROOT = Path(__file__).resolve().parents[2]
+HOSTED_GATES = {
+    "deps",
+    "security-deps",
+    "security-secrets",
+    "quality",
+    "architecture",
+    "graph-quality",
+    "contracts",
+    "unit",
+    "build",
+    "integration",
+    "parity",
+    "training-smoke",
+}
 
-def test_ci_checks_match_github_ci_jobs() -> None:
-    names = [c.name for c in CI_CHECKS]
-    assert names == ["format", "lint", "typecheck", "tests"]
-    assert CI_CHECKS[-1].argv == ["uv", "run", "pytest", "tests/", "-v"]
-    assert "-m" not in CI_CHECKS[-1].argv
-    assert "slow" not in CI_CHECKS[-1].argv
+
+def test_orchestra_delegates_to_shared_full_dispatcher() -> None:
+    assert [(check.name, check.argv) for check in CI_CHECKS] == [
+        ("full", ["./tools/check", "full"])
+    ]
+    check_script = (ROOT / "tools/check").read_text()
+    full_case = check_script.split("  full)", maxsplit=1)[1].split(";;", maxsplit=1)[0]
+    assert all(f"run_{gate.replace('-', '_')}" in full_case for gate in HOSTED_GATES)
 
 
-def test_render_ci_verification_includes_all_commands() -> None:
+def test_hosted_workflow_uses_named_shared_gates() -> None:
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    invocations = {
+        line.strip().removeprefix("- run: ./tools/check ")
+        for line in workflow.splitlines()
+        if "run: ./tools/check " in line
+    }
+    assert invocations == HOSTED_GATES
+    assert "ci-success:" in workflow
+
+
+def test_render_ci_verification_uses_one_canonical_command() -> None:
     from orchestra.prompts import render_ci_verification
 
     block = render_ci_verification("/tmp/ws")
     assert "/tmp/ws" in block
-    assert "uv run mypy ." in block
-    assert "uv run pytest tests/ -v" in block
+    assert "./tools/check full" in block
+    assert "uv run mypy ." not in block
+    assert "uv run pytest tests/ -v" not in block
     assert "Do not run the full CI gate during implementation" in block
     assert "commit" in block.lower()
-    assert '-m "not slow"' not in block.split("Do not")[0]
 
 
-def test_gate_passed_requires_all_checks() -> None:
-    ok = {c.name: {"success": True, "output": ""} for c in CI_CHECKS}
+def test_gate_passed_requires_success_and_rejects_skipped_checks() -> None:
+    ok = {check.name: {"success": True, "output": ""} for check in CI_CHECKS}
     assert gate_passed(ok) is True
-    ok["lint"] = {"success": False, "output": "error"}
+    ok["full"] = {"success": False, "output": "error"}
     assert gate_passed(ok) is False
-    assert first_failure(ok) == "lint"
+    assert first_failure(ok) == "full"
+    assert gate_passed({"full": {"success": True, "skipped": True}}) is False
+    assert first_failure({"full": {"success": True, "skipped": True}}) == "full"

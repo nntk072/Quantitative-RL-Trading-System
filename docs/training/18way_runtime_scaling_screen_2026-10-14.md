@@ -88,7 +88,7 @@ so the 20M campaign must remain unlaunched.
   · [`JSON with source hashes and per-worker results`](../../outputs/gpu_campaigns/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/reports/runtime_scaling_screen_20261014.json)
 - Calculation source and regression tests:
   [`analyze_campaign_runtime_scaling.py`](../../scripts/matrix/analyze_campaign_runtime_scaling.py)
-  · [`test_campaign_runtime_scaling.py`](../../tests/test_campaign_runtime_scaling.py)
+  · [`test_campaign_runtime_scaling.py`](../../tests/test_experiments/test_campaign_runtime_scaling.py)
 - Frozen 20M specification:
   [`campaign YAML`](../../config/campaigns/18_variant_seed42_20m_exploratory_selection_acknowledged_gpu_balanced_20261014.yaml)
 - Proposed six-hour allocation:

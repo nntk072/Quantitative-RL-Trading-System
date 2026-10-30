@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from orchestra.agent_runner import run_job
-from orchestra.models import CODEX_EXEC_EXTRA_ARGS, Model, load_models
+from orchestra.model_provider_registry import CODEX_EXEC_EXTRA_ARGS, Model, load_models
 from orchestra.sessions import SessionManager
 
 

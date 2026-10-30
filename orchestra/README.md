@@ -2,7 +2,8 @@
 
 Orchestra coordinates multiple CLI-based coding agents through a structured
 workflow: triage → plan → implement → verify. Implementers run scoped tests only.
-Phase 9 (verification) runs the same CI gate as GitHub Actions (`orchestra/ci_gate.py`).
+Phase 9 delegates to the canonical `./tools/check full` dispatcher. GitHub
+Actions invokes the same named gates independently and aggregates their status.
 
 ## Quick start
 
@@ -37,30 +38,31 @@ source package.
 
 ## CI verification gate
 
-Defined in `orchestra/ci_gate.py` (`CI_CHECKS`). Mirrors
-`.github/workflows/ci.yml` jobs `code-formatting` + `ut-venv`:
+The Orchestra adapter in `orchestra/ci_gate.py` has one responsibility: invoke
+the shared full dispatcher. The names and commands for hosted and local checks
+are defined in `tools/check` and `.github/workflows/ci.yml`:
 
 ```bash
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy .
-uv run pytest tests/ -v
+./tools/check full
 ```
 
-Orchestra phase 9 (verification) and the implementer prompt run this gate.
-Nightly workflows (`pytest -m slow`) are **not** part of the merge bar.
+Orchestra phase 9 runs the full dispatcher. Implementers use scoped checks;
+agent commit checks use full-tree Ruff and Mypy with scoped pytest. Nightly
+workflows are not part of the normal merge bar.
 
 ## Package layout
 
 ```
 orchestra/
-  cli.py           CLI entry point (orchestra doctor / run)
-  pipeline.py      Phase orchestrator
-  ci_gate.py       CI_CHECKS definition
-  router.py        Model selection and routing
-  health.py        Tier-0/Tier-1 health probes
-  agent_runner.py  Spawn and capture agent CLI sessions
-  prompts/         Phase prompt templates
+  cli.py                     CLI entry point (orchestra doctor / run)
+  task_orchestration.py      Pipeline phase execution
+  task_state_store.py        Persisted task and phase state
+  model_provider_registry.py Model/provider contracts
+  ci_gate.py                 Adapter to ./tools/check full
+  router.py                  Model selection and routing
+  health.py                  Tier-0/Tier-1 health probes
+  agent_runner.py            Spawn and capture agent CLI sessions
+  prompts/                   Phase prompt templates
   docs/
     probe-matrix.md  CLI probe evidence and tier gates
 ```

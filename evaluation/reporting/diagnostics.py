@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from artifacts.atomic import write_text_atomic
 from evaluation.metrics.bootstrap import metrics_with_ci
 from evaluation.metrics.calibration import calibration_report, plot_reliability_diagram
 from evaluation.metrics.trade_pairs import pair_trades
@@ -51,7 +52,7 @@ def write_bootstrap_cis(
         }
         for name, ci in cis.items()
     }
-    (split_dir / "bootstrap_ci.json").write_text(json.dumps(payload, indent=2))
+    write_text_atomic(split_dir / "bootstrap_ci.json", json.dumps(payload, indent=2))
     return payload
 
 
@@ -101,7 +102,7 @@ def write_calibration_artifacts(
         "summary": report.summary(),
     }
     split_dir = Path(split_dir)
-    (split_dir / "calibration.json").write_text(json.dumps(payload, indent=2))
+    write_text_atomic(split_dir / "calibration.json", json.dumps(payload, indent=2))
 
     if save_plots:
         fig, ax = plt.subplots(figsize=(5, 5))

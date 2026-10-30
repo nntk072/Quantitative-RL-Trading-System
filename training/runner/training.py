@@ -22,7 +22,7 @@ import logging
 from training.runner.reporting_runtime import finalize_training_run
 from training.runner.seed_runtime import SeedRunContext, run_seed_training
 from training.runner.setup_runtime import prepare_training_run
-from training.runner.walkforward_runtime import run_walk_forward_validation
+from training.runner.walk_forward_validation import run_walk_forward_validation
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)

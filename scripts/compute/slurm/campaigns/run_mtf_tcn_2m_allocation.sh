@@ -150,9 +150,9 @@ else
   exit "$status"
 fi
 "$VIRTUAL_ENV/bin/python" -m pytest \
-  tests/test_envs/test_mtf_windows.py tests/test_envs/test_bundle_eval.py \
+  tests/test_simulation/test_environment/test_mtf_windows.py tests/test_simulation/test_environment/test_bundle_eval.py \
   tests/test_models/test_encoders.py tests/test_features/test_build_pipeline.py \
-  tests/test_backtest/test_entry_levels.py -q
+  tests/test_simulation/test_backtest/test_entry_levels.py -q
 "$VIRTUAL_ENV/bin/python" "$REPO/experiments/campaigns/execution.py" \
   --campaign-spec "$REPO/$SPEC" \
   --workers "$WORKERS" \

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from trading.execution.broker import Position
+from trading.execution import Position
 
 
 def reorder_remaining_targets(

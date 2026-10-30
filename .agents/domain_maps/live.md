@@ -20,6 +20,7 @@
 | `integrations/mt5/domain/strategies/*.py` | Rule-based MT5 strategies |
 | `integrations/mt5/domain/data_sources/mt5_data.py` | MT5 data source |
 | `integrations/mt5/logging_config.py` | Logging configuration |
+| `integrations/mt5/risk_configuration.py` | Validated live-risk settings shared by the RL MT5 entry point and risk manager |
 
 ## Key Symbols
 
@@ -35,13 +36,16 @@
 - `decisioning.DecisionProvider`; `live_trading_rl.py` wraps the loaded SB3
   model at the composition root before constructing the runtime strategy.
 - The direct model argument on `RLStrategyAdapter` remains for compatibility.
-- `features/pipeline/builder.py` (feature rebuild for live observations)
+- `features/pipeline/feature_matrix_builder.py` (feature rebuild for live observations)
 - `trading/` signal semantics and `decisioning/observations.py` (the live bridge has no simulation-runtime dependency)
 
 ## Consumers (Callers)
 
 - `live_trading_rl.py` (live RL trading entry point)
-- `live_trading.py` (live rule-based trading entry point)
+- `demo_trading.py` is the compatibility entrypoint for
+  `integrations/mt5/cli/single_symbol_demo.py`.
+- `live_trading.py` is the compatibility entrypoint for
+  `integrations/mt5/cli/multi_symbol_trading.py`.
 
 ## Tests
 
@@ -51,6 +55,7 @@
 | `tests/test_live/test_rl_bridge.py` | RLStrategyAdapter bridge |
 | `tests/test_live/test_live_entrypoint.py` | Live entry point |
 | `tests/test_live/test_rule_based_strategies.py` | Rule-based strategies |
+| `tests/test_live/test_mt5_cli_applications.py` | MT5 command adapters, config resolution, and `--once` lifecycle |
 
 ## Do NOT Read For Live Tasks
 
@@ -69,6 +74,9 @@
    environment configuration
 4. **PAPER_TRADING defaults to true** — no orders placed unless explicitly disabled
 5. **Model loading** — must load with same encoder architecture used in training
+6. **Risk sizing fails closed** — invalid or unavailable sizing yields no order; never substitute a fixed lot size.
+7. **Executable close quotes** — close a long at bid and close a short at ask.
+8. **Optional vendor dependency** — importing `integrations.mt5` does not load MetaTrader5; requesting a concrete adapter does.
 ## Change Map
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
@@ -92,3 +100,4 @@
 - `decisioning/observations.py`
 - `integrations/mt5/adapters/trader.py`
 - `integrations/mt5/domain/trader.py`
+- `integrations/mt5/risk_configuration.py`

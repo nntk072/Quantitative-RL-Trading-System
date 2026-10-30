@@ -13,7 +13,7 @@ import pandas as pd
 
 from evaluation.metrics.trades import TradeChartMetrics, compute_trade_metrics
 from evaluation.plotting.chart_indicators import slice_overlays
-from evaluation.plotting.order_chart import OrderLevels, order_levels
+from evaluation.plotting.order_chart_data import OrderLevels, order_levels
 from evaluation.plotting.overlay_events import OverlayEvents, confirmed_pivots
 
 

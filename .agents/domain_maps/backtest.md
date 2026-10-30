@@ -4,22 +4,27 @@
 
 | File | Role |
 |------|------|
-| `simulation/backtest/engine.py` | Event-driven backtest engine |
+| `simulation/backtest/event_driven_backtest.py` | Event-driven backtest engine |
+| `simulation/backtest/runtime.py` | Backtest settings and mutable run-state contracts |
+| `simulation/backtest/accounting.py` | Fill identity, cost allocation, and close recording |
+| `simulation/backtest/policy_actions.py` | Execute policy-selected backtest actions |
+| `simulation/backtest/protective_events.py` | Protective exits, account guardrails, session close, terminal liquidation |
 | `trading/execution/broker.py` | Broker: position open/close, fill logic |
-| `trading/account/state.py` | Account state tracking |
+| `trading/account/account_state.py` | Account balance, equity, loss, and session-state tracking |
 | `trading/execution/costs.py` | Cost model (spread, slippage, commission) |
 | `trading/risk/guardrails.py` | FTMO guardrails (daily loss, max drawdown) |
 | `trading/risk/sizing.py` | Risk calculations (SL/TP, position sizing) |
-| `simulation/backtest/cross_validation/` | Engine cross-validation against backtrader |
+| `simulation/backtest/cross_validation/backtrader_runner.py` | Named Backtrader cross-validation command |
+| `simulation/backtest/cross_validation/main.py` | Tested legacy CLI forwarding adapter |
 
 ## Key Symbols
 
 | Symbol | File | Purpose |
 |--------|------|---------|
-| `run_backtest()` | `simulation/backtest/engine.py` | Main backtest entry point |
+| `run_backtest()` | `simulation/backtest/__init__.py` | Public event-driven backtest entry point |
 | `Broker` | `trading/execution/broker.py` | Position management, fill execution |
 | `Position` | `trading/execution/broker.py` | Position data container |
-| `AccountState` | `trading/account/state.py` | Account equity, balance, margin |
+| `AccountState` | `trading/account/account_state.py` | Account equity, balance, margin |
 | `CostModel` | `trading/execution/costs.py` | Spread, slippage, commission model |
 | `FTMOGuardrails` | `trading/risk/guardrails.py` | FTMO rule enforcement |
 | `compute_sl_tp_from_structure()` | `trading/risk/sizing.py` | Structure-aware SL/TP |
@@ -33,16 +38,16 @@
 
 - `simulation/environment/env.py` (uses engine internally)
 - `training/runner/backtest.py` (CLI entry point)
-- `evaluation/rollout/runner.py` (evaluation loop)
+- `evaluation/rollout/episode_rollout.py` (evaluation loop)
 
 ## Tests
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_backtest/test_engine_cross_validation.py` | Engine + cross-validation |
-| `tests/test_cost_model.py` | Cost model calculations |
-| `tests/test_guardrails.py` | FTMO guardrails |
-| `tests/test_risk.py` | Risk calculations |
+| `tests/test_simulation/test_backtest/test_engine_cross_validation.py` | Engine + cross-validation |
+| `tests/test_trading/test_cost_model.py` | Cost model calculations |
+| `tests/test_trading/test_guardrails.py` | FTMO guardrails |
+| `tests/test_trading/test_risk.py` | Risk calculations |
 
 ## Do NOT Read For Backtest Tasks
 
@@ -66,7 +71,7 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Change replay or fill behavior | execution policy | `simulation/backtest/engine.py` | trading fill semantics; `tests/test_backtest/` | replay service and parity tests | metric rendering and learner construction |
+| Change replay or fill behavior | execution policy | `simulation/backtest/event_driven_backtest.py` | trading fill semantics; `tests/test_simulation/test_backtest/` | replay service and parity tests | metric rendering and learner construction |
 
 ## Axis of Change
 
@@ -78,6 +83,6 @@
 
 ## Verified Source Paths
 
-- `simulation/backtest/engine.py`
+- `simulation/backtest/event_driven_backtest.py`
 - `trading/execution/broker.py`
-- `tests/test_backtest/test_engine_cross_validation.py`
+- `tests/test_simulation/test_backtest/test_engine_cross_validation.py`

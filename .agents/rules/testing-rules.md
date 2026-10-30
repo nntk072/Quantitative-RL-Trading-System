@@ -10,7 +10,7 @@ Applies to this repo's pytest setup (`tests/`).
 
 Test types required for features:
 1. **Unit tests** — individual functions, reward shaping, indicators.
-2. **Integration tests** — env loop, agent + model interaction (see `tests/test_integration/`).
+2. **Integration tests** — env loop, agent + model interaction (see `tests/integration/`).
 
 ## Test-driven development (mandatory for new features)
 

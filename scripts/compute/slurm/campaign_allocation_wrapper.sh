@@ -86,10 +86,10 @@ fi
 dispatch_retry=1
 while true; do
   if python -m pytest \
-    "$REPO/tests/test_triton_campaign_recovery.py" \
-    "$REPO/tests/test_triton_prebuild_cache.py" \
-    "$REPO/tests/test_triton_campaign_worker_dispatch.py" \
-    "$REPO/tests/test_thesis_campaign_evidence_index.py" \
+    "$REPO/tests/test_experiments/test_triton_campaign_recovery.py" \
+    "$REPO/tests/test_experiments/test_triton_prebuild_cache.py" \
+    "$REPO/tests/test_experiments/test_triton_campaign_worker_dispatch.py" \
+    "$REPO/tests/test_thesis/test_thesis_campaign_evidence_index.py" \
     -q; then
     break
   fi

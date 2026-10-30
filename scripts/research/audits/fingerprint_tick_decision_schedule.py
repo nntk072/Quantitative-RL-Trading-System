@@ -29,7 +29,7 @@ ROOT = repository_root(__file__)
 
 from configuration import load_config  # noqa: E402
 from market_data.splits.definitions import get_split_config, make_train_mask  # noqa: E402
-from training.setup.data import _tick_execution_split_schedule  # noqa: E402
+from training.setup.tick_execution_preflight import tick_execution_split_schedule  # noqa: E402
 
 
 def sha256_file(path: Path) -> str:
@@ -114,7 +114,7 @@ def main() -> int:
         if cache_sha256 != prior_symbol_report["m1_cache"]["sha256"]:
             raise ValueError(f"{symbol} M1 cache hash changed after coverage audit")
         session_labels = frame["session"]
-        schedule = _tick_execution_split_schedule(
+        schedule = tick_execution_split_schedule(
             index,
             make_train_mask(index, train_end),
             test_start,

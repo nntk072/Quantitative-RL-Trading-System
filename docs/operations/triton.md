@@ -18,7 +18,7 @@ durable per-attempt logging and resume criteria. The
 records experimental bundle/frames memory probes; short-slice memory samples
 are not production PPO peak-memory or scientific parity evidence.
 Connect to `code.triton.aalto.fi` and enter
-`/scratch/work/nguyenl37/Aalto_MS_Thesis`. Check `git status --short --branch`
+`/scratch/work/nguyenl37/Quantitative-RL-Trading-System`. Check `git status --short --branch`
 and `git rev-parse HEAD` before running experiments. Do not assume SSH shell
 architecture matches allocated GPU node architecture.
 

@@ -1,5 +1,5 @@
-"""Training-facing terminal and diagnostic rendering helpers."""
+"""Training diagnostics and report generation."""
 
-from evaluation.reporting.box_table import kv_lines, kv_widths, render_box_table
+from .training_curves import save_dashboard_plots, save_training_plots
 
-__all__ = ["kv_lines", "kv_widths", "render_box_table"]
+__all__ = ["save_dashboard_plots", "save_training_plots"]

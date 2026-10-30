@@ -22,10 +22,10 @@ import pandas as pd
 
 from configuration import load_config  # noqa: E402
 from evaluation import build_run_report, run_episode, sweep_delay_breakdown  # noqa: E402
-from evaluation.rollout.model import make_action_fn  # noqa: E402
+from evaluation.rollout.trained_policy_rollout import make_action_fn  # noqa: E402
 from market_data.splits.definitions import get_split_config, split_train_test  # noqa: E402
 from simulation.environment.env import TradingEnv  # noqa: E402
-from trading.execution.costs import CostModel  # noqa: E402
+from trading.execution import CostModel  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:

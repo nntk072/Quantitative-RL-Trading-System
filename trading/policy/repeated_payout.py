@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from trading.account.accounting import payout_amount, payout_due
+from trading.account import payout_amount, payout_due
 
 
 @dataclass(frozen=True, slots=True)

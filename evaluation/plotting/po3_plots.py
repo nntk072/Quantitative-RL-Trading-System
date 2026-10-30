@@ -1,7 +1,7 @@
 """PO3 / IFVG signal charts.
 
 Renders candlesticks with HTF FVG / LTF IFVG zone rectangles and entry markers,
-so the signal columns produced by :mod:`features.po3.config` can be
+so the signal columns produced by :mod:`features.po3.trigger_rules` can be
 visually inspected next to price.
 
 Uses the non-interactive Agg backend so it works headless in CI.
@@ -206,7 +206,7 @@ def plot_fvg_signals(
     """Render PO3/IFVG signals on a candlestick chart.
 
     Zone geometry uses native HTF/LTF detection via
-    :func:`~features.po3.config.build_fvg_zones_for_plot` (plot-only;
+    :func:`~features.po3.zones.build_fvg_zones_for_plot` (plot-only;
     agent causality unchanged).  Pass lookback in ``bars`` and set ``window``
     to the NY session so pre-session formations still define box starts.
 

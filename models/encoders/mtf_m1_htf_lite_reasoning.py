@@ -8,7 +8,7 @@ import torch
 from torch import nn
 
 from models.encoders.mtf import _CausalTCN
-from models.encoders.mtf_efficiency_common import (
+from models.encoders.mtf_efficiency_components import (
     MTFReasoningOutput,
     batch_mask,
     latest_two_valid,

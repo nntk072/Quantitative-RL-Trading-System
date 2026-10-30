@@ -14,11 +14,11 @@ The package requires Python >=3.12 (`pyproject.toml`). Installation uses `uv`; d
 
 | Pipeline stage | Authoritative modules | Verification |
 | --- | --- | --- |
-| M1 ingestion / timeframe resampling | `market_data/{loader,pipeline,resample,align,split}.py` | `tests/test_data_split.py` |
+| M1 ingestion / timeframe resampling | `market_data/{loader,pipeline,resample,align,split}.py` | `tests/test_market_data/test_data_split.py` |
 | Feature computation / normalization | `features/{build,normalize,po3_config}.py` | Feature and leakage tests under `tests/` |
-| Strategy context / action interpretation | `simulation/environment/{trading_env,tp_decoders}.py` and `trading/strategies/` | `tests/test_envs/test_tp_mode.py` |
+| Strategy context / action interpretation | `simulation/environment/{trading_env,tp_decoders}.py` and `trading/strategies/` | `tests/test_simulation/test_environment/test_tp_mode.py` |
 | RL agent / policies | `models/{agent,ppo_policy,encoder}.py` | Model tests under `tests/` |
-| Reward and account limits | `simulation/environment/{reward,sweep_reward,po3_reward}.py`, `simulation/backtest/{account,guardrails}.py` | `tests/test_reward.py`; `tests/test_envs/test_sweep_reward.py` |
+| Reward and account limits | `simulation/environment/{reward,sweep_reward,po3_reward}.py`, `simulation/backtest/{account,guardrails}.py` | `tests/test_simulation/test_reward.py`; `tests/test_simulation/test_environment/test_sweep_reward.py` |
 | Train and checkpointing | `training/{train_rl,variant_resolver,callbacks}.py` | Document actual CLI options from source |
 | Evaluation / plotting | `evaluation/{rollout,metrics,reanalysis,reporting,plotting}/` | Thesis [validation protocol](../docs/thesis/validation_protocol.md) |
 

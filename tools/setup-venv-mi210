@@ -2,7 +2,9 @@
 # Create a separate locked-dependency test environment for Triton's MI210 nodes.
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${TRITON_REPO:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+UV_BIN="${THESIS_UV:-uv}"
 MI210_ENV="${TRITON_MI210_ENV:-/scratch/work/nguyenl37/.venv-mi210}"
 cd "$REPO"
 
@@ -18,25 +20,25 @@ if [[ "$rocm_version" != 6.3.* ]]; then
   exit 1
 fi
 
-if ! command -v uv >/dev/null 2>&1; then
+if ! command -v "$UV_BIN" >/dev/null 2>&1; then
   echo "ERROR: uv is required on the MI210 compute node" >&2
   exit 1
 fi
 
 export UV_PROJECT_ENVIRONMENT="$MI210_ENV"
-uv python install 3.12
+"$UV_BIN" python install 3.12
 if [[ -x "$MI210_ENV/bin/python" ]]; then
   "$MI210_ENV/bin/python" -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 elif [[ -e "$MI210_ENV" ]]; then
   echo "ERROR: $MI210_ENV exists without a Python interpreter; inspect it before replacing it" >&2
   exit 1
 else
-  uv venv --python 3.12 "$MI210_ENV"
+  "$UV_BIN" venv --python 3.12 "$MI210_ENV"
 fi
 
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/aalto-mi210-env.XXXXXX")"
 trap 'rm -rf "$tmp_dir"' EXIT
-uv export --locked --extra dev --no-emit-project --no-emit-package torch \
+"$UV_BIN" export --locked --extra dev --no-emit-project --no-emit-package torch \
   -o "$tmp_dir/locked-requirements.txt"
 
 # The repository lock selects CUDA 13.0. Retain its non-accelerator packages,
@@ -53,10 +55,10 @@ awk '
 !skip { print }
 ' "$tmp_dir/locked-requirements.txt" > "$tmp_dir/rocm-requirements.txt"
 
-uv pip sync --python "$MI210_ENV/bin/python" "$tmp_dir/rocm-requirements.txt"
-uv pip install --python "$MI210_ENV/bin/python" torch==2.7.1 \
+"$UV_BIN" pip sync --python "$MI210_ENV/bin/python" "$tmp_dir/rocm-requirements.txt"
+"$UV_BIN" pip install --python "$MI210_ENV/bin/python" torch==2.7.1 \
   --index-url https://download.pytorch.org/whl/rocm6.3
-uv pip install --python "$MI210_ENV/bin/python" -e "$REPO" --no-deps
+"$UV_BIN" pip install --python "$MI210_ENV/bin/python" -e "$REPO" --no-deps
 
 "$MI210_ENV/bin/python" - <<'PY'
 import torch

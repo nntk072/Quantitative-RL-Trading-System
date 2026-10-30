@@ -7,7 +7,10 @@ verification policy. It does not own thesis experiment or trading semantics.
 
 ## Boundary
 
-- Composition root: `orchestra/pipeline.py`.
+- Composition root: `orchestra/task_orchestration.py`.
+- Stable console command composition: `orchestra/cli.py`.
+- Lifecycle commands: `orchestra/commands/task_lifecycle.py`.
+- Inspection, reporting, and recovery commands: `orchestra/commands/status.py`.
 - Phase bodies are grouped by lifecycle stage in `orchestra/phase_*.py`.
 - Task routing and handoff live in `orchestra/` modules.
 - Infrastructure may call repository checks but production packages must not import it.
@@ -17,12 +20,13 @@ verification policy. It does not own thesis experiment or trading semantics.
 - Preserve explicit phase state, bounded retries, and captured verification results.
 - Keep orchestration metadata out of scientific artifacts unless provenance requires it.
 - Focused tests: `tests/test_orchestra/`.
+- CLI registration contract: `tests/test_orchestra/test_cli_composition.py`.
 
 ## Change Map
 
 | Task | Axis | Start file | Contract and test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add or change a pipeline phase | workflow state | `orchestra/pipeline.py` | phase/state contract; orchestra tests | one phase and routing tests | thesis training semantics |
+| Add or change a pipeline phase | workflow state | `orchestra/task_orchestration.py` | phase/state contract; orchestra tests | one phase and routing tests | thesis training semantics |
 
 ## Phase Ownership
 
@@ -45,6 +49,6 @@ verification policy. It does not own thesis experiment or trading semantics.
 
 ## Verified Source Paths
 
-- `orchestra/pipeline.py`
+- `orchestra/task_orchestration.py`
 - `orchestra/handoff.py`
 - `tests/test_orchestra/test_handoff.py`

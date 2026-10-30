@@ -4,6 +4,8 @@ from typing import Any
 import MetaTrader5 as mt5
 from loguru import logger
 
+from integrations.mt5.risk_configuration import DEFAULT_MAX_TOTAL_RISK, DEFAULT_RISK_PER_SYMBOL
+
 
 class RiskManager:
     """
@@ -12,7 +14,11 @@ class RiskManager:
     Ensures total exposure doesn't exceed risk limits.
     """
 
-    def __init__(self, risk_per_symbol: float = 0.01, max_total_risk: float = 0.02):
+    def __init__(
+        self,
+        risk_per_symbol: float = DEFAULT_RISK_PER_SYMBOL,
+        max_total_risk: float = DEFAULT_MAX_TOTAL_RISK,
+    ):
         """
         Initialize the risk manager.
 

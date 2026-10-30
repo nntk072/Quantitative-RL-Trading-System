@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from models.encoders.mtf_efficiency_common import (
+from models.encoders.mtf_efficiency_components import (
     MTFReasoningOutput,
     batch_mask,
     observation_streams,

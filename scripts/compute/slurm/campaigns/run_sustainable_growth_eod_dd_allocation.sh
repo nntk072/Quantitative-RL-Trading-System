@@ -175,8 +175,8 @@ python -m ruff format \
   evaluation/rollout/model.py \
   training/artifacts/manifests.py \
   training/artifacts/metrics.py \
-  tests/test_train/test_equity_gate.py \
-  tests/test_train/test_sustainable_growth_variant_resolution.py
+  tests/test_training/test_equity_gate.py \
+  tests/test_training/test_sustainable_growth_variant_resolution.py
 python -m ruff format --check \
   simulation/environment/env.py \
   simulation/environment/risk_runtime.py \
@@ -188,8 +188,8 @@ python -m ruff format --check \
   evaluation/rollout/model.py \
   training/artifacts/manifests.py \
   training/artifacts/metrics.py \
-  tests/test_train/test_equity_gate.py \
-  tests/test_train/test_sustainable_growth_variant_resolution.py
+  tests/test_training/test_equity_gate.py \
+  tests/test_training/test_sustainable_growth_variant_resolution.py
 python -m ruff check \
   simulation/environment/env.py \
   simulation/environment/risk_runtime.py \
@@ -201,12 +201,12 @@ python -m ruff check \
   evaluation/rollout/model.py \
   training/artifacts/manifests.py \
   training/artifacts/metrics.py \
-  tests/test_train/test_equity_gate.py \
-  tests/test_train/test_sustainable_growth_variant_resolution.py
+  tests/test_training/test_equity_gate.py \
+  tests/test_training/test_sustainable_growth_variant_resolution.py
 python -m pytest \
-  tests/test_train/test_equity_gate.py \
-  tests/test_envs/test_ny_steps_eod.py \
-  tests/test_train/test_sustainable_growth_variant_resolution.py -q \
+  tests/test_training/test_equity_gate.py \
+  tests/test_simulation/test_environment/test_ny_steps_eod.py \
+  tests/test_training/test_sustainable_growth_variant_resolution.py -q \
   2>&1 | tee "$OUT_DIR/logs/focused_validation_${JOB_ID}.log"
 
 python "$REPO/experiments/campaigns/execution.py" \

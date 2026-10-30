@@ -118,6 +118,6 @@ depend on the PPO workload; it does not establish an A3 speedup.
 
 At commit `b847b5b`, full-tree Ruff formatting and lint passed, staged full-tree
 Mypy passed with no issues in 417 source files, and
-`tests/test_bench/test_measure_ppo_throughput.py` passed (5 tests). The full test
+`tests/integration/test_measure_ppo_throughput.py` passed (5 tests). The full test
 suite had passed earlier on this branch (1,502 tests). Raw JSON and logs are
 local ignored benchmark artifacts, not versioned source data.

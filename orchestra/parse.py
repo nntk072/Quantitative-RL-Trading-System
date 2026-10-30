@@ -66,7 +66,7 @@ def static_tier_fast_path(task: str) -> str | None:
 
 def parse_tier(text: str) -> str:
     """Return triage tier from model JSON (T0..T4)."""
-    from .models import complexity_to_tier
+    from .model_provider_registry import complexity_to_tier
 
     found: str | None = None
     for obj in extract_json_objects(text):

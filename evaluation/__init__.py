@@ -19,7 +19,7 @@ from .metrics.temporal import (
     holding_time_distribution,
     sweep_delay_distribution,
 )
-from .reporting.summary import (
+from .reporting.run_summary import (
     aggregate_seeds,
     build_comparison_table,
     build_run_report,
@@ -27,8 +27,8 @@ from .reporting.summary import (
     print_report,
     save_metrics_json,
 )
-from .rollout.model import evaluate_provider
-from .rollout.runner import run_episode
+from .rollout.episode_rollout import run_episode
+from .rollout.trained_policy_rollout import evaluate_provider
 
 __all__ = [
     "WFSplit",

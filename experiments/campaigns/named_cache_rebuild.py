@@ -36,7 +36,7 @@ from features import (
     build_features,
     feature_cache_content_hash,
 )
-from market_data.loading.pipeline import run_pipeline
+from market_data.loading import run_pipeline
 from market_data.splits.definitions import get_split_config, make_train_mask
 from training.configuration.variant_resolution import resolve_variant
 
@@ -561,23 +561,10 @@ def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--plan-only", action="store_true", help="resolve paths without writing")
-    parser.add_argument("--backup-dir", type=Path)
-    parser.add_argument("--report", type=Path)
-    args = parser.parse_args()
-    if args.plan_only:
-        print(json.dumps({"status": "plan_only", "caches": plan()}, indent=2))
-        return 0
-    if args.backup_dir is None or args.report is None:
-        parser.error("--backup-dir and --report are required unless --plan-only is used")
-    report_path = (args.report if args.report.is_absolute() else ROOT / args.report).resolve()
-    backup_dir = (
-        args.backup_dir if args.backup_dir.is_absolute() else ROOT / args.backup_dir
-    ).resolve()
-    result = rebuild(backup_dir, report_path)
-    print(json.dumps(result, indent=2), flush=True)
-    return 0
+    """Compatibility entry point forwarded to the stable experiments CLI."""
+    from experiments.cli import run_named_cache_rebuild_cli
+
+    return run_named_cache_rebuild_cli(sys.argv[1:])
 
 
 if __name__ == "__main__":

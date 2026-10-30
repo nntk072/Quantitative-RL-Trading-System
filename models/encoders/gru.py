@@ -7,7 +7,7 @@ from typing import Any, cast
 import torch
 import torch.nn as nn
 
-from models.encoders.common import (
+from models.encoders.sequence_encoder_components import (
     ACCOUNT_EMB_DIM,
     AccountMLP,
     BaseFeaturesExtractor,

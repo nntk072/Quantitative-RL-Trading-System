@@ -15,6 +15,8 @@ from typing import Any
 
 import yaml
 
+from artifacts.layout import CampaignArtifactLayout
+
 
 def _read_json(path: Path) -> dict[str, Any] | None:
     try:
@@ -110,7 +112,8 @@ def _pnl_reconciliation(
 
 def _resource_profiles(campaign_dir: Path) -> list[dict[str, Any]]:
     profiles: list[dict[str, Any]] = []
-    for path in sorted((campaign_dir / "logs").glob("resources_*.csv")):
+    artifacts = CampaignArtifactLayout(campaign_dir)
+    for path in sorted(artifacts.logs.glob("resources_*.csv")):
         try:
             with path.open(newline="", encoding="utf-8") as stream:
                 reader = csv.DictReader(stream)
@@ -307,8 +310,9 @@ def _finite_metrics(value: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def build_summary(campaign_dir: Path) -> dict[str, Any]:
-    campaign = _read_json(campaign_dir / "campaign.json")
-    status = _read_json(campaign_dir / "reports" / "campaign_status.json")
+    artifacts = CampaignArtifactLayout(campaign_dir)
+    campaign = _read_json(artifacts.manifest)
+    status = _read_json(artifacts.report("campaign_status.json"))
     if campaign is None or status is None:
         raise ValueError("campaign.json and reports/campaign_status.json are required")
 
@@ -320,7 +324,7 @@ def build_summary(campaign_dir: Path) -> dict[str, Any]:
         if not run_key:
             continue
         attempt_number = int(job.get("attempts", 1))
-        attempt_dir = campaign_dir / "runs" / "attempts" / run_key / f"attempt{attempt_number}"
+        attempt_dir = artifacts.attempt(run_key, attempt_number)
         run_dir = _run_dir(attempt_dir, run_key)
         episode_candidates = (
             (run_dir / "model" / "episode_equity.csv", run_dir / "episode_equity.csv")
@@ -338,9 +342,12 @@ def build_summary(campaign_dir: Path) -> dict[str, Any]:
         test_metrics = _read_json(test_path) if run_dir else None
         gate = _read_json(gate_path) if run_dir else None
         account_currency, initial_balance = _account_config(run_dir)
-        log_path = campaign_dir / str(job.get("log", ""))
+        try:
+            log_path = artifacts.resolve_recorded_path(str(job.get("log", "")))
+        except ValueError:
+            log_path = artifacts.worker_log(run_key, attempt_number)
         if not log_path.is_file():
-            log_path = campaign_dir / "logs" / "workers" / f"{run_key}.log"
+            log_path = artifacts.logs / "workers" / f"{run_key}.log"
         job_report = {
             "run_key": run_key,
             "variant": job.get("variant"),
@@ -472,8 +479,8 @@ def build_summary(campaign_dir: Path) -> dict[str, Any]:
         "test_survived_low_activity_count": test_low_activity,
         "pnl_reconciliation_counts": pnl_reconciliation_counts,
         "training_episode_coverage_summary": episode_coverage_summary,
-        "campaign_manifest_sha256": _sha256(campaign_dir / "campaign.json"),
-        "controller_status_sha256": _sha256(campaign_dir / "reports" / "campaign_status.json"),
+        "campaign_manifest_sha256": _sha256(artifacts.manifest),
+        "controller_status_sha256": _sha256(artifacts.report("campaign_status.json")),
         "summary_script_sha256": _sha256(Path(__file__).resolve()),
         "jobs": jobs,
     }
@@ -667,7 +674,9 @@ def main() -> int:
     parser.add_argument("--out-stem", type=Path, default=None)
     args = parser.parse_args()
     campaign_dir = args.campaign_dir.resolve()
-    out_stem = args.out_stem or campaign_dir / "reports" / "campaign_results_summary"
+    out_stem = args.out_stem or CampaignArtifactLayout(campaign_dir).report(
+        "campaign_results_summary"
+    )
     summary = build_summary(campaign_dir)
     markdown_path, json_path = _write_summary_outputs(summary, out_stem)
     print(markdown_path)

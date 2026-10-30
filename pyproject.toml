@@ -34,7 +34,7 @@ dependencies = [
     "six==1.17.0",
     "ta-lib==0.6.7",
     "tenacity==9.1.2",
-    "tornado==6.5.9",
+    "tornado==6.6",
     "tqdm==4.67.1",
     "tzdata==2025.2",
     "win32-setctime==1.2.0; sys_platform == 'win32'",
@@ -98,9 +98,12 @@ filterwarnings = [
     "ignore::SyntaxWarning:backtrader.*",
 ]
 markers = [
-    "slow: torch/SB3 training tests (minutes on CPU); deselect with -m 'not slow'",
-    "unit: fast unit tests",
-    "integration: integration tests that touch data pipeline or external I/O",
+    "unit: deterministic isolated tests suitable for the normal unit gate",
+    "integration: tests crossing package or I/O boundaries with controlled fixtures",
+    "slow: tests with expensive CPU execution, scheduled separately from fast checks",
+    "gpu: tests requiring an available CUDA or ROCm accelerator",
+    "triton: tests requiring Triton, Slurm, or its filesystem environment",
+    "research: larger research or evidence-protocol checks scheduled outside normal CI",
 ]
 
 [tool.ruff]
@@ -173,7 +176,7 @@ disallow_incomplete_defs = false
 [[tool.mypy.overrides]]
 module = [
     "evaluation.plotting.plots",
-    "evaluation.plotting.common",
+    "evaluation.plotting.plot_rendering",
     "evaluation.plotting.equity",
     "evaluation.plotting.performance",
     "evaluation.plotting.comparison",
@@ -183,10 +186,10 @@ module = [
     "evaluation.plotting.chart_overlays",
     "evaluation.plotting.trade_plots",
     "evaluation.metrics.trade_diagnostics",
-    "evaluation.plotting.replot_orders",
-    "tests.test_plots_export",
-    "tests.test_training_plots",
-    "tests.test_eval.*",
+    "evaluation.reporting.order_chart_regeneration",
+    "tests.test_evaluation.test_plots_export",
+    "tests.test_training.test_training_curves",
+    "tests.test_evaluation.*",
 ]
 disallow_untyped_calls = false
 

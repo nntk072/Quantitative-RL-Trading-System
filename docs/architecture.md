@@ -48,18 +48,18 @@ their domain implementations.
 | Package | Responsibility | Common entry points |
 |---|---|---|
 | `configuration/` | Load, merge, validate, hash, and locate configuration | Configuration services |
-| `market_data/` | Load bars and ticks; clean, align, transform, split, and cache inputs | `market_data/loading/pipeline.py`, `market_data/splits/` |
-| `features/` | Build causal feature matrices and their cache identity | `features/pipeline/builder.py`, `features/pipeline/cache.py` |
+| `market_data/` | Load bars and ticks; clean, align, transform, split, and cache inputs | `market_data.loading`, `market_data.transforms`, `market_data.splits`, `market_data.cache` |
+| `features/` | Build causal feature matrices and their cache identity | `features/pipeline/feature_matrix_builder.py`, `features/pipeline/feature_cache_identity.py` |
 | `trading/` | Broker-neutral account, order, position, cost, risk, and strategy domain | `trading/execution/`, `trading/risk/`, `trading/strategies/` |
 | `simulation/` | Environment transitions, Gymnasium environment, and event-driven backtest | `simulation/contracts/`, `simulation/environment/env.py`, `simulation/backtest/` |
-| `models/` | Neural encoders, policies, model factories, and runtime helpers | `models/encoders/`, `models/factory/`, `models/runtime/` |
-| `learning/` | Learning backends, PPO/SAC setup, checkpoint loading, and learner contracts | `learning/rl/`, `learning/contracts.py` |
+| `models/` | Reusable neural encoders, encoder registry, and model runtime helpers | `models/encoders/`, `models/factory/`, `models/runtime/` |
+| `learning/` | SB3 policy adapters, PPO/SAC construction and fitting, checkpoint loading, and learner contracts | `learning/rl/`, `learning/contracts.py` |
 | `decisioning/` | Versioned observation and semantic action contracts and model adapters | `decisioning/contracts.py`, `decisioning/observations.py` |
 | `training/` | Training setup, execution, callbacks, and run reporting | `training/cli.py`, `training/runner/` |
 | `evaluation/` | Rollouts, metrics, reanalysis, provenance validation, reporting, and plots | `evaluation/cli.py`, `evaluation/rollout/`, `evaluation/reanalysis/` |
-| `experiments/` | Variant and campaign definitions, orchestration, lineage, and status | `experiments/cli.py`, `experiments/variants/`, `experiments/campaigns/` |
-| `artifacts/` | Shared artifact identity, manifests, layout, atomic storage, registry, and promotion | `artifacts/` |
-| `compute/` | Device/environment capabilities and Slurm resource, resume, and worker dispatch | `compute/cli.py`, `compute/slurm/` |
+| `experiments/` | Variant and campaign definitions, orchestration, lineage, and status | `experiments/cli.py`, `experiments/campaigns/campaign_execution.py`, `experiments/variants/` |
+| `artifacts/` | Shared artifact identity, validated manifests, layout, atomic writes, retention, and baseline promotion | `artifacts/` |
+| `compute/` | Device/environment capabilities and Slurm resource, worker, and allocation-continuation mechanics | `compute/cli.py`, `compute/slurm/` |
 | `live/` | Broker-neutral live and paper strategy runtime | `live/runtime/strategy.py` |
 | `integrations/mt5/` | MetaTrader-specific data, broker, robot, and risk adapters | `integrations/mt5/` |
 | `orchestra/` | Multi-model repository task orchestration and CI workflow | `orchestra/cli.py` |
@@ -70,21 +70,47 @@ simulation, and learning into runs. `evaluation/` reloads saved runs through
 the supported rollout/reporting interfaces. `experiments/` coordinates
 multiple runs and records their lineage.
 
+Campaign workflow ownership is in `experiments/campaigns/campaign_execution.py`;
+the former `execution.py` entry point remains a compatibility adapter for
+existing launchers. Campaign cache-failure recovery is owned by
+`experiments/campaigns/cache_failure_recovery.py`. Generic worker resource
+sampling and dispatch mechanics are owned by `compute/slurm/`; the historical
+`experiments/campaigns/resources.py` path forwards to the compute owner. The
+`compute/slurm/resume.py` command/API adapter forwards recovery requests to the
+experiment owner without creating a static package dependency in the reverse
+direction. Campaign artifact locations and atomic writes use `artifacts/`.
+
+The `integrations.mt5` package exposes concrete adapters lazily, so importing
+the package surface does not require the MetaTrader5 vendor module. Live RL
+risk values are parsed and validated in `integrations/mt5/risk_configuration.py`;
+failed sizing produces no order, and MT5 close fills use bid to close longs and
+ask to close shorts.
+
+Evaluation output assembly lives in `evaluation/reporting/run_artifact_writer.py`.
+Its `evaluation_manifest.json` links numerical split artifacts to parent
+training or reanalysis manifests. Rollout, checkpoint replay, fill/position
+tables, and chart geometry/rendering have separate named owners. Training
+progress plots live under `training/reporting/`; proven historical evaluation
+paths remain compatibility wrappers. The former training-plot path was retired
+to preserve the evaluation-to-training dependency direction.
+
 ## Data and timeframe boundaries
 
-`market_data/loading/pipeline.py` loads configured datasets and can consume
-configured native timeframe files or derive configured timeframes. It also
-handles tick inputs, session labels, and cache identity. Do not assume that all
-timeframes are derived from M1 or that configured timeframe files are ignored;
-the active source and derivation rules come from the resolved dataset
-configuration.
+`market_data.loading.run_pipeline()` builds configured bar datasets and can
+consume native timeframe files or derive explicitly configured timeframes.
+`market_data.loading.build_tick_books()` assembles configured tick partitions.
+Cache paths and identities are owned by `market_data.cache`; session labels and
+the date-specific session-close calendar are owned by `market_data.transforms`.
+Do not assume that all timeframes are derived from M1 or that configured
+timeframe files are ignored; the active source and derivation rules come from
+the resolved dataset configuration.
 
-`features/pipeline/builder.py` builds the feature matrix. It accepts primary
+`features/pipeline/feature_matrix_builder.py` builds the feature matrix. It accepts primary
 and optional secondary series, train scope, and configured timeframe bars.
-Feature alignment, normalization, and cache identity are implemented under
-`features/pipeline/`. Strategies and simulation consume the resulting features;
-session eligibility is represented as state/masks rather than deleting market
-bars.
+Input resolution is handled by `features/pipeline/feature_build_inputs.py`;
+alignment, normalization, and cache identity live under `features/pipeline/`.
+Strategies and simulation consume the resulting features; session eligibility
+is represented as state/masks rather than deleting market bars.
 
 Thesis date boundaries and the exposed 2026 interval are specified in
 [`thesis/validation_protocol.md`](thesis/validation_protocol.md) and the

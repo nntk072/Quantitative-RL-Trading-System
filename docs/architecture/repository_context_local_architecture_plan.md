@@ -27,7 +27,7 @@ Largest or highest-coupling knowledge hubs include:
 - training/runner/seed_runtime.py — 970 LOC, 27 local imports across 8 domains.
 - evaluation/reanalysis/runner.py — 975 LOC, 18 local imports across 8 domains.
 - training/runner/setup_runtime.py — 647 LOC, 19 local imports across 8 domains.
-- features/pipeline/builder.py — 966 LOC, about 20 local imports.
+- features/pipeline/feature_matrix_builder.py — 802 LOC before the rename, about 20 local imports.
 - experiments/campaigns/execution.py — 1,881 LOC, 34 definitions.
 - orchestra/pipeline.py — 1,088 LOC, 39 definitions.
 - trading/orders/entries.py — 973 LOC, 21 definitions.
@@ -456,7 +456,7 @@ Move model-specific autocast/precision logic from compute/environment/device.py 
 
 ### evaluation <-> training
 
-Move shared evaluation environment construction out of training.setup.environments. Put it in simulation/environment/factory.py or evaluation/setup/environment.py. Evaluation must never import training implementation.
+Move shared evaluation environment construction out of training.setup.environments. Put it in simulation/environment/trading_environment_factory.py or evaluation/setup/environment.py. Evaluation must never import training implementation.
 
 ## Public API strategy
 
@@ -559,7 +559,7 @@ features/
   stages/
   pipeline/
 
-features/pipeline/builder.py becomes a stage composer. Stage modules own their algorithms. The pipeline owns stage order, schema assembly and cache orchestration only.
+features/pipeline/feature_matrix_builder.py becomes a stage composer. Stage modules own their algorithms. The pipeline owns stage order, schema assembly and cache orchestration only.
 
 Split features/po3/config.py by reason to change:
 

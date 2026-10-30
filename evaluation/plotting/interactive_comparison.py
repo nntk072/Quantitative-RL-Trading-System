@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .interactive_common import (
+from .interactive_plot_rendering import (
     _CLOSE_COLOR,
     _EQUITY_COLOR,
     _LONG_COLOR,

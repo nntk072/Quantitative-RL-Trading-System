@@ -37,9 +37,9 @@ INACTIVE_CONFIG_EVIDENCE = {
     )
 }
 CRITICAL_SYMBOLS = (
-    ("configuration/loader.py", "load_config"),
+    ("configuration/configuration_loader.py", "load_config"),
     ("training/configuration/cli.py", "load_merged_config"),
-    ("features/pipeline/builder.py", "build_features"),
+    ("features/pipeline/feature_matrix_builder.py", "build_features"),
     ("simulation/environment/env.py", "TradingEnv.step"),
 )
 CRITICAL_KEY_PREFIXES = (
@@ -729,6 +729,10 @@ def classify_calls(c: sqlite3.Connection) -> tuple[list[CallAudit], dict[str, An
             imports = imports_cache[source_file]
             receiver_module = imports.get(receiver, receiver)
             receiver_root = receiver_module.split(".", 1)[0] if receiver_module else ""
+            receiver_class_module = imports.get(receiver_class, receiver_class)
+            receiver_class_root = (
+                receiver_class_module.split(".", 1)[0] if receiver_class_module else ""
+            )
             imported_target = _resolve_reexport(imports.get(short, ""), reexports)
             imported_root = imported_target.split(".", 1)[0] if imported_target else ""
             same_file = [x for x in candidates if x["file_path"] == source_file]
@@ -755,21 +759,6 @@ def classify_calls(c: sqlite3.Connection) -> tuple[list[CallAudit], dict[str, An
             if short in builtin_names and not candidates:
                 category, selected, reason = "python_builtin", [], "target is a Python builtin"
             elif (
-                short in GENERIC_CONTAINER_METHODS
-                and (
-                    receiver_binding in {"unknown", "builtin"}
-                    or receiver_class
-                    in {"Any", "dict", "Dict", "Mapping", "MutableMapping", "DictConfig", "Path"}
-                )
-                and not self_candidates
-            ):
-                category, selected, reason = (
-                    "dynamic_or_indeterminate",
-                    [],
-                    "generic container/file method with unknown or builtin receiver",
-                )
-                ambiguity = "receiver_type_unknown"
-            elif (
                 receiver_root
                 and receiver_root not in repo_roots
                 and (receiver_root in stdlib or receiver in imports)
@@ -779,6 +768,31 @@ def classify_calls(c: sqlite3.Connection) -> tuple[list[CallAudit], dict[str, An
                     [],
                     f"receiver resolves to imported/stdlib module {receiver_module!r}",
                 )
+            elif (
+                receiver_class_root
+                and receiver_class_root not in repo_roots
+                and receiver_class in imports
+            ):
+                category, selected, reason = (
+                    "external_library",
+                    [],
+                    f"receiver class resolves to imported module {receiver_class_module!r}",
+                )
+            elif (
+                short in GENERIC_CONTAINER_METHODS
+                and (
+                    receiver_binding in {"unknown", "builtin"}
+                    or receiver_class
+                    in {"Any", "dict", "Dict", "Mapping", "MutableMapping", "DictConfig"}
+                )
+                and not self_candidates
+            ):
+                category, selected, reason = (
+                    "dynamic_or_indeterminate",
+                    [],
+                    "generic container/file method with unknown or builtin receiver",
+                )
+                ambiguity = "receiver_type_unknown"
             elif imported_root and imported_root not in repo_roots:
                 category, selected, reason = (
                     "external_library",
@@ -1023,7 +1037,7 @@ def write_markdown(name: str, report: dict[str, Any]) -> Path:
     return p
 
 
-def build_report(label: str) -> dict[str, Any]:
+def build_report(label: str, *, persist: bool = True) -> dict[str, Any]:
     with connect() as c:
         calls, metrics, breakdown = classify_calls(c)
         config = config_dependencies()
@@ -1050,19 +1064,20 @@ def build_report(label: str) -> dict[str, Any]:
             "config_dependencies": config,
             "verification": verification,
         }
-        write_json(f"{label}.json", report)
-        write_markdown(f"{label}.md", report)
-        write_json(
-            "unresolved_internal_calls.json",
-            [
-                asdict(x)
-                for x in calls
-                if x.category in {"internal_unresolved", "internal_ambiguous"}
-            ],
-        )
-        write_json("config_dependencies.json", config)
-        write_json("ambiguous_call_breakdown.json", breakdown)
-        write_ambiguity_markdown(breakdown)
+        if persist:
+            write_json(f"{label}.json", report)
+            write_markdown(f"{label}.md", report)
+            write_json(
+                "unresolved_internal_calls.json",
+                [
+                    asdict(x)
+                    for x in calls
+                    if x.category in {"internal_unresolved", "internal_ambiguous"}
+                ],
+            )
+            write_json("config_dependencies.json", config)
+            write_json("ambiguous_call_breakdown.json", breakdown)
+            write_ambiguity_markdown(breakdown)
         return report
 
 
@@ -1121,7 +1136,7 @@ def main() -> int:
         print(json.dumps(compare_reports(args.before, args.after), indent=2))
         return 0
 
-    report = build_report("check")
+    report = build_report("check", persist=False)
     ok = bool(report["verification"]["ok"])
     if not ok:
         for item in report["verification"]["critical_configs"]:
@@ -1132,6 +1147,16 @@ def main() -> int:
                 )
     current = report["call_metrics"]["internal_resolution_rate"]
     current_critical = report["call_metrics"].get("critical_internal_resolution_rate")
+    print(
+        "Code graph quality: "
+        f"internal={current:.4f} "
+        f"({report['call_metrics']['counts'].get('internal_exact', 0)} exact / "
+        f"{report['call_metrics']['internal_call_candidates']} candidates), "
+        f"critical={current_critical:.4f} "
+        f"({report['call_metrics']['critical_counts'].get('internal_exact', 0)} exact / "
+        f"{report['call_metrics']['critical_internal_candidates']} candidates), "
+        f"verification={'passed' if report['verification']['ok'] else 'failed'}"
+    )
     if args.min_resolution is not None and current < args.min_resolution:
         print(
             f"internal resolution below CI floor: {current:.4f} < {args.min_resolution:.4f}",

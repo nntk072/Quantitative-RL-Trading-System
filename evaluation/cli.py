@@ -20,6 +20,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="thesis-evaluate")
     parser.add_argument("command", choices=("reanalyze",))
     args, rest = parser.parse_known_args()
-    from evaluation.reanalysis.runner import main as command_main
+    from evaluation.reanalysis.checkpoint_reanalysis import main as command_main
 
     _forward(command_main, rest)

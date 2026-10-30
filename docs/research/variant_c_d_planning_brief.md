@@ -31,7 +31,7 @@ Review these sources and tests in the repository rather than assuming this summa
 - `evaluation/rollout/model.py`
 - `training/runner/configuration_stage.py`
 - `training/runner/seed_runtime.py`
-- tests under `tests/test_models`, `tests/test_envs`, `tests/test_eval`, `tests/test_train`, plus `tests/test_rollout.py` and `tests/test_plots_export.py`.
+- tests under `tests/test_models`, `tests/test_envs`, `tests/test_eval`, `tests/test_train`, plus `tests/integration/test_rollout.py` and `tests/integration/test_plots_export.py`.
 
 ## Observed smoke evidence (not a benchmark)
 

@@ -9,7 +9,7 @@ from gymnasium import spaces
 from stable_baselines3 import PPO
 
 from decisioning.actions import build_action_schema
-from evaluation.reanalysis.runner import load_checkpoint
+from evaluation.reanalysis.checkpoint_reanalysis import load_checkpoint
 from learning.rl.agent import LegacyFourToFiveActionAdapter, validate_model_action_schema
 from learning.rl.checkpoint import _install_pre_reorganization_checkpoint_modules
 from learning.rl.ppo import LegacyClampedStdMultiInputPolicy

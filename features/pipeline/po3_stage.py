@@ -12,7 +12,7 @@ from omegaconf import DictConfig, OmegaConf
 from features.context.liquidity import detect_bos, detect_liquidity_sweeps
 from features.po3.ifvg_detection import IFVGConfig
 from features.po3.ifvg_state import build_po3_ifvg_state
-from features.po3.state import (
+from features.po3.po3_phase_state import (
     align_ifvg_zone_timeframes,
     build_distribution_after_ifvg,
     build_ifvg_zone_features,

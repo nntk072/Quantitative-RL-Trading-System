@@ -116,6 +116,7 @@ def test_semantic_ppo_has_finite_distribution_and_roundtrips(tmp_path) -> None:
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="requires CUDA or ROCm accelerator")
+@pytest.mark.gpu
 def test_semantic_ppo_accelerator_update_and_roundtrip(tmp_path) -> None:
     env = _OverlayEnv()
     model = PPO(

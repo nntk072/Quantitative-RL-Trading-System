@@ -7,6 +7,7 @@ import pandas as pd
 
 from features.context.entry_ideas import entry_idea_context
 from simulation.environment.diagnostics import new_debug_window, summarize_window, wiring_from_env
+from trading.orders import manipulation_state
 from trading.strategies import BaselineStrategy
 
 from .entry_diagnostics import _REJECTION_COUNTERS
@@ -251,8 +252,6 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         """
         if not self.strategy_actions or discrete_action == 0:
             return discrete_action, risk_frac
-        from trading.orders.entries import manipulation_state
-
         if manipulation_state(feat_row) != "against":
             return discrete_action, risk_frac
         # PO3 manipulation state must not veto a separately active idea such as

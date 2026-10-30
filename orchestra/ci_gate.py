@@ -1,39 +1,41 @@
-"""CI verification gate — mirrors .github/workflows/ci.yml (not nightly)."""
+"""Orchestra's adapter to the repository's canonical CI dispatcher."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-# Nightly runs integration subsets and ``-m slow`` training tests; orchestra uses
-# the standard CI jobs ``code-formatting`` + ``ut-venv`` only.
-CI_PYTEST_TIMEOUT_S = 3600.0
+# The full dispatcher includes build, integration, assurance, and training-smoke
+# gates. Allow a generous bound while keeping a lost child process recoverable.
+CI_GATE_TIMEOUT_S = 6 * 60 * 60.0
 
 
 @dataclass(frozen=True)
 class CiCheck:
+    """One named verification operation executed by Orchestra."""
+
     name: str
     argv: list[str]
     timeout: float | None = None
 
 
+# GitHub invokes the named gates in parallel and aggregates them. Orchestra
+# delegates to the same dispatcher in its local serial mode; it does not carry
+# a second, divergent list of Ruff/Mypy/pytest commands.
 CI_CHECKS: tuple[CiCheck, ...] = (
-    CiCheck("format", ["uv", "run", "ruff", "format", "--check", "."]),
-    CiCheck("lint", ["uv", "run", "ruff", "check", "."]),
-    CiCheck("typecheck", ["uv", "run", "mypy", "."]),
-    CiCheck("tests", ["uv", "run", "pytest", "tests/", "-v"], timeout=CI_PYTEST_TIMEOUT_S),
+    CiCheck("full", ["./tools/check", "full"], timeout=CI_GATE_TIMEOUT_S),
 )
 
 
 def ci_command_lines() -> str:
-    """Markdown bullet list of CI commands for agent prompts."""
+    """Render the canonical verification command for prompts and reports."""
     return "\n".join(f"- `{' '.join(check.argv)}`" for check in CI_CHECKS)
 
 
 def gate_passed(results: dict[str, dict[str, object]]) -> bool:
-    """True when every CI check entry exists and succeeded."""
+    """Return true only when every required verification operation succeeded."""
     for check in CI_CHECKS:
         entry = results.get(check.name)
-        if not entry or not entry.get("success"):
+        if not entry or not entry.get("success") or entry.get("skipped"):
             return False
     return True
 
@@ -41,6 +43,6 @@ def gate_passed(results: dict[str, dict[str, object]]) -> bool:
 def first_failure(results: dict[str, dict[str, object]]) -> str | None:
     for check in CI_CHECKS:
         entry = results.get(check.name, {})
-        if not entry.get("success"):
+        if not entry.get("success") or entry.get("skipped"):
             return check.name
     return None

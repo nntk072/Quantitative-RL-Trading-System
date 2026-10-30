@@ -15,7 +15,7 @@ from orchestra.routing import (
     silent_default_next,
     substitute_auto_skips,
 )
-from orchestra.state import Phase
+from orchestra.task_state_store import Phase
 
 
 def _data(**kwargs: object) -> dict[str, object]:

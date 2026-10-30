@@ -11,14 +11,11 @@ from decisioning.observations import OBSERVATION_SCHEMA_V1
 from market_data.loading.ticks import TickBook
 from simulation.contracts import SimulationTransition
 from simulation.environment.diagnostics import DebugStepError
-from trading.execution.broker import Position
-from trading.execution.costs import COST_US100, CostModel
+from trading.execution import COST_US100, CostModel
 from trading.strategies import TradingStrategy
 
-from .action_diagnostics import _empty_decision
 from .action_runtime import ActionDecodingMixin
 from .diagnostics_runtime import DiagnosticsRuntimeMixin
-from .entry_diagnostics import _empty_entry_diag
 from .entry_execution_runtime import EntryExecutionRuntimeMixin
 from .entry_runtime import EntryRuntimeMixin
 from .episode_runtime import EpisodeRuntimeMixin
@@ -290,93 +287,6 @@ class TradingEnv(
             **kwargs,
         )
         return env
-
-    def reset(
-        self,
-        seed: int | None = None,
-        options: dict[str, Any] | None = None,
-    ) -> tuple[dict[str, np.ndarray[Any, Any]], dict[str, Any]]:
-        """Reset environment to initial state."""
-        super().reset(seed=seed, options=options)
-
-        self._ny_pos = int(np.searchsorted(self._ny_indices, self.obs_window, side="left"))
-        if self._ny_pos >= len(self._ny_indices):
-            self._ny_pos = max(0, len(self._ny_indices) - 1)
-        self.step_idx = int(self._ny_indices[self._ny_pos]) if len(self._ny_indices) else 0
-        self.account = self._create_account()
-        self._peak_eod_dd_locked = False
-        self._peak_dd_fired = False
-        self.position: Position | None = None
-        self._pending_entry_order: dict[str, Any] | None = None
-        self.equity_curve = [self.initial_balance]
-        # Wall-clock stamps for each equity_curve point (NY-stepped; not dense M1).
-        t0 = self._bar_time(self.step_idx) if len(self._bar_times) else None
-        self.equity_times: list[Any] = [t0]
-        self.pnl_history = [0.0]
-        self.trade_log: list[dict[str, Any]] = []
-        self._active_step_execution: dict[str, Any] | None = None
-        self._position_sequence = 0
-        self._episode_identity = getattr(self, "_episode_identity", 0) + 1
-        # Step counter within the current episode (0 at reset). Distinct
-        # from ``step_idx`` (the absolute bar index); used to enforce
-        # ``max_episode_steps`` truncation.
-        self.episode_step_count = 0
-        # Warn-once flag for the entry gate; re-arm per episode so a new
-        # feature matrix (possibly missing gate columns) warns again.
-
-        # Reset reward function
-        self.reward_fn.reset()
-
-        # Non-episodic full-split bookkeeping, used by evaluation and
-        # full-split training; unused in risk-terminated training mode.
-        self.prev_session: int | None = None
-        self.breached_sessions: set[int] = set()
-        self.sessions_with_trades: set[int] = set()
-        self.all_sessions: set[int] = set()
-        self.breach_log: list[str] = []
-        self.breach_events: list[dict[str, Any]] = []
-        self._year_failed = False
-        self._level_crosses: dict[tuple[int, str], Any] = {}
-        self._session_entry_counts = {}
-        self._cooldown_until_bar = -1
-        self._last_realized_close_pnl = None
-        self._last_realized_close_r = None
-        # ``float | None``: an exit with no stampable R leaves this unset rather
-        # than NaN, so the annotation must allow more than the None it starts as.
-        self._pending_realized_r: float | None = None
-        self._opened_this_step = False
-        self._selected_sl_anchor = 0.0
-        self._selected_thesis = None
-        self._selected_tp_fraction = 0.0
-        self._selected_exit_mode = "structural"
-        self._selected_sl_mode = "fixed"
-        self._sl_mode_explicit = False
-        self._selected_tp_mode = self.tp_mode
-        self._tp_mode_explicit = False
-        self._selected_tp_selections = (-1.0, -1.0, -1.0)
-        self._selected_tp_z = (0.0, 0.0)
-        self._decision_action = _empty_decision()
-        self._entry_rejection_reason = ""
-        self._ep_start_equity = float(self.initial_balance)
-        self._ep_reward_sum = 0.0
-        self._entry_diag = _empty_entry_diag(self.entry_state_machine is not None)
-        self._previous_constraint_ratios = {"daily": 0.0, "max_loss": 0.0, "trailing": 0.0}
-        self.cumulative_payouts = 0.0
-        self.cycle_count = 1
-        self.cycle_successes = 0
-        self.cycle_failures = 0
-        self.cycle_events: list[dict[str, Any]] = []
-        self.payout_events: list[dict[str, Any]] = []
-        self._last_requested_risk_usd = 0.0
-        self._last_approved_risk_usd = 0.0
-        self._last_execution_reserve_usd = 0.0
-        self._payout_withdrawn_this_step = 0.0
-
-        if self.entry_state_machine is not None:
-            self.entry_state_machine.reset()
-
-        obs = self._get_observation()
-        return obs, {}
 
     def step(
         self,

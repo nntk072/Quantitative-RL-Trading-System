@@ -6,7 +6,7 @@ import click
 
 from .ci_gate import CI_CHECKS, gate_passed
 from .pipeline_base import PipelineMixinBase
-from .state import Phase
+from .task_state_store import Phase
 
 
 class PhaseVerificationMixin(PipelineMixinBase):
@@ -32,7 +32,11 @@ class PhaseVerificationMixin(PipelineMixinBase):
         if verify_mode == "skip":
             click.echo("  verify_mode=skip — skipping CI gate")
             skipped = {
-                check.name: {"success": True, "output": "skipped (verify_mode=skip)"}
+                check.name: {
+                    "success": True,
+                    "skipped": True,
+                    "output": "skipped (verify_mode=skip)",
+                }
                 for check in CI_CHECKS
             }
             self.state.set_verification(skipped)

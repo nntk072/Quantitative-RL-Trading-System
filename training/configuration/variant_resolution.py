@@ -9,7 +9,8 @@ that records them.
 It is deliberately plain Python + PyYAML (no OmegaConf, no torch) so it can run
 in the launcher before the training environment is activated.
 
-Override semantics mirror ``training.configuration.variants.merge_variant_cfg``:
+This resolved representation is consumed by both campaign launchers and the
+training CLI, so a variant has one merge/override contract:
   * ladder flags -> ``env.<flag>``
   * ``include_pd_context`` -> ``features.include_pd_context`` + structure enabled
   * strategy (po3_ifvg / distribution) -> ``--strategy`` (train_rl merges the
@@ -20,7 +21,6 @@ Override semantics mirror ``training.configuration.variants.merge_variant_cfg``:
 from __future__ import annotations
 
 import argparse
-import json
 import math
 import sys
 from pathlib import Path
@@ -28,6 +28,7 @@ from typing import Any
 
 import yaml
 
+from artifacts.atomic import write_json_atomic
 from configuration.paths import repository_root
 from training.configuration.variant_risk_policy import variant_ftmo_overrides
 
@@ -352,8 +353,7 @@ def _main(argv: list[str] | None = None) -> int:
         if ns.seed is None or ns.out is None:
             raise SystemExit("manifest requires --seed and --out")
         manifest = dict(resolved, seed=ns.seed, train_args=train_args(resolved, ns.seed))
-        ns.out.parent.mkdir(parents=True, exist_ok=True)
-        ns.out.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+        write_json_atomic(ns.out, manifest, default=None)
         return 0
     return 1
 

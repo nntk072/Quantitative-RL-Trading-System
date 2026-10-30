@@ -9,7 +9,7 @@ import pathlib
 import sys
 
 from configuration.paths import repository_root
-from experiments.campaigns.execution import build_initial_checkpoint_map
+from experiments.campaigns.checkpoint_lineage import build_initial_checkpoint_map
 
 ROOT = repository_root(__file__)
 

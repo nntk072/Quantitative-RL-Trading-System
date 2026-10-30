@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import click
 
-from .models import Model
+from .model_provider_registry import Model
 from .pipeline_base import PipelineMixinBase
 from .prompts import render_prompt
 from .routing import (
@@ -29,7 +29,7 @@ class PhaseReviewMixin(PipelineMixinBase):
             click.echo(f"  WARNING: requested {reviewer_n} reviewers, got {len(models)}")
 
         diff_text = self._git_diff()
-        test_results = "Not yet run (verification runs full CI gate: format, lint, mypy, pytest)."
+        test_results = "Not yet run (verification runs the repository gate: ./tools/check full)."
         if not self.dry_run:
             click.echo("  Skipping pre-review pytest; verification is the test gate.")
 

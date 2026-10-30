@@ -10,6 +10,10 @@ permissions:
   contents: read
   packages: write  # For GHCR
 
+env:
+  UV_FROZEN: "1"
+  THESIS_CHECK_NO_SYNC: "1"
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -25,13 +29,8 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Sync deps
         run: uv sync --extra dev
-      - name: Full test suite
-        run: uv run pytest tests/ -v
-      - name: Lint & typecheck
-        run: |
-          uv run ruff format --check .
-          uv run ruff check .
-          uv run mypy .
+      - name: Validate with canonical repository gates
+        run: ./tools/check full
 
   docker-build-push:
     needs: validate
@@ -40,12 +39,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /var/lib/docker
-          key: docker-${{ runner.os }}-${{ hashFiles('docker-compose.yml', 'Dockerfile') }}
-          restore-keys: docker-${{ runner.os }}-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:

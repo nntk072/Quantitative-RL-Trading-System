@@ -15,7 +15,9 @@ from typing import Any, cast
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from .models import Model
+from artifacts.atomic import write_text_atomic
+
+from .model_provider_registry import Model
 
 _HEALTH_TTL = 24 * 3600
 _PROBE_TIMEOUT = 20
@@ -119,11 +121,8 @@ class HealthRegistry:
             self._facts[rid] = ProbeFacts.from_dict(data)
 
     def _save(self) -> None:
-        self.state_dir.mkdir(parents=True, exist_ok=True)
         payload = {"models": {rid: f.to_dict() for rid, f in self._facts.items()}}
-        tmp = self.health_file.with_suffix(".tmp")
-        tmp.write_text(json.dumps(payload, indent=2))
-        os.replace(tmp, self.health_file)
+        write_text_atomic(self.health_file, json.dumps(payload, indent=2))
 
     def get(self, model: Model) -> ProbeFacts:
         rid = model.registry_id

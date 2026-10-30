@@ -13,17 +13,18 @@ from typing import Any, cast
 import pandas as pd
 from omegaconf import OmegaConf
 
+from artifacts.atomic import write_text_atomic
 from configuration.paths import repository_root
 from decisioning.contracts import DecisionProvider
 from evaluation import calculate_metrics, evaluation_periods_per_year
-from evaluation.reporting.export import save_run
+from evaluation.reporting.run_artifact_writer import save_run
 from evaluation.reporting.run_manifest import (
     build_stop_candidate_schema,
     build_training_run_manifest,
     file_sha256,
     write_run_manifest,
 )
-from evaluation.rollout.model import BAR_CLOSE_EXPOSURE_MEASURE, evaluate_provider
+from evaluation.rollout.trained_policy_rollout import BAR_CLOSE_EXPOSURE_MEASURE, evaluate_provider
 from features.context.policy_market import (
     POLICY_MARKET_CONTEXT_VERSION,
 )
@@ -44,18 +45,21 @@ from learning.rl.callbacks import (
 from learning.rl.checkpoint import is_sb3_box_model, load_sb3_training_checkpoint
 from learning.rl.ppo import install_post_update_std_clip
 from market_data.loading.ticks import ticks_covering
-from trading.policy.config import resolve_trading_policy
-from training.artifacts.aggregation import _save_seed_artifacts
-from training.artifacts.manifests import (
-    _action_schema_manifest,
-    _action_space_width,
-    _observation_account_dim,
-    _observation_schema_manifest,
-    _observation_space_shapes,
-    _sequence_feature_schema_manifest,
-    _training_protocol_manifest,
+from trading.policy import resolve_trading_policy
+from training.artifacts import (
+    action_schema_manifest,
+    observation_account_dim,
+    observation_schema_manifest,
+    observation_space_shapes,
+    save_seed_artifacts,
+    sequence_feature_schema_manifest,
+    training_protocol_manifest,
+    write_evaluation_artifacts,
+    write_run_config_snapshot,
 )
-from training.artifacts.metrics import _write_evaluation_artifacts
+from training.artifacts import (
+    action_space_width as get_action_space_width,
+)
 from training.callbacks.activity import assess_train_activity
 from training.callbacks.dashboard import TrainingDashboardCallback, ppo_log_interval
 from training.callbacks.debug_trace import install_flight_recorder
@@ -84,8 +88,8 @@ from training.setup.environments import (
     strategy_from_cfg,
 )
 from training.setup.learner import build_fit_request, build_training_learner
-from training.setup.models import (
-    _initialize_value_head,
+from training.setup.model_state import _initialize_value_head
+from training.setup.policy_diagnostics import (
     _log_effective_ppo,
     _training_architecture_provenance,
 )
@@ -549,8 +553,8 @@ class SeedRunner:
             instrument_id=ctx.preparation.data.primary_sym,
             config=cfg,
             input_schema={
-                "observation": _observation_schema_manifest(train_env),
-                "sequence": _sequence_feature_schema_manifest(train_env),
+                "observation": observation_schema_manifest(train_env),
+                "sequence": sequence_feature_schema_manifest(train_env),
             },
             seed=self.seed,
             requested_steps=int(learning_timesteps),
@@ -574,11 +578,12 @@ class SeedRunner:
         if best_cb.viability_failure_reason is not None:
             abort_reason = best_cb.viability_failure_reason
         if abort_reason:
-            (seed_dir / "early_abort.json").write_text(
+            write_text_atomic(
+                seed_dir / "early_abort.json",
                 json.dumps(
                     {"reason": abort_reason, "timesteps": int(model.num_timesteps)},
                     indent=2,
-                )
+                ),
             )
             log.error("EARLY_ABORT %s at timesteps=%s", abort_reason, model.num_timesteps)
 
@@ -617,7 +622,10 @@ class SeedRunner:
 
         # Learning-curve / loss charts from the SB3 progress CSV.
         try:
-            from evaluation.plotting.training_plots import save_dashboard_plots, save_training_plots
+            from training.reporting.training_curves import (
+                save_dashboard_plots,
+                save_training_plots,
+            )
 
             save_training_plots(
                 progress_log,
@@ -776,9 +784,10 @@ class SeedRunner:
             peak_trailing_dd_limit=float(cfg.env.get("peak_trailing_dd_limit", 0.0)),
         )
         train_activity_gate = assess_train_activity(int(train_m.n_trades))
-        (seed_dir / "train_equity_gate.json").write_text(json.dumps(train_gate, indent=2))
-        (seed_dir / "train_activity_gate.json").write_text(
-            json.dumps(train_activity_gate, indent=2)
+        write_text_atomic(seed_dir / "train_equity_gate.json", json.dumps(train_gate, indent=2))
+        write_text_atomic(
+            seed_dir / "train_activity_gate.json",
+            json.dumps(train_activity_gate, indent=2),
         )
         if not train_gate["ok"]:
             log.error("TRAIN_SURVIVAL_GATE FAIL %s", train_gate)
@@ -817,7 +826,7 @@ class SeedRunner:
             "PHASE_TIMING train_evaluation_seconds=%.3f",
             phase_timings_seconds["train_evaluation"],
         )
-        _write_evaluation_artifacts(
+        write_evaluation_artifacts(
             run_dir=seed_dir,
             seed=int(seed),
             completed_timesteps=int(model.num_timesteps),
@@ -916,7 +925,7 @@ class SeedRunner:
             del train_export_bars, test_export_bars
 
         # Save config snapshot for this seed
-        (seed_dir / "config.yaml").write_text(OmegaConf.to_yaml(cfg), encoding="utf-8")
+        write_run_config_snapshot(seed_dir, cfg)
         per_run_cache_hash = Path(str(feat_cache) + ".hash")
         cache_hash = per_run_cache_hash.read_text(encoding="utf-8").strip()
         checkpoint_path = Path(f"{model_path}.zip")
@@ -926,7 +935,7 @@ class SeedRunner:
             raise ValueError("saved checkpoint content differs from the learner fit result")
         if fit_result.training_steps != int(model.num_timesteps):
             raise ValueError("learner fit-step count differs from the final model checkpoint")
-        sequence_feature_schema = _sequence_feature_schema_manifest(train_env)
+        sequence_feature_schema = sequence_feature_schema_manifest(train_env)
         manifest = build_training_run_manifest(
             repository=repository_root(__file__),
             config_path=seed_dir / "config.yaml",
@@ -939,8 +948,8 @@ class SeedRunner:
             },
             seed=int(seed),
             completed_steps=int(model.num_timesteps),
-            action_schema=_action_schema_manifest(train_env),
-            observation_schema=_observation_schema_manifest(train_env),
+            action_schema=action_schema_manifest(train_env),
+            observation_schema=observation_schema_manifest(train_env),
             sequence_feature_schema=sequence_feature_schema,
             stop_candidate_schema=stop_candidate_schema,
             feature_cache_path=feat_cache,
@@ -979,7 +988,7 @@ class SeedRunner:
             training_architecture=_training_architecture_provenance(
                 model, cfg, args.arch, algo=args.algo
             ),
-            training_protocol=_training_protocol_manifest(
+            training_protocol=training_protocol_manifest(
                 model=model,
                 cfg=cfg,
                 args=args,
@@ -1026,12 +1035,15 @@ class SeedRunner:
         }
         manifest_path = seed_dir / "run_manifest.json"
         write_run_manifest(manifest_path, manifest)
+        from evaluation.reporting.evaluation_manifest import write_evaluation_manifest
+
+        write_evaluation_manifest(seed_dir)
         phase_timings_seconds["report_export"] = time.perf_counter() - phase_started
         log.info("PHASE_TIMING report_export_seconds=%.3f", phase_timings_seconds["report_export"])
 
         # Per-seed artifacts (multi-seed mode only)
         if is_multi_seed:
-            _save_seed_artifacts(seed_dir, seed, cfg, train_result, test_result, train_m, test_m)
+            save_seed_artifacts(seed_dir, seed, cfg, train_result, test_result, train_m, test_m)
 
         self.sequence_feature_schema = sequence_feature_schema
         self.manifest_path = manifest_path
@@ -1062,11 +1074,11 @@ class SeedRunner:
         # Collect per-seed results for aggregation
         entry_diag = test_result.get("entry_diag", {})
         entry_state_diag = test_result.get("entry_state_diagnostics", {})
-        action_space_width = _action_space_width(train_env)
-        action_schema = _action_schema_manifest(train_env)
-        observation_account_dim = _observation_account_dim(train_env)
-        observation_space_shapes = _observation_space_shapes(train_env)
-        observation_schema = _observation_schema_manifest(train_env)
+        action_space_width = get_action_space_width(train_env)
+        action_schema = action_schema_manifest(train_env)
+        account_dim = observation_account_dim(train_env)
+        observation_shapes = observation_space_shapes(train_env)
+        observation_schema = observation_schema_manifest(train_env)
         env_flags = {
             key: bool(cfg.env.get(key, False))
             for key in (
@@ -1106,8 +1118,8 @@ class SeedRunner:
             "entry_state_diagnostics": entry_state_diag,
             "action_space_width": action_space_width,
             "action_schema": action_schema,
-            "observation_account_dim": observation_account_dim,
-            "observation_space_shapes": observation_space_shapes,
+            "observation_account_dim": account_dim,
+            "observation_space_shapes": observation_shapes,
             "observation_schema": observation_schema,
             "sequence_feature_schema": sequence_feature_schema,
             "env_flags": env_flags,

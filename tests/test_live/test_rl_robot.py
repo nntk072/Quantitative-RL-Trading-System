@@ -228,6 +228,29 @@ def test_live_robot_refuses_entry_if_broker_stop_cannot_be_computed() -> None:
     assert trader.opened == []
 
 
+def test_live_robot_does_not_replace_zero_risk_size_with_default_lot() -> None:
+    trader = RecordingTrader()
+    robot, _ = _make_robot(trader, paper_trading=False)
+    robot.risk_manager.calculate_position_size = lambda *_args, **_kwargs: 0.0
+
+    robot.trade()
+
+    assert trader.opened == []
+
+
+def test_live_robot_does_not_replace_sizing_error_with_default_lot() -> None:
+    trader = RecordingTrader()
+    robot, _ = _make_robot(trader, paper_trading=False)
+
+    def sizing_error(*_args: Any, **_kwargs: Any) -> float:
+        raise ValueError("symbol sizing unavailable")
+
+    robot.risk_manager.calculate_position_size = sizing_error
+    robot.trade()
+
+    assert trader.opened == []
+
+
 def test_robot_feed_secondary_bars_for_smt() -> None:
     """Stage 8 Task 8.4: a secondary data source must reach the adapter each
     cycle so SMT features are present in the live observation."""

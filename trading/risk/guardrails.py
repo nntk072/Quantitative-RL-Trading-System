@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from trading.account.state import AccountState
+from trading.account import AccountState
 
 
 @dataclass(frozen=True)

@@ -16,6 +16,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from artifacts.layout import CampaignArtifactLayout
+
 ENV_KEYS = (
     "VARIANT",
     "SEED",
@@ -301,7 +303,7 @@ def _manager() -> int:
     done_marker = Path(
         os.environ.get(
             "CAMPAIGN_ALLOCATION_DONE_MARKER",
-            str(campaign_out / "allocation_controller.exit"),
+            str(CampaignArtifactLayout(campaign_out).root_file("allocation_controller.exit")),
         )
     )
     cancelled = claimed.parent / "cancelled"

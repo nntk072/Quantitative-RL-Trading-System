@@ -10,6 +10,16 @@ import numpy as np
 import pandas as pd
 
 
+def stop_loss_risk_usd(
+    stop_distance: float,
+    lots: float,
+    contract_size: float,
+    point_value: float = 1.0,
+) -> float:
+    """Return the account-currency loss at a stop for the requested position."""
+    return abs(float(stop_distance)) * float(lots) * float(contract_size) * float(point_value)
+
+
 def compute_sl_tp_long(
     entry_price: float,
     last_swing_low: float,
@@ -157,6 +167,45 @@ def compute_lots(
     lots = np.clip(lots, min_lot, max_lot)
 
     return float(lots)
+
+
+def compute_lots_with_execution_reserve(
+    *,
+    total_risk_budget_usd: float,
+    equity: float,
+    risk_frac: float,
+    entry_price: float,
+    sl_price: float,
+    contract_size: float,
+    execution_reserve_per_lot: float,
+    min_lot: float = 0.01,
+    max_lot: float = 100.0,
+) -> float:
+    """Size the stop exposure so stop risk plus per-lot costs fit the budget."""
+    stop_risk_per_lot = stop_loss_risk_usd(float(entry_price) - float(sl_price), 1.0, contract_size)
+    if total_risk_budget_usd <= 0.0 or stop_risk_per_lot <= 0.0:
+        return 0.0
+
+    all_in_risk_per_lot = stop_risk_per_lot + float(execution_reserve_per_lot)
+    if all_in_risk_per_lot <= 0.0:
+        return 0.0
+
+    stop_risk_budget = total_risk_budget_usd * stop_risk_per_lot / all_in_risk_per_lot
+    lots = compute_lots(
+        equity,
+        risk_frac,
+        entry_price,
+        sl_price,
+        contract_size=contract_size,
+        min_lot=min_lot,
+        max_lot=max_lot,
+        max_loss_cap=None,
+        risk_usd=stop_risk_budget,
+    )
+    lots_at_budget = total_risk_budget_usd / all_in_risk_per_lot
+    if lots_at_budget < min_lot:
+        return 0.0
+    return float(min(lots, lots_at_budget))
 
 
 def compute_sl_tp_from_structure(

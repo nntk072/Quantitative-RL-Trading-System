@@ -188,19 +188,19 @@ Scoped verification on x86_64 Python 3.12.14:
 
 | Evidence | Status | Evidence / scope |
 | --- | --- | --- |
-| E1 | VERIFIED_EXISTING | Candidate expiry stays at five bars; entry state tests cover expiry and causal arming (`tests/test_envs/test_entry_state_machine.py`). |
+| E1 | VERIFIED_EXISTING | Candidate expiry stays at five bars; entry state tests cover expiry and causal arming (`tests/test_simulation/test_environment/test_entry_state_machine.py`). |
 | E2 | FIXED | Revised PO3 uses confirmed M5/M15/H1 references; `tests/test_features/test_htf_sweeps.py`. |
 | E3–E4 | FIXED | Reclaim and IFVG confirmation/distribution are separate events; `tests/test_features/test_po3_state.py`. |
 | E5 | FIXED | Revised overlays use strict far-edge close and zero additional overshoot; `tests/test_features/test_po3_config.py`. |
 | E6–E7 | FIXED | Explicit modes, retest alias validation, confirmation-close/next-open timing; strategy and entry-state tests. |
-| E8–E9 | FIXED | Idea 2 adds per-entry latest-completed-session midpoint gate; `tests/test_features/test_session_ohlc.py`, `tests/test_envs/test_distribution_reward.py`. |
-| E10–E11 | FIXED | IFVG far edge and observed through-zone extreme join auditable SL candidates; `tests/test_backtest/test_entry_levels.py`. |
+| E8–E9 | FIXED | Idea 2 adds per-entry latest-completed-session midpoint gate; `tests/test_features/test_session_ohlc.py`, `tests/test_simulation/test_environment/test_distribution_reward.py`. |
+| E10–E11 | FIXED | IFVG far edge and observed through-zone extreme join auditable SL candidates; `tests/test_simulation/test_backtest/test_entry_levels.py`. |
 | E12 | VERIFIED_EXISTING | Defaults remain 10 points and 0.5 ATR; revised overlays inherit them, confirmed by config inspection and risk tests. |
 | E13 | FIXED | Stop-anchor decode is clipped to `[0,2]`; strategy action tests. |
-| E14–E16 | VERIFIED_EXISTING | Structural target menu retained; preferred RR/fallback selection tested in `tests/test_backtest/test_entry_levels.py`. |
+| E14–E16 | VERIFIED_EXISTING | Structural target menu retained; preferred RR/fallback selection tested in `tests/test_simulation/test_backtest/test_entry_levels.py`. |
 | E17 | FIXED | Executed TP leg prices and anchor reference are separately recorded; entry-level tests. |
 | E18 | VERIFIED_EXISTING | Legacy RR helpers remain in place; strategy-action path still uses `entry_levels.py`. |
-| E19 | FIXED | Signal, submission and fill bar/time are distinct; `tests/test_envs/test_entry_state_machine.py`. |
+| E19 | FIXED | Signal, submission and fill bar/time are distinct; `tests/test_simulation/test_environment/test_entry_state_machine.py`. |
 | E20 | FIXED | Revised overlays align both stop-buffer keys; environment `sl_buffer_pts` is effective and candidate rejection reasons are audited. |
 | E21 | DEFERRED | Separate methodology/figure note and synthetic diagrams are ready; manuscript edits and recovery of original figure source remain deferred by plan boundary. |
 

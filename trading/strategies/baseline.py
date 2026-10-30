@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .base import TradingStrategy
-from .types import FeatureRow
+from .feature_row_contract import FeatureRow
+from .strategy_contract import TradingStrategy
 
 
 class BaselineStrategy(TradingStrategy):

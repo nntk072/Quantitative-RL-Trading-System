@@ -15,7 +15,7 @@ campaign safety constraints.
 
 ```bash
 uv sync                              # install deps
-python market_data/commands/prepare.py       # raw CSV → parquet → features
+thesis-data prepare                       # raw CSV → parquet → features
 thesis-train train --mvp   # smoke test (30 days)
 
 # Local (implementation): scoped checks only
@@ -30,14 +30,17 @@ thesis-train train --mvp   # smoke test (30 days)
 .venv/bin/mypy .                # REQUIRED full tree — not mypy <touched paths>
 .venv/bin/pytest <relevant test paths> -q # NOT tests/ -v — keep scoped
 
-# Full suite: GitHub CI / Orchestra phase 9 only (not agent default)
-# .venv/bin/pytest tests/ -v
+# Full merge gate: GitHub CI / Orchestra phase 9 only (not agent default)
+# ./tools/check full
 ```
 
 On ARM64/GH200, use the active `.venv/bin` tools for Ruff, Mypy, and pytest.
 Do not use `uv run` for these checks on ARM. The login-host `uv` may be an
 x86-64 executable and fail with `Exec format error` inside an ARM allocation.
 Preserve the full-tree Ruff/Mypy requirements and scoped-pytest rule.
+For lock, export, and environment setup commands that require `uv`, provide a
+native ARM64 binary through `THESIS_UV` when the login-home `uv` is x86-64; the
+canonical checks, setup helpers, and Make dependency gate honor that override.
 
 Full rule: `.agents/rules/ci-verification.md` (all agents). Commit checklist:
 `.agents/rules/git-commit-rules.md`.
@@ -45,7 +48,7 @@ Full rule: `.agents/rules/ci-verification.md` (all agents). Commit checklist:
 ## Orchestra (`orchestra/`)
 
 Multi-model CLI pipeline (triage → plan → implement → verify). Implementer agents run
-scoped tests only. Phase 9 (verification) runs the full CI gate (`orchestra/ci_gate.py`).
+scoped tests only. Phase 9 delegates to the canonical repository gate (`./tools/check full`).
 Agent rules: `.agents/rules/ci-verification.md`.
 
 ```bash
@@ -70,19 +73,20 @@ live → integrations/mt5
 
 | Domain | Entry File | Role |
 |--------|-----------|------|
-| configuration | `configuration/loader.py` | load, merge, and validate run configuration |
-| data | `market_data/loading/pipeline.py` | load → resample → clean → session → split |
-| features | `features/pipeline/builder.py` | indicators + SMT + structure + PO3 → matrix |
+| configuration | `configuration/configuration_loader.py` | load, merge, and validate run configuration |
+| data | `market_data/loading/market_data_ingestion.py` | configured bar ingestion and cache production; ticks, transforms, and splits have dedicated `market_data/` owners |
+| features | `features/pipeline/feature_matrix_builder.py` | indicators + SMT + structure + PO3 → matrix |
 | trading | `trading/` | broker-neutral account, execution, order, risk, and strategy contracts |
 | decisioning | `decisioning/contracts.py` | versioned observation/action schemas and inference-provider contract |
 | envs | `simulation/environment/env.py` | Gymnasium environment transitions, observations, and reward |
-| backtest | `simulation/backtest/engine.py` | event-driven engine (fill, SL/TP, guardrails) |
-| models | `models/encoders/` | reusable neural architectures and model components |
-| learning | `learning/rl/agent.py` | PPO/SAC construction, learner backends, and checkpoint loading |
+| backtest | `simulation/backtest/event_driven_backtest.py` | event-driven engine (fill, SL/TP, guardrails) |
+| models | `models/encoders/` | reusable neural architectures and encoder registry |
+| learning | `learning/rl/agent.py` | SB3 policy adapters, PPO/SAC construction, learner backends, and checkpoint loading |
 | train | `training/runner/training.py` | compose data, features, simulation, and learning into runs |
-| evaluation | `evaluation/rollout/runner.py` | backend-neutral episode rollout |
-| reports | `evaluation/rollout/model.py` | model/provider evaluation, metrics, plots, and export |
-| experiments | `experiments/campaigns/execution.py` | variant and campaign lifecycle, resume, and provenance |
+| evaluation | `evaluation/rollout/episode_rollout.py` | backend-neutral episode rollout |
+| evaluation policy | `evaluation/rollout/trained_policy_rollout.py` | model/provider evaluation through TradingEnv |
+| reports | `evaluation/reporting/run_artifact_writer.py` | numerical report, plot, and artifact writing |
+| experiments | `experiments/cli.py`, `experiments/campaigns/campaign_execution.py` | variant and campaign lifecycle, resume, and provenance; `execution.py` remains a compatibility adapter |
 | artifacts | `artifacts/` | shared identities, manifests, atomic storage, and registry |
 | compute | `compute/` | device capabilities, resource profiles, and Slurm adapters |
 | live | `live/runtime/strategy.py` | broker-neutral live and paper strategy runtime |
@@ -106,7 +110,7 @@ Domain-level context: `.agents/domain_maps/*.md`
 5. **Config is single source of truth** — `config/base/default.yaml`.
    All YAML keys are read via `cfg.<path>`. Adding a feature flag? Add YAML key first.
 6. **Cache versioning** — `FEATURE_CACHE_VERSION` plus **content hash**
-   (`feature_cache_path` / `.hash` sidecar). Hand-bump alone is not enough.
+   (`feature_cache_path` / `.hash` sidecar in `features/pipeline/feature_cache_identity.py`). Hand-bump alone is not enough.
 7. **Live risk ≈ training risk** — `live_risk_overrides` must stay aligned with
    `ftmo` dollar limits. Silent divergence is the failure mode.
 8. **Locked OOS is final report** — do not select architectures on the locked

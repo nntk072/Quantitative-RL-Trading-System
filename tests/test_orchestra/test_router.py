@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from orchestra.models import Model, codex_effort_for_level, load_models
+from orchestra.model_provider_registry import Model, codex_effort_for_level, load_models
 from orchestra.router import ModelRouter
 
 

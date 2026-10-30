@@ -66,11 +66,14 @@ services:
       target: test
     image: quant-rl-thesis:test
     volumes:
-      - ./outputs:/app/outputs
-      - ./data:/app/data
-      - ./models:/app/models
-      - ./cache:/app/cache
-      - ./logs:/app/logs
+      - ./config:/app/config:ro
+      - ./docs:/app/docs:ro
+      - ./data/examples:/app/data/examples:ro
+    tmpfs:
+      - /app/outputs
+      - /app/models
+      - /app/cache
+      - /app/logs
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
@@ -87,11 +90,14 @@ services:
         TORCH_DEVICE: cu130
     image: quant-rl-thesis:test-gpu
     volumes:
-      - ./outputs:/app/outputs
-      - ./data:/app/data
-      - ./models:/app/models
-      - ./cache:/app/cache
-      - ./logs:/app/logs
+      - ./config:/app/config:ro
+      - ./docs:/app/docs:ro
+      - ./data/examples:/app/data/examples:ro
+    tmpfs:
+      - /app/outputs
+      - /app/models
+      - /app/cache
+      - /app/logs
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1

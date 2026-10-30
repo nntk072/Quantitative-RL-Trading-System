@@ -25,6 +25,8 @@ from omegaconf import DictConfig
 from compute.environment.precision import get_autocast_dtype
 from decisioning.actions import SCHEMA_VERSION, ActionSchema, DiscreteActionSchema
 from decisioning.thesis import ThesisActionSchema, validate_thesis_observation_schema
+from learning.rl.ppo import ClampedStdMultiInputPolicy, _layout_key
+from models.factory import encoder_for
 from models.runtime.precision import enable_extractor_autocast
 
 try:
@@ -70,8 +72,6 @@ def persist_action_schema(model: Any, env: Any) -> None:
         elif width == 1 and not bool(getattr(env, "strategy_actions", False)):
             # The scalar Box belongs to the continuous directional action mode,
             # not to the strategy-overlay coordinate schema.
-            from learning.rl.ppo import _layout_key
-
             layout_key = _layout_key(width)
             schema_manifest = None
         else:
@@ -359,39 +359,6 @@ class LegacyFourToFiveActionAdapter:
             raise ValueError(f"legacy 4D policy returned unexpected action shape {values.shape}")
         structural_exit = np.full((*values.shape[:-1], 1), -1.0, dtype=values.dtype)
         return np.concatenate((values, structural_exit), axis=-1), state
-
-
-def encoder_for(arch: str) -> type[Any]:
-    """Resolve a declared encoder ID, failing closed for unknown architecture names."""
-    from models.encoders import (
-        GRUEncoder,
-        LiteTCNEncoder,
-        M1TCNHTFLiteReasoningEncoder,
-        M1TCNHTFSnapshotReasoningEncoder,
-        MTFEncoder,
-        MTFReasoningEncoder,
-        SharedTCNMTFReasoningEncoder,
-        TCNEncoder,
-        TCNRegimeEncoder,
-        TransformerEncoder,
-    )
-
-    encoders = {
-        "tcn": TCNEncoder,
-        "tcn_regime": TCNRegimeEncoder,
-        "transformer": TransformerEncoder,
-        "gru": GRUEncoder,
-        "mtf": MTFEncoder,
-        "mtf_reasoning": MTFReasoningEncoder,
-        "lite_tcn": LiteTCNEncoder,
-        "mtf_shared_tcn_reasoning": SharedTCNMTFReasoningEncoder,
-        "mtf_m1_tcn_htf_lite_reasoning": M1TCNHTFLiteReasoningEncoder,
-        "mtf_m1_tcn_htf_snapshot_reasoning": M1TCNHTFSnapshotReasoningEncoder,
-    }
-    try:
-        return encoders[arch]
-    except KeyError as exc:
-        raise ValueError(f"unknown encoder architecture: {arch!r}") from exc
 
 
 def validate_model_architecture(model: Any, expected_arch: str, *, use_vae: bool = False) -> None:
@@ -727,8 +694,6 @@ def _ppo_policy_and_ent_coef(
         ):
             raise ValueError("configured policy_distribution requires a Box action space")
         return "MultiInputPolicy", policy_kwargs, ent_coef
-    from learning.rl.ppo import ClampedStdMultiInputPolicy
-
     actor_arch = str(cfg.ppo.get("actor_arch", "shared"))
     policy_distribution = str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian"))
     if policy_distribution in {"hybrid_v1", "thesis_hybrid_v1", "thesis_conditioned_v1"}:

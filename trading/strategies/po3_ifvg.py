@@ -7,8 +7,8 @@ from collections.abc import Iterable
 import numpy as np
 import pandas as pd
 
-from .base import TradingStrategy, columns_matching
-from .types import FeatureRow
+from .feature_row_contract import FeatureRow
+from .strategy_contract import TradingStrategy, columns_matching
 
 
 class PO3IFVGStrategy(TradingStrategy):

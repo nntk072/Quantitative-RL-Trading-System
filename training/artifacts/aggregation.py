@@ -10,10 +10,11 @@ from typing import Any
 import numpy as np
 from omegaconf import OmegaConf
 
-from training.artifacts.manifests import _entry_funnel_by_split
+from artifacts.atomic import write_text_atomic
+from training.artifacts.manifests import entry_funnel_by_split
 
 
-def _save_seed_artifacts(
+def save_seed_artifacts(
     seed_dir: Path,
     seed: int,
     cfg: Any,
@@ -29,25 +30,25 @@ def _save_seed_artifacts(
         "train": train_trades.to_dict(orient="records") if train_trades is not None else [],
         "test": test_trades.to_dict(orient="records") if test_trades is not None else [],
     }
-    (seed_dir / "trade_log.json").write_text(json.dumps(trade_log, indent=2, default=str))
+    write_text_atomic(seed_dir / "trade_log.json", json.dumps(trade_log, indent=2, default=str))
     entry_diag = {
         "train": train_result.get("entry_diag", {}),
         "test": test_result.get("entry_diag", {}),
     }
-    (seed_dir / "entry_diag.json").write_text(json.dumps(entry_diag, indent=2, default=str))
+    write_text_atomic(seed_dir / "entry_diag.json", json.dumps(entry_diag, indent=2, default=str))
     entry_state = {
         "train": train_result.get("entry_state_diagnostics", {}),
         "test": test_result.get("entry_state_diagnostics", {}),
     }
-    (seed_dir / "entry_state.json").write_text(json.dumps(entry_state, indent=2, default=str))
+    write_text_atomic(seed_dir / "entry_state.json", json.dumps(entry_state, indent=2, default=str))
     try:
         config_dict = OmegaConf.to_container(cfg, resolve=True)
-        (seed_dir / "config.json").write_text(json.dumps(config_dict, indent=2, default=str))
+        write_text_atomic(seed_dir / "config.json", json.dumps(config_dict, indent=2, default=str))
     except Exception:
         pass
 
 
-def _aggregate_seed_results(
+def aggregate_seed_results(
     *,
     seed_results: list[dict[str, Any]],
     seed: int,
@@ -133,7 +134,7 @@ def _aggregate_seed_results(
 
     first = seed_results[0]
     aggregated["entry_funnel_seed"] = int(first["seed"])
-    aggregated["entry_funnel_by_split"] = _entry_funnel_by_split(
+    aggregated["entry_funnel_by_split"] = entry_funnel_by_split(
         first.get("train_result"), first.get("test_result")
     )
 

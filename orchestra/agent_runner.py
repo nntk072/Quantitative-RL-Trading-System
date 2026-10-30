@@ -9,7 +9,7 @@ import pty
 import sys
 from pathlib import Path
 
-from .models import Model
+from .model_provider_registry import Model
 from .sessions import SessionManager
 
 

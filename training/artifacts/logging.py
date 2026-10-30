@@ -5,10 +5,10 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-_RUN_LOG_NAME = "train.log"
+RUN_LOG_FILENAME = "train.log"
 
 
-def _attach_run_log(run_dir: Path) -> Path | None:
+def attach_run_log(run_dir: Path) -> Path | None:
     """Mirror console logs into ``run_dir/train.log``.
 
     Adds a file handler to the root logger without removing console handlers,
@@ -17,7 +17,7 @@ def _attach_run_log(run_dir: Path) -> Path | None:
     duplicating records or truncating the file. An unwritable directory
     returns ``None`` rather than aborting training over logging.
     """
-    name = str(run_dir / _RUN_LOG_NAME)
+    name = str(run_dir / RUN_LOG_FILENAME)
     for handler in logging.getLogger().handlers:
         if isinstance(handler, logging.FileHandler) and handler.baseFilename == name:
             return Path(name)

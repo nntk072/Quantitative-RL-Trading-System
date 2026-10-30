@@ -50,13 +50,13 @@ packages are intentionally excluded until they exist.
 
 | Current source path | Ownership example |
 |---|---|
-| `configuration/loader.py` | Config resolution |
+| `configuration/configuration_loader.py` | Config resolution |
 | `artifacts/atomic.py` | Generic atomic writes |
-| `artifacts/contracts.py` | Storage-independent artifact identity and store protocol |
-| `artifacts/storage.py` | Filesystem artifact-store adapter |
-| `market_data/loading/pipeline.py` | Bar dataset loading |
+| `artifacts/contracts.py` | Storage-independent artifact identity and manifest contracts |
+| `artifacts/promotion.py` | Explicit artifact lifecycle promotion |
+| `market_data/loading/market_data_ingestion.py` | Bar dataset loading |
 | `market_data/contracts.py` | Logical dataset and event-schema contract |
-| `features/pipeline/builder.py` | Feature stage composition |
+| `features/pipeline/feature_matrix_builder.py` | Feature stage composition |
 | `features/contracts.py` | Feature/raw/learned input-view schema |
 | `features/context/reachability.py` | Reachability feature math |
 | `trading/orders/entries.py` | Structural order geometry |
@@ -64,7 +64,7 @@ packages are intentionally excluded until they exist.
 | `trading/orders/targets.py` | Structural target candidate generation |
 | `trading/risk/contracts.py` | Risk-policy semantic contract |
 | `trading/orders/selection.py` | TP action selection decoding |
-| `simulation/environment/factory.py` | Environment construction |
+| `simulation/environment/trading_environment_factory.py` | Environment construction |
 | `decisioning/actions.py` | Versioned action schema |
 | `decisioning/observations.py` | Versioned observation schema |
 | `decisioning/observation_state.py` | Observation coordinate constants |
@@ -74,9 +74,11 @@ packages are intentionally excluded until they exist.
 | `learning/rl/environment_adapter.py` | Sharded SB3 vector-environment adapter |
 | `models/runtime/precision.py` | Model-specific autocast policy |
 | `training/runner/seed_runtime.py` | Seed training workflow |
-| `evaluation/reanalysis/runner.py` | Checkpoint reanalysis workflow |
+| `evaluation/reanalysis/checkpoint_reanalysis.py` | Checkpoint reanalysis workflow |
 | `evaluation/reporting/box_table.py` | Shared report table renderer |
-| `experiments/campaigns/execution.py` | Campaign execution lifecycle |
+| `experiments/campaigns/campaign_execution.py` | Campaign execution lifecycle |
+| `experiments/campaigns/cache_failure_recovery.py` | Campaign cache failure recovery |
+| `compute/slurm/campaign_worker_resources.py` | Worker resource sampling and dispatch mechanics |
 | `compute/environment/device.py` | Hardware capability discovery |
 | `live/runtime/strategy.py` | Broker-neutral live strategy |
 | `decisioning/contracts.py` | Backend-neutral decision and provider contracts |
@@ -87,7 +89,7 @@ packages are intentionally excluded until they exist.
 | `evaluation/reporting/dataset_renderers.py` | Typed report dataset renderers |
 | `compute/contracts.py` | Device and execution-backend capabilities |
 | `integrations/mt5/domain/trader.py` | MT5-specific adapter |
-| `orchestra/pipeline.py` | Engineering workflow composition |
+| `orchestra/task_orchestration.py` | Engineering workflow composition |
 | `tests/architecture/test_dependency_rules.py` | Enforced package dependency rules |
 
 ## Implemented Boundary Work

@@ -28,10 +28,9 @@ from numpy.typing import NDArray
 from omegaconf import OmegaConf
 
 from market_data.loading.ticks import TickBook
-from simulation.environment.factory import guardrail_kwargs, make_env
-from trading.execution.broker import Position
-from trading.orders.entries import OrderGeometry, place_strategy_order
-from trading.orders.selection import decode_tp_mode
+from simulation.environment import guardrail_kwargs, make_env
+from trading.execution import Position
+from trading.orders import OrderGeometry, decode_tp_mode, place_strategy_order
 
 ARCHIVED_TRAINING_COMMIT = "cbf7825170dee7f68ad578a19023e0847b11393f"
 EVIDENCE_ROOT = Path("docs/thesis/evidence/exit_action_semantics_20261024")
@@ -47,7 +46,7 @@ TICK_RELATIVE = Path(
 )
 RELEVANT_SOURCE_FILES = (
     "simulation/environment/action_runtime.py",
-    "simulation/environment/factory.py",
+    "simulation/environment/trading_environment_factory.py",
     "simulation/environment/market_access.py",
     "simulation/environment/entry_runtime.py",
     "simulation/environment/ema_exit_runtime.py",
@@ -630,7 +629,7 @@ def _source_compatibility(root: Path, cfg: Any) -> bool:
         if name
         not in {
             "simulation/environment/episode_runtime.py",
-            "simulation/environment/factory.py",
+            "simulation/environment/trading_environment_factory.py",
         }
     ]
     result = subprocess.run(
@@ -646,7 +645,9 @@ def _source_compatibility(root: Path, cfg: Any) -> bool:
         cwd=root,
         text=True,
     )
-    current_factory = (root / "simulation/environment/factory.py").read_text(encoding="utf-8")
+    current_factory = (root / "simulation/environment/trading_environment_factory.py").read_text(
+        encoding="utf-8"
+    )
     archived_factory_tree = ast.parse(archived_factory)
     current_factory_tree = ast.parse(current_factory)
     archived_factory_functions = {

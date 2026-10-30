@@ -231,7 +231,6 @@ ftmo:
 live_risk_overrides:
   risk_per_symbol: 0.01          # 1% of balance ≈ $1000 on a $100k account
   max_total_risk: 0.02           # broker-stop risk across open positions; unknown stops block entries
-  default_lot_size: 0.1          # fallback if risk-based sizing fails
   stop_loss_pips: 50.0           # distance used for sizing and attached broker-side stop
   interval_minutes: 1            # M1 policy cadence for live_trading_rl.py
 
@@ -271,6 +270,7 @@ features:
   po3_reference_timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
   po3_phase_mode: "legacy" # legacy or reclaim_then_ifvg
   include_pd_context: false     # session-routed Asia/London/prev-day-week PD context + LTF BOS/MSS
+  include_previous_session_pd: false # previous-session premium/discount feature block
   po3_htf: "M15"                # HTF for the full PO3 pipeline
   po3_ltf: "M5"                 # primary (LTF) for the full PO3 pipeline
   # MTF expansion (mtf_feature_expansion_plan.md §§4-5). Each block is an
@@ -642,6 +642,7 @@ auxiliary:
 # the Idea 1 (PO3 + IFVG) values; config/3_distribution.yaml overrides.
 strategy:
   name: "po3_ifvg"              # "baseline" | "po3_ifvg" | "distribution"
+  variant_id: null
   manipulation_filter: "against"  # "against" | "follow"
   session:
     timezone: "Etc/GMT-3"
@@ -676,10 +677,12 @@ strategy:
   entry:
     mode: "legacy"             # legacy | confirmed_first_eligible | confirmed_retest | preconfirmation_exploratory
     enforce_gate: false         # false = diagnostic; true = hard gate
+    previous_session_pd_gate: false
   reward:
     entry_bonus: 0.01
     manipulation_penalty: 0.02
     invalid_ifvg_penalty: 0.01
     distribution_bonus: 0.005
+    sweep_penalty: 0.02
     strategy_weight: 0.01
   batch_windows: 256     # supervised windows sampled per rollout

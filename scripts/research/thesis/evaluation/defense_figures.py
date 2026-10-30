@@ -17,7 +17,6 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
-from omegaconf import DictConfig, OmegaConf
 
 from configuration import load_config
 from evaluation.plotting.data_plots import plot_split_overlay
@@ -35,10 +34,11 @@ from evaluation.plotting.defense_plots import (
 from evaluation.plotting.plots import plot_daily_pnl, plot_drawdown, plot_equity_curve
 from evaluation.plotting.po3_plots import plot_annotated_ny_session, plot_fvg_signals
 from features import build_features, feature_cache_path
-from market_data.loading.pipeline import run_pipeline
+from market_data.loading import run_pipeline
 from market_data.splits.definitions import get_split_config, make_train_mask
 from market_data.transforms.activity import attach_activity, tick_counts_from_index
 from market_data.transforms.sessions import ny_session_mask
+from training.configuration.strategy_overlays import merge_strategy_config
 
 log = logging.getLogger(__name__)
 
@@ -209,9 +209,7 @@ def main() -> None:
     out: Path = args.out
     out.mkdir(parents=True, exist_ok=True)
     cfg = load_config(config_path=Path("config/features/full_po3_mtf.yaml"))
-    idea = Path("config/2_po3_ifvg.yaml")
-    if idea.exists():
-        cfg = cast(DictConfig, OmegaConf.merge(cfg, OmegaConf.load(idea)))
+    cfg = merge_strategy_config(cfg, "po3_ifvg")
     cfg.features.vwap_session = True
     cfg.features.include_session_ohlc = True
     train_end, test_start = get_split_config(cfg)

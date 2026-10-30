@@ -7,11 +7,11 @@ set +e
 
 ruff format \
     market_data/loading/ticks.py \
-    tests/test_ticks.py \
+    tests/test_market_data/test_ticks.py \
     scripts/research/audits/audit_tick_tie_policy.py
 format_apply_rc=$?
 
-python -m pytest tests/test_ticks.py tests/test_envs/test_eligibility_wiring.py -q
+python -m pytest tests/test_market_data/test_ticks.py tests/test_simulation/test_environment/test_eligibility_wiring.py -q
 focused_pytest_rc=$?
 
 python scripts/research/audits/audit_tick_tie_policy.py \

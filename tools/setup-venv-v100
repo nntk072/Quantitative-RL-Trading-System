@@ -2,7 +2,9 @@
 # Create the isolated CUDA 12.6 project environment required by V100 (sm_70).
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${TRITON_REPO:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+UV_BIN="${THESIS_UV:-uv}"
 V100_ENV="${TRITON_V100_ENV:-/scratch/work/nguyenl37/.venv-v100}"
 cd "$REPO"
 
@@ -14,25 +16,25 @@ if [[ -z "${SLURM_JOB_ID:-}" ]]; then
   echo "ERROR: run this installer inside an allocated V100 compute shell" >&2
   exit 1
 fi
-if ! command -v uv >/dev/null 2>&1; then
+if ! command -v "$UV_BIN" >/dev/null 2>&1; then
   echo "ERROR: uv is required on the V100 compute node" >&2
   exit 1
 fi
 
 export UV_PROJECT_ENVIRONMENT="$V100_ENV"
-uv python install 3.12
+"$UV_BIN" python install 3.12
 if [[ -x "$V100_ENV/bin/python" ]]; then
   "$V100_ENV/bin/python" -c 'import sys; assert sys.version_info[:2] == (3, 12)'
 elif [[ -e "$V100_ENV" ]]; then
   echo "ERROR: $V100_ENV exists without a Python interpreter; inspect it before replacing it" >&2
   exit 1
 else
-  uv venv --python 3.12 "$V100_ENV"
+  "$UV_BIN" venv --python 3.12 "$V100_ENV"
 fi
 
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/aalto-v100-env.XXXXXX")"
 trap 'rm -rf "$tmp_dir"' EXIT
-uv export --locked --extra dev --no-emit-project --no-emit-package torch \
+"$UV_BIN" export --locked --extra dev --no-emit-project --no-emit-package torch \
   -o "$tmp_dir/locked-requirements.txt"
 
 # The project lock targets CUDA 13, while V100 needs the CUDA 12.6 torch wheel.
@@ -47,11 +49,11 @@ awk '
 !skip { print }
 ' "$tmp_dir/locked-requirements.txt" > "$tmp_dir/v100-requirements.txt"
 
-uv pip sync --python "$V100_ENV/bin/python" "$tmp_dir/v100-requirements.txt"
-uv pip install --python "$V100_ENV/bin/python" torch==2.14.1 \
+"$UV_BIN" pip sync --python "$V100_ENV/bin/python" "$tmp_dir/v100-requirements.txt"
+"$UV_BIN" pip install --python "$V100_ENV/bin/python" torch==2.14.1 \
   --index-url https://download.pytorch.org/whl/cu126
-uv pip install --python "$V100_ENV/bin/python" -e "$REPO" --no-deps
-uv pip check --python "$V100_ENV/bin/python"
+"$UV_BIN" pip install --python "$V100_ENV/bin/python" -e "$REPO" --no-deps
+"$UV_BIN" pip check --python "$V100_ENV/bin/python"
 
 "$V100_ENV/bin/python" - <<'PY'
 import torch

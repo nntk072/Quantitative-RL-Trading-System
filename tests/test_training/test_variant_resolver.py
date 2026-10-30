@@ -1,0 +1,423 @@
+"""Tests for training.configuration.variant_resolution and the variant launcher.
+
+Plain Python (PyYAML only). Runs under pytest, or directly: python -m tests.test_training.test_variant_resolver
+"""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+import pytest
+import yaml
+
+from training.configuration.variant_resolution import (
+    ARCHS,
+    PREBUILT_FEATURE_CACHES,
+    PROJECT_ROOT,
+    VariantError,
+    consistency_table,
+    load_experiments,
+    resolve_variant,
+    train_args,
+)
+from training.configuration.variant_risk_policy import load_variant_ftmo_config
+
+LAUNCHER = PROJECT_ROOT / "scripts" / "research" / "frozen-launches" / "train_one_variant.sh"
+
+
+def test_e_f_g_architectures_are_registered_for_variant_resolution() -> None:
+    assert {
+        "mtf_shared_tcn_reasoning",
+        "mtf_m1_tcn_htf_lite_reasoning",
+        "mtf_m1_tcn_htf_snapshot_reasoning",
+    }.issubset(ARCHS)
+
+
+def _all_names() -> list[str]:
+    return [str(v["name"]) for v in load_experiments()["variants"]]
+
+
+def _write_experiments(data: dict[str, object]) -> Path:
+    tmp = Path(tempfile.mkdtemp()) / "experiments.yaml"
+    tmp.write_text(yaml.safe_dump(data), encoding="utf-8")
+    return tmp
+
+
+def _overrides_by_key(resolved: dict[str, list[str]]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for item in resolved["overrides"]:
+        key, value = item.split("=", 1)
+        assert key not in out, f"duplicate override {key}"
+        out[key] = value
+    return out
+
+
+def test_every_variant_resolves_and_declares_reward_mode() -> None:
+    names = _all_names()
+    assert len(names) == len(set(names))
+    for name in names:
+        resolved = resolve_variant(
+            name, vae_path="placeholder.pth"
+        )  # only the VAE variant needs it
+        assert resolved["reward_mode"] in (
+            "dsr",
+            "pnl",
+            "rr",
+            "equity_delta_r",
+            "equity_log_growth",
+        )
+        assert resolved["steps"] > 0
+        assert resolved["seeds"]
+        policy_path = PROJECT_ROOT / "config" / "variants" / f"{name}.yaml"
+        assert policy_path.is_file(), f"missing per-variant policy YAML: {policy_path}"
+        policy = load_variant_ftmo_config(name)
+        assert policy["limit_value_mode"] == "fixed_usd"
+        assert policy["risk_per_trade_limit_pct"] == pytest.approx(0.01)
+        assert policy["daily_loss_limit_pct"] == pytest.approx(0.05)
+        assert policy["max_loss_limit_initial_pct"] == pytest.approx(0.10)
+
+
+def test_variant_row_overrides_registry_defaults() -> None:
+    experiments = _write_experiments(
+        {
+            "defaults": {
+                "algo": "ppo",
+                "arch": "gru",
+                "strategy": "distribution",
+                "steps": 2048,
+                "seeds": [7, 8],
+            },
+            "variants": [{"name": "probe", "reward_mode": "dsr", "arch": "tcn", "steps": 4096}],
+        }
+    )
+
+    resolved = resolve_variant("probe", experiments_path=experiments)
+
+    assert resolved["algo"] == "ppo"
+    assert resolved["arch"] == "tcn"
+    assert resolved["strategy"] == "distribution"
+    assert resolved["steps"] == 4096
+    assert resolved["seeds"] == [7, 8]
+
+
+def test_all_18_thesis_variants_build_features_from_the_active_split() -> None:
+    base_config = yaml.safe_load((PROJECT_ROOT / "config" / "base" / "default.yaml").read_text())
+    assert base_config["env"]["peak_trailing_dd_limit"] == 0.0
+    campaign_names = [
+        line.strip()
+        for line in (PROJECT_ROOT / "config" / "campaigns" / "variant_list.txt")
+        .read_text()
+        .splitlines()
+        if line.strip()
+    ]
+    assert len(campaign_names) == len(set(campaign_names)) == 18
+    assert PREBUILT_FEATURE_CACHES == {}
+    for name in campaign_names:
+        resolved = resolve_variant(name)
+        assert not any(
+            override.startswith("data.prebuilt_feature_cache=")
+            for override in resolved["overrides"]
+        )
+        assert _overrides_by_key(resolved).get("env.peak_trailing_dd_limit", "0.0") == "0.0"
+
+
+def test_baseline_ladder_rungs_pin_baseline_strategy_name() -> None:
+    # Before the fix these rungs silently ran the default po3_ifvg strategy.
+    for name in ("ladder_a0_flat", "ladder_a1_sl", "ladder_a4b_entry_fsm"):
+        resolved = resolve_variant(name)
+        assert resolved["strategy"] == "baseline"
+        assert _overrides_by_key(resolved)["strategy.name"] == "baseline"
+
+
+def test_strategy_rungs_use_strategy_flag_not_name_override() -> None:
+    resolved = resolve_variant("ladder_a0_flat_dist")
+    assert resolved["strategy"] == "distribution"
+    assert "strategy.name" not in _overrides_by_key(resolved)
+    args = train_args(resolved, 42)
+    assert args[args.index("--strategy") + 1] == "distribution"
+
+
+def test_controls_run_declared_algo_and_arch() -> None:
+    sac = resolve_variant("ablation_sac_agent")
+    assert (sac["algo"], sac["arch"]) == ("sac", "gru")
+    transformer = resolve_variant("ablation_transformer_encoder")
+    assert transformer["arch"] == "transformer"
+    args = train_args(sac, 42)
+    assert args[args.index("--algo") + 1] == "sac"
+    assert args[args.index("--arch") + 1] == "gru"
+
+
+def test_mtf_reasoning_arch_resolves_for_a_campaign_variant() -> None:
+    experiments = _write_experiments(
+        {
+            "defaults": {"steps": 8, "seeds": [41]},
+            "variants": [
+                {
+                    "name": "mtf_reasoning_probe",
+                    "reward_mode": "dsr",
+                    "strategy": "baseline",
+                    "strategy_actions": True,
+                    "arch": "mtf_reasoning",
+                }
+            ],
+        }
+    )
+
+    resolved = resolve_variant("mtf_reasoning_probe", experiments_path=experiments)
+    args = train_args(resolved, 41)
+
+    assert resolved["arch"] == "mtf_reasoning"
+    assert args[args.index("--arch") + 1] == "mtf_reasoning"
+
+
+def test_vae_variant_requires_vae_path() -> None:
+    try:
+        resolve_variant("ablation_conditional_narrative")
+    except VariantError as exc:
+        assert "VAE" in str(exc)
+    else:
+        raise AssertionError("use_vae=1 without a VAE path must fail")
+    resolved = resolve_variant("ablation_conditional_narrative", vae_path="/x/vae.pth")
+    args = train_args(resolved, 42)
+    assert "--use-vae" in args and args[args.index("--vae-path") + 1] == "/x/vae.pth"
+
+
+def test_reward_mode_must_be_declared() -> None:
+    data = load_experiments()
+    data["variants"] = [{"name": "no_reward", "arch": "tcn"}]
+    path = _write_experiments(data)
+    try:
+        resolve_variant("no_reward", experiments_path=path)
+    except VariantError as exc:
+        assert "reward_mode" in str(exc)
+    else:
+        raise AssertionError("missing reward_mode must fail")
+
+
+def test_steps_and_seeds_overrides_flow_into_args() -> None:
+    resolved = resolve_variant("ladder_a2_tp", steps=8192, seeds=[7])
+    assert _overrides_by_key(resolved)["ppo.total_timesteps"] == "8192"
+    assert resolved["seeds"] == [7]
+    args = train_args(resolved, 7)
+    assert args[args.index("--seed") + 1] == "7"
+    assert "--seeds" not in args
+
+
+def test_variant_resolver_leaves_tick_latency_to_yaml_defaults() -> None:
+    resolved = resolve_variant("ladder_a0_flat")
+
+    assert not any(
+        arg.startswith("execution.randomized_fill_latency_ms=") for arg in train_args(resolved, 42)
+    )
+
+
+def test_overrides_come_after_strategy_and_have_no_duplicates() -> None:
+    resolved = resolve_variant("ladder_a4b_po3_ifvg")
+    keys = _overrides_by_key(resolved)  # asserts uniqueness
+    assert keys["env.reward_mode"] == "pnl"
+    assert keys["features.include_pd_context"] == "true"
+    assert keys["ftmo.trailing_dd_limit"] == "0.0"
+
+
+def test_selected_entry_fsm_pair_disables_peak_drawdown_behavior() -> None:
+    control = _overrides_by_key(resolve_variant("ladder_a4b_entry_fsm"))
+    treatment = _overrides_by_key(resolve_variant("ladder_a4a_entry_fsm_hidden"))
+
+    assert control["env.peak_trailing_dd_limit"] == "0.0"
+    assert treatment["env.peak_trailing_dd_limit"] == "0.0"
+    assert control["env.risk_floor"] == "0.0005"
+    assert treatment["env.risk_floor"] == "0.0005"
+    assert control["env.entry_state_observation"] == "true"
+    assert treatment["env.entry_state_observation"] == "false"
+
+
+def test_quarter_grid_pair_preserves_policy_and_shares_data_transform() -> None:
+    continuous = {
+        name: value
+        for name, value in _overrides_by_key(resolve_variant("ladder_a4b_entry_fsm")).items()
+        if not name.startswith("data.")
+    }
+    quantized_control = _overrides_by_key(resolve_variant("ladder_a4b_entry_fsm_qgrid025"))
+    quantized_treatment = _overrides_by_key(resolve_variant("ladder_a4a_entry_fsm_hidden_qgrid025"))
+
+    control_policy = {
+        key: value for key, value in quantized_control.items() if not key.startswith("data.")
+    }
+    treatment_policy = {
+        key: value for key, value in quantized_treatment.items() if not key.startswith("data.")
+    }
+    assert control_policy == continuous
+    assert treatment_policy == {
+        **continuous,
+        "env.entry_state_observation": "false",
+    }
+    assert quantized_control["data.price_discretization.enabled"] == "true"
+    assert quantized_treatment["data.price_discretization.increment"] == "0.25"
+    assert quantized_control["data.cache_dir"] == quantized_treatment["data.cache_dir"]
+    assert quantized_control["data.cache_dir"].endswith("qgrid025_v1")
+
+
+def test_quarter_grid_campaign_uses_the_matched_pair_and_locked_split() -> None:
+    campaign = yaml.safe_load(
+        (
+            PROJECT_ROOT
+            / "config/campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_dd10pilot2m_stochastic_v1.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    variant_file = PROJECT_ROOT / str(campaign["variant_file"])
+    listed = [line.strip() for line in variant_file.read_text(encoding="utf-8").splitlines()]
+
+    assert (
+        campaign["variants"]
+        == listed
+        == [
+            "ladder_a4b_entry_fsm_qgrid025",
+            "ladder_a4a_entry_fsm_hidden_qgrid025",
+        ]
+    )
+    assert campaign["timesteps"] == 2_000_000
+    assert campaign["split"] == {
+        "train_start": "2024-12-30",
+        "train_end": "2025-12-31",
+        "test_start": "2026-01-01",
+    }
+
+
+def test_consistency_table_covers_all_variants() -> None:
+    names = _all_names()
+    rows = consistency_table(names)
+    assert len(rows) == len(names)
+    by_name = {r["variant"]: r for r in rows}
+    # The confound this module makes visible: baseline-named rungs and PO3 rungs
+    # differ in reward mode and PD context.
+    assert by_name["ladder_a0_flat"]["reward_mode"] == "dsr"
+    assert by_name["ladder_a0_flat_po3"]["reward_mode"] == "pnl"
+    assert by_name["ladder_a0_flat"]["include_pd_context"] is False
+    assert by_name["ladder_a0_flat_po3"]["include_pd_context"] is True
+
+
+def test_dollar_band_q5_pair_differs_only_by_q5_objective() -> None:
+    q5_off = _overrides_by_key(resolve_variant("ladder_a4a_dollar_band_q5_off"))
+    q5_on = _overrides_by_key(resolve_variant("ladder_a4a_dollar_band_q5_on"))
+    shared = {
+        "env.risk_mode": "dollar_band",
+        "env.risk_band_max_usd": "900",
+        "env.risk_band_hold_below_usd": "100",
+        "env.risk_floor": "0",
+    }
+    assert {key: q5_off[key] for key in shared} == shared
+    assert {key: q5_on[key] for key in shared} == shared
+    assert q5_off["env.risk_floor"] == "0"
+    assert q5_off["constrained_rl.enabled"] == "false"
+    assert q5_on["constrained_rl.enabled"] == "true"
+    assert q5_on["constrained_rl.episode_cost_budget"] == "0.1"
+    assert q5_on["constrained_rl.cost_discount_gamma"] == "1.0"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX launcher requires Linux/WSL")
+def test_launcher_dry_run_prints_every_seed() -> None:
+    out_dir = tempfile.mkdtemp()
+    env = {
+        "PATH": "/usr/bin:/bin",
+        "VARIANT": "ablation_sac_agent",
+        "DRY_RUN": "1",
+        "OUT_DIR": out_dir,
+        "PYTHON": sys.executable,
+    }
+    proc = subprocess.run(
+        ["bash", str(LAUNCHER)], env=env, capture_output=True, text=True, check=False, timeout=120
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert "algo=sac arch=gru" in proc.stdout
+    for seed in (42, 43, 44, 45, 46):
+        assert f"ablation_sac_agent__seed{seed}" in proc.stdout
+    assert "--algo sac" in proc.stdout and "--arch gru" in proc.stdout
+    assert "execution.randomized_fill_latency_ms=30.0" not in proc.stdout
+    assert not any(Path(out_dir).glob("*.done"))  # dry run must not write markers
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX launcher requires Linux/WSL")
+def test_launcher_refuses_vae_variant_without_vae_path() -> None:
+    env = {
+        "PATH": "/usr/bin:/bin",
+        "VARIANT": "ablation_conditional_narrative",
+        "DRY_RUN": "1",
+        "OUT_DIR": tempfile.mkdtemp(),
+        "PYTHON": sys.executable,
+    }
+    proc = subprocess.run(
+        ["bash", str(LAUNCHER)], env=env, capture_output=True, text=True, check=False, timeout=120
+    )
+    assert proc.returncode != 0
+    assert "VAE" in proc.stderr
+
+
+def test_manifest_cli_writes_resolved_config() -> None:
+    import json
+    import os
+
+    out = Path(tempfile.mkdtemp()) / "resolved_config.json"
+    env = dict(os.environ, PYTHONPATH=str(PROJECT_ROOT))
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "training.configuration.variant_resolution",
+            "manifest",
+            "ladder_a1_sl_dist",
+            "--seed",
+            "43",
+            "--out",
+            str(out),
+        ],
+        cwd=PROJECT_ROOT,
+        env=env,
+        check=True,
+        capture_output=True,
+        timeout=120,
+    )
+    manifest = json.loads(out.read_text())
+    assert manifest["variant"] == "ladder_a1_sl_dist"
+    assert manifest["seed"] == 43
+    assert manifest["strategy"] == "distribution"
+    assert "--seed" in manifest["train_args"] and "43" in manifest["train_args"]
+
+
+def test_campaign_config_overrides_are_last_in_resolved_training_args() -> None:
+    resolved = resolve_variant(
+        "ladder_a4b_entry_fsm_qgrid025",
+        steps=2_000_000,
+        seeds=[50],
+        config_overrides=[
+            "ftmo.risk_sizing_limit_usd=900.0",
+            "ftmo.trailing_dd_limit=0.0",
+        ],
+    )
+
+    assert resolved["overrides"][-2:] == [
+        "ftmo.risk_sizing_limit_usd=900.0",
+        "ftmo.trailing_dd_limit=0.0",
+    ]
+    args = train_args(resolved, 50)
+    assert args[-2:] == [
+        "ftmo.risk_sizing_limit_usd=900.0",
+        "ftmo.trailing_dd_limit=0.0",
+    ]
+
+
+if __name__ == "__main__":
+    import sys
+
+    failures = 0
+    for name, fn in sorted(globals().items()):
+        if name.startswith("test_") and callable(fn):
+            try:
+                fn()
+                print(f"PASS {name}")
+            except Exception as exc:  # noqa: BLE001
+                failures += 1
+                print(f"FAIL {name}: {exc}")
+    sys.exit(1 if failures else 0)

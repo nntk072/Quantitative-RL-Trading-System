@@ -32,17 +32,20 @@ Never add secrets or `Co-authored-by` (auto-added).
 ```bash
 git status -sb
 git diff --stat
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy .
-uv run pytest <relevant test paths> -q
+.venv/bin/ruff format --check .       # ARM/GH200; use matching venv on other hosts
+.venv/bin/ruff check .
+.venv/bin/mypy .
+.venv/bin/pytest <relevant test paths> -q
 ```
 
-If `ruff format --check .` fails: run `uv run ruff format .`, stage the
-reformats, then re-run the gate. Do not push with format drift.
+If `ruff format --check .` fails: run `.venv/bin/ruff format .` on ARM/GH200
+(or the architecture-matched formatter elsewhere), then re-run the gate. Do not
+push with format drift.
 
 **Do not** substitute path-scoped mypy/ruff for the full-tree commands above.
-`uv run mypy .` is required (same as CI). Scoped checks while editing do not count.
+`.venv/bin/mypy .` is required on ARM/GH200 (same full-tree scope on other hosts).
+Scoped checks while editing do not count. Do not invoke these checks through an
+architecture-mismatched `uv` executable.
 
 Do **not** run `pytest tests/ -v` before every commit — only the tests that cover
 this change. Full-suite pytest is GitHub CI / Orchestra phase 9.

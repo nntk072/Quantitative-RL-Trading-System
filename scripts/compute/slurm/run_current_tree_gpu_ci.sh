@@ -2,7 +2,8 @@
 # Run the repository CI gates in one existing Slurm GPU allocation.
 set -uo pipefail
 
-ROOT=/scratch/work/nguyenl37/Aalto_MS_Thesis
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="${TRITON_REPO:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 cd "$ROOT"
 if [[ -z "${SLURM_JOB_ID:-}" ]]; then
   echo "ERROR: this gate must run inside an existing GPU allocation" >&2

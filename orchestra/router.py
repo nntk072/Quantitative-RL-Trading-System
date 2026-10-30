@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import fcntl
 import json
-import os
 import time
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from artifacts.atomic import write_text_atomic
+
 from .health import HealthRegistry
-from .models import Model, load_models, tier_rank
+from .model_provider_registry import Model, load_models, tier_rank
 
 _PACIFIC = ZoneInfo("America/Los_Angeles")
 _RPD_SAFETY = 1
@@ -31,11 +32,7 @@ class QuotaTracker:
             self._data = json.loads(self.usage_file.read_text())
 
     def _save(self) -> None:
-        self.state_dir.mkdir(parents=True, exist_ok=True)
-        tmp = self.usage_file.with_suffix(".tmp")
-        with tmp.open("w") as fh:
-            json.dump(self._data, fh, indent=2)
-        os.replace(tmp, self.usage_file)
+        write_text_atomic(self.usage_file, json.dumps(self._data, indent=2))
 
     def _today_local(self) -> str:
         return time.strftime("%Y-%m-%d")
@@ -156,7 +153,7 @@ class ModelRouter:
         escalate: bool = False,
     ) -> list[Model]:
         """Select models for a role. Returns empty list when no candidate (PARK)."""
-        from .models import complexity_to_tier
+        from .model_provider_registry import complexity_to_tier
 
         tier = task_tier or complexity_to_tier(task_complexity)
         candidates = self.get_candidates(role)
@@ -172,7 +169,7 @@ class ModelRouter:
         escalate: bool = False,
     ) -> list[Model]:
         """Other available models for role if primary fails."""
-        from .models import complexity_to_tier
+        from .model_provider_registry import complexity_to_tier
 
         tier = task_tier or complexity_to_tier(task_complexity)
         candidates = self.get_candidates(role)

@@ -22,7 +22,7 @@ TRAIN_MODULE = Path(
 WALKFORWARD_MODULE = Path(
     os.environ.get(
         "AALTO_WF_RUNTIME_SOURCE",
-        str(_REPO_ROOT / "training/runner/walkforward_runtime.py"),
+        str(_REPO_ROOT / "training/runner/walk_forward_validation.py"),
     )
 )
 

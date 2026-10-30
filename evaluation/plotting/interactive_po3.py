@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .interactive_common import (
+from .interactive_plot_rendering import (
     _LONG_COLOR,
     _SHORT_COLOR,
     _TEMPLATE,
@@ -30,7 +30,7 @@ def plot_fvg_signals_interactive(
     bars : pd.DataFrame
         M1 OHLC bars (DatetimeIndex) used to compute ``signals``.
     signals : pd.DataFrame
-        Output of :func:`~features.po3.config.detect_po3_entries`
+        Output of :func:`~features.po3.trigger_rules.detect_po3_entries`
         (or any of its sub-detectors).  Shares the index of ``bars``.
     window : tuple[Timestamp, Timestamp], optional
         Slice of the data to display (inclusive).

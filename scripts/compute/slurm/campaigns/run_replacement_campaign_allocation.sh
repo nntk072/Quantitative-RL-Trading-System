@@ -81,26 +81,26 @@ if [[ ! -s "$OUT_DIR/campaign.json" ]]; then
   run_gate_step ruff_check "$REPO/.venv/bin/ruff" check .
   run_gate_step mypy "$REPO/.venv/bin/mypy" .
   run_gate_step pytest "$REPO/.venv/bin/pytest" \
-    tests/test_envs/test_entry_state_machine.py \
-    tests/test_envs/test_baseline_regression.py \
-    tests/test_envs/test_bundle_env_equivalence.py \
-    tests/test_envs/test_strategy_env.py \
-    tests/test_envs/test_fixed_risk_sizing.py \
-    tests/test_envs/test_trader_actions.py \
-    tests/test_train/test_train_rl_decomposition.py \
-    tests/test_train/test_checkpoint_eval_determinism.py \
-    tests/test_train/test_equity_gate.py \
-    tests/test_train/test_variant_resolver.py \
-    tests/test_train/test_variant_overrides_match_legacy.py \
-    tests/test_data/test_price_grid.py \
-    tests/test_data/test_pipeline_splits.py \
-    tests/test_ticks.py \
-    tests/test_triton_prebuild_cache.py \
-    tests/test_matrix_campaign_controller.py \
-    tests/test_campaign_artifacts.py \
-    tests/test_eval/test_eval_run_provenance.py \
-    tests/test_thesis_numerical_report_verifier.py \
-    tests/test_triton_gh200_capacity.py \
+    tests/test_simulation/test_environment/test_entry_state_machine.py \
+    tests/test_simulation/test_environment/test_baseline_regression.py \
+    tests/test_simulation/test_environment/test_bundle_env_equivalence.py \
+    tests/test_simulation/test_environment/test_strategy_env.py \
+    tests/test_simulation/test_environment/test_fixed_risk_sizing.py \
+    tests/test_simulation/test_environment/test_trader_actions.py \
+    tests/test_training/test_train_rl_decomposition.py \
+    tests/test_training/test_checkpoint_eval_determinism.py \
+    tests/test_training/test_equity_gate.py \
+    tests/test_training/test_variant_resolver.py \
+    tests/test_training/test_variant_overrides_match_legacy.py \
+    tests/integration/test_price_grid.py \
+    tests/integration/test_pipeline_splits.py \
+    tests/test_market_data/test_ticks.py \
+    tests/test_experiments/test_triton_prebuild_cache.py \
+    tests/test_experiments/test_matrix_campaign_controller.py \
+    tests/test_experiments/test_campaign_artifacts.py \
+    tests/integration/test_eval_run_provenance.py \
+    tests/test_thesis/test_thesis_numerical_report_verifier.py \
+    tests/test_compute/test_triton_gh200_capacity.py \
     tests/test_models/test_legacy_checkpoint_migration.py \
     tests/architecture/test_public_imports.py -q
 

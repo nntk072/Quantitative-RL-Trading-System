@@ -21,7 +21,8 @@ Default dates live in `config/base/default.yaml` and `config/experiments.yaml`
     exploratory: permanently classify it as exposed development data, record
     `oos_role: selection_acknowledged`, and make no confirmatory or pristine
     holdout claim from it. Do not use the same period again as final OOS.
-3. `experiments/variants/runner.py` writes `oos_role: final_report_only` by default.
+3. `experiments/variants/variant_ablation_runner.py`, invoked through
+   `thesis-campaign variants`, writes `oos_role: final_report_only` by default.
     Pass `--allow-locked-oos-for-selection` only for explicitly authorized
     exploratory selection on exposed data; record the selection acknowledgment.
 4. `thesis-train train` requires `--allow-locked-oos-for-selection` when used with

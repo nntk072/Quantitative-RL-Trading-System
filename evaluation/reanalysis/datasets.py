@@ -10,6 +10,7 @@ from typing import Any
 import pandas as pd
 from omegaconf import DictConfig
 
+from artifacts.identity import file_sha256
 from configuration.paths import repository_root
 from evaluation.reanalysis.provenance import (
     _evaluation_dataset_records,
@@ -19,10 +20,9 @@ from evaluation.reanalysis.provenance import (
     _validate_reanalysis_datasets,
     _validate_reanalysis_feature_cache,
 )
-from evaluation.reporting.run_manifest import file_sha256
 from features import build_features
 from features.context.policy_market import attach_policy_market_context
-from market_data.loading.pipeline import build_tick_books, run_pipeline
+from market_data.loading import build_tick_books, run_pipeline
 from market_data.splits.definitions import (
     get_split_config,
     get_train_start_config,

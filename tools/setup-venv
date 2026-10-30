@@ -2,14 +2,16 @@
 # Create / refresh the arch-matching project virtualenv.
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${TRITON_REPO:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+UV_BIN="${THESIS_UV:-uv}"
 machine="$(uname -m)"
 
 case "$machine" in
   aarch64)
     cd "$REPO"
     echo "Syncing $REPO/.venv (aarch64) ..."
-    uv sync --extra dev
+    "$UV_BIN" sync --extra dev
     echo "Done. Activate with: source .venv/bin/activate"
     ;;
   x86_64)

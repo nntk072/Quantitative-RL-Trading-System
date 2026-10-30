@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Literal
 
-from trading.account.state import AccountState
+from trading.account import AccountState
 
 from .costs import CostModel
 

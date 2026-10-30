@@ -11,7 +11,9 @@ from typing import Any
 import yaml
 
 from configuration import load_config
-from market_data.loading.pipeline import BAR_CACHE_VERSION, build_tick_books, run_pipeline
+from market_data.cache.bars import bar_cache_is_complete
+from market_data.cache.ticks import tick_cache_is_complete
+from market_data.loading import BAR_CACHE_VERSION, build_tick_books, run_pipeline
 from market_data.loading.ticks import TICK_CACHE_VERSION
 from market_data.transforms.price_grid import (
     ROUNDING_MODE,
@@ -158,7 +160,7 @@ def main() -> None:
         for symbol in cfg.data.symbols
         for timeframe in cfg.data.timeframes
     ]
-    missing = [str(path) for path in expected if not path.is_file() or path.stat().st_size == 0]
+    missing = [str(path) for path in expected if not bar_cache_is_complete(path)]
     if missing:
         raise RuntimeError(f"bar cache build left missing/empty outputs: {missing}")
 
@@ -171,9 +173,7 @@ def main() -> None:
         for dataset_name in cache_sets
         for symbol in cfg.data.symbols
     ]
-    missing_ticks = [
-        str(path) for path in tick_cache_paths if not path.is_file() or path.stat().st_size == 0
-    ]
+    missing_ticks = [str(path) for path in tick_cache_paths if not tick_cache_is_complete(path)]
     if missing_ticks:
         raise RuntimeError(f"tick cache build left missing/empty outputs: {missing_ticks}")
 

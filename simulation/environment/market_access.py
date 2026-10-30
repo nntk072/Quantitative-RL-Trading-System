@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from trading.account.state import AccountState
+from trading.account import AccountState
 
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase

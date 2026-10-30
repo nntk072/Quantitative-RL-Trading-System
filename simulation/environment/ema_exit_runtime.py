@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from trading.execution.broker import Position
+from trading.execution import Position
 
 from .market_view import BarView
 from .mixin_base import RuntimeMixinBase

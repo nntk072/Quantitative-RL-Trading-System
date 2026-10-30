@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .parse import extract_json_objects
-from .state import Phase
+from .task_state_store import Phase
 
 logger = logging.getLogger(__name__)
 

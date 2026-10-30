@@ -8,9 +8,9 @@ Scope: 18 variants x 5 seeds x 20M PPO timesteps.
 
 ## Verified evidence
 - Default env.data_source=frames in quant_rl/config/default.yaml.
-- train_rl.py already implements env.data_source=bundle, make_bundle_env, and _publish_obs_memmap.
+- Historical source note: the earlier `train_rl.py` implementation used `_publish_obs_memmap`; the current repository owns this behavior in `training.setup.observation_memmap.publish_observation_memmap`.
 - shared_bundle.py loads arrays read-only with np.load(mmap_mode="r"); TradingEnv consumes _bundle_arrays.
-- tests/test_envs/test_shared_bundle.py covers atomic creation/concurrent builders.
+- tests/test_simulation/test_environment/test_shared_bundle.py covers atomic creation/concurrent builders.
 - The existing GH200 campaign core-18x5 uses 2 trainers x 8 envs, allocated 32 CPU / 384 GiB; preserve its current state.
 - Historic worker PSS at n_envs 8/16/32/64: 18.5/34.3/65.9/129.2 GiB (not cgroup RAM).
 

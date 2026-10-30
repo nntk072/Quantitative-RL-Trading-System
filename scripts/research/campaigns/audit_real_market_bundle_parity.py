@@ -22,15 +22,15 @@ import pandas as pd
 from configuration import load_config
 from configuration.paths import repository_root
 from features import build_features, feature_cache_path
-from market_data.loading.pipeline import build_tick_books, run_pipeline
+from market_data.loading import build_tick_books, run_pipeline
 from market_data.splits.definitions import get_split_config, make_train_mask, split_train_test
 from simulation.environment.bundles import build_env_bundle
 from simulation.environment.spec import EnvSpec
 from simulation.environment.worker import make_bundle_env
 from training.configuration.cli import load_merged_config
 from training.configuration.variant_resolution import resolve_variant
-from training.setup.data import _publish_obs_memmap
 from training.setup.environments import make_env, strategy_from_cfg
+from training.setup.observation_memmap import publish_observation_memmap
 
 ROOT = repository_root(__file__)
 
@@ -384,7 +384,7 @@ def main() -> int:
                 raw_ticks = ticks_covering(tickbook, episode_bars)
             obs_mmap_dir = args.obs_mmap_dir or args.bundle_cache / "obs_mmap"
             obs_mmap_path = obs_mmap_dir / f"{name}.npy"
-            obs_mmap = _publish_obs_memmap(
+            obs_mmap = publish_observation_memmap(
                 episode_features,
                 episode_bars,
                 cfg,

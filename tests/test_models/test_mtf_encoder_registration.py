@@ -18,13 +18,14 @@ from decisioning.thesis import (
     thesis_id_from_box,
     thesis_observation_schema,
 )
-from learning.rl.agent import build_agent, encoder_for, validate_model_architecture
+from learning.rl.agent import build_agent, validate_model_architecture
 from models.encoders import (
     M1TCNHTFLiteReasoningEncoder,
     M1TCNHTFSnapshotReasoningEncoder,
     SharedTCNMTFReasoningEncoder,
 )
-from training.setup.models import _training_architecture_provenance
+from models.factory import encoder_for
+from training.setup.policy_diagnostics import _training_architecture_provenance
 
 _STREAMS = (
     ("seq", "seq_mask", 60, 282),

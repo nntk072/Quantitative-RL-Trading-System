@@ -4,26 +4,48 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 GATE="${1:-fast}"
 PYTHON_BIN="${THESIS_PYTHON:-}"
+if [[ -z "$PYTHON_BIN" ]]; then
+  case "$(uname -m)" in
+    aarch64|arm64)
+      if [[ -x "$ROOT/.venv/bin/python" ]]; then
+        PYTHON_BIN="$ROOT/.venv/bin/python"
+      fi
+      ;;
+    x86_64)
+      if [[ -x "$ROOT/.venv-x86/bin/python" ]]; then
+        PYTHON_BIN="$ROOT/.venv-x86/bin/python"
+      fi
+      ;;
+  esac
+fi
+UV_BIN="${THESIS_UV:-}"
+if [[ -z "$UV_BIN" && -n "$PYTHON_BIN" ]]; then
+  PROJECT_UV="$(dirname "$PYTHON_BIN")/uv"
+  if [[ -x "$PROJECT_UV" ]]; then
+    UV_BIN="$PROJECT_UV"
+  fi
+fi
+UV_BIN="${UV_BIN:-uv}"
 
 run_module() {
   if [[ -n "$PYTHON_BIN" ]]; then
     "$PYTHON_BIN" -m "$@"
   else
-    uv run "$@"
+    "$UV_BIN" run "$@"
   fi
 }
 
 sync_dev() {
-  if [[ "${THESIS_CHECK_NO_SYNC:-0}" != "1" ]]; then
-    uv sync --extra dev
+  if [[ -z "$PYTHON_BIN" && "${THESIS_CHECK_NO_SYNC:-0}" != "1" ]]; then
+    "$UV_BIN" sync --extra dev
   fi
 }
 
 run_deps() {
   if [[ -n "$PYTHON_BIN" ]]; then
-    UV_PYTHON="$PYTHON_BIN" UV_PROJECT_ENVIRONMENT="$(dirname "$(dirname "$PYTHON_BIN")")" make deps-check
+    UV="$UV_BIN" UV_PYTHON="$PYTHON_BIN" UV_PROJECT_ENVIRONMENT="$(dirname "$(dirname "$PYTHON_BIN")")" make deps-check
   else
-    make deps-check
+    UV="$UV_BIN" make deps-check
   fi
 }
 run_security_deps() {
@@ -49,33 +71,70 @@ run_quality() {
 run_architecture() { sync_dev; run_module pytest -q tests/architecture; }
 run_graph_quality() {
   sync_dev
-  run_module pytest -q tests/test_code_graph_quality.py
-  ./tools/crgraph build
-  ./tools/crgraph verify-critical --min-resolution 0.80 --min-critical-resolution 0.70
+  run_module pytest -q tests/test_tooling/test_code_graph_quality.py
+  local graph_index path status
+  graph_index="$(mktemp "${TMPDIR:-/tmp}/thesis-graph-index.XXXXXX")"
+  rm -f -- "$graph_index"
+  GIT_INDEX_FILE="$graph_index" git read-tree HEAD
+
+  # The architecture refactor is often checked before its new modules are
+  # staged. Build the graph from the live source tree while keeping the user's
+  # real index untouched: remove deleted paths and intent-to-add new Python or
+  # shell sources only in this disposable index.
+  while IFS= read -r -d '' path; do
+    if [[ ! -e "$path" && ! -L "$path" ]]; then
+      GIT_INDEX_FILE="$graph_index" git update-index --force-remove -- "$path"
+    fi
+  done < <(GIT_INDEX_FILE="$graph_index" git ls-files -z)
+  while IFS= read -r -d '' path; do
+    case "$path" in
+      *.py|*.sh) GIT_INDEX_FILE="$graph_index" git add --intent-to-add -- "$path" ;;
+    esac
+  done < <(GIT_INDEX_FILE="$graph_index" git ls-files --others --exclude-standard -z)
+
+  if GIT_INDEX_FILE="$graph_index" ./tools/crgraph build; then
+    :
+  else
+    status=$?
+    rm -f -- "$graph_index"
+    return "$status"
+  fi
+  if GIT_INDEX_FILE="$graph_index" ./tools/crgraph verify-critical \
+    --min-resolution 0.80 --min-critical-resolution 0.70; then
+    :
+  else
+    status=$?
+    rm -f -- "$graph_index"
+    return "$status"
+  fi
+  rm -f -- "$graph_index"
 }
 run_contracts() {
   sync_dev
   run_module pytest -q \
-    tests/test_config_typo_safety.py \
-    tests/test_action_schema_contract.py \
-    tests/test_campaign_artifacts.py \
-    tests/test_envs/test_observation_schema.py \
+    tests/test_configuration/test_config_typo_safety.py \
+    tests/integration/test_action_schema_contract.py \
+    tests/test_experiments/test_campaign_artifacts.py \
+    tests/test_simulation/test_environment/test_observation_schema.py \
     tests/test_features/test_cache_hash_full_column.py \
     tests/test_features/test_feature_cache_and_fit_scope.py
 }
-run_unit() { sync_dev; run_module pytest -q -m "not slow and not integration" tests; }
+run_unit() {
+  sync_dev
+  run_module pytest -q -m "unit and not slow and not integration and not gpu and not triton and not research" tests
+}
 run_build() {
   sync_dev
   local build_dir build_status
   build_dir="$(mktemp -d "${TMPDIR:-/tmp}/thesis-build.XXXXXX")"
   if [[ -n "$PYTHON_BIN" ]]; then
-    if uv build --python "$PYTHON_BIN" --out-dir "$build_dir"; then
+    if "$PYTHON_BIN" -m build --outdir "$build_dir"; then
       build_status=0
     else
       build_status=$?
     fi
   else
-    if uv build --out-dir "$build_dir"; then
+    if "$UV_BIN" build --out-dir "$build_dir"; then
       build_status=0
     else
       build_status=$?
@@ -93,7 +152,7 @@ run_build() {
       build_status=$?
     fi
   else
-    if uv run python -c "$smoke"; then
+    if "$UV_BIN" run python -c "$smoke"; then
       build_status=0
     else
       build_status=$?
@@ -102,20 +161,22 @@ run_build() {
   rm -rf -- "$build_dir"
   return "$build_status"
 }
-run_integration() { sync_dev; run_module pytest -q tests/test_integration; }
+run_integration() { sync_dev; run_module pytest -q -m "integration and not slow" tests; }
+run_research() { sync_dev; run_module pytest -q -m "research and not slow" tests; }
+run_slow() { sync_dev; run_module pytest -q -m slow tests; }
 run_parity() {
   sync_dev
   run_module pytest -q \
-    tests/test_backtest/test_broker_fill_accounting_unittest.py \
-    tests/test_backtest/test_broker_quote_parity_unittest.py \
-    tests/test_backtest/test_engine_execution_contract_unittest.py \
-    tests/test_envs/test_bundle_env_equivalence.py \
-    tests/test_envs/test_trading_env_golden_traces.py \
-    tests/test_envs/test_tick_fill_reconciliation.py
+    tests/test_simulation/test_backtest/test_broker_fill_accounting_unittest.py \
+    tests/test_simulation/test_backtest/test_broker_quote_parity_unittest.py \
+    tests/test_simulation/test_backtest/test_engine_execution_contract_unittest.py \
+    tests/test_simulation/test_environment/test_bundle_env_equivalence.py \
+    tests/test_simulation/test_environment/test_trading_env_golden_traces.py \
+    tests/test_simulation/test_environment/test_tick_fill_reconciliation.py
 }
 run_training_smoke() {
   sync_dev
-  run_module pytest -q tests/test_train/test_training_smoke.py tests/test_train/test_sac_smoke.py
+  run_module pytest -q tests/test_training/test_training_smoke.py tests/test_training/test_sac_smoke.py
 }
 run_gpu() {
   if [[ -x scripts/compute/slurm/run_current_tree_gpu_ci.sh ]]; then
@@ -137,10 +198,12 @@ case "$GATE" in
   unit) run_unit ;;
   build) run_build ;;
   integration) run_integration ;;
+  research) run_research ;;
+  slow) run_slow ;;
   parity) run_parity ;;
   training-smoke) run_training_smoke ;;
   fast) run_deps; run_architecture; run_contracts ;;
   full) run_deps; run_security_deps; run_security_secrets; run_quality; run_architecture; run_graph_quality; run_contracts; run_unit; run_build; run_integration; run_parity; run_training_smoke ;;
   gpu|triton) run_gpu ;;
-  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|graph-quality|contracts|unit|build|integration|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
+  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|graph-quality|contracts|unit|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
 esac

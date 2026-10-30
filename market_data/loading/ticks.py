@@ -8,8 +8,11 @@ Typical use
 -----------
 ::
 
-    tick_book = build_tick_book(path, tz="Etc/GMT-3",
-                                cache_path="cache/US100.cash_ticks_v3-validated-full-day.parquet")
+    tick_book = build_tick_book(
+        path,
+        tz="Etc/GMT-3",
+        cache_path=f"cache/US100.cash_ticks_{TICK_CACHE_VERSION}.parquet",
+    )
     train_ticks = tick_book.slice(pd.Timestamp("2025-01-01", tz="Etc/GMT-3"),
                                   pd.Timestamp("2025-12-31 23:59", tz="Etc/GMT-3"))
 """
@@ -25,11 +28,13 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
+from artifacts.identity import file_sha256
+from market_data.cache.ticks import build_tick_cache_identity, load_tick_cache, write_tick_cache
 from market_data.loading.bars import iter_ticks_chunks
 from market_data.transforms.price_grid import price_grid_identity, quantize_prices
 
 log = logging.getLogger(__name__)
-TICK_CACHE_VERSION = "v3-validated-full-day"
+TICK_CACHE_VERSION = "v4-semantic-manifest"
 
 
 @dataclass(frozen=True, slots=True)
@@ -535,28 +540,25 @@ def build_tick_book(
     full file size multiplied by pandas' usual 3-5x parsing overhead.
     """
     path = Path(path)
-    cache_identity_path: Path | None = None
-    expected_cache_identity = price_grid_identity(price_grid_increment)
+    cache_identity: dict[str, Any] | None = None
     if cache_path:
         cache_path = Path(cache_path)
-        cache_identity_path = Path(f"{cache_path}.price_grid_identity")
-        cached_identity = (
-            cache_identity_path.read_text(encoding="utf-8").strip()
-            if cache_identity_path.is_file()
-            else None
+        cache_identity = build_tick_cache_identity(
+            source_path=path,
+            source_sha256=file_sha256(path),
+            timezone=tz,
+            session_start=session_start,
+            session_end=session_end,
+            price_grid_identity=price_grid_identity(price_grid_increment),
+            cache_version=TICK_CACHE_VERSION,
         )
-        cache_transform_matches = (
-            cached_identity == expected_cache_identity
-            if cached_identity is not None or price_grid_increment is not None
-            else True
-        )
-        if cache_path.exists() and not force and cache_transform_matches:
+        cached_frame = None if force else load_tick_cache(cache_path, cache_identity)
+        if cached_frame is not None:
             log.info("Loading tick cache: %s", cache_path)
-            df = pd.read_parquet(cache_path)
             return TickBook(
-                cast(np.ndarray[Any, Any], df["ts_ns"].to_numpy()),
-                cast(np.ndarray[Any, Any], df["bid"].to_numpy()),
-                cast(np.ndarray[Any, Any], df["ask"].to_numpy()),
+                cast(np.ndarray[Any, Any], cached_frame["ts_ns"].to_numpy()),
+                cast(np.ndarray[Any, Any], cached_frame["bid"].to_numpy()),
+                cast(np.ndarray[Any, Any], cached_frame["ask"].to_numpy()),
             )
 
     log.info("Building TickBook from %s (chunked, memory-safe) …", path)
@@ -656,11 +658,12 @@ def build_tick_book(
         order = np.argsort(ts_ns, kind="stable")
         ts_ns, bid, ask = ts_ns[order], bid[order], ask[order]
 
-    if cache_path:
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        pd.DataFrame({"ts_ns": ts_ns, "bid": bid, "ask": ask}).to_parquet(cache_path, index=False)
-        if cache_identity_path is not None:
-            cache_identity_path.write_text(expected_cache_identity + "\n", encoding="utf-8")
+    if cache_path and cache_identity is not None:
+        write_tick_cache(
+            cache_path,
+            pd.DataFrame({"ts_ns": ts_ns, "bid": bid, "ask": ask}),
+            cache_identity,
+        )
         log.info("Tick cache written: %s (%d ticks)", cache_path, len(ts_ns))
 
     return TickBook(ts_ns, bid, ask)

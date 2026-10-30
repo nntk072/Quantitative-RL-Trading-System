@@ -29,7 +29,8 @@ call made under the pressure of "the backtest looked good."
 
 ## 2. Rule-based baseline (`live_trading.py`)
 
-- **Entrypoint:** `live_trading.py` (repo root).
+- **Compatibility entrypoint:** `live_trading.py` (repo root), implemented by
+  `integrations/mt5/cli/multi_symbol_trading.py`.
 - **Default is paper:** `PAPER_TRADING` defaults to `true` — same guardrail
   semantics as `live_trading_rl.py`. Real orders require an explicit
   `PAPER_TRADING=false`.

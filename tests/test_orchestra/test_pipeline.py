@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from orchestra.models import Model
-from orchestra.pipeline import Pipeline
-from orchestra.state import Phase, TaskState, list_tasks
+from orchestra.model_provider_registry import Model
+from orchestra.task_orchestration import Pipeline
+from orchestra.task_state_store import Phase, TaskState, list_tasks
 
 
 def _patch_select(monkeypatch: pytest.MonkeyPatch, pipeline: Pipeline, dummy: Model) -> None:
@@ -205,6 +205,7 @@ def test_resume_done_without_from_stays_done(tmp_path) -> None:
 def test_run_verification_uses_ci_gate_commands(tmp_path, monkeypatch) -> None:
     pipeline = Pipeline(workspace=tmp_path, dry_run=False)
     recorded: list[list[str]] = []
+    run_options: list[tuple[float | None, float]] = []
 
     def fake_run(
         cmd: list[str],
@@ -213,17 +214,14 @@ def test_run_verification_uses_ci_gate_commands(tmp_path, monkeypatch) -> None:
         heartbeat: float = 0,
     ) -> subprocess.CompletedProcess[str]:
         recorded.append(cmd)
+        run_options.append((timeout, heartbeat))
         return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
 
     monkeypatch.setattr(pipeline.sessions, "_run", fake_run)
     pipeline.state = TaskState("task-v", "t", pipeline.state_dir)
     pipeline._run_verification()
-    assert recorded == [
-        ["uv", "run", "ruff", "format", "--check", "."],
-        ["uv", "run", "ruff", "check", "."],
-        ["uv", "run", "mypy", "."],
-        ["uv", "run", "pytest", "tests/", "-v"],
-    ]
+    assert recorded == [["./tools/check", "full"]]
+    assert run_options == [(6 * 60 * 60, 15.0)]
 
 
 def test_verification_failure_enters_fix_loop_even_if_review_passed(tmp_path, monkeypatch) -> None:
@@ -232,12 +230,7 @@ def test_verification_failure_enters_fix_loop_even_if_review_passed(tmp_path, mo
     pipeline.state.data["review_verdict"] = "pass"
 
     def fake_verify() -> dict[str, dict[str, object]]:
-        return {
-            "format": {"success": True, "output": ""},
-            "lint": {"success": True, "output": ""},
-            "typecheck": {"success": True, "output": ""},
-            "tests": {"success": False, "output": "FAILED tests/foo.py::test_x"},
-        }
+        return {"full": {"success": False, "output": "FAILED tests/foo.py::test_x"}}
 
     monkeypatch.setattr(pipeline, "_run_verification", fake_verify)
     passed = pipeline._phase_verification()
@@ -293,10 +286,7 @@ def test_fixing_runs_when_verification_already_failed(tmp_path, monkeypatch) -> 
     pipeline.state.data["review_verdict"] = "pass"
     pipeline.state.data["review_synthesis_output"] = "lgtm"
     pipeline.state.data["verification_result"] = {
-        "format": {"success": True, "output": ""},
-        "lint": {"success": True, "output": ""},
-        "typecheck": {"success": True, "output": ""},
-        "tests": {"success": False, "output": "FAILED tests/foo.py::test_x"},
+        "full": {"success": False, "output": "FAILED tests/foo.py::test_x"},
     }
     pipeline._phase_fixing()
     assert selected == ["implementer"]

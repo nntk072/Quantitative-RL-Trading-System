@@ -224,18 +224,18 @@ Validation command on the MI210 node:
 
 ```bash
 PYTHONPATH="$PWD" /scratch/work/nguyenl37/.venv-mi210/bin/python -m pytest \
-  tests/test_envs/test_eligibility_wiring.py \
-  tests/test_train/test_quality_registry.py \
-  tests/test_envs/test_observation_schema.py \
-  tests/test_envs/test_bundle_env_equivalence.py \
-  tests/test_envs/test_equity_delta_reward.py \
+  tests/test_simulation/test_environment/test_eligibility_wiring.py \
+  tests/test_training/test_quality_registry.py \
+  tests/test_simulation/test_environment/test_observation_schema.py \
+  tests/test_simulation/test_environment/test_bundle_env_equivalence.py \
+  tests/test_simulation/test_environment/test_equity_delta_reward.py \
   tests/test_models/test_semantic_actor.py \
   tests/test_models/test_hybrid_actor.py \
   tests/test_models/test_encoders.py \
   tests/test_models/test_lite_tcn_agent.py \
-  tests/test_envs/test_entry_state_machine.py \
-  tests/test_rebuild_named_prebuilt_feature_caches.py \
-  tests/test_train/test_train_rl_decomposition.py \
+  tests/test_simulation/test_environment/test_entry_state_machine.py \
+  tests/test_experiments/test_rebuild_named_prebuilt_feature_caches.py \
+  tests/test_training/test_train_rl_decomposition.py \
   tests/test_features/test_session_ohlc.py \
   tests/test_features/test_feature_cache_and_fit_scope.py \
   tests/test_features/test_cache_hash_full_column.py -q

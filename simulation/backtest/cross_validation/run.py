@@ -1,6 +1,6 @@
 """CLI entrypoint for engine cross-validation.
 
-Runs both the custom event-driven engine (simulation.backtest.engine) and
+Runs the custom event-driven engine (simulation.backtest) and
 backtrader on identical data/signals and prints a diff report.
 
 Usage:
@@ -17,8 +17,8 @@ from typing import Any
 import backtrader as bt
 import pandas as pd
 
-from simulation.backtest.engine import run_backtest
-from trading.execution.costs import CostModel
+from simulation.backtest import run_backtest
+from trading.execution import CostModel
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

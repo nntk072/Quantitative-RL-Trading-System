@@ -30,8 +30,8 @@ Based on the debug/standardization plan (v4). Plan item IDs are in brackets.
 | `experiments/variants/runner.py` | Prints a warning: it bypasses the resolver and shares one features CSV. [A5] |
 | `scripts/research/thesis/evaluation/report_ablations.py` | Docstring path corrected. [B6] |
 | `baseline/A3_*`, `baseline/runbook_*` | "SUPERSEDED" banner. [B5] |
-| `tests/test_train/test_variant_resolver.py` | 12 tests. Runs without OmegaConf or torch. **All 12 pass** in the sandbox. |
-| `tests/test_train/test_variant_overrides_match_legacy.py` | Parametrized over all 29 variants: resolver overrides must reproduce the legacy `merge_variant_cfg` config, except `strategy.name` for baseline rungs. **Not run here** (needs OmegaConf). |
+| `tests/test_training/test_variant_resolver.py` | 12 tests. Runs without OmegaConf or torch. **All 12 pass** in the sandbox. |
+| `tests/test_training/test_variant_overrides_match_legacy.py` | Parametrized over all 29 variants: resolver overrides must reproduce the legacy `merge_variant_cfg` config, except `strategy.name` for baseline rungs. **Not run here** (needs OmegaConf). |
 | `tests/test_features/test_cache_hash_full_column.py` | Mid-series change changes the digest. **Not run here** (needs pandas/numpy). |
 
 ## Behavior changes to expect
@@ -69,10 +69,10 @@ PYTHONPATH=. python -m training.train.variant_resolver meta ladder_a2_tp
 DRY_RUN=1 VARIANT=ladder_a2_tp scripts/research/frozen-launches/train_one_variant.sh
 
 # tests that run without the training stack
-PYTHONPATH=. python tests/test_train/test_variant_resolver.py
+PYTHONPATH=. python tests/test_training/test_variant_resolver.py
 
 # tests that need the repo environment (OmegaConf, pandas, pytest)
-pytest tests/test_train/test_variant_overrides_match_legacy.py tests/test_features/test_cache_hash_full_column.py -q
+pytest tests/test_training/test_variant_overrides_match_legacy.py tests/test_features/test_cache_hash_full_column.py -q
 ```
 
 ## Verification status

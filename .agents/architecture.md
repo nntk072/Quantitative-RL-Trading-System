@@ -1,4 +1,4 @@
-# Architecture Map — Aalto_MS_Thesis
+# Architecture Map — Quantitative-RL-Trading-System
 
 > Agent navigation map. The authoritative narrative is [docs/architecture.md](../docs/architecture.md).
 
@@ -30,14 +30,14 @@ orchestra/ → repository/CI orchestration
 | `trading/` | account, execution, orders, risk, strategies, baselines |
 | `simulation/` | Gym environment contracts/runtime and event-driven backtest |
 | `decisioning/` | versioned observation/action schemas and backend-neutral inference contract |
-| `models/` | reusable encoders, policies, and auxiliary neural components |
-| `learning/` | PPO/SAC fitting backends, rollout adapters, and checkpoint loading |
+| `models/` | reusable encoders, encoder registry, and auxiliary neural components |
+| `learning/` | PPO/SAC fitting backends, SB3 policy adapters, rollout adapters, and checkpoint loading |
 | `training/` | setup, callbacks, runners, training artifacts |
 | `evaluation/` | rollout, metrics, reanalysis, reporting, plotting |
 | `experiments/` | variant/campaign orchestration and provenance |
 | `artifacts/` | shared artifact identity, manifests, storage, and lifecycle mechanics |
 | `live/` | broker-neutral live runtime |
-| `integrations/mt5/` | MetaTrader-specific adapters and domain integration |
+| `integrations/mt5/` | Lazily loaded MetaTrader-specific adapters and domain integration |
 | `compute/` | cluster/environment/Slurm implementation |
 | `orchestra/` | engineering workflow orchestration |
 
@@ -58,8 +58,9 @@ Use package APIs or these command surfaces. `scripts/` includes command entry po
 
 | Constant | File | Current value |
 |---|---|---|
-| `BAR_CACHE_VERSION` | `market_data/loading/pipeline.py` | `v3-native-timeframes` |
-| `FEATURE_CACHE_VERSION` | `features/pipeline/cache.py` | `v24-native-source-timeframes` |
+| `BAR_CACHE_VERSION` | `market_data/loading/market_data_ingestion.py` | `v4-semantic-manifest` |
+| `TICK_CACHE_VERSION` | `market_data/loading/ticks.py` | `v4-semantic-manifest` |
+| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v33-timeframe-entry-ideas` |
 
 Cache identity must remain causal and include fit scope/configuration inputs that affect generated content.
 

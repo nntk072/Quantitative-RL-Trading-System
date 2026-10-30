@@ -19,7 +19,7 @@ each result; dated historical planning notes do not define the current run.
 1. Prepare M1 source data with `python market_data/commands/prepare.py --help` and
    inspect the expected input paths in `config/base/default.yaml`. The data
    loader, cleaning, resampling and session code is in `market_data/`.
-2. `features/pipeline/builder.py:build_features` computes the selected indicators
+2. `features/pipeline/feature_matrix_builder.py:build_features` computes the selected indicators
    and structure/PO3 state. `market_data/transforms/align.py:align_timeframes` shifts
    higher-timeframe values by one completed candle by default before forward fill.
    The exception `completed_bars=False` is for callers that have already shifted;

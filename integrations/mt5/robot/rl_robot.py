@@ -40,7 +40,6 @@ class RLRobot:
         secondary_data_source: Optional secondary-symbol data source for SMT
             features — required when the deployed model was trained with
             SMT enabled (train/live feature parity, Stage 8 Task 8.4).
-        default_lot_size: Fallback position size if risk-based sizing fails.
         stop_loss_pips: Stop-loss distance used by ``RiskManager`` sizing.
         magic_number: MT5 magic number tagging orders opened by this robot.
         paper_trading: When True (the safe default), every signal and intended
@@ -54,7 +53,6 @@ class RLRobot:
         trader: Trader,
         risk_manager: RiskManager | None = None,
         secondary_data_source: TradingData | None = None,
-        default_lot_size: float = 0.1,
         stop_loss_pips: float = 50.0,
         magic_number: int = 20240102,
         paper_trading: bool = True,
@@ -65,7 +63,6 @@ class RLRobot:
         self.trader = trader
         self.risk_manager = risk_manager if risk_manager is not None else RiskManager()
         self.secondary_data_source = secondary_data_source
-        self.default_lot_size = default_lot_size
         self.stop_loss_pips = stop_loss_pips
         self.magic_number = magic_number
         self.paper_trading = paper_trading
@@ -79,16 +76,13 @@ class RLRobot:
         )
 
     def calculate_position_size(self, symbol: str) -> float:
-        """Risk-based position size, falling back to ``default_lot_size``."""
+        """Return risk-sized volume, or zero when sizing cannot be validated."""
         try:
             size = self.risk_manager.calculate_position_size(symbol, self.stop_loss_pips)
-            if size == 0.0:
-                logger.warning(f"Using default lot size for {symbol}: {self.default_lot_size}")
-                return self.default_lot_size
-            return size
+            return float(size) if size > 0.0 else 0.0
         except Exception as exc:  # noqa: BLE001  (live loop must not crash)
             logger.error(f"Error calculating position size for {symbol}: {exc}")
-            return self.default_lot_size
+            return 0.0
 
     def check_risk_before_trade(self, symbol: str, position_size: float) -> tuple[bool, str]:
         """Check whether *position_size* is within live risk limits."""
@@ -97,6 +91,11 @@ class RLRobot:
     def _open(self, symbol: str, position_type: int) -> None:
         """Open a BUY/SELL position, or log it in paper mode."""
         position_size = self.calculate_position_size(symbol)
+        if position_size <= 0.0:
+            logger.warning(
+                "Refusing to open {}: risk sizing did not produce a valid volume", symbol
+            )
+            return
         try:
             stop_price = self.risk_manager.calculate_stop_loss_price(
                 symbol, position_type, self.stop_loss_pips

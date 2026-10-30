@@ -1,0 +1,60 @@
+{
+  "purpose": "Map retired phase-named source paths to functional canonical files while preserving historical hashes.",
+  "schema_version": 1,
+  "sources": [
+    {
+      "canonical_path": "docs/thesis/evidence/source_snapshots/analyze_monthly_trade_expectancy_and_exit_decomposition_20261025.source",
+      "historical_path": "scripts/research/thesis/p6_monthly_entry_exit_decomposition.py",
+      "sha256": "7d3d0b8a0cc9f4d061c474b03220df3478b94cdf99ee4f246aa0a492104c37cc",
+      "status": "historical alias retired; exact source bytes retained"
+    },
+    {
+      "canonical_path": "docs/thesis/evidence/source_snapshots/analyze_training_policy_dynamics_and_rule_control_20261025.source",
+      "historical_path": "scripts/research/thesis/p6_training_dynamics_control.py",
+      "sha256": "785010eebf429351edcbfa07088d37cd832269423d69f3b4d6a0b76bd4e550bb",
+      "status": "historical alias retired; exact source bytes retained"
+    },
+    {
+      "canonical_path": "docs/thesis/evidence/source_snapshots/build_paired_seed_payload_20261022.source",
+      "historical_path": "scripts/research/thesis/evidence/build_p7_paired_seed_payload.py",
+      "sha256": "bf2bdc48e3af49b36259cbe59a72294daca7ac918746f6eaf8b631ac52ca69ce",
+      "status": "historical alias retired; exact source bytes retained"
+    },
+    {
+      "canonical_path": "docs/thesis/evidence/source_snapshots/build_tick_cost_stress_reports_20261022.source",
+      "historical_path": "scripts/research/thesis/evidence/build_p7_tick_cost_stress_reports.py",
+      "sha256": "b16096f8931a1e7cf9adf139913f48204c3c740aa1204941756269851dcd1113",
+      "status": "historical alias retired; exact source bytes retained"
+    },
+    {
+      "canonical_path": "docs/thesis/evidence/source_snapshots/replay_tick_cost_stress_20261022.source",
+      "historical_path": "scripts/research/thesis/evidence/run_p7_tick_cost_stress_replay.py",
+      "sha256": "28a3969ee7cdf5acbca2c8c519d4bec466e5dccc18be8ffde99499c951341ec3",
+      "status": "historical alias retired; exact source bytes retained"
+    },
+    {
+      "canonical_path": "scripts/research/frozen-launches/freeze_tick_decision_schedule.sh",
+      "historical_path": "scripts/research/audits/run_p1_schedule_freeze_gate.sh",
+      "sha256": "e15d3f7beae3375e379dc44acfb977ee91ca91385d0bee5f49178014fd6cbda7",
+      "status": "historical alias retired; exact source bytes retained"
+    },
+    {
+      "canonical_path": "scripts/research/frozen-launches/validate_tick_fold_scope.sh",
+      "historical_path": "scripts/research/audits/run_p1_tick_fold_validation.sh",
+      "sha256": "f89d126788033f92f54e1bd344682777745da5e87034f354d283ebc18e7bedf7",
+      "status": "historical alias retired; exact source bytes retained"
+    },
+    {
+      "canonical_path": "scripts/research/frozen-launches/validate_tick_data_quality.sh",
+      "historical_path": "scripts/research/audits/run_p1_tick_quality_validation.sh",
+      "sha256": "0b86da0cf34e184607fbf5a400bc582b4db357b2c6e724e4d9ae050ea7a59088",
+      "status": "historical alias retired; exact source bytes retained"
+    },
+    {
+      "canonical_path": "scripts/research/frozen-launches/smoke_test_checkpoint_recovery.sh",
+      "historical_path": "scripts/research/audits/run_p3_checkpoint_recovery_smoke.sh",
+      "sha256": "33f035ef32454c2834bb0b128a120bec9e156996da787a83e82ef769038362f9",
+      "status": "historical alias retired; exact source bytes retained"
+    }
+  ]
+}

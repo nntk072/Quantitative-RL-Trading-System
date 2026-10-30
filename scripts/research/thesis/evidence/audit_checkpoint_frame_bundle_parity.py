@@ -20,7 +20,7 @@ from configuration.paths import repository_root
 from decisioning.actions import build_action_schema
 from decisioning.observations import build_observation_schema
 from evaluation import calculate_metrics, evaluation_periods_per_year
-from evaluation.reanalysis import runner as eval_run
+from evaluation.reanalysis import checkpoint_reanalysis as eval_run
 from evaluation.reanalysis.provenance import (
     _evaluation_dataset_records,
     _feature_build_scope,
@@ -32,7 +32,7 @@ from evaluation.reporting.run_manifest import (
     build_stop_candidate_schema,
     validate_sequence_feature_schema,
 )
-from evaluation.rollout.model import BAR_CLOSE_EXPOSURE_MEASURE, evaluate_model
+from evaluation.rollout.trained_policy_rollout import BAR_CLOSE_EXPOSURE_MEASURE, evaluate_model
 from features import (
     build_features,
     select_legacy_obs_columns,
@@ -43,7 +43,7 @@ from learning.rl.agent import (
     validate_model_action_schema,
     validate_model_observation_schema,
 )
-from market_data.loading.pipeline import build_tick_books, run_pipeline
+from market_data.loading import build_tick_books, run_pipeline
 from market_data.loading.ticks import ticks_covering
 from market_data.splits.definitions import (
     get_split_config,

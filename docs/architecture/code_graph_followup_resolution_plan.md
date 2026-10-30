@@ -39,7 +39,7 @@ Existing graph hardening components:
 ~~~text
 .code-review-graph/graph.db
 scripts/dev/code_graph/graph_quality.py
-tests/test_code_graph_quality.py
+tests/test_tooling/test_code_graph_quality.py
 tools/crgraph
 .agents/rules/code-review-graph.md
 docs/architecture/code_graph_trust_hardening_agent_plan.md
@@ -626,7 +626,7 @@ Create an explicit list of critical roots/areas.
 At minimum:
 
 ~~~text
-configuration/loader.py
+configuration/configuration_loader.py
 training/configuration/
 training/runner/
 features/pipeline/
@@ -686,7 +686,7 @@ If an ambiguity cannot be safely resolved, leaving it explicit is preferable to 
 
 # Phase 15 — Expand Tests
 
-Extend tests/test_code_graph_quality.py.
+Extend tests/test_tooling/test_code_graph_quality.py.
 
 Minimum new config-tracing tests:
 
@@ -871,10 +871,10 @@ python3 -m py_compile scripts/dev/code_graph/graph_quality.py
 
 .venv-x86/bin/python -m ruff check \
   scripts/dev/code_graph/graph_quality.py \
-  tests/test_code_graph_quality.py
+  tests/test_tooling/test_code_graph_quality.py
 
 .venv-x86/bin/python -m pytest -q \
-  tests/test_code_graph_quality.py
+  tests/test_tooling/test_code_graph_quality.py
 
 ./tools/crgraph build
 ./tools/crgraph status --json
@@ -891,7 +891,7 @@ Inspect:
 git diff --stat
 git diff -- \
   scripts/dev/code_graph/graph_quality.py \
-  tests/test_code_graph_quality.py \
+  tests/test_tooling/test_code_graph_quality.py \
   tools/crgraph \
   .agents/rules/code-review-graph.md
 
@@ -1005,7 +1005,7 @@ Expected implementation outputs:
 
 ~~~text
 scripts/dev/code_graph/graph_quality.py
-tests/test_code_graph_quality.py
+tests/test_tooling/test_code_graph_quality.py
 tools/crgraph
 .agents/rules/code-review-graph.md
 

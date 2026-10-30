@@ -167,12 +167,16 @@ cython_debug/
 # data remain visible to Git; examples under data/examples are versioned.
 /logs/
 /data/*
-# Tracked-on-purpose developer example (see data/examples/README.md)
+# Tracked examples and split-root README files only. Keep actual partition
+# contents ignored so a linked or materialized dataset cannot be staged by
+# accident.
 !/data/examples/
 !/data/examples/**
 !/data/normal/
+/data/normal/*
 !/data/normal/README.md
 !/data/discretion/
+/data/discretion/*
 !/data/discretion/README.md
 
 # Derived caches and all generated runs, checkpoints, reports, and logs.

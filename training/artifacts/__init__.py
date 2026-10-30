@@ -1,28 +1,35 @@
-"""Training artifact construction and aggregation."""
+"""Public training-run artifact construction, persistence, and logging APIs."""
 
-from .aggregation import _aggregate_seed_results, _save_seed_artifacts
+from .aggregation import aggregate_seed_results, save_seed_artifacts
+from .evaluation_result_writer import write_evaluation_artifacts
+from .logging import RUN_LOG_FILENAME, attach_run_log
 from .manifests import (
-    _action_schema_manifest,
-    _action_space_width,
-    _build_training_log,
-    _observation_account_dim,
-    _observation_schema_manifest,
-    _observation_space_shapes,
-    _sequence_feature_schema_manifest,
-    _training_protocol_manifest,
+    action_schema_manifest,
+    action_space_width,
+    build_training_log,
+    entry_funnel_by_split,
+    observation_account_dim,
+    observation_schema_manifest,
+    observation_space_shapes,
+    sequence_feature_schema_manifest,
+    training_protocol_manifest,
 )
-from .metrics import _write_evaluation_artifacts
+from .snapshots import write_run_config_snapshot
 
 __all__ = [
-    "_aggregate_seed_results",
-    "_save_seed_artifacts",
-    "_action_schema_manifest",
-    "_action_space_width",
-    "_build_training_log",
-    "_observation_account_dim",
-    "_observation_schema_manifest",
-    "_observation_space_shapes",
-    "_sequence_feature_schema_manifest",
-    "_training_protocol_manifest",
-    "_write_evaluation_artifacts",
+    "RUN_LOG_FILENAME",
+    "action_schema_manifest",
+    "action_space_width",
+    "aggregate_seed_results",
+    "attach_run_log",
+    "build_training_log",
+    "entry_funnel_by_split",
+    "observation_account_dim",
+    "observation_schema_manifest",
+    "observation_space_shapes",
+    "save_seed_artifacts",
+    "sequence_feature_schema_manifest",
+    "training_protocol_manifest",
+    "write_evaluation_artifacts",
+    "write_run_config_snapshot",
 ]

@@ -1,0 +1,119 @@
+"""Configuration loading typo-safety tests (Master Roadmap Stage 4)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from configuration import load_config, merge_config_overlay
+
+_ROOT = Path(__file__).resolve().parents[2]
+_CONFIG_OVERLAYS = (
+    Path("config/2_po3_ifvg.yaml"),
+    Path("config/3_distribution.yaml"),
+    *tuple(path.relative_to(_ROOT) for path in sorted((_ROOT / "config/features").rglob("*.yaml"))),
+)
+
+
+def test_typoed_override_raises() -> None:
+    """A typo like ``ppo.leraning_rate`` must raise instead of silently
+    creating a stray config key that `build_agent` ignores."""
+    with pytest.raises(ValueError, match="does not exist in default.yaml"):
+        load_config(["ppo.leraning_rate=1e-4"])
+
+
+def test_missing_section_raises() -> None:
+    """A key under a non-existent section must also be rejected."""
+    with pytest.raises(ValueError, match="does not exist"):
+        load_config(["ppo2.learning_rate=1e-4"])
+
+
+def test_correct_override_applies() -> None:
+    """The real key still type-coerces and lands in the merged config."""
+    cfg = load_config(["ppo.learning_rate=1e-4", "training.max_days=10"])
+    assert cfg.ppo.learning_rate == 1e-4
+    assert cfg.training.max_days == 10
+
+
+def test_variant_config_merge_is_not_flagged() -> None:
+    """Chain B/F variant fragments (features.* keys) load via config_path,
+    *before* overrides, so overriding their keys must not raise."""
+    overrides = ["features.include_po3=false", "ppo.batch_size=128"]
+    cfg = load_config(overrides)  # no variant config needed: features.* is in default.yaml
+    assert cfg.features.include_po3 is False
+    assert cfg.ppo.batch_size == 128
+
+
+def test_null_valued_leaf_override_is_allowed() -> None:
+    """Explicit ``null`` leaves in default.yaml must remain overridable
+    (they are present-day leaves, not typos)."""
+    cfg = load_config(
+        ["training.max_days=14", "backtest.validation.take_profit_per_trade_usd=50.0"]
+    )
+    assert cfg.training.max_days == 14
+    assert cfg.backtest.validation.take_profit_per_trade_usd == 50.0
+
+
+def test_po3_ifvg_config_merges_and_sets_strategy() -> None:
+    """config/2_po3_ifvg.yaml enables the Idea 1 stack (Agent.md §10)."""
+    cfg = load_config(config_path="config/2_po3_ifvg.yaml")
+    assert cfg.features.include_strategy_state is True
+    assert cfg.env.strategy_actions is True
+    assert cfg.strategy.name == "po3_ifvg"
+    assert cfg.strategy.risk.sl_mode == "exact"
+    assert "buyside_liquidity" in cfg.strategy.tp.allowed_targets
+    assert cfg.strategy.reward.strategy_weight > 0
+
+
+def test_idea2_config_merges_and_sets_strategy() -> None:
+    """config/3_distribution.yaml selects the distribution strategy."""
+    cfg = load_config(config_path="config/3_distribution.yaml")
+    assert cfg.features.include_strategy_state is True
+    assert cfg.env.strategy_actions is True
+    assert cfg.strategy.name == "distribution"
+
+
+@pytest.mark.parametrize("config_path", _CONFIG_OVERLAYS)
+def test_supported_feature_and_strategy_overlays_match_default_schema(
+    config_path: Path,
+) -> None:
+    """Every shared YAML overlay uses keys declared by the canonical defaults."""
+    assert load_config(config_path=_ROOT / config_path) is not None
+
+
+def test_default_strategy_is_po3_ifvg_with_actions_off() -> None:
+    """The default config must keep baseline behaviour until opted in."""
+    cfg = load_config()
+    assert cfg.env.strategy_actions is False
+    assert cfg.features.include_strategy_state is False
+
+
+def test_unknown_nested_key_in_config_file_is_rejected(tmp_path) -> None:
+    """Config-file overlays receive the same typo protection as CLI overrides."""
+    overlay = tmp_path / "typo.yaml"
+    overlay.write_text("env:\n  cooldwon_bars: 4\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"unknown keys at config\.env"):
+        load_config(config_path=overlay)
+
+
+def test_shared_overlay_merge_rejects_nested_typo() -> None:
+    """Non-loader YAML merges must use the same recursive schema validation."""
+    cfg = load_config()
+    with pytest.raises(ValueError, match=r"unknown keys at config\.env"):
+        merge_config_overlay(cfg, {"env": {"cooldwon_bars": 4}})
+
+
+@pytest.mark.parametrize(
+    ("overlay", "message"),
+    [
+        ({"env": True}, r"expected a mapping at config\.env"),
+        ({"features": False}, r"expected a mapping at config\.features"),
+        ({"env": {"n_envs": "many"}}, r"expected int at config\.env\.n_envs"),
+    ],
+)
+def test_shared_overlay_merge_rejects_mapping_shape_changes(overlay, message) -> None:
+    """A known key still cannot replace a whole config section with a scalar."""
+    with pytest.raises(ValueError, match=message):
+        merge_config_overlay(load_config(), overlay)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from evaluation.reporting.run_manifest import file_sha256
+from artifacts.identity import file_sha256
 
 
 def resolve_execution_seed(

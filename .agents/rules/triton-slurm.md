@@ -1,15 +1,15 @@
 # Triton / Slurm (GPU) — agent rules
 
-Aalto Triton cluster. **Canonical workdir:** `/scratch/work/nguyenl37/Aalto_MS_Thesis`.
+Triton cluster. **Canonical workdir:** `/scratch/work/nguyenl37/Quantitative-RL-Trading-System`.
 
 Helper scripts: [`scripts/compute/slurm/`](../../scripts/compute/slurm/) (`status.sh`, `find_gpu_session.sh`, `attach_or_alloc.sh`).
 
 ## WorkDir
 
-- All training, eval, and agent edits for GPU runs must use
-  `/scratch/work/nguyenl37/Aalto_MS_Thesis` (real scratch path).
-- A symlink `~/Aalto_MS_Thesis` → that scratch path is OK; always `cd` to the
-  scratch path (or resolve the symlink) before any GPU-side command.
+- All training, evaluation, and agent edits for this repository must use
+  `/scratch/work/nguyenl37/Quantitative-RL-Trading-System` (real scratch path).
+- Use this checkout's real scratch path for GPU commands; do not redirect work
+  to another historical Aalto checkout.
 - Do **not** treat a WSL or laptop checkout as the live Triton tree.
 
 ## Slurm authorization, execution and preservation

@@ -16,19 +16,19 @@ from typing import Any
 
 import yaml
 
-from experiments.campaigns.execution import (
-    ROOT,
-    atomic_json,
+from artifacts.layout import ArtifactLayout
+from compute.slurm.campaign_worker_resources import expand_slurm_hosts
+from experiments.campaigns.artifact_validation import validate_campaign_evaluation
+from experiments.campaigns.constants import ROOT
+from experiments.campaigns.runtime_metadata import runtime_metadata
+from experiments.campaigns.source_snapshot import (
     campaign_data_inputs,
     campaign_source_files,
-    expand_slurm_hosts,
-    read_manifest,
-    runtime_metadata,
     sha256_file,
-    validate_campaign_evaluation,
     verify_campaign_source_snapshot,
     write_campaign_source_snapshot,
 )
+from experiments.campaigns.state_store import atomic_json, read_manifest
 
 
 def main() -> int:
@@ -54,8 +54,9 @@ def main() -> int:
     if nodes != ["gpuarm1", "gpuarm2"]:
         raise RuntimeError(f"unexpected P7 allocation nodes: {nodes}")
 
-    out = ROOT / "outputs" / "gpu_campaigns" / args.campaign_id
-    manifest_path = out / "campaign.json"
+    campaign_artifacts = ArtifactLayout(ROOT / "outputs").gpu_campaign(args.campaign_id)
+    out = campaign_artifacts.root
+    manifest_path = campaign_artifacts.manifest
     if not manifest_path.is_file():
         raise FileNotFoundError(f"campaign manifest is missing: {manifest_path}")
     manifest = read_manifest(manifest_path)
@@ -105,7 +106,9 @@ def main() -> int:
             snapshot_record = manifest.get("source_snapshot")
             if not isinstance(snapshot_record, dict):
                 raise RuntimeError("migrated campaign source snapshot record is missing")
-            snapshot_path = (out / str(snapshot_record.get("path", ""))).resolve()
+            snapshot_path = campaign_artifacts.resolve_recorded_path(
+                str(snapshot_record.get("path", ""))
+            )
             if snapshot_path.parent != out.resolve():
                 raise RuntimeError("migrated campaign source snapshot escapes campaign directory")
             valid, reason = verify_campaign_source_snapshot(snapshot_path, snapshot_record)
@@ -125,10 +128,10 @@ def main() -> int:
 
     if any(job.get("status") != "pending" or job.get("attempts") != 0 for job in manifest["jobs"]):
         raise RuntimeError("preflight migration is allowed only before the first trainer attempt")
-    attempt_root = out / "runs" / "attempts"
+    attempt_root = campaign_artifacts.runs / "attempts"
     if attempt_root.exists() and any(attempt_root.rglob("ppo_*.zip")):
         raise RuntimeError("trainer checkpoints exist; refusing preflight-only migration")
-    marker_root = out / "markers"
+    marker_root = campaign_artifacts.markers
     if marker_root.exists() and any(marker_root.glob("*.done")):
         raise RuntimeError("completed-run markers exist; refusing preflight-only migration")
 
@@ -142,7 +145,9 @@ def main() -> int:
     original_snapshot = manifest.get("source_snapshot")
     if not isinstance(original_snapshot, dict):
         raise ValueError("original source snapshot record is missing")
-    original_snapshot_path = (out / str(original_snapshot.get("path", ""))).resolve()
+    original_snapshot_path = campaign_artifacts.resolve_recorded_path(
+        str(original_snapshot.get("path", ""))
+    )
     if original_snapshot_path.parent != out.resolve():
         raise ValueError("original source snapshot path escapes the campaign directory")
     valid, reason = verify_campaign_source_snapshot(original_snapshot_path, original_snapshot)
@@ -153,8 +158,10 @@ def main() -> int:
     if archived_manifest.get("files") != manifest.get("source_hashes"):
         raise RuntimeError("original campaign source snapshot and manifest disagree")
 
-    old_manifest_copy = out / "reports" / f"preflight_manifest_{original_fingerprint}.json"
-    old_snapshot_copy = out / f"source_snapshot_preflight_{original_fingerprint}.zip"
+    old_manifest_copy = campaign_artifacts.report(f"preflight_manifest_{original_fingerprint}.json")
+    old_snapshot_copy = campaign_artifacts.root_file(
+        f"source_snapshot_preflight_{original_fingerprint}.zip"
+    )
     old_manifest_copy.parent.mkdir(parents=True, exist_ok=True)
     for source, destination in (
         (manifest_path, old_manifest_copy),
@@ -206,7 +213,7 @@ def main() -> int:
         "initial_checkpoint_lineage": manifest.get("initial_checkpoint_lineage", {}),
     }
     fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
-    snapshot_path = out / f"source_snapshot_{fingerprint}.zip"
+    snapshot_path = campaign_artifacts.root_file(f"source_snapshot_{fingerprint}.zip")
     snapshot_record = write_campaign_source_snapshot(
         ROOT,
         source_files,
@@ -237,8 +244,8 @@ def main() -> int:
         "allocation_job_id": job_id,
         "allocation_nodes": nodes,
     }
-    migration_path = (
-        out / "reports" / f"preflight_migration_{original_fingerprint}_to_{fingerprint}.json"
+    migration_path = campaign_artifacts.report(
+        f"preflight_migration_{original_fingerprint}_to_{fingerprint}.json"
     )
     if migration_path.exists():
         existing = json.loads(migration_path.read_text(encoding="utf-8"))

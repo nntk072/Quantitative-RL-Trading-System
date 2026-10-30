@@ -58,7 +58,7 @@ def test_audit_source_inventory_includes_project_code_and_configs(tmp_path: Path
     expected = (
         "config/campaigns/variant_list.txt",
         "config/strategies/po3.yaml",
-        "features/pipeline/builder.py",
+        "features/pipeline/feature_matrix_builder.py",
         "scripts/research/campaigns/audit_real_market_bundle_parity.py",
         "trading/strategies/po3_ifvg.py",
     )

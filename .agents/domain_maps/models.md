@@ -4,15 +4,18 @@
 
 | File | Role |
 |------|------|
-| `models/encoders/common.py` | Shared input contract, account embedding and valid-window mechanics |
+| `models/encoders/sequence_encoder_components.py` | Shared input contract, account embedding and valid-window mechanics |
 | `models/encoders/tcn.py` | Causal TCN family and checkpoint compatibility encoder |
 | `models/encoders/lite_tcn.py` | Lightweight depthwise-separable TCN |
 | `models/encoders/gru.py` | GRU sequence encoder |
 | `models/encoders/transformer.py` | Causal Transformer sequence encoder |
 | `models/encoders/mtf.py` | Multi-timeframe TCN encoder |
-| `models/encoders/core.py` | Temporary import compatibility for archived SB3 checkpoint module paths |
+| `models/encoders/mtf_efficiency_components.py` | Shared stream extraction and masked MTF token operations |
+| `models/encoders/core.py` | Compatibility exports required by one preserved SB3 checkpoint |
 | `models/auxiliary/vae.py` | Reusable variational autoencoder architecture |
-| `models/base.py` | Base classes for models |
+| `models/encoders/__init__.py` | Public neural encoder exports |
+| `models/factory/encoder_registry.py` | Maps stable encoder IDs to reusable encoder classes |
+| `models/factory/__init__.py` | Public encoder-registry API |
 | `models/auxiliary/heads.py` | Auxiliary prediction head |
 | `models/runtime/precision.py` | Encoder-specific autocast adaptation using a caller-selected dtype |
 
@@ -30,7 +33,10 @@
 
 - `decisioning/observation_state.py` (stable account-vector input width)
 - `decisioning/actions.py` and `decisioning/observations.py` (checkpoint schemas)
-- `learning/rl/` consumes model constructors; model code has no learning-backend dependency.
+- `models/factory/` owns encoder ID resolution; `learning/rl/agent.py` composes the selected encoder with PPO/SAC.
+- SB3-specific policies and distributions stay in `learning/rl/`; the dependency
+  gate prevents framework imports from entering `models/`.
+- Model modules do not depend on the learning backend.
 
 ## Consumers (Callers)
 
@@ -59,7 +65,7 @@
 
 `learning/rl/agent.py::build_agent(env, cfg, arch, algo, use_vae, vae, device)`:
 1. Infers `F` from `env.observation_space["seq"].shape[1]`
-2. Selects encoder: `tcn` (default), `gru`, `transformer`, or `vae`
+2. Resolves the encoder ID through `models.factory.encoder_for()` (`tcn` by default, plus registered alternatives)
 3. Sets `net_arch`: SAC uses `qf`, PPO uses `vf`
 4. Wraps env in `DummyVecEnv` or a sharded VecEnv
 5. Returns `PPO` or `SAC` with `MultiInputPolicy`
@@ -84,7 +90,8 @@ not sufficient to recover coordinate meanings.
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
 | Add an encoder family | neural architecture | `models/encoders/` | encoder output contract; `tests/test_models/test_encoders.py` | one encoder and its tests | learner workflow and Slurm backend |
-| Change inference precision | runtime capability | `compute/environment/precision.py`, `learning/rl/agent.py`, `models/runtime/precision.py` | device capability contract; `tests/test_utils/test_device.py` | compute selects hardware policy, learning composes it with model adaptation | compute scheduler semantics |
+| Register an encoder ID | model registry | `models/factory/encoder_registry.py` | unknown IDs fail closed; `tests/test_models/test_mtf_encoder_registration.py` | registry entry and architecture-resolution tests | PPO/SAC policy distribution |
+| Change inference precision | runtime capability | `compute/environment/precision.py`, `learning/rl/agent.py`, `models/runtime/precision.py` | device capability contract; `tests/integration/test_device.py` | compute selects hardware policy, learning composes it with model adaptation | compute scheduler semantics |
 
 ## Axis of Change
 
@@ -101,11 +108,11 @@ archived 4D TCN policy: it restores that checkpoint's original encoder and
 policy, then appends the structural-exit coordinate required by the current
 5D base overlay schema. It does not infer missing run configuration or apply
 to other action layouts. See `learning/rl/agent.py` and
-`evaluation/reanalysis/runner.py`.
+`evaluation/reanalysis/checkpoint_reanalysis.py`.
 
 ## Verified Source Paths
 
-- `models/encoders/common.py`
+- `models/encoders/sequence_encoder_components.py`
 - `models/encoders/tcn.py`
 - `models/encoders/lite_tcn.py`
 - `models/encoders/gru.py`
@@ -113,7 +120,6 @@ to other action layouts. See `learning/rl/agent.py` and
 - `models/encoders/mtf.py`
 - `models/encoders/core.py`
 - `models/auxiliary/vae.py`
-- `models/base.py`
 - `learning/rl/vae_extractor.py`
 - `tests/test_models/test_encoders.py`
 - `models/runtime/precision.py`

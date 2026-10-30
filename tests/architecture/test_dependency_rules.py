@@ -134,6 +134,33 @@ def test_production_cross_domain_imports_are_public() -> None:
     assert not violations, "private cross-domain imports remain:\n" + "\n".join(violations)
 
 
+def test_external_consumers_import_trading_domain_apis() -> None:
+    consumers = [
+        path for path in _production_files() if path.relative_to(ROOT).parts[0] != "trading"
+    ]
+    consumers.extend((ROOT / "scripts").rglob("*.py"))
+    public_subpackages = (
+        "trading.account",
+        "trading.baselines",
+        "trading.execution",
+        "trading.orders",
+        "trading.policy",
+        "trading.positions",
+        "trading.risk",
+        "trading.strategies",
+    )
+    violations: list[str] = []
+    for path in consumers:
+        if "__pycache__" in path.parts:
+            continue
+        for name in _imports(path):
+            if any(name.startswith(package + ".") for package in public_subpackages):
+                violations.append(f"{path.relative_to(ROOT)} -> {name}")
+    assert not violations, (
+        "external consumers import trading implementation modules:\n" + "\n".join(violations)
+    )
+
+
 def test_private_cross_domain_import_rule_covers_module_paths() -> None:
     tree = ast.parse("import features._normalizer\nfrom trading.orders._geometry import stop\n")
 
@@ -165,7 +192,7 @@ DEPENDENCY_RULES = {
 
 FORBIDDEN_IMPORT_PREFIXES = {
     "features": ("trading",),
-    "trading": ("simulation.environment",),
+    "trading": ("simulation",),
     "simulation": ("models",),
     "models": ("simulation", "compute"),
     "evaluation": ("training", "learning.rl", "learning.supervised"),
@@ -320,12 +347,19 @@ def test_evaluation_metrics_do_not_import_renderers() -> None:
 
 COMPOSITION_ROOT_BUDGETS = {
     "training/runner/data_stage.py": 8,
-    "training/runner/seed_runtime.py": 8,
+    # Runtime composers may depend on artifacts for durable output publication.
+    "training/runner/seed_runtime.py": 9,
     "training/runner/baselines.py": 8,
     "training/runner/lstm_baseline.py": 8,
     "training/runner/backtest.py": 8,
-    "evaluation/reanalysis/runner.py": 8,
-    "experiments/variants/runner.py": 8,
+    "training/runner/walk_forward_validation.py": 5,
+    "evaluation/reanalysis/checkpoint_reanalysis.py": 8,
+    # Cross-domain ablation composition root: reads variants, builds the
+    # learner/environment, evaluates OOS, and aggregates reports.
+    "experiments/variants/variant_ablation_runner.py": 5,
+    # One-off cache-repair command: composes configuration, training variant
+    # resolution, market ingestion, feature construction, and artifact hashing.
+    "experiments/campaigns/baseline_cache_rebuild.py": 5,
 }
 
 

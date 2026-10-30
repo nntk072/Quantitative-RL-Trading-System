@@ -76,7 +76,7 @@ MT5 tab-separated export, **no quoting**, header row included:
 
 ## How the pipeline consumes it
 
-1. `market_data/loading/pipeline.py` reads **only** the `data.m1_files` CSVs from
+1. `market_data/loading/market_data_ingestion.py` reads **only** the `data.m1_files` CSVs from
    `data.raw_dir` (`data:` block in `config/base/default.yaml`).
 2. Bars are parsed in broker tz (`Etc/GMT-3`), resampled to all
    `data.timeframes`, features computed, and cached to parquet in

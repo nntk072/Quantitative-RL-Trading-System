@@ -21,8 +21,8 @@ from evaluation.metrics.candle_quality import (
 from evaluation.metrics.candle_quality import (
     wick_time as wick_time,
 )
-from trading.orders.levels import deviation_levels as deviation_levels
-from trading.orders.levels import level_near_candles as level_near_candles
+from trading.orders import deviation_levels as deviation_levels
+from trading.orders import level_near_candles as level_near_candles
 
 
 def at_sample_extreme(

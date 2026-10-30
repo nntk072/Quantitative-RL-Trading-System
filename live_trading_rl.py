@@ -46,6 +46,11 @@ if TYPE_CHECKING:
 from dotenv import load_dotenv
 from loguru import logger
 
+from integrations.mt5.risk_configuration import (
+    LiveRiskConfiguration,
+    load_live_risk_configuration,
+)
+
 load_dotenv()
 from integrations.mt5.logging_config import configure_logging  # noqa: E402
 
@@ -100,13 +105,7 @@ def _use_secondary_symbol(cfg: Any) -> bool:
     return not use_m1_only and not primary_only
 
 
-_LIVE_RISK_DEFAULTS: dict[str, float] = {
-    "risk_per_symbol": 0.01,
-    "max_total_risk": 0.02,
-    "default_lot_size": 0.1,
-    "stop_loss_pips": 50.0,
-    "interval_minutes": 1.0,
-}
+_LIVE_RISK_DEFAULTS = LiveRiskConfiguration().as_dict()
 
 
 def load_risk_overrides(cfg: Any) -> dict[str, float]:
@@ -119,21 +118,7 @@ def load_risk_overrides(cfg: Any) -> dict[str, float]:
     run's config falls back to the repo default *with an explicit warning*, so
     a config that silently drops the block can't quietly change live risk.
     """
-    block = getattr(cfg, "live_risk_overrides", None)
-    out = dict(_LIVE_RISK_DEFAULTS)
-    if block is None:
-        logger.warning(
-            "no live_risk_overrides block in run config — using repo defaults {}",
-            out,
-        )
-        return out
-    for key, default in _LIVE_RISK_DEFAULTS.items():
-        value = block.get(key, None) if hasattr(block, "get") else getattr(block, key, None)
-        if value is None:
-            logger.warning("live_risk_overrides.{} missing — using default {}", key, default)
-            continue
-        out[key] = float(value)
-    return out
+    return load_live_risk_configuration(cfg).as_dict()
 
 
 def parse_args() -> argparse.Namespace:
@@ -237,7 +222,6 @@ def build_robot(model_path: Path, run_config: Path, args: argparse.Namespace) ->
             risk_per_symbol=risk["risk_per_symbol"], max_total_risk=risk["max_total_risk"]
         ),
         secondary_data_source=secondary_data_source,
-        default_lot_size=risk["default_lot_size"],
         stop_loss_pips=risk["stop_loss_pips"],
         paper_trading=paper_trading,
     )

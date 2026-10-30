@@ -14,7 +14,7 @@ from orchestra.backup import (
 
 
 def test_snapshot_skips_generated_repository_roots(tmp_path) -> None:
-    source = tmp_path / "orchestra" / "pipeline.py"
+    source = tmp_path / "orchestra" / "task_orchestration.py"
     source.parent.mkdir(parents=True)
     source.write_text("source\n")
     generated = (
@@ -29,7 +29,7 @@ def test_snapshot_skips_generated_repository_roots(tmp_path) -> None:
 
     paths = iter_backup_paths(tmp_path)
 
-    assert Path("orchestra/pipeline.py") in paths
+    assert Path("orchestra/task_orchestration.py") in paths
     assert all(path not in paths for path in generated)
 
 

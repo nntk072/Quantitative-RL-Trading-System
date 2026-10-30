@@ -38,7 +38,7 @@ their concrete backend and the generic contract.
   treated as semantic identity.
 - Existing SB3 output coordinates are preserved when converted to the
   environment representation.
-- Contract and adapter tests live under `tests/test_decisioning/`; consumer
+- Contract and adapter tests live under `tests/integration/`; consumer
   adaptation tests live with the consumer, currently evaluation rollout tests.
 
 ## Current source paths
@@ -61,7 +61,7 @@ their concrete backend and the generic contract.
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add a decision backend adapter | inference adapter | `decisioning/adapters/` | `DecisionProvider`; `tests/test_eval/test_decision_provider_rollout.py` | one adapter and schema checks | fitting workflow and execution policy |
+| Add a decision backend adapter | inference adapter | `decisioning/adapters/` | `DecisionProvider`; `tests/integration/test_decision_provider_rollout.py` | one adapter and schema checks | fitting workflow and execution policy |
 | Change action meaning | contract evolution | `decisioning/contracts.py` | versioned `ActionSchemaRef`; action schema tests | schema plus compatibility adapter | PPO/SAC implementation details |
 
 ## Axis of Change

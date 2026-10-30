@@ -17,7 +17,7 @@ DISABLED_PLUGINS = ("Base64HighEntropyString", "HexHighEntropyString")
 
 
 def uv_command() -> str:
-    configured = os.environ.get("UV_BIN")
+    configured = os.environ.get("UV_BIN") or os.environ.get("THESIS_UV")
     command = configured or shutil.which("uv")
     if not command:
         raise RuntimeError("uv is required to run the isolated secret scanner")

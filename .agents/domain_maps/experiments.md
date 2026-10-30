@@ -9,7 +9,9 @@ their domain packages.
 ## Boundary
 
 - Campaign lifecycle: `experiments/campaigns/`.
-- `execution.py` composes focused state, resource, source-snapshot, artifact, and checkpoint services.
+- `campaign_execution.py` is the campaign composition root and composes focused state, source-snapshot, artifact, checkpoint, and compute services.
+- `execution.py` is a compatibility adapter for legacy launchers and public imports.
+- Cache-failure recovery is owned by `cache_failure_recovery.py`; the old compute resume command forwards to that experiment workflow.
 - Variant workflows: `experiments/variants/`.
 - May compose training, evaluation, compute, and artifacts at explicit workflow roots.
 - Must not import simulation runtime internals or own feature/trading semantics.
@@ -24,7 +26,7 @@ their domain packages.
 
 | Task | Axis | Start file | Contract and test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Change campaign lifecycle | workflow state | `experiments/campaigns/execution.py` | campaign state/provenance; campaign tests | one lifecycle service and tests | trading and simulation semantics |
+| Change campaign lifecycle | workflow state | `experiments/campaigns/campaign_execution.py` | campaign state/provenance; campaign tests | one lifecycle service and tests | trading and simulation semantics |
 
 ## Axis of Change
 
@@ -36,12 +38,15 @@ their domain packages.
 
 ## Verified Source Paths
 
-- `experiments/campaigns/execution.py`
+- `experiments/campaigns/campaign_execution.py`
+- `experiments/campaigns/execution.py` (compatibility adapter)
+- `experiments/campaigns/cache_failure_recovery.py`
 - `experiments/campaigns/state_store.py`
-- `experiments/campaigns/resources.py`
+- `compute/slurm/campaign_worker_resources.py`
+- `experiments/campaigns/resources.py` (compatibility adapter)
 - `experiments/campaigns/source_snapshot.py`
 - `experiments/campaigns/artifact_validation.py`
 - `experiments/campaigns/checkpoint_lineage.py`
 - `experiments/campaigns/constants.py`
-- `experiments/variants/runner.py`
-- `tests/test_campaign_results_summary.py`
+- `experiments/variants/variant_ablation_runner.py` (canonical lifecycle; CLI parsing is in `experiments/cli.py`)
+- `tests/test_experiments/test_campaign_results_summary.py`

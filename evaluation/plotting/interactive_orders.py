@@ -6,7 +6,7 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
-from .interactive_common import (
+from .interactive_plot_rendering import (
     _BREACH_COLOR,
     _CLOSE_COLOR,
     _LONG_COLOR,
@@ -248,7 +248,7 @@ def plot_per_trade_orders(
         draw_macd_rsi_plotly,
         draw_overlays_plotly,
     )
-    from .order_chart import draw_order_levels_plotly
+    from .order_chart_renderers import draw_order_levels_plotly
     from .order_window import _session_end_positions, prepare_order_chart
     from .overlay_events import candidate_sweep_line, confirmed_pivots
     from .plots import _trade_filename

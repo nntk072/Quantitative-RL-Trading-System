@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .state import TaskState
+from .task_state_store import TaskState
 
 _CLIP = 1200
 

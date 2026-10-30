@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import shutil
@@ -16,23 +15,16 @@ from typing import Any, cast
 
 import pandas as pd
 
+from artifacts.identity import file_sha256
 from configuration.paths import repository_root
 from features import build_features, feature_cache_content_hash
-from market_data.loading.pipeline import run_pipeline
+from market_data.loading import run_pipeline
 from market_data.splits.definitions import get_split_config, make_train_mask
 from training.configuration.cli import load_merged_config
 from training.configuration.variant_resolution import resolve_variant
 
 ROOT = repository_root(__file__)
 LEGACY_BASELINE_CACHE = Path("data/prebuilt_feature_cache/baseline.parquet")
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
@@ -129,10 +121,10 @@ def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
             "actual_hash": actual_hash,
             "matches_effective_config": actual_hash == expected_hash,
             "previous_cache_backup": backup_dir.relative_to(ROOT).as_posix(),
-            "previous_cache_sha256": _sha256(backup_dir / cache_path.name),
-            "previous_sidecar_sha256": _sha256(backup_dir / sidecar.name),
-            "rebuilt_cache_sha256": _sha256(cache_path),
-            "rebuilt_sidecar_sha256": _sha256(sidecar),
+            "previous_cache_sha256": file_sha256(backup_dir / cache_path.name),
+            "previous_sidecar_sha256": file_sha256(backup_dir / sidecar.name),
+            "rebuilt_cache_sha256": file_sha256(cache_path),
+            "rebuilt_sidecar_sha256": file_sha256(sidecar),
             "feature_rows": int(len(features)),
             "feature_columns": int(features.shape[1]),
         },

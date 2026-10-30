@@ -6,14 +6,15 @@ set -euo pipefail
 #   ./tools/uv-install --dev    # install runtime + dev deps (ruff, mypy)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+UV_BIN="${THESIS_UV:-uv}"
 cd "$SCRIPT_DIR"
 
 if [ "${1:-}" = "--dev" ]; then
   echo "==> uv sync --extra dev"
-  uv sync --extra dev
+  "$UV_BIN" sync --extra dev
 else
   echo "==> uv sync"
-  uv sync
+  "$UV_BIN" sync
 fi
 
 echo "==> done. venv at .venv/"

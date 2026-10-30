@@ -14,8 +14,9 @@ from typing import Any, cast
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
+from artifacts.identity import file_sha256
 from configuration.paths import repository_root
-from evaluation.reporting.run_manifest import array_sha256, dataset_record, file_sha256
+from evaluation.reporting.run_manifest import array_sha256, dataset_record
 from features import feature_cache_content_hash, feature_cache_path
 from market_data.splits.definitions import make_train_mask
 

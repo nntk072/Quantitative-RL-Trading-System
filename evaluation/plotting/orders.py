@@ -17,7 +17,10 @@ from matplotlib.patches import Rectangle
 
 from evaluation.metrics.trade_pairs import pair_trades as _pair_trades
 
-from .common import (
+from .order_window import _extend_trade_window as _extend_trade_window
+from .order_window import _extract_window as _extract_window
+from .order_window import _structure_anchors as _structure_anchors
+from .plot_rendering import (
     _NOTE_FONT_PT,
     BREACH_COLOR,
     CLOSE_COLOR,
@@ -27,9 +30,6 @@ from .common import (
     _apply_style,
     _save,
 )
-from .order_window import _extend_trade_window as _extend_trade_window
-from .order_window import _extract_window as _extract_window
-from .order_window import _structure_anchors as _structure_anchors
 
 log = logging.getLogger(__name__)
 
@@ -569,7 +569,7 @@ def plot_per_trade_orders(
         draw_macd_rsi_mpl,
         draw_overlays_mpl,
     )
-    from .order_chart import draw_order_levels_mpl
+    from .order_chart_renderers import draw_order_levels_mpl
     from .order_window import _session_end_positions, prepare_order_chart
     from .overlay_events import candidate_sweep_line, confirmed_pivots
 

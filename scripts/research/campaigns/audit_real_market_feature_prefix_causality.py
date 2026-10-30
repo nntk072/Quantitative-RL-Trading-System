@@ -32,6 +32,7 @@ from market_data.loading.bars import load_bars
 from market_data.splits.definitions import get_split_config, make_train_mask
 from market_data.transforms.cleaning import clean
 from market_data.transforms.sessions import add_session_id, add_session_labels
+from training.configuration.strategy_overlays import merge_strategy_config
 from training.configuration.variant_resolution import resolve_variant
 
 ROOT = repository_root(__file__)
@@ -134,15 +135,7 @@ def compare_prefix(
 def config_for_variant(name: str) -> tuple[Any, dict[str, Any]]:
     resolved = resolve_variant(name)
     cfg: DictConfig = load_config(config_path=ROOT / str(resolved["base_config"]))
-    strategy_config = {
-        "po3_ifvg": ROOT / "config" / "2_po3_ifvg.yaml",
-        "distribution": ROOT / "config" / "3_distribution.yaml",
-    }.get(str(resolved["strategy"]))
-    if strategy_config is not None:
-        merged_cfg = OmegaConf.merge(cfg, OmegaConf.load(strategy_config))
-        if not isinstance(merged_cfg, DictConfig):
-            raise TypeError("resolved strategy config must be a mapping")
-        cfg = merged_cfg
+    cfg = merge_strategy_config(cfg, str(resolved["strategy"]))
     cfg = apply_overrides(cfg, list(resolved["overrides"]))
     return cfg, resolved
 

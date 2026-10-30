@@ -21,8 +21,8 @@ def build_fvg_zone_features(
 ) -> pd.DataFrame:
     """Model-facing FVG zone features for one timeframe's own bars.
 
-    Uses :func:`features.po3.config.detect_fvg` +
-    :func:`features.po3.config.build_fvg_zones`, then per bar reports:
+    Uses :func:`features.po3.fvg_detection.detect_fvg` +
+    :func:`features.po3.zones.build_fvg_zones`, then per bar reports:
 
     - ``fvg_in_bull`` / ``fvg_in_bear``: 1 if close is inside an active zone
     - ``fvg_bull_dist`` / ``fvg_bear_dist``: distance from close to the nearest
