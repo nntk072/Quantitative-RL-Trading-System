@@ -98,7 +98,7 @@ screening arms. They use the current A4a action overlay, TCN for PPO, dollar-ban
 risk sizing capped at $900 with a $100 hold floor, $5,000 daily and $10,000
 maximum loss limits, no peak-trailing stop, and zero added randomized fill
 latency.
-The first campaign specification includes only the matched PPO reward pair.
+The first experiment run specification includes only the matched PPO reward pair.
 Final evaluation uses stochastic actions, matching the action mode used during
 PPO training; evaluation action seeds are recorded. Q5 and SAC remain registered
 for later stages but do not run until their prerequisite gates pass. The
@@ -116,7 +116,7 @@ per-variant risk YAML files keep the risk policy explicit.
 The first pair answers RQ1. The second pair (2 vs 3) answers the Q5 screening
 question. SAC follows only after the PPO reward and constrained pathway are
 validated. One seed and 2M steps can detect implementation faults and obvious
-collapse; they cannot establish superiority. Full 20M campaigns require
+collapse; they cannot establish superiority. Full 20M experiment runs require
 separate authorization.
 
 Training uses the 2025 split. The 2026 report interval has already been exposed

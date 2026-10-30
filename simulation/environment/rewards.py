@@ -137,7 +137,7 @@ class DSRReward:
             self.last_parts = fit_reward_parts({"breach": penalty}, penalty, penalty)
             return penalty
 
-        # Normalise P&L to relative return
+            # Normalise P&L to relative return
         r = step_pnl / initial_balance
 
         # Update EMA estimates
@@ -152,7 +152,7 @@ class DSRReward:
         else:
             dsr = (self._B * (r - A_prev) - 0.5 * self._A * (r**2 - B_prev)) / (denom**1.5)
 
-        # Soft brick → hard limit: linear penalty between soft and hard daily loss.
+            # Soft brick → hard limit: linear penalty between soft and hard daily loss.
         soft = (
             float(soft_daily_loss_limit)
             if soft_daily_loss_limit is not None and soft_daily_loss_limit > 0.0

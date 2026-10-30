@@ -194,7 +194,7 @@ def main() -> int:
         "symbols": symbols,
         "limitations": [
             "This verifies the deterministic tie-break against every duplicate timestamp group in the exact validated caches; it does not reconstruct true sub-millisecond ordering.",
-            "This is tick-input semantics evidence, not a policy evaluation, PnL result, campaign result, or thesis-readiness finding.",
+            "This is tick-input semantics evidence, not a policy evaluation, PnL result, experiment run result, or thesis-readiness finding.",
         ],
     }
     output.parent.mkdir(parents=True, exist_ok=True)

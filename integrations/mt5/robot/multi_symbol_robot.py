@@ -72,7 +72,7 @@ class MultiSymbolRobot:
                         atr_percentage
                     )
 
-            # Calculate position size
+                    # Calculate position size
             position_size = self.risk_manager.calculate_position_size(
                 symbol=symbol,
                 stop_loss_pips=self.stop_loss_pips,
@@ -112,14 +112,14 @@ class MultiSymbolRobot:
                 logger.warning(f"No strategy found for {symbol}")
                 return
 
-            # Get signal from strategy
+                # Get signal from strategy
             logger.info(f"Checking signals for {symbol}")
             signal_symbol, signal = strategy.signal()
 
             if signal_symbol != symbol:
                 logger.warning(f"Strategy returned different symbol: {signal_symbol} vs {symbol}")
 
-            # Process buy signal
+                # Process buy signal
             if signal == Signal.BUY:
                 total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
 
@@ -171,7 +171,7 @@ class MultiSymbolRobot:
                 else:
                     logger.info(f"Buy position already exists for {symbol}")
 
-                # Close opposite positions
+                    # Close opposite positions
                 total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
                 if total_sell > 0:
                     logger.info(f"Closing existing sell positions for {symbol}")
@@ -180,7 +180,7 @@ class MultiSymbolRobot:
                     else:
                         logger.info(f"[PAPER] Would close existing sell positions for {symbol}")
 
-            # Process sell signal
+                        # Process sell signal
             elif signal == Signal.SELL:
                 total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
 
@@ -232,7 +232,7 @@ class MultiSymbolRobot:
                 else:
                     logger.info(f"Sell position already exists for {symbol}")
 
-                # Close opposite positions
+                    # Close opposite positions
                 total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
                 if total_buy > 0:
                     logger.info(f"Closing existing buy positions for {symbol}")
@@ -241,7 +241,7 @@ class MultiSymbolRobot:
                     else:
                         logger.info(f"[PAPER] Would close existing buy positions for {symbol}")
 
-            # No signal
+                        # No signal
             elif signal == Signal.NONE:
                 logger.info(f"No trading signal for {symbol}")
 
@@ -265,7 +265,7 @@ class MultiSymbolRobot:
                 f"Margin: ${account_info.margin:.2f}"
             )
 
-        # Get current exposure
+            # Get current exposure
         exposure = self.risk_manager.get_total_exposure()
         logger.info(
             f"Current exposure: {exposure['total_positions']} positions, "

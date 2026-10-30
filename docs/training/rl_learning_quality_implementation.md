@@ -1,6 +1,6 @@
 # RL Learning Quality Program: Implementation Status
 
-> **Plan routing:** The [master project execution plan](../thesis/master_project_execution_plan.md) is the single operational plan for Q0–Q7. This file records implementation status only; it does not authorize or document a launched research campaign.
+> **Plan routing:** The [master project execution plan](../thesis/master_project_execution_plan.md) is the single operational plan for Q0–Q7. This file records implementation status only; it does not authorize or document a launched research experiment run.
 
 > **Current-status pointer (2026-10-17 06:31 Helsinki):** This file retains
 > dated snapshots that predate later Q5 implementation work. Use the current
@@ -16,19 +16,19 @@
 > limits.
 
 This work is a separate research lineage. It does not change the historical
-experiment registry or the readiness state of the thesis campaign.
+experiment registry or the readiness state of the thesis experiment run.
 
 ## Q0–Q7 source audit — 2026-10-16
 
 This audit compares `config/quality_experiments.yaml`, the training/model/env
 implementations, and the focused tests. It is a source review only; it is not a
-campaign run or runtime validation. User direction on 2026-10-16 makes every Q
+experiment run or runtime validation. User direction on 2026-10-16 makes every Q
 stage compulsory for the overall mission. No Q-stage training result exists.
 
 | Stage | Present in source | Remaining before a valid stage run |
 |---|---|---|
 | Q0 | A3/account-state-v1 control and diagnostics are registered. | Freeze source/data/config/seed/budget; run and package a full-split deterministic control. |
-| Q1 | Versioned account-state-v2 coordinates, checkpoint checks, frame/bundle wiring, and focused tests exist. | Run the matched Q0/Q1 pair and review the behavioral/economic diagnostics; no quality campaign has tested it. |
+| Q1 | Versioned account-state-v2 coordinates, checkpoint checks, frame/bundle wiring, and focused tests exist. | Run the matched Q0/Q1 pair and review the behavioral/economic diagnostics; no quality experiment run has tested it. |
 | Q2 | `n_envs=16/32/64` arms are registered and the trainer records rollout geometry. | Arms are `implementation_unverified` and fail closed pending GPU-node config/trainer tests. Freeze optimizer-update interpretation (`n_envs × n_steps`, minibatch count, epochs), budget, and resource limits before comparison. Equal `n_envs` does not imply equal PPO update geometry. No runs or winner exist. |
 | Q3 | RR and fixed-risk equity-delta reward implementations exist; registry arms are declared. | Arms are `implementation_unverified` and fail closed until GPU-node registry/trainer tests pass. Train from the selected Q2 parent and report economic metrics separately from reward. No runs or winner exist. |
 | Q4A | Semantic Gaussian actor heads are wired and tests cover gradient, distribution, save/load, and schema behavior. | Arm is `implementation_unverified` until current GPU-node checks pass. Then train/evaluate from the selected Q3 parent. No run exists. |
@@ -101,14 +101,14 @@ and the new registry regressions have not passed on an authorized GPU node.
   implemented. Constraint telemetry is only the signal-collection foundation;
   there is no cost critic, cost rollout buffer, dual update, or constrained
   policy objective.
-- No Q0–Q7 variant has been trained as a quality campaign. Q2 rollout logging
-  exists, but no winner has been selected. Existing thesis campaign workers do
+- No Q0–Q7 variant has been trained as a quality experiment run. Q2 rollout logging
+  exists, but no winner has been selected. Existing thesis experiment run workers do
   not count as Q-program runs.
 - Q6's visible, hidden-state, and no-FSM arms are registered; their regression
   and complete three-arm config have not passed validation on a GPU node. The
   comparison still has no run or result.
-- The new diagnostics have not been collected from an actual quality campaign.
-- No real `srun` allocation or training campaign was launched. `srun --test-only`
+- The new diagnostics have not been collected from an actual quality experiment run.
+- No real `srun` allocation or training experiment run was launched. `srun --test-only`
   was used only to query scheduler forecasts. This
   implementation must not be interpreted as evidence that any policy learned,
   survived, traded profitably, or passed a thesis gate.
@@ -154,7 +154,7 @@ new allocation or test step was started.
 
 - Q0 is a registered A3/account-state-v1 source control; it is not a completed
   frozen run. Q1's account-state-v2 implementation and metadata checks exist,
-  but no matched Q0/Q1 campaign result exists.
+  but no matched Q0/Q1 experiment run result exists.
 - Q2's 16/32/64 arms set `env.n_envs`, and training logs its effective
   `n_envs`, per-env `n_steps`, aggregate rollout, minibatches, and updates.
   The arms remain fail-closed; they need current integration checks and a
@@ -177,7 +177,7 @@ new allocation or test step was started.
   comparison or winner. Parent selection still depends on completing Q6.
 
 No Q stage is complete as a research stage: there is no frozen Q0 run, no
-stage winner, and no Q0–Q7 campaign evidence. This pass made no Q algorithm
+stage winner, and no Q0–Q7 experiment run evidence. This pass made no Q algorithm
 changes because no Q5 cost-budget/method specification or selected parent
 lineage is frozen, and the required GPU-node validation environment is not
 currently available. The one-minute Slurm allocation rule was tightened in
@@ -224,21 +224,21 @@ Validation command on the MI210 node:
 
 ```bash
 PYTHONPATH="$PWD" /scratch/work/nguyenl37/.venv-mi210/bin/python -m pytest \
-  tests/test_simulation/test_environment/test_eligibility_wiring.py \
-  tests/test_training/test_quality_registry.py \
-  tests/test_simulation/test_environment/test_observation_schema.py \
-  tests/test_simulation/test_environment/test_bundle_env_equivalence.py \
-  tests/test_simulation/test_environment/test_equity_delta_reward.py \
-  tests/test_models/test_semantic_actor.py \
-  tests/test_models/test_hybrid_actor.py \
-  tests/test_models/test_encoders.py \
-  tests/test_models/test_lite_tcn_agent.py \
-  tests/test_simulation/test_environment/test_entry_state_machine.py \
-  tests/test_experiments/test_rebuild_named_prebuilt_feature_caches.py \
-  tests/test_training/test_train_rl_decomposition.py \
-  tests/test_features/test_session_ohlc.py \
-  tests/test_features/test_feature_cache_and_fit_scope.py \
-  tests/test_features/test_cache_hash_full_column.py -q
+  tests/unit/simulation/test_environment/test_eligibility_wiring.py \
+  tests/unit/training/test_quality_registry.py \
+  tests/unit/simulation/test_environment/test_observation_schema.py \
+  tests/unit/simulation/test_environment/test_bundle_env_equivalence.py \
+  tests/unit/simulation/test_environment/test_equity_delta_reward.py \
+  tests/unit/models/test_semantic_actor.py \
+  tests/unit/models/test_hybrid_actor.py \
+  tests/unit/models/test_encoders.py \
+  tests/unit/models/test_lite_tcn_agent.py \
+  tests/unit/simulation/test_environment/test_entry_state_machine.py \
+  tests/unit/experiments/test_rebuild_named_prebuilt_feature_caches.py \
+  tests/unit/training/test_train_rl_decomposition.py \
+  tests/unit/features/test_session_ohlc.py \
+  tests/unit/features/test_feature_cache_and_fit_scope.py \
+  tests/unit/features/test_cache_hash_full_column.py -q
 ```
 
 Result: **139 passed**, 8 PyTorch Transformer nested-tensor warnings, in 18.22
@@ -260,7 +260,7 @@ throughput benchmark was collected, so no speedup is claimed.
 
 | Evidence | Result | Limit |
 |---|---|---|
-| `tests/test_features/test_variants.py`, `test_assembled_causality.py`, `test_po3_state.py`, `test_po3_ifvg_state.py` | 42 passed on MI210, 3.47 s. | Focused FVG/IFVG and assembled-causality contracts only. |
+| `tests/unit/features/test_variants.py`, `test_assembled_causality.py`, `test_po3_state.py`, `test_po3_ifvg_state.py` | 42 passed on MI210, 3.47 s. | Focused FVG/IFVG and assembled-causality contracts only. |
 | `docs/thesis/g1_feature_prefix_post_repair_2026-10-17.json` | 12/12 cutoffs pass over four feature profiles representing all 18 resolved variants; 528,760 M1 rows, feature version `v22-causal-configured-ny-session`; source CSV hashes are recorded in the report. | Sampled prefix invariance, not exhaustive proof across all operations or every row. |
 | `docs/thesis/g1_real_market_fold_fit_scope_post_array_opt_2026-10-17.json` | 4/4 profiles pass one early purged fold: 41,920 training rows and 6,000 validation rows each. Poisoning validation OHLC leaves training features bit-identical and changes validation features. | One fold per profile; not five-fold evaluation, strategy performance, or OOS confirmation. |
 | `docs/thesis/prebuilt_cache_rebuild_2026-10-17_mi210.json` | Transactional rebuild passed for three caches, each with 528,760 rows: baseline 194 columns, Idea 1 532, Idea 2 538. Hashes, parquet round trips, raw inputs, and loaded-source provenance are recorded. Old caches/sidecars were backed up under `data/prebuilt_feature_cache/backups/pre-repair_2026-10-17_mi210_21007645/`. | Built on ROCm MI210 with the locked CPU dependencies and PyTorch 2.7.1+rocm6.3; not an exact CUDA-lock or trainer qualification. |
@@ -286,4 +286,4 @@ rollout/critic, Lagrange update, persisted multiplier, or constrained
 evaluation. It stays fail-closed until cost budgets, aggregation horizon,
 discounting, dual update/bounds, and the frozen Q4 parent are resolved under the
 master plan. The new causal evidence permits continued P1 preparation; it does
-not make the contaminated 18-run screen admissible or authorize a new campaign.
+not make the contaminated 18-run screen admissible or authorize a new experiment run.

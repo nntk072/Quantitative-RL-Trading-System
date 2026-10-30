@@ -155,7 +155,7 @@ class SeedRunner:
             seed_dir = run_dir
             seed_model_dir = model_dir
 
-        # Create training environment
+            # Create training environment
         log.info("Creating training environment...")
         if train_env_spec is not None:
             from simulation.environment.worker import make_bundle_env
@@ -401,9 +401,9 @@ class SeedRunner:
                 arch=args.arch,
             )
 
-        # Deterministic viability checks cover the complete chronological
-        # training split. Keep the short prefix above for inexpensive checkpoint
-        # ranking and the existing dashboard for frequent stochastic feedback.
+            # Deterministic viability checks cover the complete chronological
+            # training split. Keep the short prefix above for inexpensive checkpoint
+            # ranking and the existing dashboard for frequent stochastic feedback.
         if train_eval_spec is not None:
             viability_eval_factory = self._bundle_eval_factory(train_eval_spec)
         else:
@@ -652,8 +652,8 @@ class SeedRunner:
         except Exception as exc:
             log.warning("Training progress plots skipped: %s", exc)
 
-        # Final train/test replays use the configured policy action mode. Stochastic
-        # evaluations are reseeded so their sampled trajectories can be reproduced.
+            # Final train/test replays use the configured policy action mode. Stochastic
+            # evaluations are reseeded so their sampled trajectories can be reproduced.
         deterministic_eval = self.final_eval_deterministic
         _setup_rngs(seed)
         phase_started = time.perf_counter()
@@ -893,7 +893,7 @@ class SeedRunner:
         fit_result = self.fit_result
         if fit_result is None:
             raise RuntimeError("seed workflow has no learner fit result")
-        # Export both splits for this seed
+            # Export both splits for this seed
         phase_started = time.perf_counter()
         if bundle_path is not None:
             from simulation.environment.bundles import bars_for_export
@@ -924,7 +924,7 @@ class SeedRunner:
         if bundle_path is not None:
             del train_export_bars, test_export_bars
 
-        # Save config snapshot for this seed
+            # Save config snapshot for this seed
         write_run_config_snapshot(seed_dir, cfg)
         per_run_cache_hash = Path(str(feat_cache) + ".hash")
         cache_hash = per_run_cache_hash.read_text(encoding="utf-8").strip()

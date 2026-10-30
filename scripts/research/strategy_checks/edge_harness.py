@@ -368,9 +368,9 @@ def htf_swing_levels(bars: pd.DataFrame, ny: pd.DataFrame) -> pd.DataFrame:
     for col in ("htf_swing_high", "htf_swing_low", "prior_day_high", "prior_day_low"):
         out[col] = ny_prev_day.map(prior_by_date[col])
 
-    # Liquidity = the nearest untraded extreme above/below. Falls back to the
-    # prior-day extreme when no fractal printed recently, so the column is never
-    # silently empty and quietly drops setups.
+        # Liquidity = the nearest untraded extreme above/below. Falls back to the
+        # prior-day extreme when no fractal printed recently, so the column is never
+        # silently empty and quietly drops setups.
     out["buy_side_htf"] = out["htf_swing_high"].combine_first(out["prior_day_high"])
     out["sell_side_htf"] = out["htf_swing_low"].combine_first(out["prior_day_low"])
     # Buy-side liquidity must sit above price to be a target; otherwise the
@@ -526,7 +526,7 @@ def liquidity_pools(bars: pd.DataFrame, ny: pd.DataFrame) -> pd.DataFrame:
     for col in ("swing_high", "swing_low", "d_high", "d_low"):
         out[col] = ny_prev.map(by_date[col])
 
-    # Session ranges come straight from build_ny_frame's strictly pre-open context.
+        # Session ranges come straight from build_ny_frame's strictly pre-open context.
     out["asia_high"] = ny["asia_high"]
     out["asia_low"] = ny["asia_low"]
     out["london_high"] = ny["london_high"]
@@ -654,7 +654,7 @@ def evaluate(
         dir_a = direction.reindex(ny.index).to_numpy(dtype=np.int64)
     else:
         dir_a = np.full(len(ny), int(direction), dtype=np.int64)
-    # A NaN direction would silently become a huge int64. Fail loudly instead.
+        # A NaN direction would silently become a huge int64. Fail loudly instead.
     if not np.isin(dir_a, (-1, 0, 1)).all():
         raise ValueError("direction must be +/-1 aligned to the NY index")
     dates = ny["date"].to_numpy()
@@ -759,9 +759,10 @@ def show(frame: pd.DataFrame, *, cols: list[str] | None = None) -> None:
     with pd.option_context("display.width", 240, "display.max_columns", 60):
         print(frame[have].to_string(index=False, float_format=lambda v: f"{v:+.2f}"))
 
+        # A candidate must clear all of these. They are deliberately strict: the
+        # thresholds are set above what pure noise produces, not at the edge.
 
-# A candidate must clear all of these. They are deliberately strict: the
-# thresholds are set above what pure noise produces, not at the edge.
+
 GATE = {
     "min_t": 2.0,
     "min_win_days": 0.55,

@@ -51,7 +51,7 @@ class AccountState:
         self.max_drawdown = 0.0
         self.open_pnl = 0.0
 
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
 
     def _update_loss_from_initial(self) -> None:
         """Track peak absolute loss vs initial balance (FTMO max-loss, not trailing)."""

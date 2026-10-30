@@ -75,7 +75,7 @@ def plot_price_with_orders(
     if len(ohlcv) > max_points:
         ohlcv = ohlcv.iloc[-max_points:]
 
-    # Build addplots for orders — candle-interval binning via floor to candle_tf
+        # Build addplots for orders — candle-interval binning via floor to candle_tf
     addplots = []
     if trades is not None and not trades.empty and "time" in trades.columns:
         opens = trades[trades["type"] == "open"].copy()
@@ -93,7 +93,7 @@ def plot_price_with_orders(
             binned = ts.floor(candle_tf)
             if binned in ohlcv.index:
                 return binned
-            # fallback: nearest right candle within range
+                # fallback: nearest right candle within range
             loc = int(ohlcv.index.searchsorted(ts, side="left"))
             if loc >= len(ohlcv):
                 return None
@@ -380,9 +380,9 @@ def _position_events(
         events: pd.DataFrame = trades.loc[trades["position_id"] == position_id].copy()
     else:
         events = pd.DataFrame([open_row.to_dict(), close_row.to_dict()])
-    # Old trade ledgers did not emit the automatic post-partial stop update.
-    # Reconstruct it only when the run's saved config supplies a positive
-    # buffer, and label it as reconstructed in the chart note.
+        # Old trade ledgers did not emit the automatic post-partial stop update.
+        # Reconstruct it only when the run's saved config supplies a positive
+        # buffer, and label it as reconstructed in the chart note.
     if (
         breakeven_buffer_pts > 0.0
         and "type" in events
@@ -587,9 +587,9 @@ def plot_per_trade_orders(
             timestamps = pd.to_datetime(trades[column], errors="coerce", utc=True)
             trades[column] = timestamps.dt.tz_convert(bars.index.tz)
 
-    # Older ledgers recorded the candidate's bar but not its timestamp. Recover
-    # the source candle directly from the run's bar index so the chart caption
-    # can distinguish setup time from the later policy trigger.
+            # Older ledgers recorded the candidate's bar but not its timestamp. Recover
+            # the source candle directly from the run's bar index so the chart caption
+            # can distinguish setup time from the later policy trigger.
     if "entry_origin_time" not in trades.columns:
         trades["entry_origin_time"] = pd.NaT
     if {"type", "entry_origin_bar"}.issubset(trades.columns):
@@ -614,8 +614,8 @@ def plot_per_trade_orders(
     else:
         log.info("Per-trade PNG: %d charts → %s", total, orders_dir)
 
-    # Compute EMA50/MACD/RSI/VWAP once on the full history so indicators are
-    # warmed up and match the strategy's real signals, then slice per trade.
+        # Compute EMA50/MACD/RSI/VWAP once on the full history so indicators are
+        # warmed up and match the strategy's real signals, then slice per trade.
     full_overlays = compute_chart_overlays_full(bars)
     full_overlays.update(compute_mtf_ema_overlays(bars, ema_timeframes))
     full_overlays = select_ema_overlays(full_overlays, ema_timeframes)
@@ -723,7 +723,7 @@ def plot_per_trade_orders(
             )
             ax_price.add_patch(rect)
 
-        # EMA50
+            # EMA50
         ema = overlays.get("ema50")
         if ema is not None:
             ax_price.plot(
@@ -734,8 +734,8 @@ def plot_per_trade_orders(
                 label="M1 EMA 50",
                 zorder=3,
             )
-        # Keep the chart readable: the feature set retains all EMA periods,
-        # while trade charts show only the two requested context lines.
+            # Keep the chart readable: the feature set retains all EMA periods,
+            # while trade charts show only the two requested context lines.
         ema_colors = {21: "#6a1b9a", 50: "#0066cc"}
         for timeframe in ema_timeframes:
             tf = str(timeframe).upper()

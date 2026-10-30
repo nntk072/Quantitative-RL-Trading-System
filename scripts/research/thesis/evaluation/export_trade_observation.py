@@ -3,7 +3,7 @@
 
 This report uses saved position summaries and fill events. It does not reload a
 checkpoint or replay the market. Its purpose is to make the recorded decisions,
-risk, fills, and outcomes easy to inspect alongside the campaign report.
+risk, fills, and outcomes easy to inspect alongside the experiment run report.
 """
 
 from __future__ import annotations
@@ -51,9 +51,11 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _run_dirs(campaign_dir: Path, variant: str) -> tuple[Path, Path]:
+def _run_dirs(experiment_run_dir: Path, variant: str) -> tuple[Path, Path]:
     candidates = sorted(
-        (campaign_dir / "runs" / "attempts").glob(f"{variant}__seed50/attempt*/{variant}__seed50")
+        (experiment_run_dir / "runs" / "attempts").glob(
+            f"{variant}__seed50/attempt*/{variant}__seed50"
+        )
     )
     if len(candidates) != 1:
         raise FileNotFoundError(f"expected one saved run for {variant}; found {len(candidates)}")
@@ -76,13 +78,13 @@ def _ordered_positions(rows: list[dict[str, str]]) -> list[dict[str, str]]:
 
 
 def _write_report(
-    campaign_dir: Path,
+    experiment_run_dir: Path,
     variant: str,
     limit: int,
     window: str,
     output_dir: Path,
 ) -> Path:
-    attempt_root, run_dir = _run_dirs(campaign_dir, variant)
+    attempt_root, run_dir = _run_dirs(experiment_run_dir, variant)
     split_dir = run_dir / "training"
     positions_path = split_dir / "positions.csv"
     fills_path = split_dir / "fills.csv"
@@ -102,8 +104,10 @@ def _write_report(
     config = json.loads(config_path.read_text(encoding="utf-8"))
     overrides = config.get("overrides", [])
     override_map = dict(item.split("=", 1) for item in overrides if "=" in item)
-    campaign = json.loads((campaign_dir / "campaign.json").read_text(encoding="utf-8"))
-    fingerprint = campaign.get("fingerprint", "not recorded")
+    experiment_run = json.loads(
+        (experiment_run_dir / "experiment_run.json").read_text(encoding="utf-8")
+    )
+    fingerprint = experiment_run.get("fingerprint", "not recorded")
 
     report_path = output_dir / f"{variant}_seed50_training_last{len(selected)}_trades.md"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -116,8 +120,8 @@ def _write_report(
     lines = [
         f"# {variant}: {len(selected)} completed training trades",
         "",
-        f"Campaign: `{campaign_dir.name}`  ",
-        f"Campaign fingerprint: `{fingerprint}`  ",
+        f"Experiment run: `{experiment_run_dir.name}`  ",
+        f"Experiment run fingerprint: `{fingerprint}`  ",
         f"Seed: `{config.get('seed', 'not recorded')}`  ",
         f"Architecture: `{config.get('arch', 'not recorded')}`  ",
         f"Window: `{window}` chronological completed positions from the training split  ",
@@ -126,7 +130,7 @@ def _write_report(
         "",
         "## Risk policy actually used",
         "",
-        "This MTF campaign did **not** use a 10% peak trailing drawdown rule. Its resolved settings were:",
+        "This MTF experiment run did **not** use a 10% peak trailing drawdown rule. Its resolved settings were:",
         "",
         "| Rule | Resolved setting | Meaning |",
         "|---|---:|---|",
@@ -196,10 +200,10 @@ def _write_report(
             "",
             "## Reading this ledger",
             "",
-            "- The run's equity plots and full metrics remain in [the campaign report](project_results_report.md).",
+            "- The run's equity plots and full metrics remain in [the experiment run report](project_results_report.md).",
             "- `Net PnL` is the completed position's recorded net amount. `R` is the recorded realized R value when available; `—` means the source row did not contain it.",
             "- The action columns show selected raw PPO outputs, not a probability or a guarantee of execution. SL/TP values and approved risk are the resolved execution fields.",
-            "- This is a training-split observation window, not an independent test sample. It does not claim that its selected-window sum is the campaign's total return.",
+            "- This is a training-split observation window, not an independent test sample. It does not claim that its selected-window sum is the experiment run's total return.",
             "",
             "## Source artifact hashes",
             "",
@@ -217,17 +221,17 @@ def _write_report(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--campaign-dir", type=Path, required=True)
+    parser.add_argument("--experiment-run-dir", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=100)
     parser.add_argument("--window", choices=("first", "last"), default="last")
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args()
     if args.limit <= 0:
         parser.error("--limit must be positive")
-    campaign_dir = args.campaign_dir.resolve()
-    output_dir = (args.output_dir or campaign_dir / "reports" / "trade_observation").resolve()
+    experiment_run_dir = args.experiment_run_dir.resolve()
+    output_dir = (args.output_dir or experiment_run_dir / "reports" / "trade_observation").resolve()
     for variant in ("rq_mtf_control_tcn", "rq_mtf_treatment_mtf"):
-        report = _write_report(campaign_dir, variant, args.limit, args.window, output_dir)
+        report = _write_report(experiment_run_dir, variant, args.limit, args.window, output_dir)
         print(report)
     return 0
 

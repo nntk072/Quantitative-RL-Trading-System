@@ -34,11 +34,11 @@ ACTIVE_NAMING_ROOTS = (
 ACTIVE_FILE_SUFFIXES = {".py", ".sh", ".yaml", ".yml", ".txt", ".md", ".json"}
 PHASE_ONLY_MARKER = re.compile(r"(?:^|_)(?:p\d+|wp\d*|phase[-_]?\d+)(?:_|\.|$)", re.IGNORECASE)
 
-# These files are versioned campaign identities with functional descriptions,
+# These files are versioned experiment run identities with functional descriptions,
 # not reusable source modules. Their identity is already consumed by evidence.
-HISTORICAL_CAMPAIGN_IDENTITIES = {
-    "config/campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1.yaml",
-    "config/campaigns/variant_list_p6_entry_fsm.txt",
+HISTORICAL_EXPERIMENT_RUN_IDENTITIES = {
+    "config/experiment_runs/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1.yaml",
+    "config/experiment_runs/variant_list_p6_entry_fsm.txt",
     "docs/thesis/p1_checkpoint_full_split_budget_2026-10-16.json",
 }
 HISTORICAL_OUTPUT_ROOTS = ("docs/thesis/evidence/", "docs/research/")
@@ -86,7 +86,7 @@ def test_active_repository_files_use_functional_names() -> None:
             relative = path.relative_to(ROOT).as_posix()
             if relative.startswith(HISTORICAL_OUTPUT_ROOTS):
                 continue
-            if relative in HISTORICAL_CAMPAIGN_IDENTITIES:
+            if relative in HISTORICAL_EXPERIMENT_RUN_IDENTITIES:
                 continue
             if PHASE_ONLY_MARKER.search(path.name):
                 violations.append(relative)
@@ -96,6 +96,21 @@ def test_active_repository_files_use_functional_names() -> None:
         "phase/work-package IDs as primary names; rename to the owned functionality "
         "or document a narrow identity "
         f"exception:\n{chr(10).join(sorted(violations))}"
+    )
+
+
+def test_test_module_names_describe_behavior_without_suite_suffixes() -> None:
+    test_root = ROOT / "tests"
+    violations = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in test_root.rglob("test_*.py")
+        if path.stem.endswith("_unittest")
+    )
+
+    assert not violations, (
+        "Test modules should describe the behavior they verify; the `_unittest` "
+        "suffix repeats the suite location instead of adding behavior: "
+        f"{chr(10).join(violations)}"
     )
 
 

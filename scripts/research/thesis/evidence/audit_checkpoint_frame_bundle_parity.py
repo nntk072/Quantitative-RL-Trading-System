@@ -471,8 +471,8 @@ def main() -> int:
         "status": "passed" if matches else "failed",
         "artifact_role": "historical_reanalysis_backend_parity",
         "historical_holdout_inspected": True,
-        "campaign_id": provenance.get("campaign_id"),
-        "campaign_fingerprint": provenance.get("campaign_fingerprint"),
+        "experiment_run_id": provenance.get("experiment_run_id"),
+        "experiment_run_fingerprint": provenance.get("experiment_run_fingerprint"),
         "source_attempt": provenance.get("attempt"),
         "repository": {
             "head": current_head,

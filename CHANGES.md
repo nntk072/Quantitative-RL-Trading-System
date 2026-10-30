@@ -20,7 +20,7 @@ Based on the debug/standardization plan (v4). Plan item IDs are in brackets.
 |---|---|
 | `quant_rl/train/variant_resolver.py` (new) | Single source of truth. Resolves a variant into base config, `--strategy`, algo, arch, steps, seeds, and explicit overrides. Refuses undeclared `reward_mode`, unknown strategy/algo/arch, and `use_vae=1` without a VAE path. Writes `resolved_config.json` per run. Pure Python + PyYAML. [A1, A4] |
 | `scripts/research/frozen-launches/train_one_variant.sh` | Rewritten as a thin wrapper around the resolver. Runs one seed at a time; markers and output dirs are keyed `<variant>__seed<N>`; no resume branch; `DRY_RUN=1` prints the exact commands; `VAE_PATH` required for VAE variants. [A4, B1, B2, B4] |
-| `scripts/compute/slurm/campaigns/run_18variant_matrix.sh` | Repo path is script-relative; `STEPS` defaults to the YAML value; skip check uses the seed-keyed marker; resume lookup removed. [B1, B2, B4] |
+| `scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh` | Repo path is script-relative; `STEPS` defaults to the YAML value; skip check uses the seed-keyed marker; resume lookup removed. [B1, B2, B4] |
 | `config/experiments.yaml` | Every variant declares `reward_mode` explicitly, using the effective value from before this change (no behavior change). Comments kept. |
 | `quant_rl/train/ablation_utils.py` | `merge_variant_cfg` pins `strategy.name=baseline` for baseline rungs, so the legacy `--variant` path agrees with the resolver. [A1] |
 | `quant_rl/features/build.py` | Cache digest covers every OHLCV/spread value and the full train mask. [B3] |
@@ -30,9 +30,9 @@ Based on the debug/standardization plan (v4). Plan item IDs are in brackets.
 | `experiments/variants/runner.py` | Prints a warning: it bypasses the resolver and shares one features CSV. [A5] |
 | `scripts/research/thesis/evaluation/report_ablations.py` | Docstring path corrected. [B6] |
 | `baseline/A3_*`, `baseline/runbook_*` | "SUPERSEDED" banner. [B5] |
-| `tests/test_training/test_variant_resolver.py` | 12 tests. Runs without OmegaConf or torch. **All 12 pass** in the sandbox. |
-| `tests/test_training/test_variant_overrides_match_legacy.py` | Parametrized over all 29 variants: resolver overrides must reproduce the legacy `merge_variant_cfg` config, except `strategy.name` for baseline rungs. **Not run here** (needs OmegaConf). |
-| `tests/test_features/test_cache_hash_full_column.py` | Mid-series change changes the digest. **Not run here** (needs pandas/numpy). |
+| `tests/unit/training/test_variant_resolver.py` | 12 tests. Runs without OmegaConf or torch. **All 12 pass** in the sandbox. |
+| `tests/unit/training/test_variant_overrides_match_legacy.py` | Parametrized over all 29 variants: resolver overrides must reproduce the legacy `merge_variant_cfg` config, except `strategy.name` for baseline rungs. **Not run here** (needs OmegaConf). |
+| `tests/unit/features/test_cache_hash_full_column.py` | Mid-series change changes the digest. **Not run here** (needs pandas/numpy). |
 
 ## Behavior changes to expect
 
@@ -69,10 +69,10 @@ PYTHONPATH=. python -m training.train.variant_resolver meta ladder_a2_tp
 DRY_RUN=1 VARIANT=ladder_a2_tp scripts/research/frozen-launches/train_one_variant.sh
 
 # tests that run without the training stack
-PYTHONPATH=. python tests/test_training/test_variant_resolver.py
+PYTHONPATH=. python tests/unit/training/test_variant_resolver.py
 
 # tests that need the repo environment (OmegaConf, pandas, pytest)
-pytest tests/test_training/test_variant_overrides_match_legacy.py tests/test_features/test_cache_hash_full_column.py -q
+pytest tests/unit/training/test_variant_overrides_match_legacy.py tests/unit/features/test_cache_hash_full_column.py -q
 ```
 
 ## Verification status

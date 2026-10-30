@@ -110,7 +110,7 @@ class TestLSTMSweepClassifier:
             loss.backward()
             optimiser.step()
 
-        # Assert
+            # Assert
         assert loss.item() < first_loss
         assert loss.item() < 0.1
 

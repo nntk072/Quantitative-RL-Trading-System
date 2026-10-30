@@ -16,14 +16,14 @@ non-confirmatory. It cannot serve as final OOS; see the
 [validation protocol](validation_protocol.md) and the
 [master execution plan](master_project_execution_plan.md).
 
-> **Historical evidence only (2026-09-21 seed-50 campaign).** The tables below
-> describe the recorded run directories and may be superseded by newer campaigns.
+> **Historical evidence only (2026-09-21 seed-50 experiment run).** The tables below
+> describe the recorded run directories and may be superseded by newer experiment runs.
 > They are not a verified current multi-seed comparison. Before using any values
 > in the thesis, re-evaluate the exact checkpoint and raw artifacts following
 > [reproducibility and provenance](../reproducibility.md). Zero-trade overlay
 > arms are failed comparisons, not successful strategies.
 
-## Frozen three-arm 20M campaign (seed 50)
+## Frozen three-arm 20M experiment run (seed 50)
 
 Protocol: year episode; daily loss $5,000; max loss $10,000 from initial;
 **trailing DD 7% from equity peak as a hard fail only** (`soft_trailing_dd_limit: 0`).
@@ -67,7 +67,7 @@ adjustments only; do not tune on a future fresh locked-OOS Sharpe.
 ### Negative controls (do not use as the main Idea 1 number)
 
 Old seed-50 Idea 1 had **no** trailing-DD key and Gaussian `std` exploded
-(~1 → ~3000). The first 7% trailing campaign used a 4% soft brick plus
+(~1 → ~3000). The first 7% trailing experiment run used a 4% soft brick plus
 `log_std_min: -2`, and Idea 1 learned a hold policy (`std` → 0.14).
 
 | Run | What it is | Test Sharpe | Test trades | Notes |
@@ -101,7 +101,7 @@ uv run python -m quant_rl.train.train_rl --mvp --seed=50
 | Output | Path |
 |--------|------|
 | Frozen Idea 1 / 2 / 3 | `outputs/20260921_{113043,135435,160121}_rl_train_seed50/` |
-| Campaign log | `outputs/idea123_20m_final_tmux.log` |
+| Experiment run log | `outputs/idea123_20m_final_tmux.log` |
 | Ablation JSON | `outputs/ablations/<variant>.json` |
 | OOS cost grid | `outputs/reports/oos_report.json` |
 | Leak report | `outputs/research/leak_detectors.json` |

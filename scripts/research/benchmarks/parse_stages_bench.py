@@ -53,7 +53,7 @@ def _parse_parent_memory_from_log(log_path: Path) -> dict[str, Any]:
         if match:
             result[metric] = int(match.group(1))
 
-    # Calculate memory growth
+            # Calculate memory growth
     if result["parent_end_vmhwm_kb"] and result["parent_start_vmhwm_kb"]:
         growth_kb = result["parent_end_vmhwm_kb"] - result["parent_start_vmhwm_kb"]
         result["parent_memory_growth_mb"] = round(max(0, growth_kb) / 1024, 2)
@@ -167,13 +167,13 @@ def _parse_timing_from_log(log_path: Path) -> dict[str, Any]:
         result["wall_ms"] = int(match.group(1))
         result["wall_seconds"] = round(int(match.group(1)) / 1000.0, 3)
 
-    # Rollout steps/sec from SB3 logs
+        # Rollout steps/sec from SB3 logs
     match = re.search(r"steps per second:\s*([\d.]+)", text)
     if match:
         result["rollout_steps_per_sec"] = round(float(match.group(1)), 2)
 
-    # Extract rollout/learn timing from dashboard or callbacks
-    # Look for patterns like "rollout_time: X ms", "learn_time: Y ms"
+        # Extract rollout/learn timing from dashboard or callbacks
+        # Look for patterns like "rollout_time: X ms", "learn_time: Y ms"
     rollout_times = re.findall(
         r"rollout[_:\-]?time[_:\-]?ms[_:\-]?(\d+(?:\.\d+)?)", text, re.IGNORECASE
     )
@@ -186,7 +186,7 @@ def _parse_timing_from_log(log_path: Path) -> dict[str, Any]:
     if learn_times:
         result["learn_time_ms"] = round(float(learn_times[0]), 2)
 
-    # Count updates from progress logs
+        # Count updates from progress logs
     update_matches = re.findall(r"Update\s+(\d+)", text)
     if update_matches:
         result["update_count"] = len(update_matches)
@@ -306,7 +306,7 @@ def main() -> int:
         else:
             md.append(f"| {label} | - | - | - | - |")
 
-    # Worker Memory Table
+            # Worker Memory Table
     md.extend(
         [
             "",
@@ -341,7 +341,7 @@ def main() -> int:
         else:
             md.append(f"| {label} | - | - | - | - |")
 
-    # Performance Table
+            # Performance Table
     md.extend(
         [
             "",
@@ -378,7 +378,7 @@ def main() -> int:
         else:
             md.append(f"| {label} | - | - | - | - |")
 
-    # GPU Table
+            # GPU Table
     md.extend(
         [
             "",
@@ -412,7 +412,7 @@ def main() -> int:
         else:
             md.append(f"| {label} | - | - | - | - |")
 
-    # Overall Assessment
+            # Overall Assessment
     md.extend(
         [
             "",
@@ -462,7 +462,7 @@ def main() -> int:
         else:
             md.append("- **Training Time**: No significant time reduction detected")
 
-    # Recommendations
+            # Recommendations
     md.extend(
         [
             "",
@@ -479,7 +479,7 @@ def main() -> int:
         else:
             md.append("- ❌ **Thread caps harmful**: Throughput decreased, investigate Stage 3")
 
-    # Check memory improvements
+            # Check memory improvements
     memory_improvement = False
     if baseline.get("parent_memory_growth_mb") and staged.get("parent_memory_growth_mb"):
         if staged["parent_memory_growth_mb"] < baseline["parent_memory_growth_mb"]:
@@ -495,7 +495,7 @@ def main() -> int:
             "- ⚠️ **Memory optimization minimal**: Check if Stages 1-2 are working as expected"
         )
 
-    # Final summary
+        # Final summary
     md.extend(
         [
             "",
@@ -571,7 +571,7 @@ def main() -> int:
         comparison["worker_memory_reduction_mb"] = round(worker_memory_delta, 2)
         comparison["worker_memory_reduction_pct"] = round(worker_memory_pct, 2)
 
-    # Performance comparison
+        # Performance comparison
     if baseline.get("rollout_steps_per_sec") and staged.get("rollout_steps_per_sec"):
         throughput_delta = float(staged["rollout_steps_per_sec"]) - float(
             baseline["rollout_steps_per_sec"]
@@ -601,8 +601,9 @@ def main() -> int:
 
     return 0
 
+    # Global variables for command reproduction (will be filled from environment)
 
-# Global variables for command reproduction (will be filled from environment)
+
 VARIANT = "ladder_a0_flat"
 SEED = 42
 STEPS = 10000

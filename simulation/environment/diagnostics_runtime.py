@@ -254,8 +254,8 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
             return discrete_action, risk_frac
         if manipulation_state(feat_row) != "against":
             return discrete_action, risk_frac
-        # PO3 manipulation state must not veto a separately active idea such as
-        # an Order Block reaction, FVG retest, or swing retracement.
+            # PO3 manipulation state must not veto a separately active idea such as
+            # an Order Block reaction, FVG retest, or swing retracement.
         if entry_idea_context(feat_row, discrete_action)["ideas"]:
             return discrete_action, risk_frac
         if (

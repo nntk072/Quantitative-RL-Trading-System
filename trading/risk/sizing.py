@@ -163,7 +163,7 @@ def compute_lots(
         max_lots_from_cap = max_loss_cap / (sl_distance * contract_size * point_value)
         lots = min(lots, max_lots_from_cap)
 
-    # Clip to [min_lot, max_lot]
+        # Clip to [min_lot, max_lot]
     lots = np.clip(lots, min_lot, max_lot)
 
     return float(lots)
@@ -234,9 +234,10 @@ def compute_sl_tp_from_structure(
         return compute_sl_tp_short(entry_price, structure_level, buffer_pts, rr_ratio)
     raise ValueError(f"direction must be +1 or -1, got {direction}")
 
+    # Structural level columns probed for each liquidity target mode, in priority
+    # order. The first finite level wins; missing columns are skipped.
 
-# Structural level columns probed for each liquidity target mode, in priority
-# order. The first finite level wins; missing columns are skipped.
+
 _TARGET_LEVELS: dict[str, dict[int, tuple[str, ...]]] = {
     "buyside_liquidity": {1: ("sweep_high_level", "london_high", "asian_high"), -1: ()},
     "sellside_liquidity": {1: (), -1: ("sweep_low_level", "london_low", "asian_low")},

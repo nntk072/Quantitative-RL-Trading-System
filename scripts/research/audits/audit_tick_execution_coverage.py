@@ -299,7 +299,7 @@ def main() -> int:
             "This is an input coverage and exact cache-parity audit, not a backtest, model evaluation, or strategy result.",
             "US500 coverage is descriptive only; it does not authorize changing the configured US100 primary instrument.",
             "Coverage and cache parity do not establish feed identity, data-use rights, or publication permission.",
-            "No campaign readiness or thesis readiness is implied.",
+            "No experiment run readiness or thesis readiness is implied.",
         ],
     }
 

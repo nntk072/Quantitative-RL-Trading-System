@@ -138,8 +138,8 @@ Repeated-payout mode must use one resolved risk contract across direct env const
 Relevant files:
 
 - `simulation/environment/env.py`
-- `tests/test_simulation/test_environment/test_tp_mode.py`
-- `tests/test_simulation/test_environment/test_risk_alignment.py`
+- `tests/unit/simulation/test_environment/test_tp_mode.py`
+- `tests/unit/simulation/test_environment/test_risk_alignment.py`
 
 Existing tests already cover initial-size-based partial closes, TP hit masks, final residual allocation, multiple target crossings, cooldown after full lifecycle, session-end partial closure, stop-before-target on ambiguous bars, tick partial TP then stop, multi-target tick crossing, bar/tick parity, and monotonic trailing behavior.
 
@@ -462,7 +462,7 @@ Modify only if repeated-payout baseline parity is required. Do not silently comp
 
 ### Config/docs
 
-Relevant surfaces include `config/base/default.yaml`, experiment/campaign YAMLs, `docs/thesis/eval_pack.md`, and `docs/reproducibility.md`. Archive the fully resolved policy with each run.
+Relevant surfaces include `config/base/default.yaml`, experiment/experiment_run YAMLs, `docs/thesis/eval_pack.md`, and `docs/reproducibility.md`. Archive the fully resolved policy with each run.
 
 ## 7. Interface and state-management changes
 
@@ -537,17 +537,17 @@ Tests must cover:
 
 Extend focused tests near:
 
-- `tests/test_trading/test_guardrails.py`
-- `tests/test_simulation/test_backtest/`
-- `tests/test_simulation/test_environment/test_account_normalization.py`
-- `tests/test_trading/test_risk.py`
-- `tests/test_simulation/test_environment/test_risk_alignment.py`
-- `tests/test_simulation/test_environment/test_fixed_risk_sizing.py`
-- `tests/test_simulation/test_environment/test_year_episode_survival.py`
-- `tests/test_simulation/test_environment/test_ny_steps_eod.py`
-- `tests/test_simulation/test_environment/test_trading_env_golden_traces.py`
-- `tests/test_simulation/test_environment/test_bundle_worker.py`
-- `tests/test_simulation/test_environment/test_observation_schema.py`
+- `tests/unit/trading/test_guardrails.py`
+- `tests/integration/backtest/`
+- `tests/unit/simulation/test_environment/test_account_normalization.py`
+- `tests/unit/trading/test_risk.py`
+- `tests/unit/simulation/test_environment/test_risk_alignment.py`
+- `tests/unit/simulation/test_environment/test_fixed_risk_sizing.py`
+- `tests/unit/simulation/test_environment/test_year_episode_survival.py`
+- `tests/unit/simulation/test_environment/test_ny_steps_eod.py`
+- `tests/unit/simulation/test_environment/test_trading_env_golden_traces.py`
+- `tests/unit/simulation/test_environment/test_bundle_worker.py`
+- `tests/unit/simulation/test_environment/test_observation_schema.py`
 - `tests/integration/test_rollout.py`
 - `tests/integration/test_eval_run_provenance.py`
 - `tests/integration/test_plots_export.py`

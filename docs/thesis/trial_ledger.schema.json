@@ -10,16 +10,22 @@
     "updated_at_utc": {"type": "string", "format": "date-time"},
     "records": {"type": "array", "items": {"$ref": "#/$defs/record"}},
     "limitations": {"type": "array", "items": {"type": "string"}},
-    "campaign_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    "campaign_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "experiment_run_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
   },
   "$defs": {
     "record": {
       "type": "object",
-      "required": ["record_id", "record_type", "campaign_id", "run_id", "status", "evidence_role", "source_sha", "config_sha256", "artifacts", "disposition", "identity_completeness"],
+      "required": ["record_id", "record_type", "run_id", "status", "evidence_role", "source_sha", "config_sha256", "artifacts", "disposition", "identity_completeness"],
+      "anyOf": [
+        {"required": ["campaign_id"]},
+        {"required": ["experiment_run_id"]}
+      ],
       "properties": {
         "record_id": {"type": "string", "minLength": 1},
         "record_type": {"enum": ["run", "attempt"]},
         "campaign_id": {"type": "string", "minLength": 1},
+        "experiment_run_id": {"type": "string", "minLength": 1},
         "run_id": {"type": "string", "minLength": 1},
         "attempt": {"type": ["integer", "null"], "minimum": 1},
         "variant": {"type": "string", "minLength": 1},
@@ -40,6 +46,8 @@
         "disposition": {"type": "string", "minLength": 1},
         "supersedes_record_id": {"type": ["string", "null"]},
         "campaign_fingerprint": {"type": ["string", "null"]},
+        "experiment_run_fingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "previous_fingerprint": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
         "slurm_job_id": {"type": ["integer", "null"]},
         "slurm_job_ids": {"type": "array", "items": {"type": "integer"}, "uniqueItems": true},
         "scheduler_state": {"type": ["string", "null"]},

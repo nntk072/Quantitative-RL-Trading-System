@@ -31,7 +31,7 @@ Review these sources and tests in the repository rather than assuming this summa
 - `evaluation/rollout/model.py`
 - `training/runner/configuration_stage.py`
 - `training/runner/seed_runtime.py`
-- tests under `tests/test_models`, `tests/test_envs`, `tests/test_eval`, `tests/test_train`, plus `tests/integration/test_rollout.py` and `tests/integration/test_plots_export.py`.
+- tests under `tests/unit/models`, `tests/unit/simulation/test_environment`, `tests/unit/evaluation`, `tests/unit/training`, plus `tests/integration/test_rollout.py` and `tests/integration/test_plots_export.py`.
 
 ## Observed smoke evidence (not a benchmark)
 
@@ -49,9 +49,9 @@ On 2026-10-27, one bounded Variant D smoke used seed 42, 384 PPO timesteps, 8 en
 
 Slurm allocation `21239541` on `gpuarm1` requested 1 GH200 (144 GB HBM), 16 CPUs, 128 GB host RAM, and 12 hours. During the run, Slurm reported peak host RSS 119,098,420 KiB (about 113.6 GiB, 89% of the allocation), peak GPU memory 1,178 MiB, and peak GPU utilization 13%. The one-second inspection step `21239541.1` failed with exit 126 because an x86 `rg` executable was invoked on ARM; no further diagnostic steps should be created. Preserve the allocation and existing tmux session; never use `scancel`.
 
-At the observed 1.8 steps/second, straight-line 2M training is about 12.9 days per variant. One 2M run within 12 hours needs about 46.3 steps/second, roughly 26 times the measured smoke rate. Two concurrent variants need at least that rate per variant and substantially more aggregate CPU/memory headroom. The current 16-CPU/128-GB frame-backed allocation is not evidence that this is feasible; its RAM peak is already close to the limit. This extrapolation is a warning estimate from a tiny pilot, not a promised campaign runtime.
+At the observed 1.8 steps/second, straight-line 2M training is about 12.9 days per variant. One 2M run within 12 hours needs about 46.3 steps/second, roughly 26 times the measured smoke rate. Two concurrent variants need at least that rate per variant and substantially more aggregate CPU/memory headroom. The current 16-CPU/128-GB frame-backed allocation is not evidence that this is feasible; its RAM peak is already close to the limit. This extrapolation is a warning estimate from a tiny pilot, not a promised experiment runtime.
 
-The full-split 2025 smoke replay was stopped by explicit user direction. It is not running now. The allocation remains active for quality gates. The untracked `campaign_worker_dispatch.log` is user data and must remain untouched and uncommitted.
+The full-split 2025 smoke replay was stopped by explicit user direction. It is not running now. The allocation remains active for quality gates. The untracked `experiment_run_worker_dispatch.log` is user data and must remain untouched and uncommitted.
 
 Both C and D use a masked probabilistic thesis selection. D additionally conditions the execution actor on the sampled thesis. Do not attribute the full D smoke runtime to probability sampling without a matched C/D throughput measurement; the observed low GPU utilization and high host-RAM use suggest the environment/data path also needs investigation.
 
@@ -61,15 +61,15 @@ Both C and D use a masked probabilistic thesis selection. D additionally conditi
 2. Compare the existing `frames`/`subproc` path with the repository's shared-bundle and `sharded_bundle` path. Can the immutable train/test bundle be built once and reused safely by both C and D? Identify any cache-key or concurrent-build race risks.
 3. Recommend the smallest configuration or implementation change that improves throughput without changing C/D semantics. Keep `n_envs=8`, action/observation schemas, rollout geometry, and data/simulator identity fixed unless the plan explicitly labels a new experiment.
 4. Assess whether two 8-env runs can safely share one GH200. Give required CPU, host RAM, and GPU-memory headroom based on repository behavior and measured evidence. The target is one GPU, not two separate GPU allocations.
-5. Define a bounded throughput acceptance pilot with exact steps, duration, measured `steps/sec`, resource limits, and a pass/fail threshold. It must establish a realistic 2M ETA for each arm and the pair before either 2M campaign starts.
+5. Define a bounded throughput acceptance pilot with exact steps, duration, measured `steps/sec`, resource limits, and a pass/fail threshold. It must establish a realistic 2M ETA for each arm and the pair before either 2M experiment run starts.
 6. Confirm the minimum output checks for both arms: finite PPO diagnostics and reloadable checkpoints; trade activity and thesis entropy; selection across ideas/timeframes; exactly zero invalid thesis selections and structural SL/TP violations; train/test reports and plots; and separate interpretation of the exposed 2026 report-only slice.
 7. List unresolved blockers and the exact source/tests needed to close each one. Do not infer success from the smoke's two-day PnL.
 
 ## Constraints
 
 - Preserve the existing C/D architecture and matched policy contrast.
-- Do not launch a 2M/20M campaign as part of planning or while throughput remains unverified.
-- Do not create another branch/worktree, duplicate campaigns, or another GH200 allocation to split C from D.
+- Do not launch a 2M/20M experiment run as part of planning or while throughput remains unverified.
+- Do not create another branch/worktree, duplicate experiment runs, or another GH200 allocation to split C from D.
 - Keep allocation supervision alive; do not cancel Slurm jobs. Follow `.agents/rules/triton-slurm.md` and the CPU/RAM/GPU inventory requirement before any new allocation request.
-- Keep raw output, caches, checkpoints, and `campaign_worker_dispatch.log` out of Git unless explicitly requested.
+- Keep raw output, caches, checkpoints, and `experiment_run_worker_dispatch.log` out of Git unless explicitly requested.
 - Return a concrete recommendation and an evidence-gated execution sequence, not a generic architecture review.

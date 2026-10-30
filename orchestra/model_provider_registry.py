@@ -129,8 +129,9 @@ def _model_from_yaml(entry: dict[str, Any]) -> Model:
         enabled=bool(entry.get("enabled", True)),
     )
 
+    # Default model roster — superseded by models.yaml when present.
 
-# Default model roster — superseded by models.yaml when present.
+
 DEFAULT_MODELS: list[Model] = [
     Model(
         name="gpt-5.6-luna",

@@ -111,11 +111,11 @@ class ActionDecodingMixin(RuntimeMixinBase):
             risk_frac = self.risk_frac_range[0]
             rr_ratio = 0.0
 
-        # Extract exit dim
+            # Extract exit dim
         if u.size > exit_idx and self.allow_ema_exit:
             self._selected_exit_mode = "ema_21" if float(u[exit_idx]) >= 0.5 else "structural"
 
-        # Decode sl_mode
+            # Decode sl_mode
         self._selected_sl_mode = "structural"
         self._sl_mode_explicit = False
         if sl_mode_offset and u.size > sl_idx:
@@ -129,7 +129,7 @@ class ActionDecodingMixin(RuntimeMixinBase):
         else:
             self._selected_sl_mode = self.sl_mode
 
-        # Decode tp_mode
+            # Decode tp_mode
         self._tp_mode_explicit = False
         if tp_mode_offset and u.size > tp_idx:
             u_tp = float(u[tp_idx])
@@ -144,7 +144,7 @@ class ActionDecodingMixin(RuntimeMixinBase):
             tp_mode = self.tp_mode if self.allow_agent_tp_mode else "rr"
             self._selected_tp_mode = tp_mode
 
-        # Decode z1/z2 for simplex
+            # Decode z1/z2 for simplex
         if simplex_offset and u.size > z_idx + 1:
             self._selected_tp_z = (float(u[z_idx]), float(u[z_idx + 1]))
         else:

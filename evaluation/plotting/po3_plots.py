@@ -138,7 +138,7 @@ def _draw_zones(ax: Axes, zones: list[FVGZone], ohlcv: pd.DataFrame) -> None:
         x1 = min(_snap_ts_to_candle_x(zone.end_ts, ohlcv, side="right"), x_max)
         if x1 <= x0:
             continue
-        # Filled (invalidated) zones are faded more than active ones.
+            # Filled (invalidated) zones are faded more than active ones.
         alpha = 0.28 if zone.invalidated else 0.40
         color = _zone_color(zone)
         ax.add_patch(
@@ -173,7 +173,7 @@ def _draw_entries(ax: Axes, signals: pd.DataFrame, ohlcv: pd.DataFrame) -> None:
             loc = ohlcv.index.searchsorted(ts, side="left")
             if loc >= len(ohlcv):
                 continue
-            # Prefer the candle that contains ts when resampling coarsens bars.
+                # Prefer the candle that contains ts when resampling coarsens bars.
             if loc > 0 and ohlcv.index[loc] > ts:
                 loc = loc - 1
             x = float(mdates.date2num(ohlcv.index[loc]))  # type: ignore[no-untyped-call]
@@ -182,10 +182,9 @@ def _draw_entries(ax: Axes, signals: pd.DataFrame, ohlcv: pd.DataFrame) -> None:
         if xs:
             ax.scatter(xs, ys, marker=marker, s=55, color=color, zorder=5, label=col)
 
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
+            # ---------------------------------------------------------------------------
+            # Public API
+            # ---------------------------------------------------------------------------
 
 
 def plot_fvg_signals(
@@ -237,7 +236,7 @@ def plot_fvg_signals(
     if not len(bars):
         raise ValueError("No bars to plot after applying window.")
 
-    # Zones from full spine (incl. lookback); candles/markers from display window.
+        # Zones from full spine (incl. lookback); candles/markers from display window.
     zones = build_fvg_zones_for_plot(bars, htf=htf, ltf=ltf)
     if zone_kinds is not None:
         zones = [z for z in zones if z.kind in zone_kinds]
@@ -267,7 +266,7 @@ def plot_fvg_signals(
     if show_entries:
         _draw_entries(ax, signals, ohlcv)
 
-    # Legend with representative proxies.
+        # Legend with representative proxies.
     handles: list[Any] = [
         Rectangle((0, 0), 1, 1, facecolor=HTF_FVG_BULL_COLOR, alpha=0.4, label="HTF bullish FVG"),
         Rectangle((0, 0), 1, 1, facecolor=HTF_FVG_BEAR_COLOR, alpha=0.4, label="HTF bearish FVG"),

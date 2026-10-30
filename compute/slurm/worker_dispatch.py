@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dispatch campaign worker commands through one persistent process per node."""
+"""Dispatch experiment run worker commands through one persistent process per node."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from artifacts.layout import CampaignArtifactLayout
+from artifacts.layout import ExperimentRunArtifactLayout
 
 ENV_KEYS = (
     "VARIANT",
@@ -33,7 +33,7 @@ ENV_KEYS = (
     "QUANT_RL_FAST_REPORTS",
     "QUANT_RL_ALLOW_OOS_SELECTION",
     "QUANT_RL_CONFIG_OVERRIDES",
-    "CAMPAIGN_WORKER_PID_FILE",
+    "EXPERIMENT_RUN_WORKER_PID_FILE",
     "RESUME_CHECKPOINT",
     "PYTHONUNBUFFERED",
     "PYTHONPATH",
@@ -50,7 +50,7 @@ def _host_key(value: str) -> str:
 
 
 def _parse_srun(argv: list[str]) -> dict[str, Any]:
-    """Parse only the fixed worker_command() options used by the campaign."""
+    """Parse only the fixed worker_command() options used by the experiment run."""
     node: str | None = None
     cwd: str | None = None
     gpu_count = 0
@@ -73,17 +73,17 @@ def _parse_srun(argv: list[str]) -> dict[str, Any]:
         elif arg.startswith("--gpu-bind="):
             binding = arg.removeprefix("--gpu-bind=map_gpu:")
             if binding == arg.removeprefix("--gpu-bind="):
-                raise ValueError(f"unsupported campaign GPU binding: {arg}")
+                raise ValueError(f"unsupported experiment run GPU binding: {arg}")
             try:
                 gpu_id = int(binding)
             except ValueError as exc:
-                raise ValueError(f"unsupported campaign GPU binding: {arg}") from exc
+                raise ValueError(f"unsupported experiment run GPU binding: {arg}") from exc
             if gpu_id < 0:
-                raise ValueError(f"unsupported campaign GPU binding: {arg}")
+                raise ValueError(f"unsupported experiment run GPU binding: {arg}")
         elif arg.startswith("--cpu-bind=mask_cpu:"):
             cpu_mask = int(arg.split(":", 1)[1], 0)
         elif arg.startswith("--cpu-bind="):
-            raise ValueError(f"unsupported campaign CPU binding: {arg}")
+            raise ValueError(f"unsupported experiment run CPU binding: {arg}")
         elif arg.startswith("--cpus-per-task="):
             step_cpus = int(arg.split("=", 1)[1])
         elif arg.startswith("--nodes="):
@@ -98,7 +98,7 @@ def _parse_srun(argv: list[str]) -> dict[str, Any]:
         elif arg.startswith("--export="):
             pass
         else:
-            raise ValueError(f"unsupported campaign srun option: {arg}")
+            raise ValueError(f"unsupported experiment run srun option: {arg}")
         index += 1
 
     command = argv[index:]
@@ -111,14 +111,16 @@ def _parse_srun(argv: list[str]) -> dict[str, Any]:
         or task_count != 1
         or step_cpus is None
     ):
-        raise ValueError("campaign worker command is missing node, cwd, CPU mask, or argv")
+        raise ValueError("experiment run worker command is missing node, cwd, CPU mask, or argv")
     cpus = [cpu for cpu in range(cpu_mask.bit_length()) if cpu_mask & (1 << cpu)]
     if not cpus:
-        raise ValueError("campaign worker CPU mask is empty")
+        raise ValueError("experiment run worker CPU mask is empty")
     if step_cpus < len(cpus):
-        raise ValueError("campaign worker CPU mask exceeds its Slurm CPU envelope")
+        raise ValueError("experiment run worker CPU mask exceeds its Slurm CPU envelope")
     if gpu_count not in (0, 1):
-        raise ValueError(f"campaign node allocation exposes one GPU per node, got {gpu_count}")
+        raise ValueError(
+            f"experiment run node allocation exposes one GPU per node, got {gpu_count}"
+        )
     return {
         "node": _host_key(node),
         "cwd": cwd,
@@ -136,9 +138,9 @@ def _paths(queue: Path, node: str) -> tuple[Path, Path, Path, Path]:
 
 
 def _request() -> int:
-    queue_value = os.environ.get("CAMPAIGN_WORKER_QUEUE")
+    queue_value = os.environ.get("EXPERIMENT_RUN_WORKER_QUEUE")
     if not queue_value:
-        raise RuntimeError("CAMPAIGN_WORKER_QUEUE is not set")
+        raise RuntimeError("EXPERIMENT_RUN_WORKER_QUEUE is not set")
     arguments = sys.argv[1:]
     if arguments[:1] == ["--srun-shim"]:
         arguments = arguments[1:]
@@ -195,7 +197,7 @@ def _log_path(env: dict[str, str], cwd: str, argv: list[str]) -> Path:
     for index, arg in enumerate(argv[:-1]):
         if arg == "--out":
             return Path(argv[index + 1])
-    return Path(cwd) / "campaign_worker_dispatch.log"
+    return Path(cwd) / "experiment_run_worker_dispatch.log"
 
 
 def _write_result(results: Path, request_id: str, returncode: int) -> None:
@@ -264,17 +266,17 @@ def _launch(payload: dict[str, Any], results: Path) -> subprocess.Popen[bytes]:
         )
     finally:
         log_stream.close()
-    process._campaign_log_path = str(log_path)  # type: ignore[attr-defined]
-    process._campaign_request_id = str(payload["request_id"])  # type: ignore[attr-defined]
+    process._experiment_run_log_path = str(log_path)  # type: ignore[attr-defined]
+    process._experiment_run_request_id = str(payload["request_id"])  # type: ignore[attr-defined]
     return process
 
 
 def _manager() -> int:
-    queue_value = os.environ.get("CAMPAIGN_WORKER_QUEUE")
+    queue_value = os.environ.get("EXPERIMENT_RUN_WORKER_QUEUE")
     node_value = os.environ.get("SLURMD_NODENAME") or socket.gethostname()
     job_id = os.environ.get("SLURM_JOB_ID")
     if not queue_value or not job_id:
-        raise RuntimeError("worker manager requires CAMPAIGN_WORKER_QUEUE and SLURM_JOB_ID")
+        raise RuntimeError("worker manager requires EXPERIMENT_RUN_WORKER_QUEUE and SLURM_JOB_ID")
     queue = Path(queue_value)
     pending, claimed, results, ready = _paths(queue, node_value)
     pending.mkdir(parents=True, exist_ok=True)
@@ -292,18 +294,22 @@ def _manager() -> int:
     ready_tmp.write_text(json.dumps(ready_metadata), encoding="utf-8")
     os.replace(ready_tmp, ready)
     print(
-        "CAMPAIGN_NODE_MANAGER ready"
+        "EXPERIMENT_RUN_NODE_MANAGER ready"
         f" host={_host_key(node_value)} job={job_id}"
         f" cpu_affinity={ready_metadata['cpu_ids']}"
         f" cuda_visible_devices={os.environ.get('CUDA_VISIBLE_DEVICES', 'unset')}",
         flush=True,
     )
 
-    campaign_out = Path(os.environ["CAMPAIGN_OUT_DIR"])
+    experiment_run_out = Path(os.environ["EXPERIMENT_RUN_OUT_DIR"])
     done_marker = Path(
         os.environ.get(
-            "CAMPAIGN_ALLOCATION_DONE_MARKER",
-            str(CampaignArtifactLayout(campaign_out).root_file("allocation_controller.exit")),
+            "EXPERIMENT_RUN_ALLOCATION_DONE_MARKER",
+            str(
+                ExperimentRunArtifactLayout(experiment_run_out).root_file(
+                    "allocation_controller.exit"
+                )
+            ),
         )
     )
     cancelled = claimed.parent / "cancelled"
@@ -321,7 +327,7 @@ def _manager() -> int:
                 continue
             request_id = str(payload["request_id"])
             print(
-                f"CAMPAIGN_NODE_DISPATCH request={request_id}"
+                f"EXPERIMENT_RUN_NODE_DISPATCH request={request_id}"
                 f" cpus={payload['cpu_ids']} gpu={bool(payload['gpu_count'])}"
                 f" gpu_id={payload['gpu_id']}"
                 f" argv={shlex.join(payload['argv'])}",
@@ -331,7 +337,7 @@ def _manager() -> int:
                 process = _launch(payload, results)
             except (OSError, RuntimeError, ValueError) as exc:
                 print(
-                    f"CAMPAIGN_NODE_LAUNCH_FAILED request={request_id} error={exc}",
+                    f"EXPERIMENT_RUN_NODE_LAUNCH_FAILED request={request_id} error={exc}",
                     file=sys.stderr,
                     flush=True,
                 )
@@ -365,7 +371,7 @@ def _manager() -> int:
             claimed_path = claimed / f"{request_id}.json"
             os.replace(claimed_path, completed / claimed_path.name)
             print(
-                f"CAMPAIGN_NODE_COMPLETE request={request_id} exit={returncode}",
+                f"EXPERIMENT_RUN_NODE_COMPLETE request={request_id} exit={returncode}",
                 flush=True,
             )
             del running[request_id]
@@ -391,5 +397,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        print(f"campaign worker dispatch error: {exc}", file=sys.stderr, flush=True)
+        print(f"experiment run worker dispatch error: {exc}", file=sys.stderr, flush=True)
         raise SystemExit(127) from exc

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Append process-tree PSS and GPU samples while a campaign controller runs."""
+"""Append process-tree PSS and GPU samples while an experiment run controller runs."""
 
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ def pss_bytes(pids: set[int]) -> int:
 
 
 def process_io_bytes(pids: set[int]) -> tuple[int, int, int, int]:
-    """Aggregate Linux process I/O counters for the campaign process tree."""
+    """Aggregate Linux process I/O counters for the experiment run process tree."""
     totals = [0, 0, 0, 0]
     keys = ("rchar", "wchar", "read_bytes", "write_bytes")
     for pid in pids:
@@ -212,12 +212,12 @@ def gpu_sample() -> tuple[list[int], list[int]]:
 
 def active_roots(path: pathlib.Path) -> tuple[list[int], bool]:
     try:
-        campaign: dict[str, Any] = json.loads(path.read_text())
+        experiment_run: dict[str, Any] = json.loads(path.read_text())
     except (OSError, ValueError):
         return [], False
-    if campaign.get("stopping") is True:
+    if experiment_run.get("stopping") is True:
         return [], False
-    jobs = campaign.get("jobs", [])
+    jobs = experiment_run.get("jobs", [])
     active = [job for job in jobs if job.get("status") in ("running", "pending")]
     local_host = socket.gethostname().split(".", maxsplit=1)[0]
     roots: list[int] = []
@@ -242,8 +242,8 @@ def active_roots(path: pathlib.Path) -> tuple[list[int], bool]:
     return roots, bool(active)
 
 
-def sample(path: pathlib.Path, campaign: pathlib.Path) -> None:
-    roots, active = active_roots(campaign)
+def sample(path: pathlib.Path, experiment_run: pathlib.Path) -> None:
+    roots, active = active_roots(experiment_run)
     parents = read_process_table()
     tree = descendant_pids(roots, parents)
     io_rchar, io_wchar, io_read_bytes, io_write_bytes = process_io_bytes(tree)
@@ -280,7 +280,7 @@ def sample(path: pathlib.Path, campaign: pathlib.Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--campaign", type=pathlib.Path, required=True)
+    parser.add_argument("--experiment-run", type=pathlib.Path, required=True)
     parser.add_argument("--out", type=pathlib.Path, required=True)
     parser.add_argument("--interval", type=float, default=30.0)
     args = parser.parse_args()
@@ -304,7 +304,7 @@ def main() -> int:
                     "gpu_utilization_pct",
                     "gpu_memory_used_mib",
                     "root_pids",
-                    "campaign_active",
+                    "experiment_run_active",
                     "process_tree_cpu_time_usec",
                     "gpu_utilization_pct_by_device",
                     "gpu_memory_used_mib_by_device",
@@ -312,12 +312,12 @@ def main() -> int:
                 ]
             )
     while True:
-        _, active = active_roots(args.campaign)
+        _, active = active_roots(args.experiment_run)
         if not active:
             break
-        sample(args.out, args.campaign)
+        sample(args.out, args.experiment_run)
         time.sleep(args.interval)
-    sample(args.out, args.campaign)
+    sample(args.out, args.experiment_run)
     return 0
 
 

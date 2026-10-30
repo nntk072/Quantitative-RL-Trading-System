@@ -49,10 +49,10 @@
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_models/test_encoders.py` | Encoder implementations |
-| `tests/test_models/test_sac_agent.py` | SAC agent construction |
-| `tests/test_models/test_vae.py` | VAE model |
-| `tests/test_models/test_auxiliary.py` | Auxiliary head |
+| `tests/unit/models/test_encoders.py` | Encoder implementations |
+| `tests/unit/models/test_sac_agent.py` | SAC agent construction |
+| `tests/unit/models/test_vae.py` | VAE model |
+| `tests/unit/models/test_auxiliary.py` | Auxiliary head |
 
 ## Do NOT Read For Model Tasks
 
@@ -89,8 +89,8 @@ not sufficient to recover coordinate meanings.
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add an encoder family | neural architecture | `models/encoders/` | encoder output contract; `tests/test_models/test_encoders.py` | one encoder and its tests | learner workflow and Slurm backend |
-| Register an encoder ID | model registry | `models/factory/encoder_registry.py` | unknown IDs fail closed; `tests/test_models/test_mtf_encoder_registration.py` | registry entry and architecture-resolution tests | PPO/SAC policy distribution |
+| Add an encoder family | neural architecture | `models/encoders/` | encoder output contract; `tests/unit/models/test_encoders.py` | one encoder and its tests | learner workflow and Slurm backend |
+| Register an encoder ID | model registry | `models/factory/encoder_registry.py` | unknown IDs fail closed; `tests/unit/models/test_mtf_encoder_registration.py` | registry entry and architecture-resolution tests | PPO/SAC policy distribution |
 | Change inference precision | runtime capability | `compute/environment/precision.py`, `learning/rl/agent.py`, `models/runtime/precision.py` | device capability contract; `tests/integration/test_device.py` | compute selects hardware policy, learning composes it with model adaptation | compute scheduler semantics |
 
 ## Axis of Change
@@ -99,7 +99,7 @@ not sufficient to recover coordinate meanings.
 - **Owner:** `models/` owns neural architecture; `learning/rl/` owns SB3 policies, fitting, and vector environments.
 - **Stable boundary:** encoder/predictor input schema and checkpoint metadata.
 - **Expected edit radius:** model adaptation, learning composition, and focused tests when runtime policy changes.
-- **Must not depend on:** hardware discovery, campaign workflows, learning implementations, or environment runtime state internals. Learning passes the selected dtype to model-specific autocast adaptation.
+- **Must not depend on:** hardware discovery, experiment run workflows, learning implementations, or environment runtime state internals. Learning passes the selected dtype to model-specific autocast adaptation.
 
 Unversioned SB3 checkpoints must be loaded only with the explicit legacy
 schema opt-in and a layout key taken from their original run configuration.
@@ -121,5 +121,5 @@ to other action layouts. See `learning/rl/agent.py` and
 - `models/encoders/core.py`
 - `models/auxiliary/vae.py`
 - `learning/rl/vae_extractor.py`
-- `tests/test_models/test_encoders.py`
+- `tests/unit/models/test_encoders.py`
 - `models/runtime/precision.py`

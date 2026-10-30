@@ -82,8 +82,8 @@ def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
     """
     if not overrides:
         return cfg
-    # Snapshot the *pre-override* config so keys introduced by a variant merge
-    # that already happened are not flagged as typos.
+        # Snapshot the *pre-override* config so keys introduced by a variant merge
+        # that already happened are not flagged as typos.
     known_paths = _leaf_paths(cfg)
     for ov in overrides:
         key = ov.partition("=")[0].strip()

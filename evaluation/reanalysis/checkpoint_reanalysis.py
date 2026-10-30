@@ -280,8 +280,8 @@ def main() -> None:
         if args.legacy_action_layout == "legacy4_no_exit_v1":
             if not args.allow_legacy_action_schema:
                 raise ValueError("legacy4_no_exit_v1 requires --allow-legacy-action-schema")
-            # Historical 4D policies had no exit coordinate. Pin every optional
-            # coordinate off before constructing the current 5D target layout.
+                # Historical 4D policies had no exit coordinate. Pin every optional
+                # coordinate off before constructing the current 5D target layout.
             cfg.env.agent_direction_control = False
             cfg.env.allow_agent_sl_mode = False
             cfg.env.allow_agent_tp_mode = False
@@ -554,8 +554,8 @@ def main() -> None:
             "metrics are not meaningful until action behavior is diagnosed."
         )
 
-    # Create the new destination exclusively. Even a race or interrupted
-    # reanalysis cannot erase source artifacts or reuse an existing output.
+        # Create the new destination exclusively. Even a race or interrupted
+        # reanalysis cannot erase source artifacts or reuse an existing output.
     output_dir.mkdir(parents=True, exist_ok=False)
     save_run(
         run_dir=output_dir,

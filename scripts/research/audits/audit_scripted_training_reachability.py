@@ -79,8 +79,8 @@ def _scripted_action(env: Any) -> np.ndarray[Any, Any]:
             action[index] = -1.0  # explicit fixed mode; no risk-limit override
         elif name == "exit":
             action[index] = 1.0  # allow the configured EMA exit path
-        # Neutral direction defers to the resolved strategy context. Risk, stop,
-        # and target controls remain at their schema-neutral midpoint.
+            # Neutral direction defers to the resolved strategy context. Risk, stop,
+            # and target controls remain at their schema-neutral midpoint.
     return action
 
 

@@ -4,7 +4,7 @@
 
 This audit checks the required Q0–Q7 quality-program stages against the
 registered variants, trainer/model/environment wiring, focused tests, and
-available validation notes. It is an implementation audit, not a campaign
+available validation notes. It is an implementation audit, not an experiment run
 result, strategy evaluation, winner selection, or thesis-readiness decision.
 
 ## Current-tree validation — 2026-10-17 11:18 Helsinki
@@ -36,7 +36,7 @@ result, strategy evaluation, winner selection, or thesis-readiness decision.
   split-aware report is
   `docs/thesis/g1_tick_quality_current_recovery_2026-10-17_job21014127_v2.json`
   (SHA-256 `6db8e4a88c13dec284ca357039c32f10cdf5614929f865d280e451061f4cae5a`).
-  It verifies campaign input hashes and records 100% test-period minute
+  It verifies experiment run input hashes and records 100% test-period minute
   coverage, but only 1.16% US100 and 99.82% US500 coverage over training.
   This limits the existing strategy/cost evidence and does not provide feed
   rights, broker timezone/DST, fill-source parity, or an acceptance threshold.
@@ -60,7 +60,7 @@ control/treatment unless a later protocol explicitly aligns them.
   full log: `outputs/gpu_ci_gates/observation_schema_gate_job21012389/validation.log`.
   This validates current code and tests, including the tick-ingestion and
   observation-schema changes, but does not establish market-data provenance,
-  full-campaign causal validity, evaluator acceptance, strategy quality, or
+  full-experiment-run causal validity, evaluator acceptance, strategy quality, or
   thesis readiness.
 - The full-training-interval fold-fit report completed at 08:18 and took
   3,758.9 seconds. Its hashed `quant_rl/features/build.py` is
@@ -92,7 +92,7 @@ control/treatment unless a later protocol explicitly aligns them.
   separately recorded hash for the then-untracked report verifier and test
   `43a92db7b1f63fe6d73f606b147b5eba553a1d5773d711f1dbc38a0955ac43a9` match
   the now-committed code. The wrapper's only failures were safe refusals to
-  overwrite existing immutable campaign summaries. The validated source was
+  overwrite existing immutable experiment run summaries. The validated source was
   committed as `a611411`; later commits `bc3e78f` and `953a60a` were
   documentation-only at that point. Subsequent dirty-tree P1 tick-ingestion
   and observation-schema changes invalidate the claim that this run verifies
@@ -126,7 +126,7 @@ control/treatment unless a later protocol explicitly aligns them.
   evaluator export, and verifier. This validates bounded software behavior
   only, not a learned-policy result or formal risk guarantee.
 - Allocation `21012389` remains RUNNING on `gpuamd1` (MI210 x1, 8 CPUs,
-  128 GiB; scheduled end 09:26 Helsinki). No campaign/training was launched.
+  128 GiB; scheduled end 09:26 Helsinki). No experiment_run/training was launched.
 
 - The one-minute allocation wait/fallback rule is already present in
   `.agents/rules/triton-slurm.md`: inspect each candidate node's GPU, CPUs, and
@@ -154,7 +154,7 @@ control/treatment unless a later protocol explicitly aligns them.
   In the registry, Q2/Q3/Q4/Q6 arms remain `implementation_unverified`; Q5 is
   implemented and unit-tested but still depends on a frozen Q4 parent; Q7 has
   selectable encoder implementations but no comparative result. No stage has a
-  winner or a Q-stage campaign result.
+  winner or a Q-stage experiment run result.
 - The RQ1 stop-candidate code audit confirms M5/M15/H1 multi-candidate feature
   generation, completed-bar confirmation times, sweep removal, price-level
   deduplication, source-TF age, causal stop-menu filtering, deterministic
@@ -172,7 +172,7 @@ control/treatment unless a later protocol explicitly aligns them.
   schema edits have not yet passed a GPU-node gate. See Verification boundary.
 
 **Q0–Q7 are compulsory in the master plan, but the research program is not
-complete. No Q-stage campaign has run and no stage winner is frozen.** Most
+complete. No Q-stage experiment run has run and no stage winner is frozen.** Most
 stages have registered source arms and bounded unit coverage, but source
 presence does not make them empirically complete or ready to launch. Q5's
 previous registry placeholder has now been implemented as an opt-in,
@@ -183,7 +183,7 @@ and 1,682 tests. The policy and
 dual update use matching gamma-discounted costs; Q5 evaluation costs are
 exported and independently reconciled, and policy-only resume fails closed.
 The CI wrapper exited 1 only because it safely refused to overwrite existing
-immutable schema-v2 campaign summaries. Q5 remains blocked on freezing the Q4
+immutable schema-v2 experiment run summaries. Q5 remains blocked on freezing the Q4
 parent and has not been run as a research experiment.
 
 ## Stage-by-stage status
@@ -194,8 +194,8 @@ parent and has not been run as a research experiment.
 | Q1 | Account-state-v2 schema, metadata validation, frame/shared-bundle wiring, and focused tests exist. | Revalidate the current final integration, then run a matched Q0/Q1 pair. Report behavior and economic metrics separately. No Q1 result exists. |
 | Q2 | The 16/32/64 arms declare per-environment `n_steps` 512/256/128 to hold aggregate rollout samples at 8,192; exact environment count is pinned, hardware PPO scaling is bypassed, and insufficient host-memory capacity fails closed. Current-tree full tests (1,682), Ruff, Mypy, and MI210 smoke pass. Registry arms still fail closed as `implementation_unverified`; no geometry comparison or winner exists. | Complete implementation/integration validation, freeze minibatch/update count, epochs, wall-clock/resource accounting, and parent checkpoint on one locked accelerator; then run and review the geometry comparison. |
 | Q3 | RR, fixed-risk, and `equity_delta_r` reward/risk code exists; `fixed_risk_usd` is a supported environment setting. | Validate quality-registry-to-trainer resolution and reward diagnostics; freeze one Q2 parent and one multi-arm comparison family. Keep reward return separate from PnL/equity. No run or winner exists. |
-| Q4A | Semantic Gaussian actor heads are wired into PPO and preserve the declared action-coordinate order. Focused tests cover distribution behavior, gradients, and checkpoint/schema behavior. A bounded MI210 semantic-head PPO update and save/load check is recorded in `docs/operations/triton_environment.md`. | Current registry arm is fail-closed. Revalidate on the campaign's locked CUDA stack and verify deterministic evaluator parity from the selected Q3 parent. No Q4A research run exists. |
-| Q4B | Hybrid categorical/Gaussian actor and PPO policy wiring exist; focused test source covers sampling, log-probability, entropy, gradients, and save/load. A bounded MI210 hybrid PPO update and save/load check is recorded in `docs/operations/triton_environment.md`. | It is opt-in and requires the shared actor architecture, a declared overlay `ActionSchema`, and an active exit coordinate when `exit` is present. Validate every category center against the environment decoder and campaign-locked trainer/evaluator/checkpoint integration. Registry arm remains fail-closed; no Q4B research run exists. |
+| Q4A | Semantic Gaussian actor heads are wired into PPO and preserve the declared action-coordinate order. Focused tests cover distribution behavior, gradients, and checkpoint/schema behavior. A bounded MI210 semantic-head PPO update and save/load check is recorded in `docs/operations/triton_environment.md`. | Current registry arm is fail-closed. Revalidate on the experiment run's locked CUDA stack and verify deterministic evaluator parity from the selected Q3 parent. No Q4A research run exists. |
+| Q4B | Hybrid categorical/Gaussian actor and PPO policy wiring exist; focused test source covers sampling, log-probability, entropy, gradients, and save/load. A bounded MI210 hybrid PPO update and save/load check is recorded in `docs/operations/triton_environment.md`. | It is opt-in and requires the shared actor architecture, a declared overlay `ActionSchema`, and an active exit coordinate when `exit` is present. Validate every category center against the environment decoder and experiment-run-locked trainer/evaluator/checkpoint integration. Registry arm remains fail-closed; no Q4B research run exists. |
 | Q5 | Opt-in primal-dual scalarized PPO uses the same gamma-discounted episodic composite risk cost in policy updates and dual-budget comparisons; schema-v2 checkpoint state stores gamma and refuses policy-only resume without restored environment/account history. Deterministic evaluation exports per-step/component costs, breach indicators, and discount factors; the numerical-report verifier reconciles them. Current-tree full tests (1,682), Ruff, Mypy, and MI210 smoke pass. Hard account guardrails are unchanged. | Freeze Q4 parent, budget/risk-cost interpretation, and evaluation protocol; independently review the method; then run the complete comparison. No Q5 result exists; implementation tests do not validate a constrained policy or formal risk guarantee. |
 | Q6 | Entry state machine, hidden/visible observation switch, no-FSM control, diagnostics, and three-arm registry exist. | Revalidate transition and observation semantics in both frame and shared-bundle paths. Preserve the three-arm design: no FSM, hidden FSM, visible FSM. Freeze the Q5 parent before a run. No Q6 result exists. |
 | Q7 | TCN and LiteTCN are selectable; LiteTCN has encoder and agent/checkpoint tests. | Validate matched trainer/evaluator/checkpoint integration and use the frozen Q6 parent, data, action/reward/risk semantics, budget, and seed plan. No Q7 result or winner exists. |
@@ -203,7 +203,7 @@ parent and has not been run as a research experiment.
 ## Launch and ordering controls
 
 - The registry in `config/quality_experiments.yaml` is separate from historical
-  experiments and does not auto-launch any campaign.
+  experiments and does not auto-launch any experiment run.
 - `apply_quality_variant()` refuses unresolved `*_winner` parents and refuses
   variants whose status is not explicitly selectable. Keep this fail-closed
   behavior; promote a variant only after its integration checks pass.
@@ -258,7 +258,7 @@ quality/throughput winner. Q4B's hybrid actor has source/tests but remains
 fail-closed pending action-center/environment-decoder and full checkpoint,
 trainer, and deterministic-evaluator integration review. The full per-stage
 implementation and missing-evidence matrix is in the table above; no Q-stage
-campaign, stage result, or winner exists.
+experiment run, stage result, or winner exists.
 
 The deterministic reanalysis comparator was also tightened to verify the
 actual evaluated feature-cache file hash and identity against the original
@@ -293,7 +293,7 @@ current-tree regressions passed the full MI210 software gate at 08:58 (1,671
 tests, Ruff format/lint, full-tree Mypy, and ROCm smoke). The separate real-data
 fold-fit report still hashes the earlier `features/build.py` source; its 20/20
 result is not a post-filter full-interval audit. Archived checkpoints and the
-prior contaminated campaign retain their old layout; they are not retroactively
+prior contaminated experiment run retain their old layout; they are not retroactively
 corrected by this software change. Future runs must train and evaluate under
 the versioned observation schema. The consolidated full-tree Ruff/Mypy, MI210
 ROCm-kernel smoke, and full-pytest runner is
@@ -367,7 +367,7 @@ Earlier on 2026-10-17, H200 job `21004765` on `gpu59` (H200 x1, 48 CPUs,
 and 1,594 tests (`gpu_ci_final3.log`). The initial MI210 validation in job
 `21012389` also passed 1,594 tests (`mi210_full_validation.log`); step `.3`
 later passed the recorded source snapshot with 1,603 tests. No training run,
-checkpoint mutation, cancellation, Q-stage campaign, or stage promotion
+checkpoint mutation, cancellation, Q-stage experiment run, or stage promotion
 occurred. Slurm's one-minute allocation wait rule and A100-or-better/MI210
 fallback are already present in `.agents/rules/triton-slurm.md`; the rules
 index now summarizes these requirements so agents see them at entry. The rule
@@ -394,7 +394,7 @@ boundary is recorded in the master plan.
 
 The live source audit reconfirmed the following boundary: Q0/Q1, Q2, Q3,
 Q4A/B, Q5, Q6, and Q7 each have registered source arms and bounded tests, but
-no Q-stage campaign, result, or winner exists. Q2/Q3/Q4/Q6 remain
+no Q-stage experiment run, result, or winner exists. Q2/Q3/Q4/Q6 remain
 fail-closed; Q5 remains blocked on a frozen Q4 parent; Q7 remains downstream of
 a frozen Q6 parent. The framework's stage gates and post-submission default
 order remain in force. In particular, passing implementation tests does not

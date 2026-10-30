@@ -137,9 +137,9 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                         "OHLC indicates a protective level was reached, but the bar "
                         "has no tick observations; candle fallback is disabled"
                     )
-                # Intrabar OHLC extrema are not executable bid/ask evidence.
-                # When quotes exist but none crosses the position's executable
-                # level, keep the position open instead of inventing a fill.
+                    # Intrabar OHLC extrema are not executable bid/ask evidence.
+                    # When quotes exist but none crosses the position's executable
+                    # level, keep the position open instead of inventing a fill.
             self._maybe_ema_exit(bar, idx, log_time)
             return
 

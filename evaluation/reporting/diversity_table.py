@@ -101,7 +101,7 @@ def format_diversity_table(
             block += _table(["family", "SL", "TP"], family_rows)
         boxes.append(("diversity: sl/tp", block))
 
-    # --- exit modes + planned RR percentiles ---
+        # --- exit modes + planned RR percentiles ---
     block_list: list[str] = []  # renamed to avoid conflict with 'block' parameter
     if not report.exit_shares.empty:
         exit_rows = [
@@ -119,7 +119,7 @@ def format_diversity_table(
     if block_list:
         boxes.append(("diversity: exit/rr", block_list))
 
-    # --- rank + extra stats ---
+        # --- rank + extra stats ---
     block = []
     rank_rows: list[list[str]] = []
     if not opens.empty:
@@ -163,7 +163,7 @@ def format_diversity_table(
     if block:
         boxes.append(("diversity: rank/stats", block))
 
-    # --- per-conditioner tables: levels as rows, families as columns ---
+        # --- per-conditioner tables: levels as rows, families as columns ---
     for name, table in report.by_conditioner.items():
         if table.empty:
             continue
@@ -185,7 +185,7 @@ def format_diversity_table(
             body.append(cells)
         boxes.append((f"diversity: by {name}", _table(header, body)))
 
-    # --- warnings ---
+        # --- warnings ---
     if report.warnings:
         boxes.append(
             (

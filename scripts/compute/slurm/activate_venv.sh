@@ -47,10 +47,10 @@ source "$venv/bin/activate"
 export VIRTUAL_ENV="$venv"
 export PATH="$venv/bin:$PATH"
 
-# A resumed campaign keeps the recorded Git identity only while its own source
+# A resumed experiment run keeps the recorded Git identity only while its own source
 # hashes still match. This lets documentation-only commits coexist with an
-# active campaign without weakening the controller's source-hash fingerprint.
-if [[ -n "${CAMPAIGN_ID:-}" && -z "${CAMPAIGN_RESUME_FINGERPRINT_OVERRIDE_REASON:-}" ]]; then
+# active experiment run without weakening the controller's source-hash fingerprint.
+if [[ -n "${EXPERIMENT_RUN_ID:-}" && -z "${EXPERIMENT_RUN_RESUME_FINGERPRINT_OVERRIDE_REASON:-}" ]]; then
   # shellcheck source=/dev/null
-  source "$REPO/scripts/compute/slurm/campaign_git_identity.sh"
+  source "$REPO/scripts/compute/slurm/experiment_run_git_identity.sh"
 fi

@@ -6,10 +6,10 @@ using structure-aware features (SMT divergence, PO3 state, liquidity sweeps, FVG
 ## Active research roadmap
 
 Use [`docs/thesis/master_project_execution_plan.md`](docs/thesis/master_project_execution_plan.md)
-as the single operational queue for thesis readiness, the active campaign,
+as the single operational queue for thesis readiness, the active experiment run,
 throughput work, and Q0–Q7. Older plans are technical references and evidence,
 not parallel work queues. Preserve the roadmap's stage gates and current
-campaign safety constraints.
+experiment run safety constraints.
 
 ## Build & Test
 
@@ -86,7 +86,7 @@ live → integrations/mt5
 | evaluation | `evaluation/rollout/episode_rollout.py` | backend-neutral episode rollout |
 | evaluation policy | `evaluation/rollout/trained_policy_rollout.py` | model/provider evaluation through TradingEnv |
 | reports | `evaluation/reporting/run_artifact_writer.py` | numerical report, plot, and artifact writing |
-| experiments | `experiments/cli.py`, `experiments/campaigns/campaign_execution.py` | variant and campaign lifecycle, resume, and provenance; `execution.py` remains a compatibility adapter |
+| experiments | `experiments/cli.py`, `experiments/runs/execution.py` | variant and experiment run lifecycle, recovery, and provenance |
 | artifacts | `artifacts/` | shared identities, manifests, atomic storage, and registry |
 | compute | `compute/` | device capabilities, resource profiles, and Slurm adapters |
 | live | `live/runtime/strategy.py` | broker-neutral live and paper strategy runtime |
@@ -221,7 +221,7 @@ Helpers: [`scripts/compute/slurm/`](scripts/compute/slurm/) (`status.sh`, `find_
   dependency starts its 60-second resource-wait clock only after the dependency
   clears. MI210 is excluded for the current thesis work. Preserve the
   cancellation approval rules for every existing or unrelated job.
-  The current thesis campaign has a user-set hard cap of **2 GH200 GPUs total**
+  The current thesis experiment run has a user-set hard cap of **2 GH200 GPUs total**
   across all active allocations, and at most 2 GH200s in any one request. This
   is an aggregate cap: do not combine jobs or node requests whose GH200 counts
   sum to more than 2 (for example, 1 on gpuarm1 plus 2 on gpuarm2, or 2 on
@@ -271,9 +271,9 @@ Helpers: [`scripts/compute/slurm/`](scripts/compute/slurm/) (`status.sh`, `find_
   allocation transition, or explicit progress signal. Prefer an existing
   supervisor/notification or wait-for-output mechanism where available. This
   does not change the separate 60-second maximum for waiting on a new allocation.
-- **Campaign status updates:** when asked for campaign status, or when a
-  meaningful campaign transition/blocker occurs, run
-  `experiments/campaigns/status.py` and include its generated report
+- **Experiment run status updates:** when asked for experiment run status, or when a
+  meaningful experiment run transition/blocker occurs, run
+  `experiments/runs/status.py` and include its generated report
   without manually rebuilding the tables. It reports all variants in ladder
   order (`a0`, `a1`, `a2`, `a3`, then `a4a`, `a4b`); follow
   `.agents/rules/triton-slurm.md`.

@@ -81,7 +81,7 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
                 raise ValueError(
                     "pre_ny_by_date (or legacy pre_ny_data) must be provided when use_vae=True"
                 )
-            # Freeze VAE encoder
+                # Freeze VAE encoder
             for param in vae.parameters():
                 param.requires_grad = False
 

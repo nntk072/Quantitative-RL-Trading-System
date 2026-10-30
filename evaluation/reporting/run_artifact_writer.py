@@ -691,12 +691,12 @@ def save_run(
         except Exception:
             pass
 
-    if report_profile not in ("full", "campaign_fast"):
+    if report_profile not in ("full", "experiment_run_fast"):
         raise ValueError(f"unknown report_profile: {report_profile}")
     # The fast profile affects presentation artifacts only. Every evaluation,
     # risk gate, trade, equity series, and mandatory report remains intact.
     deferred = []
-    if report_profile == "campaign_fast":
+    if report_profile == "experiment_run_fast":
         if max_order_charts > 0:
             deferred.append("per_trade_png")
         if save_html:

@@ -69,7 +69,7 @@ elapsed time below **120 seconds** counts as short. Repeated short jobs/steps
 can trigger an account warning even when they are launched under one parent
 allocation or spread across nodes. Treat the reported situation (20 or more
 short jobs/steps, especially across two or more nodes) as a launch-control
-failure, not as an acceptable cost of campaign startup. Recent examples were
+failure, not as an acceptable cost of experiment run startup. Recent examples were
 job `20982346` (46 seconds, 2 steps across 2 nodes) and job `20982372` (110
 seconds, 22 steps across 2 nodes); these are incident evidence, not acceptable
 templates for future launches.
@@ -83,7 +83,7 @@ the resulting source changes. GPU validation launchers must use
 must target Python files only (or the repository root), never a mixed-language
 list.
 
-Before starting or resuming any campaign, benchmark, test batch, or supervisor,
+Before starting or resuming any experiment run, benchmark, test batch, or supervisor,
 inspect its launch path and establish the maximum number of Slurm jobs/steps it
 can create, including retries, health checks, worker fan-out, and shutdown. The
 default permitted count of **new short Slurm jobs/steps is zero**. Do not use
@@ -146,28 +146,28 @@ automatically; inspect the trace and step topology first.
   per variant, retry, test, or monitor. A task expected to take under 120s must
   run as an ordinary command inside an already-running allocation; it must not
   create a new job or step.
-- Launching a campaign worker through a separate Slurm step for every variant
+- Launching an experiment run worker through a separate Slurm step for every variant
   when a persistent supervisor or direct child process can run it inside the
   existing allocation. Pack workers into the fewest long-lived steps required
   for GPU binding; do not turn each queue poll or retry into a step.
-- **Campaign worker dispatch:** `campaign_controller.py --worker-nodes ...`
+- **Experiment run worker dispatch:** `experiment_run_controller.py --worker-nodes ...`
   constructs one `srun --overlap` command per worker. It is allowed only when
-  the allocation starts one persistent `campaign_worker_dispatch.py --manager`
+  the allocation starts one persistent `experiment_run_worker_dispatch.py --manager`
   on each node and prepends `scripts/compute/slurm/worker_bin` to `PATH`, so
   each worker request is handled as a direct child process rather than a Slurm
   step. The GH200 supervisor must pass through
-  `campaign_srun_gh200_guard.sh`; direct controller invocation without the
-  managers and shim is forbidden. Before any campaign, inspect the launch
+  `experiment_run_srun_gh200_guard.sh`; direct controller invocation without the
+  managers and shim is forbidden. Before any experiment run, inspect the launch
   topology and confirm there is one long-lived manager per node, no per-worker
   `srun` steps, and no short-step retry fan-out.
 - Rapid automatic retry after a worker exits early. Preserve its log, let the
   supervisor record the failure, inspect the cause, then resume through the
-  campaign controller only after confirming that the retry is a sustained run.
+  experiment run controller only after confirming that the retry is a sustained run.
 - Parallel one-off benchmark jobs on multiple nodes for work that fits the
   current allocation. Prefer one allocation, one sampler, and a fixed benchmark
   window long enough to include warm-up and steady-state throughput.
 - Any use of `scancel`, including job-specific cancellation and `REPLACE=1`.
-- Campaign launchers and supervisors must not call `scancel` automatically on
+- Experiment run launchers and supervisors must not call `scancel` automatically on
   rollover, successful completion, retry, or shutdown. They must preserve the
   current allocation and its evidence. If an allocation is unavailable after
   the one-minute limit, stop that request and do not automatically resubmit the
@@ -175,7 +175,7 @@ automatically; inspect the trace and step topology first.
 - Using `srun` for login-node checks (`ls`, log tails, plain `grep`).
 - GPU count limits are **partition and workload specific**, not global. Follow
   the per-family caps in the table below; check Slurm availability and account
-  limits before each request. For the current thesis campaign, the user has set
+  limits before each request. For the current thesis experiment run, the user has set
   a hard aggregate cap of **2 GH200 GPUs total across all active allocations**
   and **2 per allocation request**. Count GPUs across jobs and nodes, including
   pending jobs that could overlap. For example, requesting 1 GH200 on gpuarm1
@@ -184,7 +184,7 @@ automatically; inspect the trace and step topology first.
   shape is unavailable, two GH200s on one eligible node are allowed within the
   same aggregate cap. This cap
   does not apply to V100 or other GPU families.
-- Before any GH200 request, inspect all active and pending campaign jobs with
+- Before any GH200 request, inspect all active and pending experiment run jobs with
   `squeue` and `scontrol show job`. Never request more than 2 GH200 in one job,
   combine allocations to run more than 2 simultaneously, or request a 2-GH200
   allocation on one node plus any additional GH200 on another. A dependency
@@ -291,7 +291,7 @@ eligible alternative. Before considering each alternative, inspect every
 candidate node's allocated/free CPUs, host RAM, and configured/allocated GPU
 inventory. Do not repeatedly poll, submit a duplicate, or create an overlapping
 replacement. This timeout does **not**
-authorize cancellation of an existing training/campaign job. The user's
+authorize cancellation of an existing training/experiment_run job. The user's
 current direction is to preserve pending jobs as well; stop polling after the
 one-minute cutoff, then inspect alternatives using fresh per-node CPU/RAM/GPU
 checks without canceling or overlapping the pending request.
@@ -324,16 +324,16 @@ The following is the Triton configuration observed on **2026-10-16** using
 configured partition capacity, not a promise that those GPUs are free. Always
 query `sinfo`, `squeue`, `scontrol show node`, and account/QOS before a real
 request. The two-GH200 aggregate cap is specific to the current thesis
-campaign; it does not limit other GPU families.
+experiment run; it does not limit other GPU families.
 
 | GPU family | VRAM / CUDA capability | Triton partition(s) | Partition MaxTime / MaxNodes | Project request guidance |
 |---|---|---|---|---|
-| V100 | 16 or 32 GiB / 7.0 | `gpu-v100-16g`, `gpu-v100-32g`; `gpu-interactive` is 32 GiB | 5d / max one node; interactive 4h / max one node | Representative nodes: 32 CPUs/375 GiB (`gpu35`); DGX 80 CPUs/516 GiB (`dgx1`, `dgx5`). The 2026-10-16 two-trainer probe used 1 V100, 16 CPUs, and 192 GiB requested RAM; it averaged 13 FPS per trainer at `n_envs=64`. The post-run profiler query did not finish; treat this as preliminary, not a campaign throughput guarantee. Use `.venv-v100`; `.venv-x86` cu130 lacks `sm_70`. |
+| V100 | 16 or 32 GiB / 7.0 | `gpu-v100-16g`, `gpu-v100-32g`; `gpu-interactive` is 32 GiB | 5d / max one node; interactive 4h / max one node | Representative nodes: 32 CPUs/375 GiB (`gpu35`); DGX 80 CPUs/516 GiB (`dgx1`, `dgx5`). The 2026-10-16 two-trainer probe used 1 V100, 16 CPUs, and 192 GiB requested RAM; it averaged 13 FPS per trainer at `n_envs=64`. The post-run profiler query did not finish; treat this as preliminary, not an experiment run throughput guarantee. Use `.venv-v100`; `.venv-x86` cu130 lacks `sm_70`. |
 | A100 | 80 GiB / 8.0 | `gpu-a100-80g` | 5d / max one node | Representative node `gpu11`: 96 CPUs/515 GiB. Choose card count from benchmark and node capacity; no GH200-derived cap. |
 | H100 | 80 GiB / 9.0 | `gpu-h100-80g`, `gpu-h100-80g-short` | 5d or 2d / max one node | Representative node `gpu45`: 192 CPUs/990 GiB. Match runtime and environment/kernel support to the selected partition. |
 | H200 | 141 GiB / 9.0 | `gpu-h200-141g-m`, `gpu-h200-141g-short` | 8h or 2d / max one node | Representative node `gpu50`: 128 CPUs/1,980 GiB; full nodes expose up to 8 GPUs. Measure concurrency and request supported node resources. |
 | H200 partitioned | 71 GiB slice (H200 3g.71gb) / 9.0 | `gpu-h200-71g-ia` | 8h / max one node | `gpu49`: 128 CPUs/1,980 GiB and up to 8 71-GiB slices alongside 4 full H200s. Treat a slice as a partitioned GPU. Other 18/35-GiB IA partitions were not configured in this snapshot. |
-| GH200 | 141 GiB / 9.0 | `gpu-grace-h200-141g` | 5d / max two nodes | Current thesis-campaign user cap: **2 GH200 total across active and pending allocations**, normally one per node on two nodes. This is not the cluster's installed capacity and does not cap other GPU families. |
+| GH200 | 141 GiB / 9.0 | `gpu-grace-h200-141g` | 5d / max two nodes | Current thesis-experiment-run user cap: **2 GH200 total across active and pending allocations**, normally one per node on two nodes. This is not the cluster's installed capacity and does not cap other GPU families. |
 | B300 | 288 GiB / 10.3 | `gpu-b300-288g-short` | 2d / max one node | Representative node `gpu64`: 256 CPUs/3,000 GiB. Verify framework support and measured throughput before choosing it. |
 | AMD MI100 / MI210 | 32 GiB MI100 / 64 GiB MI210, ROCm (not CUDA) | `gpu-amd` | 5d / max one node | `gpuamd1`: 16 CPUs/250 GiB, 1 MI100 + 2 MI210. Requires ROCm-compatible PyTorch/runtime; CUDA environments do not apply. |
 
@@ -360,15 +360,15 @@ present the 18-trainer projection as a direct measurement.
 | Job | GPUs | Typical request | Why |
 |-----|------|-----------------|-----|
 | One model (one TCN / GRU / Transformer, 20M) | **1** | Example GH200: `--gpus=gh200:1 --mem=512G --cpus-per-task=48 --time=12:00:00` | GH200 example only; size CPU/RAM/time for the chosen family, partition, and measured workload. |
-| Six-run matrix (overlay then baseline, three archs) | **2 GH200** | `--gpus=gh200:2 --mem=900G --cpus-per-task=128 --time=6:00:00` | Historical GH200 shape only. The GH200 campaign cap does not set V100/A100/H100/H200/B300 caps. Check [current matrix scripts](../../scripts/compute/slurm/campaigns/) before use. |
-| 18-trainer full-split screen (campaign-specific) | **2 total, one per node** | GH200: `--nodes=2 --ntasks=2 --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G --time=6:00:00` | Current active allocation shape: 18 workers across two nodes (9/node), 5 CPUs/worker, `n_envs=64`, shared bundle. Keep this distinct from two GPUs on one node; recheck cgroup memory and controller placement before reuse. |
+| Six-run matrix (overlay then baseline, three archs) | **2 GH200** | `--gpus=gh200:2 --mem=900G --cpus-per-task=128 --time=6:00:00` | Historical GH200 shape only. The GH200 experiment run cap does not set V100/A100/H100/H200/B300 caps. Check [current matrix scripts](../../scripts/compute/slurm/experiment_runs/) before use. |
+| 18-trainer full-split screen (experiment-run-specific) | **2 total, one per node** | GH200: `--nodes=2 --ntasks=2 --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G --time=6:00:00` | Current active allocation shape: 18 workers across two nodes (9/node), 5 CPUs/worker, `n_envs=64`, shared bundle. Keep this distinct from two GPUs on one node; recheck cgroup memory and controller placement before reuse. |
 | V100 throughput probe (2026-10-16 user-authorized) | **1 V100, 2 trainers** | Actual probe: `gpu35`, `--gres=gpu:v100:1 --mem=192G --cpus-per-task=16 --time=4:00:00` | One V100 shared by two matched throughput workers. Benchmark-only; not thesis evidence or a validated general V100 cap. |
 
 Choose a GPU family based on availability and compatible runtime, not a global
 preference. `.venv-x86` cu130 supports H100/H200 but not V100; use the separate
 V100 environment only after its CUDA kernels and real GPU operation pass the
 preflight below. The six-run matrix's two-GH200 shape remains specific to that
-campaign.
+experiment run.
 
 Setup x86 env once on an x86 node: `tools/setup-venv-x86`. Inside any GPU
 shell: `source scripts/compute/slurm/activate_venv.sh` (picks `.venv` or `.venv-x86`).
@@ -421,14 +421,14 @@ If a request remains pending after 60 seconds, stop polling and treat that
 resource shape as unavailable for immediate work, even if Slurm shows a later
 estimated start. Inspect eligible A100-or-better NVIDIA alternatives from
 fresh live per-node CPU/RAM/GPU inventories. Leave pending requests untouched,
-never cancel an existing campaign or unrelated job, and do not create an
+never cancel an existing experiment run or unrelated job, and do not create an
 overlapping duplicate.
 
 Second train: a new tmux window that **`ssh`s the compute node**. That shell
 joins the same job (`SLURM_JOB_ID` is set). `srun --overlap` / `srun --jobid=`
 fails here with `Insane message length`. Do not retry overlap.
 
-For this thesis campaign, prefer one GH200 on each of two different nodes. If
+For this thesis experiment run, prefer one GH200 on each of two different nodes. If
 that layout is unavailable, the user permits both GH200s on one eligible node
 within the aggregate cap. If `AllocTRES` shows the requested GH200s occupied,
 do not submit that shape or keep waiting on it. Apply the one-minute limit above, inspect per-node state
@@ -439,12 +439,12 @@ approval and no-overlap rules.
 
 The profiles below record prior measurements, not current request instructions
 or authorization. The current one-minute wait and alternative-selection rules
-above, per-node inventory, one-GH200-per-node campaign shape, and explicit
+above, per-node inventory, one-GH200-per-node experiment run shape, and explicit
 approval requirement take precedence. Do not reproduce an old allocation shape
 without a fresh forecast and approval.
 
 The unified matrix launcher is
-[`scripts/compute/slurm/campaigns/run_18variant_matrix.sh`](../../scripts/compute/slurm/campaigns/run_18variant_matrix.sh).
+[`scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh`](../../scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh).
 Select the GPU family with `GPU_KIND=gh200|h100|h200` and the allocation shape
 with `MODE=1|2|3|4`:
 
@@ -456,12 +456,12 @@ with `MODE=1|2|3|4`:
 | 4 | 1 GPU on each of 2 nodes, 6h, 600G per node | 2 per node | 32 |
 
 The ordered subset can be selected with a whitespace-separated `VARIANTS`
-value; when omitted, all entries in `config/campaigns/variant_list.txt` are used.
+value; when omitted, all entries in `config/experiment_runs/variant_list.txt` are used.
 The tmux entrypoint passes these options through:
 
 ```bash
 MODE=2 GPU_KIND=gh200 OUT_DIR=outputs/gpu_matrix_18_mode2 \
-  bash scripts/compute/slurm/campaigns/run_18variant_matrix_gh200_tmux.sh
+  bash scripts/compute/slurm/experiment_runs/run_18variant_matrix_gh200_tmux.sh
 ```
 
 Each run keeps logs under `<OUT_DIR>/logs/`: `all.log` contains the combined
@@ -514,16 +514,16 @@ shape or the one-minute alternative-selection rule above:
    **inside** the GPU bash.
 3. Run train/eval/tests there. Leave the shell open when finished.
 
-### Campaign status reporting
+### Experiment run status reporting
 
-When the user asks for campaign status, or when a meaningful campaign
+When the user asks for experiment run status, or when a meaningful experiment run
 transition, failure, recovery, or resource blocker occurs, generate the report
-with `experiments/campaigns/status.py` instead of composing its tables
+with `experiments/runs/status.py` instead of composing its tables
 from memory. For example:
 
 ```bash
-PYTHONPATH=. .venv-x86/bin/python experiments/campaigns/status.py \
-  outputs/gpu_campaigns/<campaign-id> --job-id <slurm-job-id> \
+PYTHONPATH=. .venv-x86/bin/python experiments/runs/status.py \
+  outputs/experiment_runs/<experiment-run-id> --job-id <slurm-job-id> \
   --supervisor <persistent-tmux-session>
 ```
 
@@ -544,51 +544,51 @@ Include these tables:
 1. **Allocation summary:** Slurm job ID and state, allocated nodes, requested
    and granted GPU/CPU/host-RAM resources, start time, elapsed time, walltime
    limit, estimated remaining time/end time, and any pending successor's ID,
-   dependency, and state. Include the campaign/supervisor name and run
+   dependency, and state. Include the experiment_run/supervisor name and run
    fingerprint when known. Reconcile live Slurm state with the supervisor,
    worker logs, manifest, and checkpoint timestamps before calling a run
    finished or a worker active.
 2. **Per-node resources:** one row per allocated node with node name, GPU type
    and allocated GPU IDs/count, sampled GPU utilization and VRAM used/total
    when the sampler records total capacity (otherwise say `total unavailable`),
-   CPU allocated/total and free (plus campaign CPU request/worker slots where
+   CPU allocated/total and free (plus experiment run CPU request/worker slots where
    available), host RAM allocated/total and free, and manager readiness plus
    active worker count. Include the sample time/source for utilization values.
 3. **Per-variant progress:** include every configured variant, including
    pending, running, failed, completed, and evaluation states. Sort by ladder
    rung in this order: `a0`, `a1`, `a2`, `a3`, `a4a`, `a4b`; within each rung,
    list the canonical base, PO3/IFVG, then distribution family variants in the
-   campaign's declared order. Use the exact variant name from the resolved
+   experiment run's declared order. Use the exact variant name from the resolved
    config/manifest. Columns should cover status/phase, assigned node and GPU
    (or planned assignment if not started), attempt, elapsed time, latest
    logged timestep versus target, latest valid checkpoint and its timestamp,
    and concise failure/recovery detail. Do not imply that logged timesteps are
    checkpointed or that a checkpoint passed evaluation.
 
-The reporter uses `squeue`/`scontrol`, campaign manifests, worker logs,
+The reporter uses `squeue`/`scontrol`, experiment run manifests, worker logs,
 checkpoints, and existing per-node sampler CSVs. It creates no Slurm jobs or
 steps and never queries a GPU by starting a diagnostic allocation. Keep any
 unavailable field visible in the generated report; do not silently infer it.
 The report keeps variants in ladder order even when worker placement or
 completion order differs.
 
-### Campaign results reporting
+### Experiment run results reporting
 
 Use one reporting path for live progress and another for terminal results:
 
-1. **Live or evaluating campaign:** generate and include the `status.py`
+1. **Live or evaluating experiment run:** generate and include the `status.py`
    report above. State plainly whether each variant is training, evaluating,
    or complete. Reaching the timestep target or finding a checkpoint does not
    mean evaluation finished or results are final.
-2. **Terminal campaign:** use the generated
-   `reports/campaign_results_summary.md` and adjacent `.json` from
-   `experiments/campaigns/reporting.py`. The controller creates these after
-   workers finish. If they are absent after the campaign is terminal, generate
+2. **Terminal experiment run:** use the generated
+   `reports/experiment_run_results_summary.md` and adjacent `.json` from
+   `experiments/runs/reporting.py`. The controller creates these after
+   workers finish. If they are absent after the experiment run is terminal, generate
    them once with:
 
    ```bash
-   PYTHONPATH=. .venv/bin/python experiments/campaigns/reporting.py \
-     --campaign-dir outputs/gpu_campaigns/<campaign-id>
+   PYTHONPATH=. .venv/bin/python experiments/runs/reporting.py \
+     --experiment-run-dir outputs/experiment_runs/<experiment-run-id>
    ```
 
    Use the architecture-matched project venv. Run this report-only fallback in
@@ -598,7 +598,7 @@ Use one reporting path for live progress and another for terminal results:
    fields as `unavailable` rather than guessing:
 
    ```text
-   Campaign: <id> | fingerprint <fingerprint> | <steps>/variant | seed(s) <...>
+   Experiment run: <id> | fingerprint <fingerprint> | <steps>/variant | seed(s) <...>
    Protocol: action mode <...> | action seed(s) <...> | execution seed(s) <...>
    Data: train <start–end> | test <start–end> | evidence role <...>
    State: training <...> | evaluation <...> | disposition <pilot/final/report-only/...>
@@ -622,7 +622,7 @@ Use one reporting path for live progress and another for terminal results:
 
 6. When the user asks for per-variant trade detail, generate the artifact-backed
    detail pack with `scripts/research/thesis/evaluation/report_variant_details.py`
-   from the completed campaign directory. It writes `reports/variant_details.md`,
+   from the completed experiment run directory. It writes `reports/variant_details.md`,
    `.json`, and `reports/variant_details_figures/`, with each variant's resolved setup, training parameters and
    learning-curve summaries, figure links, train/test entry setup, exits by
    outcome, SL/TP/risk breakdowns, and up to five representative winning,
@@ -643,11 +643,11 @@ Use one reporting path for live progress and another for terminal results:
    ```bash
    PYTHONPATH=. .venv/bin/python \
      scripts/research/thesis/evaluation/report_variant_details.py \
-     --campaign-dir outputs/gpu_campaigns/<campaign-id>
+     --experiment-run-dir outputs/experiment_runs/<experiment-run-id>
    ```
 
    Use the architecture-matched project venv and an existing GPU-node session
-   for this campaign report command, consistent with the artifact inspection
+   for this experiment run report command, consistent with the artifact inspection
    rules above.
 
 Do not recreate the generated metrics table by hand. Add only a short plain-
@@ -719,7 +719,7 @@ an overlapping allocation. Reuse an existing allocation whenever possible.
 
 ### Compare priority and GPU alternatives before waiting
 
-For CPU-heavy PPO campaigns, minimize estimated total completion time:
+For CPU-heavy PPO experiment runs, minimize estimated total completion time:
 scheduler wait plus measured training runtime. Do not select GH200 by default
 if another supported family can start sooner and meets the workload's CPU, RAM,
 VRAM, CUDA, architecture, environment and walltime requirements.

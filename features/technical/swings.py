@@ -393,9 +393,9 @@ def retained_swing_levels(
         if ev_l[t] and np.isfinite(px_l[t]) and np.isfinite(loc_l[t]):
             lows.append((float(px_l[t]), float(loc_l[t]), False))
 
-        # A body close through invalidates a level. A wick beyond it marks a
-        # one-time sweep event while the level remains available until close
-        # confirms invalidation.
+            # A body close through invalidates a level. A wick beyond it marks a
+            # one-time sweep event while the level remains available until close
+            # confirms invalidation.
         highs = [(lv, lc, close[t] > lv) for lv, lc, _ in highs]
         lows = [(lv, lc, close[t] < lv) for lv, lc, _ in lows]
         highs = [item for item in highs if not item[2]]
@@ -413,7 +413,7 @@ def retained_swing_levels(
             swept_l[t], swept_l_loc[t] = lv, lc
             lows[swept_idx] = (lv, lc, True)
 
-        # Cap size so the output matrix stays fixed-width.
+            # Cap size so the output matrix stays fixed-width.
         if len(highs) > k:
             highs = highs[-k:]
         if len(lows) > k:
@@ -513,8 +513,8 @@ def recent_unswept_swing_candidates(
         if low_events[t] and np.isfinite(low_prices[t]) and np.isfinite(low_locations[t]):
             lows = add_distinct(lows, (float(low_prices[t]), int(low_locations[t]), t))
 
-        # A wick sweep is still useful context. Remove candidates only after a
-        # completed candle body closes through the swing level.
+            # A wick sweep is still useful context. Remove candidates only after a
+            # completed candle body closes through the swing level.
         highs = [candidate for candidate in highs if bar_close[t] <= candidate[0]]
         lows = [candidate for candidate in lows if bar_close[t] >= candidate[0]]
         highs = highs[-count:]

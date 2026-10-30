@@ -71,7 +71,7 @@ run_quality() {
 run_architecture() { sync_dev; run_module pytest -q tests/architecture; }
 run_graph_quality() {
   sync_dev
-  run_module pytest -q tests/test_tooling/test_code_graph_quality.py
+  run_module pytest -q tests/unit/tooling/test_code_graph_quality.py
   local graph_index path status
   graph_index="$(mktemp "${TMPDIR:-/tmp}/thesis-graph-index.XXXXXX")"
   rm -f -- "$graph_index"
@@ -112,16 +112,16 @@ run_graph_quality() {
 run_contracts() {
   sync_dev
   run_module pytest -q \
-    tests/test_configuration/test_config_typo_safety.py \
+    tests/unit/configuration/test_config_typo_safety.py \
     tests/integration/test_action_schema_contract.py \
-    tests/test_experiments/test_campaign_artifacts.py \
-    tests/test_simulation/test_environment/test_observation_schema.py \
-    tests/test_features/test_cache_hash_full_column.py \
-    tests/test_features/test_feature_cache_and_fit_scope.py
+    tests/unit/experiments/test_experiment_run_artifacts.py \
+    tests/unit/simulation/test_environment/test_observation_schema.py \
+    tests/unit/features/test_cache_hash_full_column.py \
+    tests/unit/features/test_feature_cache_and_fit_scope.py
 }
 run_unit() {
   sync_dev
-  run_module pytest -q -m "unit and not slow and not integration and not gpu and not triton and not research" tests
+  run_module pytest -q -m "unit and not slow and not integration and not architecture and not gpu and not triton and not research" tests
 }
 run_build() {
   sync_dev
@@ -167,16 +167,17 @@ run_slow() { sync_dev; run_module pytest -q -m slow tests; }
 run_parity() {
   sync_dev
   run_module pytest -q \
-    tests/test_simulation/test_backtest/test_broker_fill_accounting_unittest.py \
-    tests/test_simulation/test_backtest/test_broker_quote_parity_unittest.py \
-    tests/test_simulation/test_backtest/test_engine_execution_contract_unittest.py \
-    tests/test_simulation/test_environment/test_bundle_env_equivalence.py \
-    tests/test_simulation/test_environment/test_trading_env_golden_traces.py \
-    tests/test_simulation/test_environment/test_tick_fill_reconciliation.py
+    tests/integration/backtest/test_broker_fill_accounting.py \
+    tests/integration/backtest/test_broker_quote_parity.py \
+    tests/integration/backtest/test_engine_execution_contract.py \
+    tests/integration/backtest/test_target_reference_contract.py \
+    tests/unit/simulation/test_environment/test_bundle_env_equivalence.py \
+    tests/unit/simulation/test_environment/test_trading_env_golden_traces.py \
+    tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py
 }
 run_training_smoke() {
   sync_dev
-  run_module pytest -q tests/test_training/test_training_smoke.py tests/test_training/test_sac_smoke.py
+  run_module pytest -q tests/unit/training/test_training_smoke.py tests/unit/training/test_sac_smoke.py
 }
 run_gpu() {
   if [[ -x scripts/compute/slurm/run_current_tree_gpu_ci.sh ]]; then

@@ -449,9 +449,9 @@ def evaluate_model(
                 }
             )
             discount_factor *= constraint_discount_gamma
-        # Measure exposure at the decision-bar close. This avoids treating
-        # overnight/weekend gaps as market exposure and is reproducible from
-        # the environment's per-step position state.
+            # Measure exposure at the decision-bar close. This avoids treating
+            # overnight/weekend gaps as market exposure and is reproducible from
+            # the environment's per-step position state.
         exposure_bars += int(bool(info.get("position", False)))
 
     equity_series = pd.Series(

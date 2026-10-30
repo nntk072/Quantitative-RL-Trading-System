@@ -51,11 +51,11 @@
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_live/test_rl_robot.py` | RL robot |
-| `tests/test_live/test_rl_bridge.py` | RLStrategyAdapter bridge |
-| `tests/test_live/test_live_entrypoint.py` | Live entry point |
-| `tests/test_live/test_rule_based_strategies.py` | Rule-based strategies |
-| `tests/test_live/test_mt5_cli_applications.py` | MT5 command adapters, config resolution, and `--once` lifecycle |
+| `tests/unit/live/test_rl_robot.py` | RL robot |
+| `tests/unit/live/test_rl_bridge.py` | RLStrategyAdapter bridge |
+| `tests/unit/live/test_live_entrypoint.py` | Live entry point |
+| `tests/unit/live/test_rule_based_strategies.py` | Rule-based strategies |
+| `tests/unit/live/test_mt5_cli_applications.py` | MT5 command adapters, config resolution, and `--once` lifecycle |
 
 ## Do NOT Read For Live Tasks
 
@@ -81,8 +81,8 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add a live data or broker adapter | external adapter | `integrations/mt5/adapters/` | live ports; `tests/test_live/test_rl_bridge.py` | adapter and conversion contract tests | provider schema and training workflow |
-| Change provider handling | inference runtime | `live/runtime/strategy.py` | `DecisionProvider`; `tests/test_live/test_rl_robot.py` | runtime adapter and schema test | vendor SDK boundary |
+| Add a live data or broker adapter | external adapter | `integrations/mt5/adapters/` | live ports; `tests/unit/live/test_rl_bridge.py` | adapter and conversion contract tests | provider schema and training workflow |
+| Change provider handling | inference runtime | `live/runtime/strategy.py` | `DecisionProvider`; `tests/unit/live/test_rl_robot.py` | runtime adapter and schema test | vendor SDK boundary |
 
 ## Axis of Change
 

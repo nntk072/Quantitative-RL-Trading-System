@@ -114,7 +114,8 @@ class AuxiliaryTrainerCallback(BaseCallback):
         """Per-step hook — the auxiliary training happens at rollout end."""
         return True
 
-    # -- setup ------------------------------------------------------------
+        # -- setup ------------------------------------------------------------
+
     def _init_callback(self) -> None:
         encoder = self.model.policy.features_extractor
         # Encoder output dim is features_dim (= latent_dim + ACCOUNT_DIM);
@@ -133,7 +134,8 @@ class AuxiliaryTrainerCallback(BaseCallback):
             out_dim,
         )
 
-    # -- data ---------------------------------------------------------------
+        # -- data ---------------------------------------------------------------
+
     def _env_data(self) -> tuple[NDArray[np.float64], NDArray[np.float64]] | None:
         """Observation columns and closes from the first underlying TradingEnv."""
         env = self.model.get_env()
@@ -153,7 +155,8 @@ class AuxiliaryTrainerCallback(BaseCallback):
                 obs = obs[:, m1_idx]
         return np.asarray(obs, dtype=np.float64), bars["close"].to_numpy(dtype=np.float64)
 
-    # -- training -----------------------------------------------------------
+        # -- training -----------------------------------------------------------
+
     def _on_rollout_end(self) -> None:
         if self.aux_weight <= 0.0 or self.aux_loss_fn is None:
             return

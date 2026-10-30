@@ -80,7 +80,7 @@ def replay(pairs: list[dict[str, Any]], bars: pd.DataFrame) -> pd.DataFrame:
         risk = float(row["stop_distance"])
         if risk <= 0:
             continue
-        # Best favorable excursion in R over the trade's life.
+            # Best favorable excursion in R over the trade's life.
         if int(row["direction"]) == 1:
             mfe = (float(high[lo:hi].max()) - entry) / risk
         else:

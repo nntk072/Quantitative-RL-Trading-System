@@ -58,7 +58,7 @@ class SMCStrategy(TradingStrategy):
                         if next_candle_range < 0.5 * candle_range:
                             bullish_blocks.iloc[i] = True
 
-            # Look for strong bearish candle
+                            # Look for strong bearish candle
             if df.iloc[i]["close"] < df.iloc[i]["open"]:
                 body_size = abs(df.iloc[i]["close"] - df.iloc[i]["open"])
                 candle_range = df.iloc[i]["high"] - df.iloc[i]["low"]
@@ -99,7 +99,7 @@ class SMCStrategy(TradingStrategy):
             if next_low > prev_high and curr_low > prev_high:
                 bullish_fvg.iloc[i] = True
 
-            # Bearish FVG: gap between prev_high and next_low
+                # Bearish FVG: gap between prev_high and next_low
             if next_high < prev_low and curr_high < prev_low:
                 bearish_fvg.iloc[i] = True
 
@@ -115,8 +115,8 @@ class SMCStrategy(TradingStrategy):
         if len(df) < 20:
             return "neutral"
 
-        # Use higher highs and higher lows for bullish
-        # Use lower highs and lower lows for bearish
+            # Use higher highs and higher lows for bullish
+            # Use lower highs and lower lows for bearish
         highs = df["high"].rolling(window=5).max()
         lows = df["low"].rolling(window=5).min()
 
@@ -155,7 +155,7 @@ class SMCStrategy(TradingStrategy):
             symbol = self.data.get_symbol()
             return symbol, Signal.NONE
 
-        # Identify order blocks
+            # Identify order blocks
         bullish_blocks, bearish_blocks = self.identify_order_blocks(df)
 
         # Identify Fair Value Gaps
@@ -185,12 +185,12 @@ class SMCStrategy(TradingStrategy):
             if (recent_bullish_blocks or recent_bullish_fvg) and price_above_ema_fast:
                 return symbol, Signal.BUY
 
-        # Sell signal: Bearish structure + bearish order block/FVG + price below EMAs
+                # Sell signal: Bearish structure + bearish order block/FVG + price below EMAs
         if market_structure == "bearish":
             if (recent_bearish_blocks or recent_bearish_fvg) and not price_above_ema_fast:
                 return symbol, Signal.SELL
 
-        # Additional confirmation: EMA crossover
+                # Additional confirmation: EMA crossover
         if ema_fast.iloc[-1] > ema_slow.iloc[-1] and ema_fast.iloc[-2] <= ema_slow.iloc[-2]:
             if recent_bullish_blocks or recent_bullish_fvg:
                 return symbol, Signal.BUY

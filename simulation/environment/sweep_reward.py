@@ -66,7 +66,7 @@ class SweepConfirmationReward:
         else:
             self.decay_horizon_min = max(0.0, float(decay_horizon_min))
 
-        # State for sweep tracking (reset per episode)
+            # State for sweep tracking (reset per episode)
         self.prev_price: float | None = None
 
         # London sweep tracking
@@ -152,7 +152,7 @@ class SweepConfirmationReward:
         else:
             total_cost = cost
 
-        # Final reward: R_t = ΔPnL_t - Cost_t + α·C_t - β·T_t
+            # Final reward: R_t = ΔPnL_t - Cost_t + α·C_t - β·T_t
         reward = pnl_step - total_cost + (self.alpha * c_t) - (self.beta * t_t)
 
         # Update previous price
@@ -188,23 +188,23 @@ class SweepConfirmationReward:
         if np.isnan(asian_high) or np.isnan(asian_low):
             asian_high = asian_low = float("nan")
 
-        # --- LONDON LEVEL SWEEPS (Priority) ---
+            # --- LONDON LEVEL SWEEPS (Priority) ---
 
-        # Long sweep: price crosses ABOVE London High
+            # Long sweep: price crosses ABOVE London High
         if not np.isnan(london_high) and price > london_high and prev <= london_high:
             self.in_london_long_sweep = True
             self.london_long_counter = 1
             self.in_asian_long_sweep = False  # London takes priority
             self.asian_long_counter = 0
 
-        # Short sweep: price crosses BELOW London Low
+            # Short sweep: price crosses BELOW London Low
         elif not np.isnan(london_low) and price < london_low and prev >= london_low:
             self.in_london_short_sweep = True
             self.london_short_counter = 1
             self.in_asian_short_sweep = False
             self.asian_short_counter = 0
 
-        # Track London LONG sweep hold
+            # Track London LONG sweep hold
         if self.in_london_long_sweep and not np.isnan(london_high):
             if price > london_high:
                 self.london_long_counter += 1
@@ -216,7 +216,7 @@ class SweepConfirmationReward:
                 self.london_long_counter = 0
                 return -0.5
 
-        # Track London SHORT sweep hold
+                # Track London SHORT sweep hold
         if self.in_london_short_sweep and not np.isnan(london_low):
             if price < london_low:
                 self.london_short_counter += 1
@@ -228,7 +228,7 @@ class SweepConfirmationReward:
                 self.london_short_counter = 0
                 return -0.5
 
-        # --- ASIAN LEVEL SWEEPS (only if not in London sweep) ---
+                # --- ASIAN LEVEL SWEEPS (only if not in London sweep) ---
 
         if not (self.in_london_long_sweep or self.in_london_short_sweep):
             # Long sweep: price crosses ABOVE Asian High
@@ -236,12 +236,12 @@ class SweepConfirmationReward:
                 self.in_asian_long_sweep = True
                 self.asian_long_counter = 1
 
-            # Short sweep: price crosses BELOW Asian Low
+                # Short sweep: price crosses BELOW Asian Low
             elif not np.isnan(asian_low) and price < asian_low and prev >= asian_low:
                 self.in_asian_short_sweep = True
                 self.asian_short_counter = 1
 
-            # Track Asian LONG sweep hold
+                # Track Asian LONG sweep hold
             if self.in_asian_long_sweep and not np.isnan(asian_high):
                 if price > asian_high:
                     self.asian_long_counter += 1
@@ -253,7 +253,7 @@ class SweepConfirmationReward:
                     self.asian_long_counter = 0
                     return -0.5
 
-            # Track Asian SHORT sweep hold
+                    # Track Asian SHORT sweep hold
             if self.in_asian_short_sweep and not np.isnan(asian_low):
                 if price < asian_low:
                     self.asian_short_counter += 1
@@ -265,7 +265,7 @@ class SweepConfirmationReward:
                     self.asian_short_counter = 0
                     return -0.5
 
-        # No sweep detected
+                    # No sweep detected
         return 0.0
 
 
@@ -370,7 +370,7 @@ class CompositeReward:
             base_parts = empty_reward_parts()
             base_parts["dsr"] = float(dsr_reward)
 
-        # If sweep parameters are provided, compute sweep reward
+            # If sweep parameters are provided, compute sweep reward
         if all(p is not None for p in [price, london_high, london_low, asian_high, asian_low]):
             sweep_r = self.sweep_reward(
                 pnl_step,
@@ -391,7 +391,7 @@ class CompositeReward:
             total = dsr_reward
             parts = dict(base_parts)
 
-        # Optional strategy-alignment component (event-based; see PO3Reward).
+            # Optional strategy-alignment component (event-based; see PO3Reward).
         if self.strategy_reward is not None and total is not None:
             if strategy_context:
                 sr = self.strategy_reward

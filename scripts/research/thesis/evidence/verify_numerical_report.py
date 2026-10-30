@@ -899,12 +899,13 @@ def _backend_parity_audit_errors(
         ):
             errors.append(f"{label} backend parity attempt provenance differs from the source run")
         if source_attempt is not None and (
-            report.get("campaign_id") != source_attempt.get("campaign_id")
-            or report.get("campaign_fingerprint") != source_attempt.get("campaign_fingerprint")
+            report.get("experiment_run_id") != source_attempt.get("experiment_run_id")
+            or report.get("experiment_run_fingerprint")
+            != source_attempt.get("experiment_run_fingerprint")
             or report.get("source_attempt") != source_attempt.get("attempt")
         ):
             errors.append(
-                f"{label} backend parity campaign identity differs from the source attempt"
+                f"{label} backend parity experiment run identity differs from the source attempt"
             )
         if report.get("config_sha256") != source_config_hash:
             errors.append(f"{label} backend parity config differs from the numerical report")

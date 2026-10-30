@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build a provenance-aware exit/action analysis from campaign evaluation CSVs.
+"""Build a provenance-aware exit/action analysis from experiment run evaluation CSVs.
 
 Example:
     python3 scripts/research/thesis/evidence/analyze_exit_outcomes.py \
-      --campaign-root outputs/gpu_campaigns/<campaign> --split testing
+      --experiment-run-root outputs/experiment_runs/<experiment run> --split testing
 
 The script only reads run manifests, positions.csv, and trades.csv. It does not
 load checkpoints or rerun model inference.
@@ -63,9 +63,9 @@ def _completed(value: Any, exit_reason: Any) -> bool:
     return str(value).strip().lower() in {"true", "1", "yes"}
 
 
-def _campaign_label(run_dir: Path, campaign_root: Path) -> str:
+def _experiment_run_label(run_dir: Path, experiment_run_root: Path) -> str:
     try:
-        parts = run_dir.relative_to(campaign_root).parts
+        parts = run_dir.relative_to(experiment_run_root).parts
     except ValueError:
         return run_dir.name
     if "attempts" in parts:
@@ -74,9 +74,9 @@ def _campaign_label(run_dir: Path, campaign_root: Path) -> str:
     return "/".join(parts)
 
 
-def _discover_runs(campaign_root: Path, split: str) -> list[dict[str, Any]]:
-    attempts_root = campaign_root / "runs" / "attempts"
-    search_root = attempts_root if attempts_root.is_dir() else campaign_root
+def _discover_runs(experiment_run_root: Path, split: str) -> list[dict[str, Any]]:
+    attempts_root = experiment_run_root / "runs" / "attempts"
+    search_root = attempts_root if attempts_root.is_dir() else experiment_run_root
     discovered: list[dict[str, Any]] = []
     for manifest_path in sorted(search_root.rglob("run_manifest.json")):
         run_dir = manifest_path.parent
@@ -89,7 +89,7 @@ def _discover_runs(campaign_root: Path, split: str) -> list[dict[str, Any]]:
         discovered.append(
             {
                 "run_dir": run_dir,
-                "label": _campaign_label(run_dir, campaign_root),
+                "label": _experiment_run_label(run_dir, experiment_run_root),
                 "manifest_path": manifest_path,
                 "manifest": manifest,
                 "positions_path": positions_path,
@@ -547,17 +547,17 @@ def _render_run(run: dict[str, Any], near_be_r: float) -> list[str]:
 
 
 def render_report(
-    campaign_root: Path,
+    experiment_run_root: Path,
     runs: Sequence[dict[str, Any]],
     split: str,
     near_be_r: float,
 ) -> str:
     analyzer_path = Path(__file__).resolve()
-    command = f"python3 {analyzer_path} --campaign-root {campaign_root} --split {split} --near-be-r-threshold {near_be_r}"
+    command = f"python3 {analyzer_path} --experiment-run-root {experiment_run_root} --split {split} --near-be-r-threshold {near_be_r}"
     lines = [
         "# Exit and Action Outcome Analysis",
         "",
-        f"Campaign: `{campaign_root.name}`  ",
+        f"Experiment run: `{experiment_run_root.name}`  ",
         f"Evaluation split: `{split}`  ",
         f"EMA exit threshold: `exit_u >= {EMA_EXIT_THRESHOLD:.2f}`  ",
         f"Near-BE outcome threshold: `abs(final realized R) <= {near_be_r:.3f}`",
@@ -588,7 +588,7 @@ def render_report(
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--campaign-root", type=Path, required=True)
+    parser.add_argument("--experiment-run-root", type=Path, required=True)
     parser.add_argument("--split", default="testing")
     parser.add_argument("--near-be-r-threshold", type=float, default=0.05)
     parser.add_argument("--out", type=Path, default=None)
@@ -597,22 +597,23 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
-    campaign_root = args.campaign_root.expanduser().resolve()
-    if not campaign_root.is_dir():
-        raise FileNotFoundError(f"campaign root does not exist: {campaign_root}")
+    experiment_run_root = args.experiment_run_root.expanduser().resolve()
+    if not experiment_run_root.is_dir():
+        raise FileNotFoundError(f"experiment run root does not exist: {experiment_run_root}")
     if args.near_be_r_threshold < 0.0:
         raise ValueError("--near-be-r-threshold must be non-negative")
-    runs = _discover_runs(campaign_root, args.split)
+    runs = _discover_runs(experiment_run_root, args.split)
     for run in runs:
         run["split_name"] = args.split
         _run_analysis(run, args.near_be_r_threshold)
-    output = args.out or (campaign_root / "reports" / f"exit_outcomes_{args.split}.md")
+    output = args.out or (experiment_run_root / "reports" / f"exit_outcomes_{args.split}.md")
     output = output.expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
-        render_report(campaign_root, runs, args.split, args.near_be_r_threshold), encoding="utf-8"
+        render_report(experiment_run_root, runs, args.split, args.near_be_r_threshold),
+        encoding="utf-8",
     )
-    print(f"Analyzed {len(runs)} runs from {campaign_root} ({args.split})")
+    print(f"Analyzed {len(runs)} runs from {experiment_run_root} ({args.split})")
     print(f"Wrote {output}")
     for run in runs:
         action = run["analysis"]["action"]

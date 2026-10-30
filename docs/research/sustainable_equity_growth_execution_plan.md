@@ -20,7 +20,7 @@ PPO architecture, and training budget matched. Treat the outcome as empirical;
 do not assume the growth reward improves trading.
 
 The first experiment is a **2M-step, single-seed development screen**. It is not
-the full 20M campaign and does not establish statistical superiority. The 2026
+the full 20M experiment run and does not establish statistical superiority. The 2026
 period has been inspected before and is report-only. Do not tune against it or
 call it a fresh holdout.
 
@@ -35,18 +35,18 @@ call it a fresh holdout.
   gate.
 - DSR, log-growth PPO, log-growth PPO + Q5, and log-growth SAC variants are
   registered. Only the matched DSR/log-growth PPO pair belongs in the first
-  campaign. Q5 and SAC stay deferred until their prerequisites pass.
-- The first-campaign YAML now selects **stochastic final evaluation**, matching
+  experiment run. Q5 and SAC stay deferred until their prerequisites pass.
+- The first-experiment-run YAML now selects **stochastic final evaluation**, matching
   the stochastic PPO action mode used in training. This corrects the former
   deterministic setting. Verify that the resolved manifest records both modes
   and the evaluation action seed before accepting results.
-- No sustainable-growth PPO campaign has started.
+- No sustainable-growth PPO experiment run has started.
 - The completed historical TCN/MTF 2M run exposed a training-coverage failure
   that must be corrected before interpreting its late-year decline as a learned
   regime failure. Each environment resets to the first eligible training bar.
   The run used 2,007,040 aggregate steps across 64 environments, or 31,360
   steps per environment. The full 2025 replay requires 99,492 steps; the
-  31,360th replay row is 2025-04-25 17:20 local time. Campaign reporting
+  31,360th replay row is 2025-04-25 17:20 local time. Experiment run reporting
   confirms zero completed full-split episodes. The TCN policy therefore saw
   only the early part of 2025 in training, then was replayed through later
   training months it had not encountered. Its gate failed on 2025-09-18 at
@@ -61,9 +61,9 @@ call it a fresh holdout.
   resolved manifests and verify full-split episodes before accepting results.
   Because this differs from the historical 64-environment TCN/MTF run, do not
   attribute differences from that run to reward mode alone.
-- The coverage-corrected TCN/DSR campaign
+- The coverage-corrected TCN/DSR experiment run
   `rq_tcn_a4a_seed50_train2025_20261025_2m_normal_fullspan_n8_v1` is terminal
-  with a failed worker; its campaign manifest keeps fingerprint
+  with a failed worker; its experiment run manifest keeps fingerprint
   `44cb5f1e7583a861059848cd750ca62c3b3acc448bc47be34bc880ab2263265f`. It is
   not an active training run and does not establish full-year policy viability.
   Preserve its logs and report as diagnostic evidence.
@@ -83,10 +83,10 @@ call it a fresh holdout.
   until the effective environment path and exact run source are reconciled.
   Do not use those runs as clean sizing controls or infer that the configured
   floor was enforced.
-- The checkout contains substantial uncommitted MTF, data, reporting, campaign,
+- The checkout contains substantial uncommitted MTF, data, reporting, experiment run,
   and PPO work. Preserve all of it; do not reset, stash, or commit unrelated
   changes as part of this plan.
-- The separate all-timeframe MTF campaign has two terminal failed variants
+- The separate all-timeframe MTF experiment run has two terminal failed variants
   (both hit the $10,000 maximum-loss guard) under Slurm allocation
   `21199478`, with fingerprint
   `dfc22a795f0715395064875e6de6ad73b8dfbedd36843898e568cb8a57a225f2` and
@@ -138,7 +138,7 @@ limit, lock/recovery behavior, equity path, survival, trade activity, and full
 configuration provenance. The earlier 5,000-dollar draft value is superseded;
 the treatment value is $10,000.
 
-The corresponding campaign is
+The corresponding experiment run is
 `sustainable_growth_seed50_train2025_20261025_2m_eod_dd10k_v1`. Its sequential
 supervisor waits for allocation `21199478` to finish before requesting one
 successor two-GH200, six-hour allocation. It generates the full saved-artifact
@@ -146,18 +146,18 @@ report for the completed TCN/MTF pair and evidence reports for earlier
 incomplete attempts, then runs focused guardrail tests before starting the
 matched pair. It does not reuse old MTF checkpoints. Existing reports and
 source evidence are retained; only obsolete `ppo_*.zip` files in those MTF 2M
-campaigns are removed after their reports validate.
+experiment runs are removed after their reports validate.
 
 ## Execution sequence and gates
 
 ### Gate 0 — Preserve live work
 
-Before each run, inspect the campaign supervisor, scheduler, worker state, and
+Before each run, inspect the experiment run supervisor, scheduler, worker state, and
 allocation. Reuse the currently approved GH200 allocation when its controller
-is available. Keep the aggregate 2-GH200 cap. Do not submit duplicate campaigns,
+is available. Keep the aggregate 2-GH200 cap. Do not submit duplicate experiment runs,
 create per-worker Slurm steps, or use `scancel`.
 
-**Pass evidence:** campaign status report, matching fingerprint, active worker
+**Pass evidence:** experiment run status report, matching fingerprint, active worker
 and allocation state, and a confirmed reuse path.
 
 ### Gate 1 — Reward correctness and baseline preservation
@@ -168,7 +168,7 @@ tests inside the suitable existing GPU-node allocation. Confirm positive,
 negative, and zero equity changes; telescoping without discounting; no second
 cost deduction; nonfinite/nonpositive handling; reset behavior; and DSR output
 unchanged. Run required full-tree Ruff/Mypy plus relevant pytest paths before
-committing or launching the growth campaign.
+committing or launching the growth experiment run.
 
 **Pass evidence:** test output, clean Ruff/Mypy results, and manifest evidence
 that reward mode, reward scale, action mode, and action RNG seed are recorded.
@@ -238,7 +238,7 @@ established, so a confirmatory RQ4 claim is unavailable.
 4. Usable checkpoint recovery, finite diagnostics, and complete result ledgers.
 5. Preserved hard account-risk limits and an explicit survival outcome.
 6. Safe access to the existing GH200 allocation without disturbing the active
-   MTF campaign.
+   MTF experiment run.
 
 ### Deferred until after the paired screen
 
@@ -265,7 +265,7 @@ established, so a confirmatory RQ4 claim is unavailable.
 1. Preserve job `21199478`, its allocation, logs, and fingerprint. The old
    TCN/MTF supervisor exited; the allocation is being reused by the single
    coverage-corrected TCN/DSR run recorded above. Do not start a second worker
-   or campaign in this allocation while that run is active.
+   or experiment run in this allocation while that run is active.
 2. Trace the under-floor ledger example against the exact snapshot and runtime
    config; add a focused regression test and correct only the confirmed defect.
 3. Finish the old TCN monthly trade-ledger decomposition: separate trade count
@@ -285,13 +285,13 @@ established, so a confirmatory RQ4 claim is unavailable.
 8. Before the growth screen, confirm both matched arms use the same effective
    8 environments, action mode/seeds, data, risk and execution config, and
    full-split training coverage. Then start the authorized 2M DSR vs
-   log-growth screen through the existing campaign supervisor.
+   log-growth screen through the existing experiment run supervisor.
 9. Publish train and report-only test results, monthly path, drawdown recovery,
    survival, reward/equity reconciliation, and trade-ledger decomposition
    before proceeding to Q5 or SAC.
 
 ## Result record
 
-No PPO growth-vs-DSR campaign result exists yet. This plan records the proposed
+No PPO growth-vs-DSR experiment run result exists yet. This plan records the proposed
 screen and implementation state; it does not claim that correctness, training,
 survival, Q5, SAC, or generalization gates have passed.

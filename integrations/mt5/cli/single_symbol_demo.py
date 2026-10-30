@@ -72,8 +72,9 @@ def get_robot() -> CrossOverRobot:
 
     return _cross_over_robot
 
+    # Scheduler setup: run every 60 minutes
 
-# Scheduler setup: run every 60 minutes
+
 scheduler = sched.scheduler(time.time, time.sleep)
 
 

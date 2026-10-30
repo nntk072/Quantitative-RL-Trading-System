@@ -46,8 +46,8 @@ class RewardInitializationMixin(RuntimeMixinBase):
                 "sweep reward."
             )
 
-        # A hard risk breach receives the same terminal penalty in training and
-        # evaluation. The guardrail also ends the episodic training trajectory.
+            # A hard risk breach receives the same terminal penalty in training and
+            # evaluation. The guardrail also ends the episodic training trajectory.
         self.reward_fn: (
             DSRReward
             | CompositeReward

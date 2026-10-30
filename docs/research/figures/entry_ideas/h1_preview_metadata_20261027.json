@@ -1,17 +1,17 @@
 {
   "bars_file": "data/US100.cash_M1_202412300105_202610162349.csv",
-  "timeframe": "H1",
-  "selected_time": "2025-12-30T15:00:00+03:00",
-  "swing_period": 5,
-  "swing_trade_idea": "short",
-  "level_1_anchor": "swing_high",
   "level_0_anchor": "swing_low",
+  "level_1_anchor": "swing_high",
+  "note": "Causal feature preview from source bars; not a trade or performance result.",
+  "order_block": {
+    "high": 25560.65,
+    "low": 25521.45,
+    "midpoint": 25541.050000000003,
+    "side": "bear"
+  },
+  "order_block_plot": "outputs/research/swing_order_block_preview_20261027_H1/order_block_with_midpoint.png",
+  "selected_time": "2025-12-30T15:00:00+03:00",
   "swing_levels": {
-    "1": 25540.65,
-    "0.786": 25525.9054,
-    "0.707": 25520.4623,
-    "0.5": 25506.2,
-    "0": 25471.75,
     "-0.5": 25437.3,
     "-1": 25402.85,
     "-1.5": 25368.399999999998,
@@ -21,15 +21,15 @@
     "-3": 25265.049999999996,
     "-4": 25196.149999999994,
     "-6": 25058.34999999999,
-    "-8": 24920.54999999999
+    "-8": 24920.54999999999,
+    "0": 25471.75,
+    "0.5": 25506.2,
+    "0.707": 25520.4623,
+    "0.786": 25525.9054,
+    "1": 25540.65
   },
-  "order_block": {
-    "side": "bear",
-    "low": 25521.45,
-    "high": 25560.65,
-    "midpoint": 25541.050000000003
-  },
+  "swing_period": 5,
   "swing_plot": "outputs/research/swing_order_block_preview_20261027_H1/swing_fib_sd_levels.png",
-  "order_block_plot": "outputs/research/swing_order_block_preview_20261027_H1/order_block_with_midpoint.png",
-  "note": "Causal feature preview from source bars; not a trade or performance result."
+  "swing_trade_idea": "short",
+  "timeframe": "H1"
 }

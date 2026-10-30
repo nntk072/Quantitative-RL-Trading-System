@@ -163,9 +163,9 @@ def _feature_zones(
                 for side in ("bull", "bear"):
                     selected.append({"family": family, "timeframe": tf, "side": side})
 
-    # A candidate can be triggered a few bars after its setup signal. Preserve
-    # its IFVG on the chart even when the signal bar no longer has an active
-    # entry-idea flag.
+                    # A candidate can be triggered a few bars after its setup signal. Preserve
+                    # its IFVG on the chart even when the signal bar no longer has an active
+                    # entry-idea flag.
     if not selected:
         setup_types = parse(open_row.get("entry_setup_types"), ())
         setup_types = set(setup_types) if isinstance(setup_types, (list, tuple, set)) else set()

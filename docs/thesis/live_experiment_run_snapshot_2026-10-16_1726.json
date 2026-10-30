@@ -1,0 +1,67 @@
+{
+  "captured_at_local": "2026-10-16T17:26:35+03:00",
+  "captured_at_utc": "2026-10-16T14:26:35+00:00",
+  "experiment_run": {
+    "fingerprint": "08459336353e046c1a4882a1dd8f1a8284c052a5e18e4bf309ccb0b574ca0a5d",
+    "latest_valid_checkpoints": "attempt 3, 11M-14M steps; no variant reached 20M",
+    "original_experiment_run_id": "ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016",
+    "original_statuses": {
+      "interrupted": 18
+    },
+    "previous_fingerprint": "3474621efd6a1481bd2a20bce0cfd2c0b69969df1849c6cd738d19dc5bb4ba34",
+    "recovery_experiment_run_id": "ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016",
+    "recovery_trainers_started": 0
+  },
+  "new_evidence": {
+    "first_parity_report": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016/reports/p2_checkpoint_frame_bundle_train_a0_dist_12m_20261016/audit.json",
+    "idea2_checkpoint": "ladder_a0_flat_dist__seed50 attempt 3, 12M steps",
+    "interpretation": "Both frame/shared-bundle comparisons passed; repeated report-level fields and metrics match. Interrupted in-sample checkpoint, negative PnL, not strategy-success or confirmatory evidence.",
+    "repeat_parity_report": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016/reports/p2_checkpoint_frame_bundle_train_a0_dist_12m_repeat1_20261016/audit.json",
+    "repeat_report_sha256": "990034addb05ef1eae0873ef394d06a1d5810a78e23850bec205662fc4cfea20"
+  },
+  "readiness": "NOT READY: P1 screen is incomplete and recovery has not started; P2 and downstream thesis gates remain open.",
+  "repository": {
+    "branch": "main",
+    "canonical_plan_path": "docs/thesis/master_project_execution_plan.md",
+    "head": "960b2897df7451c18860392352b7ed50526efe29",
+    "origin_main": "960b2897df7451c18860392352b7ed50526efe29",
+    "path": "/scratch/work/nguyenl37/Aalto_MS_Thesis",
+    "requested_plan_path": "/scratch/work/nguyenl37/Aalto_MS_Thesis/docs/thesis/master_project_execution_plan.md",
+    "working_tree_clean_at_capture": true
+  },
+  "schema": "aalto.live_experiment_run_snapshot.v1",
+  "slurm": {
+    "actions": "No duplicate request submitted; no job canceled; no start marker changed.",
+    "active_allocation": {
+      "allocated_experiment_run_id": "ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016",
+      "cpus": "48 per node",
+      "gpu": "1 GH200 per node",
+      "job_id": "20985591",
+      "memory": "512 GiB per node",
+      "nodes": [
+        "gpuarm1",
+        "gpuarm2"
+      ],
+      "original_experiment_run_start_marker_present": false,
+      "scheduled_end_local": "2026-10-16T17:32:47+03:00",
+      "state": "RUNNING",
+      "state_note": "Allocation wrapper is waiting at its commit/push start gate. Do not release this marker to start the v3 experiment run while the distinct recovery request is queued.",
+      "worker_trainers": 0
+    },
+    "pending_recovery_request": {
+      "job_id": "20990395",
+      "reason": "AssocGrpGRESRunMinutes",
+      "recovery_start_marker_present": true,
+      "requested_resources": "2 GH200 total, 48 CPUs and 512 GiB per node, 6 hours",
+      "start_time": "Unknown",
+      "state": "PENDING",
+      "submitted_local": "2026-10-16T14:13:16+03:00"
+    },
+    "persistent_supervisor": {
+      "host": "login4.triton.aalto.fi",
+      "process": "experiment_run_recovery_supervisor.sh",
+      "state": "running",
+      "tmux_session": "thesis-seed50"
+    }
+  }
+}

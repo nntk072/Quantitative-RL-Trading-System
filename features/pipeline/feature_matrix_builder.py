@@ -169,7 +169,7 @@ def build_features(
             and meta_path.read_text(encoding="utf-8").strip() == expected_hash
         ):
             return pd.read_parquet(cache_path)
-        # Stale or pre-hash cache: rebuild rather than silently reuse.
+            # Stale or pre-hash cache: rebuild rather than silently reuse.
 
     feat_cfg = cfg.features if cfg is not None else None
     secondary_m1: pd.DataFrame | None = secondary  # M1 copy kept for per-TF resampling
@@ -222,10 +222,10 @@ def build_features(
             index=primary.index,
         )
 
-    # --- SMT divergence (M1 always; MTF optional §4.1) ---
-    # M1 block is z-scored with the rest; per-TF blocks join before
-    # normalisation for the same treatment. Secondary is resampled from its
-    # own M1 bars so each TF compares like-for-like bars.
+        # --- SMT divergence (M1 always; MTF optional §4.1) ---
+        # M1 block is z-scored with the rest; per-TF blocks join before
+        # normalisation for the same treatment. Secondary is resampled from its
+        # own M1 bars so each TF compares like-for-like bars.
     if secondary is not None and feat_cfg is not None:
         smt = smt_divergence(
             primary,
@@ -258,10 +258,10 @@ def build_features(
             if smt_blocks:
                 feat = align_blocks(feat, smt_blocks)
 
-    # --- Higher-timeframe technical features (Chain A) ---
-    # Run the same indicator build on each HTF's own bars, then causally
-    # forward-fill onto the M1 spine. Done BEFORE normalisation so HTF
-    # columns are z-scored like the M1 ones.
+                # --- Higher-timeframe technical features (Chain A) ---
+                # Run the same indicator build on each HTF's own bars, then causally
+                # forward-fill onto the M1 spine. Done BEFORE normalisation so HTF
+                # columns are z-scored like the M1 ones.
     d1_source_normalized_columns: list[str] = []
     if feat_cfg is not None:
         window = int(feat_cfg.zscore_window)
@@ -293,7 +293,7 @@ def build_features(
                 htf_blocks[tf_name] = block
             feat = align_blocks(feat, htf_blocks)
 
-    # --- Chain B variant blocks (opt-in via config flags) ---
+            # --- Chain B variant blocks (opt-in via config flags) ---
     _fvg_raw = pd.DataFrame(index=primary.index)
     if feat_cfg is not None:
         # PO3 phase tag: time-derived, identical across TFs once aligned.
@@ -306,10 +306,10 @@ def build_features(
             )
             feat = pd.concat([feat, po3], axis=1)
 
-        # FVG zone features (plan §4.5): full M1+HTF ladder, not HTFs only.
-        # build_fvg_zone_features is TF-agnostic, so this is purely what goes
-        # into the loop: ["M1"] + htf_timeframes (config-overridable via
-        # fvg_timeframes), giving M1_fvg_*/M5_fvg_*/... columns.
+            # FVG zone features (plan §4.5): full M1+HTF ladder, not HTFs only.
+            # build_fvg_zone_features is TF-agnostic, so this is purely what goes
+            # into the loop: ["M1"] + htf_timeframes (config-overridable via
+            # fvg_timeframes), giving M1_fvg_*/M5_fvg_*/... columns.
         if bool(getattr(feat_cfg, "include_fvg_ifvg", False)):
             fvg_cfg_tfs = getattr(feat_cfg, "fvg_timeframes", None)
             if fvg_cfg_tfs is not None:
@@ -353,7 +353,7 @@ def build_features(
             # columns above are normalised with the rest of the matrix.
             feat, _fvg_raw = split_raw_fvg_features(feat)
 
-    # --- normalisation ---
+            # --- normalisation ---
     window = feat_cfg.zscore_window if feat_cfg is not None else 252
     if feat_cfg is not None and d1_source_normalized_columns:
         source_normalized_columns = [
@@ -432,9 +432,9 @@ def build_features(
         if ob_blocks:
             feat = align_blocks(feat, ob_blocks)
 
-    # --- Full PO3 pipeline (Chain F): HTF FVG -> LTF IFVG -> entry triggers ---
-    # Added AFTER normalization so the 0/1 entry signals and the numeric
-    # trigger code keep their raw meaning (exactly like structure levels).
+            # --- Full PO3 pipeline (Chain F): HTF FVG -> LTF IFVG -> entry triggers ---
+            # Added AFTER normalization so the 0/1 entry signals and the numeric
+            # trigger code keep their raw meaning (exactly like structure levels).
     if feat_cfg is not None and bool(getattr(feat_cfg, "include_po3_full", False)):
         po3_htf = str(getattr(feat_cfg, "po3_htf", "M15")).upper()
         po3_ltf = str(getattr(feat_cfg, "po3_ltf", "M5")).upper()
@@ -460,7 +460,7 @@ def build_features(
         )
         feat = pd.concat([feat, po3_feats], axis=1)
 
-    # --- Liquidity Levels + Volume Spike + ATR - add AFTER normalization ---
+        # --- Liquidity Levels + Volume Spike + ATR - add AFTER normalization ---
     levels = detect_session_levels(primary)
     feat = pd.concat([feat, levels], axis=1)
     from market_data.transforms.activity import activity_series
@@ -502,8 +502,8 @@ def build_features(
         if pd_htf_blocks:
             feat = align_blocks(feat, pd_htf_blocks)
 
-    # --- Sweep Velocity and Wick Ratio - for PLAN 3 ---
-    # Add sweep velocity (uses liquidity levels from levels)
+            # --- Sweep Velocity and Wick Ratio - for PLAN 3 ---
+            # Add sweep velocity (uses liquidity levels from levels)
     sweep_vel = sweep_velocity(
         primary,
         london_high=levels.get("london_high"),
@@ -542,8 +542,8 @@ def build_features(
         if sweep_blocks:
             feat = align_blocks(feat, sweep_blocks)
 
-    # --- MTF structure/BOS ATR distances (plan §4.2, second half) ---
-    # Needs atr_5 (computed above) + aligned {TF}_swing levels via ffill.
+            # --- MTF structure/BOS ATR distances (plan §4.2, second half) ---
+            # Needs atr_5 (computed above) + aligned {TF}_swing levels via ffill.
     if (
         feat_cfg is not None
         and feature_block_enabled(feat_cfg, "structure", False)
@@ -656,11 +656,11 @@ def build_features(
         if retracement_blocks:
             feat = align_blocks(feat, retracement_blocks)
 
-        # Add explicit directional multi-hot flags after all source families
-        # exist. Concurrent ideas stay visible together; none gates another.
+            # Add explicit directional multi-hot flags after all source families
+            # exist. Concurrent ideas stay visible together; none gates another.
         feat = pd.concat([feat, build_entry_idea_features(feat)], axis=1)
 
-    # Drop leading NaNs from warmup
+        # Drop leading NaNs from warmup
     feat = feat.dropna(how="all")
     feat.columns = feat.columns.map(str)
     duplicate_columns = feat.columns[feat.columns.duplicated()].unique().tolist()

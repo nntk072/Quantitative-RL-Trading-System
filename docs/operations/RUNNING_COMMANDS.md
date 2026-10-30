@@ -70,14 +70,14 @@ thesis-data prepare --force
 ./tools/check full
 
 # By domain
-.venv/bin/pytest tests/test_features/ -q
-.venv/bin/pytest tests/test_simulation/test_environment/ -q
+.venv/bin/pytest tests/unit/features/ -q
+.venv/bin/pytest tests/unit/simulation/test_environment/ -q
 .venv/bin/pytest tests/integration/ -q
-.venv/bin/pytest tests/test_orchestra/ -q
-.venv/bin/pytest tests/test_live/ -q
+.venv/bin/pytest tests/unit/orchestra/ -q
+.venv/bin/pytest tests/unit/live/ -q
 
 # Targeted
-.venv/bin/pytest tests/test_trading/test_risk.py tests/test_trading/test_macd_baseline.py -q
+.venv/bin/pytest tests/unit/trading/test_risk.py tests/unit/trading/test_macd_baseline.py -q
 ```
 
 ---
@@ -184,18 +184,17 @@ uv run python -m simulation.backtest.cross_validation.run
 uv run python scripts/research/benchmarks/compare_encoders.py
 ```
 
-## Campaign operations
+## Experiment run operations
 
-Use the installed campaign command for campaign workflows and cache-failure
-recovery. The former `compute/slurm/resume.py` command remains a compatibility
-adapter; recovery policy and provenance validation live in `experiments`.
+Use the installed experiment run command for run workflows and cache-failure
+recovery. Recovery policy and provenance validation live in `experiments`.
 
 ```bash
-uv run thesis-campaign --help
-uv run thesis-campaign recover-cache --campaign-dir outputs/gpu_campaigns/<campaign-id>
+uv run thesis-experiment-run --help
+uv run thesis-experiment-run recover-cache --experiment-run-dir outputs/experiment_runs/<experiment-run-id>
 ```
 
-Recovery validates the campaign fingerprint, attempt logs, provenance, and
+Recovery validates the experiment run fingerprint, attempt logs, provenance, and
 checkpoint hashes before changing resumable state. It preserves prior
 manifests and recovery reports as immutable backups.
 
@@ -211,7 +210,7 @@ includes `oos_role: final_report_only` unless
 ```bash
 # Declarative variant matrix (algo / arch / VAE / PD-context / strategy).
 # Features CSV must match the variant flags (e.g. include_pd_context).
-uv run thesis-campaign variants \
+uv run thesis-experiment-run variants \
     --bars-csv data/us100_2025.csv \
     --features-csv data/us100_feat.csv \
     --experiments config/experiments.yaml \
@@ -219,7 +218,7 @@ uv run thesis-campaign variants \
     --variants ablation_baseline_unconditional ablation_pd_context
 
 # Inspect the named-cache rebuild plan without writing caches.
-uv run thesis-campaign rebuild-named-cache --plan-only
+uv run thesis-experiment-run rebuild-named-cache --plan-only
 
 uv run python scripts/research/thesis/evaluation/report_ablations.py --ablations-dir outputs/ablations
 
@@ -244,7 +243,7 @@ uv run python scripts/research/audits/leak_detectors.py \
 # Thin orchestration (ablation smoke → walk-forward → optional OOS)
 BARS_CSV=data/us100_2025.csv STEPS=8192 SEEDS=42 \
   MODEL_PATH=outputs/<run>/model/ppo_final.zip \
-  bash scripts/compute/slurm/campaigns/run_18variant_matrix.sh
+  bash scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh
 ```
 
 Do **not** use the retired validation package or
@@ -332,7 +331,7 @@ uv run thesis-train train --mvp env.obs_window=30 \
 | `./tools/check quality` | Full-tree Ruff + Mypy | varies by host |
 | `run_baselines --strategy macd` | MACD baseline | ~10 s |
 | `uv run thesis-train train --mvp` | RL smoke test | varies by host |
-| `uv run thesis-train train` | Full RL training | campaign-specific |
+| `uv run thesis-train train` | Full RL training | experiment-run-specific |
 | `eval_run --run outputs/...` | Re-evaluate checkpoint | ~1 min |
 | `orchestra run "task"` | Multi-model pipeline | varies |
 

@@ -128,11 +128,11 @@ def compute_trade_metrics(
     if len(trade_bars) > 0:
         trade_bars = trade_bars.loc[tradable_mask(trade_bars)]
 
-    # Fallback: if exit_price is nan, use close price from the close bar
+        # Fallback: if exit_price is nan, use close price from the close bar
     if np.isnan(exit_price) and len(trade_bars) > 0:
         exit_price = float(trade_bars["close"].iloc[-1])
 
-    # Compute MAE and MFE
+        # Compute MAE and MFE
     mfe_idx: pd.Timestamp
     mae_idx: pd.Timestamp
     mae_drawn = True
@@ -158,7 +158,7 @@ def compute_trade_metrics(
         mae_drawn = False
         mfe_drawn = False
 
-    # Compute SL and TP levels
+        # Compute SL and TP levels
     sl_price = None
     tp_price = None
 
@@ -175,7 +175,7 @@ def compute_trade_metrics(
         else:
             raise ValueError(f"Invalid trade direction: {direction} (expected +1 or -1)")
 
-    # Prefer per-trade TP from trade log (structure-aware)
+            # Prefer per-trade TP from trade log (structure-aware)
     if pd.notna(open_row.get("tp_price")):
         tp_price = float(open_row["tp_price"])
     elif take_profit_per_trade_usd is not None and not np.isnan(entry_price):

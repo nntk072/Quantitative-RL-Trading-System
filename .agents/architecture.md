@@ -34,7 +34,7 @@ orchestra/ → repository/CI orchestration
 | `learning/` | PPO/SAC fitting backends, SB3 policy adapters, rollout adapters, and checkpoint loading |
 | `training/` | setup, callbacks, runners, training artifacts |
 | `evaluation/` | rollout, metrics, reanalysis, reporting, plotting |
-| `experiments/` | variant/campaign orchestration and provenance |
+| `experiments/` | variant/experiment_run orchestration and provenance |
 | `artifacts/` | shared artifact identity, manifests, storage, and lifecycle mechanics |
 | `live/` | broker-neutral live runtime |
 | `integrations/mt5/` | Lazily loaded MetaTrader-specific adapters and domain integration |
@@ -48,7 +48,7 @@ orchestra
 thesis-data
 thesis-train
 thesis-evaluate
-thesis-campaign
+thesis-experiment-run
 thesis-compute
 ```
 

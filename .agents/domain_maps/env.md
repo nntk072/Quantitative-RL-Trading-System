@@ -86,17 +86,17 @@
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_simulation/test_environment/test_trading_env_decomposition.py` | Env structure |
-| `tests/test_simulation/test_environment/test_trading_env_golden_traces.py` | Golden trace regression |
-| `tests/test_simulation/test_environment/test_account_normalization.py` | Account state normalization |
-| `tests/test_simulation/test_environment/test_baseline_regression.py` | Overlay invariant (baseline unchanged) |
-| `tests/test_simulation/test_environment/test_continuous_actions.py` | Continuous action space |
-| `tests/test_simulation/test_environment/test_ny_steps_eod.py` | NY session + EOD logic |
-| `tests/test_simulation/test_environment/test_strategy_env.py` | Strategy-mode env wiring |
-| `tests/test_simulation/test_environment/test_sweep_reward.py` | Sweep reward |
-| `tests/test_simulation/test_environment/test_po3_reward.py` | PO3 reward |
-| `tests/test_simulation/test_environment/test_distribution_reward.py` | Distribution reward |
-| `tests/test_simulation/test_reward.py` | DSR reward |
+| `tests/unit/simulation/test_environment/test_trading_env_decomposition.py` | Env structure |
+| `tests/unit/simulation/test_environment/test_trading_env_golden_traces.py` | Golden trace regression |
+| `tests/unit/simulation/test_environment/test_account_normalization.py` | Account state normalization |
+| `tests/unit/simulation/test_environment/test_baseline_regression.py` | Overlay invariant (baseline unchanged) |
+| `tests/unit/simulation/test_environment/test_continuous_actions.py` | Continuous action space |
+| `tests/unit/simulation/test_environment/test_ny_steps_eod.py` | NY session + EOD logic |
+| `tests/unit/simulation/test_environment/test_strategy_env.py` | Strategy-mode env wiring |
+| `tests/unit/simulation/test_environment/test_sweep_reward.py` | Sweep reward |
+| `tests/unit/simulation/test_environment/test_po3_reward.py` | PO3 reward |
+| `tests/unit/simulation/test_environment/test_distribution_reward.py` | Distribution reward |
+| `tests/unit/simulation/test_reward.py` | DSR reward |
 
 ## Do NOT Read For Env Tasks
 
@@ -111,8 +111,8 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Change a state transition | simulation service | `simulation/environment/step_runtime.py` | action/observation contracts; `tests/test_simulation/test_environment/test_sl_tp_fill.py` | one step or execution service plus golden checks | model family and learner workflow |
-| Change observation layout | schema evolution | `decisioning/observations.py` | versioned observation schema; `tests/test_simulation/test_environment/test_observation_schema.py` | schema and compatibility boundary | market-data source and report metrics |
+| Change a state transition | simulation service | `simulation/environment/step_runtime.py` | action/observation contracts; `tests/unit/simulation/test_environment/test_sl_tp_fill.py` | one step or execution service plus golden checks | model family and learner workflow |
+| Change observation layout | schema evolution | `decisioning/observations.py` | versioned observation schema; `tests/unit/simulation/test_environment/test_observation_schema.py` | schema and compatibility boundary | market-data source and report metrics |
 
 ## Axis of Change
 
@@ -148,4 +148,4 @@
 - `simulation/environment/position_constants.py`
 - `simulation/environment/trading_environment_factory.py`
 - `decisioning/observation_state.py`
-- `tests/test_simulation/test_environment/test_observation_schema.py`
+- `tests/unit/simulation/test_environment/test_observation_schema.py`

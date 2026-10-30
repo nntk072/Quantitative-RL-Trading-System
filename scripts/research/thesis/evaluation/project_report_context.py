@@ -54,9 +54,9 @@ PIPELINE_STAGES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
         ),
     ),
     (
-        "Campaign identity",
+        "Experiment run identity",
         "Records variant state, source/data identity, checkpoints, and output paths.",
-        ("experiments/campaigns/", "evaluation/reporting/run_manifest.py"),
+        ("experiments/runs/", "evaluation/reporting/run_manifest.py"),
     ),
 )
 
@@ -69,7 +69,7 @@ PIPELINE_DIAGRAM = """flowchart LR
     M --> T[Training and checkpoint]
     T --> V[Evaluation on the recorded split]
     V --> R[Metrics, trade records, and plots]
-    X[Campaign and run manifests] -. record identity .-> D
+    X[Experiment run and run manifests] -. record identity .-> D
     X -. record identity .-> T
     X -. record identity .-> V
 """
@@ -144,9 +144,9 @@ def _git_identity(root: Path) -> dict[str, Any]:
     }
 
 
-def _raw_inputs(campaign: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+def _raw_inputs(experiment_run: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     result = []
-    for identity, digest in sorted(_dict(campaign.get("data_inputs")).items()):
+    for identity, digest in sorted(_dict(experiment_run.get("data_inputs")).items()):
         role, separator, raw_path = str(identity).partition(":")
         path = Path(raw_path if separator else role)
         match = re.search(r"_(M\d+|H\d+|D1)_", path.name)
@@ -181,9 +181,9 @@ def _datasets(manifest: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _variant_evidence(
-    campaign_dir: Path, variant: dict[str, Any], current: dict[str, Any]
+    experiment_run_dir: Path, variant: dict[str, Any], current: dict[str, Any]
 ) -> dict[str, Any]:
-    run_dir = campaign_dir / str(variant.get("run_artifact_dir") or "")
+    run_dir = experiment_run_dir / str(variant.get("run_artifact_dir") or "")
     manifest_path = run_dir / "run_manifest.json"
     manifest = _read_json(manifest_path)
     if manifest is None:
@@ -240,7 +240,7 @@ def _variant_evidence(
         "variant": variant.get("variant"),
         "seed": manifest.get("seed", variant.get("seed")),
         "manifest_available": True,
-        "manifest_path": manifest_path.relative_to(campaign_dir).as_posix(),
+        "manifest_path": manifest_path.relative_to(experiment_run_dir).as_posix(),
         "missing_evidence": [key for key in required if manifest.get(key) is None],
         "repository_at_run": {
             "path": repository.get("path"),
@@ -313,8 +313,8 @@ def _variant_evidence(
 
 
 def build_project_context(
-    campaign_dir: Path,
-    campaign: dict[str, Any],
+    experiment_run_dir: Path,
+    experiment_run: dict[str, Any],
     variants: list[dict[str, Any]],
     report_dir: Path,
     repo_root: Path,
@@ -335,7 +335,7 @@ def build_project_context(
         source_map.append({"name": name, "purpose": purpose, "sources": sources})
 
     current = _git_identity(repo_root)
-    evidence = [_variant_evidence(campaign_dir, item, current) for item in variants]
+    evidence = [_variant_evidence(experiment_run_dir, item, current) for item in variants]
     core_names = {"train_bars", "train_features", "test_bars", "test_features", "primary_ticks"}
     comparable: list[dict[str, Any]] = []
     complete_comparison = bool(evidence) and all(run.get("manifest_available") for run in evidence)
@@ -358,12 +358,12 @@ def build_project_context(
         "scripts/research/thesis/evaluation/project_report_context.py",
         "scripts/research/thesis/evaluation/project_report_markdown.py",
     )
-    snapshot = _dict(campaign.get("source_snapshot"))
-    snapshot_path = campaign_dir / str(snapshot.get("path") or "")
+    snapshot = _dict(experiment_run.get("source_snapshot"))
+    snapshot_path = experiment_run_dir / str(snapshot.get("path") or "")
     snapshot = {
         **snapshot,
         "present_at_report_time": bool(snapshot.get("path") and snapshot_path.is_file()),
-        "source_file_hash_count": len(_dict(campaign.get("source_hashes"))),
+        "source_file_hash_count": len(_dict(experiment_run.get("source_hashes"))),
     }
     return {
         "schema_version": 1,
@@ -371,12 +371,12 @@ def build_project_context(
         "report_generator_sources": [
             {"path": path, "sha256": _sha256(repo_root / path)} for path in generator_paths
         ],
-        "campaign_source_revision": campaign.get("git_sha"),
-        "campaign_source_snapshot": snapshot,
+        "experiment_run_source_revision": experiment_run.get("git_sha"),
+        "experiment_run_source_snapshot": snapshot,
         "pipeline_diagram": PIPELINE_DIAGRAM,
         "source_map": source_map,
-        "raw_inputs": _raw_inputs(campaign, repo_root),
-        "cache_summary": _read_json(campaign_dir / "reports" / "split_cache_ready.json"),
+        "raw_inputs": _raw_inputs(experiment_run, repo_root),
+        "cache_summary": _read_json(experiment_run_dir / "reports" / "split_cache_ready.json"),
         "run_evidence": evidence,
         "cross_variant_data_hashes_align": aligned,
         "detail_report_is_artifact_based": True,

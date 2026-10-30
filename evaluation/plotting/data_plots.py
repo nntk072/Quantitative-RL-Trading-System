@@ -560,7 +560,7 @@ def _write_po3_charts(
         log.warning("PO3 charts skipped (import): %s", exc)
         return
 
-    # Still key off NY session days (thesis trading days), but draw the full day.
+        # Still key off NY session days (thesis trading days), but draw the full day.
     days = _ny_session_days(bars)
     if not days:
         return
@@ -594,7 +594,8 @@ def _write_po3_charts(
             dpi=dpi,
         )
 
-    # Overview = most recent trading day (full calendar day).
+        # Overview = most recent trading day (full calendar day).
+
     try:
         _plot_day(days[-1], out / "po3_fvg_sample.png")
     except Exception as exc:

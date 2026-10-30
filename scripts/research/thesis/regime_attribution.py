@@ -448,7 +448,7 @@ def generate_report(
         "2. Feature-cache availability is measured at observed entries, but the policy's learned use of those channels cannot be inferred from availability alone.",
         "3. Regime/side associations are descriptive, single-seed, in-sample evidence. Small cells and early account-risk stops limit inference.",
         "4. This analysis cannot isolate transaction-cost drag because the saved position outcomes do not provide a comparable mid-price gross counterfactual. Do not attribute losses to costs from this report.",
-        "5. Interpret regime results alongside the matched campaign metrics. This report alone does not establish a causal policy improvement or justify tuning on the report-only test interval.",
+        "5. Interpret regime results alongside the matched experiment run metrics. This report alone does not establish a causal policy improvement or justify tuning on the report-only test interval.",
         "",
         "## Provenance outputs",
         "",

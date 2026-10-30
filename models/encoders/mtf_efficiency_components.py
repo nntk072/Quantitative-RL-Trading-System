@@ -131,8 +131,8 @@ class MTFReasoningOutput(BaseFeaturesExtractor):
             raise ValueError("MTF tokens must have shape (batch, 9, latent_dim)")
         if valid.shape != tokens.shape[:2]:
             raise ValueError("MTF validity mask must have shape (batch, 9)")
-        # Transformer attention cannot accept a row with every token masked. Use a
-        # neutral M1 placeholder only for those rows; no missing stream is exposed.
+            # Transformer attention cannot accept a row with every token masked. Use a
+            # neutral M1 placeholder only for those rows; no missing stream is exposed.
         empty = ~valid.any(dim=1)
         tokens = torch.where(empty[:, None, None], torch.zeros_like(tokens), tokens)
         valid = valid.clone()

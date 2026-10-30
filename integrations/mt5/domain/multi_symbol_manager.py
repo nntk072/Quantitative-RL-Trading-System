@@ -64,7 +64,7 @@ class MultiSymbolManager:
                     logger.warning(f"Symbol {symbol} not available, skipping")
                     continue
 
-                # Create data source
+                    # Create data source
                 data_source = MT5Data(symbol, self.timeframe)
 
                 self.data_sources[symbol] = data_source
@@ -150,7 +150,7 @@ class MultiSymbolManager:
                 logger.error(f"Symbol {symbol} not available")
                 return False
 
-            # Create data source
+                # Create data source
             data_source = MT5Data(symbol, self.timeframe)
 
             self.data_sources[symbol] = data_source

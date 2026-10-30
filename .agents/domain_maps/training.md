@@ -70,13 +70,13 @@
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_training/test_training_smoke.py` | Training smoke test |
-| `tests/test_training/test_sac_smoke.py` | SAC training smoke |
-| `tests/test_training/test_train_rl_decomposition.py` | Training decomposition |
-| `tests/test_training/test_baseline_policies.py` | Baseline policies |
-| `tests/test_training/test_best_checkpoint_callback.py` | Checkpoint callback |
-| `tests/test_training/test_auxiliary_training.py` | Auxiliary training |
-| `tests/test_training/test_seed_reproducibility.py` | Seed reproducibility |
+| `tests/unit/training/test_training_smoke.py` | Training smoke test |
+| `tests/unit/training/test_sac_smoke.py` | SAC training smoke |
+| `tests/unit/training/test_train_rl_decomposition.py` | Training decomposition |
+| `tests/unit/training/test_baseline_policies.py` | Baseline policies |
+| `tests/unit/training/test_best_checkpoint_callback.py` | Checkpoint callback |
+| `tests/unit/training/test_auxiliary_training.py` | Auxiliary training |
+| `tests/unit/training/test_seed_reproducibility.py` | Seed reproducibility |
 
 ## Training Pipeline
 
@@ -99,7 +99,7 @@ causal bars through the fold validation end provide indicator context, while
 Per-seed training manifests record exact train/test bar and feature hashes,
 split boundaries, action schema, feature-cache identity, checkpoint digest,
 runtime, and execution/metric protocols. These records are emitted by the
-training path and are covered by helper tests; no full campaign artifact is
+training path and are covered by helper tests; no full experiment run artifact is
 implied by the documentation.
 
 Run directories come from `artifacts.layout.ArtifactLayout`. Training stores a
@@ -115,8 +115,8 @@ their respective artifact, learning, and training packages.
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Change run preparation | workflow stage | `training/runner/setup_runtime.py` | typed preparation stages; `tests/test_training/test_training_smoke.py` | one preparation stage and focused test | learner algorithm and evaluation metric meaning |
-| Change seed fitting | learner workflow | `training/runner/seed_runtime.py` | `Learner.fit()` and typed seed stages; `tests/test_training/test_train_rl_decomposition.py` | one lifecycle phase and contract tests | campaign state and market-data source identity |
+| Change run preparation | workflow stage | `training/runner/setup_runtime.py` | typed preparation stages; `tests/unit/training/test_training_smoke.py` | one preparation stage and focused test | learner algorithm and evaluation metric meaning |
+| Change seed fitting | learner workflow | `training/runner/seed_runtime.py` | `Learner.fit()` and typed seed stages; `tests/unit/training/test_train_rl_decomposition.py` | one lifecycle phase and contract tests | experiment run state and market-data source identity |
 
 ## Axis of Change
 

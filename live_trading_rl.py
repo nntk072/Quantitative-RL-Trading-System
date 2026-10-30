@@ -78,7 +78,7 @@ def load_model(model_path: Path) -> Any:
         return SAC.load(str(model_path))
     if algo_hint == "ppo":
         return PPO.load(str(model_path))
-    # Unknown algo: try PPO first, then SAC.
+        # Unknown algo: try PPO first, then SAC.
     try:
         return PPO.load(str(model_path))
     except Exception:

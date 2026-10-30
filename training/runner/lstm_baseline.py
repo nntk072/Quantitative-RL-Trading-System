@@ -138,8 +138,8 @@ def main() -> None:
             f"epoch {epoch + 1}/{args.epochs} loss={total / len(x_train):.4f} val_acc={val_acc:.3f}"
         )
 
-    # Trading evaluation of the trained classifier on the held-out slice,
-    # through the same pipeline as the RL agent and rule-based baselines.
+        # Trading evaluation of the trained classifier on the held-out slice,
+        # through the same pipeline as the RL agent and rule-based baselines.
     strategy = LSTMStrategy(model, test_features, window=args.window)
     strategy.fast_forward(args.obs_window)
     env = TradingEnv(

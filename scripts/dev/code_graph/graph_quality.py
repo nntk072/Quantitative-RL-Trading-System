@@ -66,7 +66,7 @@ CRITICAL_AREAS = (
     "features/pipeline/",
     "simulation/environment/",
     "learning/rl/",
-    "experiments/campaigns/",
+    "experiments/runs/",
     "evaluation/rollout/",
     "evaluation/reanalysis/",
 )

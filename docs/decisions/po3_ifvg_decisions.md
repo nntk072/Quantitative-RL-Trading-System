@@ -42,7 +42,7 @@ The hashes below are the pre-source-change decision baseline. The two strategy
 overlays have since opted into the revised HTF reference mode; current hashes
 are recorded in the WP9 update. `default.yaml` and `experiments.yaml` already
 had unrelated/in-progress working-tree edits at baseline, which are preserved.
-The frozen 18-variant campaign YAML is not modified by this Idea work.
+The frozen 18-variant experiment run YAML is not modified by this Idea work.
 
 ### Variant and config migration map
 
@@ -64,7 +64,7 @@ are never relabeled or reused as evidence for these variants.
 | `config/3_distribution.yaml` | `0c338fa4b2964a09b9059f8de66d7853cec52a4970fec6d7466cedfb6826fed6` | same |
 | `quant_rl/config/default.yaml` | `af731e0aaf08efc979338ebf3e89bfc74362f699a5116dfc79d9a62566386fd0` | `4cc2369a32a1696d0a70b15bed74d8d3f476ea7e4d021b6bd716b467eb8d86bd` |
 | `config/experiments.yaml` | `ae5d70e9aa3231f42ae43c1dcf8962f99741cf60f9fc5c03def287b060288b6b` | `332ac0a3c22da374eb086679df17e4982d5844ffdce8b06d9f1fdf6dedbcfec6` |
-| `config/campaigns/18_variant_seed42_20m.yaml` | `d5f11af1b2ab604dbac0c1020bf2c544ddb16ed9632ffad3bb704aa410101a83` | absent at HEAD |
+| `config/experiment_runs/18_variant_seed42_20m.yaml` | `d5f11af1b2ab604dbac0c1020bf2c544ddb16ed9632ffad3bb704aa410101a83` | absent at HEAD |
 
 Current configured data is M1 US100.cash/US500.cash in `Etc/GMT-3`, split at
 train end 2025-12-31 / test start 2026-01-01; the active replacement market
@@ -77,7 +77,7 @@ Current effective/pre-change settings and known contradictions to resolve:
 - PO3 and distribution overlays use strategy actions, PnL reward, `Etc/GMT-3`,
   and `swing_period: 5`; the 18-variant registry uses PPO/TCN and full PO3
   features for strategy/action variants. Do not silently add Idea variants to
-  the frozen 18-key campaign.
+  the frozen 18-key experiment run.
 - `IFVGConfig.close_through_threshold` currently defaults to `0.5`; the
   overlays set `strategy.ifvg.require_price_retest: true`, while
   `env.arm_requires_retest` defaults false and `strategy.entry.enforce_gate`
@@ -130,7 +130,7 @@ manifests and result labels.
 
 WP2, WP1, WP3, WP4 and WP5 are implemented in the working tree. The revised
 strategy modes preserve the `legacy` path; Idea overlays have explicit
-`variant_id` values and do not alter the frozen 18-run campaign. Revised phase
+`variant_id` values and do not alter the frozen 18-run experiment run. Revised phase
 features retain the confirmation-row pulse and distinguish later-ready rows.
 Zero-latency strategy entries submit using the decision close and fill at the
 next bar open, with separate signal, submission and fill bar/time fields.
@@ -182,32 +182,32 @@ Scoped verification on x86_64 Python 3.12.14:
   checked 395 source files. The scoped mypy run over the Idea implementation
   and new session/fixture tests also passed.
 - The configured `.venv` is ARM64 and cannot run here; `.venv-x86` was used.
-  No training, Slurm job, campaign run, commit, or result generation occurred.
+  No training, Slurm job, experiment run, commit, or result generation occurred.
 
 ### E1–E21 disposition
 
 | Evidence | Status | Evidence / scope |
 | --- | --- | --- |
-| E1 | VERIFIED_EXISTING | Candidate expiry stays at five bars; entry state tests cover expiry and causal arming (`tests/test_simulation/test_environment/test_entry_state_machine.py`). |
-| E2 | FIXED | Revised PO3 uses confirmed M5/M15/H1 references; `tests/test_features/test_htf_sweeps.py`. |
-| E3–E4 | FIXED | Reclaim and IFVG confirmation/distribution are separate events; `tests/test_features/test_po3_state.py`. |
-| E5 | FIXED | Revised overlays use strict far-edge close and zero additional overshoot; `tests/test_features/test_po3_config.py`. |
+| E1 | VERIFIED_EXISTING | Candidate expiry stays at five bars; entry state tests cover expiry and causal arming (`tests/unit/simulation/test_environment/test_entry_state_machine.py`). |
+| E2 | FIXED | Revised PO3 uses confirmed M5/M15/H1 references; `tests/unit/features/test_htf_sweeps.py`. |
+| E3–E4 | FIXED | Reclaim and IFVG confirmation/distribution are separate events; `tests/unit/features/test_po3_state.py`. |
+| E5 | FIXED | Revised overlays use strict far-edge close and zero additional overshoot; `tests/unit/features/test_po3_config.py`. |
 | E6–E7 | FIXED | Explicit modes, retest alias validation, confirmation-close/next-open timing; strategy and entry-state tests. |
-| E8–E9 | FIXED | Idea 2 adds per-entry latest-completed-session midpoint gate; `tests/test_features/test_session_ohlc.py`, `tests/test_simulation/test_environment/test_distribution_reward.py`. |
-| E10–E11 | FIXED | IFVG far edge and observed through-zone extreme join auditable SL candidates; `tests/test_simulation/test_backtest/test_entry_levels.py`. |
+| E8–E9 | FIXED | Idea 2 adds per-entry latest-completed-session midpoint gate; `tests/unit/features/test_session_ohlc.py`, `tests/unit/simulation/test_environment/test_distribution_reward.py`. |
+| E10–E11 | FIXED | IFVG far edge and observed through-zone extreme join auditable SL candidates; `tests/integration/backtest/test_entry_levels.py`. |
 | E12 | VERIFIED_EXISTING | Defaults remain 10 points and 0.5 ATR; revised overlays inherit them, confirmed by config inspection and risk tests. |
 | E13 | FIXED | Stop-anchor decode is clipped to `[0,2]`; strategy action tests. |
-| E14–E16 | VERIFIED_EXISTING | Structural target menu retained; preferred RR/fallback selection tested in `tests/test_simulation/test_backtest/test_entry_levels.py`. |
+| E14–E16 | VERIFIED_EXISTING | Structural target menu retained; preferred RR/fallback selection tested in `tests/integration/backtest/test_entry_levels.py`. |
 | E17 | FIXED | Executed TP leg prices and anchor reference are separately recorded; entry-level tests. |
 | E18 | VERIFIED_EXISTING | Legacy RR helpers remain in place; strategy-action path still uses `entry_levels.py`. |
-| E19 | FIXED | Signal, submission and fill bar/time are distinct; `tests/test_simulation/test_environment/test_entry_state_machine.py`. |
+| E19 | FIXED | Signal, submission and fill bar/time are distinct; `tests/unit/simulation/test_environment/test_entry_state_machine.py`. |
 | E20 | FIXED | Revised overlays align both stop-buffer keys; environment `sl_buffer_pts` is effective and candidate rejection reasons are audited. |
 | E21 | DEFERRED | Separate methodology/figure note and synthetic diagrams are ready; manuscript edits and recovery of original figure source remain deferred by plan boundary. |
 
 The pre-training implementation work packages are complete, subject to review
 of the synthetic diagrams. This does **not** mark the strategy or thesis READY
 for final training or results.
-The Idea plan excludes that campaign; the old thesis readiness status is
+The Idea plan excludes that experiment run; the old thesis readiness status is
 unchanged.
 
 Current provenance after WP5/WP7 (SHA-256):
@@ -290,5 +290,5 @@ Focused verification on x86_64 Python 3.12.14: 92 tests passed across
 Tests cover M5/M15/H1 swing alignment and causality, IFVG pulse completion,
 collision priority, source-zone metadata, mapped M1 origin, and M1 PO3
 confirmation from M5. This is implementation verification only; no training,
-Slurm campaign, or strategy-performance claim was produced. The 18-run
-campaign and thesis readiness status remain unchanged.
+Slurm experiment run, or strategy-performance claim was produced. The 18-run
+experiment run and thesis readiness status remain unchanged.

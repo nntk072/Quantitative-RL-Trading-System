@@ -62,9 +62,9 @@
 | `tests/integration/test_session_schedule.py` | Session-calendar loading and schema validation |
 | `tests/integration/test_price_grid.py` | Price-grid identity and normalization |
 | `tests/integration/test_resample_m10.py` | Higher-timeframe resampling semantics |
-| `tests/test_features/test_session_filter.py` | `filter_session()`, `ny_session_mask()`, cache versioning |
-| `tests/test_market_data/test_ticks.py` | `TickBook`, `build_tick_book()` |
-| `tests/test_features/test_causal_features.py` | Causal alignment verification |
+| `tests/unit/features/test_session_filter.py` | `filter_session()`, `ny_session_mask()`, cache versioning |
+| `tests/unit/market_data/test_ticks.py` | `TickBook`, `build_tick_book()` |
+| `tests/unit/features/test_causal_features.py` | Causal alignment verification |
 
 ## Do NOT Read For Data Tasks
 
@@ -85,7 +85,7 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add a market source | source adapter | `market_data/loading/bars.py` | `DatasetRef` and `MarketEventSchema`; `tests/test_market_data/test_dataset_source_contract.py` | one source and source contract tests | feature algorithms and training workflows |
+| Add a market source | source adapter | `market_data/loading/bars.py` | `DatasetRef` and `MarketEventSchema`; `tests/unit/market_data/test_dataset_source_contract.py` | one source and source contract tests | feature algorithms and training workflows |
 | Change session or split semantics | dataset policy | `market_data/splits/definitions.py` | partition identity; focused tests under `tests/integration/` | one transform or split module | model and report code |
 
 ## Axis of Change

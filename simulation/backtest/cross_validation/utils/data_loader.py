@@ -20,7 +20,7 @@ def load_data_from_csv(file_path, date_format="%Y-%m-%d"):
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File {file_path} not found")
 
-    # Load the data from the CSV file
+        # Load the data from the CSV file
     df = pd.read_csv(file_path, parse_dates=True)
 
     # Convert the date column to datetime if it's not already
@@ -32,7 +32,7 @@ def load_data_from_csv(file_path, date_format="%Y-%m-%d"):
             df["datetime"] = pd.to_datetime(df["datetime"], format=date_format)
             df.set_index("datetime", inplace=True)
 
-    # Create a Backtrader data feed
+            # Create a Backtrader data feed
     data_feed = bt.feeds.PandasData(
         dataname=df,
         datetime=None,  # None if the index is the datetime
@@ -66,7 +66,7 @@ def download_data_from_yahoo(symbol, start_date, end_date, timeframe="1d"):
     if isinstance(end_date, str):
         end_date = dt.datetime.strptime(end_date, "%Y-%m-%d")
 
-    # Download data from Yahoo Finance
+        # Download data from Yahoo Finance
     data = yf.download(symbol, start=start_date, end=end_date, interval=timeframe)
     data_single_level = data.copy()
     data_single_level.columns = data_single_level.columns.droplevel(1)  # Drop the ticker level

@@ -26,7 +26,7 @@ def clean(df: pd.DataFrame, tz: str = "Etc/GMT-3") -> pd.DataFrame:
     index = cast(pd.DatetimeIndex, df.index)
     if index.tz is None:
         df.index = index.tz_localize(tz, ambiguous="infer", nonexistent="shift_forward")
-    # Gap flag: True when gap to previous bar is > 2× the modal bar duration
+        # Gap flag: True when gap to previous bar is > 2× the modal bar duration
     delta = cast(pd.DatetimeIndex, df.index).to_series().diff()
     modal = delta.mode().iloc[0]
     df["gap_flag"] = delta > (2 * modal)

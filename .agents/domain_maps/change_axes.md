@@ -7,20 +7,20 @@ for semantics; neighboring packages should consume its public boundary.
 | Axis of change | Semantic owner | Current boundary | Typical edit surface | Must stay independent from |
 |---|---|---|---|---|
 | Config parsing, merge, schema and hashing | `configuration/` | Resolved `DictConfig` plus config identity helpers | `configuration/` and its config tests | Feature algorithms and training workflows |
-| Market source, event representation, sessions and splits | `market_data/` | Loaders, transforms, tick books and split definitions | One source/transform/split module and matching tests | Models, campaign state and report rendering |
+| Market source, event representation, sessions and splits | `market_data/` | Loaders, transforms, tick books and split definitions | One source/transform/split module and matching tests | Models, experiment run state and report rendering |
 | Feature/context algorithms | `features/` | Feature builder, context modules and feature-cache identity | One feature/context implementation; builder only for stage wiring | `trading/`, model implementation and training workflow |
 | Input/feature schema | `features/` and `decisioning/` | Feature views plus versioned decision input/action schemas | Schema owner plus compatibility/regression tests | PPO-specific coordinate interpretation |
 | Account state and risk policy | `trading/account/`, `trading/risk/`, `trading/policy/` | Account state and policy-specific risk helpers | One policy/state transition module and contract tests | Broker adapters and model family |
 | Order construction and target selection | `trading/orders/` | Geometry, target menus and `trading/orders/selection.py` | One order-construction module and fill/order tests | Simulation runtime internals |
 | Execution cost, quote and fill semantics | `trading/execution/` plus market quote contracts | Broker, cost model, quote and tick lookup APIs | Execution policy and parity/regression tests | Learner and report renderer |
 | Simulation clock and state transitions | `simulation/` | Environment, runtime services and environment factory | One simulation service and golden-trace tests | Concrete model classes and training runner |
-| Neural architecture and inference precision | `models/` | Encoders, factory and `models/runtime/precision.py` | One architecture/runtime implementation and model tests | Compute discovery, campaigns and training workflow |
+| Neural architecture and inference precision | `models/` | Encoders, factory and `models/runtime/precision.py` | One architecture/runtime implementation and model tests | Compute discovery, experiment runs and training workflow |
 | Learning paradigm and fitting | `learning/` | `Learner`/`FitRequest`/`FitResult` plus PPO/SAC under `learning/rl/` | Learner backend and fit contract tests | Generic simulation, trading and evaluation semantics |
 | Decision provider and semantic action | `decisioning/` | `DecisionProvider`, versioned observation/action schemas and SB3 adapter | Provider contract or backend adapter plus contract tests | Training workflow and execution implementation |
 | Evaluation cases, metrics and provenance | `evaluation/` | Rollout, reanalysis, metrics and reporting APIs | One metric/provenance/renderer module and focused tests | Training implementation and learner internals |
 | Artifact identity and atomic storage mechanics | `artifacts/` | Artifact IDs, manifests, layouts and atomic writers | Generic mechanic in `artifacts/`; meaning stays with producer | Trading or model-specific semantics |
 | Resource capability and scheduler adapter | `compute/` | Device and Slurm helpers | Capability/backend adapter and compute tests | Model classes and scientific policy |
-| Campaign lifecycle and experiment variants | `experiments/` | Variant and campaign packages | One campaign lifecycle service and campaign tests | Environment internals and feature algorithms |
+| Experiment run lifecycle and experiment variants | `experiments/` | Variant and experiment run packages | One experiment run lifecycle service and experiment run tests | Environment internals and feature algorithms |
 | Live runtime and external broker/vendor adapters | `live/`, `integrations/` | Broker-neutral runtime with MT5 adapter | Runtime port or one external adapter plus contract tests | Vendor SDK types crossing into scientific packages |
 | Workflow composition and developer orchestration | `training/`, `orchestra/` | Training runners and Orchestra pipeline | One use case/phase and integration tests | Leaf-domain ownership of scientific semantics |
 
@@ -76,9 +76,9 @@ packages are intentionally excluded until they exist.
 | `training/runner/seed_runtime.py` | Seed training workflow |
 | `evaluation/reanalysis/checkpoint_reanalysis.py` | Checkpoint reanalysis workflow |
 | `evaluation/reporting/box_table.py` | Shared report table renderer |
-| `experiments/campaigns/campaign_execution.py` | Campaign execution lifecycle |
-| `experiments/campaigns/cache_failure_recovery.py` | Campaign cache failure recovery |
-| `compute/slurm/campaign_worker_resources.py` | Worker resource sampling and dispatch mechanics |
+| `experiments/runs/execution.py` | Experiment run execution lifecycle |
+| `experiments/runs/cache_failure_recovery.py` | Experiment run cache failure recovery |
+| `compute/slurm/worker_resources.py` | Worker resource sampling and dispatch mechanics |
 | `compute/environment/device.py` | Hardware capability discovery |
 | `live/runtime/strategy.py` | Broker-neutral live strategy |
 | `decisioning/contracts.py` | Backend-neutral decision and provider contracts |

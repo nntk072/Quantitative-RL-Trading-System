@@ -41,8 +41,8 @@ the package boundary.
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add an order target policy | target construction | `trading/orders/targets.py` | order geometry; `tests/test_simulation/test_backtest/test_entry_levels.py` | target policy and execution regression | simulation action decoding internals |
-| Change risk policy | risk decision | `trading/risk/contracts.py` | `RiskPolicy`; `tests/test_trading/test_risk_policy_contract.py` | policy and contract tests | model and broker implementation |
+| Add an order target policy | target construction | `trading/orders/targets.py` | order geometry; `tests/integration/backtest/test_entry_levels.py` | target policy and execution regression | simulation action decoding internals |
+| Change risk policy | risk decision | `trading/risk/contracts.py` | `RiskPolicy`; `tests/unit/trading/test_risk_policy_contract.py` | policy and contract tests | model and broker implementation |
 
 ## Axis of Change
 
@@ -57,15 +57,15 @@ the package boundary.
 
 ## Focused Tests
 
-- `tests/test_simulation/test_backtest/test_entry_levels.py`
-- `tests/test_simulation/test_backtest/test_engine_execution_contract_unittest.py`
-- `tests/test_trading/test_risk.py`
-- `tests/test_trading/test_guardrails.py`
-- `tests/test_simulation/test_environment/test_tp_action_contracts.py`
-- `tests/test_simulation/test_environment/test_tp_mode_state.py`
-- `tests/test_simulation/test_environment/test_tp_execution.py`
-- `tests/test_simulation/test_environment/test_tp_action_decode.py`
-- `tests/test_simulation/test_environment/test_sl_tp_fill.py`
+- `tests/integration/backtest/test_entry_levels.py`
+- `tests/integration/backtest/test_engine_execution_contract.py`
+- `tests/unit/trading/test_risk.py`
+- `tests/unit/trading/test_guardrails.py`
+- `tests/unit/simulation/test_environment/test_tp_action_contracts.py`
+- `tests/unit/simulation/test_environment/test_tp_mode_state.py`
+- `tests/unit/simulation/test_environment/test_tp_execution.py`
+- `tests/unit/simulation/test_environment/test_tp_action_decode.py`
+- `tests/unit/simulation/test_environment/test_sl_tp_fill.py`
 - `tests/integration/test_position_fill_accounting.py`
 ## Verified Source Paths
 

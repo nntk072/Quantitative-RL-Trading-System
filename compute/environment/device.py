@@ -247,7 +247,7 @@ def scale_training_cfg(
     # SAC updates from a replay buffer; its minibatch is independent of PPO's
     # rollout geometry. Keep the explicit SAC setting instead of inflating it
     # to fill VRAM based on PPO's (n_steps * n_envs) batch. Large automatic
-    # SAC batches can multiply update cost and make fixed-step campaigns
+    # SAC batches can multiply update cost and make fixed-step experiment runs
     # impractical without improving the environment-step budget.
 
 

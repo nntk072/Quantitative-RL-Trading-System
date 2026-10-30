@@ -114,8 +114,8 @@ def target_menu(
     raw.extend(deviation_candidates(row, allow_extreme_extension=True))
     if source_prices is not None:
         source_prices.update((name, float(price)) for name, price in raw)
-    # A known confirmation after the decision is never eligible. The pivot
-    # origin (`*_time`) is not a confirmation time and is not used here.
+        # A known confirmation after the decision is never eligible. The pivot
+        # origin (`*_time`) is not a confirmation time and is not used here.
     decision_at = getattr(row, "name", None)
     if not isinstance(decision_at, pd.Timestamp):
         decision_at = None
@@ -159,15 +159,15 @@ def target_menu(
             continue
         if np.isfinite(room) and dist > room + 1e-9:
             continue
-        # strategy.risk.rr_range is the promised reward-to-risk window. It was
-        # read into TradingEnv.rr_ratio_range and then never applied to the
-        # menu, so ~44% of trades settled outside [1.5, 5.0].
+            # strategy.risk.rr_range is the promised reward-to-risk window. It was
+            # read into TradingEnv.rr_ratio_range and then never applied to the
+            # menu, so ~44% of trades settled outside [1.5, 5.0].
         implied = dist / stop_dist if stop_dist > 1e-12 else float("inf")
         ranked.append((name, float(level), dist, rr_lo - 1e-9 <= implied <= rr_hi + 1e-9))
-    # Enforce the window whenever the bar offers at least one level inside it.
-    # Falling back when nothing qualifies keeps the menu usable instead of
-    # rejecting a setup purely because no structural level happened to land in
-    # the window — a stop that exists is still better than no trade at all.
+        # Enforce the window whenever the bar offers at least one level inside it.
+        # Falling back when nothing qualifies keeps the menu usable instead of
+        # rejecting a setup purely because no structural level happened to land in
+        # the window — a stop that exists is still better than no trade at all.
     legal = [item for item in ranked if item[3]]
     chosen = legal or ranked
     menu = [(name, level, dist) for name, level, dist, _in_range in chosen]

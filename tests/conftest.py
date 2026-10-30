@@ -9,7 +9,9 @@ import pandas as pd
 import pytest
 from gymnasium import spaces
 
-EXECUTION_MARKERS = frozenset({"unit", "integration", "slow", "gpu", "triton", "research"})
+EXECUTION_MARKERS = frozenset(
+    {"unit", "integration", "architecture", "slow", "gpu", "triton", "research"}
+)
 
 
 @pytest.fixture
@@ -52,25 +54,28 @@ def dict_obs_space() -> spaces.Dict:
 def execution_markers_for_test(
     path: Path, existing_markers: frozenset[str] = frozenset()
 ) -> tuple[str, ...]:
-    """Return explicit path and default execution categories for one test."""
+    """Classify a test by suite location unless it declares its own marker."""
     parts = path.parts
-    markers: list[str] = []
-    if "integration" in parts or "test_integration" in parts or "test_backtest" in parts:
-        markers.append("integration")
-    elif "test_research" in parts or "test_bench" in parts:
-        markers.append("research")
-    if not (existing_markers | set(markers)).intersection(EXECUTION_MARKERS):
-        markers.append("unit")
-    return tuple(markers)
+    if "architecture" in parts:
+        suite = "architecture"
+    elif "integration" in parts:
+        suite = "integration"
+    elif "research" in parts:
+        suite = "research"
+    elif "unit" in parts:
+        suite = "unit"
+    else:
+        raise ValueError(f"test must live in a classified suite directory: {path}")
+    if existing_markers.intersection(EXECUTION_MARKERS):
+        return ()
+    return (suite,)
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Classify unmarked tests as unit and add path-level execution categories."""
+    """Apply one suite marker to each unmarked test from its test-tree location."""
     for item in items:
         existing = {mark.name for mark in item.iter_markers()}
         for marker_name in execution_markers_for_test(Path(str(item.path)), frozenset(existing)):
             if marker_name not in existing:
                 item.add_marker(getattr(pytest.mark, marker_name))
                 existing.add(marker_name)
-        if not existing.intersection(EXECUTION_MARKERS):
-            item.add_marker(pytest.mark.unit)

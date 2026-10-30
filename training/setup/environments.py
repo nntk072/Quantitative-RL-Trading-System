@@ -71,13 +71,13 @@ def _training_episodic(cfg: Any) -> bool:
 
 
 def _evaluate_final_split(model: Any, **kwargs: Any) -> dict[str, Any]:
-    """Evaluate a final split using the campaign's declared action mode."""
+    """Evaluate a final split using the experiment run's declared action mode."""
     kwargs.setdefault("deterministic", False)
     return evaluate_model(model, **kwargs)
 
 
 def final_evaluation_deterministic(cfg: Any) -> bool:
-    """Resolve the final replay mode, with campaign metadata overriding config defaults."""
+    """Resolve the final replay mode, with experiment run metadata overriding config defaults."""
     override = os.environ.get("QUANT_RL_EVALUATION_DETERMINISTIC")
     if override is not None:
         normalized = override.strip().lower()

@@ -68,7 +68,7 @@ The 14 affected packages divide into four direct dependencies and ten transitive
 | Transitive, runtime family changes | `curl-cffi`, `protobuf` | Upgrade through their parents (`yfinance`) where possible; retain protobuf major version 6 and validate data-provider imports. |
 | Transitive, development tooling | `fastmcp`, `pyjwt` | Trace `code-review-graph`/MCP parents and test the tool stack. `fastmcp` fixes span major versions; one `pyjwt` advisory has no fixed version in this scan, so do not blanket-exempt it. |
 
-After the campaign is terminal, apply updates in small dependency-family batches, regenerate the lock, and run the existing scoped/full gates required for the resulting code and dependency changes. Keep the known-vulnerability gate fail-closed; do not add bulk exceptions merely to restore a green CI result.
+After the experiment run is terminal, apply updates in small dependency-family batches, regenerate the lock, and run the existing scoped/full gates required for the resulting code and dependency changes. Keep the known-vulnerability gate fail-closed; do not add bulk exceptions merely to restore a green CI result.
 
 ### Existing security-tool gap at baseline
 
@@ -498,10 +498,10 @@ Add a meaningful compatibility test covering the actual VAE checkpoint format.
 
 ### 13.2 Subprocess trust boundaries
 
-Review orchestration code where argv/env/cwd are constructed from campaign payloads, especially:
+Review orchestration code where argv/env/cwd are constructed from experiment run payloads, especially:
 
 - `compute/slurm/`
-- `experiments/campaigns/`
+- `experiments/runs/`
 - `experiments/orchestration/`
 - `orchestra/`
 

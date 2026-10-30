@@ -10,8 +10,8 @@ import math
 from pathlib import Path
 from typing import Any
 
-CAMPAIGN_ID = "rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
-CAMPAIGN_FINGERPRINT = "10e75ab7a25a53b3d4444098185fe45603811f09f2d556265c9f80ca402388ab"
+EXPERIMENT_RUN_ID = "rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
+EXPERIMENT_RUN_FINGERPRINT = "10e75ab7a25a53b3d4444098185fe45603811f09f2d556265c9f80ca402388ab"
 EXPECTED_SEEDS = (101, 102, 103, 104, 105)
 REQUESTED_STEPS = 20_000_000
 CONTROL_PREFIX = "ladder_a4b_entry_fsm__seed"
@@ -57,10 +57,10 @@ def _source_record(path: Path, repo_root: Path) -> dict[str, Any]:
     }
 
 
-def _run_paths(campaign_dir: Path, job: dict[str, Any]) -> dict[str, Path]:
+def _run_paths(experiment_run_dir: Path, job: dict[str, Any]) -> dict[str, Path]:
     key = str(job["key"])
     attempt_number = int(job["attempts"])
-    attempt_dir = campaign_dir / "runs" / "attempts" / key / f"attempt{attempt_number}"
+    attempt_dir = experiment_run_dir / "runs" / "attempts" / key / f"attempt{attempt_number}"
     provenance_path = attempt_dir / "attempt_provenance.json"
     run_parent = attempt_dir / key
     manifests = sorted(run_parent.glob("*/run_manifest.json"))
@@ -83,7 +83,7 @@ def _arm_name_and_seed(key: str) -> tuple[str, int]:
             suffix = key.removeprefix(prefix)
             if suffix.isdigit():
                 return arm, int(suffix)
-    raise ValueError(f"unexpected frozen campaign run key: {key}")
+    raise ValueError(f"unexpected frozen experiment run key: {key}")
 
 
 def _base_provenance(
@@ -125,15 +125,15 @@ def _base_provenance(
     }
 
 
-def build_paired_seed_payload(campaign_dir: Path, repo_root: Path) -> dict[str, Any]:
-    """Validate complete campaign lineage before reading or deriving any metrics."""
-    campaign_path = campaign_dir / "campaign.json"
-    campaign = _read_json(campaign_path)
-    if campaign.get("fingerprint") != CAMPAIGN_FINGERPRINT:
-        raise ValueError("campaign fingerprint does not match the frozen P7 campaign")
-    jobs = campaign.get("jobs")
+def build_paired_seed_payload(experiment_run_dir: Path, repo_root: Path) -> dict[str, Any]:
+    """Validate complete experiment run lineage before reading or deriving any metrics."""
+    experiment_run_path = experiment_run_dir / "experiment_run.json"
+    experiment_run = _read_json(experiment_run_path)
+    if experiment_run.get("fingerprint") != EXPERIMENT_RUN_FINGERPRINT:
+        raise ValueError("experiment run fingerprint does not match the frozen P7 experiment run")
+    jobs = experiment_run.get("jobs")
     if not isinstance(jobs, list) or len(jobs) != 2 * len(EXPECTED_SEEDS):
-        raise ValueError("P7 campaign must contain exactly ten runs")
+        raise ValueError("P7 experiment run must contain exactly ten runs")
     job_by_arm_seed: dict[tuple[str, int], dict[str, Any]] = {}
     for job in jobs:
         if not isinstance(job, dict) or job.get("status") != "succeeded":
@@ -147,36 +147,36 @@ def build_paired_seed_payload(campaign_dir: Path, repo_root: Path) -> dict[str, 
         job_by_arm_seed[pair_key] = job
     expected_keys = {(arm, seed) for arm in ("control", "treatment") for seed in EXPECTED_SEEDS}
     if set(job_by_arm_seed) != expected_keys:
-        raise ValueError("P7 campaign does not contain exactly the frozen arms and seeds")
+        raise ValueError("P7 experiment run does not contain exactly the frozen arms and seeds")
 
-    source_records: list[dict[str, Any]] = [_source_record(campaign_path, repo_root)]
-    source_snapshot = campaign.get("source_snapshot")
+    source_records: list[dict[str, Any]] = [_source_record(experiment_run_path, repo_root)]
+    source_snapshot = experiment_run.get("source_snapshot")
     if not isinstance(source_snapshot, dict) or not isinstance(source_snapshot.get("path"), str):
-        raise ValueError("campaign source snapshot record is missing")
-    snapshot_path = campaign_dir / source_snapshot["path"]
+        raise ValueError("experiment run source snapshot record is missing")
+    snapshot_path = experiment_run_dir / source_snapshot["path"]
     snapshot_record = _source_record(snapshot_path, repo_root)
     if snapshot_record["sha256"] != source_snapshot.get("sha256"):
-        raise ValueError("campaign source snapshot hash mismatch")
+        raise ValueError("experiment run source snapshot hash mismatch")
     source_records.append(snapshot_record)
 
     loaded: dict[tuple[str, int], dict[str, Any]] = {}
     for arm_seed, job in job_by_arm_seed.items():
         arm, seed = arm_seed
-        paths = _run_paths(campaign_dir, job)
+        paths = _run_paths(experiment_run_dir, job)
         provenance = _read_json(paths["provenance"])
         run_manifest = _read_json(paths["run_manifest"])
         if (
-            provenance.get("campaign_fingerprint") != CAMPAIGN_FINGERPRINT
-            or _identity_hash(provenance.get("identity")) != CAMPAIGN_FINGERPRINT
-            or provenance.get("campaign_id") != CAMPAIGN_ID
+            provenance.get("experiment_run_fingerprint") != EXPERIMENT_RUN_FINGERPRINT
+            or _identity_hash(provenance.get("identity")) != EXPERIMENT_RUN_FINGERPRINT
+            or provenance.get("experiment_run_id") != EXPERIMENT_RUN_ID
             or provenance.get("run_key") != job["key"]
             or int(provenance.get("attempt", -1)) != int(job["attempts"])
             or int(provenance.get("seed", -1)) != seed
             or int(run_manifest.get("seed", -1)) != seed
         ):
-            raise ValueError(f"campaign provenance identity mismatch for {job['key']}")
+            raise ValueError(f"experiment run provenance identity mismatch for {job['key']}")
         if int(provenance.get("requested_timesteps", -1)) != REQUESTED_STEPS:
-            raise ValueError(f"campaign request budget mismatch for {job['key']}")
+            raise ValueError(f"experiment run request budget mismatch for {job['key']}")
         training = run_manifest.get("training_protocol", {})
         if (
             int(training.get("requested_steps", -1)) != REQUESTED_STEPS
@@ -256,7 +256,7 @@ def build_paired_seed_payload(campaign_dir: Path, repo_root: Path) -> dict[str, 
                 f"architecture mismatch beyond input-induced parameter count for seed {seed}"
             )
 
-    # Metrics are read only after the campaign, attempt, data, config, and checkpoint gates pass.
+    # Metrics are read only after the experiment run, attempt, data, config, and checkpoint gates pass.
     pairs: list[dict[str, Any]] = []
     for seed in EXPECTED_SEEDS:
         pair: dict[str, Any] = {"seed": seed}
@@ -282,7 +282,7 @@ def build_paired_seed_payload(campaign_dir: Path, repo_root: Path) -> dict[str, 
             )
             provenance.update(
                 {
-                    "campaign_fingerprint": CAMPAIGN_FINGERPRINT,
+                    "experiment_run_fingerprint": EXPERIMENT_RUN_FINGERPRINT,
                     "attempt": int(item["job"]["attempts"]),
                     "slurm_job_id": item["provenance"].get("slurm_job_id"),
                     "resume_from_attempt": item["provenance"].get("resume_from_attempt"),
@@ -332,8 +332,8 @@ def build_paired_seed_payload(campaign_dir: Path, repo_root: Path) -> dict[str, 
 
     return {
         "schema": "aalto.paired_seed_metrics.v1",
-        "comparison_id": CAMPAIGN_ID,
-        "campaign_fingerprint": CAMPAIGN_FINGERPRINT,
+        "comparison_id": EXPERIMENT_RUN_ID,
+        "experiment_run_fingerprint": EXPERIMENT_RUN_FINGERPRINT,
         "evidence_role": "matched_exploratory",
         "evaluation_exposure": "exposed_report_only",
         "expected_seeds": list(EXPECTED_SEEDS),
@@ -349,13 +349,13 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[4]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--campaign-dir",
+        "--experiment-run-dir",
         type=Path,
-        default=repo_root / "outputs" / "gpu_campaigns" / CAMPAIGN_ID,
+        default=repo_root / "outputs" / "gpu_experiment_runs" / EXPERIMENT_RUN_ID,
     )
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
-    payload = build_paired_seed_payload(args.campaign_dir, repo_root)
+    payload = build_paired_seed_payload(args.experiment_run_dir, repo_root)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x", encoding="utf-8") as stream:
         json.dump(payload, stream, indent=2, sort_keys=True)

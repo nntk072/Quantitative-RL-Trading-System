@@ -54,8 +54,8 @@ class CrossOverStrategy(bt.Strategy):
             # Buy/Sell order submitted/accepted to/by broker - Nothing to do
             return
 
-        # Check if an order has been completed
-        # Attention: broker could reject order if not enough cash
+            # Check if an order has been completed
+            # Attention: broker could reject order if not enough cash
         if order.status in [order.Completed]:
             if order.isbuy():
                 self.log(
@@ -75,7 +75,7 @@ class CrossOverStrategy(bt.Strategy):
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log("Order Canceled/Margin/Rejected")
 
-        # Reset orders
+            # Reset orders
         self.order = None
 
     def notify_trade(self, trade) -> None:
@@ -92,7 +92,7 @@ class CrossOverStrategy(bt.Strategy):
         if self.order:
             return
 
-        # Check if we are in the market
+            # Check if we are in the market
         if not self.position:
             # Not yet in market, look for buy signal
             if self.crossover > 0:  # if ma_short crosses above ma_long

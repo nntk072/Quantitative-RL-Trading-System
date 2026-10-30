@@ -82,7 +82,7 @@ class FTMOGuardrails:
             return max(0.0, float(acc.equity)) * float(self.risk_per_trade_limit_pct)
         return float(self.risk_per_trade_limit)
 
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
 
     def check_daily(self, acc: AccountState) -> bool:
         """Return True (breached) if daily loss exceeds the hard limit."""

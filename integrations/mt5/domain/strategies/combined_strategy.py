@@ -61,7 +61,7 @@ class CombinedStrategy(TradingStrategy):
             symbol = self.data.get_symbol()
             return symbol, Signal.NONE
 
-        # Get signals from all strategies
+            # Get signals from all strategies
         signals = []
         symbol = self.data.get_symbol()
 
@@ -76,7 +76,7 @@ class CombinedStrategy(TradingStrategy):
         if len(signals) == 0:
             return symbol, Signal.NONE
 
-        # Count signals
+            # Count signals
         buy_count = sum(1 for s in signals if s == Signal.BUY)
         sell_count = sum(1 for s in signals if s == Signal.SELL)
 

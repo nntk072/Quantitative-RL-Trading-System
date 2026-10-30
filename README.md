@@ -76,10 +76,10 @@ learns position sizing, entry timing, and stop-loss/take-profit placement.
 | `decisioning/` | Versioned observation/action contracts and policy adapters |
 | `training/` | Training configuration, setup services, callbacks, runners, and training artifacts |
 | `evaluation/` | Rollout, metrics, reanalysis, reporting, provenance, and plotting |
-| `experiments/` | Variant and campaign orchestration, checkpoint lineage, and campaign reporting |
+| `experiments/` | Variant and experiment run orchestration, checkpoint lineage, and experiment run reporting |
 | `live/` | Broker-neutral live/paper runtime |
 | `integrations/mt5/` | MetaTrader 5 adapters, broker domain objects, robots, and risk integration |
-| `compute/` | Slurm/Triton resource, continuation, resume, and worker-dispatch mechanics |
+| `compute/` | Slurm/Triton resource, continuation, and worker-dispatch mechanics |
 | `artifacts/` | Cross-cutting artifact identity, manifests, layout, atomic writes, retention, and baseline promotion |
 | `orchestra/` | Multi-model task pipeline (triage → plan → implement → verify) |
 
@@ -138,8 +138,8 @@ uv run thesis-data prepare
 ### Run tests
 
 ```bash
-.venv/bin/pytest tests/test_features/test_po3_state.py -q
-.venv/bin/pytest tests/test_simulation/test_environment/test_entry_state_machine.py -q
+.venv/bin/pytest tests/unit/features/test_po3_state.py -q
+.venv/bin/pytest tests/unit/simulation/test_environment/test_entry_state_machine.py -q
 ```
 
 Run the relevant test files for the change. GitHub CI and Orchestra coordinate
@@ -204,7 +204,7 @@ Quantitative-RL-Trading-System/
 ├── decisioning/                # Observation/action contracts and policy adapters
 ├── training/                   # Training setup, callbacks, runners, artifacts
 ├── evaluation/                 # Rollout, metrics, reanalysis, reporting, plotting
-├── experiments/                # Variants and campaign orchestration
+├── experiments/                # Variants and experiment run orchestration
 ├── live/                       # Broker-neutral paper/live runtime
 ├── integrations/mt5/           # MT5-specific adapters and robots
 ├── compute/                    # Slurm/Triton compute mechanics
@@ -218,7 +218,7 @@ Quantitative-RL-Trading-System/
 ├── tests/                      # Unit, integration, parity, architecture tests
 ├── data/                       # Raw/derived dataset storage
 ├── cache/                      # Disposable reproducible caches
-├── outputs/                    # Run/campaign/evaluation artifacts
+├── outputs/                    # Run/experiment_run/evaluation artifacts
 ├── logs/                       # Non-artifact operational logs
 ├── baseline/                   # Explicitly promoted baseline evidence
 └── docs/                       # Architecture, reproducibility, operations, thesis evidence
@@ -309,7 +309,7 @@ Cross-validate the custom event-driven backtest engine against `backtrader`:
 uv run python -m simulation.backtest.cross_validation.run
 ```
 
-See `tests/test_simulation/test_backtest/test_engine_cross_validation.py` for unit tests.
+See `tests/integration/backtest/test_engine_cross_validation.py` for unit tests.
 
 ---
 
@@ -336,8 +336,8 @@ plot_fvg_signals_interactive(bars, signals, out_path="chart.html")
 ## Testing
 
 ```bash
-.venv/bin/pytest tests/test_features/test_po3_state.py -q
-.venv/bin/pytest tests/test_simulation/test_environment/test_entry_state_machine.py -q
+.venv/bin/pytest tests/unit/features/test_po3_state.py -q
+.venv/bin/pytest tests/unit/simulation/test_environment/test_entry_state_machine.py -q
 .venv/bin/pytest tests/integration/test_strategy_integration.py -q
 ```
 

@@ -14,7 +14,7 @@ reference supervised backend for proving the shared fit and inference seams.
 
 ## Non-ownership
 
-- Generic training workflow sequencing and campaign management.
+- Generic training workflow sequencing and experiment run management.
 - Trading, risk, execution, evaluation metrics or live broker semantics.
 - Observation/action meaning; those schemas belong to `decisioning/`.
 
@@ -41,8 +41,8 @@ environment contracts. Generic training workflows select a learner/backend.
 
 ## Tests and invariants
 
-PPO/SAC and vector-environment tests remain under `tests/test_models/` and
-`tests/test_training/`. `tests/test_learning/test_learning_supervised_reference.py` proves that a
+PPO/SAC and vector-environment tests remain under `tests/unit/models/` and
+`tests/unit/training/`. `tests/unit/learning/test_learning_supervised_reference.py` proves that a
 supervised artifact loads as a `DecisionProvider` and uses the common evaluation
 rollout without an SB3 model or Gym adapter.
 
@@ -53,13 +53,13 @@ rollout without an SB3 model or Gym adapter.
 - **Stable boundary:** `Learner`/`FitRequest`/`FitResult` contracts plus
   `decisioning.DecisionProvider` for inference. Seed fitting uses
   `Learner.fit()`; checkpoint compatibility remains inside the SB3 backend.
-- **Must not own:** trading semantics, generic evaluation, or campaign lifecycle.
+- **Must not own:** trading semantics, generic evaluation, or experiment run lifecycle.
 ## Change Map
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add or change a learner backend | fitting paradigm | `learning/learner_factory.py` | `Learner`, `FitRequest`, `FitResult`; `tests/test_training/test_fit_request.py` | one backend and fit contract tests | decision, trading, and simulation semantics |
-| Add a supervised predictor | fitting paradigm and inference | `learning/supervised/` | `Learner` and `DecisionProvider`; `tests/test_learning/test_learning_supervised_reference.py` | learner/provider and artifact tests | RL backend, trading semantics, and live integrations |
+| Add or change a learner backend | fitting paradigm | `learning/learner_factory.py` | `Learner`, `FitRequest`, `FitResult`; `tests/unit/training/test_fit_request.py` | one backend and fit contract tests | decision, trading, and simulation semantics |
+| Add a supervised predictor | fitting paradigm and inference | `learning/supervised/` | `Learner` and `DecisionProvider`; `tests/unit/learning/test_learning_supervised_reference.py` | learner/provider and artifact tests | RL backend, trading semantics, and live integrations |
 | Change PPO/SAC rollout behavior | RL implementation | `learning/rl/` | learning smoke and policy tests | RL backend modules and focused tests | generic evaluation and live adapters |
 
 ## Axis of Change
@@ -68,7 +68,7 @@ rollout without an SB3 model or Gym adapter.
 - **Owner:** `learning/` owns parameter fitting; `models/` owns reusable architectures.
 - **Stable boundary:** `Learner`, `FitRequest`, and `FitResult`.
 - **Expected edit radius:** one backend and its fitting contract tests.
-- **Must not depend on:** trading semantics, campaign lifecycle, or evaluation internals.
+- **Must not depend on:** trading semantics, experiment run lifecycle, or evaluation internals.
 
 ## Verified Source Paths
 

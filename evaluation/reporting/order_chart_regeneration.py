@@ -345,9 +345,10 @@ def _replot_split(
             return timestamp.tz_localize(bar_tz)
         return timestamp.tz_convert(bar_tz)
 
-    # pandas keeps mixed UTC offsets (for example, a local timezone crossing
-    # daylight-saving time) as object dtype, which has no `.dt` accessor.
-    # Normalize each event to the bar index timezone before pairing trades.
+        # pandas keeps mixed UTC offsets (for example, a local timezone crossing
+        # daylight-saving time) as object dtype, which has no `.dt` accessor.
+        # Normalize each event to the bar index timezone before pairing trades.
+
     trades["time"] = pd.DatetimeIndex(trades["time"].map(align_trade_time))
 
     chart_cfg = _extract_trade_chart_config(cfg)

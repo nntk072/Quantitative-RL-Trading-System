@@ -359,7 +359,7 @@ COMPOSITION_ROOT_BUDGETS = {
     "experiments/variants/variant_ablation_runner.py": 5,
     # One-off cache-repair command: composes configuration, training variant
     # resolution, market ingestion, feature construction, and artifact hashing.
-    "experiments/campaigns/baseline_cache_rebuild.py": 5,
+    "experiments/runs/baseline_cache_rebuild.py": 5,
 }
 
 

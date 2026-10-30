@@ -37,9 +37,9 @@ def _encoded_centers(name: str, threshold: float) -> tuple[float, ...]:
     if name in {"sl_mode", "tp_mode"}:
         if not 0.0 <= threshold < (1.0 / 6.0 - 1e-3):
             raise ValueError(f"hybrid {name} requires a defer threshold below 1/6, got {threshold}")
-        # The center category means defer to the configured environment mode.
-        # The breakeven value sits just outside the defer band but still decodes
-        # to bucket one in the existing three-mode decoder.
+            # The center category means defer to the configured environment mode.
+            # The breakeven value sits just outside the defer band but still decodes
+            # to bucket one in the existing three-mode decoder.
         breakeven_u = 0.5 - threshold - 1e-3
         unit_values = (1.0 / 6.0, breakeven_u, 0.5, 5.0 / 6.0)
         return tuple(2.0 * value - 1.0 for value in unit_values)

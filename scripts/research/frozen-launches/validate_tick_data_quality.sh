@@ -27,12 +27,12 @@ if [[ -e "$REPORT" ]]; then
   exit 2
 fi
 
-"$VENV_X86/bin/ruff" format --check docs/thesis/audit_tick_quality_current_campaign_2026-10-17.py
-"$VENV_X86/bin/ruff" check docs/thesis/audit_tick_quality_current_campaign_2026-10-17.py
+"$VENV_X86/bin/ruff" format --check docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py
+"$VENV_X86/bin/ruff" check docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py
 "$VENV_X86/bin/ruff" format --check .
 "$VENV_X86/bin/ruff" check .
 "$VENV_X86/bin/mypy" .
 "$VENV_MI210/bin/python" -m pytest tests/ -q
-"$VENV_MI210/bin/python" docs/thesis/audit_tick_quality_current_campaign_2026-10-17.py \
+"$VENV_MI210/bin/python" docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py \
   --out "$REPORT"
 echo "P1 tick-integrity/quality audit run complete: $(date --iso-8601=seconds)"

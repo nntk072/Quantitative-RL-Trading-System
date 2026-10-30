@@ -14,7 +14,7 @@ import pandas as pd
 from omegaconf import OmegaConf
 from scripts.research.thesis.evidence.analyze_monthly_trade_expectancy_and_exit_decomposition import (
     ARMS,
-    CAMPAIGN,
+    EXPERIMENT_RUN,
     REANALYSIS,
 )
 
@@ -165,7 +165,7 @@ def _load_training_data(
 ) -> tuple[Any, pd.DataFrame, pd.DataFrame, TickBook, Path, Path, Path]:
     control_arm = ARMS[1]
     run_manifest = next(
-        (root / CAMPAIGN / "runs/attempts").rglob(
+        (root / EXPERIMENT_RUN / "runs/attempts").rglob(
             f"{control_arm}__seed50/attempt1/**/run_manifest.json"
         )
     )
@@ -363,7 +363,7 @@ def run(root: Path, out: Path) -> dict[str, Any]:
     control_monthly.to_csv(out / "p6_session_momentum_monthly_control.csv", index=False)
     control_trades.to_csv(out / "p6_session_momentum_trade_ledger.csv", index=False)
     result = {
-        "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+        "experiment_run_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
         "period": "training partition 2024-12-30 through 2025-12-31; no 2026 bars or ticks",
         "policy_monthly_notes": policy_notes,
         "control": control_metrics,
@@ -440,7 +440,7 @@ def _markdown(result: dict[str, Any], policy_monthly: pd.DataFrame, control: pd.
         "",
         "## Reproducibility",
         "",
-        f"- Campaign fingerprint: `{result['campaign_fingerprint']}`.",
+        f"- Experiment run fingerprint: `{result['experiment_run_fingerprint']}`.",
         f"- Analysis script SHA-256: `{result['analysis_script_sha256']}`.",
         "- Inputs, data hashes, and control diagnostics: `p6_training_dynamics_control.json`.",
         "- Monthly table: `p6_policy_monthly_dynamics.csv` and `p6_session_momentum_monthly_control.csv`.",

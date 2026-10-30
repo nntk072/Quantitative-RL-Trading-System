@@ -309,9 +309,9 @@ def compute_metrics(
     if np.any(curve <= 0):
         raise ValueError("equity_curve values must be positive")
 
-    # Callers may supply end-of-bar valuations without the opening capital.
-    # Preserve an explicitly included opening balance, otherwise count the
-    # first valuation's profit or loss in the return path and drawdown.
+        # Callers may supply end-of-bar valuations without the opening capital.
+        # Preserve an explicitly included opening balance, otherwise count the
+        # first valuation's profit or loss in the return path and drawdown.
     path = curve if curve[0] == initial_balance else np.concatenate(([initial_balance], curve))
     returns = _bar_returns(path)
     mdd = max_drawdown(path)
@@ -345,9 +345,10 @@ def compute_metrics(
         extras=dict(extras or {}),
     )
 
+    # M1 bars per year: kept as the default for the pandas adapter below so the
+    # migrated training runners preserve their historical annualisation.
 
-# M1 bars per year: kept as the default for the pandas adapter below so the
-# migrated training runners preserve their historical annualisation.
+
 LEGACY_M1_PERIODS_PER_YEAR = 252 * 390
 
 

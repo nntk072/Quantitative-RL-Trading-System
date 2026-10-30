@@ -20,17 +20,13 @@ def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="thesis-compute")
-    parser.add_argument(
-        "command", choices=("capacity", "resources", "resume", "continuation", "worker")
-    )
+    parser.add_argument("command", choices=("capacity", "resources", "continuation", "worker"))
     args, rest = parser.parse_known_args()
     command_main: Callable[[], object]
     if args.command == "capacity":
         from compute.slurm.capacity import main as command_main
     elif args.command == "resources":
         from compute.slurm.resources import main as command_main
-    elif args.command == "resume":
-        from compute.slurm.resume import main as command_main
     elif args.command == "continuation":
         from compute.slurm.continuation import main as command_main
     else:

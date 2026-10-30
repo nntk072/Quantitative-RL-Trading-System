@@ -19,8 +19,8 @@ verification policy. It does not own thesis experiment or trading semantics.
 
 - Preserve explicit phase state, bounded retries, and captured verification results.
 - Keep orchestration metadata out of scientific artifacts unless provenance requires it.
-- Focused tests: `tests/test_orchestra/`.
-- CLI registration contract: `tests/test_orchestra/test_cli_composition.py`.
+- Focused tests: `tests/unit/orchestra/`.
+- CLI registration contract: `tests/unit/orchestra/test_cli_composition.py`.
 
 ## Change Map
 
@@ -51,4 +51,4 @@ verification policy. It does not own thesis experiment or trading semantics.
 
 - `orchestra/task_orchestration.py`
 - `orchestra/handoff.py`
-- `tests/test_orchestra/test_handoff.py`
+- `tests/unit/orchestra/test_handoff.py`

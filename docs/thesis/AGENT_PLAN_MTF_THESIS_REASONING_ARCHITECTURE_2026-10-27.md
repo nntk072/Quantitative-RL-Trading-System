@@ -6,7 +6,7 @@
 - Branch: `main`
 - Plan against commit: `c15dbde9ef4ae37f4542819988ebe67ed262cfd1`
 - Baseline commit message: `Separate timeframe entry idea contexts`
-- Preserve the untracked `campaign_worker_dispatch.log`; do not add, delete, truncate, rename, or commit it.
+- Preserve the untracked `experiment_run_worker_dispatch.log`; do not add, delete, truncate, rename, or commit it.
 - Before making changes, read the repository's `AGENTS.md`, relevant `.agents/domain_maps/*`, and local status. Repository instructions override this plan where they are stricter.
 - Do not rewrite unrelated code, do not clean unrelated worktree state, and do not opportunistically refactor modules outside the edit radius.
 
@@ -666,7 +666,7 @@ env:
 
 or a better name consistent with current config conventions.
 
-Do not turn it on globally in existing campaigns.
+Do not turn it on globally in existing experiment runs.
 
 ---
 
@@ -1035,7 +1035,7 @@ agent.arch = mtf_reasoning   # preferred research path
 strategy_actions = true
 ```
 
-The thesis distribution may technically work with another encoder for ablation, but the primary campaign should use the new MTF reasoning encoder.
+The thesis distribution may technically work with another encoder for ablation, but the primary experiment run should use the new MTF reasoning encoder.
 
 Reject incompatible configs early and clearly.
 
@@ -1309,7 +1309,7 @@ With thesis mode off:
 - existing hybrid_v1 tests unchanged;
 - old `MTFEncoder` unchanged;
 - legacy order geometry follows existing path;
-- existing campaign configs parse as before.
+- existing experiment run configs parse as before.
 
 This is essential.
 
@@ -1327,7 +1327,7 @@ Before edits:
 
 1. confirm HEAD is the expected commit or identify newer user changes;
 2. inspect `git status`;
-3. preserve `campaign_worker_dispatch.log`;
+3. preserve `experiment_run_worker_dispatch.log`;
 4. read `AGENTS.md`;
 5. inspect decisioning, entry ideas, stop/target construction, MTF encoder, hybrid policy, semantic policy, checkpoint schema validation, observation-space initialization, and tests;
 6. write a short local implementation map in working notes;
@@ -1498,7 +1498,7 @@ Run a bounded PPO smoke sufficient to prove:
 - multiple valid thesis categories are observed in the data;
 - no invalid thesis is executed.
 
-Do not launch a long 2M/20M scientific campaign merely to test wiring.
+Do not launch a long 2M/20M scientific experiment run merely to test wiring.
 
 If the policy collapses immediately to `NO_TRADE`, diagnose rewards/entropy/mask availability before increasing timesteps.
 
@@ -1633,8 +1633,8 @@ Do not do these as part of this implementation unless a correctness issue forces
 - Do not change execution cost semantics.
 - Do not change train/test dates.
 - Do not retrain legacy checkpoints under silently changed semantics.
-- Do not run a large campaign before semantic and learning smoke gates pass.
-- Do not touch `campaign_worker_dispatch.log`.
+- Do not run a large experiment run before semantic and learning smoke gates pass.
+- Do not touch `experiment_run_worker_dispatch.log`.
 
 ---
 
@@ -1735,7 +1735,7 @@ Primary early diagnostic outcomes:
 - policy entropy;
 - frequency of multiple simultaneously eligible theses.
 
-Only after those are healthy should the campaign be judged on:
+Only after those are healthy should the experiment run be judged on:
 
 - return;
 - PF;
@@ -1783,12 +1783,12 @@ Likely tests:
 
 ```text
 tests/integration/test_thesis.py        # follow actual test layout
-tests/test_features/test_entry_ideas.py
+tests/unit/features/test_entry_ideas.py
 tests/integration/test_action_schema_contract.py
-tests/test_models/test_hybrid_actor.py
-tests/test_models/test_encoders.py
-tests/test_simulation/test_backtest/test_entry_levels.py
-tests/test_simulation/test_backtest/test_target_reference_contract_unittest.py
+tests/unit/models/test_hybrid_actor.py
+tests/unit/models/test_encoders.py
+tests/integration/backtest/test_entry_levels.py
+tests/integration/backtest/test_target_reference_contract.py
 plus focused environment/checkpoint tests
 ```
 
@@ -1846,7 +1846,7 @@ At completion, report:
 - final commit SHA(s);
 - whether pushed;
 - remaining worktree items;
-- explicit confirmation that `campaign_worker_dispatch.log` was preserved.
+- explicit confirmation that `experiment_run_worker_dispatch.log` was preserved.
 
 ## B. Architecture implemented
 

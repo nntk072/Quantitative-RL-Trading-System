@@ -260,7 +260,7 @@ def run_variant_ablation(request: VariantAblationRequest) -> None:
     """Train and score selected variants, writing one JSON report per variant."""
     print(
         "WARNING: this legacy ablation workflow shares one features CSV across variants; "
-        "do not use it as a matched thesis-campaign runner."
+        "do not use it as a matched thesis-experiment-run runner."
     )
     spec = load_experiments(request.experiments)
     defaults = dict(spec.get("defaults", {}))

@@ -94,7 +94,8 @@ def main() -> None:
             # TradingEnv's continuous decoder expects an ndarray action.
             return np.array([_strategy.act(obs)], dtype=np.float32)
 
-        # Baselines use the continuous action contract ([-1, 1] fraction).
+            # Baselines use the continuous action contract ([-1, 1] fraction).
+
         env = TradingEnv(
             bars=test_bars,
             features=test_features,

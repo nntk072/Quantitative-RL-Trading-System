@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail closed if Slurm did not apply a campaign worker's assigned CPU mask."""
+"""Fail closed if Slurm did not apply an experiment run worker's assigned CPU mask."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def main() -> int:
     )
     if actual != expected:
         print(
-            "ERROR: Slurm CPU affinity differs from the disjoint campaign assignment",
+            "ERROR: Slurm CPU affinity differs from the disjoint experiment run assignment",
             file=sys.stderr,
         )
         return 78

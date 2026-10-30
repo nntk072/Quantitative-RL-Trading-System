@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Replay completed campaign checkpoints stochastically and plot equity ensembles.
+"""Replay completed experiment run checkpoints stochastically and plot equity ensembles.
 
 Each replay uses the same explicit seed list across source variants. The seed
 controls sampled policy actions and any seeded execution randomness exposed by
@@ -57,28 +57,28 @@ def _parse_run(value: str) -> tuple[str, Path]:
     return label, path
 
 
-def _campaign_manifest(
-    run_dir: Path, *, allow_failed_source_campaign: bool = False
+def _experiment_run_manifest(
+    run_dir: Path, *, allow_failed_source_experiment_run: bool = False
 ) -> tuple[Path, dict[str, Any]]:
     for parent in (run_dir, *run_dir.parents):
-        candidate = parent / "campaign.json"
+        candidate = parent / "experiment_run.json"
         if candidate.is_file():
             value = json.loads(candidate.read_text(encoding="utf-8"))
             if not isinstance(value, dict):
-                raise ValueError(f"campaign manifest must be an object: {candidate}")
+                raise ValueError(f"experiment run manifest must be an object: {candidate}")
             jobs = value.get("jobs")
             if not isinstance(jobs, list) or not jobs:
-                raise ValueError(f"campaign manifest has no job records: {candidate}")
+                raise ValueError(f"experiment run manifest has no job records: {candidate}")
             unsuccessful = [
                 job for job in jobs if not isinstance(job, dict) or job.get("status") != "succeeded"
             ]
-            if unsuccessful and not allow_failed_source_campaign:
+            if unsuccessful and not allow_failed_source_experiment_run:
                 failed_keys = [
                     str(job.get("key", "unknown")) if isinstance(job, dict) else str(job)
                     for job in unsuccessful
                 ]
                 raise ValueError(
-                    "source campaign is not fully successful; unsuccessful jobs: "
+                    "source experiment run is not fully successful; unsuccessful jobs: "
                     f"{', '.join(failed_keys)}"
                 )
             if unsuccessful:
@@ -95,17 +95,17 @@ def _campaign_manifest(
                         f"failure reasons; rejected: {', '.join(nonterminal)}"
                     )
             return candidate, value
-    raise ValueError(f"could not find a completed campaign.json above {run_dir}")
+    raise ValueError(f"could not find a completed experiment_run.json above {run_dir}")
 
 
 def _source_identity(
-    label: str, run_dir: Path, *, allow_failed_source_campaign: bool = False
+    label: str, run_dir: Path, *, allow_failed_source_experiment_run: bool = False
 ) -> dict[str, Any]:
     run_manifest_path = run_dir / "run_manifest.json"
     if not run_manifest_path.is_file():
         raise FileNotFoundError(f"source run manifest is missing: {run_manifest_path}")
-    campaign_path, campaign = _campaign_manifest(
-        run_dir, allow_failed_source_campaign=allow_failed_source_campaign
+    experiment_run_path, experiment_run = _experiment_run_manifest(
+        run_dir, allow_failed_source_experiment_run=allow_failed_source_experiment_run
     )
     from evaluation.reanalysis.checkpoint import resolve_checkpoint
 
@@ -116,7 +116,7 @@ def _source_identity(
     datasets = manifest.get("datasets")
     if not isinstance(datasets, dict):
         raise ValueError(f"source run manifest lacks dataset identities: {run_manifest_path}")
-    jobs = campaign["jobs"]
+    jobs = experiment_run["jobs"]
     unsuccessful_jobs = [
         {
             "key": job.get("key"),
@@ -133,16 +133,16 @@ def _source_identity(
         "source_run_manifest": str(run_manifest_path),
         "source_run_manifest_sha256": _sha256(run_manifest_path),
         "source_datasets": datasets,
-        "campaign_manifest": str(campaign_path.resolve()),
-        "campaign_manifest_sha256": _sha256(campaign_path),
-        "campaign_fingerprint": campaign.get("fingerprint"),
-        "source_campaign_job_statuses": {
+        "experiment_run_manifest": str(experiment_run_path.resolve()),
+        "experiment_run_manifest_sha256": _sha256(experiment_run_path),
+        "experiment_run_fingerprint": experiment_run.get("fingerprint"),
+        "source_experiment_run_job_statuses": {
             str(job.get("key", "unknown")): str(job.get("status", "unknown"))
             for job in jobs
             if isinstance(job, dict)
         },
-        "source_campaign_unsuccessful_jobs": unsuccessful_jobs,
-        "source_campaign_diagnostic_only": bool(unsuccessful_jobs),
+        "source_experiment_run_unsuccessful_jobs": unsuccessful_jobs,
+        "source_experiment_run_diagnostic_only": bool(unsuccessful_jobs),
         "checkpoint": str(checkpoint),
         "checkpoint_sha256": _sha256(checkpoint),
     }
@@ -553,7 +553,7 @@ def _parse_args() -> argparse.Namespace:
         action="append",
         required=True,
         metavar="LABEL=PATH",
-        help="Completed campaign run; repeat once per variant.",
+        help="Completed experiment run; repeat once per variant.",
     )
     parser.add_argument(
         "--output",
@@ -574,11 +574,11 @@ def _parse_args() -> argparse.Namespace:
         help="Acknowledge that the historical test split has already been inspected.",
     )
     parser.add_argument(
-        "--allow-failed-source-campaign",
+        "--allow-failed-source-experiment-run",
         action="store_true",
         help=(
             "Allow only terminal failed source jobs with recorded failure reasons; resulting "
-            "plots are diagnostic-only and cannot establish campaign acceptance."
+            "plots are diagnostic-only and cannot establish experiment run acceptance."
         ),
     )
     return parser.parse_args()
@@ -597,7 +597,7 @@ def main() -> int:
 
     sources = [
         _source_identity(
-            label, path, allow_failed_source_campaign=args.allow_failed_source_campaign
+            label, path, allow_failed_source_experiment_run=args.allow_failed_source_experiment_run
         )
         for label, path in runs
     ]
@@ -635,13 +635,13 @@ def main() -> int:
             "median_definition": "pointwise median across replay equity values; not a replay",
             "band_definition": "pointwise 25th to 75th percentile across replay equity values",
             "historical_holdout_inspected": True,
-            "source_campaign_acceptance": (
+            "source_experiment_run_acceptance": (
                 "failed; diagnostic-only stochastic replay"
-                if any(source["source_campaign_diagnostic_only"] for source in sources)
+                if any(source["source_experiment_run_diagnostic_only"] for source in sources)
                 else "succeeded"
             ),
             "candidate_ranking_permitted": not any(
-                source["source_campaign_diagnostic_only"] for source in sources
+                source["source_experiment_run_diagnostic_only"] for source in sources
             ),
             "replays": [],
             "summaries": [],
@@ -726,7 +726,7 @@ def main() -> int:
         "",
         f"Replay seeds: {', '.join(str(seed) for seed in args.seeds)}.",
         "",
-        f"Source campaign acceptance: {manifest['source_campaign_acceptance']}.",
+        f"Source experiment run acceptance: {manifest['source_experiment_run_acceptance']}.",
         "",
         (
             "These replays change sampled policy actions. They do not retrain the policy or "
@@ -739,12 +739,12 @@ def main() -> int:
     for label in labels:
         source = next(source for source in sources if source["label"] == label)
         paired_figure = manifest["paired_training_testing_equity"][label]
-        if source["source_campaign_diagnostic_only"]:
+        if source["source_experiment_run_diagnostic_only"]:
             report_lines.extend(
                 [
                     f"## {label}",
                     "",
-                    "**Diagnostic only:** the source campaign failed its training-survival gate. These plots describe stochastic replay variability and do not convert the campaign into an accepted result.",
+                    "**Diagnostic only:** the source experiment run failed its training-survival gate. These plots describe stochastic replay variability and do not convert the experiment run into an accepted result.",
                     "",
                 ]
             )

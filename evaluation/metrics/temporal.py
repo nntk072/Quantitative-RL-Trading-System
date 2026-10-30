@@ -28,7 +28,7 @@ def _entry_exit_pairs(
     records = _as_records(trade_log)
     if not records:
         return []
-    # Prefer chronological bar order when present (matches engine append order).
+        # Prefer chronological bar order when present (matches engine append order).
     if any("bar" in r and r.get("bar") is not None for r in records):
         records = sorted(
             records,

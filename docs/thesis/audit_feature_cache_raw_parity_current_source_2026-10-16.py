@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare current-source raw feature builds with the campaign's existing caches.
+"""Compare current-source raw feature builds with the experiment run's existing caches.
 
 This audit is read-only with respect to caches: raw features are built without a
 cache path, while existing parquet files and hash sidecars are only read.
@@ -35,10 +35,10 @@ from quant_rl.features.build import (
 from quant_rl.train.variant_resolver import resolve_variant
 
 ROOT = Path(__file__).resolve().parents[2]
-CAMPAIGN_PATH = (
+EXPERIMENT_RUN_PATH = (
     ROOT
-    / "outputs/gpu_campaigns/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
-    / "campaign.json"
+    / "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
+    / "experiment_run.json"
 )
 VARIANTS = (
     "ladder_a0_flat",
@@ -147,7 +147,7 @@ def source_paths() -> list[Path]:
 
 
 def main() -> int:
-    campaign = json.loads(CAMPAIGN_PATH.read_text(encoding="utf-8"))
+    experiment_run = json.loads(EXPERIMENT_RUN_PATH.read_text(encoding="utf-8"))
     git_head_start = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
@@ -239,9 +239,9 @@ def main() -> int:
         report = {
             "audit": "current_source_raw_feature_to_cache_parity",
             "repository_head_start": git_head_start,
-            "campaign_id": campaign.get("campaign_id"),
-            "campaign_fingerprint": campaign.get("fingerprint"),
-            "campaign_source_git_sha": campaign.get("git_sha"),
+            "experiment_run_id": experiment_run.get("experiment_run_id"),
+            "experiment_run_fingerprint": experiment_run.get("fingerprint"),
+            "experiment_run_source_git_sha": experiment_run.get("git_sha"),
             "slurm_job_id": os.getenv("SLURM_JOB_ID"),
             "started_at": started_at,
             "updated_at": datetime.now().astimezone().isoformat(),

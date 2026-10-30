@@ -93,8 +93,8 @@ def decode_tp_selections(
     if s1 is None and s2 is None and s3 is None:
         return None, None, 0
 
-    # 2. Maximum-valid-subset repair & TP3 requirement:
-    # If TP3 is disabled, promote the furthest valid candidate to TP3
+        # 2. Maximum-valid-subset repair & TP3 requirement:
+        # If TP3 is disabled, promote the furthest valid candidate to TP3
     if s3 is None:
         candidates = [(slot, val) for slot, val in [(1, s1), (2, s2)] if val is not None]
         if candidates:
@@ -112,7 +112,7 @@ def decode_tp_selections(
                 if s1 is not None and s1 >= s3:
                     s1 = None
 
-    # 3. Remove duplicates: disable nearer slot
+                    # 3. Remove duplicates: disable nearer slot
     if s1 is not None and s2 is not None and s1 == s2:
         s1 = None
     if s2 is not None and s3 is not None and s2 == s3:
@@ -120,7 +120,7 @@ def decode_tp_selections(
     if s1 is not None and s3 is not None and s1 == s3:
         s1 = None
 
-    # 4. Enforce monotonic index ordering: idx(tp1) < idx(tp2) < idx(tp3)
+        # 4. Enforce monotonic index ordering: idx(tp1) < idx(tp2) < idx(tp3)
     if s1 is not None and s2 is not None and s1 >= s2:
         s1 = None
     if s2 is not None and s3 is not None and s2 >= s3:
@@ -128,7 +128,7 @@ def decode_tp_selections(
     if s1 is not None and s3 is not None and s1 >= s3:
         s1 = None
 
-    # 5. Ensure TP3 remains active
+        # 5. Ensure TP3 remains active
     if s3 is None:
         s3 = 0
 
@@ -244,8 +244,8 @@ def validate_tp_levels(
                 if raise_exc:
                     raise ValueError(f"Short TP {p} must be < SL {sl_price}")
                 return False
-        # In slot order (TP1, TP2, TP3), TP1 is closest to entry (highest),
-        # TP3 is furthest (lowest). So active[0] > active[1] > active[2].
+                # In slot order (TP1, TP2, TP3), TP1 is closest to entry (highest),
+                # TP3 is furthest (lowest). So active[0] > active[1] > active[2].
         for i in range(len(active) - 1):
             if active[i] <= active[i + 1]:
                 if raise_exc:

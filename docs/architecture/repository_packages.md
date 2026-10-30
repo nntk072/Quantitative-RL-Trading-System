@@ -28,7 +28,7 @@ compute and orchestra provide execution and engineering interfaces
 | `learning/` | Paradigm-neutral fit contracts and supervised/RL learner backends |
 | `training/` | Training orchestration, callbacks, run setup, and training reports |
 | `evaluation/` | Rollouts, metrics, reanalysis, reports, and plots |
-| `experiments/` | Variant resolution, campaign lifecycle, and experiment orchestration |
+| `experiments/` | Variant resolution, experiment run lifecycle, and experiment orchestration |
 | `live/`, `integrations/` | Runtime strategy and external broker/platform adapters |
 | `compute/` | Resource discovery and compute-side execution helpers |
 | `orchestra/` | Multi-model engineering task pipeline |
@@ -49,7 +49,7 @@ uv run thesis-train train --mvp --seed 42
 uv run thesis-train baselines
 uv run thesis-train backtest
 uv run thesis-evaluate reanalyze --help
-uv run thesis-campaign status --help
+uv run thesis-experiment-run status --help
 uv run pytest tests/architecture -q
 ```
 

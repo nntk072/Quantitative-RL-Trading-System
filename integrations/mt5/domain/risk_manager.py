@@ -152,19 +152,19 @@ class RiskManager:
                 logger.error(f"Symbol {symbol} not available")
                 return 0.0
 
-            # Get symbol info
+                # Get symbol info
             symbol_info = mt5.symbol_info(symbol)
             if symbol_info is None:
                 logger.error(f"Failed to get symbol info for {symbol}")
                 return 0.0
 
-            # Get current price
+                # Get current price
             tick = mt5.symbol_info_tick(symbol)
             if tick is None:
                 logger.error(f"Failed to get tick for {symbol}")
                 return 0.0
 
-            # Calculate risk amount if not provided
+                # Calculate risk amount if not provided
             if risk_amount is None:
                 balance = self.get_account_balance()
                 risk_amount = balance * self.risk_per_symbol
@@ -178,8 +178,8 @@ class RiskManager:
                 logger.warning(f"Invalid risk amount or volatility multiplier for {symbol}")
                 return 0.0
 
-            # Adjust risk amount by volatility multiplier and use the same
-            # stop-distance conversion as order placement and risk checking.
+                # Adjust risk amount by volatility multiplier and use the same
+                # stop-distance conversion as order placement and risk checking.
             adjusted_risk = float(risk_amount) / float(volatility_multiplier)
             price_diff, tick_size, tick_value = self._symbol_risk_units(symbol_info, stop_loss_pips)
 
@@ -200,8 +200,8 @@ class RiskManager:
                 logger.warning(f"Risk budget cannot support minimum volume for {symbol}")
                 return 0.0
 
-            # Round down so broker volume quantization cannot increase planned
-            # stop risk beyond the configured cash budget.
+                # Round down so broker volume quantization cannot increase planned
+                # stop risk beyond the configured cash budget.
             position_size = min(max_lot, math.floor(raw_size / lot_step) * lot_step)
             if position_size < min_lot:
                 return 0.0
@@ -354,7 +354,7 @@ class RiskManager:
             ):
                 return False, "Configured per-symbol or aggregate risk limit is invalid"
 
-            # Calculate risk for this position
+                # Calculate risk for this position
             symbol_info = mt5.symbol_info(symbol)
             if symbol_info is None:
                 return False, f"Symbol {symbol} not found"
@@ -370,7 +370,7 @@ class RiskManager:
                     f"Position risk ({position_risk_percent:.2%}) exceeds per-symbol limit ({self.risk_per_symbol:.2%})",
                 )
 
-            # Check total risk across all positions
+                # Check total risk across all positions
             exposure = self.get_total_exposure()
             if exposure.get("query_failed") or exposure.get("risk_unknown_positions", 0):
                 return False, "Existing position stop risk is unknown; refusing additional exposure"
@@ -407,8 +407,8 @@ class RiskManager:
         if base_atr == 0:
             base_atr = 1.0
 
-        # If ATR is higher than base, reduce position size
-        # If ATR is lower than base, increase position size (up to 2x)
+            # If ATR is higher than base, reduce position size
+            # If ATR is lower than base, increase position size (up to 2x)
         multiplier = base_atr / max(atr_percentage, 0.1)
 
         # Clamp between 0.5 and 2.0

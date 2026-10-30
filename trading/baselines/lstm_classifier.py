@@ -65,9 +65,9 @@ def build_sweep_dataset(
             "with sufficient bars (min_bars_per_session=50 default)."
         )
 
-    # Suppress "All-NaN slice encountered" RuntimeWarning from numpy when
-    # some rows lack valid session levels (expected for early bars before
-    # first session completes). We handle per-row validity in the loop below.
+        # Suppress "All-NaN slice encountered" RuntimeWarning from numpy when
+        # some rows lack valid session levels (expected for early bars before
+        # first session completes). We handle per-row validity in the loop below.
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "All-NaN slice encountered", RuntimeWarning)
         highs = np.nanmax(np.column_stack([asian_high, london_high]), axis=1)

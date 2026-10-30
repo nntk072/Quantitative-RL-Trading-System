@@ -41,7 +41,7 @@ from trading.strategies import (  # noqa: E402
 from training.configuration.strategy_overlays import merge_strategy_config  # noqa: E402
 from training.configuration.variant_resolution import resolve_variant  # noqa: E402
 
-VARIANT_FILE = ROOT / "config/campaigns/variant_list.txt"
+VARIANT_FILE = ROOT / "config/experiment_runs/variant_list.txt"
 OUT = ROOT / "outputs/data_refresh_20261017/replacement_fold_fit.json"
 STRATEGIES = {
     "baseline": BaselineStrategy,

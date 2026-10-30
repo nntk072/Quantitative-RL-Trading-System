@@ -175,8 +175,8 @@ class CumulativeReturnPredictor:
                 target_h = cum_returns[:, h:] - cum_returns[:, :-h]
                 targets.append(target_h)
 
-        # Stack to get (batch_size, seq_len - horizon, horizon)
-        # Pad if needed
+                # Stack to get (batch_size, seq_len - horizon, horizon)
+                # Pad if needed
         min_len = min(t.shape[1] for t in targets)
         padded_targets = [t[:, :min_len] for t in targets]
         result = torch.stack(padded_targets, dim=-1)
@@ -316,7 +316,7 @@ class JointEntropyLoss:
         else:
             entropy_bonus = torch.zeros(rl_loss.shape[0], device=rl_loss.device)
 
-        # Combined loss (note: we add because entropy_bonus is already positive)
+            # Combined loss (note: we add because entropy_bonus is already positive)
         total_loss = rl_loss - entropy_bonus
 
         return total_loss

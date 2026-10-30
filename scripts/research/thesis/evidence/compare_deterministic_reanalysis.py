@@ -182,9 +182,9 @@ def _source_manifest_errors(
             ):
                 errors.append(f"{label} dataset hash differs from original: {name}")
 
-    # The numerical-report verifier applies these same compatibility gates.
-    # Repeatability is meaningless if both replays silently used a different
-    # action, observation, stop, or sequence-feature contract than training.
+                # The numerical-report verifier applies these same compatibility gates.
+                # Repeatability is meaningless if both replays silently used a different
+                # action, observation, stop, or sequence-feature contract than training.
     for schema_key in ("action_schema", "observation_schema"):
         original_schema = source_manifest.get(schema_key)
         replay_schema = reanalysis_manifest.get(schema_key)

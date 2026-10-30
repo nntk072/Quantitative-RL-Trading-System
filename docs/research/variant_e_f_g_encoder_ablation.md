@@ -52,8 +52,8 @@ and stored-action PPO likelihood semantics remain unchanged.
   widths to exercise timeframe-specific adapters.
 - Do not reuse a D checkpoint under E/F/G. Each encoder has a distinct
   checkpoint/config lineage and must fail closed on architecture mismatch.
-- Do not edit C/D semantics, caches, campaign evidence, checkpoints, or
-  `campaign_worker_dispatch.log` as part of the encoder work.
+- Do not edit C/D semantics, caches, experiment run evidence, checkpoints, or
+  `experiment_run_worker_dispatch.log` as part of the encoder work.
 
 Attempt41 hardware: one NVIDIA GH200 144 GiB HBM3e, one gpuarm1 allocation with
 64 CPUs and 512 GiB host RAM. The same GPU and node were used for C and D.
@@ -82,7 +82,7 @@ Attempt41 hardware: one NVIDIA GH200 144 GiB HBM3e, one gpuarm1 allocation with
 6. Report actual measurements, variability, resource headroom, bottlenecks,
    economic diagnostics when available, and a per-variant GO/NO-GO. Any 2M
    benchmark remains gated on correctness, runtime feasibility, repository
-   campaign rules, and explicit user GO.
+   experiment run rules, and explicit user GO.
 
 ## Work status
 
@@ -91,7 +91,7 @@ Attempt41 hardware: one NVIDIA GH200 144 GiB HBM3e, one gpuarm1 allocation with
   `44ec01129c0276abdce6a228f8bd20b693d7f721`, newer than the attached reference
   SHA. This handoff follow-up records the final readiness gaps and trace check.
   The active C/D throughput diagnostic is separate and must be preserved. The
-  untracked `campaign_worker_dispatch.log` is user-owned and excluded from this
+  untracked `experiment_run_worker_dispatch.log` is user-owned and excluded from this
   work.
 - Existing D implementation: `MTFReasoningEncoder` reuses the nine independent
   `_CausalTCN` branches, one four-head Transformer layer, masked pooling and the
@@ -105,7 +105,7 @@ Attempt41 hardware: one NVIDIA GH200 144 GiB HBM3e, one gpuarm1 allocation with
   They are 20,480-step warmed diagnostic probes, not policy-quality training.
   Results are recorded in scratch under
   `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt41/`. No 2M E/F/G
-  campaign has started.
+  experiment run has started.
 
 ### C/D context probe: warmed PPO core
 
@@ -400,7 +400,7 @@ entry-fill fixtures. The dashboard
 timing and callback-inclusive runtime estimate gates are also closed with the
 measurements above. No 2M trained-policy evidence exists: Stage B remains
 gated because D fails the substantial-margin single-GH200 runtime check, and
-the plan requires explicit user GO before any 2M E/F/G campaign.
+the plan requires explicit user GO before any 2M E/F/G experiment run.
 
 The timer harness prepared each 2M run configuration and model to construct the
 production-equivalent evaluation provider and dashboard inputs, then directly

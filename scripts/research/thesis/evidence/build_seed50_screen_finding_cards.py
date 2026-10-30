@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Package summary-derived finding cards for the unrecoverable seed-50 screen.
 
-These cards preserve the campaign summary and dispositions. They are not
+These cards preserve the experiment run summary and dispositions. They are not
 canonical numerical report packs and must not be used for variant selection.
 """
 
@@ -18,14 +18,14 @@ from typing import Any
 from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
-CAMPAIGN_DIR = (
-    ROOT / "outputs/gpu_campaigns/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
+EXPERIMENT_RUN_DIR = (
+    ROOT / "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
 )
-SUMMARY_PATH = CAMPAIGN_DIR / "reports/campaign_results_summary_v2.json"
+SUMMARY_PATH = EXPERIMENT_RUN_DIR / "reports/experiment_run_results_summary_v2.json"
 RECOVERABILITY_PATH = (
     ROOT / "docs/thesis/evidence/p3_seed50_report_pack_recoverability_20261018.json"
 )
-DEFAULT_OUTPUT = CAMPAIGN_DIR / "reports/findings/seed50_run_cards_20261018"
+DEFAULT_OUTPUT = EXPERIMENT_RUN_DIR / "reports/findings/seed50_run_cards_20261018"
 EXPECTED_FINGERPRINT = "91d2f05c4c13e67753a47b88a1c900f4887ced66dad51980a018eb09465dd10e"
 EXPECTED_STATUS_COUNTS = {"failed": 4, "interrupted": 3, "succeeded": 11}
 
@@ -54,28 +54,32 @@ def read_object(path: Path) -> dict[str, Any]:
 
 
 def validate_inputs(summary: dict[str, Any], recovery: dict[str, Any]) -> None:
-    if summary.get("campaign_fingerprint") != EXPECTED_FINGERPRINT:
-        raise ValueError("campaign fingerprint does not match the reconciled seed-50 screen")
+    if summary.get("experiment_run_fingerprint") != EXPECTED_FINGERPRINT:
+        raise ValueError("experiment run fingerprint does not match the reconciled seed-50 screen")
     if summary.get("seed") != 50 or summary.get("n_envs") != 64:
-        raise ValueError("campaign seed or environment count differs from the recorded screen")
+        raise ValueError(
+            "experiment run seed or environment count differs from the recorded screen"
+        )
     if summary.get("requested_steps_per_variant") != 20_000_000:
-        raise ValueError("campaign budget differs from the recorded screen")
+        raise ValueError("experiment run budget differs from the recorded screen")
     jobs = summary.get("jobs")
     if not isinstance(jobs, list) or len(jobs) != 18:
-        raise ValueError("expected all 18 campaign run records")
+        raise ValueError("expected all 18 experiment run records")
     keys = [job.get("run_key") for job in jobs if isinstance(job, dict)]
     if len(keys) != 18 or len(set(keys)) != 18 or any(not isinstance(key, str) for key in keys):
-        raise ValueError("campaign run keys must be 18 unique strings")
+        raise ValueError("experiment run keys must be 18 unique strings")
     actual_status_counts = Counter(str(job.get("controller_status")) for job in jobs)
     if dict(actual_status_counts) != EXPECTED_STATUS_COUNTS:
         raise ValueError(f"unexpected controller status counts: {dict(actual_status_counts)}")
     if recovery.get("schema") != "aalto.seed50_screen_report_recoverability.v1":
         raise ValueError("unsupported report-pack recoverability report")
     if (
-        recovery.get("inputs", {}).get("source_campaign_fingerprint")
+        recovery.get("inputs", {}).get("source_experiment_run_fingerprint")
         != "3474621efd6a1481bd2a20bce0cfd2c0b69969df1849c6cd738d19dc5bb4ba34"
     ):
-        raise ValueError("recoverability report does not identify the source campaign lineage")
+        raise ValueError(
+            "recoverability report does not identify the source experiment run lineage"
+        )
     disposition = recovery.get("checkpoint_recoverability", {}).get("disposition", "")
     if "unavailable" not in disposition:
         raise ValueError("recoverability report does not establish unavailable report packs")
@@ -107,7 +111,7 @@ def _fmt(value: Any, digits: int = 3) -> str:
 
 def _metrics_table(label: str, metrics: Any) -> list[str]:
     if not isinstance(metrics, dict):
-        return [f"{label}: unavailable in the retained campaign summary."]
+        return [f"{label}: unavailable in the retained experiment run summary."]
     return [
         f"- **{label}:** total PnL `{_fmt(metrics.get('total_pnl'), 2)}` USD; "
         f"return `{_fmt(metrics.get('total_return_pct'), 4)}%`; "
@@ -149,13 +153,13 @@ def render_card(
         "",
         f"**Status:** `{status}` — summary-derived, exploratory only; raw report pack unavailable.",
         "**Evidence role:** one-seed screen reconciliation and disposition.",
-        "**Campaign:** `ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016`",
+        "**Experiment run:** `ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016`",
         f"**Run key:** `{run_key}`",
-        f"**Campaign fingerprint:** `{EXPECTED_FINGERPRINT}`",
+        f"**Experiment run fingerprint:** `{EXPECTED_FINGERPRINT}`",
         "",
         "## Finding",
         "",
-        f"The retained schema-v2 campaign summary reports controller status "
+        f"The retained schema-v2 experiment run summary reports controller status "
         f"`{job.get('controller_status', 'unknown')}`, exit code `{job.get('exit_code', 'unknown')}`, "
         f"and train-survival gate {gate_text}. Requested budget was 20,000,000 PPO steps; "
         "completed steps cannot be verified from the retained summary. The recoverability "
@@ -164,7 +168,7 @@ def render_card(
         f"{job.get('failure_reason') or 'no failure reason recorded'}.",
         "",
         f"**Training exposure record:** {exposure} This is episode telemetry reported by the "
-        "campaign summary, not evidence of successful training-budget completion.",
+        "experiment run summary, not evidence of successful training-budget completion.",
         "",
         "## Summary-reported metrics (not canonical numerical reports)",
         "",
@@ -175,12 +179,12 @@ def render_card(
         *_metrics_table("Report-only test replay", job.get("test_metrics_report_only")),
         "",
         "The test interval was previously inspected and is exploratory/report-only. These "
-        "numbers are copied from the retained campaign summary; raw equity/trade/position "
+        "numbers are copied from the retained experiment run summary; raw equity/trade/position "
         "packages are unavailable for canonical reconstruction or independent replay.",
         "",
         "## Evidence and provenance",
         "",
-        f"- Campaign summary: `outputs/gpu_campaigns/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016/reports/campaign_results_summary_v2.json` "
+        f"- Experiment run summary: `outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016/reports/experiment_run_results_summary_v2.json` "
         f"(SHA-256 `{summary_sha256}`).",
         f"- Report-pack recoverability audit: `{recovery_path}` (SHA-256 `{recovery_sha256}`); "
         "its scope is this checkout's `outputs/` tree, not external backups.",
@@ -223,15 +227,18 @@ def build_package(
     recovery_inputs = recovery.get("inputs", {})
     if recovery_inputs.get("summary_sha256") != summary_sha256:
         raise ValueError("recoverability audit summary hash does not match the input summary")
-    campaign_path_text = recovery_inputs.get("campaign_path")
-    campaign_sha256 = recovery_inputs.get("campaign_sha256")
-    if not isinstance(campaign_path_text, str) or not isinstance(campaign_sha256, str):
-        raise ValueError("recoverability audit is missing campaign identity hashes")
-    campaign_path = Path(campaign_path_text)
-    if not campaign_path.is_absolute():
-        campaign_path = ROOT / campaign_path
-    if not campaign_path.is_file() or sha256_file(campaign_path) != campaign_sha256:
-        raise ValueError("campaign manifest does not match the recoverability audit hash")
+    experiment_run_path_text = recovery_inputs.get("experiment_run_path")
+    experiment_run_sha256 = recovery_inputs.get("experiment_run_sha256")
+    if not isinstance(experiment_run_path_text, str) or not isinstance(experiment_run_sha256, str):
+        raise ValueError("recoverability audit is missing experiment run identity hashes")
+    experiment_run_path = Path(experiment_run_path_text)
+    if not experiment_run_path.is_absolute():
+        experiment_run_path = ROOT / experiment_run_path
+    if (
+        not experiment_run_path.is_file()
+        or sha256_file(experiment_run_path) != experiment_run_sha256
+    ):
+        raise ValueError("experiment run manifest does not match the recoverability audit hash")
     generator_sha256 = sha256_file(Path(__file__).resolve())
     recovery_relpath = display_path(recoverability_path)
 
@@ -276,8 +283,8 @@ def build_package(
         "for selection. The P3 recoverability audit searched this checkout's `outputs/` tree; "
         "external backups were not searched.",
         "",
-        f"Campaign fingerprint: `{EXPECTED_FINGERPRINT}`.",
-        f"Campaign summary SHA-256: `{summary_sha256}`.",
+        f"Experiment run fingerprint: `{EXPECTED_FINGERPRINT}`.",
+        f"Experiment run summary SHA-256: `{summary_sha256}`.",
         f"Recoverability audit SHA-256: `{recovery_sha256}`.",
         f"Generator SHA-256: `{generator_sha256}`.",
         f"Status counts: `{json.dumps(status_counts, sort_keys=True)}`.",
@@ -302,10 +309,10 @@ def build_package(
         "schema": "aalto.seed50_screen_finding_cards.v1",
         "created_at_utc": created_at_utc or datetime.now(UTC).isoformat(),
         "evidence_role": "summary_derived_exploratory_reconciliation_not_canonical_reports",
-        "campaign_fingerprint": EXPECTED_FINGERPRINT,
-        "campaign_manifest": {
-            "path": display_path(campaign_path),
-            "sha256": campaign_sha256,
+        "experiment_run_fingerprint": EXPECTED_FINGERPRINT,
+        "experiment_run_manifest": {
+            "path": display_path(experiment_run_path),
+            "sha256": experiment_run_sha256,
         },
         "source_summary": {
             "path": display_path(summary_path),

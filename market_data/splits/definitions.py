@@ -59,7 +59,7 @@ def split_train_test(
         else:
             test_start_ts = test_start_ts.tz_convert(tz)
 
-    # Include the full last training day (end of 2025-12-31)
+            # Include the full last training day (end of 2025-12-31)
     train_end_ts = train_end_ts + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
 
     train_mask = b.index <= train_end_ts

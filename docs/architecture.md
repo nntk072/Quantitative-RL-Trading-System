@@ -39,7 +39,7 @@ flowchart LR
 
 Training and evaluation use the simulation contracts and broker-neutral
 trading domain. The MT5 integration is a separate live boundary; it does not
-own training or simulation behavior. Campaign orchestration coordinates
+own training or simulation behavior. Experiment run orchestration coordinates
 training, evaluation, provenance, and compute resources without replacing
 their domain implementations.
 
@@ -57,7 +57,7 @@ their domain implementations.
 | `decisioning/` | Versioned observation and semantic action contracts and model adapters | `decisioning/contracts.py`, `decisioning/observations.py` |
 | `training/` | Training setup, execution, callbacks, and run reporting | `training/cli.py`, `training/runner/` |
 | `evaluation/` | Rollouts, metrics, reanalysis, provenance validation, reporting, and plots | `evaluation/cli.py`, `evaluation/rollout/`, `evaluation/reanalysis/` |
-| `experiments/` | Variant and campaign definitions, orchestration, lineage, and status | `experiments/cli.py`, `experiments/campaigns/campaign_execution.py`, `experiments/variants/` |
+| `experiments/` | Variant and experiment run definitions, orchestration, lineage, and status | `experiments/cli.py`, `experiments/runs/execution.py`, `experiments/variants/` |
 | `artifacts/` | Shared artifact identity, validated manifests, layout, atomic writes, retention, and baseline promotion | `artifacts/` |
 | `compute/` | Device/environment capabilities and Slurm resource, worker, and allocation-continuation mechanics | `compute/cli.py`, `compute/slurm/` |
 | `live/` | Broker-neutral live and paper strategy runtime | `live/runtime/strategy.py` |
@@ -70,15 +70,12 @@ simulation, and learning into runs. `evaluation/` reloads saved runs through
 the supported rollout/reporting interfaces. `experiments/` coordinates
 multiple runs and records their lineage.
 
-Campaign workflow ownership is in `experiments/campaigns/campaign_execution.py`;
-the former `execution.py` entry point remains a compatibility adapter for
-existing launchers. Campaign cache-failure recovery is owned by
-`experiments/campaigns/cache_failure_recovery.py`. Generic worker resource
-sampling and dispatch mechanics are owned by `compute/slurm/`; the historical
-`experiments/campaigns/resources.py` path forwards to the compute owner. The
-`compute/slurm/resume.py` command/API adapter forwards recovery requests to the
-experiment owner without creating a static package dependency in the reverse
-direction. Campaign artifact locations and atomic writes use `artifacts/`.
+Experiment run lifecycle ownership is in `experiments/runs/execution.py`, and
+cache-failure recovery is in `experiments/runs/cache_failure_recovery.py`.
+Slurm worker resource sampling and dispatch are owned by `compute/slurm/`.
+The `thesis-experiment-run recover-cache` command exposes recovery through its
+owning package. Experiment run artifact locations and atomic writes use
+`artifacts/`.
 
 The `integrations.mt5` package exposes concrete adapters lazily, so importing
 the package surface does not require the MetaTrader5 vendor module. Live RL
@@ -126,7 +123,7 @@ The supported installed command surfaces are registered in `pyproject.toml`:
 | `thesis-data` | `market_data.cli:main` | Dataset preparation and inspection |
 | `thesis-train` | `training.cli:main` | Training workflows |
 | `thesis-evaluate` | `evaluation.cli:main` | Evaluation workflows |
-| `thesis-campaign` | `experiments.cli:main` | Variant and campaign operations |
+| `thesis-experiment-run` | `experiments.cli:main` | Variant and experiment run operations |
 | `thesis-compute` | `compute.cli:main` | Compute capability and scheduler workflows |
 | `orchestra` | `orchestra.cli:main` | Repository task and verification orchestration |
 
@@ -147,7 +144,7 @@ the owning domain package.
   runtime identities in evidence used to support a result.
 - Keep simulation/training execution and risk semantics aligned. Keep
   broker-specific behavior inside `integrations/`.
-- Follow `.agents/rules/triton-slurm.md` for allocations, campaign continuity,
+- Follow `.agents/rules/triton-slurm.md` for allocations, experiment run continuity,
   and worker dispatch. Never cancel a job with `scancel`.
 
 These are navigation-level summaries. The source implementation, resolved

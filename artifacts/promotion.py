@@ -115,8 +115,8 @@ def promote_to_baseline(
         else:
             shutil.copy2(src, payload)
 
-        # Validate the staged copy that will actually be published. This keeps
-        # a concurrent source update from changing the baseline after approval.
+            # Validate the staged copy that will actually be published. This keeps
+            # a concurrent source update from changing the baseline after approval.
         payload_sha256 = _payload_sha256(payload)
         validation = validate(payload)
         if not isinstance(validation, BaselineValidation):

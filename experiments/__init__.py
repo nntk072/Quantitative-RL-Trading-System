@@ -1,1 +1,1 @@
-"""Experiment variants, campaigns, and research orchestration."""
+"""Experiment variants, experiment runs, and research orchestration."""

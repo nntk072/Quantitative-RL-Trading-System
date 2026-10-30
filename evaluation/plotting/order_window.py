@@ -162,9 +162,9 @@ def _extract_window(
         i_s += 1
     while i_e > i_s and pd.Timestamp(idx[i_e]) >= day_end:
         i_e -= 1
-    # Trailing context is measured in tradable bars, so cap it at the session
-    # close. ``max(..., i_c)`` keeps the exit itself inside the window when the
-    # trade runs past the session (overnight hold).
+        # Trailing context is measured in tradable bars, so cap it at the session
+        # close. ``max(..., i_c)`` keeps the exit itself inside the window when the
+        # trade runs past the session (overnight hold).
     exit_pos = max(i_o, i_c)
     session_end = (
         int(session_end_positions[exit_pos])

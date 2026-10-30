@@ -54,9 +54,9 @@ class _DelayedSignalStrategy(bt.Strategy):
         if len(self) < 3:
             return
 
-        # The custom engine observes action[i - 1] on bar i and fills at
-        # bar i + 1 close. This delayed signal reaches the same close in
-        # Backtrader with cheat-on-close enabled.
+            # The custom engine observes action[i - 1] on bar i and fills at
+            # bar i + 1 close. This delayed signal reaches the same close in
+            # Backtrader with cheat-on-close enabled.
         action = int(self.data.signal[-2])
         if action == 2 and self.position:
             self.order = self.close()
@@ -94,7 +94,7 @@ def load_data(data_path: str | Path) -> pd.DataFrame:
     if df.empty:
         raise ValueError(f"No data loaded from {data_path}")
 
-    # Ensure we have the required columns
+        # Ensure we have the required columns
     required_cols = ["open", "high", "low", "close", "volume"]
     for col in required_cols:
         if col not in df.columns:
@@ -117,8 +117,8 @@ def run_backtrader_engine(
     action_series = _crossover_actions(df["close"]) if actions is None else actions
     if not action_series.index.equals(df.index):
         raise ValueError("Cross-validation actions must align exactly with bar timestamps")
-    # Duplicate the final quote so a final liquidation submitted at the last
-    # real close gets one broker cycle to execute at that same close.
+        # Duplicate the final quote so a final liquidation submitted at the last
+        # real close gets one broker cycle to execute at that same close.
     final_quote = df.iloc[[-1]].assign(signal=0)
     feed_bars = pd.concat(
         [df.assign(signal=action_series), final_quote, final_quote], ignore_index=False
@@ -318,7 +318,7 @@ def main() -> None:
                 json.dump(comparison, f, indent=2)
             log.info(f"Report saved to: {args.json_output}")
 
-        # Exit with appropriate code
+            # Exit with appropriate code
         if comparison["agreement"]["overall_pass"]:
             sys.exit(0)
         else:

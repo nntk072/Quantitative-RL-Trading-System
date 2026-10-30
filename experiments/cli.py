@@ -1,4 +1,4 @@
-"""Stable experiment and campaign command surface."""
+"""Stable experiment and experiment run command surface."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ def parse_variant_ablation_args(
     from experiments.variants.variant_ablation_runner import VariantAblationRequest
 
     parser = argparse.ArgumentParser(
-        prog="thesis-campaign variants",
+        prog="thesis-experiment-run variants",
         description="Run the configured ablation workflow.",
     )
     parser.add_argument("--bars-csv", required=True, help="OHLCV CSV with DatetimeIndex")
@@ -85,14 +85,14 @@ def run_variant_ablation_cli(argv: Sequence[str] | None = None) -> None:
 def run_named_cache_rebuild_cli(argv: Sequence[str] | None = None) -> int:
     """Parse and dispatch the named-cache transaction command."""
     parser = argparse.ArgumentParser(
-        prog="thesis-campaign rebuild-named-cache",
+        prog="thesis-experiment-run rebuild-named-cache",
         description="Stage, validate, and transactionally publish named feature caches.",
     )
     parser.add_argument("--plan-only", action="store_true", help="resolve paths without writing")
     parser.add_argument("--backup-dir", type=Path)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
-    from experiments.campaigns.named_cache_rebuild import plan, rebuild
+    from experiments.runs.named_cache_rebuild import plan, rebuild
 
     if args.plan_only:
         print(json.dumps({"status": "plan_only", "caches": plan()}, indent=2))
@@ -110,7 +110,7 @@ def run_named_cache_rebuild_cli(argv: Sequence[str] | None = None) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="thesis-campaign")
+    parser = argparse.ArgumentParser(prog="thesis-experiment-run")
     parser.add_argument(
         "command",
         choices=(
@@ -135,13 +135,13 @@ def main() -> None:
 
     command_main: Callable[[], object]
     if args.command == "run":
-        from experiments.campaigns import run_campaign as command_main
+        from experiments.runs import run_experiment as command_main
     elif args.command == "status":
-        from experiments.campaigns.status import main as command_main
+        from experiments.runs.status import main as command_main
     elif args.command == "summarize":
-        from experiments.campaigns.reporting import main as command_main
+        from experiments.runs.reporting import main as command_main
     elif args.command == "checkpoint-map":
-        from experiments.campaigns.checkpoints import main as command_main
+        from experiments.runs.checkpoints import main as command_main
     else:
-        from experiments.campaigns.cache_failure_recovery import main as command_main
+        from experiments.runs.cache_failure_recovery import main as command_main
     _forward(command_main, rest)

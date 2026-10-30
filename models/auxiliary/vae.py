@@ -189,7 +189,7 @@ class VAEDecoder(nn.Module):
             layers.append(nn.ReLU())
             in_channels = out_channels
 
-        # Final layer to get back to n_features
+            # Final layer to get back to n_features
         layers.append(
             nn.ConvTranspose1d(
                 in_channels=in_channels,
@@ -233,7 +233,7 @@ class VAEDecoder(nn.Module):
         if x_recon.size(2) != self.seq_len:
             x_recon = F.interpolate(x_recon, size=self.seq_len, mode="linear", align_corners=True)
 
-        # [B, F, T] -> [B, T, F]
+            # [B, F, T] -> [B, T, F]
         x_recon = x_recon.transpose(1, 2)
 
         return x_recon

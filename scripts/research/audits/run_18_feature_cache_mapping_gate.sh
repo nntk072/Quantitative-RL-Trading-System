@@ -13,7 +13,7 @@ mypy .
 mypy_rc=$?
 python -m pytest tests/ -q
 pytest_rc=$?
-python scripts/maintenance/campaigns-or-cache/rebuild_named_prebuilt_feature_caches.py --plan-only \
+python scripts/maintenance/experiment-runs-or-cache/rebuild_named_prebuilt_feature_caches.py --plan-only \
     > outputs/data_refresh_20261017/cache_profile_18variant_plan_20261017_retry1.json
 plan_rc=$?
 

@@ -123,9 +123,10 @@ class RLStrategyAdapter:
         self._feature_lock = threading.Lock()
         self._secondary_bars: pd.DataFrame | None = None
 
-    # ------------------------------------------------------------------
-    # Feature (re)build — mirrors training-time pipeline exactly.
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Feature (re)build — mirrors training-time pipeline exactly.
+        # ------------------------------------------------------------------
+
     def _rebuild_features(self, bars: pd.DataFrame) -> pd.DataFrame:
         """Rebuild the feature matrix from raw M1 bars (train-parity path)."""
         from features import build_features  # local: heavy import
@@ -150,9 +151,10 @@ class RLStrategyAdapter:
             )
         return self._features
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Public API
+        # ------------------------------------------------------------------
+
     def update_bars(self, bars: pd.DataFrame, secondary_bars: pd.DataFrame | None = None) -> None:
         """Feed the latest M1 bars; rebuilds features (call once per new bar)."""
         self._secondary_bars = secondary_bars
@@ -293,9 +295,10 @@ class RLStrategyAdapter:
             return float(action.coordinates["direction"])
         raise ValueError("live decisions must be discrete, scalar or include direction")
 
-    # ------------------------------------------------------------------
-    # integrations.mt5 adapter
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # integrations.mt5 adapter
+        # ------------------------------------------------------------------
+
     def as_strategy(
         self,
         data_source: MarketDataSource,
@@ -338,7 +341,7 @@ class RLStrategyAdapter:
                 except Exception as exc:  # noqa: BLE001  (live loop must not crash)
                     logger.exception("Live policy inference failed for {}: {}", symbol, exc)
                     return symbol, LiveSignal.NONE
-                # Discrete contract: >0 → long, <0 → short, 0 → flat.
+                    # Discrete contract: >0 → long, <0 → short, 0 → flat.
                 if action > 0:
                     return symbol, LiveSignal.BUY
                 if action < 0:

@@ -187,7 +187,7 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
                 obs[seq_key] = window
                 obs[f"mask_{key}"] = mask
 
-        # Add VAE latent embedding if enabled
+                # Add VAE latent embedding if enabled
         if self.use_vae and self.vae is not None:
             import torch
 

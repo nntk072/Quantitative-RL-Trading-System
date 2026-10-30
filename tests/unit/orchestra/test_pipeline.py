@@ -1,0 +1,612 @@
+"""Tests for orchestra pipeline control flow and verification argv."""
+
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from orchestra.model_provider_registry import Model
+from orchestra.task_orchestration import Pipeline
+from orchestra.task_state_store import Phase, TaskState, list_tasks
+
+
+def _patch_select(monkeypatch: pytest.MonkeyPatch, pipeline: Pipeline, dummy: Model) -> None:
+    def select(
+        role: str,
+        count: int = 1,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        return [dummy] * count
+
+    monkeypatch.setattr(pipeline.router, "select", select)
+
+
+def _dummy() -> Model:
+    return Model(
+        name="default",
+        provider="opencode",
+        cli="opencode",
+        roles=[
+            "triage",
+            "planner",
+            "critic",
+            "synthesizer",
+            "implementer",
+            "reviewer",
+            "review_synthesizer",
+        ],
+        priority=1,
+        quota_daily=0,
+        env_var="ORCHESTRA_TEST_KEY",
+    )
+
+
+def test_dry_run_reaches_done(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ORCHESTRA_TEST_KEY", "1")
+    dummy = _dummy()
+    pipeline = Pipeline(
+        workspace=tmp_path,
+        dry_run=True,
+        planner_count=1,
+        critic_count=1,
+        reviewer_count=1,
+    )
+    _patch_select(monkeypatch, pipeline, dummy)
+    state = pipeline.run("add a comment")
+    assert state.phase == Phase.DONE
+    report = Path(state.data["final_report"])
+    assert report.is_file()
+    text = report.read_text()
+    assert "add a comment" in text
+    assert "## 1. Triage" in text
+    assert "## 9. Verification" in text
+
+
+def test_run_closes_tmux_when_finished(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    closed: list[str | None] = []
+
+    def fake_cleanup(
+        prefix: str = "orchestra-",
+        task_id: str | None = None,
+        role: str | None = None,
+    ) -> int:
+        closed.append(task_id)
+        return 2
+
+    monkeypatch.setattr(pipeline.sessions, "cleanup", fake_cleanup)
+    monkeypatch.setattr(pipeline, "_snapshot", lambda _slot: None)
+    monkeypatch.setattr(
+        pipeline, "_execute_phase", lambda _phase: pipeline.state.set_phase(Phase.DONE)
+    )
+    state = pipeline.run("x")
+    assert state.phase == Phase.DONE
+    assert closed == [state.task_id]
+
+
+def test_complexity_override_applied_before_triage(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ORCHESTRA_TEST_KEY", "1")
+    dummy = _dummy()
+    pipeline = Pipeline(workspace=tmp_path, dry_run=True, planner_count=1)
+    seen: list[str] = []
+
+    def select(
+        role: str,
+        count: int = 1,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        seen.append(task_complexity)
+        return [dummy] * count
+
+    monkeypatch.setattr(pipeline.router, "select", select)
+    state = pipeline.run("add a comment", complexity="trivial")
+    assert state.data["complexity"] == "trivial"
+    assert state.data["complexity_override"] is True
+    assert "trivial" in seen
+
+
+def test_verification_reenters_fixing(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=True, max_fixes=2)
+    calls: list[str] = []
+
+    def fake_fix() -> None:
+        calls.append("fix")
+        assert pipeline.state is not None
+        pipeline.state.data["fix_loop_count"] = pipeline.state.data.get("fix_loop_count", 0) + 1
+        pipeline.state.save()
+
+    def fake_verify() -> None:
+        calls.append("verify")
+        assert pipeline.state is not None
+        if pipeline.state.data.get("fix_loop_count", 0) < 2:
+            pipeline.state.set_phase(Phase.FIXING)
+        else:
+            pipeline.state.set_phase(Phase.DONE)
+
+    monkeypatch.setattr(pipeline, "_phase_fixing", fake_fix)
+    monkeypatch.setattr(pipeline, "_phase_verification", fake_verify)
+    task_id = "task-test-fix-loop"
+    state = TaskState(task_id, "fix me", pipeline.state_dir)
+    state.set_phase(Phase.FIXING)
+    pipeline.run("fix me", resume_from=task_id)
+    assert calls == ["fix", "verify", "fix", "verify"]
+    assert pipeline.state is not None
+    assert pipeline.state.phase == Phase.DONE
+
+
+def test_reporting_next_is_done_with_parked_enum() -> None:
+    assert Phase.REPORTING.next() == Phase.DONE
+    assert Phase.PARKED not in Phase.runnable()
+
+
+def test_phase_parse_resolves_numeric_and_word_aliases() -> None:
+    assert Phase.parse("2") is Phase.PLANNING
+    assert Phase.parse("planning") is Phase.PLANNING
+    assert Phase.parse("step_2") is Phase.PLANNING
+    assert Phase.parse("7") is Phase.REVIEW_SYNTHESIS
+    assert Phase.parse("8") is Phase.FIXING
+    assert Phase.parse("9") is Phase.VERIFICATION
+    assert Phase.parse("10") is Phase.REPORTING
+    assert Phase.parse("report") is Phase.REPORTING
+    assert Phase.parse("verify") is Phase.VERIFICATION
+
+
+def test_from_requires_resume(tmp_path) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=True)
+    try:
+        pipeline.run("t", start_phase="2")
+        raise AssertionError("expected ValueError")
+    except ValueError as exc:
+        assert "--from" in str(exc)
+
+
+def test_resume_failed_restarts_failed_step(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ORCHESTRA_TEST_KEY", "1")
+    dummy = _dummy()
+    pipeline = Pipeline(
+        workspace=tmp_path, dry_run=True, planner_count=1, critic_count=1, reviewer_count=1
+    )
+    _patch_select(monkeypatch, pipeline, dummy)
+    state = TaskState("task-r", "t", pipeline.state_dir)
+    state.set_phase(Phase.VERIFICATION)
+    state.set_phase(Phase.FAILED)
+    assert state.data["failed_at"] == "verification"
+    result = pipeline.run("t", resume_from="task-r")
+    assert result.phase == Phase.DONE
+
+
+def test_resume_from_step_2(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ORCHESTRA_TEST_KEY", "1")
+    dummy = _dummy()
+    pipeline = Pipeline(
+        workspace=tmp_path, dry_run=True, planner_count=1, critic_count=1, reviewer_count=1
+    )
+    _patch_select(monkeypatch, pipeline, dummy)
+    state = TaskState("task-s2", "t", pipeline.state_dir)
+    state.set_phase(Phase.CRITIQUE)
+    result = pipeline.run("t", resume_from="task-s2", start_phase="2")
+    assert result.phase == Phase.DONE
+
+
+def test_resume_done_without_from_stays_done(tmp_path) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=True)
+    state = TaskState("task-done", "t", pipeline.state_dir)
+    state.set_phase(Phase.DONE)
+    result = pipeline.run("t", resume_from="task-done")
+    assert result.phase == Phase.DONE
+
+
+def test_run_verification_uses_ci_gate_commands(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    recorded: list[list[str]] = []
+    run_options: list[tuple[float | None, float]] = []
+
+    def fake_run(
+        cmd: list[str],
+        capture: bool = True,
+        timeout: float | None = None,
+        heartbeat: float = 0,
+    ) -> subprocess.CompletedProcess[str]:
+        recorded.append(cmd)
+        run_options.append((timeout, heartbeat))
+        return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(pipeline.sessions, "_run", fake_run)
+    pipeline.state = TaskState("task-v", "t", pipeline.state_dir)
+    pipeline._run_verification()
+    assert recorded == [["./tools/check", "full"]]
+    assert run_options == [(6 * 60 * 60, 15.0)]
+
+
+def test_verification_failure_enters_fix_loop_even_if_review_passed(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False, max_fixes=2)
+    pipeline.state = TaskState("task-vfail", "t", pipeline.state_dir)
+    pipeline.state.data["review_verdict"] = "pass"
+
+    def fake_verify() -> dict[str, dict[str, object]]:
+        return {"full": {"success": False, "output": "FAILED tests/foo.py::test_x"}}
+
+    monkeypatch.setattr(pipeline, "_run_verification", fake_verify)
+    passed = pipeline._phase_verification()
+    assert passed is False
+    pipeline._advance_after_phase(Phase.VERIFICATION, verification_passed=passed)
+    assert pipeline.state.phase == Phase.FIXING
+
+
+def test_fixing_skips_when_review_passed_and_tests_not_run(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ORCHESTRA_TEST_KEY", "1")
+    dummy = _dummy()
+    dummy.roles = [*dummy.roles, "fixer"]
+    selected: list[str] = []
+
+    def select(
+        role: str,
+        count: int = 1,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        selected.append(role)
+        return [dummy]
+
+    pipeline = Pipeline(workspace=tmp_path, dry_run=True)
+    monkeypatch.setattr(pipeline.router, "select", select)
+    pipeline.state = TaskState("task-skipfix", "t", pipeline.state_dir)
+    pipeline.state.data["review_verdict"] = "pass"
+    pipeline.state.data["review_synthesis_output"] = "lgtm"
+    pipeline._phase_fixing()
+    assert selected == []
+
+
+def test_fixing_runs_when_verification_already_failed(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ORCHESTRA_TEST_KEY", "1")
+    dummy = _dummy()
+    dummy.roles = [*dummy.roles, "fixer"]
+    selected: list[str] = []
+
+    def select(
+        role: str,
+        count: int = 1,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        selected.append(role)
+        return [dummy]
+
+    pipeline = Pipeline(workspace=tmp_path, dry_run=True)
+    monkeypatch.setattr(pipeline.router, "select", select)
+    pipeline.state = TaskState("task-dofix", "t", pipeline.state_dir)
+    pipeline.state.data["review_verdict"] = "pass"
+    pipeline.state.data["review_synthesis_output"] = "lgtm"
+    pipeline.state.data["verification_result"] = {
+        "full": {"success": False, "output": "FAILED tests/foo.py::test_x"},
+    }
+    pipeline._phase_fixing()
+    assert selected == ["implementer"]
+
+
+def test_list_tasks_ignores_costs_json(tmp_path) -> None:
+    (tmp_path / "costs.json").write_text("{}")
+    (tmp_path / "usage.json").write_text("{}")
+    (tmp_path / "task-1.json").write_text(
+        '{"task_id": "task-1", "phase": "done", "task_description": "hello"}'
+    )
+    tasks = list_tasks(tmp_path)
+    assert len(tasks) == 1
+    assert tasks[0]["task_id"] == "task-1"
+
+
+def test_invoke_required_falls_back_when_primary_fails(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    pipeline.state = TaskState("task-fb1", "t", pipeline.state_dir)
+    primary = _dummy()
+    fallback = Model(
+        name="backup",
+        provider="other",
+        cli="cli",
+        roles=["triage"],
+        priority=1,
+        quota_daily=0,
+        env_var="ORCHESTRA_TEST_KEY",
+    )
+    seen: dict[str, object] = {}
+
+    def fake_chain(
+        model: Model,
+        role: str,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        seen["role"] = role
+        return [fallback]
+
+    monkeypatch.setattr(pipeline.router, "fallback_chain", fake_chain)
+    attempts: list[str] = []
+
+    def fake_invoke(
+        model: Model,
+        role: str,
+        prompt: str,
+        timeout: int,
+        lines: int = 0,
+        native_session_id: str | None = None,
+    ) -> tuple[str, str]:
+        attempts.append(model.display_name)
+        if model is primary:
+            raise TimeoutError("primary timed out")
+        return "session-backup", "output from backup"
+
+    monkeypatch.setattr(pipeline, "_invoke", fake_invoke)
+    session, output = pipeline._invoke_required(primary, "triage", "prompt", 600)
+    assert (session, output) == ("session-backup", "output from backup")
+    assert attempts == [primary.display_name, fallback.display_name]
+    assert seen["role"] == "triage"
+
+
+def test_invoke_required_falls_back_on_codex_token_exhaustion(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    pipeline.state = TaskState("task-quota", "t", pipeline.state_dir)
+    primary = Model(
+        name="gpt-5.6-luna",
+        provider="openai",
+        cli="codex",
+        roles=["review_synthesizer"],
+        priority=2,
+        quota_daily=0,
+    )
+    fallback = Model(
+        name="default",
+        provider="opencode",
+        cli="opencode",
+        roles=["review_synthesizer"],
+        priority=2,
+        quota_daily=0,
+        env_var="ORCHESTRA_TEST_KEY",
+    )
+
+    def fake_chain(
+        model: Model,
+        role: str,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        return [fallback]
+
+    monkeypatch.setattr(pipeline.router, "fallback_chain", fake_chain)
+    attempts: list[str] = []
+
+    def fake_invoke(
+        model: Model,
+        role: str,
+        prompt: str,
+        timeout: int,
+        lines: int = 0,
+        native_session_id: str | None = None,
+    ) -> tuple[str, str]:
+        attempts.append(model.display_name)
+        if model.cli == "codex":
+            raise RuntimeError(
+                "Session x exited 1\n"
+                "failed to connect to websocket: HTTP error: 403 Forbidden, "
+                "url: wss://chatgpt.com/backend-api/codex/responses"
+            )
+        return "session-backup", "review synthesis from backup"
+
+    monkeypatch.setattr(pipeline, "_invoke", fake_invoke)
+    session, output = pipeline._invoke_required(primary, "review_synthesizer", "prompt", 300)
+    assert (session, output) == ("session-backup", "review synthesis from backup")
+    assert attempts == [primary.display_name, fallback.display_name]
+    facts = pipeline.router.health.get(primary)
+    assert facts.exhausted_until is not None
+
+
+def test_invoke_required_falls_back_on_codex_proxy_failure(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    pipeline.state = TaskState("task-proxy", "t", pipeline.state_dir)
+    primary = Model(
+        name="gpt-5.6-luna",
+        provider="openai",
+        cli="codex",
+        roles=["triage"],
+        priority=2,
+        quota_daily=0,
+    )
+    fallback = Model(
+        name="default",
+        provider="opencode",
+        cli="opencode",
+        roles=["triage"],
+        priority=2,
+        quota_daily=0,
+        env_var="ORCHESTRA_TEST_KEY",
+    )
+
+    def fake_chain(
+        model: Model,
+        role: str,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        return [fallback]
+
+    monkeypatch.setattr(pipeline.router, "fallback_chain", fake_chain)
+    attempts: list[str] = []
+
+    def fake_invoke(
+        model: Model,
+        role: str,
+        prompt: str,
+        timeout: int,
+        lines: int = 0,
+        native_session_id: str | None = None,
+    ) -> tuple[str, str]:
+        attempts.append(model.display_name)
+        if model.cli == "codex":
+            raise RuntimeError(
+                "Proxy connection failed: HTTP CONNECT response missing status line, "
+                "url: wss://chatgpt.com/backend-api/codex/responses"
+            )
+        return "session-backup", "ok"
+
+    monkeypatch.setattr(pipeline, "_invoke", fake_invoke)
+    session, output = pipeline._invoke_required(primary, "triage", "prompt", 300)
+    assert (session, output) == ("session-backup", "ok")
+    assert attempts == [primary.display_name, fallback.display_name]
+    facts = pipeline.router.health.get(primary)
+    assert facts.throttled_until is not None
+
+
+def test_invoke_required_falls_back_on_cline_econnreset(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    pipeline.state = TaskState("task-econn", "t", pipeline.state_dir)
+    primary = Model(
+        name="z-ai/glm-5.3-flash",
+        provider="cline",
+        cli="cline",
+        roles=["triage"],
+        priority=2,
+        quota_daily=0,
+    )
+    fallback = Model(
+        name="default",
+        provider="opencode",
+        cli="opencode",
+        roles=["triage"],
+        priority=2,
+        quota_daily=0,
+        env_var="ORCHESTRA_TEST_KEY",
+    )
+
+    def fake_chain(
+        model: Model,
+        role: str,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        return [fallback]
+
+    monkeypatch.setattr(pipeline.router, "fallback_chain", fake_chain)
+    attempts: list[str] = []
+
+    def fake_invoke(
+        model: Model,
+        role: str,
+        prompt: str,
+        timeout: int,
+        lines: int = 0,
+        native_session_id: str | None = None,
+    ) -> tuple[str, str]:
+        attempts.append(model.display_name)
+        if model.cli == "cline":
+            raise RuntimeError(
+                "Cannot connect to API: The socket connection was closed unexpectedly (ECONNRESET)"
+            )
+        return "session-backup", "ok"
+
+    monkeypatch.setattr(pipeline, "_invoke", fake_invoke)
+    session, output = pipeline._invoke_required(primary, "triage", "prompt", 300)
+    assert (session, output) == ("session-backup", "ok")
+    assert attempts == [primary.display_name, fallback.display_name]
+
+
+def test_invoke_required_uses_select_role_for_fallback(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    pipeline.state = TaskState("task-fb3", "t", pipeline.state_dir)
+    primary = _dummy()
+    fallback = Model(
+        name="backup",
+        provider="other",
+        cli="cli",
+        roles=["implementer"],
+        priority=1,
+        quota_daily=0,
+        env_var="ORCHESTRA_TEST_KEY",
+    )
+    seen: dict[str, object] = {}
+
+    def fake_chain(
+        model: Model,
+        role: str,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        seen["role"] = role
+        return [fallback]
+
+    monkeypatch.setattr(pipeline.router, "fallback_chain", fake_chain)
+    attempts: list[str] = []
+
+    def fake_invoke(
+        model: Model,
+        role: str,
+        prompt: str,
+        timeout: int,
+        lines: int = 0,
+        native_session_id: str | None = None,
+    ) -> tuple[str, str]:
+        attempts.append(model.display_name)
+        assert role == "fixer"
+        if model is primary:
+            raise TimeoutError("primary timed out")
+        return "session-backup", "output from backup"
+
+    monkeypatch.setattr(pipeline, "_invoke", fake_invoke)
+    session, output = pipeline._invoke_required(
+        primary, "fixer", "prompt", 600, select_role="implementer"
+    )
+    assert (session, output) == ("session-backup", "output from backup")
+    assert attempts.count(primary.display_name) >= 1
+    assert fallback.display_name in attempts
+    assert seen["role"] == "implementer"
+
+
+def test_invoke_required_raises_when_all_models_fail(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    pipeline.state = TaskState("task-fb2", "t", pipeline.state_dir)
+    primary = _dummy()
+    fallback = Model(
+        name="backup",
+        provider="other",
+        cli="cli",
+        roles=["triage"],
+        priority=1,
+        quota_daily=0,
+        env_var="ORCHESTRA_TEST_KEY",
+    )
+
+    def fake_chain(
+        model: Model,
+        role: str,
+        task_complexity: str = "medium",
+        task_tier: str | None = None,
+        escalate: bool = False,
+    ) -> list[Model]:
+        return [fallback]
+
+    monkeypatch.setattr(pipeline.router, "fallback_chain", fake_chain)
+
+    def fake_invoke(
+        model: Model,
+        role: str,
+        prompt: str,
+        timeout: int,
+        lines: int = 0,
+        native_session_id: str | None = None,
+    ) -> tuple[str, str]:
+        raise RuntimeError("agent failed")
+
+    monkeypatch.setattr(pipeline, "_invoke", fake_invoke)
+    with pytest.raises(RuntimeError):
+        pipeline._invoke_required(primary, "triage", "prompt", 600)

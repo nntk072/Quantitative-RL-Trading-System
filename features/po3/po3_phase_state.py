@@ -279,9 +279,9 @@ def build_ifvg_zone_features(
     if n == 0:
         return out
 
-    # Keep the per-bar state machine in NumPy storage. Scalar .at/.iat writes
-    # repeatedly resolve timestamp labels and DataFrame blocks on long M1
-    # histories, although this algorithm is already expressed by row offsets.
+        # Keep the per-bar state machine in NumPy storage. Scalar .at/.iat writes
+        # repeatedly resolve timestamp labels and DataFrame blocks on long M1
+        # histories, although this algorithm is already expressed by row offsets.
     values = out.to_numpy(copy=True)
 
     fvg = detect_fvg(bars, fvg_config)

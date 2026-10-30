@@ -1,0 +1,75 @@
+{
+  "allocation": {
+    "cpus": "48 per node; 96 total",
+    "gpus": "2 GH200 total, one per node",
+    "job_id": "20985591",
+    "memory": "512 GiB per node; 1 TiB total",
+    "nodes": [
+      "gpuarm1",
+      "gpuarm2"
+    ],
+    "state_at_capture": "RUNNING",
+    "steps": [
+      "20985591.0 allocation",
+      "20985591.extern"
+    ],
+    "time_limit": "6 hours; scheduled end 2026-10-16 17:32:47 Europe/Helsinki",
+    "training_start_gate": "held; no workers started",
+    "worker_steps": 0
+  },
+  "captured_at_utc": "2026-10-16T08:58:00+00:00",
+  "experiment_run": {
+    "bar_cache": {
+      "configured_nonempty_bar_files": 14,
+      "path": "cache",
+      "real_directory": true
+    },
+    "experiment_run_id": "ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016",
+    "fingerprint": "08459336353e046c1a4882a1dd8f1a8284c052a5e18e4bf309ccb0b574ca0a5d",
+    "identity": "18 variants, seed 50, 20M steps each, n_envs=64, shared bundle, two GH200 nodes",
+    "manifest": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016/experiment_run.json",
+    "previous_fingerprint": "3474621efd6a1481bd2a20bce0cfd2c0b69969df1849c6cd738d19dc5bb4ba34",
+    "recorded_git_sha": "8a98f7792f83ce4bbe5cb84f4a2137657d791c02",
+    "resume_checkpoint_lineage": {
+      "attempt3_checkpoints": 37,
+      "manifest_backup": "reports/experiment_run_manifest_before_resume_attempt_repair.json",
+      "pointer_corrections": 18,
+      "recovery_report": "reports/cache_recovery.json",
+      "resume_from_attempt_counts": {
+        "3": 18
+      },
+      "resume_steps_max": 14000000,
+      "resume_steps_min": 11000000
+    },
+    "statuses": {
+      "interrupted": 18
+    }
+  },
+  "readiness": "P0 source and checkpoint boundaries are preserved. P1 remains open until the resumed 18 identities reach terminal states and chronological split exposure is reconciled. No strategy conclusion follows from the infrastructure failures or partial checkpoints.",
+  "repository": {
+    "branch": "main",
+    "changed_files_outside_experiment_run_source_hash_manifest": true,
+    "experiment_run_source_hash_mismatches": [],
+    "experiment_run_source_hashes_verified": 228,
+    "head": "45ef1a06d3e4f3cfb5413326a13a71a0c9d02c7c",
+    "path": "/scratch/work/nguyenl37/Aalto_MS_Thesis",
+    "working_tree_status": [
+      "## main...origin/main",
+      " M scripts/triton/experiment_run_allocation_wrapper.sh",
+      " M scripts/triton/prepare_experiment_run_resume.py",
+      " M tests/test_triton_experiment_run_recovery.py",
+      "?? docs/thesis/live_experiment_run_snapshot_2026-10-16_1150.json",
+      "?? scripts/thesis/",
+      "?? scripts/triton/experiment_run_worker_bin/",
+      "?? scripts/triton/experiment_run_worker_dispatch.py",
+      "?? tests/unit/thesis_experiment_run_evidence_index.py",
+      "?? tests/test_triton_experiment_run_worker_dispatch.py"
+    ]
+  },
+  "schema": "aalto.live_experiment_run_snapshot.v1",
+  "verification": {
+    "current_dispatcher_and_evidence_index_changes": "uncommitted; GPU full-tree gate and focused tests pending",
+    "prior_gpu_gate": "33 focused tests plus full-tree format, lint, and mypy passed at 11:37 while HEAD was f6c1111 and the recovery changes were uncommitted; commit 45ef1a0 was created at 11:39. The GPU pass marker still contains f6c1111, so it is not a post-commit verification of 45ef1a0.",
+    "training_release": "do not release: current allocated step predates the new persistent worker dispatcher; it must expire naturally, then the guarded supervisor should start the updated wrapper and run its checks"
+  }
+}

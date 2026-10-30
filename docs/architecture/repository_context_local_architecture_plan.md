@@ -28,7 +28,7 @@ Largest or highest-coupling knowledge hubs include:
 - evaluation/reanalysis/runner.py — 975 LOC, 18 local imports across 8 domains.
 - training/runner/setup_runtime.py — 647 LOC, 19 local imports across 8 domains.
 - features/pipeline/feature_matrix_builder.py — 802 LOC before the rename, about 20 local imports.
-- experiments/campaigns/execution.py — 1,881 LOC, 34 definitions.
+- experiments/runs/execution.py — 1,881 LOC, 34 definitions.
 - orchestra/pipeline.py — 1,088 LOC, 39 definitions.
 - trading/orders/entries.py — 973 LOC, 21 definitions.
 - models/encoders/core.py — 636 LOC, 51 definitions.
@@ -112,7 +112,7 @@ replaceability with low cognitive cost, not a universal plugin framework.
 | Compute | Triton/Slurm + local | cloud batch, Kubernetes, workstation-only, other HPC | ResourceProfile/ExecutionBackend |
 | Live integration | MT5 | another broker/API, paper broker, exchange gateway | broker-neutral live ports |
 | Reporting | matplotlib/plotly/files | notebook/dashboard/web report | typed report data before renderer |
-| Orchestration | current campaign/orchestra flows | another scheduler/agent system | workflow state + task/result contracts |
+| Orchestration | current experiment_run/orchestra flows | another scheduler/agent system | workflow state + task/result contracts |
 
 This table is not a mandate to implement all alternatives now. It defines where today's implementation
 must avoid leaking assumptions into neighboring packages.
@@ -265,11 +265,11 @@ Separate four concepts that are currently partially fused:
 1. **representation/model architecture** — TCN, GRU, Transformer, MLP, VAE, heads;
 2. **learning paradigm** — online RL, offline RL, supervised DL, imitation, self-supervised;
 3. **decision runtime** — consume a stable observation/input contract and emit a stable decision;
-4. **application workflow** — prepare data, fit, validate, evaluate, persist, campaign execution.
+4. **application workflow** — prepare data, fit, validate, evaluate, persist, experiment run execution.
 
 The dependency rule is:
 
-- model architecture must not know PPO, SAC, Gym, campaign runners, or evaluation;
+- model architecture must not know PPO, SAC, Gym, experiment runners, or evaluation;
 - decision runtime must not know how its model was trained;
 - simulation must not know which model family consumes its observations;
 - evaluation must evaluate a decision provider, not a PPO-specific object;
@@ -292,7 +292,7 @@ features/representation   trading   simulation/backtest   models
 decisioning               learning   evaluation
 
 APPLICATION COMPOSITION
-training workflows   experiments/campaigns   live   integrations   orchestra
+training workflows   experiments/runs   live   integrations   orchestra
 ```
 
 Application composition roots may combine several scientific capabilities. Scientific leaf packages should
@@ -492,7 +492,7 @@ Stop passing the complete DictConfig deep into leaf algorithms. Each domain reso
 - evaluation/config.py
 - experiments/config.py
 
-A feature detector should receive FeatureConfig rather than knowing PPO, FTMO, training, campaign and evaluation configuration.
+A feature detector should receive FeatureConfig rather than knowing PPO, FTMO, training, experiment run and evaluation configuration.
 
 ## Artifacts
 
@@ -862,7 +862,7 @@ Target:
 
 experiments/
   variants/
-  campaigns/
+  experiment_runs/
     contracts.py
     state.py
     controller.py
@@ -876,7 +876,7 @@ experiments/
     reporting.py
   provenance/
 
-experiments/campaigns/execution.py should be split after scientific runtime boundaries are stable. Its current independent responsibilities include state records, input validation, resource probing, CPU masks, Slurm host expansion, worker commands, source snapshots, artifact verification, checkpoint resume, initial checkpoint validation and controller lifecycle.
+experiments/runs/execution.py should be split after scientific runtime boundaries are stable. Its current independent responsibilities include state records, input validation, resource probing, CPU masks, Slurm host expansion, worker commands, source snapshots, artifact verification, checkpoint resume, initial checkpoint validation and controller lifecycle.
 
 ## Live and integrations
 
@@ -1041,7 +1041,7 @@ Freeze:
 - callback activation;
 - deterministic reanalysis;
 - frozen metric fixtures;
-- run/campaign manifest identities.
+- run/experiment_run manifest identities.
 
 Architecture PRs preserve these. Scientific behavior changes are separate PRs.
 
@@ -1060,7 +1060,7 @@ Exit: scientific package graph is acyclic and enforced.
 ### Wave 2 — Contracts and public APIs
 
 Stabilize dataset, feature schema, order/position/execution, action/observation, decision-provider,
-predictor artifact, learner/fit-result, training result, evaluation result and campaign-state contracts.
+predictor artifact, learner/fit-result, training result, evaluation result and experiment-run-state contracts.
 
 Create the decisioning/learning seams before moving large amounts of RL implementation code.
 
@@ -1088,9 +1088,9 @@ Exit: adding a supervised DL backend does not require edits to simulation, tradi
 
 Split decision-diversity and plotting hubs.
 
-### Wave 8 — Campaigns
+### Wave 8 — Experiment runs
 
-Split campaigns/execution.py into controller and focused services.
+Split experiment_runs/execution.py into controller and focused services.
 
 ### Wave 9 — Orchestra and compute cleanup
 
@@ -1124,7 +1124,7 @@ Recommended reviewable sequence:
 18. PO3 subdomain split;
 19. encoder-family/model factory split;
 20. evaluation metric/plotting split;
-21. campaign execution split;
+21. experiment run execution split;
 22. optional supervised-DL reference backend proving replaceability;
 23. test-tree and compatibility cleanup.
 

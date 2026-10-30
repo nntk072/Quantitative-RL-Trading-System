@@ -37,9 +37,9 @@ def _load_run_config(run_dir: Path) -> DictConfig:
         raise ValueError(
             f"Run config snapshot must be a nonempty configuration mapping: {cfg_path}"
         )
-    # get_split_config() deliberately falls back to hard-coded defaults for
-    # legacy training callers. Historical checkpoint evaluation must instead
-    # use the date boundaries saved with the checkpoint.
+        # get_split_config() deliberately falls back to hard-coded defaults for
+        # legacy training callers. Historical checkpoint evaluation must instead
+        # use the date boundaries saved with the checkpoint.
     for field in ("train_end", "test_start"):
         value = OmegaConf.select(cfg, f"data.split.{field}", default=None)
         if not isinstance(value, str) or not value.strip():
@@ -330,9 +330,9 @@ def _reanalysis_backend_disposition(
     source_backend = source_protocol.get("data_source")
     if not isinstance(source_backend, str) or not source_backend:
         return "unknown", "legacy_unverified"
-    # The training configuration/API uses ``frames`` while evaluation uses
-    # the singular backend name ``frame``. Treat those spellings as one
-    # execution mode so an ordinary frame replay is not falsely flagged.
+        # The training configuration/API uses ``frames`` while evaluation uses
+        # the singular backend name ``frame``. Treat those spellings as one
+        # execution mode so an ordinary frame replay is not falsely flagged.
     source_mode = "frame" if source_backend == "frames" else source_backend
     evaluation_mode = "frame" if evaluation_backend == "frames" else evaluation_backend
     if source_mode == evaluation_mode:

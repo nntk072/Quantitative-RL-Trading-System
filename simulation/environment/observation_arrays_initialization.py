@@ -103,8 +103,8 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         self._mtf_windows = dict(DEFAULT_HTF_WINDOWS)
         if mtf_windows:
             self._mtf_windows.update({str(k): int(v) for k, v in mtf_windows.items()})
-        # Keep structural TP candidate sources fixed while the encoder gains
-        # additional observation streams; these are separate experiment factors.
+            # Keep structural TP candidate sources fixed while the encoder gains
+            # additional observation streams; these are separate experiment factors.
         self._target_timeframes = tuple(str(tf).upper() for tf in target_timeframes)
         if self._bundle_arrays is not None:
             assert bundle_data is not None

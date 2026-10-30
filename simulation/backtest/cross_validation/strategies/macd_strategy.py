@@ -86,7 +86,7 @@ class MACDStrategy(bt.Strategy):
         if self.order:
             return
 
-        # Check if we are in the market
+            # Check if we are in the market
         if not self.position:
             # Not in market, look for buy signal (MACD histogram > 0)
             macd_hist = self.macd.macd - self.macd.signal
@@ -193,12 +193,12 @@ class EMAMACDStrategy(bt.Strategy):
         if self.cooldown_counter > 0:
             self.cooldown_counter -= 1
 
-        # Check if order is pending
+            # Check if order is pending
         if self.order:
             return
 
-        # Detect crosses
-        # Bullish cross: MACD line crosses above signal line
+            # Detect crosses
+            # Bullish cross: MACD line crosses above signal line
         bullish_cross = (
             self.macd_line[-1] <= self.signal_line[-1] and self.macd_line[0] > self.signal_line[0]
         )

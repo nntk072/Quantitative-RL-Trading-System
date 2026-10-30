@@ -71,7 +71,7 @@ config/1_baseline.yaml
 config/2_po3_ifvg.yaml
 config/3_distribution.yaml
 config/features/*.yaml
-config/campaigns/*.yaml
+config/experiment_runs/*.yaml
 ```
 
 Configuration is consumed through mechanisms including:
@@ -205,7 +205,7 @@ feature pipeline
 reward pipeline
 execution/action processing
 evaluation
-campaign controller
+experiment run controller
 ```
 
 Produce:
@@ -286,7 +286,7 @@ guardrail*
 action*
 tp*
 sl*
-campaign overrides
+experiment run overrides
 train/test split settings
 seed
 timesteps
@@ -305,8 +305,8 @@ config/features/full_po3_mtf.yaml:<feature-key>
     -> feature resolver
     -> build_features
 
-campaign YAML:<override>
-    -> campaign parser
+experiment run YAML:<override>
+    -> experiment run parser
     -> resolved experiment configuration
 ```
 
@@ -323,8 +323,8 @@ For a critical config key, an agent should be able to determine where it is defi
 ### Flow A — Training
 
 ```text
-campaign YAML
-→ campaign launcher/controller
+experiment run YAML
+→ experiment run launcher/controller
 → training entrypoint
 → config loading/merging
 → feature construction

@@ -6,7 +6,7 @@
 
 **Measured-run source:** `main`, `ce9c30472e9402b50d8ca84cf8f29704436e0d0a`
 
-**Source baseline for the new profile:** `main` at `bb4cb6706d5d4d75a69c0a86b18a343c59a9e10a`; only this audit document changed for the final handoff. The untracked `campaign_worker_dispatch.log` is preserved and excluded.
+**Source baseline for the new profile:** `main` at `bb4cb6706d5d4d75a69c0a86b18a343c59a9e10a`; only this audit document changed for the final handoff. The untracked `experiment_run_worker_dispatch.log` is preserved and excluded.
 
 **Allocations:** Slurm `21247526` (gpuarm1) and `21252045` (gpuarm2), one GH200 each. Keep their interactive shells and allocations intact after these runs.
 **Purpose:** bounded 100k production-path pilots, train/test report replay, and pre-2M readiness. This is not a 2M benchmark or full training result.
@@ -67,7 +67,7 @@ A corrected harness reconstructed the callback's environment factory directly fr
 - Attempts 21, 25, and 26, including checkpoints, JSON, logs, and GPU samples: `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt{21,25,26}/`.
 - Failed diagnostic logs: `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt27/`.
 - Earlier full 2025 replay and equity/trade ledgers: `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt23/`.
-- The untracked repository file `campaign_worker_dispatch.log` remains untouched.
+- The untracked repository file `experiment_run_worker_dispatch.log` remains untouched.
 - Allocation `21242906` was preserved through its original work. The current allocations are listed at the top of this report; neither was canceled.
 - Prior full-year replay of the 100k attempt-21 checkpoints failed the $10,000 max-loss survival gate for both C and D. That evidence remains report-only for this short pilot and is not a 2M result.
 
@@ -114,7 +114,7 @@ The current decisive blocker is economic survival, not report availability: both
 
 Attempt 26 measured dashboard-prefix replay at 210.42s for C and 198.14s for D per 100,352-step production run. If `training.dashboard.eval_every=0` removes those observer-only replays while retaining the deterministic best-prefix selection, the 100k `learn()` wall estimates become 1,056.02s for C and 1,059.50s for D. These correspond to about 95.0 and 94.7 production steps/s, respectively; the existing measured rates were 79.24 and 79.79 steps/s. This is arithmetic subtraction from attempt 26, not an observed deferred-mode run.
 
-Across 20 dashboard intervals, the measured per-event durations imply 4,208s saved for C and 3,963s for D (about 1.17h and 1.10h). Subtracting those from the previous 2M learning projections gives about 4.77h for C and 5.01h for D, with the deterministic best-prefix evaluation retained. Adding the measured 2025 replay and linearly estimated report-only test replay gives about 6.52h paired wall time if the arms/replays run in parallel, or 8.15h with a 25% reserve, before setup and exports. Attempts 32 and 37 later measured deferred-mode 100k throughput; this arithmetic remains a superseded estimate and does not authorize a 2M campaign.
+Across 20 dashboard intervals, the measured per-event durations imply 4,208s saved for C and 3,963s for D (about 1.17h and 1.10h). Subtracting those from the previous 2M learning projections gives about 4.77h for C and 5.01h for D, with the deterministic best-prefix evaluation retained. Adding the measured 2025 replay and linearly estimated report-only test replay gives about 6.52h paired wall time if the arms/replays run in parallel, or 8.15h with a 25% reserve, before setup and exports. Attempts 32 and 37 later measured deferred-mode 100k throughput; this arithmetic remains a superseded estimate and does not authorize a 2M experiment run.
 
 ### Attempt 32: deferred-dashboard throughput pilot, observed
 
@@ -175,7 +175,7 @@ Portable split summaries, thesis diagnostics, and figures are committed under [`
 | D training | [plot](gh200_cd_benchmark_20261028/D/training/equity.png) | [plot](gh200_cd_benchmark_20261028/D/training/drawdown.png) | [plot](gh200_cd_benchmark_20261028/D/training/monthly_heatmap.png) | [plot](gh200_cd_benchmark_20261028/D/training/thesis_selection_heatmap.png) | [plot](gh200_cd_benchmark_20261028/D/training/thesis_performance_heatmap.png) |
 | D testing | [plot](gh200_cd_benchmark_20261028/D/testing/equity.png) | [plot](gh200_cd_benchmark_20261028/D/testing/drawdown.png) | [plot](gh200_cd_benchmark_20261028/D/testing/monthly_heatmap.png) | [plot](gh200_cd_benchmark_20261028/D/testing/thesis_selection_heatmap.png) | [plot](gh200_cd_benchmark_20261028/D/testing/thesis_performance_heatmap.png) |
 
-Attempt 36 used the second approved GH200 allocation (`21252045`, gpuarm2) to rerun `tests/test_training/test_dashboard.py` with the ARM-native `.venv`; **19 tests passed in 16.75s**. The process ran in the existing allocation shell. No extra diagnostic `srun` step was created. This verifies the dashboard RNG-isolation unit coverage on the compute architecture used for the paired pilot.
+Attempt 36 used the second approved GH200 allocation (`21252045`, gpuarm2) to rerun `tests/unit/training/test_dashboard.py` with the ARM-native `.venv`; **19 tests passed in 16.75s**. The process ran in the existing allocation shell. No extra diagnostic `srun` step was created. This verifies the dashboard RNG-isolation unit coverage on the compute architecture used for the paired pilot.
 
 ### Attempt 37: matched deferred-dashboard 100k repeat (complete)
 

@@ -193,8 +193,8 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
             train_feat = train_feat.iloc[:n_keep]
             log.info("MVP: sliced training to %d bars (~30 calendar days)", len(train_bars))
 
-    # Fingerprint the exact split passed to the environments before bundle mode
-    # releases the frames. These records are reused for every seed in this run.
+            # Fingerprint the exact split passed to the environments before bundle mode
+            # releases the frames. These records are reused for every seed in this run.
     dataset_records = {
         "train_bars": dataset_record(train_bars),
         "test_bars": dataset_record(test_bars),

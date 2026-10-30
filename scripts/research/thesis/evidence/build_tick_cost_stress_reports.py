@@ -13,8 +13,8 @@ from scripts.research.thesis.evidence.analyze_paired_seed_results import (
     analyze_paired_seed_metrics,
 )
 
-CAMPAIGN_ID = "rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
-CAMPAIGN_FINGERPRINT = "10e75ab7a25a53b3d4444098185fe45603811f09f2d556265c9f80ca402388ab"
+EXPERIMENT_RUN_ID = "rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
+EXPERIMENT_RUN_FINGERPRINT = "10e75ab7a25a53b3d4444098185fe45603811f09f2d556265c9f80ca402388ab"
 REPORT_DIR = "reports/p7_tick_cost_stress_20261022"
 SEEDS = (101, 102, 103, 104, 105)
 COSTS = {"baseline_5pt": 5.0, "stress_10pt": 10.0}
@@ -79,7 +79,7 @@ def _run_record(
 
 def _build_pair_payload(
     repo: Path,
-    campaign_root: Path,
+    experiment_run_root: Path,
     source_payload: dict[str, Any],
     ledger: dict[str, Any],
     training_arm: str,
@@ -152,8 +152,8 @@ def _build_pair_payload(
     return {
         "schema": "aalto.paired_seed_metrics.v1",
         "comparison_id": f"p7_{training_arm}_tick_cost_5pt_vs_10pt_seed101_105",
-        "campaign_id": CAMPAIGN_ID,
-        "campaign_fingerprint": CAMPAIGN_FINGERPRINT,
+        "experiment_run_id": EXPERIMENT_RUN_ID,
+        "experiment_run_fingerprint": EXPERIMENT_RUN_FINGERPRINT,
         "training_arm": training_arm,
         "evidence_role": "matched_exploratory",
         "evaluation_exposure": "exposed_report_only",
@@ -163,23 +163,26 @@ def _build_pair_payload(
         "pairs": pairs,
         "source_artifacts": [
             {
-                "path": str((campaign_root / "campaign.json").relative_to(repo)),
-                "sha256": _sha256(campaign_root / "campaign.json"),
+                "path": str((experiment_run_root / "experiment_run.json").relative_to(repo)),
+                "sha256": _sha256(experiment_run_root / "experiment_run.json"),
             },
             {
                 "path": str(
                     (
-                        campaign_root
+                        experiment_run_root
                         / "reports/p7_paired_seed_metrics_exploratory_20261022_v2.json"
                     ).relative_to(repo)
                 ),
                 "sha256": _sha256(
-                    campaign_root / "reports/p7_paired_seed_metrics_exploratory_20261022_v2.json"
+                    experiment_run_root
+                    / "reports/p7_paired_seed_metrics_exploratory_20261022_v2.json"
                 ),
             },
             {
-                "path": str((campaign_root / REPORT_DIR / "replay_ledger.json").relative_to(repo)),
-                "sha256": _sha256(campaign_root / REPORT_DIR / "replay_ledger.json"),
+                "path": str(
+                    (experiment_run_root / REPORT_DIR / "replay_ledger.json").relative_to(repo)
+                ),
+                "sha256": _sha256(experiment_run_root / REPORT_DIR / "replay_ledger.json"),
             },
         ],
         "selection_note": (
@@ -196,20 +199,24 @@ def main() -> int:
         "--repo-root",
         type=Path,
         default=Path(__file__).resolve().parents[4],
-        help="repository root containing the frozen campaign artifacts",
+        help="repository root containing the frozen experiment run artifacts",
     )
     args = parser.parse_args()
     repo = args.repo_root.resolve()
-    campaign_root = repo / "outputs/gpu_campaigns" / CAMPAIGN_ID
-    source_path = campaign_root / "reports/p7_paired_seed_metrics_exploratory_20261022_v2.json"
-    ledger_path = campaign_root / REPORT_DIR / "replay_ledger.json"
-    campaign = json.loads((campaign_root / "campaign.json").read_text(encoding="utf-8"))
+    experiment_run_root = repo / "outputs/experiment_runs" / EXPERIMENT_RUN_ID
+    source_path = (
+        experiment_run_root / "reports/p7_paired_seed_metrics_exploratory_20261022_v2.json"
+    )
+    ledger_path = experiment_run_root / REPORT_DIR / "replay_ledger.json"
+    experiment_run = json.loads(
+        (experiment_run_root / "experiment_run.json").read_text(encoding="utf-8")
+    )
     source_payload = json.loads(source_path.read_text(encoding="utf-8"))
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
-    if campaign.get("fingerprint") != CAMPAIGN_FINGERPRINT:
-        raise ValueError("P7 campaign fingerprint changed")
+    if experiment_run.get("fingerprint") != EXPERIMENT_RUN_FINGERPRINT:
+        raise ValueError("P7 experiment run fingerprint changed")
     if (
-        ledger.get("campaign_fingerprint") != CAMPAIGN_FINGERPRINT
+        ledger.get("experiment_run_fingerprint") != EXPERIMENT_RUN_FINGERPRINT
         or len(ledger.get("results", [])) != 24
     ):
         raise ValueError("P7 cost-stress replay ledger is incomplete or mismatched")
@@ -218,10 +225,12 @@ def main() -> int:
 
     reports: dict[str, dict[str, Any]] = {}
     for training_arm in ("control", "treatment"):
-        payload = _build_pair_payload(repo, campaign_root, source_payload, ledger, training_arm)
+        payload = _build_pair_payload(
+            repo, experiment_run_root, source_payload, ledger, training_arm
+        )
         output_stem = f"p7_cost_stress_{training_arm}_seed101_105_20261022"
-        payload_path = campaign_root / REPORT_DIR / f"{output_stem}_metrics.json"
-        stats_path = campaign_root / REPORT_DIR / f"{output_stem}_statistics.json"
+        payload_path = experiment_run_root / REPORT_DIR / f"{output_stem}_metrics.json"
+        stats_path = experiment_run_root / REPORT_DIR / f"{output_stem}_statistics.json"
         for output in (payload_path, stats_path):
             if output.exists():
                 raise FileExistsError(f"refusing to overwrite existing report: {output}")
@@ -276,7 +285,7 @@ def main() -> int:
             "set; they are not fresh confirmatory OOS evidence."
         )
 
-    report_path = campaign_root / REPORT_DIR / "p7_tick_cost_stress_results_20261022.md"
+    report_path = experiment_run_root / REPORT_DIR / "p7_tick_cost_stress_results_20261022.md"
     if report_path.exists():
         raise FileExistsError(f"refusing to overwrite report: {report_path}")
     report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

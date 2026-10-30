@@ -51,9 +51,9 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
         if self._ny_pos >= len(self._ny_indices) and not done:
             truncated = True
 
-        # Apply max_episode_steps truncation last so it overrides
-        # data-end signals consistently. Do not convert a year-fail
-        # (terminated) into a pure truncation when the cap also fires.
+            # Apply max_episode_steps truncation last so it overrides
+            # data-end signals consistently. Do not convert a year-fail
+            # (terminated) into a pure truncation when the cap also fires.
         if self.max_episode_steps is not None and self.episode_step_count >= self.max_episode_steps:
             truncated = True
 

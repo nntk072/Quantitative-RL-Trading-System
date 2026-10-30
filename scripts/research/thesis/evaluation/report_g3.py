@@ -90,7 +90,7 @@ def main() -> None:
     if not reports:
         raise SystemExit(f"no metrics.json or training_log.json found under {runs_dir}")
 
-    # Normalize every run into a common row: name/algo/arch/vae + oos block.
+        # Normalize every run into a common row: name/algo/arch/vae + oos block.
     rows: list[dict[str, Any]] = []
     for run_dir, report in reports:
         is_flat = _is_flat_log(run_dir)

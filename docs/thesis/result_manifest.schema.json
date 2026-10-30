@@ -1,118 +1,467 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://aalto.example/schemas/thesis-result-manifest-v1.json",
-  "title": "Aalto thesis result manifest",
-  "description": "Claim-to-run-to-artifact map. A valid schema instance is not scientific validation or readiness evidence.",
-  "type": "object",
-  "required": ["schema", "manifest_status", "created_at_utc", "claims", "comparisons", "runs", "supporting_artifacts"],
-  "properties": {
-    "schema": {"const": "aalto.thesis_result_manifest.v1"},
-    "manifest_status": {"enum": ["draft", "frozen"]},
-    "created_at_utc": {"type": "string", "format": "date-time"},
-    "frozen_at_utc": {"type": ["string", "null"], "format": "date-time"},
-    "protocol_path": {"type": "string", "minLength": 1},
-    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
-    "comparisons": {"type": "array", "items": {"$ref": "#/$defs/comparison"}},
-    "runs": {"type": "array", "items": {"$ref": "#/$defs/run"}},
-    "supporting_artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
-    "review_disposition": {"$ref": "#/$defs/reviewDisposition"},
-    "limitations": {"type": "array", "items": {"type": "string"}}
-  },
   "$defs": {
     "artifact": {
-      "type": "object",
-      "required": ["path", "sha256", "role"],
+      "additionalProperties": false,
       "properties": {
-        "path": {"type": "string", "minLength": 1},
-        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "role": {"type": "string", "minLength": 1},
-        "media_type": {"type": ["string", "null"]},
-        "notes": {"type": "string"}
+        "media_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        },
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "role": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
       },
-      "additionalProperties": false
-    },
-    "identity": {
-      "type": "object",
-      "required": ["git_sha", "source_hash_manifest_sha256", "config_sha256"],
-      "properties": {
-        "git_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
-        "source_hash_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "source_hash_manifest_path": {"type": ["string", "null"], "minLength": 1},
-        "config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "data_sha256": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
-        "cache_sha256": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
-        "checkpoint_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
-      },
-      "additionalProperties": false
-    },
-    "run": {
-      "type": "object",
-      "required": ["run_id", "campaign_id", "variant", "seed", "role", "status", "identity", "artifacts"],
-      "properties": {
-        "run_id": {"type": "string", "minLength": 1},
-        "campaign_id": {"type": "string", "minLength": 1},
-        "variant": {"type": "string", "minLength": 1},
-        "seed": {"type": "integer"},
-        "role": {"enum": ["smoke", "development", "selection", "robustness", "final_report_only", "runtime_benchmark", "correctness", "other"]},
-        "status": {"enum": ["planned", "running", "succeeded", "failed", "interrupted", "inactive", "excluded"]},
-        "requested_timesteps": {"type": ["integer", "null"], "minimum": 0},
-        "completed_timesteps": {"type": ["integer", "null"], "minimum": 0},
-        "n_envs": {"type": ["integer", "null"], "minimum": 1},
-        "data_calendar_role": {"type": "string"},
-        "full_split_exposure": {"enum": ["verified", "failed", "not_verified", "not_applicable"]},
-        "identity": {"$ref": "#/$defs/identity"},
-        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
-        "failure_disposition": {"type": ["string", "null"]},
-        "interpretation_limitations": {"type": "array", "items": {"type": "string"}}
-      },
-      "additionalProperties": false
-    },
-    "comparison": {
-      "type": "object",
-      "required": ["comparison_id", "question", "run_ids", "evidence_role", "status", "limitations"],
-      "properties": {
-        "comparison_id": {"type": "string", "minLength": 1},
-        "question": {"type": "string", "minLength": 1},
-        "run_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
-        "evidence_role": {"enum": ["screening", "matched_confirmation", "robustness", "cost_stress", "descriptive", "runtime", "correctness"]},
-        "status": {"enum": ["planned", "in_progress", "complete", "failed", "excluded"]},
-        "comparability_audit": {"type": "array", "items": {"type": "string"}},
-        "metrics": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
-        "statistics": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
-        "figures_and_tables": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
-        "limitations": {"type": "array", "items": {"type": "string"}}
-      },
-      "additionalProperties": false
+      "required": [
+        "path",
+        "sha256",
+        "role"
+      ],
+      "type": "object"
     },
     "claim": {
-      "type": "object",
-      "required": ["claim_id", "rq", "statement", "evidence_role", "allowed_interpretation", "limitations", "comparison_ids"],
+      "additionalProperties": false,
       "properties": {
-        "claim_id": {"type": "string", "minLength": 1},
-        "rq": {"type": "string", "minLength": 1},
-        "statement": {"type": "string", "minLength": 1},
-        "evidence_role": {"enum": ["screening", "matched_confirmation", "robustness", "cost_stress", "descriptive", "runtime", "correctness"]},
-        "allowed_interpretation": {"type": "string", "minLength": 1},
-        "forbidden_overclaims": {"type": "array", "items": {"type": "string"}},
-        "comparison_ids": {"type": "array", "items": {"type": "string"}},
-        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
-        "limitations": {"type": "array", "items": {"type": "string"}},
-        "thesis_destination": {"type": "string"}
+        "allowed_interpretation": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/artifact"
+          },
+          "type": "array"
+        },
+        "claim_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "comparison_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "evidence_role": {
+          "enum": [
+            "screening",
+            "matched_confirmation",
+            "robustness",
+            "cost_stress",
+            "descriptive",
+            "runtime",
+            "correctness"
+          ]
+        },
+        "forbidden_overclaims": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rq": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "statement": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "thesis_destination": {
+          "type": "string"
+        }
       },
-      "additionalProperties": false
+      "required": [
+        "claim_id",
+        "rq",
+        "statement",
+        "evidence_role",
+        "allowed_interpretation",
+        "limitations",
+        "comparison_ids"
+      ],
+      "type": "object"
+    },
+    "comparison": {
+      "additionalProperties": false,
+      "properties": {
+        "comparability_audit": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "comparison_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_role": {
+          "enum": [
+            "screening",
+            "matched_confirmation",
+            "robustness",
+            "cost_stress",
+            "descriptive",
+            "runtime",
+            "correctness"
+          ]
+        },
+        "figures_and_tables": {
+          "items": {
+            "$ref": "#/$defs/artifact"
+          },
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/artifact"
+          },
+          "type": "array"
+        },
+        "question": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "run_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "statistics": {
+          "items": {
+            "$ref": "#/$defs/artifact"
+          },
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "in_progress",
+            "complete",
+            "failed",
+            "excluded"
+          ]
+        }
+      },
+      "required": [
+        "comparison_id",
+        "question",
+        "run_ids",
+        "evidence_role",
+        "status",
+        "limitations"
+      ],
+      "type": "object"
+    },
+    "identity": {
+      "additionalProperties": false,
+      "properties": {
+        "cache_sha256": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "checkpoint_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "config_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "data_sha256": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "git_sha": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        },
+        "source_hash_manifest_path": {
+          "minLength": 1,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_hash_manifest_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "git_sha",
+        "source_hash_manifest_sha256",
+        "config_sha256"
+      ],
+      "type": "object"
     },
     "reviewDisposition": {
-      "type": "object",
-      "required": ["status", "reviewer", "reviewed_at_utc", "artifact"],
+      "additionalProperties": false,
       "properties": {
-        "status": {"enum": ["not_started", "in_progress", "blocking_findings", "resolved", "resolved_with_disclosures"]},
-        "reviewer": {"type": ["string", "null"]},
-        "reviewed_at_utc": {"type": ["string", "null"], "format": "date-time"},
-        "artifact": {"oneOf": [{"$ref": "#/$defs/artifact"}, {"type": "null"}]},
-        "open_findings": {"type": "array", "items": {"type": "string"}}
+        "artifact": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/artifact"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "open_findings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "reviewed_at_utc": {
+          "format": "date-time",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reviewer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "not_started",
+            "in_progress",
+            "blocking_findings",
+            "resolved",
+            "resolved_with_disclosures"
+          ]
+        }
       },
-      "additionalProperties": false
+      "required": [
+        "status",
+        "reviewer",
+        "reviewed_at_utc",
+        "artifact"
+      ],
+      "type": "object"
+    },
+    "run": {
+      "additionalProperties": false,
+      "properties": {
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/artifact"
+          },
+          "type": "array"
+        },
+        "completed_timesteps": {
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "data_calendar_role": {
+          "type": "string"
+        },
+        "experiment_run_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "failure_disposition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "full_split_exposure": {
+          "enum": [
+            "verified",
+            "failed",
+            "not_verified",
+            "not_applicable"
+          ]
+        },
+        "identity": {
+          "$ref": "#/$defs/identity"
+        },
+        "interpretation_limitations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "n_envs": {
+          "minimum": 1,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "requested_timesteps": {
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "role": {
+          "enum": [
+            "smoke",
+            "development",
+            "selection",
+            "robustness",
+            "final_report_only",
+            "runtime_benchmark",
+            "correctness",
+            "other"
+          ]
+        },
+        "run_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "running",
+            "succeeded",
+            "failed",
+            "interrupted",
+            "inactive",
+            "excluded"
+          ]
+        },
+        "variant": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "experiment_run_id",
+        "variant",
+        "seed",
+        "role",
+        "status",
+        "identity",
+        "artifacts"
+      ],
+      "type": "object"
     }
   },
-  "additionalProperties": false
+  "$id": "https://aalto.example/schemas/thesis-result-manifest-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Claim-to-run-to-artifact map. A valid schema instance is not scientific validation or readiness evidence.",
+  "properties": {
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/claim"
+      },
+      "type": "array"
+    },
+    "comparisons": {
+      "items": {
+        "$ref": "#/$defs/comparison"
+      },
+      "type": "array"
+    },
+    "created_at_utc": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "frozen_at_utc": {
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "manifest_status": {
+      "enum": [
+        "draft",
+        "frozen"
+      ]
+    },
+    "protocol_path": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "review_disposition": {
+      "$ref": "#/$defs/reviewDisposition"
+    },
+    "runs": {
+      "items": {
+        "$ref": "#/$defs/run"
+      },
+      "type": "array"
+    },
+    "schema": {
+      "const": "aalto.thesis_result_manifest.v1"
+    },
+    "supporting_artifacts": {
+      "items": {
+        "$ref": "#/$defs/artifact"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema",
+    "manifest_status",
+    "created_at_utc",
+    "claims",
+    "comparisons",
+    "runs",
+    "supporting_artifacts"
+  ],
+  "title": "Aalto thesis result manifest",
+  "type": "object"
 }

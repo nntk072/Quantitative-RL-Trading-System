@@ -1,0 +1,88 @@
+{
+  "captured_at_local": "2026-10-16T16:10:47+03:00",
+  "captured_at_utc": "2026-10-16T13:10:47+00:00",
+  "experiment_run": {
+    "experiment_run_id": "ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016",
+    "fingerprint": "08459336353e046c1a4882a1dd8f1a8284c052a5e18e4bf309ccb0b574ca0a5d",
+    "identity": "18 variants, seed 50, 20M steps each, n_envs=64, shared bundle, two GH200 nodes",
+    "manifest": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016/experiment_run.json",
+    "previous_fingerprint": "3474621efd6a1481bd2a20bce0cfd2c0b69969df1849c6cd738d19dc5bb4ba34",
+    "resume_checkpoints": "18 validated attempt-3 checkpoints, 11M-14M steps; continuation not yet started",
+    "source_fidelity": {
+      "changed_source_files": 14,
+      "current_main_matching_source_files": 214,
+      "diff_report": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016/reports/source_fidelity_current_main_diff_20261016.json",
+      "recorded_experiment_run_git_sha": "8a98f7792f83ce4bbe5cb84f4a2137657d791c02",
+      "recorded_source_files": 228,
+      "review": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016/reports/source_fidelity_review_current_main_20261016.md"
+    },
+    "statuses_at_capture": {
+      "interrupted": 18
+    }
+  },
+  "readiness": "P1 remains open: 18/18 original identities are interrupted below 20M, and no recovery trainer has started. P2 and downstream thesis gates remain open. Thesis status NOT READY.",
+  "recovery_prebuilt_feature_caches": {
+    "all_three_matrices_exactly_equal_to_retained_files": true,
+    "old_files_retained": true,
+    "refresh_report": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016/reports/prebuilt_feature_cache_refresh_20261016.json",
+    "scope": "baseline, Idea 1, and Idea 2 shared caches; 528760 rows each"
+  },
+  "repository": {
+    "branch": "main",
+    "canonical_plan_path": "docs/thesis/master_project_execution_plan.md",
+    "head": "3309b7cd5b4118942cd3d92c2aa7b5d7d4fd3637",
+    "origin_main": "3309b7cd5b4118942cd3d92c2aa7b5d7d4fd3637",
+    "path": "/scratch/work/nguyenl37/Aalto_MS_Thesis",
+    "requested_plan_path": "/scratch/work/nguyenl37/Aalto_MS_Thesis/docs/thesis/master_project_execution_plan.md",
+    "working_tree_clean_at_capture": true
+  },
+  "schema": "aalto.live_experiment_run_snapshot.v1",
+  "slurm": {
+    "actions": "No duplicate request submitted; no job canceled.",
+    "active_allocation": {
+      "cpus": "48 per node; 96 total",
+      "disposition": "Preserve the allocation and wrapper; no controller or trainer is running.",
+      "elapsed_at_capture": "4:38:00",
+      "gpus": "1 GH200 per node; 2 total",
+      "job_id": "20985591",
+      "memory": "512 GiB per node; 1 TiB total",
+      "nodes": [
+        "gpuarm1",
+        "gpuarm2"
+      ],
+      "partition": "gpu-grace-h200-141g",
+      "remaining_seconds_at_capture": 4920,
+      "scheduled_end_local": "2026-10-16T17:32:47+03:00",
+      "started_local": "2026-10-16T11:32:47+03:00",
+      "state": "RUNNING",
+      "training_start_marker_present": false,
+      "worker_trainers": 0
+    },
+    "pending_recovery_request": {
+      "cpus": "48 per node; 96 total",
+      "gpus": "1 GH200 per node; 2 total",
+      "job_id": "20990395",
+      "memory": "512 GiB per node; 1 TiB total",
+      "nodes": 2,
+      "partition": "gpu-grace-h200-141g",
+      "reason": "AssocGrpGRESRunMinutes",
+      "recovery_experiment_run_id": "ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016",
+      "start_time": "Unknown",
+      "state": "PENDING",
+      "time_limit": "6 hours",
+      "training_start_marker_present": true
+    },
+    "persistent_supervisor": {
+      "host": "login4.triton.aalto.fi",
+      "process": "scripts/triton/experiment_run_recovery_supervisor.sh",
+      "state_at_capture": "RUNNING; srun request for the recovery experiment run is pending and uses TRITON_REPO=/scratch/work/nguyenl37/Aalto_MS_Thesis",
+      "tmux_session": "thesis-seed50"
+    }
+  },
+  "verification": {
+    "compute": "gpuarm1 process check found no experiment_run_controller.py or train_rl.py process.",
+    "prebuilt_caches": "Current-hash sidecars and exact matrix equality validated for all three caches; original files remain in the recorded backup directory.",
+    "scheduler": "squeue and scontrol confirmed the active and pending job states, resources, and pending reason.",
+    "supervisor": "tmux ls and the process table confirmed session thesis-seed50 and experiment_run_recovery_supervisor.sh are running."
+  }
+}

@@ -208,7 +208,7 @@ def perf() -> None:
         click.echo("No tasks found.")
         return
 
-    # Aggregate performance across all tasks
+        # Aggregate performance across all tasks
     perf_data: dict[str, dict[str, Any]] = {}
     for t in all_tasks:
         try:

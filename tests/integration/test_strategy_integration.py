@@ -91,6 +91,6 @@ def test_full_strategy_pipeline_runs() -> None:
         assert "asian_high" in trade
         assert "distribution_phase" in trade
 
-    # No NaN/inf leaked into model-facing values.
+        # No NaN/inf leaked into model-facing values.
     seq = obs["seq"]
     assert np.all(np.isfinite(seq))

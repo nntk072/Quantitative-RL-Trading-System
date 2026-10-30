@@ -70,16 +70,16 @@ def render_project_context(context: dict[str, Any]) -> str:
             "",
             f"Report-generator checkout: {_inline(repo.get('path') or 'not recorded')} at {_inline(repo.get('head') or 'not recorded')}.",
             f"Working tree when generated: {repo.get('tracked_changes', 'unknown')} tracked changes and {repo.get('untracked_changes', 'unknown')} untracked files.",
-            f"Campaign source revision: {_inline(context.get('campaign_source_revision') or 'not recorded')}. Each run source is listed below; revisions are not assumed to match.",
+            f"Experiment run source revision: {_inline(context.get('experiment_run_source_revision') or 'not recorded')}. Each run source is listed below; revisions are not assumed to match.",
         ]
     )
-    snapshot = _dict(context.get("campaign_source_snapshot"))
+    snapshot = _dict(context.get("experiment_run_source_snapshot"))
     if snapshot:
         lines.append(
-            f"Campaign source snapshot: {_inline(snapshot.get('path', 'not recorded'))}; {'present' if snapshot.get('present_at_report_time') else 'missing'}; archive SHA-256 {_inline(snapshot.get('sha256', 'not recorded'))}; {snapshot.get('file_count', 'unknown')} files; file-hash manifest SHA-256 {_inline(snapshot.get('manifest_sha256', 'not recorded'))}; {snapshot.get('source_file_hash_count', 'unknown')} source hashes in the campaign manifest."
+            f"Experiment run source snapshot: {_inline(snapshot.get('path', 'not recorded'))}; {'present' if snapshot.get('present_at_report_time') else 'missing'}; archive SHA-256 {_inline(snapshot.get('sha256', 'not recorded'))}; {snapshot.get('file_count', 'unknown')} files; file-hash manifest SHA-256 {_inline(snapshot.get('manifest_sha256', 'not recorded'))}; {snapshot.get('source_file_hash_count', 'unknown')} source hashes in the experiment run manifest."
         )
     else:
-        lines.append("Campaign source snapshot: not recorded in the campaign manifest.")
+        lines.append("Experiment run source snapshot: not recorded in the experiment run manifest.")
     lines.append("Report generator source digests:")
     for item in context.get("report_generator_sources", []):
         lines.append(
@@ -88,9 +88,9 @@ def render_project_context(context: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "#### Campaign input files",
+            "#### Experiment run input files",
             "",
-            "Hashes are the values captured in the campaign manifest. File presence is checked separately at report time.",
+            "Hashes are the values captured in the experiment run manifest. File presence is checked separately at report time.",
             "",
             "| Split/source role | File | Timeframe in filename | Present now | SHA-256 prefix |",
             "|---|---|---|---|---|",
@@ -121,7 +121,7 @@ def render_project_context(context: dict[str, Any]) -> str:
         for symbol, count in sorted(_dict(cache.get("ticks")).items()):
             lines.append(f"| {symbol} | Tick quotes | {count} |")
     else:
-        lines.append("No split_cache_ready.json inventory was saved with this campaign.")
+        lines.append("No split_cache_ready.json inventory was saved with this experiment run.")
 
     lines.extend(
         [

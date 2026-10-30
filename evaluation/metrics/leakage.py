@@ -77,6 +77,6 @@ def time_shift_feature_scores(
         if k <= 0 or k >= n:
             out[f"shift_{k}"] = float("nan")
             continue
-        # feature available k bars earlier than its timestamp ⇒ align f[:-k] with y[k:]
+            # feature available k bars earlier than its timestamp ⇒ align f[:-k] with y[k:]
         out[f"shift_{k}"] = _abs_corr(f[:-k], y[k:])
     return out

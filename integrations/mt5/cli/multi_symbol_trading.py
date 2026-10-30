@@ -73,7 +73,7 @@ def get_symbol_candidates(config: dict[str, Any]) -> list[str]:
             if isinstance(symbols, list):
                 candidates.extend(symbols)
 
-    # Remove duplicates
+                # Remove duplicates
     candidates = list(dict.fromkeys(candidates))
 
     return candidates
@@ -184,7 +184,7 @@ def initialize_trading_system() -> MultiSymbolRobot:
             strategies[symbol] = create_strategy(data_source, STRATEGY_TYPE)
             logger.info(f"Created {STRATEGY_TYPE} strategy for {symbol}")
 
-    # Initialize risk manager
+            # Initialize risk manager
     trading_config = config.get("trading_config", {})
     risk_per_symbol = trading_config.get("risk_per_symbol", 0.02)
     max_total_risk = trading_config.get("max_total_risk", 0.05)
@@ -235,7 +235,7 @@ class TradingSystem:
                 logger.error("Robot not initialized")
                 return
 
-            # Execute trading
+                # Execute trading
             self.robot_instance.trade()
 
             # Log status
@@ -275,7 +275,7 @@ class TradingSystem:
             if once:
                 return
 
-            # Start scheduler
+                # Start scheduler
             logger.info(f"Starting scheduler (every {TRADING_INTERVAL_MINUTES} minutes)...")
             self.start_scheduler()
 

@@ -15,7 +15,7 @@ details. Broker-neutral lifecycle and strategy semantics belong to `live/`.
 
 - Preserve order, fill, account, and timestamp conversion semantics.
 - Keep credentials and SDK state at the integration boundary.
-- Focused tests: `tests/test_live/` and MT5 adapter tests.
+- Focused tests: `tests/unit/live/` and MT5 adapter tests.
 
 ## Change Map
 
@@ -35,4 +35,4 @@ details. Broker-neutral lifecycle and strategy semantics belong to `live/`.
 
 - `integrations/mt5/domain/trader.py`
 - `live/runtime/strategy.py`
-- `tests/test_live/test_rl_bridge.py`
+- `tests/unit/live/test_rl_bridge.py`

@@ -25,8 +25,10 @@ from market_data.loading.ticks import TickBook
 from simulation.environment import make_env
 
 ROOT_DEFAULT = Path.cwd()
-CAMPAIGN = Path("outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1")
-REANALYSIS = CAMPAIGN / "reanalysis_daily_stop_semantics_20261024"
+EXPERIMENT_RUN = Path(
+    "outputs/experiment_runs/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1"
+)
+REANALYSIS = EXPERIMENT_RUN / "reanalysis_daily_stop_semantics_20261024"
 ARMS = (
     "ladder_a4a_entry_fsm_hidden_qgrid025",
     "ladder_a4b_entry_fsm_qgrid025",
@@ -47,7 +49,9 @@ def _sha256(path: Path) -> str:
 
 def _load_arm(root: Path, arm: str) -> dict[str, Any]:
     run_manifest_path = next(
-        (root / CAMPAIGN / "runs/attempts").rglob(f"{arm}__seed50/attempt1/**/run_manifest.json"),
+        (root / EXPERIMENT_RUN / "runs/attempts").rglob(
+            f"{arm}__seed50/attempt1/**/run_manifest.json"
+        ),
         None,
     )
     if run_manifest_path is None:
@@ -331,7 +335,7 @@ def _paired_replays(
 
 def run(root: Path, out: Path) -> dict[str, Any]:
     results: dict[str, Any] = {
-        "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+        "experiment_run_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
         "analysis_script_sha256": _sha256(
             root
             / "scripts/research/thesis/evidence/analyze_monthly_trade_expectancy_and_exit_decomposition.py"
@@ -494,7 +498,7 @@ def _report(results: dict[str, Any]) -> str:
         "",
         "## Reproducibility",
         "",
-        f"- Campaign fingerprint: `{results['campaign_fingerprint']}`.",
+        f"- Experiment run fingerprint: `{results['experiment_run_fingerprint']}`.",
         f"- Analysis script SHA-256: `{results['analysis_script_sha256']}`.",
         f"- Bootstrap: {results['bootstrap']['resamples']:,} resamples, seed {results['bootstrap']['seed']}.",
         "- Per-entry matched data: `ladder_*_paired_trades.csv`.",

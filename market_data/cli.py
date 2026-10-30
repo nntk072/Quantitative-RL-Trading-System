@@ -18,12 +18,12 @@ def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="thesis-data")
-    parser.add_argument("command", choices=("prepare", "discover", "prebuild-campaign-cache"))
+    parser.add_argument("command", choices=("prepare", "discover", "prebuild-experiment-run-cache"))
     args, rest = parser.parse_known_args()
     if args.command == "prepare":
         from market_data.commands.prepare import main as command_main
     elif args.command == "discover":
         from market_data.commands.discover import main as command_main
     else:
-        from market_data.commands.prebuild_campaign_cache import main as command_main
+        from market_data.commands.prebuild_experiment_run_cache import main as command_main
     _forward(command_main, rest)

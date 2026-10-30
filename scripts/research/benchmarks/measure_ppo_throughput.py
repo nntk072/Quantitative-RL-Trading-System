@@ -11,7 +11,7 @@ amount of work. It is not a training-quality run -- it only measures throughput.
 This is a PPO-core benchmark. It resolves the same PPO configuration and uses
 the production bundle environment factory, but does not install production
 dashboard, checkpoint, or evaluation callbacks. Callback and checkpoint timing
-remain unmeasured, so this is not an end-to-end campaign benchmark.
+remain unmeasured, so this is not an end-to-end experiment run benchmark.
 """
 
 from __future__ import annotations

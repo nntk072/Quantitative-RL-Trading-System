@@ -11,8 +11,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-CAMPAIGN_ID = "rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
-CAMPAIGN_FINGERPRINT = "10e75ab7a25a53b3d4444098185fe45603811f09f2d556265c9f80ca402388ab"
+EXPERIMENT_RUN_ID = "rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
+EXPERIMENT_RUN_FINGERPRINT = "10e75ab7a25a53b3d4444098185fe45603811f09f2d556265c9f80ca402388ab"
 SOURCE_PAYLOAD = "p7_paired_seed_metrics_exploratory_20261022_v2.json"
 SEEDS = (101, 102, 103, 104, 105)
 COST_LEVELS = {"baseline_5pt": 5.0, "stress_10pt": 10.0}
@@ -46,7 +46,7 @@ def _artifact(arm: dict[str, Any], suffix: str) -> tuple[Path, str]:
 
 def _validate_source(
     repo: Path,
-    campaign: dict[str, Any],
+    experiment_run: dict[str, Any],
     arm: dict[str, Any],
     seed: int,
 ) -> tuple[Path, Path, str]:
@@ -55,9 +55,9 @@ def _validate_source(
     provenance = arm.get("provenance")
     if (
         not isinstance(provenance, dict)
-        or provenance.get("campaign_fingerprint") != CAMPAIGN_FINGERPRINT
+        or provenance.get("experiment_run_fingerprint") != EXPERIMENT_RUN_FINGERPRINT
     ):
-        raise ValueError(f"seed {seed}: source campaign fingerprint does not match")
+        raise ValueError(f"seed {seed}: source experiment run fingerprint does not match")
     if provenance.get("seed") != seed:
         raise ValueError(f"seed {seed}: payload seed differs from run provenance")
 
@@ -65,9 +65,12 @@ def _validate_source(
     checkpoint_rel, checkpoint_sha = _artifact(arm, "/model/ppo_final.zip")
     manifest_path = (repo / manifest_rel).resolve()
     checkpoint_path = (repo / checkpoint_rel).resolve()
-    campaign_root = (repo / "outputs/gpu_campaigns" / CAMPAIGN_ID).resolve()
-    if campaign_root not in manifest_path.parents or campaign_root not in checkpoint_path.parents:
-        raise ValueError(f"seed {seed}: source artifact escapes campaign directory")
+    experiment_run_root = (repo / "outputs/experiment_runs" / EXPERIMENT_RUN_ID).resolve()
+    if (
+        experiment_run_root not in manifest_path.parents
+        or experiment_run_root not in checkpoint_path.parents
+    ):
+        raise ValueError(f"seed {seed}: source artifact escapes experiment run directory")
     if _sha256(manifest_path) != manifest_sha or _sha256(checkpoint_path) != checkpoint_sha:
         raise ValueError(f"seed {seed}: source manifest/checkpoint hash changed")
 
@@ -75,12 +78,12 @@ def _validate_source(
     if run_manifest.get("training", {}).get("seed", seed) not in (seed, None):
         raise ValueError(f"seed {seed}: run manifest records a different training seed")
     job_key = checkpoint_path.parents[2].name
-    job = next((item for item in campaign["jobs"] if item.get("key") == job_key), None)
+    job = next((item for item in experiment_run["jobs"] if item.get("key") == job_key), None)
     if job is None or job.get("status") != "succeeded" or int(job.get("seed", -1)) != seed:
-        raise ValueError(f"seed {seed}: campaign terminal record does not match checkpoint")
+        raise ValueError(f"seed {seed}: experiment run terminal record does not match checkpoint")
     attempt_dir = checkpoint_path.parents[3]
     if attempt_dir.name != f"attempt{job.get('attempts')}":
-        raise ValueError(f"seed {seed}: checkpoint is not from the latest campaign attempt")
+        raise ValueError(f"seed {seed}: checkpoint is not from the latest experiment run attempt")
     return manifest_path.parent, checkpoint_path, checkpoint_sha
 
 
@@ -97,8 +100,8 @@ def _run_one(
 ) -> dict[str, Any]:
     output = (
         repo
-        / "outputs/gpu_campaigns"
-        / CAMPAIGN_ID
+        / "outputs/experiment_runs"
+        / EXPERIMENT_RUN_ID
         / "reports/p7_tick_cost_stress_20261022"
         / cost_name
         / f"replay{repetition}"
@@ -183,18 +186,20 @@ def main() -> int:
         "--repo-root",
         type=Path,
         default=Path(__file__).resolve().parents[4],
-        help="repository root containing the frozen campaign artifacts",
+        help="repository root containing the frozen experiment run artifacts",
     )
     args = parser.parse_args()
     repo = args.repo_root.resolve()
-    campaign_root = repo / "outputs/gpu_campaigns" / CAMPAIGN_ID
-    campaign = json.loads((campaign_root / "campaign.json").read_text(encoding="utf-8"))
-    if campaign.get("fingerprint") != CAMPAIGN_FINGERPRINT:
-        raise ValueError("P7 campaign fingerprint changed")
-    if any(job.get("status") != "succeeded" for job in campaign.get("jobs", [])):
-        raise ValueError("P7 campaign is not terminal with all succeeded jobs")
+    experiment_run_root = repo / "outputs/experiment_runs" / EXPERIMENT_RUN_ID
+    experiment_run = json.loads(
+        (experiment_run_root / "experiment_run.json").read_text(encoding="utf-8")
+    )
+    if experiment_run.get("fingerprint") != EXPERIMENT_RUN_FINGERPRINT:
+        raise ValueError("P7 experiment run fingerprint changed")
+    if any(job.get("status") != "succeeded" for job in experiment_run.get("jobs", [])):
+        raise ValueError("P7 experiment run is not terminal with all succeeded jobs")
 
-    source_path = campaign_root / "reports" / SOURCE_PAYLOAD
+    source_path = experiment_run_root / "reports" / SOURCE_PAYLOAD
     source_payload = json.loads(source_path.read_text(encoding="utf-8"))
     if source_payload.get("expected_seeds") != list(SEEDS):
         raise ValueError("P7 source payload seed set changed")
@@ -202,12 +207,12 @@ def main() -> int:
     if set(pairs) != set(SEEDS):
         raise ValueError("P7 source payload does not contain exactly seeds 101-105")
 
-    ledger_path = campaign_root / "reports/p7_tick_cost_stress_20261022/replay_ledger.json"
+    ledger_path = experiment_run_root / "reports/p7_tick_cost_stress_20261022/replay_ledger.json"
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
     results: list[dict[str, Any]] = []
     if ledger_path.exists():
         previous = json.loads(ledger_path.read_text(encoding="utf-8"))
-        if previous.get("campaign_fingerprint") != CAMPAIGN_FINGERPRINT or previous.get(
+        if previous.get("experiment_run_fingerprint") != EXPERIMENT_RUN_FINGERPRINT or previous.get(
             "source_payload_sha256"
         ) != _sha256(source_path):
             raise ValueError("existing replay ledger does not match the frozen P7 input")
@@ -225,7 +230,9 @@ def main() -> int:
     for seed in SEEDS:
         for arm_name in ("control", "treatment"):
             arm = pairs[seed][arm_name]
-            source_run, checkpoint, checkpoint_sha = _validate_source(repo, campaign, arm, seed)
+            source_run, checkpoint, checkpoint_sha = _validate_source(
+                repo, experiment_run, arm, seed
+            )
             for cost_name, slippage_points in COST_LEVELS.items():
                 repetitions = (1, 2) if seed == REPRODUCIBILITY_SEED else (1,)
                 for repetition in repetitions:
@@ -247,8 +254,8 @@ def main() -> int:
                     complete_keys.add(key)
                     ledger = {
                         "schema": "aalto.p7_tick_cost_stress_replay_ledger.v1",
-                        "campaign_id": CAMPAIGN_ID,
-                        "campaign_fingerprint": CAMPAIGN_FINGERPRINT,
+                        "experiment_run_id": EXPERIMENT_RUN_ID,
+                        "experiment_run_fingerprint": EXPERIMENT_RUN_FINGERPRINT,
                         "source_payload": str(source_path.relative_to(repo)),
                         "source_payload_sha256": _sha256(source_path),
                         "requested_cost_levels": COST_LEVELS,

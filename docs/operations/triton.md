@@ -11,7 +11,7 @@ needs validation on an x86 compute node.
 
 ## Historical GPU and RAM guidance
 
-The [GPU campaign plan](../training/triton_gpu_training_agent_plan.md)
+The [GPU experiment run plan](../training/triton_gpu_training_agent_plan.md)
 documents the 18-variant, five-seed proposal, allocation-aware scheduling,
 durable per-attempt logging and resume criteria. The
 [RAM optimization plan](../training/triton_ram_optimization_plan.md)

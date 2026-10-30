@@ -17,7 +17,7 @@ class TestSACAgentIntegration:
         from omegaconf import OmegaConf
 
         from learning.rl.agent import build_agent
-        from tests.test_models.test_sac_agent import make_env
+        from tests.unit.models.test_sac_agent import make_env
 
         cfg = OmegaConf.create(
             {

@@ -44,30 +44,30 @@ def categorize_symbol(symbol: str, description: str = "") -> str:
     if any(crypto in symbol_upper for crypto in ["BTC", "ETH", "LTC", "XRP", "USDT", "CRYPTO"]):
         return "crypto"
 
-    # Gold and Precious Metals
+        # Gold and Precious Metals
     if any(
         metal in symbol_upper
         for metal in ["XAU", "GOLD", "XAG", "SILVER", "XPD", "PALLADIUM", "XPT", "PLATINUM"]
     ):
         return "commodities"
 
-    # Oil and Energy
+        # Oil and Energy
     if any(energy in symbol_upper for energy in ["OIL", "WTI", "BRENT", "NGAS", "GAS", "CRUDE"]):
         return "commodities"
 
-    # Other Commodities
+        # Other Commodities
     if any(
         commodity in symbol_upper
         for commodity in ["COPPER", "CORN", "WHEAT", "SOY", "SUGAR", "COFFEE", "COTTON"]
     ):
         return "commodities"
 
-    # Forex (major pairs)
+        # Forex (major pairs)
     major_pairs = ["EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "NZDUSD", "USDCAD"]
     if symbol_upper in major_pairs:
         return "forex"
 
-    # Forex (other pairs - contains currency codes)
+        # Forex (other pairs - contains currency codes)
     currency_codes = [
         "USD",
         "EUR",
@@ -88,11 +88,11 @@ def categorize_symbol(symbol: str, description: str = "") -> str:
     if any(code in symbol_upper for code in currency_codes) and len(symbol_upper) == 6:
         return "forex"
 
-    # ETF
+        # ETF
     if any(etf in symbol_upper for etf in ["ETF", "SPY", "QQQ", "DIA", "IWM", "VTI"]):
         return "etf"
 
-    # Stocks (if available)
+        # Stocks (if available)
     if "." in symbol_upper or len(symbol_upper) <= 5:
         return "stocks"
 
@@ -162,7 +162,7 @@ def discover_symbols() -> dict[str, list[dict[str, Any]]]:
 
         categorized[category].append(symbol_data)
 
-    # Sort each category by symbol name
+        # Sort each category by symbol name
     for category in categorized:
         categorized[category].sort(key=lambda x: x["symbol"])
 
@@ -208,7 +208,7 @@ def save_symbols_to_config(categorized: dict[str, list[dict[str, Any]]], config_
         with open(config_path) as f:
             existing_config = yaml.safe_load(f) or {}
 
-    # Update symbol categories
+            # Update symbol categories
     if "symbol_categories" not in existing_config:
         existing_config["symbol_categories"] = {}
 
@@ -217,7 +217,7 @@ def save_symbols_to_config(categorized: dict[str, list[dict[str, Any]]], config_
             symbol_names = [s["symbol"] for s in symbols]
             existing_config["symbol_categories"][category] = symbol_names
 
-    # Write updated config
+            # Write updated config
     with open(config_path, "w") as f:
         yaml.dump(existing_config, f, default_flow_style=False, sort_keys=False)
 
@@ -233,14 +233,14 @@ def main() -> None:
         logger.error("Please set LOGIN, PASSWORD, and SERVER in .env")
         return
 
-    # Discover symbols
+        # Discover symbols
     categorized = discover_symbols()
 
     if not categorized:
         logger.error("No symbols discovered")
         return
 
-    # Print results
+        # Print results
     print_symbols(categorized)
 
     # Save to config

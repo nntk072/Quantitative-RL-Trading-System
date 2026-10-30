@@ -69,8 +69,8 @@ def build_pre_ny_by_date(
         elif arr_any.shape[1] < n_features:
             pad_f = np.zeros((arr_any.shape[0], n_features - arr_any.shape[1]), dtype=np.float64)
             arr_any = np.concatenate([arr_any, pad_f], axis=1)
-        # Scale for VAE stability: OHLC as fraction of first close; volume as log1p.
-        # Keeps train_vae and TradingEnv pre_ny_seq on the same footing.
+            # Scale for VAE stability: OHLC as fraction of first close; volume as log1p.
+            # Keeps train_vae and TradingEnv pre_ny_seq on the same footing.
         first_close = float(arr_any[0, 3]) if arr_any.shape[1] >= 4 else 0.0
         if first_close > 0.0:
             arr_any[:, : min(4, arr_any.shape[1])] = (

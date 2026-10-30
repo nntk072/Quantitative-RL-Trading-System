@@ -138,8 +138,8 @@ def gpu_tres(value: str) -> dict[str, int]:
             else:
                 generic = int(count)
             continue
-        # squeue JSON uses the TresPerNode spelling `gres/gpu:1` or
-        # `gres/gpu:h100:1`, rather than the key=value AllocTRES spelling.
+            # squeue JSON uses the TresPerNode spelling `gres/gpu:1` or
+            # `gres/gpu:h100:1`, rather than the key=value AllocTRES spelling.
         if item.startswith("gres/gpu:"):
             parts = item.removeprefix("gres/gpu:").split(":")
             if len(parts) == 1 and parts[0].isdigit():
@@ -334,9 +334,9 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 
-    # sinfo lists each node's partition membership; scontrol supplies detailed
-    # per-node allocation counters. A node appears more than once when it is
-    # exposed through multiple partitions.
+        # sinfo lists each node's partition membership; scontrol supplies detailed
+        # per-node allocation counters. A node appears more than once when it is
+        # exposed through multiple partitions.
     sinfo_partitions: dict[str, set[str]] = {}
     for line in sinfo_raw.splitlines():
         pieces = line.split("|", 2)

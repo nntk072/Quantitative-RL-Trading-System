@@ -4,7 +4,7 @@
 For each representative feature profile and every default purged walk-forward
 fold, poison validation-period OHLC in both instruments. Verify that fitted
 training features remain unchanged while validation features respond. Temporary
-feature caches are written under node-local /tmp and removed; campaign caches
+feature caches are written under node-local /tmp and removed; experiment run caches
 are read-only.
 """
 
@@ -41,9 +41,9 @@ from quant_rl.features.build import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-CAMPAIGN_ID = "ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
-CAMPAIGN = ROOT / "outputs/gpu_campaigns" / CAMPAIGN_ID
-RESOLUTION_REPORT = ROOT / "docs/thesis/g1_campaign_feature_cache_resolution_2026-10-16.json"
+EXPERIMENT_RUN_ID = "ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
+EXPERIMENT_RUN = ROOT / "outputs/experiment_runs" / EXPERIMENT_RUN_ID
+RESOLUTION_REPORT = ROOT / "docs/thesis/g1_experiment_run_feature_cache_resolution_2026-10-16.json"
 PRE_REPAIR_OUTPUT = ROOT / "docs/thesis/g1_real_market_fold_fit_scope_2026-10-16.json"
 DEFAULT_OUTPUT = ROOT / "docs/thesis/g1_real_market_fold_fit_full_train_2026-10-17.json"
 VARIANTS = ("ladder_a0_flat", "ladder_a1_sl", "ladder_a0_flat_po3", "ladder_a0_flat_dist")
@@ -118,39 +118,39 @@ def main() -> int:
     if not PRE_REPAIR_OUTPUT.is_file():
         raise FileNotFoundError(f"pre-repair audit report missing: {PRE_REPAIR_OUTPUT}")
     resolution = json.loads(RESOLUTION_REPORT.read_text(encoding="utf-8"))
-    campaign = json.loads((CAMPAIGN / "campaign.json").read_text(encoding="utf-8"))
-    if resolution["campaign_fingerprint"] != campaign["fingerprint"]:
-        raise RuntimeError("cache-resolution report and active campaign fingerprints differ")
+    experiment_run = json.loads((EXPERIMENT_RUN / "experiment_run.json").read_text(encoding="utf-8"))
+    if resolution["experiment_run_fingerprint"] != experiment_run["fingerprint"]:
+        raise RuntimeError("cache-resolution report and active experiment run fingerprints differ")
     resolution_results = resolution["results"]
     if len(resolution_results) != 18:
-        raise RuntimeError(f"expected 18 resolved campaign configs, got {len(resolution_results)}")
+        raise RuntimeError(f"expected 18 resolved experiment run configs, got {len(resolution_results)}")
     resolved_profiles = {row["matched_parity_profile"] for row in resolution_results}
     if resolved_profiles != set(VARIANTS):
         raise RuntimeError(f"resolved profile set changed: {sorted(resolved_profiles)}")
     resolved_variants = [row["variant"] for row in resolution_results]
     if len(set(resolved_variants)) != 18:
-        raise RuntimeError("cache-resolution report contains duplicate campaign variants")
-    manifest_jobs = campaign["jobs"]
+        raise RuntimeError("cache-resolution report contains duplicate experiment run variants")
+    manifest_jobs = experiment_run["jobs"]
     manifest_run_keys = [row["key"] for row in manifest_jobs]
     if (
         len(manifest_run_keys) != 18
         or len(set(manifest_run_keys)) != 18
         or set(manifest_run_keys) != set(resolved_variants)
     ):
-        raise RuntimeError("campaign manifest and cache-resolution variant identities differ")
+        raise RuntimeError("experiment run manifest and cache-resolution variant identities differ")
     if any(int(row["seed"]) != 50 for row in manifest_jobs):
-        raise RuntimeError("campaign manifest contains a non-seed-50 run")
+        raise RuntimeError("experiment run manifest contains a non-seed-50 run")
     for row in resolution_results:
         config_path = ROOT / row["config_path"]
         if sha256_file(config_path) != row["config_sha256"]:
-            raise RuntimeError(f"campaign config hash changed: {row['config_path']}")
+            raise RuntimeError(f"experiment run config hash changed: {row['config_path']}")
     strategy_names_by_profile: dict[str, set[str]] = {}
     for row in resolution_results:
         cfg = OmegaConf.load(ROOT / row["config_path"])
         strategy_name = str(OmegaConf.select(cfg, "strategy.name", default="baseline"))
         if strategy_name not in STRATEGIES:
             raise RuntimeError(
-                f"unsupported campaign strategy {strategy_name!r} in {row['config_path']}"
+                f"unsupported experiment run strategy {strategy_name!r} in {row['config_path']}"
             )
         strategy_names_by_profile.setdefault(row["matched_parity_profile"], set()).add(
             strategy_name
@@ -188,10 +188,10 @@ def main() -> int:
     }
     for relative_path, actual_hash in raw_input_hashes.items():
         resolution_hash = resolution["raw_input_sha256"].get(relative_path)
-        campaign_hash = campaign["data_inputs"].get(relative_path)
-        if actual_hash != resolution_hash or actual_hash != campaign_hash:
+        experiment_run_hash = experiment_run["data_inputs"].get(relative_path)
+        if actual_hash != resolution_hash or actual_hash != experiment_run_hash:
             raise RuntimeError(
-                f"M1 input hash does not match both campaign and cache-resolution evidence: "
+                f"M1 input hash does not match both experiment run and cache-resolution evidence: "
                 f"{relative_path}"
             )
     primary = add_session_id(
@@ -298,7 +298,7 @@ def main() -> int:
                 results.append(
                     {
                         "variant": variant,
-                        "campaign_cache_feature_hash": resolution_by_profile[variant][
+                        "experiment_run_cache_feature_hash": resolution_by_profile[variant][
                             "feature_hash"
                         ],
                         "config_path": str(config_by_variant[variant].relative_to(ROOT)),
@@ -376,7 +376,7 @@ def main() -> int:
             if not item["validation_changed_model_visible_feature"]
         }
     )
-    affected_campaign_runs = [
+    affected_experiment_runs = [
         row for row in resolution["results"] if row["matched_parity_profile"] in failed_profiles
     ]
     changed_columns = sorted(
@@ -415,10 +415,10 @@ def main() -> int:
             f"{training_changed_profiles}; validation features did not respond for profiles "
             f"{validation_unresponsive_profiles}; model-visible validation response was absent "
             f"for profiles {no_visible_validation_response_profiles}. Changed training columns: "
-            f"{changed_columns}. The failed profiles map to {len(affected_campaign_runs)}/18 "
-            "saved campaign runs. "
+            f"{changed_columns}. The failed profiles map to {len(affected_experiment_runs)}/18 "
+            "saved experiment runs. "
             "This is a real-market causality failure for the tested slice, not a strategy "
-            "result. The active campaign source was not changed."
+            "result. The active experiment run source was not changed."
         )
     else:
         scope_note = (
@@ -447,9 +447,9 @@ def main() -> int:
             "true after repair. Per-profile poison results and current source hashes are "
             "the evidence for this rerun."
         ),
-        "affected_campaign_runs": [row["variant"] for row in affected_campaign_runs],
-        "affected_campaign_run_count": len(affected_campaign_runs),
-        "campaign_run_profile_mapping": [
+        "affected_experiment_runs": [row["variant"] for row in affected_experiment_runs],
+        "affected_experiment_run_count": len(affected_experiment_runs),
+        "experiment_runs_profile_mapping": [
             {
                 "variant": row["variant"],
                 "matched_parity_profile": row["matched_parity_profile"],
@@ -465,10 +465,10 @@ def main() -> int:
         "training_changed_profiles": training_changed_profiles,
         "validation_unresponsive_profiles": validation_unresponsive_profiles,
         "no_visible_validation_response_profiles": no_visible_validation_response_profiles,
-        "campaign_id": CAMPAIGN_ID,
-        "campaign_fingerprint": campaign["fingerprint"],
-        "campaign_git_sha": campaign["git_sha"],
-        "campaign_manifest_sha256": sha256_file(CAMPAIGN / "campaign.json"),
+        "experiment_run_id": EXPERIMENT_RUN_ID,
+        "experiment_run_fingerprint": experiment_run["fingerprint"],
+        "experiment_run_git_sha": experiment_run["git_sha"],
+        "experiment_run_manifest_sha256": sha256_file(EXPERIMENT_RUN / "experiment_run.json"),
         "runtime": {
             "python": platform.python_version(),
             "platform": platform.platform(),
@@ -485,10 +485,10 @@ def main() -> int:
         "working_tree_status": subprocess.check_output(
             ["git", "status", "--porcelain"], cwd=ROOT, text=True
         ).splitlines(),
-        "slurm_job_id": campaign.get("job_id"),
+        "slurm_job_id": experiment_run.get("job_id"),
         "raw_inputs_sha256": raw_input_hashes,
-        "raw_inputs_match_campaign_and_cache_resolution": True,
-        "campaign_config_hashes_match_resolution": True,
+        "raw_inputs_match_experiment_run_and_cache_resolution": True,
+        "experiment_run_config_hashes_match_resolution": True,
         "source_sha256": {str(path.relative_to(ROOT)): sha256_file(path) for path in source_paths},
         "cache_resolution_report_sha256": sha256_file(RESOLUTION_REPORT),
         "fold_rows_available": len(fold_input),

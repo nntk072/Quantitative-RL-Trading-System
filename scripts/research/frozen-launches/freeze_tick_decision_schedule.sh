@@ -13,7 +13,7 @@ fi
 
 ruff format \
     training/runner/training.py \
-    tests/test_simulation/test_environment/test_eligibility_wiring.py \
+    tests/unit/simulation/test_environment/test_eligibility_wiring.py \
     scripts/research/audits/fingerprint_tick_decision_schedule.py
 format_apply_rc=$?
 
@@ -24,7 +24,7 @@ if [[ "$validate_only" == true ]]; then
     fingerprint_out=docs/thesis/evidence/replacement_data_20261017/decision_schedule_fingerprint_final.json
 fi
 
-python -m pytest tests/test_simulation/test_environment/test_eligibility_wiring.py -q
+python -m pytest tests/unit/simulation/test_environment/test_eligibility_wiring.py -q
 pytest_rc=$?
 
 python scripts/research/audits/audit_tick_execution_coverage.py --out "$coverage_out"

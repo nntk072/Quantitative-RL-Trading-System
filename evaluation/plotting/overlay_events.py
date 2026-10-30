@@ -252,9 +252,9 @@ def candidate_sweep_line(
         if not len(prior_wicks):
             return matching_recorded_event()
         pivot_index = int(prior_wicks[-1])
-    # Anchor the horizontal level to the actual wick values at both endpoints.
-    # A nearby pivot timestamp or a tolerance-based match can otherwise leave
-    # an orange sweep line visibly floating beside its source candle.
+        # Anchor the horizontal level to the actual wick values at both endpoints.
+        # A nearby pivot timestamp or a tolerance-based match can otherwise leave
+        # an orange sweep line visibly floating beside its source candle.
     level_value = float(wick_values[pivot_index])
     event_time = pd.Timestamp(bars.index[origin_bar])
     pivot_time = pd.Timestamp(bars.index[pivot_index])
@@ -340,10 +340,10 @@ def _swing_origins(
             origin_i = i - swing_period
         if origin_i < 0 or origin_i >= len(wick):
             continue
-        # ``last_swing_*_time`` is the confirmed pivot's source candle, not its
-        # later confirmation candle. Keep that exact wick location: searching
-        # nearby candles for a similar price can attach the swing to the wrong
-        # candle when multiple wicks are close or equal.
+            # ``last_swing_*_time`` is the confirmed pivot's source candle, not its
+            # later confirmation candle. Keep that exact wick location: searching
+            # nearby candles for a similar price can attach the swing to the wrong
+            # candle when multiple wicks are close or equal.
         draw_px = float(wick.iloc[origin_i])
         if not np.isfinite(draw_px):
             continue
@@ -431,8 +431,8 @@ def _sweep_lines(
             )
             if not crosses_level:
                 continue
-        # Use the exact source wick value after matching, keeping the line
-        # attached to the wick despite floating-point serialization noise.
+                # Use the exact source wick value after matching, keeping the line
+                # attached to the wick despite floating-point serialization noise.
         price = float(origin_prices[np.flatnonzero(origin_i_arr == origin_i)[-1]])
         # Endpoints are the candles themselves. A time pad draws the X
         # between bars, off the wick the sweep took.

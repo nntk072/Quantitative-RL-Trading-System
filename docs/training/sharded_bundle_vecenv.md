@@ -24,6 +24,6 @@ python scripts/bench/measure_ppo_throughput.py \
 ```
 
 This is an execution backend change only. It does not establish that the
-backend is faster, improve policy quality, or change any historical campaign
+backend is faster, improve policy quality, or change any historical experiment run
 result. Promote it only after exact seeded trace parity and a matched hardware
 benchmark show an aggregate throughput benefit.

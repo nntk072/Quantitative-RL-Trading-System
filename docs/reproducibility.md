@@ -4,7 +4,7 @@
 
 The dated [2026-09-09 baseline runbook](../baseline/runbook_20260909T224227Z.md)
 preserves its original environment, test results and provenance as a snapshot,
-not current CI evidence. The [GPU campaign](../docs/training/triton_gpu_training_agent_plan.md)
+not current CI evidence. The [GPU experiment run](../docs/training/triton_gpu_training_agent_plan.md)
 and [RAM optimization](../docs/training/triton_ram_optimization_plan.md) plans contain
 run-specific scheduling, resource and parity requirements; they are
 historical planning records, not evidence that the proposed experiments ran.

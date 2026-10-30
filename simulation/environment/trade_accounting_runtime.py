@@ -37,10 +37,10 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
         if active_execution is not None:
             for key, value in active_execution["metadata"].items():
                 record.setdefault(key, value)
-        # The environment uses observed ticks only for triggered stop/target
-        # exits. Other fills use the bar open, bar close, or an OHLC-derived
-        # level. Preserve that distinction in every raw fill record so reports
-        # can audit execution-source parity by chronological split.
+                # The environment uses observed ticks only for triggered stop/target
+                # exits. Other fills use the bar open, bar close, or an OHLC-derived
+                # level. Preserve that distinction in every raw fill record so reports
+                # can audit execution-source parity by chronological split.
         record.setdefault(
             "fill_quote_source",
             "bar_range_level" if record.get("time_precision") == "bar_interval" else "bar_close",
@@ -53,8 +53,8 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
             record.setdefault("fill_time", None)
         else:
             record.setdefault("fill_time", record.get("time"))
-        # close_position has already reduced pos.size. Derive each fill's size
-        # from immutable entry quantity and previously stamped exit quantities.
+            # close_position has already reduced pos.size. Derive each fill's size
+            # from immutable entry quantity and previously stamped exit quantities.
         initial = float(pos.initial_size or pos.tp_initial_size or pos.size)
         close_size = max(0.0, initial - float(pos.filled_size) - float(pos.size))
         if close_size <= 1e-9 and "size" in record:

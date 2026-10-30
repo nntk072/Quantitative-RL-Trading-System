@@ -18,7 +18,7 @@ The sequence is:
 
 **repository inventory → package boundaries → public contracts → characterization tests → incremental migration → compatibility verification → removal of legacy layout**
 
-Behavioral equivalence is the primary constraint. Architecture work must not silently alter feature causality, execution, risk, rewards, training, checkpoint compatibility, evaluation results, or campaign reproducibility.
+Behavioral equivalence is the primary constraint. Architecture work must not silently alter feature causality, execution, risk, rewards, training, checkpoint compatibility, evaluation results, or experiment run reproducibility.
 
 ## Repository categories
 
@@ -45,7 +45,7 @@ These are importable Python packages with `__init__.py` and stable public APIs:
 
 ### Configuration assets
 
-`config/` contains YAML, CSV schedules, experiment declarations, and campaign configuration. It remains an asset directory rather than a Python package.
+`config/` contains YAML, CSV schedules, experiment declarations, and experiment run configuration. It remains an asset directory rather than a Python package.
 
 Python code that loads, validates, merges, hashes, and resolves shared configuration belongs to the top-level `configuration/` package. Domain packages own only domain-specific interpretation/validation layered on the resolved configuration.
 
@@ -96,7 +96,7 @@ The repository architecture includes code, declarative inputs, immutable evidenc
 | `config/`            | Declarative experiment/runtime inputs                                      | `configuration` plus domain validators                              | Human-authored or generated only through explicit config-generation commands | Versioned config plus resolved snapshot determine a run     |
 | `data/`              | Market-data assets and curated partitions                                  | `market_data`                                                       | Data ingestion/preparation APIs only; scripts wrap them                      | Raw source identity and dataset manifest are authoritative  |
 | `cache/`             | Disposable acceleration artifacts                                          | Owning producer package plus generic artifact primitives              | Atomic, identity-keyed, safe to rebuild                                      | Never the only copy of research evidence                    |
-| `outputs/`           | Immutable run, campaign, evaluation, CI, and research artifacts            | `artifacts` plus the package that defines each artifact's semantics | Structured run/artifact writers                                              | Manifest and provenance identify every result               |
+| `outputs/`           | Immutable run, experiment run, evaluation, CI, and research artifacts            | `artifacts` plus the package that defines each artifact's semantics | Structured run/artifact writers                                              | Manifest and provenance identify every result               |
 | `logs/`              | Local/global runtime diagnostics that are not already colocated with a run | Runtime owner; shared conventions from `artifacts`                  | Append/rotate; no domain state stored only in logs                           | Logs support diagnosis, not scientific truth                |
 | `baseline/`          | Curated, reviewed reference evidence                                       | Evaluation/verification code plus promotion workflow                  | Promote from validated outputs; do not write casually during runs            | Baseline manifest points to source artifacts and validation |
 | `scripts/`           | Human/Slurm command entry points                                           | Owning top-level package                                              | Thin wrappers only                                                           | No reusable domain logic                                    |
@@ -120,7 +120,7 @@ config/
 ├── features/             # feature-family profiles
 ├── policies/             # trading-policy profiles when useful
 ├── experiments/          # experiment/variant declarations
-├── campaigns/            # concrete campaign specifications
+├── experiment_runs/            # concrete experiment run specifications
 ├── data/                 # symbols, sessions, source/partition declarations
 ├── models/               # model/architecture presets if they remain declarative
 └── schemas/              # optional machine-readable config schemas
@@ -208,7 +208,7 @@ Introduce a low-level `artifacts/` package for cross-cutting artifact mechanics:
 artifacts/
 ├── __init__.py
 ├── identity.py           # ArtifactId, content/source identity helpers
-├── layout.py             # canonical run/campaign/evaluation path layouts
+├── layout.py             # canonical run/experiment_run/evaluation path layouts
 ├── manifest.py           # common provenance envelope and schema/version fields
 ├── atomic.py             # atomic JSON/text/binary/directory promotion helpers
 ├── retention.py          # disposable/retained/promotable classifications
@@ -217,7 +217,7 @@ artifacts/
 
 Exact filenames may adjust, but these responsibilities need one owner.
 
-`artifacts` owns storage/provenance mechanics, not domain content. For example, `training.artifacts` defines what a training manifest means, `evaluation.reporting` defines evaluation tables, and `experiments.campaigns` defines campaign state. They call common artifact primitives instead of independently inventing directories and JSON-write patterns.
+`artifacts` owns storage/provenance mechanics, not domain content. For example, `training.artifacts` defines what a training manifest means, `evaluation.reporting` defines evaluation tables, and `experiments.runs` defines experiment run state. They call common artifact primitives instead of independently inventing directories and JSON-write patterns.
 
 Domain packages own payload schemas and their validation. There is no global
 mutable artifact-kind registry: the previous registry had no consumers and
@@ -266,7 +266,7 @@ Failed or interrupted generation leaves a staging/incomplete state that consumer
 
 ### Provenance graph
 
-Artifacts form a directed provenance graph. A model checkpoint should identify the resolved config, dataset/partition, feature schema/cache identity, action/observation schema, seed, source revision, and parent checkpoint if resumed. Evaluation artifacts identify the checkpoint and evaluation dataset. Campaign summaries identify their child runs. Baselines identify the validated source artifacts from which they were promoted.
+Artifacts form a directed provenance graph. A model checkpoint should identify the resolved config, dataset/partition, feature schema/cache identity, action/observation schema, seed, source revision, and parent checkpoint if resumed. Evaluation artifacts identify the checkpoint and evaluation dataset. Experiment run summaries identify their child runs. Baselines identify the validated source artifacts from which they were promoted.
 
 This graph must be traversable without reading free-form logs.
 
@@ -279,7 +279,7 @@ Target logical namespaces:
 ```text
 outputs/
 ├── runs/                 # individual training runs
-├── campaigns/            # campaign controllers, child-run refs, scheduler evidence
+├── experiment_runs/            # experiment run controllers, child-run refs, scheduler evidence
 ├── evaluation/           # checkpoint reanalysis and OOS evaluation packs
 ├── research/             # research audits and one-off validated analyses
 ├── ci/                   # CI/gate evidence intended to be retained locally
@@ -287,7 +287,7 @@ outputs/
 └── agent/                # agent execution state only when intentionally retained
 ```
 
-Existing names such as campaign, CI-gate, data-refresh, thesis-validation, and agent-state trees can migrate gradually. Do not rename active campaign paths in place if that would break reproducibility.
+Existing names such as experiment run, CI-gate, data-refresh, thesis-validation, and agent-state trees can migrate gradually. Do not rename active experiment run paths in place if that would break reproducibility.
 
 A canonical training run layout should include a top-level manifest and typed children, for example:
 
@@ -305,7 +305,7 @@ outputs/runs/<run-id>/
 └── COMPLETE
 ```
 
-Campaign and evaluation layouts should likewise have explicit manifests instead of relying on filename conventions.
+Experiment run and evaluation layouts should likewise have explicit manifests instead of relying on filename conventions.
 
 Run IDs are immutable identities. A resumed run either records lineage to its parent checkpoint/run or uses a clearly defined continuation identity; it must not silently overwrite the provenance of the original run.
 
@@ -313,12 +313,12 @@ Run IDs are immutable identities. A resumed run either records lineage to its pa
 
 Logs have two scopes:
 
-- run-scoped logs belong inside the corresponding run/campaign/evaluation artifact tree;
+- run-scoped logs belong inside the corresponding run/experiment_run/evaluation artifact tree;
 - root `logs/` is reserved for local/global runtime services that have no containing artifact, such as local live/paper runtime logging.
 
 Structured event/state needed for metrics or reproducibility belongs in typed JSON/CSV/Parquet artifacts, not only in text logs. Text logs may be rotated or archived without changing scientific results.
 
-All logging setup should accept a run/artifact context carrying run ID, campaign ID, seed, worker/job identity, and relevant source/config identity. This avoids detached log files whose experiment cannot be reconstructed.
+All logging setup should accept a run/artifact context carrying run ID, experiment run ID, seed, worker/job identity, and relevant source/config identity. This avoids detached log files whose experiment cannot be reconstructed.
 
 ## Baseline architecture
 
@@ -348,14 +348,14 @@ scripts/
 ├── data/                 # ingestion/preparation/cache commands -> market_data/features
 ├── train/                # training commands -> training
 ├── eval/                 # evaluation/report commands -> evaluation
-├── experiments/          # campaign/variant commands -> experiments
+├── experiments/          # experiment_run/variant commands -> experiments
 ├── compute/              # Slurm/allocation/runtime wrappers -> compute
 ├── research/             # reproducible analysis entry points -> package APIs
 ├── maintenance/          # migrations/cleanup/repair commands
 └── tests/                # convenience launchers only; canonical tests live in tests/
 ```
 
-Shell scripts remain appropriate for Slurm allocation, environment activation, and process supervision, but business logic, campaign state transitions, data rules, and artifact schemas move into Python packages.
+Shell scripts remain appropriate for Slurm allocation, environment activation, and process supervision, but business logic, experiment run state transitions, data rules, and artifact schemas move into Python packages.
 
 A script may choose arguments and destinations; it may not define a second version of the underlying algorithm.
 
@@ -389,7 +389,7 @@ docs/
 ├── architecture/         # package + repository lifecycle architecture
 ├── decisions/            # ADR-style durable design decisions
 ├── operations/           # Triton, deployment, environment, recovery runbooks
-├── training/             # training/evaluation/campaign procedures
+├── training/             # training/evaluation/experiment_run procedures
 ├── research/             # experiment protocol, reproducibility, methodology
 ├── thesis/               # thesis-specific evidence interpretation and handoffs
 └── generated/            # optional reproducible generated docs, if truly needed
@@ -423,7 +423,7 @@ Production packages must never import `scripts/`, `tools/`, workflow code, or CI
 
 ## Command and CI execution architecture
 
-Scripts, console commands, Docker, Slurm, developer tools, and GitHub Actions are one execution architecture. They may select arguments, resources, environment variables, scheduling, and output locations, but they must converge on the same package APIs. None of these outer layers may contain a second implementation of feature logic, trading rules, risk equations, training setup, evaluation semantics, campaign state transitions, provenance rules, or artifact schemas.
+Scripts, console commands, Docker, Slurm, developer tools, and GitHub Actions are one execution architecture. They may select arguments, resources, environment variables, scheduling, and output locations, but they must converge on the same package APIs. None of these outer layers may contain a second implementation of feature logic, trading rules, risk equations, training setup, evaluation semantics, experiment run state transitions, provenance rules, or artifact schemas.
 
 Preferred direction:
 
@@ -435,7 +435,7 @@ Preferred direction:
 
 ### Stable commands and script lifecycle
 
-Frequently used commands such as training, evaluation/reanalysis, campaign execution/status, and data preparation should have stable console entry points backed by package-owned CLI functions. Internal module moves must not force users or Slurm launchers to learn new deep module paths.
+Frequently used commands such as training, evaluation/reanalysis, experiment run execution/status, and data preparation should have stable console entry points backed by package-owned CLI functions. Internal module moves must not force users or Slurm launchers to learn new deep module paths.
 
 Keep scripts for research-specific, maintenance, and platform-launch work when a permanent console command adds no value.
 
@@ -452,11 +452,11 @@ Target script groups:
       maintenance/
       tests/
 
-The current matrix and Triton groups should be migrated by responsibility. Campaign behavior belongs to experiments. Slurm/resource behavior belongs to compute. Shell files that remain should be thin platform wrappers.
+The current matrix and Triton groups should be migrated by responsibility. Experiment run behavior belongs to experiments. Slurm/resource behavior belongs to compute. Shell files that remain should be thin platform wrappers.
 
-Every migrated script is classified as stable wrapper, temporary compatibility wrapper, frozen research record, or obsolete. Before removing or renaming one, search campaign specifications, Docker Compose, workflows, tests, docs, run manifests, and saved launch commands.
+Every migrated script is classified as stable wrapper, temporary compatibility wrapper, frozen research record, or obsolete. Before removing or renaming one, search experiment run specifications, Docker Compose, workflows, tests, docs, run manifests, and saved launch commands.
 
-A Python script is too large for the scripts layer when it owns reusable state machines, dataclasses, checkpoint selection, result aggregation, hashing/provenance, dataset rules, artifact schemas, or substantial reusable helpers. A shell script is too large when it owns scientific calculations, JSON state mutation, retry-state decisions, campaign reconciliation, or long business-logic branches.
+A Python script is too large for the scripts layer when it owns reusable state machines, dataclasses, checkpoint selection, result aggregation, hashing/provenance, dataset rules, artifact schemas, or substantial reusable helpers. A shell script is too large when it owns scientific calculations, JSON state mutation, retry-state decisions, experiment run reconciliation, or long business-logic branches.
 
 ### Current CI audit
 
@@ -536,7 +536,7 @@ Nightly is not a dumping ground for flaky tests.
 
 Tier D: Triton/GPU/research-infrastructure validation.
 
-Use Triton/GH200 when changes touch GPU execution, vectorized environments, shared bundles, training orchestration, checkpoint serialization, Slurm/campaign infrastructure, or resource-sensitive behavior. Include the applicable current-source provenance check, GPU import/device smoke, direct/bundle equivalence, short PPO/SAC/recurrent smoke training, checkpoint save/load/reanalysis, worker/resource geometry, campaign dry-run/recovery, and one short training-to-evaluation-to-manifest path.
+Use Triton/GH200 when changes touch GPU execution, vectorized environments, shared bundles, training orchestration, checkpoint serialization, Slurm/experiment_run infrastructure, or resource-sensitive behavior. Include the applicable current-source provenance check, GPU import/device smoke, direct/bundle equivalence, short PPO/SAC/recurrent smoke training, checkpoint save/load/reanalysis, worker/resource geometry, experiment run dry-run/recovery, and one short training-to-evaluation-to-manifest path.
 
 Tier D results are structured gate artifacts. Long jobs use the existing external watcher rather than repeated agent polling.
 
@@ -640,11 +640,11 @@ The current repository already contains several repeated helper patterns. Their 
 
 | Repeated concern                                    | Canonical owner                                                                                    | Examples of consumers                                    |
 | --------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| file/content SHA-256, artifact fingerprints         | `artifacts.identity`                                                                             | campaigns, thesis evidence, evaluation manifests, audits |
+| file/content SHA-256, artifact fingerprints         | `artifacts.identity`                                                                             | experiment runs, thesis evidence, evaluation manifests, audits |
 | atomic JSON/text/binary writes and safe replacement | `artifacts.atomic`                                                                               | training, evaluation, experiments, research generators   |
-| artifact layout/path construction                   | `artifacts.layout`                                                                               | runs, campaigns, evaluation packs, CI evidence           |
+| artifact layout/path construction                   | `artifacts.layout`                                                                               | runs, experiment runs, evaluation packs, CI evidence           |
 | canonical manifest/provenance envelope              | `artifacts.manifest`                                                                             | training/evaluation/experiments/baseline promotion       |
-| canonical config serialization/hash                 | `configuration.hashing`                                                                          | training, campaigns, evaluation reanalysis               |
+| canonical config serialization/hash                 | `configuration.hashing`                                                                          | training, experiment runs, evaluation reanalysis               |
 | repository/config path resolution                   | `configuration.paths` when config-related; owning package otherwise                              | CLI/config/data resolution                               |
 | CUDA/device and host-resource discovery             | `compute.environment`                                                                            | training setup, benchmarks, Slurm execution              |
 | position sizing and risk capacity                   | `trading.risk`                                                                                   | simulation, evaluation, live/MT5 adapters                |
@@ -720,12 +720,12 @@ High-value current candidates include repeated SHA-256 helpers, JSON readers/wri
 The P7 filename is a concrete example that exposed this problem, not a
 special-case cleanup target. The current canonical
 `scripts/research/thesis/evidence/build_paired_seed_payload.py` has a
-functional basename, but it contains roughly 368 lines of campaign validation,
+functional basename, but it contains roughly 368 lines of experiment run validation,
 provenance checks, paired-payload construction, and CLI code. That is not a
 thin script wrapper and it obscures the owning package. The target is the
 package-owned API `evaluation/reanalysis/paired_seed_payload.py`, with the
 `scripts/` file reduced to argument parsing, API invocation, and exit/report
-handling. Keep frozen P7 campaign parameters in a declarative campaign input
+handling. Keep frozen P7 experiment run parameters in a declarative experiment run input
 and historical source identity in provenance snapshots, separate from
 reusable payload logic. Preserve the exact
 historical source bytes and hashes in the existing snapshot/provenance system;
@@ -815,7 +815,7 @@ own ledger row: 454 production Python files, 166 commands/tools, 278 tests and
 fixtures, 155 configuration assets, 118 documentation files, 323
 data/cache/output/evidence files, 32 agent-guidance files, 4 CI files, 29
 repository-support files, 4 tracked data-mode symlinks, and the protected
-`campaign_worker_dispatch.log`. It records owner, responsibility, filename
+`experiment_run_worker_dispatch.log`. It records owner, responsibility, filename
 class, disposition, consumer/compatibility evidence, and verification
 requirements. Twenty-eight paths tracked by the baseline commit are deleted in
 the current migration and are therefore not counted as active; their source
@@ -861,9 +861,9 @@ commands, CI/Slurm surfaces, data aliases, and retained evidence. Later phases
 must update this same ledger when a file moves or is retired.
 
 The expanded source pass records additional current-path decisions in the
-ledger. Phase 7 has moved the durable campaign composition root to
-`experiments/campaigns/campaign_execution.py`; internal callers use it, while
-`experiments/campaigns/execution.py` remains a narrow compatibility adapter for
+ledger. Phase 7 has moved the durable experiment run composition root to
+`experiments/runs/execution.py`; internal callers use it, while
+`experiments/runs/execution.py` remains a narrow compatibility adapter for
 legacy launchers and public imports. `features/pipeline/context.py` mixes
 reachable-R observation features, London ATR-distance assembly, and
 walk-forward fold fitting; the ledger records exact destinations and stable
@@ -872,7 +872,7 @@ now owns the standalone Backtrader implementation. `main.py` forwards to it as
 a thin compatibility command until the Phase 11 invocation-window review.
 `training/artifacts/metrics.py` was renamed to
 `training/artifacts/evaluation_result_writer.py` with its report schema
-preserved and the Phase 5 writer tests passing. The campaign allocation wrapper
+preserved and the Phase 5 writer tests passing. The experiment run allocation wrapper
 that still names retired `trading/account/state.py` remains protected until its
 supervisor/recovery contract is terminal; the ledger records its safe follow-up.
 The PO3 `config.py`
@@ -889,7 +889,7 @@ Numbering is acceptable only when the number is itself part of the domain or pro
 
 ### Naming rules
 
-Use names that state the action and the domain object. Prefer `approve_trade_risk()` over `process_risk()`, `compute_daily_loss_headroom()` over `calculate_value2()`, `apply_partial_take_profit()` over `handle_tp_part2()`, `resolve_repeated_payout_transition()` over `process_cycle()`, `build_observation_vector()` over `prepare_data()`, and `write_campaign_manifest()` over `save_json()` when campaign semantics matter.
+Use names that state the action and the domain object. Prefer `approve_trade_risk()` over `process_risk()`, `compute_daily_loss_headroom()` over `calculate_value2()`, `apply_partial_take_profit()` over `handle_tp_part2()`, `resolve_repeated_payout_transition()` over `process_cycle()`, `build_observation_vector()` over `prepare_data()`, and `write_experiment_run_manifest()` over `save_json()` when experiment run semantics matter.
 
 ### Function-boundary rules
 
@@ -901,7 +901,7 @@ These exact names may adjust to the final implementation, but the extracted resp
 
 ### Similar ideas require one vocabulary
 
-When several modules describe the same concept, choose one canonical term and use it consistently across code, configuration, logs, metrics, tests, and documentation. Important examples include `requested_risk` / `approved_risk` / `executed_risk`, `daily_loss_headroom` versus `daily_loss_breach`, `account_floor` / `operating_equity` / `realized_balance` / `payout`, `dataset` / `partition` / `feature_schema` / `cache_identity`, `run` / `attempt` / `checkpoint` / `campaign` / `evaluation`, `terminated` versus `truncated`, and `entry_intent` / `order` / `fill` / `position` / `exit`.
+When several modules describe the same concept, choose one canonical term and use it consistently across code, configuration, logs, metrics, tests, and documentation. Important examples include `requested_risk` / `approved_risk` / `executed_risk`, `daily_loss_headroom` versus `daily_loss_breach`, `account_floor` / `operating_equity` / `realized_balance` / `payout`, `dataset` / `partition` / `feature_schema` / `cache_identity`, `run` / `attempt` / `checkpoint` / `experiment run` / `evaluation`, `terminated` versus `truncated`, and `entry_intent` / `order` / `fill` / `position` / `exit`.
 
 Do not keep parallel synonyms such as `job/run/trial` or `risk_cap/risk_budget/risk_limit` unless they intentionally represent different concepts and the distinction is documented.
 
@@ -925,7 +925,7 @@ The goal is a consistent conceptual model that lets a developer follow one idea 
 
 Apply this audit to **all** active files, not only the P7 example that surfaced the issue. A source, test, config, or command filename must tell a reader what responsibility it owns without requiring a thesis phase, work-package number, date, task history, or surrounding conversation to decode it. Prefer names such as `paired_seed_payload.py`, `build_paired_seed_payload.py`, `analyze_training_dynamics.py`, or `test_paired_seed_payload.py`; do not use `p7_build_report.py`, `wp3_pipeline.py`, `phase_4.py`, or equivalent labels as the primary functional name. The P7 implementation specifically must end with its reusable validation/payload behavior in the owning evaluation package and only its command adapter in `scripts/`.
 
-Review tracked filenames repository-wide, including package modules, scripts, tests, configs, CI/Slurm entry points, generators, and reusable output builders. For each phase/ordinal-prefixed implementation file, record one disposition in the migration ledger: rename to its owning package and responsibility; classify it as a deliberate compatibility/provenance alias with its consumer and expiry condition; or retain it as an immutable historical experiment identity. A phase identifier may remain in a campaign key, schema/protocol identifier, or frozen evidence path when it is part of that artifact's established identity, but it must not substitute for the functionality name of reusable code.
+Review tracked filenames repository-wide, including package modules, scripts, tests, configs, CI/Slurm entry points, generators, and reusable output builders. For each phase/ordinal-prefixed implementation file, record one disposition in the migration ledger: rename to its owning package and responsibility; classify it as a deliberate compatibility/provenance alias with its consumer and expiry condition; or retain it as an immutable historical experiment identity. A phase identifier may remain in an experiment run key, schema/protocol identifier, or frozen evidence path when it is part of that artifact's established identity, but it must not substitute for the functionality name of reusable code.
 
 This also applies to files with no phase token. Names such as `misc.py`, `helpers.py`, `new_report.py`, `final2.yaml`, `test_everything.py`, `run_stuff.sh`, or a broadly named module in the wrong package are audit candidates, not acceptable defaults. Determine the file's actual behavior and ownership, then give it a precise functional name and put it beside the package/subsystem that owns that behavior. Split a file only when its contents represent distinct responsibilities; do not split mechanically into numbered fragments. Add a folder/package only when the grouped files form a cohesive domain boundary with a clear API and dependency direction.
 
@@ -933,7 +933,7 @@ Generic shared-module names (`common.py`, `core.py`, `base.py`, `utils.py`, `hel
 
 When a historical manifest records the exact source path and hash, preserve that identity in a provenance mapping and immutable source snapshot. Move the canonical implementation to its functional owner and migrate all active callers. If one historical source file is split across multiple responsibilities, the provenance record must distinguish the immutable historical snapshot/hash from the one-or-many active replacement paths; no replacement module is expected to hash as the old combined file. Verify the snapshot bytes and test each replacement contract independently. Do not keep a misleading phase-named symlink/wrapper solely because an old report, manifest, or saved command records that historical path: preserve the original path as provenance metadata instead. Keep a live old-path alias only for a demonstrated external/public contract that cannot be migrated; it must be clearly isolated from the canonical package, tested, and have an expiry/removal condition. Do not rewrite frozen research manifests or regenerate evidence merely to make their historical path look current. If no supported external contract requires an alias, remove it after migrating callers.
 
-The naming audit is complete only when an inventory of all active repository files—not only source/test/config/command paths—has a reviewed responsibility, owner, and disposition. Every active filename must communicate its behavior or domain, and every active file must live under the right owner. No unexplained phase-only, ordinal-only, generic, misleading, or misplaced name remains. A search result is not automatically a rename: campaign IDs, named protocol stages, timeframe identifiers, schema versions, seeds, and frozen evidence remain governed by their own identity contracts.
+The naming audit is complete only when an inventory of all active repository files—not only source/test/config/command paths—has a reviewed responsibility, owner, and disposition. Every active filename must communicate its behavior or domain, and every active file must live under the right owner. No unexplained phase-only, ordinal-only, generic, misleading, or misplaced name remains. A search result is not automatically a rename: experiment run IDs, named protocol stages, timeframe identifiers, schema versions, seeds, and frozen evidence remain governed by their own identity contracts.
 
 The first concrete application is the thesis evidence tooling. Its current implementations are organized by operation under `scripts/research/thesis/evidence/` or `scripts/research/frozen-launches/`; immutable source copies live under `docs/thesis/evidence/source_snapshots/`:
 
@@ -950,25 +950,25 @@ The first concrete application is the thesis evidence tooling. Its current imple
 | `scripts/research/audits/run_p3_checkpoint_recovery_smoke.sh` | `scripts/research/frozen-launches/smoke_test_checkpoint_recovery.sh` | Alias removed; frozen launcher retains the same bytes and mapped historical hash |
 | `tests/test_wp02_accounting.py` | `tests/integration/test_position_fill_accounting.py` | Test is discovered by pytest and has no saved import contract |
 
-Current migration state: the nine phase-named symlinks in the ledger were retired on 2026-10-30; their prior source bytes and hashes are recorded in immutable snapshots and provenance mappings. The active functional files in the table are canonical. The P1/P3 frozen launchers remain in the explicitly historical `scripts/research/frozen-launches/` area because their commands target the separate historical Aalto checkout; they are not current operational entry points. Preserve campaign IDs, output directories, report schemas, and evidence filenames only when the phase label is part of the frozen research identity, not as a substitute for a functionality name. The repository-wide ownership/name/location inventory remains open and must assess files beyond this initial ledger.
+Current migration state: the nine phase-named symlinks in the ledger were retired on 2026-10-30; their prior source bytes and hashes are recorded in immutable snapshots and provenance mappings. The active functional files in the table are canonical. The P1/P3 frozen launchers remain in the explicitly historical `scripts/research/frozen-launches/` area because their commands target the separate historical Aalto checkout; they are not current operational entry points. Preserve experiment run IDs, output directories, report schemas, and evidence filenames only when the phase label is part of the frozen research identity, not as a substitute for a functionality name. The repository-wide ownership/name/location inventory remains open and must assess files beyond this initial ledger.
 
-The P1/P3 shell aliases are deliberately housed in `scripts/research/frozen-launches/`: their source still targets the historical `/scratch/work/nguyenl37/Aalto_MS_Thesis` checkout, old venvs, and dated artifacts. Treating those launchers as current audit entry points would direct work into a different checkout. Their contents remain intact; use the canonical current audit commands from the owning package and current Slurm helpers instead. `config/campaigns/variant_list_p6_entry_fsm.txt` remains a frozen campaign input identity; P6 is useful there to identify the experiment, and the filename also describes its contents.
+The P1/P3 shell aliases are deliberately housed in `scripts/research/frozen-launches/`: their source still targets the historical `/scratch/work/nguyenl37/Aalto_MS_Thesis` checkout, old venvs, and dated artifacts. Treating those launchers as current audit entry points would direct work into a different checkout. Their contents remain intact; use the canonical current audit commands from the owning package and current Slurm helpers instead. `config/experiment_runs/variant_list_p6_entry_fsm.txt` remains a frozen experiment run input identity; P6 is useful there to identify the experiment, and the filename also describes its contents.
 
-**Applied 2026-10-30:** the functional source names, frozen snapshots, compatibility aliases, and accounting-test path above are in place. The focused naming/accounting/paired-seed group passed 24 tests; full-tree Ruff formatting and lint passed; Mypy checked 806 source files; all five current evidence CLIs handled `--help`, all four frozen shell launchers passed `bash -n`, and `git diff --check` passed. Existing campaign/report outputs were not regenerated. This closes the first filename/ownership slice only; the remaining architecture phases below are still active work.
+**Applied 2026-10-30:** the functional source names, frozen snapshots, compatibility aliases, and accounting-test path above are in place. The focused naming/accounting/paired-seed group passed 24 tests; full-tree Ruff formatting and lint passed; Mypy checked 806 source files; all five current evidence CLIs handled `--help`, all four frozen shell launchers passed `bash -n`, and `git diff --check` passed. Existing experiment_run/report outputs were not regenerated. This closes the first filename/ownership slice only; the remaining architecture phases below are still active work.
 
 **Plan corrections 2026-10-30:** refreshed the measured hotspot inventory to current source paths and line counts; corrected the CI target description to retain the nine semantic jobs plus the three independently justified security/graph assurance gates; and corrected live cache/schema values and feature API paths in `docs/config.md`, `.agents/architecture.md`, and `.agents/domain_maps/features.md`. Historical audit reports and manifests with older versions were left unchanged.
 
 **Validation update 2026-10-30:** the functional-name and operational-cache-documentation architecture guard passes; full-tree Ruff format/check passed, Mypy passed across 807 source files, and 48 focused architecture/naming/provenance/accounting tests passed on the existing GH200 allocation. No training, benchmark, or evidence regeneration was performed.
 
-**Naming audit follow-up, 2026-10-30:** a broader search found `tests/test_wp_correctness.py`, which grouped four independent contracts under a work-package label: stop-action coordinate mapping, swing-based trailing stops, take-profit ordering, and bootstrap drawdown intervals. Split these into `tests/test_models/test_stop_mode_action_mapping.py`, `tests/test_simulation/test_environment/test_swing_trailing_stop.py`, `tests/test_simulation/test_environment/test_take_profit_level_ordering.py`, and `tests/integration/test_bootstrap_drawdown_interval.py`; expanded the architecture guard so generic `_wp_` filenames are covered as well as numbered work-package names. The affected tests and filename guard passed (11 tests); full-tree Mypy then passed for 810 source files. This is another naming/ownership slice; Phase 0 and the repository refactor remain in progress.
+**Naming audit follow-up, 2026-10-30:** a broader search found `tests/test_wp_correctness.py`, which grouped four independent contracts under a work-package label: stop-action coordinate mapping, swing-based trailing stops, take-profit ordering, and bootstrap drawdown intervals. Split these into `tests/unit/models/test_stop_mode_action_mapping.py`, `tests/unit/simulation/test_environment/test_swing_trailing_stop.py`, `tests/unit/simulation/test_environment/test_take_profit_level_ordering.py`, and `tests/integration/test_bootstrap_drawdown_interval.py`; expanded the architecture guard so generic `_wp_` filenames are covered as well as numbered work-package names. The affected tests and filename guard passed (11 tests); full-tree Mypy then passed for 810 source files. This is another naming/ownership slice; Phase 0 and the repository refactor remain in progress.
 
 **Documentation filename scope, 2026-10-30:** broadened the live filename guard to include active Markdown and JSON documentation outside frozen `docs/thesis/evidence/` and `docs/research/` output trees. The dated `docs/thesis/p1_checkpoint_full_split_budget_2026-10-16.json` is retained as a historical evidence identity. This extends the rule beyond source/config/script names while keeping generated evidence names immutable.
 
-**Repository-wide phase-label scan, 2026-10-30:** a broad tracked-path search returned 105 lexical matches for `pN`, `wpN`, or `phaseN`. Fifteen were trade-plot filenames whose `_p<number>` suffix is a P&L value, not a phase label. The old `tests/test_wp_correctness.py` grouped unrelated checks and has now been split into functionally named model, environment, and evaluation tests. The remaining actual phase/work-package matches were triaged as evidence, campaign identity/configuration, or compatibility source/launcher aliases. That lexical triage did not validate that filenames are meaningful or locations are correct, and the existence of a historical reference does not justify keeping an active phase-named command. The full naming/placement audit below remains required.
+**Repository-wide phase-label scan, 2026-10-30:** a broad tracked-path search returned 105 lexical matches for `pN`, `wpN`, or `phaseN`. Fifteen were trade-plot filenames whose `_p<number>` suffix is a P&L value, not a phase label. The old `tests/test_wp_correctness.py` grouped unrelated checks and has now been split into functionally named model, environment, and evaluation tests. The remaining actual phase/work-package matches were triaged as evidence, experiment run identity/configuration, or compatibility source/launcher aliases. That lexical triage did not validate that filenames are meaningful or locations are correct, and the existence of a historical reference does not justify keeping an active phase-named command. The full naming/placement audit below remains required.
 
-**Naming/placement plan update, 2026-10-30:** broaden the audit from phase-token cleanup to every active repository file and directory. Review actual responsibility and ownership for modules, tests, fixtures, configs, commands, tooling, docs, report/evidence generators, and artifact producers; rename and relocate misleading files and migrate active references. The canonical filename must describe what the file does, while phase/campaign identity belongs in configuration or artifact metadata. Preserve historical source hashes through functionally named immutable snapshots plus provenance mappings; retire P6/P7/P1/P3 active aliases unless an independently demonstrated public contract requires them. The earlier filename ledger and 105-token scan are inputs to this work, not its completion evidence.
+**Naming/placement plan update, 2026-10-30:** broaden the audit from phase-token cleanup to every active repository file and directory. Review actual responsibility and ownership for modules, tests, fixtures, configs, commands, tooling, docs, report/evidence generators, and artifact producers; rename and relocate misleading files and migrate active references. The canonical filename must describe what the file does, while phase/experiment_run identity belongs in configuration or artifact metadata. Preserve historical source hashes through functionally named immutable snapshots plus provenance mappings; retire P6/P7/P1/P3 active aliases unless an independently demonstrated public contract requires them. The earlier filename ledger and 105-token scan are inputs to this work, not its completion evidence.
 
-**Functional-name and ownership clarification, 2026-10-30:** the active paired-seed builder has a descriptive filename, but its 368-line combination of frozen campaign validation, provenance, payload assembly, and CLI remains in `scripts/`; this conflicts with the thin-wrapper boundary. Move the reusable payload contract to `evaluation/reanalysis/paired_seed_payload.py`, leave a narrow command adapter at the script path, and keep frozen P7 parameters in a declarative campaign input and historical source identity in provenance snapshots. The adjacent 402-line paired-seed statistics file also exposes reusable analysis logic to another script and a test; move that API to `evaluation/reanalysis/paired_seed_statistics.py`, retain a thin CLI, and relocate the tests to the evaluation test owner. These are concrete Phase 0 inventory items and Phase 6 evaluation migration targets. The new naming/ownership review applies to all active files, including plausible but vague names (`runner.py`, `builder.py`, `manager.py`, `report.py`, `data.py`) that a phase-token or generic-basename regex cannot judge; these two examples do not imply the rest of the repository inventory is complete.
+**Functional-name and ownership clarification, 2026-10-30:** the active paired-seed builder has a descriptive filename, but its 368-line combination of frozen experiment run validation, provenance, payload assembly, and CLI remains in `scripts/`; this conflicts with the thin-wrapper boundary. Move the reusable payload contract to `evaluation/reanalysis/paired_seed_payload.py`, leave a narrow command adapter at the script path, and keep frozen P7 parameters in a declarative experiment run input and historical source identity in provenance snapshots. The adjacent 402-line paired-seed statistics file also exposes reusable analysis logic to another script and a test; move that API to `evaluation/reanalysis/paired_seed_statistics.py`, retain a thin CLI, and relocate the tests to the evaluation test owner. These are concrete Phase 0 inventory items and Phase 6 evaluation migration targets. The new naming/ownership review applies to all active files, including plausible but vague names (`runner.py`, `builder.py`, `manager.py`, `report.py`, `data.py`) that a phase-token or generic-basename regex cannot judge; these two examples do not imply the rest of the repository inventory is complete.
 
 **Refactor continuation, 2026-10-30:** the current implementation turn has recorded the paired-seed module/CLI split as a migration target, not claimed it is implemented. Full-tree Ruff format, Ruff check, Mypy (814 source files), and `git diff --check` pass on the existing GH200 allocation; the scoped architecture, configuration-resolution, model/checkpoint, market-data, environment, backtest, cache-recovery, and Orchestra group passes 257 tests. The ownership/name/location inventory is still open. Continue by auditing file contents and callers, especially vague but unflagged filenames and code that violates its layer boundary; update the migration ledger with evidence and focused tests before each move.
 
@@ -978,11 +978,11 @@ The P1/P3 shell aliases are deliberately housed in `scripts/research/frozen-laun
 
 **Feature-cache module naming, 2026-10-30:** renamed `features/pipeline/cache.py` to `features/pipeline/feature_cache_identity.py` after tracing code and documentation imports. The stable `features` and `features.pipeline` exports remain unchanged; the version marker, hash payload, cache paths, and sidecar semantics are unchanged. The expanded focused feature/cache/graph/data/naming group passed (303 tests); full-tree Ruff format/check and Mypy passed across 814 source files; `git diff --check` passed. No cache contents were rebuilt or rewritten. This closes the specific basename finding, not the feature-pipeline decomposition or repository-wide inventory.
 
-**Phase-label alias retirement, 2026-10-30:** removed nine active symlinks whose visible filenames identified P1/P3/P6/P7 rather than their responsibility. The four P1/P3 frozen launchers remain under `scripts/research/frozen-launches/`; P6/P7 implementations use functional names under their owning research areas. Exact bytes for all nine historical paths are mapped with SHA-256 in `docs/thesis/evidence/source_snapshots/manifest.json`; two P7 stress-tool snapshots were added because their current implementations have since changed. Frozen report/manifests remain unchanged and retain their historical source-path strings. Replaced the symlink-presence test with `tests/test_research/test_historical_source_mappings.py`, which validates path retirement, canonical file bytes, recorded P6/P7 evidence hashes, and current functional command help. The focused naming/source-mapping group passed 17 tests. The broader repository naming/ownership audit remains open.
+**Phase-label alias retirement, 2026-10-30:** removed nine active symlinks whose visible filenames identified P1/P3/P6/P7 rather than their responsibility. The four P1/P3 frozen launchers remain under `scripts/research/frozen-launches/`; P6/P7 implementations use functional names under their owning research areas. Exact bytes for all nine historical paths are mapped with SHA-256 in `docs/thesis/evidence/source_snapshots/manifest.json`; two P7 stress-tool snapshots were added because their current implementations have since changed. Frozen report/manifests remain unchanged and retain their historical source-path strings. Replaced the symlink-presence test with `tests/research/test_historical_source_mappings.py`, which validates path retirement, canonical file bytes, recorded P6/P7 evidence hashes, and current functional command help. The focused naming/source-mapping group passed 17 tests. The broader repository naming/ownership audit remains open.
 
-**Phase 0 contract inventory, 2026-10-30:** the live test tree already has import/dependency/execution-surface checks under `tests/architecture/`; environment transition golden traces and bundle equivalence under `tests/test_simulation/test_environment/`; broker/backtest accounting and quote-parity checks under `tests/test_simulation/test_backtest/`; feature output/causality/cache-fit checks under `tests/test_features/`; observation/action/checkpoint schema roundtrips under `tests/test_models/` and `tests/test_simulation/test_environment/`; and campaign artifact/recovery checks under `tests/test_campaign_*.py` and `tests/test_triton_campaign_*.py`. At initial inventory, public version markers were bar cache `v3-native-timeframes`, tick cache `v3-validated-full-day`, feature cache `v33-timeframe-entry-ideas`, account observations `account-state-v1` / `account-state-v2` / `account-state-v3-repeated-payout`, legacy overlay actions `overlay-action-v2`, discrete actions `discrete-trading-v1`, and thesis candidate/observation/action schemas `thesis-candidate-v1` / `thesis-observation-v1` / `thesis-overlay-action-v1`; their definitions live in `market_data/loading/`, `features/pipeline/cache.py`, and `decisioning/`. The cache markers have since been migrated to bar/tick `v4-semantic-manifest`; the other listed schemas remain unchanged at this checkpoint. This records existing protection rather than a passing result for every suite. This first contract inventory left Phase 0 open; the completed inventory and verification recorded below close it.
+**Phase 0 contract inventory, 2026-10-30:** the live test tree already has import/dependency/execution-surface checks under `tests/architecture/`; environment transition golden traces and bundle equivalence under `tests/unit/simulation/test_environment/`; broker/backtest accounting and quote-parity checks under `tests/integration/backtest/`; feature output/causality/cache-fit checks under `tests/unit/features/`; observation/action/checkpoint schema roundtrips under `tests/unit/models/` and `tests/unit/simulation/test_environment/`; and experiment run artifact/recovery checks under `tests/test_experiment_run_*.py` and `tests/test_triton_experiment_run_*.py`. At initial inventory, public version markers were bar cache `v3-native-timeframes`, tick cache `v3-validated-full-day`, feature cache `v33-timeframe-entry-ideas`, account observations `account-state-v1` / `account-state-v2` / `account-state-v3-repeated-payout`, legacy overlay actions `overlay-action-v2`, discrete actions `discrete-trading-v1`, and thesis candidate/observation/action schemas `thesis-candidate-v1` / `thesis-observation-v1` / `thesis-overlay-action-v1`; their definitions live in `market_data/loading/`, `features/pipeline/cache.py`, and `decisioning/`. The cache markers have since been migrated to bar/tick `v4-semantic-manifest`; the other listed schemas remain unchanged at this checkpoint. This records existing protection rather than a passing result for every suite. This first contract inventory left Phase 0 open; the completed inventory and verification recorded below close it.
 
-**Execution-surface baseline, 2026-10-30:** `.github/workflows/ci.yml` has 13 jobs: `dependency-lock`; independent `security-deps` and `security-secrets`; `quality`, `architecture`, `graph-quality`, `contracts`, `unit`, and `build-smoke`; `integration` and `parity` (each after architecture/contracts/unit); `training-smoke` (after integration/parity/build); and the `ci-success` aggregator. `tools/check` is the shared local/CI dispatcher for `deps`, both security checks, `quality`, `architecture`, `graph-quality`, `contracts`, `unit`, `build`, `integration`, `parity`, `training-smoke`, and the GPU/Triton wrapper. Current pytest markers are only `slow`, `unit`, and `integration`; GPU, Triton, and research scheduling are not separately encoded as markers. Public console commands are `orchestra`, `thesis-data`, `thesis-train`, `thesis-evaluate`, `thesis-campaign`, and `thesis-compute`. Docker currently exposes `builder`, `runtime`, `dev`, and `test` image stages; Compose provides base/dev/dev-gpu/test/test-gpu services plus data discovery/preparation, baseline, train, backtest, lint/typecheck, and live/demo entry points. Slurm launch, supervision, and status scripts are under `scripts/compute/slurm/`, with campaign-specific launchers under its `campaigns/` directory. This is the frozen current surface to compare against the Phase 9 target; the absence of dedicated pytest execution markers is recorded as a migration gap, not silently treated as existing behavior. <!-- pragma: allowlist secret -->
+**Execution-surface baseline, 2026-10-30:** `.github/workflows/ci.yml` has 13 jobs: `dependency-lock`; independent `security-deps` and `security-secrets`; `quality`, `architecture`, `graph-quality`, `contracts`, `unit`, and `build-smoke`; `integration` and `parity` (each after architecture/contracts/unit); `training-smoke` (after integration/parity/build); and the `ci-success` aggregator. `tools/check` is the shared local/CI dispatcher for `deps`, both security checks, `quality`, `architecture`, `graph-quality`, `contracts`, `unit`, `build`, `integration`, `parity`, `training-smoke`, and the GPU/Triton wrapper. Current pytest markers are only `slow`, `unit`, and `integration`; GPU, Triton, and research scheduling are not separately encoded as markers. Public console commands are `orchestra`, `thesis-data`, `thesis-train`, `thesis-evaluate`, `thesis-experiment-run`, and `thesis-compute`. Docker currently exposes `builder`, `runtime`, `dev`, and `test` image stages; Compose provides base/dev/dev-gpu/test/test-gpu services plus data discovery/preparation, baseline, train, backtest, lint/typecheck, and live/demo entry points. Slurm launch, supervision, and status scripts are under `scripts/compute/slurm/`, with experiment-run-specific launchers under its `experiment_runs/` directory. This is the frozen current surface to compare against the Phase 9 target; the absence of dedicated pytest execution markers is recorded as a migration gap, not silently treated as existing behavior. <!-- pragma: allowlist secret -->
 
 **Artifact-foundation audit, 2026-10-30:** `artifacts/promotion.py` had no callers or tests and previously copied directly to the destination without executing a validation gate or persisting the supplied manifest. Replaced the incomplete operation with a typed validator result (`BaselineValidation`, containing a command and passed checks); it validates a staged file/tree copy, writes the baseline manifest and payload in a sibling temporary directory, and publishes the completed directory only after both are ready. It refuses non-promotable retention, incomplete validation, unsupported sources, and existing destinations without overwrite. Added the function and validation type to the `artifacts` public API and tests for successful file/tree promotion, manifest roundtrip, rejection, and no-overwrite behavior. This establishes the promotion primitive but does not close Phase 1: artifact-kind schemas, source lineage completeness, and integration with actual baseline workflows remain to be assessed before any real baseline is promoted.
 
@@ -1000,19 +1000,19 @@ The P1/P3 shell aliases are deliberately housed in `scripts/research/frozen-laun
 
 **Refactor validation refresh, 2026-10-30:** on the existing GH200 allocation, full-tree Ruff format check, Ruff lint, and Mypy passed (811 source files). The current focused naming, path-compatibility, fill-accounting, split behavior-contract, artifact-promotion, and artifact-store set passed (40 tests). One initial pytest invocation referenced a nonexistent directory and collected no tests; the corrected invocation used the actual artifact test modules and passed. This remains scoped validation, not the final CI gate.
 
-**Atomic artifact-write consolidation, 2026-10-30:** the campaign state store, training run-manifest writer, weekly experiment manifests, resolved-variant manifest, reanalysis outputs, Orchestra health/quota/task/cost state, per-seed training outputs, and evaluation reports/diagnostics had separate JSON or text replacement/write paths beside `artifacts.atomic`. They now delegate to the shared atomic file primitive while preserving each writer's JSON ordering, newline, and strict-versus-string-fallback behavior. The shared JSON writer keeps its historical string fallback for metadata callers and exposes strict mode explicitly. Added focused coverage for strict serialization failure preserving the prior file, legacy fallback behavior, campaign state roundtrip, and Orchestra task/cost persistence. Baseline promotion also records a SHA-256 digest of the staged payload tree and rejects a validator that changes the staged bytes. No existing artifact was rewritten or promoted.
+**Atomic artifact-write consolidation, 2026-10-30:** the experiment run state store, training run-manifest writer, weekly experiment manifests, resolved-variant manifest, reanalysis outputs, Orchestra health/quota/task/cost state, per-seed training outputs, and evaluation reports/diagnostics had separate JSON or text replacement/write paths beside `artifacts.atomic`. They now delegate to the shared atomic file primitive while preserving each writer's JSON ordering, newline, and strict-versus-string-fallback behavior. The shared JSON writer keeps its historical string fallback for metadata callers and exposes strict mode explicitly. Added focused coverage for strict serialization failure preserving the prior file, legacy fallback behavior, experiment run state roundtrip, and Orchestra task/cost persistence. Baseline promotion also records a SHA-256 digest of the staged payload tree and rejects a validator that changes the staged bytes. No existing artifact was rewritten or promoted.
 
-**Atomic-write validation, 2026-10-30:** full-tree Ruff format/lint and Mypy passed across 814 source files. The focused persistence/artifact, campaign, manifest, walk-forward, training decomposition/smoke, Orchestra, architecture-name, and deterministic-reanalysis set passed 163 tests; the training smoke emitted the existing PyTorch nested-tensor warning. After extending the atomic-write change through evaluation exports, full-tree Ruff format/lint and Mypy passed again; all 24 architecture tests and 75 evaluation-reporting/export tests passed. Two existing pandas downcasting warnings appeared in plotting export tests. No benchmark or long training campaign ran.
+**Atomic-write validation, 2026-10-30:** full-tree Ruff format/lint and Mypy passed across 814 source files. The focused persistence/artifact, experiment run, manifest, walk-forward, training decomposition/smoke, Orchestra, architecture-name, and deterministic-reanalysis set passed 163 tests; the training smoke emitted the existing PyTorch nested-tensor warning. After extending the atomic-write change through evaluation exports, full-tree Ruff format/lint and Mypy passed again; all 24 architecture tests and 75 evaluation-reporting/export tests passed. Two existing pandas downcasting warnings appeared in plotting export tests. No benchmark or long training experiment run ran.
 
 **Shared checksum ownership, 2026-10-30:** identical bounded-memory file SHA-256 loops existed in market-data cache identity, evaluation run manifests, reanalysis, Slurm recovery, and baseline-cache reporting. Moved the canonical file-content hash to `artifacts.identity.file_sha256` and exported it from `artifacts`; migrated package consumers while retaining the historical `evaluation.reporting.run_manifest.file_sha256` import as a re-export for existing callers. Market-data cache identity continues to own semantic cache IDs, not generic file hashing. The digest is byte-identical and accepts both string and `Path` inputs. Relevant artifact, run-manifest, reanalysis-provenance, historical-source, naming, and tick-cache tests passed: 120 tests in 7.25 seconds. Other script-local hash routines remain candidates only after their optional/error semantics and frozen-source role are compared.
 
 **Validation update, 2026-10-30:** after retiring the phase-named aliases, adding the source snapshot map, and centralizing file SHA-256, full-tree Ruff format/check passed, full-tree Mypy passed for 812 files, and `git diff --check` passed. The combined artifact, manifest, reanalysis, historical-source, naming, tick-cache, Slurm recovery, and checkpoint-migration group passed 131 tests in 6.62 seconds. This validates these slices only. The architecture-wide file/owner inventory, cache/data producers beyond bars/ticks, remaining duplicate helpers, and migration phases are still open.
 
-**Bar-cache semantic identity and atomicity, 2026-10-30:** bar-cache reuse now keys on partition, symbol, timeframe, raw source identity, timezone, NY session end, timestamp convention, and price-grid identity. Cache entries use a semantic manifest with row/index bounds and a payload size/mtime/inode completion check; parquet is first written to a same-directory temporary file and atomically replaced, then the manifest is atomically published. If manifest publication is interrupted after parquet replacement, the previous manifest cannot validate the new payload. Bumped the live cache path to `v4-semantic-manifest` so old sidecar-only caches are not consumed as completed entries. The full-period rebuild publisher now backs up, publishes, and reports cache companion manifests with their parquet files; campaign prebuild rejects missing or malformed completion manifests. Added synthetic coverage for timezone/session-end invalidation, manifest identity rejection, corrupted/empty entries, and interrupted payload/manifest writes. No repository data/cache was rebuilt. Validation on the existing GH200 allocation: 36 scoped data/cache/architecture tests passed; full-tree Ruff format/check passed; Mypy passed for 816 source files.
+**Bar-cache semantic identity and atomicity, 2026-10-30:** bar-cache reuse now keys on partition, symbol, timeframe, raw source identity, timezone, NY session end, timestamp convention, and price-grid identity. Cache entries use a semantic manifest with row/index bounds and a payload size/mtime/inode completion check; parquet is first written to a same-directory temporary file and atomically replaced, then the manifest is atomically published. If manifest publication is interrupted after parquet replacement, the previous manifest cannot validate the new payload. Bumped the live cache path to `v4-semantic-manifest` so old sidecar-only caches are not consumed as completed entries. The full-period rebuild publisher now backs up, publishes, and reports cache companion manifests with their parquet files; experiment run prebuild rejects missing or malformed completion manifests. Added synthetic coverage for timezone/session-end invalidation, manifest identity rejection, corrupted/empty entries, and interrupted payload/manifest writes. No repository data/cache was rebuilt. Validation on the existing GH200 allocation: 36 scoped data/cache/architecture tests passed; full-tree Ruff format/check passed; Mypy passed for 816 source files.
 
-**Tick-cache semantic identity and atomicity, 2026-10-30:** tick-cache reuse now keys on source path and content hash, timezone, session bounds, price-grid identity, and transform/cache version. A shared parquet-cache storage primitive writes parquet to a same-directory temporary file, atomically replaces the payload, and then publishes a completion manifest containing identity, ordered bounds, payload size, modification time, and inode. Readers reject legacy, empty, incomplete, reordered, payload-replaced, or identity-mismatched entries. Bumped the tick cache path to `v4-semantic-manifest`; the campaign prebuilder and full-period publisher now require and preserve companion manifests. Added tests for source edits, timezone/session changes, price-grid separation, legacy-cache non-consumption, ordered-Series handling, empty-cache rejection, and interrupted payload/manifest publication. No repository data/cache was rebuilt. Final focused validation: 70 data, tick, session, prebuild, and filename-contract tests passed in 0.68 seconds. Full-tree Ruff format and lint passed; full-tree Mypy passed for 817 source files. This cache slice is validated; repository phases remain open.
+**Tick-cache semantic identity and atomicity, 2026-10-30:** tick-cache reuse now keys on source path and content hash, timezone, session bounds, price-grid identity, and transform/cache version. A shared parquet-cache storage primitive writes parquet to a same-directory temporary file, atomically replaces the payload, and then publishes a completion manifest containing identity, ordered bounds, payload size, modification time, and inode. Readers reject legacy, empty, incomplete, reordered, payload-replaced, or identity-mismatched entries. Bumped the tick cache path to `v4-semantic-manifest`; the experiment run prebuilder and full-period publisher now require and preserve companion manifests. Added tests for source edits, timezone/session changes, price-grid separation, legacy-cache non-consumption, ordered-Series handling, empty-cache rejection, and interrupted payload/manifest publication. No repository data/cache was rebuilt. Final focused validation: 70 data, tick, session, prebuild, and filename-contract tests passed in 0.68 seconds. Full-tree Ruff format and lint passed; full-tree Mypy passed for 817 source files. This cache slice is validated; repository phases remain open.
 
-**Variant configuration convergence, 2026-10-30:** the direct training CLI previously merged only selected ladder flags and strategy YAML, while campaign launchers used `resolve_variant()` to apply registry defaults, reward mode, risk policy, generic `config_overrides`, full-PO3 feature settings, and the declared algorithm/encoder. A mismatched explicit strategy could also merge one strategy overlay before the variant selected another. The direct CLI now consumes the same resolved variant and applies its complete ordered override set once, followed by user CLI overrides; unset algorithm/encoder/VAE values come from the resolved variant. Removed the duplicate row-only registry loader from `training.configuration.variants`. Added tests for registry-default precedence, direct variant strategy selection, Q5 reward/config overrides, and parity with the resolver path. Scoped Ruff and Mypy passed; 90 variant-resolution, configuration, and training-CLI tests passed. This closes one configuration consistency defect, not the configuration-schema or broader Phase 1 acceptance work.
+**Variant configuration convergence, 2026-10-30:** the direct training CLI previously merged only selected ladder flags and strategy YAML, while experiment run launchers used `resolve_variant()` to apply registry defaults, reward mode, risk policy, generic `config_overrides`, full-PO3 feature settings, and the declared algorithm/encoder. A mismatched explicit strategy could also merge one strategy overlay before the variant selected another. The direct CLI now consumes the same resolved variant and applies its complete ordered override set once, followed by user CLI overrides; unset algorithm/encoder/VAE values come from the resolved variant. Removed the duplicate row-only registry loader from `training.configuration.variants`. Added tests for registry-default precedence, direct variant strategy selection, Q5 reward/config overrides, and parity with the resolver path. Scoped Ruff and Mypy passed; 90 variant-resolution, configuration, and training-CLI tests passed. This closes one configuration consistency defect, not the configuration-schema or broader Phase 1 acceptance work.
 
 **Trading/feature/task-state naming migration, 2026-10-30:** replaced active generic `base.py`, `types.py`, and `state.py` modules with `strategy_contract.py`, `step_indexed_strategy.py`, `feature_row_contract.py`, `account_state.py`, `po3_phase_state.py`, and `task_state_store.py`, and migrated imports and domain maps. The filename guard now rejects those placeholder basenames repository-wide; the remaining encoder `core.py` and `common.py` paths are explicit serialization/import compatibility shims and the encoder re-export behavior is tested. Focused account, strategy, PO3, environment, backtest, encoder, Orchestra state/routing/pipeline, and filename-contract validation passed: 186 tests. Full-tree Ruff format/check and Mypy passed, with Mypy covering 813 files; `git diff --check` passed. The full repository inventory remains open.
 
@@ -1022,7 +1022,7 @@ The P1/P3 shell aliases are deliberately housed in `scripts/research/frozen-laun
 canonical path ledger and refreshed it to match the current checkout. The
 active path set is exactly reconciled with the working tree: 1,529 tracked files
 and symlinks plus 35 untracked nonignored files, including the 20,858-byte
-protected `campaign_worker_dispatch.log`; all 454 production Python modules
+protected `experiment_run_worker_dispatch.log`; all 454 production Python modules
 parsed successfully, and the AST consumer map includes production code,
 commands, tests, and repository support. The inventory now has an explicit
 owner, responsibility, filename class, disposition, and verification path for
@@ -1032,7 +1032,7 @@ Large and high-fanout source modules have source/caller-based keep/split/rename
 decisions; all 278 tests/fixtures have a concrete future owner path; the 19
 generic production-module names have explicit functional, compatibility, or
 retirement decisions; and the active ordinal/phase filenames are classified as
-campaign identity or immutable evidence where their identifier is meaningful.
+experiment run identity or immutable evidence where their identifier is meaningful.
 The verified command baseline is 13 CI jobs, 149 regular script files, and 9
 script symlinks. Pytest declares `slow`, `unit`, and `integration` markers; the
 plan's remaining marker/scheduling work stays in the CI phase.
@@ -1063,7 +1063,7 @@ The issue is broader than file length. The table below is a live 2026-10-30 sour
 | P1 | `scripts/research/thesis/evidence/verify_numerical_report.py` | 1,248 | Split metrics, policy, source, backend parity, provenance checks, and CLI verification are combined. Keep verifier behavior and historical schemas stable. |
 | P1 | `scripts/research/thesis/exit_shadow_fixed_entry.py` | 1,233 | Replay setup, execution reconstruction, paired statistics, plotting, and report generation share a research command. Keep research-only semantics out of general evaluation APIs. |
 | P1 | `scripts/dev/code_graph/graph_quality.py` | 1,173 | Graph extraction, config/call resolution, threshold verification, report generation, and CLI share a developer tool module. It is a distinct CI tool, not domain code. |
-| P1 | `experiments/campaigns/execution.py` | 1,115 | Campaign overrides and CLI lifecycle coexist with job snapshot/start orchestration while state, checkpoint, and reporting helpers already live in sibling modules. Identify remaining duplicate ownership before splitting. |
+| P1 | `experiments/runs/execution.py` | 1,115 | Experiment run overrides and CLI lifecycle coexist with job snapshot/start orchestration while state, checkpoint, and reporting helpers already live in sibling modules. Identify remaining duplicate ownership before splitting. |
 | P1 | `learning/rl/callbacks.py` | 1,113 | Progress, diagnostics, learned risk, evaluation/checkpoint, equity, and abort callbacks are defined in one module. Preserve callback state/resume contracts. |
 | P1 | `evaluation/reporting/export.py` | 938 | Run-directory creation, split/trade outputs, chart configuration, and manifest writing share the export module. Keep atomicity and artifact identity intact. |
 | P1 | `orchestra/task_orchestration.py` | 655 | A single task-orchestration class still coordinates workflow stages; compare its responsibilities with `orchestra/sessions.py` and stage modules before further extraction. |
@@ -1311,7 +1311,7 @@ Quantitative-RL-Trading-System/
 │   │   ├── __init__.py
 │   │   ├── registry.py
 │   │   └── resolution.py
-│   ├── campaigns/
+│   ├── experiment_runs/
 │   │   ├── __init__.py
 │   │   ├── config.py
 │   │   ├── state.py
@@ -1353,7 +1353,7 @@ Quantitative-RL-Trading-System/
 │   │   ├── resources.py
 │   │   ├── jobs.py
 │   │   ├── sessions.py
-│   │   └── campaign.py
+│   │   └── experiment_run.py
 │   └── environment/
 │       ├── __init__.py
 │       ├── runtime.py
@@ -1410,7 +1410,7 @@ scripts/
 ├── research/
 │   ├── audits/                # reproducible research/protocol audits
 │   ├── benchmarks/            # performance/resource experiments
-│   ├── campaigns/             # research-only campaign analyses, not controllers
+│   ├── experiment_runs/             # research-only experiment run analyses, not controllers
 │   ├── strategy_checks/       # isolated thesis/strategy diagnostics
 │   ├── thesis/
 │   │   ├── evaluation/        # thesis-specific rescoring/figures
@@ -1433,7 +1433,7 @@ The exact executable prefix may be adjusted once during Phase 1, but the plan re
 thesis-data       -> market_data.cli       # discover, prepare, validate, identify datasets
 thesis-train      -> training.cli          # train/resume/benchmark supported training modes
 thesis-evaluate   -> evaluation.cli        # evaluate, reanalyze, report, verify result packages
-thesis-campaign   -> experiments.cli       # run, resume, status, summarize campaigns
+thesis-experiment-run   -> experiments.cli       # run, resume, status, summarize experiment runs
 thesis-compute    -> compute.cli           # platform/resource inspection; no trading semantics
 ```
 
@@ -1534,7 +1534,7 @@ source change
     │
     └── Tier D: Triton/GPU/Slurm
            gpu -> short accelerator training -> checkpoint/evaluation roundtrip
-               -> resource/vector-env checks -> campaign dry-run/resume/recovery
+               -> resource/vector-env checks -> experiment run dry-run/resume/recovery
                -> structured Triton gate artifact
 ```
 
@@ -1656,7 +1656,7 @@ It must remain independent of training/evaluation orchestration so the same reso
 
 Owns cross-cutting generated-artifact identity, layouts, manifests, atomic writes/promotions, retention metadata, and provenance links.
 
-It does not define training metrics, evaluation statistics, feature values, or campaign semantics; those remain with their domain packages.
+It does not define training metrics, evaluation statistics, feature values, or experiment run semantics; those remain with their domain packages.
 
 ### `market_data`
 
@@ -1696,7 +1696,7 @@ Is the single canonical evaluation package. It owns rollout, metrics, statistica
 
 ### `experiments`
 
-Owns variant resolution, campaign configuration/state, checkpoint discovery/resume, validation, worker construction, provenance, and campaign reporting.
+Owns variant resolution, experiment run configuration/state, checkpoint discovery/resume, validation, worker construction, provenance, and experiment run reporting.
 
 ### `live`
 
@@ -1708,7 +1708,7 @@ Owns external-system adapters. MT5-specific I/O, connections, data adapters, and
 
 ### `compute`
 
-Owns reusable compute-platform mechanics: Slurm resources/jobs/sessions, runtime environment identity, and campaign compute dispatch.
+Owns reusable compute-platform mechanics: Slurm resources/jobs/sessions, runtime environment identity, and experiment run compute dispatch.
 
 ### `orchestra`
 
@@ -1731,7 +1731,7 @@ from models import build_agent, load_checkpoint
 from training import run_training
 from evaluation import calculate_metrics, evaluate_model
 from experiments import resolve_variant
-from experiments.campaigns import run_campaign
+from experiments.runs import run_experiment
 from integrations.mt5 import MT5Connection, MT5Trader
 ```
 
@@ -1934,13 +1934,13 @@ Static and interactive plots share semantic data transforms, not renderer-specif
 
 Old evaluation paths remain compatibility shims only during migration.
 
-## Campaign and experiment architecture
+## Experiment run and experiment architecture
 
-Reusable matrix/thesis campaign logic moves into `experiments`.
+Reusable matrix/thesis experiment run logic moves into `experiments`.
 
 `experiments.variants` owns variant resolution and registry.
 
-`experiments.campaigns` owns campaign lifecycle, checkpoint mapping, resume logic, run validation, worker commands, and campaign summaries.
+`experiments.runs` owns experiment run lifecycle, checkpoint mapping, resume logic, run validation, worker commands, and experiment run summaries.
 
 `experiments.provenance` owns source/artifact identity and reproducibility records.
 
@@ -1977,18 +1977,18 @@ scripts/train/run_training.py
 scripts/eval/reanalyze.py
     -> evaluation.reanalysis.reanalyze_checkpoint()
 
-experiments/campaigns/execution.py
-    -> experiments.campaigns.run_campaign()
+experiments/runs/execution.py
+    -> experiments.runs.run_experiment()
 
-experiments/campaigns/status.py
-    -> experiments.campaigns reporting + compute.slurm status
+experiments/runs/status.py
+    -> experiments.runs reporting + compute.slurm status
 ```
 
 Do not add `__init__.py` throughout `scripts/` to legitimize reusable imports. Move reusable logic into a top-level package.
 
 Steady-state script acceptance:
 
-- no reusable campaign/data/training/evaluation implementation remains under `scripts/`;
+- no reusable experiment_run/data/training/evaluation implementation remains under `scripts/`;
 - no generic `matrix/`, `utility/`, `docker/`, `tests/`, or `setup/` category survives solely for historical convenience;
 - every retained research script declares the package APIs/artifacts it consumes and produces;
 - every retained Slurm shell wrapper contains resource/environment orchestration only;
@@ -2019,50 +2019,50 @@ The pre-refactor audit counted **152 regular files under `scripts/`**, excluding
 | `scripts/research/thesis/evaluation/score_rule_baselines.py` | compatibility wrapper | `evaluation CLI/public API` | Move reusable evaluation semantics to evaluation; retire deep script entry point. |
 | `scripts/research/thesis/evaluation/test_oos.py` | compatibility wrapper | `evaluation CLI/public API` | Move reusable evaluation semantics to evaluation; retire deep script entry point. |
 | `experiments/variants/runner.py` | compatibility wrapper | `experiments CLI/public API` | Lifecycle is owned by `variant_ablation_runner.py`; CLI parsing is stable in `experiments.cli`; retain the thin old import/module facade until Phase 11 gates pass. |
-| `scripts/research/campaigns/analyze_campaign_runtime_scaling.py` | research command | `scripts/research/campaigns/` | Keep audit/report command thin; move reusable campaign/artifact logic to packages. |
-| `scripts/research/campaigns/audit_campaign_checkpoint_loads.py` | research command | `scripts/research/campaigns/` | Keep audit/report command thin; move reusable campaign/artifact logic to packages. |
-| `scripts/research/campaigns/audit_campaign_source_fidelity.py` | research command | `scripts/research/campaigns/` | Keep audit/report command thin; move reusable campaign/artifact logic to packages. |
-| `scripts/research/campaigns/audit_real_market_bundle_parity.py` | research command | `scripts/research/campaigns/` | Keep audit/report command thin; move reusable campaign/artifact logic to packages. |
-| `scripts/research/campaigns/audit_real_market_feature_prefix_causality.py` | research command | `scripts/research/campaigns/` | Keep audit/report command thin; move reusable campaign/artifact logic to packages. |
-| `scripts/research/campaigns/audit_variant_spaces.py` | research command | `scripts/research/campaigns/` | Keep audit/report command thin; move reusable campaign/artifact logic to packages. |
-| `experiments/campaigns/checkpoints.py` | compatibility wrapper | `experiments.provenance/public API` | Move lineage semantics into experiments; retain only command adapter during migration. |
-| `experiments/campaigns/execution.py` | compatibility wrapper | `experiments CLI/public API` | Forward legacy launchers to `campaign_execution.py`; retire only after external/frozen launcher consumers are verified. |
-| `scripts/maintenance/migrations/migrate_preflight_campaign.py` | maintenance command | `scripts/maintenance/migrations/` | Use package APIs and artifact transactions; keep only migration/repair orchestration. |
+| `scripts/research/experiment_runs/analyze_experiment_runstime_scaling.py` | research command | `scripts/research/experiment_runs/` | Keep audit/report command thin; move reusable experiment_run/artifact logic to packages. |
+| `scripts/research/experiment_runs/audit_experiment_run_checkpoint_loads.py` | research command | `scripts/research/experiment_runs/` | Keep audit/report command thin; move reusable experiment_run/artifact logic to packages. |
+| `scripts/research/experiment_runs/audit_experiment_run_source_fidelity.py` | research command | `scripts/research/experiment_runs/` | Keep audit/report command thin; move reusable experiment_run/artifact logic to packages. |
+| `scripts/research/experiment_runs/audit_real_market_bundle_parity.py` | research command | `scripts/research/experiment_runs/` | Keep audit/report command thin; move reusable experiment_run/artifact logic to packages. |
+| `scripts/research/experiment_runs/audit_real_market_feature_prefix_causality.py` | research command | `scripts/research/experiment_runs/` | Keep audit/report command thin; move reusable experiment_run/artifact logic to packages. |
+| `scripts/research/experiment_runs/audit_variant_spaces.py` | research command | `scripts/research/experiment_runs/` | Keep audit/report command thin; move reusable experiment_run/artifact logic to packages. |
+| `experiments/runs/checkpoints.py` | compatibility wrapper | `experiments.provenance/public API` | Move lineage semantics into experiments; retain only command adapter during migration. |
+| `experiments/runs/execution.py` | lifecycle service | `experiments CLI/public API` | Own the canonical experiment run composition root. |
+| `scripts/maintenance/migrations/migrate_preflight_experiment_run.py` | maintenance command | `scripts/maintenance/migrations/` | Use package APIs and artifact transactions; keep only migration/repair orchestration. |
 | `scripts/maintenance/data-and-cache/rebuild_named_prebuilt_feature_caches.py` | maintenance command | `scripts/maintenance/data-and-cache/` | Use package APIs and artifact transactions; keep only migration/repair orchestration. |
 | `scripts/maintenance/data-and-cache/rebuild_prebuilt_baseline_cache.py` | maintenance command | `scripts/maintenance/data-and-cache/` | Use package APIs and artifact transactions; keep only migration/repair orchestration. |
 | `scripts/maintenance/data-and-cache/rebuild_full_period_data_cache.py` | maintenance command | `scripts/maintenance/data-and-cache/` | Use market-data/features/artifact APIs; preserve immutable cache identity and provenance. |
-| `config/campaigns/resource_profile_a0_variant_list.txt` | config asset | `config/experiments or config/campaigns` | Move declarative list out of scripts; update every launcher/config reference. |
-| `scripts/compute/slurm/campaigns/run_18variant_matrix.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_18variant_matrix_gh200_tmux.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_18variant_matrix_tmux.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_2variant_node.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_cpumask_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_cpumask_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_finalization_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_full_split_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_full_split_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_migration_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_migration_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_two_node_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_two_node_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_vector_resume_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_18way_vector_resume_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_3way_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_3way_prebuilt_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_3way_prebuilt_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_3way_shared_bundle_n64_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_3way_shared_bundle_n64_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_3way_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_campaign_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_replacement_campaign_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_replacement_campaign_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_rq1_pair_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_rq1_pair_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `scripts/compute/slurm/campaigns/run_rr_two_gpu_tmux.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
-| `experiments/campaigns/reporting.py` | research command | `scripts/research/campaigns/` | Keep audit/report command thin; move reusable campaign/artifact logic to packages. |
-| `experiments/campaigns/orchestration.py` | compatibility wrapper | `experiments CLI/public API` | Extract controller/state/orchestration into experiments; wrapper disappears after stable CLI adoption. |
-| `scripts/compute/slurm/campaigns/validate_cpu_mask_campaign_gpu.sh` | platform/Slurm wrapper | `scripts/compute/slurm/campaigns/` | Keep shell wrapper thin; move campaign/resource decisions to experiments/compute. |
+| `config/experiment_runs/resource_profile_a0_variant_list.txt` | config asset | `config/experiments or config/experiment_runs` | Move declarative list out of scripts; update every launcher/config reference. |
+| `scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18variant_matrix_gh200_tmux.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18variant_matrix_tmux.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_2variant_node.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_cpumask_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_cpumask_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_finalization_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_full_split_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_full_split_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_migration_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_migration_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_two_node_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_two_node_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_vector_resume_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_18way_vector_resume_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_3way_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_3way_prebuilt_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_3way_prebuilt_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_3way_shared_bundle_n64_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_3way_shared_bundle_n64_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_3way_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_replacement_experiment_run_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_replacement_experiment_run_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_rq1_pair_allocation.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_rq1_pair_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `scripts/compute/slurm/experiment_runs/run_rr_two_gpu_tmux.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
+| `experiments/runs/reporting.py` | research command | `scripts/research/experiment_runs/` | Keep audit/report command thin; move reusable experiment_run/artifact logic to packages. |
+| `experiments/runs/orchestration.py` | compatibility wrapper | `experiments CLI/public API` | Extract controller/state/orchestration into experiments; wrapper disappears after stable CLI adoption. |
+| `scripts/compute/slurm/experiment_runs/validate_cpu_mask_experiment_run_gpu.sh` | platform/Slurm wrapper | `scripts/compute/slurm/experiment_runs/` | Keep shell wrapper thin; move experiment_run/resource decisions to experiments/compute. |
 | `scripts/compute/slurm/verify_worker_cpu_affinity.py` | platform/Slurm wrapper | `scripts/compute/slurm/` | Move reusable resource inspection to compute; wrapper invokes it. |
 | `scripts/research/audits/audit_candidate_holdout_archive_exposure.py` | research command | `scripts/research/audits/` | Preserve reproducible research gate; extract reusable validation primitives to owners. |
 | `scripts/research/audits/audit_candidate_holdout_repository_exposure.py` | research command | `scripts/research/audits/` | Preserve reproducible research gate; extract reusable validation primitives to owners. |
@@ -2106,11 +2106,11 @@ The pre-refactor audit counted **152 regular files under `scripts/`**, excluding
 | `scripts/research/strategy_checks/sweep_displacement_check.py` | research command | `scripts/research/strategy_checks/` | Keep experiment-specific analysis thin; move shared feature/evaluation logic to owners. |
 | `scripts/research/thesis/evidence/analyze_paired_seed_results.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
 | `scripts/research/thesis/evidence/audit_checkpoint_frame_bundle_parity.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
-| `scripts/research/thesis/evidence/build_campaign_evidence_index.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
-| `scripts/research/thesis/evidence/build_campaign_trial_ledger.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
+| `scripts/research/thesis/evidence/build_experiment_run_evidence_index.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
+| `scripts/research/thesis/evidence/build_experiment_run_trial_ledger.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
 | `scripts/research/thesis/evidence/build_seed50_screen_finding_cards.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
 | `scripts/research/thesis/evidence/compare_deterministic_reanalysis.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
-| `scripts/research/thesis/evidence/reconcile_campaign_attempts.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
+| `scripts/research/thesis/evidence/reconcile_experiment_run_attempts.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
 | `scripts/research/thesis/evidence/verify_numerical_report.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
 | `scripts/research/thesis/evidence/verify_result_manifest.py` | research command | `scripts/research/thesis/evidence/` | Keep evidence assembly/verification reproducible; use canonical artifacts/evaluation APIs. |
 | `scripts/research/benchmarks/compare_encoders.py` | research command | `scripts/research/benchmarks/` | Use training/evaluation APIs; preserve comparison protocol, not duplicate setup logic. |
@@ -2122,18 +2122,18 @@ The pre-refactor audit counted **152 regular files under `scripts/`**, excluding
 | `docs/operations/triton/README.md` | documentation | `docs/operations/triton/` | Move operational documentation to docs; keep command references current. |
 | `scripts/compute/slurm/activate_venv.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
 | `scripts/compute/slurm/attach_or_alloc.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
-| `scripts/compute/slurm/campaign_allocation_wrapper.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
-| `scripts/compute/slurm/campaign_git_identity.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
-| `scripts/compute/slurm/campaign_recovery_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
-| `scripts/compute/slurm/campaign_srun_gh200_guard.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
+| `scripts/compute/slurm/experiment_run_allocation_wrapper.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
+| `scripts/compute/slurm/experiment_run_git_identity.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
+| `scripts/compute/slurm/experiment_run_recovery_supervisor.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
+| `scripts/compute/slurm/experiment_run_srun_gh200_guard.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
 | `scripts/compute/slurm/worker_bin/srun` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
 | `compute/slurm/worker_dispatch.py` | compatibility wrapper | `compute CLI/public API` | Extract reusable Slurm/resource/recovery behavior to compute; keep thin adapter temporarily. |
 | `compute/slurm/capacity.py` | compatibility wrapper | `compute CLI/public API` | Extract reusable Slurm/resource/recovery behavior to compute; keep thin adapter temporarily. |
 | `scripts/compute/slurm/find_gpu_session.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
-| `market_data/commands/prebuild_campaign_cache.py` | compatibility wrapper | `market_data + experiments/compute API` | Move cache semantics to market_data/artifacts; orchestration to experiments/compute. |
-| `compute/slurm/resume.py` | compatibility wrapper | `compute CLI/public API` | Forward legacy recovery requests to `experiments.campaigns.cache_failure_recovery` without a static package dependency cycle. |
+| `market_data/commands/prebuild_experiment_run_cache.py` | compatibility wrapper | `market_data + experiments/compute API` | Move cache semantics to market_data/artifacts; orchestration to experiments/compute. |
+| `experiments/runs/cache_failure_recovery.py` | lifecycle service | `experiments CLI/public API` | Own cache recovery and expose it through `thesis-experiment-run recover-cache`. |
 | `scripts/research/frozen-launches/reexport_oct3_runs.sh` | frozen research wrapper | `scripts/research/frozen-launches/` | Retain only for provenance/replay if evidence still depends on it. |
-| `experiments/campaigns/status.py` | compatibility wrapper | `experiments reporting CLI` | Move status model/reporting to experiments; retain login-node-safe wrapper if useful. |
+| `experiments/runs/status.py` | compatibility wrapper | `experiments reporting CLI` | Move status model/reporting to experiments; retain login-node-safe wrapper if useful. |
 | `compute/slurm/continuation.py` | compatibility wrapper | `compute CLI/public API` | Extract reusable Slurm/resource/recovery behavior to compute; keep thin adapter temporarily. |
 | `scripts/compute/slurm/run_current_tree_gpu_ci.sh` | platform/Slurm wrapper | `scripts/compute/slurm/` | Keep allocation/shell mechanics thin; invoke compute/experiments APIs. |
 | `compute/slurm/resources.py` | compatibility wrapper | `compute CLI/public API` | Extract reusable Slurm/resource/recovery behavior to compute; keep thin adapter temporarily. |
@@ -2142,18 +2142,18 @@ The pre-refactor audit counted **152 regular files under `scripts/`**, excluding
 | `scripts/research/audits/leak_detectors.py` | research command | `scripts/research/audits/` | Extract reusable leakage checks to market_data/features/tests as appropriate. |
 | `scripts/research/thesis/evaluation/rescore_sl_fill.py` | frozen research command | `scripts/research/thesis/evaluation/` | Preserve only as explicit historical rescore protocol using evaluation APIs. |
 | `scripts/research/strategy_checks/verify_strategy_features.py` | research command | `scripts/research/strategy_checks/` | Use owning package APIs; remove generic utility category. |
-| `config/campaigns/variant_list.txt` | config asset | `config/experiments or config/campaigns` | Move declarative list out of scripts; update every launcher/config reference. |
-| `config/campaigns/variant_list_3_strategy_20261014.txt` | config asset | `config/experiments or config/campaigns` | Move declarative list out of scripts; update every launcher/config reference. |
-| `config/campaigns/variant_list_rq1_entry_fsm.txt` | config asset | `config/experiments or config/campaigns` | Move declarative list out of scripts; update every launcher/config reference. |
-| `scripts/compute/slurm/campaigns/run_dollar_band_q5_2m_continuous_allocation.sh` | campaign allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
-| `scripts/compute/slurm/campaigns/run_dollar_band_q5_2m_normal_allocation.sh` | campaign allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
-| `scripts/compute/slurm/campaigns/run_dollar_band_q5_2m_normal_supervisor.sh` | campaign supervisor | `experiments + compute` | Keep recovery and allocation continuity explicit; do not replace a live supervisor during migration. |
-| `scripts/compute/slurm/campaigns/run_dollar_band_q5_5m_allocation.sh` | campaign allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
-| `scripts/compute/slurm/campaigns/run_mtf_tcn_2m_allocation.sh` | campaign allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
-| `scripts/compute/slurm/campaigns/run_mtf_tcn_2m_supervisor.sh` | campaign supervisor | `experiments + compute` | Keep recovery and allocation continuity explicit; do not replace a live supervisor during migration. |
-| `scripts/compute/slurm/campaigns/run_sustainable_growth_eod_dd_allocation.sh` | campaign allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
-| `scripts/compute/slurm/campaigns/run_sustainable_growth_eod_dd_supervisor.sh` | campaign supervisor | `experiments + compute` | Keep recovery and allocation continuity explicit; do not replace a live supervisor during migration. |
-| `scripts/compute/slurm/campaigns/run_tcn_fullspan_n8_in_existing_allocation.sh` | in-allocation campaign launcher | `experiments + compute` | Reuse the supplied allocation and keep resource-specific launch code in the Slurm boundary. |
+| `config/experiment_runs/variant_list.txt` | config asset | `config/experiments or config/experiment_runs` | Move declarative list out of scripts; update every launcher/config reference. |
+| `config/experiment_runs/variant_list_3_strategy_20261014.txt` | config asset | `config/experiments or config/experiment_runs` | Move declarative list out of scripts; update every launcher/config reference. |
+| `config/experiment_runs/variant_list_rq1_entry_fsm.txt` | config asset | `config/experiments or config/experiment_runs` | Move declarative list out of scripts; update every launcher/config reference. |
+| `scripts/compute/slurm/experiment_runs/run_dollar_band_q5_2m_continuous_allocation.sh` | experiment run allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
+| `scripts/compute/slurm/experiment_runs/run_dollar_band_q5_2m_normal_allocation.sh` | experiment run allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
+| `scripts/compute/slurm/experiment_runs/run_dollar_band_q5_2m_normal_supervisor.sh` | experiment run supervisor | `experiments + compute` | Keep recovery and allocation continuity explicit; do not replace a live supervisor during migration. |
+| `scripts/compute/slurm/experiment_runs/run_dollar_band_q5_5m_allocation.sh` | experiment run allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
+| `scripts/compute/slurm/experiment_runs/run_mtf_tcn_2m_allocation.sh` | experiment run allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
+| `scripts/compute/slurm/experiment_runs/run_mtf_tcn_2m_supervisor.sh` | experiment run supervisor | `experiments + compute` | Keep recovery and allocation continuity explicit; do not replace a live supervisor during migration. |
+| `scripts/compute/slurm/experiment_runs/run_sustainable_growth_eod_dd_allocation.sh` | experiment run allocation wrapper | `experiments + compute` | Keep resource and shell supervision only; preserve the named experiment's launch contract until its callers migrate. |
+| `scripts/compute/slurm/experiment_runs/run_sustainable_growth_eod_dd_supervisor.sh` | experiment run supervisor | `experiments + compute` | Keep recovery and allocation continuity explicit; do not replace a live supervisor during migration. |
+| `scripts/compute/slurm/experiment_runs/run_tcn_fullspan_n8_in_existing_allocation.sh` | in-allocation experiment run launcher | `experiments + compute` | Reuse the supplied allocation and keep resource-specific launch code in the Slurm boundary. |
 | `scripts/compute/slurm/node_inventory.py` | resource inventory command | `compute` | Keep scheduler/node inspection behind the compute API and retain read-only behavior. |
 | `scripts/data/setup_mode_dirs.sh` | data setup wrapper | `market_data` | Keep filesystem setup explicit and route dataset lifecycle through market-data ownership. |
 | `scripts/dev/code_graph/graph_quality.py` | engineering quality command | `tools/check graph-quality` | Keep graph analysis outside trading packages; separate reusable graph engine from its gate CLI where justified. |
@@ -2166,7 +2166,7 @@ The pre-refactor audit counted **152 regular files under `scripts/`**, excluding
 | `scripts/research/audits/run_p3_checkpoint_recovery_smoke.sh` | retired historical path | `scripts/research/frozen-launches/smoke_test_checkpoint_recovery.sh` | Alias removed; exact historical source hash is recorded in the snapshot manifest. |
 | `scripts/research/count_entry_idea_opportunities.py` | research counter | `features + evaluation` | Keep the report command thin and consume the feature-owned entry-idea schema. |
 | `scripts/research/plot_swing_order_block_preview.py` | research visualization | `evaluation/plotting` | Keep plotting reusable through evaluation; retain this command only as a thin preview entry point. |
-| `scripts/research/thesis/evaluation/compare_campaign_summaries.py` | thesis analysis command | `evaluation + experiments` | Keep comparison logic on canonical campaign/evaluation records and outputs. |
+| `scripts/research/thesis/evaluation/compare_experiment_run_summaries.py` | thesis analysis command | `evaluation + experiments` | Keep comparison logic on canonical experiment_run/evaluation records and outputs. |
 | `scripts/research/thesis/evaluation/export_trade_observation.py` | thesis evidence command | `evaluation` | Export the versioned observation contract without reimplementing rollout semantics. |
 | `scripts/research/thesis/evaluation/plot_stochastic_equity_ensemble.py` | thesis plotting command | `evaluation/plotting` | Keep stochastic-path summarization separate from the renderer and preserve its report protocol. |
 | `scripts/research/thesis/evaluation/project_report_context.py` | report context builder | `evaluation/reporting` | Move reusable report-context assembly behind the reporting package API. |
@@ -2178,7 +2178,7 @@ The pre-refactor audit counted **152 regular files under `scripts/`**, excluding
 | `scripts/research/thesis/evidence/analyze_training_policy_dynamics_and_rule_control.py` | thesis evidence command | `evaluation` | Preserve historical report schema and source snapshot while keeping the canonical command functional. |
 | `scripts/research/thesis/evidence/build_p7_paired_seed_payload.py` | retired historical path | `scripts/research/thesis/evidence/build_paired_seed_payload.py` | Preserve exact historical source bytes and hash in `docs/thesis/evidence/source_snapshots/manifest.json`. |
 | `scripts/research/thesis/evidence/build_p7_tick_cost_stress_reports.py` | retired historical path | `scripts/research/thesis/evidence/build_tick_cost_stress_reports.py` | Preserve exact historical source bytes and hash in the snapshot manifest. |
-| `scripts/research/thesis/evidence/build_paired_seed_payload.py` | mixed report builder and CLI | `evaluation/reanalysis/paired_seed_payload.py` plus thin script adapter | Move lineage validation and payload construction into the evaluation API; load frozen campaign parameters declaratively; retain historical source identity in provenance snapshots. |
+| `scripts/research/thesis/evidence/build_paired_seed_payload.py` | mixed report builder and CLI | `evaluation/reanalysis/paired_seed_payload.py` plus thin script adapter | Move lineage validation and payload construction into the evaluation API; load frozen experiment run parameters declaratively; retain historical source identity in provenance snapshots. |
 | `scripts/research/thesis/evidence/build_tick_cost_stress_reports.py` | thesis evidence command | `evaluation + artifacts` | Keep report generation separate from stress replay and use immutable report identity. |
 | `scripts/research/thesis/evidence/replay_tick_cost_stress.py` | thesis replay command | `evaluation` | Keep deterministic replay orchestration on reusable evaluation/execution contracts. |
 | `scripts/research/thesis/evidence/analyze_paired_seed_results.py` | mixed statistical library and CLI | `evaluation/reanalysis/paired_seed_statistics.py` plus thin script adapter | Move paired inference functions into the evaluation package; migrate script/test imports and place characterization tests under `tests/integration/`. |
@@ -2329,7 +2329,7 @@ Update `README.md`, `docs/architecture.md`, `.agents/architecture.md`, domain ma
 - Resolve priority misnamed/misplaced files from the inventory before declaring a subsystem migration complete. Keep a rolling list of remaining files, with an explicit reason for every retained generic or ordinal name.
 - Freeze the checked 2026-10-30 baseline: 13 CI jobs (12 required gates plus aggregator) and 149 regular script files plus 9 compatibility symlinks, excluding `__pycache__`. Historical counts are not current migration inputs.
 - Add architecture import/dependency tests.
-- Add characterization tests for environment, backtest, features, training setup, evaluation, and campaign behavior.
+- Add characterization tests for environment, backtest, features, training setup, evaluation, and experiment run behavior.
 - Record checkpoint/action/observation/feature schemas.
 - Make no production behavior changes.
 
@@ -2487,7 +2487,7 @@ retired.
 The full-tree gate passed: Ruff format/check and Mypy on 825 source files;
 281 focused architecture, model/checkpoint, seed, training-artifact, run
 manifest, and command smoke tests passed. Same-seed rollout reproducibility
-passed. The gate did not run a campaign, benchmark, cache build, or mutate
+passed. The gate did not run an experiment run, benchmark, cache build, or mutate
 training data. The known PyTorch nested-tensor warnings remain informational.
 
 **Phase 5 completion addendum, 2026-10-30:** removed the mixed
@@ -2541,21 +2541,21 @@ the former training-plot wrapper was retired to preserve dependency direction. A
 new full-year saved-checkpoint reanalysis was not run as part of this architecture
 phase.
 
-### Phase 7 — Extract experiments and campaigns — COMPLETE
+### Phase 7 — Extract experiments and experiment runs — COMPLETE
 
-Campaign workflow and provenance remain in `experiments`; generic Slurm worker
-resource sampling and dispatch live in `compute.slurm`; campaign paths and
+Experiment run workflow and provenance remain in `experiments`; generic Slurm worker
+resource sampling and dispatch live in `compute.slurm`; experiment run paths and
 atomic writes use shared `artifacts` services. The workflow composition root is
-`experiments/campaigns/campaign_execution.py`. The former execution, campaign
+`experiments/runs/execution.py`. The former execution, experiment run
 resource, and compute resume paths remain narrow compatibility adapters where
 existing launchers or CLI consumers depend on them. Cache-failure recovery is
-owned by `experiments/campaigns/cache_failure_recovery.py`.
+owned by `experiments/runs/cache_failure_recovery.py`.
 
-Campaign storage naming and checkpoint/worker/report lineage retain their
+Experiment run storage naming and checkpoint/worker/report lineage retain their
 existing external layout. The focused contracts for artifact layouts, fake
 worker-controller integration, resource dispatch, checkpoint migration,
-recovery, and campaign status passed together: 125 tests. Full-tree Ruff
-format/check and Mypy passed across 840 files. No campaign, training run,
+recovery, and experiment run status passed together: 125 tests. Full-tree Ruff
+format/check and Mypy passed across 840 files. No experiment run, training run,
 benchmark, data rebuild, or cache mutation was performed in this phase.
 
 **Phase 7 completion addendum, 2026-10-30:** the ablation lifecycle now lives
@@ -2563,7 +2563,7 @@ in `experiments/variants/variant_ablation_runner.py` behind a typed request
 contract; argument parsing and root dispatch live in `experiments/cli.py`.
 `experiments/variants/runner.py` remains a thin compatibility import and module
 entry point. Named-cache rebuild parsing is also owned by the stable
-`thesis-campaign rebuild-named-cache` command, while the former module command
+`thesis-experiment-run rebuild-named-cache` command, while the former module command
 forwards to it. Added parser/dispatch tests without invoking training or
 writing caches. The combined focused batch passed 36 tests; Ruff format/check
 passed on all changed Python files. One initial architecture check identified
@@ -2596,7 +2596,7 @@ Split Orchestra phases/execution/recovery/reporting behind its package API.
 
 Establish the canonical quality-gate surface, migrate GitHub workflows to named gates, normalize test markers, eliminate duplicate CI command definitions, and migrate Docker/Slurm/script entry points to stable package APIs.
 
-Acceptance: normal `ci.yml` matches the nine semantic gates plus three explicitly justified assurance gates and `ci-success`; local and hosted CPU gates share semantics; `ci-scripts/` contains only proven platform glue or is deleted; the checked 149-file/9-symlink script ledger has no unresolved entry; stable operations use console/package APIs; Tier D Triton/GPU validation is documented and runnable; no required gate silently skips; stale *ordinary operational* command paths are removed. Identity-bound launchers, supervisors, and frozen campaign commands remain protected exceptions while their run or recovery contract is active; record each exact path and retirement condition rather than rewriting a live command and changing campaign identity.
+Acceptance: normal `ci.yml` matches the nine semantic gates plus three explicitly justified assurance gates and `ci-success`; local and hosted CPU gates share semantics; `ci-scripts/` contains only proven platform glue or is deleted; the checked 149-file/9-symlink script ledger has no unresolved entry; stable operations use console/package APIs; Tier D Triton/GPU validation is documented and runnable; no required gate silently skips; stale *ordinary operational* command paths are removed. Identity-bound launchers, supervisors, and frozen experiment run commands remain protected exceptions while their run or recovery contract is active; record each exact path and retirement condition rather than rewriting a live command and changing experiment run identity.
 
 **Phase 9 implementation and consolidated gate (2026-10-30):** Orchestra now
 delegates verification to one `./tools/check full` command. The dispatcher
@@ -2622,14 +2622,14 @@ compatibility symlink entries; the physical `scripts/` tree contains no
 symlinks, and `ci-scripts/` is absent. The ledger retains their exact
 dispositions. We preserved active fingerprint-bound invocation paths in
 `scripts/compute/slurm/two_trains_one_h200.sh`, the two dollar-band Q5
-campaign allocation scripts
-`scripts/compute/slurm/campaigns/run_dollar_band_q5_2m_continuous_allocation.sh`
-and `scripts/compute/slurm/campaigns/run_dollar_band_q5_5m_allocation.sh`,
+experiment run allocation scripts
+`scripts/compute/slurm/experiment_runs/run_dollar_band_q5_2m_continuous_allocation.sh`
+and `scripts/compute/slurm/experiment_runs/run_dollar_band_q5_5m_allocation.sh`,
 `scripts/compute/slurm/worker_bin/srun`, and their
 `training.runner.training` / `compute.slurm.worker_dispatch` module targets.
 These paths can be migrated or retired only after the corresponding
 supervisor and run-recovery contracts are terminal. No training, benchmark,
-campaign, cache build, or data mutation ran. The ledger includes the Phase 9
+experiment run, cache build, or data mutation ran. The ledger includes the Phase 9
 marker-contract test and shared timeframe-order module. Command references in
 the agent, Orchestra, README, and operations guides now use the
 architecture-matched test tools; outdated full-suite duration and generic
@@ -2648,7 +2648,7 @@ build/import smoke through the selected project Python (sdist and wheel both
 built). The dependency-lock/export gate also passed using a native ARM64 `uv`
 0.13.6 supplied through `THESIS_UV`; all pip pin files match `uv.lock`. The
 consolidated focused batch passed 152 architecture, artifact, Orchestra,
-compatibility, campaign, encoder, and checkpoint-persistence tests. Current
+compatibility, experiment run, encoder, and checkpoint-persistence tests. Current
 inventory reconciliation is 1,603 unique ledger rows, 1,596 paths present,
 and seven explicitly retired paths. All 1,517 tracked paths present in this
 worktree have inventory rows; none are unlisted. This supersedes the earlier
@@ -2670,8 +2670,8 @@ Acceptance: no production caller depends on an undocumented generated path; ever
 ownership inventory now has a unique row for each of 1,603 recorded paths,
 including every active tracked path and explicit retired-path records. Required
 owner, responsibility, disposition, boundary, compatibility, and verification
-fields are populated for every row. `ArtifactLayout` validates run, campaign,
-and evaluation path components and resolves recorded campaign paths without
+fields are populated for every row. `ArtifactLayout` validates run, experiment run,
+and evaluation path components and resolves recorded experiment run paths without
 allowing directory escape. Root ignore rules keep normal/discretion partition
 contents, generated caches, run outputs, and logs out of Git while preserving
 the tracked examples and split-root README files. Docker `test` and `test-gpu`
@@ -2684,7 +2684,7 @@ the promotion gate.
 Validation passed on the existing GH200 allocation: full-tree Ruff format,
 full-tree Ruff lint, full-tree Mypy (845 source files), package build/import,
 the dependency-lock/export gate with native ARM64 `uv`, and 152 focused
-architecture, artifact, Orchestra, compatibility, campaign, encoder, and
+architecture, artifact, Orchestra, compatibility, experiment run, encoder, and
 checkpoint-persistence tests. The canonical `contracts` and `parity` gates
 passed 78 and 65 tests, respectively. The storage contracts were run against
 an isolated temporary Git repository. Docker runtime execution, training,
@@ -2734,7 +2734,7 @@ shell remain available for follow-up work.
 
 Retire a compatibility module only after the repository-wide import and
 invocation audit, public-import tests, repository gate, fixed-checkpoint
-reanalysis, and campaign dry-run pass. Do not break an active launcher or a
+reanalysis, and experiment run dry-run pass. Do not break an active launcher or a
 serialized checkpoint class path to make the alias count zero. Such paths are
 supported compatibility contracts, not duplicate implementations; record
 their owner and concrete consumer in this plan. The goal is zero *unreviewed
@@ -2746,7 +2746,7 @@ Then remove compatibility forwarding modules and update build/lint/type-check co
 confirms that compatibility paths remain observable contracts. Evaluation
 forwarders have explicit canonical-module tests; frozen reanalysis launchers
 still invoke `evaluation.reanalysis.runner`; `compute/cli.py` still exposes the
-resume subcommand through `compute.slurm.resume`; and campaign execution has
+resume subcommand through `compute.slurm.resume`; and experiment run execution has
 current CLI, migration, checkpoint, test, and research-script consumers.
 Encoder import shims also preserve serialized Stable-Baselines3 class paths;
 the repository inventory still requires an archive-load inventory before
@@ -2754,12 +2754,12 @@ those paths can be retired. No wrapper or shim was removed based on a
 repository-only search.
 
 The focused Phase 11 readiness batch passed 52 tests covering evaluation
-forwarders, encoder imports, campaign policy overrides, campaign execution,
+forwarders, encoder imports, experiment run policy overrides, experiment run execution,
 cache recovery, and continuation. It emitted nine existing Transformer
 nested-tensor warnings. Four additional checkpoint persistence tests passed:
 legacy-module resolution, legacy action-layout adaptation, and SB3 save/load
 for continuous and discrete action schemas; these create and load temporary
-synthetic checkpoints and do not train. A campaign dry-run validated two
+synthetic checkpoints and do not train. an experiment run dry-run validated two
 development variants at 1,000 configured steps each, printed the resolved
 2,000-step plan, and created no output directory. The same consolidation also
 verified wheel/sdist builds and package imports through the
@@ -2767,7 +2767,7 @@ architecture-selected interpreter; `tools/check build` no longer depends on
 the login-home `uv` executable when a matched project Python is selected.
 
 Phase 11 remains gated, not complete. The plan requires full CI, a smoke
-training run, checkpoint reanalysis, and a campaign dry-run before removals.
+training run, checkpoint reanalysis, and an experiment run dry-run before removals.
 The dry-run and synthetic checkpoint persistence checks passed. A real
 checkpoint reanalysis is recorded below, but it does not establish numerical
 parity because the source run predates material policy changes. Full CI and a
@@ -2829,7 +2829,7 @@ full-tree Mypy (854 source files), architecture tests (43), graph quality,
 contracts (78), unit tests (2,054 passed; 388 deselected), package build/import
 smoke, integration tests (315), execution-parity tests (65), and synthetic PPO
 and SAC smoke tests (12) all passed. The smoke phase used only its small
-synthetic test fixtures; no thesis campaign, market-data training, or benchmark
+synthetic test fixtures; no thesis experiment run, market-data training, or benchmark
 was started. The suite emitted existing Transformer nested-tensor notices and
 synthetic metric/report warnings; no test failed.
 
@@ -2844,7 +2844,7 @@ files; internal resolution was 81.18% (11,239/13,844), critical-path
 resolution was 72.05% (1,449/2,011), and source/config verification passed.
 
 The full suite also found and fixed stale test-root calculations left by the
-file moves. Affected Triton, campaign-policy, campaign-controller,
+file moves. Affected Triton, experiment-run-policy, experiment-run-controller,
 worker-dispatch, and result-manifest tests now resolve repository assets from
 the repository root; all 33 directly affected tests passed before the final
 full run. The ARM security audit helpers also honor `THESIS_UV`, and Tornado is
@@ -2861,7 +2861,7 @@ inventory has not yet been extended to a complete archive-load inventory.
 Therefore no compatibility wrappers, frozen launchers, or serialized class
 shims were removed. Retiring them without a source-matched checkpoint parity
 result and archive-load inventory would violate the plan's preservation gate.
-No training campaign, full benchmark, data/cache rebuild, commit, or push was
+No training experiment run, full benchmark, data/cache rebuild, commit, or push was
 performed.
 
 **Phase 1 artifact-foundation closeout (2026-10-30):** the remaining artifact
@@ -2870,8 +2870,8 @@ consumer APIs. There is deliberately no global kind registry: training owns
 the versioned run-manifest schema (including source revision, resolved-config
 digest, exact train/test data and feature identities, split, policy schemas,
 seed, checkpoint digest, and training protocol); evaluation owns the
-`evaluation-artifacts-v1` parent and numerical-artifact hashes; campaigns own
-their campaign-state schema, source snapshot, fingerprint, and child-run
+`evaluation-artifacts-v1` parent and numerical-artifact hashes; experiment runs own
+their experiment-run-state schema, source snapshot, fingerprint, and child-run
 lineage; and market-data/features own semantic cache manifests. The common
 `artifacts` package supplies identity/hash, path layout, atomic writes,
 retention, and validated-promotion mechanics without duplicating those domain
@@ -2951,7 +2951,7 @@ modules. The historical evaluation import test was reduced to the one adapter
 used by frozen reanalysis launchers, and tests now import the canonical
 ablation lifecycle. Keep the remaining adapters with demonstrated contracts:
 `evaluation.reanalysis.runner` is invoked by frozen research launchers;
-`experiments.campaigns.execution` is called directly by retained Slurm launch
+`experiments.runs.execution` is called directly by retained Slurm launch
 scripts; `compute.slurm.resume` owns the existing compute CLI command; and
 `models.encoders.core.TCNEncoder` is referenced by one of the 2,175 inventoried
 saved checkpoints. They contain no competing domain implementation. The
@@ -2962,7 +2962,7 @@ The final GH200 validation passed: full-tree Ruff format (847 files), Ruff
 lint, and Mypy (847 source files), plus 65 focused reanalysis, experiment CLI,
 report export, PO3, and architecture filename tests. Two existing pandas
 deprecation warnings were emitted. The prior consolidated full repository
-gate remains recorded above. No model training, research benchmark, campaign,
+gate remains recorded above. No model training, research benchmark, experiment run,
 data/cache rebuild, commit, or push was run for this closeout. The approved
 allocation `21301784` remains running in its persistent tmux shell for reuse.
 With source-matched numerical parity and only supported compatibility
@@ -3063,7 +3063,7 @@ For each phase, an implementation agent should:
 8. perform a semantic naming audit for moved modules, functions, state fields, config keys, metrics, artifacts, tests, and docs; replace ordinal/placeholder names with domain names where compatibility allows;
 8a. audit filenames across every active repository area, explicitly disposition phase/ordinal-prefixed files, and preserve only provenance- or public-contract-backed aliases with a test and expiry condition;
 9. verify that extracted functions represent meaningful responsibilities rather than numbered fragments;
-10. audit every execution surface that invokes the moved responsibility: console commands, Python scripts, shell/Slurm wrappers, tools, Docker, GitHub workflows, and saved campaign commands;
+10. audit every execution surface that invokes the moved responsibility: console commands, Python scripts, shell/Slurm wrappers, tools, Docker, GitHub workflows, and saved experiment run commands;
 11. migrate those callers to one stable package API or gate command and remove duplicated orchestration logic;
 12. add missing characterization tests first;
 13. create the target package/subpackage with `__init__.py`;
@@ -3089,7 +3089,7 @@ The repository-wide architecture refactor is complete when:
 - generated artifacts have typed identities, manifests, provenance links, completion semantics, and regeneration paths;
 - datasets and partitions are identified by manifests rather than inferred only from filenames;
 - caches are disposable, validated, identity-keyed, and never the sole source of research evidence;
-- run/campaign/evaluation outputs are immutable artifact trees with canonical manifests;
+- run/experiment_run/evaluation outputs are immutable artifact trees with canonical manifests;
 - run-scoped logs are colocated with their owning artifacts and scientific state is not log-only;
 - baselines can only be created through an explicit validated promotion workflow;
 - scripts, tools, and CI wrappers contain no duplicate domain algorithms;
@@ -3101,7 +3101,7 @@ The repository-wide architecture refactor is complete when:
 - hosted CI avoids redundant full-suite execution unless each run validates a distinct environment contract;
 - test markers form a scheduling contract for unit, integration, slow, GPU, Triton, and research validation;
 - CPU CI uses isolated data/artifact roots and cannot consume developer caches or outputs accidentally;
-- Triton/GPU validation is explicit for resource-sensitive training and campaign behavior;
+- Triton/GPU validation is explicit for resource-sensitive training and experiment run behavior;
 - Docker/release automation exists only for supported reproducibility/runtime needs and has no stale command paths;
 - high-value shared primitives have one semantic owner and one canonical implementation;
 - no catch-all utility package becomes a dependency dumping ground;
@@ -3122,7 +3122,7 @@ The repository-wide architecture refactor is complete when:
 - training coordinates services instead of owning upstream domain behavior;
 - feature construction is a named causal pipeline;
 - evaluation has one canonical package;
-- campaign logic is reusable package code rather than script internals;
+- experiment run logic is reusable package code rather than script internals;
 - live logic is broker-neutral and external systems are isolated under integrations;
 - scripts are command wrappers rather than libraries;
 - build, lint, type-check, and test configuration recognize the root packages;
@@ -3134,3 +3134,27 @@ The repository-wide architecture refactor is complete when:
   and OOS reanalysis remain valid; real training is a separately authorized
   research activity, not an architecture-refactor gate;
 - a developer can identify where to import and where to modify a concern by reading the repository tree and package `__init__.py` files.
+
+## Implementation record — 2026-10-30
+
+The repository refactor and behavior-based test reorganization are implemented on
+`main`. The migration ledger and immutable source archive preserve renamed-path
+provenance. Historical thesis and research evidence files were kept byte-for-byte;
+the result-manifest reader accepts both the preserved legacy ledger identity and
+the current experiment-run identity.
+
+Tests now live under `tests/unit/`, `tests/integration/`, `tests/research/`, and
+`tests/architecture/`. Test names describe observable code behavior or contracts,
+not plan phases, work packages, or suite categories. Adapter-identity checks were
+removed where they duplicated no behavior guarantee. The ownership inventory is
+checked against the active repository file set, and path migrations are checked
+against archived source hashes. The user-owned `campaign_worker_dispatch.log`
+remains untracked and unchanged.
+
+The required full gate completed successfully in the existing GH200 allocation;
+no training was run for this refactor. Results were: Ruff format and lint passed;
+Mypy passed for 860 source files; 46 architecture tests, 17 graph-quality tests,
+78 contract tests, 2,079 unit tests, 242 integration tests, 74 parity tests, and
+12 training-smoke tests passed. Dependency lock/export, dependency-security,
+secret scanning, package build/import, and `git diff --check` also passed. The
+captured gate log is `outputs/agent_state/repository_refactor_full_current_20261030.log`.

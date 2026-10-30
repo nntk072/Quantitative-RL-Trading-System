@@ -118,7 +118,7 @@ class TradingCostModel:
         if position_size == 0:
             return 0.0
 
-        # Spread cost + slippage
+            # Spread cost + slippage
         cost = self.spread + (self.spread * self.slippage_frac)
         return cost * abs(position_size)
 

@@ -47,26 +47,26 @@ run_gate() {
 }
 
 run_gate touched_source_format_apply "$VENV_X86/bin/ruff" format \
-  docs/thesis/audit_tick_quality_current_campaign_2026-10-17.py
+  docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py
 echo "validated_source_tracked_worktree_diff_sha256=$(git -C "$ROOT" diff --binary HEAD | sha256sum | cut -d' ' -f1)"
 run_gate full_tree_ruff_format_verify "$VENV_X86/bin/ruff" format --check .
 run_gate full_tree_ruff_lint "$VENV_X86/bin/ruff" check .
 run_gate full_tree_mypy "$VENV_X86/bin/mypy" .
-run_gate campaign_shell_syntax bash -c \
-  'for file in scripts/compute/slurm/campaigns/run_18variant_matrix.sh scripts/compute/slurm/campaigns/run_campaign_18way_cpumask_allocation.sh scripts/compute/slurm/campaigns/run_campaign_18way_cpumask_supervisor.sh scripts/compute/slurm/campaigns/validate_cpu_mask_campaign_gpu.sh scripts/compute/slurm/campaign_srun_gh200_guard.sh scripts/compute/slurm/campaign_allocation_wrapper.sh; do bash -n "$file" || exit; done'
+run_gate experiment_run_shell_syntax bash -c \
+  'for file in scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh scripts/compute/slurm/experiment_runs/run_18way_cpumask_allocation.sh scripts/compute/slurm/experiment_runs/run_18way_cpumask_supervisor.sh scripts/compute/slurm/experiment_runs/validate_cpu_mask_experiment_run_gpu.sh scripts/compute/slurm/experiment_run_srun_gh200_guard.sh scripts/compute/slurm/experiment_run_allocation_wrapper.sh; do bash -n "$file" || exit; done'
 run_gate matrix_launcher_no_scancel bash -c \
-  '! rg -n "^[[:space:]]*scancel[[:space:]]|[;&|][[:space:]]*scancel[[:space:]]" scripts/compute/slurm/campaigns/run_18variant_matrix.sh'
+  '! rg -n "^[[:space:]]*scancel[[:space:]]|[;&|][[:space:]]*scancel[[:space:]]" scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh'
 if (( failures != 0 )); then
   echo "DATA_AUDITS_SKIPPED software gate failed=$failures"
   exit 1
 fi
-run_gate focused_tick_tests "$VENV_MI210/bin/python" -m pytest tests/test_market_data/test_ticks.py -q
+run_gate focused_tick_tests "$VENV_MI210/bin/python" -m pytest tests/unit/market_data/test_ticks.py -q
 if (( failures != 0 )); then
   echo "DATA_AUDITS_SKIPPED focused tick tests failed"
   exit 1
 fi
 run_gate raw_tick_quality_audit "$VENV_MI210/bin/python" \
-  docs/thesis/audit_tick_quality_current_campaign_2026-10-17.py \
+  docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py \
   --out "$TICK_AUDIT_REPORT"
 run_gate full_training_interval_fold_audit "$VENV_MI210/bin/python" \
   docs/thesis/audit_real_market_fold_fit_scope_full_train_2026-10-17.py \

@@ -95,7 +95,7 @@ daily limits use current equity; the 10% maximum-loss limit uses initial
 equity. The soft daily and maximum-loss limits match their hard thresholds.
 Both modes keep the separate $900 sizing ceiling and leave peak trailing
 drawdown disabled. Values are merged into the resolved run config for both
-direct variant training and campaign workers.
+direct variant training and experiment run workers.
 
 ---
 

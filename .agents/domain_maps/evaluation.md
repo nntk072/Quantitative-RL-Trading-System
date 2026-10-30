@@ -51,8 +51,8 @@ Purged walk-forward split construction lives in `market_data/splits/walkforward.
 
 ## Key Symbols
 
-For a reusable thesis campaign report, run
-`python scripts/research/thesis/evaluation/report_variant_details.py --campaign-dir <campaign>`
+For a reusable thesis experiment run report, run
+`python scripts/research/thesis/evaluation/report_variant_details.py --experiment-run-dir <experiment run>`
 on a suitable compute node. It writes `reports/project_results_report.md` and JSON,
 plus a standalone Mermaid pipeline diagram. The report explains the saved input/cache identity,
 source revisions, run split, model/training settings, evaluation protocol, trade results,
@@ -87,7 +87,7 @@ links are unavailable.
 | `tests/integration/test_runner.py` | Episode runner |
 | `tests/integration/test_metrics.py` | Metrics calculation |
 | `tests/integration/test_calibration_ci.py` | Calibration |
-| `tests/integration/test_matched_comparison_unittest.py` | Matched-run fields, timestamp windows and paired intervals |
+| `tests/integration/test_matched_comparison.py` | Matched-run fields, timestamp windows and paired intervals |
 | `tests/integration/test_run_manifest.py` | Run-manifest identity and fail-closed artifact requirements |
 | `tests/integration/test_report.py` | Report generation |
 | `tests/integration/test_walkforward.py` | Walk-forward splits |

@@ -1,6 +1,6 @@
 # New research lineages for the RL Learning Quality Program.
 # This registry is deliberately separate from config/experiments.yaml; no
-# historical campaign entry is altered or automatically launched.
+# historical experiment run entry is altered or automatically launched.
 registry_version: 1
 development_control: ladder_a3_multi_tp
 status: implementation_in_progress

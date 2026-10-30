@@ -309,9 +309,10 @@ def format_dashboard_table(snapshot: dict[str, Any]) -> str:
     boxes = [(title, kv_lines(pairs, key_width, value_width)) for title, pairs in rows]
     return render_box_table(boxes)
 
+    # Eval drawdown is ``eval_max_drawdown`` so it does not overwrite the close-reason
+    # share stored in ``max_drawdown``.
 
-# Eval drawdown is ``eval_max_drawdown`` so it does not overwrite the close-reason
-# share stored in ``max_drawdown``.
+
 _EVAL_ROW_KEYS: tuple[tuple[str, str], ...] = (
     ("return_pct", "return_pct"),
     ("total_pnl", "eval_total_pnl"),

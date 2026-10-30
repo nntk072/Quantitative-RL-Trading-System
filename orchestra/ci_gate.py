@@ -17,10 +17,11 @@ class CiCheck:
     argv: list[str]
     timeout: float | None = None
 
+    # GitHub invokes the named gates in parallel and aggregates them. Orchestra
+    # delegates to the same dispatcher in its local serial mode; it does not carry
+    # a second, divergent list of Ruff/Mypy/pytest commands.
 
-# GitHub invokes the named gates in parallel and aggregates them. Orchestra
-# delegates to the same dispatcher in its local serial mode; it does not carry
-# a second, divergent list of Ruff/Mypy/pytest commands.
+
 CI_CHECKS: tuple[CiCheck, ...] = (
     CiCheck("full", ["./tools/check", "full"], timeout=CI_GATE_TIMEOUT_S),
 )

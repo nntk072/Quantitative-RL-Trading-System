@@ -27,8 +27,6 @@
   "cache_bytes": 1279943130,
   "cache_hash": "63a6192edd31d705",
   "cache_path": "cache/data_modes/normal/train_test_2025_2026_v1/US100.cash_features_v30-directional-swing-fib_63a6192edd31d705.parquet",
-  "campaign_id": "regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1",
-  "campaign_spec": "config/campaigns/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1.yaml",
   "directional_swing_fields_by_timeframe": {
     "D1": {
       "direction": "D1_standard_deviation_leg_direction",
@@ -87,6 +85,8 @@
     "H4",
     "D1"
   ],
+  "experiment_run_id": "regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1",
+  "experiment_run_spec": "config/experiment_runs/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1.yaml",
   "feature_cache_version": "v30-directional-swing-fib",
   "feature_columns": 1442,
   "feature_rows": 630787,

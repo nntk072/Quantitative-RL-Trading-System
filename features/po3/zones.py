@@ -192,7 +192,7 @@ def build_fvg_zones_for_plot(
     if ifvg_config is None:
         ifvg_config = IFVGConfig()
 
-    # --- HTF FVG: start at bar2 open (gap between bar1 and bar3) ---
+        # --- HTF FVG: start at bar2 open (gap between bar1 and bar3) ---
     htf_bars = resample(m1_bars, htf)  # type: ignore[arg-type]
     if len(htf_bars) >= 3:
         htf_fvg = detect_fvg(htf_bars, config=fvg_config)
@@ -204,7 +204,7 @@ def build_fvg_zones_for_plot(
             for i in range(2, len(htf_bars)):
                 if flags[i] != 1:
                     continue
-                # Pulse only: skip forward-filled runs if any (detect_fvg is per-bar).
+                    # Pulse only: skip forward-filled runs if any (detect_fvg is per-bar).
                 zone_low = float(htf_fvg[low_col].iloc[i])
                 zone_high = float(htf_fvg[high_col].iloc[i])
                 if not np.isfinite(zone_low) or not np.isfinite(zone_high) or zone_high <= zone_low:
@@ -230,7 +230,7 @@ def build_fvg_zones_for_plot(
                     )
                 )
 
-    # --- LTF IFVG: start at confirmation candle on LTF ---
+                # --- LTF IFVG: start at confirmation candle on LTF ---
     ltf_bars = resample(m1_bars, ltf)  # type: ignore[arg-type]
     if len(ltf_bars) >= 3:
         ltf_fvg = detect_fvg(ltf_bars, config=fvg_config)
@@ -257,8 +257,8 @@ def build_fvg_zones_for_plot(
                 zone_high = float(ltf_ifvg[high_col].iloc[i])
                 if not np.isfinite(zone_low) or not np.isfinite(zone_high) or zone_high <= zone_low:
                     continue
-                # Two LTF candles left of the confirmation bar, so the box
-                # covers the imbalance pair and not only the close-through.
+                    # Two LTF candles left of the confirmation bar, so the box
+                    # covers the imbalance pair and not only the close-through.
                 start_ts = ltf_bars.index[i - 2] if i >= 2 else ltf_bars.index[0]
                 end_ts, invalidated = _invalidate_zone_on_tf(
                     ltf_bars,

@@ -9,7 +9,7 @@
 - The audit skips the exact CUDA build `torch==2.14.0+cu130`, which is not available from PyPI. Its security status remains unverified by this audit; do not describe the full environment as vulnerability-free.
 - The reviewed dependency changes are recorded in `pyproject.toml`, `uv.lock`, `requirements.txt`, and `requirements-dev.txt`. `uv lock --check` and `make deps-check` pass.
 - The secret scanner passes with only its configured Base64 and Hex entropy detectors disabled. The audit scripts, exception file, and tests are wired into required CI jobs.
-- Full-tree Ruff format, Ruff lint, and Mypy pass (739 files). The scoped compatibility and evidence suite passes (110 tests), including checkpoint migration, campaign artifacts, numerical reports, and VAE loading.
+- Full-tree Ruff format, Ruff lint, and Mypy pass (739 files). The scoped compatibility and evidence suite passes (110 tests), including checkpoint migration, experiment run artifacts, numerical reports, and VAE loading.
 - `load_vae_from_checkpoint` uses `weights_only=True` for tensor state dictionaries.
 
 ## Historical baseline

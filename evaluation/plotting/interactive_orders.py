@@ -268,8 +268,8 @@ def plot_per_trade_orders(
     else:
         log.info("Per-trade HTML: %d charts → %s", total, orders_dir)
 
-    # Compute EMA50/MACD/RSI/VWAP once on the full history so indicators are
-    # warmed up and match the strategy's real signals, then slice per trade.
+        # Compute EMA50/MACD/RSI/VWAP once on the full history so indicators are
+        # warmed up and match the strategy's real signals, then slice per trade.
     full_overlays = compute_chart_overlays_full(bars)
     full_overlays.update(compute_mtf_ema_overlays(bars, ema_timeframes))
     full_overlays = select_ema_overlays(full_overlays, ema_timeframes)
@@ -369,7 +369,7 @@ def plot_per_trade_orders(
                     col=1,
                 )
 
-        # Top panel: EMA50 overlay
+                # Top panel: EMA50 overlay
         ema = overlays.get("ema50")
         if ema is not None:
             fig.add_trace(

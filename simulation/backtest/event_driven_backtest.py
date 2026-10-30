@@ -187,7 +187,7 @@ def _fill_quote_event(
                         "fill_quote_source": "tick",
                     },
                 )
-            # In legacy mode, reject outlier ticks and use the candle quote.
+                # In legacy mode, reject outlier ticks and use the candle quote.
     if tick_execution_required:
         raise TickExecutionUnavailable(
             f"no executable tick within {max_tick_quote_wait_ms}ms of {fill_instant}"

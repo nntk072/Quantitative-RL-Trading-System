@@ -31,17 +31,19 @@ class ArtifactLayout:
         timestamp_text = created_at.strftime("%Y%m%d_%H%M%S_%f")
         return self.root / f"{timestamp_text}_{name}"
 
-    def campaigns(self) -> Path:
-        return self.root / "campaigns"
+    def experiment_runs(self) -> Path:
+        return self.root / "experiment_runs"
 
-    def campaign(self, campaign_id: str) -> Path:
-        return self.campaigns() / _validate_layout_component(campaign_id, "campaign id")
+    def experiment_run(self, experiment_run_id: str) -> Path:
+        return self.experiment_runs() / _validate_layout_component(
+            experiment_run_id, "experiment run id"
+        )
 
-    def gpu_campaign(self, campaign_id: str) -> CampaignArtifactLayout:
-        """Resolve the established GPU campaign path through the artifact layout."""
-        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,100}", campaign_id):
-            raise ValueError(f"unsafe campaign id: {campaign_id!r}")
-        return CampaignArtifactLayout(self.root / "gpu_campaigns" / campaign_id)
+    def gpu_experiment_run(self, experiment_run_id: str) -> ExperimentRunArtifactLayout:
+        """Resolve the established GPU experiment run path through the artifact layout."""
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,100}", experiment_run_id):
+            raise ValueError(f"unsafe experiment run id: {experiment_run_id!r}")
+        return ExperimentRunArtifactLayout(self.root / "gpu_experiment_runs" / experiment_run_id)
 
     def evaluation(self, evaluation_id: str) -> Path:
         return self.root / "evaluation" / _validate_layout_component(evaluation_id, "evaluation id")
@@ -54,14 +56,14 @@ class ArtifactLayout:
 
 
 @dataclass(frozen=True, slots=True)
-class CampaignArtifactLayout:
-    """Named artifact paths for a campaign, preserving its established on-disk layout."""
+class ExperimentRunArtifactLayout:
+    """Named artifact paths for an experiment run, preserving its established on-disk layout."""
 
     root: Path
 
     @property
     def manifest(self) -> Path:
-        return self.root / "campaign.json"
+        return self.root / "experiment_run.json"
 
     @property
     def controller_lock(self) -> Path:
@@ -131,22 +133,24 @@ class CampaignArtifactLayout:
         return self.root / "bootstrap_checkpoints" / f"{run_key}.zip"
 
     def resolve_recorded_path(self, value: str | Path) -> Path:
-        """Resolve a manifest path without allowing it to escape the campaign root."""
+        """Resolve a manifest path without allowing it to escape the experiment run root."""
         candidate = Path(value)
         if not candidate.is_absolute():
             candidate = self.root / candidate
         resolved_root = self.root.resolve()
         resolved_candidate = candidate.resolve()
         if not resolved_candidate.is_relative_to(resolved_root):
-            raise ValueError("recorded campaign path escapes its campaign directory")
+            raise ValueError("recorded experiment run path escapes its experiment run directory")
         return resolved_candidate
 
     def recovery_checkpoint(self, value: str | Path) -> Path:
-        """Resolve a recorded checkpoint only when it remains inside this campaign."""
+        """Resolve a recorded checkpoint only when it remains inside this experiment run."""
         try:
             return self.resolve_recorded_path(value)
         except ValueError:
-            raise ValueError("campaign checkpoint path escapes its campaign directory") from None
+            raise ValueError(
+                "experiment run checkpoint path escapes its experiment run directory"
+            ) from None
 
     def ensure_controller_directories(self) -> None:
         for directory in (
@@ -161,15 +165,15 @@ class CampaignArtifactLayout:
     @staticmethod
     def _validate_run_key(run_key: str) -> None:
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,150}", run_key):
-            raise ValueError(f"unsafe campaign run key: {run_key!r}")
+            raise ValueError(f"unsafe experiment run key: {run_key!r}")
 
     @staticmethod
     def _validate_attempt(attempt: int) -> None:
         if type(attempt) is not int or attempt < 1:
-            raise ValueError("campaign attempt must be a positive integer")
+            raise ValueError("experiment run attempt must be a positive integer")
 
     @staticmethod
     def _named_file(directory: Path, name: str, kind: str) -> Path:
         if not name or Path(name).name != name or name in {".", ".."}:
-            raise ValueError(f"campaign {kind} name must be a file name")
+            raise ValueError(f"experiment run {kind} name must be a file name")
         return directory / name

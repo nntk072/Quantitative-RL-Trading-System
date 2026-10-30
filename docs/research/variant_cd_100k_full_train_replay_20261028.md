@@ -84,7 +84,7 @@ These are one-seed, short-training diagnostics. The full-replay wrapper did not 
 - This attempt used the canonical dashboard cadence then present in its resolved config (`eval_every=100000`); `isolate_eval_rng` was unset and therefore false. The later attempt32 lineage deferred dashboard evaluation while keeping its prior cadence and enabled evaluation RNG isolation.
 - No 2026 test/report-only data was evaluated.
 
-Machine-readable replay JSON and full equity/trade ledgers remain in the preserved scratch campaign directory:
+Machine-readable replay JSON and full equity/trade ledgers remain in the preserved scratch experiment run directory:
 
 `/scratch/work/nguyenl37/mtf_cd_benchmark_20261027/attempt23/{C,D}/`
 

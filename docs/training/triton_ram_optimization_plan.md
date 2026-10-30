@@ -10,15 +10,15 @@ Scope: 18 variants x 5 seeds x 20M PPO timesteps.
 - Default env.data_source=frames in quant_rl/config/default.yaml.
 - Historical source note: the earlier `train_rl.py` implementation used `_publish_obs_memmap`; the current repository owns this behavior in `training.setup.observation_memmap.publish_observation_memmap`.
 - shared_bundle.py loads arrays read-only with np.load(mmap_mode="r"); TradingEnv consumes _bundle_arrays.
-- tests/test_simulation/test_environment/test_shared_bundle.py covers atomic creation/concurrent builders.
-- The existing GH200 campaign core-18x5 uses 2 trainers x 8 envs, allocated 32 CPU / 384 GiB; preserve its current state.
+- tests/unit/simulation/test_environment/test_shared_bundle.py covers atomic creation/concurrent builders.
+- The existing GH200 experiment run core-18x5 uses 2 trainers x 8 envs, allocated 32 CPU / 384 GiB; preserve its current state.
 - Historic worker PSS at n_envs 8/16/32/64: 18.5/34.3/65.9/129.2 GiB (not cgroup RAM).
 
 ## Strict invariants
 Never change features, observation/action definitions, rewards, execution prices, costs, SL/TP, exits, position sizing, guardrails, train/OOS split, purge, episode boundaries, metrics, or seed schedules. Keep exact financial precision; float32 downcasting requires explicit parity review. No training on login/Windows. No implicit new srun/scancel. No modifications to in-flight training runs.
 
 ## Stage 0: baseline attribution
-Record git/config hash, Slurm allocation, actual CPU affinity, cgroup memory.max/current/peak/events, process USS/PSS/smaps_rollup, anonymous vs file-backed pages, disk free and scratch I/O. Collect 30-60-second time series and process trees while feature building, env creation, rollout, PPO optimizer, checkpoint, IS and OOS run. Separate node free memory from job cgroup memory and avoid adding shared RSS. Identify top 3 duplicated immutable buffers and estimate potential savings. Store raw observations as CSV/JSON under outputs/gpu_campaigns/<campaign>/logs/.
+Record git/config hash, Slurm allocation, actual CPU affinity, cgroup memory.max/current/peak/events, process USS/PSS/smaps_rollup, anonymous vs file-backed pages, disk free and scratch I/O. Collect 30-60-second time series and process trees while feature building, env creation, rollout, PPO optimizer, checkpoint, IS and OOS run. Separate node free memory from job cgroup memory and avoid adding shared RSS. Identify top 3 duplicated immutable buffers and estimate potential savings. Store raw observations as CSV/JSON under outputs/experiment_runs/<experiment run>/logs/.
 
 ## Stage 1: audit existing shared bundle
 Inspect env_bundle_builder.py, shared_bundle.py, env_spec.py, worker.py, TradingEnv.from_bundle, train_rl.py and SubprocVecEnv creation. Verify cache fingerprints, atomic build, concurrent writes, checksum/dtype/shape, split isolation, file-backed mappings and worker cleanup. Audit any array conversion, .copy(), DataFrame reconstruction, tickbook, OHLC, session and MTF arrays. Resolve all 18 variants, action widths, three strategy families and VAE/walk-forward compatibility. Unsupported cases must be explicit; do not silently change behavior.
@@ -39,7 +39,7 @@ Never shrink scientific inputs, suppress evaluation, or silently change PPO n_st
 Profiles: workers x n_envs = 1x8, 1x16, 1x32, 1x64, 2x8, 2x16, 2x32; optionally 3x8, 4x8 after admission checks. Measure both frames and bundle at identical algorithm settings. Require multiple meaningful rollout + optimizer cycles per profile and repeated sustained samples where possible. Report separately feature preprocessing, worker startup, environment throughput, PPO optimization, checkpoint, IS/OOS time; full pipeline wallclock must not masquerade as PPO steps/s. Capture actual model timesteps (rollout rounding), GPU utilization/VRAM, allocated CPU utilization, cgroup peak/anon/file, USS/PSS, I/O and failure conditions. Admit only if >=64 GiB reserve plus 1.35x measured predicted peak fits allocated cgroup RAM; ensure CPU headroom. Select maximum aggregate trained timesteps/hour, not highest env count.
 
 ## Stage 5: safe pilot and rollout
-Pilot a separately named campaign (baseline, PO3/IFVG, distribution, varied action widths) with seed 42 and validated checkpoints/metrics/trade gates. Keep existing core-18x5 logs/checkpoints untouched. Record git SHA, config digest, feature/cache hashes, backend, GPU/CPU/cgroup, seed, n_envs, PPO parameters, actual timesteps and artifact paths. Fix campaign-controller status to verify checkpoints + result outputs rather than exit code alone; preserve append-only attempt logs and resume without double scheduling. Switch production backend only at a safe run boundary, after CI + parity + performance gates. Check remaining allocation walltime, scratch quota, Slurm restrictions and availability before later jobs. Commit independently reviewable verified changes; do not claim hypothetical memory gains as measured.
+Pilot a separately named experiment run (baseline, PO3/IFVG, distribution, varied action widths) with seed 42 and validated checkpoints/metrics/trade gates. Keep existing core-18x5 logs/checkpoints untouched. Record git SHA, config digest, feature/cache hashes, backend, GPU/CPU/cgroup, seed, n_envs, PPO parameters, actual timesteps and artifact paths. Fix experiment-run-controller status to verify checkpoints + result outputs rather than exit code alone; preserve append-only attempt logs and resume without double scheduling. Switch production backend only at a safe run boundary, after CI + parity + performance gates. Check remaining allocation walltime, scratch quota, Slurm restrictions and availability before later jobs. Commit independently reviewable verified changes; do not claim hypothetical memory gains as measured.
 
 ## Acceptance
 - All 18 variants resolve correctly and unsupported cases are flagged.
@@ -50,7 +50,7 @@ Pilot a separately named campaign (baseline, PO3/IFVG, distribution, varied acti
 
 
 ## GPU bundle probe evidence (2026-10-10; exploratory)
-All measurements ran on allocated GH200 GPU compute node in Slurm 20877341; existing prebuilt immutable bundles, CUDA PPO with 15 epochs, n_steps=2048, batch_size=512, and short runs. Saved raw JSON at outputs/gpu_campaigns/core-18x5/reports. These are NOT production throughput or peak RAM comparisons against frames and cannot authorize full rollout.
+All measurements ran on allocated GH200 GPU compute node in Slurm 20877341; existing prebuilt immutable bundles, CUDA PPO with 15 epochs, n_steps=2048, batch_size=512, and short runs. Saved raw JSON at outputs/experiment_runs/core-18x5/reports. These are NOT production throughput or peak RAM comparisons against frames and cannot authorize full rollout.
 
 | Bundle | envs | steps | elapsed seconds | steps/sec | cgroup post-train GB decimal |
 |---|---:|---:|---:|---:|---:|
@@ -60,10 +60,10 @@ All measurements ran on allocated GH200 GPU compute node in Slurm 20877341; exis
 | 26.8 MB | 64 | 4096 | 3.55 | 1154.1 | 15.25 |
 | 861.6 MB | 32 | 8192 | 9.01 | 908.7 | 12.24 |
 
-Cgroup values are point-in-time, not monitored peaks. Probe memory includes baseline allocation. Workers scale memory even with mmap, and increased n_envs can cause CPU contention. Compare matched production configurations and collect peaks before choosing workers/parallelism. Hold campaign core-18x5 suspended pending full parity and workload comparisons.
+Cgroup values are point-in-time, not monitored peaks. Probe memory includes baseline allocation. Workers scale memory even with mmap, and increased n_envs can cause CPU contention. Compare matched production configurations and collect peaks before choosing workers/parallelism. Hold experiment run core-18x5 suspended pending full parity and workload comparisons.
 
 ## Matched seven-day frames/bundle memory comparison (2026-10-10)
-GPU-node Slurm 20877341, same feature pipeline and seven-day train slice, environment-only vector step probe (128 steps), no PPO gradient phases. Full raw JSON is at outputs/gpu_campaigns/core-18x5/reports/{frames,bundle}_memory_matched.json (ignored run outputs).
+GPU-node Slurm 20877341, same feature pipeline and seven-day train slice, environment-only vector step probe (128 steps), no PPO gradient phases. Full raw JSON is at outputs/experiment_runs/core-18x5/reports/{frames,bundle}_memory_matched.json (ignored run outputs).
 
 | Backend | n_envs | cgroup start GB | cgroup steady GB | added cgroup GB | tree PSS MiB | startup s |
 |---|---:|---:|---:|---:|---:|---:|

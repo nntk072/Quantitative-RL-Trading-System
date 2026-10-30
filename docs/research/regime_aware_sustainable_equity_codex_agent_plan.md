@@ -5,7 +5,7 @@
 The proposed DSR PPO 1-environment rerun is removed from the active goal and
 must not be launched. Its interrupted attempt is historical evidence only.
 Continue this regime-aware plan from the existing R0/R1 evidence and the
-completed matched R2 campaign. DSR remains the R0 control inside that matched
+completed matched R2 experiment run. DSR remains the R0 control inside that matched
 screen; this does not authorize a separate DSR rerun.
 
 ### Verified preflight finding from the completed 2M run
@@ -163,11 +163,11 @@ Do not:
 
 - cancel active jobs;
 - submit duplicate jobs;
-- overwrite active campaign outputs;
+- overwrite active experiment run outputs;
 - delete historical evidence;
 - reset unrelated repository changes;
 - reuse an incompatible checkpoint;
-- alter campaign provenance after execution.
+- alter experiment run provenance after execution.
 
 If an existing GPU allocation is safely reusable, reuse it instead of requesting unnecessary resources.
 
@@ -603,7 +603,7 @@ The report must explicitly answer:
 7. Does trade geometry explain more than direction?
 8. Is there sufficient evidence to justify a slow-regime observation?
 
-Do not train before this report exists unless an existing running campaign must be allowed to finish independently.
+Do not train before this report exists unless an existing running experiment run must be allowed to finish independently.
 
 The existing R0/R1 artifacts answer this gate descriptively. R1 has large
 trend-by-side expectancy differences, but the saved entry direction mix shifts
@@ -621,7 +621,7 @@ normalization. It fuses this small independent vector through a 16-unit MLP
 with the existing TCN and account branch. The existing TCN, action schema,
 execution, and risk behavior remain unchanged. The matched R2 screen pairs this
 against the same source-normalized TCN control; it is prepared in
-`config/campaigns/regime_tcn_context_r2_seed50_train2025_2m.yaml` and may run
+`config/experiment_runs/regime_tcn_context_r2_seed50_train2025_2m.yaml` and may run
 only after correctness and quality gates pass and suitable allocation time is
 available.
 
@@ -955,7 +955,7 @@ You may run:
 - small PPO smoke tests;
 - short bounded diagnostic pilots.
 
-Do not immediately launch a new 20M campaign.
+Do not immediately launch a new 20M experiment run.
 
 A reasonable progression is:
 
@@ -1030,7 +1030,7 @@ If the framework silently scales it upward enough to destroy chronological cover
 
 # 27. 2M representation screen
 
-Once implementation and gates pass, and no conflicting active campaign exists, run:
+Once implementation and gates pass, and no conflicting active experiment run exists, run:
 
 ```text
 R0
@@ -1439,7 +1439,7 @@ and appropriate machine-readable analysis outputs.
 
 Also create tracked experiment configurations for R0/R1.
 
-Generated GPU campaign outputs may remain ignored if that matches repository convention.
+Generated GPU experiment run outputs may remain ignored if that matches repository convention.
 
 ---
 
@@ -1491,9 +1491,9 @@ creating experiment configs
 committing completed implementation
 ```
 
-Do not launch an expensive full 20M multi-seed campaign merely because GPU resources are available.
+Do not launch an expensive full 20M multi-seed experiment run merely because GPU resources are available.
 
-A 2M matched development screen is allowed only after implementation gates pass and only if it does not interfere with an already active/queued research campaign.
+A 2M matched development screen is allowed only after implementation gates pass and only if it does not interfere with an already active/queued research experiment run.
 
 If scheduling state makes immediate execution unsafe, finish all implementation/configuration/reporting work and leave the run ready to launch rather than duplicating resources.
 
@@ -1562,7 +1562,7 @@ Execute autonomously in this order:
 4. Verify causal completed-D1 values, per-feature masks, source-index train-only normalization, and checkpoint schema compatibility.
 5. Resolve and compare the R2 control/treatment configurations before launch.
 6. Pass full-tree Ruff format, Ruff lint, Mypy, and focused environment/model/feature/config tests.
-7. Commit the tested implementation so the campaign has a stable source identity.
+7. Commit the tested implementation so the experiment run has a stable source identity.
 8. After the current allocation ends, reuse or request one suitable GH200 allocation within the repository GPU-hour limit.
 9. Run the matched 2M R2 development screen once; preserve its fingerprints, logs, checkpoints, and report artifacts.
 10. Generate matched training/report-only results with monthly, regime, action, risk, exit, and equity diagnostics.

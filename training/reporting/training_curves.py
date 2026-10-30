@@ -83,10 +83,9 @@ def _exact_col(df: pd.DataFrame, name: str) -> str | None:
 def _valid(df: pd.DataFrame, col: str) -> pd.DataFrame:
     return df[["timestep", col]].dropna()
 
-
-# ---------------------------------------------------------------------------
-# Static PNG charts
-# ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
+    # Static PNG charts
+    # ---------------------------------------------------------------------------
 
 
 def plot_learning_curve(
@@ -285,10 +284,9 @@ def plot_learning_rate(
         _save_fig(fig, Path(out_path), dpi)
     return fig
 
-
-# ---------------------------------------------------------------------------
-# Interactive HTML charts
-# ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
+    # Interactive HTML charts
+    # ---------------------------------------------------------------------------
 
 
 def _save_training_html(df: pd.DataFrame, out_dir: Path) -> None:
@@ -321,7 +319,8 @@ def _save_training_html(df: pd.DataFrame, out_dir: Path) -> None:
         fig.update_layout(template=T, title=title, xaxis_title="Timestep", height=400)
         _write(fig, fname)
 
-    # Learning curve
+        # Learning curve
+
     col = _col(df, "ep_rew_mean")
     if col and len(_valid(df, col)) > 1:
         v = _valid(df, col)
@@ -407,10 +406,9 @@ def _save_training_html(df: pd.DataFrame, out_dir: Path) -> None:
         fig.update_layout(template=T, title="Mode means", xaxis_title="Timestep", height=400)
         _write(fig, "mode_means.html")
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
+        # ---------------------------------------------------------------------------
+        # Entry point
+        # ---------------------------------------------------------------------------
 
 
 def save_training_plots(
@@ -439,10 +437,10 @@ def save_training_plots(
     if save_html:
         _save_training_html(df, out_dir)
 
+        # ---------------------------------------------------------------------------
+        # Dashboard series (reward parts, behavior, risk, eval, grad norm)
+        # ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Dashboard series (reward parts, behavior, risk, eval, grad norm)
-# ---------------------------------------------------------------------------
 
 _DASH_COLORS = (_C0, _C1, _C2, _C3, _C4, "#00838f", "#6d4c41", "#ad1457", "#455a64")
 

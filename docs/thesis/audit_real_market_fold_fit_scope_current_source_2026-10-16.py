@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Check fold-scoped feature fitting against real campaign market data.
+"""Check fold-scoped feature fitting against real experiment run market data.
 
 For one early purged walk-forward fold per feature profile, poison only the
 validation-period primary bars and verify that fitted training features remain
 unchanged. Temporary feature caches are written under node-local /tmp and
-removed automatically; campaign caches are read-only.
+removed automatically; experiment run caches are read-only.
 """
 
 from __future__ import annotations
@@ -37,9 +37,9 @@ from quant_rl.features.build import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-CAMPAIGN_ID = "ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
-CAMPAIGN = ROOT / "outputs/gpu_campaigns" / CAMPAIGN_ID
-RESOLUTION_REPORT = ROOT / "docs/thesis/g1_campaign_feature_cache_resolution_2026-10-16.json"
+EXPERIMENT_RUN_ID = "ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
+EXPERIMENT_RUN = ROOT / "outputs/experiment_runs" / EXPERIMENT_RUN_ID
+RESOLUTION_REPORT = ROOT / "docs/thesis/g1_experiment_run_feature_cache_resolution_2026-10-16.json"
 PRE_REPAIR_OUTPUT = ROOT / "docs/thesis/g1_real_market_fold_fit_scope_2026-10-16.json"
 OUTPUT = ROOT / "docs/thesis/g1_real_market_fold_fit_scope_post_repair_2026-10-17.json"
 VARIANTS = ("ladder_a0_flat", "ladder_a1_sl", "ladder_a0_flat_po3", "ladder_a0_flat_dist")
@@ -105,10 +105,10 @@ def main() -> int:
         raise FileNotFoundError(f"pre-repair audit report missing: {PRE_REPAIR_OUTPUT}")
     resolution = json.loads(RESOLUTION_REPORT.read_text(encoding="utf-8"))
     if (
-        resolution["campaign_fingerprint"]
-        != json.loads((CAMPAIGN / "campaign.json").read_text(encoding="utf-8"))["fingerprint"]
+        resolution["experiment_run_fingerprint"]
+        != json.loads((EXPERIMENT_RUN / "experiment_run.json").read_text(encoding="utf-8"))["fingerprint"]
     ):
-        raise RuntimeError("cache-resolution report and active campaign fingerprints differ")
+        raise RuntimeError("cache-resolution report and active experiment run fingerprints differ")
     resolution_by_profile: dict[str, dict[str, Any]] = {}
     for row in resolution["results"]:
         resolution_by_profile.setdefault(row["matched_parity_profile"], row)
@@ -242,9 +242,9 @@ def main() -> int:
 
         shutil.rmtree(temp_root)
 
-    campaign = json.loads((CAMPAIGN / "campaign.json").read_text(encoding="utf-8"))
+    experiment_run = json.loads((EXPERIMENT_RUN / "experiment_run.json").read_text(encoding="utf-8"))
     failed_profiles = {item["variant"] for item in results if not item["passed"]}
-    affected_campaign_runs = [
+    affected_experiment_runs = [
         row for row in resolution["results"] if row["matched_parity_profile"] in failed_profiles
     ]
     changed_columns = sorted(
@@ -268,9 +268,9 @@ def main() -> int:
             f"FAILED: only {sum(bool(item['passed']) for item in results)}/{len(results)} "
             "profile perturbation checks passed. Validation OHLC changes altered training "
             f"features {changed_columns} for profiles {sorted(failed_profiles)}; "
-            f"the mapped saved campaign configs include {len(affected_campaign_runs)}/18 runs. "
+            f"the mapped saved experiment run configs include {len(affected_experiment_runs)}/18 runs. "
             "This is a real-market causality failure for the tested slice, not a strategy "
-            "result. The active campaign source was not changed."
+            "result. The active experiment run source was not changed."
         )
     else:
         scope_note = (
@@ -297,12 +297,12 @@ def main() -> int:
             "true after repair. Per-profile poison results and current source hashes are "
             "the evidence for this rerun."
         ),
-        "affected_campaign_runs": [row["variant"] for row in affected_campaign_runs],
-        "affected_campaign_run_count": len(affected_campaign_runs),
+        "affected_experiment_runs": [row["variant"] for row in affected_experiment_runs],
+        "affected_experiment_run_count": len(affected_experiment_runs),
         "failed_profiles": sorted(failed_profiles),
-        "campaign_id": CAMPAIGN_ID,
-        "campaign_fingerprint": campaign["fingerprint"],
-        "campaign_git_sha": campaign["git_sha"],
+        "experiment_run_id": EXPERIMENT_RUN_ID,
+        "experiment_run_fingerprint": experiment_run["fingerprint"],
+        "experiment_run_git_sha": experiment_run["git_sha"],
         "runtime": {
             "python": platform.python_version(),
             "platform": platform.platform(),
@@ -314,7 +314,7 @@ def main() -> int:
         "repository_head": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
         ).strip(),
-        "slurm_job_id": campaign.get("job_id"),
+        "slurm_job_id": experiment_run.get("job_id"),
         "raw_inputs_sha256": {
             str(primary_path.relative_to(ROOT)): sha256_file(primary_path),
             str(secondary_path.relative_to(ROOT)): sha256_file(secondary_path),

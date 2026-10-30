@@ -141,7 +141,7 @@ def _session_completed_and_running(
             else:
                 day_asia_hi[d] = max(day_asia_hi[d], h)
                 day_asia_lo[d] = min(day_asia_lo[d], lo_i)
-            # Same-day Asia context is masked by the caller; leave NaN here.
+                # Same-day Asia context is masked by the caller; leave NaN here.
         elif s == "london":
             # Asia is finished once London starts.
             if d in day_asia_hi and not day_asia_done.get(d, False):
@@ -158,7 +158,7 @@ def _session_completed_and_running(
             else:
                 day_lon_hi[d] = max(day_lon_hi[d], h)
                 day_lon_lo[d] = min(day_lon_lo[d], lo_i)
-            # Live/running London range during London.
+                # Live/running London range during London.
             lon_hi[i] = day_lon_hi[d]
             lon_lo[i] = day_lon_lo[d]
         elif s == "ny":

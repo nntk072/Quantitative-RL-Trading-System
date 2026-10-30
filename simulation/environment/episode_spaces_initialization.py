@@ -125,7 +125,7 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
                 shape=(THESIS_CATEGORY_COUNT,),
                 dtype=np.float32,
             )
-        # Add VAE latent to observation space if enabled
+            # Add VAE latent to observation space if enabled
         if use_vae and vae_latent_dim > 0:
             observation_space.spaces["vae_z"] = spaces.Box(
                 low=-np.inf,

@@ -179,13 +179,13 @@ def validate_model_action_schema(
         )
     if layout != expected_schema.key:
         raise ValueError(f"action layout {layout!r} differs from {expected_schema.key!r}")
-    # The policy rebuilt by SB3 starts with a constructor default. Restore
-    # the validated layout for correct mode-prior coordinates after loading.
+        # The policy rebuilt by SB3 starts with a constructor default. Restore
+        # the validated layout for correct mode-prior coordinates after loading.
     if policy is not None:
         policy._action_layout_key = layout
         policy._action_schema_version = version
-    # The validated decoder contract is useful to dashboards and exports;
-    # it does not change the serialized policy's action coordinates.
+        # The validated decoder contract is useful to dashboards and exports;
+        # it does not change the serialized policy's action coordinates.
     manifest = expected_schema.to_dict()
     manifest["checkpoint_metadata"] = "versioned"
     setattr(model, "_action_schema", manifest)
@@ -463,7 +463,7 @@ def build_agent(
             "architectures must not receive it"
         )
 
-    # Infer F from the env's observation space
+        # Infer F from the env's observation space
     n_features: int = env.observation_space["seq"].shape[1]
     account_dim: int = int(env.observation_space["account"].shape[0])
     agent_cfg = cfg.get("agent", {})
@@ -481,7 +481,7 @@ def build_agent(
     if configured_distribution in thesis_distributions and not thesis_enabled:
         raise ValueError(f"{configured_distribution} requires env.thesis_actions=true")
 
-    # Choose feature extractor based on architecture / VAE use
+        # Choose feature extractor based on architecture / VAE use
     extractor_cls: Any
     if use_vae and "vae_z" in env.observation_space.spaces:
         extractor_cls = VAEFeatureExtractor
@@ -561,7 +561,7 @@ def build_agent(
                 account_dim=account_dim,
             )
 
-    # Two hidden layers after the encoder. SAC uses ``qf`` for the critic.
+            # Two hidden layers after the encoder. SAC uses ``qf`` for the critic.
     head_cfg = agent_cfg.get("head_arch", {})
     head_arch = [int(value) for value in head_cfg.get(arch, [256, 128])]
     if algo == "sac":
@@ -625,7 +625,7 @@ def build_agent(
         persist_action_schema(model, env)
         return _finalize_cuda_policy(model, device)
 
-    # Default to PPO
+        # Default to PPO
     ppo_n_steps = cfg.ppo.n_steps
     if n_envs > 1 and env_fn is not None:
         ppo_n_steps = max(1, ppo_n_steps // n_envs)
@@ -776,8 +776,8 @@ def _finalize_cuda_policy(model: Any, device: str | torch.device | None) -> Any:
     if policy is None:
         return model
 
-    # PPO exposes one extractor on the policy. SAC keeps separate feature
-    # extractors on its actor, critic, and target critic instead.
+        # PPO exposes one extractor on the policy. SAC keeps separate feature
+        # extractors on its actor, critic, and target critic instead.
     extractors = [getattr(policy, "features_extractor", None)]
     for component_name in ("actor", "critic", "critic_target"):
         component = getattr(policy, component_name, None)

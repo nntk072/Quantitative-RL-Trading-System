@@ -8,7 +8,7 @@ Run `scripts/research/thesis/regime_attribution.py` with the same saved `trainin
 
 ## Source identity
 
-- Run directory: `/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/sustainable_growth_seed50_train2025_20261025_2m_normal_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261026_002028_229373_rl_train_seed50_tcn`
+- Run directory: `/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/experiment_runs/sustainable_growth_seed50_train2025_20261025_2m_normal_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261026_002028_229373_rl_train_seed50_tcn`
 - Trades SHA-256: `18b8afe2848a0f14ff93a1361026365cdd6b3d36526ac94f5fe72a082b4e8e33`
 - Positions SHA-256: `ed82760289fbbd612479535a8a435a0b7ee5816387feb6dedda9b3855d3a6f27`
 - Manifest SHA-256: `c16920488059b8f40f3aff7b269786026f49be84c81e99782e6720e712b40ca1`
@@ -194,7 +194,7 @@ The historical failure mode was that higher-timeframe bars were causally aligned
 2. Feature-cache availability is measured at observed entries, but the policy's learned use of those channels cannot be inferred from availability alone.
 3. Regime/side associations are descriptive, single-seed, in-sample evidence. Small cells and early account-risk stops limit inference.
 4. This analysis cannot isolate transaction-cost drag because the saved position outcomes do not provide a comparable mid-price gross counterfactual. Do not attribute losses to costs from this report.
-5. Interpret regime results alongside the matched campaign metrics. This report alone does not establish a causal policy improvement or justify tuning on the report-only test interval.
+5. Interpret regime results alongside the matched experiment run metrics. This report alone does not establish a causal policy improvement or justify tuning on the report-only test interval.
 
 ## Provenance outputs
 

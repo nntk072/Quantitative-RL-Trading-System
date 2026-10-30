@@ -284,7 +284,7 @@ with one GH200, 64 CPUs, 512G host RAM, and a 12-hour limit ending at 16:39
 EET. The GPU showed 0% utilization and 1 MiB used. A Python process using about
 one CPU core and 7.3 GiB RSS belonged to a different user's process tree; it
 was left untouched. The interactive allocation shell was preserved. This
-allocation was not used to start a fresh 2M C/D campaign.
+allocation was not used to start a fresh 2M C/D experiment run.
 
 At 15:43 EET, a current-source, core-only repeat began inside the same existing
 interactive allocation (no new Slurm step): three 20,480-step repeats per arm,
@@ -327,7 +327,7 @@ remained assigned to another user's job `21261802` (8 CPUs, 64 GiB; 3:05 of
 4:00). gpuarm1 had 56/144 CPUs allocated and 327,680/1,100,000 MiB host RAM
 allocated, leaving 88 CPUs and 772,320 MiB unallocated. Both configured GH200s
 were allocated. gpuarm2 remained `DOWN+NOT_RESPONDING`, with no jobs and no
-schedulable CPUs or GPUs. No new request was made; the matched C/D campaign
+schedulable CPUs or GPUs. No new request was made; the matched C/D experiment run
 still lacks two simultaneously available GH200s.
 
 ## Evidence paths

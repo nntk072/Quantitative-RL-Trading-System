@@ -138,7 +138,7 @@ uses the same dispatcher sequentially:
 - Mock methods with `monkeypatch.setattr`, not `instance.method = ...` (mypy
   `method-assign`).
 - Orchestra router/health tests on CI: use `stub_clis` fixture
-  (`tests/test_orchestra/conftest.py`).
+  (`tests/unit/orchestra/conftest.py`).
 
 ## Relations
 

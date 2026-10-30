@@ -1,0 +1,69 @@
+{
+  "captured_at_local": "2026-10-16T15:41:03+03:00",
+  "captured_at_utc": "2026-10-16T12:41:03+00:00",
+  "experiment_run": {
+    "experiment_run_id": "ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016",
+    "fingerprint": "08459336353e046c1a4882a1dd8f1a8284c052a5e18e4bf309ccb0b574ca0a5d",
+    "held_start_marker": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016/start_training_after_commit.held",
+    "identity": "18 variants, seed 50, 20M steps each, n_envs=64, shared bundle, two GH200 nodes",
+    "manifest": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016/experiment_run.json",
+    "previous_fingerprint": "3474621efd6a1481bd2a20bce0cfd2c0b69969df1849c6cd738d19dc5bb4ba34",
+    "resume_checkpoints": "18 validated attempt-3 checkpoints, 11M-14M steps; no continuation trainer has started",
+    "statuses_at_capture": {
+      "interrupted": 18
+    },
+    "training_start_marker_present": false
+  },
+  "readiness": "P1 and P2 remain open; no 20M screen identity is complete; the continuation has not launched. Thesis status remains NOT READY.",
+  "repository": {
+    "branch": "main",
+    "canonical_plan_path": "docs/thesis/master_project_execution_plan.md",
+    "head": "a13dcd467a14b08224633a5329b24375ec0df2cb",
+    "origin_main": "a13dcd467a14b08224633a5329b24375ec0df2cb",
+    "path": "/scratch/work/nguyenl37/Aalto_MS_Thesis",
+    "requested_plan_path": "/scratch/work/nguyenl37/Aalto_MS_Thesis/docs/thesis/master_project_execution_plan.md",
+    "working_tree_clean_at_capture": true
+  },
+  "schema": "aalto.live_experiment_run_snapshot.v1",
+  "slurm": {
+    "actions": "No duplicate request submitted; no job canceled; no training gate released.",
+    "active_allocation": {
+      "cpus": "48 per node; 96 total",
+      "elapsed_at_capture": "4:08:16",
+      "gpus": "1 GH200 per node; 2 total",
+      "job_id": "20985591",
+      "memory": "512 GiB per node; 1 TiB total",
+      "nodes": [
+        "gpuarm1",
+        "gpuarm2"
+      ],
+      "observed_processes": [
+        "run_18way_cpumask_allocation.sh (waiting on training-start gate)"
+      ],
+      "partition": "gpu-grace-h200-141g",
+      "remaining_seconds_at_capture": 6704,
+      "scheduled_end_local": "2026-10-16T17:32:47+03:00",
+      "started_local": "2026-10-16T11:32:47+03:00",
+      "state": "RUNNING",
+      "training_start_gate": "held; marker absent; preserve allocation and wrapper",
+      "worker_trainers": 0
+    },
+    "pending_request": {
+      "cpus": "48 per node; 96 total",
+      "gpus": "1 GH200 per node; 2 total",
+      "job_id": "20990395",
+      "memory": "512 GiB per node; 1 TiB total",
+      "nodes": 2,
+      "partition": "gpu-grace-h200-141g",
+      "reason": "AssocGrpGRESRunMinutes",
+      "start_time": "Unknown",
+      "state": "PENDING",
+      "time_limit": "6 hours"
+    }
+  },
+  "verification": {
+    "active_process": "gpuarm1 process table and wrapper environment verified canonical repo path; no experiment_run_controller.py or train_rl.py process present.",
+    "experiment_run_state": "Current experiment run manifest and prior all-attempt reconciliation report retain 18 interrupted identities; preserve the original fingerprint and checkpoints.",
+    "scheduler": "squeue and scontrol show job verified both job states and requested resources at capture time."
+  }
+}

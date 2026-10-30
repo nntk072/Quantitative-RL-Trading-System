@@ -17,12 +17,11 @@ except ImportError:
     MultiInputActorCriticPolicy = object  # type: ignore[assignment,misc]
     _SB3_AVAILABLE = False
 
-
-# Layout keys: width plus which optional dims are present.
-#   5      -> [intensity, stop, risk, target, exit]
-#   6_dir  -> [direction, intensity, stop, risk, target, exit]
-#   6_sl   -> [intensity, stop, risk, target, sl_mode, exit]
-#   7      -> [direction, intensity, stop, risk, target, sl_mode, exit]
+    # Layout keys: width plus which optional dims are present.
+    #   5      -> [intensity, stop, risk, target, exit]
+    #   6_dir  -> [direction, intensity, stop, risk, target, exit]
+    #   6_sl   -> [intensity, stop, risk, target, sl_mode, exit]
+    #   7      -> [direction, intensity, stop, risk, target, sl_mode, exit]
 _MODE_INDEX: dict[str, dict[str, int]] = {
     "5": {"stop": 1, "risk": 2, "target": 3, "exit": 4},
     "6_dir": {"direction": 0, "stop": 2, "risk": 3, "target": 4, "exit": 5},
@@ -123,8 +122,8 @@ def _layout_key(
     flags = (has_direction, has_sl_mode, has_tp_mode, has_multi_tp, has_simplex)
     if width == 1 and flags == (False,) * 5:
         return "1"
-    # Compatibility with older tests/users passing a bare width: this is
-    # inherently ambiguous and should not be used for new model construction.
+        # Compatibility with older tests/users passing a bare width: this is
+        # inherently ambiguous and should not be used for new model construction.
     if flags == (False,) * 5 and width != 5:
         if width == 6:
             return "6_sl"

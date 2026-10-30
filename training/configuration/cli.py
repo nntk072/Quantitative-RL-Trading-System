@@ -169,7 +169,7 @@ def load_merged_config(args: argparse.Namespace) -> DictConfig:
     if variant_path is not None:
         log.info("Merged strategy config: %s", variant_path)
 
-    # Use the same fully explicit override set as campaign launchers. This
+    # Use the same fully explicit override set as experiment run launchers. This
     # keeps reward, architecture-related flags, risk policy, and variant
     # config_overrides from acquiring a second runtime interpretation.
     if resolved is not None:

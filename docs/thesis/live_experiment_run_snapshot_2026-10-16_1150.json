@@ -1,0 +1,74 @@
+{
+  "allocation": {
+    "gpu_ci": "passed for commit 45ef1a0 cache/recovery changes with 33 tests; current dispatcher changes require a fresh GPU gate before commit/start",
+    "job_id": "20985591",
+    "sacct_steps": [
+      "20985591|00:18:13|RUNNING|gpuarm[1-2]",
+      "20985591.extern|00:18:13|RUNNING|gpuarm[1-2]",
+      "20985591.0|00:18:12|RUNNING|gpuarm[1-2]"
+    ],
+    "scontrol": "JobId=20985591 JobName=thesis18maskv3 UserId=nguyenl37(3249541) GroupId=nguyenl37(3249541) MCS_label=N/A Priority=246491 Nice=0 Account=aalto_users QOS=normal JobState=RUNNING Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=0 Reboot=0 ExitCode=0:0 RunTime=00:18:13 TimeLimit=06:00:00 TimeMin=N/A SubmitTime=2026-10-16T11:32:46 EligibleTime=2026-10-16T11:32:46 AccrueTime=2026-10-16T11:32:46 StartTime=2026-10-16T11:32:47 EndTime=2026-10-16T17:32:47 Deadline=N/A SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-10-16T11:32:47 Scheduler=Main Partition=gpu-grace-h200-141g AllocNode:Sid=login4:3190233 ReqNodeList=(null) ExcNodeList=(null) NodeList=gpuarm[1-2] BatchHost=gpuarm1 NumNodes=2 NumCPUs=96 NumTasks=2 CPUs/Task=48 ReqB:S:C:T=0:0:*:* ReqTRES=cpu=96,mem=1T,node=2,billing=282,gres/gpu=2,gres/gpu:gh200=2 AllocTRES=cpu=96,mem=1T,node=2,billing=282,gres/gpu=2,gres/gpu:gh200=2 Socks/Node=* NtasksPerN:B:S:C=1:0:*:* CoreSpec=* MinCPUsNode=48 MinMemoryNode=512G MinTmpDiskNode=0 Features=(null) DelayBoot=00:00:00 OverSubscribe=NO Exclusive=NO Contiguous=0 Licenses=(null) LicensesAlloc=(null) Network=(null) Command=bash SubmitLine=srun --partition=gpu-grace-h200-141g --nodes=2 --ntasks=2 --ntasks-per-node=1 --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G --time=06:00:00 --job-name=thesis18maskv3 --export=ALL,TRITON_REPO=/scratch/work/nguyenl37/Aalto_MS_Thesis,EXPERIMENT_RUN_SPEC=config/experiment_runs/18_variant_seed50_20m_full_split_n64_cpumask_v3_20261016.yaml,EXPERIMENT_RUN_ID=ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016,SOURCE_EXPERIMENT_RUN=/scratch/work/nguyenl37/Aalto_MS_Thesis/outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_mainplan_20261016 --chdir=/scratch/work/nguyenl37/Aalto_MS_Thesis bash /scratch/work/nguyenl37/Aalto_MS_Thesis/scripts/triton/experiment_run_allocation_wrapper.sh WorkDir=/scratch/work/nguyenl37/Aalto_MS_Thesis TresPerNode=gres/gpu:gh200:1 TresPerTask=cpu=48",
+    "squeue": "RUNNING 18:13 gpuarm[1-2]",
+    "step_observation": "only allocation step .0 and standard .extern observed; no worker child srun steps",
+    "supervisor_tmux": "thesis-seed50",
+    "training_start_gate": "held; current allocation has not started workers"
+  },
+  "captured_at_utc": "2026-10-16T08:51:00.279468+00:00",
+  "dispatcher_work": {
+    "design": "one persistent manager per allocated node; direct child workers inherit Slurm cgroup and exact CPU affinity; srun shim uses shared-filesystem queue and creates no Slurm steps",
+    "local_checks": "Ruff check/format and six focused manager tests passed under isolated Python; full-tree GPU checks remain pending",
+    "status": "uncommitted on main; experiment_run_source_hashes do not include dispatcher helper paths"
+  },
+  "experiment_run": {
+    "attempt4_classification": "cache-path infrastructure failure before any new training; all 18 retained as interrupted/recoverable",
+    "bar_cache": {
+      "configured_nonempty_bar_files": 14,
+      "path": "cache",
+      "real_directory": true
+    },
+    "experiment_run_id": "ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016",
+    "fingerprint": "08459336353e046c1a4882a1dd8f1a8284c052a5e18e4bf309ccb0b574ca0a5d",
+    "identity": "18 variants, seed 50, 20M steps each, n_envs=64, shared bundle, two GH200 nodes",
+    "manifest": "outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016/experiment_run.json",
+    "previous_fingerprint": "3474621efd6a1481bd2a20bce0cfd2c0b69969df1849c6cd738d19dc5bb4ba34",
+    "recorded_git_sha": "8a98f7792f83ce4bbe5cb84f4a2137657d791c02",
+    "resume_pointer_correction": {
+      "checkpoint_attempt": 3,
+      "corrections": 18,
+      "manifest_backup": "reports/experiment_run_manifest_before_resume_attempt_repair.json",
+      "prior_report_backup": "reports/cache_recovery_before_resume_attempt_repair.json",
+      "resume_from_attempt_counts": {
+        "3": 18
+      }
+    },
+    "statuses": {
+      "interrupted": 18
+    },
+    "verified_checkpoints": {
+      "attempt3_archives": 37,
+      "hashes_and_experiment_run_boundaries": "validated by reports/cache_recovery.json and rechecked during resume-pointer repair",
+      "one_resume_checkpoint_per_identity": 18,
+      "resume_steps_max": 14000000,
+      "resume_steps_min": 11000000
+    }
+  },
+  "readiness": "P0 source/checkpoint boundary preserved. P1 incomplete until the resumed 18 identities reach terminal states and full chronological split exposure is reconciled. No strategy conclusion is supported by infrastructure failures or partial checkpoints.",
+  "repository": {
+    "branch": "main",
+    "experiment_run_source_hash_mismatches": [],
+    "experiment_run_source_hashes_match": true,
+    "experiment_run_source_hashes_verified": 228,
+    "head": "45ef1a06d3e4f3cfb5413326a13a71a0c9d02c7c",
+    "path": "/scratch/work/nguyenl37/Aalto_MS_Thesis",
+    "working_tree_status": [
+      "## main...origin/main",
+      " M scripts/triton/experiment_run_allocation_wrapper.sh",
+      " M scripts/triton/prepare_experiment_run_resume.py",
+      " M tests/test_triton_experiment_run_recovery.py",
+      "?? scripts/triton/experiment_run_worker_bin/",
+      "?? scripts/triton/experiment_run_worker_dispatch.py",
+      "?? tests/test_triton_experiment_run_worker_dispatch.py"
+    ]
+  },
+  "schema": "aalto.live_experiment_run_snapshot.v1"
+}

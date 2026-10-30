@@ -21,8 +21,8 @@ configuration identity. Domain packages resolve semantic settings from it.
 
 - YAML remains the single source of truth for configured runtime values.
 - CLI overrides apply last; resolved config and its identity are persisted.
-- Focused tests: `tests/test_configuration/test_config_typo_safety.py`,
-  `tests/test_training/test_variant_resolver.py`, and the training CLI config tests.
+- Focused tests: `tests/unit/configuration/test_config_typo_safety.py`,
+  `tests/unit/training/test_variant_resolver.py`, and the training CLI config tests.
 
 ## Change Map
 
@@ -42,4 +42,4 @@ configuration identity. Domain packages resolve semantic settings from it.
 
 - `configuration/configuration_loader.py`
 - `config/base/default.yaml`
-- `tests/test_configuration/test_config_typo_safety.py`
+- `tests/unit/configuration/test_config_typo_safety.py`

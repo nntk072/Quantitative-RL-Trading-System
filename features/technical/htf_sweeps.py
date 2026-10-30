@@ -62,8 +62,8 @@ def _pivot_references(bars: pd.DataFrame, timeframe: str) -> list[_PivotReferenc
     if tf.empty:
         return []
 
-    # The trailing resampled bar may be partial. It must not participate in
-    # right-hand confirmation, even if it happens to contain an apparent pivot.
+        # The trailing resampled bar may be partial. It must not participate in
+        # right-hand confirmation, even if it happens to contain an apparent pivot.
     last_m1_end = pd.Timestamp(bars.index[-1]) + pd.Timedelta(minutes=1)
     bar_ends = pd.Series(tf.index, index=tf.index, dtype="object").shift(-1)
     if timeframe == "D1":
@@ -217,7 +217,7 @@ def detect_confirmed_htf_sweeps(
 
             if not crossed:
                 continue
-            # Every crossed level is no longer an unswept liquidity reference.
+                # Every crossed level is no longer an unswept liquidity reference.
             crossed_ids = {id(ref) for ref in crossed}
             active = [ref for ref in active if id(ref) not in crossed_ids]
             eligible = [ref for ref in crossed if ref.qualifies]

@@ -100,6 +100,7 @@ filterwarnings = [
 markers = [
     "unit: deterministic isolated tests suitable for the normal unit gate",
     "integration: tests crossing package or I/O boundaries with controlled fixtures",
+    "architecture: tests for repository boundaries, names, paths, and execution contracts",
     "slow: tests with expensive CPU execution, scheduled separately from fast checks",
     "gpu: tests requiring an available CUDA or ROCm accelerator",
     "triton: tests requiring Triton, Slurm, or its filesystem environment",
@@ -187,9 +188,9 @@ module = [
     "evaluation.plotting.trade_plots",
     "evaluation.metrics.trade_diagnostics",
     "evaluation.reporting.order_chart_regeneration",
-    "tests.test_evaluation.test_plots_export",
-    "tests.test_training.test_training_curves",
-    "tests.test_evaluation.*",
+    "tests.unit.evaluation.test_plots_export",
+    "tests.unit.training.test_training_curves",
+    "tests.unit.evaluation.*",
 ]
 disallow_untyped_calls = false
 
@@ -239,5 +240,5 @@ orchestra = "orchestra.cli:main"
 thesis-data = "market_data.cli:main"
 thesis-train = "training.cli:main"
 thesis-evaluate = "evaluation.cli:main"
-thesis-campaign = "experiments.cli:main"
+thesis-experiment-run = "experiments.cli:main"
 thesis-compute = "compute.cli:main"

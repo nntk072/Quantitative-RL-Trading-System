@@ -52,7 +52,7 @@ def _paired_bars(
 
 
 def generate_train_test_figures(
-    report: dict[str, Any], campaign_dir: Path, figure_dir: Path, report_dir: Path
+    report: dict[str, Any], experiment_run_dir: Path, figure_dir: Path, report_dir: Path
 ) -> None:
     """Create comparison figures and add their report-relative paths to variants."""
     import matplotlib
@@ -88,7 +88,7 @@ def generate_train_test_figures(
             continue
 
         curves = {
-            split: read_equity(campaign_dir / run_artifact_dir, split)
+            split: read_equity(experiment_run_dir / run_artifact_dir, split)
             for split in ("training", "testing")
         }
         action_seed = variant.get("seed", "not recorded")

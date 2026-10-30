@@ -77,13 +77,13 @@ class VolatilityAnalyzer:
         if len(tr_list) < self.atr_period:
             return 0.0
 
-        # Calculate ATR as simple moving average of TR
+            # Calculate ATR as simple moving average of TR
         atr_values = []
         for i in range(self.atr_period - 1, len(tr_list)):
             atr = np.mean(tr_list[i - self.atr_period + 1 : i + 1])
             atr_values.append(atr)
 
-        # Return average ATR over lookback period
+            # Return average ATR over lookback period
         if len(atr_values) == 0:
             return 0.0
 
@@ -112,7 +112,7 @@ class VolatilityAnalyzer:
                 logger.warning(f"Symbol {symbol} not available")
                 return None
 
-            # Get historical data
+                # Get historical data
             rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, 1000)
             if rates is None or len(rates) == 0:
                 logger.warning(f"No data available for {symbol}")
@@ -125,7 +125,7 @@ class VolatilityAnalyzer:
                 logger.warning(f"Insufficient data for {symbol}")
                 return None
 
-            # Calculate ATR
+                # Calculate ATR
             atr = self.calculate_atr(df)
 
             # Calculate price range volatility (standard deviation of returns)
@@ -175,7 +175,7 @@ class VolatilityAnalyzer:
             if metrics:
                 results.append(metrics)
 
-        # Sort by combined score (highest volatility first)
+                # Sort by combined score (highest volatility first)
         results.sort(key=lambda x: x["score"], reverse=True)
 
         return results

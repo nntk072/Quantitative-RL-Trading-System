@@ -88,8 +88,8 @@ def feature_cache_content_hash(
             pd.DatetimeIndex(primary.index).to_numpy(dtype="datetime64[ns]").view(np.int64)
         )
         h.update(np.ascontiguousarray(primary_index_ns).tobytes())
-    # SMT and optional per-timeframe SMT use the secondary bars. Hash both
-    # inputs so a corrected/missing/re-timestamped US500 bar invalidates cache.
+        # SMT and optional per-timeframe SMT use the secondary bars. Hash both
+        # inputs so a corrected/missing/re-timestamped US500 bar invalidates cache.
     for label, frame in (("primary", primary), ("secondary", secondary)):
         if frame is None:
             h.update(f"{label}:none".encode())

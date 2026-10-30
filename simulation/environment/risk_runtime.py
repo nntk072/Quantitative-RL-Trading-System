@@ -119,9 +119,9 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                         ),
                     }
                 )
-            # Repeated-payout breaches fail the sustainability path even during
-            # chronological evaluation. Legacy non-episodic evaluation retains
-            # its session/year latch behavior.
+                # Repeated-payout breaches fail the sustainability path even during
+                # chronological evaluation. Legacy non-episodic evaluation retains
+                # its session/year latch behavior.
             done = self.episodic or self.repeated_payout_policy
             truncated = False
         elif session_blocked:

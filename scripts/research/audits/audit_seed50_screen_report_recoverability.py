@@ -17,11 +17,11 @@ from configuration.paths import repository_root
 ROOT = repository_root(__file__)
 OUTPUTS = ROOT / "outputs"
 RECOVERY_DIR = (
-    OUTPUTS / "gpu_campaigns/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
+    OUTPUTS / "gpu_experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
 )
-SOURCE_DIR = OUTPUTS / "gpu_campaigns/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016"
-MAINPLAN_DIR = OUTPUTS / "gpu_campaigns/ladder18_seed50_20m_full_split_n64_mainplan_20261016"
-SUMMARY_PATH = RECOVERY_DIR / "reports/campaign_results_summary_v2.json"
+SOURCE_DIR = OUTPUTS / "gpu_experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016"
+MAINPLAN_DIR = OUTPUTS / "gpu_experiment_runs/ladder18_seed50_20m_full_split_n64_mainplan_20261016"
+SUMMARY_PATH = RECOVERY_DIR / "reports/experiment_run_results_summary_v2.json"
 DEFAULT_REPORT = ROOT / "docs/thesis/evidence/p3_seed50_report_pack_recoverability_20261018.json"
 MAINPLAN_CHECKPOINT = "ppo_ckpt_1000000_steps.zip"
 
@@ -49,12 +49,12 @@ def mainplan_checkpoints(mainplan_dir: Path) -> list[Path]:
 
 def build_report() -> dict[str, Any]:
     started = time.perf_counter()
-    campaign_path = RECOVERY_DIR / "campaign.json"
-    campaign = json.loads(campaign_path.read_text(encoding="utf-8"))
+    experiment_run_path = RECOVERY_DIR / "experiment_run.json"
+    experiment_run = json.loads(experiment_run_path.read_text(encoding="utf-8"))
     summary = json.loads(SUMMARY_PATH.read_text(encoding="utf-8"))
-    lineage = campaign.get("initial_checkpoint_lineage")
+    lineage = experiment_run.get("initial_checkpoint_lineage")
     if not isinstance(lineage, dict) or len(lineage) != 18:
-        raise ValueError("recovery campaign must record exactly 18 source checkpoint hashes")
+        raise ValueError("recovery experiment run must record exactly 18 source checkpoint hashes")
     if len(summary.get("jobs", [])) != 18:
         raise ValueError("screen summary must record exactly 18 variants")
 
@@ -69,17 +69,17 @@ def build_report() -> dict[str, Any]:
         raise ValueError("source checkpoint lineage contains malformed hashes")
 
     recovery_hashes: dict[str, str] = {}
-    for job in campaign.get("jobs", []):
+    for job in experiment_run.get("jobs", []):
         if not isinstance(job, dict):
             continue
         for relative_path, digest in job.get("artifact_hashes", {}).items():
             if relative_path.endswith(".zip") and isinstance(digest, str):
                 recovery_hashes[str(job.get("key"))] = digest
     if len(recovery_hashes) != 18:
-        raise ValueError("recovery campaign must record 18 final checkpoint hashes")
+        raise ValueError("recovery experiment run must record 18 final checkpoint hashes")
 
     run_dirs: list[dict[str, Any]] = []
-    summary_dir = Path(str(summary.get("campaign_dir", RECOVERY_DIR)))
+    summary_dir = Path(str(summary.get("experiment_run_dir", RECOVERY_DIR)))
     for job in summary["jobs"]:
         if not isinstance(job, dict):
             continue
@@ -149,16 +149,18 @@ def build_report() -> dict[str, Any]:
             ),
         },
         "inputs": {
-            "campaign_path": str(campaign_path.relative_to(ROOT)),
-            "campaign_sha256": sha256(campaign_path),
+            "experiment_run_path": str(experiment_run_path.relative_to(ROOT)),
+            "experiment_run_sha256": sha256(experiment_run_path),
             "summary_path": str(SUMMARY_PATH.relative_to(ROOT)),
             "summary_sha256": sha256(SUMMARY_PATH),
             "audit_script_path": "scripts/research/audits/audit_seed50_screen_report_recoverability.py",
             "audit_script_sha256": sha256(Path(__file__).resolve()),
-            "source_campaign_path": str(SOURCE_DIR.relative_to(ROOT)),
-            "source_campaign_fingerprint": campaign.get("initial_checkpoint_lineage", {})
+            "source_experiment_run_path": str(SOURCE_DIR.relative_to(ROOT)),
+            "source_experiment_run_fingerprint": experiment_run.get(
+                "initial_checkpoint_lineage", {}
+            )
             .get("ladder_a0_flat__seed50", {})
-            .get("source_campaign_fingerprint"),
+            .get("source_experiment_run_fingerprint"),
         },
         "screen": {
             "variant_count": len(summary["jobs"]),
@@ -171,8 +173,8 @@ def build_report() -> dict[str, Any]:
             "expected_run_artifact_directories": len(run_dirs),
             "present_run_artifact_directories": sum(item["exists"] for item in run_dirs),
             "run_artifact_directory_inventory": run_dirs,
-            "source_campaign_runs_directory_exists": (SOURCE_DIR / "runs").is_dir(),
-            "recovery_campaign_runs_directory_exists": (RECOVERY_DIR / "runs").is_dir(),
+            "source_experiment_runs_directory_exists": (SOURCE_DIR / "runs").is_dir(),
+            "recovery_experiment_runs_directory_exists": (RECOVERY_DIR / "runs").is_dir(),
             "present_1m_mainplan_checkpoints": len(existing_mainplan_checkpoints),
             "mainplan_checkpoint_paths": [str(path) for path in existing_mainplan_checkpoints],
             "available_replay_manifest_count": len(replay_manifests),
@@ -196,9 +198,9 @@ def build_report() -> dict[str, Any]:
         },
         "limitations": [
             "The seed-50 screen remains exploratory and invalid for variant selection due to its recorded lookahead and survival-gate findings.",
-            "Campaign summary metrics and their hashes are not substitutes for raw fills, positions, equity, diagnostics, manifests, and checkpoint-backed deterministic report packs.",
+            "Experiment run summary metrics and their hashes are not substitutes for raw fills, positions, equity, diagnostics, manifests, and checkpoint-backed deterministic report packs.",
             "The 1M-step mainplan checkpoints do not match the recorded attempt-3 checkpoint hashes and cannot reproduce the 12M-14M-step recovery outputs.",
-            "This audit performs no policy evaluation, training, deletion, overwrite, or modification of campaign files.",
+            "This audit performs no policy evaluation, training, deletion, overwrite, or modification of experiment run files.",
         ],
         "elapsed_seconds": time.perf_counter() - started,
     }

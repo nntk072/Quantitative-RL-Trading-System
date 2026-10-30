@@ -170,7 +170,7 @@ def plot_equity_curve(
                     opacity=0.7,
                 )
 
-    # User preference: do not draw breach vertical lines on equity chart.
+                # User preference: do not draw breach vertical lines on equity chart.
 
     fig.update_layout(
         template=_TEMPLATE,

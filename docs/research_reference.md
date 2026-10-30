@@ -8,17 +8,17 @@ Evidence baseline: Triton checkout `main` at `76684a3`, inspected 2026-10-10. Th
 
 ## Environment and execution
 
-The package requires Python >=3.12 (`pyproject.toml`). Installation uses `uv`; dependency groups and platform-specific Torch indexes are defined in `pyproject.toml`. Use the architecture-specific virtual environment on Triton (`.venv` on aarch64 GH200, `.venv-x86` on x86_64 H200); consult [Triton scripts](../docs/operations/triton/README.md) and [running commands](../docs/operations/RUNNING_COMMANDS.md). Avoid GPU allocations for documentation verification; use existing allocations if authorized. `thesis-data`, `thesis-train`, `thesis-evaluate`, and `thesis-campaign` are the stable pipeline command surfaces. Inspect their `--help` output before invoking a long-running command.
+The package requires Python >=3.12 (`pyproject.toml`). Installation uses `uv`; dependency groups and platform-specific Torch indexes are defined in `pyproject.toml`. Use the architecture-specific virtual environment on Triton (`.venv` on aarch64 GH200, `.venv-x86` on x86_64 H200); consult [Triton scripts](../docs/operations/triton/README.md) and [running commands](../docs/operations/RUNNING_COMMANDS.md). Avoid GPU allocations for documentation verification; use existing allocations if authorized. `thesis-data`, `thesis-train`, `thesis-evaluate`, and `thesis-experiment-run` are the stable pipeline command surfaces. Inspect their `--help` output before invoking a long-running command.
 
 ## Pipeline and source ownership
 
 | Pipeline stage | Authoritative modules | Verification |
 | --- | --- | --- |
-| M1 ingestion / timeframe resampling | `market_data/{loader,pipeline,resample,align,split}.py` | `tests/test_market_data/test_data_split.py` |
+| M1 ingestion / timeframe resampling | `market_data/{loader,pipeline,resample,align,split}.py` | `tests/unit/market_data/test_data_split.py` |
 | Feature computation / normalization | `features/{build,normalize,po3_config}.py` | Feature and leakage tests under `tests/` |
-| Strategy context / action interpretation | `simulation/environment/{trading_env,tp_decoders}.py` and `trading/strategies/` | `tests/test_simulation/test_environment/test_tp_mode.py` |
+| Strategy context / action interpretation | `simulation/environment/{trading_env,tp_decoders}.py` and `trading/strategies/` | `tests/unit/simulation/test_environment/test_tp_mode.py` |
 | RL agent / policies | `models/{agent,ppo_policy,encoder}.py` | Model tests under `tests/` |
-| Reward and account limits | `simulation/environment/{reward,sweep_reward,po3_reward}.py`, `simulation/backtest/{account,guardrails}.py` | `tests/test_simulation/test_reward.py`; `tests/test_simulation/test_environment/test_sweep_reward.py` |
+| Reward and account limits | `simulation/environment/{reward,sweep_reward,po3_reward}.py`, `simulation/backtest/{account,guardrails}.py` | `tests/unit/simulation/test_reward.py`; `tests/unit/simulation/test_environment/test_sweep_reward.py` |
 | Train and checkpointing | `training/{train_rl,variant_resolver,callbacks}.py` | Document actual CLI options from source |
 | Evaluation / plotting | `evaluation/{rollout,metrics,reanalysis,reporting,plotting}/` | Thesis [validation protocol](../docs/thesis/validation_protocol.md) |
 
@@ -63,7 +63,7 @@ Reward classes include `DSRReward`, `PnLReward`, `RMultipleReward` in `simulatio
 
 ## Experiments, results, and claims
 
-Training runs, variant comparisons, ablation tables and thesis figures must always identify experiment ID, git SHA, merged configuration, data provenance, seeds, training steps, checkpoint choice, IS/OOS dates and the path of raw metrics. Results without those fields are **unverified**. Check `experiments/campaigns/`, `scripts/research/thesis/evaluation/`, `outputs/` and [evaluation pack](../docs/thesis/eval_pack.md), then distinguish failed or incomplete attempts. Do not copy numerical results from old slides or design plans.
+Training runs, variant comparisons, ablation tables and thesis figures must always identify experiment ID, git SHA, merged configuration, data provenance, seeds, training steps, checkpoint choice, IS/OOS dates and the path of raw metrics. Results without those fields are **unverified**. Check `experiments/runs/`, `scripts/research/thesis/evaluation/`, `outputs/` and [evaluation pack](../docs/thesis/eval_pack.md), then distinguish failed or incomplete attempts. Do not copy numerical results from old slides or design plans.
 
 ## Documentation maintenance checklist
 

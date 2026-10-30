@@ -618,7 +618,7 @@ def _validate_historical_quotes(opens: pd.DataFrame, book: TickBook) -> None:
 def _source_compatibility(root: Path, cfg: Any) -> bool:
     """Audit the replay call path against the source that generated the cohort.
 
-    The post-campaign factory changed sizing and added percentage guardrails.
+    The post-experiment-run factory changed sizing and added percentage guardrails.
     The shadow injects archived quantities directly, so sizing is outside the
     replay path. For guardrails, compare the effective fixed-dollar values with
     the archived factory defaults before accepting the source audit.

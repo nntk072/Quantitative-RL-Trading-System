@@ -49,6 +49,16 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _experiment_run_id(record: dict[str, Any]) -> str | None:
+    """Read the canonical run ID from current or preserved ledger records."""
+    current_id = record.get("experiment_run_id")
+    historical_id = record.get("campaign_id")
+    if current_id is not None and historical_id is not None and current_id != historical_id:
+        return None
+    value = current_id if current_id is not None else historical_id
+    return value if isinstance(value, str) else None
+
+
 def _contained_path(path_value: str, repo_root: Path) -> Path | None:
     relative = Path(path_value)
     if relative.is_absolute():
@@ -188,17 +198,23 @@ def validate_result_manifest(
                     if ledger_errors:
                         errors.append("linked trial ledger fails its schema")
                     else:
-                        ledger_runs = {
-                            (record["campaign_id"], record["run_id"])
-                            for record in ledger["records"]
-                            if record["record_type"] == "run"
-                        }
+                        ledger_runs = set()
+                        for record in ledger["records"]:
+                            if record["record_type"] != "run":
+                                continue
+                            run_id = _experiment_run_id(record)
+                            if run_id is None:
+                                errors.append(
+                                    "linked trial ledger has conflicting or missing run identity"
+                                )
+                                continue
+                            ledger_runs.add((run_id, record["run_id"]))
                         for run in runs:
-                            key = (run["campaign_id"], run["run_id"])
+                            key = (run["experiment_run_id"], run["run_id"])
                             if key not in ledger_runs:
                                 errors.append(
                                     "result run is absent from linked trial ledger: "
-                                    f"{run['campaign_id']}/{run['run_id']}"
+                                    f"{run['experiment_run_id']}/{run['run_id']}"
                                 )
     return errors
 

@@ -135,7 +135,7 @@ def detect_entry_trigger(
                 if not (pd.isna(fvg_low) or pd.isna(fvg_high)):
                     confirmed_bearish_ifvg.append((i, fvg_low, fvg_high))
 
-        # Detect entry triggers based on type
+                    # Detect entry triggers based on type
         close_price = close_arr[i]
 
         if entry_type == "retest":
@@ -149,7 +149,7 @@ def detect_entry_trigger(
                         out_trigger_type[i] = "retest"
                         break
 
-            # Short entry: price retests bearish IFVG zone
+                        # Short entry: price retests bearish IFVG zone
             for idx, fvg_low, fvg_high in confirmed_bearish_ifvg[:]:
                 fvg_size = fvg_high - fvg_low
                 if fvg_size > 0:
@@ -167,7 +167,7 @@ def detect_entry_trigger(
                     out_trigger_type[i] = "close_through"
                     break
 
-            # Short entry: strong close below bullish IFVG
+                    # Short entry: strong close below bullish IFVG
             for idx, fvg_low, fvg_high in confirmed_bullish_ifvg[:]:
                 if close_price < fvg_low:
                     out_entry_short[i] = 1
@@ -191,7 +191,7 @@ def detect_entry_trigger(
                     out_trigger_type[i] = "ltf_fvg"
                     break
 
-        # Clean up old IFVGs
+                    # Clean up old IFVGs
         max_age = 50
         confirmed_bullish_ifvg = [
             (idx, lo, h) for idx, lo, h in confirmed_bullish_ifvg if i - idx < max_age
@@ -254,7 +254,7 @@ def detect_htf_fvg(
     if htf_bars is None:
         htf_bars = resample(m1_bars, htf)  # type: ignore[arg-type]
 
-    # Detect FVG on HTF
+        # Detect FVG on HTF
     if config is None:
         config = FVGConfig()
     htf_fvg = detect_fvg(htf_bars, config=config)
@@ -343,7 +343,7 @@ def detect_ltf_ifvg(
     if primary_bars is None:
         primary_bars = resample(m1_bars, primary_tf)  # type: ignore[arg-type]
 
-    # Detect FVG on primary TF
+        # Detect FVG on primary TF
     if fvg_config is None:
         fvg_config = FVGConfig()
     primary_fvg = detect_fvg(primary_bars, config=fvg_config)

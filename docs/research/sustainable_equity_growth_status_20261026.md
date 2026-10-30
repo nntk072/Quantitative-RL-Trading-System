@@ -15,10 +15,10 @@ the passing gate. The full pytest suite was not run.
 
 ## Latest completed matched 2M screen
 
-Campaign `sustainable_growth_seed50_train2025_20261025_2m_normal_v1` compared
+Experiment run `sustainable_growth_seed50_train2025_20261025_2m_normal_v1` compared
 PPO + DSR with PPO + log-equity growth, seed 50, 8 environments, normal data,
 and no peak-EOD or percentage trailing-drawdown rule. Results below are the
-observed campaign report, not claims of generalization.
+observed experiment run report, not claims of generalization.
 
 | Variant | Split | Net return | Net PnL | Max drawdown | Sharpe | Profit factor | Win rate | Trades | Outcome |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|
@@ -35,7 +35,7 @@ not confirmatory OOS evidence.
 
 ## Earlier log-growth EOD diagnostic
 
-Campaign `sustainable_growth_seed50_train2025_20261025_2m_eod_dd10k_v1`
+Experiment run `sustainable_growth_seed50_train2025_20261025_2m_eod_dd10k_v1`
 compared log-growth PPO with the EOD policy disabled and enabled. The enabled
 arm completed 2M training steps and reported train return +28.57%, +$28,567.71,
 10.21% maximum drawdown, and 519 trades. Its EOD drawdown reached $10,660.88,
@@ -67,7 +67,7 @@ This proves feature availability, not improved policy performance.
 
 The first R1 startup attempt failed before PPO training because the treatment
 feature-cache Parquet footer was corrupted; it completed zero PPO steps and
-created no checkpoint. Its campaign fingerprint, manifest, log, and attempt
+created no checkpoint. Its experiment run fingerprint, manifest, log, and attempt
 provenance are preserved in
 `docs/research/regime_attribution_20261026/r1_startup_recovery.json`. The
 corrupted derived cache was rebuilt from the same saved config and data, and
@@ -82,7 +82,7 @@ The 2026 interval remains previously exposed and report-only.
 
 The final current-tree agent gate passed on `gpuarm1` (aarch64/GH200): full-tree
 Ruff format check, full-tree Ruff lint, full-tree Mypy across 768 files, and 90
-scoped campaign, replay, feature, and research tests. `git diff --check` also
+scoped experiment run, replay, feature, and research tests. `git diff --check` also
 passed. The full pytest suite was not run. The D1 cache rebuild and the gate
 establish feature-path availability and code correctness. R1 training and
 evaluation are complete; both matched arms fail the training survival gate at
@@ -137,14 +137,14 @@ ADX, and realized-volatility channels with per-feature validity masks. It
 requires D1 source-index train-only normalization, leaves existing TCN behavior
 unchanged, and keeps the action, execution, and account-risk contracts fixed.
 The matched two-arm screen is defined in
-`config/campaigns/regime_tcn_context_r2_seed50_train2025_2m.yaml`.
+`config/experiment_runs/regime_tcn_context_r2_seed50_train2025_2m.yaml`.
 The current implementation passed full-tree Ruff format, full-tree Ruff lint,
 and full-tree Mypy (772 files), plus 73 focused environment/model/config tests
 and 7 D1 source-normalization tests on the existing GH200 allocation. The
 checkpoint test verifies deterministic action parity after saving and loading
 the new PPO architecture.
 
-The first R2 campaign, `regime_tcn_context_r2_seed50_train2025_2m_normal`,
+The first R2 experiment run, `regime_tcn_context_r2_seed50_train2025_2m_normal`,
 started on 2026-10-26 and failed before completing the matched pair. The
 control reached its hard maximum-loss floor; the treatment stopped at 1.528M
 steps because an EMA exit requested a tick quote 138.8 seconds after the
@@ -158,16 +158,16 @@ anchors such exits to the next observed bar; its regression test covers a
 timestamp gap. The old manifest, fingerprint, checkpoints, and failure logs
 remain preserved.
 
-The corrective matched R2 campaign
+The corrective matched R2 experiment run
 `regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1` ran as
 Slurm job 21210220 on gpuarm1. It used seed 50, 2M requested steps per variant,
 eight environments, the same data split and execution settings, and one GH200
 sequentially through the persistent worker manager. Both arms reached
 2,007,040 PPO steps (whole rollout batches), saved final checkpoints, and
 completed their final stochastic replays. The controller marked both variants
-failed because each breached the hard-loss survival gate; the campaign summary
+failed because each breached the hard-loss survival gate; the experiment run summary
 records two failed variants and no active workers. The R2 corrective run's
-fingerprint and provenance are in its campaign manifest.
+fingerprint and provenance are in its experiment run manifest.
 
 On the 2025 training replay, control ended at -$9,977.86 (-9.98%), with 31.13%
 maximum drawdown, Sharpe -0.465, profit factor 0.949, and 879 trades; it traded
@@ -187,22 +187,22 @@ but both replays failed full-period survival. Since this interval was already
 exposed, it is descriptive only and cannot establish a benefit or be used for
 selection.
 
-The matched campaign results are in
-`outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/reports/campaign_results_summary.md`;
-per-run evaluations, checkpoints, logs, and the campaign source snapshot are
+The matched experiment run results are in
+`outputs/experiment_runs/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/reports/experiment_run_results_summary.md`;
+per-run evaluations, checkpoints, logs, and the experiment run source snapshot are
 preserved beneath that directory. The corrective run's full-train evaluation
 is at
-`outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/runs/attempts/regime_d1_norm_tcn_control__seed50/attempt1/regime_d1_norm_tcn_control__seed50/20261026_111806_381670_rl_train_seed50_tcn/evaluations/summary.md`.
+`outputs/experiment_runs/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/runs/attempts/regime_d1_norm_tcn_control__seed50/attempt1/regime_d1_norm_tcn_control__seed50/20261026_111806_381670_rl_train_seed50_tcn/evaluations/summary.md`.
 
 Resolved configuration comparison confirmed that control and treatment match
 on seed, data, PPO budget, risk policy, execution, and source-normalized D1
 inputs. The only behavioral changes are the treatment's `tcn_regime`
-architecture and enabled regime observation. The final campaign snapshot and
+architecture and enabled regime observation. The final experiment run snapshot and
 per-run evidence are preserved under
-`outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/`;
-the generated matched metrics are in `reports/campaign_results_summary.md`.
+`outputs/experiment_runs/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/`;
+the generated matched metrics are in `reports/experiment_run_results_summary.md`.
 The generated live status is
-`outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/reports/campaign_status_live.md`.
+`outputs/experiment_runs/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/reports/experiment_run_status_live.md`.
 
 ### Matched R2 interpretation
 
@@ -266,7 +266,7 @@ the current one-seed R2 evidence. Its strongest signals are confounded shifts
 in selected entries, action risk, and exit mode; the legacy trend label is
 uninformative, the exposed 2026 interval cannot be used for selection, and no
 unexposed evaluation interval is established here. Do not launch another
-campaign or alter policy behavior on this basis. The R2 result and these
+experiment run or alter policy behavior on this basis. The R2 result and these
 limits are the current stopping point; further causal work requires a
 source-verified R2 fixed-entry replay or a newly specified unexposed protocol.
 
@@ -279,7 +279,7 @@ does not override the separate final replay survival gate or establish a
 performance improvement. The treatment's positive prefix-monitor readings are
 interim diagnostics, not its full-split training or test result.
 Controller and per-variant logs are under
-`outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/logs/`.
+`outputs/experiment_runs/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1/logs/`.
 
 The earlier DSR PPO 1-environment attempt
 (`sustainable_growth_dsr_peak_eod_dd10k_seed50_train2025_20261026_2m_normal_1env_v1`)

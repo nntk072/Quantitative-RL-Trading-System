@@ -110,7 +110,7 @@ account:
 # minute bars/session. This convention is recorded with every run's metrics.
 evaluation:
   # PPO collects sampled actions; use the same policy mode for final train/test replays.
-  # Set true only when a campaign explicitly evaluates deterministic deployment actions.
+  # Set true only when an experiment run explicitly evaluates deterministic deployment actions.
   deterministic: false
   periods_per_year: 98280
   annualization_convention: "252 sessions/year x 390 NY-session M1 bars/session"
@@ -537,7 +537,7 @@ quality_diagnostics:
   enabled: false                    # per-rollout action/funnel/reward report, no policy effect
 
 output:
-  report_profile: "full"             # full or campaign_fast (skip optional order PNG and HTML)
+  report_profile: "full"             # full or experiment_run_fast (skip optional order PNG and HTML)
   dir: "outputs"                    # base directory for run artifacts
   save_plots: true                  # save static PNG figures
   save_html: false                  # save interactive plotly HTML (slow: ~1h per split)

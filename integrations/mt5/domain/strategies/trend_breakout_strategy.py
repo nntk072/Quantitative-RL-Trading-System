@@ -92,7 +92,7 @@ class TrendBreakoutStrategy(TradingStrategy):
             # Use typical price as proxy for volume
             volume = (df["high"] + df["low"] + df["close"]) / 3
 
-        # Calculate VWAP
+            # Calculate VWAP
         typical_price = (df["high"] + df["low"] + df["close"]) / 3
         vwap = (typical_price * volume).cumsum() / volume.cumsum()
 
@@ -120,7 +120,7 @@ class TrendBreakoutStrategy(TradingStrategy):
             if breakout_amount >= self.breakout_threshold:
                 return True, "bullish"
 
-        # Bearish breakout: price breaks below support
+                # Bearish breakout: price breaks below support
         if current_low < support:
             # Confirm with threshold
             breakout_amount = (support - current_low) / support if support > 0 else 0
@@ -163,14 +163,14 @@ class TrendBreakoutStrategy(TradingStrategy):
             symbol = self.data.get_symbol()
             return symbol, Signal.NONE
 
-        # Identify support and resistance
+            # Identify support and resistance
         support, resistance = self.identify_support_resistance(df)
 
         if support == 0.0 or resistance == 0.0:
             symbol = self.data.get_symbol()
             return symbol, Signal.NONE
 
-        # Detect breakout
+            # Detect breakout
         is_breakout, direction = self.detect_breakout(df, support, resistance)
 
         # Calculate trend strength
@@ -197,14 +197,14 @@ class TrendBreakoutStrategy(TradingStrategy):
                 if price_above_sma_fast and price_above_sma_slow:
                     return symbol, Signal.BUY
 
-        # Bearish breakout signal
+                    # Bearish breakout signal
         if is_breakout and direction == "bearish":
             # Confirm with trend strength and moving averages
             if trend_strength > 25:  # Strong trend
                 if not price_above_sma_fast and not price_above_sma_slow:
                     return symbol, Signal.SELL
 
-        # Trend continuation signals (if already in a trend)
+                    # Trend continuation signals (if already in a trend)
         if trend_strength > 30:
             # Bullish trend continuation
             if price_above_sma_fast and price_above_sma_slow and price_above_vwap:
@@ -214,7 +214,7 @@ class TrendBreakoutStrategy(TradingStrategy):
                     if 0 < distance_to_support < 0.005:  # Within 0.5% of support
                         return symbol, Signal.BUY
 
-            # Bearish trend continuation
+                        # Bearish trend continuation
             if not price_above_sma_fast and not price_above_sma_slow and not price_above_vwap:
                 if sma_fast.iloc[-1] < sma_slow.iloc[-1]:
                     # Check if price is near resistance (potential rejection)

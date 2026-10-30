@@ -10,7 +10,7 @@ This follow-up has three concrete goals:
    - config/quality_experiments.yaml
    - config/1_baseline.yaml
    - config/3_distribution.yaml
-2. Reduce ambiguous repository-internal CALLS classifications, prioritizing training, environment, feature, execution, reward, campaign, and evaluation paths.
+2. Reduce ambiguous repository-internal CALLS classifications, prioritizing training, environment, feature, execution, reward, experiment run, and evaluation paths.
 3. Make verify-critical fail when a critical config that is expected to be traceable has no validated consumer path.
 
 This work improves trust in graph-assisted impact analysis. It is engineering infrastructure and must not block thesis training or experiment execution unless the new checks reveal a real configuration or execution-path defect.
@@ -39,7 +39,7 @@ Existing graph hardening components:
 ~~~text
 .code-review-graph/graph.db
 scripts/dev/code_graph/graph_quality.py
-tests/test_tooling/test_code_graph_quality.py
+tests/unit/tooling/test_code_graph_quality.py
 tools/crgraph
 .agents/rules/code-review-graph.md
 docs/architecture/code_graph_trust_hardening_agent_plan.md
@@ -86,7 +86,7 @@ The follow-up is complete when:
 
 - All critical configuration files have an explicit traceability policy.
 - Critical configs marked as required-to-resolve have at least one validated consumer path.
-- Indirect registry/variant/campaign config selection is represented in the companion dependency index.
+- Indirect registry/variant/experiment_run config selection is represented in the companion dependency index.
 - Ambiguous CALLS are reduced using evidence-backed static resolution.
 - Ambiguous calls on thesis-critical paths are either resolved or explicitly classified with a defensible reason.
 - verify-critical fails when a required critical config loses its expected trace.
@@ -163,7 +163,7 @@ Do not overwrite evidence needed to compare the first hardening pass against thi
 
 The current config scanner primarily resolves direct literal/path-based loads such as OmegaConf.load with literal or Path-composed config paths.
 
-Some important configs are selected indirectly through mappings, registries, experiment definitions, CLI choices, campaign specs, or variant resolvers.
+Some important configs are selected indirectly through mappings, registries, experiment definitions, CLI choices, experiment run specs, or variant resolvers.
 
 Those relationships need to appear in the companion dependency index.
 
@@ -175,7 +175,7 @@ Extend the configuration dependency model to support at least these relation typ
 DIRECT_LOAD
 REGISTRY_ENTRY
 VARIANT_SELECTION
-CAMPAIGN_REFERENCE
+EXPERIMENT_RUN_REFERENCE
 BASE_CONFIG
 OVERLAY_CONFIG
 QUALITY_CONFIG
@@ -254,7 +254,7 @@ Confirm whether it is selected through:
 
 - experiment registry,
 - strategy mapping,
-- campaign override,
+- experiment run override,
 - variant resolver,
 - audit/evaluation tooling.
 
@@ -342,7 +342,7 @@ unresolved
 Definitions:
 
 - directly_traceable: direct static load from repository code.
-- indirectly_traceable: selected through a static registry/mapping/campaign/variant chain.
+- indirectly_traceable: selected through a static registry/mapping/experiment_run/variant chain.
 - dynamic_but_expected: consumer exists but runtime input prevents exact static path resolution.
 - tracked_but_inactive: evidence shows the config is retained but not part of active execution.
 - unresolved: no defensible consumer/reachability explanation.
@@ -487,7 +487,7 @@ training
 simulation/environment
 features
 configuration
-experiments/campaigns
+experiments/runs
 evaluation
 learning
 live
@@ -632,7 +632,7 @@ training/runner/
 features/pipeline/
 simulation/environment/
 learning/rl/
-experiments/campaigns/
+experiments/runs/
 evaluation/rollout/
 evaluation/reanalysis/
 ~~~
@@ -686,7 +686,7 @@ If an ambiguity cannot be safely resolved, leaving it explicit is preferable to 
 
 # Phase 15 — Expand Tests
 
-Extend tests/test_tooling/test_code_graph_quality.py.
+Extend tests/unit/tooling/test_code_graph_quality.py.
 
 Minimum new config-tracing tests:
 
@@ -696,7 +696,7 @@ registry selected by subscript
 registry selected by get()
 aliased registry name
 Path config plus registry key
-campaign mapping to config
+experiment run mapping to config
 variant mapping to config
 inactive critical config classification
 unresolved critical config failure
@@ -816,7 +816,7 @@ After changing resolution logic, re-verify source versus graph/companion traces 
 ## Training
 
 ~~~text
-campaign config
+experiment run config
 → variant/config selection
 → merged config
 → feature build
@@ -871,10 +871,10 @@ python3 -m py_compile scripts/dev/code_graph/graph_quality.py
 
 .venv-x86/bin/python -m ruff check \
   scripts/dev/code_graph/graph_quality.py \
-  tests/test_tooling/test_code_graph_quality.py
+  tests/unit/tooling/test_code_graph_quality.py
 
 .venv-x86/bin/python -m pytest -q \
-  tests/test_tooling/test_code_graph_quality.py
+  tests/unit/tooling/test_code_graph_quality.py
 
 ./tools/crgraph build
 ./tools/crgraph status --json
@@ -891,7 +891,7 @@ Inspect:
 git diff --stat
 git diff -- \
   scripts/dev/code_graph/graph_quality.py \
-  tests/test_tooling/test_code_graph_quality.py \
+  tests/unit/tooling/test_code_graph_quality.py \
   tools/crgraph \
   .agents/rules/code-review-graph.md
 
@@ -941,7 +941,7 @@ The follow-up is complete when all of these are true:
 - Every critical config has an explicit policy.
 - verify-critical enforces that policy.
 - Missing required config traceability causes non-zero exit.
-- Registry/variant/campaign config selection is represented.
+- Registry/variant/experiment_run config selection is represented.
 - Ambiguous CALLS have a root-cause breakdown.
 - High-confidence same-module/import/receiver/inheritance/re-export rules are implemented.
 - False exact resolution is avoided.
@@ -1005,7 +1005,7 @@ Expected implementation outputs:
 
 ~~~text
 scripts/dev/code_graph/graph_quality.py
-tests/test_tooling/test_code_graph_quality.py
+tests/unit/tooling/test_code_graph_quality.py
 tools/crgraph
 .agents/rules/code-review-graph.md
 

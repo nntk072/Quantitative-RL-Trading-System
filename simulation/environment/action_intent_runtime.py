@@ -63,9 +63,9 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
             risk_frac = 0.0
             entry_candidate = None
 
-        # Apply session and order constraints before strategy validation.
-        # Suppress new entries on the last bar of a session (overnight block
-        # just closed a position or would have if there was one).
+            # Apply session and order constraints before strategy validation.
+            # Suppress new entries on the last bar of a session (overnight block
+            # just closed a position or would have if there was one).
         entering_new_session = self.block_overnight and self._is_ny_session_boundary()
         if entering_new_session and discrete_action != 0:
             # Counting only when an entry was actually requested keeps this a
@@ -73,7 +73,7 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
             discrete_action = 0
             if self.strategy_actions:
                 self._reject("overnight_boundary")
-        # Session entry cap + post-close cooldown (trader / strategy actions).
+                # Session entry cap + post-close cooldown (trader / strategy actions).
         if self.strategy_actions and discrete_action != 0:
             if self._in_open_blackout(session_id):
                 discrete_action = 0
@@ -127,9 +127,9 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
                 if self.strategy_actions:
                     self._reject("overnight_boundary")
 
-        # A stored, armed candidate has already passed causal setup checks.
-        # Revalidate only fresh actions; session levels are order references,
-        # not a universal breakout rule.
+                    # A stored, armed candidate has already passed causal setup checks.
+                    # Revalidate only fresh actions; session levels are order references,
+                    # not a universal breakout rule.
         if discrete_action != 0:  # Only check for long/short entries
             if self.thesis_actions:
                 gate_ok = True

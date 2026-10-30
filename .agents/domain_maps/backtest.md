@@ -44,10 +44,10 @@
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_simulation/test_backtest/test_engine_cross_validation.py` | Engine + cross-validation |
-| `tests/test_trading/test_cost_model.py` | Cost model calculations |
-| `tests/test_trading/test_guardrails.py` | FTMO guardrails |
-| `tests/test_trading/test_risk.py` | Risk calculations |
+| `tests/integration/backtest/test_engine_cross_validation.py` | Engine + cross-validation |
+| `tests/unit/trading/test_cost_model.py` | Cost model calculations |
+| `tests/unit/trading/test_guardrails.py` | FTMO guardrails |
+| `tests/unit/trading/test_risk.py` | Risk calculations |
 
 ## Do NOT Read For Backtest Tasks
 
@@ -71,7 +71,7 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Change replay or fill behavior | execution policy | `simulation/backtest/event_driven_backtest.py` | trading fill semantics; `tests/test_simulation/test_backtest/` | replay service and parity tests | metric rendering and learner construction |
+| Change replay or fill behavior | execution policy | `simulation/backtest/event_driven_backtest.py` | trading fill semantics; `tests/integration/backtest/` | replay service and parity tests | metric rendering and learner construction |
 
 ## Axis of Change
 
@@ -85,4 +85,4 @@
 
 - `simulation/backtest/event_driven_backtest.py`
 - `trading/execution/broker.py`
-- `tests/test_simulation/test_backtest/test_engine_cross_validation.py`
+- `tests/integration/backtest/test_engine_cross_validation.py`

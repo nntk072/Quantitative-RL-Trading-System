@@ -104,7 +104,7 @@ def plot_fvg_signals_interactive(
             layer="below",
         )
 
-    # Entry markers at candle close.
+        # Entry markers at candle close.
     if show_entries:
         for col, marker, color in (
             ("entry_long", "triangle-up", _LONG_COLOR),

@@ -227,10 +227,10 @@ def main() -> int:
         },
         "source_sha256": {str(path.relative_to(ROOT)): sha256_file(path) for path in source_files},
         "limitations": [
-            "This fingerprints an input schedule; it is not a model, backtest, campaign, or strategy result.",
+            "This fingerprints an input schedule; it is not a model, backtest, experiment run, or strategy result.",
             "A timestamp fingerprint proves exact reproducibility of the observed schedule but does not prove market-data source identity, feed-use/publication rights, provider trading hours, or an untouched holdout.",
             "Tick quote coverage remains the separately cited report's result; it is not recomputed here.",
-            "The old 18-variant campaign remains inadmissible and no readiness gate is changed by this artifact.",
+            "The old 18-variant experiment run remains inadmissible and no readiness gate is changed by this artifact.",
         ],
     }
 

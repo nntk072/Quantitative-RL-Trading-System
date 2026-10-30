@@ -114,7 +114,7 @@ exposed and is report-only. Results are exploratory, single-seed screening and
 cannot establish out-of-sample superiority.
 
 The entry-idea follow-up adds the four multi-timeframe idea contexts and signed
-direction action to both arms. The first campaign identity failed before PPO
+direction action to both arms. The first experiment run identity failed before PPO
 step 0 while resolving duplicate-labelled input columns; that fingerprint is
 preserved as a pre-training failure. A positional column-selection fix was
 added and its focused regression passed.
@@ -132,7 +132,7 @@ cache. The feature-cache version is `v28-entry-idea-unique-columns`.
 
 Do not launch training until the full-tree Ruff/Mypy gate and relevant pytest
 set pass, then build and validate the feature Parquet cache as a separate
-pre-training step. Put that cache path in the next campaign spec as
+pre-training step. Put that cache path in the next experiment run spec as
 `data.prebuilt_feature_cache`; training must hash-validate and reuse it. The
-next attempt needs a new campaign identity and fingerprint. No PPO training or
+next attempt needs a new experiment run identity and fingerprint. No PPO training or
 benchmark result is available yet.

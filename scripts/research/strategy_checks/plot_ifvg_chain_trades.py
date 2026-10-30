@@ -129,10 +129,10 @@ def plot_one(ny: pd.DataFrame, meta: dict[str, Any], out_path: Path) -> None:
                     zorder=3,
                 )
             )
-    # Every liquidity pool available to this session, so the chart shows which one
-    # was actually taken rather than assuming Asia was the relevant one. Off-screen
-    # pools are clamped to the frame edge and labelled, because a pool that cannot be
-    # seen is indistinguishable from a pool that does not exist.
+            # Every liquidity pool available to this session, so the chart shows which one
+            # was actually taken rather than assuming Asia was the relevant one. Off-screen
+            # pools are clamped to the frame edge and labelled, because a pool that cannot be
+            # seen is indistinguishable from a pool that does not exist.
     ymin, ymax = ax.get_ylim()
     span = ymax - ymin
     edge_labels: list[str] = []
@@ -187,7 +187,7 @@ def plot_one(ny: pd.DataFrame, meta: dict[str, Any], out_path: Path) -> None:
             label=f"SWEPT: {', '.join(sorted(meta['pool_taken']))}",
         )
 
-    # The inverse fair value gap.
+        # The inverse fair value gap.
     ax.axhspan(
         meta["ifvg_bot"], meta["ifvg_top"], color=C_IFVG, alpha=0.25, zorder=1, label="IFVG zone"
     )
@@ -242,7 +242,7 @@ def plot_one(ny: pd.DataFrame, meta: dict[str, Any], out_path: Path) -> None:
             label=f"exit: {meta['outcome']}",
         )
 
-    # Session-phase shading, so a late entry is visible at a glance.
+        # Session-phase shading, so a late entry is visible at a glance.
     ph = meta["phases"]
     start = 0
     for k in range(1, len(ph) + 1):

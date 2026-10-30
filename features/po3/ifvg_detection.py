@@ -120,7 +120,7 @@ def detect_ifvg_confirmation(
             if bear_flag[i] == 1 and i >= 2:
                 active_fvg_bearish.append(_ActiveFVG(i, bear_low_arr[i], bear_high_arr[i]))
 
-        # Check for IFVG confirmation (close-through)
+                # Check for IFVG confirmation (close-through)
         close_price = close_arr[i]
 
         # Revised mode inverts an opposing-direction gap. The false branch
@@ -181,7 +181,7 @@ def detect_ifvg_confirmation(
                     )
                     gap.pass_bar = i
 
-        # Remove old FVGs (older than lookback period)
+                    # Remove old FVGs (older than lookback period)
         active_fvg_bullish = [gap for gap in active_fvg_bullish if i - gap.start < max_age]
         active_fvg_bearish = [gap for gap in active_fvg_bearish if i - gap.start < max_age]
 

@@ -10,25 +10,33 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_architecture_inventory_covers_active_git_tracked_paths() -> None:
+def test_architecture_inventory_covers_active_repository_files() -> None:
     inventory_path = ROOT / "docs/architecture/repository_file_ownership_inventory.csv"
     with inventory_path.open(newline="", encoding="utf-8") as source:
         rows = list(csv.DictReader(source))
     inventory_paths = [row["path"] for row in rows]
-    tracked_paths = set(
+    repository_paths = set(
         filter(
             None,
-            subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).decode().split("\0"),
+            subprocess.check_output(
+                ["git", "ls-files", "-co", "--exclude-standard", "-z"], cwd=ROOT
+            )
+            .decode()
+            .split("\0"),
         )
     )
-    active_tracked_paths = {
-        path for path in tracked_paths if (ROOT / path).exists() or (ROOT / path).is_symlink()
+    active_repository_files = {
+        path for path in repository_paths if (ROOT / path).is_file() or (ROOT / path).is_symlink()
+    }
+    inventory_files = {
+        path for path in inventory_paths if (ROOT / path).is_file() or (ROOT / path).is_symlink()
     }
 
     assert len(inventory_paths) == len(set(inventory_paths)), "inventory paths must be unique"
-    assert not (active_tracked_paths - set(inventory_paths)), sorted(
-        active_tracked_paths - set(inventory_paths)
-    )
+    assert inventory_files == active_repository_files, {
+        "unlisted": sorted(active_repository_files - inventory_files),
+        "stale": sorted(inventory_files - active_repository_files),
+    }
 
 
 def test_generated_data_and_runtime_paths_follow_repository_ignore_policy(

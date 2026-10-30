@@ -17,8 +17,8 @@ and 15 PPO epochs. The measured device was an NVIDIA GH200 144G HBM3e.
 
 Production evaluation callbacks and checkpoint writes are not included. The
 reports therefore compare the PPO core and vector backends; they are not full
-campaign completion-time measurements and contain no policy-quality evidence.
-No checkpoint was saved and no 18-variant training campaign was launched.
+experiment run completion-time measurements and contain no policy-quality evidence.
+No checkpoint was saved and no 18-variant training experiment run was launched.
 
 The A3 bundle manifest SHA256 is
 `3ddea0b613e7096314263010c24c2665eed8d782d5db5c74d9742dbd3cb0f69a`.
@@ -81,18 +81,18 @@ provisional until repeated; the memory and worker-count reductions are the
 clearer result.
 
 This makes nine sharded trainers per GH200 a plausible makespan choice for the
-18-variant campaign (nine per node on two GH200 nodes): it lets all 18 variants
+18-variant experiment run (nine per node on two GH200 nodes): it lets all 18 variants
 progress together, while the ninth slot adds little aggregate GPU throughput.
 That is still a provisional projection from one GH200 and a 262k-step core
 benchmark. It does not include production callbacks, full 20M schedules, two-node
 interference, or confirm a 20M allocation will fit its wall limit. Re-measure
-with the selected learning `n_envs` before the actual campaign.
+with the selected learning `n_envs` before the actual experiment run.
 
 At the measured nine-trainer per-worker rate of about 929 steps/s, a 20M-step
 variant projects to roughly 6.0 hours of PPO core time. That leaves no practical
 margin in a six-hour allocation for bundle checks, evaluation, callbacks, and
 checkpoint promotion. Plan for a 12-hour allocation or a validated allocation
-resume path; do not treat this short probe as evidence that a 20M campaign fits
+resume path; do not treat this short probe as evidence that a 20M experiment run fits
 in six hours.
 
 Earlier A0-core probes on the same GH200 measured 3,026 steps/s for SubprocVecEnv
@@ -110,7 +110,7 @@ depend on the PPO workload; it does not establish an A3 speedup.
   IPC is the remaining dominant bottleneck. The plan's 10% sustained-throughput
   threshold for that added complexity has not been met.
 - Use nine concurrent trainers per GH200 as the current measured candidate if
-  the campaign must run all 18 variants together. Revalidate at the `n_envs`
+  the experiment run must run all 18 variants together. Revalidate at the `n_envs`
   chosen by the learning-quality track, because changing it changes rollout
   geometry and resource use.
 

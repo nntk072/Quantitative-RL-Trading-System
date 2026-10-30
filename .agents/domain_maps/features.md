@@ -79,16 +79,16 @@
 
 | Test File | Covers |
 |-----------|--------|
-| `tests/test_features/test_build_pipeline.py` | Full feature pipeline + cache version |
-| `tests/test_features/test_htf_alignment.py` | HTF alignment |
-| `tests/test_features/test_pivots_swings.py` | Pivot/swing detection |
-| `tests/test_features/test_structure.py` | Structure detection |
-| `tests/test_features/test_liquidity.py` | Liquidity sweeps and BOS |
-| `tests/test_features/test_po3_config.py` | PO3 FVG detection |
-| `tests/test_features/test_po3_state.py` | PO3 state features |
-| `tests/test_features/test_session_ohlc.py` | Session OHLC |
-| `tests/test_features/test_variants.py` | Feature variants |
-| `tests/test_features/test_causal_features.py` | Causal feature verification |
+| `tests/unit/features/test_build_pipeline.py` | Full feature pipeline + cache version |
+| `tests/unit/features/test_htf_alignment.py` | HTF alignment |
+| `tests/unit/features/test_pivots_swings.py` | Pivot/swing detection |
+| `tests/unit/features/test_structure.py` | Structure detection |
+| `tests/unit/features/test_liquidity.py` | Liquidity sweeps and BOS |
+| `tests/unit/features/test_po3_config.py` | PO3 FVG detection |
+| `tests/unit/features/test_po3_state.py` | PO3 state features |
+| `tests/unit/features/test_session_ohlc.py` | Session OHLC |
+| `tests/unit/features/test_variants.py` | Feature variants |
+| `tests/unit/features/test_causal_features.py` | Causal feature verification |
 
 ## Do NOT Read For Feature Tasks
 
@@ -104,8 +104,8 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add a feature stage | feature transform | `features/pipeline/feature_matrix_builder.py` | feature schema and cache identity; `tests/test_features/test_build_pipeline.py` | one stage plus causal regression | trading and training workflow semantics |
-| Change an input representation | input schema | `features/contracts.py` | `InputSchema`/`InputView`; `tests/test_market_data/test_input_view_contract.py` | view contract and consumer adapter | PPO-specific observation coordinates |
+| Add a feature stage | feature transform | `features/pipeline/feature_matrix_builder.py` | feature schema and cache identity; `tests/unit/features/test_build_pipeline.py` | one stage plus causal regression | trading and training workflow semantics |
+| Change an input representation | input schema | `features/contracts.py` | `InputSchema`/`InputView`; `tests/unit/market_data/test_input_view_contract.py` | view contract and consumer adapter | PPO-specific observation coordinates |
 
 ## Axis of Change
 
@@ -130,5 +130,5 @@
 - `features/pipeline/structure_stage.py`
 - `features/context/reachability.py`
 - `features/technical/indicators.py`
-- `tests/test_features/test_stage_a_observation.py`
+- `tests/unit/features/test_stage_a_observation.py`
 - `features/contracts.py`

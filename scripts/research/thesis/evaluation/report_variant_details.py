@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render project-to-result campaign reports from saved run artifacts.
+"""Render project-to-result experiment run reports from saved run artifacts.
 
 The report is intentionally artifact-driven: it does not load checkpoints, replay
 markets, or infer values that were not saved. It writes JSON for programmatic use
@@ -901,7 +901,7 @@ def _markdown_metric(detail: dict[str, Any] | None, name: str) -> str:
 
 
 def _markdown_config_results(
-    report: dict[str, Any], be_tolerance: float, report_dir: Path, campaign_dir: Path
+    report: dict[str, Any], be_tolerance: float, report_dir: Path, experiment_run_dir: Path
 ) -> str:
     """Render a short local-preview report centered on effective config and outcomes."""
     evidence_rows = report.get("project_context", {}).get("run_evidence", [])
@@ -939,7 +939,7 @@ def _markdown_config_results(
     lines = [
         "# 2M matched-run report: configuration and results",
         "",
-        f"Campaign: `{report.get('campaign_id', 'Not recorded')}`  ",
+        f"Experiment run: `{report.get('experiment_run_id', 'Not recorded')}`  ",
         f"Fingerprint: `{report.get('fingerprint') or 'Not recorded'}`  ",
         "Generated from saved run artifacts; no checkpoint was replayed for this report.",
         f"Break-even tolerance: {_display(be_tolerance)} account-currency units.",
@@ -1071,7 +1071,7 @@ def _markdown_config_results(
         hard_risk_text = _hard_risk_status_text(gate)
         run_artifact_dir = variant.get("run_artifact_dir")
         trade_rows = (
-            _rows(campaign_dir / run_artifact_dir / "training" / "trades.csv")
+            _rows(experiment_run_dir / run_artifact_dir / "training" / "trades.csv")
             if isinstance(run_artifact_dir, str)
             else []
         )
@@ -1162,7 +1162,7 @@ def _markdown_config_results(
         run_artifact_dir = variant.get("run_artifact_dir")
         if not isinstance(run_artifact_dir, str):
             continue
-        trade_rows = _rows(campaign_dir / run_artifact_dir / "training" / "trades.csv")
+        trade_rows = _rows(experiment_run_dir / run_artifact_dir / "training" / "trades.csv")
         opened = [row for row in trade_rows if row.get("type") == "open"]
         guard_indices = [
             index
@@ -1347,7 +1347,7 @@ def _markdown_config_results(
             if ensemble.get("diagnostic_only"):
                 lines.extend(
                     [
-                        "**Diagnostic only:** the source campaign failed its training-survival gate. These paths describe action-sampling variability and do not establish an accepted training result.",
+                        "**Diagnostic only:** the source experiment run failed its training-survival gate. These paths describe action-sampling variability and do not establish an accepted training result.",
                         "",
                     ]
                 )
@@ -1380,13 +1380,13 @@ def _markdown_config_results(
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _markdown(report: dict[str, Any], campaign_dir: Path, be_tolerance: float) -> str:
+def _markdown(report: dict[str, Any], experiment_run_dir: Path, be_tolerance: float) -> str:
     lines = [
         "# Project, training, and evaluation report",
         "",
-        f"- **Campaign:** `{report['campaign_id']}`",
-        f"- **Fingerprint:** `{report.get('fingerprint') or 'Not recorded in campaign manifest'}`",
-        f"- **Source revision:** `{report.get('campaign_git_sha') or 'Not recorded in campaign manifest'}`",
+        f"- **Experiment run:** `{report['experiment_run_id']}`",
+        f"- **Fingerprint:** `{report.get('fingerprint') or 'Not recorded in experiment run manifest'}`",
+        f"- **Source revision:** `{report.get('experiment_run_git_sha') or 'Not recorded in experiment run manifest'}`",
         "",
         "Generated from saved run artifacts. This report did not load a checkpoint or replay a market.",
         f"Break-even means an explicit break-even exit or absolute net PnL no greater than {_display(be_tolerance)} account-currency units.",
@@ -1515,7 +1515,7 @@ def _markdown(report: dict[str, Any], campaign_dir: Path, be_tolerance: float) -
             if ensemble.get("diagnostic_only"):
                 lines.extend(
                     [
-                        "**Diagnostic only:** the source campaign failed its training-survival gate. These paths describe action-sampling variability and do not establish an accepted training result.",
+                        "**Diagnostic only:** the source experiment run failed its training-survival gate. These paths describe action-sampling variability and do not establish an accepted training result.",
                         "",
                     ]
                 )
@@ -1536,7 +1536,7 @@ def _markdown(report: dict[str, Any], campaign_dir: Path, be_tolerance: float) -
         )
         summary = {
             "Optimizer execution": _optimizer_execution_status(variant),
-            "Campaign controller status": variant.get("controller_status"),
+            "Experiment run controller status": variant.get("controller_status"),
             "Seed": variant.get("seed"),
             "Attempt": variant.get("attempt"),
             "Completed timesteps": variant.get("training", {})
@@ -1707,19 +1707,21 @@ def _markdown(report: dict[str, Any], campaign_dir: Path, be_tolerance: float) -
 
 
 def build_report(
-    campaign_dir: Path,
+    experiment_run_dir: Path,
     be_tolerance: float,
     example_split: str,
     report_dir: Path,
 ) -> dict[str, Any]:
-    campaign = _json(campaign_dir / "campaign.json")
-    if campaign is None:
-        raise ValueError(f"campaign manifest missing or invalid: {campaign_dir / 'campaign.json'}")
+    experiment_run = _json(experiment_run_dir / "experiment_run.json")
+    if experiment_run is None:
+        raise ValueError(
+            f"experiment run manifest missing or invalid: {experiment_run_dir / 'experiment_run.json'}"
+        )
     variants: list[dict[str, Any]] = []
-    jobs = campaign.get("jobs")
+    jobs = experiment_run.get("jobs")
     if not isinstance(jobs, list) or not jobs:
         raise ValueError(
-            f"campaign manifest has no reportable jobs: {campaign_dir / 'campaign.json'}"
+            f"experiment run manifest has no reportable jobs: {experiment_run_dir / 'experiment_run.json'}"
         )
     for job in jobs:
         if not isinstance(job, dict):
@@ -1728,7 +1730,7 @@ def build_report(
         if not key:
             continue
         attempt = int(job.get("attempts", 1) or 1)
-        attempt_dir = campaign_dir / "runs" / "attempts" / key / f"attempt{attempt}"
+        attempt_dir = experiment_run_dir / "runs" / "attempts" / key / f"attempt{attempt}"
         candidates = sorted((attempt_dir / key).glob("*")) if (attempt_dir / key).is_dir() else []
         run_dir = next((path for path in reversed(candidates) if path.is_dir()), None)
         if run_dir is None:
@@ -1822,7 +1824,7 @@ def build_report(
                 "controller_status": job.get("status"),
                 "exit_code": job.get("exit_code"),
                 "failure_reason": job.get("failure_reason"),
-                "run_artifact_dir": run_dir.relative_to(campaign_dir).as_posix()
+                "run_artifact_dir": run_dir.relative_to(experiment_run_dir).as_posix()
                 if run_dir
                 else None,
                 "training": training,
@@ -1860,24 +1862,26 @@ def build_report(
 
     variants.sort(key=variant_order)
     if not variants:
-        raise ValueError(f"campaign manifest contains no jobs with reportable keys: {campaign_dir}")
+        raise ValueError(
+            f"experiment run manifest contains no jobs with reportable keys: {experiment_run_dir}"
+        )
     from scripts.research.thesis.evaluation.project_report_context import (
         build_project_context,
     )
 
     return {
         "schema_version": 2,
-        "campaign_id": campaign_dir.name,
-        "fingerprint": campaign.get("fingerprint"),
-        "campaign_git_sha": campaign.get("git_sha"),
-        "campaign_manifest_sha256": _sha256(campaign_dir / "campaign.json"),
+        "experiment_run_id": experiment_run_dir.name,
+        "fingerprint": experiment_run.get("fingerprint"),
+        "experiment_run_git_sha": experiment_run.get("git_sha"),
+        "experiment_run_manifest_sha256": _sha256(experiment_run_dir / "experiment_run.json"),
         "report_script_sha256": _sha256(Path(__file__).resolve()),
         "be_tolerance_account_currency": be_tolerance,
         "example_split": example_split,
         "variants": variants,
         "project_context": build_project_context(
-            campaign_dir,
-            campaign,
+            experiment_run_dir,
+            experiment_run,
             variants,
             report_dir,
             _PROJECT_ROOT,
@@ -2039,7 +2043,7 @@ def _write_equity_figures(
 
 
 def _plot_training_diagnostics(
-    report: dict[str, Any], campaign_dir: Path, figure_dir: Path, report_dir: Path
+    report: dict[str, Any], experiment_run_dir: Path, figure_dir: Path, report_dir: Path
 ) -> None:
     """Generate the same learner diagnostic figure for every reported run."""
     import matplotlib
@@ -2058,7 +2062,7 @@ def _plot_training_diagnostics(
         ("Update stability", ("train/approx_kl", "train/clip_fraction", "train/learning_rate")),
     )
     for variant in report["variants"]:
-        run_dir = campaign_dir / variant["run_artifact_dir"]
+        run_dir = experiment_run_dir / variant["run_artifact_dir"]
         source = run_dir / "model" / "training_log.csv"
         frame = pd.read_csv(source)
         x = (
@@ -2114,7 +2118,7 @@ def _plot_training_diagnostics(
 
 
 def _plot_variant_figures(
-    report: dict[str, Any], campaign_dir: Path, figure_dir: Path, report_dir: Path
+    report: dict[str, Any], experiment_run_dir: Path, figure_dir: Path, report_dir: Path
 ) -> None:
     """Create one small set of comparable diagnostic figures per variant/split."""
     import matplotlib
@@ -2133,7 +2137,7 @@ def _plot_variant_figures(
         run_artifact_dir = variant.get("run_artifact_dir")
         if not isinstance(run_artifact_dir, str):
             continue
-        run_dir = campaign_dir / run_artifact_dir
+        run_dir = experiment_run_dir / run_artifact_dir
         for split, detail in variant.get("splits", {}).items():
             out_dir = figure_dir / run_key / split
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -2657,7 +2661,7 @@ def _attach_stochastic_ensemble(
             "seeds": manifest.get("seeds", []),
             "replay_count": len(manifest.get("seeds", [])),
             "summaries": variant_summaries,
-            "diagnostic_only": bool(source.get("source_campaign_diagnostic_only")),
+            "diagnostic_only": bool(source.get("source_experiment_run_diagnostic_only")),
             "source_saved_evaluation_backend": source_backend,
             "replay_evaluation_backends": sorted(replay_backends),
             "backend_mismatch": bool(
@@ -2688,11 +2692,11 @@ def _validate_markdown_images(markdown: str, report_dir: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--campaign-dir", required=True, type=Path)
+    parser.add_argument("--experiment-run-dir", required=True, type=Path)
     parser.add_argument(
         "--out-stem",
         type=Path,
-        help="default: <campaign>/reports/project_results_report",
+        help="default: <experiment run>/reports/project_results_report",
     )
     parser.add_argument(
         "--be-tolerance",
@@ -2715,11 +2719,11 @@ def main() -> int:
     args = parser.parse_args()
     if args.be_tolerance < 0 or not math.isfinite(args.be_tolerance):
         parser.error("--be-tolerance must be finite and non-negative")
-    campaign_dir = args.campaign_dir.resolve()
-    out_stem = args.out_stem or campaign_dir / "reports" / "project_results_report"
+    experiment_run_dir = args.experiment_run_dir.resolve()
+    out_stem = args.out_stem or experiment_run_dir / "reports" / "project_results_report"
     out_stem.parent.mkdir(parents=True, exist_ok=True)
     report_dir = out_stem.parent.resolve()
-    report = build_report(campaign_dir, args.be_tolerance, args.example_split, report_dir)
+    report = build_report(experiment_run_dir, args.be_tolerance, args.example_split, report_dir)
     diagram_path = out_stem.with_name(f"{out_stem.stem}_pipeline_architecture.mmd")
     project_context = report.get("project_context")
     if isinstance(project_context, dict):
@@ -2732,13 +2736,13 @@ def main() -> int:
             raise RuntimeError(f"pipeline architecture diagram is missing or empty: {diagram_path}")
     _plot_training_diagnostics(
         report,
-        campaign_dir,
+        experiment_run_dir,
         report_dir / f"{out_stem.stem}_figures",
         report_dir,
     )
     _plot_variant_figures(
         report,
-        campaign_dir,
+        experiment_run_dir,
         report_dir / f"{out_stem.stem}_figures",
         report_dir,
     )
@@ -2748,7 +2752,7 @@ def main() -> int:
 
     generate_train_test_figures(
         report,
-        campaign_dir,
+        experiment_run_dir,
         report_dir / f"{out_stem.stem}_figures",
         report_dir,
     )
@@ -2756,9 +2760,9 @@ def main() -> int:
         _attach_stochastic_ensemble(report, args.stochastic_ensemble_dir.resolve(), report_dir)
     _validate_report_figures(report, report_dir)
     markdown = (
-        _markdown(report, campaign_dir, args.be_tolerance)
+        _markdown(report, experiment_run_dir, args.be_tolerance)
         if args.scope == "full"
-        else _markdown_config_results(report, args.be_tolerance, report_dir, campaign_dir)
+        else _markdown_config_results(report, args.be_tolerance, report_dir, experiment_run_dir)
     )
     _validate_markdown_images(markdown, report_dir)
     json_path = out_stem.with_suffix(".json")
@@ -2767,7 +2771,7 @@ def main() -> int:
         json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8"
     )
     markdown_path.write_text(markdown, encoding="utf-8")
-    print(f"Project and campaign report created for {len(report['variants'])} variants.")
+    print(f"Project and experiment run report created for {len(report['variants'])} variants.")
     print(f"Markdown: {markdown_path}")
     print(f"JSON: {json_path}")
     print(f"Pipeline diagram: {diagram_path}")

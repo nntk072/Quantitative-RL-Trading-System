@@ -7,17 +7,17 @@
 The existing timing evidence does **not** support completing 18 × 20M steps in
 one allocation. The supervisor can continue unfinished workers across
 six-hour allocations, so the projection below estimates the number of chunks
-that might be needed; it does not imply the whole campaign must fit in one
+that might be needed; it does not imply the whole experiment run must fit in one
 allocation. This is a screening calculation from an existing 100k
 shared-bundle resource probe, not a measured runtime for the frozen 20M
-campaign.
+experiment run.
 
 The only empirical 18-worker timing sample used `n_envs=64`, the shared-bundle
 backend, six CPUs per worker, two GH200s on `gpuarm2`, and a 900 GiB cgroup
-memory limit. The frozen campaign uses the frames backend, `n_envs=4`, three
+memory limit. The frozen experiment run uses the frames backend, `n_envs=4`, three
 CPUs per worker, and requests two GH200s with a six-hour allocation on
 `gpuarm1`. The changed backend, environment count, CPU assignment, and node
-mean the probe cannot serve as a direct forecast for that campaign.
+mean the probe cannot serve as a direct forecast for that experiment run.
 
 ## Measured training time
 
@@ -42,13 +42,13 @@ projected_20M_train_seconds = ppo_learn_seconds * 20,000,000 / completed_steps
 
 The final-evaluation pair is measured once after training; it is added once,
 not scaled by 200. These estimates omit feature loading, checkpoint/report
-export, queue delay, and retries. The wall time of a simultaneous campaign
+export, queue delay, and retries. The wall time of a simultaneous experiment run
 tracks its slowest worker, rather than the median worker alone.
 
 ## Six-hour throughput requirement
 
 The allocation requests six hours, but the controller process is wrapped by a
-20,700-second timeout, leaving about **5.75 hours** for the campaign step. A
+20,700-second timeout, leaving about **5.75 hours** for the experiment run step. A
 variant would need at least **966 steps/s** to complete 20,000,000 PPO steps in
 that single controller window, before final evaluation/export. That is 5.1×
 the measured median and 3.2× the fastest measured worker. At the measured
@@ -69,27 +69,27 @@ Treat total runtime for the `n_envs=4` frames profile as **unvalidated**. The
 supervisor's multiple-allocation design can continue the work, but completion
 time and queue delay are not established by the `n_envs=64` bundle probe.
 Before relying on a duration estimate, a future authorized resource probe
-would need to use the exact frozen campaign worker settings and measure PPO
+would need to use the exact frozen experiment run worker settings and measure PPO
 steps/s, final evaluation/export time, allocation-scoped host memory,
 process-tree CPU time, and per-GPU utilization. This timing gate does not
 supersede the scientific gate: all 18 existing 100k train-equity gates failed,
-so the 20M campaign must remain unlaunched.
+so the 20M experiment run must remain unlaunched.
 
 ## Evidence
 
 - 18-worker probe manifest and configuration:
-  [`campaign.json`](../../outputs/gpu_campaigns/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/campaign.json)
+  [`experiment_run.json`](../../outputs/experiment_runs/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/experiment_run.json)
 - Checksummed results and resource summary:
-  [`campaign_results_summary.md`](../../outputs/gpu_campaigns/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/reports/campaign_results_summary.md)
+  [`experiment_run_results_summary.md`](../../outputs/experiment_runs/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/reports/experiment_run_results_summary.md)
 - Raw sampled resources:
-  [`resources_gpuarm2.csv`](../../outputs/gpu_campaigns/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/logs/resources_gpuarm2.csv)
+  [`resources_gpuarm2.csv`](../../outputs/experiment_runs/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/logs/resources_gpuarm2.csv)
 - Reproducible calculation output:
-  [`runtime_scaling_screen_20261014.md`](../../outputs/gpu_campaigns/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/reports/runtime_scaling_screen_20261014.md)
-  · [`JSON with source hashes and per-worker results`](../../outputs/gpu_campaigns/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/reports/runtime_scaling_screen_20261014.json)
+  [`runtime_scaling_screen_20261014.md`](../../outputs/experiment_runs/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/reports/runtime_scaling_screen_20261014.md)
+  · [`JSON with source hashes and per-worker results`](../../outputs/experiment_runs/ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014/reports/runtime_scaling_screen_20261014.json)
 - Calculation source and regression tests:
-  [`analyze_campaign_runtime_scaling.py`](../../scripts/matrix/analyze_campaign_runtime_scaling.py)
-  · [`test_campaign_runtime_scaling.py`](../../tests/test_experiments/test_campaign_runtime_scaling.py)
+  [`analyze_experiment_runstime_scaling.py`](../../scripts/matrix/analyze_experiment_runstime_scaling.py)
+  · [`test_experiment_runstime_scaling.py`](../../tests/unit/experiments/test_experiment_runstime_scaling.py)
 - Frozen 20M specification:
-  [`campaign YAML`](../../config/campaigns/18_variant_seed42_20m_exploratory_selection_acknowledged_gpu_balanced_20261014.yaml)
+  [`experiment run YAML`](../../config/experiment_runs/18_variant_seed42_20m_exploratory_selection_acknowledged_gpu_balanced_20261014.yaml)
 - Proposed six-hour allocation:
-  [`run_campaign_18way_supervisor.sh`](../../scripts/matrix/run_campaign_18way_supervisor.sh)
+  [`run_18way_supervisor.sh`](../../scripts/matrix/run_18way_supervisor.sh)

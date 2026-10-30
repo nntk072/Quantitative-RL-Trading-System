@@ -218,7 +218,7 @@ class PositionRuntimeMixin(RuntimeMixinBase):
             new_tp = pos.entry_price + alpha * risk_pts
         else:
             new_tp = pos.entry_price - alpha * risk_pts
-        # Apply only to nearest active TP (tp1 if active, else tp2, else tp3)
+            # Apply only to nearest active TP (tp1 if active, else tp2, else tp3)
         for slot, attr in enumerate(("tp1_price", "tp2_price", "tp3_price"), start=1):
             if pos.tp_hit_mask & (1 << (slot - 1)):
                 continue
@@ -284,9 +284,9 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         if close is not None and pos.direction * (candidate - close) <= 0:
             return
 
-        # Target slot identities and allocated quantities are stable. One
-        # confirmed swing updates only the nearest remaining slot; later legs
-        # keep their original distinct references and ordering.
+            # Target slot identities and allocated quantities are stable. One
+            # confirmed swing updates only the nearest remaining slot; later legs
+            # keep their original distinct references and ordering.
         for slot in (1, 2, 3):
             if pos.tp_hit_mask & (1 << (slot - 1)):
                 continue

@@ -27,7 +27,7 @@ COVERAGE_REPORT = (
     ROOT / "docs/thesis/evidence/replacement_data_20261017/"
     "tick_execution_coverage_schedule_freeze_final.json"
 )
-TICK_AUDIT_HELPER = ROOT / "docs/thesis/audit_tick_quality_current_campaign_2026-10-17.py"
+TICK_AUDIT_HELPER = ROOT / "docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py"
 TICKS_SOURCE = ROOT / "market_data/loading/ticks.py"
 DEFAULT_REPORT = (
     ROOT / "docs/thesis/evidence/replacement_data_20261017/replacement_tick_quality_20261018.json"
@@ -154,7 +154,7 @@ def build_report() -> dict[str, Any]:
         COVERAGE_REPORT,
     ]
     all_hashes_match = all(
-        item["campaign_hash_match"] and item["m1_source_matches_coverage_report"]
+        item["experiment_run_hash_match"] and item["m1_source_matches_coverage_report"]
         for item in symbols.values()
     )
     return {

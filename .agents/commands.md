@@ -67,9 +67,9 @@ uv run python scripts/research/thesis/evaluation/report_g3.py --runs-dir outputs
 .venv/bin/pytest -m "not slow"               # local shortcut
 .venv/bin/pytest -m unit                     # unit tests only
 .venv/bin/pytest -m integration              # integration tests only
-.venv/bin/pytest tests/test_features/ -q     # feature tests only
-.venv/bin/pytest tests/test_simulation/test_environment/ -q         # env tests only
-.venv/bin/pytest tests/test_orchestra/ -q    # orchestra tests
+.venv/bin/pytest tests/unit/features/ -q     # feature tests only
+.venv/bin/pytest tests/unit/simulation/test_environment/ -q         # env tests only
+.venv/bin/pytest tests/unit/orchestra/ -q    # orchestra tests
 ./tools/check unit
 ```
 

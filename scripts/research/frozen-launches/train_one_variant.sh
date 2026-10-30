@@ -50,10 +50,10 @@ else
   PYTHON="${PYTHON:-python}"
 fi
 
-if [[ -n "${CAMPAIGN_WORKER_PID_FILE:-}" ]]; then
-  mkdir -p "$(dirname "$CAMPAIGN_WORKER_PID_FILE")"
+if [[ -n "${EXPERIMENT_RUN_WORKER_PID_FILE:-}" ]]; then
+  mkdir -p "$(dirname "$EXPERIMENT_RUN_WORKER_PID_FILE")"
   printf '{"hostname":"%s","pid":%s}\n' \
-    "$(hostname -s)" "$$" > "$CAMPAIGN_WORKER_PID_FILE"
+    "$(hostname -s)" "$$" > "$EXPERIMENT_RUN_WORKER_PID_FILE"
 fi
 
 RESOLVE_OPTS=()
@@ -114,7 +114,7 @@ run_seed() {
   if [[ "${QUANT_RL_FULL_REPORTS:-0}" == "1" ]]; then
     train_args+=("output.report_profile=full" "output.max_order_charts=200" "output.save_html=true")
   elif [[ "${QUANT_RL_FAST_REPORTS:-0}" == "1" ]]; then
-    train_args+=("output.report_profile=campaign_fast" "output.max_order_charts=0" "output.save_html=false")
+    train_args+=("output.report_profile=experiment_run_fast" "output.max_order_charts=0" "output.save_html=false")
   fi
   if [[ -n "${QUANT_RL_DATA_SOURCE:-}" ]]; then
     case "$QUANT_RL_DATA_SOURCE" in

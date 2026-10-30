@@ -9,7 +9,7 @@ that records them.
 It is deliberately plain Python + PyYAML (no OmegaConf, no torch) so it can run
 in the launcher before the training environment is activated.
 
-This resolved representation is consumed by both campaign launchers and the
+This resolved representation is consumed by both experiment run launchers and the
 training CLI, so a variant has one merge/override contract:
   * ladder flags -> ``env.<flag>``
   * ``include_pd_context`` -> ``features.include_pd_context`` + structure enabled
@@ -39,7 +39,7 @@ EXPERIMENTS_PATH = PROJECT_ROOT / "config" / "experiments.yaml"
 DEFAULT_BASE = "config/base/default.yaml"
 FULL_PO3_BASE = "config/features/full_po3_mtf.yaml"
 
-# The replacement-data campaign builds content-hashed features in its fresh
+# The replacement-data experiment run builds content-hashed features in its fresh
 # split cache tree. Historical named caches are not assigned to new runs.
 PREBUILT_FEATURE_CACHES: dict[str, str] = {}
 
@@ -218,7 +218,9 @@ def resolve_variant(
     for item in config_overrides or []:
         key, separator, value = item.partition("=")
         if not separator or not key.strip() or not value.strip():
-            raise VariantError(f"invalid campaign config override {item!r}; expected key=value")
+            raise VariantError(
+                f"invalid experiment run config override {item!r}; expected key=value"
+            )
         overrides.append(f"{key.strip()}={value.strip()}")
 
     return {
@@ -303,7 +305,7 @@ def _main(argv: list[str] | None = None) -> int:
                 "--config-override",
                 action="append",
                 default=[],
-                help="campaign-scoped config override in key=value form; repeat as needed",
+                help="experiment-run-scoped config override in key=value form; repeat as needed",
             )
         p.add_argument("--steps", type=int, default=None)
         p.add_argument("--seeds", default=None, help="comma or space separated")

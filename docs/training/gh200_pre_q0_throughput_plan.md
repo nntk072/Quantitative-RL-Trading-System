@@ -6,7 +6,7 @@
 
 Improve measured PPO training throughput on the GH200 without changing the
 trading objective, execution rules, or evaluation protocol. Keep the current
-A3 profile as the reference. Do not start Q0 or the 18-variant campaign as part
+A3 profile as the reference. Do not start Q0 or the 18-variant experiment run as part
 of this optimization work. Use the existing allocation for isolated probes;
 do not request another Slurm allocation for this plan.
 
@@ -21,7 +21,7 @@ quality does not regress.
 
 1. **Profile one trainer end to end. — Complete**
    Capture PPO CPU/CUDA operators, host-to-device transfers, GPU activity,
-   memory use, environment rollout time, and PPO update time. Keep campaign
+   memory use, environment rollout time, and PPO update time. Keep experiment run
    callbacks out of the microbenchmark and identify their timing separately.
 
 2. **Stage one complete PPO rollout in VRAM. — Prototype measured**
@@ -96,11 +96,11 @@ Rollout/framework time stayed similar (51.94 s CPU versus 50.74 s device
 buffer), which is consistent with the optimization targeting minibatch data
 staging. Peak allocated device memory rose by about 0.71 GiB, remaining well
 below the GH200's 144 GiB. These are two PPO-core pairs on one allocation, not
-an end-to-end campaign result or a multi-node concurrency result.
+an end-to-end experiment run result or a multi-node concurrency result.
 
 The buffer uses the same NumPy permutation and produced exactly matching
 minibatch tensors in the focused parity test
-(`tests/test_models/test_rollout_copy.py`). This supports sample-order and data
+(`tests/unit/models/test_rollout_copy.py`). This supports sample-order and data
 parity; it is not a claim that training quality or evaluation results improved.
 
 A PyTorch CPU/CUDA trace was then captured on the same GH200 and bundle for 64
@@ -135,10 +135,10 @@ launch activity make phase-level follow-up profiling important.
 - One-second GPU samples: `outputs/benchmarks/fast-training-wp0/gh200-a3-single-gpu-samples.csv`
 - CPU buffer repeat runs: `outputs/benchmarks/fast-training-wp0/gh200-a3-cpu-rollout-buffer-r1.json`, `outputs/benchmarks/fast-training-wp0/gh200-a3-cpu-rollout-buffer-r2.json`
 - Device buffer repeat runs: `outputs/benchmarks/fast-training-wp0/gh200-a3-device-rollout-buffer-r1.json`, `outputs/benchmarks/fast-training-wp0/gh200-a3-device-rollout-buffer-r2.json`
-Q0, existing campaign processes, and Slurm job states were not changed by this
+Q0, existing experiment run processes, and Slurm job states were not changed by this
 prototype. New PPO runs use the device buffer by default, including the pending
 18-variant job when it starts. The throughput comparison is still PPO-core
-only; an end-to-end campaign and training/evaluation quality review remain open.
+only; an end-to-end experiment run and training/evaluation quality review remain open.
 
 ## Follow-up experiments on 2026-10-15
 
@@ -184,8 +184,8 @@ the effective rollout/minibatch geometry to state the optimizer-step count.
 
 The only production fast-path change in this branch remains full-rollout device
 staging, enabled by default with a CPU-buffer control. PPO minibatch parity is
-tested exactly. No full production training/evaluation campaign was run during
-these probes; no Q0 or 18-variant campaign was started by this optimization
+tested exactly. No full production training/evaluation experiment run was run during
+these probes; no Q0 or 18-variant experiment run was started by this optimization
 work. Therefore these measurements do not establish that a policy survives a
 full-year training episode or that its evaluation performance is preserved.
 
@@ -232,13 +232,13 @@ did not beat it. A single update slot reduced aggregate throughput by about
 This benchmark-only semaphore changes when `train()` runs, not the PPO update
 math. It remains opt-in and is not wired into production training.
 
-For an 18-run campaign with two GH200 nodes and nine trainers per node, the
+For an 18-run experiment run with two GH200 nodes and nine trainers per node, the
 measured T=9-stagger aggregate rate implies approximately 5.6 hours of PPO-core
 time for 18 × 20M steps. This is a throughput projection only: production
 callbacks, checkpointing, evaluation, report rendering, startup, and inter-run
-coordination were excluded, so campaign wall time will be longer. The current
+coordination were excluded, so experiment run wall time will be longer. The current
 allocation still has one GH200 and the separate 18-run Slurm request remains
-pending; this probe did not launch that campaign.
+pending; this probe did not launch that experiment run.
 
 Artifacts are under
 `outputs/benchmarks/fast-training-wp1-device-concurrency-20261015/`:
@@ -250,5 +250,5 @@ Artifacts are under
 
 These results select T=9 with a 2-second launch stagger as the current PPO-core
 throughput candidate for one GH200. Treat this as a benchmark setting, not as a
-validated production campaign configuration, until a two-node end-to-end run
+validated production experiment run configuration, until a two-node end-to-end run
 measures callback/evaluation cost and confirms artifact integrity.
