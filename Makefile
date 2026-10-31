@@ -7,7 +7,8 @@
 # Recipes use bash features (process substitution).
 SHELL := bash
 
-UV ?= $(if $(strip $(THESIS_UV)),$(THESIS_UV),uv)
+# QRL_UV is canonical; THESIS_UV remains a deprecated compatibility fallback.
+UV ?= $(if $(strip $(QRL_UV)),$(QRL_UV),$(if $(strip $(THESIS_UV)),$(THESIS_UV),uv))
 EXPORT = $(UV) export --frozen --no-hashes --no-emit-project --format requirements-txt
 
 # torch is installed from the PyTorch CPU index in an index-scoped step, so it is

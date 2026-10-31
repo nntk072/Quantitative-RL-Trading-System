@@ -27,7 +27,7 @@ automatically use fewer slots.
 - Experiment run lifecycle: `experiments/runs/`.
 - `execution.py` is the canonical experiment run composition root; it composes
   focused state, source-snapshot, artifact, checkpoint, and compute services.
-- Cache-failure recovery is owned by `cache_failure_recovery.py` and exposed through `thesis-experiment-run recover-cache`.
+- Cache-failure recovery is owned by `cache_failure_recovery.py` and exposed through `qrl-experiment recover-cache`.
 - Variant workflows: `experiments/variants/`.
 - May compose training, evaluation, compute, and artifacts at explicit workflow roots.
 - Must not import simulation runtime internals or own feature/trading semantics.

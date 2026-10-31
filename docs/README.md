@@ -1,45 +1,51 @@
 # Documentation
 
-This documentation is organized around the repository’s actual modules. A
-reader can follow the system from market input to model decision, simulated
-execution, training, and evaluation without first studying the source code.
+This is the reader entry point for the quantitative reinforcement-learning
+trading framework. The pages follow subsystem boundaries and explain the
+purpose, ownership, interfaces, runtime behavior, assumptions, and limits of
+each part before linking to source.
 
-## Start with the system
+## Understand the system
 
-- [System architecture](architecture.md): end-to-end flow, key boundaries, and
-  important limits.
-- [Module guides](modules/README.md): one guide for each application module,
-  plus cross-cutting software testing.
-- [Configuration guide](config.md): where behavior is selected and how run
-  settings fit together.
-- [Model and experiment catalog](model_variants.md): generated index of
-  selectable algorithms, encoders, and comparison roles.
+- [Architecture](architecture/README.md): context, packages, import
+  dependencies, data flow, model composition, and runtime sequences.
+- [Module guides](modules/README.md): responsibilities and boundaries for
+  every production package and the test system.
+- [Concepts](concepts/README.md): observations/actions, trade setups, market
+  structure, execution costs, and account risk.
+- [Reference](reference/README.md): versioned schemas and stable contracts.
+- [Model and experiment catalog](model_variants.md): generated list of
+  configured agents and research comparisons.
+- [Glossary](glossary.md): canonical meanings for trading, RL, and evidence
+  terms.
 
-## Research and evidence
+## Work with the framework
 
-- [Research guide](research/README.md): research questions, findings, and
-  interpretation limits.
-- [Thesis validation protocol](thesis/validation_protocol.md): roles of
-  training, validation, and previously inspected test periods.
-- [Threats to validity](thesis/threats_to_validity.md): known limitations in
-  data, execution, and inference.
-- [Master project execution plan](thesis/master_project_execution_plan.md):
-  the operational thesis work queue.
+- [Configuration](config.md): source settings, composition, and cache identity.
+- [Research](research/README.md): questions, findings, methodology, and
+  validity limits.
+- [Reproducibility](concepts/reproducibility.md): source, configuration, data, run, and
+  evaluation identity expected for a result.
+- [Operations](operations/triton.md): environments, storage, and Triton
+  resource workflow.
+- [Commands](operations/RUNNING_COMMANDS.md): current executable commands.
+- [Deployment](operations/DEPLOYMENT.md): paper/live boundaries and promotion
+  controls.
+- [Agent rules](../AGENTS.md): repository invariants and contributor workflow.
+- [Documentation maintenance](MAINTAINING.md): sources of truth and update
+  expectations.
+- [Contributing](../CONTRIBUTING.md): architecture-aware change and validation
+  workflow.
+- [Architecture decisions](decisions/README.md): durable project choices.
 
-## Operating the repository
+## Guided use
 
-- [Triton operations](operations/triton.md): environments, storage, resource
-  allocations, and troubleshooting.
-- [Command guide](operations/RUNNING_COMMANDS.md): supported command examples.
-- [Deployment boundary](operations/DEPLOYMENT.md): paper and live runtime
-  considerations.
-- [Shared agent rules](../AGENTS.md): repository invariants and required
-  engineering workflow for coding agents.
+- [Tutorials](tutorials/README.md): a project tour and bounded reproducible
+  smoke workflow.
+- [How-to guides](how-to/README.md): prepare data, build caches, train,
+  evaluate, run experiments, and extend the system.
 
-## Documentation style
-
-Module pages explain purpose, concepts, inputs, outputs, diagrams, assumptions,
-and limitations. They keep source references secondary. Research pages explain
-the question, comparison, result, and evidence limits. Reader-facing pages use
-clear names and describe setup and outcomes; exact input identities remain in
-machine-readable run records.
+The active experiment queue and its period-role decisions remain at the
+[project execution plan](thesis/master_project_execution_plan.md) until its
+compatibility migration is complete. That retained path does not define the
+software architecture or project identity.

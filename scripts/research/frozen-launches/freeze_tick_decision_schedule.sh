@@ -2,7 +2,7 @@
 # Rebuild replacement-data tick coverage and its observed-schedule fingerprint
 # on the allocated GH200 node, then run repository code and test checks.
 set -u
-cd /scratch/work/nguyenl37/Aalto_MS_Thesis || exit 2
+cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)" || exit 2
 source scripts/compute/slurm/activate_venv.sh
 set +e
 

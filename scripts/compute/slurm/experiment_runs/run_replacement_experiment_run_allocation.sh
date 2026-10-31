@@ -3,7 +3,7 @@
 # Worker requests are handled by one persistent dispatcher per allocated node.
 set -Eeuo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/replacement18_seed50_train2025_test2026_current_mtf_20261019.yaml}"
 EXPERIMENT_RUN_ID="${EXPERIMENT_RUN_ID:-replacement18_seed50_train2025_test2026_current_mtf_20261019}"
 WORKERS="${EXPERIMENT_RUN_WORKERS:-18}"
@@ -99,7 +99,7 @@ if [[ ! -s "$OUT_DIR/experiment_run.json" ]]; then
     tests/unit/experiments/test_matrix_experiment_run_controller.py \
     tests/unit/experiments/test_experiment_run_artifacts.py \
     tests/integration/test_eval_run_provenance.py \
-    tests/unit/thesis/test_thesis_numerical_report_verifier.py \
+    tests/unit/research/test_numerical_report_verifier.py \
     tests/unit/compute/test_triton_gh200_capacity.py \
     tests/unit/models/test_legacy_checkpoint_migration.py \
     tests/architecture/test_public_imports.py -q

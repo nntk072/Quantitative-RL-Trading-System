@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 
-ROOT=/scratch/work/nguyenl37/Aalto_MS_Thesis
+ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 RUN_DIR="$ROOT/outputs/gpu_ci_gates/observation_schema_gate_job21012389"
 VENV_X86="$ROOT/.venv-x86"
 VENV_MI210=/scratch/work/nguyenl37/.venv-mi210

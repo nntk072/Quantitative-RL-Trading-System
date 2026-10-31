@@ -47,6 +47,54 @@ can change across time, and a saved checkpoint can still fail a full-period or
 out-of-sample evaluation. Faster training is valuable only when it preserves
 the intended learning and execution semantics.
 
+## UML
+
+This UML shows how resolved inputs pass through training stages into a
+recoverable seed run and evaluation candidate.
+
+```mermaid
+classDiagram
+    class TrainingConfigurationStage {
+      +resolve() EffectiveConfig
+    }
+    class TrainingDataStage {
+      +prepare() PreparedData
+    }
+    class TrainingRunAssetsStage {
+      +build() RunAssets
+    }
+    class TrainingPreparation {
+      +prepare() PreparedSeedRun
+    }
+    class PreparedSeedRun
+    class SeedRunContext {
+      +seed
+      +environment
+      +learner
+    }
+    class SeedRunner {
+      +run() TrainedSeedRun
+    }
+    class TrainedSeedRun {
+      +checkpoint
+      +diagnostics
+    }
+    class PersistedSeedRun {
+      +manifest
+      +artifact_paths
+    }
+    class EvaluationRunner
+    TrainingConfigurationStage --> TrainingDataStage
+    TrainingDataStage --> TrainingRunAssetsStage
+    TrainingRunAssetsStage --> TrainingPreparation
+    TrainingPreparation --> PreparedSeedRun
+    PreparedSeedRun --> SeedRunContext : initializes
+    SeedRunContext --> SeedRunner : executes
+    SeedRunner --> TrainedSeedRun
+    TrainedSeedRun --> PersistedSeedRun : writes artifacts
+    TrainedSeedRun --> EvaluationRunner : candidate for
+```
+
 ## Implementation reference
 
 The `training/` module composes the run. `experiments/` selects comparisons;

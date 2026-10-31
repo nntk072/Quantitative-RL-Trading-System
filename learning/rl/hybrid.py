@@ -10,10 +10,11 @@ from stable_baselines3.common.distributions import Distribution as SB3Distributi
 from torch import nn
 from torch.distributions import Categorical, Normal
 
-from decisioning.thesis import THESIS_CATEGORY_COUNT, thesis_center
+from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT, trade_setup_center
 from learning.rl.ppo import ClampedStdMultiInputPolicy, clip_policy_log_std
 
-_CATEGORICAL_COORDINATES = {"thesis", "sl_mode", "tp_mode", "exit"}
+_SETUP_COORDINATES = {"thesis", "trade_setup"}
+_CATEGORICAL_COORDINATES = {*_SETUP_COORDINATES, "sl_mode", "tp_mode", "exit"}
 
 
 def _normal_distribution(means: torch.Tensor, scales: torch.Tensor) -> Normal:
@@ -30,8 +31,10 @@ def _categorical_distribution(logits: torch.Tensor) -> Categorical:
 
 def _encoded_centers(name: str, threshold: float) -> tuple[float, ...]:
     """Return normalized raw-Box values that the existing env decoder maps exactly."""
-    if name == "thesis":
-        return tuple(thesis_center(candidate_id) for candidate_id in range(THESIS_CATEGORY_COUNT))
+    if name in _SETUP_COORDINATES:
+        return tuple(
+            trade_setup_center(candidate_id) for candidate_id in range(TRADE_SETUP_CATEGORY_COUNT)
+        )
     if name == "exit":
         return (-0.5, 0.5)  # structural, EMA-21
     if name in {"sl_mode", "tp_mode"}:
@@ -118,13 +121,15 @@ class HybridBoxDistribution(SB3Distribution):
         self.normal = _normal_distribution(means, log_std.exp().expand_as(means))
         self.categorical = {}
         for name, values in logits.items():
-            if name == "thesis":
+            if name in _SETUP_COORDINATES:
                 if masks is None or name not in masks:
-                    raise ValueError("thesis categorical distribution requires thesis_mask")
+                    raise ValueError(
+                        f"{name} categorical distribution requires its eligibility mask"
+                    )
                 mask = masks[name].to(device=values.device) > 0.0
                 if mask.shape != values.shape or not bool(mask.any(dim=1).all()):
                     raise ValueError(
-                        "thesis_mask must match logits and allow at least one category"
+                        f"{name} eligibility mask must match logits and allow a category"
                     )
                 values = values.masked_fill(~mask, torch.finfo(values.dtype).min)
             self.categorical[name] = _categorical_distribution(values)
@@ -201,12 +206,15 @@ class HybridBoxDistribution(SB3Distribution):
 
     def thesis_entropy(self) -> torch.Tensor:
         """Return the masked primary-thesis entropy when this is a thesis policy."""
-        if "thesis" not in self.categorical:
+        setup_name = next((name for name in _SETUP_COORDINATES if name in self.categorical), None)
+        if setup_name is None:
             raise RuntimeError("distribution has no primary-thesis categorical head")
         return cast(
             torch.Tensor,
-            self.categorical["thesis"].entropy(),  # type: ignore[no-untyped-call]
+            self.categorical[setup_name].entropy(),  # type: ignore[no-untyped-call]
         )
+
+    trade_setup_entropy = thesis_entropy
 
     def actions_from_params(
         self,
@@ -238,16 +246,23 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         sl_mode_defer_threshold: float = 0.1,
         tp_mode_defer_threshold: float = 0.1,
         thesis_mask_key: str | None = None,
+        trade_setup_mask_key: str | None = None,
         **kwargs: Any,
     ) -> None:
         self.hybrid_action_coordinates = tuple(str(value) for value in hybrid_action_coordinates)
+        self.setup_coordinate = next(
+            (name for name in ("trade_setup", "thesis") if name in self.hybrid_action_coordinates),
+            None,
+        )
         self.hybrid_thresholds = {
             "sl_mode": float(sl_mode_defer_threshold),
             "tp_mode": float(tp_mode_defer_threshold),
         }
-        self.thesis_mask_key = thesis_mask_key
+        self.trade_setup_mask_key = trade_setup_mask_key or thesis_mask_key
+        self.thesis_mask_key = thesis_mask_key or trade_setup_mask_key
         self._distribution_masks: dict[str, torch.Tensor] | None = None
         self.last_thesis_entropy: torch.Tensor | None = None
+        self.last_trade_setup_entropy: torch.Tensor | None = None
         super().__init__(*args, **kwargs)
 
     def _build(self, lr_schedule: Any) -> None:
@@ -284,19 +299,18 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
             means, self.log_std, logits, masks=self._distribution_masks
         )
         self.last_thesis_entropy = (
-            distribution.thesis_entropy().detach()
-            if "thesis" in self.hybrid_action_coordinates
-            else None
+            distribution.thesis_entropy().detach() if self.setup_coordinate is not None else None
         )
+        self.last_trade_setup_entropy = self.last_thesis_entropy
         return distribution
 
     def _set_distribution_mask(self, obs: Any) -> None:
-        if "thesis" not in self.hybrid_action_coordinates:
+        if self.setup_coordinate is None:
             self._distribution_masks = None
             return
-        if not isinstance(obs, dict) or self.thesis_mask_key not in obs:
-            raise ValueError("thesis hybrid policy requires the thesis_mask observation")
-        self._distribution_masks = {"thesis": obs[self.thesis_mask_key]}
+        if not isinstance(obs, dict) or self.trade_setup_mask_key not in obs:
+            raise ValueError("setup hybrid policy requires its configured eligibility mask")
+        self._distribution_masks = {self.setup_coordinate: obs[self.trade_setup_mask_key]}
 
     def forward(
         self, obs: Any, deterministic: bool = False
@@ -329,12 +343,15 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
             hybrid_action_coordinates=self.hybrid_action_coordinates,
             sl_mode_defer_threshold=self.hybrid_thresholds["sl_mode"],
             tp_mode_defer_threshold=self.hybrid_thresholds["tp_mode"],
-            thesis_mask_key=self.thesis_mask_key,
         )
+        if self.setup_coordinate == "trade_setup":
+            data["trade_setup_mask_key"] = self.trade_setup_mask_key
+        elif self.setup_coordinate == "thesis":
+            data["thesis_mask_key"] = self.thesis_mask_key
         return data
 
 
-class ThesisConditionedActorHeads(nn.Module):
+class TradeSetupConditionedActorHeads(nn.Module):
     """Market-only thesis selector with an execution actor conditioned on that thesis."""
 
     def __init__(
@@ -352,10 +369,17 @@ class ThesisConditionedActorHeads(nn.Module):
             for index, name in enumerate(self.coordinates)
             if name in _CATEGORICAL_COORDINATES
         }
-        if "thesis" not in self.categorical_indices:
-            raise ValueError("thesis-conditioned policy requires a thesis action coordinate")
+        setup_coordinate = next(
+            (name for name in ("trade_setup", "thesis") if name in self.categorical_indices),
+            None,
+        )
+        if setup_coordinate is None:
+            raise ValueError("setup-conditioned policy requires a setup action coordinate")
+        self.setup_coordinate: str = setup_coordinate
         self.execution_categorical_indices = {
-            name: index for name, index in self.categorical_indices.items() if name != "thesis"
+            name: index
+            for name, index in self.categorical_indices.items()
+            if name != self.setup_coordinate
         }
         self.continuous_indices = tuple(
             index
@@ -371,8 +395,8 @@ class ThesisConditionedActorHeads(nn.Module):
         self.latent_dim = int(latent_dim)
         self.embedding_dim = int(embedding_dim)
         self.hidden_dim = int(hidden_dim)
-        self.thesis_logits = nn.Linear(latent_dim, THESIS_CATEGORY_COUNT)
-        self.thesis_embedding = nn.Embedding(THESIS_CATEGORY_COUNT, embedding_dim)
+        self.thesis_logits = nn.Linear(latent_dim, TRADE_SETUP_CATEGORY_COUNT)
+        self.thesis_embedding = nn.Embedding(TRADE_SETUP_CATEGORY_COUNT, embedding_dim)
         self.execution_body = nn.Sequential(
             nn.Linear(latent_dim + embedding_dim, hidden_dim),
             nn.SiLU(),
@@ -403,9 +427,11 @@ class ThesisConditionedActorHeads(nn.Module):
             nn.init.orthogonal_(module.weight, gain=0.01)
             nn.init.zeros_(module.bias)
 
-    def thesis(self, market_latent: torch.Tensor) -> torch.Tensor:
-        """Compute thesis logits from market state only."""
+    def trade_setup(self, market_latent: torch.Tensor) -> torch.Tensor:
+        """Compute primary setup logits from market state only."""
         return cast(torch.Tensor, self.thesis_logits(market_latent))
+
+    thesis = trade_setup
 
     def execution(
         self, market_latent: torch.Tensor, thesis_ids: torch.Tensor
@@ -417,12 +443,13 @@ class ThesisConditionedActorHeads(nn.Module):
         return cast(torch.Tensor, self.continuous_mean(latent)), logits
 
 
-class ThesisConditionedHybridBoxDistribution(SB3Distribution):
+class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
     """Hierarchical Box distribution: select thesis, then condition execution on it."""
 
-    def __init__(self, actor: ThesisConditionedActorHeads, action_width: int):
+    def __init__(self, actor: TradeSetupConditionedActorHeads, action_width: int):
         super().__init__()  # type: ignore[no-untyped-call]
         self.actor = actor
+        self.setup_coordinate = actor.setup_coordinate
         self.action_width = int(action_width)
         self.market_latent: torch.Tensor | None = None
         self.log_std: torch.Tensor | None = None
@@ -433,7 +460,7 @@ class ThesisConditionedHybridBoxDistribution(SB3Distribution):
 
     def proba_distribution_net(self, *args: Any, **kwargs: Any) -> nn.Module:
         del args, kwargs
-        raise NotImplementedError("hierarchical heads are built by ThesisConditionedActorHeads")
+        raise NotImplementedError("hierarchical heads are built by TradeSetupConditionedActorHeads")
 
     def proba_distribution(
         self,
@@ -441,14 +468,14 @@ class ThesisConditionedHybridBoxDistribution(SB3Distribution):
         log_std: torch.Tensor,
         thesis_logits: torch.Tensor,
         masks: dict[str, torch.Tensor] | None = None,
-    ) -> ThesisConditionedHybridBoxDistribution:
+    ) -> TradeSetupConditionedHybridBoxDistribution:
         self.market_latent = market_latent
         self.log_std = log_std
-        if masks is None or "thesis" not in masks:
-            raise ValueError("thesis-conditioned distribution requires thesis_mask")
-        mask = masks["thesis"].to(device=thesis_logits.device) > 0.0
+        if masks is None or self.setup_coordinate not in masks:
+            raise ValueError("setup-conditioned distribution requires its eligibility mask")
+        mask = masks[self.setup_coordinate].to(device=thesis_logits.device) > 0.0
         if mask.shape != thesis_logits.shape or not bool(mask.any(dim=1).all()):
-            raise ValueError("thesis_mask must match logits and allow at least one category")
+            raise ValueError("setup eligibility mask must match logits and allow a category")
         self.mask = mask
         self.thesis = _categorical_distribution(
             thesis_logits.masked_fill(~mask, torch.finfo(thesis_logits.dtype).min)
@@ -490,7 +517,7 @@ class ThesisConditionedHybridBoxDistribution(SB3Distribution):
             raise RuntimeError("call proba_distribution before sampling actions")
         thesis_ids = cast(torch.Tensor, self.thesis.sample())  # type: ignore[no-untyped-call]
         normal, categorical = self._selected_distributions(thesis_ids)
-        classes = {"thesis": thesis_ids}
+        classes = {self.setup_coordinate: thesis_ids}
         classes.update(
             {name: cast(torch.Tensor, dist.sample()) for name, dist in categorical.items()}  # type: ignore[no-untyped-call]
         )
@@ -501,7 +528,7 @@ class ThesisConditionedHybridBoxDistribution(SB3Distribution):
             raise RuntimeError("call proba_distribution before selecting an action")
         thesis_ids = self.thesis.logits.argmax(dim=-1)
         normal, categorical = self._selected_distributions(thesis_ids)
-        classes = {"thesis": thesis_ids}
+        classes = {self.setup_coordinate: thesis_ids}
         classes.update({name: dist.logits.argmax(dim=-1) for name, dist in categorical.items()})
         return self._pack(normal.mean, classes)
 
@@ -533,7 +560,7 @@ class ThesisConditionedHybridBoxDistribution(SB3Distribution):
         if self.thesis is None:
             raise RuntimeError("call proba_distribution before evaluating actions")
         classes = self._class_ids(actions)
-        thesis_ids = classes["thesis"]
+        thesis_ids = classes[self.setup_coordinate]
         normal, categorical = self._selected_distributions(thesis_ids)
         continuous_index = torch.as_tensor(
             self.actor.continuous_indices, dtype=torch.long, device=actions.device
@@ -560,6 +587,8 @@ class ThesisConditionedHybridBoxDistribution(SB3Distribution):
             torch.Tensor,
             self.thesis.entropy(),  # type: ignore[no-untyped-call]
         )
+
+    trade_setup_entropy = thesis_entropy
 
     def entropy(self) -> torch.Tensor:
         """Exact entropy of the hierarchical policy via the chain rule."""
@@ -588,20 +617,31 @@ class ThesisConditionedHybridBoxDistribution(SB3Distribution):
         return self.thesis_entropy() + conditional_by_row
 
 
-class ThesisConditionedClampedStdMultiInputPolicy(HybridClampedStdMultiInputPolicy):
+class TradeSetupConditionedClampedStdMultiInputPolicy(HybridClampedStdMultiInputPolicy):
     """PPO policy with a market-only thesis head and thesis-conditioned execution."""
 
     def __init__(
         self,
         *args: Any,
+        trade_setup_embedding_dim: int | None = None,
+        trade_setup_execution_hidden_dim: int | None = None,
         thesis_embedding_dim: int = 32,
         thesis_execution_hidden_dim: int = 128,
         **kwargs: Any,
     ) -> None:
-        self.thesis_embedding_dim = int(thesis_embedding_dim)
-        self.thesis_execution_hidden_dim = int(thesis_execution_hidden_dim)
-        self.conditioned_actor: ThesisConditionedActorHeads | None = None
-        self.conditioned_distribution: ThesisConditionedHybridBoxDistribution | None = None
+        self.trade_setup_embedding_dim = int(
+            thesis_embedding_dim if trade_setup_embedding_dim is None else trade_setup_embedding_dim
+        )
+        self.trade_setup_execution_hidden_dim = int(
+            thesis_execution_hidden_dim
+            if trade_setup_execution_hidden_dim is None
+            else trade_setup_execution_hidden_dim
+        )
+        # Attribute aliases are required when cloudpickle restores old checkpoints.
+        self.thesis_embedding_dim = self.trade_setup_embedding_dim
+        self.thesis_execution_hidden_dim = self.trade_setup_execution_hidden_dim
+        self.conditioned_actor: TradeSetupConditionedActorHeads | None = None
+        self.conditioned_distribution: TradeSetupConditionedHybridBoxDistribution | None = None
         super().__init__(*args, **kwargs)
 
     def _build(self, lr_schedule: Any) -> None:
@@ -613,12 +653,12 @@ class ThesisConditionedClampedStdMultiInputPolicy(HybridClampedStdMultiInputPoli
         if len(self.hybrid_action_coordinates) != int(action_shape[0]):
             raise ValueError("hybrid coordinate count differs from action-space width")
         old_parameters = set(self.action_net.parameters()) | {self.log_std}
-        actor_heads = ThesisConditionedActorHeads(
+        actor_heads = TradeSetupConditionedActorHeads(
             self.mlp_extractor.latent_dim_pi,
             self.hybrid_action_coordinates,
             self.hybrid_thresholds,
-            self.thesis_embedding_dim,
-            self.thesis_execution_hidden_dim,
+            self.trade_setup_embedding_dim,
+            self.trade_setup_execution_hidden_dim,
         )
         self.action_net = actor_heads
         self.conditioned_actor = actor_heads
@@ -632,21 +672,22 @@ class ThesisConditionedClampedStdMultiInputPolicy(HybridClampedStdMultiInputPoli
         self.optimizer.add_param_group(
             {"params": list(self.action_net.parameters()) + [self.log_std], "lr": lr_schedule(1)}
         )
-        self.conditioned_distribution = ThesisConditionedHybridBoxDistribution(
+        self.conditioned_distribution = TradeSetupConditionedHybridBoxDistribution(
             actor_heads, int(action_shape[0])
         )
 
     def _get_action_dist_from_latent(
         self, latent_pi: torch.Tensor
-    ) -> ThesisConditionedHybridBoxDistribution:
+    ) -> TradeSetupConditionedHybridBoxDistribution:
         clip_policy_log_std(self, self.log_std_min, self.log_std_max)
         if self.conditioned_actor is None or self.conditioned_distribution is None:
             raise RuntimeError("thesis-conditioned policy was not built")
-        thesis_logits = self.conditioned_actor.thesis(latent_pi)
+        thesis_logits = self.conditioned_actor.trade_setup(latent_pi)
         distribution = self.conditioned_distribution.proba_distribution(
             latent_pi, self.log_std, thesis_logits, masks=self._distribution_masks
         )
         self.last_thesis_entropy = distribution.thesis_entropy().detach()
+        self.last_trade_setup_entropy = self.last_thesis_entropy
         return distribution
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
@@ -655,18 +696,40 @@ class ThesisConditionedClampedStdMultiInputPolicy(HybridClampedStdMultiInputPoli
             hybrid_action_coordinates=self.hybrid_action_coordinates,
             sl_mode_defer_threshold=self.hybrid_thresholds["sl_mode"],
             tp_mode_defer_threshold=self.hybrid_thresholds["tp_mode"],
-            thesis_mask_key=self.thesis_mask_key,
-            thesis_embedding_dim=self.thesis_embedding_dim,
-            thesis_execution_hidden_dim=self.thesis_execution_hidden_dim,
         )
+        if "trade_setup" in self.hybrid_action_coordinates:
+            data.update(
+                trade_setup_mask_key=self.trade_setup_mask_key,
+                trade_setup_embedding_dim=self.trade_setup_embedding_dim,
+                trade_setup_execution_hidden_dim=self.trade_setup_execution_hidden_dim,
+            )
+        else:
+            data.update(
+                thesis_mask_key=self.thesis_mask_key,
+                thesis_embedding_dim=self.thesis_embedding_dim,
+                thesis_execution_hidden_dim=self.thesis_execution_hidden_dim,
+            )
         return data
+
+
+class ThesisConditionedClampedStdMultiInputPolicy(TradeSetupConditionedClampedStdMultiInputPolicy):
+    """Legacy policy class path retained for cloudpickled SB3 checkpoints."""
 
 
 __all__ = [
     "HybridActorHeads",
     "HybridBoxDistribution",
     "HybridClampedStdMultiInputPolicy",
+    "TradeSetupConditionedActorHeads",
+    "TradeSetupConditionedHybridBoxDistribution",
+    "TradeSetupConditionedClampedStdMultiInputPolicy",
     "ThesisConditionedActorHeads",
     "ThesisConditionedHybridBoxDistribution",
     "ThesisConditionedClampedStdMultiInputPolicy",
 ]
+
+
+# Nested actor/distribution objects are recreated from the policy class; old
+# checkpoint state dicts keep their historical ``thesis_*`` parameter names.
+ThesisConditionedActorHeads = TradeSetupConditionedActorHeads
+ThesisConditionedHybridBoxDistribution = TradeSetupConditionedHybridBoxDistribution

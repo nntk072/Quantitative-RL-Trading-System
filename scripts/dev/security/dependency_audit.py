@@ -119,7 +119,7 @@ def unexpected_skips(skipped: list[str]) -> list[str]:
 
 
 def uv_command() -> str:
-    configured = os.environ.get("UV_BIN") or os.environ.get("THESIS_UV")
+    configured = os.environ.get("UV_BIN") or os.environ.get("QRL_UV") or os.environ.get("THESIS_UV")
     command = configured or shutil.which("uv")
     if not command:
         raise RuntimeError("uv is required to export the frozen lockfile")
@@ -129,7 +129,7 @@ def uv_command() -> str:
 def run_audit(*, exceptions_path: Path, report_out: Path | None = None) -> int:
     exceptions = load_exceptions(exceptions_path)
     uv = uv_command()
-    with tempfile.TemporaryDirectory(prefix="thesis-security-audit-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="qrl-security-audit-") as temp_dir:
         requirements = Path(temp_dir) / "requirements.txt"
         exported = subprocess.run(
             [

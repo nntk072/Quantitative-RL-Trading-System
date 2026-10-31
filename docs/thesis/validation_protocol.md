@@ -22,13 +22,13 @@ Default dates live in `config/base/default.yaml` and `config/experiments.yaml`
     `oos_role: selection_acknowledged`, and make no confirmatory or pristine
     holdout claim from it. Do not use the same period again as final OOS.
 3. `experiments/variants/variant_ablation_runner.py`, invoked through
-   `thesis-experiment-run variants`, writes `oos_role: final_report_only` by default.
+   `qrl-experiment variants`, writes `oos_role: final_report_only` by default.
     Pass `--allow-locked-oos-for-selection` only for explicitly authorized
     exploratory selection on exposed data; record the selection acknowledgment.
-4. `thesis-train train` requires `--allow-locked-oos-for-selection` when used with
+4. `qrl-train train` requires `--allow-locked-oos-for-selection` when used with
     `--wandb` so the sweep does not log locked-OOS Sharpe by default.
     The bundled `config/wandb_sweep.yaml` opts in explicitly.
-5. Prefer `thesis-train train --walk-forward` (non-overlapping purged folds, T-03.1) for
+5. Prefer `qrl-train train --walk-forward` (non-overlapping purged folds, T-03.1) for
     selection metrics.
 6. Changing locked OOS dates is HUMAN-GATED and must update
     [threats_to_validity.md](threats_to_validity.md).

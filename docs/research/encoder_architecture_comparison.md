@@ -37,17 +37,43 @@ measurement, though still small relative to the GH200’s available memory.
 A separate 20,480-step pilot included the production preparation and callback
 path, followed by a 5,293-decision prefix replay from the training year.
 
-| Architecture | Executed trades in prefix | Ending prefix equity | No-trade action rate | Invalid thesis selections |
+| Architecture | Executed trades in prefix | Ending prefix equity | No-trade action rate | Invalid setup selections |
 |---|---:|---:|---:|---:|
 | Independent temporal encoders | 0 | Not reported | 53.8% | 0 |
 | Shared temporal encoder | 275 | $98,089.60 | 74.6% | 0 |
 | History-aware higher-timeframe summaries | 201 | $102,253.41 | 65.4% | 0 |
 | Latest-valid higher-timeframe state | 176 | $111,270.66 | 67.0% | 0 |
 
-Each architecture selected multiple thesis categories in this short screen.
+Each architecture selected multiple setup categories in this short screen.
 These figures describe an exposed training-period prefix, not a full-year or
 test result. They do not show that a faster architecture improves trading
 performance.
+
+## Full-budget three-model screen
+
+A separate seed-42 screen trained the TCN control, multi-timeframe encoder, and
+multi-timeframe reasoning variants for a requested 2,000,000 steps each, using
+eight environments and the shared data bundle. The terminal controller marked
+all three arms failed because each breached the training maximum-loss guardrail.
+All report-period replays also failed to survive their full period. The 2026
+period was already inspected and is report-only; these results cannot select a
+variant or establish confirmatory performance.
+
+| Model | Training return | Training trades | Report-period return | Report-period max drawdown | Report-period trades | Survival |
+|---|---:|---:|---:|---:|---:|---|
+| TCN control | −10.75% | 620 | −9.83% | 11.93% | 231 | Failed training and report-period survival |
+| Multi-timeframe encoder | −9.90% | 1,091 | −12.08% | 14.00% | 124 | Failed training and report-period survival |
+| Multi-timeframe reasoning | −9.98% | 500 | −10.28% | 17.62% | 1,761 | Failed training and report-period survival |
+
+The reasoning model's training Sharpe was −1.283, profit factor 0.847, and
+expectancy −$19.95 per trade. Its report-period Sharpe was −0.672, profit
+factor 0.956, and expectancy −$5.84 per trade. All three arms had the same
+terminal training-gate reason, `max_loss_stopped_trading`. Six training/test
+equity-to-PnL checks reconciled with zero mismatches. This is one seed, and the
+test period is exposed; do not infer an architectural ranking from it.
+
+The generated run report, per-arm summaries, logs, and manifests remain in
+[`the immutable experiment-run output`](../../outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/reports/experiment_run_results_summary.md).
 
 ## Conclusion
 

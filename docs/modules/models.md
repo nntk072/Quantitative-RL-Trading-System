@@ -50,6 +50,49 @@ Model capacity, input length, and number of timeframes affect speed and memory.
 Architecture comparisons are meaningful only when their data, action meaning,
 training budget, and evaluation rules are adequately matched.
 
+## UML
+
+The model UML separates observation representation, policy/value outputs, and
+the action contract. Encoder families are alternatives implemented by the
+model factory, not an assertion that every algorithm/encoder pairing exists.
+
+```mermaid
+classDiagram
+    class Observation
+    class ObservationSchema
+    class FeatureExtractor {
+      +forward(observation) latent
+    }
+    class TCNEncoder
+    class MTFEncoder
+    class MTFReasoningEncoder
+    class GRUEncoder
+    class PolicyHead {
+      +distribution(latent)
+      +sample_or_mode()
+    }
+    class ValueHead {
+      +estimate(latent) value
+    }
+    class ActorCriticPolicy {
+      +forward(observation)
+      +evaluate_actions(observation, action)
+    }
+    class ActionSchema
+    Observation --> ObservationSchema : conforms to
+    ObservationSchema --> FeatureExtractor : shapes input
+    TCNEncoder ..|> FeatureExtractor
+    MTFEncoder ..|> FeatureExtractor
+    MTFReasoningEncoder ..|> FeatureExtractor
+    GRUEncoder ..|> FeatureExtractor
+    FeatureExtractor --> PolicyHead : latent representation
+    FeatureExtractor --> ValueHead : latent representation
+    ActorCriticPolicy *-- FeatureExtractor
+    ActorCriticPolicy *-- PolicyHead
+    ActorCriticPolicy *-- ValueHead
+    PolicyHead --> ActionSchema : outputs interpreted by
+```
+
 ## Implementation reference
 
 Reusable neural components live in `models/`; PPO/SAC policy construction and

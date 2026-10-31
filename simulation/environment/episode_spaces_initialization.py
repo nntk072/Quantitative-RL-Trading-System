@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from gymnasium import spaces
 
-from decisioning.thesis import THESIS_CATEGORY_COUNT
+from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT
 
 from .entry_diagnostics import _empty_entry_diag
 from .mixin_base import RuntimeMixinBase
@@ -27,7 +27,10 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
         obs_window: int,
     ) -> None:
         # Per-step entry diagnostics (strategy_actions); reset each episode.
-        self._entry_diag: dict[str, int] = _empty_entry_diag(self.entry_state_machine is not None)
+        self._entry_diag: dict[str, int] = _empty_entry_diag(
+            self.entry_state_machine is not None,
+            legacy_thesis_contract=self.legacy_thesis_contract,
+        )
         self._previous_constraint_ratios: dict[str, float] = {
             "daily": 0.0,
             "max_loss": 0.0,
@@ -118,11 +121,11 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
                 shape=(regime_width,),
                 dtype=np.float32,
             )
-        if self.thesis_actions:
-            observation_space.spaces["thesis_mask"] = spaces.Box(
+        if self.trade_setup_actions:
+            observation_space.spaces[self._trade_setup_mask_key] = spaces.Box(
                 low=0.0,
                 high=1.0,
-                shape=(THESIS_CATEGORY_COUNT,),
+                shape=(TRADE_SETUP_CATEGORY_COUNT,),
                 dtype=np.float32,
             )
             # Add VAE latent to observation space if enabled

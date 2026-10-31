@@ -15,7 +15,12 @@ from decisioning.actions import (
     build_discrete_trading_action_schema,
 )
 from decisioning.observations import OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3
-from decisioning.thesis import ThesisActionSchema, build_thesis_action_schema
+from decisioning.trade_setup import (
+    LegacyThesisActionSchema,
+    TradeSetupActionSchema,
+    build_legacy_thesis_action_schema,
+    build_trade_setup_action_schema,
+)
 
 from .mixin_base import RuntimeMixinBase
 
@@ -47,7 +52,9 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
                 "repeated-payout mode requires a continuous risk action coordinate "
                 "(strategy_actions=true or continuous_actions=true)"
             )
-        self.action_schema: ActionSchema | DiscreteActionSchema | ThesisActionSchema
+        self.action_schema: (
+            ActionSchema | DiscreteActionSchema | TradeSetupActionSchema | LegacyThesisActionSchema
+        )
 
         # VAE for narrative embedding
         self.use_vae = use_vae
@@ -85,8 +92,13 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
             for param in vae.parameters():
                 param.requires_grad = False
 
-        if self.thesis_actions:
-            self.action_schema = build_thesis_action_schema(
+        if self.trade_setup_actions:
+            schema_builder = (
+                build_legacy_thesis_action_schema
+                if self.legacy_thesis_contract
+                else build_trade_setup_action_schema
+            )
+            self.action_schema = schema_builder(
                 has_sl_mode=self.allow_agent_sl_mode,
                 has_tp_mode=self.allow_agent_tp_mode,
                 has_multi_tp=self.allow_multi_tp,

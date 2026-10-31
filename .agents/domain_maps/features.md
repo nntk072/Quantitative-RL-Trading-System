@@ -20,13 +20,13 @@
 | `features/po3/ifvg_detection.py` | IFVG configuration and confirmation rules |
 | `features/po3/trigger_rules.py` | HTF/LTF PO3 entry trigger construction |
 | `features/po3/zones.py` | FVG zone lifecycle and plotting records |
-| `features/po3/config.py` | Compatibility exports for the former combined PO3 module |
+| `features/po3/__init__.py` | Public exports for current FVG/IFVG and trigger APIs |
 | `features/po3/po3_phase_state.py` | PO3 manipulation/distribution phases and IFVG-zone state |
 | `features/po3/ifvg_state.py` | Causal PO3 manipulation/reclaim/IFVG phase-state construction |
 | `features/pipeline/normalization.py` | Rolling z-score normalization with legacy masked-window and frozen-fold modes |
 | `features/context/session_levels.py` | CT-anchored session OHLC, prior period H/L, quadrants |
 | `features/context/reachability.py` | Causal take-profit room cap and risk-ratio reachability |
-| `features/pipeline/context.py` | Assembles policy context, reachable-R and fold-local feature views |
+| `features/pipeline/walkforward_feature_fitting.py` | Builds fold-local feature views while fitting only on fold training rows |
 | `features/context/entry_ideas.py` | Builds multi-hot entry-idea signals and source-timeframe context |
 | `market_data/transforms/align.py` | HTF → M1 alignment (used by features) |
 
@@ -56,7 +56,7 @@
 | `build_po3_state()` | `features/po3/po3_phase_state.py` | PO3 manipulation/distribution state |
 | `build_ifvg_zone_features()` | `features/po3/po3_phase_state.py` | IFVG active-zone state features |
 | `rolling_zscore()` | `features/pipeline/normalization.py` | Train-mask normalization; `frozen_fold` holds final training statistics through validation |
-| `reachable_r_series()` | `features/pipeline/context.py` | Reachable reward room from feature-owned session-range estimates |
+| `reachable_r_series()` | `features/context/reachability.py` | Reachable reward room from feature-owned session-range estimates |
 | `max_tp_distance()` | `features/context/reachability.py` | Causal session-range cap from already closed NY sessions |
 | `align_timeframes()` | `market_data/transforms/align.py` | Causally forward-fill completed HTF features onto an M1 spine |
 
@@ -100,6 +100,12 @@
 
 ## Critical Invariants
 
+1. **Causal only** — no future references in indicators or structure signals.
+2. **Closed-bar HTF alignment** — higher-timeframe values become visible only after source-candle completion; alignment forward-fills and never back-fills.
+3. **Training-only fit scope** — fitted normalization uses training rows and remains fixed on validation/evaluation rows.
+4. **Cache identity** — source bars, feature configuration, output ordering, and normalization semantics contribute to cache identity; update the feature-cache version when schema or meaning changes.
+5. **Observation schema** — raw price-level context is not silently added to normalized model sequences; validity and eligibility stay separate from feature values.
+
 ## Change Map
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
@@ -115,11 +121,6 @@
 - **Expected edit radius:** one feature implementation, its focused test, and the pipeline composer only when stage wiring changes.
 - **Must not depend on:** trading execution/order code, training workflows, or model implementations.
 
-1. **Causal only** — no `.shift(-1)` or future reference in any indicator
-2. **HTF alignment uses ffill** — `align_timeframes` forward-fills only (never bfill)
-3. **Fold fit scope** — `frozen_fold` fits rolling statistics on fold training rows and holds the final training statistics through validation; `legacy_masked_window` remains a separately named compatibility mode
-4. **Cache version bump** — `FEATURE_CACHE_VERSION` must change when columns change
-5. **Raw price levels excluded from model seq** — `MTF_RAW_SUFFIXES` lists stems to exclude
 ## Verified Source Paths
 
 - `features/pipeline/feature_matrix_builder.py`
@@ -131,4 +132,3 @@
 - `features/context/reachability.py`
 - `features/technical/indicators.py`
 - `tests/unit/features/test_stage_a_observation.py`
-- `features/contracts.py`

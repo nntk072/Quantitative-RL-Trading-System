@@ -12,7 +12,7 @@ on the held-out slice, so its Sharpe/drawdown/PnL are directly comparable
 to the RL agent and rule-based baselines.
 
 Example:
-    thesis-train lstm-baseline \
+    qrl-train lstm-baseline \
         --bars-csv data/us100_2025.csv --features-csv data/us100_feat.csv \
         --epochs 20 --out outputs/lstm_sweep.pt
 """

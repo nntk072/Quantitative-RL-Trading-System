@@ -11,7 +11,7 @@
 # cost -1R, so the agent is pushed toward hit rate rather than size.
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 cd "$REPO"
 
 # shellcheck source=/dev/null

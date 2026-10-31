@@ -88,7 +88,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
             ):
                 current_decision = self._decision_action
                 selected_names = (
-                    "_selected_thesis",
+                    "_selected_trade_setup",
                     "_selected_sl_anchor",
                     "_selected_tp_fraction",
                     "_selected_exit_mode",

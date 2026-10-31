@@ -42,7 +42,7 @@ nvidia-smi
 | ARM64, GH200 | `.venv` | `tools/setup-venv` with an ARM64 `uv` binary |
 | x86_64, H100/H200 | `.venv-x86` | `tools/setup-venv-x86` |
 | x86_64, V100 | `.venv-v100` | `tools/setup-venv-v100`; verify `sm_70` and a real CUDA operation |
-| x86_64, MI210 | `/scratch/work/nguyenl37/.venv-mi210` | Separate ROCm setup; not part of current thesis runs |
+| x86_64, MI210 | `/scratch/work/nguyenl37/.venv-mi210` | Separate ROCm setup; not part of the current project run environment |
 
 Select the environment from inside the allocation:
 
@@ -118,5 +118,5 @@ persistent environment to work around an import stall.
 ## Related references
 
 - [Command examples](RUNNING_COMMANDS.md)
-- [Reproducibility requirements](../reproducibility.md)
+- [Reproducibility requirements](../concepts/reproducibility.md)
 - [Agent Slurm rules](../../.agents/rules/triton-slurm.md)

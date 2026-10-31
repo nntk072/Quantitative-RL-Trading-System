@@ -3,7 +3,7 @@
 # Run only in a named, persistent login-node tmux session after user approval.
 set -Eeuo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/replacement18_seed50_train2025_test2026_current_mtf_20261019.yaml}"
 EXPERIMENT_RUN_ID="${EXPERIMENT_RUN_ID:-replacement18_seed50_train2025_test2026_current_mtf_20261019}"
 OUT_DIR="$REPO/outputs/experiment_runs/$EXPERIMENT_RUN_ID"

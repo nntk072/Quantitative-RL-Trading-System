@@ -1,23 +1,25 @@
-# Aalto_MS_Thesis — Agent Guide
+# Quantitative RL Trading System — Agent Guide
 
 Quantitative RL trading system. PPO/SAC agents learn entry/exit timing on US100/US500
 using structure-aware features (SMT divergence, PO3 state, liquidity sweeps, FVG zones).
 
-## Active research roadmap
+## Active research workflow
 
 Use [`docs/thesis/master_project_execution_plan.md`](docs/thesis/master_project_execution_plan.md)
-as the single operational queue for thesis readiness, the active experiment run,
-throughput work, and Q0–Q7. Older plans are technical references and evidence,
-not parallel work queues. Agent implementation plans and working notes belong
-outside the repository in `/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/`.
-Preserve the roadmap's stage gates and current experiment run safety constraints.
+as the operational queue for the current thesis submission work. It is a
+project-specific research plan, not the architecture or documentation index.
+Use [Research](docs/research/README.md) for the framework's general research
+methodology and evidence. Older plans are references, not parallel work
+queues. Agent implementation plans and working notes belong outside the
+repository in `/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/`.
+Preserve the active plan's evidence gates and experiment-run safety constraints.
 
 ## Build & Test
 
 ```bash
 uv sync                              # install deps
-thesis-data prepare                       # raw CSV → parquet → features
-thesis-train train --mvp   # smoke test (30 days)
+qrl-data prepare                       # raw CSV → parquet → features
+qrl-train train --mvp   # smoke test (30 days)
 
 # Local (implementation): scoped checks only
 .venv/bin/ruff format --check <touched paths>  # ARM/GH200; use matching venv tools
@@ -40,7 +42,7 @@ Do not use `uv run` for these checks on ARM. The login-host `uv` may be an
 x86-64 executable and fail with `Exec format error` inside an ARM allocation.
 Preserve the full-tree Ruff/Mypy requirements and scoped-pytest rule.
 For lock, export, and environment setup commands that require `uv`, provide a
-native ARM64 binary through `THESIS_UV` when the login-home `uv` is x86-64; the
+native ARM64 binary through `QRL_UV` when the login-home `uv` is x86-64; the
 canonical checks, setup helpers, and Make dependency gate honor that override.
 
 Full rule: `.agents/rules/ci-verification.md` (all agents). Commit checklist:
@@ -186,7 +188,7 @@ Helpers: [`scripts/compute/slurm/`](scripts/compute/slurm/) (`status.sh`, `find_
 
 - **Reuse first:** if a GPU tmux/`srun` already exists, run train/eval/tests
   there (`tmux send-keys`).
-- **GPU allocation:** standing user authorization permits necessary thesis
+- **GPU allocation:** standing user authorization permits necessary research
   allocations. Reuse an existing allocation first; before a new one, inspect
   every candidate node's live GPU availability, allocated/free CPUs, and
   allocated/free host RAM. Never use `srun --test-only` or scheduler forecasts;
@@ -197,7 +199,7 @@ Helpers: [`scripts/compute/slurm/`](scripts/compute/slurm/) (`status.sh`, `find_
   creating an overlapping request.
   Do not create short diagnostic jobs or fan out Slurm steps.
 - **Where computation runs:** use a suitable existing GPU-node allocation for
-  thesis computation whenever the workload can use a GPU. Never run training,
+  project computation whenever the workload can use a GPU. Never run training,
   evaluation, feature construction, or other memory/CPU-intensive work directly
   on the normal x86 login host or in login tmux. For CPU-only work, inspect a
   candidate CPU node's live CPU/RAM availability, obtain any required allocation
@@ -220,9 +222,9 @@ Helpers: [`scripts/compute/slurm/`](scripts/compute/slurm/) (`status.sh`, `find_
   configured/allocated GPU inventory. Do not use `srun --test-only`. An approved
   successor behind an explicit
   dependency starts its 60-second resource-wait clock only after the dependency
-  clears. MI210 is excluded for the current thesis work. Preserve the
+  clears. MI210 is excluded for the current project research. Preserve the
   cancellation approval rules for every existing or unrelated job.
-  The current thesis experiment run has a user-set hard cap of **2 GH200 GPUs total**
+  The current experiment run has a user-set hard cap of **2 GH200 GPUs total**
   across all active allocations, and at most 2 GH200s in any one request. This
   is an aggregate cap: do not combine jobs or node requests whose GH200 counts
   sum to more than 2 (for example, 1 on gpuarm1 plus 2 on gpuarm2, or 2 on

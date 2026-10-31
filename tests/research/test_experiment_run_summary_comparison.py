@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from scripts.research.thesis.evaluation.compare_experiment_run_summaries import render_comparison
+from scripts.research.analysis.evaluation.compare_experiment_run_summaries import render_comparison
 
 
 def _summary(

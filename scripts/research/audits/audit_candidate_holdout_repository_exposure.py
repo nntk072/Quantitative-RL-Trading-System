@@ -10,7 +10,7 @@ from typing import Any
 
 import pandas as pd
 
-ROOT = Path("/scratch/work/nguyenl37/Aalto_MS_Thesis")
+ROOT = Path(__file__).resolve().parents[3]
 SOURCE_FILES = (
     ROOT / "data/US100.cash_202412300105_202610162349.csv",
     ROOT / "data/US500.cash_202412300105_202610162349.csv",

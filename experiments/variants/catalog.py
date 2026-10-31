@@ -248,7 +248,7 @@ def render_catalog(catalog: dict[str, Any]) -> str:
         "# Model and Experiment Variant Catalog",
         "",
         "Generated from `config/variant_catalog.yaml` and resolved experiment settings.",
-        "Regenerate with `thesis-experiment-run catalog --write`; validate with `--check`.",
+        "Regenerate with `qrl-experiment catalog --write`; validate with `--check`.",
         "Settings stay in their source YAML files; A/B labels are local to each family.",
         "",
         "## Policy algorithms",

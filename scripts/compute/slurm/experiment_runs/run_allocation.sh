@@ -3,7 +3,7 @@
 # controller is rank 0; additional ranks, if any, keep the allocation alive.
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/18_variant_seed42_20m_exploratory_selection_acknowledged_gpu_balanced_20261014.yaml}"
 EXPERIMENT_RUN_ID="ladder18_seed42_20m_exploratory_selection_acknowledged_gpu_balanced_20261014"
 OUT_DIR="$REPO/outputs/experiment_runs/$EXPERIMENT_RUN_ID"

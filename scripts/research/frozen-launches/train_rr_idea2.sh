@@ -7,7 +7,7 @@
 # dollar PnL. Only the strategy differs, so the two runs are comparable.
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 cd "$REPO"
 
 # shellcheck source=/dev/null

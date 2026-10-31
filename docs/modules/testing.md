@@ -51,3 +51,44 @@ as evidence for later code.
 Tests are organized by behavior and domain under `tests/`. A module guide
 should link the most relevant tests when readers need to see which contract is
 covered; there is no need to duplicate test code in documentation.
+
+## UML
+
+This UML maps a behavior contract to its test layers and reports. A passing
+result supports only the contract and cases that were actually exercised.
+
+```mermaid
+classDiagram
+    class BehaviorContract {
+      +preconditions
+      +expected_behavior
+      +invariants
+    }
+    class TestCase {
+      +arrange()
+      +act()
+      +assert_result()
+    }
+    class UnitTest
+    class IntegrationTest
+    class ResearchValidation
+    class QualityGate
+    class TestRun {
+      +command
+      +environment
+      +result
+    }
+    class TestEvidence {
+      +scope
+      +passed
+      +limitations
+    }
+    class Report
+    TestCase --> BehaviorContract : verifies
+    UnitTest --|> TestCase
+    IntegrationTest --|> TestCase
+    ResearchValidation --|> TestCase
+    QualityGate o-- TestRun : aggregates
+    TestRun --> TestEvidence : records
+    TestEvidence --> Report : supports
+```

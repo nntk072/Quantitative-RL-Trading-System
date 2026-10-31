@@ -2,7 +2,7 @@
 # Run the frozen selected-pair experiment run in one existing GH200 allocation.
 set -Eeuo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261019.yaml}"
 EXPERIMENT_RUN_ID="${EXPERIMENT_RUN_ID:-rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261019}"
 WORKERS="${RQ1_WORKERS:-${SLURM_NNODES:-1}}"

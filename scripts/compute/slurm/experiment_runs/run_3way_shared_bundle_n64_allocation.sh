@@ -2,7 +2,7 @@
 # Run the three strategy variants with shared bundles and 64 vector envs each.
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/3_strategy_shared_bundle_n64_seed42_20m_20261014.yaml}"
 EXPERIMENT_RUN_ID="ladder3_shared_bundle_n64_seed42_20m_20261014"
 OUT_DIR="$REPO/outputs/experiment_runs/$EXPERIMENT_RUN_ID"

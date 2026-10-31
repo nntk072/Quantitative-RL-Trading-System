@@ -10,7 +10,7 @@ parameters:
   arch:
     values: [gru, transformer]
   use_vae:
-    # NOTE: thesis-train train raises NotImplementedError for
+    # NOTE: qrl-train train raises NotImplementedError for
     # --use-vae until the VAE pipeline exists (Master Roadmap Stage 6).
     # Keep this at 0 until then; set to 1 once VAE lands.
     value: 0
@@ -29,7 +29,7 @@ parameters:
 command:
   - uv
   - run
-  - thesis-train
+  - qrl-train
   - train
   - --algo
   - ${parameters.algo}

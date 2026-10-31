@@ -252,69 +252,86 @@ if _SB3_AVAILABLE:
                     bins = np.digitize(coordinate, [-1.0 / 3.0, 1.0 / 3.0])
                     for bin_index, label in enumerate(("low", "mid", "high")):
                         row[f"action/{name}_hist/{label}"] = float(np.mean(bins == bin_index))
-            thesis_index = names.index("thesis") if "thesis" in names else None
-            observations = getattr(buffer, "observations", {})
-            thesis_mask = (
-                observations.get("thesis_mask") if isinstance(observations, dict) else None
+            setup_coordinate = next(
+                (name for name in ("trade_setup", "thesis") if name in names), None
             )
-            if thesis_index is not None and thesis_mask is not None:
-                from decisioning.thesis import THESIS_CANDIDATES, THESIS_CATEGORY_COUNT
+            setup_index = names.index(setup_coordinate) if setup_coordinate is not None else None
+            setup_prefix = "thesis" if setup_coordinate == "thesis" else "trade_setup"
+            observations = getattr(buffer, "observations", {})
+            mask_key = "thesis_mask" if setup_coordinate == "thesis" else "trade_setup_mask"
+            setup_mask = observations.get(mask_key) if isinstance(observations, dict) else None
+            if setup_index is not None and setup_mask is not None:
+                from decisioning.trade_setup import (
+                    TRADE_SETUP_CANDIDATES,
+                    TRADE_SETUP_CATEGORY_COUNT,
+                )
 
-                thesis_ids = np.floor(
-                    np.clip((actions[:, thesis_index] + 1.0) * 0.5, 0.0, 1.0)
-                    * THESIS_CATEGORY_COUNT
+                setup_ids = np.floor(
+                    np.clip((actions[:, setup_index] + 1.0) * 0.5, 0.0, 1.0)
+                    * TRADE_SETUP_CATEGORY_COUNT
                 ).astype(np.int64)
-                thesis_ids = np.clip(thesis_ids, 0, THESIS_CATEGORY_COUNT - 1)
-                masks = np.asarray(thesis_mask, dtype=np.float32).reshape(-1, THESIS_CATEGORY_COUNT)
-                if len(masks) != len(thesis_ids):
-                    raise ValueError("rollout thesis mask and thesis action counts differ")
-                valid = masks[np.arange(len(masks)), thesis_ids] > 0.0
-                no_trade = thesis_ids == 0
-                trade_ids = thesis_ids[~no_trade]
+                setup_ids = np.clip(setup_ids, 0, TRADE_SETUP_CATEGORY_COUNT - 1)
+                masks = np.asarray(setup_mask, dtype=np.float32).reshape(
+                    -1, TRADE_SETUP_CATEGORY_COUNT
+                )
+                if len(masks) != len(setup_ids):
+                    raise ValueError("rollout setup mask and setup action counts differ")
+                valid = masks[np.arange(len(masks)), setup_ids] > 0.0
+                no_trade = setup_ids == 0
+                trade_ids = setup_ids[~no_trade]
                 trade_eligible_steps = masks[:, 1:].sum(axis=1) > 0
                 selected_ideas = {
-                    THESIS_CANDIDATES[int(candidate_id)].idea for candidate_id in trade_ids
+                    TRADE_SETUP_CANDIDATES[int(candidate_id)].idea for candidate_id in trade_ids
                 }
                 selected_timeframes = {
-                    THESIS_CANDIDATES[int(candidate_id)].setup_timeframe
+                    TRADE_SETUP_CANDIDATES[int(candidate_id)].setup_timeframe
                     for candidate_id in trade_ids
                 }
                 eligible_counts = masks[:, 1:].sum(axis=1)
                 row.update(
                     {
-                        "thesis/entropy_mean_nats": (entropy_mean),
-                        "thesis/no_trade_rate": float(np.mean(no_trade)),
-                        "thesis/no_trade_rate_when_eligible": float(
+                        f"{setup_prefix}/entropy_mean_nats": (entropy_mean),
+                        f"{setup_prefix}/no_trade_rate": float(np.mean(no_trade)),
+                        f"{setup_prefix}/no_trade_rate_when_eligible": float(
                             np.sum(no_trade & trade_eligible_steps)
                             / max(1, int(np.sum(trade_eligible_steps)))
                         ),
-                        "thesis/trade_eligible_step_rate": float(np.mean(trade_eligible_steps)),
-                        "thesis/no_trade_count": float(np.sum(no_trade)),
-                        "thesis/selected_trade_count": float(len(trade_ids)),
-                        "thesis/selected_idea_count": float(len(selected_ideas)),
-                        "thesis/selected_timeframe_count": float(len(selected_timeframes)),
-                        "thesis/eligible_trade_candidate_mean": float(np.mean(eligible_counts)),
-                        "thesis/invalid_selection_count": float(np.sum(~valid)),
+                        f"{setup_prefix}/trade_eligible_step_rate": float(
+                            np.mean(trade_eligible_steps)
+                        ),
+                        f"{setup_prefix}/no_trade_count": float(np.sum(no_trade)),
+                        f"{setup_prefix}/selected_trade_count": float(len(trade_ids)),
+                        f"{setup_prefix}/selected_idea_count": float(len(selected_ideas)),
+                        f"{setup_prefix}/selected_timeframe_count": float(len(selected_timeframes)),
+                        f"{setup_prefix}/eligible_trade_candidate_mean": float(
+                            np.mean(eligible_counts)
+                        ),
+                        f"{setup_prefix}/invalid_selection_count": float(np.sum(~valid)),
                     }
                 )
                 for idea in sorted(item for item in selected_ideas if item is not None):
-                    row[f"thesis/selected_idea/{idea}_count"] = float(
+                    row[f"{setup_prefix}/selected_idea/{idea}_count"] = float(
                         sum(
-                            THESIS_CANDIDATES[int(candidate_id)].idea == idea
+                            TRADE_SETUP_CANDIDATES[int(candidate_id)].idea == idea
                             for candidate_id in trade_ids
                         )
                     )
                 for timeframe in sorted(item for item in selected_timeframes if item is not None):
-                    row[f"thesis/selected_timeframe/{timeframe}_count"] = float(
+                    row[f"{setup_prefix}/selected_timeframe/{timeframe}_count"] = float(
                         sum(
-                            THESIS_CANDIDATES[int(candidate_id)].setup_timeframe == timeframe
+                            TRADE_SETUP_CANDIDATES[int(candidate_id)].setup_timeframe == timeframe
                             for candidate_id in trade_ids
                         )
                     )
-                model.logger.record("thesis/entropy_mean_nats", row["thesis/entropy_mean_nats"])
-                model.logger.record("thesis/no_trade_rate", row["thesis/no_trade_rate"])
                 model.logger.record(
-                    "thesis/invalid_selection_count", row["thesis/invalid_selection_count"]
+                    f"{setup_prefix}/entropy_mean_nats", row[f"{setup_prefix}/entropy_mean_nats"]
+                )
+                model.logger.record(
+                    f"{setup_prefix}/no_trade_rate", row[f"{setup_prefix}/no_trade_rate"]
+                )
+                model.logger.record(
+                    f"{setup_prefix}/invalid_selection_count",
+                    row[f"{setup_prefix}/invalid_selection_count"],
                 )
             for key, value in self._funnel.items():
                 row[f"entry_funnel/{key}"] = float(value)

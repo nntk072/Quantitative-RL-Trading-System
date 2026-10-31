@@ -35,6 +35,56 @@ Resource availability changes over time. A throughput result belongs to its
 measured hardware, software environment, model geometry, and workload; it is
 not a general device guarantee.
 
+## UML
+
+This UML shows workload needs, hardware capability, scheduling, execution, and
+measured resource outcomes as separate concepts.
+
+```mermaid
+classDiagram
+    class JobSpec {
+      +command
+      +cpu_count
+      +memory_bytes
+      +accelerator_request
+    }
+    class ResourceProfile {
+      +cpu_count
+      +memory_bytes
+      +device_type
+    }
+    class DeviceCapabilities {
+      +device_name
+      +memory_bytes
+      +supported_precision
+    }
+    class ExecutionBackend {
+      +submit(JobSpec)
+      +status(job_id)
+    }
+    class SlurmBackend
+    class LocalBackend
+    class ResourceInventory
+    class WorkerLayout {
+      +environment_count
+      +process_count
+    }
+    class ResourceMeasurement {
+      +cpu_use
+      +host_memory
+      +gpu_use
+      +throughput
+    }
+    JobSpec --> ResourceProfile : requests
+    ResourceInventory o-- DeviceCapabilities
+    ResourceInventory --> ResourceProfile : informs
+    SlurmBackend ..|> ExecutionBackend
+    LocalBackend ..|> ExecutionBackend
+    ExecutionBackend --> JobSpec : runs
+    JobSpec --> WorkerLayout : configures
+    WorkerLayout --> ResourceMeasurement : measured as
+```
+
 ## Implementation reference
 
 The `compute/` module owns device discovery, resource profiles, and scheduler

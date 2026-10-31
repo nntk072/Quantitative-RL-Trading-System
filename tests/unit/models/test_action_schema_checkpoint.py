@@ -7,7 +7,10 @@ import pytest
 from gymnasium import spaces
 
 from decisioning.actions import build_action_schema, build_discrete_trading_action_schema
-from decisioning.thesis import build_thesis_action_schema
+from decisioning.trade_setup import (
+    build_legacy_thesis_action_schema,
+    build_trade_setup_action_schema,
+)
 from learning.rl.agent import (
     LegacyFourToFiveActionAdapter,
     bind_discrete_action_schema,
@@ -95,8 +98,8 @@ def test_checkpoint_validation_exposes_versioned_schema_manifest() -> None:
     assert model._action_schema["checkpoint_metadata"] == "versioned"
 
 
-def test_thesis_checkpoint_schema_is_versioned_and_never_legacy_migrated() -> None:
-    schema = build_thesis_action_schema(has_sl_mode=True, has_tp_mode=True)
+def test_legacy_thesis_checkpoint_schema_remains_versioned_and_readable() -> None:
+    schema = build_legacy_thesis_action_schema(has_sl_mode=True, has_tp_mode=True)
     model = _model(schema.width, schema.key, schema.version)
     validate_model_action_schema(model, schema)
     assert model._action_schema["kind"] == "thesis_overlay"
@@ -110,6 +113,17 @@ def test_thesis_checkpoint_schema_is_versioned_and_never_legacy_migrated() -> No
             allow_legacy=True,
             legacy_layout_key=schema.key,
         )
+
+
+def test_trade_setup_checkpoint_schema_uses_canonical_metadata() -> None:
+    schema = build_trade_setup_action_schema(has_sl_mode=True, has_tp_mode=True)
+    model = _model(schema.width, schema.key, schema.version)
+    validate_model_action_schema(model, schema)
+    assert model._action_schema["kind"] == "trade_setup_overlay"
+    assert (
+        model._action_schema["trade_setup_candidate_schema_version"] == "trade-setup-candidate-v1"
+    )
+    assert model._action_schema["checkpoint_metadata"] == "versioned"
 
 
 def test_discrete_checkpoint_requires_and_validates_named_categories() -> None:

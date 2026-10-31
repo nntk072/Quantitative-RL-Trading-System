@@ -99,7 +99,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                         if isinstance(feat_row, pd.Series):
                             stored_feat_row = feat_row.copy()
                         selected_names = (
-                            "_selected_thesis",
+                            "_selected_trade_setup",
                             "_selected_sl_anchor",
                             "_selected_tp_fraction",
                             "_selected_exit_mode",
@@ -126,17 +126,28 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             "decision_action": dict(self._decision_action),
                             "selected": {name: getattr(self, name) for name in selected_names},
                         }
-                        thesis = self._selected_thesis if self.thesis_actions else None
+                        thesis = self._selected_trade_setup if self.trade_setup_actions else None
+                        if thesis is not None and self.legacy_thesis_contract:
+                            from decisioning.trade_setup import LEGACY_THESIS_ACTION_VERSION
+
+                            setup_identity = {
+                                "thesis_candidate_id": int(thesis.candidate_id),
+                                "thesis_schema_version": LEGACY_THESIS_ACTION_VERSION,
+                            }
+                        elif thesis is not None:
+                            from decisioning.trade_setup import TRADE_SETUP_ACTION_VERSION
+
+                            setup_identity = {
+                                "trade_setup_candidate_id": int(thesis.candidate_id),
+                                "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
+                            }
+                        else:
+                            setup_identity = {}
                         self.trade_log.append(
                             {
                                 "type": "order_submit",
                                 "direction": discrete_action,
-                                "thesis_candidate_id": (
-                                    int(thesis.candidate_id) if thesis is not None else None
-                                ),
-                                "thesis_schema_version": (
-                                    str(self.action_schema.version) if thesis is not None else ""
-                                ),
+                                **setup_identity,
                                 "primary_idea": thesis.idea if thesis is not None else "",
                                 "primary_setup_timeframe": (
                                     thesis.setup_timeframe if thesis is not None else ""

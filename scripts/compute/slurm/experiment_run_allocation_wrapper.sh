@@ -3,7 +3,7 @@
 # the already-approved two-node allocation, then run its unchanged controller.
 set -Eeuo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 ALLOCATION_SCRIPT="$REPO/scripts/compute/slurm/experiment_runs/run_18way_cpumask_allocation.sh"
 OUT_DIR="$REPO/outputs/experiment_runs/${EXPERIMENT_RUN_ID:?}"
 PREPARED="$OUT_DIR/.cache_recovery_prepared_${SLURM_JOB_ID:?}"
@@ -69,7 +69,7 @@ if [[ -s "$OUT_DIR/experiment_run.json" ]]; then
   done
 
   index_retry=1
-  while ! python "$REPO/scripts/research/thesis/evidence/build_experiment_run_evidence_index.py" \
+  while ! python "$REPO/scripts/research/analysis/evidence/build_experiment_run_evidence_index.py" \
     --experiment-run-dir "$OUT_DIR" \
     --output "$OUT_DIR/reports/thesis_evidence_index_before_${SLURM_JOB_ID}.json"; do
     touch "$FAILED" "$GPU_GATE_FAILED"
@@ -89,7 +89,7 @@ while true; do
     "$REPO/tests/unit/experiments/test_triton_experiment_run_recovery.py" \
     "$REPO/tests/unit/experiments/test_triton_prebuild_cache.py" \
     "$REPO/tests/unit/experiments/test_triton_experiment_run_worker_dispatch.py" \
-    "$REPO/tests/unit/thesis/test_thesis_experiment_run_evidence_index.py" \
+    "$REPO/tests/unit/research/test_experiment_evidence_index.py" \
     -q; then
     break
   fi
@@ -148,7 +148,7 @@ bash "$ALLOCATION_SCRIPT"
 allocation_status=$?
 set -e
 wait "$manager_pid" || manager_status=$?
-if ! python "$REPO/scripts/research/thesis/evidence/build_experiment_run_evidence_index.py" \
+if ! python "$REPO/scripts/research/analysis/evidence/build_experiment_run_evidence_index.py" \
   --experiment-run-dir "$OUT_DIR" \
   --output "$OUT_DIR/reports/thesis_evidence_index_after_${SLURM_JOB_ID}.json"; then
   echo "ERROR: could not finalize the experiment run evidence index" >&2

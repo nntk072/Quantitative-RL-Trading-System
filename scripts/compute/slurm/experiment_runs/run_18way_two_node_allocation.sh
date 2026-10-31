@@ -2,7 +2,7 @@
 # Prepare and run the acknowledged exploratory matrix in one two-node job.
 set -Eeuo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/18_variant_seed42_20m_purelegacy_shared_bundle_n64_20261014.yaml}"
 EXPERIMENT_RUN_ID="ladder18_seed42_20m_purelegacy_shared_bundle_n64_20261014"
 OUT_DIR="$REPO/outputs/experiment_runs/$EXPERIMENT_RUN_ID"
@@ -20,7 +20,7 @@ PY
 )"
   current_sha="$(git -C "$REPO" rev-parse HEAD)"
   if [[ -n "$expected_sha" && "$expected_sha" != "$current_sha" ]]; then
-    PINNED_REPO="${EXPERIMENT_RUN_PINNED_SOURCE_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis_pinned_937bae}"
+    PINNED_REPO="${EXPERIMENT_RUN_PINNED_SOURCE_REPO:?Set EXPERIMENT_RUN_PINNED_SOURCE_REPO to the intended preserved source checkout}"
     if [[ ! -d "$PINNED_REPO" || "$(git -C "$PINNED_REPO" rev-parse HEAD)" != "$expected_sha" ]]; then
       echo "experiment run source mismatch: expected=$expected_sha current=$current_sha; no matching pinned checkout" >&2
       exit 2

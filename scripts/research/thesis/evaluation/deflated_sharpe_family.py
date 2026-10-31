@@ -1,106 +1,28 @@
-# mypy: ignore-errors
-"""Deflated Sharpe for the six finished seed-50 rescores.
+"""Deprecated import adapter; implementation lives in the research analysis package."""
 
-Uses trade P&L as the return sample so Sharpe, skew, and kurtosis refer to
-the same observations. Does not start another training run.
-"""
-
-from __future__ import annotations
-
-import json
+import sys
+from importlib import import_module as _import_module
 from pathlib import Path
+from typing import Any
 
-import numpy as np
+for _candidate in Path(__file__).resolve().parents:
+    if (_candidate / "pyproject.toml").is_file():
+        sys.path.insert(0, str(_candidate))
+        break
 
-from configuration.paths import repository_root
-
-ROOT = repository_root(__file__)
-
-from evaluation.metrics.deflated_sharpe import (  # noqa: E402
-    deflated_sharpe_probability,
-    expected_maximum_sharpe,
-    return_moments,
-)
-
-FAMILY = {
-    "base_gru": "20260922_024235_116145_rl_train_seed50_gru",
-    "base_tcn": "20260922_024235_194714_rl_train_seed50_tcn",
-    "base_tf": "20260922_024235_109978_rl_train_seed50_transformer",
-    "po3_tcn": "20260922_024144_516380_rl_train_seed50_tcn",
-    "po3_gru": "20260922_024144_521964_rl_train_seed50_gru",
-    "po3_tf": "20260922_024144_531686_rl_train_seed50_transformer",
-}
+_implementation = _import_module("scripts.research.analysis.evaluation.deflated_sharpe_family")
 
 
-def _trade_pnls(path: Path) -> np.ndarray:
-    import pandas as pd
-
-    df = pd.read_csv(path)
-    closes = df[df["type"].astype(str).str.contains("close")]
-    return pd.to_numeric(closes["pnl"], errors="coerce").dropna().to_numpy()
+def __getattr__(name: str) -> Any:
+    return getattr(_implementation, name)
 
 
-def main() -> None:
-    root = ROOT / "outputs" / "rescore_sl_fill"
-    rows = []
-    for name in FAMILY:
-        pnls = _trade_pnls(root / name / "testing" / "trades.csv")
-        sr, skew, kurt, n = return_moments(pnls)
-        checklist = json.loads((root / name / "checklist.json").read_text())
-        rows.append(
-            {
-                "name": name,
-                "source": FAMILY[name],
-                "trade_sharpe": sr,
-                "skew": skew,
-                "kurtosis": kurt,
-                "n_trades": n,
-                "bar_sharpe": checklist["test"]["sharpe"],
-                "test_pnl": checklist["test"]["pnl"],
-            }
-        )
-    sharpes = [row["trade_sharpe"] for row in rows]
-    sr_std = float(np.std(sharpes, ddof=1))
-    sr0 = expected_maximum_sharpe(sr_std, n_trials=len(rows))
-    best = max(rows, key=lambda row: row["trade_sharpe"])
-    best_prob = deflated_sharpe_probability(
-        best["trade_sharpe"],
-        sr0=sr0,
-        n_obs=best["n_trades"],
-        skew=best["skew"],
-        kurtosis=best["kurtosis"],
-    )
-    for row in rows:
-        row["sr0"] = sr0
-        row["deflated_sharpe_probability"] = deflated_sharpe_probability(
-            row["trade_sharpe"],
-            sr0=sr0,
-            n_obs=row["n_trades"],
-            skew=row["skew"],
-            kurtosis=row["kurtosis"],
-        )
-    payload = {
-        "family": "rescore_sl_fill test trades, six finished 20M policies",
-        "n_trials": len(rows),
-        "trade_sharpe_std": sr_std,
-        "sr0": sr0,
-        "selected": best["name"],
-        "selected_deflated_sharpe_probability": best_prob,
-        "runs": rows,
-        "note": (
-            "Sharpe here is mean(trade PnL) / sample std, not the annualised bar Sharpe. "
-            "The in-flight 20260926 retrain is not included."
-        ),
-    }
-    dest = root / "deflated_sharpe.json"
-    dest.write_text(json.dumps(payload, indent=2) + "\n")
-    print(
-        json.dumps(
-            {k: payload[k] for k in ("selected", "selected_deflated_sharpe_probability", "sr0")},
-            indent=2,
-        )
-    )
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(dir(_implementation)))
 
 
 if __name__ == "__main__":
-    main()
+    entry = getattr(_implementation, "main", None)
+    if not callable(entry):
+        raise SystemExit("This compatibility module has no command-line entry point.")
+    raise SystemExit(entry())

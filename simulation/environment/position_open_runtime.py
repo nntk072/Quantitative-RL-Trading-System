@@ -37,15 +37,28 @@ class PositionOpenRuntimeMixin(RuntimeMixinBase):
         self._position_sequence += 1
         self.position.position_id = f"e{self._episode_identity}:p{self._position_sequence}"
         self.position.initial_size = float(self.position.size)
-        thesis = self._selected_thesis if self.thesis_actions else None
+        thesis = self._selected_trade_setup if self.trade_setup_actions else None
         if thesis is not None:
-            from decisioning.thesis import THESIS_ACTION_VERSION
+            from decisioning.trade_setup import (
+                LEGACY_THESIS_ACTION_VERSION,
+                TRADE_SETUP_ACTION_VERSION,
+            )
 
-            self.position.thesis_candidate_id = int(thesis.candidate_id)
-            self.position.thesis_schema_version = THESIS_ACTION_VERSION
+            schema_version = (
+                LEGACY_THESIS_ACTION_VERSION
+                if self.legacy_thesis_contract
+                else TRADE_SETUP_ACTION_VERSION
+            )
+            if self.legacy_thesis_contract:
+                self.position.thesis_candidate_id = int(thesis.candidate_id)
+                self.position.thesis_schema_version = schema_version
+                self.position.thesis_decision_time = bar_time
+            else:
+                self.position.trade_setup_candidate_id = int(thesis.candidate_id)
+                self.position.trade_setup_schema_version = schema_version
+                self.position.trade_setup_decision_time = bar_time
             self.position.primary_idea = str(thesis.idea or "")
             self.position.primary_setup_timeframe = str(thesis.setup_timeframe or "")
-            self.position.thesis_decision_time = bar_time
         self.position.sl_price = sl_price
         self.position.sl_initial_price = sl_price
         self.position.breakeven_done = False

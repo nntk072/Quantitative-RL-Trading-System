@@ -87,6 +87,7 @@ class TradingEnv(
         strategy: TradingStrategy | None = None,
         strategy_actions: bool = False,
         thesis_actions: bool = False,
+        trade_setup_actions: bool = False,
         trader_actions: bool | None = None,
         sl_buffer_pts: float = 0.0,
         strategy_reward: Any = None,
@@ -227,8 +228,16 @@ class TradingEnv(
             strategy_weight,
             equity_log_growth_scale,
         )
-        if thesis_actions and not resolved_strategy_actions:
-            raise ValueError("env.thesis_actions requires strategy_actions=true")
+        if thesis_actions and trade_setup_actions:
+            raise ValueError(
+                "configure either legacy thesis_actions or trade_setup_actions, not both"
+            )
+        if (thesis_actions or trade_setup_actions) and not resolved_strategy_actions:
+            raise ValueError("trade setup actions require strategy_actions=true")
+        self.legacy_thesis_contract = bool(thesis_actions)
+        self.trade_setup_actions = bool(thesis_actions or trade_setup_actions)
+        # Runtime compatibility alias; persisted config key remains readable.
+        self.thesis_actions = bool(thesis_actions)
         self._initialize_strategy_runtime(
             strategy, resolved_strategy_actions, sl_buffer_pts, bundle_data, bars, features
         )
@@ -245,7 +254,7 @@ class TradingEnv(
             scheduled_session_closes,
             session_start,
             regime_observation,
-            thesis_actions,
+            self.trade_setup_actions,
         )
         self._initialize_action_and_episode_contracts(
             continuous_actions,

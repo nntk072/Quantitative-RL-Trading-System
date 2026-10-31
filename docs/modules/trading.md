@@ -42,7 +42,7 @@ or broker behavior. Stops, targets, partial exits, spread, slippage, and
 commissions affect realized results. The policy can learn a preference, but
 hard account limits are enforced by the environment or broker-risk boundary.
 
-For a thesis-conditioned entry, structural stop choices use the selected setup
+For a setup-conditioned entry, structural stop choices use the selected setup
 timeframe or a higher one; the stop is not automatically taken from the highest
 available timeframe. Targets can use any valid timeframe. If the
 standard-deviation idea is selected, its level 1 reference comes from that
@@ -55,6 +55,70 @@ the reserved remainder after a target has filled.
 Broker-neutral rules do not guarantee broker equivalence. Market hours,
 contract sizes, margin, order rejection, quote availability, and fill behavior
 can differ between historical simulation and a live venue.
+
+## UML
+
+This UML shows the broker-neutral trading domain from an intent through risk,
+order geometry, execution, and account change.
+
+```mermaid
+classDiagram
+    class TradingIntent {
+      +direction
+      +entry_reference
+      +stop_reference
+      +target_references
+    }
+    class RiskPolicy {
+      +assess(AccountState, TradingIntent) RiskDecision
+    }
+    class RiskDecision {
+      +accepted
+      +approved_size
+      +reason
+    }
+    class AccountState {
+      +balance
+      +equity
+      +positions
+      +risk_capacity
+    }
+    class OrderGeometry {
+      +entry
+      +stop
+      +targets
+      +validate()
+    }
+    class Position {
+      +side
+      +volume
+      +open_price
+      +manage()
+    }
+    class Broker {
+      +submit(order) Fill
+      +close(position) Fill
+    }
+    class CostModel {
+      +spread
+      +slippage
+      +commission
+    }
+    class Fill {
+      +price
+      +time
+      +costs
+    }
+    TradingIntent --> RiskPolicy : assessed by
+    RiskPolicy --> RiskDecision
+    AccountState --> RiskPolicy : current limits
+    RiskDecision --> OrderGeometry : authorizes
+    OrderGeometry --> Broker : submitted to
+    Broker --> Fill : returns
+    Fill --> Position : opens or changes
+    Position --> AccountState : updates
+    CostModel --> Fill : prices execution
+```
 
 ## Implementation reference
 

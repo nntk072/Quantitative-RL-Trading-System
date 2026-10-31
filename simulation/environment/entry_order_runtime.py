@@ -44,15 +44,16 @@ class EntryOrderRuntimeMixin(RuntimeMixinBase):
         placed = None
         if self.strategy_actions:
             entry_context = entry_idea_context(feat_row, discrete_action)
-            selected_thesis = self._selected_thesis if self.thesis_actions else None
+            selected_trade_setup = self._selected_trade_setup if self.trade_setup_actions else None
             timeframe_floor = (
-                str(selected_thesis.setup_timeframe)
-                if selected_thesis is not None
+                str(selected_trade_setup.setup_timeframe)
+                if selected_trade_setup is not None
                 else str(entry_context["stop_timeframe_floor"])
             )
             sd_timeframes = (
-                (str(selected_thesis.setup_timeframe),)
-                if selected_thesis is not None and str(selected_thesis.idea) == "standard_deviation"
+                (str(selected_trade_setup.setup_timeframe),)
+                if selected_trade_setup is not None
+                and str(selected_trade_setup.idea) == "standard_deviation"
                 else tuple(entry_context["standard_deviation_timeframes"])
             )
 
@@ -81,7 +82,7 @@ class EntryOrderRuntimeMixin(RuntimeMixinBase):
                     self.ema_runner_fraction if self._selected_exit_mode == "ema_21" else 0.0
                 ),
                 price_increment=float(self.cost_model.point_size),
-                thesis=selected_thesis,
+                thesis=selected_trade_setup,
             )
             sl_price = placed.sl_price
             tp_price = placed.tp_price

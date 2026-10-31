@@ -30,6 +30,42 @@ be able to understand the module before opening its implementation.
 Non-package folders such as `config/`, `data/`, `cache/`, `outputs/`,
 `scripts/`, and `tools/` are described in [Repository layout](repository_layout.md).
 
+## UML
+
+The package-level diagram is a navigation map. Detailed UML for each domain
+is embedded in its module guide below.
+
+```mermaid
+classDiagram
+    class Configuration
+    class MarketData
+    class Features
+    class Decisioning
+    class Simulation
+    class Trading
+    class Models
+    class Learning
+    class Training
+    class Evaluation
+    class Experiments
+    class Artifacts
+    class Compute
+    class LiveRuntime
+    class Integrations
+    Configuration --> MarketData
+    MarketData --> Features
+    Features --> Decisioning
+    Decisioning --> Models
+    Models --> Learning
+    Learning --> Simulation
+    Trading --> Simulation
+    Training --> Learning
+    Experiments --> Training
+    Evaluation --> Artifacts
+    Compute --> Training
+    LiveRuntime --> Integrations
+```
+
 ## Reading order
 
 For the full learning path, read configuration, market data, features,
@@ -37,9 +73,11 @@ decisioning, trading, simulation, models, learning, training, evaluation, and
 experiments. Read artifacts, compute, live runtime, integrations, Orchestra,
 and testing when working in those areas.
 
-The overview diagram is in [System architecture](../architecture.md). Human
-research findings are in [Research](../research/README.md). Operating
-instructions are in [Operations](../operations/triton.md).
+The system diagram is in [Architecture](../architecture/README.md). Domain
+terms are explained in [Concepts](../concepts/README.md), and exact schemas
+are in [Reference](../reference/README.md). Human research findings are in
+[Research](../research/README.md). Operating instructions are in
+[Operations](../operations/triton.md).
 
 ## Documentation rules
 

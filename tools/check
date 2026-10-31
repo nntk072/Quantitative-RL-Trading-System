@@ -3,7 +3,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 GATE="${1:-fast}"
-PYTHON_BIN="${THESIS_PYTHON:-}"
+# QRL_* names are canonical; THESIS_* remain deprecated fallbacks during migration.
+PYTHON_BIN="${QRL_PYTHON:-${THESIS_PYTHON:-}}"
 if [[ -z "$PYTHON_BIN" ]]; then
   case "$(uname -m)" in
     aarch64|arm64)
@@ -18,7 +19,7 @@ if [[ -z "$PYTHON_BIN" ]]; then
       ;;
   esac
 fi
-UV_BIN="${THESIS_UV:-}"
+UV_BIN="${QRL_UV:-${THESIS_UV:-}}"
 if [[ -z "$UV_BIN" && -n "$PYTHON_BIN" ]]; then
   PROJECT_UV="$(dirname "$PYTHON_BIN")/uv"
   if [[ -x "$PROJECT_UV" ]]; then
@@ -36,7 +37,7 @@ run_module() {
 }
 
 sync_dev() {
-  if [[ -z "$PYTHON_BIN" && "${THESIS_CHECK_NO_SYNC:-0}" != "1" ]]; then
+  if [[ -z "$PYTHON_BIN" && "${QRL_CHECK_NO_SYNC:-${THESIS_CHECK_NO_SYNC:-0}}" != "1" ]]; then
     "$UV_BIN" sync --extra dev
   fi
 }
@@ -69,11 +70,18 @@ run_quality() {
   run_module mypy .
 }
 run_architecture() { sync_dev; run_module pytest -q tests/architecture; }
+run_docs() {
+  sync_dev
+  run_module pytest -q tests/architecture/test_documentation_contracts.py
+  run_module tools.documentation.check_docs
+  run_module tools.documentation.package_dependency_model --check
+  run_module experiments.variants.catalog --check
+}
 run_graph_quality() {
   sync_dev
   run_module pytest -q tests/unit/tooling/test_code_graph_quality.py
   local graph_index path status
-  graph_index="$(mktemp "${TMPDIR:-/tmp}/thesis-graph-index.XXXXXX")"
+  graph_index="$(mktemp "${TMPDIR:-/tmp}/qrl-graph-index.XXXXXX")"
   rm -f -- "$graph_index"
   GIT_INDEX_FILE="$graph_index" git read-tree HEAD
 
@@ -126,7 +134,7 @@ run_unit() {
 run_build() {
   sync_dev
   local build_dir build_status
-  build_dir="$(mktemp -d "${TMPDIR:-/tmp}/thesis-build.XXXXXX")"
+  build_dir="$(mktemp -d "${TMPDIR:-/tmp}/qrl-build.XXXXXX")"
   if [[ -n "$PYTHON_BIN" ]]; then
     if "$PYTHON_BIN" -m build --outdir "$build_dir"; then
       build_status=0
@@ -194,6 +202,7 @@ case "$GATE" in
   security-secrets) run_security_secrets ;;
   quality) run_quality ;;
   architecture) run_architecture ;;
+  docs) run_docs ;;
   graph-quality) run_graph_quality ;;
   contracts) run_contracts ;;
   unit) run_unit ;;
@@ -204,7 +213,7 @@ case "$GATE" in
   parity) run_parity ;;
   training-smoke) run_training_smoke ;;
   fast) run_deps; run_architecture; run_contracts ;;
-  full) run_deps; run_security_deps; run_security_secrets; run_quality; run_architecture; run_graph_quality; run_contracts; run_unit; run_build; run_integration; run_parity; run_training_smoke ;;
+  full) run_deps; run_security_deps; run_security_secrets; run_quality; run_architecture; run_docs; run_graph_quality; run_contracts; run_unit; run_build; run_integration; run_parity; run_training_smoke ;;
   gpu|triton) run_gpu ;;
-  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|graph-quality|contracts|unit|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
+  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|docs|graph-quality|contracts|unit|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
 esac

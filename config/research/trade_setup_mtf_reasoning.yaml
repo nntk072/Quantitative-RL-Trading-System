@@ -1,0 +1,19 @@
+# Canonical primary trade-setup selection with the MTF reasoning encoder.
+# This is an opt-in configuration; it does not authorize a training run.
+env:
+  strategy_actions: true
+  trade_setup_actions: true
+  thesis_actions: false
+  agent_direction_control: false
+
+features:
+  include_strategy_state: true
+  entry_ideas:
+    enabled: true
+
+agent:
+  arch: mtf_reasoning
+
+ppo:
+  policy_distribution: trade_setup_hybrid_v1
+  actor_arch: shared

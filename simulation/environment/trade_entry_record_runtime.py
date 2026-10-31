@@ -4,7 +4,7 @@ from typing import Any
 
 import pandas as pd
 
-from features.context.thesis_candidates import active_thesis_candidates
+from features.context.trade_setup_candidates import active_trade_setup_candidates
 
 from .entry_diagnostics import _previous_session_audit
 from .entry_state import EntryCandidate
@@ -39,14 +39,29 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
         sweep_delay: float,
     ) -> None:
         assert self.position is not None
-        thesis = self._selected_thesis if self.thesis_actions else None
+        thesis = self._selected_trade_setup if self.trade_setup_actions else None
         primary_id = int(thesis.candidate_id) if thesis is not None else None
         supporting = [
             f"{candidate.idea}@{candidate.setup_timeframe}:{'long' if candidate.direction == 1 else 'short'}"
-            for candidate in active_thesis_candidates(feat_row)
+            for candidate in active_trade_setup_candidates(feat_row)
             if thesis is None or candidate.candidate_id != primary_id
         ]
-        from decisioning.thesis import THESIS_ACTION_VERSION
+        from decisioning.trade_setup import LEGACY_THESIS_ACTION_VERSION, TRADE_SETUP_ACTION_VERSION
+
+        if thesis is not None and self.legacy_thesis_contract:
+            setup_identity = {
+                "thesis_candidate_id": primary_id,
+                "thesis_schema_version": LEGACY_THESIS_ACTION_VERSION,
+                "thesis_decision_time": self.position.thesis_decision_time,
+            }
+        elif thesis is not None:
+            setup_identity = {
+                "trade_setup_candidate_id": primary_id,
+                "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
+                "trade_setup_decision_time": self.position.trade_setup_decision_time,
+            }
+        else:
+            setup_identity = {}
 
         self.trade_log.append(
             {
@@ -59,14 +74,10 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
                 "strategy": self.strategy.name,
                 "variant_id": str(getattr(self.strategy, "variant_id", self.strategy.name)),
                 "direction": discrete_action,
-                "thesis_candidate_id": primary_id,
-                "thesis_schema_version": THESIS_ACTION_VERSION if thesis is not None else "",
+                **setup_identity,
                 "primary_idea": thesis.idea if thesis is not None else "",
                 "primary_setup_timeframe": thesis.setup_timeframe if thesis is not None else "",
                 "primary_direction": thesis.direction if thesis is not None else 0,
-                "thesis_decision_time": (
-                    self.position.thesis_decision_time if thesis is not None else None
-                ),
                 "supporting_idea_timeframes": supporting,
                 "price": self.position.entry_price,
                 "bar": self.step_idx if decision_bar_idx is None else decision_bar_idx,

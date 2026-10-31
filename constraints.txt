@@ -134,7 +134,7 @@ protobuf==6.33.6
 py-key-value-aio==0.4.6
 pyarrow==25.0.0
 pyasn1-modules==0.4.2
-pyasn1==0.6.4
+pyasn1==0.6.5
 pycparser==2.23 ; implementation_name != 'PyPy'
 pydantic-core==2.46.5
 pydantic-settings==2.15.0

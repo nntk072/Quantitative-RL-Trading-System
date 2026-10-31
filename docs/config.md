@@ -1,200 +1,103 @@
-# Configuration Reference
+# Configuration
 
-All runtime configuration flows through the `configuration` package. The base
-is `config/base/default.yaml`; feature and strategy YAML files are partial
-overlays, validated against the default schema before OmegaConf merges them.
-Unknown nested keys, mapping/scalar shape changes, and incompatible scalar
-types fail at load time.
+Configuration files are the human-authored inputs to runtime behavior. The
+`configuration` package loads and validates them; domain packages define what
+their keys mean. The resolved configuration recorded with a run is the
+execution truth. A default file or catalog entry alone does not prove the
+settings used by a checkpoint.
 
----
+## Configuration sources
 
-## Base config (`config/base/default.yaml`)
+| Source | Purpose |
+|---|---|
+| `config/base/default.yaml` | Default sections for data, sessions, account, execution costs, risk, features, environment, learning algorithms, compute, and output. |
+| `config/features/` | Feature-specific overlays. |
+| `config/variants/` | Per-variant settings, including risk configuration. |
+| `config/experiments.yaml` | Selectable variant matrix and comparison definitions. |
+| `config/variant_catalog.yaml` | Classification metadata used to generate the reader-facing model catalog; it is not a runtime settings source. |
+| `config/research/` and `config/experiment_runs/` | Named research/run inputs that preserve explicit experiment identity. |
 
-| Section | Key paths | Purpose |
-|---------|-----------|---------|
-| `data` | `m1_files`, `tick_files`, `split.train_end`, `split.test_start` | Data sources and locked OOS split |
-| `session` | `tz`, `start`, `end` | Broker-tz NY eligibility window (`16:30`–`23:00`) |
-| `account` | `initial_balance`, `leverage`, `margin_pct` | Simulated account |
-| `costs` | `spread_us100`, `use_tick_execution`, `point_size` | Fill pricing |
-| `ftmo` | `daily_loss_limit`, `max_loss_limit`, `risk_per_trade_limit` | Training/eval dollar kill-switches |
-| `live_risk_overrides` | `risk_per_symbol`, `max_total_risk`, `stop_loss_pips` | Live MT5 percent-of-balance sizing |
-| `features` | `htf_timeframes`, opt-in flags (below) | Feature matrix composition |
-| `env` | `obs_window`, `action_type`, `strategy_actions` | Gymnasium environment |
-| `training` | `total_timesteps`, `max_days_mvp` | Training loop |
-| `ppo` / `sac` | algorithm hyperparameters | SB3 agent config |
+The configuration schema rejects unknown or structurally incompatible
+settings. Add a new key to its owning configuration section and consumer,
+validate it, and add tests for defaults and overrides.
 
-### Locked OOS split
+## Important setting groups
 
-```yaml
-data:
-  split:
-    train_end: "2025-12-31"   # in-sample ≤ this date
-    test_start: "2026-01-01"  # out-of-sample ≥ this date
-```
+| Group | Typical settings |
+|---|---|
+| `data` | Source files, tick inputs, timezone, split dates, and cache locations. |
+| `session` | Decision-window timezone and session boundaries. |
+| `account`, `ftmo`, `risk` | Initial capital, hard account limits, sizing mode, and risk values. |
+| `costs`, `execution` | Spread, quote source, tick execution, fill behavior, and latency. |
+| `features` | Timeframes and optional technical/structure/context features. |
+| `env` | Observation/action schema, windows, worker layout, reward, and environment behavior. |
+| `encoder`, `agent`, `ppo`, `sac` | Model architecture, algorithm, and learning settings. |
+| `quality_execution`, `quality_diagnostics` | Resource scaling and learning-quality diagnostics. |
+| `training`, `evaluation`, `output` | Run budget, replay/report behavior, and artifact locations. |
+| `live_risk_overrides` | Broker adapter risk settings, which require explicit parity review against simulation settings. |
 
-Variant configs must **not** override these dates.
+Use the exact effective configuration saved beside the run when reporting
+settings. Defaults may be overridden by a variant, experiment resolver, or
+command-line option.
 
----
+## Observation and action configuration
 
-## Feature opt-in flags (`features:`)
+The base currently selects the discrete action interface and account-state-v1
+observation schema unless a resolved variant changes those settings. Other
+runs may enable continuous strategy overlays, setup-conditioned actions,
+multiple-target coordinates, regime context, or multi-timeframe sequence
+branches. Their exact dimensions and meanings are documented in
+[observation schemas](reference/observation_schemas.md) and
+[action schemas](reference/action_schemas.md).
 
-All off by default in `default.yaml`. Enable via variant YAML or CLI override.
+A schema change can invalidate checkpoint compatibility even when tensor
+width remains unchanged. Preserve schema metadata in run artifacts.
 
-| Flag | Adds |
-|------|------|
-| `include_po3` | PO3 time-of-day phase tag |
-| `include_fvg_ifvg` | Per-TF FVG zone features |
-| `include_po3_full` | Full HTF-FVG → LTF-IFVG → entry-trigger pipeline |
-| `include_strategy_state` | Sweeps, BOS, PO3 state, IFVG zones (required for Idea 1/2 overlay) |
-| `include_session_ohlc` | CT-anchored session OHLC, prior-period H/L, quadrants |
-| `include_previous_session_pd` | Previous-session premium/discount context |
-| `smt` | `{enabled, timeframes}` — MTF SMT divergence |
-| `structure` | `{enabled, timeframes}` — MTF structure levels and BOS |
-| `liquidity` | `{enabled, timeframes}` — MTF liquidity sweeps |
-| `po3_state_mtf` | `{enabled, timeframes}` — MTF PO3 manipulation/distribution |
-| `ifvg_mtf` | `{enabled, timeframes}` — MTF IFVG active zones |
+## Risk and execution configuration
 
----
+Risk settings may be expressed as fixed dollar values, equity-relative values,
+or a configured dollar band depending on the selected policy and variant.
+Execution settings separately define costs and fill sources. Read the
+resolved variant file and saved run configuration to determine the units and
+effective thresholds. Do not infer them from a key name or a shared default.
 
-## Strategy overlay configs
+Hard account guardrails are enforced by the account/environment path. Learned
+risk penalties are an optimization signal and are not a replacement for the
+hard checks. Live risk overrides are a separate adapter surface; parity is
+not automatic.
 
-Selected via `--strategy` on `train_rl.py`. Merged over `default.yaml`.
+## Feature and cache configuration
 
-| CLI flag | YAML file | Idea |
-|----------|-----------|------|
-| `--strategy baseline` (default) | `config/1_baseline.yaml` | Idea 3 — legacy discrete/continuous actions |
-| `--strategy po3_ifvg` | `config/2_po3_ifvg.yaml` | Idea 1 — PO3 + IFVG overlay |
-| `--strategy distribution` | `config/3_distribution.yaml` | Idea 2 — distribution overlay |
+Feature overlays select which technical, session, structure, and entry-context
+families are built. Timeframe lists and completion/alignment rules determine
+what is available to a decision. Feature cache identity includes relevant
+source data and resolved feature settings; a manual cache-version change by
+itself is not sufficient to prove cache compatibility.
 
-Strategy overlays require **both**:
+Build reusable caches before training where the workflow supports it. Record
+the cache identity and input hashes with the run. See
+[market data](../market_data/README.md), [features](../features/README.md), and
+[reproducibility](concepts/reproducibility.md).
 
-```yaml
-features:
-  include_strategy_state: true
-env:
-  strategy_actions: true
-strategy:
-  name: "po3_ifvg"   # or "distribution"
-  # ... gates, risk ranges, TP targets, reward weights
-```
+The implementation versions are useful invalidation inputs, but cache
+compatibility also depends on source and resolved configuration hashes:
 
-## Per-variant risk policy
+| Cache identity | Definition | Current version |
+|---|---|---|
+| `BAR_CACHE_VERSION` | `market_data/loading/market_data_ingestion.py` | `v4-semantic-manifest` |
+| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v33-timeframe-entry-ideas` |
+| `TICK_CACHE_VERSION` | `market_data/loading/ticks.py` | `v4-semantic-manifest` |
 
-Every experiment registered in `config/experiments.yaml` has a corresponding
-`config/variants/<variant-name>.yaml` file. That file keeps the hard limits
-visible beside the variant and provides two selectable value modes:
+## Inspect a resolved run
 
-```yaml
-ftmo:
-  limit_value_mode: fixed_usd # or percent_equity
-```
+1. Identify the configured variant and comparison definition.
+2. Resolve the configuration using the repository's loader/experiment entry
+   point.
+3. Inspect the saved effective config and run manifest, including split,
+   costs, risk, model, schemas, reward, seed, and training budget.
+4. Confirm that the checkpoint metadata matches the observation and action
+   schemas used during evaluation.
 
-`fixed_usd` uses $1,000 per trade idea, $5,000 daily loss, and $10,000 maximum
-loss from initial equity. In `percent_equity` mode, the 1% per-trade and 5%
-daily limits use current equity; the 10% maximum-loss limit uses initial
-equity. The soft daily and maximum-loss limits match their hard thresholds.
-Both modes keep the separate $900 sizing ceiling and leave peak trailing
-drawdown disabled. Values are merged into the resolved run config for both
-direct variant training and experiment run workers.
-
-The generated [model and experiment variant catalog](model_variants.md) groups
-selectable variants by research question and reports their resolved algorithm,
-encoder, reward, strategy, and risk settings. Catalog metadata is descriptive;
-run settings remain in the source YAML files above and `config/experiments.yaml`.
-
----
-
-## Feature variant configs
-
-Passed via `--config` on `train_rl.py`. Control MTF feature expansion without
-changing the strategy overlay.
-
-| File | Enables |
-|------|---------|
-| `config/features/technical_mtf.yaml` | Technical indicators on M5/M15/H1 |
-| `config/features/po3_mtf.yaml` | PO3 phase tag on multiple TFs |
-| `config/features/fvg_ifvg_mtf.yaml` | FVG/IFVG zones on multiple TFs |
-| `config/features/full_po3_mtf.yaml` | All three Chain-F blocks (`include_po3`, `include_fvg_ifvg`, `include_po3_full`) |
-
-Example:
-
-```bash
-uv run thesis-train train --mvp \
-    --config config/features/full_po3_mtf.yaml --seed=42
-```
-
----
-
-## Cache versioning
-
-| Constant | File | Current value | Busts |
-|----------|------|---------------|-------|
-| `BAR_CACHE_VERSION` | `market_data/loading/market_data_ingestion.py` | `v4-semantic-manifest` | Stale bar parquet caches; each entry also has a semantic manifest and atomic completion |
-| `TICK_CACHE_VERSION` | `market_data/loading/ticks.py` | `v4-semantic-manifest` | Stale tick parquet caches; each entry also has a semantic manifest and atomic completion |
-| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v33-timeframe-entry-ideas` | Stale feature parquet caches |
-| Content hash | `features.pipeline.feature_cache_identity.feature_cache_content_hash()` | 16-hex digest of feature version/config, session/timezone inputs, source data, timeframe bars, normalization mode, and optional `train_mask` | Flag flip or data change must miss cache |
-
-**Rule:** bump the relevant constant whenever transform semantics or output
-schema change. Bar-cache identity includes source bytes, partition,
-symbol/timeframe, timezone, NY session end, timestamp convention, and price
-grid. Tick-cache identity includes source bytes, timezone, tick-session filter,
-and price grid. Both parquet types are published atomically and reused only
-when their completion manifest matches the identity and recorded row/order
-shape.
-Feature flags and source-data identity also contribute to the feature-cache
-content hash, so different resolved feature configurations use distinct cache
-paths.
-
-Cache file pattern:
-
-```
-cache/{symbol}_{tf}_{BAR_CACHE_VERSION}.parquet          # bars
-cache/{symbol}_{tf}_{BAR_CACHE_VERSION}.parquet.manifest.json
-cache/{symbol}_features_{FEATURE_CACHE_VERSION}_{content_hash}.parquet
-cache/{symbol}_features_{FEATURE_CACHE_VERSION}_{content_hash}.parquet.hash
-
-```
-
----
-
-## How configs compose
-
-1. `config/base/default.yaml` is always the base.
-2. `--config path/to/variant.yaml` merges over the base (OmegaConf).
-3. `--strategy po3_ifvg|distribution` additionally applies the strategy YAML
-   through `training.configuration.strategy_overlays` and the shared
-   configuration schema validator.
-4. Positional `key=value` overrides on the CLI merge last.
-
-```bash
-# Base + feature variant + CLI override
-uv run thesis-train train --mvp \
-    --config config/features/full_po3_mtf.yaml \
-    --strategy po3_ifvg \
-    env.obs_window=30
-```
-
-The run's merged config is saved to `outputs/<run>/config.yaml` for
-train/live parity.
-
----
-
-## Other config files
-
-| File | Purpose |
-|------|---------|
-| `config/vae.yaml` | VAE standalone training |
-| `config/wandb_sweep.yaml` | Weights & Biases sweep |
-| `config/symbols_config.yaml` | Live multi-symbol selection (`integrations/mt5/cli/multi_symbol_trading.py`, exposed by `live_trading.py`) |
-
----
-
-## References
-
-- [architecture.md](architecture.md) — pipeline contracts and overlay invariant
-- [RUNNING_COMMANDS.md](operations/RUNNING_COMMANDS.md) — CLI examples
-- [DEPLOYMENT.md](operations/DEPLOYMENT.md) — live risk alignment (`ftmo` vs `live_risk_overrides`)
-
-## Current action-vector and TP contract
-
-See [implementation-verified research reference](research_reference.md#action-space-layout-current-implementation) for the dimension formula, ordering, and opt-in TP/SL behavior. The base config sets `env.strategy_actions: false` and `env.action_type: "discrete"`, so the default action space is `Discrete(20)`. If `env.strategy_actions: true`, `allow_agent_sl_mode: true`, and direction control, TP mode and multi-TP are disabled, the overlay has six Box dimensions. With baseline continuous actions, the action space is a one-dimensional Box. See `simulation/environment/env.py`.
+Installed commands are listed in the [CLI reference](reference/cli.md). The
+[generated model catalog](model_variants.md) groups configured comparisons but
+does not contain authoritative runtime settings.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Transactionally rebuild all feature profiles used by the 18-variant thesis screen.
 set -euo pipefail
-cd /scratch/work/nguyenl37/Aalto_MS_Thesis
+cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 source scripts/compute/slurm/activate_venv.sh
 python scripts/maintenance/experiment-runs-or-cache/rebuild_named_prebuilt_feature_caches.py \
     --backup-dir data/prebuilt_feature_cache/backups/pre-18-profile-rebuild_20261017_job21020179 \

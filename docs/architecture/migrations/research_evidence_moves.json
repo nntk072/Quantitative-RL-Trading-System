@@ -1,0 +1,230 @@
+{
+  "migration": "research-machine-evidence-paths",
+  "reason": "Separate exact machine outputs from reader-facing research documentation; preserve file contents and historical run identity.",
+  "source_run_dates": [
+    "2026-10-27",
+    "2026-10-28"
+  ],
+  "files": [
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/daily_pnl.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/daily_pnl.png",
+      "sha256": "0cd3bc0c8b928ccc6faf8e01e2ed5fb323fb12f476692c4f923d53d49cc7a5fb"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/drawdown.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/drawdown.png",
+      "sha256": "9e6351bba65f36f76336f2f4c73c65f9fa7c4f432dfdb69456707fb4a1ad26dd"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/equity.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/equity.png",
+      "sha256": "6e5025dff9c275f3da061c231ccf13db24de7ec3e9c3e9be15de9d2a6b93128c"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/monthly_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/monthly_heatmap.png",
+      "sha256": "1a1f87e1377ac59061330122675a822491e53281e5f75a15053f5da8e3fd0ca1"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/returns_dist.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/returns_dist.png",
+      "sha256": "d99536ecf9845f0b7b75ab5d2e02e88348ac89fcb0dfbac11a9239e3bae4b19e"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/summary.txt",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/summary.txt",
+      "sha256": "43da3e4e5b5e925a60e2eafba5531fdcd6a723df633b2d905b8aa11d73ba6dc3"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/thesis_performance_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/thesis_performance_heatmap.png",
+      "sha256": "9c87b6f6a6ac575649e29df1dd83f74e7eecda5fa97b4ff7b73d19a8d971190d"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/thesis_policy_dynamics.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/thesis_policy_dynamics.png",
+      "sha256": "cd7d0c94ff052deb8a15db0e44ee741686eaeff4b83de032150b479022693c4f"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/thesis_policy_metrics.json",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/thesis_policy_metrics.json",
+      "sha256": "8720ae91be2238b55f6a5c9fe8f98318ee519b221fb2712eed033e01c0feeed4"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/testing/thesis_selection_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/thesis_selection_heatmap.png",
+      "sha256": "3c1455ed459ad9912123b91833e68169dad8b389233b96e90dc6dbd9a4142b2b"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/daily_pnl.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/daily_pnl.png",
+      "sha256": "6ffdaecefd5c0db9ee083809518f47d0553a3779669c2a2778da533fb29eccba"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/drawdown.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/drawdown.png",
+      "sha256": "fc68e75d0f945ef4e4df87e7bc5161b439d361f75ebf4a87f24441c78fd643bc"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/equity.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/equity.png",
+      "sha256": "ae385987a81c5709467a278c4b93ff64a9b5912416db5fc6336edca3434bde54"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/monthly_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/monthly_heatmap.png",
+      "sha256": "b2cadd5b65d2173f7e25297f625a142c51c61e190461c9ebd3f08becdaa5486a"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/returns_dist.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/returns_dist.png",
+      "sha256": "0f3c49db4f1d9b6cb3da897536acdc6f49ab26f555a6f3d7146bdcee259d8502"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/summary.txt",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/summary.txt",
+      "sha256": "fc6bffa0e74ca9fae1ed50f2d79c373ec455ac533c0e0547b7c6be93e28450bc"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/thesis_performance_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/thesis_performance_heatmap.png",
+      "sha256": "0bb209fe4b941e3f6d17254461a69d9c0ca0a3771806f993480851d8660a176b"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/thesis_policy_dynamics.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/thesis_policy_dynamics.png",
+      "sha256": "745674d81e4316d5de2eb3e53f0fc5f08e593564bfb52188374773979ee1f7e8"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/thesis_policy_metrics.json",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/thesis_policy_metrics.json",
+      "sha256": "e7e8bad906a927927112ff3b1217417398b0e85f590175ea57c4aa3eff7f532b"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/C/training/thesis_selection_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/training/thesis_selection_heatmap.png",
+      "sha256": "63ea6c142c2e546a25af527fec140187cdd1ad20a1a02b18d19e902159da3544"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/daily_pnl.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/daily_pnl.png",
+      "sha256": "f4fc8761597d9cc701185f4bded9ffd8dd41b816a5e5e227fc0d49184d4d4e6a"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/drawdown.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/drawdown.png",
+      "sha256": "6574b5f04667b4cb8c7d07219ce923b099c441e4dbf75382e78fdf0050b104b8"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/equity.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/equity.png",
+      "sha256": "86567065dad9a6eb305cf1b000d4f7decb7701ecee6c800b46948392c3e03fd2"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/monthly_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/monthly_heatmap.png",
+      "sha256": "1a1f87e1377ac59061330122675a822491e53281e5f75a15053f5da8e3fd0ca1"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/returns_dist.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/returns_dist.png",
+      "sha256": "f027ab3677782fe05ef7dd632ccd3a75ca104462da2d812909ffc3a6fb55271d"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/summary.txt",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/summary.txt",
+      "sha256": "45ae895598c63dac91cf9f328733d71f7835c772a864015540adfc702a23e13d"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/thesis_performance_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/thesis_performance_heatmap.png",
+      "sha256": "039b9b5f81fd67262382e367563fee29adb7893ad3a1e32a4726877504c208cb"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/thesis_policy_dynamics.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/thesis_policy_dynamics.png",
+      "sha256": "2a200de40ac359a868710ed08e94c33f6d3dfdd7081210431313aebafa9f2a01"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/thesis_policy_metrics.json",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/thesis_policy_metrics.json",
+      "sha256": "dcb03a2f622e1c16389302be4d5e482092e16845c87ee15afaa5323a0b1de118"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/testing/thesis_selection_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/thesis_selection_heatmap.png",
+      "sha256": "7bc69955985d458e8d516641bac4ec62a07f1581908cef6dae36c056f169c81a"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/daily_pnl.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/daily_pnl.png",
+      "sha256": "f2e3703cc24c9ed6445846cabdfce8d644cd6d3e1c24d40c5189cf15341e400c"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/drawdown.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/drawdown.png",
+      "sha256": "8facb0306f40bc9e42742cd74c5965f532996eb23327f73df28a83d3181d734a"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/equity.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/equity.png",
+      "sha256": "bf1e801099f8ca779e34062875e5f2bcab5cf61daa143405ffa082a0e15e3c3e"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/monthly_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/monthly_heatmap.png",
+      "sha256": "8240c2e5c545326fdc769ba92613058f3f6cbb09e8de971a7328610a1a7d9735"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/returns_dist.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/returns_dist.png",
+      "sha256": "ba1a580485884c13e3d6a5d0c596309cbf6283098b749de35506d6f04cdd4100"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/summary.txt",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/summary.txt",
+      "sha256": "94ad46ec8c68dca1583ec5bf2f826762d9cd2a85a8542252a102bb0efbdc6c38"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/thesis_performance_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/thesis_performance_heatmap.png",
+      "sha256": "ebc8bcf60204326fc8b978cbfae77c4e7b4b501ef667300944cf0d33bb978731"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/thesis_policy_dynamics.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/thesis_policy_dynamics.png",
+      "sha256": "1cb911c904864a9462f53100f0dd2cfbad64939f20a47d2ccd68d77e5301cd75"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/thesis_policy_metrics.json",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/thesis_policy_metrics.json",
+      "sha256": "7ec2d6b3a45ea3ee1d06bb99bff60dcb930368daec74825c4c81390227c4cd31"
+    },
+    {
+      "old_path": "docs/research/gh200_cd_benchmark_20261028/D/training/thesis_selection_heatmap.png",
+      "new_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/training/thesis_selection_heatmap.png",
+      "sha256": "050802e43a8b0451a43d5c67cd9940dbd86be9622cb81ea83ba11b1d51a9ddfc"
+    },
+    {
+      "old_path": "docs/research/figures/entry_ideas/h1_order_block_20261027.png",
+      "new_path": "evidence/research/entry_idea_context_previews/h1_order_block.png",
+      "sha256": "acd2e31959619729d3db747e0f624ed402c5a4a1b49ff2bb36b4bba225e216ea"
+    },
+    {
+      "old_path": "docs/research/figures/entry_ideas/h1_swing_fib_sd_20261027.png",
+      "new_path": "evidence/research/entry_idea_context_previews/h1_swing_fibonacci_levels.png",
+      "sha256": "6ddba8d9de6b6908170becaaedaaf114ab25e71cb44462bb8fc7cef425fadf90"
+    },
+    {
+      "old_path": "docs/research/figures/entry_ideas/h1_preview_metadata_20261027.json",
+      "new_path": "evidence/research/entry_idea_context_previews/source_metadata.json",
+      "sha256": "96950e865ee28708a46088a189d0cf6bb4410b812a36cf6909bc5c96479b08cd"
+    },
+    {
+      "old_path": "docs/research/directional_swing_cache_validation_20261027_v30.json",
+      "new_path": "evidence/research/directional_swing_cache_validation.json",
+      "sha256": "4af7406f64ff8e4b0c897012a9bfaec075da9119c27c5982217b42749a11f2c7"
+    }
+  ]
+}

@@ -39,6 +39,52 @@ Historical evaluation does not validate network reliability, broker rejections,
 partial fills, clock drift, or live slippage. Live risk must be checked against
 the broker’s actual contract and account values.
 
+## UML
+
+This UML describes the streaming inference boundary and the handoff from a
+saved policy to a broker-neutral signal and adapter request.
+
+```mermaid
+classDiagram
+    class MarketDataSource {
+      +latest_bars()
+      +latest_quotes()
+    }
+    class LiveStrategy {
+      +signal() LiveSignal
+    }
+    class LiveSignal {
+      +symbol
+      +direction
+      +intent
+    }
+    class RLStrategyAdapter {
+      +update_bars()
+      +build_observation()
+      +signal()
+    }
+    class SavedPolicy {
+      +predict(observation)
+    }
+    class ObservationSchema
+    class ActionSchema
+    class RiskGate {
+      +validate(intent)
+    }
+    class Trader {
+      +submit(intent)
+      +manage(position)
+    }
+    RLStrategyAdapter ..|> LiveStrategy
+    MarketDataSource --> RLStrategyAdapter : updates
+    RLStrategyAdapter --> ObservationSchema : builds
+    ObservationSchema --> SavedPolicy : input
+    SavedPolicy --> ActionSchema : output decoded by
+    ActionSchema --> RiskGate : intent checked
+    RiskGate --> LiveSignal : approved signal
+    LiveSignal --> Trader : submitted through
+```
+
 ## Implementation reference
 
 The `live/` module owns broker-neutral runtime behavior. Broker-specific

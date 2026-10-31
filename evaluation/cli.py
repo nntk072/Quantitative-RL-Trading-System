@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Callable
+from pathlib import Path
 
 
 def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
@@ -17,7 +18,8 @@ def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="thesis-evaluate")
+    program = Path(sys.argv[0]).name
+    parser = argparse.ArgumentParser(prog=program if program != "pytest" else "qrl-evaluate")
     parser.add_argument("command", choices=("reanalyze",))
     args, rest = parser.parse_known_args()
     from evaluation.reanalysis.checkpoint_reanalysis import main as command_main

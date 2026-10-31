@@ -5,7 +5,7 @@ using swing structure and SMT divergence features.
 
 Usage
 -----
-    cd Aalto_MS_Thesis
+    cd Quantitative-RL-Trading-System
     uv run python -m training.runner.training --seed 42
     uv run python -m training.runner.training --mvp --seed 42  # MVP: first 30 days
 """

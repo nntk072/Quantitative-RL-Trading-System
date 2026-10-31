@@ -2,7 +2,7 @@
 # Run/resume the seed-50 18-variant experiment run with disjoint per-worker CPU masks.
 set -Eeuo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/18_variant_seed50_20m_full_split_n64_cpumask_v3_20261016.yaml}"
 EXPERIMENT_RUN_ID="${EXPERIMENT_RUN_ID:-ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016}"
 SOURCE_EXPERIMENT_RUN="${SOURCE_EXPERIMENT_RUN:-$REPO/outputs/experiment_runs/ladder18_seed50_20m_full_split_n64_mainplan_20261016}"

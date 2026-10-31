@@ -28,7 +28,7 @@ def test_parse_experiment_run_worker_command() -> None:
             "--gpu-bind=map_gpu:0",
             "--cpu-bind=mask_cpu:0x60",
             "--chdir",
-            "/scratch/work/nguyenl37/Aalto_MS_Thesis",
+            "/scratch/work/nguyenl37/Quantitative-RL-Trading-System",
             "--export=ALL",
             "/venv/bin/python",
             "/repo/scripts/compute/slurm/verify_worker_cpu_affinity.py",
@@ -42,7 +42,7 @@ def test_parse_experiment_run_worker_command() -> None:
 
     assert parsed == {
         "node": "gpuarm2",
-        "cwd": "/scratch/work/nguyenl37/Aalto_MS_Thesis",
+        "cwd": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System",
         "argv": [
             "/venv/bin/python",
             "/repo/scripts/compute/slurm/verify_worker_cpu_affinity.py",
@@ -145,11 +145,14 @@ def test_persistent_manager_dispatches_worker_with_affinity_and_gpu_binding(
                 time.sleep(0.02)
             assert ready.exists()
             ready_metadata = json.loads(ready.read_text())
-            assert ready_metadata == {
-                "node": node,
-                "job_id": job_id,
-                "cpu_ids": sorted(os.sched_getaffinity(0)),
-            }
+            assert ready_metadata["node"] == node
+            assert ready_metadata["job_id"] == job_id
+            assert ready_metadata["cpu_ids"] == sorted(os.sched_getaffinity(0))
+            assert isinstance(ready_metadata["gpu_memory"], list)
+            assert (
+                ready_metadata["memory_limit_bytes"] is None
+                or ready_metadata["memory_limit_bytes"] > 0
+            )
 
             cpu_id = min(os.sched_getaffinity(0))
             worker_log = tmp_path / "worker.log"

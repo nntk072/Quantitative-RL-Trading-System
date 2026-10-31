@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 exec python -m compute.slurm.worker_dispatch --srun-shim "$@"

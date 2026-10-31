@@ -16,16 +16,25 @@ architecture description or a claim of future profitability.
   definitions, candidate use, and current engineering limits.
 - [GH200 throughput](gh200_throughput_audit.md): measured training speed and
   the resource conditions that affected it.
-- [Thesis-hybrid versus thesis-conditioned replay](thesis_policy_training_replay.md):
+- [Hybrid versus setup-conditioned replay](setup_conditioned_policy_replay.md):
   matched training comparison and resulting policy behavior.
 - [Multi-timeframe encoder comparison](encoder_architecture_comparison.md):
   bounded speed and short-policy screen, with its limits.
 - [Training throughput](gh200_throughput_audit.md): measured rates, observed
   bottlenecks, and why speed alone does not justify longer training.
 
-The thesis pages contain the current manuscript, validation boundaries, and
-project work queue. Older run notes remain in the evidence archive and should
-not be treated as active instructions.
+The active experiment queue and its period-role decisions remain at the
+[project execution plan](../thesis/master_project_execution_plan.md) until its
+compatibility migration is complete. This section contains project-wide
+research methods and findings; historical run snapshots are evidence, not
+independent work queues.
+
+## Supporting evidence
+
+- [Entry-idea opportunity counts](../../evidence/research/entry_idea_opportunity_counts/entry_idea_opportunity_counts.md): generated context-signal counts and CSV tables. These counts describe cached opportunities, not executed trades.
+- [Setup-conditioned replay evidence](../../evidence/research/setup_conditioned_reasoning_replay/README.md): preserved train/test exports for the replay discussed in the linked protocol and result note.
+- [Entry-idea feature previews](../../evidence/research/entry_idea_context_previews/README.md): H1 context plots, not performance evidence.
+- [Directional swing cache validation](../../evidence/research/directional_swing_cache_validation.json): machine validation record.
 
 ## How to read a result
 

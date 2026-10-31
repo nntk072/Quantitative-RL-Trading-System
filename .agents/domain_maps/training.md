@@ -63,7 +63,7 @@
 
 ## Consumers (Callers)
 
-- `thesis-train` console entry point (`training/cli.py`)
+- `qrl-train` console entry point (`training/cli.py`)
 - `scripts/research/benchmarks/compare_encoders.py` (encoder comparison)
 
 ## Tests
@@ -127,11 +127,11 @@ their respective artifact, learning, and training packages.
 - **Must not depend on:** storage identity semantics or scheduler implementation details.
 
 ```bash
-uv run thesis-train train --mvp --seed=42
-uv run thesis-train train --algo sac --arch gru
-uv run thesis-train train --strategy po3_ifvg
-uv run thesis-train train --config config/features/full_po3_mtf.yaml
-uv run thesis-train train --walk-forward --wf-splits 5 --purge-bars 60
+uv run qrl-train train --mvp --seed=42
+uv run qrl-train train --algo sac --arch gru
+uv run qrl-train train --strategy po3_ifvg
+uv run qrl-train train --config config/features/full_po3_mtf.yaml
+uv run qrl-train train --walk-forward --wf-splits 5 --purge-bars 60
 ```
 ## Verified Source Paths
 

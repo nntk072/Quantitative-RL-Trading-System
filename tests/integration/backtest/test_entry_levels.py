@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from decisioning.thesis import thesis_candidate, thesis_candidate_id
+from decisioning.trade_setup import trade_setup_candidate, trade_setup_candidate_id
 from evaluation.reporting.geometry import geometry_summary
 from features.technical.swings import recent_unswept_swing_candidates
 from simulation.environment.env import TradingEnv
@@ -240,7 +240,7 @@ def test_strategy_order_uses_setup_floor_for_stops_and_all_timeframes_for_target
         M5_last_swing_high=109.0,
         H1_last_swing_high=110.0,
     )
-    thesis = thesis_candidate(thesis_candidate_id("fvg_retest", "M5", 1))
+    thesis = trade_setup_candidate(trade_setup_candidate_id("fvg_retest", "M5", 1))
     geometry = place_strategy_order(
         _Menu(),
         direction=1,
@@ -278,7 +278,7 @@ def test_standard_deviation_thesis_uses_its_own_timeframe_level_one_stop() -> No
         M5_last_swing_high=105.0,
         H1_last_swing_high=108.0,
     )
-    thesis = thesis_candidate(thesis_candidate_id("standard_deviation", "M5", 1))
+    thesis = trade_setup_candidate(trade_setup_candidate_id("standard_deviation", "M5", 1))
     geometry = place_strategy_order(
         _Menu(),
         direction=1,

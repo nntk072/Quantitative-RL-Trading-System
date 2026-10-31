@@ -48,11 +48,11 @@ orchestra/ → repository/CI orchestration
 
 ```text
 orchestra
-thesis-data
-thesis-train
-thesis-evaluate
-thesis-experiment-run
-thesis-compute
+qrl-data
+qrl-train
+qrl-evaluate
+qrl-experiment
+qrl-compute
 ```
 
 Use package APIs or these command surfaces. `scripts/` includes command entry points plus thesis-specific evidence builders and audits; some existing scripts hold substantial logic and are not general-purpose APIs. Put new shared behavior in its owning package, and keep new CLI wrappers thin.

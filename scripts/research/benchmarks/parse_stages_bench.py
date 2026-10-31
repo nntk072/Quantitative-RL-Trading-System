@@ -518,7 +518,7 @@ def main() -> int:
             "",
             "## Reproduction",
             "```bash",
-            f"cd {REPO if 'REPO' in globals() else '/scratch/work/nguyenl37/Aalto_MS_Thesis'}",
+            f"cd {REPO if 'REPO' in globals() else str(Path(__file__).resolve().parents[3])}",
             f"VARIANT={VARIANT if 'VARIANT' in globals() else 'ladder_a0_flat'} SEED={SEED if 'SEED' in globals() else '42'} STEPS={STEPS if 'STEPS' in globals() else '10000'} N_ENVS={N_ENVS if 'N_ENVS' in globals() else '64'} \\",
             "bash scripts/research/benchmarks/run_stages_benchmark.sh",
             "```",
@@ -608,7 +608,7 @@ VARIANT = "ladder_a0_flat"
 SEED = 42
 STEPS = 10000
 N_ENVS = 64
-REPO = "/scratch/work/nguyenl37/Aalto_MS_Thesis"
+REPO = str(Path(__file__).resolve().parents[3])
 
 
 if __name__ == "__main__":

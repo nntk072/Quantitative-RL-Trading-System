@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 JOB_ID="${SLURM_JOB_ID:?run inside the approved P3 allocation}"
 OUT_DIR="${P3_OUT_DIR:-$REPO/outputs/thesis_validation/p3_recovery_${JOB_ID}}"
 # Use the existing full-PO3 profile so the smoke exercises supplied native
@@ -145,7 +145,7 @@ env PYTHONHASHSEED=73 PYTHONUNBUFFERED=1 python -m evaluation.reanalysis.runner 
   --no-save-html \
   --allow-historical
 
-python scripts/research/thesis/evidence/compare_deterministic_reanalysis.py \
+python scripts/research/analysis/evidence/compare_deterministic_reanalysis.py \
   "$OUT_DIR/reanalysis" \
   "$OUT_DIR/reanalysis_hashseed73" \
   --output "$OUT_DIR/p3_hashseed_repeatability.json"

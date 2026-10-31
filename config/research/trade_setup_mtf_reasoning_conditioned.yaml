@@ -1,0 +1,22 @@
+# Canonical trade-setup selection with execution parameters conditioned on the
+# selected setup. This is an opt-in configuration, not a run authorization.
+env:
+  strategy_actions: true
+  trade_setup_actions: true
+  thesis_actions: false
+  agent_direction_control: false
+
+features:
+  include_strategy_state: true
+  entry_ideas:
+    enabled: true
+
+agent:
+  arch: mtf_reasoning
+
+ppo:
+  policy_distribution: trade_setup_conditioned_v1
+  actor_arch: shared
+  trade_setup_conditioned:
+    embedding_dim: 32
+    execution_hidden_dim: 128

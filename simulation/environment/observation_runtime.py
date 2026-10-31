@@ -13,23 +13,23 @@ from decisioning.observations import (
     normalized_account_vector,
     pad_observation_window,
 )
-from decisioning.thesis import NO_TRADE_ID, THESIS_CATEGORY_COUNT
+from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CATEGORY_COUNT
 
 from .mixin_base import RuntimeMixinBase
 from .observations import DEFAULT_HTF_WINDOWS, HTF_BRANCHES, closed_window
 
 
 class ObservationRuntimeMixin(RuntimeMixinBase):
-    def _thesis_mask_for_step(self, step_idx: int | None = None) -> np.ndarray[Any, Any]:
+    def _trade_setup_mask_for_step(self, step_idx: int | None = None) -> np.ndarray[Any, Any]:
         """Return exact cached candidate eligibility for one decision row."""
         index = int(self.step_idx if step_idx is None else step_idx)
-        mask = np.zeros(THESIS_CATEGORY_COUNT, dtype=np.float32)
+        mask = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
         mask[NO_TRADE_ID] = 1.0
-        if not self.thesis_actions or not 0 <= index < self._n_bars:
+        if not self.trade_setup_actions or not 0 <= index < self._n_bars:
             return mask
-        raw = self._obs_features_arr[index, self._thesis_feature_indices]
+        raw = self._obs_features_arr[index, self._trade_setup_feature_indices]
         active = np.isfinite(raw) & (raw > 0.0)
-        mask[self._thesis_candidate_ids[active]] = 1.0
+        mask[self._trade_setup_candidate_ids[active]] = 1.0
         return mask
 
     def _session_seq_start(self) -> int:
@@ -171,8 +171,8 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             )
             obs["regime_mask"] = np.isfinite(raw_regime).astype(np.float32)
             obs["regime"] = np.nan_to_num(raw_regime, nan=0.0, posinf=0.0, neginf=0.0)
-        if self.thesis_actions:
-            obs["thesis_mask"] = self._thesis_mask_for_step()
+        if self.trade_setup_actions:
+            obs[self._trade_setup_mask_key] = self._trade_setup_mask_for_step()
         if self.mtf:
             decision = int(self.step_idx)
             for key, _, seq_key in HTF_BRANCHES:

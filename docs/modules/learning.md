@@ -42,6 +42,58 @@ curve, high reward, or successful checkpoint save is not evidence of positive
 net trading performance. Risk penalties are learned preferences unless backed
 by hard environment guardrails.
 
+## UML
+
+This UML maps the learner interface to PPO/SAC implementations, rollout data,
+and persisted training state.
+
+```mermaid
+classDiagram
+    class Learner {
+      +fit(FitRequest) FitResult
+      +predict(observation)
+      +save(path)
+    }
+    class FitRequest {
+      +environment
+      +total_steps
+      +seed
+    }
+    class FitResult {
+      +checkpoint
+      +diagnostics
+      +steps_completed
+    }
+    class SB3Learner
+    class PPOAgent
+    class SACAgent
+    class RolloutBuffer {
+      +add(transition)
+      +get(batch)
+    }
+    class ReplayBuffer {
+      +add(transition)
+      +sample(batch)
+    }
+    class Checkpoint {
+      +policy_state
+      +optimizer_state
+      +schema_reference
+    }
+    class TrainingCallback
+    SB3Learner ..|> Learner
+    SB3Learner --> PPOAgent : builds
+    SB3Learner --> SACAgent : builds
+    Learner --> FitRequest : consumes
+    Learner --> FitResult : returns
+    PPOAgent --> RolloutBuffer : on-policy data
+    SACAgent --> ReplayBuffer : off-policy data
+    PPOAgent --> TrainingCallback : reports progress
+    SACAgent --> TrainingCallback : reports progress
+    PPOAgent --> Checkpoint : saves or resumes
+    SACAgent --> Checkpoint : saves or resumes
+```
+
 ## Implementation reference
 
 The `learning/` module builds and updates supported RL agents and handles

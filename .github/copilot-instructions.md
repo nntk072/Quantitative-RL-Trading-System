@@ -1,4 +1,4 @@
-# Aalto_MS_Thesis project agent rules
+# Quantitative RL Trading System project agent rules
 
 ## Token-efficient context and replies
 

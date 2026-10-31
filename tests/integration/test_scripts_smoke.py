@@ -17,9 +17,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from scripts.research.analysis.evaluation.report_g3 import main as report_g3_main
+from scripts.research.analysis.evaluation.run_baseline_eval import main as run_baseline_eval_main
 from scripts.research.benchmarks.compare_encoders import main as compare_encoders_main
-from scripts.research.thesis.evaluation.report_g3 import main as report_g3_main
-from scripts.research.thesis.evaluation.run_baseline_eval import main as run_baseline_eval_main
 
 from training.cli import main as train_rl_main
 from training.runner.lstm_baseline import main as train_lstm_main

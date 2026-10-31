@@ -9,7 +9,7 @@ the cost of regenerating the underlying trade log.
 
 Usage
 -----
-    cd Aalto_MS_Thesis
+    cd Quantitative-RL-Trading-System
     uv run python -m evaluation.reporting.order_chart_regeneration \\
         --run outputs/20260719_002519_rl_train_seed42 --split testing
     uv run python -m evaluation.reporting.order_chart_regeneration \\

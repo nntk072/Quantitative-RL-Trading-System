@@ -55,6 +55,49 @@ Configuration cannot establish that a data feed, fill model, or strategy is
 realistic. It describes what the software is asked to do; data checks and
 evaluation determine what actually happened.
 
+## UML
+
+This UML view separates source settings, resolution, validation, and effective
+configuration consumed by runtime modules.
+
+```mermaid
+classDiagram
+    class RepositoryPaths {
+      +root
+      +config_dir
+      +data_dir
+    }
+    class Defaults
+    class ExperimentMatrix
+    class VariantSettings
+    class RunOverrides
+    class ConfigLoader {
+      +load_config()
+      +merge_config_overlay()
+      +apply_overrides()
+    }
+    class ConfigSchema {
+      +validate()
+      +reject_unknown_keys()
+    }
+    class EffectiveConfig {
+      +resolved_values
+      +source_selection
+    }
+    Defaults --> ConfigLoader
+    ExperimentMatrix --> ConfigLoader
+    VariantSettings --> ConfigLoader
+    RunOverrides --> ConfigLoader
+    RepositoryPaths --> ConfigLoader : locates inputs
+    ConfigLoader --> ConfigSchema : validates with
+    ConfigSchema --> EffectiveConfig : accepts
+    EffectiveConfig --> MarketDataPipeline
+    EffectiveConfig --> FeatureBuilder
+    EffectiveConfig --> ModelFactory
+    EffectiveConfig --> TrainingRunner
+    EffectiveConfig --> EvaluationRunner
+```
+
 ## Implementation reference
 
 The configuration package loads, merges, resolves, and validates settings.

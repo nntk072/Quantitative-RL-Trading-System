@@ -69,8 +69,52 @@ confirmatory holdout.
 - File coverage alone does not prove feed identity, permission to redistribute,
   or realistic live execution.
 
+## UML
+
+This domain UML shows the public data concepts and the pipeline boundaries.
+It omits private parsing helpers and individual file formats.
+
+```mermaid
+classDiagram
+    class DatasetSource {
+      +load() MarketDataset
+    }
+    class MarketDataset {
+      +bars_by_symbol_timeframe
+      +ticks_by_symbol
+      +calendar_context
+    }
+    class MarketEventSchema {
+      +timestamp
+      +symbol
+      +timeframe
+      +price_fields
+    }
+    class TickBook {
+      +quotes_at(time) TickExecutionQuote
+    }
+    class WFSplit {
+      +train_indices
+      +test_indices
+      +purge_indices
+    }
+    class Loader
+    class TimeframeAligner
+    class CacheStore
+    DatasetSource --> Loader : supplies files
+    Loader --> MarketDataset : validates and loads
+    MarketDataset *-- MarketEventSchema : conforms to
+    MarketDataset --> TimeframeAligner : aligned streams
+    MarketDataset --> WFSplit : chronological selection
+    MarketDataset --> TickBook : execution quotes
+    TimeframeAligner --> CacheStore : prepared data
+    CacheStore --> FeatureBuilder : feeds
+    TickBook --> BacktestEngine : fill lookup
+```
+
 ## Implementation reference
 
 The market-data module owns file loading, timeframe alignment, split handling,
-and cache preparation. Data files and split settings are selected by the
-configuration module.
+and cache preparation. Reusable bar/tick cache identity and completion checks
+are described in the local [cache guide](../../market_data/cache/README.md).
+Data files and split settings are selected by the configuration module.

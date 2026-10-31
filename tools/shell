@@ -21,7 +21,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-IMAGE="quant-rl-thesis:dev"
+IMAGE="quantitative-rl-trading-system:dev"
 COMPOSE_FILE="docker-compose.yml"
 SERVICE="dev-gpu"
 TORCH_DEVICE="cu130"
@@ -46,9 +46,9 @@ done
 
 # Rebuild if the image doesn't exist or the Dockerfile is newer than the image.
 if [ "$SERVICE" = "dev-gpu" ]; then
-  IMAGE="quant-rl-thesis:dev-gpu"
+  IMAGE="quantitative-rl-trading-system:dev-gpu"
 else
-  IMAGE="quant-rl-thesis:dev"
+  IMAGE="quantitative-rl-trading-system:dev"
 fi
 IMAGE_EXISTS=$(docker image inspect "$IMAGE" --format '{{.Id}}' 2>/dev/null || echo "")
 DOCKERFILE_MTIME=$(stat -c %Y Dockerfile docker-compose.yml 2>/dev/null | sort -rn | head -1)

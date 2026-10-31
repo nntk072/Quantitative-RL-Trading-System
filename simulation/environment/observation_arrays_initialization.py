@@ -8,12 +8,13 @@ import numpy as np
 import pandas as pd
 
 from decisioning.regime_observations import REGIME_FEATURES, regime_observation_schema
-from decisioning.thesis import (
-    THESIS_CATEGORY_COUNT,
-    thesis_observation_schema,
+from decisioning.trade_setup import (
+    TRADE_SETUP_CATEGORY_COUNT,
+    legacy_thesis_observation_schema,
+    trade_setup_observation_schema,
 )
 from features import attach_reachable_r, select_legacy_obs_columns, select_obs_columns
-from features.context.thesis_candidates import thesis_candidate_feature_columns
+from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
 
 from .mixin_base import RuntimeMixinBase
 from .observations import (
@@ -39,7 +40,7 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         scheduled_session_closes: dict[str, str] | None,
         session_start: str,
         regime_observation: bool,
-        thesis_actions: bool,
+        trade_setup_actions: bool,
     ) -> None:
         # Model-facing observation frame: the strategy's raw price-level
         # columns stay in ``features`` for execution/risk but must not enter
@@ -133,29 +134,42 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         self._m1_idx, self._htf_idx = split_obs_columns(self._obs_columns)
         self.regime_observation = bool(regime_observation)
         self.regime_observation_schema = regime_observation_schema() if regime_observation else None
-        self.thesis_actions = bool(thesis_actions)
-        self.thesis_observation_schema = (
-            thesis_observation_schema() if self.thesis_actions else None
+        self.trade_setup_actions = bool(trade_setup_actions)
+        self.trade_setup_observation_schema = (
+            trade_setup_observation_schema() if self.trade_setup_actions else None
         )
-        self._thesis_candidate_ids: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
-        self._thesis_feature_indices: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
-        if self.thesis_actions:
-            columns = thesis_candidate_feature_columns()
+        self.thesis_observation_schema = (
+            legacy_thesis_observation_schema()
+            if self.trade_setup_actions and self.legacy_thesis_contract
+            else None
+        )
+        self._trade_setup_mask_key = (
+            "thesis_mask" if self.legacy_thesis_contract else "trade_setup_mask"
+        )
+        self._trade_setup_candidate_ids: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
+        self._trade_setup_feature_indices: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
+        if self.trade_setup_actions:
+            columns = trade_setup_candidate_feature_columns()
             column_indices = {name: index for index, name in enumerate(self._obs_columns)}
-            missing_thesis_features = [name for _, name in columns if name not in column_indices]
-            if missing_thesis_features:
-                raise ValueError(
-                    "thesis actions require all per-timeframe entry-idea observation features; "
-                    f"missing {missing_thesis_features[:5]}"
+            missing_setup_features = [name for _, name in columns if name not in column_indices]
+            if missing_setup_features:
+                contract_label = (
+                    "legacy thesis actions"
+                    if self.legacy_thesis_contract
+                    else "trade setup actions"
                 )
-            self._thesis_candidate_ids = np.asarray(
+                raise ValueError(
+                    f"{contract_label} require all per-timeframe entry-idea observation features; "
+                    f"missing {missing_setup_features[:5]}"
+                )
+            self._trade_setup_candidate_ids = np.asarray(
                 [candidate_id for candidate_id, _ in columns], dtype=np.int64
             )
-            self._thesis_feature_indices = np.asarray(
+            self._trade_setup_feature_indices = np.asarray(
                 [column_indices[name] for _, name in columns], dtype=np.int64
             )
-            if self._thesis_candidate_ids.size != THESIS_CATEGORY_COUNT - 1:
-                raise RuntimeError("thesis candidate feature mapping is incomplete")
+            if self._trade_setup_candidate_ids.size != TRADE_SETUP_CATEGORY_COUNT - 1:
+                raise RuntimeError("trade setup candidate feature mapping is incomplete")
         missing_regime = [name for name in REGIME_FEATURES if name not in self._obs_columns]
         self._regime_idx = np.asarray(
             [

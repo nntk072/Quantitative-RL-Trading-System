@@ -12,11 +12,11 @@ from typing import Any, Protocol
 import numpy as np
 import pandas as pd
 
-from decisioning.thesis import THESIS_IDEAS
+from decisioning.trade_setup import TRADE_SETUP_IDEAS
 
 _TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
 _TIMEFRAME_CODES = dict(zip((1, 3, 5, 10, 15, 30, 60, 240, 1440), _TIMEFRAMES))
-ENTRY_IDEA_NAMES = THESIS_IDEAS
+ENTRY_IDEA_NAMES = TRADE_SETUP_IDEAS
 _TIMEFRAME_RANK = {timeframe: rank for rank, timeframe in enumerate(_TIMEFRAMES)}
 
 

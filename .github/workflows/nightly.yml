@@ -10,7 +10,7 @@ permissions:
 
 env:
   UV_FROZEN: "1"
-  THESIS_CHECK_NO_SYNC: "1"
+  QRL_CHECK_NO_SYNC: "1"
 
 jobs:
   research-tests:

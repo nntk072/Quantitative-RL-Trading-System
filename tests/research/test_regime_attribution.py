@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from scripts.research.thesis.regime_attribution import (
+from scripts.research.analysis.regime_attribution import (
     _decision_intent_summary,
     _regime_action_summary,
     attach_completed_context,

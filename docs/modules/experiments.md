@@ -48,6 +48,53 @@ One seed or one market interval is weak evidence for generalization. A catalog
 entry means the system can select the configuration, not that it has been
 trained, evaluated, or independently validated.
 
+## UML
+
+This UML distinguishes a scientific question, its matched arms, the run
+specification, and the evidence used to form a bounded finding.
+
+```mermaid
+classDiagram
+    class ResearchQuestion {
+      +statement
+      +primary_outcome
+    }
+    class ComparisonDesign {
+      +shared_conditions
+      +declared_factor
+    }
+    class ExperimentArm {
+      +role
+      +variant_id
+      +seed
+    }
+    class RunSpec {
+      +config
+      +budget
+      +resources
+    }
+    class BatchSpec
+    class WeeklyOrchestrator {
+      +schedule()
+      +collect_results()
+    }
+    class RunRecord
+    class EvaluationReport
+    class Finding {
+      +observed_result
+      +uncertainty
+      +limitations
+    }
+    ResearchQuestion --> ComparisonDesign
+    ComparisonDesign o-- ExperimentArm
+    ExperimentArm --> RunSpec : resolves to
+    BatchSpec o-- RunSpec
+    WeeklyOrchestrator --> RunSpec : dispatches
+    RunSpec --> RunRecord : produces
+    RunRecord --> EvaluationReport
+    EvaluationReport --> Finding : supports
+```
+
 ## Implementation reference
 
 The `experiments/` module owns variant selection and run lifecycle. Result

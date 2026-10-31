@@ -123,6 +123,7 @@ def evaluate_model(
     strategy: Any = None,
     strategy_actions: bool = False,
     thesis_actions: bool = False,
+    trade_setup_actions: bool = False,
     entry_state_machine: bool = False,
     candidate_max_age_bars: int = 5,
     arm_requires_retest: bool = False,
@@ -248,6 +249,7 @@ def evaluate_model(
             strategy=strategy,
             strategy_actions=strategy_actions,
             thesis_actions=thesis_actions,
+            trade_setup_actions=trade_setup_actions,
             entry_state_machine=entry_state_machine,
             candidate_max_age_bars=candidate_max_age_bars,
             arm_requires_retest=arm_requires_retest,
@@ -363,16 +365,25 @@ def evaluate_model(
         thesis_record: dict[str, Any] | None = None
         policy = getattr(model, "policy", None)
         coordinates = tuple(getattr(policy, "hybrid_action_coordinates", ()))
-        if strategy_actions and "thesis" in coordinates and isinstance(obs, dict):
-            from decisioning.thesis import THESIS_CANDIDATES, thesis_id_from_box
+        setup_coordinate = next(
+            (name for name in ("trade_setup", "thesis") if name in coordinates), None
+        )
+        if strategy_actions and setup_coordinate is not None and isinstance(obs, dict):
+            from decisioning.trade_setup import TRADE_SETUP_CANDIDATES, trade_setup_id_from_box
 
             values = np.asarray(action, dtype=np.float32).reshape(-1)
-            thesis_index = coordinates.index("thesis")
-            selected_id = thesis_id_from_box(float(values[thesis_index]))
-            mask = np.asarray(obs.get("thesis_mask", []), dtype=np.float32).reshape(-1)
+            setup_index = coordinates.index(setup_coordinate)
+            selected_id = trade_setup_id_from_box(float(values[setup_index]))
+            legacy_setup = setup_coordinate == "thesis"
+            mask_key = "thesis_mask" if legacy_setup else "trade_setup_mask"
+            mask = np.asarray(obs.get(mask_key, []), dtype=np.float32).reshape(-1)
             is_valid = selected_id < len(mask) and bool(mask[selected_id] > 0.0)
-            candidate = THESIS_CANDIDATES[selected_id]
-            raw_entropy = getattr(policy, "last_thesis_entropy", None)
+            candidate = TRADE_SETUP_CANDIDATES[selected_id]
+            raw_entropy = getattr(
+                policy,
+                "last_trade_setup_entropy",
+                getattr(policy, "last_thesis_entropy", None),
+            )
             entropy_value = (
                 float(np.asarray(raw_entropy.detach().cpu()).reshape(-1)[0])
                 if raw_entropy is not None
@@ -380,21 +391,29 @@ def evaluate_model(
             )
             thesis_record = {
                 "step": n_steps + 1,
-                "thesis_candidate_id": selected_id,
+                (
+                    "thesis_candidate_id" if legacy_setup else "trade_setup_candidate_id"
+                ): selected_id,
                 "idea": candidate.idea or "",
                 "setup_timeframe": candidate.setup_timeframe or "",
                 "direction": int(candidate.direction),
                 "is_no_trade": bool(candidate.is_no_trade),
                 "selection_valid": is_valid,
-                "eligible_thesis_count": int(np.count_nonzero(mask)),
-                "eligible_candidate_ids": np.flatnonzero(mask).astype(int).tolist(),
-                "thesis_entropy_nats": entropy_value,
+                ("eligible_thesis_count" if legacy_setup else "eligible_trade_setup_count"): int(
+                    np.count_nonzero(mask)
+                ),
+                (
+                    "eligible_candidate_ids" if legacy_setup else "eligible_trade_setup_ids"
+                ): np.flatnonzero(mask).astype(int).tolist(),
+                (
+                    "thesis_entropy_nats" if legacy_setup else "trade_setup_entropy_nats"
+                ): entropy_value,
             }
             thesis_record.update(
                 {
                     f"action_{name}": float(values[index])
                     for index, name in enumerate(coordinates)
-                    if name != "thesis"
+                    if name != setup_coordinate
                 }
             )
         if strategy_actions:
@@ -462,14 +481,18 @@ def evaluate_model(
     thesis_decisions = pd.DataFrame.from_records(thesis_decision_rows)
     thesis_metrics: dict[str, Any] | None = None
     if thesis_decision_rows:
-        from evaluation.metrics.thesis_policy import summarize_thesis_decisions
+        from evaluation.metrics.trade_setup_policy import summarize_trade_setup_decisions
 
-        thesis_metrics = summarize_thesis_decisions(thesis_decisions, trades_df)
+        thesis_metrics = summarize_trade_setup_decisions(thesis_decisions, trades_df)
         policy_class = type(getattr(model, "policy", None)).__name__
         thesis_metrics["policy_class"] = policy_class
-        thesis_metrics["variant_d_execution_conditioning_active"] = (
-            policy_class == "ThesisConditionedClampedStdMultiInputPolicy"
-        )
+        setup_conditioning_active = policy_class in {
+            "ThesisConditionedClampedStdMultiInputPolicy",
+            "TradeSetupConditionedClampedStdMultiInputPolicy",
+        }
+        thesis_metrics["setup_conditioned_execution_active"] = setup_conditioning_active
+        if bool(thesis_actions):
+            thesis_metrics["variant_d_execution_conditioning_active"] = setup_conditioning_active
 
     n_sessions = len(env.all_sessions)
     days_traded = len(env.sessions_with_trades)
@@ -558,7 +581,16 @@ def evaluate_model(
         "peak_eod_dd_policy_ok": bool(episode_equity.get("peak_eod_dd_policy_ok", True)),
         "action_counts": dict(action_counts),
         **(
-            {"thesis_decisions": thesis_decisions, "thesis_policy_metrics": thesis_metrics}
+            {
+                (
+                    "thesis_decisions" if bool(thesis_actions) else "trade_setup_decisions"
+                ): thesis_decisions,
+                (
+                    "thesis_policy_metrics"
+                    if bool(thesis_actions)
+                    else "trade_setup_policy_metrics"
+                ): thesis_metrics,
+            }
             if thesis_metrics is not None
             else {}
         ),

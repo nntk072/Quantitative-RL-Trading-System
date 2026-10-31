@@ -33,6 +33,46 @@ Automated agents can miss context or misread evidence. Orchestration does not
 replace source review, scientific judgment, or the repository’s required
 verification gate.
 
+## UML
+
+This UML shows the task pipeline and the records exchanged between stages.
+Orchestration coordinates engineering work; it does not participate in policy
+inference or trading execution.
+
+```mermaid
+classDiagram
+    class TaskRequest {
+      +description
+      +repository_state
+    }
+    class TriageStage
+    class PlanningStage
+    class ImplementationStage
+    class VerificationStage
+    class HandoffBundle {
+      +changed_files
+      +checks
+      +remaining_work
+    }
+    class CiCheck {
+      +name
+      +command
+      +result
+    }
+    class FailureRecord
+    class ClassifiedFailure
+    class CostTracker
+    TaskRequest --> TriageStage
+    TriageStage --> PlanningStage
+    PlanningStage --> ImplementationStage
+    ImplementationStage --> VerificationStage
+    VerificationStage o-- CiCheck
+    VerificationStage --> HandoffBundle : produces
+    TriageStage --> FailureRecord : may record
+    FailureRecord --> ClassifiedFailure : classified as
+    TaskRequest --> CostTracker : usage tracked
+```
+
 ## Implementation reference
 
 The `orchestra/` module owns the task pipeline and its CI integration. Shared

@@ -8,8 +8,11 @@ from typing import Any
 
 import pytest
 import yaml
-from scripts.research.thesis.evaluation.report_ablations import format_table, load_ablation_reports
-from scripts.research.thesis.evaluation.test_oos import make_cost_model
+from scripts.research.analysis.evaluation.report_ablations import (
+    format_table,
+    load_ablation_reports,
+)
+from scripts.research.analysis.evaluation.test_oos import make_cost_model
 
 from configuration import load_config
 from experiments.variants.variant_ablation_runner import _average_seed_reports, load_experiments

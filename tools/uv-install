@@ -6,7 +6,7 @@ set -euo pipefail
 #   ./tools/uv-install --dev    # install runtime + dev deps (ruff, mypy)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-UV_BIN="${THESIS_UV:-uv}"
+UV_BIN="${QRL_UV:-${THESIS_UV:-uv}}"
 cd "$SCRIPT_DIR"
 
 if [ "${1:-}" = "--dev" ]; then

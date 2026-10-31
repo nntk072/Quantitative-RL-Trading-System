@@ -24,7 +24,12 @@ from omegaconf import DictConfig
 
 from compute.environment.precision import get_autocast_dtype
 from decisioning.actions import SCHEMA_VERSION, ActionSchema, DiscreteActionSchema
-from decisioning.thesis import ThesisActionSchema, validate_thesis_observation_schema
+from decisioning.trade_setup import (
+    LegacyThesisActionSchema,
+    TradeSetupActionSchema,
+    validate_thesis_observation_schema,
+    validate_trade_setup_observation_schema,
+)
 from learning.rl.ppo import ClampedStdMultiInputPolicy, _layout_key
 from models.factory import encoder_for
 from models.runtime.precision import enable_extractor_autocast
@@ -61,7 +66,7 @@ def persist_action_schema(model: Any, env: Any) -> None:
     if isinstance(action_space, spaces.Box):
         width = int(action_space.shape[0])
         schema = getattr(env, "action_schema", None)
-        if isinstance(schema, (ActionSchema, ThesisActionSchema)):
+        if isinstance(schema, (ActionSchema, TradeSetupActionSchema, LegacyThesisActionSchema)):
             if width != schema.width:
                 raise ValueError(
                     f"action space width {width} disagrees with declared schema width "
@@ -101,7 +106,7 @@ def persist_action_schema(model: Any, env: Any) -> None:
 
 def validate_model_action_schema(
     model: Any,
-    expected_schema: ActionSchema | ThesisActionSchema,
+    expected_schema: ActionSchema | TradeSetupActionSchema | LegacyThesisActionSchema,
     *,
     allow_legacy: bool = False,
     legacy_layout_key: str | None = None,
@@ -140,7 +145,7 @@ def validate_model_action_schema(
                 f"legacy action layout {layout!r} differs from {expected_schema.key!r}"
             )
         migration: str | None = None
-        if isinstance(expected_schema, ThesisActionSchema):
+        if isinstance(expected_schema, (TradeSetupActionSchema, LegacyThesisActionSchema)):
             raise ValueError("thesis action checkpoints require versioned schema metadata")
         if legacy_layout_key == "legacy4_no_exit_v1":
             if actual_width != 4 or expected_schema.key != "5":
@@ -267,12 +272,23 @@ def validate_model_observation_schema(
     setattr(model, "_observation_schema", expected_schema.to_dict())
 
 
+def validate_model_trade_setup_observation_schema(
+    model: Any, expected_schema: dict[str, Any] | None, *, legacy: bool = False
+) -> None:
+    """Validate setup-mask metadata while retaining the legacy checkpoint field."""
+    if legacy:
+        actual = getattr(model, "_thesis_observation_schema", None)
+        validate_thesis_observation_schema(actual, expected_schema)
+    else:
+        actual = getattr(model, "_trade_setup_observation_schema", None)
+        validate_trade_setup_observation_schema(actual, expected_schema)
+
+
 def validate_model_thesis_observation_schema(
     model: Any, expected_schema: dict[str, Any] | None
 ) -> None:
-    """Fail closed when the optional candidate-mask observation meaning differs."""
-    actual = getattr(model, "_thesis_observation_schema", None)
-    validate_thesis_observation_schema(actual, expected_schema)
+    """Compatibility wrapper for callers using the historical API name."""
+    validate_model_trade_setup_observation_schema(model, expected_schema, legacy=True)
 
 
 def build_vector_env(
@@ -467,19 +483,30 @@ def build_agent(
     n_features: int = env.observation_space["seq"].shape[1]
     account_dim: int = int(env.observation_space["account"].shape[0])
     agent_cfg = cfg.get("agent", {})
-    thesis_enabled = bool(getattr(env, "thesis_actions", False))
+    trade_setup_enabled = bool(getattr(env, "trade_setup_actions", False))
+    legacy_thesis_contract = bool(getattr(env, "legacy_thesis_contract", False))
     ppo_cfg = cfg.get("ppo", {})
     configured_distribution = str(ppo_cfg.get("policy_distribution", "clamped_diagonal_gaussian"))
-    if thesis_enabled and algo != "ppo":
-        raise ValueError("thesis actions currently require PPO's masked categorical distribution")
-    thesis_distributions = {"thesis_hybrid_v1", "thesis_conditioned_v1"}
-    if thesis_enabled and configured_distribution not in thesis_distributions:
+    setup_distributions = {
+        "thesis_hybrid_v1",
+        "thesis_conditioned_v1",
+        "trade_setup_hybrid_v1",
+        "trade_setup_conditioned_v1",
+    }
+    if trade_setup_enabled and algo != "ppo":
         raise ValueError(
-            "env.thesis_actions requires ppo.policy_distribution='thesis_hybrid_v1' "
-            "or 'thesis_conditioned_v1'"
+            "trade setup actions currently require PPO's masked categorical distribution"
         )
-    if configured_distribution in thesis_distributions and not thesis_enabled:
-        raise ValueError(f"{configured_distribution} requires env.thesis_actions=true")
+    if trade_setup_enabled and configured_distribution not in setup_distributions:
+        raise ValueError(
+            "trade setup actions require a masked trade-setup or legacy thesis PPO distribution"
+        )
+    if configured_distribution in setup_distributions and not trade_setup_enabled:
+        raise ValueError(f"{configured_distribution} requires trade setup actions to be enabled")
+    if configured_distribution.startswith("thesis_") and not legacy_thesis_contract:
+        raise ValueError("thesis policy distributions require the legacy thesis action contract")
+    if configured_distribution.startswith("trade_setup_") and legacy_thesis_contract:
+        raise ValueError("trade_setup policy distributions require env.trade_setup_actions=true")
 
         # Choose feature extractor based on architecture / VAE use
     extractor_cls: Any
@@ -619,9 +646,20 @@ def build_agent(
         regime_schema = getattr(env, "regime_observation_schema", None)
         if isinstance(regime_schema, dict):
             setattr(model, "_regime_observation_schema", regime_schema)
-        thesis_schema = getattr(env, "thesis_observation_schema", None)
-        if isinstance(thesis_schema, dict):
-            setattr(model, "_thesis_observation_schema", thesis_schema)
+        setup_schema = getattr(
+            env,
+            "thesis_observation_schema"
+            if legacy_thesis_contract
+            else "trade_setup_observation_schema",
+            None,
+        )
+        if isinstance(setup_schema, dict):
+            metadata_key = (
+                "_thesis_observation_schema"
+                if legacy_thesis_contract
+                else "_trade_setup_observation_schema"
+            )
+            setattr(model, metadata_key, setup_schema)
         persist_action_schema(model, env)
         return _finalize_cuda_policy(model, device)
 
@@ -669,9 +707,18 @@ def build_agent(
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
         setattr(ppo_model, "_regime_observation_schema", regime_schema)
-    thesis_schema = getattr(env, "thesis_observation_schema", None)
-    if isinstance(thesis_schema, dict):
-        setattr(ppo_model, "_thesis_observation_schema", thesis_schema)
+    setup_schema = getattr(
+        env,
+        "thesis_observation_schema" if legacy_thesis_contract else "trade_setup_observation_schema",
+        None,
+    )
+    if isinstance(setup_schema, dict):
+        metadata_key = (
+            "_thesis_observation_schema"
+            if legacy_thesis_contract
+            else "_trade_setup_observation_schema"
+        )
+        setattr(ppo_model, metadata_key, setup_schema)
     persist_action_schema(ppo_model, env)
     from learning.rl.rollout_buffer import install_single_copy_add
 
@@ -683,7 +730,7 @@ def _ppo_policy_and_ent_coef(
     cfg: DictConfig,
     policy_kwargs: dict[str, Any],
     action_space: spaces.Space[Any],
-    action_schema: ActionSchema | ThesisActionSchema | None = None,
+    action_schema: ActionSchema | TradeSetupActionSchema | LegacyThesisActionSchema | None = None,
     observation_space: spaces.Space[Any] | None = None,
 ) -> tuple[Any, dict[str, Any], float]:
     """Box overlay: clamp Gaussian std. Discrete: keep categorical entropy coef."""
@@ -696,24 +743,40 @@ def _ppo_policy_and_ent_coef(
         return "MultiInputPolicy", policy_kwargs, ent_coef
     actor_arch = str(cfg.ppo.get("actor_arch", "shared"))
     policy_distribution = str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian"))
-    if policy_distribution in {"hybrid_v1", "thesis_hybrid_v1", "thesis_conditioned_v1"}:
+    if policy_distribution in {
+        "hybrid_v1",
+        "thesis_hybrid_v1",
+        "thesis_conditioned_v1",
+        "trade_setup_hybrid_v1",
+        "trade_setup_conditioned_v1",
+    }:
         if actor_arch != "shared":
             raise ValueError("hybrid PPO distributions require ppo.actor_arch='shared'")
-        thesis_distribution = policy_distribution in {
+        setup_distribution = policy_distribution in {
             "thesis_hybrid_v1",
             "thesis_conditioned_v1",
+            "trade_setup_hybrid_v1",
+            "trade_setup_conditioned_v1",
         }
-        conditioned_distribution = policy_distribution == "thesis_conditioned_v1"
-        if thesis_distribution:
-            if not isinstance(action_schema, ThesisActionSchema):
-                raise ValueError(f"{policy_distribution} requires the thesis action schema")
+        conditioned_distribution = policy_distribution in {
+            "thesis_conditioned_v1",
+            "trade_setup_conditioned_v1",
+        }
+        legacy_distribution = policy_distribution.startswith("thesis_")
+        if setup_distribution:
+            expected_type = (
+                LegacyThesisActionSchema if legacy_distribution else TradeSetupActionSchema
+            )
+            if not isinstance(action_schema, expected_type):
+                raise ValueError(f"{policy_distribution} requires its matching action schema")
             observation_spaces = getattr(observation_space, "spaces", {})
-            if "thesis_mask" not in observation_spaces:
-                raise ValueError(f"{policy_distribution} requires the thesis_mask observation")
+            mask_key = "thesis_mask" if legacy_distribution else "trade_setup_mask"
+            if mask_key not in observation_spaces:
+                raise ValueError(f"{policy_distribution} requires the {mask_key} observation")
         elif not isinstance(action_schema, ActionSchema):
             raise ValueError("hybrid_v1 requires a declared legacy strategy ActionSchema")
-        if not thesis_distribution and not isinstance(action_schema, ActionSchema):
-            raise ValueError("hybrid_v1 cannot consume a thesis action schema")
+        if not setup_distribution and not isinstance(action_schema, ActionSchema):
+            raise ValueError("hybrid_v1 requires a standard strategy action schema")
         if "exit" in action_schema.names and not bool(cfg.env.get("allow_ema_exit", True)):
             raise ValueError(
                 "hybrid policy requires the EMA/structural exit coordinate to be active"
@@ -721,11 +784,17 @@ def _ppo_policy_and_ent_coef(
         from learning.rl.hybrid import (
             HybridClampedStdMultiInputPolicy,
             ThesisConditionedClampedStdMultiInputPolicy,
+            TradeSetupConditionedClampedStdMultiInputPolicy,
         )
 
         kwargs = dict(policy_kwargs)
         kwargs["hybrid_action_coordinates"] = action_schema.names
-        kwargs["thesis_mask_key"] = "thesis_mask" if thesis_distribution else None
+        kwargs["thesis_mask_key"] = (
+            "thesis_mask" if setup_distribution and legacy_distribution else None
+        )
+        kwargs["trade_setup_mask_key"] = (
+            "trade_setup_mask" if setup_distribution and not legacy_distribution else None
+        )
         kwargs["sl_mode_defer_threshold"] = float(cfg.env.get("sl_mode_defer_threshold", 0.1))
         kwargs["tp_mode_defer_threshold"] = float(cfg.env.get("tp_mode_defer_threshold", 0.1))
         kwargs["log_std_init"] = float(cfg.ppo.get("log_std_init", 0.0))
@@ -733,13 +802,24 @@ def _ppo_policy_and_ent_coef(
         kwargs["log_std_max"] = float(cfg.ppo.get("log_std_max", 0.0))
         kwargs["mode_prior_coef"] = float(cfg.ppo.get("mode_prior_coef", 1e-3))
         if conditioned_distribution:
-            conditioned_cfg = cfg.ppo.get("thesis_conditioned", {})
-            kwargs["thesis_embedding_dim"] = int(conditioned_cfg.get("embedding_dim", 32))
-            kwargs["thesis_execution_hidden_dim"] = int(
-                conditioned_cfg.get("execution_hidden_dim", 128)
+            conditioned_key = (
+                "thesis_conditioned" if legacy_distribution else "trade_setup_conditioned"
             )
+            conditioned_cfg = cfg.ppo.get(conditioned_key, {})
+            if legacy_distribution:
+                kwargs["thesis_embedding_dim"] = int(conditioned_cfg.get("embedding_dim", 32))
+                kwargs["thesis_execution_hidden_dim"] = int(
+                    conditioned_cfg.get("execution_hidden_dim", 128)
+                )
+            else:
+                kwargs["trade_setup_embedding_dim"] = int(conditioned_cfg.get("embedding_dim", 32))
+                kwargs["trade_setup_execution_hidden_dim"] = int(
+                    conditioned_cfg.get("execution_hidden_dim", 128)
+                )
         return (
             ThesisConditionedClampedStdMultiInputPolicy
+            if conditioned_distribution and legacy_distribution
+            else TradeSetupConditionedClampedStdMultiInputPolicy
             if conditioned_distribution
             else HybridClampedStdMultiInputPolicy,
             kwargs,

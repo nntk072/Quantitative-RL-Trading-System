@@ -19,7 +19,7 @@
 #   MAX_CHARTS=200 bash scripts/research/frozen-launches/reexport_oct3_runs.sh   # inside a shell
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 RUNS="${RUNS:-20261003_171903_512479_rl_train_seed50_tcn 20261003_171903_426375_rl_train_seed50_tcn}"
 MAX_CHARTS="${MAX_CHARTS:-50}"
 LOGDIR="${LOGDIR:-$REPO/outputs}"

@@ -24,16 +24,17 @@ tool binary before starting a gate. An architecture mismatch is an invocation
 failure, not a lint, type, or test result.
 
 Lock/export/sync operations still require `uv`. On ARM, `tools/check` prefers
-`THESIS_UV` or a `uv` executable inside the selected project environment; do
-not let it fall through to an x86 login-home binary. For a standalone native
+`QRL_UV` or a `uv` executable inside the selected project environment; do not
+let it fall through to an x86 login-home binary. For a standalone native
 binary, pass it explicitly, for example:
 
 ```bash
-THESIS_UV=/path/to/aarch64/uv ./tools/check deps
+QRL_UV=/path/to/aarch64/uv ./tools/check deps
 ```
 
 The venv setup helpers, `tools/uv-install`, and `make deps-check` honor the same
-`THESIS_UV` override. `tools/check build` uses the selected project Python's
+`QRL_UV` override. `THESIS_UV` remains a deprecated fallback for existing
+setups. `tools/check build` uses the selected project Python's
 `build` module when a matched environment is active.
 
 ## Hard rule — agent commit / push
@@ -70,7 +71,7 @@ Only **pytest** stays scoped at commit time.
 - Prefer tests that cover the modules you touched (same package / mirror path under
   `tests/`, plus any smoke tests you added).
 - Use graph/`tests_for` when available; otherwise grep or path convention
-  (`features/foo.py` → `tests/**/test_*foo*`).
+  (for example, `<feature_module>.py` → `tests/**/test_*<feature>*`).
 - Cap to a small set (typically 1–few files). Do **not** expand to the whole tree
   “to be safe.”
 - Run `./tools/check full` only when the user explicitly asks, or when you are

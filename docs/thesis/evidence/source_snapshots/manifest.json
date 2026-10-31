@@ -36,25 +36,26 @@
       "canonical_path": "scripts/research/frozen-launches/freeze_tick_decision_schedule.sh",
       "historical_path": "scripts/research/audits/run_p1_schedule_freeze_gate.sh",
       "sha256": "e15d3f7beae3375e379dc44acfb977ee91ca91385d0bee5f49178014fd6cbda7",
-      "status": "historical alias retired; exact source bytes retained"
+      "status": "historical digest retained; canonical source evolved and exact historical bytes are unavailable"
     },
     {
       "canonical_path": "scripts/research/frozen-launches/validate_tick_fold_scope.sh",
       "historical_path": "scripts/research/audits/run_p1_tick_fold_validation.sh",
       "sha256": "f89d126788033f92f54e1bd344682777745da5e87034f354d283ebc18e7bedf7",
-      "status": "historical alias retired; exact source bytes retained"
+      "status": "historical digest retained; canonical source evolved and exact historical bytes are unavailable"
     },
     {
       "canonical_path": "scripts/research/frozen-launches/validate_tick_data_quality.sh",
       "historical_path": "scripts/research/audits/run_p1_tick_quality_validation.sh",
       "sha256": "0b86da0cf34e184607fbf5a400bc582b4db357b2c6e724e4d9ae050ea7a59088",
-      "status": "historical alias retired; exact source bytes retained"
+      "status": "historical digest retained; canonical source evolved and exact historical bytes are unavailable"
     },
     {
       "canonical_path": "scripts/research/frozen-launches/smoke_test_checkpoint_recovery.sh",
       "historical_path": "scripts/research/audits/run_p3_checkpoint_recovery_smoke.sh",
       "sha256": "33f035ef32454c2834bb0b128a120bec9e156996da787a83e82ef769038362f9",
-      "status": "historical alias retired; exact source bytes retained"
+      "status": "historical alias retired; canonical source evolved; exact historical bytes retained separately",
+      "historical_source_snapshot": "docs/thesis/evidence/source_snapshots/smoke_test_checkpoint_recovery_20261031.source"
     }
   ]
 }

@@ -3,7 +3,7 @@ services:
     build:
       context: .
       target: runtime
-    image: quant-rl-thesis:latest
+    image: quantitative-rl-trading-system:latest
     user: "1001:1001"
     volumes:
       - ./outputs:/app/outputs
@@ -21,7 +21,7 @@ services:
       target: dev
       args:
         TORCH_DEVICE: cpu
-    image: quant-rl-thesis:dev
+    image: quantitative-rl-trading-system:dev
     volumes:
       - .:/app
       - ./outputs:/app/outputs
@@ -40,7 +40,7 @@ services:
       target: dev
       args:
         TORCH_DEVICE: cu130
-    image: quant-rl-thesis:dev-gpu
+    image: quantitative-rl-trading-system:dev-gpu
     volumes:
       - .:/app
       - ./outputs:/app/outputs
@@ -64,7 +64,7 @@ services:
     build:
       context: .
       target: test
-    image: quant-rl-thesis:test
+    image: quantitative-rl-trading-system:test
     volumes:
       - ./config:/app/config:ro
       - ./docs:/app/docs:ro
@@ -88,7 +88,7 @@ services:
       target: test
       args:
         TORCH_DEVICE: cu130
-    image: quant-rl-thesis:test-gpu
+    image: quantitative-rl-trading-system:test-gpu
     volumes:
       - ./config:/app/config:ro
       - ./docs:/app/docs:ro
@@ -186,4 +186,4 @@ services:
 
 networks:
   default:
-    name: quant-rl-thesis
+    name: qrl

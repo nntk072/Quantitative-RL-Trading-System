@@ -23,7 +23,20 @@ def _exception_file(tmp_path: Path, contents: str) -> Path:
 def test_uv_command_prefers_explicit_architecture_override(monkeypatch, tmp_path: Path) -> None:
     native_uv = tmp_path / "uv-aarch64"
     monkeypatch.delenv("UV_BIN", raising=False)
+    monkeypatch.delenv("QRL_UV", raising=False)
     monkeypatch.setenv("THESIS_UV", str(native_uv))
+    monkeypatch.setattr(
+        "scripts.dev.security.dependency_audit.shutil.which", lambda _: "/usr/bin/uv"
+    )
+
+    assert uv_command() == str(native_uv)
+
+
+def test_dependency_audit_prefers_canonical_qrl_uv(monkeypatch, tmp_path: Path) -> None:
+    native_uv = tmp_path / "uv-qrl"
+    monkeypatch.delenv("UV_BIN", raising=False)
+    monkeypatch.setenv("QRL_UV", str(native_uv))
+    monkeypatch.setenv("THESIS_UV", "/deprecated/uv")
     monkeypatch.setattr(
         "scripts.dev.security.dependency_audit.shutil.which", lambda _: "/usr/bin/uv"
     )
@@ -36,7 +49,18 @@ def test_secret_scanner_uv_command_prefers_architecture_override(
 ) -> None:
     native_uv = tmp_path / "uv-aarch64"
     monkeypatch.delenv("UV_BIN", raising=False)
+    monkeypatch.delenv("QRL_UV", raising=False)
     monkeypatch.setenv("THESIS_UV", str(native_uv))
+    monkeypatch.setattr("scripts.dev.security.secret_scan.shutil.which", lambda _: "/usr/bin/uv")
+
+    assert secret_uv_command() == str(native_uv)
+
+
+def test_secret_scanner_prefers_canonical_qrl_uv(monkeypatch, tmp_path: Path) -> None:
+    native_uv = tmp_path / "uv-qrl"
+    monkeypatch.delenv("UV_BIN", raising=False)
+    monkeypatch.setenv("QRL_UV", str(native_uv))
+    monkeypatch.setenv("THESIS_UV", "/deprecated/uv")
     monkeypatch.setattr("scripts.dev.security.secret_scan.shutil.which", lambda _: "/usr/bin/uv")
 
     assert secret_uv_command() == str(native_uv)

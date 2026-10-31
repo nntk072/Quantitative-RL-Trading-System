@@ -12,11 +12,11 @@ from gymnasium import spaces
 from omegaconf import OmegaConf
 from stable_baselines3 import PPO
 
-from decisioning.thesis import (
-    THESIS_CATEGORY_COUNT,
-    build_thesis_action_schema,
-    thesis_id_from_box,
-    thesis_observation_schema,
+from decisioning.trade_setup import (
+    TRADE_SETUP_CATEGORY_COUNT,
+    build_legacy_thesis_action_schema,
+    trade_setup_id_from_box,
+    trade_setup_observation_schema,
 )
 from learning.rl.agent import build_agent, validate_model_architecture
 from models.encoders import (
@@ -50,22 +50,24 @@ class _ThesisMTFEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.f
     def __init__(self) -> None:
         schema: dict[str, spaces.Space[Any]] = {
             "account": spaces.Box(-10.0, 10.0, (6,), dtype=np.float32),
-            "thesis_mask": spaces.Box(0.0, 1.0, (THESIS_CATEGORY_COUNT,), dtype=np.float32),
+            "thesis_mask": spaces.Box(0.0, 1.0, (TRADE_SETUP_CATEGORY_COUNT,), dtype=np.float32),
         }
         for seq_key, mask_key, length, width in _STREAMS:
             schema[seq_key] = spaces.Box(-1.0, 1.0, (length, width), dtype=np.float32)
             schema[mask_key] = spaces.Box(0.0, 1.0, (length,), dtype=np.float32)
         self.observation_space = spaces.Dict(schema)
         self.action_space = spaces.Box(-1.0, 1.0, (5,), dtype=np.float32)
-        self.action_schema = build_thesis_action_schema()
+        self.action_schema = build_legacy_thesis_action_schema()
+        self.trade_setup_actions = True
+        self.legacy_thesis_contract = True
         self.thesis_actions = True
         self.strategy_actions = True
-        self.thesis_observation_schema = thesis_observation_schema()
+        self.trade_setup_observation_schema = trade_setup_observation_schema()
 
     def _observation(self) -> dict[str, npt.NDArray[np.float32]]:
         observation: dict[str, npt.NDArray[np.float32]] = {
             "account": np.zeros(6, dtype=np.float32),
-            "thesis_mask": np.zeros(THESIS_CATEGORY_COUNT, dtype=np.float32),
+            "thesis_mask": np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32),
         }
         observation["thesis_mask"][[0, 12, 51]] = 1.0
         for seq_key, mask_key, length, width in _STREAMS:
@@ -151,7 +153,7 @@ def test_thesis_conditioned_ppo_checkpoint_roundtrip_preserves_encoder(
 
     observation, _ = env.reset()
     predicted, _ = model.predict(observation, deterministic=True)
-    assert thesis_id_from_box(float(predicted[0])) in {0, 12, 51}
+    assert trade_setup_id_from_box(float(predicted[0])) in {0, 12, 51}
     observation_tensor, _ = model.policy.obs_to_tensor(observation)
     action_tensor = torch.as_tensor(predicted, device=model.device).reshape(1, -1)
     _, log_prob, entropy = model.policy.evaluate_actions(observation_tensor, action_tensor)

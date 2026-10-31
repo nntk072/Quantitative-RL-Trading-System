@@ -1,0 +1,22 @@
+{
+  "migration": "entry-idea-opportunity-count-evidence",
+  "reason": "Move generated machine evidence out of reader-facing research documentation; preserve exact bytes.",
+  "source_run_date": "2026-10-27",
+  "files": [
+    {
+      "old_path": "docs/research/entry_idea_opportunity_counts_20261027/annual_summary.csv",
+      "new_path": "evidence/research/entry_idea_opportunity_counts/annual_summary.csv",
+      "sha256": "ad63eaec44e3d2ead2e6cb5a522c0567ad82535e1c0f8e05d3adbac1097ba814"
+    },
+    {
+      "old_path": "docs/research/entry_idea_opportunity_counts_20261027/by_idea_timeframe.csv",
+      "new_path": "evidence/research/entry_idea_opportunity_counts/by_idea_timeframe.csv",
+      "sha256": "5ea9a37a113fc1a01c2c3dffc701f827cfd7a2ca322e70b168d51ab3998f3ac9"
+    },
+    {
+      "old_path": "docs/research/entry_idea_opportunity_counts_20261027/entry_idea_opportunity_counts.md",
+      "new_path": "evidence/research/entry_idea_opportunity_counts/entry_idea_opportunity_counts.md",
+      "sha256": "f02672cd81b1fb272ff0491c86cfe1eff04bf016bbf179bb7e97d7dcfcbab42a"
+    }
+  ]
+}

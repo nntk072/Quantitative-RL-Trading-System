@@ -36,7 +36,7 @@ Four distinct context families can be present at once:
    the selected swing direction. The retracement uses that swing’s own
    timeframe.
 
-These contexts can correlate. A policy configured for thesis-conditioned
+These contexts can correlate. A policy configured for setup-conditioned
 decisions selects one primary idea, setup timeframe, and direction for an
 entry. Other timeframes may provide corroborating context. A recorded active
 context does not by itself prove that it caused the trade.
@@ -72,6 +72,17 @@ Blocks do not validate this detector or establish a trading edge.
 - Charts show the entry idea and selected references. Indicator and structure
   overlays are independently switchable; plot visibility does not change
   training behavior.
+
+## Feature preview
+
+The following H1 figures show the source-context preview used to inspect the
+Order Block and swing retracement features. They are not trade entries or
+performance results. Source bars, selected time, and plotted levels are
+preserved in the [preview metadata](../../evidence/research/entry_idea_context_previews/source_metadata.json).
+
+![H1 Order Block context preview](../../evidence/research/entry_idea_context_previews/h1_order_block.png)
+
+![H1 swing retracement levels](../../evidence/research/entry_idea_context_previews/h1_swing_fibonacci_levels.png)
 
 ## Interpretation limits
 

@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="${TRITON_REPO:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-UV_BIN="${THESIS_UV:-uv}"
+UV_BIN="${QRL_UV:-${THESIS_UV:-uv}}"
 V100_ENV="${TRITON_V100_ENV:-/scratch/work/nguyenl37/.venv-v100}"
 cd "$REPO"
 

@@ -7,7 +7,7 @@ from typing import Any, cast
 import pandas as pd
 import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
-ROOT = Path("/scratch/work/nguyenl37/Aalto_MS_Thesis")
+ROOT = Path(__file__).resolve().parents[3]
 CACHE = ROOT / "cache/us100_us500_20241230_20261016"
 OUT = ROOT / "outputs/data_refresh_20261017/missing_m1_tick_reconstruction.json"
 TZ = "Etc/GMT-3"

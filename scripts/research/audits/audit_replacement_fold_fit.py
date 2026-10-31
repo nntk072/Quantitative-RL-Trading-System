@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
-ROOT = Path("/scratch/work/nguyenl37/Aalto_MS_Thesis")
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 from configuration import apply_overrides, load_config  # noqa: E402
 from features import (  # noqa: E402

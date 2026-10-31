@@ -1,7 +1,7 @@
 [project]
-name = "quant-rl-thesis"
+name = "quantitative-rl-trading-system"
 version = "0.1.0"
-description = "Add your description here"
+description = "A configurable reinforcement-learning system for quantitative trading research and evaluation."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -76,6 +76,7 @@ torch = { index = "pytorch-gpu" }
 
 [tool.uv]
 constraint-dependencies = [
+    "pyasn1>=0.6.5",
     "protobuf>=6.33.5,<7",
     "soupsieve>=2.9.0,<3",
 ]
@@ -237,6 +238,13 @@ packages = ["configuration", "artifacts", "market_data", "features", "trading", 
 
 [project.scripts]
 orchestra = "orchestra.cli:main"
+# Canonical project command names.
+qrl-data = "market_data.cli:main"
+qrl-train = "training.cli:main"
+qrl-evaluate = "evaluation.cli:main"
+qrl-experiment = "experiments.cli:main"
+qrl-compute = "compute.cli:main"
+# Deprecated compatibility aliases retained for existing workflows and records.
 thesis-data = "market_data.cli:main"
 thesis-train = "training.cli:main"
 thesis-evaluate = "evaluation.cli:main"

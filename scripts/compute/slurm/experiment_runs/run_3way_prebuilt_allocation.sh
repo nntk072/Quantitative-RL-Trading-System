@@ -2,7 +2,7 @@
 # One allocation runs the three strategy variants against their named caches.
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/3_strategy_prebuilt_cache_seed42_20m_20261014.yaml}"
 EXPERIMENT_RUN_ID="ladder3_prebuilt_cache_seed42_20m_20261014"
 OUT_DIR="$REPO/outputs/experiment_runs/$EXPERIMENT_RUN_ID"

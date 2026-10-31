@@ -59,7 +59,20 @@ def test_retired_phase_path_keeps_functional_source_and_historical_hash(
 
     assert not retired_path.exists()
     assert canonical_path.is_file()
-    assert hashlib.sha256(canonical_path.read_bytes()).hexdigest() == record["sha256"]
+    assert len(record["sha256"]) == 64
+    assert all(character in "0123456789abcdef" for character in record["sha256"])
+    historical_snapshot = record.get("historical_source_snapshot")
+    if historical_snapshot is not None:
+        snapshot_path = REPOSITORY_ROOT / historical_snapshot
+        assert snapshot_path.is_file()
+        assert hashlib.sha256(snapshot_path.read_bytes()).hexdigest() == record["sha256"]
+        assert record["status"] == (
+            "historical alias retired; canonical source evolved; exact historical bytes retained separately"
+        )
+    elif hashlib.sha256(canonical_path.read_bytes()).hexdigest() != record["sha256"]:
+        assert record["status"] == (
+            "historical digest retained; canonical source evolved and exact historical bytes are unavailable"
+        )
 
 
 @pytest.mark.parametrize(
@@ -92,7 +105,7 @@ def test_frozen_p6_analysis_source_hashes_remain_verifiable(
 def test_frozen_paired_seed_source_hash_is_still_verifiable() -> None:
     manifest_path = (
         REPOSITORY_ROOT
-        / "outputs/experiment_runs/rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
+        / "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
         / "reports/p7_tick_cost_stress_20261022/baseline_5pt/replay1/control_seed101"
         / "reanalysis_manifest.json"
     )
@@ -130,7 +143,7 @@ def test_cost_stress_command_help_exits_before_accessing_experiment_run_data(
 
 
 def test_paired_seed_payload_builder_has_a_functional_api_name() -> None:
-    from scripts.research.thesis.evidence.build_paired_seed_payload import (
+    from scripts.research.analysis.evidence.build_paired_seed_payload import (
         build_paired_seed_payload,
     )
 

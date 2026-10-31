@@ -33,6 +33,41 @@ An adapter may depend on a vendor library, terminal, account setting, and
 network connection. A passing mock-based integration test cannot prove that a
 real account will accept or fill an order as expected.
 
+## UML
+
+This UML defines the adapter boundary. Vendor-specific objects are translated
+into broker-neutral contracts before they reach the live strategy.
+
+```mermaid
+classDiagram
+    class MarketDataSource {
+      +bars()
+      +quotes()
+    }
+    class TradingData
+    class MT5Data
+    class LiveStrategy {
+      +signal() LiveSignal
+    }
+    class TradingStrategy
+    class Trader {
+      +submit(intent)
+      +manage(position)
+    }
+    class MT5Trader
+    class RiskManager
+    class Signal
+    class BrokerNeutralIntent
+    MT5Data ..|> MarketDataSource
+    MT5Data --> TradingData : normalizes to
+    TradingStrategy ..|> LiveStrategy
+    TradingStrategy --> Signal : maps output
+    Signal --> BrokerNeutralIntent : decoded as
+    BrokerNeutralIntent --> RiskManager : checked by
+    RiskManager --> Trader : permits request
+    MT5Trader ..|> Trader
+```
+
 ## Implementation reference
 
 The `integrations/` package contains external-system adapters. The current

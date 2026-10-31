@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Scan pre-intake archive text for holdout-period references, then gate the tree.
 set -u
-cd /scratch/work/nguyenl37/Aalto_MS_Thesis || exit 2
+cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)" || exit 2
 source scripts/compute/slurm/activate_venv.sh
 set +e
 

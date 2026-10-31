@@ -64,6 +64,53 @@ Features expose measurements and candidate context; they do not prove that a
 pattern predicts future returns. More timeframes and feature families increase
 input size and may increase computation without improving the policy.
 
+## UML
+
+This domain UML maps the feature-building contract, derived context, and cache.
+Internal indicator helpers are intentionally grouped by responsibility.
+
+```mermaid
+classDiagram
+    class InputSchema {
+      +timeframes
+      +feature_names
+      +normalization_contract
+    }
+    class InputView {
+      +bars
+      +quotes
+      +calendar_context
+    }
+    class FeatureBuilder {
+      +build(InputView) FeatureMatrix
+    }
+    class FeatureMatrix {
+      +values
+      +timestamps
+      +feature_names
+    }
+    class IndicatorFeatures
+    class StructureFeatures
+    class SessionFeatures
+    class TrainNormalizer {
+      +fit(train_rows)
+      +transform(rows)
+    }
+    class FeatureCache {
+      +identity
+      +load_or_build()
+    }
+    InputView --> FeatureBuilder
+    InputSchema --> FeatureBuilder : validates
+    FeatureBuilder --> IndicatorFeatures : derives
+    FeatureBuilder --> StructureFeatures : derives
+    FeatureBuilder --> SessionFeatures : derives
+    FeatureBuilder --> FeatureMatrix : assembles
+    FeatureMatrix --> TrainNormalizer : normalized by
+    FeatureMatrix --> FeatureCache : persisted as
+    FeatureMatrix --> ObservationSchema : supplies
+```
+
 ## Implementation reference
 
 Feature building and cache preparation live in the `features/` and

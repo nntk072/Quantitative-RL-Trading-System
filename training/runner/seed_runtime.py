@@ -207,17 +207,24 @@ class SeedRunner:
             resume_env = build_vector_env(train_env, cfg, env_factory)
             model = load_sb3_training_checkpoint(resume_path, env=resume_env, device=device)
             validate_model_architecture(model, args.arch, use_vae=args.use_vae)
-            from decisioning.thesis import validate_thesis_observation_schema
-            from learning.rl.agent import validate_model_observation_schema
+            from learning.rl.agent import (
+                validate_model_observation_schema,
+                validate_model_trade_setup_observation_schema,
+            )
 
             validate_model_observation_schema(
                 model,
                 train_env.observation_schema,
                 allow_legacy_v1=bool(args.allow_legacy_observation_schema),
             )
-            validate_thesis_observation_schema(
-                getattr(model, "_thesis_observation_schema", None),
-                train_env.thesis_observation_schema,
+            validate_model_trade_setup_observation_schema(
+                model,
+                (
+                    train_env.thesis_observation_schema
+                    if bool(getattr(train_env, "legacy_thesis_contract", False))
+                    else train_env.trade_setup_observation_schema
+                ),
+                legacy=bool(getattr(train_env, "legacy_thesis_contract", False)),
             )
             if int(model.num_timesteps) > int(timesteps):
                 raise ValueError(
@@ -294,7 +301,9 @@ class SeedRunner:
             )
 
         callbacks.append(EpisodeEquityCallback(log_path=seed_model_dir / "episode_equity.csv"))
-        thesis_diagnostics_enabled = bool(cfg.env.get("thesis_actions", False))
+        thesis_diagnostics_enabled = bool(
+            cfg.env.get("thesis_actions", False) or cfg.env.get("trade_setup_actions", False)
+        )
         if (
             bool(cfg.get("quality_diagnostics", {}).get("enabled", False))
             or thesis_diagnostics_enabled
@@ -633,10 +642,12 @@ class SeedRunner:
                 dpi=getattr(cfg.output, "dpi", 150),
                 save_html=getattr(cfg.output, "save_html", False),
             )
-            if bool(cfg.env.get("thesis_actions", False)):
-                from evaluation.reporting.thesis_plots import write_thesis_learning_plots
+            if bool(
+                cfg.env.get("thesis_actions", False) or cfg.env.get("trade_setup_actions", False)
+            ):
+                from evaluation.reporting.trade_setup_plots import write_trade_setup_learning_plots
 
-                thesis_plots = write_thesis_learning_plots(
+                thesis_plots = write_trade_setup_learning_plots(
                     seed_model_dir / "learning_diagnostics.csv",
                     seed_model_dir,
                     dpi=getattr(cfg.output, "dpi", 150),
@@ -1084,6 +1095,7 @@ class SeedRunner:
             for key in (
                 "strategy_actions",
                 "thesis_actions",
+                "trade_setup_actions",
                 "allow_agent_sl_mode",
                 "allow_agent_tp_mode",
                 "allow_multi_tp",

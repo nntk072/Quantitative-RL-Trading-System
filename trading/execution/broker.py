@@ -95,6 +95,9 @@ class Position:
     primary_idea: str = ""
     primary_setup_timeframe: str = ""
     thesis_decision_time: object | None = None
+    trade_setup_candidate_id: int | None = None
+    trade_setup_schema_version: str = ""
+    trade_setup_decision_time: object | None = None
     tp1_price: float | None = None
     tp2_price: float | None = None
     tp3_price: float | None = None

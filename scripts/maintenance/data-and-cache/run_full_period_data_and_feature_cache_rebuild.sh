@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Refresh every configured full-period bar/tick cache and all four named feature profiles.
 set -euo pipefail
-cd /scratch/work/nguyenl37/Aalto_MS_Thesis
+cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 source scripts/compute/slurm/activate_venv.sh
 
 python scripts/maintenance/data-and-cache/rebuild_full_period_data_cache.py

@@ -23,7 +23,7 @@ from configuration.paths import repository_root
 from decisioning.actions import build_action_schema, build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.observations import build_observation_schema
-from decisioning.thesis import build_thesis_action_schema
+from decisioning.trade_setup import build_trade_setup_action_schema
 from evaluation import calculate_metrics, evaluation_periods_per_year
 from evaluation.reanalysis.checkpoint import resolve_checkpoint
 from evaluation.reanalysis.cli import build_reanalysis_parser
@@ -33,6 +33,7 @@ from evaluation.reanalysis.legacy_sb3 import (
     is_sb3_discrete_model,
     load_sb3_checkpoint,
     seed_sb3,
+    validate_model_trade_setup_observation_schema,
     validate_sb3_discrete_action_schema,
     validate_sb3_observation_schema,
     validate_sb3_overlay_action_schema,
@@ -269,11 +270,23 @@ def main() -> None:
         expected_observation_schema,
         allow_legacy_v1=bool(args.allow_legacy_observation_schema),
     )
-    from decisioning.thesis import thesis_observation_schema, validate_thesis_observation_schema
+    from decisioning.trade_setup import (
+        legacy_thesis_observation_schema,
+        trade_setup_observation_schema,
+    )
 
-    validate_thesis_observation_schema(
-        getattr(model, "_thesis_observation_schema", None),
-        thesis_observation_schema() if bool(cfg.env.get("thesis_actions", False)) else None,
+    legacy_setup = bool(cfg.env.get("thesis_actions", False))
+    canonical_setup = bool(cfg.env.get("trade_setup_actions", False))
+    if legacy_setup and canonical_setup:
+        raise ValueError("run config cannot enable both legacy thesis and trade setup actions")
+    validate_model_trade_setup_observation_schema(
+        model,
+        legacy_thesis_observation_schema()
+        if legacy_setup
+        else trade_setup_observation_schema()
+        if canonical_setup
+        else None,
+        legacy=legacy_setup,
     )
     is_overlay = bool(cfg.env.get("strategy_actions", False))
     if is_overlay:
@@ -289,8 +302,17 @@ def main() -> None:
             cfg.env.allow_simplex = False
         multi_tp = bool(cfg.env.get("allow_multi_tp", False))
         schema: Any
-        if bool(cfg.env.get("thesis_actions", False)):
-            schema = build_thesis_action_schema(
+        if bool(cfg.env.get("thesis_actions", False)) or bool(
+            cfg.env.get("trade_setup_actions", False)
+        ):
+            from decisioning.trade_setup import build_legacy_thesis_action_schema
+
+            schema_builder = (
+                build_legacy_thesis_action_schema
+                if bool(cfg.env.get("thesis_actions", False))
+                else build_trade_setup_action_schema
+            )
+            schema = schema_builder(
                 has_sl_mode=bool(cfg.env.get("allow_agent_sl_mode", True)),
                 has_tp_mode=bool(cfg.env.get("allow_agent_tp_mode", False)),
                 has_multi_tp=multi_tp,

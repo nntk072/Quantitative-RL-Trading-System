@@ -46,7 +46,57 @@ fees, risk rules, and action interpretation. A strong result on one interval or
 seed does not establish robust performance. Use uncertainty estimates and
 matched comparisons for claims that go beyond description.
 
+## UML
+
+This UML connects a frozen model and evaluation case to replay outputs, metrics,
+plots, and the human report.
+
+```mermaid
+classDiagram
+    class EvaluationCase {
+      +checkpoint
+      +period
+      +execution_rules
+    }
+    class RolloutRunner {
+      +run(EvaluationCase) ReportDataset
+    }
+    class ModelProvider {
+      +predict(observation)
+    }
+    class EvaluationLedger {
+      +orders
+      +fills
+      +trades
+      +equity_path
+    }
+    class PerformanceMetrics
+    class TradeChartMetrics
+    class PlotBuilder
+    class ReportDataset
+    class ReportRenderer {
+      +render(ReportDataset)
+    }
+    class MetricResult {
+      +name
+      +value
+      +sample_size
+    }
+    EvaluationCase --> RolloutRunner
+    RolloutRunner --> ModelProvider : queries
+    RolloutRunner --> EvaluationLedger : records
+    EvaluationLedger --> PerformanceMetrics : summarizes
+    EvaluationLedger --> TradeChartMetrics : summarizes
+    PerformanceMetrics --> MetricResult
+    TradeChartMetrics --> PlotBuilder
+    EvaluationLedger --> ReportDataset
+    MetricResult --> ReportDataset
+    PlotBuilder --> ReportDataset
+    ReportDataset --> ReportRenderer : rendered by
+```
+
 ## Implementation reference
 
 The `evaluation/` module owns rollouts, metrics, report assembly, and plots.
-Thesis period roles are defined in the [validation protocol](../thesis/validation_protocol.md).
+Training, validation, exploratory, and confirmatory period roles are defined
+in the [validation protocol](../thesis/validation_protocol.md).

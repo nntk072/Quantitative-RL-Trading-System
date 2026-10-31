@@ -42,6 +42,53 @@ underlying data or execution assumptions are realistic. A checkpoint without
 its compatible model schema, configuration, and data context may not be
 reproducible.
 
+## UML
+
+This UML separates stable identity and storage layout from the manifest and
+human-facing report.
+
+```mermaid
+classDiagram
+    class ArtifactRef {
+      +kind
+      +path
+      +digest
+    }
+    class ArtifactId {
+      +algorithm
+      +digest
+    }
+    class ArtifactLayout {
+      +root
+      +resolve_path()
+    }
+    class ExperimentRunArtifactLayout
+    class ArtifactManifest {
+      +run_id
+      +inputs
+      +outputs
+      +write()
+    }
+    class AtomicWriter {
+      +write_json()
+      +write_bytes()
+    }
+    class BaselineValidation {
+      +checks
+      +passed
+    }
+    class RetentionClass
+    class HumanReport
+    ArtifactLayout <|-- ExperimentRunArtifactLayout
+    ArtifactRef --> ArtifactId : identified by
+    ArtifactManifest o-- ArtifactRef : records
+    ArtifactManifest --> ArtifactLayout : locates artifacts
+    AtomicWriter --> ArtifactManifest : persists safely
+    ArtifactManifest --> BaselineValidation : checked before promotion
+    ArtifactRef --> RetentionClass : assigned
+    ArtifactManifest --> HumanReport : supplies verified facts
+```
+
 ## Implementation reference
 
 The `artifacts/` module owns layouts, manifests, identities, safe writes, and

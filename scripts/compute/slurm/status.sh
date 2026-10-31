@@ -3,7 +3,7 @@
 # Usage: bash scripts/compute/slurm/status.sh
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SESSION="${TMUX_SESSION:-quant-rl-train}"
 
 echo "=== user / host ==="

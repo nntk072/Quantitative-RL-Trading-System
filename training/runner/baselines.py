@@ -5,7 +5,7 @@ before RL training. Helps verify hold times and lot sizes are realistic.
 
 Usage
 -----
-    cd Aalto_MS_Thesis
+    cd Quantitative-RL-Trading-System
     python -m training.runner.baselines --strategy macd
     python -m training.runner.baselines --strategy ema --seed 42
 """

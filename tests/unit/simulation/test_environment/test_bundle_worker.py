@@ -267,7 +267,7 @@ def test_mtf_reasoning_worker_preserves_mtf_and_thesis_observations(tmp_path: Pa
     import pandas as pd
 
     from configuration import load_config
-    from features.context.thesis_candidates import thesis_candidate_feature_columns
+    from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
     from simulation.environment.bundles import build_env_bundle
     from simulation.environment.spec import EnvSpec
     from simulation.environment.worker import make_bundle_env
@@ -276,7 +276,7 @@ def test_mtf_reasoning_worker_preserves_mtf_and_thesis_observations(tmp_path: Pa
 
     bars = _make_deterministic_bars(n=96)
     features = _make_features(bars)
-    columns = [name for _, name in thesis_candidate_feature_columns()]
+    columns = [name for _, name in trade_setup_candidate_feature_columns()]
     features = pd.concat(
         [
             features,

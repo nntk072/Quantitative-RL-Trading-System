@@ -2,7 +2,7 @@
 
 Usage
 -----
-    cd Aalto_MS_Thesis
+    cd Quantitative-RL-Trading-System
     python -m training.runner.backtest
     python -m training.runner.backtest env.obs_window=30 --seed=42
     python -m training.runner.backtest --no-save

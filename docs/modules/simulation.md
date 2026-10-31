@@ -52,6 +52,52 @@ is still limited by missing quotes, modeled latency, and assumptions about
 broker behavior. Environment termination rules affect what the learner
 experiences and must be stated when interpreting a result.
 
+## UML
+
+The simulation UML distinguishes the learning environment transition from the
+event-driven replay engine, while showing their shared account/execution rules.
+
+```mermaid
+classDiagram
+    class TradingEnvironment {
+      +reset() Observation
+      +step(action) SimulationTransition
+    }
+    class SimulationTransition {
+      +observation
+      +reward
+      +terminated
+      +truncated
+      +diagnostics
+    }
+    class BacktestEngine {
+      +run(checkpoint, period) EvaluationLedger
+    }
+    class MarketData
+    class AccountState
+    class ExecutionModel {
+      +fill(order, quote) Fill
+    }
+    class RiskPolicy {
+      +assess(account, intent) RiskDecision
+    }
+    class RewardCalculator {
+      +compute(previous, current) float
+    }
+    class EvaluationLedger
+    TradingEnvironment --> MarketData : observes
+    TradingEnvironment --> RiskPolicy : checks
+    TradingEnvironment --> ExecutionModel : fills through
+    TradingEnvironment --> AccountState : updates
+    TradingEnvironment --> RewardCalculator : computes
+    TradingEnvironment --> SimulationTransition : returns
+    BacktestEngine --> MarketData
+    BacktestEngine --> RiskPolicy
+    BacktestEngine --> ExecutionModel
+    BacktestEngine --> AccountState
+    BacktestEngine --> EvaluationLedger : records
+```
+
 ## Implementation reference
 
 The `simulation/` module owns environment transitions and backtesting. Trading

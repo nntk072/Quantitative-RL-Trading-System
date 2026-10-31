@@ -15,7 +15,7 @@
 #   MEM=512G CPUS=48 bash scripts/compute/slurm/attach_or_alloc.sh
 set -euo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SESSION="${TMUX_SESSION:-quant-rl-train}"
 WINDOW="${TMUX_WINDOW:-gpu-shell}"
 MEM="${MEM:-128G}"

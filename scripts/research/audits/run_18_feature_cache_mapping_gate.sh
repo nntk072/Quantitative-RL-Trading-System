@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Validate the 18-variant mapping to four full-period prebuilt feature profiles.
 set -u
-cd /scratch/work/nguyenl37/Aalto_MS_Thesis || exit 2
+cd "$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)" || exit 2
 source scripts/compute/slurm/activate_venv.sh
 set +e
 

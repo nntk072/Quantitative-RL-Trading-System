@@ -212,9 +212,9 @@ variants:
     entry_state_observation: false
     peak_trailing_dd_limit: 0.0
     config_overrides:
-      - "env.thesis_actions=true"
+      - "env.trade_setup_actions=true"
       - "features.entry_ideas.enabled=true"
-      - "ppo.policy_distribution=thesis_hybrid_v1"
+      - "ppo.policy_distribution=trade_setup_hybrid_v1"
       - "ppo.actor_arch=shared"
       - "constrained_rl.enabled=false"
       - "env.risk_mode=dollar_band"

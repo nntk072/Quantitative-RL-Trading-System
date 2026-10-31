@@ -336,7 +336,8 @@ env:
   max_episode_steps: null
   reward_dsr_eta: 0.01                 # differential Sharpe damping
   strategy_actions: false              # legacy Idea 1/2 trader Box action interface
-  thesis_actions: false                # versioned primary-thesis action + eligibility mask
+  trade_setup_actions: false           # canonical primary trade-setup choice and eligibility mask
+  thesis_actions: false                # deprecated legacy checkpoint/config compatibility
   entry_state_machine: false           # A4 persistent opportunity lifecycle
   candidate_max_age_bars: 5            # last valid candidate age, in bars
   arm_requires_retest: false           # require a current directional gap retest to arm
@@ -414,8 +415,11 @@ env:
 
 ppo:
   actor_arch: shared                # shared | semantic_heads; opt-in Q4A treatment
-  policy_distribution: clamped_diagonal_gaussian  # hybrid_v1 / thesis_hybrid_v1 / thesis_conditioned_v1 are opt-in
+  policy_distribution: clamped_diagonal_gaussian  # trade_setup_* and hybrid_v1 are opt-in; thesis_* remain legacy
   thesis_conditioned:
+    embedding_dim: 32
+    execution_hidden_dim: 128
+  trade_setup_conditioned:
     embedding_dim: 32
     execution_hidden_dim: 128
   semantic_head_width: 64

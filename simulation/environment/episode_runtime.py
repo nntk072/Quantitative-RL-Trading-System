@@ -6,7 +6,7 @@ import gymnasium as gym
 import numpy as np
 import pandas as pd
 
-from decisioning.thesis import ThesisCandidate
+from decisioning.trade_setup import TradeSetupCandidate
 from market_data.loading.ticks import TickExecutionUnavailable, resolve_tick_execution_by_deadline
 from market_data.transforms.sessions import ny_session_mask
 from simulation.contracts import SimulationTransition
@@ -23,7 +23,7 @@ from .sweep_reward import CompositeReward
 class EpisodeRuntimeMixin(RuntimeMixinBase):
     prev_session: int | None
     position: Position | None
-    _selected_thesis: ThesisCandidate | None
+    _selected_trade_setup: TradeSetupCandidate | None
     _session_entry_counts: dict[int, int]
     _last_realized_close_pnl: float | None
     _last_realized_close_r: float | None
@@ -84,7 +84,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._pending_realized_r: float | None = None
         self._opened_this_step = False
         self._selected_sl_anchor = 0.0
-        self._selected_thesis = None
+        self._selected_trade_setup = None
         self._selected_tp_fraction = 0.0
         self._selected_exit_mode = "structural"
         self._selected_sl_mode = "fixed"
@@ -97,7 +97,10 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._entry_rejection_reason = ""
         self._ep_start_equity = float(self.initial_balance)
         self._ep_reward_sum = 0.0
-        self._entry_diag = _empty_entry_diag(self.entry_state_machine is not None)
+        self._entry_diag = _empty_entry_diag(
+            self.entry_state_machine is not None,
+            legacy_thesis_contract=self.legacy_thesis_contract,
+        )
         self._previous_constraint_ratios = {"daily": 0.0, "max_loss": 0.0, "trailing": 0.0}
         self.cumulative_payouts = 0.0
         self.cycle_count = 1

@@ -13,8 +13,11 @@ uv sync --extra dev                        # include dev tooling
 
 On ARM64/GH200, these package-manager commands require an ARM64 `uv`. If the
 login-home `uv` is x86-64, run the repository helper with
-`THESIS_UV=/path/to/aarch64/uv ./tools/setup-venv`; use `.venv/bin` directly
+`QRL_UV=/path/to/aarch64/uv ./tools/setup-venv`; use `.venv/bin` directly
 for Ruff, Mypy, and pytest.
+
+`THESIS_UV` remains a deprecated fallback for existing node setups; new
+commands and automation must use `QRL_UV`.
 
 ## Agent commit/push gate — blocking
 
@@ -35,28 +38,28 @@ Orchestra phase 9 runs their serial equivalent with `./tools/check full`.
 ## Data Pipeline
 
 ```bash
-thesis-data prepare                            # raw CSV → parquet → features
-thesis-data prepare --force                    # ignore cache, reprocess
+qrl-data prepare                            # raw CSV → parquet → features
+qrl-data prepare --force                    # ignore cache, reprocess
 ```
 
 ## Training
 
 ```bash
-uv run thesis-train train --mvp              # MVP smoke test (30 days)
-uv run thesis-train train                    # full training run
-uv run thesis-train train --algo sac --arch gru
-uv run thesis-train train --strategy po3_ifvg  # Idea 1 overlay
-uv run thesis-train train --config config/features/full_po3_mtf.yaml
-uv run thesis-train train --walk-forward --wf-splits 5 --purge-bars 60
-uv run thesis-train backtest                # random policy backtest
-uv run thesis-train baselines                 # baseline strategies
+uv run qrl-train train --mvp              # MVP smoke test (30 days)
+uv run qrl-train train                    # full training run
+uv run qrl-train train --algo sac --arch gru
+uv run qrl-train train --strategy po3_ifvg  # Idea 1 overlay
+uv run qrl-train train --config config/features/full_po3_mtf.yaml
+uv run qrl-train train --walk-forward --wf-splits 5 --purge-bars 60
+uv run qrl-train backtest                # random policy backtest
+uv run qrl-train baselines                 # baseline strategies
 uv run python scripts/research/benchmarks/compare_encoders.py                     # encoder comparison
 ```
 
 ## Evaluation
 
 ```bash
-uv run thesis-evaluate reanalyze --run outputs/<run_dir>
+uv run qrl-evaluate reanalyze --run outputs/<run_dir>
 uv run python scripts/research/thesis/evaluation/report_g3.py --runs-dir outputs
 ```
 
@@ -115,6 +118,6 @@ make deps-check
 ## Config Overrides
 
 ```bash
-thesis-data prepare data.cache_dir=my_cache env.obs_window=30
-uv run thesis-train train training.max_days=60
+qrl-data prepare data.cache_dir=my_cache env.obs_window=30
+uv run qrl-train train training.max_days=60
 ```

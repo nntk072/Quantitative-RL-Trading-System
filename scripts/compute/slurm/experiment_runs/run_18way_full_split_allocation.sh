@@ -2,7 +2,7 @@
 # Run or resume the seed-42 18-variant experiment run under full-split episodes.
 set -Eeuo pipefail
 
-REPO="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 SPEC="${EXPERIMENT_RUN_SPEC:-config/experiment_runs/18_variant_seed42_20m_full_split_n64_20261015.yaml}"
 EXPERIMENT_RUN_ID="${EXPERIMENT_RUN_ID:-ladder18_seed42_20m_full_split_n64_20261015}"
 OUT_DIR="$REPO/outputs/experiment_runs/$EXPERIMENT_RUN_ID"

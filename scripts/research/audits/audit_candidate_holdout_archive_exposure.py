@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol
 
-ROOT = Path("/scratch/work/nguyenl37/Aalto_MS_Thesis")
+ROOT = Path(__file__).resolve().parents[3]
 SEARCH_ROOTS = (ROOT / "outputs", ROOT / "cache", ROOT / "data/prebuilt_feature_cache")
 SOURCE_FILES = (
     ROOT / "data/US100.cash_202412300105_202610162349.csv",

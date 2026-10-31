@@ -24,6 +24,7 @@ _RELEVANT_CONFIG_PATHS = (
     "env.obs_window",
     "env.strategy_actions",
     "env.thesis_actions",
+    "env.trade_setup_actions",
     "legacy_sequence_columns",
     "strategy.raw_columns",
     "features",

@@ -12,7 +12,7 @@
 set -euo pipefail
 
 export PATH="/usr/bin:$HOME/.local/bin:$PATH"
-REPO="$HOME/Aalto_MS_Thesis"
+REPO="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 STATE_DIR="$REPO/outputs/orchestra/state"
 
 if ! command -v tmux >/dev/null 2>&1; then

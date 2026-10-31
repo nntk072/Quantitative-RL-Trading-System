@@ -21,8 +21,9 @@ CRGRAPH_BIN=""
 if [[ -n "${CODE_REVIEW_GRAPH_BIN:-}" && -x "${CODE_REVIEW_GRAPH_BIN}" ]]; then
   CRGRAPH_BIN="${CODE_REVIEW_GRAPH_BIN}"
 fi
-if [[ -z "$CRGRAPH_BIN" && -n "${THESIS_PYTHON:-}" ]]; then
-  candidate="$(dirname "$THESIS_PYTHON")/code-review-graph"
+if [[ -z "$CRGRAPH_BIN" && -n "${QRL_PYTHON:-${THESIS_PYTHON:-}}" ]]; then
+  PROJECT_PYTHON="${QRL_PYTHON:-${THESIS_PYTHON:-}}"
+  candidate="$(dirname "$PROJECT_PYTHON")/code-review-graph"
   if [[ -x "$candidate" ]]; then
     CRGRAPH_BIN="$candidate"
   fi

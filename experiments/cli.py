@@ -13,6 +13,12 @@ if TYPE_CHECKING:
     from experiments.variants.variant_ablation_runner import VariantAblationRequest
 
 
+def _cli_program() -> str:
+    """Return the actual installed entrypoint name, defaulting to the canonical name."""
+    program = Path(sys.argv[0]).name
+    return program if program not in {"pytest", "-c"} else "qrl-experiment"
+
+
 def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
     original = sys.argv
     try:
@@ -31,7 +37,7 @@ def parse_variant_ablation_args(
     from experiments.variants.variant_ablation_runner import VariantAblationRequest
 
     parser = argparse.ArgumentParser(
-        prog="thesis-experiment-run variants",
+        prog=f"{_cli_program()} variants",
         description="Run the configured ablation workflow.",
     )
     parser.add_argument("--bars-csv", required=True, help="OHLCV CSV with DatetimeIndex")
@@ -85,7 +91,7 @@ def run_variant_ablation_cli(argv: Sequence[str] | None = None) -> None:
 def run_named_cache_rebuild_cli(argv: Sequence[str] | None = None) -> int:
     """Parse and dispatch the named-cache transaction command."""
     parser = argparse.ArgumentParser(
-        prog="thesis-experiment-run rebuild-named-cache",
+        prog=f"{_cli_program()} rebuild-named-cache",
         description="Stage, validate, and transactionally publish named feature caches.",
     )
     parser.add_argument("--plan-only", action="store_true", help="resolve paths without writing")
@@ -117,7 +123,7 @@ def run_variant_catalog_cli(argv: Sequence[str] | None = None) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="thesis-experiment-run")
+    parser = argparse.ArgumentParser(prog=_cli_program())
     parser.add_argument(
         "command",
         choices=(

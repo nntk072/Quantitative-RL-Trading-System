@@ -135,9 +135,15 @@ def observation_schema_manifest(env: Any) -> dict[str, Any] | None:
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
         result["regime_observation"] = regime_schema
-    thesis_schema = getattr(env, "thesis_observation_schema", None)
-    if isinstance(thesis_schema, dict):
-        result["thesis_observation"] = thesis_schema
+    legacy_setup = bool(getattr(env, "legacy_thesis_contract", False))
+    setup_schema = getattr(
+        env,
+        "thesis_observation_schema" if legacy_setup else "trade_setup_observation_schema",
+        None,
+    )
+    if isinstance(setup_schema, dict):
+        result_key = "thesis_observation" if legacy_setup else "trade_setup_observation"
+        result[result_key] = setup_schema
     return result
 
 

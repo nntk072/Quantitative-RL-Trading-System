@@ -3,7 +3,7 @@ set -euo pipefail
 
 export PATH="/usr/bin:$HOME/.local/bin:$PATH"
 
-REPO="$HOME/Aalto_MS_Thesis"
+REPO="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 
 declare -A AGENTS=(
     [planner-opencode]="opencode"

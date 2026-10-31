@@ -37,6 +37,7 @@ def build_evaluation_manifest(
             "fills.csv",
             "positions.csv",
             "thesis_decisions.csv",
+            "trade_setup_decisions.csv",
         ):
             artifact_path = root / partition / filename
             if artifact_path.is_file():

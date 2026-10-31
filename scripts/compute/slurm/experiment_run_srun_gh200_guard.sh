@@ -21,7 +21,7 @@ experiment_run_srun_gh200_guard() {
   done
   [[ "$guarded" -eq 31 ]] || return 0
 
-  local checker="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}/compute/slurm/capacity.py"
+  local checker="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}/compute/slurm/capacity.py"
   local result other_gh200
   other_gh200="$(squeue -h -u "${USER:?}" -o '%T %b' | \
     awk '$1 ~ /^(RUNNING|PENDING|CONFIGURING)$/ && $2 ~ /gres\/gpu:gh200=[1-9]/')"
@@ -51,7 +51,7 @@ experiment_run_srun_gh200_guard() {
 srun() {
   experiment_run_srun_gh200_guard "$@" || return $?
 
-  local repo="${TRITON_REPO:-/scratch/work/nguyenl37/Aalto_MS_Thesis}"
+  local repo="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
   local -a forwarded=("$@")
   local i arg has_nodelist=0
   for arg in "${forwarded[@]}"; do

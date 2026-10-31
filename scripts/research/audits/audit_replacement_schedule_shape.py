@@ -7,7 +7,7 @@ from typing import cast
 import numpy as np
 import pandas as pd
 
-ROOT = Path("/scratch/work/nguyenl37/Aalto_MS_Thesis")
+ROOT = Path(__file__).resolve().parents[3]
 CACHE = ROOT / "cache/us100_us500_20241230_20261016"
 OUT = ROOT / "outputs/data_refresh_20261017/replacement_schedule_shape.json"
 

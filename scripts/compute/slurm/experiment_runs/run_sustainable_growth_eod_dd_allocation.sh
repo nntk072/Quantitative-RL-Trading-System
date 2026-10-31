@@ -103,7 +103,7 @@ for previous_id in "${PREVIOUS_MTF_EXPERIMENT_RUNS[@]}"; do
   if [[ -s "$previous_dir/reports/project_results_report.md" ]]; then
     report_name=project_results_report.md
     echo "Using existing report: $previous_dir/reports/$report_name"
-  elif python "$REPO/scripts/research/thesis/evaluation/report_variant_details.py" \
+  elif python "$REPO/scripts/research/analysis/evaluation/report_variant_details.py" \
     --experiment-run-dir "$previous_dir" \
     > "$previous_dir/reports/project_results_report_generation.log" 2>&1; then
     report_name=project_results_report.md
@@ -234,8 +234,8 @@ python "$REPO/experiments/runs/execution.py" \
 controller_status=${PIPESTATUS[0]}
 set -e
 
-if [[ -f "$REPO/scripts/research/thesis/evaluation/report_variant_details.py" ]]; then
-  if ! python "$REPO/scripts/research/thesis/evaluation/report_variant_details.py" \
+if [[ -f "$REPO/scripts/research/analysis/evaluation/report_variant_details.py" ]]; then
+  if ! python "$REPO/scripts/research/analysis/evaluation/report_variant_details.py" \
     --experiment-run-dir "$OUT_DIR" \
     > "$OUT_DIR/reports/project_results_report_generation.log" 2>&1; then
     echo "full per-variant report generation failed; see $OUT_DIR/reports/project_results_report_generation.log" >&2

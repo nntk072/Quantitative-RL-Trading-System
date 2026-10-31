@@ -8,7 +8,7 @@ The trained encoder is then frozen and used as a feature extractor for the
 RL agent's observation space.
 
 Usage:
-    thesis-train vae [--config config/vae.yaml]
+    qrl-train vae [--config config/vae.yaml]
 """
 
 from __future__ import annotations

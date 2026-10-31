@@ -6,12 +6,13 @@ import numpy as np
 import pandas as pd
 
 from decisioning.actions import ActionSchema
-from decisioning.thesis import (
+from decisioning.trade_setup import (
     NO_TRADE_ID,
-    ThesisActionSchema,
-    ThesisCandidate,
-    thesis_candidate,
-    thesis_id_from_box,
+    LegacyThesisActionSchema,
+    TradeSetupActionSchema,
+    TradeSetupCandidate,
+    trade_setup_candidate,
+    trade_setup_id_from_box,
 )
 from trading.orders import decode_tp_mode
 
@@ -21,14 +22,17 @@ from .mixin_base import RuntimeMixinBase
 
 
 class ActionDecodingMixin(RuntimeMixinBase):
-    _selected_thesis: ThesisCandidate | None
+    _selected_trade_setup: TradeSetupCandidate | None
 
     def _decode_strategy_action(
         self,
         action: int | float | np.ndarray[Any, Any],
         feat_row: FeatureRow | pd.Series | None,
     ) -> tuple[int, float, float, str]:
-        assert isinstance(self.action_schema, (ActionSchema, ThesisActionSchema))
+        assert isinstance(
+            self.action_schema,
+            (ActionSchema, TradeSetupActionSchema, LegacyThesisActionSchema),
+        )
         arr = np.asarray(action, dtype=np.float32).reshape(-1)
         if arr.size != self.action_schema.width:
             raise ValueError(
@@ -41,26 +45,33 @@ class ActionDecodingMixin(RuntimeMixinBase):
         rr_ratio = self.rr_ratio_range[0]
         if not np.isfinite(arr).all():
             raise ValueError("strategy action values must all be finite")
-        thesis_mode = isinstance(self.action_schema, ThesisActionSchema)
+        trade_setup_mode = isinstance(
+            self.action_schema, (TradeSetupActionSchema, LegacyThesisActionSchema)
+        )
         raw = np.clip(arr, -1.0, 1.0)
         u = 0.5 * (raw + 1.0)
         indices = self.action_schema.indices
-        if thesis_mode:
-            candidate_id = thesis_id_from_box(float(raw[indices["thesis"]]))
-            candidate = thesis_candidate(candidate_id)
-            self._selected_thesis = candidate
+        if trade_setup_mode:
+            candidate_index = indices.get("trade_setup", indices.get("thesis"))
+            if candidate_index is None:
+                raise ValueError("trade setup action schema has no categorical setup coordinate")
+            candidate_id = trade_setup_id_from_box(float(raw[candidate_index]))
+            candidate = trade_setup_candidate(candidate_id)
+            self._selected_trade_setup = candidate
             if candidate_id == NO_TRADE_ID:
                 discrete_action = 0
                 risk_frac = 0.0
-            elif feat_row is None or self._thesis_mask_for_step()[candidate_id] <= 0.0:
+            elif feat_row is None or self._trade_setup_mask_for_step()[candidate_id] <= 0.0:
                 discrete_action = 0
                 risk_frac = 0.0
-                self._selected_thesis = None
-                self._reject("thesis_inactive")
+                self._selected_trade_setup = None
+                self._reject(
+                    "thesis_inactive" if self.legacy_thesis_contract else "trade_setup_inactive"
+                )
             else:
                 discrete_action = candidate.direction
         else:
-            self._selected_thesis = None
+            self._selected_trade_setup = None
             assert isinstance(self.action_schema, ActionSchema)
             direction_offset = int(self.action_schema.has_direction)
             intensity = float(u[indices["intensity"]])
@@ -150,7 +161,7 @@ class ActionDecodingMixin(RuntimeMixinBase):
         else:
             self._selected_tp_z = (0.0, 0.0)
 
-        if thesis_mode and discrete_action == 0:
+        if trade_setup_mode and discrete_action == 0:
             risk_frac = 0.0
         self._decision_action = _decision_from_action(raw, u, self.action_schema)
         return discrete_action, risk_frac, rr_ratio, tp_mode
@@ -231,7 +242,7 @@ class ActionDecodingMixin(RuntimeMixinBase):
     ) -> tuple[int, float, float, str]:
         """Decode strategy, continuous, or discrete actions through their stable schemas."""
         self._selected_sl_anchor = 0.0
-        self._selected_thesis = None
+        self._selected_trade_setup = None
         self._selected_tp_fraction = 0.0
         self._selected_exit_mode = "structural"
         self._decision_action = _empty_decision()

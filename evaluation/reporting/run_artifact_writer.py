@@ -95,10 +95,18 @@ def action_schema_manifest(cfg: Any) -> dict[str, Any] | None:
             return None
         schema: Any
         multi_tp = bool(env.get("allow_multi_tp", False))
-        if bool(env.get("thesis_actions", False)):
-            from decisioning.thesis import build_thesis_action_schema
+        if bool(env.get("thesis_actions", False)) or bool(env.get("trade_setup_actions", False)):
+            from decisioning.trade_setup import (
+                build_legacy_thesis_action_schema,
+                build_trade_setup_action_schema,
+            )
 
-            schema = build_thesis_action_schema(
+            builder = (
+                build_legacy_thesis_action_schema
+                if bool(env.get("thesis_actions", False))
+                else build_trade_setup_action_schema
+            )
+            schema = builder(
                 has_sl_mode=bool(env.get("allow_agent_sl_mode", True)),
                 has_tp_mode=bool(env.get("allow_agent_tp_mode", False)),
                 has_multi_tp=multi_tp,
@@ -254,9 +262,14 @@ def _write_split(
                 save_plots=save_plots,
                 dpi=dpi,
             )
-        thesis_decisions = result.get("thesis_decisions")
-        if isinstance(thesis_decisions, pd.DataFrame):
-            thesis_decisions.to_csv(split_dir / "thesis_decisions.csv", index=False)
+        setup_decisions = result.get("trade_setup_decisions", result.get("thesis_decisions"))
+        if isinstance(setup_decisions, pd.DataFrame):
+            decision_filename = (
+                "trade_setup_decisions.csv"
+                if "trade_setup_candidate_id" in setup_decisions.columns
+                else "thesis_decisions.csv"
+            )
+            setup_decisions.to_csv(split_dir / decision_filename, index=False)
         breach_frame = pd.DataFrame.from_records(breach_events, columns=_BREACH_EVENT_COLUMNS)
         breach_frame.to_csv(split_dir / "breach_events.csv", index=False)
         cycle_events = result.get("cycle_events")
@@ -336,21 +349,36 @@ def _write_split(
         "cycle_successes": int(result.get("cycle_successes", 0)),
         "cycle_failures": int(result.get("cycle_failures", 0)),
     }
-    thesis_policy_metrics = result.get("thesis_policy_metrics")
-    if isinstance(thesis_policy_metrics, dict):
-        evaluation_diagnostics["thesis_policy"] = thesis_policy_metrics
-        (split_dir / "thesis_policy_metrics.json").write_text(
-            json.dumps(thesis_policy_metrics, indent=2)
+    setup_policy_metrics = result.get(
+        "trade_setup_policy_metrics", result.get("thesis_policy_metrics")
+    )
+    if isinstance(setup_policy_metrics, dict):
+        canonical_setup = setup_policy_metrics.get("wire_schema") == "trade_setup"
+        file_prefix = "trade_setup" if canonical_setup else "thesis"
+        diagnostics_key = "trade_setup_policy" if canonical_setup else "thesis_policy"
+        evaluation_diagnostics[diagnostics_key] = setup_policy_metrics
+        (split_dir / f"{file_prefix}_policy_metrics.json").write_text(
+            json.dumps(setup_policy_metrics, indent=2)
         )
         for key, filename in (
-            ("selection_by_idea", "thesis_selection_by_idea.csv"),
-            ("selection_by_timeframe", "thesis_selection_by_timeframe.csv"),
-            ("selection_matrix", "thesis_selection_matrix.csv"),
-            ("execution_action_by_thesis", "thesis_action_by_idea_timeframe.csv"),
-            ("execution_by_opened_thesis", "thesis_execution_by_idea_timeframe.csv"),
-            ("performance_by_idea_timeframe", "thesis_performance_by_idea_timeframe.csv"),
+            ("selection_by_idea", f"{file_prefix}_selection_by_idea.csv"),
+            ("selection_by_timeframe", f"{file_prefix}_selection_by_timeframe.csv"),
+            ("selection_matrix", f"{file_prefix}_selection_matrix.csv"),
+            (
+                "execution_action_by_trade_setup"
+                if canonical_setup
+                else "execution_action_by_thesis",
+                f"{file_prefix}_action_by_idea_timeframe.csv",
+            ),
+            (
+                "execution_by_opened_trade_setup"
+                if canonical_setup
+                else "execution_by_opened_thesis",
+                f"{file_prefix}_execution_by_idea_timeframe.csv",
+            ),
+            ("performance_by_idea_timeframe", f"{file_prefix}_performance_by_idea_timeframe.csv"),
         ):
-            rows = thesis_policy_metrics.get(key)
+            rows = setup_policy_metrics.get(key)
             if isinstance(rows, list):
                 pd.DataFrame.from_records(rows).to_csv(split_dir / filename, index=False)
     if result.get("constraint_cost_summary") is not None:
@@ -359,9 +387,30 @@ def _write_split(
         json.dumps(evaluation_diagnostics, indent=2)
     )
     summary_text = build_summary_table(metrics)
-    if isinstance(thesis_policy_metrics, dict):
-        structure = thesis_policy_metrics.get("structural_violations", {})
-        entropy_months = thesis_policy_metrics.get("thesis_entropy_by_month", [])
+    if isinstance(setup_policy_metrics, dict):
+        canonical_setup = setup_policy_metrics.get("wire_schema") == "trade_setup"
+        file_prefix = "trade_setup" if canonical_setup else "thesis"
+        title = "TRADE SETUP POLICY DIAGNOSTICS" if canonical_setup else "THESIS POLICY DIAGNOSTICS"
+        entropy_months = setup_policy_metrics.get(
+            "trade_setup_entropy_by_month" if canonical_setup else "thesis_entropy_by_month", []
+        )
+        mean_entropy = setup_policy_metrics.get(
+            "trade_setup_entropy_mean_nats" if canonical_setup else "thesis_entropy_mean_nats"
+        )
+        eligible_key = (
+            "trade_setup_eligible_steps" if canonical_setup else "trade_thesis_eligible_steps"
+        )
+        eligible_rate_key = (
+            "no_trade_rate_when_trade_setup_eligible"
+            if canonical_setup
+            else "no_trade_rate_when_trade_thesis_eligible"
+        )
+        conditioning_key = (
+            "setup_conditioned_execution_active"
+            if canonical_setup
+            else "variant_d_execution_conditioning_active"
+        )
+        structure = setup_policy_metrics.get("structural_violations", {})
         monthly = (
             "\n".join(
                 f"  {row['month']}: mean {row['mean']:.3f} nats (n={row['count']})"
@@ -369,41 +418,45 @@ def _write_split(
             )
             or "  no entropy observations"
         )
-        no_trade_rate = thesis_policy_metrics.get("no_trade_rate")
-        mean_entropy = thesis_policy_metrics.get("thesis_entropy_mean_nats")
+        no_trade_rate = setup_policy_metrics.get("no_trade_rate")
         summary_text += (
-            "\n\nTHESIS POLICY DIAGNOSTICS\n"
-            f"Policy: {thesis_policy_metrics.get('policy_class', 'unknown')}; "
-            "Variant D execution conditioning active: "
-            f"{bool(thesis_policy_metrics.get('variant_d_execution_conditioning_active', False))}\n"
-            f"Decision bars: {thesis_policy_metrics.get('decision_steps', 0)}; "
-            f"NO_TRADE: {thesis_policy_metrics.get('no_trade_count', 0)} "
+            f"\n\n{title}\n"
+            f"Policy: {setup_policy_metrics.get('policy_class', 'unknown')}; "
+            "Setup-conditioned execution active: "
+            f"{bool(setup_policy_metrics.get(conditioning_key, False))}\n"
+            f"Decision bars: {setup_policy_metrics.get('decision_steps', 0)}; "
+            f"NO_TRADE: {setup_policy_metrics.get('no_trade_count', 0)} "
             f"({float(no_trade_rate or 0.0):.1%}); "
-            f"opened trades: {thesis_policy_metrics.get('opened_trade_count', 0)}\n"
-            f"Selected ideas/timeframes: {thesis_policy_metrics.get('selected_idea_count', 0)} / "
-            f"{thesis_policy_metrics.get('selected_timeframe_count', 0)}; invalid thesis choices: "
-            f"{thesis_policy_metrics.get('invalid_selection_count', 0)}\n"
-            f"Eligible trade-thesis steps: {thesis_policy_metrics.get('trade_thesis_eligible_steps', 0)}; "
+            f"opened trades: {setup_policy_metrics.get('opened_trade_count', 0)}\n"
+            f"Selected ideas/timeframes: {setup_policy_metrics.get('selected_idea_count', 0)} / "
+            f"{setup_policy_metrics.get('selected_timeframe_count', 0)}; invalid setup choices: "
+            f"{setup_policy_metrics.get('invalid_selection_count', 0)}\n"
+            f"Eligible trade-setup steps: {setup_policy_metrics.get(eligible_key, 0)}; "
             f"NO_TRADE rate when eligible: "
-            f"{float(thesis_policy_metrics.get('no_trade_rate_when_trade_thesis_eligible') or 0.0):.1%}\n"
-            f"Mean thesis entropy: {float(mean_entropy or 0.0):.3f} nats\n"
+            f"{float(setup_policy_metrics.get(eligible_rate_key) or 0.0):.1%}\n"
+            f"Mean setup entropy: {float(mean_entropy or 0.0):.3f} nats\n"
             f"Structural violations: {structure.get('total', 0)} unique trades; "
             f"SL side/floor/SD-level-1 = {structure.get('sl_wrong_side', 0)}/"
             f"{structure.get('sl_below_primary_timeframe', 0)}/"
             f"{structure.get('standard_deviation_sl_not_level_1_on_setup_timeframe', 0)}; "
             f"TP wrong-side = {structure.get('tp_wrong_side', 0)}; allowed lower-timeframe TP refs = "
             f"{structure.get('tp_below_primary_timeframe', 0)}; semantic violations: "
-            f"{thesis_policy_metrics.get('semantic_violation_count', 0)}\n"
-            "Monthly thesis entropy (see thesis_policy_metrics.json for detail):\n"
+            f"{setup_policy_metrics.get('semantic_violation_count', 0)}\n"
+            f"Monthly setup entropy (see {file_prefix}_policy_metrics.json for detail):\n"
             f"{monthly}\n"
-            "Raw decision trace: thesis_decisions.csv; per-trade open rows: trades.csv."
+            f"Raw decision trace: {file_prefix}_decisions.csv; per-trade open rows: trades.csv."
         )
     (split_dir / "summary.txt").write_text(summary_text)
-    if save_plots and isinstance(thesis_policy_metrics, dict):
-        from evaluation.reporting.thesis_plots import write_thesis_heatmaps
+    if save_plots and isinstance(setup_policy_metrics, dict):
+        from evaluation.reporting.trade_setup_plots import write_trade_setup_heatmaps
 
-        write_thesis_heatmaps(thesis_policy_metrics, split_dir, dpi)
-        entropy_months = thesis_policy_metrics.get("thesis_entropy_by_month", [])
+        write_trade_setup_heatmaps(setup_policy_metrics, split_dir, dpi)
+        entropy_months = setup_policy_metrics.get(
+            "trade_setup_entropy_by_month"
+            if setup_policy_metrics.get("wire_schema") == "trade_setup"
+            else "thesis_entropy_by_month",
+            [],
+        )
         if entropy_months:
             import matplotlib.pyplot as plt
 

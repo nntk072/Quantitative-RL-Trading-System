@@ -9,9 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_path_migration_preserves_originals_and_resolves_current_paths() -> None:
-    migration_path = (
-        ROOT / "docs/architecture/migrations/experiment_run_name_migration_20261030.json"
-    )
+    migration_path = ROOT / "docs/architecture/migrations/experiment_run_name_migration.json"
     migration = json.loads(migration_path.read_text(encoding="utf-8"))
     archive_path = ROOT / migration["originals_archive"]
     path_migrations = migration["path_migrations"]
@@ -32,9 +30,7 @@ def test_path_migration_preserves_originals_and_resolves_current_paths() -> None
 
 
 def test_fingerprint_migration_is_deterministic_and_collision_free() -> None:
-    migration_path = (
-        ROOT / "docs/architecture/migrations/experiment_run_name_migration_20261030.json"
-    )
+    migration_path = ROOT / "docs/architecture/migrations/experiment_run_name_migration.json"
     migration = json.loads(migration_path.read_text(encoding="utf-8"))
     rows = migration["fingerprint_migrations"]
 

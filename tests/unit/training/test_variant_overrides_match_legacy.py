@@ -56,6 +56,12 @@ EXPECTED_DIFFS_BY_VARIANT = {
     | {"data.cache_dir", "data.price_discretization.enabled"},
     "rq_mtf_control_tcn": RISK_BAND_DIFFS,
     "rq_mtf_treatment_mtf": RISK_BAND_DIFFS,
+    "rq_mtf_treatment_reasoning": RISK_BAND_DIFFS
+    | {
+        "env.trade_setup_actions",
+        "features.entry_ideas.enabled",
+        "ppo.policy_distribution",
+    },
     "sustainable_growth_ppo_dsr": RISK_BAND_DIFFS | LOGGING_DIFFS,
     "regime_d1_norm_tcn_control": RISK_BAND_DIFFS
     | LOGGING_DIFFS
