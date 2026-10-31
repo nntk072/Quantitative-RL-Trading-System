@@ -49,6 +49,7 @@ from typing import Any, cast
 import pandas as pd
 
 from artifacts.atomic import write_json_atomic, write_text_atomic
+from artifacts.config_snapshot import write_config_snapshot
 from artifacts.layout import ArtifactLayout
 from evaluation import PerformanceMetrics
 from evaluation.reporting.evaluation_manifest import write_evaluation_manifest
@@ -684,12 +685,7 @@ def save_run(
 
     # Config snapshot at root only
     if cfg is not None:
-        try:
-            from omegaconf import OmegaConf
-
-            (run_dir / "config.yaml").write_text(OmegaConf.to_yaml(cfg))
-        except Exception:
-            pass
+        write_config_snapshot(run_dir, cfg)
 
     if report_profile not in ("full", "experiment_run_fast"):
         raise ValueError(f"unknown report_profile: {report_profile}")

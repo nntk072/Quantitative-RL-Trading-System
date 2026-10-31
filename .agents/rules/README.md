@@ -1,6 +1,8 @@
 # Agent rules index & activation map (Quantitative-RL-Trading-System)
 
-Single source of truth for all coding agents in this repo (Cursor, Cline, Windsurf, Kilo Code, Antigravity, Mistral Vibe). Rules live here — not in `.cursor/` or `.kilocode/` (local IDE folders; gitignored). Entry point for Cursor: root `AGENTS.md` and `.cursorrules`.
+Single source of truth for every coding agent, regardless of model or tool.
+Rules live here rather than in tool-specific folders. Entry points are root
+`AGENTS.md` and `.cursorrules`.
 
 ## Rule files
 
@@ -15,6 +17,7 @@ Single source of truth for all coding agents in this repo (Cursor, Cline, Windsu
 | [testing-rules.md](testing-rules.md) | TDD, AAA, coverage ≥80% | On feature/bugfix work |
 | [security-rules.md](security-rules.md) | Secret & input safety checklist | Always at commit; deep on sensitive code |
 | [development-workflow.md](development-workflow.md) | Research-first → plan → TDD → review → commit | On non-trivial features |
+| [agent-planning-implementation.md](agent-planning-implementation.md) | Consistent repository inspection, naming, implementation, verification, and handoff rules for every agent model; keep agent plans outside the repo | Always |
 | [ci-verification.md](ci-verification.md) | **Blocking** full-tree `ruff` + `mypy .` (not path-scoped); scoped pytest before commit/push | On commit/push |
 | [triton-slurm.md](triton-slurm.md) | Use suitable existing GPU-node allocations for thesis computation when GPU-capable; CPU-only heavy work runs inside a properly sized CPU-node `srun` launched from persistent login tmux; heavy work never runs on normal login; inspect GPU/CPU/RAM; never use `srun --test-only` or `scancel`; preserve pending/active jobs | On Triton / GPU training |
 
@@ -23,6 +26,7 @@ Single source of truth for all coding agents in this repo (Cursor, Cline, Windsu
 ```
 request
   ├─ ALWAYS: token-efficient-context-replies + RTK prefix (antigravity-rtk-rules)
+  ├─ ALL tasks?               → agent-planning-implementation
   ├─ running commands?        → token-efficient-shell (+ RTK)
   ├─ non-trivial feature?     → development-workflow
   │                             ├─ research/reuse first

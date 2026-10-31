@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Durable, allocation-bounded launcher for the fixed Triton variant matrix.
+"""Durable, allocation-bounded launcher for configured experiment run variants.
 
 Does not create or cancel Slurm allocations. Runs in an existing compute-node job.
 """
@@ -30,10 +30,19 @@ from compute.slurm.worker_resources import (
     cgroup_memory_file as cgroup_memory_file,
 )
 from compute.slurm.worker_resources import (
+    cpu_mask_for_range as cpu_mask_for_range,
+)
+from compute.slurm.worker_resources import (
     cpu_mask_for_slot as cpu_mask_for_slot,
 )
 from compute.slurm.worker_resources import (
     expand_slurm_hosts as expand_slurm_hosts,
+)
+from compute.slurm.worker_resources import (
+    gpu_memory_inventory as gpu_memory_inventory,
+)
+from compute.slurm.worker_resources import (
+    plan_worker_capacity as plan_worker_capacity,
 )
 from compute.slurm.worker_resources import (
     resolve_worker_nodes as resolve_worker_nodes,
@@ -46,6 +55,9 @@ from compute.slurm.worker_resources import (
 )
 from compute.slurm.worker_resources import (
     worker_node_cpu_ids as worker_node_cpu_ids,
+)
+from compute.slurm.worker_resources import (
+    worker_node_resources as worker_node_resources,
 )
 from experiments.runs.artifact_validation import (
     hash_run_artifacts as hash_run_artifacts,
@@ -135,6 +147,8 @@ __all__ = [
     "experiment_run_source_files",
     "choose_resume_checkpoint",
     "cpu_mask_for_slot",
+    "cpu_mask_for_range",
+    "gpu_memory_inventory",
     "expand_slurm_hosts",
     "hash_run_artifacts",
     "latest_resumable_checkpoint",
@@ -148,6 +162,7 @@ __all__ = [
     "resolve_worker_nodes",
     "runtime_metadata",
     "sample_resources",
+    "plan_worker_capacity",
     "sha256_file",
     "STOP",
     "utc",
@@ -159,6 +174,7 @@ __all__ = [
     "verify_run_artifacts",
     "worker_command",
     "worker_node_cpu_ids",
+    "worker_node_resources",
     "write_experiment_run_source_snapshot",
 ]
 
@@ -275,21 +291,50 @@ def signal_stop(_sig: int, _frame: object) -> None:
     STOP = True
 
 
+def distribute_worker_slots(total: int, capacities: dict[str, int]) -> dict[str, int]:
+    """Spread worker slots fairly without exceeding any node's resource limit."""
+    targets = {node: 0 for node in sorted(capacities)}
+    for _ in range(total):
+        eligible = [node for node, capacity in capacities.items() if targets[node] < capacity]
+        if not eligible:
+            raise ValueError("requested worker count exceeds the resource-derived capacity")
+        node = min(
+            eligible,
+            key=lambda candidate: (
+                targets[candidate] / capacities[candidate],
+                targets[candidate],
+                candidate,
+            ),
+        )
+        targets[node] += 1
+    return targets
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--experiment-run-spec", type=pathlib.Path)
     parser.add_argument("--variant-file", type=pathlib.Path)
     parser.add_argument("--seeds")
     parser.add_argument("--timesteps", type=int)
-    parser.add_argument("--workers", type=int, default=1)
+    parser.add_argument(
+        "--workers",
+        default="1",
+        help="concurrent variants; use auto to fill CPU, RAM, and GPU capacity safely",
+    )
     parser.add_argument("--n-envs", type=int, default=8)
     parser.add_argument(
         "--worker-nodes",
         help="comma-separated nodes inside the current allocation; workers are load-balanced across them",
     )
-    parser.add_argument("--worker-cpus", type=int, default=8)
+    parser.add_argument(
+        "--worker-cpus",
+        default="8",
+        help="CPUs per variant worker; use auto to divide each node among its worker slots",
+    )
     parser.add_argument("--worker-gpu-type", default="gh200")
     parser.add_argument("--worker-gpus-per-node", type=int, default=1)
+    parser.add_argument("--max-workers-per-gpu", type=int, default=9)
+    parser.add_argument("--gpu-memory-per-worker-gib", type=float, default=8.0)
     parser.add_argument("--data-source", choices=("frames", "bundle"))
     parser.add_argument("--experiment-run-id")
     parser.add_argument(
@@ -314,6 +359,22 @@ def main() -> int:
     )
     parser.add_argument("--test-worker", type=pathlib.Path, help="inject mock worker for CI only")
     args = parser.parse_args()
+    args.workers_auto = str(args.workers).lower() == "auto"
+    args.worker_cpus_auto = str(args.worker_cpus).lower() == "auto"
+    if not args.workers_auto:
+        try:
+            args.workers = int(args.workers)
+        except (TypeError, ValueError):
+            raise ValueError("--workers must be a positive integer or 'auto'") from None
+    else:
+        args.workers = 1  # replaced with a resource-derived count after input validation
+    if not args.worker_cpus_auto:
+        try:
+            args.worker_cpus = int(args.worker_cpus)
+        except (TypeError, ValueError):
+            raise ValueError("--worker-cpus must be a positive integer or 'auto'") from None
+    else:
+        args.worker_cpus = 1  # replaced with a per-node CPU share after capacity planning
     import yaml
 
     evaluation: dict[str, Any] = {"locked_oos_role": "unspecified", "deterministic": False}
@@ -384,13 +445,15 @@ def main() -> int:
     if (
         args.worker_cpus <= 0
         or args.worker_gpus_per_node <= 0
+        or args.max_workers_per_gpu <= 0
+        or args.gpu_memory_per_worker_gib <= 0
         or not re.fullmatch(r"[A-Za-z0-9]+", args.worker_gpu_type)
     ):
         raise ValueError("worker CPU/GPU count or GPU type is invalid")
     worker_nodes = resolve_worker_nodes(
         args.worker_nodes, dry_run=args.dry_run or bool(args.test_worker)
     )
-    if worker_nodes and len(worker_nodes) > args.workers:
+    if worker_nodes and len(worker_nodes) > args.workers and not args.workers_auto:
         raise ValueError("worker count must be at least the number of worker nodes")
     jobs = validate_inputs(args)
     initial_checkpoints: dict[str, dict[str, Any]] = {}
@@ -428,10 +491,18 @@ def main() -> int:
                     "steps_per_run": args.timesteps,
                     "runs": len(jobs),
                     "total_timesteps": len(jobs) * args.timesteps,
-                    "workers": args.workers,
+                    "workers": "auto (resolved inside allocation)"
+                    if args.workers_auto
+                    else args.workers,
                     "n_envs": args.n_envs,
                     "worker_nodes": worker_nodes,
-                    "worker_cpus": args.worker_cpus if worker_nodes else None,
+                    "worker_cpus": (
+                        "auto (resolved per node)"
+                        if args.worker_cpus_auto and worker_nodes
+                        else args.worker_cpus
+                        if worker_nodes
+                        else None
+                    ),
                     "worker_gpu_type": args.worker_gpu_type if worker_nodes else None,
                     "worker_gpus_per_node": (args.worker_gpus_per_node if worker_nodes else None),
                     "data_source": args.data_source,
@@ -448,37 +519,116 @@ def main() -> int:
         raise RuntimeError("must run inside an existing Slurm compute allocation")
     resources = available_resources()
     cpus = resources["cpu_affinity"]
-    workers_per_node = math.ceil(args.workers / len(worker_nodes)) if worker_nodes else args.workers
-    envs_per_cpu = 12 if args.data_source == "bundle" else 2
-    if workers_per_node * args.n_envs > cpus * envs_per_cpu:
-        raise RuntimeError(f"requested vector environments exceed {envs_per_cpu} per available CPU")
+    memory_limit_bytes = int(resources["memory_limit_bytes"])
+    if not memory_limit_bytes:
+        memory_per_node_mib = os.getenv("SLURM_MEM_PER_NODE", "")
+        if memory_per_node_mib.isdigit():
+            memory_limit_bytes = int(memory_per_node_mib) * 1024**2
     worker_node_cpu_sets: dict[str, list[int]] = {}
+    node_resources: dict[str, dict[str, Any]] = {}
+    node_worker_capacity: dict[str, int] = {}
+    node_worker_targets: dict[str, int] = {}
+    worker_cpus_by_node: dict[str, int] = {}
+    worker_cpu_counts_by_node: dict[str, list[int]] = {}
+    worker_allocation_plan: dict[str, Any] | None = None
     if worker_nodes:
         queue_root = pathlib.Path(os.environ["EXPERIMENT_RUN_WORKER_QUEUE"])
         allocation_job_id = os.environ["SLURM_JOB_ID"]
-        worker_node_cpu_sets = {
-            node: worker_node_cpu_ids(queue_root, allocation_job_id, node) for node in worker_nodes
+        for node in worker_nodes:
+            advertised = worker_node_resources(queue_root, allocation_job_id, node)
+            worker_node_cpu_sets[node] = list(advertised["cpu_ids"])
+            if not int(advertised["memory_limit_bytes"]):
+                advertised["memory_limit_bytes"] = memory_limit_bytes
+            if (
+                not advertised["gpu_memory"]
+                and node.split(".", maxsplit=1)[0] == socket.gethostname().split(".", maxsplit=1)[0]
+            ):
+                advertised["gpu_memory"] = gpu_memory_inventory()
+            advertised["gpu_type"] = args.worker_gpu_type
+            node_resources[node] = advertised
+        worker_allocation_plan = plan_worker_capacity(
+            node_resources,
+            n_envs=args.n_envs,
+            data_source=args.data_source,
+            gpus_per_node=args.worker_gpus_per_node,
+            max_workers_per_gpu=args.max_workers_per_gpu,
+            gpu_memory_per_worker_gib=args.gpu_memory_per_worker_gib,
+        )
+        node_worker_capacity = {
+            node: int(values["workers"]) for node, values in worker_allocation_plan["nodes"].items()
         }
-        for node, node_cpu_ids in worker_node_cpu_sets.items():
-            needed = workers_per_node * args.worker_cpus + 1  # one CPU for the sampler
-            if needed > len(node_cpu_ids):
-                raise RuntimeError(
-                    f"worker CPU request needs {needed} CPUs on {node} including sampler; "
-                    f"manager exposes {len(node_cpu_ids)}"
+        if not args.worker_cpus_auto:
+            for node in worker_nodes:
+                cpu_limited = max(
+                    0,
+                    (len(worker_node_cpu_sets[node]) - 1) // args.worker_cpus,
                 )
-    available_mem = resources["memory_limit_bytes"]
-    # Frames estimates are conservative historical PSS values. The bundle
-    # n_envs=64 estimate is calibrated from the live three-worker GH200 pilot:
-    # each worker peaked at about 23 GB, so reserve 30 GiB per worker before
-    # applying the existing 35% margin and 64 GiB controller/OS allowance.
+                node_worker_capacity[node] = min(node_worker_capacity[node], cpu_limited)
+                worker_allocation_plan["nodes"][node]["workers"] = node_worker_capacity[node]
+        worker_allocation_plan["workers"] = sum(node_worker_capacity.values())
+        if args.workers_auto:
+            if sum(node_worker_capacity.values()) <= 0:
+                raise RuntimeError("the current allocation has no safe experiment worker capacity")
+            args.workers = min(len(jobs), sum(node_worker_capacity.values()))
+        if args.workers < len(worker_nodes):
+            raise ValueError("worker count must be at least the number of worker nodes")
+        if args.workers > sum(node_worker_capacity.values()):
+            raise RuntimeError(
+                f"requested {args.workers} workers, but CPU/RAM/GPU capacity supports at most "
+                f"{sum(node_worker_capacity.values())}; use --workers auto to fit the allocation"
+            )
+        node_worker_targets = distribute_worker_slots(args.workers, node_worker_capacity)
+        worker_allocation_plan["workers_selected"] = args.workers
+        for node, target in node_worker_targets.items():
+            worker_allocation_plan["nodes"][node]["assigned_workers"] = target
+        if args.worker_cpus_auto:
+            for node, target in node_worker_targets.items():
+                if target <= 0:
+                    continue
+                base, extra = divmod(len(worker_node_cpu_sets[node]) - 1, target)
+                worker_cpu_counts_by_node[node] = [
+                    base + (1 if index < extra else 0) for index in range(target)
+                ]
+                worker_cpus_by_node[node] = min(worker_cpu_counts_by_node[node])
+        else:
+            worker_cpus_by_node = {node: args.worker_cpus for node in worker_nodes}
+            worker_cpu_counts_by_node = {
+                node: [args.worker_cpus] * target
+                for node, target in node_worker_targets.items()
+                if target > 0
+            }
+        for node, target in node_worker_targets.items():
+            if target <= 0:
+                continue
+            needed = sum(worker_cpu_counts_by_node[node]) + 1
+            if needed > len(worker_node_cpu_sets[node]):
+                raise RuntimeError(
+                    f"worker plan needs {needed} CPUs on {node} including the sampler; "
+                    f"manager exposes {len(worker_node_cpu_sets[node])}"
+                )
+        args.worker_cpus = min(worker_cpus_by_node.values()) if worker_cpus_by_node else 1
+    else:
+        # Local subprocess mode retains its explicit default; auto is available
+        # only when the allocation exposes per-node worker managers.
+        if args.workers_auto:
+            raise ValueError("--workers auto requires --worker-nodes inside a Slurm allocation")
+        worker_cpus_by_node = {}
+        node_worker_targets = {}
+
+    if not args.workers_auto and not worker_nodes:
+        worker_nodes = []
+    workers_per_node = max(node_worker_targets.values(), default=args.workers)
+    envs_per_cpu = 12 if args.data_source == "bundle" else 2
+    if workers_per_node * args.n_envs > cpus * envs_per_cpu:
+        raise RuntimeError(f"requested vector environments exceed {envs_per_cpu} per available CPU")
     estimated_per_worker = {4: 12, 8: 19, 16: 35, 32: 67, 64: 132}.get(args.n_envs)
     if args.data_source == "bundle" and args.n_envs == 64:
         estimated_per_worker = 30
     if estimated_per_worker is None and not args.test_worker:
         raise ValueError("n-envs not benchmarked for memory: choose 4,8,16,32,64")
-    if available_mem and estimated_per_worker and not args.test_worker:
+    if not worker_nodes and memory_limit_bytes and estimated_per_worker and not args.test_worker:
         recommended_bytes = int((workers_per_node * estimated_per_worker * 1.35 + 64) * 1024**3)
-        if recommended_bytes > available_mem:
+        if recommended_bytes > memory_limit_bytes:
             raise RuntimeError(
                 f"insufficient cgroup RAM: needs >= {recommended_bytes // 1024**3} GiB"
             )
@@ -528,6 +678,7 @@ def main() -> int:
     identity = {
         "jobs": [x["key"] for x in jobs],
         "steps": args.timesteps,
+        "workers_requested": "auto" if args.workers_auto else args.workers,
         "data_source": args.data_source,
         "workers": args.workers,
         "n_envs": args.n_envs,
@@ -538,6 +689,9 @@ def main() -> int:
             "gpus_per_node": args.worker_gpus_per_node if worker_nodes else None,
             "gpu_binding": "least-loaded-map_gpu" if worker_nodes else None,
             "cpus_per_worker": args.worker_cpus if worker_nodes else None,
+            "cpus_per_node": worker_cpus_by_node if worker_nodes else None,
+            "worker_cpu_counts_by_node": worker_cpu_counts_by_node if worker_nodes else None,
+            "worker_allocation_plan": worker_allocation_plan,
             "cpu_binding": "unique-mask-per-worker" if worker_nodes else None,
         },
         "fast_reports": args.fast_reports,
@@ -751,6 +905,10 @@ def main() -> int:
             "workers": args.workers,
             "worker_nodes": worker_nodes,
             "worker_cpus": args.worker_cpus if worker_nodes else None,
+            "worker_cpus_by_node": worker_cpus_by_node if worker_nodes else None,
+            "worker_cpu_counts_by_node": worker_cpu_counts_by_node if worker_nodes else None,
+            "workers_requested": "auto" if args.workers_auto else args.workers,
+            "worker_allocation_plan": worker_allocation_plan,
             "worker_gpu_type": args.worker_gpu_type if worker_nodes else None,
             "worker_gpus_per_node": args.worker_gpus_per_node if worker_nodes else None,
             "gpu_binding": "least-loaded-map_gpu" if worker_nodes else None,
@@ -770,6 +928,11 @@ def main() -> int:
         f"host={socket.gethostname()}",
         flush=True,
     )
+    if worker_allocation_plan is not None:
+        print(
+            "worker resource plan=" + json.dumps(worker_allocation_plan, sort_keys=True),
+            flush=True,
+        )
 
     def snapshot() -> None:
         atomic_json(manifest_path, manifest)
@@ -791,7 +954,9 @@ def main() -> int:
                 "a", encoding="utf-8"
             )
             sampler_cpu_mask, sampler_cpu_ids = cpu_mask_for_slot(
-                worker_node_cpu_sets[node], workers_per_node * args.worker_cpus, 1
+                worker_node_cpu_sets[node],
+                sum(worker_cpu_counts_by_node[node]),
+                1,
             )
             sampler_cmd = worker_command(
                 [
@@ -853,9 +1018,23 @@ def main() -> int:
                 )
                 for node in worker_nodes
             }
-            worker_node = min(worker_nodes, key=lambda node: node_load[node])
-            worker_cpu_mask, worker_cpu_ids = cpu_mask_for_slot(
-                worker_node_cpu_sets[worker_node], node_load[worker_node], args.worker_cpus
+            eligible_nodes = [
+                node for node in worker_nodes if node_load[node] < node_worker_targets[node]
+            ]
+            if not eligible_nodes:
+                raise RuntimeError("worker scheduler has no node with an available resource slot")
+            worker_node = min(
+                eligible_nodes,
+                key=lambda node: (
+                    node_load[node] / node_worker_targets[node],
+                    node_load[node],
+                    node,
+                ),
+            )
+            worker_cpu_count = worker_cpu_counts_by_node[worker_node][node_load[worker_node]]
+            cpu_start = sum(worker_cpu_counts_by_node[worker_node][: node_load[worker_node]])
+            worker_cpu_mask, worker_cpu_ids = cpu_mask_for_range(
+                worker_node_cpu_sets[worker_node], cpu_start, worker_cpu_count
             )
             job["worker_node"] = worker_node
             job["worker_cpu_mask"] = worker_cpu_mask

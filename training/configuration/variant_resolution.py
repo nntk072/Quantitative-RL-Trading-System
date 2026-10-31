@@ -30,6 +30,7 @@ import yaml
 
 from artifacts.atomic import write_json_atomic
 from configuration.paths import repository_root
+from models.architecture_ids import ENCODER_ARCHITECTURE_IDS
 from training.configuration.variant_risk_policy import variant_ftmo_overrides
 
 PROJECT_ROOT = repository_root(__file__)
@@ -45,18 +46,7 @@ PREBUILT_FEATURE_CACHES: dict[str, str] = {}
 
 STRATEGIES = ("baseline", "po3_ifvg", "distribution")
 ALGOS = ("ppo", "sac")
-ARCHS = (
-    "tcn",
-    "tcn_regime",
-    "lite_tcn",
-    "gru",
-    "transformer",
-    "mtf",
-    "mtf_reasoning",
-    "mtf_shared_tcn_reasoning",
-    "mtf_m1_tcn_htf_lite_reasoning",
-    "mtf_m1_tcn_htf_snapshot_reasoning",
-)
+ARCHS = ENCODER_ARCHITECTURE_IDS
 REWARD_MODES = ("dsr", "pnl", "rr", "equity_delta_r", "equity_log_growth")
 
 LADDER_FLAGS: tuple[str, ...] = (

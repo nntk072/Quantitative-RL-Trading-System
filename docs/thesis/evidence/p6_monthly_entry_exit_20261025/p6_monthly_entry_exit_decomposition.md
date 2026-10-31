@@ -64,4 +64,4 @@ The EMA21 replay is a conditional reference, not a causal intervention and not a
 - Bootstrap: 10,000 resamples, seed 20261025.
 - Per-entry matched data: `ladder_*_paired_trades.csv`.
 - Complete input, manifest and source hashes: `p6_monthly_entry_exit_decomposition.json`.
-- Script: [`scripts/research/thesis/p6_monthly_entry_exit_decomposition.py`](../../../scripts/research/thesis/p6_monthly_entry_exit_decomposition.py).
+- Script: [`analyze_monthly_trade_expectancy_and_exit_decomposition.py`](../../../../scripts/research/thesis/evidence/analyze_monthly_trade_expectancy_and_exit_decomposition.py).

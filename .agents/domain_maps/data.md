@@ -59,9 +59,10 @@
 |-----------|--------|
 | `tests/integration/test_pipeline_splits.py` | `run_pipeline()` partition and cache behavior |
 | `tests/integration/test_bar_cache_manifest.py` | Bar-cache identity and atomic completion manifest |
-| `tests/integration/test_session_schedule.py` | Session-calendar loading and schema validation |
+| `tests/unit/market_data/test_session_schedule.py` | Session-calendar loading and schema validation |
 | `tests/integration/test_price_grid.py` | Price-grid identity and normalization |
 | `tests/integration/test_resample_m10.py` | Higher-timeframe resampling semantics |
+| `tests/unit/market_data/test_walkforward.py` | Purged, embargoed walk-forward splits |
 | `tests/unit/features/test_session_filter.py` | `filter_session()`, `ny_session_mask()`, cache versioning |
 | `tests/unit/market_data/test_ticks.py` | `TickBook`, `build_tick_book()` |
 | `tests/unit/features/test_causal_features.py` | Causal alignment verification |

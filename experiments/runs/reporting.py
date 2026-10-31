@@ -325,7 +325,36 @@ def build_summary(experiment_run_dir: Path) -> dict[str, Any]:
         run_key = str(job.get("key", ""))
         if not run_key:
             continue
-        attempt_number = int(job.get("attempts", 1))
+        attempt_number = int(job.get("attempts", 0))
+        if attempt_number <= 0:
+            jobs.append(
+                {
+                    "run_key": run_key,
+                    "variant": job.get("variant"),
+                    "seed": job.get("seed"),
+                    "controller_status": job.get("status"),
+                    "exit_code": job.get("exit_code"),
+                    "failure_reason": job.get("failure_reason"),
+                    "attempt": 0,
+                    "account_currency": None,
+                    "train_pnl_reconciliation": {"status": "unavailable"},
+                    "test_pnl_reconciliation": {"status": "unavailable"},
+                    "train_equity_gate": None,
+                    "training_episode_coverage": {
+                        "status": "unavailable",
+                        "full_split_episode_count": 0,
+                        "environments_with_full_split_episode": 0,
+                    },
+                    "train_metrics": None,
+                    "test_metrics_report_only": None,
+                    "train_replay": {},
+                    "test_replay_report_only": {},
+                    "evidence_sha256": {},
+                    "run_artifact_dir": None,
+                    "worker_log": None,
+                }
+            )
+            continue
         attempt_dir = artifacts.attempt(run_key, attempt_number)
         run_dir = _run_dir(attempt_dir, run_key)
         episode_candidates = (

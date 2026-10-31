@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from models.architecture_ids import ENCODER_ARCHITECTURE_IDS
 from models.encoders import (
     GRUEncoder,
     LiteTCNEncoder,
@@ -29,6 +30,9 @@ ENCODER_TYPES: dict[str, type[Any]] = {
     "mtf_m1_tcn_htf_lite_reasoning": M1TCNHTFLiteReasoningEncoder,
     "mtf_m1_tcn_htf_snapshot_reasoning": M1TCNHTFSnapshotReasoningEncoder,
 }
+
+if set(ENCODER_TYPES) != set(ENCODER_ARCHITECTURE_IDS):
+    raise RuntimeError("encoder implementation registry differs from architecture identifiers")
 
 
 def encoder_for(architecture: str) -> type[Any]:

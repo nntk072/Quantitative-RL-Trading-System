@@ -1,29 +1,45 @@
-# Documentation Index
+# Documentation
 
-| Page | Purpose |
-|------|---------|
-| [thesis/master_project_execution_plan.md](thesis/master_project_execution_plan.md) | **Canonical ordered roadmap** for experiment run readiness, implementation gates, throughput work, and Q0–Q7. Older plans are technical references; do not run them as parallel work queues. |
-| [reproducibility.md](reproducibility.md) | Data flow, training/evaluation CLI, artifact provenance and limitations |
-| [operations/triton.md](operations/triton.md) | Triton SSH, HPC environment, scheduling and logs |
-| [operations/live-status.md](operations/live-status.md) | MT5 paper/live boundaries and implementation status |
-| [research_reference.md](research_reference.md) | Source-verified environment, action-space, split, reward and risk contracts |
-| [architecture.md](architecture.md) | Pipeline stages, contracts, invariants, adding a strategy |
-| [architecture/thesis_audit_2026.md](architecture/thesis_audit_2026.md) | Thesis F3–F8/F10 audit citations |
-| [config.md](config.md) | YAML config catalog, feature flags, cache versioning |
-| [distributional_methodology.md](distributional_methodology.md) | Distributional PnL methodology for thesis claims |
-| [thesis/threats_to_validity.md](thesis/threats_to_validity.md) | Examiner-facing threats to validity |
-| [thesis/validation_protocol.md](thesis/validation_protocol.md) | Nested selection vs locked OOS |
-| [thesis/eval_pack.md](thesis/eval_pack.md) | Frozen thesis table commands |
-| [thesis/weekly_agent_protocol.md](thesis/weekly_agent_protocol.md) | Reusable weekly agent workflow and supervisor report |
-| [operations/RUNNING_COMMANDS.md](operations/RUNNING_COMMANDS.md) | Command reference for research sessions |
-| [operations/DEPLOYMENT.md](operations/DEPLOYMENT.md) | Paper-to-live promotion protocol |
-| [../README.md](../README.md) | Project overview and quick start |
-| [../AGENTS.md](../AGENTS.md) | Agent guide for coding assistants |
-| [../orchestra/README.md](../orchestra/README.md) | Multi-model CLI pipeline |
-| [architecture/repository_packages.md](architecture/repository_packages.md) | Package layout and public command surface |
-| [../.agents/architecture.md](../.agents/architecture.md) | Agent architecture map |
-| [../.agents/domain_maps/](../.agents/domain_maps/) | Per-domain context for agents |
+This documentation is organized around the repository’s actual modules. A
+reader can follow the system from market input to model decision, simulated
+execution, training, and evaluation without first studying the source code.
 
-**`docs/`** — framework reference (`architecture.md`, `config.md`),
-**`docs/thesis/`** — MSc validity / eval pack, and
-**`docs/operations/`** — operational guides (commands, deployment).
+## Start with the system
+
+- [System architecture](architecture.md): end-to-end flow, key boundaries, and
+  important limits.
+- [Module guides](modules/README.md): one guide for each application module,
+  plus cross-cutting software testing.
+- [Configuration guide](config.md): where behavior is selected and how run
+  settings fit together.
+- [Model and experiment catalog](model_variants.md): generated index of
+  selectable algorithms, encoders, and comparison roles.
+
+## Research and evidence
+
+- [Research guide](research/README.md): research questions, findings, and
+  interpretation limits.
+- [Thesis validation protocol](thesis/validation_protocol.md): roles of
+  training, validation, and previously inspected test periods.
+- [Threats to validity](thesis/threats_to_validity.md): known limitations in
+  data, execution, and inference.
+- [Master project execution plan](thesis/master_project_execution_plan.md):
+  the operational thesis work queue.
+
+## Operating the repository
+
+- [Triton operations](operations/triton.md): environments, storage, resource
+  allocations, and troubleshooting.
+- [Command guide](operations/RUNNING_COMMANDS.md): supported command examples.
+- [Deployment boundary](operations/DEPLOYMENT.md): paper and live runtime
+  considerations.
+- [Shared agent rules](../AGENTS.md): repository invariants and required
+  engineering workflow for coding agents.
+
+## Documentation style
+
+Module pages explain purpose, concepts, inputs, outputs, diagrams, assumptions,
+and limitations. They keep source references secondary. Research pages explain
+the question, comparison, result, and evidence limits. Reader-facing pages use
+clear names and describe setup and outcomes; exact input identities remain in
+machine-readable run records.

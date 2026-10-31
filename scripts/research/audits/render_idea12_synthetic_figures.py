@@ -8,7 +8,7 @@ import json
 from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
-SOURCE = ROOT / "docs/decisions/fixtures/idea12_synthetic_fixtures.json"
+SOURCE = ROOT / "tests/fixtures/research/idea12/synthetic_examples.json"
 OUT = ROOT / "docs/thesis/figures"
 
 

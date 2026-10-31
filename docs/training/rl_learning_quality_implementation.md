@@ -4,7 +4,7 @@
 
 > **Current-status pointer (2026-10-17 06:31 Helsinki):** This file retains
 > dated snapshots that predate later Q5 implementation work. Use the current
-> [Q0–Q7 implementation audit](../thesis/q0_q7_implementation_audit_2026-10-17.md)
+> [Q0–Q7 implementation audit](../thesis/q0_q7_implementation_audit.md)
 > for the reconciled source status. Q5 primal-dual PPO is implemented with
 > gamma-matched discounted cost updates, checkpointed gamma, fail-closed
 > policy-only resume, and deterministic evaluation cost exports. The current

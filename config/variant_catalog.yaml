@@ -1,0 +1,394 @@
+schema_version: 1
+
+algorithms:
+  ppo:
+    title: Proximal Policy Optimization
+    description: On-policy policy-gradient algorithm.
+  sac:
+    title: Soft Actor-Critic
+    description: Off-policy maximum-entropy actor-critic algorithm.
+
+architectures:
+  - id: tcn
+    title: Temporal Convolutional Network
+    description: Convolutional encoder for a single ordered market sequence.
+  - id: tcn_regime
+    title: Regime-conditioned TCN
+    description: TCN encoder with explicit market-regime context.
+  - id: lite_tcn
+    title: Lightweight TCN
+    description: Compact temporal convolutional encoder.
+  - id: gru
+    title: Gated Recurrent Unit
+    description: Recurrent encoder for ordered market observations.
+  - id: transformer
+    title: Transformer encoder
+    description: Attention-based encoder for ordered market observations.
+  - id: mtf
+    title: Multi-timeframe encoder
+    description: Encodes correlated observations from multiple timeframes.
+  - id: mtf_reasoning
+    title: Multi-timeframe reasoning encoder
+    description: Multi-timeframe encoder with cross-timeframe reasoning.
+  - id: mtf_shared_tcn_reasoning
+    title: Shared-TCN multi-timeframe reasoning
+    description: Shares temporal convolutional processing across timeframes.
+  - id: mtf_m1_tcn_htf_lite_reasoning
+    title: M1 TCN with lightweight higher-timeframe reasoning
+    description: Uses a dedicated M1 TCN and a compact higher-timeframe path.
+  - id: mtf_m1_tcn_htf_snapshot_reasoning
+    title: M1 TCN with higher-timeframe snapshots
+    description: Combines M1 temporal features with higher-timeframe snapshots.
+
+families:
+  - id: policy_ladder
+    title: Core policy capability ladder
+    question: What does each added trading-control capability change from the baseline?
+    comparison_type: ladder
+    entries:
+      - variant: ladder_a0_flat
+        label: A0
+        role: reference
+        description: Baseline action behavior without learned stop selection.
+        changed_factors: []
+      - variant: ladder_a1_sl
+        label: A1
+        role: rung
+        description: Adds agent-selected stop-loss behavior.
+        changed_factors: [agent stop selection]
+      - variant: ladder_a2_tp
+        label: A2
+        role: rung
+        description: Adds agent-selected take-profit behavior.
+        changed_factors: [agent take-profit selection]
+      - variant: ladder_a3_multi_tp
+        label: A3
+        role: rung
+        description: Adds multiple partial take-profit levels.
+        changed_factors: [multiple take-profit levels]
+      - variant: ladder_a4b_entry_fsm
+        label: A4b
+        role: rung
+        description: Adds an observed entry-state machine.
+        changed_factors: [entry-state machine, observed entry state]
+      - variant: ladder_a4a_entry_fsm_hidden
+        label: A4a
+        role: rung
+        description: Adds an entry-state machine with latent state.
+        changed_factors: [entry-state machine, hidden entry state]
+
+  - id: price_grid_a4b
+    title: Quarter-point price grid with observed entry state
+    question: Does quarter-point price discretization change the A4b policy result?
+    comparison_type: matched
+    entries:
+      - variant: ladder_a4b_entry_fsm
+        label: A
+        role: control
+        description: Continuous-price A4b reference.
+        changed_factors: []
+      - variant: ladder_a4b_entry_fsm_qgrid025
+        label: B
+        role: treatment
+        description: A4b with quarter-point price discretization.
+        changed_factors: [quarter-point price grid]
+
+  - id: price_grid_a4a
+    title: Quarter-point price grid with hidden entry state
+    question: Does quarter-point price discretization change the A4a policy result?
+    comparison_type: matched
+    entries:
+      - variant: ladder_a4a_entry_fsm_hidden
+        label: A
+        role: control
+        description: Continuous-price A4a reference.
+        changed_factors: []
+      - variant: ladder_a4a_entry_fsm_hidden_qgrid025
+        label: B
+        role: treatment
+        description: A4a with quarter-point price discretization.
+        changed_factors: [quarter-point price grid]
+
+  - id: dollar_band_q5
+    title: Dollar-band risk constraint
+    question: Does the learned Q5 constraint help with dollar-band risk sizing?
+    comparison_type: matched
+    entries:
+      - variant: ladder_a4a_dollar_band_q5_off
+        label: A
+        role: control
+        description: Dollar-band sizing with Q5 disabled.
+        changed_factors: []
+      - variant: ladder_a4a_dollar_band_q5_on
+        label: B
+        role: treatment
+        description: Same dollar-band sizing with Q5 enabled.
+        changed_factors: [Q5 constrained learning]
+
+  - id: mtf_encoder
+    title: Single-timeframe versus multi-timeframe encoder
+    question: Does the multi-timeframe encoder improve on the matched TCN control?
+    comparison_type: matched
+    entries:
+      - variant: rq_mtf_control_tcn
+        label: A
+        role: control
+        description: Single-window TCN control.
+        changed_factors: []
+      - variant: rq_mtf_treatment_mtf
+        label: B
+        role: treatment
+        description: Correlated multi-timeframe encoder treatment.
+        changed_factors: [encoder architecture]
+
+  - id: mtf_reasoning_models
+    title: Core, multi-timeframe, and thesis-reasoning PPO models
+    question: How do the matched core TCN, multi-timeframe encoder, and thesis-conditioned reasoning policies compare?
+    comparison_type: matched
+    entries:
+      - variant: rq_mtf_control_tcn
+        label: A
+        role: control
+        description: Core PPO with the single-window TCN and shared dollar-band controls.
+        changed_factors: []
+      - variant: rq_mtf_treatment_mtf
+        label: B
+        role: treatment
+        description: PPO with correlated multi-timeframe encoding.
+        changed_factors: [multi-timeframe encoder]
+      - variant: rq_mtf_treatment_reasoning
+        label: C
+        role: treatment
+        description: PPO with multi-timeframe thesis reasoning and a thesis-aware action distribution.
+        changed_factors: [multi-timeframe reasoning encoder, thesis selection, thesis-aware action distribution]
+
+  - id: a4b_strategy_overlay
+    title: A4b strategy overlays
+    question: How do the configured strategy overlays behave under the A4b policy?
+    comparison_type: descriptive
+    entries:
+      - variant: ladder_a4b_po3_ifvg
+        label: A
+        role: candidate
+        description: A4b with the PO3 and IFVG strategy overlay.
+        changed_factors: [PO3 and IFVG strategy]
+      - variant: ladder_a4b_distribution
+        label: B
+        role: candidate
+        description: A4b with the distribution strategy overlay.
+        changed_factors: [distribution strategy]
+
+  - id: po3_policy_ladder
+    title: PO3 strategy capability ladder
+    question: What does each added action capability change with the PO3 strategy?
+    comparison_type: ladder
+    entries:
+      - variant: ladder_a0_flat_po3
+        label: A0
+        role: reference
+        description: PO3 strategy with the baseline action capability.
+        changed_factors: [PO3 strategy]
+      - variant: ladder_a1_sl_po3
+        label: A1
+        role: rung
+        description: PO3 strategy with agent-selected stops.
+        changed_factors: [agent stop selection]
+      - variant: ladder_a2_tp_po3
+        label: A2
+        role: rung
+        description: PO3 strategy with agent-selected stops and targets.
+        changed_factors: [agent take-profit selection]
+      - variant: ladder_a3_multi_tp_po3
+        label: A3
+        role: rung
+        description: PO3 strategy with multiple take-profit levels.
+        changed_factors: [multiple take-profit levels]
+      - variant: ladder_a4a_entry_fsm_hidden_po3
+        label: A4a
+        role: rung
+        description: PO3 strategy with hidden entry-state-machine state.
+        changed_factors: [entry-state machine]
+
+  - id: distribution_policy_ladder
+    title: Distribution strategy capability ladder
+    question: What does each added action capability change with the distribution strategy?
+    comparison_type: ladder
+    entries:
+      - variant: ladder_a0_flat_dist
+        label: A0
+        role: reference
+        description: Distribution strategy with the baseline action capability.
+        changed_factors: [distribution strategy]
+      - variant: ladder_a1_sl_dist
+        label: A1
+        role: rung
+        description: Distribution strategy with agent-selected stops.
+        changed_factors: [agent stop selection]
+      - variant: ladder_a2_tp_dist
+        label: A2
+        role: rung
+        description: Distribution strategy with agent-selected stops and targets.
+        changed_factors: [agent take-profit selection]
+      - variant: ladder_a3_multi_tp_dist
+        label: A3
+        role: rung
+        description: Distribution strategy with multiple take-profit levels.
+        changed_factors: [multiple take-profit levels]
+      - variant: ladder_a4a_entry_fsm_hidden_dist
+        label: A4a
+        role: rung
+        description: Distribution strategy with hidden entry-state-machine state.
+        changed_factors: [entry-state machine]
+
+  - id: entry_retest_control
+    title: Entry retest setting
+    question: What changes when the entry retest requirement is enabled?
+    comparison_type: descriptive
+    entries:
+      - variant: knob_retest_true
+        label: B
+        role: candidate
+        description: Enables the entry retest requirement.
+        changed_factors: [entry retest]
+
+  - id: entry_candidate_age
+    title: Entry candidate lifetime
+    question: How does the configured candidate age affect entry behavior?
+    comparison_type: descriptive
+    entries:
+      - variant: knob_age_20
+        label: A
+        role: candidate
+        description: Uses a 20-bar candidate lifetime.
+        changed_factors: [candidate maximum age]
+      - variant: knob_age_60
+        label: B
+        role: candidate
+        description: Uses a 60-bar candidate lifetime.
+        changed_factors: [candidate maximum age]
+
+  - id: model_and_policy_ablations
+    title: Existing model and policy ablations
+    question: How do the recorded architecture and policy ablations differ from the reference?
+    comparison_type: screening
+    entries:
+      - variant: ablation_baseline_unconditional
+        label: A
+        role: reference
+        description: Unconditional baseline reference.
+        changed_factors: []
+      - variant: ablation_conditional_narrative
+        label: B
+        role: candidate
+        description: Conditional narrative input variant.
+        changed_factors: [conditional narrative input]
+      - variant: ablation_transformer_encoder
+        label: C
+        role: candidate
+        description: Transformer encoder variant.
+        changed_factors: [encoder architecture]
+      - variant: ablation_sac_agent
+        label: D
+        role: candidate
+        description: SAC algorithm variant.
+        changed_factors: [policy algorithm]
+      - variant: ablation_discrete_actions
+        label: E
+        role: candidate
+        description: Discrete action representation variant.
+        changed_factors: [action representation]
+      - variant: ablation_pd_context
+        label: F
+        role: candidate
+        description: Premium/discount context variant.
+        changed_factors: [premium/discount context]
+      - variant: ablation_po3_ifvg
+        label: G
+        role: candidate
+        description: PO3 and IFVG strategy variant.
+        changed_factors: [PO3 and IFVG strategy]
+      - variant: ablation_distribution
+        label: H
+        role: candidate
+        description: Distribution strategy variant.
+        changed_factors: [distribution strategy]
+
+  - id: sustainable_growth_reward
+    title: Sustainable growth reward objective
+    question: Does log-equity growth reward improve on the DSR objective?
+    comparison_type: matched
+    entries:
+      - variant: sustainable_growth_ppo_dsr
+        label: A
+        role: control
+        description: PPO with the DSR objective.
+        changed_factors: []
+      - variant: sustainable_growth_ppo_log
+        label: B
+        role: treatment
+        description: PPO with the log-equity-growth objective.
+        changed_factors: [reward objective]
+
+  - id: regime_context
+    title: Regime context
+    question: Does the regime-conditioned TCN change results versus the TCN control?
+    comparison_type: matched
+    entries:
+      - variant: regime_d1_norm_tcn_control
+        label: A
+        role: control
+        description: TCN control without the regime treatment.
+        changed_factors: []
+      - variant: regime_d1_norm_tcn_regime
+        label: B
+        role: treatment
+        description: TCN with daily-normalized regime context.
+        changed_factors: [regime context]
+
+  - id: log_growth_eod_drawdown
+    title: EOD drawdown policy
+    question: What changes when a 10,000 EOD trailing drawdown policy is enabled?
+    comparison_type: matched
+    entries:
+      - variant: sustainable_growth_ppo_log
+        label: A
+        role: control
+        description: Log-growth PPO with peak trailing drawdown disabled.
+        changed_factors: []
+      - variant: sustainable_growth_ppo_log_eod_dd10k
+        label: B
+        role: treatment
+        description: Log-growth PPO with the 10,000 EOD drawdown policy.
+        changed_factors: [EOD trailing drawdown policy]
+
+  - id: log_growth_q5_constraint
+    title: Log-growth Q5 constraint
+    question: Does Q5 constrained learning change the log-growth PPO result?
+    comparison_type: matched
+    entries:
+      - variant: sustainable_growth_ppo_log
+        label: A
+        role: control
+        description: Log-growth PPO with Q5 disabled.
+        changed_factors: []
+      - variant: sustainable_growth_ppo_log_q5
+        label: B
+        role: treatment
+        description: Log-growth PPO with Q5 enabled.
+        changed_factors: [Q5 constrained learning]
+
+  - id: log_growth_algorithm
+    title: Log-growth policy algorithm
+    question: Does SAC change the result relative to PPO under log-growth reward?
+    comparison_type: matched
+    entries:
+      - variant: sustainable_growth_ppo_log
+        label: A
+        role: control
+        description: PPO with log-equity-growth reward.
+        changed_factors: []
+      - variant: sustainable_growth_sac_log
+        label: B
+        role: treatment
+        description: SAC with log-equity-growth reward.
+        changed_factors: [policy algorithm]

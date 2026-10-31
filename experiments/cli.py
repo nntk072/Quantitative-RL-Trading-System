@@ -109,6 +109,13 @@ def run_named_cache_rebuild_cli(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
+def run_variant_catalog_cli(argv: Sequence[str] | None = None) -> int:
+    """Generate or validate the model and experiment variant catalog."""
+    from experiments.variants.catalog import main as catalog_main
+
+    return catalog_main(list(argv) if argv is not None else None)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="thesis-experiment-run")
     parser.add_argument(
@@ -121,6 +128,7 @@ def main() -> None:
             "recover-cache",
             "rebuild-named-cache",
             "variants",
+            "catalog",
         ),
     )
     argv = sys.argv[1:]
@@ -131,6 +139,11 @@ def main() -> None:
         return
     if args.command == "rebuild-named-cache":
         run_named_cache_rebuild_cli(rest)
+        return
+    if args.command == "catalog":
+        status = run_variant_catalog_cli(rest)
+        if status:
+            raise SystemExit(status)
         return
 
     command_main: Callable[[], object]

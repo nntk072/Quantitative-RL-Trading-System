@@ -1,8 +1,0 @@
-feature,entries,baseline_finite,source_normalized_finite,source_normalized_unique
-D1_ret_5,1110,0,1064,202
-D1_ret_30,1110,0,937,180
-D1_ema_21_dist,1110,0,1096,207
-D1_ema_50_dist,1110,0,1096,207
-D1_ema_200_dist,1110,0,1096,207
-D1_adx,1110,0,1083,205
-D1_realized_vol,1110,0,990,189

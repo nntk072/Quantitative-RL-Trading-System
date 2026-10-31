@@ -252,3 +252,31 @@ These results select T=9 with a 2-second launch stagger as the current PPO-core
 throughput candidate for one GH200. Treat this as a benchmark setting, not as a
 validated production experiment run configuration, until a two-node end-to-end run
 measures callback/evaluation cost and confirms artifact integrity.
+
+## Applying later max-throughput measurements to the current architecture
+
+The completed `codex/gh200-max-fps` worktree contains three related commits and
+substantial measurement evidence. It is not merged wholesale: its source base
+predates the current `main` architecture, and its result includes prototypes
+that failed the end-to-end adoption threshold. The following records what is
+already present in the current source tree and what remains appropriate to
+carry forward.
+
+| Concept | Current-main status | Decision |
+| --- | --- | --- |
+| Keep completed PPO rollouts on the learner GPU | `ppo.rollout_buffer_on_device` is enabled by default; exact minibatch parity has a focused test. | Already adopted. Keep the CPU-buffer control. |
+| Use subprocess vector environments and resource-aware worker packing | `subproc` is the default backend; the experiment-run controller supports `--workers auto`, `--worker-cpus auto`, and node CPU/RAM/GPU capacity planning. | Already adopted. Preserve resource-derived concurrency instead of hard-coding a worker count for every node. |
+| Increase per-run environment and PPO batch geometry | On the earlier MTF reasoning baseline, 64 subprocess environments with 16,384 aggregate rollout steps, batch 4,096, and 15 epochs reached 0.91–0.98k PPO-core transitions/s, versus 222 transitions/s for the 8-env reference. This changes the PPO sampling/update geometry and has no matched learning-quality result. | Keep only as a separately identified experiment setting. Do not change baseline defaults or claim equivalent learning. |
+| Compact worker-to-parent observation transport | Cut measured receive bytes by 98.02% but reduced PPO-core throughput by 5.32%. | Do not integrate. |
+| Group duplicate market rows during MTF inference | Final measured p50 inference gain was 2.7%, below the 20% adoption gate; grouping discovery and training were excluded. | Do not integrate. |
+| Pipeline CPU stepping for one environment cohort with inference on another | The 2×32 and 4×16 prototypes were 21.17% and 42.76% slower than sequential 64 across three warmed repeats. | Do not integrate a production collector. |
+| CUDA Graphs for policy execution | Static-shape MLP inference showed a bounded gain, but the current MTF reasoning path has variable valid-suffix lengths; its production graph replay failed and was disabled for MTF. | Do not enable for current MTF policies. Reconsider only with a shape-safe implementation and checkpoint/resume parity. |
+| Reduce PPO epochs from 15 to 10 or 5 | Throughput increased, but the optimizer budget changed and no learning-quality comparison was run. | Do not change the default epoch count. Treat as a separate learning-protocol experiment. |
+
+The current mainline decision is therefore conservative: retain the already
+integrated GPU rollout buffer, subprocess environments, and resource-aware
+worker allocation. Per-run geometry can be raised explicitly for a separate
+benchmark, but it must be recorded in the run identity and evaluated for policy
+quality before adoption. The new throughput measurements do not justify
+changing global defaults or merging the branch's measurement prototypes into
+the active training path.

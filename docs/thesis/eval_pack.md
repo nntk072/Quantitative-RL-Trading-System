@@ -120,6 +120,5 @@ uv run python -m quant_rl.train.train_rl --mvp --seed=50
 
 ## Validity docs
 
-- [threats_to_validity.md](threats_to_validity.md)
-- [../architecture/thesis_audit_2026.md](../architecture/thesis_audit_2026.md)
-- [validation_protocol.md](validation_protocol.md)
+- [Threats to validity](threats_to_validity.md)
+- [Validation protocol](validation_protocol.md)

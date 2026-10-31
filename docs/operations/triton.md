@@ -1,44 +1,122 @@
-# Triton operations and runtime verification
+# Triton Operations
 
-For compute architecture, venv provisioning, storage characteristics,
-resource observations and installation troubleshooting, see
-[Triton environment guidance](triton_environment.md).
+This runbook is for people running or diagnosing work on Aalto's Triton
+cluster. Exact Slurm safety rules for coding agents live in
+[`.agents/rules/triton-slurm.md`](../../.agents/rules/triton-slurm.md); use
+that file when operating as an agent. Hardware availability and queue state
+change, so query Slurm instead of relying on recorded examples.
 
-If `mypy --version` stalls inside an allocated GPU shell, see
-[the architecture-aware Lustre Mypy workaround](triton_mypy_lustre.md).
-The ARM64 workaround was verified on 2026-10-11; the x86_64 equivalent
-needs validation on an x86 compute node.
+## Find or start a compute session
 
-## Historical GPU and RAM guidance
+Run status and filesystem inspection from the login shell. Run training,
+evaluation, cache construction, and other substantial computation inside a
+Slurm compute allocation.
 
-The [GPU experiment run plan](../training/triton_gpu_training_agent_plan.md)
-documents the 18-variant, five-seed proposal, allocation-aware scheduling,
-durable per-attempt logging and resume criteria. The
-[RAM optimization plan](../training/triton_ram_optimization_plan.md)
-records experimental bundle/frames memory probes; short-slice memory samples
-are not production PPO peak-memory or scientific parity evidence.
-Connect to `code.triton.aalto.fi` and enter
-`/scratch/work/nguyenl37/Quantitative-RL-Trading-System`. Check `git status --short --branch`
-and `git rev-parse HEAD` before running experiments. Do not assume SSH shell
-architecture matches allocated GPU node architecture.
+```bash
+bash scripts/compute/slurm/status.sh
+bash scripts/compute/slurm/find_gpu_session.sh
+squeue -u "$USER"
+sinfo
+```
 
-Follow [docs/operations/triton/README.md](../../docs/operations/triton/README.md) and
-[Slurm agent rules](../../.agents/rules/triton-slurm.md) for resource selection.
-Use `bash scripts/compute/slurm/status.sh` for a status overview and
-`bash scripts/compute/slurm/find_gpu_session.sh` to discover a reusable session.
-`attach_or_alloc.sh` and `two_trains_one_h200.sh` can request resources;
-running them requires explicit allocation authorization under repository rules.
-The helper documentation prefers one H200 or GH200 allocation, and requires
-checking `sinfo` rather than assuming a partition is available.
+Reuse an appropriate running allocation when possible. Before requesting
+compute, check current node, GPU, CPU, and host-memory availability and read
+the [Slurm operating rules](../../.agents/rules/triton-slurm.md). Keep the
+allocation shell persistent so completed work can be collected and the
+allocation reused safely.
 
-The architecture-specific environments are `.venv` (ARM64/aarch64, including
-`gpuarm` GH200 nodes) and `.venv-x86` (x86_64 compute nodes such as H100/H200).
-Never use `.venv-x86` on `gpuarm`; the setup scripts live under `tools/`.
-Use `scripts/compute/slurm/activate_venv.sh` **inside the correct allocated shell**.
-Do not use `PAPER_TRADING=false` for HPC tests or any documentation check.
+Once inside the compute shell, verify the actual node and device rather than
+assuming the SSH gateway matches them:
 
-For reproducible experiments, save Slurm job ID, node type, environment,
-`git SHA`, resolved config, seed, launch command, checkpoint and run-log paths.
-Check logs and completion artifacts before declaring success; a zero exit
-status alone does not prove a valid final PPO checkpoint. See
-[reproducibility](../reproducibility.md).
+```bash
+hostname
+uname -m
+echo "${SLURM_JOB_ID:-no Slurm allocation}"
+nvidia-smi
+```
+
+## Choose the matching Python environment
+
+| Compute architecture and device | Environment | Setup |
+| --- | --- | --- |
+| ARM64, GH200 | `.venv` | `tools/setup-venv` with an ARM64 `uv` binary |
+| x86_64, H100/H200 | `.venv-x86` | `tools/setup-venv-x86` |
+| x86_64, V100 | `.venv-v100` | `tools/setup-venv-v100`; verify `sm_70` and a real CUDA operation |
+| x86_64, MI210 | `/scratch/work/nguyenl37/.venv-mi210` | Separate ROCm setup; not part of current thesis runs |
+
+Select the environment from inside the allocation:
+
+```bash
+source scripts/compute/slurm/activate_venv.sh
+command -v python
+python -c 'import sys; print(sys.prefix)'
+python --version
+```
+
+Do not run an ARM environment from an x86 shell or reuse compiled packages
+across architectures. The login home may provide an x86 `uv` binary on an ARM
+node; use an architecture-matched binary for package operations. A Python
+import or `nvidia-smi` alone does not validate the training runtime; use a real
+device operation and the relevant tests before relying on a new environment.
+
+## Storage and measurements
+
+- `/scratch/work/nguyenl37` is persistent project storage for source,
+  environments, checkpoints, logs, and reports. Lustre metadata operations and
+  small-file imports may be slow.
+- Node-local `/tmp` is faster but temporary. Keep a durable copy of every
+  checkpoint, report, or dataset outside it before the allocation ends.
+- Check filesystem capacity and user quotas before copying large environments:
+  `df -h /tmp /scratch` and `du -sh <path>`.
+- A requested Slurm RAM amount is a limit, not an observed peak. Report CPU,
+  host RAM, GPU utilization, and GPU memory with the measurement source and
+  whether each value is a peak, snapshot, or allocation limit.
+- tmux preserves a terminal session; it does not keep an expired allocation
+  alive. Save logs on scratch with the run configuration and source identity.
+
+## Diagnose a slow command or Mypy startup
+
+First verify the host, Python environment, exact command, and process state.
+Lustre waits can delay imports without indicating a type error:
+
+```bash
+source scripts/compute/slurm/activate_venv.sh
+timeout 30 mypy --version
+ps -u "$USER" -o pid,stat,wchan:24,etime,pcpu,args
+df -h /tmp /scratch
+```
+
+Exit code `124` means `timeout` expired. Inspect the process before concluding
+that Lustre is responsible or starting another command. A full project type
+check remains `mypy .`; never substitute a path-scoped check for the project
+gate.
+
+If Mypy stalls while importing from Lustre, stage its runtime and modules in a
+private, architecture-local `/tmp` directory while keeping the project source
+and dependencies from the matching persistent environment:
+
+```bash
+ENV_DIR="$(dirname "$(dirname "$(command -v python)")")"
+STAGE="$(mktemp -d "/tmp/triton-mypy-${USER}-XXXXXX")"
+mkdir -p "$STAGE/sitepkgs" "$STAGE/cache"
+BASE="$(dirname "$(dirname "$(readlink -f "$ENV_DIR/bin/python")")")"
+SITE="$ENV_DIR/lib/python3.12/site-packages"
+cp -a "$BASE" "$STAGE/pythonbase"
+cp -a "$SITE/mypy" "$SITE/mypyc" "$SITE/librt" "$SITE/pathspec" \
+  "$SITE/packaging" "$SITE/mypy_extensions.py" "$SITE/typing_extensions.py" \
+  "$STAGE/sitepkgs/"
+find "$SITE" -maxdepth 1 -name '*__mypyc*.so' -exec cp -a {} "$STAGE/sitepkgs/" \;
+PYTHONPATH="$STAGE/sitepkgs:$SITE" "$STAGE/pythonbase/bin/python3.12" \
+  -m mypy . --cache-dir "$STAGE/cache" --no-color-output --show-error-codes
+```
+
+This workaround was verified on ARM64 with Python 3.12. The equivalent x86_64
+staging path has not been validated. Remove only the unique staging directory
+after the check completes; never clear shared `/tmp` contents or replace the
+persistent environment to work around an import stall.
+
+## Related references
+
+- [Command examples](RUNNING_COMMANDS.md)
+- [Reproducibility requirements](../reproducibility.md)
+- [Agent Slurm rules](../../.agents/rules/triton-slurm.md)

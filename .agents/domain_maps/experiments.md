@@ -6,6 +6,22 @@ Own variant definitions, experiment run lifecycle, resource-aware scheduling, re
 artifact verification, and experiment run provenance. Scientific algorithms belong to
 their domain packages.
 
+## Allocation-aware worker pool
+
+Pass `--workers auto --worker-cpus auto` for a pooled run. The controller plans
+slots per node from the Slurm CPU set, cgroup RAM limit, and visible GPU memory,
+then divides CPUs among those slots and leaves one CPU for the resource sampler.
+For the 8-environment bundle profile the conservative RAM estimate is 19 GiB per
+worker, with a 35% margin and 64 GiB per-node reserve; GH200 sharing is capped at
+9 workers per allocated GPU using an 8 GiB per-worker VRAM estimate and 20% GPU
+reserve. The controller queues the full variant list and keeps the resource-sized
+pool busy as workers finish. If a resource limit cannot be read, it admits only
+one worker per node rather than assuming unlimited capacity. Explicit worker
+counts remain supported for controlled comparisons. For 8-environment bundle
+workers, nine per GH200 need about 295 GiB per node under this estimate; request
+at least 512 GiB per node when that concurrency is desired. Smaller allocations
+automatically use fewer slots.
+
 ## Boundary
 
 - Experiment run lifecycle: `experiments/runs/`.

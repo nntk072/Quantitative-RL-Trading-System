@@ -55,6 +55,21 @@ def test_root_variants_command_forwards_arguments_at_package_boundary(monkeypatc
     assert captured == [["--bars-csv", "bars.csv", "--steps", "64"]]
 
 
+def test_root_catalog_command_forwards_generation_mode(monkeypatch) -> None:
+    captured: list[list[str]] = []
+
+    def capture(argv: list[str]) -> int:
+        captured.append(list(argv))
+        return 0
+
+    monkeypatch.setattr(cli, "run_variant_catalog_cli", capture)
+    monkeypatch.setattr(sys, "argv", ["thesis-experiment-run", "catalog", "--check"])
+
+    cli.main()
+
+    assert captured == [["--check"]]
+
+
 def test_named_cache_plan_command_dispatches_without_rebuild(monkeypatch, capsys) -> None:
     from experiments.runs import named_cache_rebuild
 

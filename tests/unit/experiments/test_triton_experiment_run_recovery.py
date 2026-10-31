@@ -11,9 +11,9 @@ import pytest
 from experiments.runs.cache_failure_recovery import prepare_experiment_run_resume
 
 
-def _experiment_run_fixture(root: Path) -> tuple[Path, bytes]:
+def _experiment_run_fixture(root: Path, variant_count: int = 42) -> tuple[Path, bytes]:
     experiment_run = root / "experiment_run"
-    keys = [f"variant_{index:02d}" for index in range(18)]
+    keys = [f"variant_{index:02d}" for index in range(variant_count)]
     fingerprint = "a" * 64
     lineage = {key: {"checkpoint_sha256": f"{index:064x}"} for index, key in enumerate(keys)}
     jobs = []
@@ -75,7 +75,7 @@ def test_resume_requeues_only_proven_infrastructure_failures(tmp_path: Path) -> 
     result = prepare_experiment_run_resume(experiment_run)
 
     recovered = json.loads((experiment_run / "experiment_run.json").read_text())
-    assert result["requeued"] == 18
+    assert result["requeued"] == 42
     assert {job["status"] for job in recovered["jobs"]} == {"interrupted"}
     assert {job["resume_from_attempt"] for job in recovered["jobs"]} == {3}
     assert recovered["fingerprint"] == "a" * 64
@@ -87,7 +87,7 @@ def test_resume_requeues_only_proven_infrastructure_failures(tmp_path: Path) -> 
     assert backup.read_bytes() == original
     report = json.loads((experiment_run / "reports" / "cache_recovery.json").read_text())
     assert report["identity_changed"] is False
-    assert len(report["requeued_identities"]) == 18
+    assert len(report["requeued_identities"]) == 42
     after_recovery = (experiment_run / "experiment_run.json").read_bytes()
     second_result = prepare_experiment_run_resume(experiment_run)
     assert second_result["requeued"] == 0
@@ -110,14 +110,14 @@ def test_resume_repairs_incorrect_attempt_pointer_from_checkpoint_lineage(
     result = prepare_experiment_run_resume(experiment_run)
 
     repaired = json.loads(manifest_path.read_text())
-    assert result["resume_attempt_corrections"] == 18
+    assert result["resume_attempt_corrections"] == 42
     assert {job["resume_from_attempt"] for job in repaired["jobs"]} == {3}
     manifest_backup = (
         experiment_run / "reports" / "experiment_run_manifest_before_resume_attempt_repair.json"
     )
     assert manifest_backup.read_text() == incorrect_manifest
     report = json.loads((experiment_run / "reports" / "cache_recovery.json").read_text())
-    assert len(report["resume_attempt_corrections"]) == 18
+    assert len(report["resume_attempt_corrections"]) == 42
     assert all(
         correction["previous_resume_from_attempt"] == 4 and correction["resume_from_attempt"] == 3
         for correction in report["resume_attempt_corrections"]

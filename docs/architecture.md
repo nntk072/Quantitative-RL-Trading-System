@@ -1,152 +1,73 @@
-# Repository Architecture
+# How the trading system fits together
 
-This page describes the current root-package layout. Reusable implementation
-lives in the domain packages below; `scripts/` provides research, maintenance,
-and compute entry points. There is no active `quant_rl/` package. The checkpoint
-loader retains narrow legacy module aliases for old saved models, and dated
-audit scripts can retain their original imports; neither defines current
-application entry points. Use the current package paths when adding code or
-fixing imports.
+This repository turns historical market data into trading decisions, trains a
+policy to make those decisions, and replays the saved policy against market
+data to measure what happened. The same market history supports more than one
+purpose: learning the policy, checking software behavior, and evaluating a
+trained policy are separate activities.
 
-For repository-wide agent rules and scientific invariants, see
-[`AGENTS.md`](../AGENTS.md) and [`.agents/architecture.md`](../.agents/architecture.md).
-The [research reference](research_reference.md) documents concrete action,
-data, reward, and risk contracts; the [thesis validation protocol](thesis/validation_protocol.md)
-defines the calendar roles for thesis evaluation.
+The guides below explain each area in plain language. They describe the
+system’s purpose, the information it receives, the work it performs, and its
+limitations. Source code is linked only as an implementation reference.
 
-## End-to-end flow
+## System flow
 
 ```mermaid
 flowchart LR
-  C[configuration/] --> D[market_data/]
-  D --> F[features/]
-  F --> S[simulation/]
-  T[trading/] --> S
-  S --> L[learning/]
-  M[models/] --> L
-  Q[decisioning/] --> L
-  L --> TR[training/]
-  TR --> A[artifacts/]
-  TR --> E[evaluation/]
-  E --> A
-  X[experiments/] --> TR
-  X --> E
-  CP[compute/] --> X
-  LR[live/] --> MT[integrations/mt5/]
-  M --> LR
-  Q --> LR
+    Raw[Bars and bid/ask ticks] --> Data[Data loading and time alignment]
+    Data --> Feature[Features and market context]
+    Feature --> Obs[Observation for the current decision]
+    Obs --> Policy[Policy: algorithm plus encoder]
+    Policy --> Intent[Direction, entry, risk, and management intent]
+    Intent --> Env[Trading environment and execution]
+    Env --> Next[Next observation, account state, and reward]
+    Next --> Policy
+    Policy --> Learner[Training update]
+    Learner --> Policy
+
+    Saved[Saved model] --> Replay[Evaluation replay]
+    Data --> Replay
+    Replay --> Result[Equity, trades, risk, metrics, and figures]
 ```
 
-Training and evaluation use the simulation contracts and broker-neutral
-trading domain. The MT5 integration is a separate live boundary; it does not
-own training or simulation behavior. Experiment run orchestration coordinates
-training, evaluation, provenance, and compute resources without replacing
-their domain implementations.
+In training, the environment applies a decision to its simulated account and
+returns the resulting state and reward. The learner uses many such transitions
+to update the policy. In evaluation, the saved policy is replayed over a chosen
+time range and the resulting account path and trades are reported. A test of
+software behavior is a third activity; passing software tests does not show
+that a policy is profitable.
 
-## Package ownership
+## System areas
 
-| Package | Responsibility | Common entry points |
+| Area | What it answers | Guide |
 |---|---|---|
-| `configuration/` | Load, merge, validate, hash, and locate configuration | Configuration services |
-| `market_data/` | Load bars and ticks; clean, align, transform, split, and cache inputs | `market_data.loading`, `market_data.transforms`, `market_data.splits`, `market_data.cache` |
-| `features/` | Build causal feature matrices and their cache identity | `features/pipeline/feature_matrix_builder.py`, `features/pipeline/feature_cache_identity.py` |
-| `trading/` | Broker-neutral account, order, position, cost, risk, and strategy domain | `trading/execution/`, `trading/risk/`, `trading/strategies/` |
-| `simulation/` | Environment transitions, Gymnasium environment, and event-driven backtest | `simulation/contracts/`, `simulation/environment/env.py`, `simulation/backtest/` |
-| `models/` | Reusable neural encoders, encoder registry, and model runtime helpers | `models/encoders/`, `models/factory/`, `models/runtime/` |
-| `learning/` | SB3 policy adapters, PPO/SAC construction and fitting, checkpoint loading, and learner contracts | `learning/rl/`, `learning/contracts.py` |
-| `decisioning/` | Versioned observation and semantic action contracts and model adapters | `decisioning/contracts.py`, `decisioning/observations.py` |
-| `training/` | Training setup, execution, callbacks, and run reporting | `training/cli.py`, `training/runner/` |
-| `evaluation/` | Rollouts, metrics, reanalysis, provenance validation, reporting, and plots | `evaluation/cli.py`, `evaluation/rollout/`, `evaluation/reanalysis/` |
-| `experiments/` | Variant and experiment run definitions, orchestration, lineage, and status | `experiments/cli.py`, `experiments/runs/execution.py`, `experiments/variants/` |
-| `artifacts/` | Shared artifact identity, validated manifests, layout, atomic writes, retention, and baseline promotion | `artifacts/` |
-| `compute/` | Device/environment capabilities and Slurm resource, worker, and allocation-continuation mechanics | `compute/cli.py`, `compute/slurm/` |
-| `live/` | Broker-neutral live and paper strategy runtime | `live/runtime/strategy.py` |
-| `integrations/mt5/` | MetaTrader-specific data, broker, robot, and risk adapters | `integrations/mt5/` |
-| `orchestra/` | Multi-model repository task orchestration and CI workflow | `orchestra/cli.py` |
+| Configuration | How settings select consistent behavior across a run | [Configuration](modules/configuration.md) |
+| Market data | How timestamped bars and bid/ask ticks enter the system | [Market data](modules/market_data.md) |
+| Features | How market observations become causal model inputs | [Features](modules/features.md) |
+| Trading | How accounts, orders, execution, and risk rules are represented | [Trading](modules/trading.md) |
+| Decisioning | How a model output becomes a defined trading intent | [Decisioning](modules/decisioning.md) |
+| Simulation and environment | How an action changes the simulated account | [Simulation](modules/simulation.md) |
+| Models and learning | How the policy represents observations and learns from experience | [Models](modules/models.md), [Learning](modules/learning.md) |
+| Training | How a recoverable training run is assembled | [Training](modules/training.md) |
+| Testing | What automated checks establish and what they do not | [Testing](modules/testing.md) |
+| Evaluation | How a saved policy is replayed and reported | [Evaluation](modules/evaluation.md) |
+| Experiments | How controlled research comparisons are organized | [Experiments](modules/experiments.md) |
+| Artifacts and compute | How results are retained and workloads are resourced | [Artifacts](modules/artifacts.md), [Compute](modules/compute.md) |
+| Live and external systems | How policies cross into live or vendor-specific boundaries | [Live runtime](modules/live.md), [Integrations](modules/integrations.md) |
+| Engineering workflow | How repository changes are coordinated and verified | [Orchestra](modules/orchestra.md) |
+| Research | How comparisons are designed and findings are interpreted | [Research guide](research/README.md) |
 
-`models/` contains reusable architectures. `learning/` contains backend and
-optimization mechanics. `training/` composes configuration, data, features,
-simulation, and learning into runs. `evaluation/` reloads saved runs through
-the supported rollout/reporting interfaces. `experiments/` coordinates
-multiple runs and records their lineage.
+## Important limits
 
-Experiment run lifecycle ownership is in `experiments/runs/execution.py`, and
-cache-failure recovery is in `experiments/runs/cache_failure_recovery.py`.
-Slurm worker resource sampling and dispatch are owned by `compute/slurm/`.
-The `thesis-experiment-run recover-cache` command exposes recovery through its
-owning package. Experiment run artifact locations and atomic writes use
-`artifacts/`.
+- The simulator is a research tool. A historical replay cannot guarantee live
+  execution quality, future returns, or account survival.
+- Training reward is an optimization signal, not a trading-performance result.
+- An observed test interval is exploratory once it has influenced model or
+  design choices; it is not a fresh confirmatory sample.
+- Market-data, feature, execution, and account assumptions affect every result.
+  Reports should state those assumptions in words and explain their effect.
 
-The `integrations.mt5` package exposes concrete adapters lazily, so importing
-the package surface does not require the MetaTrader5 vendor module. Live RL
-risk values are parsed and validated in `integrations/mt5/risk_configuration.py`;
-failed sizing produces no order, and MT5 close fills use bid to close longs and
-ask to close shorts.
-
-Evaluation output assembly lives in `evaluation/reporting/run_artifact_writer.py`.
-Its `evaluation_manifest.json` links numerical split artifacts to parent
-training or reanalysis manifests. Rollout, checkpoint replay, fill/position
-tables, and chart geometry/rendering have separate named owners. Training
-progress plots live under `training/reporting/`; proven historical evaluation
-paths remain compatibility wrappers. The former training-plot path was retired
-to preserve the evaluation-to-training dependency direction.
-
-## Data and timeframe boundaries
-
-`market_data.loading.run_pipeline()` builds configured bar datasets and can
-consume native timeframe files or derive explicitly configured timeframes.
-`market_data.loading.build_tick_books()` assembles configured tick partitions.
-Cache paths and identities are owned by `market_data.cache`; session labels and
-the date-specific session-close calendar are owned by `market_data.transforms`.
-Do not assume that all timeframes are derived from M1 or that configured
-timeframe files are ignored; the active source and derivation rules come from
-the resolved dataset configuration.
-
-`features/pipeline/feature_matrix_builder.py` builds the feature matrix. It accepts primary
-and optional secondary series, train scope, and configured timeframe bars.
-Input resolution is handled by `features/pipeline/feature_build_inputs.py`;
-alignment, normalization, and cache identity live under `features/pipeline/`.
-Strategies and simulation consume the resulting features; session eligibility
-is represented as state/masks rather than deleting market bars.
-
-Thesis date boundaries and the exposed 2026 interval are specified in
-[`thesis/validation_protocol.md`](thesis/validation_protocol.md) and the
-operational [master execution plan](thesis/master_project_execution_plan.md).
-Do not infer a new data split from a cache name or historical document.
-
-## Commands
-
-The supported installed command surfaces are registered in `pyproject.toml`:
-
-| Command | Implementation | Purpose |
-|---|---|---|
-| `thesis-data` | `market_data.cli:main` | Dataset preparation and inspection |
-| `thesis-train` | `training.cli:main` | Training workflows |
-| `thesis-evaluate` | `evaluation.cli:main` | Evaluation workflows |
-| `thesis-experiment-run` | `experiments.cli:main` | Variant and experiment run operations |
-| `thesis-compute` | `compute.cli:main` | Compute capability and scheduler workflows |
-| `orchestra` | `orchestra.cli:main` | Repository task and verification orchestration |
-
-Use package APIs for reusable logic. Keep scripts thin; put shared behavior in
-the owning domain package.
-
-## Scientific and execution invariants
-
-- Features must be causal. Higher-timeframe values are aligned only after
-  their source bars close.
-- Fit normalization on training data only and preserve the fitted statistics
-  for later partitions.
-- Keep calendar partitions chronological; use purged, non-overlapping
-  walk-forward folds where configured.
-- Keep all supplied market bars, including bars from shortened sessions;
-  session eligibility must not remove observations from the feature dataset.
-- Include configuration, source, data, feature/cache, checkpoint, seed, and
-  runtime identities in evidence used to support a result.
-- Keep simulation/training execution and risk semantics aligned. Keep
-  broker-specific behavior inside `integrations/`.
-- Follow `.agents/rules/triton-slurm.md` for allocations, experiment run continuity,
-  and worker dispatch. Never cancel a job with `scancel`.
-
-These are navigation-level summaries. The source implementation, resolved
-configuration, and current thesis plan are authoritative when they differ from
-older examples or historical research notes.
+For configuration concepts, see [Configuration](config.md). For machine and
+Slurm operations, see [Triton operations](operations/triton.md). Research
+results are organized separately from these system guides so that a reader can
+learn the design before reading individual findings.

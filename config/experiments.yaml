@@ -197,6 +197,31 @@ variants:
       - "env.risk_floor=0"
       - "constrained_rl.enabled=false"
 
+  # Thesis-conditioned reasoning treatment. Compared with the TCN and MTF
+  # arms, this also changes the action distribution to select an explicit
+  # primary thesis before continuous execution parameters.
+  - name: rq_mtf_treatment_reasoning
+    reward_mode: dsr
+    arch: mtf_reasoning
+    strategy_actions: true
+    agent_direction_control: false
+    allow_agent_sl_mode: true
+    allow_agent_tp_mode: true
+    allow_multi_tp: true
+    entry_state_machine: true
+    entry_state_observation: false
+    peak_trailing_dd_limit: 0.0
+    config_overrides:
+      - "env.thesis_actions=true"
+      - "features.entry_ideas.enabled=true"
+      - "ppo.policy_distribution=thesis_hybrid_v1"
+      - "ppo.actor_arch=shared"
+      - "constrained_rl.enabled=false"
+      - "env.risk_mode=dollar_band"
+      - "env.risk_band_max_usd=900"
+      - "env.risk_band_hold_below_usd=100"
+      - "env.risk_floor=0"
+
   # ===== LADDER x STRATEGY (A4b under each strategy) =====
   - name: ladder_a4b_po3_ifvg
     reward_mode: pnl   # effective value before the resolver fix; see CHANGES.md

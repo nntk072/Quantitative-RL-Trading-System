@@ -1,0 +1,21 @@
+schema_version: 1
+experiment_run_id: core_mtf_reasoning_seed42_train2025_2m_n8_20261031
+variant_file: config/experiment_runs/variant_list_core_mtf_reasoning_seed42_2m_20261031.txt
+variants:
+  - rq_mtf_control_tcn
+  - rq_mtf_treatment_mtf
+  - rq_mtf_treatment_reasoning
+seeds: [42]
+timesteps: 2000000
+data_source: bundle
+python_hash_seed: 0
+data_profile: config/data_modes/normal.yaml
+split:
+  train_start: "2024-12-30"
+  train_end: "2025-12-31"
+  test_start: "2026-01-01"
+evaluation:
+  locked_oos_role: final_report_only
+  locked_oos_exposure: previously_inspected_holdout
+  selection_allowed: false
+  deterministic: false

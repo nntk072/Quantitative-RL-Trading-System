@@ -15,6 +15,7 @@
 | `models/auxiliary/vae.py` | Reusable variational autoencoder architecture |
 | `models/encoders/__init__.py` | Public neural encoder exports |
 | `models/factory/encoder_registry.py` | Maps stable encoder IDs to reusable encoder classes |
+| `models/architecture_ids.py` | Lightweight encoder IDs shared with pre-training config resolution |
 | `models/factory/__init__.py` | Public encoder-registry API |
 | `models/auxiliary/heads.py` | Auxiliary prediction head |
 | `models/runtime/precision.py` | Encoder-specific autocast adaptation using a caller-selected dtype |
@@ -34,6 +35,7 @@
 - `decisioning/observation_state.py` (stable account-vector input width)
 - `decisioning/actions.py` and `decisioning/observations.py` (checkpoint schemas)
 - `models/factory/` owns encoder ID resolution; `learning/rl/agent.py` composes the selected encoder with PPO/SAC.
+- `docs/model_variants.md` is generated from `config/variant_catalog.yaml`; it links architecture IDs to comparison families without duplicating run settings.
 - SB3-specific policies and distributions stay in `learning/rl/`; the dependency
   gate prevents framework imports from entering `models/`.
 - Model modules do not depend on the learning backend.

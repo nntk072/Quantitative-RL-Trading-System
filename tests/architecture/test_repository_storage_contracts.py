@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_architecture_inventory_covers_active_repository_files() -> None:
-    inventory_path = ROOT / "docs/architecture/repository_file_ownership_inventory.csv"
+    inventory_path = ROOT / ".agents/architecture/repository_file_ownership_inventory.csv"
     with inventory_path.open(newline="", encoding="utf-8") as source:
         rows = list(csv.DictReader(source))
     inventory_paths = [row["path"] for row in rows]

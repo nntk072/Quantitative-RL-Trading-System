@@ -3,7 +3,7 @@
 # gh200:1 allocation pinned to a separate node (gpuarm1 / gpuarm2).
 #
 # Why one GPU per window instead of --gpus=gh200:2 in a single srun:
-#   docs/operations/triton/README.md and .agents/rules/triton-slurm.md specify ONE
+#   docs/operations/triton.md and .agents/rules/triton-slurm.md specify ONE
 #   allocation per model: gh200:1, --time=6:00:00, --mem=512G, --cpus-per-task=48.
 #   A 2-GPU/12h request asks the group quota (AssocGrpGRESRunMinutes) for double
 #   the GPU-minutes in one shot and stayed PENDING while both nodes sat idle.

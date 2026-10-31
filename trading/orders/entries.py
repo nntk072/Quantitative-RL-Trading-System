@@ -262,7 +262,6 @@ def place_strategy_order(
         front_run_pts=target_front_run_pts,
         price_increment=price_increment,
         source_prices=source_prices,
-        min_timeframe=(entry_timeframe_floor if thesis is not None else None),
     )
     tp_fallback_reason: str | None = None
     if rr_bounds is not None and targets and sl_dist > 1e-12:

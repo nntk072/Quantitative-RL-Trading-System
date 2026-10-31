@@ -97,6 +97,11 @@ Both modes keep the separate $900 sizing ceiling and leave peak trailing
 drawdown disabled. Values are merged into the resolved run config for both
 direct variant training and experiment run workers.
 
+The generated [model and experiment variant catalog](model_variants.md) groups
+selectable variants by research question and reports their resolved algorithm,
+encoder, reward, strategy, and risk settings. Catalog metadata is descriptive;
+run settings remain in the source YAML files above and `config/experiments.yaml`.
+
 ---
 
 ## Feature variant configs

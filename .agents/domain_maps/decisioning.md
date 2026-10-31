@@ -61,7 +61,7 @@ their concrete backend and the generic contract.
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add a decision backend adapter | inference adapter | `decisioning/adapters/` | `DecisionProvider`; `tests/integration/test_decision_provider_rollout.py` | one adapter and schema checks | fitting workflow and execution policy |
+| Add a decision backend adapter | inference adapter | `decisioning/adapters/` | `DecisionProvider`; `tests/unit/evaluation/test_decision_provider_rollout.py` | one adapter and provider-rollout contract checks | fitting workflow and execution policy |
 | Change action meaning | contract evolution | `decisioning/contracts.py` | versioned `ActionSchemaRef`; action schema tests | schema plus compatibility adapter | PPO/SAC implementation details |
 
 ## Axis of Change

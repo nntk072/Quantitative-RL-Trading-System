@@ -9,7 +9,7 @@ from typing import cast
 import pytest
 
 FIXTURE_PATH = (
-    Path(__file__).resolve().parents[2] / "docs/decisions/fixtures/idea12_synthetic_fixtures.json"
+    Path(__file__).resolve().parents[2] / "tests/fixtures/research/idea12/synthetic_examples.json"
 )
 
 

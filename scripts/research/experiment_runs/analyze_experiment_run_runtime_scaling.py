@@ -202,7 +202,7 @@ def render_markdown(screen: dict[str, Any]) -> str:
             "",
             "These projections omit startup/feature loading, checkpoint export, queue delay, and retries. The sample's final evaluation time is added once rather than scaled with training steps.",
             "",
-            "See `18way_runtime_scaling_screen_2026-10-14.md` for the verified interpretation, resource observations, and launch-readiness decision.",
+            "See `multi_variant_runtime_scaling_screen.md` for the verified interpretation, resource observations, and launch-readiness decision.",
             "",
         ]
     )

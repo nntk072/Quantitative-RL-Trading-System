@@ -2,6 +2,9 @@
 
 > Agent navigation map. The authoritative narrative is [docs/architecture.md](../docs/architecture.md).
 
+The detailed path ownership ledger is maintained in
+[`architecture/repository_file_ownership_inventory.csv`](architecture/repository_file_ownership_inventory.csv).
+
 ## Dependency Graph
 
 ```text

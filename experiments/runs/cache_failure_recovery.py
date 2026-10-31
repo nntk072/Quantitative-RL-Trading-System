@@ -55,8 +55,18 @@ def prepare_experiment_run_resume(experiment_run_dir: Path) -> dict[str, Any]:
     manifest = json.loads(original_bytes)
     fingerprint = manifest.get("fingerprint")
     jobs = manifest.get("jobs")
-    if not isinstance(fingerprint, str) or not isinstance(jobs, list) or len(jobs) != 18:
-        raise ValueError("expected the registered 18-run experiment run manifest")
+    if (
+        not isinstance(fingerprint, str)
+        or not fingerprint
+        or not isinstance(jobs, list)
+        or not jobs
+    ):
+        raise ValueError("expected an experiment run manifest with a fingerprint and jobs")
+    job_keys = [job.get("key") for job in jobs if isinstance(job, dict)]
+    if len(job_keys) != len(jobs) or any(not isinstance(key, str) or not key for key in job_keys):
+        raise ValueError("experiment run jobs must have non-empty string keys")
+    if len(job_keys) != len(set(job_keys)):
+        raise ValueError("experiment run job keys must be unique")
 
     failed: list[dict[str, Any]] = []
     checkpoint_steps: list[int] = []

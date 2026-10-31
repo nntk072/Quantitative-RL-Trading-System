@@ -656,7 +656,7 @@ encode; keep unavailable protocol or evidence fields explicit.
 
 ### Node architecture, environments and storage
 
-Read [Triton environment guidance](../../docs/operations/triton_environment.md)
+Read the [Triton operations guide](../../docs/operations/triton.md)
 before environment installation or diagnosis. It covers ARM64/x86_64
 selection, persistent Lustre versus ephemeral node storage, uv/venv checks,
 runtime profiling, process I/O symptoms, and reproducibility. Preserve
@@ -676,7 +676,7 @@ until the command is corrected; short-job count must remain zero.
 
 When `mypy --version` hangs in the architecture-matching venv, inspect
 the process/I/O state and follow
-[`docs/operations/triton_mypy_lustre.md`](../../docs/operations/triton_mypy_lustre.md).
+[`docs/operations/triton.md`](../../docs/operations/triton.md).
 Node-local staging passed a 355-file full-tree check on aarch64/GH200
 (2026-10-11); x86_64 staging is documented but not yet verified.
 Do not skip the full-tree type gate, alter production environments, or

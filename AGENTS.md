@@ -8,8 +8,9 @@ using structure-aware features (SMT divergence, PO3 state, liquidity sweeps, FVG
 Use [`docs/thesis/master_project_execution_plan.md`](docs/thesis/master_project_execution_plan.md)
 as the single operational queue for thesis readiness, the active experiment run,
 throughput work, and Q0–Q7. Older plans are technical references and evidence,
-not parallel work queues. Preserve the roadmap's stage gates and current
-experiment run safety constraints.
+not parallel work queues. Agent implementation plans and working notes belong
+outside the repository in `/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/`.
+Preserve the roadmap's stage gates and current experiment run safety constraints.
 
 ## Build & Test
 
@@ -44,6 +45,8 @@ canonical checks, setup helpers, and Make dependency gate honor that override.
 
 Full rule: `.agents/rules/ci-verification.md` (all agents). Commit checklist:
 `.agents/rules/git-commit-rules.md`.
+Planning and implementation workflow for every agent model:
+`.agents/rules/agent-planning-implementation.md`.
 
 ## Orchestra (`orchestra/`)
 
@@ -172,11 +175,9 @@ gives you structural context (callers, dependents, test coverage) that file sear
 4. Use `query_graph_tool` pattern="tests_for" to check coverage.
 <!-- /code-review-graph MCP tools -->
 For node architecture, virtual environments, Lustre versus local storage,
-installation and diagnostics, read
-[`docs/operations/triton_environment.md`](docs/operations/triton_environment.md).
-For intermittent Mypy startup stalls on Lustre (ARM64 or x86_64), follow
-[`docs/operations/triton_mypy_lustre.md`](docs/operations/triton_mypy_lustre.md);
-use the full-tree Mypy gate even when staging the executable on node-local storage.
+installation, and diagnostics, read the
+[Triton operations guide](docs/operations/triton.md). Use the full-tree Mypy
+gate even when staging the executable on node-local storage.
 
 ## Triton (Aalto HPC)
 

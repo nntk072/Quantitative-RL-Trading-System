@@ -229,15 +229,15 @@ def test_stop_menu_applies_h2_floor_and_keeps_weekly_references() -> None:
     assert {"H2_last_swing_low", "W1_last_swing_low"} <= names
 
 
-def test_strategy_order_uses_selected_thesis_for_stop_and_target_floor() -> None:
+def test_strategy_order_uses_setup_floor_for_stops_and_all_timeframes_for_targets() -> None:
     row = _row(
         last_swing_low=95.0,
         M3_last_swing_low=94.0,
         M5_last_swing_low=93.0,
         H1_last_swing_low=90.0,
-        last_swing_high=102.0,
-        M3_last_swing_high=103.0,
-        M5_last_swing_high=108.0,
+        last_swing_high=107.5,
+        M3_last_swing_high=108.0,
+        M5_last_swing_high=109.0,
         H1_last_swing_high=110.0,
     )
     thesis = thesis_candidate(thesis_candidate_id("fvg_retest", "M5", 1))
@@ -261,9 +261,12 @@ def test_strategy_order_uses_selected_thesis_for_stop_and_target_floor() -> None
     assert "last_swing_low" not in sl_names
     assert "M3_last_swing_low" not in sl_names
     assert {"M5_last_swing_low", "H1_last_swing_low"} & sl_names
-    assert "last_swing_high" not in tp_names
-    assert "M3_last_swing_high" not in tp_names
-    assert {"M5_last_swing_high", "H1_last_swing_high"} <= tp_names
+    assert {
+        "last_swing_high",
+        "M3_last_swing_high",
+        "M5_last_swing_high",
+        "H1_last_swing_high",
+    } <= tp_names
 
 
 def test_standard_deviation_thesis_uses_its_own_timeframe_level_one_stop() -> None:

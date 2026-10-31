@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from artifacts.layout import ExperimentRunArtifactLayout
+from compute.slurm.worker_resources import available_resources, gpu_memory_inventory
 
 ENV_KEYS = (
     "VARIANT",
@@ -285,10 +286,13 @@ def _manager() -> int:
     completed.mkdir(parents=True, exist_ok=True)
     results.mkdir(parents=True, exist_ok=True)
     ready.parent.mkdir(parents=True, exist_ok=True)
+    host_resources = available_resources()
     ready_metadata = {
         "node": _host_key(node_value),
         "job_id": job_id,
         "cpu_ids": sorted(os.sched_getaffinity(0)),
+        "memory_limit_bytes": int(host_resources["memory_limit_bytes"]),
+        "gpu_memory": gpu_memory_inventory(),
     }
     ready_tmp = ready.with_suffix(".tmp")
     ready_tmp.write_text(json.dumps(ready_metadata), encoding="utf-8")

@@ -14,6 +14,8 @@
 
 ## Historical baseline
 
-The frozen Linux audit at baseline `f504c82` found 121 finding records, 78 unique package/advisory pairs across 14 packages. Its original report is [`evidence/pip_audit_locked_linux_dev_20261021.json`](evidence/pip_audit_locked_linux_dev_20261021.json), SHA-256 `30e2afb42a421c05bb822b640e75c78182fa22c8b50b242d33df05d570032afb`. That report is retained as the pre-remediation snapshot and does not describe the current lock.
+The frozen Linux audit in the historical baseline found 121 finding records, 78 unique package/advisory pairs across 14 packages. Its original report is [`evidence/pip_audit_locked_linux_dev_20261021.json`](evidence/pip_audit_locked_linux_dev_20261021.json). That report is retained as the pre-remediation snapshot and does not describe the current lock.
 
-See [`dependency_security_ci_hardening_plan.md`](dependency_security_ci_hardening_plan.md) for the remediation rationale and scan limitations.
+The historical agent implementation plan was moved outside the repository to
+`/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs/security/`.
+The current audit state and limitations are recorded above.

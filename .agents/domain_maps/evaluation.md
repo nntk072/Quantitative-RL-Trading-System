@@ -85,17 +85,20 @@ links are unavailable.
 | Test File | Covers |
 |-----------|--------|
 | `tests/integration/test_runner.py` | Episode runner |
-| `tests/integration/test_metrics.py` | Metrics calculation |
 | `tests/integration/test_calibration_ci.py` | Calibration |
 | `tests/integration/test_matched_comparison.py` | Matched-run fields, timestamp windows and paired intervals |
-| `tests/integration/test_run_manifest.py` | Run-manifest identity and fail-closed artifact requirements |
-| `tests/integration/test_report.py` | Report generation |
-| `tests/integration/test_walkforward.py` | Walk-forward splits |
-| `tests/integration/test_evaluate_metrics_contract.py` | Metrics contract |
-| `tests/integration/test_trade_plots.py` | Trade plots |
-| `tests/integration/test_po3_plots.py` | PO3 plots |
-| `tests/integration/test_rollout.py` | Model rollout |
-| `tests/integration/test_trade_metrics.py` | Trade metrics |
+| `tests/unit/evaluation/test_metrics.py` | Hand-calculated performance metric behavior |
+| `tests/unit/evaluation/test_run_summary.py` | Report tables and summary serialization |
+| `tests/unit/evaluation/test_run_manifest.py` | Run-manifest identity and artifact requirements |
+| `tests/unit/evaluation/test_evaluate_metrics_contract.py` | Metrics contract |
+| `tests/unit/evaluation/test_trade_plots.py` | Trade plots |
+| `tests/unit/evaluation/test_po3_plots.py` | PO3 plots |
+| `tests/unit/evaluation/test_rollout.py` | Model rollout |
+| `tests/unit/evaluation/test_trade_metrics.py` | Trade metrics |
+| `tests/unit/evaluation/test_distribution_metrics.py` | Distribution metric behavior |
+| `tests/unit/evaluation/test_temporal_distributions.py` | Holding-time and temporal trade distributions |
+| `tests/unit/evaluation/test_distribution_plots.py` | Distribution plot export |
+| `tests/unit/evaluation/test_deflated_sharpe.py` | Deflated Sharpe calculations |
 
 ## Do NOT Read For Evaluation Tasks
 
@@ -110,7 +113,7 @@ links are unavailable.
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
 | Add a metric | scientific metric | `evaluation/metrics/` | `MetricResult`; focused metric fixture | one metric and report wiring | training internals and renderers |
-| Add a decision provider adapter | evaluation boundary | `evaluation/rollout/provider.py` | `DecisionProvider`; `tests/integration/test_decision_provider_rollout.py` | adapter and evaluation integration test | learner implementation |
+| Add a decision provider adapter | evaluation boundary | `evaluation/rollout/provider.py` | `DecisionProvider`; `tests/unit/evaluation/test_decision_provider_rollout.py` | adapter and provider-rollout contract test | learner implementation |
 
 ## Axis of Change
 

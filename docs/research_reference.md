@@ -8,7 +8,7 @@ Evidence baseline: Triton checkout `main` at `76684a3`, inspected 2026-10-10. Th
 
 ## Environment and execution
 
-The package requires Python >=3.12 (`pyproject.toml`). Installation uses `uv`; dependency groups and platform-specific Torch indexes are defined in `pyproject.toml`. Use the architecture-specific virtual environment on Triton (`.venv` on aarch64 GH200, `.venv-x86` on x86_64 H200); consult [Triton scripts](../docs/operations/triton/README.md) and [running commands](../docs/operations/RUNNING_COMMANDS.md). Avoid GPU allocations for documentation verification; use existing allocations if authorized. `thesis-data`, `thesis-train`, `thesis-evaluate`, and `thesis-experiment-run` are the stable pipeline command surfaces. Inspect their `--help` output before invoking a long-running command.
+The package requires Python >=3.12 (`pyproject.toml`). Installation uses `uv`; dependency groups and platform-specific Torch indexes are defined in `pyproject.toml`. Use the architecture-specific virtual environment on Triton (`.venv` on aarch64 GH200, `.venv-x86` on x86_64 H200); consult the [Triton operations guide](operations/triton.md) and [running commands](operations/RUNNING_COMMANDS.md). Avoid GPU allocations for documentation verification; use existing allocations if authorized. `thesis-data`, `thesis-train`, `thesis-evaluate`, and `thesis-experiment-run` are the stable pipeline command surfaces. Inspect their `--help` output before invoking a long-running command.
 
 ## Pipeline and source ownership
 

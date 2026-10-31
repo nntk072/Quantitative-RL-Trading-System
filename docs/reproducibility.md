@@ -4,10 +4,11 @@
 
 The dated [2026-09-09 baseline runbook](../baseline/runbook_20260909T224227Z.md)
 preserves its original environment, test results and provenance as a snapshot,
-not current CI evidence. The [GPU experiment run](../docs/training/triton_gpu_training_agent_plan.md)
-and [RAM optimization](../docs/training/triton_ram_optimization_plan.md) plans contain
-run-specific scheduling, resource and parity requirements; they are
-historical planning records, not evidence that the proposed experiments ran.
+not current CI evidence. Current compute and experiment-run requirements are
+in the [Triton agent rules](../.agents/rules/triton-slurm.md) and the
+[thesis execution plan](thesis/master_project_execution_plan.md). The [RAM
+optimization reference](training/triton_ram_optimization_plan.md) records
+historical bundle/frames probes, not evidence that a proposed training run ran.
 
 The active operational scope and current split are documented in the
 [thesis execution plan](thesis/master_project_execution_plan.md). Record the
@@ -56,8 +57,8 @@ git status --short --branch
 
 Use the aarch64 environment `.venv` when on a GH200; `.venv-x86` is for x86_64.
 The SSH login node need not have the CUDA environment used for GPU training.
-See [operational commands](operations/RUNNING_COMMANDS.md) and
-[Triton allocation policy](../docs/operations/triton/README.md).
+See [operational commands](operations/RUNNING_COMMANDS.md) and the
+[Triton operations guide](operations/triton.md).
 
 ## Artifact evidence ledger (mandatory for thesis tables)
 
