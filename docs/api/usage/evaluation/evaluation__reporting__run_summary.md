@@ -1,0 +1,705 @@
+# Evaluation · `reporting.run_summary`
+
+This page contains 12 public callable records owned by `evaluation.reporting.run_summary`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+
+## `aggregate_seeds`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Aggregate per-seed :class:`PerformanceMetrics` into a summary DataFrame.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.aggregate_seeds` · **Source:** [evaluation/reporting/run_summary.py:41](../../../../evaluation/reporting/run_summary.py#L41)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  results: One ``PerformanceMetrics`` instance per seed/run.
+  ```
+
+- **Returns:**
+
+  ```text
+  DataFrame with one row per seed and one column per metric.
+  ```
+
+- **Raises:**
+
+  ```text
+  ValueError: If *results* is empty or contains a non-metrics object.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_one_row_per_seed`](../../../../tests/unit/evaluation/test_run_summary.py#L33)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_one_row_per_seed(self) -> None:
+    # Arrange
+    results = [_metrics(100.0, 2), _metrics(-50.0, 3), _metrics(0.0, 0)]
+
+    # Act
+    df = aggregate_seeds(results)
+
+    # Assert
+    assert len(df) == 3
+    assert list(df["seed"]) == [0, 1, 2]
+    assert list(df["activity_status"]) == ["ACTIVE", "ACTIVE", "INACTIVE"]
+    assert {"sharpe", "max_drawdown", "n_trades", "breach_rate"} <= set(df.columns)
+```
+
+2. [test fixture: `test_rejects_non_metrics`](../../../../tests/unit/evaluation/test_run_summary.py#L43)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_rejects_non_metrics(self) -> None:
+    with pytest.raises(ValueError, match="PerformanceMetrics"):
+        aggregate_seeds([{"sharpe": 1.0}])  # type: ignore[list-item]
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `build_comparison_table`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Return a two-column Train vs Test comparison table.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_comparison_table` · **Source:** [evaluation/reporting/run_summary.py:137](../../../../evaluation/reporting/run_summary.py#L137)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  train_m: Train m used by the operation described above.
+  test_m: Test m used by the operation described above.
+  ```
+
+- **Returns:**
+
+  ```text
+  Text returned by ``build_comparison_table``.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_build_comparison_table`](../../../../tests/unit/evaluation/test_plots_export.py#L145)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_build_comparison_table(metrics):
+    table = build_comparison_table(metrics, metrics)
+    assert "Train" in table
+    assert "Test" in table
+    assert "Sharpe" in table
+```
+
+2. [test fixture: `test_comparison_table_train_and_test_columns`](../../../../tests/unit/evaluation/test_run_summary.py#L68)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_comparison_table_train_and_test_columns(self) -> None:
+    # Act
+    table = build_comparison_table(_metrics(100.0, 2), _metrics(-30.0, 1))
+
+    # Assert
+    assert "Train" in table
+    assert "Test" in table
+    assert "Sharpe" in table
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `build_run_report`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Build the JSON-serialisable report block for one evaluation run.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_run_report` · **Source:** [evaluation/reporting/run_summary.py:203](../../../../evaluation/reporting/run_summary.py#L203)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  metrics: Metrics returned by :func:`run_episode`.
+  trade_log: The environment's ``trade_log`` list, if available.
+  **context: Extra key/value pairs merged into the report.
+  ```
+
+- **Returns:**
+
+  ```text
+  A dict safe to pass to ``json.dumps``.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_zero_trade_metrics_are_labeled_inactive`](../../../../tests/unit/evaluation/test_run_summary.py#L100)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_zero_trade_metrics_are_labeled_inactive(self, tmp_path: Path) -> None:
+    metrics = _metrics(0.0, 0)
+    table = build_summary_table(metrics)
+    path = tmp_path / "inactive_metrics.json"
+    save_metrics_json(metrics, path)
+    report = build_run_report(metrics)
+
+    assert "INACTIVE" in table
+    assert json.loads(path.read_text())["activity_status"] == "INACTIVE"
+    assert report["activity_status"] == "INACTIVE"
+```
+
+2. [test fixture: `test_merges_metrics_delay_and_context`](../../../../tests/unit/evaluation/test_run_summary.py#L114)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_merges_metrics_delay_and_context(self) -> None:
+    # Arrange
+    trade_log = [{"type": "open", "sweep_delay_s": 5.0, "level_type": "london_high"}]
+
+    # Act
+    report = build_run_report(_metrics(80.0, 1), trade_log, run_name="r1")
+
+    # Assert
+    assert report["run_name"] == "r1"
+    assert report["total_pnl"] == pytest.approx(80.0)
+    assert report["sweep_delay"]["sweep_delay_mean_s"] == pytest.approx(5.0)
+    assert report["sweep_delay"]["n_entries"] == 1
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `build_summary_table`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Return a human-readable text table of a single PerformanceMetrics.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_summary_table` · **Source:** [evaluation/reporting/run_summary.py:116](../../../../evaluation/reporting/run_summary.py#L116)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  m: M used by the operation described above.
+  ```
+
+- **Returns:**
+
+  ```text
+  Text returned by ``build_summary_table``.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_build_summary_table`](../../../../tests/unit/evaluation/test_plots_export.py#L138)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_build_summary_table(metrics):
+    table = build_summary_table(metrics)
+    assert "Sharpe" in table
+    assert "Max Drawdown" in table
+    assert "Breach Rate" in table
+```
+
+2. [test fixture: `test_summary_table_contains_key_rows`](../../../../tests/unit/evaluation/test_run_summary.py#L54)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_summary_table_contains_key_rows(self) -> None:
+    # Act
+    table = build_summary_table(_metrics(150.0, 2))
+
+    # Assert
+    for label in ("Sharpe", "Max Drawdown", "Breach Rate", "Max Consec Loss", "Turnover"):
+        assert label in table
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `print_report`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Print a describe()-style summary of an aggregated seed DataFrame.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.print_report` · **Source:** [evaluation/reporting/run_summary.py:69](../../../../evaluation/reporting/run_summary.py#L69)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  df: Input DataFrame supplying the rows used by this calculation.
+  ```
+
+**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+
+**Invocation shape (placeholders):**
+
+Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+
+```python
+result = print_report(df=...)
+```
+
+**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+
+The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `save_metrics_json`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Persist metrics plus account endpoints when supplied by the evaluator.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.save_metrics_json` · **Source:** [evaluation/reporting/run_summary.py:179](../../../../evaluation/reporting/run_summary.py#L179)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  m: M used by the operation described above.
+  path: Path to the input file or directory.
+  initial_balance: Initial balance used by the operation described above.
+  final_equity: Final equity used by the operation described above.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_save_metrics_json`](../../../../tests/unit/evaluation/test_plots_export.py#L153)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_save_metrics_json(metrics, tmp_path):
+    path = tmp_path / "metrics.json"
+    save_metrics_json(metrics, path)
+    data = json.loads(path.read_text())
+    assert "sharpe" in data
+    assert "total_pnl" in data
+```
+
+2. [test fixture: `test_save_metrics_json_roundtrip`](../../../../tests/unit/evaluation/test_run_summary.py#L80)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+    def test_save_metrics_json_roundtrip(self, tmp_path: Path) -> None:
+        # Arrange
+        path = tmp_path / "metrics.json"
+
+        # Act
+        save_metrics_json(
+            _metrics(120.0, 2),
+            path,
+            initial_balance=100_000.0,
+            final_equity=100_120.0,
+        )
+        data = json.loads(path.read_text())
+
+        # Assert
+        assert data["n_trades"] == 2
+        assert "breach_rate" in data
+# … caller assertions omitted …
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `aggregate_seeds`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Aggregate per-seed :class:`PerformanceMetrics` into a summary DataFrame.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.aggregate_seeds` · **Source:** [evaluation/reporting/run_summary.py:41](../../../../evaluation/reporting/run_summary.py#L41)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  results: One ``PerformanceMetrics`` instance per seed/run.
+  ```
+
+- **Returns:**
+
+  ```text
+  DataFrame with one row per seed and one column per metric.
+  ```
+
+- **Raises:**
+
+  ```text
+  ValueError: If *results* is empty or contains a non-metrics object.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_one_row_per_seed`](../../../../tests/unit/evaluation/test_run_summary.py#L33)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_one_row_per_seed(self) -> None:
+    # Arrange
+    results = [_metrics(100.0, 2), _metrics(-50.0, 3), _metrics(0.0, 0)]
+
+    # Act
+    df = aggregate_seeds(results)
+
+    # Assert
+    assert len(df) == 3
+    assert list(df["seed"]) == [0, 1, 2]
+    assert list(df["activity_status"]) == ["ACTIVE", "ACTIVE", "INACTIVE"]
+    assert {"sharpe", "max_drawdown", "n_trades", "breach_rate"} <= set(df.columns)
+```
+
+2. [test fixture: `test_rejects_non_metrics`](../../../../tests/unit/evaluation/test_run_summary.py#L43)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_rejects_non_metrics(self) -> None:
+    with pytest.raises(ValueError, match="PerformanceMetrics"):
+        aggregate_seeds([{"sharpe": 1.0}])  # type: ignore[list-item]
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `build_comparison_table`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Return a two-column Train vs Test comparison table.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_comparison_table` · **Source:** [evaluation/reporting/run_summary.py:137](../../../../evaluation/reporting/run_summary.py#L137)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  train_m: Train m used by the operation described above.
+  test_m: Test m used by the operation described above.
+  ```
+
+- **Returns:**
+
+  ```text
+  Text returned by ``build_comparison_table``.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_build_comparison_table`](../../../../tests/unit/evaluation/test_plots_export.py#L145)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_build_comparison_table(metrics):
+    table = build_comparison_table(metrics, metrics)
+    assert "Train" in table
+    assert "Test" in table
+    assert "Sharpe" in table
+```
+
+2. [test fixture: `test_comparison_table_train_and_test_columns`](../../../../tests/unit/evaluation/test_run_summary.py#L68)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_comparison_table_train_and_test_columns(self) -> None:
+    # Act
+    table = build_comparison_table(_metrics(100.0, 2), _metrics(-30.0, 1))
+
+    # Assert
+    assert "Train" in table
+    assert "Test" in table
+    assert "Sharpe" in table
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `build_run_report`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Build the JSON-serialisable report block for one evaluation run.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_run_report` · **Source:** [evaluation/reporting/run_summary.py:203](../../../../evaluation/reporting/run_summary.py#L203)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  metrics: Metrics returned by :func:`run_episode`.
+  trade_log: The environment's ``trade_log`` list, if available.
+  **context: Extra key/value pairs merged into the report.
+  ```
+
+- **Returns:**
+
+  ```text
+  A dict safe to pass to ``json.dumps``.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_zero_trade_metrics_are_labeled_inactive`](../../../../tests/unit/evaluation/test_run_summary.py#L100)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_zero_trade_metrics_are_labeled_inactive(self, tmp_path: Path) -> None:
+    metrics = _metrics(0.0, 0)
+    table = build_summary_table(metrics)
+    path = tmp_path / "inactive_metrics.json"
+    save_metrics_json(metrics, path)
+    report = build_run_report(metrics)
+
+    assert "INACTIVE" in table
+    assert json.loads(path.read_text())["activity_status"] == "INACTIVE"
+    assert report["activity_status"] == "INACTIVE"
+```
+
+2. [test fixture: `test_merges_metrics_delay_and_context`](../../../../tests/unit/evaluation/test_run_summary.py#L114)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_merges_metrics_delay_and_context(self) -> None:
+    # Arrange
+    trade_log = [{"type": "open", "sweep_delay_s": 5.0, "level_type": "london_high"}]
+
+    # Act
+    report = build_run_report(_metrics(80.0, 1), trade_log, run_name="r1")
+
+    # Assert
+    assert report["run_name"] == "r1"
+    assert report["total_pnl"] == pytest.approx(80.0)
+    assert report["sweep_delay"]["sweep_delay_mean_s"] == pytest.approx(5.0)
+    assert report["sweep_delay"]["n_entries"] == 1
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `build_summary_table`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Return a human-readable text table of a single PerformanceMetrics.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_summary_table` · **Source:** [evaluation/reporting/run_summary.py:116](../../../../evaluation/reporting/run_summary.py#L116)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  m: M used by the operation described above.
+  ```
+
+- **Returns:**
+
+  ```text
+  Text returned by ``build_summary_table``.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_build_summary_table`](../../../../tests/unit/evaluation/test_plots_export.py#L138)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_build_summary_table(metrics):
+    table = build_summary_table(metrics)
+    assert "Sharpe" in table
+    assert "Max Drawdown" in table
+    assert "Breach Rate" in table
+```
+
+2. [test fixture: `test_summary_table_contains_key_rows`](../../../../tests/unit/evaluation/test_run_summary.py#L54)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_summary_table_contains_key_rows(self) -> None:
+    # Act
+    table = build_summary_table(_metrics(150.0, 2))
+
+    # Assert
+    for label in ("Sharpe", "Max Drawdown", "Breach Rate", "Max Consec Loss", "Turnover"):
+        assert label in table
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `print_report`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Print a describe()-style summary of an aggregated seed DataFrame.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.print_report` · **Source:** [evaluation/reporting/run_summary.py:69](../../../../evaluation/reporting/run_summary.py#L69)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  df: Input DataFrame supplying the rows used by this calculation.
+  ```
+
+**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+
+**Invocation shape (placeholders):**
+
+Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+
+```python
+result = print_report(df=...)
+```
+
+**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+
+The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`
+
+## `save_metrics_json`
+
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.reporting.run_summary`
+
+**Purpose:** Persist metrics plus account endpoints when supplied by the evaluator.
+
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.save_metrics_json` · **Source:** [evaluation/reporting/run_summary.py:179](../../../../evaluation/reporting/run_summary.py#L179)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  m: M used by the operation described above.
+  path: Path to the input file or directory.
+  initial_balance: Initial balance used by the operation described above.
+  final_equity: Final equity used by the operation described above.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_save_metrics_json`](../../../../tests/unit/evaluation/test_plots_export.py#L153)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_save_metrics_json(metrics, tmp_path):
+    path = tmp_path / "metrics.json"
+    save_metrics_json(metrics, path)
+    data = json.loads(path.read_text())
+    assert "sharpe" in data
+    assert "total_pnl" in data
+```
+
+2. [test fixture: `test_save_metrics_json_roundtrip`](../../../../tests/unit/evaluation/test_run_summary.py#L80)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+    def test_save_metrics_json_roundtrip(self, tmp_path: Path) -> None:
+        # Arrange
+        path = tmp_path / "metrics.json"
+
+        # Act
+        save_metrics_json(
+            _metrics(120.0, 2),
+            path,
+            initial_balance=100_000.0,
+            final_equity=100_120.0,
+        )
+        data = json.loads(path.read_text())
+
+        # Assert
+        assert data["n_trades"] == 2
+        assert "breach_rate" in data
+# … caller assertions omitted …
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/workflows`
+- Generated package reference: {doc}`../../generated/evaluation/index`

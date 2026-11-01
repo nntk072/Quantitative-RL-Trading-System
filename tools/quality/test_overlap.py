@@ -79,6 +79,7 @@ def _source_identity() -> tuple[str, str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Report test pairs that execute overlapping source lines."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-file", type=Path, default=ROOT / ".coverage")
     parser.add_argument("--minimum-shared-lines", type=int, default=12)

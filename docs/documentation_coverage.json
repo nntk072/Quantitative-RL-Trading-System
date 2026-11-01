@@ -1,0 +1,425 @@
+{
+  "dimensions": [
+    "concept",
+    "architecture",
+    "tutorial",
+    "how_to",
+    "reference_api",
+    "troubleshooting",
+    "research",
+    "reproduction"
+  ],
+  "schema_version": 1,
+  "source": "docs/development/documentation_coverage.md",
+  "state_vocabulary": {
+    "\u2014": "missing",
+    "\u25cf": "dedicated",
+    "\u25d2": "partial"
+  },
+  "subject_count": 31,
+  "subjects": [
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "partial",
+        "reproduction": "missing",
+        "research": "partial",
+        "troubleshooting": "missing",
+        "tutorial": "partial"
+      },
+      "subject": "Product overview"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "partial",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "partial",
+        "troubleshooting": "partial",
+        "tutorial": "dedicated"
+      },
+      "subject": "Market data and sessions"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "partial",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "partial",
+        "troubleshooting": "partial",
+        "tutorial": "dedicated"
+      },
+      "subject": "Ticks and resampling"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Splits and walk-forward"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "partial",
+        "troubleshooting": "partial",
+        "tutorial": "dedicated"
+      },
+      "subject": "Feature causality/normalization"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "partial",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "partial",
+        "troubleshooting": "dedicated",
+        "tutorial": "partial"
+      },
+      "subject": "Cache identity"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "partial",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "partial",
+        "troubleshooting": "partial",
+        "tutorial": "dedicated"
+      },
+      "subject": "Technical indicators"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Swings, liquidity, SMT, PO3, FVG/IFVG"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "partial",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Order blocks and premium/discount"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "dedicated",
+        "troubleshooting": "dedicated",
+        "tutorial": "partial"
+      },
+      "subject": "Trade setups"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "partial",
+        "troubleshooting": "partial",
+        "tutorial": "dedicated"
+      },
+      "subject": "Observations and masks"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "partial",
+        "troubleshooting": "partial",
+        "tutorial": "dedicated"
+      },
+      "subject": "Action schemas and parameterization"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "missing",
+        "reference_api": "partial",
+        "reproduction": "missing",
+        "research": "partial",
+        "troubleshooting": "missing",
+        "tutorial": "partial"
+      },
+      "subject": "MDP/POMDP"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "PPO and rollout geometry"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "partial",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "SAC"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "partial",
+        "reproduction": "partial",
+        "research": "partial",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Constrained RL"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "dedicated"
+      },
+      "subject": "TCN/GRU/Transformer/MTF"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "dedicated",
+        "troubleshooting": "dedicated",
+        "tutorial": "dedicated"
+      },
+      "subject": "Stops, targets, multi-TP, exits"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "partial",
+        "troubleshooting": "dedicated",
+        "tutorial": "dedicated"
+      },
+      "subject": "Account state, risk, prop constraints"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "dedicated",
+        "troubleshooting": "dedicated",
+        "tutorial": "dedicated"
+      },
+      "subject": "Execution, fills, costs"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Reward and attribution"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "partial",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "partial",
+        "troubleshooting": "dedicated",
+        "tutorial": "partial"
+      },
+      "subject": "Training, seeds, resume, checkpoints"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "dedicated"
+      },
+      "subject": "Evaluation metrics and inference"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "dedicated",
+        "how_to": "partial",
+        "reference_api": "partial",
+        "reproduction": "partial",
+        "research": "dedicated",
+        "troubleshooting": "missing",
+        "tutorial": "partial"
+      },
+      "subject": "Multiple testing and cost stress"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Experiment design, controls, ablations"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "dedicated",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "dedicated",
+        "research": "dedicated",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Artifacts and evidence lineage"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "partial",
+        "how_to": "missing",
+        "reference_api": "partial",
+        "reproduction": "dedicated",
+        "research": "dedicated",
+        "troubleshooting": "missing",
+        "tutorial": "missing"
+      },
+      "subject": "Research findings and negative results"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "partial",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "missing",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Live/paper and MetaTrader"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "partial",
+        "how_to": "dedicated",
+        "reference_api": "partial",
+        "reproduction": "partial",
+        "research": "dedicated",
+        "troubleshooting": "dedicated",
+        "tutorial": "partial"
+      },
+      "subject": "Triton, Slurm, hardware, performance"
+    },
+    {
+      "dimensions": {
+        "architecture": "partial",
+        "concept": "partial",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "missing",
+        "research": "missing",
+        "troubleshooting": "partial",
+        "tutorial": "missing"
+      },
+      "subject": "Security and dependency handling"
+    },
+    {
+      "dimensions": {
+        "architecture": "dedicated",
+        "concept": "partial",
+        "how_to": "dedicated",
+        "reference_api": "dedicated",
+        "reproduction": "partial",
+        "research": "missing",
+        "troubleshooting": "partial",
+        "tutorial": "partial"
+      },
+      "subject": "Extension development and tests"
+    }
+  ]
+}

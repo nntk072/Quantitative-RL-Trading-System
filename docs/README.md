@@ -8,8 +8,8 @@ each part before linking to source.
 The intended [documentation website](https://nntk072.github.io/Quantitative-RL-Trading-System/)
 and generated [Python API reference](https://nntk072.github.io/Quantitative-RL-Trading-System/api/)
 are built from these maintained Markdown files and the Python package source.
-The repository workflow is ready; the project owner must enable GitHub Pages
-before these URLs serve the generated site.
+The GitHub Actions workflow builds and deploys the site; repository Pages
+settings must use GitHub Actions as the deployment source.
 
 ## Understand the system
 
@@ -17,8 +17,10 @@ before these URLs serve the generated site.
   dependencies, data flow, model composition, and runtime sequences.
 - [Module guides](modules/README.md): responsibilities and boundaries for
   every production package and the test system.
+- [Learn foundations](learn/foundations.md): quantitative trading, RL,
+  partial observability, algorithms, and evidence boundaries.
 - [Concepts](concepts/README.md): observations/actions, trade setups, market
-  structure, execution costs, and account risk.
+  structure, causality, execution costs, and account risk.
 - [Reference](reference/README.md): versioned schemas and stable contracts.
 - [Model and experiment catalog](model_variants.md): generated list of
   configured agents and research comparisons.
@@ -55,7 +57,10 @@ before these URLs serve the generated site.
 - [Tutorials](tutorials/README.md): a project tour and bounded reproducible
   smoke workflow.
 - [How-to guides](how-to/README.md): prepare data, build caches, train,
-  evaluate, run experiments, and extend the system.
+  evaluate, troubleshoot, run experiments, and extend the system.
+- [Subject coverage audit](development/documentation_coverage.md): reviewed
+  matrix for concept, architecture, tutorial, reference, research, and
+  troubleshooting coverage.
 
 The active experiment queue and period-role decisions are recorded in the
 [research execution plan](operations/research_execution_plan.md). That plan

@@ -1,0 +1,175 @@
+# Trading · `account.limits`
+
+This page contains 4 public callable records owned by `trading.account.limits`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+
+## `canonical_daily_loss`
+
+**Kind:** function · **Status:** stable · **Owner:** `trading.account.limits`
+
+**Purpose:** Return session-start equity minus current equity, floored at zero.
+
+**Exact API:** {py:obj}`trading.account.limits.canonical_daily_loss` · **Source:** [trading/account/limits.py:6](../../../../trading/account/limits.py#L6)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  session_start_equity: Equity at the start of the current loss session.
+  equity: Current account equity.
+  ```
+
+- **Returns:**
+
+  ```text
+  Nonnegative realized daily loss.
+  ```
+
+**Observed usage:**
+
+1. [production caller: `canonical_daily_loss`](../../../../trading/account/account_state.py#L100)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def canonical_daily_loss(self) -> float:
+    if self.policy_mode == "repeated_payout":
+        return compute_canonical_daily_loss(self.session_start_equity, self.equity)
+    return float(self.daily_loss)
+```
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`
+
+## `daily_floor`
+
+**Kind:** function · **Status:** stable · **Owner:** `trading.account.limits`
+
+**Purpose:** Calculate the lowest permitted equity for the daily-loss rule.
+
+**Exact API:** {py:obj}`trading.account.limits.daily_floor` · **Source:** [trading/account/limits.py:19](../../../../trading/account/limits.py#L19)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  session_start_equity: Equity at the start of the loss session.
+  daily_loss_limit: Maximum permitted daily loss in account currency.
+  ```
+
+- **Returns:**
+
+  ```text
+  Equity floor for the session.
+  ```
+
+**Observed usage:**
+
+1. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L112)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def daily_floor(self, daily_loss_limit: float) -> float:
+    return compute_daily_floor(self.session_start_equity, daily_loss_limit)
+```
+
+2. [production caller: `remaining_daily_capacity`](../../../../trading/account/limits.py#L45)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def remaining_daily_capacity(
+    session_start_equity: float, equity: float, daily_loss_limit: float
+) -> float:
+    return max(0.0, float(equity) - daily_floor(session_start_equity, daily_loss_limit))
+```
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`
+
+## `remaining_account_capacity`
+
+**Kind:** function · **Status:** stable · **Owner:** `trading.account.limits`
+
+**Purpose:** Calculate equity available above the account floor.
+
+**Exact API:** {py:obj}`trading.account.limits.remaining_account_capacity` · **Source:** [trading/account/limits.py:48](../../../../trading/account/limits.py#L48)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  equity: Current account equity.
+  account_floor: Minimum permitted account equity.
+  ```
+
+- **Returns:**
+
+  ```text
+  Nonnegative capacity above the floor.
+  ```
+
+**Observed usage:**
+
+1. [production caller: `remaining_account_capacity`](../../../../trading/account/account_state.py#L136)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def remaining_account_capacity(self, account_floor: float) -> float:
+    return compute_remaining_account_capacity(self.equity, account_floor)
+```
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`
+
+## `remaining_daily_capacity`
+
+**Kind:** function · **Status:** stable · **Owner:** `trading.account.limits`
+
+**Purpose:** Calculate remaining loss capacity under the daily limit.
+
+**Exact API:** {py:obj}`trading.account.limits.remaining_daily_capacity` · **Source:** [trading/account/limits.py:32](../../../../trading/account/limits.py#L32)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  session_start_equity: Equity at the start of the loss session.
+  equity: Current account equity.
+  daily_loss_limit: Maximum permitted daily loss.
+  ```
+
+- **Returns:**
+
+  ```text
+  Nonnegative remaining daily capacity.
+  ```
+
+**Observed usage:**
+
+1. [production caller: `remaining_daily_capacity`](../../../../trading/account/account_state.py#L123)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def remaining_daily_capacity(self, daily_loss_limit: float) -> float:
+    return compute_remaining_daily_capacity(
+        self.session_start_equity, self.equity, daily_loss_limit
+    )
+```
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`

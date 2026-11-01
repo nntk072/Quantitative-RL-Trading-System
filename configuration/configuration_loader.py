@@ -23,11 +23,10 @@ def load_config(
     Args:
         overrides (list[str], optional): ``key=value`` string overrides applied on top of the loaded YAML.
         config_path (str | Path, optional): YAML config file to load instead of ``config/base/default.yaml``.
-            Lets ``training/train/train_rl.py`` load the Chain B variant configs
-            (``config/features_*_mtf.yaml``) just like ``scripts/train_rl.py``.
+            Use this to select a full configuration or a partial feature overlay.
 
     Returns:
-        Result of load config from ``config_path`` (the root config/base/default.yaml when None), then apply overrides.
+        Merged configuration with the requested overrides applied.
     """
     cfg_path = Path(config_path) if config_path else _DEFAULT_CFG
     base = load_config_overlay(_DEFAULT_CFG)

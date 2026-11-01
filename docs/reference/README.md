@@ -9,6 +9,9 @@ research terms.
 
 ## Current contracts
 
+- [Curated API examples](api_examples.md): minimal examples with links to
+  exact public contracts.
+
 - [Public contracts](public_contracts.md): stable boundaries, internal seams,
   and compatibility surfaces.
 - [Public Python API inventory](public_api.md): generated package exports,
@@ -43,3 +46,26 @@ research terms.
 
 Schema pages describe current code contracts. Historical serialized names are
 identified as compatibility terms and are not endorsements of their wording.
+
+```{toctree}
+:maxdepth: 1
+:caption: Reference pages
+
+api_examples
+public_contracts
+public_api
+observation_schemas
+action_schemas
+trade_setup_catalog
+rewards
+metrics
+artifacts
+cache_and_schema_versions
+cli
+configuration
+model_architectures
+feature_catalog
+risk_and_execution
+experiment_runs
+manifest_schemas
+```

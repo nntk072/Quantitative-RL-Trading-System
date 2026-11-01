@@ -1,5 +1,8 @@
 # Market data and features
 
+![Market-data feature flow: A higher-timeframe value becomes visible only after its source interval completes.](../_static/figures/feature-availability.svg)
+
+
 ## Overview
 
 Configured bar ingestion feeds the feature pipeline. Feature rows retain their market timestamps and session eligibility; higher-timeframe inputs become visible only after their source candles close.

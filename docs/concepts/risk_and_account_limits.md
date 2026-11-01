@@ -1,5 +1,8 @@
 # Risk and account limits
 
+![Trade geometry: For a long position, stop distance drives size and target distance defines planned reward.](../_static/figures/trade-geometry.svg)
+
+
 Risk management has two layers. The policy can choose or react to position
 risk, while the environment enforces hard account and order guardrails. A
 learned penalty or observation feature is not a substitute for those hard

@@ -1,0 +1,24 @@
+# Evaluation function usage
+
+This guide contains 55 public callable records across 15 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+
+```{toctree}
+:maxdepth: 1
+:caption: Source modules
+
+evaluation__metrics__bootstrap
+evaluation__metrics__calibration
+evaluation__metrics__distributions
+evaluation__metrics__performance
+evaluation__metrics__temporal
+evaluation__plotting__equity
+evaluation__plotting__interactive_orders
+evaluation__plotting__orders
+evaluation__reanalysis
+evaluation__reporting__evaluation_manifest
+evaluation__reporting__run_artifact_writer
+evaluation__reporting__run_summary
+evaluation__rollout__episode_rollout
+evaluation__rollout__trained_policy_rollout
+market_data__splits__walkforward
+```

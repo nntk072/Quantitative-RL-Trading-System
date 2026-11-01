@@ -81,6 +81,7 @@ def replace_generated_block(document: str, rendered: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Write the generated dependency map or check its freshness."""
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true", help="update the generated graph")

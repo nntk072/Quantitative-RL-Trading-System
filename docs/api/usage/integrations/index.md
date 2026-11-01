@@ -1,0 +1,22 @@
+# Integrations function usage
+
+This guide contains 70 public callable records across 13 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+
+```{toctree}
+:maxdepth: 1
+:caption: Source modules
+
+integrations__mt5__adapters__data
+integrations__mt5__adapters__strategy
+integrations__mt5__adapters__trader
+integrations__mt5__domain__data_sources__mt5_data
+integrations__mt5__domain__mt5_connection
+integrations__mt5__domain__multi_symbol_manager
+integrations__mt5__domain__risk_manager
+integrations__mt5__domain__strategies__combined_strategy
+integrations__mt5__domain__strategies__cross_over_strategy
+integrations__mt5__domain__strategies__smc_strategy
+integrations__mt5__domain__strategies__trend_breakout_strategy
+integrations__mt5__domain__trader
+integrations__mt5__domain__volatility_analyzer
+```

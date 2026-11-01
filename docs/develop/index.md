@@ -20,6 +20,9 @@
 
 ../development/testing
 ../development/documentation
+../development/documentation_coverage
+../development/figure_registry
+../development/supplementary_source_map
 ../modules/README
 ../decisions/README
 ```

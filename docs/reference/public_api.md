@@ -87,11 +87,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `CURRENT_CONFIG_SCHEMA_VERSION` | value | [configuration.schema](../../configuration/schema.py#L6) | stable |
 | `ConfigSchemaError` | class | [configuration.schema](../../configuration/schema.py#L9) | stable |
 | `RepositoryPaths` | class | [configuration.paths](../../configuration/paths.py#L8) | stable |
-| `apply_overrides` | function | [configuration.configuration_loader](../../configuration/configuration_loader.py#L81) | stable |
+| `apply_overrides` | function | [configuration.configuration_loader](../../configuration/configuration_loader.py#L80) | stable |
 | `config_sha256` | function | [configuration.hashing](../../configuration/hashing.py#L23) | stable |
 | `load_config` | function | [configuration.configuration_loader](../../configuration/configuration_loader.py#L17) | stable |
-| `load_config_overlay` | function | [configuration.configuration_loader](../../configuration/configuration_loader.py#L42) | stable |
-| `merge_config_overlay` | function | [configuration.configuration_loader](../../configuration/configuration_loader.py#L57) | stable |
+| `load_config_overlay` | function | [configuration.configuration_loader](../../configuration/configuration_loader.py#L41) | stable |
+| `merge_config_overlay` | function | [configuration.configuration_loader](../../configuration/configuration_loader.py#L56) | stable |
 | `RepositoryPaths.from_root` | method | [configuration.paths](../../configuration/paths.py#L30) | stable |
 
 ### `decisioning`

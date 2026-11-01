@@ -2,12 +2,19 @@
 
 Move through the framework in the same order a run uses: inspect bars, build causal features, decide risk, step the environment, and evaluate outcomes.
 
+Begin with [quantitative trading and RL foundations](foundations.md) if you
+are new to the problem or the algorithms.
+
 ## Beginner tutorials
+
+The [foundations guide](foundations.md) explains the problem, observation,
+algorithms, action path, and evidence levels used by these notebooks.
 
 ```{toctree}
 :maxdepth: 1
 :caption: Beginner
 
+foundations
 tutorials/01_market_data.ipynb
 tutorials/02_causal_features.ipynb
 tutorials/03_trading_and_risk.ipynb
@@ -16,6 +23,8 @@ tutorials/05_evaluation.ipynb
 ```
 
 The earlier command-line overview remains available in [Tutorials](../tutorials/README).
+For one joined walkthrough across these notebooks, see the
+[end-to-end learning path](../tutorials/end_to_end_path.md).
 
 ## Advanced tutorials
 

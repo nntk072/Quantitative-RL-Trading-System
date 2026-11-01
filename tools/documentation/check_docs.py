@@ -306,6 +306,7 @@ def validate(root: Path) -> list[str]:
 
 
 def main() -> int:
+    """Run the maintained documentation link and package-guide checks."""
     errors = validate(ROOT)
     if errors:
         print("Documentation checks failed:")

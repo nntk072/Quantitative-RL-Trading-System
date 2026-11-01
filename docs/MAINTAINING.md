@@ -27,8 +27,8 @@ Documentation has one primary home for each kind of knowledge:
 The Sphinx site is configured in `docs/conf.py`. Its landing page and
 navigation live in `docs/index.md`; the generated package reference is linked
 from `docs/api/index.md`. Do not edit generated API pages by hand. The Pages
-workflow publishes the generated HTML after the repository owner enables
-GitHub Pages for this repository.
+workflow publishes generated HTML through GitHub Actions; the repository's
+Pages source must be set to **GitHub Actions** for deployment.
 
 ## Change documentation with the owning interface
 
@@ -45,3 +45,9 @@ bounded; do not make documentation CI launch training or use external data.
 Avoid duplicate authoritative explanations. Link to the source page instead
 of copying tables across the root README, module overview, package README, and
 reference pages.
+
+Update [`development/documentation_coverage.md`](development/documentation_coverage.md)
+when a core subject gains or loses a reader path. Update
+[`development/supplementary_source_map.md`](development/supplementary_source_map.md)
+and [`development/figure_registry.md`](development/figure_registry.md) when
+material from the supplementary source archive is adopted or redrawn.

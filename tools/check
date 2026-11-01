@@ -90,12 +90,17 @@ run_docs() {
   sync_docs
   run_module pytest -q \
     tests/architecture/test_documentation_contracts.py \
-    tests/unit/tooling/test_documentation_inventory.py
+    tests/unit/tooling/test_documentation_inventory.py \
+    tests/unit/tooling/test_documentation_api_usage.py
   run_module tools.documentation.check_notebooks
   run_module tools.documentation.inventory --check
+  run_module tools.documentation.coverage --check
+  run_module tools.documentation.figures
   run_module tools.documentation.evidence_audit --check
   run_module tools.documentation.check_docs
   run_module tools.documentation.public_api --check
+  run_module tools.documentation.api_usage --check
+  run_module tools.documentation.function_docstrings
   run_module tools.documentation.configuration_reference --check
   run_module tools.documentation.package_dependency_model --check
   run_module experiments.variants.catalog --check

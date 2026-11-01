@@ -6,6 +6,15 @@ Use these terms consistently in documentation and reports.
 |---|---|
 | M1 / M3 / M5 | One-, three-, or five-minute bar timeframe. A bar's final values are available only after it closes. |
 | Lower/higher timeframe | A timeframe shorter/longer than the policy's decision interval. Availability still follows source-bar close time. |
+| MDP | Markov decision process: state, action, transition, reward, and discount model used to formalize a sequential decision problem. |
+| POMDP | Partially observable MDP: the agent receives observations generated from a hidden state rather than the full state. |
+| PPO | Proximal Policy Optimization, an on-policy actor-critic algorithm used by the configured agent builder. |
+| SAC | Soft Actor-Critic, an off-policy maximum-entropy actor-critic implementation that requires continuous Box actions here. |
+| TCN | Temporal convolutional network; in this project, causal temporal convolutions encode a finite feature sequence. |
+| GAE | Generalized Advantage Estimation, the configured method for estimating policy advantages from rollout rewards and values. |
+| Rollout geometry | The effective environment count, per-environment steps, aggregate samples, minibatch size, and update epochs for a PPO rollout. |
+| Action mask | Boolean/indicator information used to mark valid input positions or eligible categorical actions; the meaning depends on its schema. |
+| Availability time | The timestamp at which a source bar/event is complete and may enter a causal feature. |
 | PO3 | Power of Three market narrative: accumulation, manipulation, and distribution phases. A configured feature/idea, not a guaranteed market mechanism. |
 | FVG | Fair-value gap: a three-candle price imbalance under the configured structural definition. |
 | IFVG | Inverse fair-value gap: an imbalance whose role changes after the configured invalidation/close condition. |
@@ -27,6 +36,7 @@ Use these terms consistently in documentation and reports.
 | OOS | Out-of-sample data not used to fit, tune, or select the evaluated policy. Exposure during development removes confirmatory status. |
 | Walk-forward | Chronological repeated fitting/evaluation procedure with training windows preceding their test windows. |
 | Purge / embargo | Removal of overlapping label/look-ahead intervals and a separation gap around validation folds. |
+| R1–R4 | Project evidence levels from inspectable artifacts (R1), through bounded recomputation (R2) and frozen checkpoint replay (R3), to retraining (R4). A software trace is labeled separately. |
 | Artifact | A saved input, model, log, report, ledger, or manifest associated with a computation. |
 | Lineage | Recorded relationship from source data/config/code through cache, run, checkpoint, and result. |
 | Baseline | A declared control used to interpret a treatment under a specified comparison protocol. |

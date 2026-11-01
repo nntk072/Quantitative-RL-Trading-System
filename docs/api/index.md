@@ -17,6 +17,17 @@ domains/runtime
 domains/engineering
 ```
 
+## Function usage and call paths
+
+Use the function guides for source-backed call examples, fixture context, and the full workflow around each exported callable.
+
+```{toctree}
+:maxdepth: 1
+:caption: Function usage
+
+usage/index
+```
+
 ## Full generated reference
 
 ```{toctree}

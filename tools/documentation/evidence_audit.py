@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "docs/reproduce/evidence_audit.md"
 EXIT = "evidence/research/archive_2026/evidence/exit_action_semantics_20261024"
 SETUP = "evidence/research/setup_conditioned_reasoning_replay"
+P6 = "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025"
+IDEAS = "evidence/research/entry_idea_opportunity_counts"
 AUDITS: dict[str, dict[str, list[str]]] = {
     "Exit-action exact-common-entry cohort (R2 claim scope)": {
         "Tracked identity": [f"{EXIT}/provenance.json", f"{EXIT}/config.yaml"],
@@ -25,6 +27,29 @@ AUDITS: dict[str, dict[str, list[str]]] = {
             "not-tracked: full per-arm v2 trade ledger",
             "not-tracked: full per-arm v3 trade ledger",
             "not-tracked: original raw tick data",
+        ],
+    },
+    "P6 monthly entry/exit decomposition (R2 aggregate claim scope)": {
+        "Tracked identity and paired trade inputs": [
+            f"{P6}/p6_monthly_entry_exit_decomposition.json",
+            f"{P6}/ladder_a4a_entry_fsm_hidden_qgrid025_paired_trades.csv",
+            f"{P6}/ladder_a4b_entry_fsm_qgrid025_paired_trades.csv",
+        ],
+        "Unavailable independent raw replay inputs": [
+            "not-tracked: source run manifests and per-arm environment traces",
+            "not-tracked: original raw tick data and broker fill inputs",
+            "not-tracked: frozen policy checkpoints for both arms",
+        ],
+    },
+    "Entry-idea opportunity counts (R2 aggregate claim scope)": {
+        "Tracked aggregate inputs": [
+            f"{IDEAS}/annual_summary.csv",
+            f"{IDEAS}/by_idea_timeframe.csv",
+            f"{IDEAS}/entry_idea_opportunity_counts.md",
+        ],
+        "Unavailable raw recount inputs": [
+            "not-tracked: timestamp-level source feature rows",
+            "not-tracked: source feature cache and generation manifest",
         ],
     },
     "Setup-conditioned replay (R1 evidence view)": {
@@ -80,7 +105,7 @@ def render_audit(root: Path = ROOT) -> str:
         [
             "## Interpretation",
             "",
-            "The exit-action notebook makes an R2 claim only for the tracked cohort CSV and summary. The fixed-entry shadow exports exist, but the full per-arm ledgers and raw ticks are missing. The setup-conditioned package supports an R1 evidence view; its missing ledgers prevent full plot regeneration.",
+            "The exit-action notebook makes an R2 claim only for the tracked cohort CSV and summary. The P6 notebook recomputes monthly paired-trade aggregates and a seeded bootstrap decomposition, but raw ticks and checkpoints are absent. The entry-idea notebook recomputes family-level totals from tracked aggregate exports, but timestamp-level feature rows are absent. The setup-conditioned package supports an R1 evidence view; its missing ledgers prevent full plot regeneration.",
             "",
         ]
     )

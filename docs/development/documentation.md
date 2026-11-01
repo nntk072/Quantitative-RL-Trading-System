@@ -15,10 +15,13 @@ Google section names such as `Args`, `Returns`, `Raises`, `Yields`, and
 and explain units, ordering, defaults, side effects, validation, and error
 conditions in prose. Do not repeat an obvious type annotation as prose.
 
-Private helpers do not need a docstring when their purpose and behavior are
-clear from the implementation. Experimental APIs should identify their scope
-and stability. Avoid maintaining NumPy-style section headings alongside the
-Google convention.
+Every maintained production and tooling function has at least a concise
+Google-style summary; private helpers can keep this to one precise sentence
+when their signature and surrounding context make arguments self-explanatory.
+Public callables document their contract and use `Args`, `Returns`, `Raises`,
+`Yields`, and `Attributes` where useful. Experimental APIs identify scope and
+stability. Avoid maintaining NumPy-style section headings alongside Google
+style.
 
 ## Comments
 
@@ -45,6 +48,11 @@ generated `docs/documentation_inventory.json` records page type, status, local
 links, and toctree/orphan status; refresh it with
 `python -m tools.documentation.inventory --write` after documentation changes.
 
+The subject coverage snapshot is maintained separately in
+[`documentation_coverage.md`](documentation_coverage.md). It tracks whether a
+reader can learn, use, and verify each core subject; a linked page is not by
+itself evidence that every listed dimension is complete.
+
 ## Notebooks
 
 Each notebook declares a title, tier, expected runtime, hardware, and data
@@ -65,7 +73,7 @@ frozen checkpoint replay; R4 adds sufficient inputs to retrain. Do not infer a
 higher level from a configuration file alone. Distinguish software trace,
 reproduce, replay, and retrain.
 
-The documentation gate validates notebooks, evidence assets, page inventory,
+The documentation gate validates source docstrings, notebooks, evidence assets, page inventory,
 maintained links and source references, then builds the Sphinx site with
 warnings as errors. See the [visual index](../architecture/visual_index), the
 [documentation inventory](../documentation_inventory.json), and the

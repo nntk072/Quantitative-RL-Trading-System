@@ -432,6 +432,7 @@ def _has_owned_yield(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     """Return whether a function yields values directly or through yield from."""
 
     def visit(current: ast.AST) -> bool:
+        """Inspect this AST branch for yields owned by the target function."""
         if current is not node and isinstance(
             current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
         ):
@@ -469,20 +470,25 @@ def _production_function_docstring_gaps(root: Path = ROOT) -> list[str]:
                 """Identify direct class methods so only bound self/cls are implicit."""
 
                 def __init__(self) -> None:
+                    """Initialize direct-method scope tracking."""
                     self.scopes: list[str] = []
 
                 def visit_ClassDef(self, node: ast.ClassDef) -> None:
+                    """Visit a class body while marking its direct method scope."""
                     self.scopes.append("class")
                     self.generic_visit(node)
                     self.scopes.pop()
 
                 def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+                    """Record a synchronous function's enclosing scope."""
                     self._visit_function(node)
 
                 def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+                    """Record an asynchronous function's enclosing scope."""
                     self._visit_function(node)
 
                 def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+                    """Track methods and recursively visit nested definitions."""
                     if self.scopes and self.scopes[-1] == "class":
                         methods.add(id(node))
                     self.scopes.append("function")

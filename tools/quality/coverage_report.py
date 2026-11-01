@@ -15,6 +15,7 @@ DEFAULT_BASELINE = ROOT / "tools/quality/coverage_baseline.json"
 
 
 def _ratio(covered: int, total: int) -> float | None:
+    """Return the covered fraction, or ``None`` for an empty denominator."""
     return covered / total if total else None
 
 
@@ -83,6 +84,7 @@ def require_main_baseline(baseline_document: dict[str, Any]) -> None:
 
 
 def _percent(ratio: float | None) -> str:
+    """Format a ratio as a percentage or ``n/a`` when unavailable."""
     return "n/a" if ratio is None else f"{ratio * 100:.2f}%"
 
 
@@ -102,6 +104,7 @@ def _current_branch() -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Compare current package coverage with the frozen main-branch baseline."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--coverage-json", type=Path, default=ROOT / "coverage.json")
     parser.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE)

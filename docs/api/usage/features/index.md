@@ -1,0 +1,28 @@
+# Features function usage
+
+This guide contains 45 public callable records across 19 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+
+```{toctree}
+:maxdepth: 1
+:caption: Source modules
+
+features__context__policy_market
+features__context__reachability
+features__contracts
+features__input_view
+features__pipeline__feature_cache_identity
+features__pipeline__feature_matrix_builder
+features__pipeline__normalization
+features__pipeline__schema
+features__pipeline__session_context_features
+features__pipeline__walkforward_feature_fitting
+features__po3__entries
+features__po3__fvg
+features__po3__fvg_detection
+features__po3__ifvg_detection
+features__po3__ifvg_state
+features__po3__trigger_rules
+features__po3__zones
+features__technical__indicators
+features__technical__swings
+```

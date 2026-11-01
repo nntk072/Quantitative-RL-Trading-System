@@ -1,5 +1,8 @@
 # Observations and actions
 
+![Observation and action flow: The policy proposes an intent; environment rules validate and execute it.](../_static/figures/policy-action-contract.svg)
+
+
 The policy receives a causal snapshot of market and account state, then
 returns a schema-defined action. The observation describes what was available
 at the decision point; the action describes a proposed intent. The simulator

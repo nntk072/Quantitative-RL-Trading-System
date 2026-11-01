@@ -21,8 +21,11 @@ A YAML file alone does not establish R4. The [result registry](result_registry) 
 evidence_audit
 result_registry
 exit_action_semantics.ipynb
+p6_monthly_exit_decomposition.ipynb
+entry_idea_opportunity_counts.ipynb
 environment_trace.ipynb
 setup_conditioned_evidence
+how_to_read_a_run
 ```
 
 ## Method and evidence

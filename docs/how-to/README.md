@@ -16,3 +16,26 @@ They assume the reader already knows the relevant terms; use
 - [Add an action schema](add_action_schema.md)
 - [Add an evaluation metric](add_metric.md)
 - [Add a broker adapter](add_broker_adapter.md)
+- [Troubleshoot by symptom](troubleshooting.md)
+- [Configuration recipes](configuration_recipes.md)
+- [Change a serialized schema](schema_version_change.md)
+
+```{toctree}
+:maxdepth: 1
+:caption: Task guides
+
+prepare_market_data
+build_feature_cache
+run_training
+evaluate_checkpoint
+run_experiment
+add_feature
+add_encoder
+add_reward
+add_action_schema
+add_metric
+add_broker_adapter
+troubleshooting
+configuration_recipes
+schema_version_change
+```

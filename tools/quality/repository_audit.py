@@ -60,6 +60,7 @@ def _definitions(tree: ast.AST) -> list[ast.FunctionDef | ast.AsyncFunctionDef |
     """Return definitions that own runtime behavior and need source documentation."""
 
     def overloaded(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        """Return whether a function definition is a static overload stub."""
         return any(
             (isinstance(decorator, ast.Name) and decorator.id == "overload")
             or (isinstance(decorator, ast.Attribute) and decorator.attr == "overload")
@@ -237,6 +238,7 @@ def audit_tests(root: Path, test_paths: Iterable[Path]) -> dict[str, Any]:
 
 
 def _percent(numerator: int, denominator: int) -> float | None:
+    """Convert a numerator and denominator to a percentage when defined."""
     return round(100 * numerator / denominator, 2) if denominator else None
 
 
@@ -283,6 +285,7 @@ def build_audit(root: Path = ROOT) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Print the repository source, test, and documentation inventory."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--include-comment-candidates", action="store_true")

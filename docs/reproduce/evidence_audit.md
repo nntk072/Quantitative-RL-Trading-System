@@ -21,6 +21,29 @@ This generated audit checks files required for the stated claim scope. It does n
 - full per-arm v3 trade ledger — missing
 - original raw tick data — missing
 
+## P6 monthly entry/exit decomposition (R2 aggregate claim scope)
+
+**Tracked identity and paired trade inputs: complete** (3/3 tracked assets present)
+- evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.json — present
+- evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/ladder_a4a_entry_fsm_hidden_qgrid025_paired_trades.csv — present
+- evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/ladder_a4b_entry_fsm_qgrid025_paired_trades.csv — present
+
+**Unavailable independent raw replay inputs: missing** (0/3 tracked assets present)
+- source run manifests and per-arm environment traces — missing
+- original raw tick data and broker fill inputs — missing
+- frozen policy checkpoints for both arms — missing
+
+## Entry-idea opportunity counts (R2 aggregate claim scope)
+
+**Tracked aggregate inputs: complete** (3/3 tracked assets present)
+- evidence/research/entry_idea_opportunity_counts/annual_summary.csv — present
+- evidence/research/entry_idea_opportunity_counts/by_idea_timeframe.csv — present
+- evidence/research/entry_idea_opportunity_counts/entry_idea_opportunity_counts.md — present
+
+**Unavailable raw recount inputs: missing** (0/2 tracked assets present)
+- timestamp-level source feature rows — missing
+- source feature cache and generation manifest — missing
+
 ## Setup-conditioned replay (R1 evidence view)
 
 **Tracked evidence: complete** (5/5 tracked assets present)
@@ -38,4 +61,4 @@ This generated audit checks files required for the stated claim scope. It does n
 
 ## Interpretation
 
-The exit-action notebook makes an R2 claim only for the tracked cohort CSV and summary. The fixed-entry shadow exports exist, but the full per-arm ledgers and raw ticks are missing. The setup-conditioned package supports an R1 evidence view; its missing ledgers prevent full plot regeneration.
+The exit-action notebook makes an R2 claim only for the tracked cohort CSV and summary. The P6 notebook recomputes monthly paired-trade aggregates and a seeded bootstrap decomposition, but raw ticks and checkpoints are absent. The entry-idea notebook recomputes family-level totals from tracked aggregate exports, but timestamp-level feature rows are absent. The setup-conditioned package supports an R1 evidence view; its missing ledgers prevent full plot regeneration.

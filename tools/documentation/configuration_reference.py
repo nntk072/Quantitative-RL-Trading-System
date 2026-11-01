@@ -104,6 +104,7 @@ def render_configuration_reference(config: Mapping[str, Any]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Write the configuration reference or check it against base defaults."""
     parser = argparse.ArgumentParser(description=__doc__)
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--write", action="store_true", help="write the generated reference")

@@ -1522,7 +1522,7 @@
       "name": "apply_overrides",
       "numpy_style": false,
       "package": "configuration",
-      "source_line": 81,
+      "source_line": 80,
       "source_module": "configuration.configuration_loader",
       "source_path": "configuration/configuration_loader.py"
     },
@@ -1558,7 +1558,7 @@
       "name": "load_config_overlay",
       "numpy_style": false,
       "package": "configuration",
-      "source_line": 42,
+      "source_line": 41,
       "source_module": "configuration.configuration_loader",
       "source_path": "configuration/configuration_loader.py"
     },
@@ -1570,7 +1570,7 @@
       "name": "merge_config_overlay",
       "numpy_style": false,
       "package": "configuration",
-      "source_line": 57,
+      "source_line": 56,
       "source_module": "configuration.configuration_loader",
       "source_path": "configuration/configuration_loader.py"
     },
@@ -1594,7 +1594,7 @@
       "name": "_leaf_paths",
       "numpy_style": false,
       "package": "configuration",
-      "source_line": 123,
+      "source_line": 122,
       "source_module": "configuration.configuration_loader",
       "source_path": "configuration/configuration_loader.py"
     },
