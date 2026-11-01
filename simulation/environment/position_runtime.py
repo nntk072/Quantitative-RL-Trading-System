@@ -14,6 +14,8 @@ from .position_constants import _PRICE_TOL, _SL_MODE_RANK, _TP_MODE_RANK
 
 
 class PositionRuntimeMixin(RuntimeMixinBase):
+    """Maintain position-level stop/target updates and trade state."""
+
     position: Position | None
 
     def _record_stop_update(
@@ -27,7 +29,17 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         event_time: Any = None,
         bar_idx: int | None = None,
     ) -> None:
-        """Record every stop mutation with the first bar on which it applies."""
+        """Record every stop mutation with the first bar on which it applies.
+
+        Args:
+            pos: Pos used by the operation described above.
+            previous: Previous used by the operation described above.
+            reference: Text or path value identifying the reference.
+            reference_price: Reference price used by the operation described above.
+            reason: Text or path value identifying the reason.
+            event_time: Event time used by the operation described above.
+            bar_idx: Bar idx used by the operation described above.
+        """
         if not hasattr(self, "trade_log") or previous == pos.sl_price:
             return
         effective_time = None
@@ -62,6 +74,12 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         Only ever tightens toward entry: never widens a stop and never rewrites
         a stop that already sits at or beyond breakeven. Disabled when
         ``breakeven_trigger_r <= 0``.
+
+        Args:
+            pos: Pos used by the operation described above.
+            favorable: Numeric value used for the favorable.
+            event_time: Event time used by the operation described above.
+            bar_idx: Bar idx used by the operation described above.
         """
         if self._breakeven_trigger_r <= 0.0 or pos.breakeven_done:
             return
@@ -107,6 +125,12 @@ class PositionRuntimeMixin(RuntimeMixinBase):
 
         Swing feature values must already be available at the decision bar;
         the current tradeable bar close constrains stop geometry when known.
+
+        Args:
+            pos: Pos used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            bar_idx: Bar idx used by the operation described above.
+            event_time: Event time used by the operation described above.
         """
         if pos.sl_mode != "trailing":
             return
@@ -148,7 +172,11 @@ class PositionRuntimeMixin(RuntimeMixinBase):
             )
 
     def _reorder_tp_levels_safe(self, pos: Position) -> None:
-        """Enforce remaining target ordering via the trading domain invariant."""
+        """Enforce remaining target ordering via the trading domain invariant.
+
+        Args:
+            pos: Pos used by the operation described above.
+        """
         cost_model = getattr(self, "cost_model", None)
         point_size = float(getattr(cost_model, "point_size", _PRICE_TOL))
         reorder_remaining_targets(pos, point_size=point_size, price_tolerance=_PRICE_TOL)
@@ -166,7 +194,19 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         event_time: Any,
         bar_idx: int | None,
     ) -> None:
-        """Record the TP mutation and the first bar on which it can execute."""
+        """Record the TP mutation and the first bar on which it can execute.
+
+        Args:
+            pos: Pos used by the operation described above.
+            slot: Numeric value used for the slot.
+            previous: Numeric value used for the previous.
+            price: Numeric value used for the price.
+            reference: Text or path value identifying the reference.
+            reference_price: Reference price used by the operation described above.
+            reason: Text or path value identifying the reason.
+            event_time: Event time used by the operation described above.
+            bar_idx: Bar idx used by the operation described above.
+        """
         if not hasattr(self, "trade_log"):
             return
         effective_time = None
@@ -204,6 +244,13 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         This legacy ``breakeven`` TP mode does not modify the stop. A pullback
         level already crossed by the current market is left unchanged to avoid
         creating a retroactive limit fill.
+
+        Args:
+            pos: Pos used by the operation described above.
+            favorable: Numeric value used for the favorable.
+            current_price: Current price used by the operation described above.
+            event_time: Event time used by the operation described above.
+            bar_idx: Bar idx used by the operation described above.
         """
         if not self.allow_agent_tp_mode or pos.tp_breakeven_done:
             return
@@ -255,7 +302,14 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         event_time: Any = None,
         bar_idx: int | None = None,
     ) -> None:
-        """Extend only the nearest unhit TP to a newer, executable swing."""
+        """Extend only the nearest unhit TP to a newer, executable swing.
+
+        Args:
+            pos: Pos used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            event_time: Event time used by the operation described above.
+            bar_idx: Bar idx used by the operation described above.
+        """
         if not self.allow_agent_tp_mode or pos.tp_mode != "trailing":
             return
         reference: str
@@ -340,7 +394,18 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         bar_idx: int | None = None,
         fill_time: Any | None = None,
     ) -> None:
-        """Age, stale-progress, breakeven, and max-loss guards for a position."""
+        """Age, stale-progress, breakeven, and max-loss guards for a position.
+
+        Args:
+            bar: Bar used by the operation described above.
+            bar_time: Bar time used by the operation described above.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            eod: Whether to enable or require the eod.
+            feat_row: Feature values for the current market bar.
+            bar_idx: Bar idx used by the operation described above.
+            fill_time: Fill time used by the operation described above.
+        """
         pos = self.position
         if pos is None:
             return
@@ -421,6 +486,15 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         *,
         fill_time: Any | None = None,
     ) -> None:
+        """Process close guard.
+
+        Args:
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            reason: Text or path value identifying the reason.
+            bar_time: Bar time used by the operation described above.
+            fill_time: Fill time used by the operation described above.
+        """
         if self.position is None:
             return
         execution_meta: dict[str, Any] = {}

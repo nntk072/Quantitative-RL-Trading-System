@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_path_migration_preserves_originals_and_resolves_current_paths() -> None:
+def test_path_migration_preserves_originals_and_resolves_repository_paths() -> None:
     migration_path = ROOT / "docs/architecture/migrations/experiment_run_name_migration.json"
     migration = json.loads(migration_path.read_text(encoding="utf-8"))
     archive_path = ROOT / migration["originals_archive"]
@@ -22,11 +22,18 @@ def test_path_migration_preserves_originals_and_resolves_current_paths() -> None
         assert len(archived_paths) == migration["original_file_count"]
         for row in path_migrations:
             original_path = row["old_path"]
-            current_path = row["new_path"]
+            current_path = row.get("new_path")
 
             assert original_path in archived_paths
             assert hashlib.sha256(archive.read(original_path)).hexdigest() == row["old_sha256"]
-            assert (ROOT / current_path).is_file()
+            if current_path is not None:
+                resolved_path = (ROOT / current_path).resolve()
+                assert resolved_path.is_relative_to(ROOT.resolve())
+                assert resolved_path.is_file()
+            else:
+                assert row["superseded_archive_path"].startswith(
+                    "../Quantitative-RL-Trading-System-bin/superseded/"
+                )
 
 
 def test_fingerprint_migration_is_deterministic_and_collision_free() -> None:

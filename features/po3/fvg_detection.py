@@ -9,16 +9,11 @@ import pandas as pd
 class FVGConfig:
     """Configuration for FVG detection.
 
-    Attributes
-    ----------
-    min_imbalance_pts : float
-        Minimum price imbalance required to count as FVG (in price units).
-    lookback_bars : int
-        Number of bars to look back for FVG detection.
-    reaction_buffer_fraction : float
-        Follow-through close buffer as a fraction of the gap height.
-    reaction_buffer_enabled : bool
-        Whether retest confirmation also requires the configured fraction.
+    Attributes:
+        min_imbalance_pts (float): Minimum price imbalance required to count as FVG (in price units).
+        lookback_bars (int): Number of bars to look back for FVG detection.
+        reaction_buffer_fraction (float): Follow-through close buffer as a fraction of the gap height.
+        reaction_buffer_enabled (bool): Whether retest confirmation also requires the configured fraction.
     """
 
     min_imbalance_pts: float = 0.0
@@ -38,23 +33,18 @@ def detect_fvg(
 
     The FVG is detected **during the manipulation leg itself** (i.e., on bar 3).
 
-    Parameters
-    ----------
-    bars : pd.DataFrame
-        OHLC DataFrame with 'high', 'low', 'close' columns and DatetimeIndex.
-    config : FVGConfig, optional
-        Configuration for FVG detection. Uses defaults if None.
+    Args:
+        bars (pd.DataFrame): OHLC DataFrame with 'high', 'low', 'close' columns and DatetimeIndex.
+        config (FVGConfig, optional): Configuration for FVG detection. Uses defaults if None.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with same index as input, containing:
-        - fvg_bullish: 1 if bullish FVG detected at this bar, else 0
-        - fvg_bearish: 1 if bearish FVG detected at this bar, else 0
-        - fvg_bullish_low: Low price of the FVG zone (for bullish)
-        - fvg_bullish_high: High price of the FVG zone (for bullish)
-        - fvg_bearish_low: Low price of the FVG zone (for bearish)
-        - fvg_bearish_high: High price of the FVG zone (for bearish)
+    Returns:
+        pd.DataFrame: DataFrame with same index as input, containing:
+            - fvg_bullish: 1 if bullish FVG detected at this bar, else 0
+            - fvg_bearish: 1 if bearish FVG detected at this bar, else 0
+            - fvg_bullish_low: Low price of the FVG zone (for bullish)
+            - fvg_bullish_high: High price of the FVG zone (for bullish)
+            - fvg_bearish_low: Low price of the FVG zone (for bearish)
+            - fvg_bearish_high: High price of the FVG zone (for bearish)
     """
     if config is None:
         config = FVGConfig()

@@ -15,6 +15,11 @@ ROOT = repository_root(__file__)
 
 
 def main() -> int:
+    """Build checkpoint provenance for the requested experiment-run sources.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--source-experiment-run",

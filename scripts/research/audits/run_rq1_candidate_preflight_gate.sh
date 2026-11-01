@@ -7,7 +7,7 @@ set +e
 
 audit_rc=0
 python scripts/research/audits/audit_rq1_candidate_config.py \
-    --out docs/thesis/evidence/rq1_gate_candidate_config_preflight_20261017.json \
+    --out outputs/research_audits/rq1_gate_candidate_config_preflight_20261017.json \
     || audit_rc=$?
 format_apply_rc=0
 ruff format . || format_apply_rc=$?

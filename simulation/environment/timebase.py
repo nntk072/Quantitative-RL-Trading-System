@@ -10,7 +10,14 @@ BAR_TIME_TZ = "Etc/GMT-3"
 
 
 def _minutes_per_step(index: pd.DatetimeIndex) -> float:
-    """Return median positive bar spacing, with a one-minute fallback."""
+    """Return median positive bar spacing, with a one-minute fallback.
+
+    Args:
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Numeric result returned by ``_minutes_per_step``.
+    """
     if index is None or len(index) < 2:
         return _DEFAULT_MINUTES_PER_STEP
     nanos = index.to_numpy(dtype="datetime64[ns]").astype("int64")

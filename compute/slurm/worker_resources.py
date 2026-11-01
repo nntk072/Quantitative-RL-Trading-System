@@ -36,11 +36,23 @@ __all__ = [
 
 
 def utc() -> str:
+    """Return the current UTC timestamp in ISO 8601 format.
+
+    Returns:
+        Text returned by ``utc``.
+    """
     return dt.datetime.now(dt.UTC).isoformat()
 
 
 def cgroup_memory_file(name: str) -> pathlib.Path | None:
-    """Locate a memory-controller file under this process's cgroup."""
+    """Locate a memory-controller file under this process's cgroup.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Path returned by ``cgroup_memory_file``.
+    """
     root = pathlib.Path("/sys/fs/cgroup")
     try:
         entries = pathlib.Path("/proc/self/cgroup").read_text().splitlines()
@@ -75,7 +87,13 @@ def cgroup_memory_file(name: str) -> pathlib.Path | None:
 
 
 def available_resources() -> dict[str, Any]:
-    mem_limit = 0
+    """Report CPU affinity and the tightest visible host-memory limit.
+
+    Returns:
+        CPU IDs, effective CPU count, and memory limit in bytes, or ``None`` when
+        the memory limit is unavailable.
+    """
+    mem_limit: int | None = None
     memory = cgroup_memory_file("memory.max")
     if memory is not None:
         # Slurm task cgroups often report "max" while a parent job cgroup
@@ -90,7 +108,7 @@ def available_resources() -> dict[str, Any]:
             except OSError:
                 continue
             if value.isdigit() and 0 < int(value) < 2**60:
-                mem_limit = int(value) if not mem_limit else min(mem_limit, int(value))
+                mem_limit = int(value) if mem_limit is None else min(mem_limit, int(value))
     if not mem_limit:
         memory = cgroup_memory_file("memory.limit_in_bytes")
         if memory is not None and memory.read_text().strip().isdigit():
@@ -106,7 +124,11 @@ def available_resources() -> dict[str, Any]:
 
 
 def gpu_memory_inventory() -> list[dict[str, Any]]:
-    """Return memory capacity for GPUs visible to this Slurm task."""
+    """Return memory capacity for GPUs visible to this Slurm task.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     try:
         result = subprocess.run(
             [
@@ -152,14 +174,32 @@ def gpu_memory_inventory() -> list[dict[str, Any]]:
 
 
 def cpu_mask_for_slot(cpu_ids: list[int], slot: int, cpus: int) -> tuple[str, list[int]]:
-    """Assign a distinct contiguous slice of allocated CPU IDs to one worker."""
+    """Assign a distinct contiguous slice of allocated CPU IDs to one worker.
+
+    Args:
+        cpu_ids: Items supplied for the cpu ids, in input order.
+        slot: Numeric value used for the slot.
+        cpus: Numeric value used for the cpus.
+
+    Returns:
+        Values returned by ``cpu_mask_for_slot``, in the declared order.
+    """
     if slot < 0 or cpus <= 0:
         raise ValueError("CPU slot and worker CPU count must be non-negative/positive")
     return cpu_mask_for_range(cpu_ids, slot * cpus, cpus)
 
 
 def cpu_mask_for_range(cpu_ids: list[int], start: int, cpus: int) -> tuple[str, list[int]]:
-    """Assign an explicit contiguous range from the allocation CPU set."""
+    """Assign an explicit contiguous range from the allocation CPU set.
+
+    Args:
+        cpu_ids: Items supplied for the cpu ids, in input order.
+        start: Numeric value used for the start.
+        cpus: Numeric value used for the cpus.
+
+    Returns:
+        Values returned by ``cpu_mask_for_range``, in the declared order.
+    """
     if start < 0 or cpus <= 0:
         raise ValueError("CPU range start and worker CPU count must be non-negative/positive")
     selected = cpu_ids[start : start + cpus]
@@ -170,7 +210,16 @@ def cpu_mask_for_range(cpu_ids: list[int], start: int, cpus: int) -> tuple[str, 
 
 
 def worker_node_cpu_ids(queue_root: pathlib.Path, job_id: str, node: str) -> list[int]:
-    """Read the CPU set advertised by the persistent manager on one worker node."""
+    """Read the CPU set advertised by the persistent manager on one worker node.
+
+    Args:
+        queue_root: Text or path value identifying the queue root.
+        job_id: Text or path value identifying the job id.
+        node: Text or path value identifying the node.
+
+    Returns:
+        Values returned by ``worker_node_cpu_ids``, in the declared order.
+    """
     ready = queue_root / job_id / node.split(".", maxsplit=1)[0] / "ready"
     try:
         metadata = json.loads(ready.read_text(encoding="utf-8"))
@@ -191,7 +240,16 @@ def worker_node_cpu_ids(queue_root: pathlib.Path, job_id: str, node: str) -> lis
 
 
 def worker_node_resources(queue_root: pathlib.Path, job_id: str, node: str) -> dict[str, Any]:
-    """Read validated CPU, RAM, and GPU capacity advertised by a node manager."""
+    """Read validated CPU, RAM, and GPU capacity advertised by a node manager.
+
+    Args:
+        queue_root: Text or path value identifying the queue root.
+        job_id: Text or path value identifying the job id.
+        node: Text or path value identifying the node.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     ready = queue_root / job_id / node.split(".", maxsplit=1)[0] / "ready"
     try:
         metadata = json.loads(ready.read_text(encoding="utf-8"))
@@ -210,8 +268,7 @@ def worker_node_resources(queue_root: pathlib.Path, job_id: str, node: str) -> d
         or not cpu_ids
         or any(not isinstance(cpu, int) or cpu < 0 for cpu in cpu_ids)
         or len(set(cpu_ids)) != len(cpu_ids)
-        or not isinstance(memory_limit, int)
-        or memory_limit < 0
+        or (memory_limit is not None and (not isinstance(memory_limit, int) or memory_limit < 0))
         or not isinstance(gpus, list)
         or any(
             not isinstance(gpu, dict)
@@ -250,6 +307,21 @@ def plan_worker_capacity(
     estimate reserves 20% of device memory and defaults to 8 GiB per worker;
     launchers can lower concurrency with ``max_workers_per_gpu`` when measured
     model peaks demand more headroom.
+
+    Args:
+        node_resources: Key-value data used for the node resources.
+        n_envs: Number of parallel environments to create.
+        data_source: Text or path value identifying the data source.
+        gpus_per_node: Numeric value used for the gpus per node.
+        max_workers_per_gpu: Numeric value used for the max workers per gpu.
+        gpu_memory_per_worker_gib: Numeric value used for the gpu memory per worker gib.
+        gpu_memory_reserve_fraction: Numeric value used for the gpu memory reserve fraction.
+        cpu_reserve_per_node: Numeric value used for the cpu reserve per node.
+        memory_reserve_gib: Numeric value used for the memory reserve gib.
+        memory_safety_factor: Numeric value used for the memory safety factor.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     if n_envs not in {4, 8, 16, 32, 64}:
         raise ValueError("n-envs not benchmarked for memory: choose 4,8,16,32,64")
@@ -271,7 +343,7 @@ def plan_worker_capacity(
     planned_nodes: dict[str, dict[str, Any]] = {}
     for node, resources in sorted(node_resources.items()):
         cpu_ids = list(resources.get("cpu_ids", []))
-        memory_bytes = int(resources.get("memory_limit_bytes", 0))
+        memory_bytes = int(resources.get("memory_limit_bytes") or 0)
         gpu_memory = list(resources.get("gpu_memory", []))[:gpus_per_node]
         cpu_capacity = max(
             0,
@@ -345,7 +417,14 @@ def plan_worker_capacity(
 
 
 def expand_slurm_hosts(node_list: str) -> list[str]:
-    """Expand a Slurm host expression, preserving the scheduler's host order."""
+    """Expand a Slurm host expression, preserving the scheduler's host order.
+
+    Args:
+        node_list: Text or path value identifying the node list.
+
+    Returns:
+        Values returned by ``expand_slurm_hosts``, in the declared order.
+    """
     result = subprocess.run(
         ["scontrol", "show", "hostnames", node_list],
         capture_output=True,
@@ -374,7 +453,23 @@ def worker_command(
     expected_cpu_ids: list[int] | None = None,
     step_cpus: int | None = None,
 ) -> list[str]:
-    """Build a worker request with per-worker GPU count and allocation GPU index."""
+    """Build a worker request with per-worker GPU count and allocation GPU index.
+
+    Args:
+        command: Items supplied for the command, in input order.
+        node: Node used by the operation described above.
+        gpu_type: Text or path value identifying the gpu type.
+        cpus: Numeric value used for the cpus.
+        gpu_count: Number specifying the gpu count for this operation.
+        gpu_id: Numeric value used for the gpu id.
+        available_gpu_count: Number specifying the available gpu count for this operation.
+        cpu_mask: Boolean or status values aligned with the input cpu.
+        expected_cpu_ids: Items supplied for the expected cpu ids, in input order.
+        step_cpus: Step cpus used by the operation described above.
+
+    Returns:
+        Values returned by ``worker_command``, in the declared order.
+    """
     if node is None:
         return command
     visible_gpu_count = gpu_count if available_gpu_count is None else available_gpu_count
@@ -424,6 +519,18 @@ def worker_command(
 
 
 def resolve_worker_nodes(raw: str | None, *, dry_run: bool) -> list[str]:
+    """Resolve requested worker hosts and validate them against the allocation.
+
+    Args:
+        raw: Comma-separated host list, or ``None`` when no list was supplied.
+        dry_run: Whether to validate syntax without requiring Slurm state.
+
+    Returns:
+        Validated worker host names in the requested order.
+
+    Raises:
+        ValueError: If hosts are duplicated or outside the current allocation.
+    """
     if not raw:
         return []
     if dry_run:
@@ -445,7 +552,21 @@ def resolve_worker_nodes(raw: str | None, *, dry_run: bool) -> list[str]:
 
 
 def sample_resources(path: pathlib.Path) -> None:
+    """Append one host, cgroup, and GPU resource sample to a CSV file.
+
+    Args:
+        path: CSV file that receives the sampled resource values.
+    """
+
     def read(name: str) -> str:
+        """Read and flatten one cgroup counter for the sample row.
+
+        Args:
+            name: Cgroup counter filename to read.
+
+        Returns:
+            Counter value with embedded line breaks replaced by semicolons.
+        """
         p = cgroup_memory_file(name)
         return p.read_text().strip().replace("\n", ";") if p is not None else ""
 

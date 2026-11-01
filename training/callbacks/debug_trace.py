@@ -28,7 +28,14 @@ Collector = Callable[[Any, Mapping[str, Any]], Mapping[str, Any]]
 
 
 def merge_env_stats(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    """Sum per-env windows and scale reward parts to per 1k steps."""
+    """Sum per-env windows and scale reward parts to per 1k steps.
+
+    Args:
+        rows: Items supplied for the rows, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     usable = [row for row in rows if row]
     n = sum(int(row.get("n", 0)) for row in usable)
     parts: dict[str, float] = {}
@@ -66,7 +73,14 @@ def merge_env_stats(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 
 
 def collect_rollout(model: Any) -> dict[str, Any]:
-    """Return, value, and account correlations from the current rollout buffer."""
+    """Return, value, and account correlations from the current rollout buffer.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     empty = {
         "timesteps": int(getattr(model, "num_timesteps", 0) or 0),
         "ret_mean": 0.0,
@@ -126,7 +140,14 @@ def collect_rollout(model: Any) -> dict[str, Any]:
 
 
 def policy_std(model: Any) -> float | None:
-    """Mean Gaussian std after the post-update clamp, or None when absent."""
+    """Mean Gaussian std after the post-update clamp, or None when absent.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Result of mean Gaussian std after the post-update clamp, or None when absent.
+    """
     log_std = getattr(getattr(model, "policy", None), "log_std", None)
     if log_std is None:
         return None
@@ -134,7 +155,14 @@ def policy_std(model: Any) -> float | None:
 
 
 def account_weights(model: Any) -> list[float]:
-    """The six linear account-value weights, or an empty list."""
+    """The six linear account-value weights, or an empty list.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Values returned by ``account_weights``, in the declared order.
+    """
     weight = getattr(getattr(model, "policy", None), "account_value_weight", None)
     if weight is None:
         return []
@@ -142,7 +170,14 @@ def account_weights(model: Any) -> list[float]:
 
 
 def builtin_checks(thresholds: Mapping[str, Any] | None = None) -> list[Check]:
-    """Checks for the failures already seen, plus a wiring check."""
+    """Checks for the failures already seen, plus a wiring check.
+
+    Args:
+        thresholds: Key-value data used for the thresholds.
+
+    Returns:
+        Values returned by ``builtin_checks``, in the declared order.
+    """
     cfg = dict(thresholds or {})
     ev_floor = float(cfg.get("ev_floor", 0.2))
     ev_windows = int(cfg.get("ev_windows", 5))
@@ -153,6 +188,14 @@ def builtin_checks(thresholds: Mapping[str, Any] | None = None) -> list[Check]:
     corr_windows = int(cfg.get("corr_windows", 3))
 
     def explained_variance(records: Sequence[Mapping[str, Any]]) -> str:
+        """Flag a sustained run of explained-variance values below the floor.
+
+        Args:
+            records: Items supplied for the records, in input order.
+
+        Returns:
+            Text returned by ``explained_variance``.
+        """
         body = list(records)[1:]
         if len(body) < ev_windows:
             return ""
@@ -162,6 +205,14 @@ def builtin_checks(thresholds: Mapping[str, Any] | None = None) -> list[Check]:
         return ""
 
     def std_band(records: Sequence[Mapping[str, Any]]) -> str:
+        """Flag a missing, non-finite, or out-of-band policy standard deviation.
+
+        Args:
+            records: Items supplied for the records, in input order.
+
+        Returns:
+            Text returned by ``std_band``.
+        """
         std = records[-1].get("std") if records else None
         if std is None:
             return ""
@@ -171,6 +222,14 @@ def builtin_checks(thresholds: Mapping[str, Any] | None = None) -> list[Check]:
         return ""
 
     def reward_dominates(records: Sequence[Mapping[str, Any]]) -> str:
+        """Flag a non-PnL reward component that overwhelms the PnL component.
+
+        Args:
+            records: Items supplied for the records, in input order.
+
+        Returns:
+            Text returned by ``reward_dominates``.
+        """
         parts = dict(records[-1].get("reward_per_1k", {})) if records else {}
         pnl = abs(float(parts.get("pnl", 0.0)))
         for key, value in parts.items():
@@ -182,6 +241,14 @@ def builtin_checks(thresholds: Mapping[str, Any] | None = None) -> list[Check]:
         return ""
 
     def shaping(records: Sequence[Mapping[str, Any]]) -> str:
+        """Flag shaping rewards that dominate the observed return scale.
+
+        Args:
+            records: Items supplied for the records, in input order.
+
+        Returns:
+            Text returned by ``shaping``.
+        """
         row = records[-1] if records else {}
         if int(row.get("shape_on_hold", 0)) > 0:
             return "shaping on hold"
@@ -190,6 +257,14 @@ def builtin_checks(thresholds: Mapping[str, Any] | None = None) -> list[Check]:
         return ""
 
     def open_pnl(records: Sequence[Mapping[str, Any]]) -> str:
+        """Flag repeated weak value correlation with account open PnL.
+
+        Args:
+            records: Items supplied for the records, in input order.
+
+        Returns:
+            Text returned by ``open_pnl``.
+        """
         body = list(records)[1:]
         if len(body) < corr_windows:
             return ""
@@ -203,6 +278,14 @@ def builtin_checks(thresholds: Mapping[str, Any] | None = None) -> list[Check]:
         return ""
 
     def wiring(records: Sequence[Mapping[str, Any]]) -> str:
+        """Flag missing required policy and environment wiring diagnostics.
+
+        Args:
+            records: Items supplied for the records, in input order.
+
+        Returns:
+            Text returned by ``wiring``.
+        """
         row = records[-1] if records else {}
         if "breach_penalty" not in row and "pnl_dsr_weight" not in row:
             return ""
@@ -232,6 +315,15 @@ class FlightRecorder:
         thresholds: Mapping[str, Any] | None = None,
         extra_checks: Sequence[Check] | None = None,
     ) -> None:
+        """Initialize FlightRecorder and its owned state.
+
+        Args:
+            directory: Directory used by the operation described above.
+            ring_size: Number specifying the ring size for this operation.
+            checks: Items supplied for the checks, in input order.
+            thresholds: Key-value data used for the thresholds.
+            extra_checks: Items supplied for the extra checks, in input order.
+        """
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.ring: deque[dict[str, Any]] = deque(maxlen=max(1, int(ring_size)))
@@ -246,6 +338,11 @@ class FlightRecorder:
         self.wiring_path = self.directory / "debug_wiring.json"
 
     def write_wiring(self, payload: Mapping[str, Any]) -> None:
+        """Write stable architecture and environment wiring metadata for the run.
+
+        Args:
+            payload: Key-value data used for the payload.
+        """
         snap = jsonable(dict(payload))
         self.wiring_path.write_text(json.dumps(snap, indent=2) + "\n", encoding="utf-8")
         reason = ""
@@ -257,7 +354,11 @@ class FlightRecorder:
             self._write_incident(reason, snap, "")
 
     def record(self, snapshot: Mapping[str, Any]) -> None:
-        """Append one update. Write an incident when the snapshot is unhealthy."""
+        """Append one update. Write an incident when the snapshot is unhealthy.
+
+        Args:
+            snapshot: Key-value data used for the snapshot.
+        """
         reason = nonfinite_reason(snapshot)
         snap = jsonable(dict(snapshot))
         _append_jsonl(self.trace_path, snap)
@@ -272,7 +373,12 @@ class FlightRecorder:
         self.ring.append(snap)
 
     def capture(self, reason: str, snapshot: Mapping[str, Any] | None = None) -> None:
-        """Record an exception. A second capture of the same traceback is skipped."""
+        """Record an exception. A second capture of the same traceback is skipped.
+
+        Args:
+            reason: Text or path value identifying the reason.
+            snapshot: Key-value data used for the snapshot.
+        """
         current = sys.exc_info()[1]
         if current is not None and getattr(current, "_debug_captured", False):
             return
@@ -290,6 +396,13 @@ class FlightRecorder:
         self._write_incident(reason, snap, "" if text == "NoneType: None\n" else text)
 
     def _write_incident(self, reason: str, snapshot: Mapping[str, Any], tb: str) -> None:
+        """Write incident.
+
+        Args:
+            reason: Text or path value identifying the reason.
+            snapshot: Key-value data used for the snapshot.
+            tb: Text or path value identifying the tb.
+        """
         _append_jsonl(
             self.incident_path,
             {
@@ -302,7 +415,14 @@ class FlightRecorder:
 
 
 def nonfinite_reason(snapshot: Mapping[str, Any]) -> str:
-    """Name the first non-finite number, or return an empty string."""
+    """Name the first non-finite number, or return an empty string.
+
+    Args:
+        snapshot: Key-value data used for the snapshot.
+
+    Returns:
+        Text returned by ``nonfinite_reason``.
+    """
     for key, value in _walk(snapshot):
         if isinstance(value, float) and not math.isfinite(value):
             return f"non-finite {key}"
@@ -317,7 +437,18 @@ def install_flight_recorder(
     extra_checks: Sequence[Check] | None = None,
     extra_collectors: Sequence[Collector] | None = None,
 ) -> FlightRecorder:
-    """Wrap ``learn`` and ``train``, and enable env counters when the env has them."""
+    """Wrap ``learn`` and ``train``, and enable env counters when the env has them.
+
+    Args:
+        model: Model used for this operation.
+        directory: Directory used by the operation described above.
+        thresholds: Key-value data used for the thresholds.
+        extra_checks: Items supplied for the extra checks, in input order.
+        extra_collectors: Items supplied for the extra collectors, in input order.
+
+    Returns:
+        Result of wrap ``learn`` and ``train``, and enable env counters when the env has them.
+    """
     cfg = dict(thresholds or {})
     recorder = FlightRecorder(
         directory,
@@ -339,6 +470,15 @@ def install_flight_recorder(
     train = model.train
 
     def _train(*args: Any, **kwargs: Any) -> Any:
+        """Train the requested value.
+
+        Args:
+            *args: Parsed command-line arguments for this operation.
+            **kwargs: Kwargs used by the operation described above.
+
+        Returns:
+            Result of train the requested value.
+        """
         rollout = collect_rollout(model)
         try:
             result = train(*args, **kwargs)
@@ -363,6 +503,15 @@ def install_flight_recorder(
     learn = model.learn
 
     def _learn(*args: Any, **kwargs: Any) -> Any:
+        """Process the requested value.
+
+        Args:
+            *args: Parsed command-line arguments for this operation.
+            **kwargs: Kwargs used by the operation described above.
+
+        Returns:
+            Result of process the requested value.
+        """
         try:
             return learn(*args, **kwargs)
         except DebugStepError as exc:
@@ -379,6 +528,14 @@ def install_flight_recorder(
 
 
 def _flush_env_stats(model: Any) -> dict[str, Any]:
+    """Process env stats.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     vec = model.get_env()
     if not hasattr(vec, "env_method"):
         return merge_env_stats(())
@@ -394,6 +551,16 @@ def _monte_carlo(
     starts: Any,
     gamma: float,
 ) -> np.ndarray[Any, np.dtype[np.floating[Any]]]:
+    """Process carlo.
+
+    Args:
+        rewards: Rewards used by the operation described above.
+        starts: Starts used by the operation described above.
+        gamma: Numeric value used for the gamma.
+
+    Returns:
+        Array returned by ``_monte_carlo``.
+    """
     start_arr = np.asarray(starts, dtype=float) if starts is not None else np.zeros_like(rewards)
     if start_arr.ndim == 1:
         start_arr = start_arr.reshape(-1, 1)
@@ -410,6 +577,15 @@ def _corr(
     left: np.ndarray[Any, np.dtype[np.floating[Any]]],
     right: np.ndarray[Any, np.dtype[np.floating[Any]]],
 ) -> float:
+    """Process the requested value.
+
+    Args:
+        left: Left used by the operation described above.
+        right: Right used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_corr``.
+    """
     x_all = np.asarray(left, dtype=float).reshape(-1)
     y_all = np.asarray(right, dtype=float).reshape(-1)
     n = min(int(x_all.shape[0]), int(y_all.shape[0]))
@@ -423,12 +599,27 @@ def _corr(
 
 
 def _append_jsonl(path: Path, payload: Mapping[str, Any]) -> None:
+    """Process jsonl.
+
+    Args:
+        path: Path to the input file or directory.
+        payload: Key-value data used for the payload.
+    """
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(jsonable(dict(payload))) + "\n")
         handle.flush()
 
 
 def _walk(value: Any, prefix: str = "") -> list[tuple[str, Any]]:
+    """Process the requested value.
+
+    Args:
+        value: Value to process.
+        prefix: Text or path value identifying the prefix.
+
+    Returns:
+        Values returned by ``_walk``, in the declared order.
+    """
     found: list[tuple[str, Any]] = []
     if isinstance(value, dict):
         for key, item in value.items():

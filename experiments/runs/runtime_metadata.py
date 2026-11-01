@@ -9,6 +9,11 @@ from typing import Any
 
 
 def runtime_metadata() -> dict[str, Any]:
+    """Collect runtime, package, device, and source-revision provenance.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     packages: dict[str, str | None] = {}
     for name in (
         "numpy",

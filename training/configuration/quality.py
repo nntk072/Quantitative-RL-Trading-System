@@ -18,6 +18,15 @@ _MISSING = object()
 
 
 def _override_type_matches(expected: object, value: object) -> bool:
+    """Process type matches.
+
+    Args:
+        expected: Expected used by the operation described above.
+        value: Value to process.
+
+    Returns:
+        Whether override type matches meets the requested condition.
+    """
     if expected is None or value is None:
         return True
     if type(expected) is bool:
@@ -30,7 +39,11 @@ def _override_type_matches(expected: object, value: object) -> bool:
 
 
 def _validate_override_schema(registry: DictConfig) -> None:
-    """Reject registry typos and type drift against the canonical default config."""
+    """Reject registry typos and type drift against the canonical default config.
+
+    Args:
+        registry: Registry used by the operation described above.
+    """
     from configuration import load_config
 
     base = load_config()
@@ -91,7 +104,14 @@ def _validate_override_schema(registry: DictConfig) -> None:
 
 
 def load_quality_registry(path: str | Path = DEFAULT_QUALITY_REGISTRY) -> DictConfig:
-    """Load and validate staged quality variants without touching historical experiments."""
+    """Load and validate staged quality variants without touching historical experiments.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Result of load and validate staged quality variants without touching historical experiments.
+    """
     loaded = OmegaConf.load(Path(path))
     if not isinstance(loaded, DictConfig):
         raise TypeError("quality registry root must be a mapping")
@@ -133,7 +153,15 @@ def get_quality_variant(
     variant_id: str,
     path: str | Path = DEFAULT_QUALITY_REGISTRY,
 ) -> tuple[str, DictConfig]:
-    """Return the owning stage and dot-key overrides for one registered variant."""
+    """Return the owning stage and dot-key overrides for one registered variant.
+
+    Args:
+        variant_id: Text or path value identifying the variant id.
+        path: Path to the input file or directory.
+
+    Returns:
+        Values returned by ``get_quality_variant``, in the declared order.
+    """
     registry = load_quality_registry(path)
     for stage in registry.stages:
         for variant in stage.variants:
@@ -146,7 +174,14 @@ def get_quality_variant(
 
 
 def quality_variant_metadata(variant_id: str) -> dict[str, str | None]:
-    """Return stage, direct parent, and status for provenance records."""
+    """Return stage, direct parent, and status for provenance records.
+
+    Args:
+        variant_id: Text or path value identifying the variant id.
+
+    Returns:
+        Mapping from ``str`` keys to ``str | None`` values.
+    """
     registry = load_quality_registry()
     for stage in registry.stages:
         for variant in stage.variants:
@@ -162,7 +197,14 @@ def quality_variant_metadata(variant_id: str) -> dict[str, str | None]:
 
 
 def quality_variant_resource_contract(variant_id: str) -> dict[str, bool | int]:
-    """Return validated runtime resource constraints for a quality variant."""
+    """Return validated runtime resource constraints for a quality variant.
+
+    Args:
+        variant_id: Text or path value identifying the variant id.
+
+    Returns:
+        Whether quality variant resource contract meets the requested condition.
+    """
     registry = load_quality_registry()
     for stage in registry.stages:
         for variant in stage.variants:
@@ -182,7 +224,14 @@ def validate_quality_resource_shape(
     effective_n_envs: int,
     aggregate_rollout_steps: int,
 ) -> None:
-    """Fail closed when resource scaling or CLI overrides change a Q2 arm."""
+    """Fail closed when resource scaling or CLI overrides change a Q2 arm.
+
+    Args:
+        variant_id: Text or path value identifying the variant id.
+        requested_n_envs: Numeric value used for the requested n envs.
+        effective_n_envs: Numeric value used for the effective n envs.
+        aggregate_rollout_steps: Number specifying the aggregate rollout steps for this operation.
+    """
     contract = quality_variant_resource_contract(variant_id)
     expected_n_envs = contract.get("expected_n_envs")
     if contract.get("exact_n_envs", False):
@@ -206,7 +255,15 @@ def validate_quality_resource_shape(
 
 
 def apply_quality_variant(cfg: DictConfig, variant_id: str) -> DictConfig:
-    """Apply a complete resolved parent lineage, refusing an unselected winner."""
+    """Apply a complete resolved parent lineage, refusing an unselected winner.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        variant_id: Text or path value identifying the variant id.
+
+    Returns:
+        Result of apply a complete resolved parent lineage, refusing an unselected winner.
+    """
     registry = load_quality_registry()
     variants = {str(variant.id): variant for stage in registry.stages for variant in stage.variants}
     if variant_id not in variants:

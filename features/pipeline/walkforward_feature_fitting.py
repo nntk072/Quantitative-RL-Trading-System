@@ -24,6 +24,18 @@ def build_walkforward_fold_features(
     Keep all historical bars through the fold's validation end as indicator
     context, but fit normalization only on the fold's train indices. Later
     folds and the locked evaluation period cannot influence this fitted state.
+
+    Args:
+        primary: Tabular data used for the primary.
+        secondary: Tabular data used for the secondary.
+        cfg: Run configuration used by this operation.
+        fold_train_bars: Market bar or price data used for refit normalization on one fold with causal warm-up bars.
+        fold_validation_bars: Market bar or price data used for refit normalization on one fold with causal warm-up bars.
+        cache_dir: Directory used to store or read cached data.
+        symbol: Text or path value identifying the symbol.
+
+    Returns:
+        DataFrame returned by ``build_walkforward_fold_features``.
     """
     if (
         primary.empty

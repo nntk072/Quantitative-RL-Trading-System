@@ -11,7 +11,14 @@ from configuration.paths import repository_root
 
 
 def scheduled_session_close_map(cfg: DictConfig | None) -> dict[str, str]:
-    """Load date-specific NY close times from the resolved data configuration."""
+    """Load date-specific NY close times from the resolved data configuration.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     if cfg is None:
         return {}
     schedule_value = OmegaConf.select(cfg, "data.session_schedule_file")

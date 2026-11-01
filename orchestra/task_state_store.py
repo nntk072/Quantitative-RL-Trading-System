@@ -30,7 +30,11 @@ class Phase(StrEnum):
     PARKED = "parked"
 
     def next(self) -> Phase:
-        """Get the next phase in the pipeline."""
+        """Get the next phase in the pipeline.
+
+        Returns:
+            Result of get the next phase in the pipeline.
+        """
         members = list(Phase)
         idx = members.index(self)
         if idx < len(members) - 1:
@@ -39,11 +43,23 @@ class Phase(StrEnum):
 
     @classmethod
     def runnable(cls) -> tuple[Phase, ...]:
+        """Return phases that execute work rather than representing terminal state.
+
+        Returns:
+            Values returned by ``runnable``, in the declared order.
+        """
         return tuple(p for p in cls if p not in (cls.PENDING, cls.DONE, cls.FAILED, cls.PARKED))
 
     @classmethod
     def parse(cls, raw: str) -> Phase:
-        """Parse a phase name, alias, or step number (``2`` / ``planning``)."""
+        """Parse a phase name, alias, or step number (``2`` / ``planning``).
+
+        Args:
+            raw: Text or path value identifying the raw.
+
+        Returns:
+            Result of parse a phase name, alias, or step number (``2`` / ``planning``).
+        """
         key = raw.strip().lower()
         key = key.replace("[", "").replace("]", "").replace("/10", "").replace("/9", "")
         key = key.replace(" ", "_").replace("-", "_")
@@ -103,6 +119,14 @@ class TaskState:
         state_dir: Path,
         data: dict[str, Any] | None = None,
     ):
+        """Initialize TaskState and its owned state.
+
+        Args:
+            task_id: Text or path value identifying the task id.
+            task_description: Text or path value identifying the task description.
+            state_dir: Text or path value identifying the state dir.
+            data: Input data to process.
+        """
         self.task_id = task_id
         self.task_description = task_description
         self.state_dir = state_dir
@@ -112,6 +136,11 @@ class TaskState:
             self.data["task_description"] = task_description
 
     def _default_data(self) -> dict[str, Any]:
+        """Process data.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         return {
             "schema_version": 2,
             "task_id": self.task_id,
@@ -157,7 +186,15 @@ class TaskState:
 
     @classmethod
     def load(cls, task_id: str, state_dir: Path) -> TaskState:
-        """Load state from disk."""
+        """Load state from disk.
+
+        Args:
+            task_id: Text or path value identifying the task id.
+            state_dir: Text or path value identifying the state dir.
+
+        Returns:
+            Result of load state from disk.
+        """
         state_file = state_dir / f"{task_id}.json"
         if not state_file.exists():
             raise FileNotFoundError(f"No state for task {task_id}")
@@ -183,13 +220,27 @@ class TaskState:
 
     @property
     def phase(self) -> Phase:
+        """Return the current persisted pipeline phase as an enum value.
+
+        Returns:
+            Result of return the current persisted pipeline phase as an enum value.
+        """
         return Phase(self.data["phase"])
 
     def is_parked(self) -> bool:
+        """Return whether the task is paused pending an external decision.
+
+        Returns:
+            Whether is parked meets the requested condition.
+        """
         return self.data.get("phase") == Phase.PARKED.value
 
     def set_phase(self, phase: Phase) -> None:
-        """Transition to a new phase."""
+        """Transition to a new phase.
+
+        Args:
+            phase: Phase used by the operation described above.
+        """
         current = Phase(self.data["phase"])
         if phase is Phase.FAILED and current in Phase.runnable():
             self.data["failed_at"] = current.value
@@ -197,7 +248,13 @@ class TaskState:
         self.save()
 
     def add_planner_output(self, model: str, output: str, session: str) -> None:
-        """Record a planner's output."""
+        """Record a planner's output.
+
+        Args:
+            model: Model used for this operation.
+            output: Output value produced by the preceding operation.
+            session: Session identifier used by the operation.
+        """
         self.data["planner_outputs"].append(
             {
                 "model": model,
@@ -210,7 +267,13 @@ class TaskState:
         self.save()
 
     def add_critic_output(self, model: str, output: str, session: str) -> None:
-        """Record a critic's output."""
+        """Record a critic's output.
+
+        Args:
+            model: Model used for this operation.
+            output: Output value produced by the preceding operation.
+            session: Session identifier used by the operation.
+        """
         self.data["critic_outputs"].append(
             {
                 "model": model,
@@ -222,7 +285,13 @@ class TaskState:
         self.save()
 
     def add_reviewer_output(self, model: str, output: str, session: str) -> None:
-        """Record a reviewer's output."""
+        """Record a reviewer's output.
+
+        Args:
+            model: Model used for this operation.
+            output: Output value produced by the preceding operation.
+            session: Session identifier used by the operation.
+        """
         self.data["review_outputs"].append(
             {
                 "model": model,
@@ -240,7 +309,14 @@ class TaskState:
         complexity: str,
         tier: str | None = None,
     ) -> None:
-        """Store triage results."""
+        """Store triage results.
+
+        Args:
+            output: Output value produced by the preceding operation.
+            model: Model used for this operation.
+            complexity: Text or path value identifying the complexity.
+            tier: Tier used by the operation described above.
+        """
         self.data["triage_output"] = output
         self.data["triage_model"] = model
         self.data["complexity"] = complexity
@@ -249,7 +325,11 @@ class TaskState:
         self.save()
 
     def park(self, reason: str) -> None:
-        """Park task until models become available."""
+        """Park task until models become available.
+
+        Args:
+            reason: Text or path value identifying the reason.
+        """
         if self.phase in Phase.runnable():
             self.data["parked_at"] = self.data["phase"]
         self.data["park_reason"] = reason
@@ -257,28 +337,49 @@ class TaskState:
         self.save()
 
     def set_synthesis(self, output: str, model: str) -> None:
-        """Store synthesis results."""
+        """Store synthesis results.
+
+        Args:
+            output: Output value produced by the preceding operation.
+            model: Model used for this operation.
+        """
         self.data["synthesis_output"] = output
         self.data["synthesis_model"] = model
         self.data["final_plan"] = output
         self.save()
 
     def set_implementation(self, output: str, model: str) -> None:
-        """Store implementation results."""
+        """Store implementation results.
+
+        Args:
+            output: Output value produced by the preceding operation.
+            model: Model used for this operation.
+        """
         self.data["implementer_output"] = output
         self.data["implementer_model"] = model
         self.data["implementation_succeeded"] = True
         self.save()
 
     def set_review_synthesis(self, output: str, model: str, verdict: str) -> None:
-        """Store review synthesis results."""
+        """Store review synthesis results.
+
+        Args:
+            output: Output value produced by the preceding operation.
+            model: Model used for this operation.
+            verdict: Text or path value identifying the verdict.
+        """
         self.data["review_synthesis_output"] = output
         self.data["review_synthesis_model"] = model
         self.data["review_verdict"] = verdict
         self.save()
 
     def add_fix_output(self, output: str, model: str) -> None:
-        """Record a fix iteration output."""
+        """Record a fix iteration output.
+
+        Args:
+            output: Output value produced by the preceding operation.
+            model: Model used for this operation.
+        """
         self.data["fix_outputs"].append(
             {
                 "model": model,
@@ -293,7 +394,14 @@ class TaskState:
     def record_performance(
         self, model: str, role: str, success: bool, tokens_used: int = 0
     ) -> None:
-        """Record model performance for a role."""
+        """Record model performance for a role.
+
+        Args:
+            model: Model used for this operation.
+            role: Text or path value identifying the role.
+            success: Whether to enable or require the success.
+            tokens_used: Numeric value used for the tokens used.
+        """
         perf = self.data.setdefault("performance", {})
         if model not in perf:
             perf[model] = {"roles": {}, "total_calls": 0, "successes": 0}
@@ -309,12 +417,20 @@ class TaskState:
         self.save()
 
     def set_verification(self, result: dict[str, Any]) -> None:
-        """Store verification results."""
+        """Store verification results.
+
+        Args:
+            result: Key-value data used for the result.
+        """
         self.data["verification_result"] = result
         self.save()
 
     def add_error(self, error: str) -> None:
-        """Record an error."""
+        """Record an error.
+
+        Args:
+            error: Text or path value identifying the error.
+        """
         self.data["errors"].append(
             {
                 "error": error,
@@ -325,7 +441,11 @@ class TaskState:
         self.save()
 
     def get_planner_outputs_text(self) -> str:
-        """Get all planner outputs as a single formatted text block."""
+        """Get all planner outputs as a single formatted text block.
+
+        Returns:
+            Text returned by ``get_planner_outputs_text``.
+        """
         if not self.data["planner_outputs"]:
             return "No plans generated."
         parts = []
@@ -334,7 +454,11 @@ class TaskState:
         return "\n\n".join(parts)
 
     def get_review_outputs_text(self) -> str:
-        """Get all review outputs as a single formatted text block."""
+        """Get all review outputs as a single formatted text block.
+
+        Returns:
+            Text returned by ``get_review_outputs_text``.
+        """
         if not self.data["review_outputs"]:
             return "No reviews generated."
         parts = []
@@ -343,7 +467,11 @@ class TaskState:
         return "\n\n".join(parts)
 
     def get_critic_outputs_text(self) -> str:
-        """Get all critic outputs as a single formatted text block."""
+        """Get all critic outputs as a single formatted text block.
+
+        Returns:
+            Text returned by ``get_critic_outputs_text``.
+        """
         if not self.data["critic_outputs"]:
             return "No critiques generated."
         parts = []
@@ -353,7 +481,14 @@ class TaskState:
 
 
 def list_tasks(state_dir: Path) -> list[dict[str, Any]]:
-    """List all tasks in the state directory."""
+    """List all tasks in the state directory.
+
+    Args:
+        state_dir: Text or path value identifying the state dir.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     if not state_dir.exists():
         return []
     tasks = []
@@ -374,5 +509,9 @@ def list_tasks(state_dir: Path) -> list[dict[str, Any]]:
 
 
 def generate_task_id() -> str:
-    """Generate a unique task ID."""
+    """Generate a unique task ID.
+
+    Returns:
+        Text returned by ``generate_task_id``.
+    """
     return f"task-{int(time.time())}"

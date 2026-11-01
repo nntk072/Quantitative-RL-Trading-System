@@ -13,7 +13,15 @@ from features.technical.indicators import rsi as _rsi
 
 
 def _sma(series: pd.Series, period: int) -> pd.Series:
-    """Simple moving average."""
+    """Simple moving average.
+
+    Args:
+        series: Tabular data used for the series.
+        period: Numeric value used for the period.
+
+    Returns:
+        Result of simple moving average.
+    """
     return series.rolling(window=period).mean()
 
 
@@ -27,6 +35,16 @@ def ema_crossover(
     """EMA crossover with ATR-based stop logic (positional, bar-by-bar).
 
     Returns a signal Series aligned to bars.index.
+
+    Args:
+        bars: Market bars to process.
+        fast: Numeric value used for the fast.
+        slow: Numeric value used for the slow.
+        atr_period: Numeric value used for the atr period.
+        atr_stop_mult: Numeric value used for the atr stop mult.
+
+    Returns:
+        Result of eMA crossover with ATR-based stop logic (positional, bar-by-bar).
     """
     close = bars["close"]
     fast_e = ema(close, fast)
@@ -43,7 +61,14 @@ def ema_crossover(
 
 
 def macd_baseline(bars: pd.DataFrame) -> pd.Series:
-    """MACD histogram sign → signal."""
+    """MACD histogram sign → signal.
+
+    Args:
+        bars: Market bars to process.
+
+    Returns:
+        Result of mACD histogram sign → signal.
+    """
     m = _macd(bars["close"])
     signal = pd.Series(0, index=bars.index, dtype=int)
     signal[m["macd_hist"] > 0] = 1
@@ -75,6 +100,17 @@ def macd_ema50_baseline(
     - -1: short entry event (bar the position is opened)
     - 0: hold current position, or flat with no signal
     - 2: explicit exit event (bar the position is closed, go flat)
+
+    Args:
+        bars: Market bars to process.
+        fast: Numeric value used for the fast.
+        slow: Numeric value used for the slow.
+        signal_period: Numeric value used for the signal period.
+        ema50_period: Numeric value used for the ema50 period.
+        cooldown_bars: Market bar or price data used for mACD+EMA50 baseline with cross-only entry/exit and 5-bar cooldown.
+
+    Returns:
+        Result of mACD+EMA50 baseline with cross-only entry/exit and 5-bar cooldown.
     """
     close = bars["close"]
 
@@ -147,7 +183,18 @@ def rsi_mean_reversion(
     overbought: float = 70.0,
     atr_period: int = 14,
 ) -> pd.Series:
-    """RSI mean-reversion: buy oversold, sell overbought, exit at 50."""
+    """RSI mean-reversion: buy oversold, sell overbought, exit at 50.
+
+    Args:
+        bars: Market bars to process.
+        period: Numeric value used for the period.
+        oversold: Numeric value used for the oversold.
+        overbought: Numeric value used for the overbought.
+        atr_period: Numeric value used for the atr period.
+
+    Returns:
+        Result of rSI mean-reversion: buy oversold, sell overbought, exit at 50.
+    """
     rsi_s = _rsi(bars["close"], period)
     signal = pd.Series(0, index=bars.index, dtype=int)
     signal[rsi_s < oversold] = 1

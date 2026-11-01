@@ -106,7 +106,7 @@ while true; do
     --gpus-per-node=gh200:1 \
     --mem=512G \
     --time=06:00:00 \
-    --job-name=thesis18new \
+    --job-name=qrl18new \
     --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC",EXPERIMENT_RUN_ID="$EXPERIMENT_RUN_ID" \
     --chdir="$REPO" \
     /bin/bash -c '
@@ -115,7 +115,7 @@ while true; do
       printf "allocation shell host=%s bash=%s script=%s\\n" "$(hostname -s)" "$BASH_VERSION" "$allocation_script"
       /bin/bash -n "$allocation_script"
       exec /bin/bash "$allocation_script"
-    ' thesis-allocation "$REPO/scripts/compute/slurm/experiment_runs/run_replacement_experiment_run_allocation.sh"
+    ' qrl-allocation "$REPO/scripts/compute/slurm/experiment_runs/run_replacement_experiment_run_allocation.sh"
   request_status=$?
   set -e
   echo "$(date --iso-8601=seconds) allocation returned exit=$request_status"

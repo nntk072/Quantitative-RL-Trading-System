@@ -14,11 +14,28 @@ from .sessions import SessionManager
 
 
 def _preview_cmd(cmd: list[str], prompt: str) -> str:
+    """Process cmd.
+
+    Args:
+        cmd: Items supplied for the cmd, in input order.
+        prompt: Prompt submitted to the selected model.
+
+    Returns:
+        Text returned by ``_preview_cmd``.
+    """
     shown = ["<prompt>" if a == prompt else a for a in cmd]
     return "[orchestra] exec " + " ".join(shown)
 
 
 def _exit_from_waitstatus(status: int) -> int:
+    """Process from waitstatus.
+
+    Args:
+        status: Numeric value used for the status.
+
+    Returns:
+        Numeric result returned by ``_exit_from_waitstatus``.
+    """
     if os.WIFEXITED(status):
         return os.WEXITSTATUS(status)
     if os.WIFSIGNALED(status):
@@ -27,7 +44,16 @@ def _exit_from_waitstatus(status: int) -> int:
 
 
 def _run_with_pty(cmd: list[str], log_file: Path, cwd: str | None) -> int:
-    """Run ``cmd`` in a PTY so TUI CLIs still write output, tee'd to the log."""
+    """Run ``cmd`` in a PTY so TUI CLIs still write output, tee'd to the log.
+
+    Args:
+        cmd: Items supplied for the cmd, in input order.
+        log_file: Path or filename identifying the log.
+        cwd: Cwd used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_run_with_pty``.
+    """
     prev = os.getcwd()
     try:
         if cwd:
@@ -35,6 +61,14 @@ def _run_with_pty(cmd: list[str], log_file: Path, cwd: str | None) -> int:
         with log_file.open("ab") as log:
 
             def reader(fd: int) -> bytes:
+                """Copy PTY output into the log while returning it to the terminal.
+
+                Args:
+                    fd: Numeric value used for the fd.
+
+                Returns:
+                    Text returned by ``reader``.
+                """
                 data = os.read(fd, 4096)
                 log.write(data)
                 log.flush()
@@ -47,7 +81,14 @@ def _run_with_pty(cmd: list[str], log_file: Path, cwd: str | None) -> int:
 
 
 def run_job(job_path: Path) -> int:
-    """Run one agent job. Writes log + exit-code files. Returns the exit code."""
+    """Run one agent job. Writes log + exit-code files. Returns the exit code.
+
+    Args:
+        job_path: Path or filename identifying the job.
+
+    Returns:
+        Numeric result returned by ``run_job``.
+    """
     job = json.loads(job_path.read_text())
     model = Model(**job["model"])
     prompt = Path(job["prompt_file"]).read_text()
@@ -98,6 +139,7 @@ def run_job(job_path: Path) -> int:
 
 
 def main() -> None:
+    """Run the agent job described by the sole command-line path argument."""
     if len(sys.argv) != 2:
         sys.stderr.write("usage: python -m orchestra.agent_runner JOB.json\n")
         sys.exit(2)

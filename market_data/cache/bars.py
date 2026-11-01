@@ -21,17 +21,41 @@ BAR_CACHE_TRANSFORM_ID = "bar-cleaning-session-labels-v1"
 
 
 def bar_cache_path(cache_dir: str | Path, symbol: str, timeframe: str, cache_version: str) -> Path:
-    """Build the canonical bar-cache path from its semantic cache version."""
+    """Build the canonical bar-cache path from its semantic cache version.
+
+    Args:
+        cache_dir: Directory used to store or read cached data.
+        symbol: Text or path value identifying the symbol.
+        timeframe: Text or path value identifying the timeframe.
+        cache_version: Text or path value identifying the cache version.
+
+    Returns:
+        Path returned by ``bar_cache_path``.
+    """
     return Path(cache_dir) / f"{symbol}_{timeframe}_{cache_version}.parquet"
 
 
 def bar_cache_manifest_path(cache_path: str | Path) -> Path:
-    """Return the completion manifest path associated with a bar parquet."""
+    """Return the completion manifest path associated with a bar parquet.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+
+    Returns:
+        Path returned by ``bar_cache_manifest_path``.
+    """
     return parquet_cache_manifest_path(cache_path)
 
 
 def bar_cache_is_complete(cache_path: str | Path) -> bool:
-    """Check for a non-empty parquet and structurally valid completion manifest."""
+    """Check for a non-empty parquet and structurally valid completion manifest.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+
+    Returns:
+        Whether bar cache is complete meets the requested condition.
+    """
     if not parquet_cache_is_complete(cache_path):
         return False
     manifest = json.loads(bar_cache_manifest_path(cache_path).read_text(encoding="utf-8"))
@@ -53,7 +77,21 @@ def build_bar_cache_identity(
     timestamp_convention: str,
     price_grid_identity: str | None,
 ) -> dict[str, Any]:
-    """Describe every source and configuration input that changes cached bars."""
+    """Describe every source and configuration input that changes cached bars.
+
+    Args:
+        dataset_id: Text or path value identifying the dataset id.
+        symbol: Text or path value identifying the symbol.
+        timeframe: Text or path value identifying the timeframe.
+        source_identity: Text or path value identifying the source identity.
+        timezone: Text or path value identifying the timezone.
+        ny_session_end: Text or path value identifying the ny session end.
+        timestamp_convention: Text or path value identifying the timestamp convention.
+        price_grid_identity: Price grid identity used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     transform_config = {
         "dataset_id": dataset_id,
         "symbol": symbol,
@@ -80,7 +118,15 @@ def build_bar_cache_identity(
 def load_bar_cache(
     cache_path: str | Path, expected_identity: dict[str, Any]
 ) -> pd.DataFrame | None:
-    """Load a complete cache only when its semantic identity and shape match."""
+    """Load a complete cache only when its semantic identity and shape match.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+        expected_identity: Key-value data used for the expected identity.
+
+    Returns:
+        DataFrame returned by ``load_bar_cache``.
+    """
     return load_parquet_cache(cache_path, expected_identity, unique_order=True)
 
 
@@ -89,7 +135,16 @@ def write_bar_cache(
     frame: pd.DataFrame,
     identity: dict[str, Any],
 ) -> Path:
-    """Atomically publish a parquet cache, then its completion manifest."""
+    """Atomically publish a parquet cache, then its completion manifest.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+        frame: Input data frame to process.
+        identity: Key-value data used for the identity.
+
+    Returns:
+        Path returned by ``write_bar_cache``.
+    """
     if frame.empty:
         raise ValueError("cannot publish an empty bar cache")
     return write_parquet_cache(cache_path, frame, identity)

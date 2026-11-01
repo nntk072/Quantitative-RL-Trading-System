@@ -24,7 +24,18 @@ def latest_resumable_checkpoint(
     fingerprint: str,
     max_steps: int | None = None,
 ) -> pathlib.Path | None:
-    """Return the newest intact PPO checkpoint from a verified interrupted attempt."""
+    """Return the newest intact PPO checkpoint from a verified interrupted attempt.
+
+    Args:
+        experiment_run_out: Text or path value identifying the experiment run out.
+        key: Text or path value identifying the key.
+        previous_attempt: Numeric value used for the previous attempt.
+        fingerprint: Text or path value identifying the fingerprint.
+        max_steps: Number specifying the max steps for this operation.
+
+    Returns:
+        Path returned by ``latest_resumable_checkpoint``.
+    """
     attempt_out = ExperimentRunArtifactLayout(experiment_run_out).attempt(key, previous_attempt)
     try:
         provenance = json.loads(
@@ -63,7 +74,16 @@ def latest_resumable_checkpoint(
 def validate_initial_checkpoints(
     map_path: pathlib.Path | None, jobs: list[dict[str, Any]], target_steps: int
 ) -> dict[str, dict[str, Any]]:
-    """Validate explicit parent-experiment-run checkpoints for a new lineage experiment run."""
+    """Validate explicit parent-experiment-run checkpoints for a new lineage experiment run.
+
+    Args:
+        map_path: Path or filename identifying the map.
+        jobs: Items supplied for the jobs, in input order.
+        target_steps: Number specifying the target steps for this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, Any]`` values.
+    """
     if map_path is None:
         return {}
     raw = json.loads(map_path.read_text(encoding="utf-8"))
@@ -203,7 +223,16 @@ def build_initial_checkpoint_map(
     required_keys: set[str],
     target_steps: int,
 ) -> dict[str, Any]:
-    """Build an explicit, checksummed parent-lineage map for incomplete runs."""
+    """Build an explicit, checksummed parent-lineage map for incomplete runs.
+
+    Args:
+        source_experiment_run_dirs: Items supplied for the source experiment run dirs, in input order.
+        required_keys: Required keys used by the operation described above.
+        target_steps: Number specifying the target steps for this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     records: dict[str, dict[str, Any]] = {}
     for source_dir_raw in source_experiment_run_dirs:
         source_dir = source_dir_raw.resolve()
@@ -287,7 +316,15 @@ def build_initial_checkpoint_map(
 def archive_initial_checkpoints(
     experiment_run_out: pathlib.Path, checkpoints: dict[str, dict[str, Any]]
 ) -> dict[str, pathlib.Path]:
-    """Copy validated bootstrap checkpoints into the successor experiment run."""
+    """Copy validated bootstrap checkpoints into the successor experiment run.
+
+    Args:
+        experiment_run_out: Text or path value identifying the experiment run out.
+        checkpoints: Key-value data used for the checkpoints.
+
+    Returns:
+        Mapping from ``str`` keys to ``pathlib.Path`` values.
+    """
     archived: dict[str, pathlib.Path] = {}
     for key, checkpoint in checkpoints.items():
         destination = ExperimentRunArtifactLayout(experiment_run_out).bootstrap_checkpoint(key)
@@ -312,7 +349,18 @@ def choose_resume_checkpoint(
     fingerprint: str,
     archived_bootstrap: dict[str, pathlib.Path],
 ) -> tuple[pathlib.Path | None, str | None]:
-    """Prefer this experiment run's latest checkpoint, else its verified parent input."""
+    """Prefer this experiment run's latest checkpoint, else its verified parent input.
+
+    Args:
+        experiment_run_out: Text or path value identifying the experiment run out.
+        key: Text or path value identifying the key.
+        previous_attempt: Previous attempt used by the operation described above.
+        fingerprint: Text or path value identifying the fingerprint.
+        archived_bootstrap: Key-value data used for the archived bootstrap.
+
+    Returns:
+        Path returned by ``choose_resume_checkpoint``.
+    """
     if previous_attempt is not None:
         checkpoint = latest_resumable_checkpoint(
             experiment_run_out, key, previous_attempt, fingerprint
@@ -328,7 +376,15 @@ def choose_resume_checkpoint(
 def verify_initial_checkpoint_models(
     archived: dict[str, pathlib.Path], lineage: dict[str, dict[str, Any]]
 ) -> dict[str, int]:
-    """Deserialize migrated PPO checkpoints on CPU and check saved step counts."""
+    """Deserialize migrated PPO checkpoints on CPU and check saved step counts.
+
+    Args:
+        archived: Key-value data used for the archived.
+        lineage: Key-value data used for the lineage.
+
+    Returns:
+        Mapping from ``str`` keys to ``int`` values.
+    """
     import gc
 
     root_path = str(ROOT)

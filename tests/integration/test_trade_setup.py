@@ -62,7 +62,7 @@ def test_trade_setup_ids_and_box_centers_round_trip_exactly() -> None:
             )
 
 
-def test_trade_setup_action_schema_is_separate_from_legacy_overlay() -> None:
+def test_trade_setup_action_schema_uses_canonical_coordinate_order() -> None:
     schema = build_trade_setup_action_schema(
         has_sl_mode=True,
         has_tp_mode=True,
@@ -71,7 +71,6 @@ def test_trade_setup_action_schema_is_separate_from_legacy_overlay() -> None:
     )
     assert schema.version == "trade-setup-overlay-action-v1"
     assert "trade_setup" in schema.names
-    assert "thesis" not in schema.names
     assert schema.names == (
         "trade_setup",
         "stop",

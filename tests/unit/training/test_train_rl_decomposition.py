@@ -16,7 +16,12 @@ import pytest
 import torch
 
 from evaluation.metrics import PerformanceMetrics
-from training.artifacts import action_space_width, build_training_log, write_evaluation_artifacts
+from training.artifacts import (
+    action_space_width,
+    build_training_log,
+    sequence_feature_schema_manifest,
+    write_evaluation_artifacts,
+)
 from training.callbacks.activity import assess_train_activity
 from training.configuration.cli import load_merged_config, parse_train_args
 from training.runner.reporting_runtime import finalize_training_run
@@ -24,6 +29,13 @@ from training.runner.seed import _setup_rngs
 from training.runner.seed_runtime import SeedRunner
 from training.setup.environments import _training_episodic, cost_model
 from training.setup.model_state import _initialize_value_head
+
+
+def test_sequence_feature_schema_manifest_preserves_column_order() -> None:
+    manifest = sequence_feature_schema_manifest(SimpleNamespace(_obs_columns=("close", "volume")))
+
+    assert manifest["columns"] == ["close", "volume"]
+    assert manifest["width"] == 2
 
 
 def test_training_episode_mode_defaults_to_full_split() -> None:

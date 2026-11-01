@@ -45,11 +45,11 @@ def test_exact_environment_config_preserves_resolved_ppo_geometry(monkeypatch) -
     )
 
     for config_path in (
-        "config/research/thesis_mtf_reasoning_2m.yaml",
-        "config/research/thesis_mtf_reasoning_conditioned_2m.yaml",
-        "config/research/thesis_mtf_shared_tcn_2m.yaml",
-        "config/research/thesis_mtf_m1_htf_lite_2m.yaml",
-        "config/research/thesis_mtf_m1_htf_snapshot_2m.yaml",
+        "config/research/trade_setup_mtf_reasoning_2m.yaml",
+        "config/research/trade_setup_mtf_reasoning_conditioned_2m.yaml",
+        "config/research/trade_setup_mtf_shared_tcn_2m.yaml",
+        "config/research/trade_setup_mtf_m1_htf_lite_2m.yaml",
+        "config/research/trade_setup_mtf_m1_htf_snapshot_2m.yaml",
     ):
         config = load_config(config_path=config_path)
         monkeypatch.setattr(configuration_stage, "load_merged_config", lambda _: config)
@@ -67,15 +67,19 @@ def test_exact_environment_config_preserves_resolved_ppo_geometry(monkeypatch) -
 
 
 def test_efg_resolved_configs_match_variant_d_outside_encoder_identity() -> None:
-    baseline = load_config(config_path="config/research/thesis_mtf_reasoning_conditioned_2m.yaml")
+    baseline = load_config(
+        config_path="config/research/trade_setup_mtf_reasoning_conditioned_2m.yaml"
+    )
     baseline_fields = OmegaConf.to_container(baseline, resolve=True)
     assert isinstance(baseline_fields, dict)
     baseline_fields["agent"].pop("arch")
 
     configs = {
-        "mtf_shared_tcn_reasoning": "config/research/thesis_mtf_shared_tcn_2m.yaml",
-        "mtf_m1_tcn_htf_lite_reasoning": "config/research/thesis_mtf_m1_htf_lite_2m.yaml",
-        "mtf_m1_tcn_htf_snapshot_reasoning": ("config/research/thesis_mtf_m1_htf_snapshot_2m.yaml"),
+        "mtf_shared_tcn_reasoning": "config/research/trade_setup_mtf_shared_tcn_2m.yaml",
+        "mtf_m1_tcn_htf_lite_reasoning": "config/research/trade_setup_mtf_m1_htf_lite_2m.yaml",
+        "mtf_m1_tcn_htf_snapshot_reasoning": (
+            "config/research/trade_setup_mtf_m1_htf_snapshot_2m.yaml"
+        ),
     }
     for expected_arch, config_path in configs.items():
         resolved = load_config(config_path=config_path)

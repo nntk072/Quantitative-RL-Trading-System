@@ -1,0 +1,20 @@
+# Conditioned execution with strategy-state features disabled.
+# This opt-in profile preserves the prior feature set and action schema.
+env:
+  strategy_actions: true
+  trade_setup_actions: true
+  agent_direction_control: false
+
+features:
+  entry_ideas:
+    enabled: true
+
+agent:
+  arch: mtf_reasoning
+
+ppo:
+  policy_distribution: trade_setup_conditioned_v1
+  actor_arch: shared
+  trade_setup_conditioned:
+    embedding_dim: 32
+    execution_hidden_dim: 128

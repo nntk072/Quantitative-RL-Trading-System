@@ -44,7 +44,16 @@ def _install_pre_reorganization_checkpoint_modules() -> None:
 def load_sb3_checkpoint(
     path: Path, *, legacy_layout_key: str | None = None, device: Any = "auto"
 ) -> Any:
-    """Load an SB3 checkpoint with only the explicitly selected legacy migration."""
+    """Load an SB3 checkpoint with only the explicitly selected legacy migration.
+
+    Args:
+        path: Path to the input file or directory.
+        legacy_layout_key: Legacy layout key used by the operation described above.
+        device: Compute device on which to perform the operation.
+
+    Returns:
+        Result of load an SB3 checkpoint with only the explicitly selected legacy migration.
+    """
     _install_pre_reorganization_checkpoint_modules()
     from learning.rl.ppo import LegacyClampedStdMultiInputPolicy
     from models.encoders import LegacyTCNEncoderV1, TCNEncoder
@@ -78,19 +87,39 @@ def load_sb3_checkpoint(
 
 
 def load_sb3_training_checkpoint(path: Path, *, env: Any, device: Any) -> Any:
-    """Resume an SB3 training checkpoint on the caller's prepared environment."""
+    """Resume an SB3 training checkpoint on the caller's prepared environment.
+
+    Args:
+        path: Path to the input file or directory.
+        env: Environment whose state is read or updated.
+        device: Compute device on which to perform the operation.
+
+    Returns:
+        Result of resume an SB3 training checkpoint on the caller's prepared environment.
+    """
     _install_pre_reorganization_checkpoint_modules()
     return PPO.load(path, env=env, device=device)
 
 
 def seed_sb3(seed: int) -> None:
-    """Seed Torch for reproducible stochastic SB3 inference."""
+    """Seed Torch for reproducible stochastic SB3 inference.
+
+    Args:
+        seed: Random seed used to make sampling reproducible.
+    """
     torch.manual_seed(seed)
 
 
 def validate_sb3_observation_schema(
     model: Any, expected_schema: Any, *, allow_legacy_v1: bool
 ) -> None:
+    """Validate and bind the expected observation schema on a loaded SB3 model.
+
+    Args:
+        model: Loaded policy or algorithm instance.
+        expected_schema: Required observation coordinate contract.
+        allow_legacy_v1: Permit the explicitly supported legacy schema migration.
+    """
     from learning.rl.agent import validate_model_observation_schema
 
     validate_model_observation_schema(model, expected_schema, allow_legacy_v1=allow_legacy_v1)
@@ -103,6 +132,17 @@ def validate_sb3_overlay_action_schema(
     allow_legacy: bool,
     legacy_layout_key: str | None,
 ) -> Any:
+    """Validate Box overlay metadata and adapt the supported legacy layout.
+
+    Args:
+        model: Loaded SB3 model to validate.
+        expected_schema: Current overlay-action schema required by the run.
+        allow_legacy: Permit an explicitly identified legacy checkpoint.
+        legacy_layout_key: Exact legacy layout to accept when migration is enabled.
+
+    Returns:
+        The original model or its compatibility adapter.
+    """
     from learning.rl.agent import LegacyFourToFiveActionAdapter, validate_model_action_schema
 
     if not isinstance(getattr(model, "action_space", None), spaces.Box):
@@ -126,6 +166,15 @@ def validate_sb3_discrete_action_schema(
     allow_legacy: bool,
     legacy_layout_key: str | None,
 ) -> None:
+    """Validate discrete action-space width and persisted category meanings.
+
+    Args:
+        model: Loaded SB3 model to validate.
+        expected_schema: Discrete action contract required by the run.
+        manifest_schema: Action contract recorded in the source run manifest.
+        allow_legacy: Permit the explicit legacy-checkpoint path.
+        legacy_layout_key: Exact legacy layout key required for that path.
+    """
     from learning.rl.agent import validate_model_discrete_action_schema
 
     if not isinstance(getattr(model, "action_space", None), spaces.Discrete):
@@ -140,10 +189,26 @@ def validate_sb3_discrete_action_schema(
 
 
 def is_sb3_box_model(model: Any) -> bool:
+    """Return whether a loaded SB3 model declares a Box action space.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Whether is sb3 box model meets the requested condition.
+    """
     return isinstance(getattr(model, "action_space", None), spaces.Box)
 
 
 def is_sb3_discrete_model(model: Any) -> bool:
+    """Return whether a loaded SB3 model declares a Discrete action space.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Whether is sb3 discrete model meets the requested condition.
+    """
     return isinstance(getattr(model, "action_space", None), spaces.Discrete)
 
 

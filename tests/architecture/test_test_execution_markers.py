@@ -60,7 +60,7 @@ def test_named_test_gates_exclude_other_execution_requirements() -> None:
         in dispatcher
     )
     assert "tests/unit" in dispatcher
-    assert 'pytest -q -m "integration and not slow" tests' in dispatcher
+    assert 'run_pytest_gate "integration and not slow" tests' in dispatcher
     assert 'pytest -q -m "research and not slow" tests' in dispatcher
     assert "integration and not slow" in dispatcher
     assert "research and not slow" in dispatcher

@@ -23,18 +23,31 @@ architecture description or a claim of future profitability.
 - [Training throughput](gh200_throughput_audit.md): measured rates, observed
   bottlenecks, and why speed alone does not justify longer training.
 
-The active experiment queue and its period-role decisions remain at the
-[project execution plan](../thesis/master_project_execution_plan.md) until its
-compatibility migration is complete. This section contains project-wide
-research methods and findings; historical run snapshots are evidence, not
-independent work queues.
+The active experiment queue and its period-role decisions are in the
+[research execution plan](../operations/research_execution_plan.md). This
+section contains research methods and findings; historical run snapshots are
+evidence, not independent work queues.
+
+## Methods and limitations
+
+- [Validation protocol](validation_protocol.md): data roles, selection rules,
+  causal inputs, and evidence requirements.
+- [Evaluation methodology](evaluation_methodology.md): model replay, event-driven
+  backtests, metrics, and reporting boundaries.
+- [Limitations](limitations.md): interpretation limits for historical
+  simulation and model comparisons.
+- [Finding card template](finding_card_template.md): a reusable structure for
+  recording a research question, evidence, claim boundary, and decision.
+
+Historical machine outputs and frozen report snapshots are indexed in the
+[research evidence archive](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/README.md).
 
 ## Supporting evidence
 
-- [Entry-idea opportunity counts](../../evidence/research/entry_idea_opportunity_counts/entry_idea_opportunity_counts.md): generated context-signal counts and CSV tables. These counts describe cached opportunities, not executed trades.
-- [Setup-conditioned replay evidence](../../evidence/research/setup_conditioned_reasoning_replay/README.md): preserved train/test exports for the replay discussed in the linked protocol and result note.
-- [Entry-idea feature previews](../../evidence/research/entry_idea_context_previews/README.md): H1 context plots, not performance evidence.
-- [Directional swing cache validation](../../evidence/research/directional_swing_cache_validation.json): machine validation record.
+- [Entry-idea opportunity counts](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/entry_idea_opportunity_counts/entry_idea_opportunity_counts.md): generated context-signal counts and CSV tables. These counts describe cached opportunities, not executed trades.
+- [Setup-conditioned replay evidence](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/setup_conditioned_reasoning_replay/README.md): preserved train/test exports for the replay discussed in the linked protocol and result note.
+- [Entry-idea feature previews](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/entry_idea_context_previews/README.md): H1 context plots, not performance evidence.
+- [Directional swing cache validation](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/directional_swing_cache_validation.json): machine validation record.
 
 ## How to read a result
 

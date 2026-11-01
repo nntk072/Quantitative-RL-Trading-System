@@ -11,7 +11,15 @@ from artifacts.atomic import write_text_atomic
 
 
 def write_config_snapshot(run_dir: str | Path, config: Any) -> Path:
-    """Write a resolved ``config.yaml`` once, rejecting identity rewrites."""
+    """Write a resolved ``config.yaml`` once, rejecting identity rewrites.
+
+    Args:
+        run_dir: Run dir used by the operation described above.
+        config: Configuration values used by this operation.
+
+    Returns:
+        Path returned by ``write_config_snapshot``.
+    """
     path = Path(run_dir) / "config.yaml"
     if not OmegaConf.is_config(config):
         config = OmegaConf.create(config)

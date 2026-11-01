@@ -12,10 +12,15 @@ from simulation.environment.market_view import FeatureRow
 
 def _empty_entry_diag(
     entry_state_machine: bool = False,
-    *,
-    legacy_thesis_contract: bool = False,
 ) -> dict[str, int]:
-    """Build per-episode rejection counters from one canonical definition."""
+    """Build per-episode rejection counters from one canonical definition.
+
+    Args:
+        entry_state_machine: Whether to enable or require the entry state machine.
+
+    Returns:
+        Mapping from ``str`` keys to ``int`` values.
+    """
     diagnostics = {
         "hold_low_intensity": 0,
         "hold_no_context": 0,
@@ -29,11 +34,7 @@ def _empty_entry_diag(
         "rejected_soft_brick": 0,
         "rejected_terminal": 0,
         "rejected_entry_pending": 0,
-        (
-            "rejected_thesis_inactive"
-            if legacy_thesis_contract
-            else "rejected_trade_setup_inactive"
-        ): 0,
+        "rejected_trade_setup_inactive": 0,
         "rejected_sl": 0,
         "rejected_rr": 0,
         "rejected_ema": 0,
@@ -63,7 +64,6 @@ _REJECTION_COUNTERS: dict[str, str] = {
     "sl_already_hit": "rejected_sl_already_hit",
     "terminal_no_fill_bar": "rejected_terminal",
     "entry_pending": "rejected_entry_pending",
-    "thesis_inactive": "rejected_thesis_inactive",
     "trade_setup_inactive": "rejected_trade_setup_inactive",
 }
 
@@ -71,7 +71,16 @@ _REJECTION_COUNTERS: dict[str, str] = {
 def _previous_session_audit(
     strategy: object, row: FeatureRow | pd.Series, decision_close: float
 ) -> dict[str, Any]:
-    """Return the previous-session reference used by the Idea 2 entry gate."""
+    """Return the previous-session reference used by the Idea 2 entry gate.
+
+    Args:
+        strategy: Strategy used to select or evaluate trades.
+        row: Row index or record being processed.
+        decision_close: Numeric value used for the decision close.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     if not bool(getattr(strategy, "previous_session_pd_gate", False)):
         return {}
     code = float(row.get("previous_session_code", np.nan))

@@ -1,21 +1,9 @@
-"""Single source of truth for ablation variants (config/experiments.yaml).
+"""Resolve experiment variants into explicit training settings and arguments.
 
-The launcher used to hard-code architecture, algorithm, feature profile and
-strategy, and passed ``--variant`` to ``train_rl`` so the variant was merged a
-second time with different semantics. This module resolves a variant once into
-the exact ``train_rl`` arguments and config overrides, and writes a manifest
-that records them.
-
-It is deliberately plain Python + PyYAML (no OmegaConf, no torch) so it can run
-in the launcher before the training environment is activated.
-
-This resolved representation is consumed by both experiment run launchers and the
-training CLI, so a variant has one merge/override contract:
-  * ladder flags -> ``env.<flag>``
-  * ``include_pd_context`` -> ``features.include_pd_context`` + structure enabled
-  * strategy (po3_ifvg / distribution) -> ``--strategy`` (train_rl merges the
-    strategy YAML); ``baseline`` -> ``strategy.name=baseline`` so that the
-    default ``po3_ifvg`` block in default.yaml cannot leak into a baseline rung.
+The resolver reads the experiment catalog, applies declared environment,
+feature, strategy, algorithm, architecture, and risk settings, then records the
+effective configuration used for a run. Launchers and the training CLI share
+this resolution path so variant names have one meaning.
 """
 
 from __future__ import annotations
@@ -35,7 +23,7 @@ from training.configuration.variant_risk_policy import variant_ftmo_overrides
 
 PROJECT_ROOT = repository_root(__file__)
 # Retained for the standalone tick-coverage audit only; training uses YAML values.
-THESIS_RANDOMIZED_FILL_LATENCY_MS = 30.0
+RANDOMIZED_FILL_LATENCY_MS = 30.0
 EXPERIMENTS_PATH = PROJECT_ROOT / "config" / "experiments.yaml"
 DEFAULT_BASE = "config/base/default.yaml"
 FULL_PO3_BASE = "config/features/full_po3_mtf.yaml"
@@ -90,6 +78,17 @@ class VariantError(ValueError):
 
 
 def load_experiments(path: Path | str | None = None) -> dict[str, Any]:
+    """Load and validate the experiment catalog YAML.
+
+    Args:
+        path: Optional catalog path; defaults to the repository catalog.
+
+    Returns:
+        Parsed catalog mapping containing the variant list.
+
+    Raises:
+        VariantError: If the parsed file does not contain a variant list.
+    """
     raw = yaml.safe_load(Path(path or EXPERIMENTS_PATH).read_text(encoding="utf-8"))
     if not isinstance(raw, dict) or not isinstance(raw.get("variants"), list):
         raise VariantError("experiments.yaml must contain a 'variants' list")
@@ -97,13 +96,28 @@ def load_experiments(path: Path | str | None = None) -> dict[str, Any]:
 
 
 def _fmt(value: Any) -> str:
+    """Process the requested value.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_fmt``.
+    """
     if isinstance(value, bool):
         return "true" if value else "false"
     return str(value)
 
 
 def _data_price_grid_overrides(variant: dict[str, Any]) -> list[str]:
-    """Emit data-only overrides for a discretized market-data experiment."""
+    """Emit data-only overrides for a discretized market-data experiment.
+
+    Args:
+        variant: Key-value data used for the variant.
+
+    Returns:
+        Values returned by ``_data_price_grid_overrides``, in the declared order.
+    """
     if "price_grid_increment" not in variant:
         return []
     increment = float(variant["price_grid_increment"])
@@ -129,7 +143,19 @@ def resolve_variant(
     vae_path: str | None = None,
     config_overrides: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Resolve one variant into a fully explicit, validated configuration."""
+    """Resolve one variant into a fully explicit, validated configuration.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+        experiments_path: Path or filename identifying the experiments.
+        steps: Number of environment or optimization steps to run.
+        seeds: Items supplied for the seeds, in input order.
+        vae_path: Path or filename identifying the vae.
+        config_overrides: Items supplied for the config overrides, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     exp = load_experiments(experiments_path)
     defaults = dict(exp.get("defaults") or {})
     matches = [v for v in exp["variants"] if str(v.get("name")) == name]
@@ -236,6 +262,13 @@ def train_args(resolved: dict[str, Any], seed: int) -> list[str]:
 
     ``--out`` is added by the launcher. Overrides come last because train_rl
     applies positional ``key=value`` overrides after every config merge.
+
+    Args:
+        resolved: Key-value data used for the resolved.
+        seed: Random seed used to make sampling reproducible.
+
+    Returns:
+        Values returned by ``train_args``, in the declared order.
     """
     args = [
         "--config",
@@ -257,7 +290,15 @@ def train_args(resolved: dict[str, Any], seed: int) -> list[str]:
 
 
 def consistency_table(names: list[str], **kwargs: Any) -> list[dict[str, Any]]:
-    """Per-variant summary of the settings that drive cross-variant comparisons."""
+    """Per-variant summary of the settings that drive cross-variant comparisons.
+
+    Args:
+        names: Items supplied for the names, in input order.
+        **kwargs: Kwargs used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     rows = []
     for name in names:
         kw = dict(kwargs)
@@ -285,6 +326,14 @@ def consistency_table(names: list[str], **kwargs: Any) -> list[dict[str, Any]]:
 
 
 def _main(argv: list[str] | None = None) -> int:
+    """Process the requested value.
+
+    Args:
+        argv: Items supplied for the argv, in input order.
+
+    Returns:
+        Numeric result returned by ``_main``.
+    """
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="cmd", required=True)
     for cmd in ("meta", "args", "manifest", "table"):

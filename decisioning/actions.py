@@ -22,15 +22,28 @@ class DiscreteActionSchema:
 
     @property
     def width(self) -> int:
-        """Number of categorical choices in the discrete action space."""
+        """Number of categorical choices in the discrete action space.
+
+        Returns:
+            Numeric result returned by ``width``.
+        """
         return len(self.names)
 
     @property
     def key(self) -> str:
+        """Return the stable key for this categorical action menu.
+
+        Returns:
+            Text returned by ``key``.
+        """
         return f"discrete-{self.width}"
 
     def to_dict(self) -> dict[str, object]:
-        """Return the complete ordered category contract."""
+        """Return the complete ordered category contract.
+
+        Returns:
+            Mapping from ``str`` keys to ``object`` values.
+        """
         return {
             "kind": "discrete",
             "version": self.version,
@@ -47,7 +60,14 @@ class DiscreteActionSchema:
 
 
 def build_discrete_trading_action_schema(n_actions: int = 20) -> DiscreteActionSchema:
-    """Describe the exact categorical menu used by ``TradingEnv`` Discrete(20)."""
+    """Describe the exact categorical menu used by ``TradingEnv`` Discrete(20).
+
+    Args:
+        n_actions: Numeric value used for the n actions.
+
+    Returns:
+        Result of describe the exact categorical menu used by ``TradingEnv`` Discrete(20).
+    """
     if n_actions != 20:
         raise ValueError(
             f"the discrete trading action contract requires 20 choices, got {n_actions}"
@@ -67,6 +87,18 @@ def build_discrete_trading_action_schema(n_actions: int = 20) -> DiscreteActionS
 
 @dataclass(frozen=True)
 class ActionSchema:
+    """Ordered continuous and categorical action-coordinate contract.
+
+    Attributes:
+        names: Coordinates in policy-vector order.
+        has_direction: Whether direction is an explicit coordinate.
+        has_sl_mode: Whether stop-loss mode is represented.
+        has_tp_mode: Whether take-profit mode is represented.
+        has_multi_tp: Whether multiple target choices are represented.
+        has_simplex: Whether target weights use simplex coordinates.
+        version: Version identifier for this schema.
+    """
+
     names: tuple[str, ...]
     has_direction: bool
     has_sl_mode: bool
@@ -77,10 +109,20 @@ class ActionSchema:
 
     @property
     def width(self) -> int:
+        """Return the number of action coordinates.
+
+        Returns:
+            Numeric result returned by ``width``.
+        """
         return len(self.names)
 
     @property
     def indices(self) -> dict[str, int]:
+        """Map every coordinate name to its position in the action vector.
+
+        Returns:
+            Mapping from ``str`` keys to ``int`` values.
+        """
         result = {name: idx for idx, name in enumerate(self.names)}
         if self.has_multi_tp:
             result["target"] = result["tp1_sel"]
@@ -88,6 +130,11 @@ class ActionSchema:
 
     @property
     def key(self) -> str:
+        """Return the canonical key describing the enabled coordinate flags.
+
+        Returns:
+            Text returned by ``key``.
+        """
         canonical: dict[tuple[bool, bool, bool, bool, bool], str] = {
             (False, False, False, False, False): "5",
             (True, False, False, False, False): "6_dir",
@@ -112,7 +159,11 @@ class ActionSchema:
         return "v2:" + "".join(str(int(flag)) for flag in flags)
 
     def to_dict(self) -> dict[str, object]:
-        """Return the complete JSON-safe coordinate contract."""
+        """Return the complete JSON-safe coordinate contract.
+
+        Returns:
+            Mapping from ``str`` keys to ``object`` values.
+        """
         return {
             "version": self.version,
             "key": self.key,
@@ -134,6 +185,18 @@ def build_action_schema(
     has_multi_tp: bool = False,
     has_simplex: bool = False,
 ) -> ActionSchema:
+    """Build the ordered action schema for a selected set of strategy controls.
+
+    Args:
+        has_direction: Include an explicit long/short coordinate.
+        has_sl_mode: Include stop-loss mode selection.
+        has_tp_mode: Include take-profit mode selection.
+        has_multi_tp: Include multiple target selection.
+        has_simplex: Include simplex target-allocation coordinates.
+
+    Returns:
+        Schema with canonical coordinate order and version.
+    """
     if has_simplex and not has_multi_tp:
         raise ValueError("simplex fractions require multi-TP targets")
     coordinates: list[str] = []

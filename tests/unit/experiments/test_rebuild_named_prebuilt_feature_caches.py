@@ -13,7 +13,7 @@ from experiments.runs import named_cache_rebuild as cache_builder
 
 
 @pytest.mark.unit
-def test_thesis_experiment_run_maps_all_18_variants_to_four_feature_caches() -> None:
+def test_trade_setup_experiment_run_maps_all_18_variants_to_four_feature_caches() -> None:
     rows = cache_builder.plan()
     assert len(rows) == 4
     bindings = rows[0]["experiment_run_variant_cache_bindings"]

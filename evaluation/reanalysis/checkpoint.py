@@ -17,6 +17,13 @@ def resolve_checkpoint(run_dir: Path, checkpoint: str | None) -> Path:
     (written on successful training completion), then the highest-step
     ``ppo_ckpt_*_steps.zip`` (for a run whose training hasn't finished, or
     was interrupted, but has intermediate checkpoints).
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+        checkpoint: Checkpoint used by the operation described above.
+
+    Returns:
+        Path returned by ``resolve_checkpoint``.
     """
     if checkpoint:
         path = Path(checkpoint)
@@ -36,6 +43,14 @@ def resolve_checkpoint(run_dir: Path, checkpoint: str | None) -> Path:
         raise SystemExit(f"No model checkpoints found under {model_dir}")
 
     def _steps(p: Path) -> int:
+        """Process the requested value.
+
+        Args:
+            p: Text or path value identifying the p.
+
+        Returns:
+            Numeric result returned by ``_steps``.
+        """
         m = _CKPT_STEPS_RE.search(p.name)
         return int(m.group(1)) if m else -1
 

@@ -43,7 +43,14 @@ __all__ = [
 
 
 def compute_vwap_for_chart(bars: pd.DataFrame) -> pd.Series:
-    """Session VWAP for charting; infers ``session_id`` / volume when missing."""
+    """Session VWAP for charting; infers ``session_id`` / volume when missing.
+
+    Args:
+        bars: Market bars to process.
+
+    Returns:
+        Result of session VWAP for charting; infers ``session_id`` / volume when missing.
+    """
     df = bars.copy()
     if "session_id" not in df.columns:
         from market_data.transforms.sessions import add_session_id
@@ -59,18 +66,38 @@ def compute_vwap_for_chart(bars: pd.DataFrame) -> pd.Series:
 
 
 def draw_overlays_mpl(ax: Any, events: OverlayEvents) -> None:
-    """Draw swing rays, sweep lines, and SMT segments on a matplotlib axis."""
+    """Draw swing rays, sweep lines, and SMT segments on a matplotlib axis.
+
+    Args:
+        ax: Ax used by the operation described above.
+        events: Events used by the operation described above.
+    """
     _draw_swings_mpl(ax, events.swings)
     _draw_sweeps_mpl(ax, events.sweeps)
     _draw_smt_mpl(ax, events.smt)
 
 
 def _first_legend(ax: Any, label: str) -> bool:
+    """Process legend.
+
+    Args:
+        ax: Ax used by the operation described above.
+        label: Text or path value identifying the label.
+
+    Returns:
+        Whether first legend meets the requested condition.
+    """
     handles, labels = ax.get_legend_handles_labels()
     return label not in labels
 
 
 def _draw_swings_mpl(ax: Any, swings: list[SwingRay]) -> None:
+    """Process swings mpl.
+
+    Args:
+        ax: Ax used by the operation described above.
+        swings: Items supplied for the swings, in input order.
+    """
     for ray in swings:
         color = SWING_HIGH_COLOR if ray.side == "high" else SWING_LOW_COLOR
         label = "Swing High" if ray.side == "high" else "Swing Low"
@@ -97,6 +124,12 @@ def _draw_swings_mpl(ax: Any, swings: list[SwingRay]) -> None:
 
 
 def _draw_sweeps_mpl(ax: Any, sweeps: list[SweepLine]) -> None:
+    """Process sweeps mpl.
+
+    Args:
+        ax: Ax used by the operation described above.
+        sweeps: Items supplied for the sweeps, in input order.
+    """
     for line in sweeps:
         ax.plot(
             [line.t0, line.t1],
@@ -126,6 +159,12 @@ def _draw_sweeps_mpl(ax: Any, sweeps: list[SweepLine]) -> None:
 
 
 def _draw_smt_mpl(ax: Any, segments: list[SmtSegment]) -> None:
+    """Process smt mpl.
+
+    Args:
+        ax: Ax used by the operation described above.
+        segments: Items supplied for the segments, in input order.
+    """
     for seg in segments:
         color = SMT_BEAR_COLOR if seg.side == "high" else SMT_BULL_COLOR
         ax.plot(
@@ -140,12 +179,27 @@ def _draw_smt_mpl(ax: Any, segments: list[SmtSegment]) -> None:
 
 
 def draw_overlays_plotly(fig: Any, events: OverlayEvents, *, row: int = 1, col: int = 1) -> None:
-    """Draw swing rays, sweep lines, and SMT segments on a Plotly figure."""
+    """Draw swing rays, sweep lines, and SMT segments on a Plotly figure.
+
+    Args:
+        fig: Fig used by the operation described above.
+        events: Events used by the operation described above.
+        row: Row index or record being processed.
+        col: Numeric value used for the col.
+    """
     import plotly.graph_objects as go
 
     seen: set[str] = set()
 
     def _legend(name: str) -> bool:
+        """Process the requested value.
+
+        Args:
+            name: Name used to identify the requested file, artifact, or item.
+
+        Returns:
+            Whether legend meets the requested condition.
+        """
         if name in seen:
             return False
         seen.add(name)
@@ -228,7 +282,16 @@ def draw_overlays_plotly(fig: Any, events: OverlayEvents, *, row: int = 1, col: 
 
 
 def draw_macd_rsi_mpl(ax_macd: Any, window: pd.DataFrame, overlays: dict[str, pd.Series]) -> Any:
-    """MACD on the left y-axis, RSI on the right y-axis of the same axes."""
+    """MACD on the left y-axis, RSI on the right y-axis of the same axes.
+
+    Args:
+        ax_macd: Ax macd used by the operation described above.
+        window: Tabular data used for the window.
+        overlays: Tabular data used for the overlays.
+
+    Returns:
+        Result of mACD on the left y-axis, RSI on the right y-axis of the same axes.
+    """
     macd = overlays["macd"]
     signal = overlays["signal"]
     rsi = overlays["rsi"]
@@ -261,7 +324,14 @@ def draw_macd_rsi_mpl(ax_macd: Any, window: pd.DataFrame, overlays: dict[str, pd
 def draw_macd_rsi_plotly(
     fig: Any, window: pd.DataFrame, overlays: dict[str, pd.Series], *, row: int = 2
 ) -> None:
-    """MACD (left) and RSI (right) on a Plotly subplot with a secondary y-axis."""
+    """MACD (left) and RSI (right) on a Plotly subplot with a secondary y-axis.
+
+    Args:
+        fig: Fig used by the operation described above.
+        window: Tabular data used for the window.
+        overlays: Tabular data used for the overlays.
+        row: Row index or record being processed.
+    """
     import plotly.graph_objects as go
 
     macd = overlays["macd"]
@@ -351,5 +421,13 @@ def draw_macd_rsi_plotly(
 
 
 def rsi_series(bars: pd.DataFrame, period: int = 14) -> pd.Series:
-    """RSI on close; used by chart overlay builders."""
+    """RSI on close; used by chart overlay builders.
+
+    Args:
+        bars: Market bars to process.
+        period: Numeric value used for the period.
+
+    Returns:
+        Result of rSI on close; used by chart overlay builders.
+    """
     return _rsi(bars["close"], period).rename("rsi")

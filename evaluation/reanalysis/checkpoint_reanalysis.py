@@ -87,11 +87,27 @@ __all__ = [
 
 
 def load_checkpoint(path: Path, *, legacy_layout_key: str | None) -> Any:
-    """Compatibility entry point; SB3 checkpoint loading belongs to its adapter."""
+    """Compatibility entry point; SB3 checkpoint loading belongs to its adapter.
+
+    Args:
+        path: Path to the input file or directory.
+        legacy_layout_key: Legacy layout key used by the operation described above.
+
+    Returns:
+        Result of compatibility entry point; SB3 checkpoint loading belongs to its adapter.
+    """
     return load_sb3_checkpoint(path, legacy_layout_key=legacy_layout_key)
 
 
 def _source_final_evaluation_metadata(run_dir: Path) -> dict[str, Any]:
+    """Process final evaluation metadata.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     metadata_path = run_dir / "evaluations" / "test_report_only.json"
     try:
         value = json.loads(metadata_path.read_text(encoding="utf-8"))
@@ -101,7 +117,15 @@ def _source_final_evaluation_metadata(run_dir: Path) -> dict[str, Any]:
 
 
 def resolve_reanalysis_action_mode(run_dir: Path, requested_stochastic: bool | None) -> bool:
-    """Use an explicit CLI mode or inherit the source run's final test mode."""
+    """Use an explicit CLI mode or inherit the source run's final test mode.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+        requested_stochastic: Requested stochastic used by the operation described above.
+
+    Returns:
+        Whether resolve reanalysis action mode meets the requested condition.
+    """
     if requested_stochastic is not None:
         return requested_stochastic
     return _source_final_evaluation_metadata(run_dir).get("policy_action_mode") == "stochastic"
@@ -110,7 +134,16 @@ def resolve_reanalysis_action_mode(run_dir: Path, requested_stochastic: bool | N
 def resolve_reanalysis_action_seed(
     run_dir: Path, requested_seed: int | None, *, stochastic: bool
 ) -> int | None:
-    """Use an explicit seed or inherit the source run's sampled-action seed."""
+    """Use an explicit seed or inherit the source run's sampled-action seed.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+        requested_seed: Requested seed used by the operation described above.
+        stochastic: Whether to enable or require the stochastic.
+
+    Returns:
+        Result of use an explicit seed or inherit the source run's sampled-action seed.
+    """
     if requested_seed is not None:
         return requested_seed
     if not stochastic:
@@ -120,7 +153,16 @@ def resolve_reanalysis_action_seed(
 
 
 def evaluate_checkpoint_split(provider: Any, *, stochastic: bool, **kwargs: Any) -> dict[str, Any]:
-    """Replay one final split using the explicitly selected policy action mode."""
+    """Replay one final split using the explicitly selected policy action mode.
+
+    Args:
+        provider: Provider used by the operation described above.
+        stochastic: Whether to enable or require the stochastic.
+        **kwargs: Kwargs used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     if hasattr(provider, "metadata") and hasattr(provider, "predict"):
         return evaluate_provider(provider, deterministic=not stochastic, **kwargs)
     return evaluate_model(provider, deterministic=not stochastic, **kwargs)
@@ -129,7 +171,15 @@ def evaluate_checkpoint_split(provider: Any, *, stochastic: bool, **kwargs: Any)
 def resolve_replay_eod_risk(
     eod_risk: dict[str, Any], *, disable_peak_eod_dd_policy: bool
 ) -> dict[str, Any]:
-    """Copy replay EOD settings, optionally removing the training-only peak-DD policy."""
+    """Copy replay EOD settings, optionally removing the training-only peak-DD policy.
+
+    Args:
+        eod_risk: Key-value data used for the eod risk.
+        disable_peak_eod_dd_policy: Whether to enable or require the disable peak eod dd policy.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     resolved = dict(eod_risk)
     if disable_peak_eod_dd_policy:
         resolved["peak_trailing_dd_limit_usd"] = 0.0
@@ -148,7 +198,22 @@ def evaluate_train_split(
     initial_balance: float,
     periods_per_year: int,
 ) -> tuple[dict[str, Any], Any]:
-    """Evaluate only the supplied training split and calculate its metrics."""
+    """Evaluate only the supplied training split and calculate its metrics.
+
+    Args:
+        provider: Provider used by the operation described above.
+        stochastic: Whether to enable or require the stochastic.
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        tickbook: Tickbook used by the operation described above.
+        legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
+        eval_common: Key-value data used for the eval common.
+        initial_balance: Numeric value used for the initial balance.
+        periods_per_year: Numeric value used for the periods per year.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any], Any`` values.
+    """
     result = evaluate_checkpoint_split(
         provider,
         stochastic=stochastic,
@@ -171,7 +236,15 @@ def evaluate_train_split(
 
 
 def write_train_only_screen_report(output_dir: Path, report: dict[str, Any]) -> Path:
-    """Write the minimal train-only candidate screen into a new directory."""
+    """Write the minimal train-only candidate screen into a new directory.
+
+    Args:
+        output_dir: Text or path value identifying the output dir.
+        report: Key-value data used for the report.
+
+    Returns:
+        Path returned by ``write_train_only_screen_report``.
+    """
     report["evaluation_provenance"] = build_evaluation_provenance(repository_root(__file__))
     output_dir.mkdir(parents=True, exist_ok=False)
     report_path = output_dir / "train_only_screen.json"
@@ -180,6 +253,7 @@ def write_train_only_screen_report(output_dir: Path, report: dict[str, Any]) -> 
 
 
 def main() -> None:
+    """Re-evaluate a retained checkpoint against the requested run data."""
     args = build_reanalysis_parser().parse_args()
     if args.train_only_screen and args.stochastic is True:
         raise SystemExit("--train-only-screen requires deterministic policy actions")
@@ -204,6 +278,7 @@ def main() -> None:
     log.info("Policy action mode: %s", policy_action_mode)
 
     def seed_action_rng() -> None:
+        """Reset stochastic action sampling to the recorded evaluation seed."""
         if action_rng_seed is not None:
             random.seed(action_rng_seed)
             np.random.seed(action_rng_seed)
@@ -270,23 +345,12 @@ def main() -> None:
         expected_observation_schema,
         allow_legacy_v1=bool(args.allow_legacy_observation_schema),
     )
-    from decisioning.trade_setup import (
-        legacy_thesis_observation_schema,
-        trade_setup_observation_schema,
-    )
-
-    legacy_setup = bool(cfg.env.get("thesis_actions", False))
     canonical_setup = bool(cfg.env.get("trade_setup_actions", False))
-    if legacy_setup and canonical_setup:
-        raise ValueError("run config cannot enable both legacy thesis and trade setup actions")
+    from decisioning.trade_setup import trade_setup_observation_schema
+
     validate_model_trade_setup_observation_schema(
         model,
-        legacy_thesis_observation_schema()
-        if legacy_setup
-        else trade_setup_observation_schema()
-        if canonical_setup
-        else None,
-        legacy=legacy_setup,
+        trade_setup_observation_schema() if canonical_setup else None,
     )
     is_overlay = bool(cfg.env.get("strategy_actions", False))
     if is_overlay:
@@ -302,17 +366,8 @@ def main() -> None:
             cfg.env.allow_simplex = False
         multi_tp = bool(cfg.env.get("allow_multi_tp", False))
         schema: Any
-        if bool(cfg.env.get("thesis_actions", False)) or bool(
-            cfg.env.get("trade_setup_actions", False)
-        ):
-            from decisioning.trade_setup import build_legacy_thesis_action_schema
-
-            schema_builder = (
-                build_legacy_thesis_action_schema
-                if bool(cfg.env.get("thesis_actions", False))
-                else build_trade_setup_action_schema
-            )
-            schema = schema_builder(
+        if bool(cfg.env.get("trade_setup_actions", False)):
+            schema = build_trade_setup_action_schema(
                 has_sl_mode=bool(cfg.env.get("allow_agent_sl_mode", True)),
                 has_tp_mode=bool(cfg.env.get("allow_agent_tp_mode", False)),
                 has_multi_tp=multi_tp,

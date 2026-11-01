@@ -183,7 +183,7 @@ def test_target_menu_uses_every_configured_timeframe_swing_level() -> None:
     assert {f"{timeframe}_last_swing_high" for timeframe in timeframes} <= names
 
 
-def test_target_menu_applies_selected_thesis_timeframe_floor() -> None:
+def test_target_menu_applies_selected_trade_setup_timeframe_floor() -> None:
     row = _row(
         last_swing_high=102.0,
         M3_last_swing_high=103.0,
@@ -240,7 +240,7 @@ def test_strategy_order_uses_setup_floor_for_stops_and_all_timeframes_for_target
         M5_last_swing_high=109.0,
         H1_last_swing_high=110.0,
     )
-    thesis = trade_setup_candidate(trade_setup_candidate_id("fvg_retest", "M5", 1))
+    trade_setup = trade_setup_candidate(trade_setup_candidate_id("fvg_retest", "M5", 1))
     geometry = place_strategy_order(
         _Menu(),
         direction=1,
@@ -253,7 +253,7 @@ def test_strategy_order_uses_setup_floor_for_stops_and_all_timeframes_for_target
         buffer_pts=0.0,
         max_tp_distance=float("nan"),
         htf=("M3", "M5", "H1"),
-        thesis=thesis,
+        trade_setup=trade_setup,
     )
     assert not geometry.rejected
     sl_names = {part for name, _price in geometry.sl_menu for part in name.split("|")}
@@ -269,7 +269,7 @@ def test_strategy_order_uses_setup_floor_for_stops_and_all_timeframes_for_target
     } <= tp_names
 
 
-def test_standard_deviation_thesis_uses_its_own_timeframe_level_one_stop() -> None:
+def test_standard_deviation_trade_setup_uses_its_own_timeframe_level_one_stop() -> None:
     row = _row(
         M5_standard_deviation_level_1_price=95.0,
         H1_standard_deviation_level_1_price=92.0,
@@ -278,7 +278,7 @@ def test_standard_deviation_thesis_uses_its_own_timeframe_level_one_stop() -> No
         M5_last_swing_high=105.0,
         H1_last_swing_high=108.0,
     )
-    thesis = trade_setup_candidate(trade_setup_candidate_id("standard_deviation", "M5", 1))
+    trade_setup = trade_setup_candidate(trade_setup_candidate_id("standard_deviation", "M5", 1))
     geometry = place_strategy_order(
         _Menu(),
         direction=1,
@@ -291,7 +291,7 @@ def test_standard_deviation_thesis_uses_its_own_timeframe_level_one_stop() -> No
         buffer_pts=0.0,
         max_tp_distance=float("nan"),
         htf=("M3", "M5", "H1"),
-        thesis=thesis,
+        trade_setup=trade_setup,
     )
     assert not geometry.rejected
     sd_stops = [name for name, _price in geometry.sl_menu if "standard_deviation" in name]

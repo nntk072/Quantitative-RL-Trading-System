@@ -20,6 +20,12 @@ def extract_json_objects(text: str) -> list[dict[str, Any]]:
 
     Uses ``JSONDecoder.raw_decode`` so a greedy ``{...}`` regex cannot swallow
     the whole pane (prompt template + model output).
+
+    Args:
+        text: Text or path value identifying the text.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
     """
     decoder = json.JSONDecoder()
     objects: list[dict[str, Any]] = []
@@ -45,6 +51,12 @@ def parse_complexity(text: str) -> str:
     Prompt templates contain the word ``trivial`` and a JSON *example* whose
     complexity value is ``trivial|medium|complex``. Those must not win.
     The last valid complexity in the text is used (model output after any echo).
+
+    Args:
+        text: Text or path value identifying the text.
+
+    Returns:
+        Text returned by ``parse_complexity``.
     """
     found: str | None = None
     for obj in extract_json_objects(text):
@@ -55,7 +67,14 @@ def parse_complexity(text: str) -> str:
 
 
 def static_tier_fast_path(task: str) -> str | None:
-    """Return T0 for trivial tasks without a model call."""
+    """Return T0 for trivial tasks without a model call.
+
+    Args:
+        task: Text or path value identifying the task.
+
+    Returns:
+        Result of return T0 for trivial tasks without a model call.
+    """
     text = task.strip()
     if len(text) >= 80:
         return None
@@ -65,7 +84,14 @@ def static_tier_fast_path(task: str) -> str | None:
 
 
 def parse_tier(text: str) -> str:
-    """Return triage tier from model JSON (T0..T4)."""
+    """Return triage tier from model JSON (T0..T4).
+
+    Args:
+        text: Text or path value identifying the text.
+
+    Returns:
+        Text returned by ``parse_tier``.
+    """
     from .model_provider_registry import complexity_to_tier
 
     found: str | None = None
@@ -81,7 +107,14 @@ def parse_tier(text: str) -> str:
 
 
 def parse_verdict(text: str) -> str:
-    """Extract pass/conditional_pass/fail from a review-synthesis report."""
+    """Extract pass/conditional_pass/fail from a review-synthesis report.
+
+    Args:
+        text: Text or path value identifying the text.
+
+    Returns:
+        Text returned by ``parse_verdict``.
+    """
     match = re.search(
         r"##\s*Verdict\s*\n\s*(pass|conditional_pass|fail)",
         text,

@@ -18,7 +18,11 @@ log = logging.getLogger(__name__)
 
 
 def parse_train_args() -> argparse.Namespace:
-    """Parse CLI arguments for the RL training entrypoint."""
+    """Parse CLI arguments for the RL training entrypoint.
+
+    Returns:
+        Result of parse CLI arguments for the RL training entrypoint.
+    """
     parser = argparse.ArgumentParser(description="Train PPO/SAC on structure-aware trading.")
     parser.add_argument(
         "--config",
@@ -146,6 +150,12 @@ def load_merged_config(args: argparse.Namespace) -> DictConfig:
 
     CLI ``overrides`` apply *after* the declarative variant resolution so an
     explicit command-line override remains the final value.
+
+    Args:
+        args: Parsed command-line arguments for this operation.
+
+    Returns:
+        Result of load base config and resolve one experiment variant if requested.
     """
     resolved = getattr(args, "resolved_variant", None)
     if getattr(args, "variant", None) and resolved is None:

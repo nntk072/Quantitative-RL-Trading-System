@@ -10,7 +10,13 @@ from trading.execution import Position
 def reorder_remaining_targets(
     pos: Position, *, point_size: float, price_tolerance: float = 1e-8
 ) -> None:
-    """Disable invalid remaining TP slots without fabricating target prices."""
+    """Disable invalid remaining TP slots without fabricating target prices.
+
+    Args:
+        pos: Pos used by the operation described above.
+        point_size: Number specifying the point size for this operation.
+        price_tolerance: Numeric value used for the price tolerance.
+    """
     tol = max(float(price_tolerance), float(point_size) / 2.0)
     last_price: float | None = None
     for slot in (1, 2, 3):

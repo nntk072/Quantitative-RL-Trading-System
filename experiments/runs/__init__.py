@@ -4,7 +4,11 @@ from __future__ import annotations
 
 
 def run_experiment() -> int:
-    """Run the experiment run controller through its canonical composition root."""
+    """Run the experiment run controller through its canonical composition root.
+
+    Returns:
+        Numeric result returned by ``run_experiment``.
+    """
     from experiments.runs.execution import main
 
     return main()

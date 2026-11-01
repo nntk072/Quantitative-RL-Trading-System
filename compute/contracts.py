@@ -9,6 +9,8 @@ from typing import Protocol
 
 @dataclass(frozen=True, slots=True)
 class DeviceCapabilities:
+    """Describe the hardware and numeric features available to a workload."""
+
     architecture: str
     accelerator_kind: str | None
     accelerator_count: int
@@ -21,6 +23,8 @@ class DeviceCapabilities:
 
 @dataclass(frozen=True, slots=True)
 class ResourceProfile:
+    """Declare CPU, memory, time, and accelerator requirements for a job."""
+
     cpu_count: int
     host_memory_bytes: int
     walltime_seconds: int
@@ -28,6 +32,7 @@ class ResourceProfile:
     accelerator_count: int = 0
 
     def __post_init__(self) -> None:
+        """Validate and initialize ResourceProfile after construction."""
         if self.cpu_count <= 0 or self.host_memory_bytes <= 0 or self.walltime_seconds <= 0:
             raise ValueError("resource profile CPU, memory, and walltime values must be positive")
         if self.accelerator_count < 0:
@@ -38,12 +43,15 @@ class ResourceProfile:
 
 @dataclass(frozen=True, slots=True)
 class JobSpec:
+    """Package a command, execution directory, environment, and resource request."""
+
     command: tuple[str, ...]
     resources: ResourceProfile
     working_directory: str
     environment: Mapping[str, str]
 
     def __post_init__(self) -> None:
+        """Validate and initialize JobSpec after construction."""
         if not self.command or not self.working_directory:
             raise ValueError("job command and working directory are required")
 
@@ -51,7 +59,16 @@ class JobSpec:
 class ExecutionBackend(Protocol):
     """Submit a semantic workload through a local, Slurm, or cloud adapter."""
 
-    def submit(self, job: JobSpec) -> str: ...
+    def submit(self, job: JobSpec) -> str:
+        """Submit a job specification to the selected execution backend.
+
+        Args:
+            job: Command and resources to execute.
+
+        Returns:
+            Backend identifier for the submitted job.
+        """
+        ...
 
 
 __all__ = ["DeviceCapabilities", "ExecutionBackend", "JobSpec", "ResourceProfile"]

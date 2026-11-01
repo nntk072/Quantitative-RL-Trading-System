@@ -11,6 +11,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class StepConstraintsRuntimeMixin(RuntimeMixinBase):
+    """Apply eligibility and risk constraints before executing a step action."""
+
     _decision_action: dict[str, float]
     _pending_entry_order: dict[str, Any] | None
 
@@ -31,6 +33,26 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
         entry_machine: Any,
     ) -> tuple[bool, bool, bool, bool]:
         # Check guardrails
+        """Process step constraints.
+
+        Args:
+            bar: Bar used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            fill_time: Fill time used by the operation described above.
+            pending_due: Whether to enable or require the pending due.
+            entry_fill_bid: Numeric value used for the entry fill bid.
+            entry_fill_ask: Numeric value used for the entry fill ask.
+            entry_fill_time: Entry fill time used by the operation described above.
+            market_fill_idx: Numeric value used for the market fill idx.
+            entry_machine: Entry machine used by the operation described above.
+
+        Returns:
+            Whether enforce step constraints meets the requested condition.
+        """
         reason, session_blocked, done, truncated = self._check_guardrails(
             bar_time, session_id, fill_bid, fill_ask, fill_time=fill_time
         )

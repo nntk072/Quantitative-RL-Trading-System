@@ -52,7 +52,14 @@ __all__ = [
 
 
 def _training_episodic(cfg: Any) -> bool:
-    """Resolve whether risk breaches terminate training episodes."""
+    """Resolve whether risk breaches terminate training episodes.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Whether training episodic meets the requested condition.
+    """
     if resolve_trading_policy(cfg).repeated_payout:
         return True
     training = cfg.get("training", {}) if hasattr(cfg, "get") else getattr(cfg, "training", {})
@@ -71,13 +78,28 @@ def _training_episodic(cfg: Any) -> bool:
 
 
 def _evaluate_final_split(model: Any, **kwargs: Any) -> dict[str, Any]:
-    """Evaluate a final split using the experiment run's declared action mode."""
+    """Evaluate a final split using the experiment run's declared action mode.
+
+    Args:
+        model: Model used for this operation.
+        **kwargs: Kwargs used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     kwargs.setdefault("deterministic", False)
     return evaluate_model(model, **kwargs)
 
 
 def final_evaluation_deterministic(cfg: Any) -> bool:
-    """Resolve the final replay mode, with experiment run metadata overriding config defaults."""
+    """Resolve the final replay mode, with experiment run metadata overriding config defaults.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Whether final evaluation deterministic meets the requested condition.
+    """
     override = os.environ.get("QUANT_RL_EVALUATION_DETERMINISTIC")
     if override is not None:
         normalized = override.strip().lower()
@@ -94,7 +116,15 @@ def final_evaluation_deterministic(cfg: Any) -> bool:
 
 
 def build_sb3_provider(model: Any, input_schema_version: str) -> DecisionProvider:
-    """Wrap an SB3 model at a training/evaluation composition boundary."""
+    """Wrap an SB3 model at a training/evaluation composition boundary.
+
+    Args:
+        model: Model used for this operation.
+        input_schema_version: Text or path value identifying the input schema version.
+
+    Returns:
+        Result of wrap an SB3 model at a training/evaluation composition boundary.
+    """
     return SB3DecisionProvider(model, input_schema_version=input_schema_version)
 
 
@@ -107,6 +137,18 @@ def build_eval_provider(
     pre_ny_by_date: Any,
     arch: str | None,
 ) -> DecisionProvider:
-    """Build a provider using the same resolved observation schema as evaluation."""
+    """Build a provider using the same resolved observation schema as evaluation.
+
+    Args:
+        model: Model used for this operation.
+        cfg: Run configuration used by this operation.
+        args: Parsed command-line arguments for this operation.
+        env_vae: Env vae used by the operation described above.
+        pre_ny_by_date: Pre ny by date used by the operation described above.
+        arch: Arch used by the operation described above.
+
+    Returns:
+        Result of build a provider using the same resolved observation schema as evaluation.
+    """
     eval_common, *_ = build_eval_common(cfg, args, env_vae, pre_ny_by_date, arch=arch)
     return build_sb3_provider(model, str(eval_common["observation_schema_version"]))

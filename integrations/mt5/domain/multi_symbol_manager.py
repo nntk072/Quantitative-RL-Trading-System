@@ -9,8 +9,8 @@ from integrations.mt5.domain.volatility_analyzer import VolatilityAnalyzer
 
 
 class MultiSymbolManager:
-    """
-    Manages multiple symbol data sources and their configurations.
+    """Manage multiple symbol data sources and their configurations.
+
     Handles symbol selection, data fetching, and volatility analysis.
     """
 
@@ -23,8 +23,7 @@ class MultiSymbolManager:
         symbols: list[str],
         timeframe: int = mt5.TIMEFRAME_H1,
     ):
-        """
-        Initialize Multi-Symbol Manager.
+        """Initialize Multi-Symbol Manager.
 
         Args:
             login: MT5 account login
@@ -74,8 +73,7 @@ class MultiSymbolManager:
                 logger.error(f"Error initializing data source for {symbol}: {e}")
 
     def get_data_source(self, symbol: str) -> MT5Data | None:
-        """
-        Get data source for a symbol.
+        """Get data source for a symbol.
 
         Args:
             symbol: Trading symbol
@@ -86,8 +84,7 @@ class MultiSymbolManager:
         return self.data_sources.get(symbol)
 
     def get_all_data_sources(self) -> dict[str, MT5Data]:
-        """
-        Get all data sources.
+        """Get all data sources.
 
         Returns:
             Dictionary mapping symbol names to MT5Data instances
@@ -95,8 +92,7 @@ class MultiSymbolManager:
         return self.data_sources.copy()
 
     def update_volatility_metrics(self, analyzer: VolatilityAnalyzer) -> None:
-        """
-        Update volatility metrics for all symbols.
+        """Update volatility metrics for all symbols.
 
         Args:
             analyzer: VolatilityAnalyzer instance
@@ -110,8 +106,7 @@ class MultiSymbolManager:
                 logger.error(f"Error updating volatility metrics for {symbol}: {e}")
 
     def get_volatility_metrics(self, symbol: str) -> dict[str, Any] | None:
-        """
-        Get volatility metrics for a symbol.
+        """Get volatility metrics for a symbol.
 
         Args:
             symbol: Trading symbol
@@ -122,8 +117,7 @@ class MultiSymbolManager:
         return self.volatility_metrics.get(symbol)
 
     def get_all_volatility_metrics(self) -> dict[str, dict[str, Any]]:
-        """
-        Get volatility metrics for all symbols.
+        """Get volatility metrics for all symbols.
 
         Returns:
             Dictionary mapping symbol names to volatility metrics
@@ -131,8 +125,7 @@ class MultiSymbolManager:
         return self.volatility_metrics.copy()
 
     def add_symbol(self, symbol: str) -> bool:
-        """
-        Add a new symbol to the manager.
+        """Add a new symbol to the manager.
 
         Args:
             symbol: Trading symbol to add
@@ -163,8 +156,7 @@ class MultiSymbolManager:
             return False
 
     def remove_symbol(self, symbol: str) -> bool:
-        """
-        Remove a symbol from the manager.
+        """Remove a symbol from the manager.
 
         Args:
             symbol: Trading symbol to remove
@@ -199,8 +191,7 @@ class MultiSymbolManager:
                 logger.error(f"Error refreshing data for {symbol}: {e}")
 
     def get_active_symbols(self) -> list[str]:
-        """
-        Get list of active (available) symbols.
+        """Get list of active (available) symbols.
 
         Returns:
             List of symbol names that are available and initialized

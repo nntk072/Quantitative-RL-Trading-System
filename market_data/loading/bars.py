@@ -24,6 +24,12 @@ def load_bars(path: str | Path) -> pd.DataFrame:
 
     The returned index name is ``datetime`` and the timezone is left as read
     (naive) because the caller applies the broker timezone via the config.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        DataFrame returned by ``load_bars``.
     """
     path = Path(path)
     with path.open(encoding="utf-8-sig") as stream:
@@ -72,11 +78,16 @@ def load_ticks(path: str | Path) -> pd.DataFrame:
 
     Tick time includes milliseconds (``HH:MM:SS.fff``), unlike bar files.
 
-    Warning
-    -------
-    Loads the **entire file into memory at once**.  MT5 tick exports can be
-    multiple GB — for those, use :func:`iter_ticks_chunks` instead (streams
-    bounded chunks, used by ``market_data.loading.ticks.build_tick_book``).
+    Warning:
+        This function loads the full file into memory. MT5 tick exports can be
+        several gigabytes, so use :func:`iter_ticks_chunks` for bounded
+        streaming instead.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        DataFrame returned by ``load_ticks``.
     """
     path = Path(path)
     df = pd.read_csv(
@@ -104,11 +115,14 @@ def iter_ticks_chunks(path: str | Path, chunksize: int = 2_000_000) -> Iterator[
     matters for multi-GB MT5 tick exports (a naive full-file load can OOM a
     memory-constrained VM such as WSL2).
 
-    Yields
-    ------
-    Raw ``DataFrame`` chunks with columns ``["date", "time", "bid", "ask"]``
-    (still as string ``date``/``time`` — the caller parses datetimes itself
-    so it can carry forward-fill state across chunk boundaries).
+    Args:
+        path: Path to the input file or directory.
+        chunksize: Numeric value used for the chunksize.
+
+    Yields:
+        Raw ``DataFrame`` chunks with ``date``, ``time``, ``bid``, and ``ask``
+        columns. Date and time remain strings so callers can carry forward-fill
+        state across chunk boundaries while parsing timestamps.
     """
     path = Path(path)
     reader = pd.read_csv(

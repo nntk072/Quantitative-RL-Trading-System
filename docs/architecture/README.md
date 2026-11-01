@@ -20,7 +20,8 @@ and broker integration can evolve independently.
   evaluation.
 - [Model and policy architecture](model_and_policy_architecture.md) separates
   algorithm, encoder, policy distribution, action schema, and variant.
-- [Runtime sequences](runtime/) cover data/features, environment steps,
+- Runtime sequences cover [data and features](runtime/data_and_features.md),
+  [environment steps](runtime/environment_step.md),
   training, evaluation, experiment runs, and live/paper execution.
 - [Deployment](deployment.md) describes local, cluster, artifact, and broker
   boundaries.

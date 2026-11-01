@@ -47,7 +47,7 @@ def test_root_variants_command_forwards_arguments_at_package_boundary(monkeypatc
     monkeypatch.setattr(
         sys,
         "argv",
-        ["thesis-experiment-run", "variants", "--bars-csv", "bars.csv", "--steps", "64"],
+        ["qrl-experiment", "variants", "--bars-csv", "bars.csv", "--steps", "64"],
     )
 
     cli.main()
@@ -63,7 +63,7 @@ def test_root_catalog_command_forwards_generation_mode(monkeypatch) -> None:
         return 0
 
     monkeypatch.setattr(cli, "run_variant_catalog_cli", capture)
-    monkeypatch.setattr(sys, "argv", ["thesis-experiment-run", "catalog", "--check"])
+    monkeypatch.setattr(sys, "argv", ["qrl-experiment", "catalog", "--check"])
 
     cli.main()
 
@@ -87,9 +87,7 @@ def test_root_named_cache_command_forwards_to_stable_parser(monkeypatch) -> None
         return 0
 
     monkeypatch.setattr(cli, "run_named_cache_rebuild_cli", capture)
-    monkeypatch.setattr(
-        sys, "argv", ["thesis-experiment-run", "rebuild-named-cache", "--plan-only"]
-    )
+    monkeypatch.setattr(sys, "argv", ["qrl-experiment", "rebuild-named-cache", "--plan-only"])
 
     cli.main()
 

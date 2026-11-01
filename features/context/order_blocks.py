@@ -31,6 +31,17 @@ def build_order_block_features(
     A bearish block mirrors that rule. The zone becomes observable at the
     displacement bar close. Later bars may signal a zone retest. Close-through
     of the distal edge or expiry deactivates the zone.
+
+    Args:
+        bars: Market bars to process.
+        swing_period: Numeric value used for the swing period.
+        impulse_atr: Numeric value used for the impulse atr.
+        search_bars: Market bar or price data used for return active bullish/bearish OB zones, retests, ages, and ATR distances.
+        max_age_bars: Market bar or price data used for return active bullish/bearish OB zones, retests, ages, and ATR distances.
+        atr_period: Numeric value used for the atr period.
+
+    Returns:
+        DataFrame returned by ``build_order_block_features``.
     """
     if swing_period < 1 or search_bars < 1 or max_age_bars < 1:
         raise ValueError("order-block periods and age must be positive")

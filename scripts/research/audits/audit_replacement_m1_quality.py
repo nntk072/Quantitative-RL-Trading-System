@@ -20,14 +20,14 @@ from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
 DEFAULT_REPORT = (
-    ROOT / "docs/thesis/evidence/replacement_data_20261017/replacement_m1_quality_20261018.json"
+    ROOT / "outputs/research_audits/replacement_data_20261017/replacement_m1_quality_20261018.json"
 )
 NAMED_CACHE_REPORT = (
-    ROOT / "docs/thesis/evidence/replacement_data_20261017/"
+    ROOT / "evidence/research/archive_2026/evidence/replacement_data_20261017/"
     "named_feature_cache_rebuild_18variant_20261018_job21020179_clockfix.json"
 )
 DATA_REBUILD_REPORT = (
-    ROOT / "docs/thesis/evidence/replacement_data_20261017/"
+    ROOT / "evidence/research/archive_2026/evidence/replacement_data_20261017/"
     "full_period_data_cache_rebuild_20261017_job21020179_rerun1.json"
 )
 

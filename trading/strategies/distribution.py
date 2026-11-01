@@ -15,6 +15,15 @@ _StopGroup = tuple[str, str, str | None]
 
 
 def _on(row: pd.Series, col: str) -> bool:
+    """Process the requested value.
+
+    Args:
+        row: Row index or record being processed.
+        col: Text or path value identifying the col.
+
+    Returns:
+        Whether on meets the requested condition.
+    """
     return float(row.get(col, 0.0) or 0.0) > 0.0
 
 
@@ -25,7 +34,17 @@ def _ifvg_groups(
     area: str,
     origin: str,
 ) -> tuple[tuple[_StopGroup, ...], tuple[_StopGroup, ...]]:
-    """Live-zone stop triples, lower timeframes before higher ones."""
+    """Live-zone stop triples, lower timeframes before higher ones.
+
+    Args:
+        columns: Items supplied for the columns, in input order.
+        active: Text or path value identifying the active.
+        area: Text or path value identifying the area.
+        origin: Text or path value identifying the origin.
+
+    Returns:
+        Values returned by ``_ifvg_groups``, in the declared order.
+    """
     names = {str(col) for col in columns}
     lower: list[tuple[tuple[int, str], _StopGroup]] = []
     higher: list[tuple[str, _StopGroup]] = []
@@ -95,6 +114,15 @@ class DistributionStrategy(TradingStrategy):
         previous_session_pd_gate: bool = False,
         variant_id: str = "distribution_legacy",
     ):
+        """Initialize DistributionStrategy and its owned state.
+
+        Args:
+            enforce_gate: Whether to enable or require the enforce gate.
+            entry_mode: Text or path value identifying the entry mode.
+            candidate_max_age_bars: Market bar or price data used for initialize DistributionStrategy and its owned state.
+            previous_session_pd_gate: Whether to enable or require the previous session pd gate.
+            variant_id: Text or path value identifying the variant id.
+        """
         allowed = {"legacy", "confirmed_first_eligible", "confirmed_retest"}
         if entry_mode not in allowed:
             raise ValueError(f"unsupported distribution entry mode: {entry_mode!r}")
@@ -111,7 +139,11 @@ class DistributionStrategy(TradingStrategy):
         self._higher_bear: tuple[tuple[str, str, str | None], ...] | None = None
 
     def bind_columns(self, columns: Iterable[object]) -> None:
-        """Resolve inverse-gap stop columns once for the step loop."""
+        """Resolve inverse-gap stop columns once for the step loop.
+
+        Args:
+            columns: Items supplied for the columns, in input order.
+        """
         self._lower_bull, self._higher_bull = _ifvg_groups(
             columns, active="ifvg_bull_active", area="ifvg_bull_low", origin="ifvg_bull_origin"
         )
@@ -120,13 +152,29 @@ class DistributionStrategy(TradingStrategy):
         )
 
     def validate_entry(self, *, direction: int, row: pd.Series) -> bool:
-        """Distribution after the opposing gap fails, when the gate is enforced."""
+        """Distribution after the opposing gap fails, when the gate is enforced.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Whether validate entry meets the requested condition.
+        """
         if self.enforce_gate and not self.distribution_ready(row, direction):
             return False
         return self.previous_session_pd_eligible(row, direction)
 
     def entry_rejection_reason(self, *, direction: int, row: pd.Series) -> str:
-        """Return the explicit Idea 2 premium/discount rejection label."""
+        """Return the explicit Idea 2 premium/discount rejection label.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Text returned by ``entry_rejection_reason``.
+        """
         if self.previous_session_pd_gate:
             midpoint = float(row.get("previous_session_midpoint", np.nan))
             close = float(row.get("decision_close", np.nan))
@@ -139,7 +187,15 @@ class DistributionStrategy(TradingStrategy):
         return "entry_gate"
 
     def previous_session_pd_eligible(self, row: pd.Series, direction: int) -> bool:
-        """Per-entry strict discount/premium check; equality is ineligible."""
+        """Per-entry strict discount/premium check; equality is ineligible.
+
+        Args:
+            row: Row index or record being processed.
+            direction: Signed trade direction: 1 for long and -1 for short.
+
+        Returns:
+            Whether previous session pd eligible meets the requested condition.
+        """
         if not self.previous_session_pd_gate:
             return True
         midpoint = float(row.get("previous_session_midpoint", np.nan))
@@ -155,15 +211,38 @@ class DistributionStrategy(TradingStrategy):
 
         Returns the raw reference level; the environment validates geometry
         against the entry price and rejects invalid stops.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Result of long -> swept low, short -> swept high (Agent.md §14).
         """
         col = "sweep_low_level" if direction == 1 else "sweep_high_level"
         level = float(row.get(col, np.nan))
         return level if np.isfinite(level) else None
 
     def target_candidates(self, *, direction: int, row: pd.Series) -> dict[str, float]:
-        """Named structural targets; the TP resolver validates each side."""
+        """Named structural targets; the TP resolver validates each side.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Mapping from ``str`` keys to ``float`` values.
+        """
 
         def _get(col: str) -> float:
+            """Return DistributionStrategy.
+
+            Args:
+                col: Text or path value identifying the col.
+
+            Returns:
+                Numeric result returned by ``_get``.
+            """
             value = float(row.get(col, np.nan))
             return value if np.isfinite(value) else np.nan
 
@@ -182,6 +261,12 @@ class DistributionStrategy(TradingStrategy):
 
         The leg must already be past the bar the opposing gap failed. A
         later fair-value-gap retest is not required.
+
+        Args:
+            row: Row index or record being processed.
+
+        Returns:
+            Numeric result returned by ``context_direction``.
         """
         return (
             1
@@ -190,7 +275,15 @@ class DistributionStrategy(TradingStrategy):
         )
 
     def distribution_ready(self, row: pd.Series, direction: int) -> bool:
-        """True on a distribution bar after the matching inverse gap printed."""
+        """True on a distribution bar after the matching inverse gap printed.
+
+        Args:
+            row: Row index or record being processed.
+            direction: Signed trade direction: 1 for long and -1 for short.
+
+        Returns:
+            Whether distribution ready meets the requested condition.
+        """
         if direction not in (1, -1):
             return False
         if float(row.get("po3_distribution", 0.0) or 0.0) <= 0.0:
@@ -219,7 +312,15 @@ class DistributionStrategy(TradingStrategy):
         return float(row.get("po3_distribution_after_ifvg", 0.0) or 0.0) > 0.0
 
     def sl_candidates(self, *, direction: int, row: pd.Series) -> list[tuple[str, float]]:
-        """Structural SL ladder (sweep extremes instead of manip)."""
+        """Structural SL ladder (sweep extremes instead of manip).
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Values returned by ``sl_candidates``, in the declared order.
+        """
         if direction == 1:
             cols = (
                 "last_swing_low",

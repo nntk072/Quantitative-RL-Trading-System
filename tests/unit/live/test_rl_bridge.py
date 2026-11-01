@@ -93,7 +93,6 @@ def test_latency_env_constructs_and_steps(trending_bars, latency):
 
 def test_latency_changes_fill_price(trending_bars):
     """A delayed entry stays pending until its future quote time."""
-
     env0 = _make_env(trending_bars, 0)
     env2 = _make_env(trending_bars, 2)
     env0.reset(seed=42)

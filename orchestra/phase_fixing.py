@@ -9,6 +9,8 @@ from .pipeline_base import PipelineMixinBase
 
 
 class PhaseFixingMixin(PipelineMixinBase):
+    """Apply bounded repairs after review identifies actionable defects."""
+
     def _phase_fixing(self) -> None:
         """Phase 8: Apply targeted fixes based on review synthesis."""
         fix_count = self.state.data.get("fix_loop_count", 0)

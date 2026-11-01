@@ -453,7 +453,8 @@ def test_ffill_inplace_leading_nan_stays_nan():
 
 def _write_tick_csv(path: Path, rows: list[tuple[str, str, float, float]]) -> None:
     """Write a synthetic MT5 tick CSV. ``time`` must include milliseconds
-    (HH:MM:SS.fff), matching the real MT5 export format."""
+    (HH:MM:SS.fff), matching the real MT5 export format.
+    """
     lines = ["<DATE>\t<TIME>\t<BID>\t<ASK>\t<LAST>\t<VOLUME>\t<FLAGS>"]
     for date, time, bid, ask in rows:
         lines.append(f"{date}\t{time}\t{bid}\t{ask}\t0\t0\t0")
@@ -666,7 +667,8 @@ def test_build_tick_books_rejects_unconfigured_symbol(tmp_path: Path) -> None:
 
 def test_build_tick_book_chunked_matches_expected(tmp_path: Path):
     """Small synthetic CSV, forced to a 2-row chunksize to exercise the
-    cross-chunk forward-fill / session-filter boundary logic."""
+    cross-chunk forward-fill / session-filter boundary logic.
+    """
     csv_path = tmp_path / "ticks.csv"
     _write_tick_csv(
         csv_path,

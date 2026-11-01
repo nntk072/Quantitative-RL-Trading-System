@@ -14,6 +14,6 @@ in [`research/`](../research/README.md).
 | Throughput optimization | Larger/concurrent rollouts alter on-policy ordering or increase memory beyond capacity. | Measure PPO-core performance and validate transition/update semantics. |
 
 See [checkpoint compatibility](../reference/checkpoint_compatibility.md),
-[validation protocol](../thesis/validation_protocol.md), and
+[validation protocol](../research/validation_protocol.md), and
 [operations](../operations/README.md) for the corresponding maintained
 controls.

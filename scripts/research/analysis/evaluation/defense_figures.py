@@ -1,4 +1,4 @@
-"""Build the thesis defense PNG catalog (no PowerPoint / PDF).
+"""Build a research figure catalog (no PowerPoint or PDF export).
 
 Usage
 -----

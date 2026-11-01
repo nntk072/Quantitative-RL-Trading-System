@@ -18,7 +18,14 @@ _CANDIDATES = ("tick_count", "tickvol", "volume", "vol")
 
 
 def _is_dead_volume(series: pd.Series) -> bool:
-    """True when a volume-like column is missing, empty, or ~all zeros."""
+    """True when a volume-like column is missing, empty, or ~all zeros.
+
+    Args:
+        series: Tabular data used for the series.
+
+    Returns:
+        Whether is dead volume meets the requested condition.
+    """
     vals = pd.to_numeric(series, errors="coerce")
     if vals.notna().sum() == 0:
         return True
@@ -31,6 +38,12 @@ def activity_series(df: pd.DataFrame) -> pd.Series | None:
 
     Prefers ``tick_count`` (optional tape overlay) then ``tickvol``. CFD
     ``volume`` / ``vol`` are used only when they are not ~all zeros.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+
+    Returns:
+        Result of return tick-count activity, ignoring all-zero ``vol`` / ``volume``.
     """
     for col in _CANDIDATES:
         if col not in df.columns:
@@ -46,7 +59,14 @@ def activity_series(df: pd.DataFrame) -> pd.Series | None:
 
 
 def attach_activity(df: pd.DataFrame) -> pd.DataFrame:
-    """Copy *df* and set ``activity`` from :func:`activity_series` when possible."""
+    """Copy *df* and set ``activity`` from :func:`activity_series` when possible.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+
+    Returns:
+        DataFrame returned by ``attach_activity``.
+    """
     out = df.copy()
     act = activity_series(out)
     if act is not None:
@@ -58,7 +78,15 @@ def tick_counts_from_index(
     bars_index: pd.DatetimeIndex,
     tick_index: pd.DatetimeIndex,
 ) -> pd.Series:
-    """Count ticks whose timestamp falls in each M1 bar (left-labeled)."""
+    """Count ticks whose timestamp falls in each M1 bar (left-labeled).
+
+    Args:
+        bars_index: Number specifying the bars index for this operation.
+        tick_index: Number specifying the tick index for this operation.
+
+    Returns:
+        Result of count ticks whose timestamp falls in each M1 bar (left-labeled).
+    """
     if bars_index.empty:
         return pd.Series(dtype=float, name="tick_count")
     bar_ns = np.asarray(bars_index, dtype="datetime64[ns]").view(np.int64)
@@ -70,7 +98,15 @@ def tick_counts_from_index(
 
 
 def load_tick_index(path: Path | str, tz: str = "Etc/GMT-3") -> pd.DatetimeIndex:
-    """DatetimeIndex of ticks from an MT5 tick CSV (date+time only)."""
+    """DatetimeIndex of ticks from an MT5 tick CSV (date+time only).
+
+    Args:
+        path: Path to the input file or directory.
+        tz: Text or path value identifying the tz.
+
+    Returns:
+        Result of datetimeIndex of ticks from an MT5 tick CSV (date+time only).
+    """
     raw = pd.read_csv(
         path,
         sep="\t",

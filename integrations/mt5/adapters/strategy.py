@@ -8,6 +8,13 @@ if TYPE_CHECKING:
 
 
 class TradingStrategy(ABC):
+    """Interface for strategies that convert market data into signals."""
+
     @abstractmethod
     def signal(self) -> tuple[str, Signal]:
+        """Return the current signal for the strategy's configured market.
+
+        Returns:
+            Values returned by ``signal``, in the declared order.
+        """
         raise NotImplementedError

@@ -72,6 +72,14 @@ _ENTRY_SETUP_LABELS: dict[str, str] = {
 
 
 def _text(value: Any) -> str:
+    """Process the requested value.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_text``.
+    """
     if value is None:
         return ""
     if isinstance(value, float) and math.isnan(value):
@@ -80,6 +88,14 @@ def _text(value: Any) -> str:
 
 
 def _number(value: Any) -> float | None:
+    """Process the requested value.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Result of process the requested value.
+    """
     if value is None or isinstance(value, bool):
         return None
     try:
@@ -94,6 +110,12 @@ def pretty_ref(name: Any) -> str:
 
     ``asian_low|H1_last_swing_low`` becomes ``Asia session low + swing low (H1)``.
     An empty or ``nan`` input returns ``""``.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Text returned by ``pretty_ref``.
     """
     text = _text(name)
     if not text or text.lower() == "nan":
@@ -151,6 +173,12 @@ def entry_reason(open_row: Any) -> str:
 
     ``enforce_gate`` is false in both idea configs, so this describes the setup
     the strategy offered, not a filter that blocked other trades.
+
+    Args:
+        open_row: Open row used by the operation described above.
+
+    Returns:
+        Text returned by ``entry_reason``.
     """
     parts: list[str] = []
     primary_idea = _text(open_row.get("primary_idea"))
@@ -162,7 +190,7 @@ def entry_reason(open_row: Any) -> str:
             primary_idea, primary_idea.replace("_", " ").capitalize()
         )
         parts.append(
-            f"Primary thesis: {primary_label}"
+            f"Primary setup: {primary_label}"
             + (f" ({primary_tf}, {side})" if primary_tf else f" ({side})")
         )
         supporting = [
@@ -263,6 +291,14 @@ def entry_reason(open_row: Any) -> str:
 
 
 def _sequence_value(raw: Any) -> list[Any]:
+    """Process value.
+
+    Args:
+        raw: Raw used by the operation described above.
+
+    Returns:
+        Values returned by ``_sequence_value``, in the declared order.
+    """
     if isinstance(raw, str):
         try:
             raw = ast.literal_eval(raw)
@@ -277,6 +313,14 @@ def _sequence_value(raw: Any) -> list[Any]:
 
 
 def _mapping_value(raw: Any) -> Mapping[str, Any]:
+    """Process value.
+
+    Args:
+        raw: Raw used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     if isinstance(raw, str):
         try:
             raw = ast.literal_eval(raw)
@@ -286,6 +330,14 @@ def _mapping_value(raw: Any) -> Mapping[str, Any]:
 
 
 def _clock(value: Any) -> str:
+    """Process the requested value.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_clock``.
+    """
     text = _text(value)
     if len(text) >= 23 and text[19] == ".":
         return text[11:23]
@@ -310,7 +362,28 @@ def build_trade_note(
     signal_time: Any = None,
     entry_fill_time: Any = None,
 ) -> list[str]:
-    """Caption lines shown under both subplots of one trade chart."""
+    """Caption lines shown under both subplots of one trade chart.
+
+    Args:
+        open_row: Open row used by the operation described above.
+        close_row: Close row used by the operation described above.
+        entry_price: Price at which the position was opened.
+        exit_price: Numeric value used for the exit price.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        pnl: Numeric value used for the pnl.
+        pnl_calc: Numeric value used for the pnl calc.
+        duration_mins: Numeric value used for the duration mins.
+        duration_secs: Numeric value used for the duration secs.
+        lots: Numeric value used for the lots.
+        close_reason_detail: Text or path value identifying the close reason detail.
+        extra_notes: Items supplied for the extra notes, in input order.
+        position_events: Position events used by the operation described above.
+        signal_time: Signal time used by the operation described above.
+        entry_fill_time: Entry fill time used by the operation described above.
+
+    Returns:
+        Values returned by ``build_trade_note``, in the declared order.
+    """
     dir_label = "Long" if direction == 1 else "Short" if direction == -1 else "Flat"
     fill_source = _text(open_row.get("fill_quote_source"))
     fill_kind = "tick fill" if fill_source == "tick" else "logged fill"
@@ -447,6 +520,14 @@ def build_trade_note(
 
 
 def _short_reference(value: Any) -> str:
+    """Process reference.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_short_reference``.
+    """
     text = pretty_ref(value)
     for long, short in (
         ("Inverse Fair Value Gap", "IFVG"),
@@ -462,7 +543,14 @@ def _short_reference(value: Any) -> str:
 
 
 def _plot_reason(open_row: Any) -> str:
-    """Short, plot-only reason that keeps FVG and IFVG reactions distinct."""
+    """Short, plot-only reason that keeps FVG and IFVG reactions distinct.
+
+    Args:
+        open_row: Open row used by the operation described above.
+
+    Returns:
+        Text returned by ``_plot_reason``.
+    """
     primary_idea = _text(open_row.get("primary_idea"))
     if primary_idea:
         primary_tf = _text(open_row.get("primary_setup_timeframe"))
@@ -534,6 +622,15 @@ def _plot_reason(open_row: Any) -> str:
 
 
 def _clip_plot_line(text: str, max_chars: int = 150) -> str:
+    """Process plot line.
+
+    Args:
+        text: Text or path value identifying the text.
+        max_chars: Numeric value used for the max chars.
+
+    Returns:
+        Text returned by ``_clip_plot_line``.
+    """
     return text if len(text) <= max_chars else text[: max_chars - 1].rstrip() + "…"
 
 
@@ -551,7 +648,24 @@ def build_trade_plot_note(
     signal_time: Any = None,
     entry_fill_time: Any = None,
 ) -> list[str]:
-    """Build five compact rows intended to live inside a trade chart."""
+    """Build five compact rows intended to live inside a trade chart.
+
+    Args:
+        open_row: Open row used by the operation described above.
+        close_row: Close row used by the operation described above.
+        entry_price: Price at which the position was opened.
+        exit_price: Numeric value used for the exit price.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        pnl: Numeric value used for the pnl.
+        lots: Numeric value used for the lots.
+        close_reason_detail: Text or path value identifying the close reason detail.
+        position_events: Position events used by the operation described above.
+        signal_time: Signal time used by the operation described above.
+        entry_fill_time: Entry fill time used by the operation described above.
+
+    Returns:
+        Values returned by ``build_trade_plot_note``, in the declared order.
+    """
     side = "Long" if direction == 1 else "Short" if direction == -1 else "Flat"
     signal = _clock(signal_time) if _text(signal_time) else "?"
     fill_time = entry_fill_time if _text(entry_fill_time) else open_row.get("time")

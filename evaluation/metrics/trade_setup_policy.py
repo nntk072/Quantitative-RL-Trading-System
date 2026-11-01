@@ -27,6 +27,12 @@ def _reference_timeframes(reference: object) -> tuple[list[str], bool]:
     SL/TP source strings can combine several references with ``|``. Session
     highs/lows have no candle timeframe, but remain valid structural anchors.
     Unprefixed candle references follow the execution resolver and mean M1.
+
+    Args:
+        reference: Reference used by the operation described above.
+
+    Returns:
+        Whether reference timeframes meets the requested condition.
     """
     if reference is None or reference is pd.NA or reference is pd.NaT:
         return [], False
@@ -52,21 +58,18 @@ def _reference_timeframes(reference: object) -> tuple[list[str], bool]:
 def summarize_trade_setup_decisions(
     decisions: pd.DataFrame, trades: pd.DataFrame
 ) -> dict[str, Any]:
-    """Return benchmark metrics for policy choices, entropy, and structural safety."""
-    canonical_wire_schema = "trade_setup_candidate_id" in decisions.columns or (
-        "trade_setup_candidate_id" in trades.columns
-    )
+    """Return benchmark metrics for policy choices, entropy, and structural safety.
+
+    Args:
+        decisions: Tabular data used for the decisions.
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     decisions = decisions.rename(
         columns={
-            "trade_setup_candidate_id": "thesis_candidate_id",
-            "trade_setup_entropy_nats": "thesis_entropy_nats",
             "eligible_trade_setup_ids": "eligible_candidate_ids",
-        }
-    )
-    trades = trades.rename(
-        columns={
-            "trade_setup_candidate_id": "thesis_candidate_id",
-            "trade_setup_schema_version": "thesis_schema_version",
         }
     )
     if decisions.empty:
@@ -78,28 +81,28 @@ def summarize_trade_setup_decisions(
             "invalid_selection_rate": None,
             "selected_idea_count": 0,
             "selected_timeframe_count": 0,
-            "thesis_entropy_mean_nats": None,
-            "thesis_entropy_by_month": [],
+            "trade_setup_entropy_mean_nats": None,
+            "trade_setup_entropy_by_month": [],
             "selection_counts": [],
-            "execution_action_by_thesis": [],
+            "execution_action_by_trade_setup": [],
             "no_trade_only_eligible_steps": 0,
-            "trade_thesis_eligible_steps": 0,
-            "eligible_trade_thesis_count_mean": None,
-            "eligible_trade_thesis_count_median": None,
-            "eligible_trade_thesis_count_max": 0,
-            "no_trade_rate_when_trade_thesis_eligible": None,
+            "trade_setup_eligible_steps": 0,
+            "eligible_trade_setup_count_mean": None,
+            "eligible_trade_setup_count_median": None,
+            "eligible_trade_setup_count_max": 0,
+            "no_trade_rate_when_trade_setup_eligible": None,
             "selection_by_idea": [],
             "selection_by_timeframe": [],
             "selection_matrix": [],
-            "execution_by_opened_thesis": [],
+            "execution_by_opened_trade_setup": [],
             "performance_by_idea_timeframe": [],
         }
     else:
-        selected = pd.to_numeric(decisions["thesis_candidate_id"], errors="raise").astype(int)
+        selected = pd.to_numeric(decisions["trade_setup_candidate_id"], errors="raise").astype(int)
         no_trade = selected.eq(NO_TRADE_ID)
         ideas = decisions.loc[~no_trade, "idea"].fillna("").astype(str)
         timeframes = decisions.loc[~no_trade, "setup_timeframe"].fillna("").astype(str)
-        entropy = pd.to_numeric(decisions["thesis_entropy_nats"], errors="coerce")
+        entropy = pd.to_numeric(decisions["trade_setup_entropy_nats"], errors="coerce")
         timestamps = pd.to_datetime(decisions["time"], errors="coerce", utc=True)
         entropy_rows = pd.DataFrame(
             {
@@ -140,12 +143,12 @@ def summarize_trade_setup_decisions(
             "invalid_selection_rate": float(invalid.mean()),
             "selected_idea_count": int(ideas[ideas.ne("")].nunique()),
             "selected_timeframe_count": int(timeframes[timeframes.ne("")].nunique()),
-            "thesis_entropy_mean_nats": float(entropy.mean()),
-            "thesis_entropy_by_month": entropy_by_month,
+            "trade_setup_entropy_mean_nats": float(entropy.mean()),
+            "trade_setup_entropy_by_month": entropy_by_month,
             "selection_counts": selection_counts,
         }
         action_columns = [name for name in decisions if str(name).startswith("action_")]
-        execution_by_thesis: list[dict[str, Any]] = []
+        execution_by_trade_setup: list[dict[str, Any]] = []
         if action_columns:
             executions = decisions.loc[~no_trade].groupby(
                 ["idea", "setup_timeframe"], dropna=False, sort=True
@@ -161,8 +164,8 @@ def summarize_trade_setup_decisions(
                     if not values.empty:
                         row[f"{column}_mean"] = float(values.mean())
                         row[f"{column}_std"] = float(values.std(ddof=0))
-                execution_by_thesis.append(row)
-        decision_metrics["execution_action_by_thesis"] = execution_by_thesis
+                execution_by_trade_setup.append(row)
+        decision_metrics["execution_action_by_trade_setup"] = execution_by_trade_setup
         eligible_ids = [
             {int(value) for value in values if int(value) != NO_TRADE_ID}
             for values in decisions["eligible_candidate_ids"]
@@ -249,11 +252,11 @@ def summarize_trade_setup_decisions(
         decision_metrics.update(
             {
                 "no_trade_only_eligible_steps": int((eligible_sizes == 0).sum()),
-                "trade_thesis_eligible_steps": int(trade_eligible_steps.sum()),
-                "eligible_trade_thesis_count_mean": float(eligible_sizes.mean()),
-                "eligible_trade_thesis_count_median": float(np.median(eligible_sizes)),
-                "eligible_trade_thesis_count_max": int(eligible_sizes.max(initial=0)),
-                "no_trade_rate_when_trade_thesis_eligible": float(
+                "trade_setup_eligible_steps": int(trade_eligible_steps.sum()),
+                "eligible_trade_setup_count_mean": float(eligible_sizes.mean()),
+                "eligible_trade_setup_count_median": float(np.median(eligible_sizes)),
+                "eligible_trade_setup_count_max": int(eligible_sizes.max(initial=0)),
+                "no_trade_rate_when_trade_setup_eligible": float(
                     (no_trade & trade_eligible_steps).sum()
                     / max(1, int(trade_eligible_steps.sum()))
                 ),
@@ -364,7 +367,7 @@ def summarize_trade_setup_decisions(
             )
             sd_timeframe_violations += row_sd
         try:
-            candidate = trade_setup_candidate(int(trade_row.get("thesis_candidate_id", -1)))
+            candidate = trade_setup_candidate(int(trade_row.get("trade_setup_candidate_id", -1)))
         except (TypeError, ValueError):
             candidate = None
         if candidate is None or candidate.is_no_trade:
@@ -375,8 +378,8 @@ def summarize_trade_setup_decisions(
             or candidate.direction != direction
         ):
             semantic_violations["candidate_fields_disagree"] += 1
-        if not trade_row.get("thesis_schema_version"):
-            semantic_violations["missing_thesis_schema_version"] += 1
+        if not trade_row.get("trade_setup_schema_version"):
+            semantic_violations["missing_trade_setup_schema_version"] += 1
         trades_with_any_violation += int(any((row_sl_side, row_sl_floor, row_sd, row_tp_side)))
 
     open_counts = Counter(
@@ -393,7 +396,7 @@ def summarize_trade_setup_decisions(
         {"idea": idea, "setup_timeframe": timeframe, "count": count}
         for (idea, timeframe), count in sorted(open_counts.items())
     ]
-    execution_by_opened_thesis: list[dict[str, Any]] = []
+    execution_by_opened_trade_setup: list[dict[str, Any]] = []
     if not opens.empty and {"primary_idea", "primary_setup_timeframe"}.issubset(opens.columns):
         for (idea, timeframe), group in opens.groupby(
             ["primary_idea", "primary_setup_timeframe"], dropna=False, sort=True
@@ -419,9 +422,9 @@ def summarize_trade_setup_decisions(
                         .value_counts()
                         .items()
                     }
-            execution_by_opened_thesis.append(summary)
-    decision_metrics["execution_by_opened_thesis"] = execution_by_opened_thesis
-    performance_by_thesis: list[dict[str, Any]] = []
+            execution_by_opened_trade_setup.append(summary)
+    decision_metrics["execution_by_opened_trade_setup"] = execution_by_opened_trade_setup
+    performance_by_trade_setup: list[dict[str, Any]] = []
     if not opens.empty and {"primary_idea", "primary_setup_timeframe"}.issubset(opens.columns):
         for (idea, timeframe), group in opens.groupby(
             ["primary_idea", "primary_setup_timeframe"], dropna=False, sort=True
@@ -458,8 +461,8 @@ def summarize_trade_setup_decisions(
                 performance_row["mean_realized_r"] = float(realized_r.mean())
                 performance_row["median_realized_r"] = float(realized_r.median())
                 performance_row["realized_r_trade_count"] = int(len(realized_r))
-            performance_by_thesis.append(performance_row)
-    decision_metrics["performance_by_idea_timeframe"] = performance_by_thesis
+            performance_by_trade_setup.append(performance_row)
+    decision_metrics["performance_by_idea_timeframe"] = performance_by_trade_setup
     decision_metrics["structural_violations"] = {
         "sl_wrong_side": sl_side_violations,
         "sl_below_primary_timeframe": sl_timeframe_floor_violations,
@@ -471,31 +474,18 @@ def summarize_trade_setup_decisions(
     }
     decision_metrics["semantic_violations"] = dict(sorted(semantic_violations.items()))
     decision_metrics["semantic_violation_count"] = int(sum(semantic_violations.values()))
-    if canonical_wire_schema:
-        key_names = {
-            "thesis_entropy_mean_nats": "trade_setup_entropy_mean_nats",
-            "thesis_entropy_by_month": "trade_setup_entropy_by_month",
-            "execution_action_by_thesis": "execution_action_by_trade_setup",
-            "trade_thesis_eligible_steps": "trade_setup_eligible_steps",
-            "eligible_trade_thesis_count_mean": "eligible_trade_setup_count_mean",
-            "eligible_trade_thesis_count_median": "eligible_trade_setup_count_median",
-            "eligible_trade_thesis_count_max": "eligible_trade_setup_count_max",
-            "no_trade_rate_when_trade_thesis_eligible": "no_trade_rate_when_trade_setup_eligible",
-            "execution_by_opened_thesis": "execution_by_opened_trade_setup",
-        }
-        decision_metrics = {
-            key_names.get(key, key): value for key, value in decision_metrics.items()
-        }
-        violations = decision_metrics.get("semantic_violations")
-        if isinstance(violations, dict) and "missing_thesis_schema_version" in violations:
-            violations["missing_trade_setup_schema_version"] = violations.pop(
-                "missing_thesis_schema_version"
-            )
-    decision_metrics["wire_schema"] = "trade_setup" if canonical_wire_schema else "thesis_legacy"
     return decision_metrics
 
 
 def _finite(value: object) -> float | None:
+    """Process the requested value.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Result of process the requested value.
+    """
     try:
         result = float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
@@ -503,7 +493,4 @@ def _finite(value: object) -> float | None:
     return result if np.isfinite(result) else None
 
 
-# The old function name is an explicit compatibility alias for report callers.
-summarize_thesis_decisions = summarize_trade_setup_decisions
-
-__all__ = ["summarize_trade_setup_decisions", "summarize_thesis_decisions"]
+__all__ = ["summarize_trade_setup_decisions"]

@@ -30,12 +30,25 @@ REWARD_PART_KEYS: tuple[str, ...] = (
 
 
 def empty_reward_parts() -> dict[str, float]:
-    """Zero split of one step reward. The keys sum to the returned reward."""
+    """Zero split of one step reward. The keys sum to the returned reward.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     return {key: 0.0 for key in REWARD_PART_KEYS}
 
 
 def fit_reward_parts(parts: dict[str, float], raw: float, clipped: float) -> dict[str, float]:
-    """Scale a split so it sums to the clipped reward the agent receives."""
+    """Scale a split so it sums to the clipped reward the agent receives.
+
+    Args:
+        parts: Key-value data used for the parts.
+        raw: Numeric value used for the raw.
+        clipped: Numeric value used for the clipped.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     out = empty_reward_parts()
     out.update({key: float(value) for key, value in parts.items()})
     if raw != 0.0 and clipped != raw:
@@ -51,7 +64,17 @@ def _soft_band_penalty(
     *,
     weight: float = 0.5,
 ) -> float:
-    """Linear penalty in ``(soft, hard]``; 0 below soft."""
+    """Linear penalty in ``(soft, hard]``; 0 below soft.
+
+    Args:
+        value: Value to process.
+        soft: Soft used by the operation described above.
+        hard: Numeric value used for the hard.
+        weight: Numeric value used for the weight.
+
+    Returns:
+        Numeric result returned by ``_soft_band_penalty``.
+    """
     soft_v = float(soft) if soft is not None and soft > 0.0 else 0.0
     if soft_v <= 0.0 or hard <= soft_v or value <= soft_v:
         return 0.0
@@ -60,6 +83,11 @@ def _soft_band_penalty(
 
 
 def _fresh_band_state() -> dict[str, bool]:
+    """Process band state.
+
+    Returns:
+        Whether fresh band state meets the requested condition.
+    """
     return {"soft_daily": False, "soft_year": False, "soft_trailing": False}
 
 
@@ -72,7 +100,19 @@ def _charge_band_once(
     *,
     weight: float = 0.5,
 ) -> float:
-    """Penalise the bar that enters the band. Later bars inside it pay nothing."""
+    """Penalise the bar that enters the band. Later bars inside it pay nothing.
+
+    Args:
+        state: State object read or updated by the operation.
+        key: Text or path value identifying the key.
+        value: Value to process.
+        soft: Soft used by the operation described above.
+        hard: Numeric value used for the hard.
+        weight: Numeric value used for the weight.
+
+    Returns:
+        Numeric result returned by ``_charge_band_once``.
+    """
     penalty = _soft_band_penalty(value, soft, hard, weight=weight)
     inside = penalty > 0.0
     entered = inside and not state[key]
@@ -84,6 +124,12 @@ class DSRReward:
     """Online differential Sharpe reward with FTMO soft penalties."""
 
     def __init__(self, eta: float = 0.01, *, breach_penalty: float = -1.0) -> None:
+        """Initialize DSRReward and its owned state.
+
+        Args:
+            eta: Numeric value used for the eta.
+            breach_penalty: Numeric value used for the breach penalty.
+        """
         self.eta = eta  # EMA damping for A and B estimates
         self.breach_penalty = float(breach_penalty)
         self._A: float = 0.0  # EMA of returns
@@ -92,6 +138,7 @@ class DSRReward:
         self.last_parts: dict[str, float] = empty_reward_parts()
 
     def reset(self) -> None:
+        """Clear the DSR moving moments and once-per-band penalty state."""
         self._A = 0.0
         self._B = 0.0
         self._band_inside = _fresh_band_state()
@@ -117,20 +164,25 @@ class DSRReward:
     ) -> float:
         """Compute the DSR reward for one step.
 
-        Parameters
-        ----------
-        step_pnl:
-            Realised + unrealised P&L change for this bar.
-        daily_loss, daily_loss_limit, soft_daily_loss_limit:
-            Soft FTMO penalty ramps from the soft brick toward the hard limit.
-        loss_from_initial, soft_max_loss_limit, max_loss_limit:
-            Soft year-loss shaping from soft floor toward absolute max loss.
-        trailing_dd, soft_trailing_dd_limit, trailing_dd_limit:
-            Optional soft trailing band and peak drawdown limit (both disabled by default).
-        initial_balance:
-            For normalisation.
-        breach:
-            Hard FTMO guardrail breached → large negative terminal reward.
+        Args:
+            step_pnl: Realised + unrealised P&L change for this bar.
+            daily_loss: Current daily loss in account currency.
+            daily_loss_limit: Hard daily-loss threshold.
+            soft_daily_loss_limit: Optional start of the soft daily-loss penalty ramp.
+            loss_from_initial: Loss measured from initial account balance.
+            soft_max_loss_limit: Optional start of the total-loss penalty ramp.
+            max_loss_limit: Hard total-loss threshold.
+            trailing_dd: Current drawdown from the running equity peak.
+            soft_trailing_dd_limit: Optional start of the trailing-drawdown penalty ramp.
+            trailing_dd_limit: Hard trailing-drawdown threshold; zero disables the check.
+            initial_balance: For normalisation.
+            breach: Hard FTMO guardrail breached → large negative terminal reward.
+            realized_close_pnl: Optional realized P&L metadata; not used by this reward.
+            realized_r: Optional realized R-multiple metadata; not used by this reward.
+            equity: Optional account-equity metadata; not used by this reward.
+
+        Returns:
+            Numeric result returned by ``__call__``.
         """
         if breach:
             penalty = self.breach_penalty
@@ -201,6 +253,14 @@ class PnLReward:
         breach_penalty: float = -1.0,
         soft_band_weight: float = 0.05,
     ) -> None:
+        """Initialize PnLReward and its owned state.
+
+        Args:
+            soft_loss_frac: Numeric value used for the soft loss frac.
+            dsr_weight: Numeric value used for the dsr weight.
+            breach_penalty: Numeric value used for the breach penalty.
+            soft_band_weight: Numeric value used for the soft band weight.
+        """
         self.soft_loss_frac = soft_loss_frac
         self.dsr_weight = float(dsr_weight)
         self.breach_penalty = float(breach_penalty)
@@ -210,6 +270,7 @@ class PnLReward:
         self.last_parts: dict[str, float] = empty_reward_parts()
 
     def reset(self) -> None:
+        """Clear penalty-band state and reset the optional DSR component."""
         self._band_inside = _fresh_band_state()
         if self._dsr is not None:
             self._dsr.reset()
@@ -233,6 +294,28 @@ class PnLReward:
         realized_r: float | None = None,
         equity: float | None = None,
     ) -> float:
+        """Process PnLReward.
+
+        Args:
+            step_pnl: Numeric value used for the step pnl.
+            daily_loss: Numeric value used for the daily loss.
+            daily_loss_limit: Numeric value used for the daily loss limit.
+            soft_daily_loss_limit: Soft daily loss limit used by the operation described above.
+            loss_from_initial: Numeric value used for the loss from initial.
+            soft_max_loss_limit: Soft max loss limit used by the operation described above.
+            max_loss_limit: Numeric value used for the max loss limit.
+            trailing_dd: Numeric value used for the trailing dd.
+            soft_trailing_dd_limit: Soft trailing dd limit used by the operation described above.
+            trailing_dd_limit: Numeric value used for the trailing dd limit.
+            initial_balance: Numeric value used for the initial balance.
+            breach: Whether to enable or require the breach.
+            realized_close_pnl: Realized close pnl used by the operation described above.
+            realized_r: Realized r used by the operation described above.
+            equity: Current account equity in account currency.
+
+        Returns:
+            Numeric result returned by ``__call__``.
+        """
         if breach:
             penalty = self.breach_penalty
             self.last_parts = fit_reward_parts({"breach": penalty}, penalty, penalty)
@@ -315,6 +398,12 @@ class RMultipleReward:
     """
 
     def __init__(self, *, breach_penalty: float = -1.0, soft_band_weight: float = 0.05) -> None:
+        """Initialize RMultipleReward and its owned state.
+
+        Args:
+            breach_penalty: Numeric value used for the breach penalty.
+            soft_band_weight: Numeric value used for the soft band weight.
+        """
         self.breach_penalty = float(breach_penalty)
         self.soft_band_weight = float(soft_band_weight)
         self._band_inside = _fresh_band_state()
@@ -322,6 +411,7 @@ class RMultipleReward:
         self.last_parts: dict[str, float] = empty_reward_parts()
 
     def reset(self) -> None:
+        """Clear penalty-band state and the accumulated realized R multiple."""
         self._band_inside = _fresh_band_state()
         self.cumulative_r = 0.0
 
@@ -344,6 +434,28 @@ class RMultipleReward:
         realized_r: float | None = None,
         equity: float | None = None,
     ) -> float:
+        """Process RMultipleReward.
+
+        Args:
+            step_pnl: Numeric value used for the step pnl.
+            daily_loss: Numeric value used for the daily loss.
+            daily_loss_limit: Numeric value used for the daily loss limit.
+            soft_daily_loss_limit: Soft daily loss limit used by the operation described above.
+            loss_from_initial: Numeric value used for the loss from initial.
+            soft_max_loss_limit: Soft max loss limit used by the operation described above.
+            max_loss_limit: Numeric value used for the max loss limit.
+            trailing_dd: Numeric value used for the trailing dd.
+            soft_trailing_dd_limit: Soft trailing dd limit used by the operation described above.
+            trailing_dd_limit: Numeric value used for the trailing dd limit.
+            initial_balance: Numeric value used for the initial balance.
+            breach: Whether to enable or require the breach.
+            realized_close_pnl: Realized close pnl used by the operation described above.
+            realized_r: Realized r used by the operation described above.
+            equity: Current account equity in account currency.
+
+        Returns:
+            Numeric result returned by ``__call__``.
+        """
         if breach:
             penalty = self.breach_penalty
             self.last_parts = fit_reward_parts({"breach": penalty}, penalty, penalty)
@@ -399,6 +511,12 @@ class EquityDeltaReward:
     """Dense incremental R reward using mark-to-market equity changes."""
 
     def __init__(self, fixed_risk_usd: float, *, breach_penalty: float = -10.0) -> None:
+        """Initialize EquityDeltaReward and its owned state.
+
+        Args:
+            fixed_risk_usd: Numeric value used for the fixed risk usd.
+            breach_penalty: Numeric value used for the breach penalty.
+        """
         if not np.isfinite(fixed_risk_usd) or fixed_risk_usd <= 0.0:
             raise ValueError("equity_delta_r requires fixed_risk_usd > 0")
         self.fixed_risk_usd = float(fixed_risk_usd)
@@ -406,9 +524,20 @@ class EquityDeltaReward:
         self.last_parts: dict[str, float] = empty_reward_parts()
 
     def reset(self) -> None:
+        """Clear the component breakdown for the next episode."""
         self.last_parts = empty_reward_parts()
 
     def __call__(self, step_pnl: float, *, breach: bool = False, **_: object) -> float:
+        """Process EquityDeltaReward.
+
+        Args:
+            step_pnl: Numeric value used for the step pnl.
+            breach: Whether to enable or require the breach.
+            **_: _ used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``__call__``.
+        """
         if breach:
             reward = self.breach_penalty
             self.last_parts = fit_reward_parts({"breach": reward}, reward, reward)
@@ -430,6 +559,12 @@ class EquityLogGrowthReward:
     """
 
     def __init__(self, scale: float = 100.0, *, breach_penalty: float = -10.0) -> None:
+        """Initialize EquityLogGrowthReward and its owned state.
+
+        Args:
+            scale: Numeric value used for the scale.
+            breach_penalty: Numeric value used for the breach penalty.
+        """
         if isinstance(scale, bool) or not np.isfinite(scale) or scale <= 0.0:
             raise ValueError("equity_log_growth scale must be finite and positive")
         if not np.isfinite(breach_penalty) or breach_penalty >= 0.0:
@@ -439,6 +574,7 @@ class EquityLogGrowthReward:
         self.last_parts: dict[str, float] = empty_reward_parts()
 
     def reset(self) -> None:
+        """Clear the component breakdown for the next episode."""
         self.last_parts = empty_reward_parts()
 
     def __call__(
@@ -449,6 +585,17 @@ class EquityLogGrowthReward:
         equity: float | None = None,
         **_: object,
     ) -> float:
+        """Process EquityLogGrowthReward.
+
+        Args:
+            step_pnl: Numeric value used for the step pnl.
+            previous_equity: Previous equity used by the operation described above.
+            equity: Current account equity in account currency.
+            **_: _ used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``__call__``.
+        """
         if previous_equity is None or equity is None:
             raise ValueError("equity_log_growth requires previous_equity and equity")
         before = float(previous_equity)

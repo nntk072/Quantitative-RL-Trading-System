@@ -13,15 +13,21 @@ from decisioning.trade_setup import TRADE_SETUP_IDEAS, TRADE_SETUP_TIMEFRAMES
 
 
 def write_trade_setup_heatmaps(metrics: dict[str, Any], split_dir: Path, dpi: int) -> None:
-    """Write 6-by-9 choice and outcome heatmaps with cell support counts."""
+    """Write 6-by-9 choice and outcome heatmaps with cell support counts.
+
+    Args:
+        metrics: Key-value data used for the metrics.
+        split_dir: Text or path value identifying the split dir.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     selection_rows = metrics.get("selection_matrix", [])
     performance_rows = metrics.get("performance_by_idea_timeframe", [])
     if not isinstance(selection_rows, list) or not isinstance(performance_rows, list):
         return
     import matplotlib.pyplot as plt
 
-    file_prefix = "trade_setup" if metrics.get("wire_schema") == "trade_setup" else "thesis"
-    display_name = "trade setup" if file_prefix == "trade_setup" else "thesis"
+    file_prefix = "trade_setup"
+    display_name = "trade setup"
 
     selection = _matrix_from_rows(selection_rows, "selected_count")
     _plot_matrix(
@@ -56,15 +62,20 @@ def write_trade_setup_heatmaps(metrics: dict[str, Any], split_dir: Path, dpi: in
 
 
 def write_trade_setup_learning_plots(csv_path: Path, output_dir: Path, dpi: int) -> list[Path]:
-    """Plot rollout-level policy activity and thesis entropy from PPO training."""
+    """Plot rollout-level setup-selection activity and entropy from PPO training.
+
+    Args:
+        csv_path: Path or filename identifying the csv.
+        output_dir: Text or path value identifying the output dir.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Path returned by ``write_trade_setup_learning_plots``.
+    """
     if not csv_path.is_file():
         return []
     frame = pd.read_csv(csv_path)
-    prefix = (
-        "trade_setup"
-        if {"trade_setup/no_trade_rate", "trade_setup/entropy_mean_nats"}.issubset(frame.columns)
-        else "thesis"
-    )
+    prefix = "trade_setup"
     required = {"timestep", f"{prefix}/no_trade_rate", f"{prefix}/entropy_mean_nats"}
     if not required.issubset(frame.columns) or frame.empty:
         return []
@@ -78,16 +89,16 @@ def write_trade_setup_learning_plots(csv_path: Path, output_dir: Path, dpi: int)
     axis.plot(x, frame[f"{prefix}/no_trade_rate"], label="NO_TRADE, all decision bars")
     eligible_key = f"{prefix}/no_trade_rate_when_eligible"
     if eligible_key in frame:
-        axis.plot(x, frame[eligible_key], label="NO_TRADE when a trade thesis is eligible")
+        axis.plot(x, frame[eligible_key], label="NO_TRADE when a setup is eligible")
     eligible_coverage_key = f"{prefix}/trade_eligible_step_rate"
     if eligible_coverage_key in frame:
-        axis.plot(x, frame[eligible_coverage_key], label="Bars with an eligible trade thesis")
+        axis.plot(x, frame[eligible_coverage_key], label="Bars with an eligible trade setup")
     axis.set(xlabel="Environment timesteps", ylabel="Decision-bar rate", ylim=(-0.02, 1.02))
     axis.set_title("Trade-setup activity during PPO training")
     axis.grid(True, alpha=0.25)
     axis.legend(loc="best")
     fig.tight_layout()
-    file_prefix = "trade_setup" if prefix == "trade_setup" else "thesis"
+    file_prefix = "trade_setup"
     activity_path = output_dir / f"{file_prefix}_activity.png"
     fig.savefig(activity_path, dpi=dpi)
     plt.close(fig)
@@ -110,6 +121,14 @@ def write_trade_setup_learning_plots(csv_path: Path, output_dir: Path, dpi: int)
 
 
 def _complete_performance_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Process performance rows.
+
+    Args:
+        rows: Items supplied for the rows, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     indexed = {(str(row.get("idea")), str(row.get("setup_timeframe"))): row for row in rows}
     return [
         indexed.get(
@@ -121,6 +140,15 @@ def _complete_performance_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any
 
 
 def _matrix_from_rows(rows: list[dict[str, Any]], value_key: str) -> NDArray[np.float64]:
+    """Process from rows.
+
+    Args:
+        rows: Items supplied for the rows, in input order.
+        value_key: Text or path value identifying the value key.
+
+    Returns:
+        Array returned by ``_matrix_from_rows``.
+    """
     indexed = {
         (str(row.get("idea")), str(row.get("timeframe", row.get("setup_timeframe")))): row
         for row in rows
@@ -150,6 +178,17 @@ def _plot_matrix(
     format_value: Any,
     support: NDArray[np.float64] | None = None,
 ) -> None:
+    """Process matrix.
+
+    Args:
+        values: Values to process, in input order.
+        title: Text or path value identifying the title.
+        colorbar_label: Text or path value identifying the colorbar label.
+        output_path: Path at which to write the output.
+        dpi: Resolution of generated plots, in dots per inch.
+        format_value: Format value used by the operation described above.
+        support: Support used by the operation described above.
+    """
     import matplotlib.pyplot as plt
 
     indexed = np.ma.masked_invalid(values)  # type: ignore[no-untyped-call]
@@ -183,13 +222,7 @@ def _plot_matrix(
     plt.close(fig)
 
 
-# Compatibility aliases for historical reporting integrations.
-write_thesis_heatmaps = write_trade_setup_heatmaps
-write_thesis_learning_plots = write_trade_setup_learning_plots
-
 __all__ = [
     "write_trade_setup_heatmaps",
     "write_trade_setup_learning_plots",
-    "write_thesis_heatmaps",
-    "write_thesis_learning_plots",
 ]

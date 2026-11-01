@@ -24,22 +24,15 @@ class SweepConfirmationReward:
     This reward function enables zero-human-label training by providing
     immediate feedback based on automated sweep detection heuristics.
 
-    Parameters
-    ----------
-    alpha : float
-        Weight for sweep confirmation score C_t (default: 0.1)
-    beta : float
-        Weight for time decay penalty T_t (default: 0.01)
-    hold_bars : int
-        Number of bars price must hold beyond level for confirmation (default: 3)
-    cost_per_trade : float
-        Estimated transaction cost per trade (default: 0.0)
-    decay_grace_min : float
-        Minutes after the session open before the time decay starts (default: 20)
-    decay_horizon_min : float | None
-        Minutes at which the decay saturates. Defaults to ``alpha / beta`` so
-        the penalty can at most cancel the confirmation bonus it penalises.
-        Pass ``None`` explicitly with ``beta == 0`` to disable the decay.
+    Args:
+        alpha (float): Weight for sweep confirmation score C_t (default: 0.1)
+        beta (float): Weight for time decay penalty T_t (default: 0.01)
+        hold_bars (int): Number of bars price must hold beyond level for confirmation (default: 3)
+        cost_per_trade (float): Estimated transaction cost per trade (default: 0.0)
+        decay_grace_min (float): Minutes after the session open before the time decay starts (default: 20)
+        decay_horizon_min (float | None): Minutes at which the decay saturates. Defaults to ``alpha / beta`` so
+            the penalty can at most cancel the confirmation bonus it penalises.
+            Pass ``None`` explicitly with ``beta == 0`` to disable the decay.
     """
 
     def __init__(
@@ -51,6 +44,16 @@ class SweepConfirmationReward:
         decay_grace_min: float = 20.0,
         decay_horizon_min: float | None = None,
     ):
+        """Initialize SweepConfirmationReward and its owned state.
+
+        Args:
+            alpha: Numeric value used for the alpha.
+            beta: Numeric value used for the beta.
+            hold_bars: Market bar or price data used for initialize SweepConfirmationReward and its owned state.
+            cost_per_trade: Numeric value used for the cost per trade.
+            decay_grace_min: Numeric value used for the decay grace min.
+            decay_horizon_min: Decay horizon min used by the operation described above.
+        """
         self.alpha = alpha
         self.beta = beta
         self.hold_bars = hold_bars
@@ -107,31 +110,19 @@ class SweepConfirmationReward:
     ) -> float:
         """Compute reward for current step.
 
-        Parameters
-        ----------
-        pnl_step : float
-            Change in unrealised P&L from previous step
-        cost : float
-            Transaction cost for this step
-        price : float
-            Current price
-        london_high : float
-            London session high (liquidity level)
-        london_low : float
-            London session low (liquidity level)
-        asian_high : float
-            Asian session high (liquidity level)
-        asian_low : float
-            Asian session low (liquidity level)
-        minutes_since_open : float
-            Minutes elapsed since NY open (16:30 UTC+3)
-        position_changed : bool
-            Whether position was opened/closed/changed this step
+        Args:
+            pnl_step (float): Change in unrealised P&L from previous step
+            cost (float): Transaction cost for this step
+            price (float): Current price
+            london_high (float): London session high (liquidity level)
+            london_low (float): London session low (liquidity level)
+            asian_high (float): Asian session high (liquidity level)
+            asian_low (float): Asian session low (liquidity level)
+            minutes_since_open (float): Minutes elapsed since NY open (16:30 UTC+3)
+            position_changed (bool): Whether position was opened/closed/changed this step
 
-        Returns
-        -------
-        float
-            Reward value for this step
+        Returns:
+            float: Reward value for this step
         """
         # Compute sweep confirmation score C_t
         c_t = self._compute_sweep_score(price, london_high, london_low, asian_high, asian_low)
@@ -169,6 +160,13 @@ class SweepConfirmationReward:
         asian_low: float,
     ) -> float:
         """Compute C_t: Liquidity Sweep Confirmation Score.
+
+        Args:
+            price: Numeric value used for the price.
+            london_high: Numeric value used for the london high.
+            london_low: Numeric value used for the london low.
+            asian_high: Numeric value used for the asian high.
+            asian_low: Numeric value used for the asian low.
 
         Returns:
             +1.0: London level swept and held for hold_bars
@@ -286,6 +284,17 @@ class CompositeReward:
         strategy_weight: float = 0.0,
         base_reward: Any = None,
     ):
+        """Initialize CompositeReward and its owned state.
+
+        Args:
+            sweep_reward: Sweep reward used by the operation described above.
+            dsr_weight: Numeric value used for the dsr weight.
+            sweep_weight: Numeric value used for the sweep weight.
+            dsr_eta: Numeric value used for the dsr eta.
+            strategy_reward: Strategy reward used by the operation described above.
+            strategy_weight: Numeric value used for the strategy weight.
+            base_reward: Base reward used by the operation described above.
+        """
         self.sweep_reward = sweep_reward
         self.dsr_weight = dsr_weight
         self.sweep_weight = sweep_weight
@@ -343,6 +352,36 @@ class CompositeReward:
         Supports both DSR-style arguments and sweep-style arguments.
         For backward compatibility, accepts DSR arguments and uses sweep
         reward only when sweep parameters are provided.
+
+        Args:
+            pnl_step: Numeric value used for the pnl step.
+            daily_loss: Numeric value used for the daily loss.
+            daily_loss_limit: Numeric value used for the daily loss limit.
+            soft_daily_loss_limit: Soft daily loss limit used by the operation described above.
+            loss_from_initial: Numeric value used for the loss from initial.
+            soft_max_loss_limit: Soft max loss limit used by the operation described above.
+            max_loss_limit: Numeric value used for the max loss limit.
+            trailing_dd: Numeric value used for the trailing dd.
+            soft_trailing_dd_limit: Soft trailing dd limit used by the operation described above.
+            trailing_dd_limit: Numeric value used for the trailing dd limit.
+            initial_balance: Numeric value used for the initial balance.
+            breach: Whether to enable or require the breach.
+            cost: Numeric value used for the cost.
+            price: Price used by the operation described above.
+            london_high: London high used by the operation described above.
+            london_low: London low used by the operation described above.
+            asian_high: Asian high used by the operation described above.
+            asian_low: Asian low used by the operation described above.
+            minutes_since_open: Numeric value used for the minutes since open.
+            position_changed: Whether to enable or require the position changed.
+            dsr_reward: Dsr reward used by the operation described above.
+            strategy_context: Key-value data used for the strategy context.
+            realized_close_pnl: Realized close pnl used by the operation described above.
+            realized_r: Realized r used by the operation described above.
+            equity: Current account equity in account currency.
+
+        Returns:
+            Numeric result returned by ``__call__``.
         """
         # Compute base (DSR or PnL) reward if not provided (reuses persistent state)
         if dsr_reward is None:

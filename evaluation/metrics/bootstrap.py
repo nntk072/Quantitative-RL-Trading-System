@@ -28,6 +28,11 @@ class CI:
     level: float
 
     def as_tuple(self) -> tuple[float, float, float]:
+        """Return the lower and upper confidence limits as a pair.
+
+        Returns:
+            Values returned by ``as_tuple``, in the declared order.
+        """
         return (self.lower, self.estimate, self.upper)
 
 
@@ -44,6 +49,17 @@ def bootstrap_ci(
     Uses a moving-block bootstrap (blocks of ``block_len``) so mild
     autocorrelation in bar returns is preserved rather than destroyed
     by an i.i.d. resample.
+
+    Args:
+        values: Values to process, in input order.
+        stat_fn: Stat fn used by the operation described above.
+        n_boot: Numeric value used for the n boot.
+        level: Numeric value used for the level.
+        rng_seed: Numeric value used for the rng seed.
+        block_len: Numeric value used for the block len.
+
+    Returns:
+        Result of percentile bootstrap CI for ``stat_fn(values)``.
     """
     arr = np.asarray(values, dtype=np.float64)
     n = arr.size
@@ -87,6 +103,18 @@ def paired_metric_difference_ci(
     Each bootstrap draw selects the *same* contiguous time blocks for both
     series.  The caller must supply matching periods from matched systems;
     this is within-path uncertainty, separate from paired-seed uncertainty.
+
+    Args:
+        treatment_returns: Treatment returns used by the operation described above.
+        control_returns: Control returns used by the operation described above.
+        stat_fn: Stat fn used by the operation described above.
+        n_boot: Numeric value used for the n boot.
+        level: Numeric value used for the level.
+        rng_seed: Numeric value used for the rng seed.
+        block_len: Numeric value used for the block len.
+
+    Returns:
+        Result of moving-block CI for treatment minus control on aligned returns.
     """
     treatment = np.asarray(treatment_returns, dtype=np.float64)
     control = np.asarray(control_returns, dtype=np.float64)
@@ -120,7 +148,15 @@ def paired_metric_difference_ci(
 def sharpe_stat(
     returns: NDArray[np.float64], periods_per_year: int = DEFAULT_PERIODS_PER_YEAR
 ) -> float:
-    """Sharpe of bar returns (annualisation matching evaluation/metrics)."""
+    """Sharpe of bar returns (annualisation matching evaluation/metrics).
+
+    Args:
+        returns: Returns used by the operation described above.
+        periods_per_year: Numeric value used for the periods per year.
+
+    Returns:
+        Numeric result returned by ``sharpe_stat``.
+    """
     r = np.asarray(returns, dtype=np.float64)
     if r.size < 2:
         return 0.0
@@ -133,7 +169,15 @@ def sharpe_stat(
 def sortino_stat(
     returns: NDArray[np.float64], periods_per_year: int = DEFAULT_PERIODS_PER_YEAR
 ) -> float:
-    """Sortino of bar returns (downside deviation vs. zero)."""
+    """Sortino of bar returns (downside deviation vs. zero).
+
+    Args:
+        returns: Returns used by the operation described above.
+        periods_per_year: Numeric value used for the periods per year.
+
+    Returns:
+        Numeric result returned by ``sortino_stat``.
+    """
     r = np.asarray(returns, dtype=np.float64)
     if r.size < 2:
         return 0.0
@@ -145,7 +189,14 @@ def sortino_stat(
 
 
 def max_drawdown_stat(equity: NDArray[np.float64]) -> float:
-    """Peak-to-trough equity decline as a positive fraction."""
+    """Peak-to-trough equity decline as a positive fraction.
+
+    Args:
+        equity: Current account equity in account currency.
+
+    Returns:
+        Numeric result returned by ``max_drawdown_stat``.
+    """
     eq = np.asarray(equity, dtype=np.float64)
     if eq.size == 0:
         return float("nan")
@@ -155,7 +206,14 @@ def max_drawdown_stat(equity: NDArray[np.float64]) -> float:
 
 
 def win_rate_stat(trade_pnls: NDArray[np.float64]) -> float:
-    """Fraction of winning trades."""
+    """Fraction of winning trades.
+
+    Args:
+        trade_pnls: Trade pnls used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``win_rate_stat``.
+    """
     p = np.asarray(trade_pnls, dtype=np.float64)
     if p.size == 0:
         return float("nan")
@@ -176,6 +234,18 @@ def metrics_with_ci(
     Max drawdown resamples contiguous blocks of returns, then reconstructs
     each equity path from the original initial equity. Resampling equity
     *levels* would create impossible crashes in monotonic runs.
+
+    Args:
+        equity_curve: Equity curve used by the operation described above.
+        trade_pnls: Trade pnls used by the operation described above.
+        periods_per_year: Numeric value used for the periods per year.
+        n_boot: Numeric value used for the n boot.
+        level: Numeric value used for the level.
+        rng_seed: Numeric value used for the rng seed.
+        initial_balance: Initial balance used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``CI`` values.
     """
     eq = np.asarray(equity_curve, dtype=np.float64)
     if initial_balance is not None:
@@ -186,6 +256,14 @@ def metrics_with_ci(
     rets = np.diff(eq) / eq[:-1] if eq.size > 1 else np.array([])
 
     def reconstructed_drawdown(sample: NDArray[np.float64]) -> float:
+        """Rebuild an equity path from sampled returns and measure drawdown.
+
+        Args:
+            sample: Sample used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``reconstructed_drawdown``.
+        """
         if eq.size == 0:
             return float("nan")
         path = np.empty(sample.size + 1, dtype=np.float64)

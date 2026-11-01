@@ -10,7 +10,6 @@ import pandas as pd
 from decisioning.regime_observations import REGIME_FEATURES, regime_observation_schema
 from decisioning.trade_setup import (
     TRADE_SETUP_CATEGORY_COUNT,
-    legacy_thesis_observation_schema,
     trade_setup_observation_schema,
 )
 from features import attach_reachable_r, select_legacy_obs_columns, select_obs_columns
@@ -26,6 +25,8 @@ from .observations import (
 
 
 class ObservationArraysInitializationMixin(RuntimeMixinBase):
+    """Build cached market and feature arrays used by observations and steps."""
+
     def _initialize_observation_arrays(
         self,
         bundle_data: Any | None,
@@ -50,6 +51,23 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         # never reach the encoder.
         # Drop non-numeric columns (e.g. string ``session`` labels) — they cannot
         # be cast to float32 and are not part of the model's normalized observation.
+        """Initialize observation arrays.
+
+        Args:
+            bundle_data: Bundle data used by the operation described above.
+            bars: Market bars to process.
+            features: Feature values supplied to the operation.
+            legacy_sequence_columns: Legacy sequence columns used by the operation described above.
+            episodic: Whether to enable or require the episodic.
+            obs_features_mmap: Obs features mmap used by the operation described above.
+            mtf: Whether to enable or require the mtf.
+            mtf_windows: Key-value data used for the mtf windows.
+            target_timeframes: Items supplied for the target timeframes, in input order.
+            scheduled_session_closes: Key-value data used for the scheduled session closes.
+            session_start: Text or path value identifying the session start.
+            regime_observation: Whether to enable or require the regime observation.
+            trade_setup_actions: Whether to enable or require the trade setup actions.
+        """
         if self._bundle_arrays is None:
             assert bars is not None and features is not None
             self._legacy_sequence_columns = bool(legacy_sequence_columns)
@@ -138,14 +156,7 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         self.trade_setup_observation_schema = (
             trade_setup_observation_schema() if self.trade_setup_actions else None
         )
-        self.thesis_observation_schema = (
-            legacy_thesis_observation_schema()
-            if self.trade_setup_actions and self.legacy_thesis_contract
-            else None
-        )
-        self._trade_setup_mask_key = (
-            "thesis_mask" if self.legacy_thesis_contract else "trade_setup_mask"
-        )
+        self._trade_setup_mask_key = "trade_setup_mask"
         self._trade_setup_candidate_ids: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
         self._trade_setup_feature_indices: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
         if self.trade_setup_actions:
@@ -153,13 +164,8 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
             column_indices = {name: index for index, name in enumerate(self._obs_columns)}
             missing_setup_features = [name for _, name in columns if name not in column_indices]
             if missing_setup_features:
-                contract_label = (
-                    "legacy thesis actions"
-                    if self.legacy_thesis_contract
-                    else "trade setup actions"
-                )
                 raise ValueError(
-                    f"{contract_label} require all per-timeframe entry-idea observation features; "
+                    "trade setup actions require all per-timeframe entry-idea observation features; "
                     f"missing {missing_setup_features[:5]}"
                 )
             self._trade_setup_candidate_ids = np.asarray(

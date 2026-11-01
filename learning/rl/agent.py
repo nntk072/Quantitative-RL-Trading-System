@@ -25,9 +25,7 @@ from omegaconf import DictConfig
 from compute.environment.precision import get_autocast_dtype
 from decisioning.actions import SCHEMA_VERSION, ActionSchema, DiscreteActionSchema
 from decisioning.trade_setup import (
-    LegacyThesisActionSchema,
     TradeSetupActionSchema,
-    validate_thesis_observation_schema,
     validate_trade_setup_observation_schema,
 )
 from learning.rl.ppo import ClampedStdMultiInputPolicy, _layout_key
@@ -44,7 +42,12 @@ except ImportError:
 
 
 def bind_discrete_action_schema(model: Any, schema: DiscreteActionSchema) -> None:
-    """Persist a categorical schema on both SB3 model and policy metadata."""
+    """Persist a categorical schema on both SB3 model and policy metadata.
+
+    Args:
+        model: Model used for this operation.
+        schema: Schema used by the operation described above.
+    """
     action_space = getattr(model, "action_space", None)
     if not isinstance(action_space, spaces.Discrete) or action_space.n != schema.width:
         raise ValueError("discrete action schema width differs from the model action space")
@@ -60,13 +63,18 @@ def bind_discrete_action_schema(model: Any, schema: DiscreteActionSchema) -> Non
 
 
 def persist_action_schema(model: Any, env: Any) -> None:
-    """Persist the environment's action semantics on an SB3 model and policy."""
+    """Persist the environment's action semantics on an SB3 model and policy.
+
+    Args:
+        model: Model used for this operation.
+        env: Environment whose state is read or updated.
+    """
     action_space = env.action_space
     policy = getattr(model, "policy", None)
     if isinstance(action_space, spaces.Box):
         width = int(action_space.shape[0])
         schema = getattr(env, "action_schema", None)
-        if isinstance(schema, (ActionSchema, TradeSetupActionSchema, LegacyThesisActionSchema)):
+        if isinstance(schema, (ActionSchema, TradeSetupActionSchema)):
             if width != schema.width:
                 raise ValueError(
                     f"action space width {width} disagrees with declared schema width "
@@ -106,7 +114,7 @@ def persist_action_schema(model: Any, env: Any) -> None:
 
 def validate_model_action_schema(
     model: Any,
-    expected_schema: ActionSchema | TradeSetupActionSchema | LegacyThesisActionSchema,
+    expected_schema: ActionSchema | TradeSetupActionSchema,
     *,
     allow_legacy: bool = False,
     legacy_layout_key: str | None = None,
@@ -121,6 +129,15 @@ def validate_model_action_schema(
     supported width migration is the documented 4D no-exit layout to the
     current 5D base layout, with a structural-exit coordinate appended at
     inference time.
+
+    Args:
+        model: Model used for this operation.
+        expected_schema: Expected schema used by the operation described above.
+        allow_legacy: Whether to enable or require the allow legacy.
+        legacy_layout_key: Legacy layout key used by the operation described above.
+
+    Returns:
+        Result of validate action semantics before using a checkpoint for evaluation.
     """
     shape = getattr(getattr(model, "action_space", None), "shape", None)
     actual_width = int(shape[0]) if shape and len(shape) == 1 else None
@@ -145,8 +162,8 @@ def validate_model_action_schema(
                 f"legacy action layout {layout!r} differs from {expected_schema.key!r}"
             )
         migration: str | None = None
-        if isinstance(expected_schema, (TradeSetupActionSchema, LegacyThesisActionSchema)):
-            raise ValueError("thesis action checkpoints require versioned schema metadata")
+        if isinstance(expected_schema, TradeSetupActionSchema):
+            raise ValueError("trade-setup action checkpoints require versioned schema metadata")
         if legacy_layout_key == "legacy4_no_exit_v1":
             if actual_width != 4 or expected_schema.key != "5":
                 raise ValueError(
@@ -207,7 +224,18 @@ def validate_model_discrete_action_schema(
     allow_legacy: bool = False,
     legacy_layout_key: str | None = None,
 ) -> str:
-    """Validate the ordered categorical action meaning for a discrete checkpoint."""
+    """Validate the ordered categorical action meaning for a discrete checkpoint.
+
+    Args:
+        model: Model used for this operation.
+        expected_schema: Expected schema used by the operation described above.
+        source_schema: Key-value data used for the source schema.
+        allow_legacy: Whether to enable or require the allow legacy.
+        legacy_layout_key: Legacy layout key used by the operation described above.
+
+    Returns:
+        Text returned by ``validate_model_discrete_action_schema``.
+    """
     action_space = getattr(model, "action_space", None)
     if not isinstance(action_space, spaces.Discrete) or action_space.n != expected_schema.width:
         actual_n = getattr(action_space, "n", None)
@@ -264,7 +292,13 @@ def validate_model_observation_schema(
     *,
     allow_legacy_v1: bool = False,
 ) -> None:
-    """Reject checkpoints whose account-state coordinate meanings differ."""
+    """Reject checkpoints whose account-state coordinate meanings differ.
+
+    Args:
+        model: Model used for this operation.
+        expected_schema: Expected schema used by the operation described above.
+        allow_legacy_v1: Whether to enable or require the allow legacy v1.
+    """
     from decisioning.observations import validate_observation_schema
 
     actual = getattr(model, "_observation_schema", None)
@@ -273,22 +307,16 @@ def validate_model_observation_schema(
 
 
 def validate_model_trade_setup_observation_schema(
-    model: Any, expected_schema: dict[str, Any] | None, *, legacy: bool = False
-) -> None:
-    """Validate setup-mask metadata while retaining the legacy checkpoint field."""
-    if legacy:
-        actual = getattr(model, "_thesis_observation_schema", None)
-        validate_thesis_observation_schema(actual, expected_schema)
-    else:
-        actual = getattr(model, "_trade_setup_observation_schema", None)
-        validate_trade_setup_observation_schema(actual, expected_schema)
-
-
-def validate_model_thesis_observation_schema(
     model: Any, expected_schema: dict[str, Any] | None
 ) -> None:
-    """Compatibility wrapper for callers using the historical API name."""
-    validate_model_trade_setup_observation_schema(model, expected_schema, legacy=True)
+    """Validate the checkpoint's canonical trade-setup mask metadata.
+
+    Args:
+        model: Model used for this operation.
+        expected_schema: Key-value data used for the expected schema.
+    """
+    actual = getattr(model, "_trade_setup_observation_schema", None)
+    validate_trade_setup_observation_schema(actual, expected_schema)
 
 
 def build_vector_env(
@@ -301,6 +329,14 @@ def build_vector_env(
     Keeping this wiring shared matters when loading checkpoints: SB3 otherwise
     wraps the supplied raw environment in a single-env ``DummyVecEnv``, even
     when the resolved config requests many parallel environments.
+
+    Args:
+        env: Environment whose state is read or updated.
+        cfg: Run configuration used by this operation.
+        env_fn: Env fn used by the operation described above.
+
+    Returns:
+        Result of build the VecEnv described by config for fresh or resumed PPO runs.
     """
     if not _SB3_AVAILABLE:
         raise ImportError("stable-baselines3 is required: pip install stable-baselines3")
@@ -327,6 +363,11 @@ def build_vector_env(
         )
 
     def _thread_capped_env_fn() -> Any:
+        """Process capped env fn.
+
+        Returns:
+            Result of process capped env fn.
+        """
         import os as _os
 
         for _var in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
@@ -363,12 +404,34 @@ class LegacyFourToFiveActionAdapter:
     """Append the explicit structural-exit coordinate for a legacy 4D policy."""
 
     def __init__(self, model: Any) -> None:
+        """Initialize LegacyFourToFiveActionAdapter and its owned state.
+
+        Args:
+            model: Model used for this operation.
+        """
         self.model = model
 
     def __getattr__(self, name: str) -> Any:
+        """Process LegacyFourToFiveActionAdapter.
+
+        Args:
+            name: Name used to identify the requested file, artifact, or item.
+
+        Returns:
+            Result of process LegacyFourToFiveActionAdapter.
+        """
         return getattr(self.model, name)
 
     def predict(self, observation: Any, *, deterministic: bool = True) -> tuple[Any, Any]:
+        """Append the structural-exit coordinate to a legacy four-value action.
+
+        Args:
+            observation: Batch or single observation passed to the wrapped model.
+            deterministic: Whether the wrapped policy selects its modal action.
+
+        Returns:
+            Adapted action values and the wrapped model's state.
+        """
         action, state = self.model.predict(observation, deterministic=deterministic)
         values = np.asarray(action)
         if values.shape[-1:] != (4,):
@@ -378,7 +441,13 @@ class LegacyFourToFiveActionAdapter:
 
 
 def validate_model_architecture(model: Any, expected_arch: str, *, use_vae: bool = False) -> None:
-    """Fail closed when a checkpoint encoder differs from the requested lineage."""
+    """Fail closed when a checkpoint encoder differs from the requested lineage.
+
+    Args:
+        model: Model used for this operation.
+        expected_arch: Text or path value identifying the expected arch.
+        use_vae: Whether to enable or require the use vae.
+    """
     if use_vae:
         return
     expected = encoder_for(expected_arch)
@@ -431,39 +500,28 @@ def build_agent(
 ) -> Any:
     """Build an SB3 PPO or SAC agent wired to the sequence encoder.
 
-    Parameters
-    ----------
-    env:
-        A :class:`simulation.environment.env.TradingEnv` instance.
-    cfg:
-        Full OmegaConf config.
-    arch:
-        ``"tcn"`` (default), ``"transformer"``, ``"gru"``, or ``"mtf"``.
-    algo:
-        ``"ppo"`` (default) or ``"sac"``.
-    use_vae:
-        If True, use the VAE feature extractor (default: False).
-    vae:
-        A trained :class:`models.auxiliary.vae.VAE` instance.  Required when
-        ``use_vae`` is ``True``.
-    device:
-        Torch device to place the policy on (e.g. ``"cpu"``, ``"cuda"``).
-        ``None`` lets SB3 auto-detect.
-    env_fn:
-        Optional factory ``() -> TradingEnv`` used when ``cfg.env.n_envs > 1``
-        to spawn parallel environments via ``SubprocVecEnv``.  When omitted or
-        when ``n_envs == 1``, falls back to ``DummyVecEnv`` (sequential,
-        single-env — the original behaviour).
+    Args:
+        env: A :class:`simulation.environment.env.TradingEnv` instance.
+        cfg: Full OmegaConf config.
+        arch: ``"tcn"`` (default), ``"transformer"``, ``"gru"``, or ``"mtf"``.
+        algo: ``"ppo"`` (default) or ``"sac"``.
+        use_vae: If True, use the VAE feature extractor (default: False).
+        vae: A trained :class:`models.auxiliary.vae.VAE` instance.  Required when
+            ``use_vae`` is ``True``.
+        device: Torch device to place the policy on (e.g. ``"cpu"``, ``"cuda"``).
+            ``None`` lets SB3 auto-detect.
+        env_fn: Optional factory ``() -> TradingEnv`` used when ``cfg.env.n_envs > 1``
+            to spawn parallel environments via ``SubprocVecEnv``.  When omitted or
+            when ``n_envs == 1``, falls back to ``DummyVecEnv`` (sequential,
+            single-env — the original behaviour).
+        seed: Optional random seed used to initialize the agent and policy.
 
-    Returns
-    -------
-    ``stable_baselines3.PPO`` or ``stable_baselines3.SAC`` ready to call
-    ``.learn()``.
+    Returns:
+        ``stable_baselines3.PPO`` or ``stable_baselines3.SAC`` ready to call:
+        ``.learn()``.:
 
-    Raises
-    ------
-    ValueError
-        If ``use_vae`` is ``True`` but ``vae`` is ``None``.
+    Raises:
+        ValueError: If ``use_vae`` is ``True`` but ``vae`` is ``None``.
     """
     if not _SB3_AVAILABLE:
         raise ImportError("stable-baselines3 is required: pip install stable-baselines3")
@@ -484,12 +542,9 @@ def build_agent(
     account_dim: int = int(env.observation_space["account"].shape[0])
     agent_cfg = cfg.get("agent", {})
     trade_setup_enabled = bool(getattr(env, "trade_setup_actions", False))
-    legacy_thesis_contract = bool(getattr(env, "legacy_thesis_contract", False))
     ppo_cfg = cfg.get("ppo", {})
     configured_distribution = str(ppo_cfg.get("policy_distribution", "clamped_diagonal_gaussian"))
     setup_distributions = {
-        "thesis_hybrid_v1",
-        "thesis_conditioned_v1",
         "trade_setup_hybrid_v1",
         "trade_setup_conditioned_v1",
     }
@@ -498,15 +553,9 @@ def build_agent(
             "trade setup actions currently require PPO's masked categorical distribution"
         )
     if trade_setup_enabled and configured_distribution not in setup_distributions:
-        raise ValueError(
-            "trade setup actions require a masked trade-setup or legacy thesis PPO distribution"
-        )
+        raise ValueError("trade setup actions require a masked trade-setup PPO distribution")
     if configured_distribution in setup_distributions and not trade_setup_enabled:
         raise ValueError(f"{configured_distribution} requires trade setup actions to be enabled")
-    if configured_distribution.startswith("thesis_") and not legacy_thesis_contract:
-        raise ValueError("thesis policy distributions require the legacy thesis action contract")
-    if configured_distribution.startswith("trade_setup_") and legacy_thesis_contract:
-        raise ValueError("trade_setup policy distributions require env.trade_setup_actions=true")
 
         # Choose feature extractor based on architecture / VAE use
     extractor_cls: Any
@@ -646,20 +695,9 @@ def build_agent(
         regime_schema = getattr(env, "regime_observation_schema", None)
         if isinstance(regime_schema, dict):
             setattr(model, "_regime_observation_schema", regime_schema)
-        setup_schema = getattr(
-            env,
-            "thesis_observation_schema"
-            if legacy_thesis_contract
-            else "trade_setup_observation_schema",
-            None,
-        )
+        setup_schema = getattr(env, "trade_setup_observation_schema", None)
         if isinstance(setup_schema, dict):
-            metadata_key = (
-                "_thesis_observation_schema"
-                if legacy_thesis_contract
-                else "_trade_setup_observation_schema"
-            )
-            setattr(model, metadata_key, setup_schema)
+            setattr(model, "_trade_setup_observation_schema", setup_schema)
         persist_action_schema(model, env)
         return _finalize_cuda_policy(model, device)
 
@@ -707,18 +745,9 @@ def build_agent(
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
         setattr(ppo_model, "_regime_observation_schema", regime_schema)
-    setup_schema = getattr(
-        env,
-        "thesis_observation_schema" if legacy_thesis_contract else "trade_setup_observation_schema",
-        None,
-    )
+    setup_schema = getattr(env, "trade_setup_observation_schema", None)
     if isinstance(setup_schema, dict):
-        metadata_key = (
-            "_thesis_observation_schema"
-            if legacy_thesis_contract
-            else "_trade_setup_observation_schema"
-        )
-        setattr(ppo_model, metadata_key, setup_schema)
+        setattr(ppo_model, "_trade_setup_observation_schema", setup_schema)
     persist_action_schema(ppo_model, env)
     from learning.rl.rollout_buffer import install_single_copy_add
 
@@ -730,10 +759,21 @@ def _ppo_policy_and_ent_coef(
     cfg: DictConfig,
     policy_kwargs: dict[str, Any],
     action_space: spaces.Space[Any],
-    action_schema: ActionSchema | TradeSetupActionSchema | LegacyThesisActionSchema | None = None,
+    action_schema: ActionSchema | TradeSetupActionSchema | None = None,
     observation_space: spaces.Space[Any] | None = None,
 ) -> tuple[Any, dict[str, Any], float]:
-    """Box overlay: clamp Gaussian std. Discrete: keep categorical entropy coef."""
+    """Box overlay: clamp Gaussian std. Discrete: keep categorical entropy coef.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        policy_kwargs: Key-value data used for the policy kwargs.
+        action_space: Action space used by the operation described above.
+        action_schema: Action schema used by the operation described above.
+        observation_space: Observation space used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any], float`` values.
+    """
     ent_coef = float(cfg.ppo.ent_coef)
     if not isinstance(action_space, spaces.Box):
         if str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian")) != (
@@ -745,34 +785,24 @@ def _ppo_policy_and_ent_coef(
     policy_distribution = str(cfg.ppo.get("policy_distribution", "clamped_diagonal_gaussian"))
     if policy_distribution in {
         "hybrid_v1",
-        "thesis_hybrid_v1",
-        "thesis_conditioned_v1",
         "trade_setup_hybrid_v1",
         "trade_setup_conditioned_v1",
     }:
         if actor_arch != "shared":
             raise ValueError("hybrid PPO distributions require ppo.actor_arch='shared'")
         setup_distribution = policy_distribution in {
-            "thesis_hybrid_v1",
-            "thesis_conditioned_v1",
             "trade_setup_hybrid_v1",
             "trade_setup_conditioned_v1",
         }
         conditioned_distribution = policy_distribution in {
-            "thesis_conditioned_v1",
             "trade_setup_conditioned_v1",
         }
-        legacy_distribution = policy_distribution.startswith("thesis_")
         if setup_distribution:
-            expected_type = (
-                LegacyThesisActionSchema if legacy_distribution else TradeSetupActionSchema
-            )
-            if not isinstance(action_schema, expected_type):
+            if not isinstance(action_schema, TradeSetupActionSchema):
                 raise ValueError(f"{policy_distribution} requires its matching action schema")
             observation_spaces = getattr(observation_space, "spaces", {})
-            mask_key = "thesis_mask" if legacy_distribution else "trade_setup_mask"
-            if mask_key not in observation_spaces:
-                raise ValueError(f"{policy_distribution} requires the {mask_key} observation")
+            if "trade_setup_mask" not in observation_spaces:
+                raise ValueError(f"{policy_distribution} requires the trade_setup_mask observation")
         elif not isinstance(action_schema, ActionSchema):
             raise ValueError("hybrid_v1 requires a declared legacy strategy ActionSchema")
         if not setup_distribution and not isinstance(action_schema, ActionSchema):
@@ -783,18 +813,12 @@ def _ppo_policy_and_ent_coef(
             )
         from learning.rl.hybrid import (
             HybridClampedStdMultiInputPolicy,
-            ThesisConditionedClampedStdMultiInputPolicy,
             TradeSetupConditionedClampedStdMultiInputPolicy,
         )
 
         kwargs = dict(policy_kwargs)
         kwargs["hybrid_action_coordinates"] = action_schema.names
-        kwargs["thesis_mask_key"] = (
-            "thesis_mask" if setup_distribution and legacy_distribution else None
-        )
-        kwargs["trade_setup_mask_key"] = (
-            "trade_setup_mask" if setup_distribution and not legacy_distribution else None
-        )
+        kwargs["trade_setup_mask_key"] = "trade_setup_mask" if setup_distribution else None
         kwargs["sl_mode_defer_threshold"] = float(cfg.env.get("sl_mode_defer_threshold", 0.1))
         kwargs["tp_mode_defer_threshold"] = float(cfg.env.get("tp_mode_defer_threshold", 0.1))
         kwargs["log_std_init"] = float(cfg.ppo.get("log_std_init", 0.0))
@@ -802,24 +826,13 @@ def _ppo_policy_and_ent_coef(
         kwargs["log_std_max"] = float(cfg.ppo.get("log_std_max", 0.0))
         kwargs["mode_prior_coef"] = float(cfg.ppo.get("mode_prior_coef", 1e-3))
         if conditioned_distribution:
-            conditioned_key = (
-                "thesis_conditioned" if legacy_distribution else "trade_setup_conditioned"
+            conditioned_cfg = cfg.ppo.get("trade_setup_conditioned", {})
+            kwargs["trade_setup_embedding_dim"] = int(conditioned_cfg.get("embedding_dim", 32))
+            kwargs["trade_setup_execution_hidden_dim"] = int(
+                conditioned_cfg.get("execution_hidden_dim", 128)
             )
-            conditioned_cfg = cfg.ppo.get(conditioned_key, {})
-            if legacy_distribution:
-                kwargs["thesis_embedding_dim"] = int(conditioned_cfg.get("embedding_dim", 32))
-                kwargs["thesis_execution_hidden_dim"] = int(
-                    conditioned_cfg.get("execution_hidden_dim", 128)
-                )
-            else:
-                kwargs["trade_setup_embedding_dim"] = int(conditioned_cfg.get("embedding_dim", 32))
-                kwargs["trade_setup_execution_hidden_dim"] = int(
-                    conditioned_cfg.get("execution_hidden_dim", 128)
-                )
         return (
-            ThesisConditionedClampedStdMultiInputPolicy
-            if conditioned_distribution and legacy_distribution
-            else TradeSetupConditionedClampedStdMultiInputPolicy
+            TradeSetupConditionedClampedStdMultiInputPolicy
             if conditioned_distribution
             else HybridClampedStdMultiInputPolicy,
             kwargs,
@@ -846,7 +859,15 @@ def _ppo_policy_and_ent_coef(
 
 
 def _finalize_cuda_policy(model: Any, device: str | torch.device | None) -> Any:
-    """Enable bf16 encoder autocast when the policy lives on CUDA."""
+    """Enable bf16 encoder autocast when the policy lives on CUDA.
+
+    Args:
+        model: Model used for this operation.
+        device: Compute device on which to perform the operation.
+
+    Returns:
+        Result of enable bf16 encoder autocast when the policy lives on CUDA.
+    """
     if device is None:
         return model
     dev = device if isinstance(device, torch.device) else torch.device(device)

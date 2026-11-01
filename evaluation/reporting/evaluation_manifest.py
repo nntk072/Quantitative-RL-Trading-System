@@ -16,7 +16,15 @@ def build_evaluation_manifest(
     *,
     lineage: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Describe an evaluation bundle and connect it to its source artifacts."""
+    """Describe an evaluation bundle and connect it to its source artifacts.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+        lineage: Key-value data used for the lineage.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     root = run_dir.resolve()
     parents: dict[str, dict[str, str] | str] = {}
     for name in ("run_manifest.json", "reanalysis_manifest.json"):
@@ -36,7 +44,6 @@ def build_evaluation_manifest(
             "trades.csv",
             "fills.csv",
             "positions.csv",
-            "thesis_decisions.csv",
             "trade_setup_decisions.csv",
         ):
             artifact_path = root / partition / filename
@@ -65,7 +72,15 @@ def write_evaluation_manifest(
     *,
     lineage: dict[str, Any] | None = None,
 ) -> Path:
-    """Atomically refresh the canonical evaluation provenance manifest."""
+    """Atomically refresh the canonical evaluation provenance manifest.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+        lineage: Key-value data used for the lineage.
+
+    Returns:
+        Path returned by ``write_evaluation_manifest``.
+    """
     path = run_dir / "evaluation_manifest.json"
     write_json_atomic(path, build_evaluation_manifest(run_dir, lineage=lineage), default=None)
     return path

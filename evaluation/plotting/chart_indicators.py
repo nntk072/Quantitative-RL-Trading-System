@@ -10,12 +10,27 @@ from features.technical.indicators import ema
 
 
 def _sma(series: pd.Series, period: int) -> pd.Series:
-    """Simple moving average."""
+    """Simple moving average.
+
+    Args:
+        series: Tabular data used for the series.
+        period: Numeric value used for the period.
+
+    Returns:
+        Result of simple moving average.
+    """
     return series.rolling(window=period).mean()
 
 
 def compute_ema50(bars: pd.DataFrame) -> pd.Series:
-    """Compute EMA(50) on close prices."""
+    """Compute EMA(50) on close prices.
+
+    Args:
+        bars: Market bars to process.
+
+    Returns:
+        Result of compute EMA(50) on close prices.
+    """
     return ema(bars["close"], 50)
 
 
@@ -24,9 +39,14 @@ def compute_macd_sma(
 ) -> pd.DataFrame:
     """Compute MACD with SMA(9) signal line.
 
-    Returns
-    -------
-    pd.DataFrame with columns: macd, signal, histogram
+    Args:
+        bars: Market bars to process.
+        fast: Numeric value used for the fast.
+        slow: Numeric value used for the slow.
+        signal_period: Numeric value used for the signal period.
+
+    Returns:
+        macd, signal, histogram:
     """
     close = bars["close"]
     fast_ema = ema(close, fast)
@@ -46,6 +66,15 @@ def compute_macd_sma(
 
 
 def _with_rsi_vwap(bars: pd.DataFrame, overlays: dict[str, pd.Series]) -> dict[str, pd.Series]:
+    """Process rsi vwap.
+
+    Args:
+        bars: Market bars to process.
+        overlays: Tabular data used for the overlays.
+
+    Returns:
+        Mapping from ``str`` keys to ``pd.Series`` values.
+    """
     from .chart_overlays import compute_vwap_for_chart, rsi_series
 
     overlays["rsi"] = rsi_series(bars)
@@ -64,14 +93,11 @@ def compute_chart_overlays(window: pd.DataFrame) -> dict[str, pd.Series]:
         on the full bars, then slice by ``window.index``, for chart
         rendering that must match the actual strategy decisions.
 
-    Parameters
-    ----------
-    window : pd.DataFrame
-        Price bars (OHLC) for the trade window.
+    Args:
+        window (pd.DataFrame): Price bars (OHLC) for the trade window.
 
-    Returns
-    -------
-    dict with keys: ema50, macd, signal, histogram, rsi, vwap
+    Returns:
+        ema50, macd, signal, histogram, rsi, vwap:
     """
     ema50 = compute_ema50(window)
     macd_df = compute_macd_sma(window)
@@ -95,14 +121,11 @@ def compute_chart_overlays_full(bars: pd.DataFrame) -> dict[str, pd.Series]:
     strategy acted on, rather than being recomputed from scratch on a
     short ~60-bar trade window.
 
-    Parameters
-    ----------
-    bars : pd.DataFrame
-        Full M1 price bars (OHLC) for the backtest split.
+    Args:
+        bars (pd.DataFrame): Full M1 price bars (OHLC) for the backtest split.
 
-    Returns
-    -------
-    dict with keys: ema50, macd, signal, histogram, rsi, vwap
+    Returns:
+        ema50, macd, signal, histogram, rsi, vwap:
     """
     ema50 = compute_ema50(bars)
     macd_df = compute_macd_sma(bars)
@@ -122,7 +145,16 @@ def compute_mtf_ema_overlays(
     timeframes: tuple[str, ...],
     periods: tuple[int, ...] = (9, 21, 50, 200),
 ) -> dict[str, pd.Series]:
-    """Compute raw-price EMA lines for selected TFs on the completed-bar M1 spine."""
+    """Compute raw-price EMA lines for selected TFs on the completed-bar M1 spine.
+
+    Args:
+        bars: Market bars to process.
+        timeframes: Items supplied for the timeframes, in input order.
+        periods: Items supplied for the periods, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``pd.Series`` values.
+    """
     from features.technical.indicators import ema
     from market_data.transforms.align import align_timeframes
     from market_data.transforms.resample import resample
@@ -152,7 +184,15 @@ def compute_mtf_ema_overlays(
 def select_ema_overlays(
     overlays: dict[str, pd.Series], timeframes: tuple[str, ...]
 ) -> dict[str, pd.Series]:
-    """Keep EMA lines only for the selected chart timeframes."""
+    """Keep EMA lines only for the selected chart timeframes.
+
+    Args:
+        overlays: Tabular data used for the overlays.
+        timeframes: Items supplied for the timeframes, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``pd.Series`` values.
+    """
     selected = {str(timeframe).upper() for timeframe in timeframes}
     result = dict(overlays)
     for name in tuple(result):
@@ -168,7 +208,15 @@ def select_ema_overlays(
 
 
 def slice_overlays(overlays: dict[str, pd.Series], index: pd.Index) -> dict[str, pd.Series]:
-    """Slice a full-history overlays dict down to a trade window's index."""
+    """Slice a full-history overlays dict down to a trade window's index.
+
+    Args:
+        overlays: Tabular data used for the overlays.
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Mapping from ``str`` keys to ``pd.Series`` values.
+    """
     return {key: series.reindex(index) for key, series in overlays.items()}
 
 
@@ -181,6 +229,12 @@ def break_overlay_gaps(overlays: dict[str, pd.Series]) -> dict[str, pd.Series]:
     Line series are warmed up on the full M1 spine, then sliced onto the
     window. A gap in that index must not be drawn as a straight slope.
     Histogram bars stay on the candle index.
+
+    Args:
+        overlays: Tabular data used for the overlays.
+
+    Returns:
+        Mapping from ``str`` keys to ``pd.Series`` values.
     """
     out = dict(overlays)
     for key in tuple(out):
@@ -193,6 +247,14 @@ def break_overlay_gaps(overlays: dict[str, pd.Series]) -> dict[str, pd.Series]:
 
 
 def _break_series_gaps(series: pd.Series) -> pd.Series:
+    """Process series gaps.
+
+    Args:
+        series: Tabular data used for the series.
+
+    Returns:
+        Result of process series gaps.
+    """
     idx = pd.DatetimeIndex(series.index)
     if len(idx) < 2:
         return series

@@ -30,6 +30,15 @@ class _TemporalBlock(nn.Module):
         dilation: int,
         dropout: float,
     ) -> None:
+        """Initialize _TemporalBlock and its owned state.
+
+        Args:
+            n_in: Numeric value used for the n in.
+            n_out: Numeric value used for the n out.
+            kernel_size: Number specifying the kernel size for this operation.
+            dilation: Numeric value used for the dilation.
+            dropout: Numeric value used for the dropout.
+        """
         super().__init__()
         padding = (kernel_size - 1) * dilation
         self.net = nn.Sequential(
@@ -50,6 +59,14 @@ class _TemporalBlock(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply the dilated causal stack and add its projected residual input.
+
+        Args:
+            x: Channel-first sequence tensor with shape ``[batch, channels, time]``.
+
+        Returns:
+            Residual features with the block's output channel width.
+        """
         out = self.net(x)
         res = x if self.downsample is None else self.downsample(x)
         return cast(torch.Tensor, self.relu(out + res))
@@ -74,6 +91,17 @@ class LegacyTCNEncoderV1(BaseFeaturesExtractor):
         kernel_size: int = 3,
         dropout: float = 0.1,
     ) -> None:
+        """Initialize LegacyTCNEncoderV1 and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+        """
         account_space = getattr(observation_space, "spaces", {}).get("account")
         account_dim = int(account_space.shape[0]) if account_space is not None else ACCOUNT_DIM
         super().__init__(observation_space, features_dim=latent_dim + account_dim)
@@ -95,6 +123,14 @@ class LegacyTCNEncoderV1(BaseFeaturesExtractor):
         self.proj = nn.Linear(channels[-1], latent_dim)
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode the legacy sequence and account observation layout.
+
+        Args:
+            observations: Mapping containing batched seq and account tensors.
+
+        Returns:
+            Policy feature tensor in the checkpoint-compatible layout.
+        """
         seq = observations["seq"]
         account = observations["account"]
         hidden = self.tcn(seq.transpose(1, 2))
@@ -108,14 +144,15 @@ class TCNEncoder(BaseFeaturesExtractor):
     Receptive field with ``L`` levels, kernel ``k``, grows as
     ``2^0 + … + 2^{L-1}) * (k-1) + 1`` bars — easily covers T=60.
 
-    Parameters (pass via ``policy_kwargs["features_extractor_kwargs"]``)
-    --------------------------------------------------------------------
-    seq_len    : T – observation window length
-    n_features : F – features per bar
-    latent_dim : D – encoder output dimension
-    channels   : conv channels at each dilation level
-    kernel_size: conv kernel width
-    dropout    : dropout rate inside each temporal block
+    Args:
+        seq_len: Observation window length in bars.
+        n_features: Number of input features per bar.
+        latent_dim: Width of the encoded sequence representation.
+        channels: Output width for each successive temporal convolution block.
+        kernel_size: Width of each temporal convolution kernel.
+        dropout: Dropout probability inside each temporal block.
+        account_dim: Optional width of account inputs; inferred from the observation
+            space when omitted.
     """
 
     def __init__(
@@ -129,6 +166,18 @@ class TCNEncoder(BaseFeaturesExtractor):
         dropout: float = 0.1,
         account_dim: int | None = None,
     ) -> None:
+        """Initialize TCNEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+            account_dim: Account dim used by the operation described above.
+        """
         super().__init__(observation_space, features_dim=latent_dim + ACCOUNT_EMB_DIM)
         self.seq_len = seq_len
         self.n_features = n_features
@@ -150,15 +199,35 @@ class TCNEncoder(BaseFeaturesExtractor):
 
     @property
     def receptive_field(self) -> int:
-        """Bars visible at the last step. Two kernel-sized convs per dilation."""
+        """Bars visible at the last step. Two kernel-sized convs per dilation.
+
+        Returns:
+            Numeric result returned by ``receptive_field``.
+        """
         return int(1 + 2 * (self.kernel_size - 1) * sum(self.dilations))
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode sequence and account observations with a temporal convolutional network.
+
+        Args:
+            observations: Mapping containing batched seq and account tensors, plus optional valid-length metadata.
+
+        Returns:
+            Concatenated latent sequence representation and account embedding.
+        """
         seq = observations["seq"]  # [B, T, F]
         account = observations["account"]  # [B, A]
         lengths = _valid_lengths(seq, observations)
 
         def _encode(valid: torch.Tensor) -> torch.Tensor:
+            """Process TCNEncoder.
+
+            Args:
+                valid: Valid used by the operation described above.
+
+            Returns:
+                Result of process TCNEncoder.
+            """
             hidden = self.tcn(valid.transpose(1, 2))
             return cast(torch.Tensor, self.proj(hidden[:, :, -1]))
 

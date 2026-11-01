@@ -9,6 +9,8 @@ import pandas as pd
 
 
 class LiveSignal(StrEnum):
+    """Enumerate broker-neutral directional decisions from a live strategy."""
+
     BUY = "buy"
     SELL = "sell"
     HOLD = "hold"
@@ -16,13 +18,32 @@ class LiveSignal(StrEnum):
 
 
 class MarketDataSource(Protocol):
-    def get_symbol(self) -> str: ...
+    """Provide the current instrument identity and market bars to a strategy."""
 
-    def get_data(self) -> pd.DataFrame: ...
+    def get_symbol(self) -> str:
+        """Return the broker symbol represented by this data source.
+
+        Returns:
+            Text returned by ``get_symbol``.
+        """
+
+    def get_data(self) -> pd.DataFrame:
+        """Return the latest market bars available for the configured symbol.
+
+        Returns:
+            DataFrame returned by ``get_data``.
+        """
 
 
 class LiveStrategy(Protocol):
-    def signal(self) -> tuple[str, LiveSignal]: ...
+    """Define the live decision contract consumed by execution adapters."""
+
+    def signal(self) -> tuple[str, LiveSignal]:
+        """Return the instrument and its current directional signal.
+
+        Returns:
+            Values returned by ``signal``, in the declared order.
+        """
 
 
 __all__ = ["LiveSignal", "LiveStrategy", "MarketDataSource"]

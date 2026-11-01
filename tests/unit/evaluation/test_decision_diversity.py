@@ -77,7 +77,7 @@ def test_manipulation_changes_the_stop_family() -> None:
     assert _share(done, "fvg") > 0.0
 
 
-def test_thesis_fields_are_available_as_diversity_conditioners() -> None:
+def test_trade_setup_fields_are_available_as_diversity_conditioners() -> None:
     report = diversity_report(
         pd.DataFrame(
             [

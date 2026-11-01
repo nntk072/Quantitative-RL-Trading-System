@@ -67,7 +67,14 @@ _PART_LABELS: tuple[tuple[str, str], ...] = (
 
 
 def position_mix(directions: list[int]) -> dict[str, float]:
-    """Share of steps that were long, short, or flat."""
+    """Share of steps that were long, short, or flat.
+
+    Args:
+        directions: Items supplied for the directions, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     n = len(directions)
     if n == 0:
         return {"long": 0.0, "short": 0.0, "flat": 0.0}
@@ -80,7 +87,14 @@ def position_mix(directions: list[int]) -> dict[str, float]:
 
 
 def action_stats(actions: list[float]) -> dict[str, float]:
-    """Mean and std of the actions taken in one rollout."""
+    """Mean and std of the actions taken in one rollout.
+
+    Args:
+        actions: Actions to apply, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     if not actions:
         return {"mean": 0.0, "std": 0.0}
     arr = np.asarray(actions, dtype=float)
@@ -88,7 +102,14 @@ def action_stats(actions: list[float]) -> dict[str, float]:
 
 
 def close_shares(reasons: list[str]) -> dict[str, float]:
-    """Each close reason as a fraction of closes in the window."""
+    """Each close reason as a fraction of closes in the window.
+
+    Args:
+        reasons: Items supplied for the reasons, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     n = len(reasons)
     shares = {key: 0.0 for key in _CLOSE_KEYS}
     if n == 0:
@@ -105,7 +126,16 @@ def close_shares(reasons: list[str]) -> dict[str, float]:
 
 
 def critic_stats(advantages: Any, returns: Any, values: Any) -> dict[str, float]:
-    """Mean return, value prediction, and advantage from one rollout buffer."""
+    """Mean return, value prediction, and advantage from one rollout buffer.
+
+    Args:
+        advantages: Advantages used by the operation described above.
+        returns: Returns used by the operation described above.
+        values: Values to process, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     adv = np.asarray(advantages, dtype=float).reshape(-1)
     ret = np.asarray(returns, dtype=float).reshape(-1)
     val = np.asarray(values, dtype=float).reshape(-1)
@@ -120,7 +150,14 @@ def critic_stats(advantages: Any, returns: Any, values: Any) -> dict[str, float]
 
 
 def sum_parts(rows: list[dict[str, float]]) -> dict[str, float]:
-    """Add reward splits across the steps of one rollout."""
+    """Add reward splits across the steps of one rollout.
+
+    Args:
+        rows: Items supplied for the rows, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     total = empty_reward_parts()
     for row in rows:
         for key in REWARD_PART_KEYS:
@@ -132,6 +169,14 @@ def ppo_log_interval(*, n_steps: int, n_envs: int, log_every: int) -> int:
     """How many PPO rollouts to skip between Stable-Baselines3 log dumps.
 
     ``log_every`` is in environment steps. One rollout is ``n_steps * n_envs``.
+
+    Args:
+        n_steps: Number specifying the n steps for this operation.
+        n_envs: Number of parallel environments to create.
+        log_every: Numeric value used for the log every.
+
+    Returns:
+        Numeric result returned by ``ppo_log_interval``.
     """
     rollout = max(1, int(n_steps) * max(1, int(n_envs)))
     if log_every <= 0:
@@ -140,7 +185,14 @@ def ppo_log_interval(*, n_steps: int, n_envs: int, log_every: int) -> int:
 
 
 def format_dashboard(snapshot: dict[str, Any]) -> str:
-    """A few column rows, one per section, for the terminal log."""
+    """A few column rows, one per section, for the terminal log.
+
+    Args:
+        snapshot: Key-value data used for the snapshot.
+
+    Returns:
+        Text returned by ``format_dashboard``.
+    """
     steps = int(snapshot["timesteps"])
     total = int(snapshot["total_timesteps"])
     parts = snapshot["reward_parts"]
@@ -216,6 +268,12 @@ def format_dashboard_table(snapshot: dict[str, Any]) -> str:
 
     Each section is a stacked box with --- borders. The diversity report
     is rendered separately by ``format_diversity_table``.
+
+    Args:
+        snapshot: Key-value data used for the snapshot.
+
+    Returns:
+        Text returned by ``format_dashboard_table``.
     """
     rows: list[tuple[str, list[tuple[str, str]]]] = []
     steps = int(snapshot["timesteps"])
@@ -371,7 +429,15 @@ _PRIOR_NAMES: tuple[str, ...] = ("stop", "target", "exit", "direction", "risk")
 
 
 def snapshot_row(snapshot: dict[str, Any], *, record_eval: bool = False) -> dict[str, Any]:
-    """Flatten one dashboard snapshot. Eval keys appear only when ``record_eval``."""
+    """Flatten one dashboard snapshot. Eval keys appear only when ``record_eval``.
+
+    Args:
+        snapshot: Key-value data used for the snapshot.
+        record_eval: Whether to enable or require the record eval.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     parts = snapshot["reward_parts"]
     action = snapshot["action"]
     position = snapshot["position"]
@@ -418,6 +484,14 @@ def snapshot_row(snapshot: dict[str, Any], *, record_eval: bool = False) -> dict
 
 
 def _grad_norm_value(raw: Any) -> float | str:
+    """Process norm value.
+
+    Args:
+        raw: Raw used by the operation described above.
+
+    Returns:
+        Result of process norm value.
+    """
     if raw is None or raw == "n/a" or raw == "":
         return ""
     try:
@@ -427,7 +501,12 @@ def _grad_norm_value(raw: Any) -> float | str:
 
 
 def append_dashboard_row(path: str | Path, row: dict[str, Any]) -> None:
-    """Append one snapshot row and flush so a crash keeps the log."""
+    """Append one snapshot row and flush so a crash keeps the log.
+
+    Args:
+        path: Path to the input file or directory.
+        row: Key-value data used for the row.
+    """
     dest = Path(path)
     dest.parent.mkdir(parents=True, exist_ok=True)
     write_header = not dest.exists() or dest.stat().st_size == 0
@@ -440,6 +519,15 @@ def append_dashboard_row(path: str | Path, row: dict[str, Any]) -> None:
 
 
 def _logger_float(values: dict[str, Any], key: str) -> float:
+    """Process float.
+
+    Args:
+        values: Values to process, in input order.
+        key: Text or path value identifying the key.
+
+    Returns:
+        Numeric result returned by ``_logger_float``.
+    """
     try:
         value = float(values.get(key, 0.0))
     except (TypeError, ValueError):
@@ -450,7 +538,15 @@ def _logger_float(values: dict[str, Any], key: str) -> float:
 
 
 def policy_from_logger(values: dict[str, Any], grad_norm: float | None) -> dict[str, Any]:
-    """PPO figures Stable-Baselines3 already records, plus the captured grad norm."""
+    """PPO figures Stable-Baselines3 already records, plus the captured grad norm.
+
+    Args:
+        values: Values to process, in input order.
+        grad_norm: Grad norm used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     entropy_loss = _logger_float(values, "train/entropy_loss")
     grad = "n/a" if grad_norm is None else f"{grad_norm:.3f}"
     return {
@@ -466,7 +562,14 @@ def policy_from_logger(values: dict[str, Any], grad_norm: float | None) -> dict[
 
 @contextmanager
 def preserve_global_rng_state(torch_module: Any) -> Iterator[None]:
-    """Restore Python, NumPy, and Torch RNG state after observer-only work."""
+    """Restore Python, NumPy, and Torch RNG state after observer-only work.
+
+    Args:
+        torch_module: Torch module used by the operation described above.
+
+    Yields:
+        Each preserve global rng state value, yielded in processing order.
+    """
     python_state = random.getstate()
     numpy_state = np.random.get_state()
     torch_cpu_state = torch_module.random.get_rng_state()
@@ -511,6 +614,19 @@ if _SB3_AVAILABLE:
             prior_every: int | None = None,
             isolate_eval_rng: bool = False,
         ) -> None:
+            """Initialize TrainingDashboardCallback and its owned state.
+
+            Args:
+                total_timesteps: Numeric value used for the total timesteps.
+                eval_every: Numeric value used for the eval every.
+                eval_fn: Eval fn used by the operation described above.
+                log_path: Path or filename identifying the log.
+                log_every: Numeric value used for the log every.
+                verbose: Numeric value used for the verbose.
+                diversity: Diversity used by the operation described above.
+                prior_every: Prior every used by the operation described above.
+                isolate_eval_rng: Whether to enable or require the isolate eval rng.
+            """
             super().__init__(verbose=verbose)
             self.total_timesteps = int(total_timesteps)
             self.eval_every = int(eval_every)
@@ -547,10 +663,20 @@ if _SB3_AVAILABLE:
             self._grad_norm: float | None = None
 
         def _on_training_start(self) -> None:
+            """Process training start."""
             orig = getattr(self.model, "train")
             callback = self
 
             def _train_and_report(*args: Any, **kwargs: Any) -> Any:
+                """Train and report.
+
+                Args:
+                    *args: Parsed command-line arguments for this operation.
+                    **kwargs: Kwargs used by the operation described above.
+
+                Returns:
+                    Result of train and report.
+                """
                 callback._apply_prior_interval()
                 callback._maybe_eval()
                 if not callback._should_log():
@@ -560,6 +686,17 @@ if _SB3_AVAILABLE:
                 real_clip = torch.nn.utils.clip_grad_norm_
 
                 def _cap(parameters: Any, max_norm: float, *args: Any, **kwargs: Any) -> Any:
+                    """Process TrainingDashboardCallback.
+
+                    Args:
+                        parameters: Parameters used by the operation described above.
+                        max_norm: Numeric value used for the max norm.
+                        *args: Parsed command-line arguments for this operation.
+                        **kwargs: Kwargs used by the operation described above.
+
+                    Returns:
+                        Result of process TrainingDashboardCallback.
+                    """
                     total = real_clip(parameters, max_norm, *args, **kwargs)
                     try:
                         norms.append(float(total))
@@ -604,6 +741,11 @@ if _SB3_AVAILABLE:
             setattr(self.model, "train", _train_and_report)
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             infos = self.locals.get("infos") or []
             rewards = self.locals.get("rewards")
             actions = self.locals.get("actions")
@@ -638,17 +780,28 @@ if _SB3_AVAILABLE:
             return True
 
         def _should_log(self) -> bool:
+            """Return whether log is available or permitted.
+
+            Returns:
+                Whether should log meets the requested condition.
+            """
             if self.log_every <= 0:
                 return True
             return int(self.num_timesteps) >= self._next_log or self._eval_just_ran
 
         def _advance_log(self) -> None:
+            """Process log."""
             if self.log_every <= 0:
                 return
             step = int(self.num_timesteps)
             self._next_log = self.log_every * (1 + step // self.log_every)
 
         def _snapshot(self) -> dict[str, Any]:
+            """Process TrainingDashboardCallback.
+
+            Returns:
+                Mapping from ``str`` keys to ``Any`` values.
+            """
             train_mean = (
                 self._since_eval_reward / self._since_eval_steps if self._since_eval_steps else 0.0
             )
@@ -685,6 +838,11 @@ if _SB3_AVAILABLE:
             return snapshot
 
         def _critic_from_buffer(self) -> dict[str, float]:
+            """Process from buffer.
+
+            Returns:
+                Mapping from ``str`` keys to ``float`` values.
+            """
             buffer = getattr(self.model, "rollout_buffer", None)
             if buffer is None or getattr(buffer, "advantages", None) is None:
                 return critic_stats([], [], [])
@@ -723,6 +881,7 @@ if _SB3_AVAILABLE:
             self._next_prior = self._prior_every * (1 + step // self._prior_every)
 
         def _maybe_eval(self) -> None:
+            """Process eval."""
             self._eval_just_ran = False
             if self._eval_fn is None or self._next_eval <= 0:
                 return
@@ -753,6 +912,7 @@ if _SB3_AVAILABLE:
             self._since_eval_steps = 0
 
         def _on_rollout_end(self) -> None:
+            """Process rollout end."""
             return None
 
 else:
@@ -761,6 +921,12 @@ else:
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize TrainingDashboardCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError(
                 "stable-baselines3 is required for TrainingDashboardCallback. "
                 "Install it with: pip install stable-baselines3"

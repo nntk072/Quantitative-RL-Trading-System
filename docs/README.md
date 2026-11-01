@@ -5,6 +5,12 @@ trading framework. The pages follow subsystem boundaries and explain the
 purpose, ownership, interfaces, runtime behavior, assumptions, and limits of
 each part before linking to source.
 
+The intended [documentation website](https://nntk072.github.io/Quantitative-RL-Trading-System/)
+and generated [Python API reference](https://nntk072.github.io/Quantitative-RL-Trading-System/api/)
+are built from these maintained Markdown files and the Python package source.
+The repository workflow is ready; the project owner must enable GitHub Pages
+before these URLs serve the generated site.
+
 ## Understand the system
 
 - [Architecture](architecture/README.md): context, packages, import
@@ -28,14 +34,20 @@ each part before linking to source.
   evaluation identity expected for a result.
 - [Operations](operations/triton.md): environments, storage, and Triton
   resource workflow.
+- [Testing strategy](development/testing.md): test ownership, scoped gates, and
+  the measured line and branch coverage baseline.
 - [Commands](operations/RUNNING_COMMANDS.md): current executable commands.
 - [Deployment](operations/DEPLOYMENT.md): paper/live boundaries and promotion
   controls.
-- [Agent rules](../AGENTS.md): repository invariants and contributor workflow.
+- [Agent rules](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/AGENTS.md): repository invariants and contributor workflow.
 - [Documentation maintenance](MAINTAINING.md): sources of truth and update
   expectations.
-- [Contributing](../CONTRIBUTING.md): architecture-aware change and validation
+- [Source documentation policy](development/documentation.md): Google-style
+  docstrings, comments, and useful diagrams.
+- [Contributing](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/CONTRIBUTING.md): architecture-aware change and validation
   workflow.
+- [Repository standards decisions](decisions/repository_standards.md): selected
+  license and conduct policy, plus the verified security reporting route.
 - [Architecture decisions](decisions/README.md): durable project choices.
 
 ## Guided use
@@ -45,7 +57,6 @@ each part before linking to source.
 - [How-to guides](how-to/README.md): prepare data, build caches, train,
   evaluate, run experiments, and extend the system.
 
-The active experiment queue and its period-role decisions remain at the
-[project execution plan](thesis/master_project_execution_plan.md) until its
-compatibility migration is complete. That retained path does not define the
-software architecture or project identity.
+The active experiment queue and period-role decisions are recorded in the
+[research execution plan](operations/research_execution_plan.md). That plan
+does not define the software architecture or project identity.

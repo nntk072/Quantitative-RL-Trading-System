@@ -16,9 +16,20 @@ from .mixin_base import RuntimeMixinBase
 
 
 class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
+    """Resolve protective levels and partial exits while preserving runners."""
+
     @staticmethod
     def _target_close_size(pos: Any, slot_num: int, *, is_final: bool) -> float:
-        """Return this leg's initial-size allocation, retaining an EMA runner."""
+        """Return this leg's initial-size allocation, retaining an EMA runner.
+
+        Args:
+            pos: Pos used by the operation described above.
+            slot_num: Numeric value used for the slot num.
+            is_final: Whether to enable or require the is final.
+
+        Returns:
+            Numeric result returned by ``_target_close_size``.
+        """
         init_size = float(pos.tp_initial_size or pos.initial_size or pos.size)
         fractions = tuple(float(value) for value in pos.tp_lot_fractions)
         active_slots = [
@@ -62,6 +73,12 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
         at the level. Slippage, when configured, moves that level fill only
         against the position. If both levels sit inside one bar and there is
         no tick, the stop wins.
+
+        Args:
+            bar: Bar used by the operation described above.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            bar_idx: Bar idx used by the operation described above.
         """
         if self.position is None:
             return
@@ -314,6 +331,13 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
 
         Return True when a tick produced any exit. The caller must then avoid
         applying the bar's ambiguous OHLC crossings to the same position.
+
+        Args:
+            bar_time: Bar time used by the operation described above.
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Whether check multi tp ticks meets the requested condition.
         """
         book = self._tickbook
         pos = self.position

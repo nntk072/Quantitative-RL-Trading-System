@@ -1,19 +1,8 @@
-"""Regenerate per-trade order charts (PNG + HTML) for an existing run.
+"""Regenerate charts for trades in an existing evaluation run.
 
-Rebuilds the M1 bars for a saved run's split from its ``config.yaml``
-snapshot and re-renders the per-trade order charts directly from the run's
-existing ``trades.csv`` — no retraining, no re-running the backtest. Useful
-after a charting bug fix (e.g. the trade-pairing fix that dropped
-``tp_close`` events) so a historical run's charts can be corrected without
-the cost of regenerating the underlying trade log.
-
-Usage
------
-    cd Quantitative-RL-Trading-System
-    uv run python -m evaluation.reporting.order_chart_regeneration \\
-        --run outputs/20260719_002519_rl_train_seed42 --split testing
-    uv run python -m evaluation.reporting.order_chart_regeneration \\
-        --run outputs/20260719_002519_rl_train_seed42 --split both
+The command reads the run's saved configuration and trade log, rebuilds the
+requested split's bars and features, and writes updated per-trade charts. It
+does not retrain the policy or rerun the event-driven backtest.
 """
 
 from __future__ import annotations
@@ -50,8 +39,16 @@ log = logging.getLogger(__name__)
 
 
 def _load_run_config(run_dir: Path) -> Any:
-    """Prefer the run's own config snapshot so split boundaries/account
-    settings match exactly what produced its trades.csv."""
+    """Prefer the run's own configuration snapshot.
+
+    This keeps split boundaries and account settings aligned with its trades.csv.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+
+    Returns:
+        Result of prefer the run's own configuration snapshot.
+    """
     cfg_path = run_dir / "config.yaml"
     if cfg_path.exists():
         log.info("Loading config snapshot: %s", cfg_path)
@@ -61,7 +58,16 @@ def _load_run_config(run_dir: Path) -> Any:
 
 
 def _load_split_bars(cfg: Any, split: str, force: bool) -> tuple[pd.DataFrame, pd.DataFrame | None]:
-    """Rebuild primary (and secondary if configured) M1 bars for one split."""
+    """Rebuild primary (and secondary if configured) M1 bars for one split.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        split: Text or path value identifying the split.
+        force: Whether to enable or require the force.
+
+    Returns:
+        DataFrame returned by ``_load_split_bars``.
+    """
     data = run_pipeline(cfg, force=force)
     primary_m1 = data[cfg.data.primary]["M1"]
     secondary_m1 = data.get(cfg.data.secondary, {}).get("M1")
@@ -85,12 +91,33 @@ def _chart_feature_config(
     standard_deviation_timeframes: tuple[str, ...] = (),
     entry_idea_timeframes: Mapping[str, tuple[str, ...]] | None = None,
 ) -> Any:
-    """Enable only selected context families on a disposable chart config."""
+    """Enable only selected context families on a disposable chart config.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        order_block_timeframes: Items supplied for the order block timeframes, in input order.
+        fvg_timeframes: Items supplied for the fvg timeframes, in input order.
+        ifvg_timeframes: Items supplied for the ifvg timeframes, in input order.
+        swing_timeframes: Items supplied for the swing timeframes, in input order.
+        standard_deviation_timeframes: Items supplied for the standard deviation timeframes, in input order.
+        entry_idea_timeframes: Items supplied for the entry idea timeframes, in input order.
+
+    Returns:
+        Result of enable only selected context families on a disposable chart config.
+    """
     copied = OmegaConf.create(OmegaConf.to_container(cfg, resolve=True))
     features = copied.setdefault("features", OmegaConf.create())
     ideas = entry_idea_timeframes or {}
 
     def merge_timeframes(*values: Any) -> tuple[str, ...]:
+        """Merge timeframe settings into canonical ladder order.
+
+        Args:
+            *values: Values to process, in input order.
+
+        Returns:
+            Values returned by ``merge_timeframes``, in the declared order.
+        """
         ladder = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
         found: set[str] = set()
         for value in values:
@@ -138,7 +165,14 @@ def _chart_feature_config(
 
 
 def _entry_idea_timeframes(trades: pd.DataFrame) -> dict[str, tuple[str, ...]]:
-    """Union only the timeframes recorded on open rows for each entry idea."""
+    """Union only the timeframes recorded on open rows for each entry idea.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        Mapping from ``str`` keys to ``tuple[str, ...]`` values.
+    """
     ladder = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
     selected: dict[str, set[str]] = defaultdict(set)
     if "type" not in trades or "entry_ideas" not in trades:
@@ -180,7 +214,14 @@ def _entry_idea_timeframes(trades: pd.DataFrame) -> dict[str, tuple[str, ...]]:
 
 
 def _standard_deviation_timeframes(trades: pd.DataFrame) -> tuple[str, ...]:
-    """Find retracement timeframes recorded on trades that used that idea."""
+    """Find retracement timeframes recorded on trades that used that idea.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        Values returned by ``_standard_deviation_timeframes``, in the declared order.
+    """
     if not {"type", "entry_ideas", "entry_idea_timeframes"}.issubset(trades.columns):
         return ()
     ladder = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
@@ -210,6 +251,14 @@ def _standard_deviation_timeframes(trades: pd.DataFrame) -> tuple[str, ...]:
 
 
 def _load_equity(split_dir: Path) -> pd.Series | None:
+    """Load equity.
+
+    Args:
+        split_dir: Text or path value identifying the split dir.
+
+    Returns:
+        Result of load equity.
+    """
     path = split_dir / "equity.csv"
     if not path.exists():
         return None
@@ -223,7 +272,14 @@ def _load_equity(split_dir: Path) -> pd.Series | None:
 def _replot_split_summary(
     split_dir: Path, cfg: Any, dpi: int, trades: pd.DataFrame | None = None
 ) -> None:
-    """Refresh equity / drawdown / daily-PnL charts from the saved equity.csv."""
+    """Refresh equity / drawdown / daily-PnL charts from the saved equity.csv.
+
+    Args:
+        split_dir: Text or path value identifying the split dir.
+        cfg: Run configuration used by this operation.
+        dpi: Resolution of generated plots, in dots per inch.
+        trades: Trade records used to calculate the requested report or metric.
+    """
     equity = _load_equity(split_dir)
     if equity is None or equity.empty:
         log.warning("No equity.csv in %s; skipping summary charts", split_dir)
@@ -296,6 +352,23 @@ def _replot_split(
     ema_timeframes: tuple[str, ...] = (),
     swing_timeframes: tuple[str, ...] = ("M1",),
 ) -> None:
+    """Process split.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+        cfg: Run configuration used by this operation.
+        split: Text or path value identifying the split.
+        dpi: Resolution of generated plots, in dots per inch.
+        force: Whether to enable or require the force.
+        save_html: Whether to enable or require the save html.
+        max_charts: Numeric value used for the max charts.
+        output_root: Root directory for generated outputs.
+        order_block_timeframes: Items supplied for the order block timeframes, in input order.
+        fvg_timeframes: Items supplied for the fvg timeframes, in input order.
+        ifvg_timeframes: Items supplied for the ifvg timeframes, in input order.
+        ema_timeframes: Items supplied for the ema timeframes, in input order.
+        swing_timeframes: Items supplied for the swing timeframes, in input order.
+    """
     source_split_dir = run_dir / split
     split_dir = (output_root or run_dir) / split
     split_dir.mkdir(parents=True, exist_ok=True)
@@ -338,6 +411,14 @@ def _replot_split(
     bar_tz = pd.DatetimeIndex(bars.index).tz
 
     def align_trade_time(value: Any) -> pd.Timestamp:
+        """Localize or convert a trade timestamp to the bar-index timezone.
+
+        Args:
+            value: Value to process.
+
+        Returns:
+            Result of localize or convert a trade timestamp to the bar-index timezone.
+        """
         timestamp = pd.Timestamp(value)
         if bar_tz is None:
             return timestamp.tz_localize(None) if timestamp.tzinfo is not None else timestamp
@@ -417,6 +498,7 @@ def _replot_split(
 
 
 def main() -> None:
+    """Regenerate charts for an existing run without retraining or replaying."""
     parser = argparse.ArgumentParser(
         description="Regenerate order charts and equity/drawdown/daily-PnL figures "
         "for an existing run (no retraining, no backtest re-run)."
@@ -499,6 +581,14 @@ def main() -> None:
     timeframe_ladder = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
 
     def selected_timeframes(value: str) -> tuple[str, ...]:
+        """Parse a chart timeframe option and reject unsupported values.
+
+        Args:
+            value: Value to process.
+
+        Returns:
+            Values returned by ``selected_timeframes``, in the declared order.
+        """
         if not value.strip():
             return ()
         if value.strip().lower() == "all":

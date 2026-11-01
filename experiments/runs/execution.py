@@ -183,7 +183,14 @@ _CACHE_FILE_HASHES: dict[tuple[str, int, int, int], str] = {}
 
 
 def normalize_experiment_run_config_overrides(value: Any) -> dict[str, bool | int | float | str]:
-    """Validate simple scalar config overrides declared by an experiment run spec."""
+    """Validate simple scalar config overrides declared by an experiment run spec.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Whether normalize experiment run config overrides meets the requested condition.
+    """
     if value is None:
         return {}
     if not isinstance(value, dict):
@@ -225,7 +232,14 @@ def normalize_experiment_run_config_overrides(value: Any) -> dict[str, bool | in
 
 
 def load_experiment_run_data_profile(profile: Any) -> dict[str, bool | int | float | str]:
-    """Load an explicit reusable data mode from ``config/data_modes``."""
+    """Load an explicit reusable data mode from ``config/data_modes``.
+
+    Args:
+        profile: Profile used by the operation described above.
+
+    Returns:
+        Whether load experiment run data profile meets the requested condition.
+    """
     if profile is None:
         return {}
     if not isinstance(profile, str) or not profile.strip():
@@ -256,6 +270,12 @@ def load_experiment_run_data_profile(profile: Any) -> dict[str, bool | int | flo
     flattened: dict[str, Any] = {}
 
     def visit(prefix: str, value: Any) -> None:
+        """Flatten one nested profile value into dotted-key overrides.
+
+        Args:
+            prefix: Text or path value identifying the prefix.
+            value: Value to process.
+        """
         if isinstance(value, dict):
             for key, child in value.items():
                 visit(f"{prefix}.{key}" if prefix else str(key), child)
@@ -278,7 +298,14 @@ def load_experiment_run_data_profile(profile: Any) -> dict[str, bool | int | flo
 
 
 def experiment_run_config_override_lines(values: dict[str, bool | int | float | str]) -> str:
-    """Serialize validated scalar overrides for the isolated trainer process."""
+    """Serialize validated scalar overrides for the isolated trainer process.
+
+    Args:
+        values: Values to process, in input order.
+
+    Returns:
+        Text returned by ``experiment_run_config_override_lines``.
+    """
     lines = []
     for key, value in values.items():
         rendered = str(value).lower() if isinstance(value, bool) else str(value)
@@ -287,12 +314,26 @@ def experiment_run_config_override_lines(values: dict[str, bool | int | float | 
 
 
 def signal_stop(_sig: int, _frame: object) -> None:
+    """Set the scheduler stop flag after receiving a termination signal.
+
+    Args:
+        _sig: Numeric value used for the sig.
+        _frame: Frame used by the operation described above.
+    """
     global STOP
     STOP = True
 
 
 def distribute_worker_slots(total: int, capacities: dict[str, int]) -> dict[str, int]:
-    """Spread worker slots fairly without exceeding any node's resource limit."""
+    """Spread worker slots fairly without exceeding any node's resource limit.
+
+    Args:
+        total: Numeric value used for the total.
+        capacities: Key-value data used for the capacities.
+
+    Returns:
+        Mapping from ``str`` keys to ``int`` values.
+    """
     targets = {node: 0 for node in sorted(capacities)}
     for _ in range(total):
         eligible = [node for node, capacity in capacities.items() if targets[node] < capacity]
@@ -311,6 +352,11 @@ def distribute_worker_slots(total: int, capacities: dict[str, int]) -> dict[str,
 
 
 def main() -> int:
+    """Validate and execute one bounded experiment-run worker schedule.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--experiment-run-spec", type=pathlib.Path)
     parser.add_argument("--variant-file", type=pathlib.Path)
@@ -935,6 +981,7 @@ def main() -> int:
         )
 
     def snapshot() -> None:
+        """Persist the current run manifest and aggregate job-state counts."""
         atomic_json(manifest_path, manifest)
         atomic_json(
             experiment_run_artifacts.report("experiment_run_status.json"),
@@ -988,6 +1035,11 @@ def main() -> int:
             resource_samplers.append((sampler_proc, sampler_log))
 
     def start(job: dict[str, Any]) -> None:
+        """Launch one attempt with validated resume and resource provenance.
+
+        Args:
+            job: Key-value data used for the job.
+        """
         key = job["key"]
         job["attempts"] += 1
         attempt = job["attempts"]

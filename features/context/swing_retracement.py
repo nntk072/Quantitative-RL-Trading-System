@@ -30,7 +30,14 @@ SWING_LEVELS = (
 
 
 def level_token(value: float) -> str:
-    """Stable column-name token for a configured ladder level."""
+    """Stable column-name token for a configured ladder level.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``level_token``.
+    """
     return f"{value:g}".replace("-", "neg_").replace(".", "_")
 
 
@@ -52,6 +59,17 @@ def build_swing_retracement_features(
     a named research entry idea, not a statistical sigma band. The direction
     feature is +1 for a valid up leg, -1 for a valid down leg, and 0 when the
     leg is invalid or unavailable.
+
+    Args:
+        bars: Market bars to process.
+        swing_period: Numeric value used for the swing period.
+        atr_mult: Numeric value used for the atr mult.
+        retracement_low: Numeric value used for the retracement low.
+        retracement_high: Numeric value used for the retracement high.
+        level_values: Items supplied for the level values, in input order.
+
+    Returns:
+        DataFrame returned by ``build_swing_retracement_features``.
     """
     if swing_period < 1:
         raise ValueError("swing_period must be positive")

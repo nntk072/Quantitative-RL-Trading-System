@@ -20,8 +20,17 @@ from .observations import DEFAULT_HTF_WINDOWS, HTF_BRANCHES, closed_window
 
 
 class ObservationRuntimeMixin(RuntimeMixinBase):
+    """Build policy observations and action masks from the current step state."""
+
     def _trade_setup_mask_for_step(self, step_idx: int | None = None) -> np.ndarray[Any, Any]:
-        """Return exact cached candidate eligibility for one decision row."""
+        """Return exact cached candidate eligibility for one decision row.
+
+        Args:
+            step_idx: Step idx used by the operation described above.
+
+        Returns:
+            Array returned by ``_trade_setup_mask_for_step``.
+        """
         index = int(self.step_idx if step_idx is None else step_idx)
         mask = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
         mask[NO_TRADE_ID] = 1.0
@@ -37,6 +46,9 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
 
         Only bars belonging to the current ``session_id`` are kept (same-day
         NY context). Left-pads when fewer than ``obs_window`` bars exist.
+
+        Returns:
+            Numeric result returned by ``_session_seq_start``.
         """
         window_start = max(0, int(self.step_idx) - int(self.obs_window))
         if self._session_ids_arr is None or not (0 <= self.step_idx < len(self._session_ids_arr)):
@@ -53,6 +65,9 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
         ``seq`` is clipped to the **current** ``session_id`` (same-day NY
         bars only) and left-padded to ``obs_window``. Same-day pre-session
         features live in the current feature row inside that window.
+
+        Returns:
+            Mapping from ``str`` keys to ``np.ndarray[Any, Any]`` values.
         """
         start_idx = self._session_seq_start()
         seq = self._obs_features_arr[start_idx : self.step_idx]

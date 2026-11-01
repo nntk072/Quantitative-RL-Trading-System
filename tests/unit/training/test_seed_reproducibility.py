@@ -114,7 +114,6 @@ def test_same_seed_yields_identical_ppo_rollout() -> None:
 
 def _make_features(bars: pd.DataFrame) -> pd.DataFrame:  # tiny helper
     """Build a minimal feature DataFrame matching the bars index."""
-
     n = len(bars)
     rng = np.random.default_rng(7)
     return pd.DataFrame(

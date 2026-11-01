@@ -1,0 +1,77 @@
+{
+  "baseline_commit": "5a23e6321653c45719dfb8fdb831e242ff8c3d78",
+  "date": "2026-10-31",
+  "entries": [
+    {
+      "archive_sha256": "7f9fbf39e5345c05521661861ce1b2473ea5b9924cbbc7e973d6a89c3fca78ae",
+      "archive_snapshot": "evidence/research/archive_2026/config/research/thesis_mtf_reasoning.yaml",
+      "current_path": "config/research/trade_setup_mtf_reasoning.yaml",
+      "current_sha256": "5049113ddbc5f134c2294f7383aa57f07350fb8338a25caaa5eae0c9c9440545",
+      "historical_path": "config/research/thesis_mtf_reasoning.yaml",
+      "migration_type": "rename_and_canonicalize_serialized_contract",
+      "notes": "Feature settings were preserved; conditioned profile without strategy-state features has a distinct current filename.",
+      "preexisting_destination_sha256": "895c4d76e368e7f11708c94645cb89abbcfb177416ea928ef48deb2ccaaa3198"
+    },
+    {
+      "archive_sha256": "fa27bb63debc77cf3461ff29e385b0d2fc80a7c121a7cc4a908ae9c10298b569",
+      "archive_snapshot": "evidence/research/archive_2026/config/research/thesis_mtf_reasoning_2m.yaml",
+      "current_path": "config/research/trade_setup_mtf_reasoning_2m.yaml",
+      "current_sha256": "cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+      "historical_path": "config/research/thesis_mtf_reasoning_2m.yaml",
+      "migration_type": "rename_and_canonicalize_serialized_contract",
+      "notes": "Feature settings were preserved; conditioned profile without strategy-state features has a distinct current filename.",
+      "preexisting_destination_sha256": null
+    },
+    {
+      "archive_sha256": "84126d6260d772c3e252646ff7ec57eb9a64895c52dbd710769082a21be31091",
+      "archive_snapshot": "evidence/research/archive_2026/config/research/thesis_mtf_reasoning_conditioned.yaml",
+      "current_path": "config/research/trade_setup_mtf_reasoning_conditioned_no_strategy_state.yaml",
+      "current_sha256": "166bb29c45824de0fe149576aab2840e9b594ad32733e558613d54a6421b41d5",
+      "historical_path": "config/research/thesis_mtf_reasoning_conditioned.yaml",
+      "migration_type": "rename_and_canonicalize_serialized_contract",
+      "notes": "Feature settings were preserved; conditioned profile without strategy-state features has a distinct current filename.",
+      "preexisting_destination_sha256": null
+    },
+    {
+      "archive_sha256": "d97017d8c354cdb5b24544359c50396f7a53096429f21c6f502d9325a9079f39",
+      "archive_snapshot": "evidence/research/archive_2026/config/research/thesis_mtf_reasoning_conditioned_2m.yaml",
+      "current_path": "config/research/trade_setup_mtf_reasoning_conditioned_2m.yaml",
+      "current_sha256": "45b7df161e8af04d8ff175369c354b00fd5d7b1b05f1d13816a2a6d05a03238a",
+      "historical_path": "config/research/thesis_mtf_reasoning_conditioned_2m.yaml",
+      "migration_type": "rename_and_canonicalize_serialized_contract",
+      "notes": "Feature settings were preserved; conditioned profile without strategy-state features has a distinct current filename.",
+      "preexisting_destination_sha256": null
+    },
+    {
+      "archive_sha256": "d5b21c5b227eccea9d73181ae5156ba0e97bb771ee23d4df30e71e93ba820ef3",
+      "archive_snapshot": "evidence/research/archive_2026/config/research/thesis_mtf_shared_tcn_2m.yaml",
+      "current_path": "config/research/trade_setup_mtf_shared_tcn_2m.yaml",
+      "current_sha256": "7b4364ecf2cc6c211d86f719caca713225ae93bff49d78ce098f2103eba0df7c",
+      "historical_path": "config/research/thesis_mtf_shared_tcn_2m.yaml",
+      "migration_type": "rename_and_canonicalize_serialized_contract",
+      "notes": "Feature settings were preserved; conditioned profile without strategy-state features has a distinct current filename.",
+      "preexisting_destination_sha256": null
+    },
+    {
+      "archive_sha256": "34fe6e6260470c10e98cdfca0a15fc0559ccf7cafd9f461e9e4597b11534bddd",
+      "archive_snapshot": "evidence/research/archive_2026/config/research/thesis_mtf_m1_htf_lite_2m.yaml",
+      "current_path": "config/research/trade_setup_mtf_m1_htf_lite_2m.yaml",
+      "current_sha256": "269b869c924ccc8e1fac44767bd8a1a775784710a09de762ec8838f6bd338abc",
+      "historical_path": "config/research/thesis_mtf_m1_htf_lite_2m.yaml",
+      "migration_type": "rename_and_canonicalize_serialized_contract",
+      "notes": "Feature settings were preserved; conditioned profile without strategy-state features has a distinct current filename.",
+      "preexisting_destination_sha256": null
+    },
+    {
+      "archive_sha256": "7813a71ae64114d88da4f03a9c97e3bb183f34642d426f031a50d0f4fbc6c01d",
+      "archive_snapshot": "evidence/research/archive_2026/config/research/thesis_mtf_m1_htf_snapshot_2m.yaml",
+      "current_path": "config/research/trade_setup_mtf_m1_htf_snapshot_2m.yaml",
+      "current_sha256": "279c59b8bcb5aba89e49f7babf8413d4bf7d105bf8d38396c786b002606f9aab",
+      "historical_path": "config/research/thesis_mtf_m1_htf_snapshot_2m.yaml",
+      "migration_type": "rename_and_canonicalize_serialized_contract",
+      "notes": "Feature settings were preserved; conditioned profile without strategy-state features has a distinct current filename.",
+      "preexisting_destination_sha256": null
+    }
+  ],
+  "schema_version": 1
+}

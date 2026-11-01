@@ -21,7 +21,7 @@ Purged walk-forward split construction lives in `market_data/splits/walkforward.
 | `evaluation/reporting/trade_event_export.py` | Canonical fill-event and position-table reconstruction |
 | `evaluation/reporting/evaluation_manifest.py` | Evaluation artifact hashes and parent manifest lineage |
 | `evaluation/reporting/order_chart_regeneration.py` | Rebuild saved inputs and regenerate per-trade charts |
-| `scripts/research/thesis/evaluation/report_variant_details.py` | Standardized artifact-driven Markdown/JSON report, required diagnostics, outcome-labeled trade figures, and missing-figure validation |
+| `scripts/research/analysis/evaluation/report_variant_details.py` | Standardized artifact-driven Markdown/JSON report, required diagnostics, outcome-labeled trade figures, and missing-figure validation |
 | `evaluation/reporting/box_table.py` | Shared evaluation/training report table renderer |
 | `evaluation/reporting/diversity_artifacts.py` | Persist decoded decision-diversity reports |
 | `evaluation/reporting/diversity_table.py` | Render typed diversity reports as terminal tables |
@@ -51,8 +51,8 @@ Purged walk-forward split construction lives in `market_data/splits/walkforward.
 
 ## Key Symbols
 
-For a reusable thesis experiment run report, run
-`python scripts/research/thesis/evaluation/report_variant_details.py --experiment-run-dir <experiment run>`
+For a reusable experiment run report, run
+`python scripts/research/analysis/evaluation/report_variant_details.py --experiment-run-dir <experiment run>`
 on a suitable compute node. It writes `reports/project_results_report.md` and JSON,
 plus a standalone Mermaid pipeline diagram. The report explains the saved input/cache identity,
 source revisions, run split, model/training settings, evaluation protocol, trade results,
@@ -78,7 +78,7 @@ links are unavailable.
 ## Consumers (Callers)
 
 - `training/runner/training.py` (evaluates after training)
-- `scripts/research/thesis/evaluation/report_g3.py` (report generation)
+- `scripts/research/analysis/evaluation/report_g3.py` (report generation)
 
 ## Tests
 

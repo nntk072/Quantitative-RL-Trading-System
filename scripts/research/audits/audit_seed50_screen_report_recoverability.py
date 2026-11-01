@@ -22,7 +22,7 @@ RECOVERY_DIR = (
 SOURCE_DIR = OUTPUTS / "gpu_experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016"
 MAINPLAN_DIR = OUTPUTS / "gpu_experiment_runs/ladder18_seed50_20m_full_split_n64_mainplan_20261016"
 SUMMARY_PATH = RECOVERY_DIR / "reports/experiment_run_results_summary_v2.json"
-DEFAULT_REPORT = ROOT / "docs/thesis/evidence/p3_seed50_report_pack_recoverability_20261018.json"
+DEFAULT_REPORT = ROOT / "outputs/research_audits/p3_seed50_report_pack_recoverability_20261018.json"
 MAINPLAN_CHECKPOINT = "ppo_ckpt_1000000_steps.zip"
 
 

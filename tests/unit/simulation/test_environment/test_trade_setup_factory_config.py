@@ -10,7 +10,7 @@ from stable_baselines3 import PPO
 from configuration.configuration_loader import load_config
 from decisioning.trade_setup import (
     TRADE_SETUP_CATEGORY_COUNT,
-    LegacyThesisActionSchema,
+    TradeSetupActionSchema,
     build_trade_setup_action_schema,
     trade_setup_candidate_id,
     trade_setup_center,
@@ -20,35 +20,35 @@ from features.context.trade_setup_candidates import trade_setup_candidate_featur
 from learning.rl.agent import build_agent
 from learning.rl.hybrid import (
     HybridClampedStdMultiInputPolicy,
-    ThesisConditionedClampedStdMultiInputPolicy,
+    TradeSetupConditionedClampedStdMultiInputPolicy,
 )
 from market_data.loading.ticks import TickBook
 from models.encoders import MTFReasoningEncoder
 from simulation.environment import build_eval_common, make_env, mtf_settings
-from tests.unit.simulation.test_environment.test_account_normalization import (
+from tests.unit.simulation.test_environment._account_fixtures import (
     _make_bars,
     _make_features,
 )
 from trading.strategies import PO3IFVGStrategy
 
 
-def test_thesis_observation_mode_flows_into_train_and_eval_env_kwargs() -> None:
+def test_trade_setup_observation_mode_flows_into_train_and_eval_env_kwargs() -> None:
     config = OmegaConf.load("config/base/default.yaml")
     config.env.strategy_actions = True
-    config.env.thesis_actions = True
+    config.env.trade_setup_actions = True
 
     eval_common, *_ = build_eval_common(config, arch="tcn")
 
     assert eval_common["strategy_actions"] is True
-    assert eval_common["thesis_actions"] is True
+    assert eval_common["trade_setup_actions"] is True
 
 
-def test_thesis_observation_mode_defaults_off() -> None:
+def test_trade_setup_observation_mode_defaults_off() -> None:
     config = OmegaConf.load("config/base/default.yaml")
 
     eval_common, *_ = build_eval_common(config, arch="tcn")
 
-    assert eval_common["thesis_actions"] is False
+    assert eval_common["trade_setup_actions"] is False
 
 
 @pytest.mark.parametrize(
@@ -69,27 +69,27 @@ def test_e_f_g_architectures_enable_mtf_observations(arch: str) -> None:
 
 
 def test_mtf_reasoning_research_overlay_is_opt_in_and_complete() -> None:
-    config = load_config(config_path="config/research/thesis_mtf_reasoning.yaml")
+    config = load_config(config_path="config/research/trade_setup_mtf_reasoning.yaml")
 
     assert config.env.strategy_actions is True
-    assert config.env.thesis_actions is True
+    assert config.env.trade_setup_actions is True
     assert config.env.agent_direction_control is False
     assert config.features.include_strategy_state is True
     assert config.features.entry_ideas.enabled is True
     assert config.agent.arch == "mtf_reasoning"
-    assert config.ppo.policy_distribution == "thesis_hybrid_v1"
+    assert config.ppo.policy_distribution == "trade_setup_hybrid_v1"
     assert config.ppo.actor_arch == "shared"
 
 
 def test_mtf_reasoning_conditioned_overlay_is_opt_in_and_complete() -> None:
-    config = load_config(config_path="config/research/thesis_mtf_reasoning_conditioned.yaml")
+    config = load_config(config_path="config/research/trade_setup_mtf_reasoning_conditioned.yaml")
 
     assert config.env.strategy_actions is True
-    assert config.env.thesis_actions is True
+    assert config.env.trade_setup_actions is True
     assert config.agent.arch == "mtf_reasoning"
-    assert config.ppo.policy_distribution == "thesis_conditioned_v1"
-    assert config.ppo.thesis_conditioned.embedding_dim == 32
-    assert config.ppo.thesis_conditioned.execution_hidden_dim == 128
+    assert config.ppo.policy_distribution == "trade_setup_conditioned_v1"
+    assert config.ppo.trade_setup_conditioned.embedding_dim == 32
+    assert config.ppo.trade_setup_conditioned.execution_hidden_dim == 128
 
 
 @pytest.mark.parametrize(
@@ -104,7 +104,6 @@ def test_canonical_trade_setup_overlays_are_explicit(overlay: str, distribution:
 
     assert config.env.strategy_actions is True
     assert config.env.trade_setup_actions is True
-    assert config.env.thesis_actions is False
     assert config.ppo.policy_distribution == distribution
     eval_common, *_ = build_eval_common(config, arch="mtf_reasoning")
     assert eval_common["trade_setup_actions"] is True
@@ -118,7 +117,6 @@ def test_resolved_reasoning_treatment_uses_canonical_trade_setup_contract() -> N
     overrides = set(resolved["overrides"])
     assert "env.trade_setup_actions=true" in overrides
     assert "ppo.policy_distribution=trade_setup_hybrid_v1" in overrides
-    assert not any(item.startswith("env.thesis_actions=") for item in overrides)
 
 
 @pytest.mark.parametrize(
@@ -167,20 +165,20 @@ def test_canonical_distribution_resolves_matching_policy_and_mask(
 def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: bool) -> None:
     """Encoder selection must not change environment transitions for fixed actions."""
     overlays = (
-        "thesis_mtf_reasoning_conditioned_2m.yaml",
-        "thesis_mtf_shared_tcn_2m.yaml",
-        "thesis_mtf_m1_htf_lite_2m.yaml",
-        "thesis_mtf_m1_htf_snapshot_2m.yaml",
+        "trade_setup_mtf_reasoning_conditioned_2m.yaml",
+        "trade_setup_mtf_shared_tcn_2m.yaml",
+        "trade_setup_mtf_m1_htf_lite_2m.yaml",
+        "trade_setup_mtf_m1_htf_snapshot_2m.yaml",
     )
     bars = _make_bars(120)
     features = _make_features(bars)
-    thesis_columns = [name for _, name in trade_setup_candidate_feature_columns()]
+    trade_setup_columns = [name for _, name in trade_setup_candidate_feature_columns()]
     strategy_columns = list(PO3IFVGStrategy.required_features)
     features = pd.concat(
         [
             features,
             pd.DataFrame(0.0, index=features.index, columns=strategy_columns, dtype=np.float32),
-            pd.DataFrame(0.0, index=features.index, columns=thesis_columns, dtype=np.float32),
+            pd.DataFrame(0.0, index=features.index, columns=trade_setup_columns, dtype=np.float32),
         ],
         axis=1,
     )
@@ -189,7 +187,7 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: b
     features[candidate_column] = 1.0
     # Give the shared simulator a valid structural stop and a reachable target
     # so this parity trace verifies an executed open/fill, not only a
-    # no-position transition for an eligible thesis.
+    # no-position transition for an eligible trade_setup.
     features["last_swing_low"] = bars["close"] - 30.0
     features["last_swing_high"] = bars["close"] + 60.0
     tickbook = None
@@ -222,7 +220,9 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: b
             )
 
         observations = [env.reset(seed=41)[0] for env in envs]
-        assert all(observation["thesis_mask"][candidate_id] == 1.0 for observation in observations)
+        assert all(
+            observation["trade_setup_mask"][candidate_id] == 1.0 for observation in observations
+        )
         for key in observations[0]:
             for observation in observations[1:]:
                 np.testing.assert_array_equal(observations[0][key], observation[key])
@@ -230,9 +230,7 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: b
         entry_action = np.zeros(envs[0].action_space.shape, dtype=np.float32)
         entry_action[0] = trade_setup_center(candidate_id)
         schema = envs[0].action_schema
-        # These dated 2M overlays are preserved legacy config inputs. Canonical
-        # trade-setup overlays are tested separately; old run semantics stay exact.
-        assert isinstance(schema, LegacyThesisActionSchema)
+        assert isinstance(schema, TradeSetupActionSchema)
         entry_action[schema.indices["risk"]] = 1.0
         entry_action[schema.indices["target"]] = -1.0
         entry_action[schema.indices["exit"]] = -1.0
@@ -267,7 +265,7 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: b
                 "tp_price",
                 "lots",
                 "fill_quote_source",
-                "thesis_candidate_id",
+                "trade_setup_candidate_id",
             ):
                 assert records[0][field] == reference_open[field]
         if use_tick_execution:
@@ -302,13 +300,15 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: b
 
 
 def test_mtf_reasoning_2m_configs_are_matched_except_for_execution_conditioning() -> None:
-    control = load_config(config_path="config/research/thesis_mtf_reasoning_2m.yaml")
-    treatment = load_config(config_path="config/research/thesis_mtf_reasoning_conditioned_2m.yaml")
+    control = load_config(config_path="config/research/trade_setup_mtf_reasoning_2m.yaml")
+    treatment = load_config(
+        config_path="config/research/trade_setup_mtf_reasoning_conditioned_2m.yaml"
+    )
 
     for config in (control, treatment):
         assert config.env.n_envs == 8
         assert config.env.strategy_actions is True
-        assert config.env.thesis_actions is True
+        assert config.env.trade_setup_actions is True
         assert config.features.include_strategy_state is True
         assert config.agent.arch == "mtf_reasoning"
         assert config.ppo.n_steps == 2048
@@ -319,9 +319,9 @@ def test_mtf_reasoning_2m_configs_are_matched_except_for_execution_conditioning(
         assert config.quality_execution.requested_n_envs == 8
         assert config.quality_execution.exact_n_envs is True
 
-    assert control.ppo.policy_distribution == "thesis_hybrid_v1"
-    assert treatment.ppo.policy_distribution == "thesis_conditioned_v1"
-    assert control.ppo.thesis_conditioned == treatment.ppo.thesis_conditioned
+    assert control.ppo.policy_distribution == "trade_setup_hybrid_v1"
+    assert treatment.ppo.policy_distribution == "trade_setup_conditioned_v1"
+    assert control.ppo.trade_setup_conditioned == treatment.ppo.trade_setup_conditioned
     control_resolved = OmegaConf.to_container(control, resolve=True)
     treatment_resolved = OmegaConf.to_container(treatment, resolve=True)
     assert isinstance(control_resolved, dict)
@@ -346,8 +346,11 @@ def test_mtf_reasoning_2m_configs_are_matched_except_for_execution_conditioning(
 @pytest.mark.parametrize(
     ("overlay", "expected_policy"),
     [
-        ("thesis_mtf_reasoning.yaml", HybridClampedStdMultiInputPolicy),
-        ("thesis_mtf_reasoning_conditioned.yaml", ThesisConditionedClampedStdMultiInputPolicy),
+        ("trade_setup_mtf_reasoning.yaml", HybridClampedStdMultiInputPolicy),
+        (
+            "trade_setup_mtf_reasoning_conditioned.yaml",
+            TradeSetupConditionedClampedStdMultiInputPolicy,
+        ),
     ],
 )
 def test_mtf_reasoning_overlay_builds_real_env_and_agent(
@@ -365,13 +368,13 @@ def test_mtf_reasoning_overlay_builds_real_env_and_agent(
 
     bars = _make_bars(120)
     features = _make_features(bars)
-    thesis_columns = [name for _, name in trade_setup_candidate_feature_columns()]
+    trade_setup_columns = [name for _, name in trade_setup_candidate_feature_columns()]
     strategy_columns = list(PO3IFVGStrategy.required_features)
     features = pd.concat(
         [
             features,
             pd.DataFrame(0.0, index=features.index, columns=strategy_columns, dtype=np.float32),
-            pd.DataFrame(0.0, index=features.index, columns=thesis_columns, dtype=np.float32),
+            pd.DataFrame(0.0, index=features.index, columns=trade_setup_columns, dtype=np.float32),
         ],
         axis=1,
     )
@@ -404,9 +407,9 @@ def test_mtf_reasoning_overlay_builds_real_env_and_agent(
         "mask_h1",
         "mask_h4",
         "mask_d1",
-        "thesis_mask",
+        "trade_setup_mask",
     } <= set(env.observation_space.spaces)
-    assert observation["thesis_mask"].shape == (TRADE_SETUP_CATEGORY_COUNT,)
+    assert observation["trade_setup_mask"].shape == (TRADE_SETUP_CATEGORY_COUNT,)
 
     model = build_agent(
         env,
@@ -422,17 +425,11 @@ def test_mtf_reasoning_overlay_builds_real_env_and_agent(
     action, _ = model.predict(observation, deterministic=False)
     assert trade_setup_id_from_box(float(action[0])) == 0
 
-    checkpoint = tmp_path / "mtf_thesis_factory_smoke.zip"
+    checkpoint = tmp_path / "mtf_trade_setup_factory_smoke.zip"
     model.save(checkpoint)
     loaded = PPO.load(checkpoint, env=env, device="cpu")
     assert isinstance(loaded.policy.features_extractor, MTFReasoningEncoder)
     assert type(loaded.policy) is expected_policy
-    if env.legacy_thesis_contract:
-        assert getattr(loaded, "_thesis_observation_schema", None) == env.thesis_observation_schema
-    else:
-        assert (
-            getattr(loaded, "_trade_setup_observation_schema", None)
-            == env.trade_setup_observation_schema
-        )
+    assert getattr(loaded, "_trade_setup_observation_schema") == env.trade_setup_observation_schema
     loaded_action, _ = loaded.predict(observation, deterministic=True)
     assert trade_setup_id_from_box(float(loaded_action[0])) == 0

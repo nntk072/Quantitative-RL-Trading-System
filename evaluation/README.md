@@ -10,7 +10,7 @@ action, execution, and account semantics.
 | `rollout/` | Run policy decisions against a supplied environment/provider. |
 | `metrics/` | Compute trade and account outcome measures. |
 | `plotting/`, `reporting/` | Render equity, trade, and summary outputs. |
-| `metrics/trade_setup_policy.py`, `reporting/trade_setup_plots.py` | Analyze and plot setup choice and execution behavior; legacy `thesis_*` module paths re-export these APIs. |
+| `metrics/trade_setup_policy.py`, `reporting/trade_setup_plots.py` | Analyze and plot setup choice and execution behavior. |
 | `reanalysis/` | Recompute analysis from preserved run evidence. |
 | `cli.py` | Evaluation command entry point. |
 
@@ -20,7 +20,7 @@ exposed periods must not be represented as untouched confirmation.
 
 See the [evaluation guide](../docs/modules/evaluation.md),
 [evaluation flow](../docs/architecture/data_flow.md), and
-[validation protocol](../docs/thesis/validation_protocol.md).
+[validation protocol](../docs/research/validation_protocol.md).
 
 ## Replay and reporting path
 

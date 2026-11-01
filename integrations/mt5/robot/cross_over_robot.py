@@ -5,46 +5,25 @@ from integrations.mt5.adapters import Trader, TradingStrategy
 
 
 class CrossOverRobot:
-    """
-    CrossOverRobot class represents a trading robot implementing a crossover strategy.
+    """Execute crossover strategy signals through a MetaTrader trader adapter.
 
     Args:
-        - volume (float): The trading volume for each position.
-        - trader (Trader): The trader instance responsible for executing trades.
-        - strategy (TradingStrategy): The trading strategy instance guiding the robot's decisions.
-
-    Attributes:
-        - volume (float): The trading volume for each position.
-        - trader (Trader): The trader instance responsible for executing trades.
-        - strategy (TradingStrategy): The trading strategy instance guiding the robot's decisions.
-        - magic_number (int): A unique identifier for trades opened by the robot.
-        - name (str): The name of the robot.
-
-    Methods:
-        - trade(): Executes the trading logic based on the strategy's signals.
-
-    Example usage:
-    ```python
-    # Create an instance of CrossOverRobot with a trader and a trading strategy
-    robot = CrossOverRobot(volume=0.1, trader=my_trader_instance, strategy=my_strategy_instance)
-
-    # Start the trading robot
-    robot.trade()
-    ```
+        volume: Requested position size.
+        trader: Adapter that reads and changes broker positions.
+        strategy: Signal-producing strategy.
+        paper_trading: When true, log intended orders without submitting them.
     """
 
     def __init__(
         self, volume: float, trader: Trader, strategy: TradingStrategy, paper_trading: bool = True
     ):
-        """
-        Initializes the CrossOverRobot instance.
+        """Initialize the robot with its sizing, adapter, strategy, and mode.
 
         Args:
-            - volume (float): The trading volume for each position.
-            - trader (Trader): The trader instance responsible for executing trades.
-            - strategy (TradingStrategy): The trading strategy instance guiding the robot's decisions.
-            - paper_trading (bool): When True (the safe default), every signal and intended
-                order is logged but no orders are placed with the broker.
+            volume: Numeric value used for the volume.
+            trader: Trader used by the operation described above.
+            strategy: Strategy used to select or evaluate trades.
+            paper_trading: Whether to enable or require the paper trading.
         """
         self.volume = volume
         self.trader = trader
@@ -55,9 +34,7 @@ class CrossOverRobot:
         logger.info(f"Starting CrossOver Robot (paper_trading={paper_trading})")
 
     def trade(self) -> None:
-        """
-        Executes the trading logic based on the strategy's signals.
-        """
+        """Executes the trading logic based on the strategy's signals."""
         logger.info("Searching for trading signal")
         symbol, signal = self.strategy.signal()
 

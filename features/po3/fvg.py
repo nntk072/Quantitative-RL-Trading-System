@@ -38,6 +38,14 @@ def build_fvg_zone_features(
 
     All values are computed from the current and earlier bars only (zone
     activity windows end at fill/expire time), so the block is causal.
+
+    Args:
+        bars: Market bars to process.
+        fvg_config: Fvg config used by the operation described above.
+        max_zone_bars: Market bar or price data used for model-facing FVG zone features for one timeframe's own bars.
+
+    Returns:
+        DataFrame returned by ``build_fvg_zone_features``.
     """
     n = len(bars)
     idx = bars.index

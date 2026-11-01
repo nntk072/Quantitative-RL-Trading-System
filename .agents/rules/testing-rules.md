@@ -2,11 +2,19 @@
 
 Applies to this repo's pytest setup (`tests/`).
 
-## Coverage target: 80% minimum
+## Coverage baseline
 
 ```bash
 ./tools/check unit
+./tools/check coverage
 ```
+
+The coverage gate measures line and conditional branch coverage for production
+packages and compares it with the committed baseline from `main`. Do not claim
+that percentage alone proves test quality. Review uncovered paths against the
+behavior and failure modes the package owns. See
+[the measured testing strategy](../../docs/development/testing.md) for scope,
+baseline provenance, and update rules.
 
 Test types required for features:
 1. **Unit tests** — production behavior at an isolated package boundary, under `tests/unit/<domain>/`.
@@ -19,7 +27,8 @@ Test types required for features:
 1. Write the test first (RED) — it should FAIL.
 2. Run it to confirm failure.
 3. Write minimal implementation (GREEN).
-4. Refactor (IMPROVE) while keeping coverage ≥ 80%.
+4. Refactor (IMPROVE) while preserving meaningful assertions and the coverage
+   baseline.
 
 Fix the implementation, not the tests — unless the tests are wrong.
 
@@ -36,15 +45,17 @@ Fix the implementation, not the tests — unless the tests are wrong.
 - Test observable behavior and public contracts. Avoid tests that only assert
   that a forwarding module re-exports the same object; test the owning behavior
   and remove redundant forwarding layers when no external contract requires them.
-- Categorize with pytest markers:
+- Let `tests/conftest.py` assign `unit`, `integration`, `architecture`, or
+  `research` from the file path. Add explicit markers for cost or environment
+  requirements such as `slow`, `gpu`, or `triton`.
+
+Do not add `unit` or `integration` markers to every test when its path already
+supplies the execution category.
 
 ```python
-@pytest.mark.unit
-def test_cosine_similarity_returns_one_for_identical_vectors(): ...
+@pytest.mark.slow
+def test_expensive_deterministic_case(): ...
 
-
-@pytest.mark.integration
-def test_trading_env_episode_loop_updates_account_equity(): ...
 ```
 
 ## Relations

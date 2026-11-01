@@ -16,10 +16,19 @@ from .mixin_base import RuntimeMixinBase
 
 
 class TickQuoteRuntimeMixin(RuntimeMixinBase):
+    """Resolve delayed tick quotes for exits and randomized fills."""
+
     def _tick_exit_quote(
         self, bar_time: pd.Timestamp
     ) -> tuple[str, tuple[float, float], pd.Timestamp, dict[str, Any]] | None:
-        """Delayed tick quote for a stop or target, or ``None`` to use the level."""
+        """Delayed tick quote for a stop or target, or ``None`` to use the level.
+
+        Args:
+            bar_time: Bar time used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any]`` values.
+        """
         book = self._tickbook
         pos = self.position
         if book is None or pos is None:
@@ -92,6 +101,12 @@ class TickQuoteRuntimeMixin(RuntimeMixinBase):
         A configured latency of zero is an immediate tick lookup, not a candle
         fill. Positive values sample integer nanoseconds below the configured
         exclusive upper bound.
+
+        Args:
+            order_time: Order time used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any]`` values.
         """
         if self._tickbook is None:
             raise TickExecutionUnavailable("tick-only execution requires a TickBook")

@@ -8,7 +8,7 @@ Current feature groups include session levels, liquidity and swings,
 retracements, premium/discount, SMT, order blocks, and trade-setup candidates.
 `trade_setup_candidates.py` retains exact idea/timeframe/direction semantics
 instead of combining unrelated evidence into pooled eligibility flags. The
-older `thesis_candidates.py` path remains as a compatibility import surface.
+canonical module is `trade_setup_candidates.py`.
 
 Feature definitions must be causal, expose validity/invalidation separately
 from numeric levels where appropriate, and preserve source timeframe and

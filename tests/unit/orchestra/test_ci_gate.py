@@ -12,12 +12,14 @@ HOSTED_GATES = {
     "security-deps",
     "security-secrets",
     "quality",
+    "docs",
     "architecture",
     "graph-quality",
     "contracts",
     "unit",
     "build",
     "integration",
+    "coverage-report",
     "parity",
     "training-smoke",
 }
@@ -35,9 +37,9 @@ def test_orchestra_delegates_to_shared_full_dispatcher() -> None:
 def test_hosted_workflow_uses_named_shared_gates() -> None:
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
     invocations = {
-        line.strip().removeprefix("- run: ./tools/check ")
+        line.split("./tools/check ", maxsplit=1)[1].split()[0]
         for line in workflow.splitlines()
-        if "run: ./tools/check " in line
+        if "./tools/check " in line
     }
     assert invocations == HOSTED_GATES
     assert "ci-success:" in workflow

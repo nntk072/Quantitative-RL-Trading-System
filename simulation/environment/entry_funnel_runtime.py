@@ -11,12 +11,24 @@ from .mixin_base import RuntimeMixinBase
 
 
 class EntryFunnelRuntimeMixin(RuntimeMixinBase):
+    """Track entry-gate outcomes and funnel counters for diagnostics."""
+
     def _update_entry_funnel(
         self,
         feat_row: FeatureRow | pd.Series,
         entry_machine: Any,
         entry_diag_before: dict[str, int],
     ) -> dict[str, int]:
+        """Update entry funnel.
+
+        Args:
+            feat_row: Feature values for the current market bar.
+            entry_machine: Entry machine used by the operation described above.
+            entry_diag_before: Key-value data used for the entry diag before.
+
+        Returns:
+            Mapping from ``str`` keys to ``int`` values.
+        """
         entry_funnel: dict[str, int] = {"bars_seen": 1}
         if entry_machine is not None:
             prior_state = entry_machine.state

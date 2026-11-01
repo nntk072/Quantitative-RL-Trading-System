@@ -74,6 +74,6 @@ A resolved `TESTED_BY` relationship means only that the recorded relation points
 
 `config/1_baseline.yaml` is intentionally `tracked_but_inactive`: baseline training uses `config/base/default.yaml` and the baseline branch does not auto-merge the symmetry file. `config/3_distribution.yaml` and `config/quality_experiments.yaml` must remain traceable through their active strategy/quality registry paths.
 
-CALLS quality reports now include both global and thesis-critical-path resolution. Evidence-backed same-module, explicit-import/re-export, `self`/`cls`, and unique direct-base resolutions may be promoted to `internal_exact`. Generic container/file methods with unknown receivers remain dynamic rather than being matched to unrelated repository methods with the same short name.
+CALLS quality reports now include both global and research-critical-path resolution. Evidence-backed same-module, explicit-import/re-export, `self`/`cls`, and unique direct-base resolutions may be promoted to `internal_exact`. Generic container/file methods with unknown receivers remain dynamic rather than being matched to unrelated repository methods with the same short name.
 
 Use `outputs/code_graph_quality/ambiguous_call_breakdown.{json,md}` to inspect remaining ambiguity classes. Preserve ambiguity whenever static evidence does not identify one target.

@@ -33,7 +33,19 @@ def write_bootstrap_cis(
     level: float = 0.95,
     initial_balance: float | None = None,
 ) -> dict[str, Any]:
-    """Compute and persist bootstrap CIs for Sharpe / Sortino / MDD / win-rate."""
+    """Compute and persist bootstrap CIs for Sharpe / Sortino / MDD / win-rate.
+
+    Args:
+        split_dir: Text or path value identifying the split dir.
+        equity: Current account equity in account currency.
+        trades: Trade records used to calculate the requested report or metric.
+        n_boot: Numeric value used for the n boot.
+        level: Numeric value used for the level.
+        initial_balance: Initial balance used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     split_dir = Path(split_dir)
     split_dir.mkdir(parents=True, exist_ok=True)
     eq = np.asarray(equity.astype(float).to_numpy(), dtype=np.float64)
@@ -68,6 +80,15 @@ def write_calibration_artifacts(
     Predicted probability for each trade is the empirical win rate of its
     direction (long vs short) on the same split — a baseline calibration
     check that does not require policy logits.
+
+    Args:
+        split_dir: Text or path value identifying the split dir.
+        trades: Trade records used to calculate the requested report or metric.
+        dpi: Resolution of generated plots, in dots per inch.
+        save_plots: Whether to enable or require the save plots.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     pairs = pair_trades(trades) if not trades.empty else []
     if len(pairs) < 2:

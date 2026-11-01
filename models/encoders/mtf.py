@@ -38,6 +38,15 @@ class _CausalTCN(nn.Module):
         kernel_size: int = 3,
         dropout: float = 0.1,
     ) -> None:
+        """Initialize _CausalTCN and its owned state.
+
+        Args:
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+        """
         super().__init__()
         dilations = tuple(2**i for i in range(len(channels)))
         layers: list[nn.Module] = []
@@ -48,9 +57,26 @@ class _CausalTCN(nn.Module):
         self.proj = nn.Linear(channels[-1], latent_dim)
 
     def forward(self, seq: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        """Encode each row's valid sequence suffix into its final latent state.
+
+        Args:
+            seq: Batched timeframe features with shape ``[batch, time, features]``.
+            mask: Valid-timestep mask aligned with ``seq``.
+
+        Returns:
+            One ``latent_dim`` vector per batch row.
+        """
         lengths = _valid_lengths(seq, {"seq_mask": mask})
 
         def _encode(valid: torch.Tensor) -> torch.Tensor:
+            """Process _CausalTCN.
+
+            Args:
+                valid: Valid used by the operation described above.
+
+            Returns:
+                Result of process _CausalTCN.
+            """
             hidden = self.tcn(valid.transpose(1, 2))
             return cast(torch.Tensor, self.proj(hidden[:, :, -1]))
 
@@ -73,6 +99,16 @@ class MTFEncoder(BaseFeaturesExtractor):
         dropout: float = 0.1,
         account_dim: int | None = None,
     ) -> None:
+        """Initialize MTFEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+            account_dim: Account dim used by the operation described above.
+        """
         super().__init__(observation_space, features_dim=latent_dim + ACCOUNT_EMB_DIM)
         spaces_map = getattr(observation_space, "spaces", None)
         if not isinstance(spaces_map, Mapping):
@@ -102,6 +138,14 @@ class MTFEncoder(BaseFeaturesExtractor):
         self.fuse = nn.Sequential(nn.LayerNorm(width), nn.Linear(width, latent_dim))
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode aligned timeframe streams and account state into policy features.
+
+        Args:
+            observations: Mapping of timeframe sequences, masks, and account values.
+
+        Returns:
+            Fused timeframe latent concatenated with the account embedding.
+        """
         parts = [
             branch(observations[seq_key], observations[mask_key])
             for branch, (seq_key, mask_key) in zip(self.branches, self._keys, strict=True)

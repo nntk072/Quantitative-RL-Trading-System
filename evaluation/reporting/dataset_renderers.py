@@ -8,7 +8,14 @@ from evaluation.contracts import ReportDataset
 
 
 def render_json(report: ReportDataset) -> str:
-    """Serialize the already-computed report dataset as JSON."""
+    """Serialize the already-computed report dataset as JSON.
+
+    Args:
+        report: Report used by the operation described above.
+
+    Returns:
+        Text returned by ``render_json``.
+    """
     payload = {
         "case_id": report.case.case_id,
         "dataset_id": report.case.dataset.dataset_id,
@@ -21,7 +28,14 @@ def render_json(report: ReportDataset) -> str:
 
 
 def render_markdown_table(report: ReportDataset) -> str:
-    """Render the already-computed report dataset as a compact Markdown table."""
+    """Render the already-computed report dataset as a compact Markdown table.
+
+    Args:
+        report: Report used by the operation described above.
+
+    Returns:
+        Text returned by ``render_markdown_table``.
+    """
     rows = ["| Metric | Value | Unit |", "|---|---:|---|"]
     rows.extend(
         f"| {metric.name} | {metric.value:g} | {metric.unit} |" for metric in report.metrics

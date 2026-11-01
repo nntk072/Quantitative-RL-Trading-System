@@ -20,6 +20,15 @@ def plot_baseline_comparison(
     equity_dict: dict[str, pd.Series],
     out_path: Path | str | None = None,
 ) -> go.Figure:
+    """Compare baseline equity series as returns from each series' first value.
+
+    Args:
+        equity_dict: Named equity curves indexed by observation time.
+        out_path: Optional destination for an HTML copy of the figure.
+
+    Returns:
+        Interactive figure containing one normalized return trace per strategy.
+    """
     _check()
     colors = [_EQUITY_COLOR, _LONG_COLOR, _SHORT_COLOR, _CLOSE_COLOR, "#ce93d8", "#80cbc4"]
 

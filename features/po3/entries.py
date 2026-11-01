@@ -22,6 +22,14 @@ def build_po3_phase_features(
     Returns a DataFrame indexed like ``index`` with:
     - ``po3_phase``: ordinal 0/1/2 (accumulation/manipulation/distribution)
     - ``session_progress``: continuous fraction of session elapsed in [0, 1]
+
+    Args:
+        index: Position or label identifying the requested item.
+        session_start: Text or path value identifying the session start.
+        session_end: Text or path value identifying the session end.
+
+    Returns:
+        DataFrame returned by ``build_po3_phase_features``.
     """
     tz = index.tz
     start_ts = pd.Timestamp(f"2000-01-01 {session_start}").tz_localize(tz)

@@ -18,6 +18,7 @@ class MarketEventSchema:
     time_field: str
 
     def __post_init__(self) -> None:
+        """Validate and initialize MarketEventSchema after construction."""
         if not self.event_type or not self.version or not self.time_field:
             raise ValueError("event type, schema version, and time field are required")
         if not self.fields or len(set(self.fields)) != len(self.fields):
@@ -39,6 +40,7 @@ class DatasetRef:
     provenance_id: str
 
     def __post_init__(self) -> None:
+        """Validate and initialize DatasetRef after construction."""
         if not self.dataset_id or not self.instrument_id or not self.provenance_id:
             raise ValueError("dataset, instrument, and provenance identities are required")
         if self.start.tzinfo is None or self.end.tzinfo is None:
@@ -60,7 +62,16 @@ class MarketDataset:
 class DatasetSource(Protocol):
     """Resolve a logical dataset reference through one source or storage backend."""
 
-    def load(self, reference: DatasetRef) -> MarketDataset: ...
+    def load(self, reference: DatasetRef) -> MarketDataset:
+        """Load market events for a validated logical dataset request.
+
+        Args:
+            reference: Dataset identity, time bounds, schema, and provenance.
+
+        Returns:
+            Events and the resolved dataset reference.
+        """
+        ...
 
 
 __all__ = ["DatasetRef", "DatasetSource", "MarketDataset", "MarketEventSchema"]

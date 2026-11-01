@@ -333,7 +333,8 @@ def test_engine_open_direction_always_valid(sample_bars):
 def test_engine_fills_within_bar_range(sample_bars):
     """Regression: every logged open/close fill price must be within the
     executing bar's [low, high] range (guards against tick-outlier fills
-    landing far from any visible candle)."""
+    landing far from any visible candle).
+    """
     from features import build_features
 
     features = build_features(sample_bars, cfg=None)

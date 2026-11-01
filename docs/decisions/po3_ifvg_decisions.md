@@ -51,4 +51,4 @@ A trade report should distinguish the setup signal, order submission, and actual
 
 ## Scope and limitations
 
-These definitions specify causal event ordering and reference selection. They do not establish that the patterns predict returns. Data gaps, incomplete calendars, spread, quote latency, market impact, and broker-specific execution can change observed outcomes. Validation must check both event timing and the plotted candle/reference geometry before these rules are used for a thesis claim.
+These definitions specify causal event ordering and reference selection. They do not establish that the patterns predict returns. Data gaps, incomplete calendars, spread, quote latency, market impact, and broker-specific execution can change observed outcomes. Validation must check both event timing and the plotted candle/reference geometry before making claims about these rules.

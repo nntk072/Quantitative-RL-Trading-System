@@ -78,7 +78,7 @@
 
 ## Critical Invariants
 
-1. **M1 is the policy sequence, not the only source** — the thesis input uses the supplied M3–D1 bars as native higher-timeframe context; M1 resampling is not a substitute for those source files.
+1. **M1 is the policy sequence, not the only source** — policies can use supplied M3–D1 bars as native higher-timeframe context; M1 resampling is not a substitute for those source files.
 2. **Session labels are eligibility flags** — `filter_session` is mask-only, never drops feature bars
 3. **Locked OOS split** — `train_end` / `test_start` in `default.yaml` must not be overridden by variants
 4. **Semantic cache identity** — bar-cache reuse requires source identity plus partition, symbol/timeframe, timezone, NY session end, timestamp convention, and price-grid identity. Tick-cache reuse requires source bytes, timezone, session filter, and price-grid identity. Both parquet types and their atomic completion manifests are published together; incomplete or stale entries are rebuilt.

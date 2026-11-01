@@ -3,10 +3,10 @@
 ## Scope
 
 Variant D changes only the policy factorization. The matched 2M configs are
-Variant C (`config/research/thesis_mtf_reasoning_2m.yaml`,
-`thesis_hybrid_v1`) and D
-(`config/research/thesis_mtf_reasoning_conditioned_2m.yaml`,
-`thesis_conditioned_v1`). Both resolve to 2,000,000 timesteps, 8 environments,
+Variant C (`config/research/trade_setup_mtf_reasoning_2m.yaml`,
+`trade_setup_hybrid_v1`) and D
+(`config/research/trade_setup_mtf_reasoning_conditioned_2m.yaml`,
+`trade_setup_conditioned_v1`). Both resolve to 2,000,000 timesteps, 8 environments,
 2,048 rollout steps, batch size 512, and 15 PPO epochs. Both use the same
 109-candidate setup catalog, mask,
 NO_TRADE action, action/observation schemas, MTF encoder, reward, simulator,
@@ -30,25 +30,24 @@ separately authorized benchmark-length run.
 | Are invalid setup selections exactly zero? | Count every selected category against that bar's recorded mask. Acceptance is exactly zero. |
 | Are structural SL/TP violations exactly zero? | On each open event check stop and selected target price side, source-timeframe floor relative to the selected setup, and SD level-1 source-timeframe semantics. Acceptance is zero. |
 | Does training behavior remain sane on test? | Use the same diagnostics on chronological train and test replays; compare NO_TRADE, entropy, idea/timeframe use, constraints, equity, and drawdown without tuning on test. |
-| Does D produce setup-dependent execution? | Policy factorization tests plus per-idea/timeframe execution-action summaries and realized risk/stop/target summaries. Identical execution summaries across theses are a warning, not proof by themselves. |
+| Does D produce setup-dependent execution? | Policy factorization tests plus per-idea/timeframe execution-action summaries and realized risk/stop/target summaries. Identical execution summaries across setups are a warning, not proof by themselves. |
 | Is economic behavior moving sensibly? | Report the existing net equity, drawdown, breach, trade expectancy, and cost metrics on both splits. A bounded smoke can reveal catastrophic deterioration but cannot establish superiority. |
 
 ## Saved artifacts
 
-Each split should contain `thesis_decisions.csv`,
-`thesis_policy_metrics.json`, and selection tables by idea, timeframe, and
-idea-by-timeframe. It also contains `thesis_performance_by_idea_timeframe.csv`,
-selection and performance heatmaps, and positions with primary-thesis and
+Each split should contain `trade_setup_decisions.csv`,
+`trade_setup_policy_metrics.json`, and selection tables by idea, timeframe, and
+idea-by-timeframe. It also contains `trade_setup_performance_by_idea_timeframe.csv`,
+selection and performance heatmaps, and positions with primary-setup and
 structural SL/TP provenance. Training output separately includes
-`learning_diagnostics.csv`, `thesis_activity.png`, and `thesis_entropy.png`.
+`learning_diagnostics.csv`, `trade_setup_activity.png`, and `trade_setup_entropy.png`.
 Keep rollout-time learning diagnostics separate from train/test replay
 diagnostics and keep training and testing in their existing output folders.
 
 The decision trace records the selected category, eligible category IDs,
-mask validity, setup entropy, and execution coordinates. Historical trace
-files and schema fields still use `thesis_*` names; those are serialized
-compatibility identifiers. Trade-level checks preserve the primary setup,
-selected timeframe, structural references, and schema version.
+mask validity, setup entropy, and execution coordinates. Trade-level checks
+preserve the primary setup, selected timeframe, structural references, and
+schema version.
 
 ## Gates
 

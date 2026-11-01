@@ -49,6 +49,14 @@ log = logging.getLogger(__name__)
 
 
 def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataStage:
+    """Prepare training data.
+
+    Args:
+        stage: Stage used by the operation described above.
+
+    Returns:
+        Result of prepare training data.
+    """
     args = stage.args
     cfg = stage.cfg
     data = run_pipeline(cfg, force=args.force)

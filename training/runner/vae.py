@@ -47,29 +47,28 @@ class PreNYSequenceDataset(Dataset[torch.Tensor]):
     def __init__(self, data: np.ndarray[Any, Any]) -> None:
         """Initialize dataset.
 
-        Parameters
-        ----------
-        data : np.ndarray
-            Array of shape (n_samples, seq_len, n_features) containing
-            the pre-NY sequences.
+        Args:
+            data (np.ndarray): Array of shape (n_samples, seq_len, n_features) containing
+                the pre-NY sequences.
         """
         self.data = data
 
     def __len__(self) -> int:
+        """Process PreNYSequenceDataset.
+
+        Returns:
+            Numeric result returned by ``__len__``.
+        """
         return len(self.data)
 
     def __getitem__(self, idx: int) -> torch.Tensor:
         """Get a single sample.
 
-        Parameters
-        ----------
-        idx : int
-            Index of the sample to retrieve.
+        Args:
+            idx (int): Index of the sample to retrieve.
 
-        Returns
-        -------
-        torch.Tensor
-            Sequence tensor of shape (seq_len, n_features).
+        Returns:
+            torch.Tensor: Sequence tensor of shape (seq_len, n_features).
         """
         return torch.from_numpy(self.data[idx]).float()
 
@@ -80,12 +79,9 @@ class VAELoss:
     def __init__(self, reconstruction_weight: float = 1.0, kl_weight: float = 1.0) -> None:
         """Initialize VAE loss.
 
-        Parameters
-        ----------
-        reconstruction_weight : float
-            Weight for the reconstruction loss (MSE).
-        kl_weight : float
-            Weight for the KL divergence loss.
+        Args:
+            reconstruction_weight (float): Weight for the reconstruction loss (MSE).
+            kl_weight (float): Weight for the KL divergence loss.
         """
         self.reconstruction_weight = reconstruction_weight
         self.kl_weight = kl_weight
@@ -100,21 +96,14 @@ class VAELoss:
     ) -> torch.Tensor:
         """Compute VAE loss.
 
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input tensor of shape (batch_size, seq_len, n_features).
-        x_recon : torch.Tensor
-            Reconstructed tensor of shape (batch_size, seq_len, n_features).
-        mu : torch.Tensor
-            Mean of latent distribution of shape (batch_size, latent_dim).
-        log_var : torch.Tensor
-            Log-variance of latent distribution of shape (batch_size, latent_dim).
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, n_features).
+            x_recon (torch.Tensor): Reconstructed tensor of shape (batch_size, seq_len, n_features).
+            mu (torch.Tensor): Mean of latent distribution of shape (batch_size, latent_dim).
+            log_var (torch.Tensor): Log-variance of latent distribution of shape (batch_size, latent_dim).
 
-        Returns
-        -------
-        torch.Tensor
-            Total loss value.
+        Returns:
+            torch.Tensor: Total loss value.
         """
         # Reconstruction loss (MSE)
         recon_loss = self.mse_loss(x_recon, x)
@@ -132,15 +121,11 @@ class VAELoss:
 def load_config(config_path: str) -> dict[str, Any]:
     """Load configuration from YAML file.
 
-    Parameters
-    ----------
-    config_path : str
-        Path to the configuration file.
+    Args:
+        config_path (str): Path to the configuration file.
 
-    Returns
-    -------
-    dict
-        Configuration dictionary.
+    Returns:
+        dict: Configuration dictionary.
     """
     with open(config_path) as f:
         config: dict[str, Any] = yaml.safe_load(f)
@@ -152,21 +137,16 @@ def prepare_data(
 ) -> tuple[Subset[torch.Tensor], Subset[torch.Tensor], Subset[torch.Tensor]]:
     """Load and prepare training, validation, and test data.
 
-    Parameters
-    ----------
-    config : dict
-        Configuration dictionary containing data paths and parameters.
+    Args:
+        config (dict): Configuration dictionary containing data paths and parameters.
 
-    Returns
-    -------
-    tuple[Subset[torch.Tensor], Subset[torch.Tensor], Subset[torch.Tensor]]
-        Training, validation, and test datasets.
+    Returns:
+        tuple[Subset[torch.Tensor], Subset[torch.Tensor], Subset[torch.Tensor]]: Training, validation, and test datasets.
     """
     data_path = Path(config["data_path"])
     seq_len = config["seq_len"]
     n_features = config["n_features"]
 
-    # Load data from numpy files
     # Expected format: (n_samples, seq_len, n_features)
     data = np.load(data_path)
 
@@ -216,23 +196,15 @@ def train_vae(
 ) -> VAE:
     """Train the VAE model.
 
-    Parameters
-    ----------
-    model : VAE
-        The VAE model to train.
-    train_loader : DataLoader
-        DataLoader for training data.
-    val_loader : DataLoader
-        DataLoader for validation data.
-    config : dict
-        Configuration dictionary containing training parameters.
-    device : torch.device
-        Device to train on (cpu or cuda).
+    Args:
+        model (VAE): The VAE model to train.
+        train_loader (DataLoader): DataLoader for training data.
+        val_loader (DataLoader): DataLoader for validation data.
+        config (dict): Configuration dictionary containing training parameters.
+        device (torch.device): Device to train on (cpu or cuda).
 
-    Returns
-    -------
-    VAE
-        Trained VAE model.
+    Returns:
+        VAE: Trained VAE model.
     """
     # Setup
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
@@ -299,19 +271,13 @@ def train_vae(
 def evaluate_vae(model: VAE, test_loader: DataLoader[Any], device: torch.device) -> float:
     """Evaluate the VAE model on test data.
 
-    Parameters
-    ----------
-    model : VAE
-        The trained VAE model.
-    test_loader : DataLoader
-        DataLoader for test data.
-    device : torch.device
-        Device to evaluate on.
+    Args:
+        model (VAE): The trained VAE model.
+        test_loader (DataLoader): DataLoader for test data.
+        device (torch.device): Device to evaluate on.
 
-    Returns
-    -------
-    float
-        Test loss value.
+    Returns:
+        float: Test loss value.
     """
     model.eval()
     loss_fn = VAELoss()
@@ -339,7 +305,6 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Load configuration
     config = load_config(args.config)
 
     # Create output directory
@@ -386,7 +351,6 @@ def main() -> None:
     torch.save(model.state_dict(), output_dir / "vae_final.pth")
     logger.info(f"Training complete. Final model saved to {output_dir / 'vae_final.pth'}")
 
-    # Save configuration
     with open(output_dir / "config.yaml", "w") as f:
         yaml.dump(config, f)
 

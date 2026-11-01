@@ -21,6 +21,8 @@ _DONE_RE = re.compile(
 
 
 class FailureKind(StrEnum):
+    """Normalized failure categories used for retry and routing decisions."""
+
     TRANSIENT_RATE_LIMIT = "transient_rate_limit"
     DAILY_EXHAUSTED = "daily_exhausted"
     AUTH_INVALID = "auth_invalid"
@@ -32,6 +34,8 @@ class FailureKind(StrEnum):
 
 @dataclass
 class ClassifiedFailure:
+    """Failure classification with optional retry and quota-resume timestamps."""
+
     kind: FailureKind
     message: str
     retry_after: float | None = None
@@ -39,7 +43,11 @@ class ClassifiedFailure:
 
 
 def next_midnight_pacific() -> float:
-    """Unix timestamp for next midnight America/Los_Angeles."""
+    """Unix timestamp for next midnight America/Los_Angeles.
+
+    Returns:
+        Numeric result returned by ``next_midnight_pacific``.
+    """
     from datetime import datetime, timedelta
 
     now = datetime.now(_PACIFIC)
@@ -53,7 +61,17 @@ def classify_failure(
     cli: str = "",
     signatures: dict[str, Any] | None = None,
 ) -> ClassifiedFailure:
-    """Classify agent failure from log text and exit code."""
+    """Classify agent failure from log text and exit code.
+
+    Args:
+        text: Text or path value identifying the text.
+        exit_code: Exit code used by the operation described above.
+        cli: Text or path value identifying the cli.
+        signatures: Key-value data used for the signatures.
+
+    Returns:
+        Result of classify agent failure from log text and exit code.
+    """
     combined = _ANSI_RE.sub("", text).lower()
     sigs = signatures or {}
     cli_sigs = sigs.get(cli, {}) if cli else {}
@@ -119,12 +137,27 @@ def classify_failure(
 
 
 def transport_blocked(combined: str) -> bool:
-    """True when the CLI cannot reach the provider (proxy/WSS/CONNECT)."""
+    """True when the CLI cannot reach the provider (proxy/WSS/CONNECT).
+
+    Args:
+        combined: Text or path value identifying the combined.
+
+    Returns:
+        Whether transport blocked meets the requested condition.
+    """
     return _hard_transport(combined) or _soft_transport(combined)
 
 
 def abort_dead_session(combined: str, cli: str = "") -> bool:
-    """True when the live log shows the agent cannot recover."""
+    """True when the live log shows the agent cannot recover.
+
+    Args:
+        combined: Text or path value identifying the combined.
+        cli: Text or path value identifying the cli.
+
+    Returns:
+        Whether abort dead session meets the requested condition.
+    """
     return _quota_exhausted(combined, cli) or _hard_transport(combined)
 
 
@@ -132,6 +165,13 @@ def inspect_live_log(snippet: str, cli: str = "") -> str | None:
     """Classify only top-level CLI lines, not errors quoted in prompts/tools.
 
     Returns ``complete``, ``abort``, or None.
+
+    Args:
+        snippet: Text or path value identifying the snippet.
+        cli: Text or path value identifying the cli.
+
+    Returns:
+        Result of classify only top-level CLI lines, not errors quoted in prompts/tools.
     """
     tail = _ANSI_RE.sub("", snippet)[-65536:]
     if _DONE_RE.search(tail):
@@ -161,12 +201,27 @@ def inspect_live_log(snippet: str, cli: str = "") -> str | None:
 
 
 def agent_completed(combined: str) -> bool:
-    """True when a Cline JSONL done event is present (tests / excerpts)."""
+    """True when a Cline JSONL done event is present (tests / excerpts).
+
+    Args:
+        combined: Text or path value identifying the combined.
+
+    Returns:
+        Whether agent completed meets the requested condition.
+    """
     return inspect_live_log(combined) == "complete"
 
 
 def failure_excerpt(output: str, n: int = 8000) -> str:
-    """Tail plus transport/quota lines so classify_failure sees them."""
+    """Tail plus transport/quota lines so classify_failure sees them.
+
+    Args:
+        output: Output value produced by the preceding operation.
+        n: Numeric value used for the n.
+
+    Returns:
+        Text returned by ``failure_excerpt``.
+    """
     markers = (
         "usage limit",
         "307 temporary redirect",
@@ -186,6 +241,14 @@ def failure_excerpt(output: str, n: int = 8000) -> str:
 
 
 def _hard_transport(combined: str) -> bool:
+    """Process transport.
+
+    Args:
+        combined: Text or path value identifying the combined.
+
+    Returns:
+        Whether hard transport meets the requested condition.
+    """
     markers = (
         "proxy connection failed",
         "connect response missing status line",
@@ -202,19 +265,42 @@ def _hard_transport(combined: str) -> bool:
 
 
 def _soft_transport(combined: str) -> bool:
+    """Process transport.
+
+    Args:
+        combined: Text or path value identifying the combined.
+
+    Returns:
+        Whether soft transport meets the requested condition.
+    """
     markers = ("falling back from websockets",)
     return any(m in combined for m in markers)
 
 
 def _quota_exhausted(combined: str, cli: str) -> bool:
-    """True when the provider rejected the call because usage is spent."""
+    """True when the provider rejected the call because usage is spent.
+
+    Args:
+        combined: Text or path value identifying the combined.
+        cli: Text or path value identifying the cli.
+
+    Returns:
+        Whether quota exhausted meets the requested condition.
+    """
     if "usage limit" in combined or "tokens exhausted" in combined:
         return True
     return cli == "codex" and "403" in combined and "websocket" in combined
 
 
 def _quota_resume_at(combined: str) -> float:
-    """When Codex says try again on a calendar date, honor it; else midnight PT."""
+    """When Codex says try again on a calendar date, honor it; else midnight PT.
+
+    Args:
+        combined: Text or path value identifying the combined.
+
+    Returns:
+        Numeric result returned by ``_quota_resume_at``.
+    """
     match = re.search(
         r"try again at ([a-z]{3})\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})",
         combined,

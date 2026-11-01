@@ -109,6 +109,6 @@ classDiagram
 ## Implementation reference
 
 The `decisioning/` module owns observation and action contracts. The canonical
-setup API is `decisioning.trade_setup`; the older `decisioning.thesis` module
-and `thesis_*` serialized keys remain compatibility interfaces. Trading and
+setup API is `decisioning.trade_setup`. Decision and observation contracts use
+the canonical trade-setup schema identifiers. Trading and
 simulation consume the resulting intent.

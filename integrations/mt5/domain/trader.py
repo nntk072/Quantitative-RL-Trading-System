@@ -6,6 +6,8 @@ from integrations.mt5.adapters import Trader
 
 
 class MT5Trader(Trader):
+    """Execution adapter for submitting and managing MetaTrader positions."""
+
     def open_position(
         self,
         symbol: str,
@@ -17,6 +19,20 @@ class MT5Trader(Trader):
         tp: float | None = None,
     ) -> object | None:
         # Base order dictionary with common parameters
+        """Submit a market order and optionally attach stop and target prices.
+
+        Args:
+            symbol: Broker symbol to trade.
+            volume: Requested position size in lots.
+            position_type: MetaTrader buy or sell order code.
+            comment: Broker-visible order comment.
+            magic_number: Strategy identifier stored with the order.
+            sl: Optional stop-loss price.
+            tp: Optional take-profit price.
+
+        Returns:
+            Result of submit a market order and optionally attach stop and target prices.
+        """
         order = {
             "action": mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
@@ -48,6 +64,13 @@ class MT5Trader(Trader):
     def close_positions(
         self, robot_name: str, symbol: str | None = None, position_type: int | None = None
     ) -> None:
+        """Close matching open positions owned by the named robot.
+
+        Args:
+            robot_name: Strategy identifier used to filter positions.
+            symbol: Optional broker symbol filter.
+            position_type: Optional MetaTrader position type filter.
+        """
         df_open_positions = self.get_all_positions()
 
         if not df_open_positions.empty:
@@ -106,6 +129,15 @@ class MT5Trader(Trader):
     def get_opened_positions(
         self, symbol: str | None = None, position_type: int | None = None
     ) -> tuple[int, pd.DataFrame]:
+        """Return matching open positions and their total volume.
+
+        Args:
+            symbol: Optional broker symbol filter.
+            position_type: Optional MetaTrader position type filter.
+
+        Returns:
+            Pair containing total volume and the filtered position frame.
+        """
         try:
             opened_positions = mt5.positions_get()
             df_opened_positions = pd.DataFrame(
@@ -129,6 +161,11 @@ class MT5Trader(Trader):
         return total_opened_positions, df
 
     def get_all_positions(self) -> pd.DataFrame:
+        """Fetch all currently open positions as a data frame.
+
+        Returns:
+            DataFrame returned by ``get_all_positions``.
+        """
         try:
             opened_positions = mt5.positions_get()
             df_opened_positions = pd.DataFrame(
@@ -139,6 +176,12 @@ class MT5Trader(Trader):
         return df_opened_positions
 
     def send_to_break_even(self, df: pd.DataFrame, percentage: float) -> None:
+        """Move eligible positions' stop losses to their break-even price.
+
+        Args:
+            df: Positions selected for adjustment.
+            percentage: Profit threshold used to trigger the adjustment.
+        """
         if not df.empty:
             for symbol in df["symbol"].unique().tolist():
                 df_symbol = df[df["symbol"] == symbol]
@@ -182,6 +225,16 @@ class MT5Trader(Trader):
                             mt5.order_send(modify_order_request)
 
     def calculate_position_size(self, symbol: str, stop_loss: float, per_to_risk: float) -> float:
+        """Calculate lots for a stop distance and risk fraction.
+
+        Args:
+            symbol: Broker symbol whose contract and tick values determine sizing.
+            stop_loss: Stop-loss distance in price units.
+            per_to_risk: Fraction of account equity to risk.
+
+        Returns:
+            Position size in broker lots.
+        """
         mt5.symbol_select(symbol, True)
         symbol_info_tick = mt5.symbol_info_tick(symbol)
         symbol_info = mt5.symbol_info(symbol)

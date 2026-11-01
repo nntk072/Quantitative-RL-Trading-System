@@ -37,7 +37,22 @@ def append_structure_features(
     enabled: FeatureEnabled,
     default_timeframes: tuple[str, ...],
 ) -> tuple[pd.DataFrame, pd.DataFrame | None, dict[str, pd.DataFrame]]:
-    """Append M1 and optional MTF structure features in causal source order."""
+    """Append M1 and optional MTF structure features in causal source order.
+
+    Args:
+        primary: Tabular data used for the primary.
+        features: Feature values supplied to the operation.
+        feature_config: Feature config used by the operation described above.
+        cfg: Run configuration used by this operation.
+        resample_pair: Resample pair used by the operation described above.
+        align_blocks: Align blocks used by the operation described above.
+        timeframe_list: Timeframe list used by the operation described above.
+        enabled: Enabled used by the operation described above.
+        default_timeframes: Items supplied for the default timeframes, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``pd.DataFrame]`` values.
+    """
     if feature_config is None:
         return features, None, {}
 

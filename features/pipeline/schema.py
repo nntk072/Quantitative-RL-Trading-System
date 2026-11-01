@@ -126,7 +126,15 @@ def select_legacy_obs_columns(
     features: pd.DataFrame,
     raw_columns: tuple[str, ...] | list[str] = (),
 ) -> pd.DataFrame:
-    """Reproduce the pre-sequence-schema observation filter for explicit legacy replay."""
+    """Reproduce the pre-sequence-schema observation filter for explicit legacy replay.
+
+    Args:
+        features: Feature values supplied to the operation.
+        raw_columns: Items supplied for the raw columns, in input order.
+
+    Returns:
+        DataFrame returned by ``select_legacy_obs_columns``.
+    """
     drop_cols = [c for c in raw_columns if c in features.columns]
     mtf_raw = {
         c
@@ -145,7 +153,15 @@ def select_obs_columns(
     features: pd.DataFrame,
     raw_columns: tuple[str, ...] | list[str] = (),
 ) -> pd.DataFrame:
-    """Select model columns, excluding raw prices and absolute metadata."""
+    """Select model columns, excluding raw prices and absolute metadata.
+
+    Args:
+        features: Feature values supplied to the operation.
+        raw_columns: Items supplied for the raw columns, in input order.
+
+    Returns:
+        DataFrame returned by ``select_obs_columns``.
+    """
     legacy = select_legacy_obs_columns(features, raw_columns)
     metadata_cols = [
         str(column)

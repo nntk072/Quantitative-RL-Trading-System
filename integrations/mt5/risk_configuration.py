@@ -25,10 +25,24 @@ class LiveRiskConfiguration:
     interval_minutes: float = DEFAULT_INTERVAL_MINUTES
 
     def as_dict(self) -> dict[str, float]:
+        """Return the validated risk settings as a plain mapping.
+
+        Returns:
+            Mapping from ``str`` keys to ``float`` values.
+        """
         return asdict(self)
 
 
 def _read_value(block: Any, key: str) -> Any:
+    """Read value.
+
+    Args:
+        block: Block used by the operation described above.
+        key: Text or path value identifying the key.
+
+    Returns:
+        Result of read value.
+    """
     if isinstance(block, Mapping):
         return block.get(key)
     getter = getattr(block, "get", None)
@@ -43,6 +57,12 @@ def load_live_risk_configuration(cfg: Any) -> LiveRiskConfiguration:
     Missing configuration fields retain the documented repository defaults
     with a warning. Invalid, non-finite, or non-positive values fail closed so
     an incomplete live configuration cannot silently enable invalid sizing.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Result of resolve risk values from ``live_risk_overrides`` and validate them.
     """
     block = _read_value(cfg, "live_risk_overrides")
     defaults = LiveRiskConfiguration()

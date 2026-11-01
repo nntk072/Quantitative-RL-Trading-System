@@ -1,6 +1,6 @@
 """Risk/sizing alignment, breakeven management, and agent direction control.
 
-These cover the three changes in ``docs/thesis/agent_implementation_plan.md``:
+These cover the three risk-alignment changes in the current implementation:
 
 1. The intraday adverse-excursion guard must never sit inside the trade's own
    structural stop, or a position sized to risk ``risk_per_trade_limit`` gets

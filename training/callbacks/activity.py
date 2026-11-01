@@ -11,7 +11,16 @@ def assess_train_activity(
     minimum_trades: int = 1,
     sparse_warning_below: int = 5,
 ) -> dict[str, object]:
-    """Classify completed train-replay trades independently of survival."""
+    """Classify completed train-replay trades independently of survival.
+
+    Args:
+        n_trades: Numeric value used for the n trades.
+        minimum_trades: Numeric value used for the minimum trades.
+        sparse_warning_below: Numeric value used for the sparse warning below.
+
+    Returns:
+        Mapping from ``str`` keys to ``object`` values.
+    """
     if isinstance(n_trades, bool) or not isinstance(n_trades, int) or n_trades < 0:
         raise ValueError("n_trades must be a non-negative integer")
     if minimum_trades < 1:
@@ -37,7 +46,16 @@ def classify_zero_trade_cause(
     entry_state: dict[str, Any] | None = None,
     entry_diag: dict[str, Any] | None = None,
 ) -> str | None:
-    """Use existing funnel counters to label a zero-trade replay."""
+    """Use existing funnel counters to label a zero-trade replay.
+
+    Args:
+        n_trades: Numeric value used for the n trades.
+        entry_state: Key-value data used for the entry state.
+        entry_diag: Key-value data used for the entry diag.
+
+    Returns:
+        Result of use existing funnel counters to label a zero-trade replay.
+    """
     if n_trades > 0:
         return None
     state = entry_state or {}

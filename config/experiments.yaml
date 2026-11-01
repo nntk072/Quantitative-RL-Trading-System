@@ -1,4 +1,4 @@
-# Ablation experiment matrix (thesis PLAN 6 + PD-context extensions).
+# Ablation experiment matrix and PD-context extensions.
 # Each variant trains with the given hyperparameters and is scored OOS through
 # the shared evaluation pipeline (build_run_report). Override `steps` / `seeds`
 # on the CLI for smoke runs.
@@ -197,9 +197,9 @@ variants:
       - "env.risk_floor=0"
       - "constrained_rl.enabled=false"
 
-  # Thesis-conditioned reasoning treatment. Compared with the TCN and MTF
+  # Setup-conditioned reasoning treatment. Compared with the TCN and MTF
   # arms, this also changes the action distribution to select an explicit
-  # primary thesis before continuous execution parameters.
+  # primary trade setup before continuous execution parameters.
   - name: rq_mtf_treatment_reasoning
     reward_mode: dsr
     arch: mtf_reasoning

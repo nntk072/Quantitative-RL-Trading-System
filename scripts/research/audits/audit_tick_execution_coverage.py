@@ -35,7 +35,7 @@ from market_data.splits.definitions import get_split_config, make_train_mask  # 
 from market_data.transforms.cleaning import clean  # noqa: E402
 from market_data.transforms.sessions import add_session_id, add_session_labels  # noqa: E402
 from training.configuration.variant_resolution import (  # noqa: E402
-    THESIS_RANDOMIZED_FILL_LATENCY_MS,  # noqa: E402
+    RANDOMIZED_FILL_LATENCY_MS,  # noqa: E402
 )
 from training.setup.tick_execution_preflight import (  # noqa: E402
     tick_execution_split_coverage,
@@ -273,10 +273,10 @@ def main() -> int:
         },
         "execution_contract": {
             "base_config_randomized_latency_ms": float(cfg.execution.randomized_fill_latency_ms),
-            "thesis_variant_resolver_randomized_latency_ms": THESIS_RANDOMIZED_FILL_LATENCY_MS,
+            "research_variant_resolver_randomized_latency_ms": RANDOMIZED_FILL_LATENCY_MS,
             "audited_randomized_latency_interval_ms": f"[0, {args.latency_ms})",
-            "coverage_audit_matches_thesis_variant_resolver": (
-                float(args.latency_ms) == THESIS_RANDOMIZED_FILL_LATENCY_MS
+            "coverage_audit_matches_research_variant_resolver": (
+                float(args.latency_ms) == RANDOMIZED_FILL_LATENCY_MS
             ),
             "max_tick_quote_wait_ms": args.max_quote_wait_ms,
             "schedule": "NY-labeled M1 environment steps, each mapped to the next market-bar timestamp by training.setup.tick_execution_preflight.tick_execution_split_coverage",
@@ -299,7 +299,7 @@ def main() -> int:
             "This is an input coverage and exact cache-parity audit, not a backtest, model evaluation, or strategy result.",
             "US500 coverage is descriptive only; it does not authorize changing the configured US100 primary instrument.",
             "Coverage and cache parity do not establish feed identity, data-use rights, or publication permission.",
-            "No experiment run readiness or thesis readiness is implied.",
+            "No experiment run or research-readiness conclusion is implied.",
         ],
     }
 

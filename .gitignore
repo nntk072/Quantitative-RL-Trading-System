@@ -46,11 +46,13 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
 *.cover
 *.py,cover
 .hypothesis/
 .pytest_cache/
 cover/
+/mutants/
 
 # Translations
 *.mo
@@ -139,6 +141,8 @@ venv.bak/
 
 # mkdocs documentation
 /site
+/docs/_build/
+/docs/api/generated/
 
 # Ruff cache
 .ruff_cache/

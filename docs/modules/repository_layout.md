@@ -31,9 +31,9 @@ Settings that change system behavior belong in `config/`. Reusable logic
 belongs in the Python module that owns the domain. A script may invoke that
 logic but should not become a second implementation of it. Generated result
 files belong in the run’s artifact area rather than being copied into unrelated
-source folders. See the local [configuration](../../config/README.md),
-[scripts](../../scripts/README.md), [tools](../../tools/README.md), and
-[baseline](../../baseline/README.md) guides for those non-package areas.
+source folders. See the local [configuration](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/config/README.md),
+[scripts](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/scripts/README.md), [tools](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/tools/README.md), and
+[baseline](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/baseline/README.md) guides for those non-package areas.
 
 ## UML
 

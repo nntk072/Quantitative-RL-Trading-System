@@ -53,17 +53,33 @@ _WHITE_RC = {
 
 
 def _apply_white() -> None:
+    """Apply white."""
     plt.rcParams.update(_WHITE_RC)
 
 
 def _save_fig(fig: Figure, path: Path, dpi: int = 150) -> None:
+    """Save fig.
+
+    Args:
+        fig: Fig used by the operation described above.
+        path: Path to the input file or directory.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(str(path), dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
 
 def _col(df: pd.DataFrame, *keywords: str) -> str | None:
-    """Return first column whose name contains any of *keywords*."""
+    """Return first column whose name contains any of *keywords*.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        *keywords: Text or path value identifying the keywords.
+
+    Returns:
+        Result of return first column whose name contains any of *keywords*.
+    """
     for kw in keywords:
         for c in df.columns:
             if kw in c:
@@ -72,7 +88,15 @@ def _col(df: pd.DataFrame, *keywords: str) -> str | None:
 
 
 def _exact_col(df: pd.DataFrame, name: str) -> str | None:
-    """Column ``name`` or ``.../name``, not a longer key that only contains it."""
+    """Column ``name`` or ``.../name``, not a longer key that only contains it.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Result of column ``name`` or ``.../name``, not a longer key that only contains it.
+    """
     for column in df.columns:
         text = str(column)
         if text == name or text.endswith("/" + name):
@@ -81,16 +105,31 @@ def _exact_col(df: pd.DataFrame, name: str) -> str | None:
 
 
 def _valid(df: pd.DataFrame, col: str) -> pd.DataFrame:
-    return df[["timestep", col]].dropna()
+    """Process the requested value.
 
-    # ---------------------------------------------------------------------------
-    # Static PNG charts
-    # ---------------------------------------------------------------------------
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        col: Text or path value identifying the col.
+
+    Returns:
+        DataFrame returned by ``_valid``.
+    """
+    return df[["timestep", col]].dropna()
 
 
 def plot_learning_curve(
     df: pd.DataFrame, out_path: Path | str | None = None, dpi: int = 150
 ) -> Figure:
+    """Plot rollout return against completed training steps.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of plot rollout return against completed training steps.
+    """
     _apply_white()
     col = _col(df, "ep_rew_mean")
     fig, ax = plt.subplots(figsize=(10, 4))
@@ -114,6 +153,16 @@ def plot_learning_curve(
 
 
 def plot_losses(df: pd.DataFrame, out_path: Path | str | None = None, dpi: int = 150) -> Figure:
+    """Plot available policy, value, and entropy losses over training steps.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of plot available policy, value, and entropy losses over training steps.
+    """
     _apply_white()
     pol = _col(df, "policy_gradient_loss", "policy_loss")
     val = _col(df, "value_loss")
@@ -148,6 +197,16 @@ def plot_losses(df: pd.DataFrame, out_path: Path | str | None = None, dpi: int =
 def plot_entropy_explvar(
     df: pd.DataFrame, out_path: Path | str | None = None, dpi: int = 150
 ) -> Figure:
+    """Plot policy entropy beside explained variance across training updates.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of plot policy entropy beside explained variance across training updates.
+    """
     _apply_white()
     ent = _col(df, "entropy_loss", "entropy")
     ev = _col(df, "explained_variance")
@@ -187,6 +246,16 @@ def plot_entropy_explvar(
 
 
 def plot_kl_clip(df: pd.DataFrame, out_path: Path | str | None = None, dpi: int = 150) -> Figure:
+    """Plot approximate KL divergence and clip fraction over training steps.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of plot approximate KL divergence and clip fraction over training steps.
+    """
     _apply_white()
     kl = _col(df, "approx_kl")
     clip = _col(df, "clip_fraction")
@@ -224,6 +293,14 @@ def plot_mode_means(
     """Exit and direction means, with the prior value on a second axis.
 
     Returns ``None`` when the log has none of those columns.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of exit and direction means, with the prior value on a second axis.
     """
     exit_col = _exact_col(df, "mean_exit")
     direction_col = _exact_col(df, "mean_direction")
@@ -264,6 +341,16 @@ def plot_mode_means(
 def plot_learning_rate(
     df: pd.DataFrame, out_path: Path | str | None = None, dpi: int = 150
 ) -> Figure:
+    """Plot the learner's recorded learning-rate schedule over training steps.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of plot the learner's recorded learning-rate schedule over training steps.
+    """
     _apply_white()
     lr = _col(df, "learning_rate")
     fig, ax = plt.subplots(figsize=(10, 3))
@@ -284,12 +371,14 @@ def plot_learning_rate(
         _save_fig(fig, Path(out_path), dpi)
     return fig
 
-    # ---------------------------------------------------------------------------
-    # Interactive HTML charts
-    # ---------------------------------------------------------------------------
-
 
 def _save_training_html(df: pd.DataFrame, out_dir: Path) -> None:
+    """Save training html.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        out_dir: Text or path value identifying the out dir.
+    """
     try:
         import plotly.graph_objects as go
         from plotly.subplots import make_subplots
@@ -299,11 +388,27 @@ def _save_training_html(df: pd.DataFrame, out_dir: Path) -> None:
     T = "plotly_white"
 
     def _write(fig: go.Figure, name: str) -> None:
+        """Write the requested value.
+
+        Args:
+            fig: Fig used by the operation described above.
+            name: Name used to identify the requested file, artifact, or item.
+        """
         fig.write_html(str(out_dir / name), include_plotlyjs="cdn")
 
     def _dual(
         col_a: str | None, name_a: str, col_b: str | None, name_b: str, title: str, fname: str
     ) -> None:
+        """Process the requested value.
+
+        Args:
+            col_a: Col a used by the operation described above.
+            name_a: Text or path value identifying the name a.
+            col_b: Col b used by the operation described above.
+            name_b: Text or path value identifying the name b.
+            title: Text or path value identifying the title.
+            fname: Text or path value identifying the fname.
+        """
         if not (col_a or col_b):
             return
         fig = make_subplots(specs=[[{"secondary_y": bool(col_b)}]])
@@ -406,10 +511,6 @@ def _save_training_html(df: pd.DataFrame, out_dir: Path) -> None:
         fig.update_layout(template=T, title="Mode means", xaxis_title="Timestep", height=400)
         _write(fig, "mode_means.html")
 
-        # ---------------------------------------------------------------------------
-        # Entry point
-        # ---------------------------------------------------------------------------
-
 
 def save_training_plots(
     log_path: Path | str,
@@ -417,7 +518,14 @@ def save_training_plots(
     dpi: int = 150,
     save_html: bool = True,
 ) -> None:
-    """Generate all training-progress charts from *log_path* CSV into *out_dir*."""
+    """Generate all training-progress charts from *log_path* CSV into *out_dir*.
+
+    Args:
+        log_path: Path or filename identifying the log.
+        out_dir: Out dir used by the operation described above.
+        dpi: Resolution of generated plots, in dots per inch.
+        save_html: Whether to enable or require the save html.
+    """
     log_path = Path(log_path)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -436,10 +544,6 @@ def save_training_plots(
 
     if save_html:
         _save_training_html(df, out_dir)
-
-        # ---------------------------------------------------------------------------
-        # Dashboard series (reward parts, behavior, risk, eval, grad norm)
-        # ---------------------------------------------------------------------------
 
 
 _DASH_COLORS = (_C0, _C1, _C2, _C3, _C4, "#00838f", "#6d4c41", "#ad1457", "#455a64")
@@ -523,6 +627,15 @@ _RISK_PLOT_COLS: tuple[tuple[str, str], ...] = (
 
 
 def _numeric(df: pd.DataFrame, col: str) -> pd.DataFrame:
+    """Process the requested value.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        col: Text or path value identifying the col.
+
+    Returns:
+        DataFrame returned by ``_numeric``.
+    """
     if col not in df.columns:
         return df.iloc[0:0]
     out = df[["timestep", col]].copy()
@@ -531,6 +644,15 @@ def _numeric(df: pd.DataFrame, col: str) -> pd.DataFrame:
 
 
 def _has_points(df: pd.DataFrame, cols: tuple[str, ...]) -> bool:
+    """Return whether points is available or permitted.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        cols: Items supplied for the cols, in input order.
+
+    Returns:
+        Whether has points meets the requested condition.
+    """
     return any(len(_numeric(df, col)) > 0 for col in cols)
 
 
@@ -543,6 +665,20 @@ def _line_chart(
     dpi: int,
     percent_xmax: float | None = None,
 ) -> bool:
+    """Process chart.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        cols: Items supplied for the cols, in input order.
+        title: Text or path value identifying the title.
+        ylabel: Text or path value identifying the ylabel.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+        percent_xmax: Percent xmax used by the operation described above.
+
+    Returns:
+        Whether line chart meets the requested condition.
+    """
     present = [(col, label) for col, label in cols if len(_numeric(df, col)) > 0]
     if not present:
         return False
@@ -576,6 +712,14 @@ def _html_lines(
     title: str,
     out_path: Path,
 ) -> None:
+    """Process lines.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        cols: Items supplied for the cols, in input order.
+        title: Text or path value identifying the title.
+        out_path: Path or filename identifying the out.
+    """
     try:
         import plotly.graph_objects as go
     except ImportError:
@@ -597,7 +741,14 @@ def save_dashboard_plots(
     dpi: int = 150,
     save_html: bool = True,
 ) -> None:
-    """Chart the dashboard CSV written during ``learn()``."""
+    """Chart the dashboard CSV written during ``learn()``.
+
+    Args:
+        log_path: Path or filename identifying the log.
+        out_dir: Out dir used by the operation described above.
+        dpi: Resolution of generated plots, in dots per inch.
+        save_html: Whether to enable or require the save html.
+    """
     log_path = Path(log_path)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

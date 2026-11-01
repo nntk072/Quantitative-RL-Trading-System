@@ -24,7 +24,24 @@ def finalize_training_run(
     feature_columns: list[str],
     seeds: list[int],
 ) -> dict[str, Any]:
-    """Aggregate seed results, persist the training log, and emit optional W&B metrics."""
+    """Aggregate seed results, persist the training log, and emit optional W&B metrics.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        args: Parsed command-line arguments for this operation.
+        is_multi_seed: Whether to enable or require the is multi seed.
+        seed_results: Items supplied for the seed results, in input order.
+        timesteps: Numeric value used for the timesteps.
+        train_bar_count: Number specifying the train bar count for this operation.
+        test_bar_count: Number specifying the test bar count for this operation.
+        run_dir: Text or path value identifying the run dir.
+        feat_cache: Text or path value identifying the feat cache.
+        feature_columns: Items supplied for the feature columns, in input order.
+        seeds: Items supplied for the seeds, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     strategy_actions = bool(cfg.env.get("strategy_actions", False))
     strategy_name = (
         "baseline" if not strategy_actions else str(cfg.strategy.get("name", args.strategy))
@@ -290,13 +307,27 @@ def finalize_training_run(
 
 
 def _peak_dd_policy_missed(gate: dict[str, Any]) -> bool:
-    """Identify policy non-fit even when another hard-risk condition also failed."""
+    """Identify policy non-fit even when another hard-risk condition also failed.
+
+    Args:
+        gate: Key-value data used for the gate.
+
+    Returns:
+        Whether peak dd policy missed meets the requested condition.
+    """
     reasons = {part.strip() for part in str(gate.get("reason", "")).split(",") if part.strip()}
     return "peak_trailing_dd" in reasons
 
 
 def _peak_dd_policy_only_miss(gate: dict[str, Any]) -> bool:
-    """Separate a DD-only policy miss from a hard-risk or malformed-gate failure."""
+    """Separate a DD-only policy miss from a hard-risk or malformed-gate failure.
+
+    Args:
+        gate: Key-value data used for the gate.
+
+    Returns:
+        Whether peak dd policy only miss meets the requested condition.
+    """
     reasons = {part.strip() for part in str(gate.get("reason", "")).split(",") if part.strip()}
     return (
         not bool(gate.get("ok"))

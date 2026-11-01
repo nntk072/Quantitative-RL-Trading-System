@@ -19,18 +19,14 @@ class _ActiveFVG:
 class IFVGConfig:
     """Configuration for IFVG confirmation.
 
-    Attributes
-    ----------
-    close_through_threshold : float
-        How far price must close beyond the FVG zone to confirm IFVG
-        (as a fraction of FVG size; 0.1 means 10% beyond the zone).
-    inverse_opposing_fvg : bool
-        When true, a bullish IFVG is a close above an existing bearish FVG;
-        a bearish IFVG is a close below an existing bullish FVG. False keeps
-        the historical same-orientation confirmation behavior.
-    close_through_buffer_enabled : bool
-        Whether confirmation also requires ``close_through_threshold`` beyond
-        the far edge. A later close beyond the passing wick is always required.
+    Attributes:
+        close_through_threshold (float): How far price must close beyond the FVG zone to confirm IFVG
+            (as a fraction of FVG size; 0.1 means 10% beyond the zone).
+        inverse_opposing_fvg (bool): When true, a bullish IFVG is a close above an existing bearish FVG;
+            a bearish IFVG is a close below an existing bullish FVG. False keeps
+            the historical same-orientation confirmation behavior.
+        close_through_buffer_enabled (bool): Whether confirmation also requires ``close_through_threshold`` beyond
+            the far edge. A later close beyond the passing wick is always required.
     """
 
     close_through_threshold: float = 0.1
@@ -38,6 +34,7 @@ class IFVGConfig:
     close_through_buffer_enabled: bool = True
 
     def __post_init__(self) -> None:
+        """Validate and initialize IFVGConfig after construction."""
         if self.close_through_threshold < 0.0:
             raise ValueError("close_through_threshold must be nonnegative")
         if not np.isfinite(self.close_through_threshold):
@@ -58,25 +55,19 @@ def detect_ifvg_confirmation(
     Bullish IFVG confirmation: Price closes above the FVG zone (above bar1_high)
     Bearish IFVG confirmation: Price closes below the FVG zone (below bar1_low)
 
-    Parameters
-    ----------
-    bars : pd.DataFrame
-        OHLC DataFrame with 'high', 'low', 'close' columns.
-    fvg_df : pd.DataFrame
-        FVG detection output from detect_fvg().
-    config : IFVGConfig, optional
-        Configuration for IFVG confirmation. Uses defaults if None.
+    Args:
+        bars (pd.DataFrame): OHLC DataFrame with 'high', 'low', 'close' columns.
+        fvg_df (pd.DataFrame): FVG detection output from detect_fvg().
+        config (IFVGConfig, optional): Configuration for IFVG confirmation. Uses defaults if None.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with same index, containing:
-        - ifvg_bullish_confirmed: 1 if bullish IFVG confirmed at this bar
-        - ifvg_bearish_confirmed: 1 if bearish IFVG confirmed at this bar
-        - ifvg_bullish_low: Low price of the IFVG zone (for bullish)
-        - ifvg_bullish_high: High price of the IFVG zone (for bullish)
-        - ifvg_bearish_low: Low price of the IFVG zone (for bearish)
-        - ifvg_bearish_high: High price of the IFVG zone (for bearish)
+    Returns:
+        pd.DataFrame: DataFrame with same index, containing:
+            - ifvg_bullish_confirmed: 1 if bullish IFVG confirmed at this bar
+            - ifvg_bearish_confirmed: 1 if bearish IFVG confirmed at this bar
+            - ifvg_bullish_low: Low price of the IFVG zone (for bullish)
+            - ifvg_bullish_high: High price of the IFVG zone (for bullish)
+            - ifvg_bearish_low: Low price of the IFVG zone (for bearish)
+            - ifvg_bearish_high: High price of the IFVG zone (for bearish)
     """
     if config is None:
         config = IFVGConfig()

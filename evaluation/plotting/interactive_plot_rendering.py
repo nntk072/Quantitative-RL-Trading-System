@@ -39,10 +39,17 @@ __all__ = [
 
 
 def _check() -> None:
+    """Check the requested value."""
     if not _PLOTLY_AVAILABLE:
         raise ImportError("plotly is required for interactive charts: pip install plotly")
 
 
 def _save(fig: go.Figure, path: Path | str) -> None:
+    """Save the requested value.
+
+    Args:
+        fig: Fig used by the operation described above.
+        path: Path to the input file or directory.
+    """
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     fig.write_html(str(path), include_plotlyjs="cdn")

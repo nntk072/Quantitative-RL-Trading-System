@@ -16,6 +16,14 @@ _CACHE_FILE_HASHES: dict[tuple[str, int, int, int], str] = {}
 
 
 def sha256_file(path: pathlib.Path) -> str:
+    """Return the SHA-256 digest of a file without loading it all into memory.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Text returned by ``sha256_file``.
+    """
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
@@ -26,7 +34,15 @@ def sha256_file(path: pathlib.Path) -> str:
 def experiment_run_data_inputs(
     data_config: dict[str, Any], *, root: pathlib.Path = ROOT
 ) -> dict[str, str]:
-    """Fingerprint the exact split bar/tick inputs and date-level calendar."""
+    """Fingerprint the exact split bar/tick inputs and date-level calendar.
+
+    Args:
+        data_config: Key-value data used for the data config.
+        root: Root directory for the operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     data_inputs: dict[str, str] = {}
     configured_datasets = data_config.get("datasets")
     if configured_datasets:
@@ -64,7 +80,14 @@ def experiment_run_data_inputs(
 
 
 def cached_sha256_file(path: pathlib.Path) -> str:
-    """Hash a shared experiment run cache once per unchanged file identity."""
+    """Hash a shared experiment run cache once per unchanged file identity.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Text returned by ``cached_sha256_file``.
+    """
     stat = path.stat()
     identity = (str(path.resolve()), stat.st_ino, stat.st_size, stat.st_mtime_ns)
     digest = _CACHE_FILE_HASHES.get(identity)
@@ -75,7 +98,15 @@ def cached_sha256_file(path: pathlib.Path) -> str:
 
 
 def action_space_matches_width(action_space: Any, width: int) -> bool:
-    """Check vector and legacy discrete action spaces without conflating them."""
+    """Check vector and legacy discrete action spaces without conflating them.
+
+    Args:
+        action_space: Action space used by the operation described above.
+        width: Numeric value used for the width.
+
+    Returns:
+        Whether action space matches width meets the requested condition.
+    """
     discrete_width = getattr(action_space, "n", None)
     if isinstance(discrete_width, numbers.Integral):
         return int(discrete_width) == width and tuple(getattr(action_space, "shape", ())) == ()
@@ -85,7 +116,15 @@ def action_space_matches_width(action_space: Any, width: int) -> bool:
 def experiment_run_source_files(
     root: pathlib.Path, experiment_run_spec: pathlib.Path | None = None
 ) -> list[pathlib.Path]:
-    """Return tracked and untracked source inputs hashed into experiment run identity."""
+    """Return tracked and untracked source inputs hashed into experiment run identity.
+
+    Args:
+        root: Root directory for the operation.
+        experiment_run_spec: Experiment run spec used by the operation described above.
+
+    Returns:
+        Path returned by ``experiment_run_source_files``.
+    """
     pathspecs = [
         "configuration",
         "artifacts",
@@ -132,7 +171,18 @@ def write_experiment_run_source_snapshot(
     git_sha: str,
     expected_source_hashes: dict[str, str],
 ) -> dict[str, Any]:
-    """Archive the exact hashed experiment run inputs before any worker is launched."""
+    """Archive the exact hashed experiment run inputs before any worker is launched.
+
+    Args:
+        root: Root directory for the operation.
+        source_files: Items supplied for the source files, in input order.
+        destination: Text or path value identifying the destination.
+        git_sha: Text or path value identifying the git sha.
+        expected_source_hashes: Key-value data used for the expected source hashes.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     root = root.resolve()
     records: dict[str, str] = {}
     resolved_files: dict[str, pathlib.Path] = {}
@@ -210,7 +260,15 @@ def write_experiment_run_source_snapshot(
 def verify_experiment_run_source_snapshot(
     archive_path: pathlib.Path, record: object
 ) -> tuple[bool, str]:
-    """Check an archived experiment run source bundle against its experiment run manifest."""
+    """Check an archived experiment run source bundle against its experiment run manifest.
+
+    Args:
+        archive_path: Path or filename identifying the archive.
+        record: Record used by the operation described above.
+
+    Returns:
+        Whether verify experiment run source snapshot meets the requested condition.
+    """
     if not isinstance(record, dict):
         return False, "source snapshot record is invalid"
     expected_hash = record.get("sha256")

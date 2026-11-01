@@ -10,7 +10,14 @@ from compute.contracts import DeviceCapabilities
 
 
 def discover_device_capabilities(device_hint: str | None = None) -> DeviceCapabilities:
-    """Describe the selected visible accelerator without exposing model policy."""
+    """Describe the selected visible accelerator without exposing model policy.
+
+    Args:
+        device_hint: Device hint used by the operation described above.
+
+    Returns:
+        Result of describe the selected visible accelerator without exposing model policy.
+    """
     if not device_hint or device_hint.lower() == "auto":
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     else:

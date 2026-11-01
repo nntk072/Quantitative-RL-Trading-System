@@ -43,6 +43,13 @@ def load_variant_ftmo_config(name: str, *, required: bool = True) -> dict[str, A
     A separate file makes the active limits and both selectable value modes
     inspectable for each variant. Missing files are allowed only for callers
     resolving temporary experiment registries.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+        required: Whether to enable or require the required.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     path = VARIANT_POLICY_DIR / f"{name}.yaml"
     if not path.is_file():
@@ -81,7 +88,15 @@ def load_variant_ftmo_config(name: str, *, required: bool = True) -> dict[str, A
 
 
 def variant_ftmo_overrides(name: str, *, required: bool = True) -> list[str]:
-    """Return flat CLI overrides for one validated per-variant policy file."""
+    """Return flat CLI overrides for one validated per-variant policy file.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+        required: Whether to enable or require the required.
+
+    Returns:
+        Values returned by ``variant_ftmo_overrides``, in the declared order.
+    """
     values = load_variant_ftmo_config(name, required=required)
     return [f"ftmo.{key}={value}" for key, value in values.items()]
 

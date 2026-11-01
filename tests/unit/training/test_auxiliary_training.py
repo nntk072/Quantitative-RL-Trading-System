@@ -46,7 +46,8 @@ def test_window_alignment(synthetic):
 
 def test_window_causality(synthetic):
     """Targets must not depend on bars after the horizon; truncating the
-    sample must not change already-valid pairs."""
+    sample must not change already-valid pairs.
+    """
     feats, closes = synthetic
     seq_full, y_full = build_supervised_windows(
         feats, closes, obs_window=60, horizon=5, max_windows=1000

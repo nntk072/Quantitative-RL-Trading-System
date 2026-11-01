@@ -11,7 +11,12 @@ from models.encoders.transformer import TransformerEncoder
 
 
 def enable_extractor_autocast(extractor: nn.Module, dtype: torch.dtype | None) -> None:
-    """Apply a caller-selected autocast dtype to an encoder; return fp32 features."""
+    """Apply a caller-selected autocast dtype to an encoder; return fp32 features.
+
+    Args:
+        extractor: Extractor used by the operation described above.
+        dtype: Dtype used by the operation described above.
+    """
     # Transformer attention in bf16 can NaN under PPO's large rollout batches.
     if isinstance(extractor, TransformerEncoder):
         return
@@ -22,6 +27,18 @@ def enable_extractor_autocast(extractor: nn.Module, dtype: torch.dtype | None) -
     original_forward = extractor.forward
 
     def forward_amp(*args: Any, **kwargs: Any) -> torch.Tensor:
+        """Run encoder inference under the selected autocast policy.
+
+        ``float16`` updates stay in fp32 because SB3 does not use GradScaler;
+        non-finite no-grad fp16 output is retried once in fp32.
+
+        Args:
+            *args: Parsed command-line arguments for this operation.
+            **kwargs: Kwargs used by the operation described above.
+
+        Returns:
+            Result of run encoder inference under the selected autocast policy.
+        """
         # SB3's PPO optimizer calls backward/step without GradScaler. Running
         # V100 fp16 encoder ops with autograd can therefore overflow gradients
         # and corrupt actor logits. Keep PPO updates in fp32 until its optimizer

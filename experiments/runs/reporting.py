@@ -19,6 +19,14 @@ from artifacts.layout import ExperimentRunArtifactLayout
 
 
 def _read_json(path: Path) -> dict[str, Any] | None:
+    """Read json.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -27,6 +35,14 @@ def _read_json(path: Path) -> dict[str, Any] | None:
 
 
 def _sha256(path: Path) -> str | None:
+    """Process the requested value.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Result of process the requested value.
+    """
     digest = hashlib.sha256()
     try:
         with path.open("rb") as stream:
@@ -38,6 +54,15 @@ def _sha256(path: Path) -> str | None:
 
 
 def _run_dir(attempt_dir: Path, run_key: str) -> Path | None:
+    """Run dir.
+
+    Args:
+        attempt_dir: Text or path value identifying the attempt dir.
+        run_key: Text or path value identifying the run key.
+
+    Returns:
+        Path returned by ``_run_dir``.
+    """
     candidates = sorted(
         (path for path in (attempt_dir / run_key).glob("*") if path.is_dir()),
         key=lambda path: path.name,
@@ -46,11 +71,27 @@ def _run_dir(attempt_dir: Path, run_key: str) -> Path | None:
 
 
 def _account_currency(run_dir: Path | None) -> str | None:
+    """Process currency.
+
+    Args:
+        run_dir: Run dir used by the operation described above.
+
+    Returns:
+        Result of process currency.
+    """
     currency, _ = _account_config(run_dir)
     return currency
 
 
 def _account_config(run_dir: Path | None) -> tuple[str | None, float | None]:
+    """Process config.
+
+    Args:
+        run_dir: Run dir used by the operation described above.
+
+    Returns:
+        Values returned by ``_account_config``, in the declared order.
+    """
     if run_dir is None:
         return None, None
     try:
@@ -75,7 +116,17 @@ def _pnl_reconciliation(
     metrics: dict[str, Any] | None,
     initial_balance: float | None,
 ) -> dict[str, Any]:
-    """Check saved split PnL against its final equity value."""
+    """Check saved split PnL against its final equity value.
+
+    Args:
+        run_dir: Run dir used by the operation described above.
+        split: Text or path value identifying the split.
+        metrics: Key-value data used for the metrics.
+        initial_balance: Initial balance used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     result: dict[str, Any] = {
         "status": "unavailable",
         "initial_balance": initial_balance,
@@ -111,6 +162,14 @@ def _pnl_reconciliation(
 
 
 def _resource_profiles(experiment_run_dir: Path) -> list[dict[str, Any]]:
+    """Process profiles.
+
+    Args:
+        experiment_run_dir: Text or path value identifying the experiment run dir.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     profiles: list[dict[str, Any]] = []
     artifacts = ExperimentRunArtifactLayout(experiment_run_dir)
     for path in sorted(artifacts.logs.glob("resources_*.csv")):
@@ -197,6 +256,15 @@ def _resource_profiles(experiment_run_dir: Path) -> list[dict[str, Any]]:
 
 
 def _split_log(log_path: Path, label: str) -> dict[str, Any]:
+    """Split log.
+
+    Args:
+        log_path: Path or filename identifying the log.
+        label: Text or path value identifying the label.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     result: dict[str, Any] = {"survived_full_period": None, "days_traded": None, "days_total": None}
     try:
         lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -218,7 +286,14 @@ def _split_log(log_path: Path, label: str) -> dict[str, Any]:
 
 
 def _episode_coverage(path: Path | None) -> dict[str, Any]:
-    """Summarize training episode completion telemetry without inferring missing rows."""
+    """Summarize training episode completion telemetry without inferring missing rows.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     result: dict[str, Any] = {
         "status": "missing",
         "artifact": str(path) if path is not None else None,
@@ -300,6 +375,14 @@ def _episode_coverage(path: Path | None) -> dict[str, Any]:
 
 
 def _finite_metrics(value: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Process metrics.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     if value is None:
         return None
     cleaned: dict[str, Any] = {}
@@ -312,6 +395,14 @@ def _finite_metrics(value: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def build_summary(experiment_run_dir: Path) -> dict[str, Any]:
+    """Join controller and worker artifacts into an evidence-preserving summary.
+
+    Args:
+        experiment_run_dir: Run directory containing manifest and status reports.
+
+    Returns:
+        Per-job controller, worker, evaluation, and artifact summary.
+    """
     artifacts = ExperimentRunArtifactLayout(experiment_run_dir)
     experiment_run = _read_json(artifacts.manifest)
     status = _read_json(artifacts.report("experiment_run_status.json"))
@@ -518,16 +609,40 @@ def build_summary(experiment_run_dir: Path) -> dict[str, Any]:
 
 
 def _fmt_percent(value: Any) -> str:
+    """Process percent.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_fmt_percent``.
+    """
     if not isinstance(value, (int, float)):
         return "—"
     return f"{value:+.2f}%"
 
 
 def _fmt_money(value: Any) -> str:
+    """Process money.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_fmt_money``.
+    """
     return f"{value:+,.2f}" if isinstance(value, (int, float)) else "—"
 
 
 def render_markdown(summary: dict[str, Any]) -> str:
+    """Render an experiment-run summary without ranking its variants.
+
+    Args:
+        summary: Mapping produced by :func:`build_summary`.
+
+    Returns:
+        Markdown tables and provenance notes for the run.
+    """
     jobs = summary["jobs"]
     currencies = {job.get("account_currency") for job in jobs if job.get("account_currency")}
     pnl_label = next(iter(currencies)) if len(currencies) == 1 else "account currency"
@@ -687,7 +802,15 @@ def render_markdown(summary: dict[str, Any]) -> str:
 
 
 def _write_summary_outputs(summary: dict[str, Any], out_stem: Path) -> tuple[Path, Path]:
-    """Write a new report pair without replacing prior experiment run evidence."""
+    """Write a new report pair without replacing prior experiment run evidence.
+
+    Args:
+        summary: Key-value data used for the summary.
+        out_stem: Text or path value identifying the out stem.
+
+    Returns:
+        Path returned by ``_write_summary_outputs``.
+    """
     json_path = out_stem.with_suffix(".json")
     markdown_path = out_stem.with_suffix(".md")
     existing = [path for path in (json_path, markdown_path) if path.exists()]
@@ -703,6 +826,11 @@ def _write_summary_outputs(summary: dict[str, Any], out_stem: Path) -> tuple[Pat
 
 
 def main() -> int:
+    """Write JSON and Markdown result snapshots for an experiment run.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--experiment-run-dir", type=Path, required=True)
     parser.add_argument("--out-stem", type=Path, default=None)

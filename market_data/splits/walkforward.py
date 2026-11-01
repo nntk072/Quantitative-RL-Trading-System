@@ -21,6 +21,14 @@ import numpy as np
 
 @dataclass
 class WFSplit:
+    """Indices and metadata for one purged walk-forward fold.
+
+    Attributes:
+        train_idx: Training-row indices for this fold.
+        test_idx: Non-overlapping test-row indices.
+        fold: Zero-based fold number.
+    """
+
     train_idx: np.ndarray[Any, Any]
     test_idx: np.ndarray[Any, Any]
     fold: int
@@ -40,20 +48,16 @@ def purged_walk_forward(
     across all folds (split into ``n_splits`` contiguous blocks at the end of
     the series). Train is always ``[0, test_start)`` after purge/embargo.
 
-    Parameters
-    ----------
-    n:
-        Total number of samples.
-    n_splits:
-        Number of folds.
-    test_size:
-        Fraction of ``n`` used as the combined test budget.
-    purge_bars:
-        Bars removed from the end of train (feature lookback).
-    embargo_bars:
-        Extra gap between train end and test start.
-    label_horizon:
-        Extra purge bars for label/episode horizon (added to ``purge_bars``).
+    Args:
+        n: Total number of samples.
+        n_splits: Number of folds.
+        test_size: Fraction of ``n`` used as the combined test budget.
+        purge_bars: Bars removed from the end of train (feature lookback).
+        embargo_bars: Extra gap between train end and test start.
+        label_horizon: Extra purge bars for label/episode horizon (added to ``purge_bars``).
+
+    Yields:
+        Each purged walk forward value, yielded in processing order.
     """
     if n_splits < 1 or n <= 0 or test_size <= 0:
         return
@@ -91,7 +95,18 @@ def purged_walk_forward_legacy(
     purge_bars: int = 60,
     embargo_bars: int = 20,
 ) -> Generator[WFSplit, None, None]:
-    """Pre-fix overlapping stepper (F5). Do not use for new work."""
+    """Pre-fix overlapping stepper (F5). Do not use for new work.
+
+    Args:
+        n: Numeric value used for the n.
+        n_splits: Numeric value used for the n splits.
+        test_size: Number specifying the test size for this operation.
+        purge_bars: Market bar or price data used for pre-fix overlapping stepper (F5). Do not use for new work.
+        embargo_bars: Market bar or price data used for pre-fix overlapping stepper (F5). Do not use for new work.
+
+    Yields:
+        Each purged walk forward legacy value, yielded in processing order.
+    """
     warnings.warn(
         "purged_walk_forward_legacy has overlapping test folds (F5); "
         "use purged_walk_forward instead",

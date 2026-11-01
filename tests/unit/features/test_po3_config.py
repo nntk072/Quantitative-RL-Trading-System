@@ -677,7 +677,7 @@ class TestBuildFVGZones:
 
 
 class TestMTFCausality:
-    """Zero within-period lookahead for HTF FVG / LTF IFVG mapping.
+    r"""Zero within-period lookahead for HTF FVG / LTF IFVG mapping.
 
     HTF bars are indexed by their *open* time (label=\"left\" in resample), so an
     HTF bar spanning [T, T+period) is not complete until the next HTF open.

@@ -16,7 +16,7 @@ reproducing a recorded historical analysis.
 When changing inclusivity or purge behavior, test exact boundary timestamps,
 short input periods, and non-overlap across folds. Focused coverage is under
 `tests/unit/market_data/`; feature-fitting scope is tested under
-`tests/unit/features/`. See the [validation protocol](../../docs/thesis/validation_protocol.md)
+`tests/unit/features/`. See the [validation protocol](../../docs/research/validation_protocol.md)
 for research-period roles.
 
 ## UML module view

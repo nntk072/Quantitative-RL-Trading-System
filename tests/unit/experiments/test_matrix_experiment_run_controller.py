@@ -7,7 +7,7 @@ import yaml
 from experiments.runs.source_snapshot import experiment_run_data_inputs, sha256_file
 
 
-def test_replacement_experiment_run_pins_the_thesis_split_and_variants() -> None:
+def test_replacement_experiment_run_pins_the_trade_setup_split_and_variants() -> None:
     root = Path(__file__).resolve().parents[3]
     experiment_run = yaml.safe_load(
         (

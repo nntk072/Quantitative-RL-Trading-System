@@ -77,7 +77,14 @@ class OrderGeometry:
 def _menu_pairs(
     menu: list[tuple[str, float, float]],
 ) -> tuple[tuple[str, float], ...]:
-    """``(name, price)`` pairs from a ``(name, price, distance)`` menu."""
+    """``(name, price)`` pairs from a ``(name, price, distance)`` menu.
+
+    Args:
+        menu: Items supplied for the menu, in input order.
+
+    Returns:
+        Values returned by ``_menu_pairs``, in the declared order.
+    """
     return tuple((str(name), float(price)) for name, price, _ in menu)
 
 
@@ -91,7 +98,20 @@ def _with_menus(
     fallback_reason: str | None = None,
     stop_audit: list[dict[str, Any]] | None = None,
 ) -> OrderGeometry:
-    """Attach the full candidate ladders so a chart can list every option."""
+    """Attach the full candidate ladders so a chart can list every option.
+
+    Args:
+        geometry: Geometry used by the operation described above.
+        stops: Items supplied for the stops, in input order.
+        targets: Items supplied for the targets, in input order.
+        row: Row index or record being processed.
+        source_prices: Market bar or price data used for attach the full candidate ladders so a chart can list every option.
+        fallback_reason: Fallback reason used by the operation described above.
+        stop_audit: Items supplied for the stop audit, in input order.
+
+    Returns:
+        Result of attach the full candidate ladders so a chart can list every option.
+    """
     selected = {i for i in geometry.tp_indices if i is not None}
     if not selected and geometry.tp_index >= 0 and geometry.exit_mode != "ema_21":
         selected = {geometry.tp_index}
@@ -128,6 +148,13 @@ def select_index(fraction: float, n: int) -> int:
 
     Index 0 is the nearest candidate. ``round`` is not used: half of two
     candidates must land on the farther one.
+
+    Args:
+        fraction: Numeric value used for the fraction.
+        n: Numeric value used for the n.
+
+    Returns:
+        Numeric result returned by ``select_index``.
     """
     if n <= 0:
         raise ValueError("n must be positive")
@@ -147,6 +174,16 @@ def dynamic_tp(
 
     Strategy entries do not call this. They pick a structural price or an
     EMA-21 exit.
+
+    Args:
+        direction: Signed trade direction: 1 for long and -1 for short.
+        entry_price: Price at which the position was opened.
+        sl_price: Numeric value used for the sl price.
+        reward_fraction: Numeric value used for the reward fraction.
+        max_tp_distance: Max tp distance used by the operation described above.
+
+    Returns:
+        Whether dynamic tp meets the requested condition.
     """
     if direction not in (1, -1):
         return None, False
@@ -185,21 +222,50 @@ def place_strategy_order(
     target_front_run_pts: float = 0.0,
     price_increment: float | None = None,
     ema_runner_fraction: float = 0.0,
-    thesis: Any | None = None,
+    trade_setup: Any | None = None,
 ) -> OrderGeometry:
     """Pick the stop, then a structural target or an EMA-21 exit.
 
     ``exit_mode`` is ``ema_21`` or ``structural``. A missing ``ema_21`` does
     not fall back to a structural target. No survivor means no order.
+
+    Args:
+        strategy: Strategy used to select or evaluate trades.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        entry_price: Price at which the position was opened.
+        feat_row: Feature values for the current market bar.
+        min_dist: Numeric value used for the min dist.
+        sl_fraction: Numeric value used for the sl fraction.
+        tp_fraction: Numeric value used for the tp fraction.
+        exit_mode: Text or path value identifying the exit mode.
+        buffer_pts: Numeric value used for the buffer pts.
+        max_tp_distance: Numeric value used for the max tp distance.
+        rr_bounds: Items supplied for the rr bounds, in input order.
+        htf: Items supplied for the htf, in input order.
+        entry_timeframe_floor: Text or path value identifying the entry timeframe floor.
+        standard_deviation_timeframes: Items supplied for the standard deviation timeframes, in input order.
+        tp_selections: Items supplied for the tp selections, in input order.
+        tp_z: Items supplied for the tp z, in input order.
+        allow_multi_tp: Whether to enable or require the allow multi tp.
+        allow_simplex: Whether to enable or require the allow simplex.
+        target_front_run_pts: Numeric value used for the target front run pts.
+        price_increment: Price increment used by the operation described above.
+        ema_runner_fraction: Numeric value used for the ema runner fraction.
+        trade_setup: Trade setup used by the operation described above.
+
+    Returns:
+        Result of pick the stop, then a structural target or an EMA-21 exit.
     """
     mode = "ema_21" if exit_mode == "ema_21" else "structural"
     runner_fraction = float(ema_runner_fraction)
     if not 0.0 <= runner_fraction < 1.0:
         raise ValueError("ema_runner_fraction must be in [0, 1)")
-    if thesis is not None:
-        entry_timeframe_floor = str(thesis.setup_timeframe)
+    if trade_setup is not None:
+        entry_timeframe_floor = str(trade_setup.setup_timeframe)
         standard_deviation_timeframes = (
-            (str(thesis.setup_timeframe),) if str(thesis.idea) == "standard_deviation" else None
+            (str(trade_setup.setup_timeframe),)
+            if str(trade_setup.idea) == "standard_deviation"
+            else None
         )
     state = manipulation_state(feat_row)
     buf = stop_buffer(buffer_pts)
@@ -584,6 +650,21 @@ def resolve_strategy_entry(
 
     ``rr_rejected`` is true when every profit-side price was inside the stop
     or beyond a finite session reach. Dollar size is left to the caller.
+
+    Args:
+        strategy: Strategy used to select or evaluate trades.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        entry_price: Price at which the position was opened.
+        reward_fraction: Numeric value used for the reward fraction.
+        feat_row: Feature values for the current market bar.
+        min_dist: Numeric value used for the min dist.
+        sl_anchor: Numeric value used for the sl anchor.
+        buffer_pts: Numeric value used for the buffer pts.
+        max_tp_distance: Numeric value used for the max tp distance.
+        htf: Items supplied for the htf, in input order.
+
+    Returns:
+        Whether resolve strategy entry meets the requested condition.
     """
     placed = place_strategy_order(
         strategy,

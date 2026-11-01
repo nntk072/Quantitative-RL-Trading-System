@@ -40,6 +40,7 @@ class AccountState:
     open_pnl: float = field(init=False)
 
     def __post_init__(self) -> None:
+        """Validate and initialize AccountState after construction."""
         self.balance = self.initial_balance
         self.equity = self.initial_balance
         self.peak_equity = self.initial_balance
@@ -51,8 +52,6 @@ class AccountState:
         self.max_drawdown = 0.0
         self.open_pnl = 0.0
 
-        # ------------------------------------------------------------------
-
     def _update_loss_from_initial(self) -> None:
         """Track peak absolute loss vs initial balance (FTMO max-loss, not trailing)."""
         if self.equity > self.peak_equity:
@@ -62,13 +61,21 @@ class AccountState:
             self.max_drawdown = loss
 
     def update_equity(self, open_pnl: float) -> None:
-        """Recompute equity from balance + unrealised P&L."""
+        """Recompute equity from balance + unrealised P&L.
+
+        Args:
+            open_pnl: Numeric value used for the open pnl.
+        """
         self.open_pnl = open_pnl
         self.equity = self.balance + open_pnl
         self._update_loss_from_initial()
 
     def close_trade(self, pnl: float) -> None:
-        """Realise P&L from a closed trade."""
+        """Realise P&L from a closed trade.
+
+        Args:
+            pnl: Numeric value used for the pnl.
+        """
         self.balance += pnl
         self.open_pnl = 0.0
         self.equity = self.balance
@@ -84,25 +91,56 @@ class AccountState:
         self.daily_loss = 0.0
 
     def canonical_daily_loss(self) -> float:
-        """Daily loss used by the selected policy."""
+        """Daily loss used by the selected policy.
+
+        Returns:
+            Numeric result returned by ``canonical_daily_loss``.
+        """
         if self.policy_mode == "repeated_payout":
             return compute_canonical_daily_loss(self.session_start_equity, self.equity)
         return float(self.daily_loss)
 
     def daily_floor(self, daily_loss_limit: float) -> float:
-        """Fixed session floor for repeated-payout mode."""
+        """Fixed session floor for repeated-payout mode.
+
+        Args:
+            daily_loss_limit: Numeric value used for the daily loss limit.
+
+        Returns:
+            Numeric result returned by ``daily_floor``.
+        """
         return compute_daily_floor(self.session_start_equity, daily_loss_limit)
 
     def remaining_daily_capacity(self, daily_loss_limit: float) -> float:
+        """Return the remaining capacity before the daily loss limit is breached.
+
+        Args:
+            daily_loss_limit: Maximum daily loss in account currency.
+
+        Returns:
+            Nonnegative remaining daily capacity.
+        """
         return compute_remaining_daily_capacity(
             self.session_start_equity, self.equity, daily_loss_limit
         )
 
     def remaining_account_capacity(self, account_floor: float) -> float:
+        """Return equity capacity above the account floor.
+
+        Args:
+            account_floor: Minimum permitted account equity.
+
+        Returns:
+            Nonnegative remaining account capacity.
+        """
         return compute_remaining_account_capacity(self.equity, account_floor)
 
     def reset_operating_balance(self, operating_balance: float) -> None:
-        """Reset deployable capital after a payout while preserving global counters elsewhere."""
+        """Reset deployable capital after a payout while preserving global counters elsewhere.
+
+        Args:
+            operating_balance: Numeric value used for the operating balance.
+        """
         self.balance = float(operating_balance)
         self.equity = float(operating_balance)
         self.open_pnl = 0.0
@@ -112,21 +150,37 @@ class AccountState:
         self.daily_loss = 0.0
 
     def loss_from_initial(self) -> float:
-        """Current absolute loss vs initial balance (0 if equity ≥ initial)."""
+        """Current absolute loss vs initial balance (0 if equity ≥ initial).
+
+        Returns:
+            Numeric result returned by ``loss_from_initial``.
+        """
         return max(0.0, self.initial_balance - self.equity)
 
     def drawdown_pct(self) -> float:
-        """Peak loss from initial as a fraction of initial balance."""
+        """Peak loss from initial as a fraction of initial balance.
+
+        Returns:
+            Numeric result returned by ``drawdown_pct``.
+        """
         return self.max_drawdown / self.initial_balance if self.initial_balance else 0.0
 
     def trailing_drawdown_pct(self) -> float:
-        """Current drawdown from peak equity (HWM) as a fraction of peak."""
+        """Current drawdown from peak equity (HWM) as a fraction of peak.
+
+        Returns:
+            Numeric result returned by ``trailing_drawdown_pct``.
+        """
         if self.peak_equity <= 0:
             return 0.0
         return max(0.0, (self.peak_equity - self.equity) / self.peak_equity)
 
     def record_eod_equity(self) -> float:
-        """Record end-of-session equity and return drawdown from the prior EOD peak."""
+        """Record end-of-session equity and return drawdown from the prior EOD peak.
+
+        Returns:
+            Numeric result returned by ``record_eod_equity``.
+        """
         drawdown_usd = self.peak_eod_drawdown_usd
         self.max_peak_eod_drawdown_usd = max(self.max_peak_eod_drawdown_usd, drawdown_usd)
         self.peak_eod_equity = max(self.peak_eod_equity, self.equity)
@@ -134,11 +188,19 @@ class AccountState:
 
     @property
     def peak_eod_drawdown_usd(self) -> float:
-        """Current dollar drawdown from the last completed-session equity peak."""
+        """Current dollar drawdown from the last completed-session equity peak.
+
+        Returns:
+            Numeric result returned by ``peak_eod_drawdown_usd``.
+        """
         return max(0.0, self.peak_eod_equity - self.equity)
 
     def to_array(self) -> list[float]:
-        """Return a fixed-length array for the env observation."""
+        """Return a fixed-length array for the env observation.
+
+        Returns:
+            Values returned by ``to_array``, in the declared order.
+        """
         return [
             self.balance / self.initial_balance - 1.0,
             self.equity / self.initial_balance - 1.0,

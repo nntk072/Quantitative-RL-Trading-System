@@ -60,6 +60,13 @@ def _bar_spread_price_units(row: pd.Series, cost_model: CostModel) -> float | No
     ``point_size`` here. Without this conversion a raw value like 80 was
     being added directly to the close price, producing bid/ask quotes tens
     to hundreds of points away from the visible candle.
+
+    Args:
+        row: Row index or record being processed.
+        cost_model: Cost model used by the operation described above.
+
+    Returns:
+        Result of convert the bar's raw MT5 ``spread`` column (broker points) to price units.
     """
     if "spread" not in row.index or pd.isna(row["spread"]):
         return None
@@ -76,18 +83,41 @@ def _sl_tp_fill_quote(
     The fill price is pinned to the SL/TP level; the opposite side is
     extended by the model spread so that ``Broker.close_position`` can
     deduct the round-turn spread cost.
+
+    Args:
+        direction: Signed trade direction: 1 for long and -1 for short.
+        hit_price: Numeric value used for the hit price.
+        cost_model: Cost model used by the operation described above.
+
+    Returns:
+        Values returned by ``_sl_tp_fill_quote``, in the declared order.
     """
     return protective_level_fill_quote(direction, hit_price, cost_model)
 
 
 def _bar_quote(row: pd.Series, cost_model: CostModel) -> tuple[float, float]:
-    """Derive ``(bid, ask)`` from a bar row (MT5 close = bid)."""
+    """Derive ``(bid, ask)`` from a bar row (MT5 close = bid).
+
+    Args:
+        row: Row index or record being processed.
+        cost_model: Cost model used by the operation described above.
+
+    Returns:
+        Values returned by ``_bar_quote``, in the declared order.
+    """
     bar_spread = _bar_spread_price_units(row, cost_model)
     return cost_model.bar_quote(float(row["close"]), bar_spread=bar_spread)
 
 
 def _bar_duration(index: pd.DatetimeIndex) -> pd.Timedelta:
-    """Estimate bar duration from positive index deltas, defaulting to M1."""
+    """Estimate bar duration from positive index deltas, defaulting to M1.
+
+    Args:
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Result of estimate bar duration from positive index deltas, defaulting to M1.
+    """
     if len(index) < 2:
         return pd.Timedelta(minutes=1)
     deltas = np.diff(index.to_numpy(dtype="datetime64[ns]").astype("int64"))
@@ -115,6 +145,15 @@ def _fill_quote(
     ``[low, high]`` range (widened by a small buffer for spread), the tick
     fill is rejected in favour of a bar-based quote, so fills always land
     on/near a visible candle.
+
+    Args:
+        fill_instant: Fill instant used by the operation described above.
+        row: Row index or record being processed.
+        cost_model: Cost model used by the operation described above.
+        tickbook: Tickbook used by the operation described above.
+
+    Returns:
+        Values returned by ``_fill_quote``, in the declared order.
     """
     return _fill_quote_event(fill_instant, row, cost_model, tickbook)[0]
 
@@ -131,7 +170,22 @@ def _fill_quote_event(
     max_tick_quote_wait_ms: int = 60_000,
     tick_execution_required: bool = False,
 ) -> tuple[tuple[float, float], pd.Timestamp, str, dict[str, Any]]:
-    """Return a delayed execution quote and timing/source metadata."""
+    """Return a delayed execution quote and timing/source metadata.
+
+    Args:
+        fill_instant: Fill instant used by the operation described above.
+        row: Row index or record being processed.
+        cost_model: Cost model used by the operation described above.
+        tickbook: Tickbook used by the operation described above.
+        bar_close_time: Bar close time used by the operation described above.
+        rng: Rng used by the operation described above.
+        randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
+        max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
+        tick_execution_required: Whether to enable or require the tick execution required.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     if randomized_fill_latency_ms > 30.0 or randomized_fill_latency_ms < 0.0:
         raise ValueError("randomized_fill_latency_ms must be in [0, 30]")
     if max_tick_quote_wait_ms <= 0:
@@ -201,7 +255,16 @@ def _fill_quote_event(
 
 
 def _is_last_ny_bar(bars: pd.DataFrame, i: int, is_ny: bool) -> bool:
-    """True on the last NY bar of a session (next bar is non-NY or a time jump)."""
+    """True on the last NY bar of a session (next bar is non-NY or a time jump).
+
+    Args:
+        bars: Market bars to process.
+        i: Numeric value used for the i.
+        is_ny: Whether to enable or require the is ny.
+
+    Returns:
+        Whether is last ny bar meets the requested condition.
+    """
     if not is_ny:
         return False
     if i + 1 >= len(bars):
@@ -247,6 +310,38 @@ def run_backtest(
     Accounting, policy actions, and protective/session events live in focused
     simulation.backtest modules so this function remains the readable
     composition root for the timing-sensitive execution contract.
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        policy: Policy used to select or evaluate actions.
+        obs_window: Numeric value used for the obs window.
+        cost_model: Cost model used by the operation described above.
+        broker_kwargs: Key-value data used for the broker kwargs.
+        guardrail_kwargs: Key-value data used for the guardrail kwargs.
+        initial_balance: Numeric value used for the initial balance.
+        lots: Numeric value used for the lots.
+        max_loss_per_trade_usd: Max loss per trade usd used by the operation described above.
+        take_profit_per_trade_usd: Take profit per trade usd used by the operation described above.
+        tickbook: Tickbook used by the operation described above.
+        fill_delay_ms: Numeric value used for the fill delay ms.
+        randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
+        max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
+        tick_execution_required: Whether to enable or require the tick execution required.
+        execution_seed: Numeric value used for the execution seed.
+        use_structure_sl_tp: Whether to enable or require the use structure sl tp.
+        risk_frac: Numeric value used for the risk frac.
+        rr_ratio: Numeric value used for the rr ratio.
+        swing_buffer_pts: Numeric value used for the swing buffer pts.
+        min_lot: Numeric value used for the min lot.
+        max_lot: Numeric value used for the max lot.
+        contract_size: Number specifying the contract size for this operation.
+        hold_on_zero: Whether to enable or require the hold on zero.
+        exit_action: Exit action used by the operation described above.
+        block_overnight: Whether to enable or require the block overnight.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     from simulation.backtest.policy_actions import apply_policy_action
     from simulation.backtest.protective_events import (
@@ -333,6 +428,11 @@ def run_backtest(
         def resolve_bar_execution() -> tuple[
             tuple[float, float], pd.Timestamp, str, dict[str, Any]
         ]:
+            """Resolve and cache the execution quote for this bar's fill time.
+
+            Returns:
+                Mapping from ``str`` keys to ``Any]`` values.
+            """
             nonlocal execution_event
             if execution_event is None:
                 execution_event = _fill_quote_event(

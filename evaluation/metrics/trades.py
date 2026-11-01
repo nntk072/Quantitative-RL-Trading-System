@@ -14,30 +14,18 @@ from evaluation.metrics.candle_quality import tradable_mask, wick_time
 class TradeChartMetrics:
     """Chart overlay metrics for a single trade.
 
-    Attributes
-    ----------
-    entry_price : float
-        The entry price (fill price of the open order).
-    exit_price : float
-        The exit price (fill price of the close order).
-    direction : int
-        Trade direction: +1 for long, -1 for short.
-    mae_price : float
-        Maximum Adverse Excursion price (worst price during trade).
-    mfe_price : float
-        Maximum Favorable Excursion price (best price during trade).
-    mae_time : pd.Timestamp
-        Timestamp of the bar where MAE occurred.
-    mfe_time : pd.Timestamp
-        Timestamp of the bar where MFE occurred.
-    sl_price : float | None
-        Stop Loss level based on max_loss_per_trade_usd. None if not configured.
-    tp_price : float | None
-        Take Profit level based on take_profit_per_trade_usd. None if not configured.
-    sl_time, tp_time : pd.Timestamp | None
-        Bar whose wick printed the stop or target, when one exists.
-    mae_drawn, mfe_drawn : bool
-        False when no valid in-trade bar printed that excursion.
+    Attributes:
+        entry_price (float): The entry price (fill price of the open order).
+        exit_price (float): The exit price (fill price of the close order).
+        direction (int): Trade direction: +1 for long, -1 for short.
+        mae_price (float): Maximum Adverse Excursion price (worst price during trade).
+        mfe_price (float): Maximum Favorable Excursion price (best price during trade).
+        mae_time (pd.Timestamp): Timestamp of the bar where MAE occurred.
+        mfe_time (pd.Timestamp): Timestamp of the bar where MFE occurred.
+        sl_price (float | None): Stop Loss level based on max_loss_per_trade_usd. None if not configured.
+        tp_price (float | None): Take Profit level based on take_profit_per_trade_usd. None if not configured.
+        sl_time, tp_time (pd.Timestamp | None): Bar whose wick printed the stop or target, when one exists.
+        mae_drawn, mfe_drawn (bool): False when no valid in-trade bar printed that excursion.
     """
 
     entry_price: float
@@ -74,27 +62,17 @@ def compute_trade_metrics(
     If open_row contains 'sl_price' or 'tp_price' (logged by structure-aware engine),
     those values take precedence over computed defaults.
 
-    Parameters
-    ----------
-    bars : pd.DataFrame
-        M1 price bars with index as DatetimeIndex and columns: open, high, low, close.
-    open_row : pd.Series
-        Trade open record with fields: time, direction, price, and optionally sl_price, tp_price.
-    close_row : pd.Series
-        Trade close record with fields: time, price.
-    max_loss_per_trade_usd : float | None
-        Maximum loss limit in USD; if set, SL level is computed (fallback).
-    take_profit_per_trade_usd : float | None
-        Maximum profit limit in USD; if set, TP level is computed (fallback).
-    lots : float
-        Position size in lots (default 1.0).
-    contract_size : float
-        Contract size (default 1.0).
+    Args:
+        bars (pd.DataFrame): M1 price bars with index as DatetimeIndex and columns: open, high, low, close.
+        open_row (pd.Series): Trade open record with fields: time, direction, price, and optionally sl_price, tp_price.
+        close_row (pd.Series): Trade close record with fields: time, price.
+        max_loss_per_trade_usd (float | None): Maximum loss limit in USD; if set, SL level is computed (fallback).
+        take_profit_per_trade_usd (float | None): Maximum profit limit in USD; if set, TP level is computed (fallback).
+        lots (float): Position size in lots (default 1.0).
+        contract_size (float): Contract size (default 1.0).
 
-    Returns
-    -------
-    TradeChartMetrics
-        Computed metrics for chart rendering.
+    Returns:
+        TradeChartMetrics: Computed metrics for chart rendering.
     """
     entry_time = open_row.get("actual_tick_time")
     if pd.isna(entry_time) or not str(entry_time).strip():

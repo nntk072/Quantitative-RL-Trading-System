@@ -28,6 +28,13 @@ class SB3DecisionProvider:
         input_schema_version: str,
         provider_id: str = "sb3-policy",
     ) -> None:
+        """Initialize SB3DecisionProvider and its owned state.
+
+        Args:
+            model: Model used for this operation.
+            input_schema_version: Text or path value identifying the input schema version.
+            provider_id: Text or path value identifying the provider id.
+        """
         self._model = model
         self._input_schema_version = input_schema_version
         self._action_schema = self._resolve_action_schema(model)
@@ -41,9 +48,26 @@ class SB3DecisionProvider:
 
     @property
     def metadata(self) -> PredictorMetadata:
+        """Return the checkpoint identity and action schema resolved at setup.
+
+        Returns:
+            Result of return the checkpoint identity and action schema resolved at setup.
+        """
         return self._metadata
 
     def predict(self, input: DecisionInput, *, deterministic: bool = True) -> Decision:
+        """Predict and decode an SB3 action under the provider's schema contract.
+
+        Args:
+            input: Versioned observation and action-schema context.
+            deterministic: Whether SB3 should select its deterministic action.
+
+        Returns:
+            A decision carrying the action schema resolved from the checkpoint.
+
+        Raises:
+            ValueError: If the observation schema differs from the provider contract.
+        """
         if input.schema_version != self._input_schema_version:
             raise ValueError(
                 f"observation schema {input.schema_version!r} differs from provider schema "
@@ -56,6 +80,14 @@ class SB3DecisionProvider:
         )
 
     def _decode_action(self, action: Any) -> DiscreteAction | ContinuousAction | StructuredAction:
+        """Decode action.
+
+        Args:
+            action: Action to apply to the current state.
+
+        Returns:
+            Result of decode action.
+        """
         if self._action_schema.kind == "discrete":
             values = np.asarray(action).reshape(-1)
             if values.size != 1:
@@ -79,6 +111,14 @@ class SB3DecisionProvider:
 
     @staticmethod
     def _resolve_action_schema(model: Any) -> ActionSchemaRef:
+        """Resolve action schema.
+
+        Args:
+            model: Model used for this operation.
+
+        Returns:
+            Result of resolve action schema.
+        """
         action_space = getattr(model, "action_space", None)
         saved = getattr(model, "_action_schema", None)
         if isinstance(action_space, spaces.Discrete):

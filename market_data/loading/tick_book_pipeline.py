@@ -30,6 +30,15 @@ def build_tick_books(
     arrays. Returns ``{symbol: TickBook | None}``, where ``None`` means the
     tick file was not configured or does not exist. Ticks are stored for the
     full day so overnight replay can quote skipped bars.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        force: Whether to enable or require the force.
+        symbols: Items supplied for the symbols, in input order.
+        datasets: Items supplied for the datasets, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``TickBook | None`` values.
     """
     configured_symbols = [str(sym) for sym in cfg.data.symbols]
     selected_symbols = (

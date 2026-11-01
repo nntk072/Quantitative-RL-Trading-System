@@ -1,5 +1,4 @@
-"""
-Symbol Discovery Utility
+"""Symbol Discovery Utility.
 
 This script discovers available symbols on the MT5 broker and categorizes them.
 Helps identify correct symbol names for trading.
@@ -28,8 +27,7 @@ SERVER = os.getenv("SERVER")
 
 
 def categorize_symbol(symbol: str, description: str = "") -> str:
-    """
-    Categorize a symbol based on its name and description.
+    """Categorize a symbol based on its name and description.
 
     Args:
         symbol: Symbol name
@@ -100,8 +98,7 @@ def categorize_symbol(symbol: str, description: str = "") -> str:
 
 
 def discover_symbols() -> dict[str, list[dict[str, Any]]]:
-    """
-    Discover all available symbols on the broker.
+    """Discover all available symbols on the broker.
 
     Returns:
         Dictionary with categorized symbols
@@ -172,7 +169,11 @@ def discover_symbols() -> dict[str, list[dict[str, Any]]]:
 
 
 def print_symbols(categorized: dict[str, list[dict[str, Any]]]) -> None:
-    """Print discovered symbols in a formatted way."""
+    """Print discovered symbols in a formatted way.
+
+    Args:
+        categorized: Items supplied for the categorized, in input order.
+    """
     print("\n" + "=" * 80)
     print("DISCOVERED SYMBOLS")
     print("=" * 80)
@@ -192,8 +193,7 @@ def print_symbols(categorized: dict[str, list[dict[str, Any]]]) -> None:
 
 
 def save_symbols_to_config(categorized: dict[str, list[dict[str, Any]]], config_path: str) -> None:
-    """
-    Save discovered symbols to config file.
+    """Save discovered symbols to config file.
 
     Args:
         categorized: Categorized symbols dictionary

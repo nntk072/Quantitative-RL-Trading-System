@@ -9,7 +9,7 @@ from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
 SOURCE = ROOT / "tests/fixtures/research/idea12/synthetic_examples.json"
-OUT = ROOT / "docs/thesis/figures"
+OUT = ROOT / "outputs/research_audits/idea12_figures"
 
 
 def _svg(body: str, title: str) -> str:

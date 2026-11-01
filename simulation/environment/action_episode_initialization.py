@@ -16,9 +16,7 @@ from decisioning.actions import (
 )
 from decisioning.observations import OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3
 from decisioning.trade_setup import (
-    LegacyThesisActionSchema,
     TradeSetupActionSchema,
-    build_legacy_thesis_action_schema,
     build_trade_setup_action_schema,
 )
 
@@ -26,6 +24,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class ActionEpisodeInitializationMixin(RuntimeMixinBase):
+    """Initialize action schemas and episode-level transition contracts."""
+
     action_space: Any
 
     def _initialize_action_and_episode_contracts(
@@ -41,6 +41,19 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
         normalize_account: bool,
     ) -> None:
         # Action space: strategy actions, continuous, or discrete
+        """Initialize action and episode contracts.
+
+        Args:
+            continuous_actions: Whether to enable or require the continuous actions.
+            max_risk_frac: Numeric value used for the max risk frac.
+            use_vae: Whether to enable or require the use vae.
+            vae: Vae used by the operation described above.
+            pre_ny_by_date: Key-value data used for the pre ny by date.
+            pre_ny_data: Tabular data used for the pre ny data.
+            fill_latency_bars: Market bar or price data used for initialize action and episode contracts.
+            max_episode_steps: Number specifying the max episode steps for this operation.
+            normalize_account: Whether to enable or require the normalize account.
+        """
         self.continuous_actions = continuous_actions
         self.max_risk_frac = (
             self.trading_policy.max_agent_risk_frac
@@ -52,9 +65,7 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
                 "repeated-payout mode requires a continuous risk action coordinate "
                 "(strategy_actions=true or continuous_actions=true)"
             )
-        self.action_schema: (
-            ActionSchema | DiscreteActionSchema | TradeSetupActionSchema | LegacyThesisActionSchema
-        )
+        self.action_schema: ActionSchema | DiscreteActionSchema | TradeSetupActionSchema
 
         # VAE for narrative embedding
         self.use_vae = use_vae
@@ -93,12 +104,7 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
                 param.requires_grad = False
 
         if self.trade_setup_actions:
-            schema_builder = (
-                build_legacy_thesis_action_schema
-                if self.legacy_thesis_contract
-                else build_trade_setup_action_schema
-            )
-            self.action_schema = schema_builder(
+            self.action_schema = build_trade_setup_action_schema(
                 has_sl_mode=self.allow_agent_sl_mode,
                 has_tp_mode=self.allow_agent_tp_mode,
                 has_multi_tp=self.allow_multi_tp,

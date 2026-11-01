@@ -12,6 +12,14 @@ from .retention import RetentionClass
 
 @dataclass(frozen=True, slots=True)
 class ArtifactManifest:
+    """Provenance and retention metadata associated with a stored artifact.
+
+    Attributes:
+        artifact_id: Deterministic identity of the artifact.
+        schema_version: Manifest schema version.
+        retention: Retention policy for the artifact.
+    """
+
     kind: str
     artifact_id: str
     schema_version: int = 1
@@ -21,6 +29,7 @@ class ArtifactManifest:
     provenance: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        """Validate and initialize ArtifactManifest after construction."""
         if not isinstance(self.kind, str) or not self.kind.strip():
             raise ValueError("artifact manifest kind must be non-empty")
         if not isinstance(self.artifact_id, str) or not self.artifact_id.strip():
@@ -39,12 +48,28 @@ class ArtifactManifest:
             raise ValueError("artifact manifest provenance must be a mapping")
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the manifest as a JSON-compatible mapping.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         result = asdict(self)
         result["retention"] = str(self.retention)
         return result
 
     @classmethod
     def read(cls, path: str | Path) -> ArtifactManifest:
+        """Read and validate a manifest from disk.
+
+        Args:
+            path: Manifest file to parse.
+
+        Returns:
+            Parsed artifact manifest.
+
+        Raises:
+            ValueError: The file does not contain a valid manifest mapping.
+        """
         data = json.loads(Path(path).read_text(encoding="utf-8"))
         if not isinstance(data, Mapping):
             raise ValueError("artifact manifest root must be a mapping")

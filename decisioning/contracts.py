@@ -86,13 +86,36 @@ class DecisionProvider(Protocol):
     """Produces one schema-validated decision for each observation."""
 
     @property
-    def metadata(self) -> PredictorMetadata: ...
+    def metadata(self) -> PredictorMetadata:
+        """Describe the input and output contract implemented by this provider.
 
-    def predict(self, input: DecisionInput, *, deterministic: bool = True) -> Decision: ...
+        Returns:
+            Result of describe the input and output contract implemented by this provider.
+        """
+        ...
+
+    def predict(self, input: DecisionInput, *, deterministic: bool = True) -> Decision:
+        """Produce an action for one versioned decision input.
+
+        Args:
+            input: Observation and schema identity to evaluate.
+            deterministic: Select the deterministic policy action when supported.
+
+        Returns:
+            Versioned decision output compatible with the input contract.
+        """
+        ...
 
 
 def to_policy_action(decision: Decision) -> int | np.ndarray[Any, Any]:
-    """Convert a decision back to the action representation expected by Gym."""
+    """Convert a decision back to the action representation expected by Gym.
+
+    Args:
+        decision: Decision used by the operation described above.
+
+    Returns:
+        Array returned by ``to_policy_action``.
+    """
     action = decision.action
     if isinstance(action, DiscreteAction):
         return action.index

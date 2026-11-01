@@ -16,7 +16,15 @@ from .step_indexed_strategy import BaseStrategy
 
 
 def _ny_session_day(index: pd.DatetimeIndex, tz: str = "Etc/GMT-3") -> pd.Series:
-    """Calendar day of each bar that falls in 16:30–23:00. Else missing."""
+    """Calendar day of each bar that falls in 16:30–23:00. Else missing.
+
+    Args:
+        index: Position or label identifying the requested item.
+        tz: Text or path value identifying the tz.
+
+    Returns:
+        Result of calendar day of each bar that falls in 16:30–23:00. Else missing.
+    """
     ts = index.tz_convert(tz) if index.tz is not None else index.tz_localize(tz)
     minutes = ts.hour * 60 + ts.minute
     in_session = (minutes >= 16 * 60 + 30) & (minutes <= 23 * 60)
@@ -49,7 +57,8 @@ class BuyAndHoldStrategy(BaseStrategy):
             size: Long fraction in ``(0, 1]``.
             bars: OHLCV frame. Required for ``intraday`` and ``swing``.
             mode: ``always``, ``intraday``, or ``swing``.
-            tz: Session clock. Broker time in this thesis is ``Etc/GMT-3``.
+            tz: Session clock. Broker time for the configured market data is ``Etc/GMT-3``.
+            entry_from: Earliest absolute bar index eligible for the single swing entry.
         """
         if mode not in {"always", "intraday", "swing"}:
             raise ValueError(f"unknown buy-and-hold mode: {mode}")
@@ -77,6 +86,14 @@ class BuyAndHoldStrategy(BaseStrategy):
         super().__init__(len(self._signals))
 
     def _signal(self, idx: int) -> float:
+        """Process BuyAndHoldStrategy.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Numeric result returned by ``_signal``.
+        """
         if self._signals is None:
             return self._size
         return float(self._signals[idx])
@@ -126,6 +143,14 @@ class EMAMACDRSIStrategy(BaseStrategy):
         super().__init__(len(self._signals))
 
     def _signal(self, idx: int) -> float:
+        """Process EMAMACDRSIStrategy.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Numeric result returned by ``_signal``.
+        """
         return float(self._signals[idx])
 
 
@@ -143,7 +168,7 @@ class SessionMomentumStrategy(BaseStrategy):
 
         Args:
             bars: OHLCV frame with a DatetimeIndex and a ``close`` column.
-            tz: Session clock. Broker time in this thesis is ``Etc/GMT-3``.
+            tz: Session clock. Broker time for the configured market data is ``Etc/GMT-3``.
         """
         if not isinstance(bars.index, pd.DatetimeIndex):
             raise ValueError("session momentum requires a DatetimeIndex")
@@ -173,4 +198,12 @@ class SessionMomentumStrategy(BaseStrategy):
         super().__init__(len(self._signals))
 
     def _signal(self, idx: int) -> float:
+        """Process SessionMomentumStrategy.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Numeric result returned by ``_signal``.
+        """
         return float(self._signals[idx])

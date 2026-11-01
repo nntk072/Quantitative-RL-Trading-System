@@ -1,4 +1,4 @@
-"""Tests for the provenance-first thesis experiment run evidence index."""
+"""Tests for the provenance-first trade_setup experiment run evidence index."""
 
 from __future__ import annotations
 
@@ -84,7 +84,7 @@ def test_index_hashes_experiment_run_artifacts_and_verifies_resume_checkpoint(
         for artifact in index["experiment_run_artifacts"]
     )
 
-    output = experiment_run / "reports" / "thesis_evidence_index.json"
+    output = experiment_run / "reports" / "experiment_run_evidence_index.json"
     write_index(index, output)
     assert json.loads(output.read_text())["schema"] == "aalto.experiment_run_evidence_index.v1"
 

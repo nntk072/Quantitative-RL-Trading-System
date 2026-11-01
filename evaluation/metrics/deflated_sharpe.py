@@ -16,10 +16,26 @@ _EULER = 0.5772156649015329
 
 
 def _norm_cdf(z: float) -> float:
+    """Process cdf.
+
+    Args:
+        z: Numeric value used for the z.
+
+    Returns:
+        Numeric result returned by ``_norm_cdf``.
+    """
     return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
 
 
 def _norm_ppf(p: float) -> float:
+    """Process ppf.
+
+    Args:
+        p: Numeric value used for the p.
+
+    Returns:
+        Numeric result returned by ``_norm_ppf``.
+    """
     lo, hi = -12.0, 12.0
     for _ in range(80):
         mid = 0.5 * (lo + hi)

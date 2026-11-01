@@ -28,6 +28,15 @@ LEGACY_BASELINE_CACHE = Path("data/prebuilt_feature_cache/baseline.parquet")
 
 
 def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
+    """Rebuild baseline experiment caches and record a recoverable report.
+
+    Args:
+        backup_dir: Destination for byte-preserving copies of existing caches.
+        report_path: Destination for the rebuild and verification report.
+
+    Returns:
+        Summary of cache paths, hashes, and validation outcomes.
+    """
     resolved = resolve_variant("ladder_a0_flat", steps=100_000, seeds=[42])
     cfg = load_merged_config(
         argparse.Namespace(
@@ -136,6 +145,11 @@ def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the guarded baseline cache-rebuild command.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backup-dir", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)

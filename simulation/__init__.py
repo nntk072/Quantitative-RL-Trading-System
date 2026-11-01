@@ -1,3 +1,5 @@
+"""Simulation environments, event-driven backtests, and transition contracts."""
+
 # Offline simulation, backtesting, and parity contracts.
 from .contracts import SimulationTransition
 from .environment import TradingEnv

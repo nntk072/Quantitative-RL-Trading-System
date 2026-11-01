@@ -3,7 +3,6 @@
 env:
   strategy_actions: true
   trade_setup_actions: true
-  thesis_actions: false
   agent_direction_control: false
 
 features:

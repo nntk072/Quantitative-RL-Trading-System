@@ -24,14 +24,15 @@ class GRUEncoder(BaseFeaturesExtractor):
     Simpler and more stable than Transformer but may suffer from memory decay
     and delayed reaction to sudden spikes.
 
-    Parameters (pass via ``policy_kwargs["features_extractor_kwargs"]``)
-    --------------------------------------------------------------------
-    seq_len    : T – observation window length
-    n_features : F – features per bar
-    latent_dim : D – encoder output dimension
-    hidden_size: GRU hidden state size
-    num_layers : number of GRU layers
-    dropout    : dropout rate between GRU layers
+    Args:
+        seq_len: Observation window length in bars.
+        n_features: Number of input features per bar.
+        latent_dim: Width of the encoded sequence representation.
+        hidden_size: Width of the GRU hidden state.
+        num_layers: Number of stacked GRU layers.
+        dropout: Dropout probability between GRU layers when multiple layers are used.
+        account_dim: Optional width of account inputs; inferred from the observation
+            space when omitted.
     """
 
     def __init__(
@@ -45,6 +46,18 @@ class GRUEncoder(BaseFeaturesExtractor):
         dropout: float = 0.1,
         account_dim: int | None = None,
     ) -> None:
+        """Initialize GRUEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            hidden_size: Number specifying the hidden size for this operation.
+            num_layers: Numeric value used for the num layers.
+            dropout: Numeric value used for the dropout.
+            account_dim: Account dim used by the operation described above.
+        """
         super().__init__(observation_space, features_dim=latent_dim + ACCOUNT_EMB_DIM)
         self.seq_len = seq_len
         self.n_features = n_features
@@ -65,11 +78,27 @@ class GRUEncoder(BaseFeaturesExtractor):
         self.proj = nn.Linear(hidden_size, latent_dim)
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode sequence and account observations into one policy feature vector.
+
+        Args:
+            observations: Mapping containing batched seq and account tensors, plus optional valid-length metadata.
+
+        Returns:
+            Concatenated latent sequence representation and account embedding.
+        """
         seq = observations["seq"]  # [B, T, F]
         account = observations["account"]  # [B, A]
         lengths = _valid_lengths(seq, observations)
 
         def _encode(valid: torch.Tensor) -> torch.Tensor:
+            """Process GRUEncoder.
+
+            Args:
+                valid: Valid used by the operation described above.
+
+            Returns:
+                Result of process GRUEncoder.
+            """
             hidden, _ = self.gru(valid)
             return cast(torch.Tensor, self.proj(hidden[:, -1, :]))
 

@@ -24,13 +24,17 @@ from configuration.paths import repository_root
 ROOT = repository_root(__file__)
 CONFIG_PATH = ROOT / "config/base/default.yaml"
 COVERAGE_REPORT = (
-    ROOT / "docs/thesis/evidence/replacement_data_20261017/"
+    ROOT / "evidence/research/archive_2026/evidence/replacement_data_20261017/"
     "tick_execution_coverage_schedule_freeze_final.json"
 )
-TICK_AUDIT_HELPER = ROOT / "docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py"
+TICK_AUDIT_HELPER = (
+    ROOT
+    / "evidence/research/archive_2026/records/audit_tick_quality_current_experiment_run_2026-10-17.py"
+)
 TICKS_SOURCE = ROOT / "market_data/loading/ticks.py"
 DEFAULT_REPORT = (
-    ROOT / "docs/thesis/evidence/replacement_data_20261017/replacement_tick_quality_20261018.json"
+    ROOT
+    / "outputs/research_audits/replacement_data_20261017/replacement_tick_quality_20261018.json"
 )
 
 

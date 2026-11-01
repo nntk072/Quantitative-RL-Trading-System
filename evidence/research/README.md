@@ -5,6 +5,11 @@ limitations belong in [`docs/research/`](../../docs/research/README.md).
 Preserved output filenames may retain serialized terms or run identifiers so
 that the original records remain recoverable.
 
+The [2026 historical research archive](archive_2026/README.md) contains
+checksummed records migrated from a former project-planning directory. Those
+files are preserved as evidence and do not define current architecture,
+commands, or the active research queue.
+
 - [Entry-idea opportunity counts](entry_idea_opportunity_counts/entry_idea_opportunity_counts.md)
   and its annual/timeframe CSV tables. Counts describe cached contexts, not
   executed trades.

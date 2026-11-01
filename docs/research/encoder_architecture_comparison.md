@@ -72,8 +72,9 @@ terminal training-gate reason, `max_loss_stopped_trading`. Six training/test
 equity-to-PnL checks reconciled with zero mismatches. This is one seed, and the
 test period is exposed; do not infer an architectural ranking from it.
 
-The generated run report, per-arm summaries, logs, and manifests remain in
-[`the immutable experiment-run output`](../../outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/reports/experiment_run_results_summary.md).
+The generated run report, per-arm summaries, logs, and manifests remain in the
+local ignored `outputs/` tree and are intentionally not part of the published
+documentation.
 
 ## Conclusion
 

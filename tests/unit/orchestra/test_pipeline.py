@@ -610,3 +610,71 @@ def test_invoke_required_raises_when_all_models_fail(tmp_path, monkeypatch) -> N
     monkeypatch.setattr(pipeline, "_invoke", fake_invoke)
     with pytest.raises(RuntimeError):
         pipeline._invoke_required(primary, "triage", "prompt", 600)
+
+
+def test_critique_records_success_after_another_critic_fails(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False, critic_count=2)
+    pipeline.state = TaskState("task-critics", "review plan", pipeline.state_dir)
+    dummy = _dummy()
+    _patch_select(monkeypatch, pipeline, dummy)
+    spawned: list[str] = []
+    records: list[tuple[bool, str]] = []
+
+    def spawn(*_args, **_kwargs) -> str:
+        session = f"critic-{len(spawned) + 1}"
+        spawned.append(session)
+        return session
+
+    def collect(session: str, **_kwargs) -> str:
+        if session == "critic-1":
+            raise TimeoutError("session timed out")
+        return "review finding"
+
+    monkeypatch.setattr(pipeline.sessions, "spawn", spawn)
+    monkeypatch.setattr(pipeline.sessions, "collect", collect)
+    monkeypatch.setattr(
+        pipeline,
+        "_record_model_call",
+        lambda _model, _prompt, output, _task_id, success, _role: records.append((success, output)),
+    )
+
+    pipeline._phase_critique()
+
+    assert [item["output"] for item in pipeline.state.data["critic_outputs"]] == ["review finding"]
+    assert records == [(False, "session timed out"), (True, "review finding")]
+
+
+def test_critique_raises_when_every_critic_fails(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False, critic_count=1)
+    pipeline.state = TaskState("task-critics-fail", "review plan", pipeline.state_dir)
+    _patch_select(monkeypatch, pipeline, _dummy())
+    monkeypatch.setattr(pipeline.sessions, "spawn", lambda *_args, **_kwargs: "critic-1")
+    monkeypatch.setattr(
+        pipeline.sessions,
+        "collect",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("unavailable")),
+    )
+    monkeypatch.setattr(pipeline, "_record_model_call", lambda *_args, **_kwargs: None)
+
+    with pytest.raises(RuntimeError, match="All critics failed"):
+        pipeline._phase_critique()
+
+
+def test_synthesis_records_required_model_output(tmp_path, monkeypatch) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=False)
+    pipeline.state = TaskState("task-synthesis", "synthesize plans", pipeline.state_dir)
+    dummy = _dummy()
+    _patch_select(monkeypatch, pipeline, dummy)
+    invoked: list[tuple[str, str]] = []
+
+    def invoke(_model, role, prompt, **_kwargs):
+        invoked.append((role, prompt))
+        return "synthesis-session", "final plan"
+
+    monkeypatch.setattr(pipeline, "_invoke_required", invoke)
+
+    pipeline._phase_synthesis()
+
+    assert invoked[0][0] == "synthesizer"
+    assert pipeline.state.data["synthesis_output"] == "final plan"
+    assert pipeline.state.data["synthesis_model"] == dummy.display_name

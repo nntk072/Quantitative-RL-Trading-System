@@ -5,6 +5,11 @@ from loguru import logger
 
 
 def configure_logging(log_path: str = "logs/mt5.log") -> None:
+    """Configure console and rotating-file logging for the MT5 integration.
+
+    Args:
+        log_path: Destination path for the rotating application log.
+    """
     Path(log_path).parent.mkdir(parents=True, exist_ok=True)
     logger.remove()
 

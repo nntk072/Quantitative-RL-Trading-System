@@ -1,0 +1,2024 @@
+{
+  "created_for_branch": "main",
+  "files": [
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/a0_current_action_feature_audit_2026-10-14.json",
+      "new_sha256": "2637a60b14496d12f7f29802d16043addfa8834da696e9b794b2ec6e9bdf7887",
+      "old_path": "docs/thesis/a0_current_action_feature_audit_2026-10-14.json",
+      "old_sha256": "2637a60b14496d12f7f29802d16043addfa8834da696e9b794b2ec6e9bdf7887",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "preserved_external_copy; removed from repository",
+      "new_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_20261031/ai_use_log.md",
+      "new_sha256": "7d840f6d77ad6bea2655f9bfcfae965a3b60e99abd89a482179505707689e9f6",
+      "old_path": "docs/thesis/ai_use_log.md",
+      "old_sha256": "7d840f6d77ad6bea2655f9bfcfae965a3b60e99abd89a482179505707689e9f6",
+      "reason": "Academic-only material or the superseded project queue; keep recoverable outside the software repository."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/audit_checkpoint_full_split_budget_current_experiment_run_2026-10-16.py",
+      "new_sha256": "4e4a67688fbc835cc834f3002a7aedff3f802beaf77343629e86db9b57568c2a",
+      "old_path": "docs/thesis/audit_checkpoint_full_split_budget_current_experiment_run_2026-10-16.py",
+      "old_sha256": "4e4a67688fbc835cc834f3002a7aedff3f802beaf77343629e86db9b57568c2a",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/audit_experiment_run_feature_cache_resolution_current_source_2026-10-16.py",
+      "new_sha256": "5b8fecf5044ee142f832c10fa61802848e751d4a167ec933ca45d3a239357e99",
+      "old_path": "docs/thesis/audit_experiment_run_feature_cache_resolution_current_source_2026-10-16.py",
+      "old_sha256": "5b8fecf5044ee142f832c10fa61802848e751d4a167ec933ca45d3a239357e99",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/audit_feature_cache_raw_parity_current_source_2026-10-16.py",
+      "new_sha256": "7a758ac0d44177819f7d69bd199a816ab834c4687ad4292bbe009a5ce1ebbe71",
+      "old_path": "docs/thesis/audit_feature_cache_raw_parity_current_source_2026-10-16.py",
+      "old_sha256": "7a758ac0d44177819f7d69bd199a816ab834c4687ad4292bbe009a5ce1ebbe71",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/audit_real_market_feature_prefix_current_source_2026-10-16.py",
+      "new_sha256": "a2d5ef279e1e4ddc00e28826acec94dc789f7e070555a47714081a5f35c0c7f7",
+      "old_path": "docs/thesis/audit_real_market_feature_prefix_current_source_2026-10-16.py",
+      "old_sha256": "a2d5ef279e1e4ddc00e28826acec94dc789f7e070555a47714081a5f35c0c7f7",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/audit_real_market_fold_fit_scope_current_source_2026-10-16.py",
+      "new_sha256": "f406503f6fa040d60a6ba719d6c97bd3125f96590422dfc93e0b1eec0ee72167",
+      "old_path": "docs/thesis/audit_real_market_fold_fit_scope_current_source_2026-10-16.py",
+      "old_sha256": "f406503f6fa040d60a6ba719d6c97bd3125f96590422dfc93e0b1eec0ee72167",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/audit_real_market_fold_fit_scope_full_train_2026-10-17.py",
+      "new_sha256": "2c4a8cf8c20605454e127666bb101f7cdc5a531b175d75cab9ae522b972f2570",
+      "old_path": "docs/thesis/audit_real_market_fold_fit_scope_full_train_2026-10-17.py",
+      "old_sha256": "2c4a8cf8c20605454e127666bb101f7cdc5a531b175d75cab9ae522b972f2570",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/audit_tick_quality_current_experiment_run_2026-10-17.py",
+      "new_sha256": "ce3295627039c171512bc85abb7d8dc04e6c83d6f9a2faa19bc3b39889262604",
+      "old_path": "docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py",
+      "old_sha256": "ce3295627039c171512bc85abb7d8dc04e6c83d6f9a2faa19bc3b39889262604",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/checkpoint_load_cpu_18_seed42_live_20261014_1338.json",
+      "new_sha256": "75581ab0b06107c232e458479673d57134dfcac167884a2f080cfdd31e41f1e3",
+      "old_path": "docs/thesis/checkpoint_load_cpu_18_seed42_live_20261014_1338.json",
+      "old_sha256": "75581ab0b06107c232e458479673d57134dfcac167884a2f080cfdd31e41f1e3",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/checkpoint_schema_inventory_2026-10-13.json",
+      "new_sha256": "06a38531289dd95bad254b3219e7bdd1310a3518253a78afbeaea9aaea25b540",
+      "old_path": "docs/thesis/checkpoint_schema_inventory_2026-10-13.json",
+      "old_sha256": "06a38531289dd95bad254b3219e7bdd1310a3518253a78afbeaea9aaea25b540",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/eval_pack.md",
+      "new_sha256": "1f11f5319425466fdd8afcbe33f8c24520541c7468d524e5c114cf61dcaa98e6",
+      "old_path": "docs/thesis/eval_pack.md",
+      "old_sha256": "1f11f5319425466fdd8afcbe33f8c24520541c7468d524e5c114cf61dcaa98e6",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/README.md",
+      "new_sha256": "6b0c7a63069aa2357a1b2e81b76e4fbf046655b44fab0c0d7d0592db13367850",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/README.md",
+      "old_sha256": "6b0c7a63069aa2357a1b2e81b76e4fbf046655b44fab0c0d7d0592db13367850",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/action_histograms.csv",
+      "new_sha256": "28f8eeda942a757f335a607b721d0aaec4b766c8e288e086db3599683e660c64",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/action_histograms.csv",
+      "old_sha256": "28f8eeda942a757f335a607b721d0aaec4b766c8e288e086db3599683e660c64",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/build_exit_semantics_report.py.txt",
+      "new_sha256": "c0aa4f00551ecda93dafe4d07553da17ff5d6511270182462a0e2062058a7d78",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/build_exit_semantics_report.py.txt",
+      "old_sha256": "c0aa4f00551ecda93dafe4d07553da17ff5d6511270182462a0e2062058a7d78",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/config.yaml",
+      "new_sha256": "ea2361cb70bfde81e3b95a177f44783fbbaffffc4bd29fbe72805d277cf742b0",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/config.yaml",
+      "old_sha256": "ea2361cb70bfde81e3b95a177f44783fbbaffffc4bd29fbe72805d277cf742b0",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/counterfactual_patch.diff",
+      "new_sha256": "7c77a75683795adf2a082d0373e605be0ddb83b6147df876374ac4cdf941ba60",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/counterfactual_patch.diff",
+      "old_sha256": "7c77a75683795adf2a082d0373e605be0ddb83b6147df876374ac4cdf941ba60",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/decision_gates.json",
+      "new_sha256": "e1f704540e900a1b190760838b0b39f3adc5d890b32308e2351943f25b84c936",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/decision_gates.json",
+      "old_sha256": "e1f704540e900a1b190760838b0b39f3adc5d890b32308e2351943f25b84c936",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_breakdown.csv",
+      "new_sha256": "195d4271b166d82d59ec673a5d8dbf23702e681686770ead10df0255995fd281",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/exit_breakdown.csv",
+      "old_sha256": "195d4271b166d82d59ec673a5d8dbf23702e681686770ead10df0255995fd281",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_semantics_equity_v2_vs_v3_train2025.png",
+      "new_sha256": "2230f4f477aa5b0e5989c1db82fde4323a87f99d7be330f209f2effe50b82fe2",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/exit_semantics_equity_v2_vs_v3_train2025.png",
+      "old_sha256": "2230f4f477aa5b0e5989c1db82fde4323a87f99d7be330f209f2effe50b82fe2",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_semantics_findings.md",
+      "new_sha256": "f150693db5b06561e1ed514ec55a47f725f7dcfd77730898799b3bb4ef3d2bcc",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/exit_semantics_findings.md",
+      "old_sha256": "f150693db5b06561e1ed514ec55a47f725f7dcfd77730898799b3bb4ef3d2bcc",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/fixed_entry_shadow_report.md",
+      "new_sha256": "65c7ed35d5dac6e4303cb48f1eb4b47986d00943772428f328cb98e1bf3c84e0",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/fixed_entry_shadow/fixed_entry_shadow_report.md",
+      "old_sha256": "65c7ed35d5dac6e4303cb48f1eb4b47986d00943772428f328cb98e1bf3c84e0",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/paired_delta_r.png",
+      "new_sha256": "196e8798d2e4414aa9a68e880de271040713a7d768902f6f3a66a849c4bf8d43",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/fixed_entry_shadow/paired_delta_r.png",
+      "old_sha256": "196e8798d2e4414aa9a68e880de271040713a7d768902f6f3a66a849c4bf8d43",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/paired_trades.csv",
+      "new_sha256": "3673cf2a77832ba14623a51b940d0821c29a01c507f2d9615e4143f0f7e8a395",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/fixed_entry_shadow/paired_trades.csv",
+      "old_sha256": "3673cf2a77832ba14623a51b940d0821c29a01c507f2d9615e4143f0f7e8a395",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/provenance.json",
+      "new_sha256": "f162c111668a7ed4467993955aa6edb4ca493961d5845d77acf47927a4718d3b",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/fixed_entry_shadow/provenance.json",
+      "old_sha256": "f162c111668a7ed4467993955aa6edb4ca493961d5845d77acf47927a4718d3b",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/shadow_events.jsonl",
+      "new_sha256": "c7fea235575d9f05d0bc9962c559d23c94b513ee108483630cd26ae350d17c54",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/fixed_entry_shadow/shadow_events.jsonl",
+      "old_sha256": "c7fea235575d9f05d0bc9962c559d23c94b513ee108483630cd26ae350d17c54",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/original_exit_action_semantics_proposal.md",
+      "new_sha256": "862c3ef67f0e705ee6901b09603363e96a242769461ae945f1bf1de85255ad06",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/original_exit_action_semantics_proposal.md",
+      "old_sha256": "862c3ef67f0e705ee6901b09603363e96a242769461ae945f1bf1de85255ad06",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase1_comparison.json",
+      "new_sha256": "852767c245f4e34b2ce4abe75389d0b818ae7947cec895631e78da1823e69976",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase1_comparison.json",
+      "old_sha256": "852767c245f4e34b2ce4abe75389d0b818ae7947cec895631e78da1823e69976",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_cohort_summary.json",
+      "new_sha256": "050fc201cc3bd346b62a895c1dbd612ab764a4c155f15f03543d8200f9b20f92",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase2_cohort_summary.json",
+      "old_sha256": "050fc201cc3bd346b62a895c1dbd612ab764a4c155f15f03543d8200f9b20f92",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_common_entry_cohort.csv",
+      "new_sha256": "26dd074b5dda0219f0edb0e73b724fc00a500f0b5fe2bc6a644a10b50fe10aa7",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase2_common_entry_cohort.csv",
+      "old_sha256": "26dd074b5dda0219f0edb0e73b724fc00a500f0b5fe2bc6a644a10b50fe10aa7",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_common_entry_monthly.csv",
+      "new_sha256": "e25276b3371afe226b5f7155d15fe1c1183becc021e3f6aaa5cfe8e8d86078bd",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase2_common_entry_monthly.csv",
+      "old_sha256": "e25276b3371afe226b5f7155d15fe1c1183becc021e3f6aaa5cfe8e8d86078bd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_entry_cohort.py.txt",
+      "new_sha256": "ce5645b74b1a31c3d037f5732239c73c5edb3cf77bf63e6cd6a742ecd35144cd",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase2_entry_cohort.py.txt",
+      "old_sha256": "ce5645b74b1a31c3d037f5732239c73c5edb3cf77bf63e6cd6a742ecd35144cd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort.csv",
+      "new_sha256": "ad8e725c51b7a4ee8168c0c0af1f2a4c92fa22fa9332577bf131ec42158f414b",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort.csv",
+      "old_sha256": "ad8e725c51b7a4ee8168c0c0af1f2a4c92fa22fa9332577bf131ec42158f414b",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort.py.txt",
+      "new_sha256": "38dc9c9df1839d0881c85a5978b444d4a79806b3e8b57c0b5c8494ed5224a0de",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort.py.txt",
+      "old_sha256": "38dc9c9df1839d0881c85a5978b444d4a79806b3e8b57c0b5c8494ed5224a0de",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort_summary.json",
+      "new_sha256": "e283694e046e9148076254e44b543d238448afab1677c6f667c7d567d0b8b23e",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort_summary.json",
+      "old_sha256": "e283694e046e9148076254e44b543d238448afab1677c6f667c7d567d0b8b23e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_unmatched_entry_cohort.csv",
+      "new_sha256": "e92bb2697d431a51049cd3e56c4ee9d24fe44609f1cd3659a9fb631065f1d058",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/phase2_unmatched_entry_cohort.csv",
+      "old_sha256": "e92bb2697d431a51049cd3e56c4ee9d24fe44609f1cd3659a9fb631065f1d058",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/provenance.json",
+      "new_sha256": "9f7f616d10b18896d079e62ff9ba9cd1304bfe15799d613a4f73c869398f38b9",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/provenance.json",
+      "old_sha256": "9f7f616d10b18896d079e62ff9ba9cd1304bfe15799d613a4f73c869398f38b9",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/time_slice_comparison.csv",
+      "new_sha256": "811f5c61c083cd9e44998288c44894c98be4ca1f18cfed0763149629e4ab061e",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/time_slice_comparison.csv",
+      "old_sha256": "811f5c61c083cd9e44998288c44894c98be4ca1f18cfed0763149629e4ab061e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/train_only_screen.json",
+      "new_sha256": "62be92be33c01334f6c08eab6ce00a954155288c5d4485180982005399c6c21c",
+      "old_path": "docs/thesis/evidence/exit_action_semantics_20261024/train_only_screen.json",
+      "old_sha256": "62be92be33c01334f6c08eab6ce00a954155288c5d4485180982005399c6c21c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/g1_2026-10-16/audit_real_market_feature_prefix_causality_mainfix.py.txt",
+      "new_sha256": "940a9a5057b676c4e01bff0eef1e658bbc7b3dc44a0109345dd294b94c20d67e",
+      "old_path": "docs/thesis/evidence/g1_2026-10-16/audit_real_market_feature_prefix_causality_mainfix.py.txt",
+      "old_sha256": "940a9a5057b676c4e01bff0eef1e658bbc7b3dc44a0109345dd294b94c20d67e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/g1_2026-10-16/g1_feature_cache_raw_parity_20261016.json",
+      "new_sha256": "890ba40c92bb2ec73a1d2909540985e958bc31d09f17e94248d8acadddb50e67",
+      "old_path": "docs/thesis/evidence/g1_2026-10-16/g1_feature_cache_raw_parity_20261016.json",
+      "old_sha256": "890ba40c92bb2ec73a1d2909540985e958bc31d09f17e94248d8acadddb50e67",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/g1_2026-10-16/g1_feature_cache_raw_parity_20261016.py.txt",
+      "new_sha256": "dca3c4135b57d16091b81f67789bf754126d1e5b2f451ad9e91b1967f15e2032",
+      "old_path": "docs/thesis/evidence/g1_2026-10-16/g1_feature_cache_raw_parity_20261016.py.txt",
+      "old_sha256": "dca3c4135b57d16091b81f67789bf754126d1e5b2f451ad9e91b1967f15e2032",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/g1_2026-10-16/g1_full_split_budget_math_20261016.py.txt",
+      "new_sha256": "cc8c43c407c4d06f000c63b5a9644c9b141e8d3cb9082b8bb344e02f10c768b8",
+      "old_path": "docs/thesis/evidence/g1_2026-10-16/g1_full_split_budget_math_20261016.py.txt",
+      "old_sha256": "cc8c43c407c4d06f000c63b5a9644c9b141e8d3cb9082b8bb344e02f10c768b8",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/g1_2026-10-16/g1_raw_m1_quality_audit_20261016.py.txt",
+      "new_sha256": "5ac84f3f4855c3717c339be98b0d6a6b0a6c08858b88d4b351f31fe6f32d2410",
+      "old_path": "docs/thesis/evidence/g1_2026-10-16/g1_raw_m1_quality_audit_20261016.py.txt",
+      "old_sha256": "5ac84f3f4855c3717c339be98b0d6a6b0a6c08858b88d4b351f31fe6f32d2410",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/g1_2026-10-16/g1_tick_quality_scan_20261016.py.txt",
+      "new_sha256": "e9f7770cfcca5254efa081192f496a7e9161b8c24fdb779cec49830d827b7e49",
+      "old_path": "docs/thesis/evidence/g1_2026-10-16/g1_tick_quality_scan_20261016.py.txt",
+      "old_sha256": "e9f7770cfcca5254efa081192f496a7e9161b8c24fdb779cec49830d827b7e49",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/g1_2026-10-16/real_market_feature_prefix_audit.md",
+      "new_sha256": "ed153e5b35d728e5910bce7898688ff314f8facdf0c72d8677fe4dbfe971633e",
+      "old_path": "docs/thesis/evidence/g1_2026-10-16/real_market_feature_prefix_audit.md",
+      "old_sha256": "ed153e5b35d728e5910bce7898688ff314f8facdf0c72d8677fe4dbfe971633e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/hashseed_runtime_provenance.md",
+      "new_sha256": "0220b785fdff80cbf8e6b86767e8d2892d33ebb65ba4b2c15ae8cdc7413616cd",
+      "old_path": "docs/thesis/evidence/hashseed_runtime_provenance.md",
+      "old_sha256": "0220b785fdff80cbf8e6b86767e8d2892d33ebb65ba4b2c15ae8cdc7413616cd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p1_tick_execution_coverage_20261020_job21070280.json",
+      "new_sha256": "39cc097505e70e186b07a706dcbb9ac7577ddab968a7cf2bf376844fd1e4a00a",
+      "old_path": "docs/thesis/evidence/p1_tick_execution_coverage_20261020_job21070280.json",
+      "old_sha256": "39cc097505e70e186b07a706dcbb9ac7577ddab968a7cf2bf376844fd1e4a00a",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p2_engineering_reanalysis.md",
+      "new_sha256": "b39d641381291bc7b55b09a9383fb57a4645fda127f6848bdde6ca70057cf788",
+      "old_path": "docs/thesis/evidence/p2_engineering_reanalysis.md",
+      "old_sha256": "b39d641381291bc7b55b09a9383fb57a4645fda127f6848bdde6ca70057cf788",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p2_frame_bundle_a4b_seed50_test_20261017_gh200_retry1.json",
+      "new_sha256": "e10a34d4cc63535a8ae177e7db91d97b6b1ddfdcaaac9b146b427ca66e4bd4b5",
+      "old_path": "docs/thesis/evidence/p2_frame_bundle_a4b_seed50_test_20261017_gh200_retry1.json",
+      "old_sha256": "e10a34d4cc63535a8ae177e7db91d97b6b1ddfdcaaac9b146b427ca66e4bd4b5",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p2_frame_bundle_a4b_seed50_test_20261017_job21019757.json",
+      "new_sha256": "c612a531b8d2fe1d4adbbdc7291568b8a1a86e0d4e1539141beff6a64b37a65a",
+      "old_path": "docs/thesis/evidence/p2_frame_bundle_a4b_seed50_test_20261017_job21019757.json",
+      "old_sha256": "c612a531b8d2fe1d4adbbdc7291568b8a1a86e0d4e1539141beff6a64b37a65a",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p2_frame_bundle_a4b_seed50_train_20261017_gh200_retry1.json",
+      "new_sha256": "abf23349a4bbdb60b9f44955d4ded7b5fc2d45dcb90ff9570eeb8ab37f231896",
+      "old_path": "docs/thesis/evidence/p2_frame_bundle_a4b_seed50_train_20261017_gh200_retry1.json",
+      "old_sha256": "abf23349a4bbdb60b9f44955d4ded7b5fc2d45dcb90ff9570eeb8ab37f231896",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p2_postfix_hashseed_replay_attempt_20261018.json",
+      "new_sha256": "7e0a7841e740d80744dee5ae824e4390fe41c84272f6795d19fd3010ade524bb",
+      "old_path": "docs/thesis/evidence/p2_postfix_hashseed_replay_attempt_20261018.json",
+      "old_sha256": "7e0a7841e740d80744dee5ae824e4390fe41c84272f6795d19fd3010ade524bb",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p2_report_verifier_20261018/exit_status.txt",
+      "new_sha256": "9f4a87d6225bd3c9fcdc206b269ef3afea743a0aedb0e1ff8d484219138e6ae5",
+      "old_path": "docs/thesis/evidence/p2_report_verifier_20261018/exit_status.txt",
+      "old_sha256": "9f4a87d6225bd3c9fcdc206b269ef3afea743a0aedb0e1ff8d484219138e6ae5",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p2_report_verifier_20261018/seed42_a0_hashseed1.json",
+      "new_sha256": "e64e8ce892c8778d24bbe881e0d1101cd6a50f76c91883a04080aad637cbb7e6",
+      "old_path": "docs/thesis/evidence/p2_report_verifier_20261018/seed42_a0_hashseed1.json",
+      "old_sha256": "e64e8ce892c8778d24bbe881e0d1101cd6a50f76c91883a04080aad637cbb7e6",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p2_report_verifier_20261018/seed42_a0_hashseed12.json",
+      "new_sha256": "cd90d118a996f6f67d09031f9514aa957027d572b376f6fc7ec9edda8dc5814c",
+      "old_path": "docs/thesis/evidence/p2_report_verifier_20261018/seed42_a0_hashseed12.json",
+      "old_sha256": "cd90d118a996f6f67d09031f9514aa957027d572b376f6fc7ec9edda8dc5814c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p3_checkpoint_eligibility_audit_20261018.json",
+      "new_sha256": "666b5928f96a080a8a4f3995f27ac32ca40b5847a874afd0b953f85caa1b1345",
+      "old_path": "docs/thesis/evidence/p3_checkpoint_eligibility_audit_20261018.json",
+      "old_sha256": "666b5928f96a080a8a4f3995f27ac32ca40b5847a874afd0b953f85caa1b1345",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p3_seed50_report_pack_recoverability_20261018.json",
+      "new_sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c",
+      "old_path": "docs/thesis/evidence/p3_seed50_report_pack_recoverability_20261018.json",
+      "old_sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p3_seed50_report_pack_recoverability_20261018_superseded_v1.json",
+      "new_sha256": "062e1417b4dd2eaba6f539edb934f9e3b31a030f4996eaf44394886e9bddd9bc",
+      "old_path": "docs/thesis/evidence/p3_seed50_report_pack_recoverability_20261018_superseded_v1.json",
+      "old_sha256": "062e1417b4dd2eaba6f539edb934f9e3b31a030f4996eaf44394886e9bddd9bc",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p3_seed50_report_pack_recoverability_20261018_superseded_v2.json",
+      "new_sha256": "28f1f0e90c3dd5a04481aaef50bf53d52662d735b151e3f93401decf4776bd3e",
+      "old_path": "docs/thesis/evidence/p3_seed50_report_pack_recoverability_20261018_superseded_v2.json",
+      "old_sha256": "28f1f0e90c3dd5a04481aaef50bf53d52662d735b151e3f93401decf4776bd3e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_1m_checkpoint_archive_integrity_20261018_1604.json",
+      "new_sha256": "1bd89d4f851928b3095929d50da7f8bf3cc590bffce6db2156db16ec07a0f83b",
+      "old_path": "docs/thesis/evidence/p4_1m_checkpoint_archive_integrity_20261018_1604.json",
+      "old_sha256": "1bd89d4f851928b3095929d50da7f8bf3cc590bffce6db2156db16ec07a0f83b",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_2m_checkpoint_archive_integrity_20261018_1604.json",
+      "new_sha256": "9160979f1047f79d747ed93e9b333cec7c48e2e93adcdc139e2f3911edc8cee6",
+      "old_path": "docs/thesis/evidence/p4_2m_checkpoint_archive_integrity_20261018_1604.json",
+      "old_sha256": "9160979f1047f79d747ed93e9b333cec7c48e2e93adcdc139e2f3911edc8cee6",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_campaign_source_identity_20261018_1635.json",
+      "new_sha256": "a74a22b3d2c8de8b986aa32873e4de79495c0c9ad2b32d1a76bbb78042f77abd",
+      "old_path": "docs/thesis/evidence/p4_campaign_source_identity_20261018_1635.json",
+      "old_sha256": "a74a22b3d2c8de8b986aa32873e4de79495c0c9ad2b32d1a76bbb78042f77abd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_20261018_1648.json",
+      "new_sha256": "d68a7c6da8a02340f7cd60c3e36b3939a9af92d5810876631fa471dd8c965ce6",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_20261018_1648.json",
+      "old_sha256": "d68a7c6da8a02340f7cd60c3e36b3939a9af92d5810876631fa471dd8c965ce6",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1657.json",
+      "new_sha256": "f044590e92d435d3135026e4099d9f8176d8caac88ce195fda4e71dd0126a8d0",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1657.json",
+      "old_sha256": "f044590e92d435d3135026e4099d9f8176d8caac88ce195fda4e71dd0126a8d0",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1701.json",
+      "new_sha256": "f9a5fead79b4a8dcb618a87eeb21365ab4f4e2759fe2217d36d75ad2c01ae1e0",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1701.json",
+      "old_sha256": "f9a5fead79b4a8dcb618a87eeb21365ab4f4e2759fe2217d36d75ad2c01ae1e0",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1702.json",
+      "new_sha256": "61633c8f006aff45522277fd5e1211de0e919a6081a1914b7915e64118350e21",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1702.json",
+      "old_sha256": "61633c8f006aff45522277fd5e1211de0e919a6081a1914b7915e64118350e21",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1707.json",
+      "new_sha256": "cdb4d40d1c45f1dfb9e26d273c235c6721032251411e2b94a042dd6e2e966ce6",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1707.json",
+      "old_sha256": "cdb4d40d1c45f1dfb9e26d273c235c6721032251411e2b94a042dd6e2e966ce6",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1710.json",
+      "new_sha256": "1eaef46dcf2bc007272b0e83442ff9acc757f6aad2cb11e13884122cd9b11707",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1710.json",
+      "old_sha256": "1eaef46dcf2bc007272b0e83442ff9acc757f6aad2cb11e13884122cd9b11707",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1720.json",
+      "new_sha256": "bf02f163183580e511547697e1dfa61eb804599023807d179c1eafcd7acc23ef",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1720.json",
+      "old_sha256": "bf02f163183580e511547697e1dfa61eb804599023807d179c1eafcd7acc23ef",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1723.json",
+      "new_sha256": "f45cf9351e5e0ff85a1df8e56d6f55299d7337dfcc4032dab432bc075ec5d387",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1723.json",
+      "old_sha256": "f45cf9351e5e0ff85a1df8e56d6f55299d7337dfcc4032dab432bc075ec5d387",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1724.json",
+      "new_sha256": "55a8caa3e74b537afde9af2cde43b8f3ea9575482f660288ea0b436ae39686cc",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1724.json",
+      "old_sha256": "55a8caa3e74b537afde9af2cde43b8f3ea9575482f660288ea0b436ae39686cc",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1727.json",
+      "new_sha256": "83a6499bf1bb2416bff8128b9cd4f51b7857505f2a371966d0095eea79c9e99e",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1727.json",
+      "old_sha256": "83a6499bf1bb2416bff8128b9cd4f51b7857505f2a371966d0095eea79c9e99e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1728.json",
+      "new_sha256": "47f41304db3531012cc9acc02114a4f779cc3768b980a6cb10bf4658a3f53fee",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1728.json",
+      "old_sha256": "47f41304db3531012cc9acc02114a4f779cc3768b980a6cb10bf4658a3f53fee",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1730.json",
+      "new_sha256": "25319e32e5c8638997d3c6a89dce9d633e1cdbf0091c815bfdfc070d303d7054",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1730.json",
+      "old_sha256": "25319e32e5c8638997d3c6a89dce9d633e1cdbf0091c815bfdfc070d303d7054",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1731.json",
+      "new_sha256": "903bd7c175f6630c61a6bf9b32d34a9c7bd31a2fa7022f226a2cd7758ca971a8",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1731.json",
+      "old_sha256": "903bd7c175f6630c61a6bf9b32d34a9c7bd31a2fa7022f226a2cd7758ca971a8",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1732.json",
+      "new_sha256": "4645b636e5f238620d3cb36d768fbc7cea3c616f33d60dcc8142dc395c702b38",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1732.json",
+      "old_sha256": "4645b636e5f238620d3cb36d768fbc7cea3c616f33d60dcc8142dc395c702b38",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1733.json",
+      "new_sha256": "91cf4b80ecf24ea5fb969f159d5d503780c1dd5cd886a2a2d0f186d2138165f3",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1733.json",
+      "old_sha256": "91cf4b80ecf24ea5fb969f159d5d503780c1dd5cd886a2a2d0f186d2138165f3",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1750.json",
+      "new_sha256": "807cf39b4de238bf086ea660706a48f3308d8baa8a272a89582ab263e7e58b67",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1750.json",
+      "old_sha256": "807cf39b4de238bf086ea660706a48f3308d8baa8a272a89582ab263e7e58b67",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_1800.json",
+      "new_sha256": "b9128ee850d5e336ce4564d92ffb8fb758d065c455d3c59322a975b28f2dd7c0",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_1800.json",
+      "old_sha256": "b9128ee850d5e336ce4564d92ffb8fb758d065c455d3c59322a975b28f2dd7c0",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2132.json",
+      "new_sha256": "4a83891a669983b7b8820b60c09ebc814205f59195cedc2e798d3dd1918135b7",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2132.json",
+      "old_sha256": "4a83891a669983b7b8820b60c09ebc814205f59195cedc2e798d3dd1918135b7",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2144.json",
+      "new_sha256": "befc8b231969bccb52d8cb4f1ff8d8940a3ad96e005e88f7aff1f84f89633393",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2144.json",
+      "old_sha256": "befc8b231969bccb52d8cb4f1ff8d8940a3ad96e005e88f7aff1f84f89633393",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2147.json",
+      "new_sha256": "b667dccec6d0fa8fee7cdea675cd5995424e1002a860e53bc3bd41ea4369f37e",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2147.json",
+      "old_sha256": "b667dccec6d0fa8fee7cdea675cd5995424e1002a860e53bc3bd41ea4369f37e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2148.json",
+      "new_sha256": "2733c6fe550022e0776b7bde4e6f8d410acb79175554a46f3d8e2c401b46f17a",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2148.json",
+      "old_sha256": "2733c6fe550022e0776b7bde4e6f8d410acb79175554a46f3d8e2c401b46f17a",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2149.json",
+      "new_sha256": "fe8d2cb23497ff99d4a6fe6d3c90c03ec6fe4a52d83924d673ac90a7c8256819",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2149.json",
+      "old_sha256": "fe8d2cb23497ff99d4a6fe6d3c90c03ec6fe4a52d83924d673ac90a7c8256819",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2152.json",
+      "new_sha256": "d5932d00d4b38c079fa6e84ce16855ae8cacd82fe701e646ddcc5bcd6492d123",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2152.json",
+      "old_sha256": "d5932d00d4b38c079fa6e84ce16855ae8cacd82fe701e646ddcc5bcd6492d123",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2154.json",
+      "new_sha256": "d4452f924d2168f425595381f15be11b2fabbd798af1a5b070872b90f19668f2",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2154.json",
+      "old_sha256": "d4452f924d2168f425595381f15be11b2fabbd798af1a5b070872b90f19668f2",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2207.json",
+      "new_sha256": "7eec988ed053109fb1b54a28a057c3be670c49a36c24c4acdcc8623fde421014",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2207.json",
+      "old_sha256": "7eec988ed053109fb1b54a28a057c3be670c49a36c24c4acdcc8623fde421014",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2221.json",
+      "new_sha256": "828815052362738cc90f0ef154768bace8cdfcb59135b747e784e2113b15fe2c",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2221.json",
+      "old_sha256": "828815052362738cc90f0ef154768bace8cdfcb59135b747e784e2113b15fe2c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_archive_integrity_delta_20261018_2300.json",
+      "new_sha256": "7a5ed85ade4c6d2bb30719d2aab5569533cca138e9811949cdae317645e5adce",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_archive_integrity_delta_20261018_2300.json",
+      "old_sha256": "7a5ed85ade4c6d2bb30719d2aab5569533cca138e9811949cdae317645e5adce",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_recovery_delta_20261018_1629.json",
+      "new_sha256": "a3b601969b61f483e92756dfb8a5c9798de53b97205e3c3845284ddf1d555fa1",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_recovery_delta_20261018_1629.json",
+      "old_sha256": "a3b601969b61f483e92756dfb8a5c9798de53b97205e3c3845284ddf1d555fa1",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_recovery_delta_20261018_1630.json",
+      "new_sha256": "438961c1735ee5810188b811e8a1ba6b80649497f7ae42300e11b6d8a7af51dd",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_recovery_delta_20261018_1630.json",
+      "old_sha256": "438961c1735ee5810188b811e8a1ba6b80649497f7ae42300e11b6d8a7af51dd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_recovery_delta_20261018_1631.json",
+      "new_sha256": "5f119b6ffe6130b971fbdfdd2b6d83429c22fb8b46004641573da5d4c3c4bd96",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_recovery_delta_20261018_1631.json",
+      "old_sha256": "5f119b6ffe6130b971fbdfdd2b6d83429c22fb8b46004641573da5d4c3c4bd96",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_recovery_delta_20261018_1632.json",
+      "new_sha256": "44b49d4be9a66a782f53c170685d088a9c5eaf251a5624c6c0b034bde9e60138",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_recovery_delta_20261018_1632.json",
+      "old_sha256": "44b49d4be9a66a782f53c170685d088a9c5eaf251a5624c6c0b034bde9e60138",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_recovery_delta_20261018_1634.json",
+      "new_sha256": "2ec8b59db84c1b34dc4ce2066c0cbd83c386f4e2d485504aae58601ac02468e4",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_recovery_delta_20261018_1634.json",
+      "old_sha256": "2ec8b59db84c1b34dc4ce2066c0cbd83c386f4e2d485504aae58601ac02468e4",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_checkpoint_recovery_delta_20261018_1635.json",
+      "new_sha256": "8acf9187d99dae320f5c7ba24af709b6241d409a47db06837ff98245df3a8c4d",
+      "old_path": "docs/thesis/evidence/p4_checkpoint_recovery_delta_20261018_1635.json",
+      "old_sha256": "8acf9187d99dae320f5c7ba24af709b6241d409a47db06837ff98245df3a8c4d",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_distribution_fsm_signal_availability_20261018.json",
+      "new_sha256": "9876d2d20c5418cebaebdad0ef7d669c8a364f78dbbf3d3fa447b9501bd985c0",
+      "old_path": "docs/thesis/evidence/p4_distribution_fsm_signal_availability_20261018.json",
+      "old_sha256": "9876d2d20c5418cebaebdad0ef7d669c8a364f78dbbf3d3fa447b9501bd985c0",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_experiment_run_source_identity_20261018_1635.json",
+      "new_sha256": "9b65f72da217c896904bedfa88e1f617066401f05f4d9078ad160437785167e5",
+      "old_path": "docs/thesis/evidence/p4_experiment_run_source_identity_20261018_1635.json",
+      "old_sha256": "9b65f72da217c896904bedfa88e1f617066401f05f4d9078ad160437785167e5",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_failed_attempt2_checkpoint_recovery_20261018_1748.json",
+      "new_sha256": "2dc59f0fb338b8f4dd77ad86cd701adf5fce656a042827cc15886fb5a135f779",
+      "old_path": "docs/thesis/evidence/p4_failed_attempt2_checkpoint_recovery_20261018_1748.json",
+      "old_sha256": "2dc59f0fb338b8f4dd77ad86cd701adf5fce656a042827cc15886fb5a135f779",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_interim_baseline_fsm_viability_20261018.json",
+      "new_sha256": "ad6399faf78e835a352d23f3da0114d80514aa44360999fa932aaf8b4a9a7f79",
+      "old_path": "docs/thesis/evidence/p4_interim_baseline_fsm_viability_20261018.json",
+      "old_sha256": "ad6399faf78e835a352d23f3da0114d80514aa44360999fa932aaf8b4a9a7f79",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_latest_checkpoint_archive_integrity_20261018.json",
+      "new_sha256": "97fac13dd11266625698e29110ab5ca3ec00b77c6a5cdc77a63fa1e62b83aa00",
+      "old_path": "docs/thesis/evidence/p4_latest_checkpoint_archive_integrity_20261018.json",
+      "old_sha256": "97fac13dd11266625698e29110ab5ca3ec00b77c6a5cdc77a63fa1e62b83aa00",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_latest_checkpoint_loadability_20261018.json",
+      "new_sha256": "7c347c9d3f8331224106146921b2c985a986756d030b8edf779c76b00ef14f28",
+      "old_path": "docs/thesis/evidence/p4_latest_checkpoint_loadability_20261018.json",
+      "old_sha256": "7c347c9d3f8331224106146921b2c985a986756d030b8edf779c76b00ef14f28",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_latest_checkpoint_recovery_20261018_1627.json",
+      "new_sha256": "0ede37bb9257d8f21c2da20e6e03821692c3b75173dae2b219ec7a8068c7e5cd",
+      "old_path": "docs/thesis/evidence/p4_latest_checkpoint_recovery_20261018_1627.json",
+      "old_sha256": "0ede37bb9257d8f21c2da20e6e03821692c3b75173dae2b219ec7a8068c7e5cd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_latest_checkpoint_recovery_20261018_1636.json",
+      "new_sha256": "65acac8d37212f5732c617e23973ddebbafc747972ad44e66a33f96809fce00f",
+      "old_path": "docs/thesis/evidence/p4_latest_checkpoint_recovery_20261018_1636.json",
+      "old_sha256": "65acac8d37212f5732c617e23973ddebbafc747972ad44e66a33f96809fce00f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p4_live_screen_activity_20261018_1559.json",
+      "new_sha256": "06c1c145a69c39308a8b2a6e911404a06d5a98a5a6d3a7a0b6bc8e33f8886e66",
+      "old_path": "docs/thesis/evidence/p4_live_screen_activity_20261018_1559.json",
+      "old_sha256": "06c1c145a69c39308a8b2a6e911404a06d5a98a5a6d3a7a0b6bc8e33f8886e66",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_candidate_pair_config_audit_20261018.json",
+      "new_sha256": "c0f616509094dc29b93947e6326bdd79bbcbf8d45e76c127df16ce6f9f32ec6e",
+      "old_path": "docs/thesis/evidence/p6_candidate_pair_config_audit_20261018.json",
+      "old_sha256": "c0f616509094dc29b93947e6326bdd79bbcbf8d45e76c127df16ce6f9f32ec6e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_current_campaign_pair_config_preflight_20261019.json",
+      "new_sha256": "3321ae473c0c972348de29fbf7dca5c6a5f78fb1909bc1097460b232b973288f",
+      "old_path": "docs/thesis/evidence/p6_current_campaign_pair_config_preflight_20261019.json",
+      "old_sha256": "3321ae473c0c972348de29fbf7dca5c6a5f78fb1909bc1097460b232b973288f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_current_experiment_run_pair_config_preflight_20261019.json",
+      "new_sha256": "64b0ec50bd477daf5ba8d91dab8cd2308ef4a6bd5636a2a34f777452ee93e98f",
+      "old_path": "docs/thesis/evidence/p6_current_experiment_run_pair_config_preflight_20261019.json",
+      "old_sha256": "64b0ec50bd477daf5ba8d91dab8cd2308ef4a6bd5636a2a34f777452ee93e98f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/ladder_a4a_entry_fsm_hidden_qgrid025_paired_trades.csv",
+      "new_sha256": "6dfa98daa914065acdd74a23ad3516bb01972cefa3b60f303f4d4c9ef6ffbdae",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/ladder_a4a_entry_fsm_hidden_qgrid025_paired_trades.csv",
+      "old_sha256": "6dfa98daa914065acdd74a23ad3516bb01972cefa3b60f303f4d4c9ef6ffbdae",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/ladder_a4b_entry_fsm_qgrid025_paired_trades.csv",
+      "new_sha256": "45df9ffac7404869fd8f2701716f9e45ff887e8ad7d96226cd005734a319fbe5",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/ladder_a4b_entry_fsm_qgrid025_paired_trades.csv",
+      "old_sha256": "45df9ffac7404869fd8f2701716f9e45ff887e8ad7d96226cd005734a319fbe5",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.json",
+      "new_sha256": "c8974b1ed236e1c33176c2c001811f1a80547b86d158fb786784f89e17148a17",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.json",
+      "old_sha256": "c8974b1ed236e1c33176c2c001811f1a80547b86d158fb786784f89e17148a17",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
+      "new_sha256": "ab796284d32e12e579648f08966cfb533df18bac5ce5e0dc46bb8d249f7bafa5",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
+      "old_sha256": "ab796284d32e12e579648f08966cfb533df18bac5ce5e0dc46bb8d249f7bafa5",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_policy_monthly_dynamics.csv",
+      "new_sha256": "bbf9060a60df701a50f7b8b8ca6ce7bf3c0afeb8d4e121d1fece1e11f7658a65",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/p6_policy_monthly_dynamics.csv",
+      "old_sha256": "bbf9060a60df701a50f7b8b8ca6ce7bf3c0afeb8d4e121d1fece1e11f7658a65",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_session_momentum_monthly_control.csv",
+      "new_sha256": "9f3797ae16e4d91424b812665742d7fe176583e9b5e170fff898d5a83d2a871e",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/p6_session_momentum_monthly_control.csv",
+      "old_sha256": "9f3797ae16e4d91424b812665742d7fe176583e9b5e170fff898d5a83d2a871e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_session_momentum_trade_ledger.csv",
+      "new_sha256": "9a76ea9f1468b1082b452d1a6910de588ccd6ad8ee43f58ef46e982e2073a00f",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/p6_session_momentum_trade_ledger.csv",
+      "old_sha256": "9a76ea9f1468b1082b452d1a6910de588ccd6ad8ee43f58ef46e982e2073a00f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_training_dynamics_control.json",
+      "new_sha256": "9721154a97da238ae48661e6efbbdede8834854da3d376e50bd2694fd751c09f",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/p6_training_dynamics_control.json",
+      "old_sha256": "9721154a97da238ae48661e6efbbdede8834854da3d376e50bd2694fd751c09f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_training_dynamics_control.md",
+      "new_sha256": "56df018f27e9111108cce0d18fbc51c8446c9643095998f59ea2df3560ea6883",
+      "old_path": "docs/thesis/evidence/p6_monthly_entry_exit_20261025/p6_training_dynamics_control.md",
+      "old_sha256": "56df018f27e9111108cce0d18fbc51c8446c9643095998f59ea2df3560ea6883",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_seed50_training_viability_20261021.json",
+      "new_sha256": "4dfa4e10f8c5d44f3e254ec3e961922b7d12fc7cf85ae3466ca5a279968aacc2",
+      "old_path": "docs/thesis/evidence/p6_seed50_training_viability_20261021.json",
+      "old_sha256": "4dfa4e10f8c5d44f3e254ec3e961922b7d12fc7cf85ae3466ca5a279968aacc2",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_selected_pair_freeze_20261019.json",
+      "new_sha256": "c0ef55d073090e8b171a2651d8075e6d8132a2294ad9c04840431d6e37d55366",
+      "old_path": "docs/thesis/evidence/p6_selected_pair_freeze_20261019.json",
+      "old_sha256": "c0ef55d073090e8b171a2651d8075e6d8132a2294ad9c04840431d6e37d55366",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/p6_terminal_pair_config_audit_20261019.json",
+      "new_sha256": "ce087286df5f1403a7b16efab208006f4be8bbc202fbafa37aa712b1eeb1fcd4",
+      "old_path": "docs/thesis/evidence/p6_terminal_pair_config_audit_20261019.json",
+      "old_sha256": "ce087286df5f1403a7b16efab208006f4be8bbc202fbafa37aa712b1eeb1fcd4",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_campaign_20261018_failure_disposition.json",
+      "new_sha256": "0f122dc0ae9dd395a8c09c0bf9bd6e116e7acdf69f75ba9a72652faf4be1df33",
+      "old_path": "docs/thesis/evidence/replacement_campaign_20261018_failure_disposition.json",
+      "old_sha256": "0f122dc0ae9dd395a8c09c0bf9bd6e116e7acdf69f75ba9a72652faf4be1df33",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/audit_replacement_fold_fit_source.py.txt",
+      "new_sha256": "2c572f7bc5bbcd1febcb63bd3f47533ef2b52b64dce8bec7eb52d6fee87720ea",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/audit_replacement_fold_fit_source.py.txt",
+      "old_sha256": "2c572f7bc5bbcd1febcb63bd3f47533ef2b52b64dce8bec7eb52d6fee87720ea",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/audit_replacement_m1_quality_source.py.txt",
+      "new_sha256": "3a0dca2eb6ad37208cd93017473374bf01beb508991893672a39c9fb5e3e6ea6",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/audit_replacement_m1_quality_source.py.txt",
+      "old_sha256": "3a0dca2eb6ad37208cd93017473374bf01beb508991893672a39c9fb5e3e6ea6",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/audit_tick_timestamp_ties_source.py.txt",
+      "new_sha256": "d62605a04d2caa6cc1cd0bfdd365fc90affa6c65d2216c44fe455943a7cdb079",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/audit_tick_timestamp_ties_source.py.txt",
+      "old_sha256": "d62605a04d2caa6cc1cd0bfdd365fc90affa6c65d2216c44fe455943a7cdb079",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/candidate_holdout_archive_exposure_20261017_final.json",
+      "new_sha256": "d2c75d9831664b3c0dbd16fb2af19df207f2de37a9b4bdb71da481583f02bc5d",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/candidate_holdout_archive_exposure_20261017_final.json",
+      "old_sha256": "d2c75d9831664b3c0dbd16fb2af19df207f2de37a9b4bdb71da481583f02bc5d",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/candidate_holdout_archive_exposure_20261017_triaged.json",
+      "new_sha256": "9da5e6d913c69ab1f8940182daf112fbb60f2f24f97045e33b01cedc773d3243",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/candidate_holdout_archive_exposure_20261017_triaged.json",
+      "old_sha256": "9da5e6d913c69ab1f8940182daf112fbb60f2f24f97045e33b01cedc773d3243",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/data_partition_integrity_20261018.json",
+      "new_sha256": "9451efb8dc69d9e02c9a7fa53e059894e8edf754c0b09dc4db1d55c737e6ad27",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/data_partition_integrity_20261018.json",
+      "old_sha256": "9451efb8dc69d9e02c9a7fa53e059894e8edf754c0b09dc4db1d55c737e6ad27",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/data_source_user_attestation_20261018.json",
+      "new_sha256": "0a3aaa9ad0e1890ab928cbb094ff1cc7fea472be75a0157a602dc806078f6857",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/data_source_user_attestation_20261018.json",
+      "old_sha256": "0a3aaa9ad0e1890ab928cbb094ff1cc7fea472be75a0157a602dc806078f6857",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/full_period_data_cache_rebuild_20261017_job21020179_rerun1.json",
+      "new_sha256": "f0c5faba69b19c4277f4a302c7ccaf04cdc15802b3f743cd87aa56fe5824b91e",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/full_period_data_cache_rebuild_20261017_job21020179_rerun1.json",
+      "old_sha256": "f0c5faba69b19c4277f4a302c7ccaf04cdc15802b3f743cd87aa56fe5824b91e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/missing_m1_tick_reconstruction.json",
+      "new_sha256": "a029d2668cb4c6a03426a0e387f3659460a8aefedabd2368668dc19fcc3c5a33",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/missing_m1_tick_reconstruction.json",
+      "old_sha256": "a029d2668cb4c6a03426a0e387f3659460a8aefedabd2368668dc19fcc3c5a33",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/named_feature_cache_rebuild.json",
+      "new_sha256": "d8e0420efce107bc7169026f080e57614ce3552eea079bdc1b3d08cb75669fdb",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/named_feature_cache_rebuild.json",
+      "old_sha256": "d8e0420efce107bc7169026f080e57614ce3552eea079bdc1b3d08cb75669fdb",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/named_feature_cache_rebuild_18variant_20261017_job21020179.json",
+      "new_sha256": "50245309bc64e7257fdb7f0b2fd07816469e61d9e0d25725e164f0a651f14cc5",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/named_feature_cache_rebuild_18variant_20261017_job21020179.json",
+      "old_sha256": "50245309bc64e7257fdb7f0b2fd07816469e61d9e0d25725e164f0a651f14cc5",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/named_feature_cache_rebuild_18variant_20261017_job21020179_rerun1.json",
+      "new_sha256": "533aa4bd77dfdde6c0f480b4476b58eee0e2f9742fa4bd4190ca5d88fdd736e6",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/named_feature_cache_rebuild_18variant_20261017_job21020179_rerun1.json",
+      "old_sha256": "533aa4bd77dfdde6c0f480b4476b58eee0e2f9742fa4bd4190ca5d88fdd736e6",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/named_feature_cache_rebuild_18variant_20261018_job21020179_clockfix.json",
+      "new_sha256": "01ddd3212fe365c70fca872eff2919b1888753b509037d644692127a58ea0d67",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/named_feature_cache_rebuild_18variant_20261018_job21020179_clockfix.json",
+      "old_sha256": "01ddd3212fe365c70fca872eff2919b1888753b509037d644692127a58ea0d67",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/public_data_usage_review.md",
+      "new_sha256": "60de4beecc8e18b23e94468efdb272c6a226a8212d3cebf0870129fbc787ed4c",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/public_data_usage_review.md",
+      "old_sha256": "60de4beecc8e18b23e94468efdb272c6a226a8212d3cebf0870129fbc787ed4c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/real_market_feature_prefix_causality.json",
+      "new_sha256": "6aa7d8a475ed3a5292470bd1ca3b4c2819094b3ecf058d9929194e523395e67e",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/real_market_feature_prefix_causality.json",
+      "old_sha256": "6aa7d8a475ed3a5292470bd1ca3b4c2819094b3ecf058d9929194e523395e67e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/replacement_fold_fit.json",
+      "new_sha256": "3ab59e87820b84aaa0d3bc5d936bb899377de33abda6d9e3d37aac90b0a8ef9c",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/replacement_fold_fit.json",
+      "old_sha256": "3ab59e87820b84aaa0d3bc5d936bb899377de33abda6d9e3d37aac90b0a8ef9c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/replacement_fold_fit_v23_ftmo_clockfix_20261018_login_x86.json",
+      "new_sha256": "598b5d9652d70a99426321660c4b8e94a245fd01295a8069da61f783c6c81e5d",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/replacement_fold_fit_v23_ftmo_clockfix_20261018_login_x86.json",
+      "old_sha256": "598b5d9652d70a99426321660c4b8e94a245fd01295a8069da61f783c6c81e5d",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/replacement_m1_quality.json",
+      "new_sha256": "7a2af1d713632eecfb1ef91984da5b7d8592339acae8c91c947f0aef584d4c83",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/replacement_m1_quality.json",
+      "old_sha256": "7a2af1d713632eecfb1ef91984da5b7d8592339acae8c91c947f0aef584d4c83",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/replacement_m1_quality_20261018.json",
+      "new_sha256": "3061e545921a17c5afad2cd683ac3528f65d897dc7ea63cd87f49f782007d1b9",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/replacement_m1_quality_20261018.json",
+      "old_sha256": "3061e545921a17c5afad2cd683ac3528f65d897dc7ea63cd87f49f782007d1b9",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/replacement_tick_quality_20261018.json",
+      "new_sha256": "eaedc5a6a4b264ceaef1b679fdcbffeb863385defe08147a784eb76e4a0f4f06",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/replacement_tick_quality_20261018.json",
+      "old_sha256": "eaedc5a6a4b264ceaef1b679fdcbffeb863385defe08147a784eb76e4a0f4f06",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/schedule_freeze_validation_20261017.json",
+      "new_sha256": "b786de3e3db8fdc5e88427423789131aff00728cc06ada037254062f6a203d15",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/schedule_freeze_validation_20261017.json",
+      "old_sha256": "b786de3e3db8fdc5e88427423789131aff00728cc06ada037254062f6a203d15",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_cache_quality.json",
+      "new_sha256": "882dc69ff181ecc3fbe7c82c5d107eccf6831e14ede4b58281c50fd6b919ea49",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/tick_cache_quality.json",
+      "old_sha256": "882dc69ff181ecc3fbe7c82c5d107eccf6831e14ede4b58281c50fd6b919ea49",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_execution_coverage.json",
+      "new_sha256": "24a60b60371e376a35e875d71ba9dd5addefb8eba8c5c275886eb8440d31f16f",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/tick_execution_coverage.json",
+      "old_sha256": "24a60b60371e376a35e875d71ba9dd5addefb8eba8c5c275886eb8440d31f16f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_execution_coverage_schedule_freeze_final.json",
+      "new_sha256": "0354cab7951a1b8f8d626e8b6381c0332a1fc0990379b652f530bb5b908762c4",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/tick_execution_coverage_schedule_freeze_final.json",
+      "old_sha256": "0354cab7951a1b8f8d626e8b6381c0332a1fc0990379b652f530bb5b908762c4",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_timestamp_tie_policy_20261017.json",
+      "new_sha256": "52e4ce7275c1589dc70fef6be29f815311221529abd18baa07c0c5db64ea6238",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/tick_timestamp_tie_policy_20261017.json",
+      "old_sha256": "52e4ce7275c1589dc70fef6be29f815311221529abd18baa07c0c5db64ea6238",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_timestamp_ties.json",
+      "new_sha256": "462cd3e25b90b7c5f6203c1553681148a0d11ff0ee4523846ec227e172c9e81c",
+      "old_path": "docs/thesis/evidence/replacement_data_20261017/tick_timestamp_ties.json",
+      "old_sha256": "462cd3e25b90b7c5f6203c1553681148a0d11ff0ee4523846ec227e172c9e81c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_experiment_run_20261018_failure_disposition.json",
+      "new_sha256": "d83b87836cc9f0207616841f772f8659781573ff9fd9cadab9917d72b3a98943",
+      "old_path": "docs/thesis/evidence/replacement_experiment_run_20261018_failure_disposition.json",
+      "old_sha256": "d83b87836cc9f0207616841f772f8659781573ff9fd9cadab9917d72b3a98943",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/result_manifest_seed50_screen_disposition_draft_20261018.json",
+      "new_sha256": "f95098155a450ca8e1ff964d0f4e1495b57b20996bada18823520e4725d0ac64",
+      "old_path": "docs/thesis/evidence/result_manifest_seed50_screen_disposition_draft_20261018.json",
+      "old_sha256": "f95098155a450ca8e1ff964d0f4e1495b57b20996bada18823520e4725d0ac64",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/rq1_gate_candidate_config_preflight_20261017.json",
+      "new_sha256": "c4e8c65a48b89f4489134444b0f3f28fa9a6f0086cd1caeb459dadd8a77bcc04",
+      "old_path": "docs/thesis/evidence/rq1_gate_candidate_config_preflight_20261017.json",
+      "old_sha256": "c4e8c65a48b89f4489134444b0f3f28fa9a6f0086cd1caeb459dadd8a77bcc04",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/rq1_gate_candidate_config_preflight_20261018_clockfix.json",
+      "new_sha256": "9a864b3a02bdd89829f717210f83478871701715206b89b54658081650e9217f",
+      "old_path": "docs/thesis/evidence/rq1_gate_candidate_config_preflight_20261018_clockfix.json",
+      "old_sha256": "9a864b3a02bdd89829f717210f83478871701715206b89b54658081650e9217f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/rq1_gate_candidate_source_review_20261018.json",
+      "new_sha256": "77b3a94017b659ab18bc3c89e337aa8d2209a835005874837d82fcc117ecd37e",
+      "old_path": "docs/thesis/evidence/rq1_gate_candidate_source_review_20261018.json",
+      "old_sha256": "77b3a94017b659ab18bc3c89e337aa8d2209a835005874837d82fcc117ecd37e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/scripted_training_reachability_20261023.json",
+      "new_sha256": "047250f5fb712aa1fa2af9e64d47660932eb22c76cf40ab7e6ad558bbb34715f",
+      "old_path": "docs/thesis/evidence/scripted_training_reachability_20261023.json",
+      "old_sha256": "047250f5fb712aa1fa2af9e64d47660932eb22c76cf40ab7e6ad558bbb34715f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/seed50_artifact_search.md",
+      "new_sha256": "4c9b629e7dfd10a1fbfc4d128df39a949cc2981db8786e814cc27e0c6c100acb",
+      "old_path": "docs/thesis/evidence/seed50_artifact_search.md",
+      "old_sha256": "4c9b629e7dfd10a1fbfc4d128df39a949cc2981db8786e814cc27e0c6c100acb",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/seed50_recovery_source_manifest_20261018.json",
+      "new_sha256": "065e43657fe47600239909476a52945c8491d54fcfa5795f52af5f36f883e91f",
+      "old_path": "docs/thesis/evidence/seed50_recovery_source_manifest_20261018.json",
+      "old_sha256": "065e43657fe47600239909476a52945c8491d54fcfa5795f52af5f36f883e91f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/seed50_training_viability.md",
+      "new_sha256": "63b0eff7b12c812653f824700890650b8a5f253f4e0307c2a0f9040700d81d09",
+      "old_path": "docs/thesis/evidence/seed50_training_viability.md",
+      "old_sha256": "63b0eff7b12c812653f824700890650b8a5f253f4e0307c2a0f9040700d81d09",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/source_snapshots/analyze_monthly_trade_expectancy_and_exit_decomposition_20261025.source",
+      "new_sha256": "7d3d0b8a0cc9f4d061c474b03220df3478b94cdf99ee4f246aa0a492104c37cc",
+      "old_path": "docs/thesis/evidence/source_snapshots/analyze_monthly_trade_expectancy_and_exit_decomposition_20261025.source",
+      "old_sha256": "7d3d0b8a0cc9f4d061c474b03220df3478b94cdf99ee4f246aa0a492104c37cc",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/source_snapshots/analyze_training_policy_dynamics_and_rule_control_20261025.source",
+      "new_sha256": "785010eebf429351edcbfa07088d37cd832269423d69f3b4d6a0b76bd4e550bb",
+      "old_path": "docs/thesis/evidence/source_snapshots/analyze_training_policy_dynamics_and_rule_control_20261025.source",
+      "old_sha256": "785010eebf429351edcbfa07088d37cd832269423d69f3b4d6a0b76bd4e550bb",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/source_snapshots/build_paired_seed_payload_20261022.source",
+      "new_sha256": "bf2bdc48e3af49b36259cbe59a72294daca7ac918746f6eaf8b631ac52ca69ce",
+      "old_path": "docs/thesis/evidence/source_snapshots/build_paired_seed_payload_20261022.source",
+      "old_sha256": "bf2bdc48e3af49b36259cbe59a72294daca7ac918746f6eaf8b631ac52ca69ce",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/source_snapshots/build_tick_cost_stress_reports_20261022.source",
+      "new_sha256": "b16096f8931a1e7cf9adf139913f48204c3c740aa1204941756269851dcd1113",
+      "old_path": "docs/thesis/evidence/source_snapshots/build_tick_cost_stress_reports_20261022.source",
+      "old_sha256": "b16096f8931a1e7cf9adf139913f48204c3c740aa1204941756269851dcd1113",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/source_snapshots/manifest.json",
+      "new_sha256": "a313adf4bd7e468ee6a41b2c64583d3e552175f2ba9cd76bb088119ad4ff8b61",
+      "old_path": "docs/thesis/evidence/source_snapshots/manifest.json",
+      "old_sha256": "a313adf4bd7e468ee6a41b2c64583d3e552175f2ba9cd76bb088119ad4ff8b61",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/source_snapshots/replay_tick_cost_stress_20261022.source",
+      "new_sha256": "28a3969ee7cdf5acbca2c8c519d4bec466e5dccc18be8ffde99499c951341ec3",
+      "old_path": "docs/thesis/evidence/source_snapshots/replay_tick_cost_stress_20261022.source",
+      "old_sha256": "28a3969ee7cdf5acbca2c8c519d4bec466e5dccc18be8ffde99499c951341ec3",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/source_snapshots/smoke_test_checkpoint_recovery_20261031.source",
+      "new_sha256": "33f035ef32454c2834bb0b128a120bec9e156996da787a83e82ef769038362f9",
+      "old_path": "docs/thesis/evidence/source_snapshots/smoke_test_checkpoint_recovery_20261031.source",
+      "old_sha256": "33f035ef32454c2834bb0b128a120bec9e156996da787a83e82ef769038362f9",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/template_release_check.md",
+      "new_sha256": "ffdc00738503dca2e4c1fee36588bd1b6764632e27e916f066474411015e759a",
+      "old_path": "docs/thesis/evidence/template_release_check.md",
+      "old_sha256": "ffdc00738503dca2e4c1fee36588bd1b6764632e27e916f066474411015e759a",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018.json",
+      "new_sha256": "05f3905d8849bf7fbfbca433b1108c61104c7a3acdcd090ea3404e919675b912",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018.json",
+      "old_sha256": "05f3905d8849bf7fbfbca433b1108c61104c7a3acdcd090ea3404e919675b912",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1549.json",
+      "new_sha256": "f351e75288ff83d981fa1a93692de81354a1cbefb17483041e4d0bc5fad2a352",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1549.json",
+      "old_sha256": "f351e75288ff83d981fa1a93692de81354a1cbefb17483041e4d0bc5fad2a352",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1556.json",
+      "new_sha256": "2ce3e21e08d20d039bb7b550cced6fe8fa5b49d46066df9757aca3549988bb75",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1556.json",
+      "old_sha256": "2ce3e21e08d20d039bb7b550cced6fe8fa5b49d46066df9757aca3549988bb75",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1557.json",
+      "new_sha256": "d79ed03ba648e6177b987afdbd975f761f701c645d0f43592439fd8f8d4351bb",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1557.json",
+      "old_sha256": "d79ed03ba648e6177b987afdbd975f761f701c645d0f43592439fd8f8d4351bb",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1602.json",
+      "new_sha256": "cac0b976893fd94b37c601e6124ab445b63b7dbcc9c1a5f277486275c26cfba3",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1602.json",
+      "old_sha256": "cac0b976893fd94b37c601e6124ab445b63b7dbcc9c1a5f277486275c26cfba3",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1609.json",
+      "new_sha256": "8e908be5c9a95603bb28c90a41451ce53db5af94f6b011dbf2c528dc7f92cfe1",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1609.json",
+      "old_sha256": "8e908be5c9a95603bb28c90a41451ce53db5af94f6b011dbf2c528dc7f92cfe1",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1622.json",
+      "new_sha256": "57fc5471ed41de4203176c7adedcab90d149a1487136ce19538ced0da7c477d5",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1622.json",
+      "old_sha256": "57fc5471ed41de4203176c7adedcab90d149a1487136ce19538ced0da7c477d5",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1627.json",
+      "new_sha256": "10edf10db46bd2e5bc660e9220a43d5124fdd5be40939b1ba22cad8ab39b9c3f",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1627.json",
+      "old_sha256": "10edf10db46bd2e5bc660e9220a43d5124fdd5be40939b1ba22cad8ab39b9c3f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1629.json",
+      "new_sha256": "f8f9e28277767e17481704ec2f89cc3f97f8341acd3edeff74c6bb4959d404fb",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1629.json",
+      "old_sha256": "f8f9e28277767e17481704ec2f89cc3f97f8341acd3edeff74c6bb4959d404fb",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1630.json",
+      "new_sha256": "82ed2b30ddbccda9123759f4d8e25e2c11c007e8936b9b3264709f6be688c47f",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1630.json",
+      "old_sha256": "82ed2b30ddbccda9123759f4d8e25e2c11c007e8936b9b3264709f6be688c47f",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1631.json",
+      "new_sha256": "b08124c9b093f40569584b2a06166843ca93f2450186fae1211e5ffaa051f5ed",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1631.json",
+      "old_sha256": "b08124c9b093f40569584b2a06166843ca93f2450186fae1211e5ffaa051f5ed",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1632.json",
+      "new_sha256": "3b23c65576aed5d15ab3be580ffd57f715330c16e4a08c835594a32f2d95ffc8",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1632.json",
+      "old_sha256": "3b23c65576aed5d15ab3be580ffd57f715330c16e4a08c835594a32f2d95ffc8",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1634.json",
+      "new_sha256": "7f512d15f10d4f75178e419e1489b50c3baec3182c35182eb2e7ff9d2ddd32e7",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1634.json",
+      "old_sha256": "7f512d15f10d4f75178e419e1489b50c3baec3182c35182eb2e7ff9d2ddd32e7",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_replacement18_live_20261018_1635.json",
+      "new_sha256": "ed777036561957bf36788c21cee75922ac03ed0d1090d6cc3fb8e089822df457",
+      "old_path": "docs/thesis/evidence/trial_ledger_replacement18_live_20261018_1635.json",
+      "old_sha256": "ed777036561957bf36788c21cee75922ac03ed0d1090d6cc3fb8e089822df457",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_seed50_campaigns_20261018.json",
+      "new_sha256": "5cc9f0857bde327a68ca48735c29a758365cf84138763742fecdecc17ebf89cb",
+      "old_path": "docs/thesis/evidence/trial_ledger_seed50_campaigns_20261018.json",
+      "old_sha256": "5cc9f0857bde327a68ca48735c29a758365cf84138763742fecdecc17ebf89cb",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_seed50_experiment_runs_20261018.json",
+      "new_sha256": "5684af2b22bc14f4fbc22b82daa9ad9bbe940806620201c38d8d1bbdab44b5be",
+      "old_path": "docs/thesis/evidence/trial_ledger_seed50_experiment_runs_20261018.json",
+      "old_sha256": "5684af2b22bc14f4fbc22b82daa9ad9bbe940806620201c38d8d1bbdab44b5be",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/evidence/zero_trade_prevention_validation.md",
+      "new_sha256": "1087b240467d7f267f24c9b12699efb5e8adc49ab09c94d7dd97a9627b4ac3dd",
+      "old_path": "docs/thesis/evidence/zero_trade_prevention_validation.md",
+      "old_sha256": "1087b240467d7f267f24c9b12699efb5e8adc49ab09c94d7dd97a9627b4ac3dd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/figures/idea12_confirmed_retest_synthetic.svg",
+      "new_sha256": "83323861665a14f3190576a88f75bce807bda155791ec233193702b16862e14d",
+      "old_path": "docs/thesis/figures/idea12_confirmed_retest_synthetic.svg",
+      "old_sha256": "83323861665a14f3190576a88f75bce807bda155791ec233193702b16862e14d",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/figures/idea12_figure17_synthetic.svg",
+      "new_sha256": "93f43a7363ae62181db49ae33e459f4f537aaa76c2ea6ce9d01b364f9101e6c7",
+      "old_path": "docs/thesis/figures/idea12_figure17_synthetic.svg",
+      "old_sha256": "93f43a7363ae62181db49ae33e459f4f537aaa76c2ea6ce9d01b364f9101e6c7",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/figures/idea12_figure18_synthetic.svg",
+      "new_sha256": "8687f9c2a02c59b4092b892875f17cb0213f91f73f87486963eccd9b0d19f846",
+      "old_path": "docs/thesis/figures/idea12_figure18_synthetic.svg",
+      "old_sha256": "8687f9c2a02c59b4092b892875f17cb0213f91f73f87486963eccd9b0d19f846",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "moved and minimally edited",
+      "new_path": "docs/research/finding_card_template.md",
+      "new_sha256": "17e1e3db39f8611657c603f3890b73f2af6abb6bade5d63c73902526f76be698",
+      "old_path": "docs/thesis/finding_card_template.md",
+      "old_sha256": "4b733ea5789b77a668d9ee34fa6031664c6a2b3be18c3210f9cbb1d16113a709",
+      "reason": "Retain the reusable research finding template and remove its submission-specific field."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/g1_contract_tests_2026-10-16.json",
+      "new_sha256": "325197b1352b6e10d9c1e281bdfe421604b870989c36f783c10b989e5a20ed07",
+      "old_path": "docs/thesis/g1_contract_tests_2026-10-16.json",
+      "old_sha256": "325197b1352b6e10d9c1e281bdfe421604b870989c36f783c10b989e5a20ed07",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/legacy_a2_a3_checkpoint_exclusion_2026-10-13.json",
+      "new_sha256": "c1a7c9c9d75763a2ec797631cd9d8158f73894109102f16805c3ea3e9253f0d3",
+      "old_path": "docs/thesis/legacy_a2_a3_checkpoint_exclusion_2026-10-13.json",
+      "old_sha256": "c1a7c9c9d75763a2ec797631cd9d8158f73894109102f16805c3ea3e9253f0d3",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1332.json",
+      "new_sha256": "05eb275738e408b2b1c47d84c54eba2e7ded9d8eb3d94be1e6bc913f0a810c91",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1332.json",
+      "old_sha256": "05eb275738e408b2b1c47d84c54eba2e7ded9d8eb3d94be1e6bc913f0a810c91",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1348.json",
+      "new_sha256": "efdf664e4d32320d601fdc41f3ac581d19fcdb1d947b9fa01e40b9428aac17d9",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1348.json",
+      "old_sha256": "efdf664e4d32320d601fdc41f3ac581d19fcdb1d947b9fa01e40b9428aac17d9",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1352.json",
+      "new_sha256": "fc11afa4ac1779fb1179bbac452e369fa3fbfce262a536c010483d058082f209",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1352.json",
+      "old_sha256": "fc11afa4ac1779fb1179bbac452e369fa3fbfce262a536c010483d058082f209",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1656.json",
+      "new_sha256": "a5f98d2c20835caca79d58fa1398d7b90c7027f7f0f7f6ac0aa6c998446569e4",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1656.json",
+      "old_sha256": "a5f98d2c20835caca79d58fa1398d7b90c7027f7f0f7f6ac0aa6c998446569e4",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1706.json",
+      "new_sha256": "589278652a60337dabe1c5b34400d15310a3806f2dc460cd44345fb9b26a92a4",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1706.json",
+      "old_sha256": "589278652a60337dabe1c5b34400d15310a3806f2dc460cd44345fb9b26a92a4",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1707.json",
+      "new_sha256": "eb757f5256841f2cc85b14b6bc5775acd4d0f9c1c1d6269b99f2de4185b60500",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1707.json",
+      "old_sha256": "eb757f5256841f2cc85b14b6bc5775acd4d0f9c1c1d6269b99f2de4185b60500",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1709.json",
+      "new_sha256": "11132512e5f0e3a5048e0b53fee94552a205794a9d3898f016a631ac99c8cfa8",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1709.json",
+      "old_sha256": "11132512e5f0e3a5048e0b53fee94552a205794a9d3898f016a631ac99c8cfa8",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1711.json",
+      "new_sha256": "50b2558b0c6e27e01107d00ab9245afae3c696f4a81b6acb809c2f8d84ee8bad",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1711.json",
+      "old_sha256": "50b2558b0c6e27e01107d00ab9245afae3c696f4a81b6acb809c2f8d84ee8bad",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1713.json",
+      "new_sha256": "c9df47a35c5ed838f31969385c9b49b723e3bf99a623ee614ddaa48dd2a3ef12",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1713.json",
+      "old_sha256": "c9df47a35c5ed838f31969385c9b49b723e3bf99a623ee614ddaa48dd2a3ef12",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1715.json",
+      "new_sha256": "d3d74060630193779b6302dab79f7d4388d751185e2d1fd2b8990dfa4d58eb12",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1715.json",
+      "old_sha256": "d3d74060630193779b6302dab79f7d4388d751185e2d1fd2b8990dfa4d58eb12",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1716.json",
+      "new_sha256": "036942bc069eba84fd72bce78ed2d2287f18925b27dbd00bd15692b6d98d88d2",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1716.json",
+      "old_sha256": "036942bc069eba84fd72bce78ed2d2287f18925b27dbd00bd15692b6d98d88d2",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1719.json",
+      "new_sha256": "d0a3fa93bf2382fdd3f4a8f25f5b114523112bf425feb6fb5b3ab1558db3cfee",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1719.json",
+      "old_sha256": "d0a3fa93bf2382fdd3f4a8f25f5b114523112bf425feb6fb5b3ab1558db3cfee",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-14_1950.json",
+      "new_sha256": "1f38c5eb626741a3221c96ebe879e147dc8369e1976c2b0eb34e6db3da9110af",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1950.json",
+      "old_sha256": "1f38c5eb626741a3221c96ebe879e147dc8369e1976c2b0eb34e6db3da9110af",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1119.json",
+      "new_sha256": "db917fbec608289a42109d0a5152d7ffbe429290e6ddc0cb69088abd57e57d8d",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1119.json",
+      "old_sha256": "db917fbec608289a42109d0a5152d7ffbe429290e6ddc0cb69088abd57e57d8d",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1150.json",
+      "new_sha256": "762bc8a058c4f9c6bad95c3691aec5e93b5efc26bf1746f692780f4b64d7dfec",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1150.json",
+      "old_sha256": "762bc8a058c4f9c6bad95c3691aec5e93b5efc26bf1746f692780f4b64d7dfec",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1158.json",
+      "new_sha256": "c64a3645cf1d0d4dfbdae876ebb432a5daa4a661bee84cfd74d6f840afec4853",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1158.json",
+      "old_sha256": "c64a3645cf1d0d4dfbdae876ebb432a5daa4a661bee84cfd74d6f840afec4853",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1245.json",
+      "new_sha256": "22efeda8858c37783e2ddb95e5bab7e79f27b5460064ba01d2ba10a0640eb66a",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1245.json",
+      "old_sha256": "22efeda8858c37783e2ddb95e5bab7e79f27b5460064ba01d2ba10a0640eb66a",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1300.json",
+      "new_sha256": "26d9c8161a4465a4111748396bcb59af54c1922d0648d823b746fc34862b37be",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1300.json",
+      "old_sha256": "26d9c8161a4465a4111748396bcb59af54c1922d0648d823b746fc34862b37be",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1541.json",
+      "new_sha256": "1980b27bda39266ec896561f3f508f00b82d22d31cfd57a448205a4c24d0286a",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1541.json",
+      "old_sha256": "1980b27bda39266ec896561f3f508f00b82d22d31cfd57a448205a4c24d0286a",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1610.json",
+      "new_sha256": "de06d45289b37e69e1b2bef902428d3643c064b0f175028e96703cd2b571bd7a",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1610.json",
+      "old_sha256": "de06d45289b37e69e1b2bef902428d3643c064b0f175028e96703cd2b571bd7a",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1726.json",
+      "new_sha256": "33dfe6bab718ae0f99b0a3ed5f5c77f42b706dffa17bc3154dcf9ba29ce7c571",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1726.json",
+      "old_sha256": "33dfe6bab718ae0f99b0a3ed5f5c77f42b706dffa17bc3154dcf9ba29ce7c571",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_campaign_snapshot_2026-10-16_1750.json",
+      "new_sha256": "7e0c09c42d5c9e9a708b4e7fa1c4bf84eb236dfbfc3e62c56e4d89f12ec94358",
+      "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1750.json",
+      "old_sha256": "7e0c09c42d5c9e9a708b4e7fa1c4bf84eb236dfbfc3e62c56e4d89f12ec94358",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1332.json",
+      "new_sha256": "b042613049922505c8ac0b6d00709005c78d13e37bdbb0c42f6768e02097cfb5",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1332.json",
+      "old_sha256": "b042613049922505c8ac0b6d00709005c78d13e37bdbb0c42f6768e02097cfb5",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1348.json",
+      "new_sha256": "79a0bd40434875c568bd6052461339fc26ee2f1f74fad17dd089247840eb4dd0",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1348.json",
+      "old_sha256": "79a0bd40434875c568bd6052461339fc26ee2f1f74fad17dd089247840eb4dd0",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1352.json",
+      "new_sha256": "e7fdd012696e0d68e4cec7f6828f2e7ea60d88861a40bacfa55a1c04141a03f9",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1352.json",
+      "old_sha256": "e7fdd012696e0d68e4cec7f6828f2e7ea60d88861a40bacfa55a1c04141a03f9",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1656.json",
+      "new_sha256": "ba45d5be698cb7eef33b819c0a5623767143d5016aa759aa6ebf95ee86744c7b",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1656.json",
+      "old_sha256": "ba45d5be698cb7eef33b819c0a5623767143d5016aa759aa6ebf95ee86744c7b",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1706.json",
+      "new_sha256": "5d80e737569ad970d7e981eaf144d57ed945ccf2029e4d67628f8230e3d19e77",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1706.json",
+      "old_sha256": "5d80e737569ad970d7e981eaf144d57ed945ccf2029e4d67628f8230e3d19e77",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1707.json",
+      "new_sha256": "e9a08a97452955d52f578de27d829cca4fdf6fbea8ecf6eb12a431c99942f9fb",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1707.json",
+      "old_sha256": "e9a08a97452955d52f578de27d829cca4fdf6fbea8ecf6eb12a431c99942f9fb",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1709.json",
+      "new_sha256": "3a5f1b8d00844cc2a6d4b7e5f82b7ef7ab2dc0672255a66d147f66c38b4a3ac2",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1709.json",
+      "old_sha256": "3a5f1b8d00844cc2a6d4b7e5f82b7ef7ab2dc0672255a66d147f66c38b4a3ac2",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1711.json",
+      "new_sha256": "c649642605859efce2e449eb46052bd163e5ceb9b8e10013b36680bef8473546",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1711.json",
+      "old_sha256": "c649642605859efce2e449eb46052bd163e5ceb9b8e10013b36680bef8473546",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1713.json",
+      "new_sha256": "db5183f9890fe93f42f21aaf197d25a9e855e09cc7f5823c8bc1ad844ab198db",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1713.json",
+      "old_sha256": "db5183f9890fe93f42f21aaf197d25a9e855e09cc7f5823c8bc1ad844ab198db",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1715.json",
+      "new_sha256": "d2418172ae0d0dac877ab9f0b8291734120ca56ccde61c208b6aae90758f2251",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1715.json",
+      "old_sha256": "d2418172ae0d0dac877ab9f0b8291734120ca56ccde61c208b6aae90758f2251",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1716.json",
+      "new_sha256": "7ae36bac89545f256634d5a817c3b04b85e5552c1bfec9d3b2c09e3a74b5a494",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1716.json",
+      "old_sha256": "7ae36bac89545f256634d5a817c3b04b85e5552c1bfec9d3b2c09e3a74b5a494",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1719.json",
+      "new_sha256": "d40736c100f79578dcbdcf6555d3e840744a88b2a72636f0eabca6ee0d10f129",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1719.json",
+      "old_sha256": "d40736c100f79578dcbdcf6555d3e840744a88b2a72636f0eabca6ee0d10f129",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1950.json",
+      "new_sha256": "f3c8a7348ddf4cd40e53954c38748a6ab9b6c5a65f23c5778ecedb197ff3d16d",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1950.json",
+      "old_sha256": "f3c8a7348ddf4cd40e53954c38748a6ab9b6c5a65f23c5778ecedb197ff3d16d",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1119.json",
+      "new_sha256": "5d27a4efac0867c9cba8b1930566ecdb10473b1531265811dc596937a1dbb27c",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1119.json",
+      "old_sha256": "5d27a4efac0867c9cba8b1930566ecdb10473b1531265811dc596937a1dbb27c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1150.json",
+      "new_sha256": "96dae3a46662d677871376fc205330095e96ff3a55db8765a340ae872f406c5e",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1150.json",
+      "old_sha256": "96dae3a46662d677871376fc205330095e96ff3a55db8765a340ae872f406c5e",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1158.json",
+      "new_sha256": "ca9bd4a9ad8fdd9f410cbac4197564f3122dfac1ba63d7d7b2e0f346f1767f73",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1158.json",
+      "old_sha256": "ca9bd4a9ad8fdd9f410cbac4197564f3122dfac1ba63d7d7b2e0f346f1767f73",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1245.json",
+      "new_sha256": "33250abb65960ebf150aa2a17d8bf789237969bcab1d42c94e6718b9664ec735",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1245.json",
+      "old_sha256": "33250abb65960ebf150aa2a17d8bf789237969bcab1d42c94e6718b9664ec735",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1300.json",
+      "new_sha256": "2c30ca5bb4eecda36fccee94bf5594035329b7fd80a39efca826c9fc9afd87c9",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1300.json",
+      "old_sha256": "2c30ca5bb4eecda36fccee94bf5594035329b7fd80a39efca826c9fc9afd87c9",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1541.json",
+      "new_sha256": "3561811e278eeeb71d9bb999edc5fd72b2335c973aa28d519352e61a248a4d7d",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1541.json",
+      "old_sha256": "3561811e278eeeb71d9bb999edc5fd72b2335c973aa28d519352e61a248a4d7d",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1610.json",
+      "new_sha256": "844b34a7f831601cd637441d49f8b4be0eb41cde851512e194ff2954e8e91d99",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1610.json",
+      "old_sha256": "844b34a7f831601cd637441d49f8b4be0eb41cde851512e194ff2954e8e91d99",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1726.json",
+      "new_sha256": "132a89efa770e8af6a1ec9403da3e5f2d4d68f7b775fe72dfd7930812f8ed09b",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1726.json",
+      "old_sha256": "132a89efa770e8af6a1ec9403da3e5f2d4d68f7b775fe72dfd7930812f8ed09b",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1750.json",
+      "new_sha256": "6aa0883ce48a500c657897adc4e1313fa0a52ba06bc5cd87e6f4885a8b8fc818",
+      "old_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1750.json",
+      "old_sha256": "6aa0883ce48a500c657897adc4e1313fa0a52ba06bc5cd87e6f4885a8b8fc818",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_resource_sample_2026-10-14_1406.json",
+      "new_sha256": "c7fd5f8f46e8a35cf3dd3990b5041ba2835fd346c76890395c9c8f6b9f06d7a9",
+      "old_path": "docs/thesis/live_resource_sample_2026-10-14_1406.json",
+      "old_sha256": "c7fd5f8f46e8a35cf3dd3990b5041ba2835fd346c76890395c9c8f6b9f06d7a9",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_resource_sample_2026-10-14_1508.json",
+      "new_sha256": "a015994a3f2b176626b45f0bd66e5508166a73f490f246ff2f4c35d3818b50d4",
+      "old_path": "docs/thesis/live_resource_sample_2026-10-14_1508.json",
+      "old_sha256": "a015994a3f2b176626b45f0bd66e5508166a73f490f246ff2f4c35d3818b50d4",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_resource_snapshot_2026-10-14_1710.json",
+      "new_sha256": "b15fa89bce224ac65e063100835ace24fc22d465a2ca6a7007993befcccbc31c",
+      "old_path": "docs/thesis/live_resource_snapshot_2026-10-14_1710.json",
+      "old_sha256": "b15fa89bce224ac65e063100835ace24fc22d465a2ca6a7007993befcccbc31c",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_resource_snapshot_2026-10-14_1713.json",
+      "new_sha256": "7c81adfb211cd90c4f6ed0f7b00800708910d02ad5d8dd56c68c6cf5aab803fc",
+      "old_path": "docs/thesis/live_resource_snapshot_2026-10-14_1713.json",
+      "old_sha256": "7c81adfb211cd90c4f6ed0f7b00800708910d02ad5d8dd56c68c6cf5aab803fc",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_resource_snapshot_2026-10-14_1719.json",
+      "new_sha256": "a2ddc3fddc59a9c9f39d73074f9c9d4df2509d94a1e2524937a2a888320615cd",
+      "old_path": "docs/thesis/live_resource_snapshot_2026-10-14_1719.json",
+      "old_sha256": "a2ddc3fddc59a9c9f39d73074f9c9d4df2509d94a1e2524937a2a888320615cd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_resource_snapshot_2026-10-14_1755.json",
+      "new_sha256": "0dd5a117a746397072b30e78ee6bedcd9a2cc9289bcf841d9c4d8c76c54aace4",
+      "old_path": "docs/thesis/live_resource_snapshot_2026-10-14_1755.json",
+      "old_sha256": "0dd5a117a746397072b30e78ee6bedcd9a2cc9289bcf841d9c4d8c76c54aace4",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_resource_snapshot_2026-10-14_1949.json",
+      "new_sha256": "3143b15ff663449fa8db1fd026fa4636500e50846f9f010ed7e3440984a756ba",
+      "old_path": "docs/thesis/live_resource_snapshot_2026-10-14_1949.json",
+      "old_sha256": "3143b15ff663449fa8db1fd026fa4636500e50846f9f010ed7e3440984a756ba",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/live_train_prefix_monitor_2026-10-14_1412.json",
+      "new_sha256": "2012a42f7e579b309f8fc55591ab2e2ea85126e4ee5b6caceb55230a180acdbd",
+      "old_path": "docs/thesis/live_train_prefix_monitor_2026-10-14_1412.json",
+      "old_sha256": "2012a42f7e579b309f8fc55591ab2e2ea85126e4ee5b6caceb55230a180acdbd",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "preserved_external_copy; removed from repository",
+      "new_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_20261031/manuscript_draft.md",
+      "new_sha256": "0b1c9d98dbf49480b8d98deee79b7dd076e1275e5d6d3ab76fb6eb0ce0a60b8f",
+      "old_path": "docs/thesis/manuscript_draft.md",
+      "old_sha256": "0b1c9d98dbf49480b8d98deee79b7dd076e1275e5d6d3ab76fb6eb0ce0a60b8f",
+      "reason": "Academic-only material or the superseded project queue; keep recoverable outside the software repository."
+    },
+    {
+      "migration_type": "preserved_external_copy; removed from repository",
+      "new_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_20261031/master_project_execution_plan.md",
+      "new_sha256": "28b01e58c65b400049d19213a487faec4d9c2622f1bfa9068dd9cb68f1b2a17a",
+      "old_path": "docs/thesis/master_project_execution_plan.md",
+      "old_sha256": "28b01e58c65b400049d19213a487faec4d9c2622f1bfa9068dd9cb68f1b2a17a",
+      "reason": "Academic-only material or the superseded project queue; keep recoverable outside the software repository."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/p1_checkpoint_full_split_budget_2026-10-16.json",
+      "new_sha256": "ea5ba7dd6f42e2179fb0f39e2115a12c9764df8dc5c181316a13b914265de197",
+      "old_path": "docs/thesis/p1_checkpoint_full_split_budget_2026-10-16.json",
+      "old_sha256": "ea5ba7dd6f42e2179fb0f39e2115a12c9764df8dc5c181316a13b914265de197",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/q0_q7_implementation_audit.md",
+      "new_sha256": "1790cae937e53fe86a71e983b449935a2926ef01a760ee9e25da7b73b4fe7c34",
+      "old_path": "docs/thesis/q0_q7_implementation_audit.md",
+      "old_sha256": "1790cae937e53fe86a71e983b449935a2926ef01a760ee9e25da7b73b4fe7c34",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "preserved_external_copy; removed from repository",
+      "new_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_20261031/related_work.md",
+      "new_sha256": "c8ef065841855264b5b7c07f48941ccaa495920130db5558e41b18f20dbb4a1f",
+      "old_path": "docs/thesis/related_work.md",
+      "old_sha256": "c8ef065841855264b5b7c07f48941ccaa495920130db5558e41b18f20dbb4a1f",
+      "reason": "Academic-only material or the superseded project queue; keep recoverable outside the software repository."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/result_manifest.schema.json",
+      "new_sha256": "9c12bc86bbea562c4e34b639f8c4d8d35514de92fb67f82a8859c32c4e71f615",
+      "old_path": "docs/thesis/result_manifest.schema.json",
+      "old_sha256": "9c12bc86bbea562c4e34b639f8c4d8d35514de92fb67f82a8859c32c4e71f615",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/seed50_screen_config_match_audit_2026-10-16.json",
+      "new_sha256": "a0b2fa9677dd445110c79487e3095461a0690670f84a9f96371f1c3030b3d917",
+      "old_path": "docs/thesis/seed50_screen_config_match_audit_2026-10-16.json",
+      "old_sha256": "a0b2fa9677dd445110c79487e3095461a0690670f84a9f96371f1c3030b3d917",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/threats_to_validity.md",
+      "new_sha256": "54f1b4c90b4c1688bf8aa7b8a0c535f065097bb80adf76e95e65c6fcfcb8acf7",
+      "old_path": "docs/thesis/threats_to_validity.md",
+      "old_sha256": "54f1b4c90b4c1688bf8aa7b8a0c535f065097bb80adf76e95e65c6fcfcb8acf7",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/train_episode_reset_coverage_audit_2026-10-14.json",
+      "new_sha256": "8f0e564510cd0cbf481bcc3576e392b603eb6e35a85d5939b6d7910c66f177f9",
+      "old_path": "docs/thesis/train_episode_reset_coverage_audit_2026-10-14.json",
+      "old_sha256": "8f0e564510cd0cbf481bcc3576e392b603eb6e35a85d5939b6d7910c66f177f9",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/train_episode_reset_coverage_audit_2026-10-14_1745.json",
+      "new_sha256": "aa3875d6074b84eb9be7a0b8cf8ba881b6e8d5aa840a5066a9f4a886597979e6",
+      "old_path": "docs/thesis/train_episode_reset_coverage_audit_2026-10-14_1745.json",
+      "old_sha256": "aa3875d6074b84eb9be7a0b8cf8ba881b6e8d5aa840a5066a9f4a886597979e6",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/trial_ledger.schema.json",
+      "new_sha256": "af1655441cbdbbcb119c5bda943af6dac0abdb36080e8dbe62336af3ed6ee9d8",
+      "old_path": "docs/thesis/trial_ledger.schema.json",
+      "old_sha256": "af1655441cbdbbcb119c5bda943af6dac0abdb36080e8dbe62336af3ed6ee9d8",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/trial_ledger_2026-10-16.json",
+      "new_sha256": "699d5cf86c69660dbe0dbe4ce7093a08c2ad2849837b97ebfac3d2d78520e786",
+      "old_path": "docs/thesis/trial_ledger_2026-10-16.json",
+      "old_sha256": "699d5cf86c69660dbe0dbe4ce7093a08c2ad2849837b97ebfac3d2d78520e786",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    },
+    {
+      "migration_type": "path-only archive move",
+      "new_path": "evidence/research/archive_2026/records/validation_protocol.md",
+      "new_sha256": "2a05295a1a6ff8f2da318b5b70db8899ede438a1efe583f2c4a758943fe67394",
+      "old_path": "docs/thesis/validation_protocol.md",
+      "old_sha256": "2a05295a1a6ff8f2da318b5b70db8899ede438a1efe583f2c4a758943fe67394",
+      "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
+    }
+  ],
+  "migration": "former-academic-research-directory-classification",
+  "reason": "Separate current research methodology and operations from frozen historical evidence and personal academic material.",
+  "source_commit": "5a23e6321653c45719dfb8fdb831e242ff8c3d78"
+}

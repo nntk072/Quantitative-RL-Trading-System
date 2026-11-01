@@ -36,6 +36,8 @@ log = logging.getLogger(__name__)
 
 @dataclass(frozen=True, slots=True)
 class ReanalysisDatasets:
+    """Prepared split bars, feature matrices, and their market-input provenance."""
+
     primary_ticks: Any
     features: pd.DataFrame
     train_bars: pd.DataFrame
@@ -64,7 +66,17 @@ def reconstruct_reanalysis_datasets(
     cfg: DictConfig,
     source_manifest: dict[str, Any],
 ) -> ReanalysisDatasets:
-    """Load, rebuild, split, fingerprint and compare the exact evaluation inputs."""
+    """Load, rebuild, split, fingerprint and compare the exact evaluation inputs.
+
+    Args:
+        args: Parsed command-line arguments for this operation.
+        run_dir: Text or path value identifying the run dir.
+        cfg: Run configuration used by this operation.
+        source_manifest: Key-value data used for the source manifest.
+
+    Returns:
+        Result of load, rebuild, split, fingerprint and compare the exact evaluation inputs.
+    """
     source_feature_cache = source_manifest.get("feature_cache")
     source_datasets = source_manifest.get("datasets")
     source_execution_protocol = source_manifest.get("execution_protocol")

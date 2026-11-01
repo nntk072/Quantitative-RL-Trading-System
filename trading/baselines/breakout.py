@@ -78,7 +78,21 @@ class MultiLevelBreakoutStrategy(BaseStrategy):
         stop_mult: float,
         size: float,
     ) -> NDArray[np.floating[Any]]:
-        """Walk forward once emitting per-bar actions."""
+        """Walk forward once emitting per-bar actions.
+
+        Args:
+            closes: Closes used by the operation described above.
+            asian_high: Asian high used by the operation described above.
+            asian_low: Asian low used by the operation described above.
+            spike: Spike used by the operation described above.
+            atr_vals: Atr vals used by the operation described above.
+            spike_thr: Numeric value used for the spike thr.
+            stop_mult: Numeric value used for the stop mult.
+            size: Numeric value used for the size.
+
+        Returns:
+            Array returned by ``_simulate``.
+        """
         actions = np.zeros(len(closes), dtype=float)
         pos_dir = 0.0
         entry_price = 0.0
@@ -105,4 +119,12 @@ class MultiLevelBreakoutStrategy(BaseStrategy):
         return actions
 
     def _signal(self, idx: int) -> float:
+        """Process MultiLevelBreakoutStrategy.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Numeric result returned by ``_signal``.
+        """
         return float(self._signals[idx])

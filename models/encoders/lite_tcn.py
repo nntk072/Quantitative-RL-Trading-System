@@ -22,6 +22,14 @@ class _DepthwiseSeparableConv1d(nn.Module):
     """Causal temporal convolution with depthwise and pointwise factors."""
 
     def __init__(self, channels: int, kernel_size: int, dilation: int, dropout: float) -> None:
+        """Initialize _DepthwiseSeparableConv1d and its owned state.
+
+        Args:
+            channels: Numeric value used for the channels.
+            kernel_size: Number specifying the kernel size for this operation.
+            dilation: Numeric value used for the dilation.
+            dropout: Numeric value used for the dropout.
+        """
         super().__init__()
         padding = (kernel_size - 1) * dilation
         self.depthwise = nn.Conv1d(
@@ -38,6 +46,14 @@ class _DepthwiseSeparableConv1d(nn.Module):
         self.pointwise = nn.Conv1d(channels, channels, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply depthwise causal filtering followed by channel mixing.
+
+        Args:
+            x: Channel-first sequence tensor with shape ``[batch, channels, time]``.
+
+        Returns:
+            Causally filtered tensor with the input time length and channel width.
+        """
         x = self.depthwise(x)
         x = self.chomp(x)
         x = self.activation(x)
@@ -49,6 +65,14 @@ class _LiteTemporalBlock(nn.Module):
     """Residual block with two depthwise-separable causal convolutions."""
 
     def __init__(self, channels: int, kernel_size: int, dilation: int, dropout: float) -> None:
+        """Initialize _LiteTemporalBlock and its owned state.
+
+        Args:
+            channels: Numeric value used for the channels.
+            kernel_size: Number specifying the kernel size for this operation.
+            dilation: Numeric value used for the dilation.
+            dropout: Numeric value used for the dropout.
+        """
         super().__init__()
         self.temporal = nn.Sequential(
             _DepthwiseSeparableConv1d(channels, kernel_size, dilation, dropout),
@@ -57,6 +81,14 @@ class _LiteTemporalBlock(nn.Module):
         self.activation = nn.ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Add two causal temporal convolutions to the input residual.
+
+        Args:
+            x: Channel-first sequence tensor with shape ``[batch, channels, time]``.
+
+        Returns:
+            Activated residual features with the same shape as ``x``.
+        """
         return cast(torch.Tensor, self.activation(x + self.temporal(x)))
 
 
@@ -80,6 +112,19 @@ class LiteTCNEncoder(BaseFeaturesExtractor):
         dropout: float = 0.1,
         account_dim: int | None = None,
     ) -> None:
+        """Initialize LiteTCNEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Numeric value used for the channels.
+            dilations: Items supplied for the dilations, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+            account_dim: Account dim used by the operation described above.
+        """
         super().__init__(observation_space, features_dim=latent_dim + ACCOUNT_EMB_DIM)
         if not dilations or any(dilation < 1 for dilation in dilations):
             raise ValueError("LiteTCN dilations must be a nonempty sequence of positive integers")
@@ -102,22 +147,49 @@ class LiteTCNEncoder(BaseFeaturesExtractor):
 
     @property
     def receptive_field(self) -> int:
-        """Return the number of input bars visible at a block's last timestep."""
+        """Return the number of input bars visible at a block's last timestep.
+
+        Returns:
+            Numeric result returned by ``receptive_field``.
+        """
         return int(1 + 2 * (self.kernel_size - 1) * sum(self.dilations))
 
     def _encode_hidden(self, seq: torch.Tensor) -> torch.Tensor:
-        """Return every causal hidden state as ``[batch, time, channels]``."""
+        """Return every causal hidden state as ``[batch, time, channels]``.
+
+        Args:
+            seq: Seq used by the operation described above.
+
+        Returns:
+            Result of return every causal hidden state as ``[batch, time, channels]``.
+        """
         hidden = self.input_proj(seq.transpose(1, 2))
         for block in self.blocks:
             hidden = block(hidden)
         return cast(torch.Tensor, hidden.transpose(1, 2))
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode sequence and account observations with the lightweight temporal convolution.
+
+        Args:
+            observations: Mapping containing batched seq and account tensors, plus optional valid-length metadata.
+
+        Returns:
+            Concatenated latent sequence representation and account embedding.
+        """
         seq = observations["seq"]
         account = observations["account"]
         lengths = _valid_lengths(seq, observations)
 
         def _encode(valid: torch.Tensor) -> torch.Tensor:
+            """Process LiteTCNEncoder.
+
+            Args:
+                valid: Valid used by the operation described above.
+
+            Returns:
+                Result of process LiteTCNEncoder.
+            """
             hidden = self._encode_hidden(valid)
             return cast(torch.Tensor, self.proj(hidden[:, -1, :]))
 

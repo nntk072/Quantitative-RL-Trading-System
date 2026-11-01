@@ -12,6 +12,8 @@ from .timebase import BAR_TIME_TZ
 
 
 class StepAccountingRuntimeMixin(RuntimeMixinBase):
+    """Record realized step outcomes for account and evaluation bookkeeping."""
+
     def _record_step_accounting(
         self,
         bar: BarView,
@@ -21,6 +23,19 @@ class StepAccountingRuntimeMixin(RuntimeMixinBase):
         done: bool,
         truncated: bool,
     ) -> tuple[bool, Any, float, float, dict[str, float]]:
+        """Record step accounting.
+
+        Args:
+            bar: Bar used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+            step_trade_log_start: Numeric value used for the step trade log start.
+            done: Whether to enable or require the done.
+            truncated: Whether to enable or require the truncated.
+
+        Returns:
+            Whether record step accounting meets the requested condition.
+        """
         payout_terminal = self._handle_repeated_payout(bar_time)
         if payout_terminal:
             done = True

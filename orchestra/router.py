@@ -22,32 +22,66 @@ class QuotaTracker:
     """Tracks daily token and request usage per model."""
 
     def __init__(self, state_dir: Path):
+        """Initialize QuotaTracker and its owned state.
+
+        Args:
+            state_dir: Text or path value identifying the state dir.
+        """
         self.state_dir = state_dir
         self.usage_file = state_dir / "usage.json"
         self._data: dict[str, Any] = {}
         self._load()
 
     def _load(self) -> None:
+        """Load QuotaTracker."""
         if self.usage_file.exists():
             self._data = json.loads(self.usage_file.read_text())
 
     def _save(self) -> None:
+        """Save QuotaTracker."""
         write_text_atomic(self.usage_file, json.dumps(self._data, indent=2))
 
     def _today_local(self) -> str:
+        """Process local.
+
+        Returns:
+            Text returned by ``_today_local``.
+        """
         return time.strftime("%Y-%m-%d")
 
     def _today_pacific(self) -> str:
+        """Process pacific.
+
+        Returns:
+            Text returned by ``_today_pacific``.
+        """
         from datetime import datetime
 
         return datetime.now(_PACIFIC).strftime("%Y-%m-%d")
 
     def _day_key(self, model: Model) -> str:
+        """Process key.
+
+        Args:
+            model: Model used for this operation.
+
+        Returns:
+            Text returned by ``_day_key``.
+        """
         if model.rpd is not None:
             return self._today_pacific()
         return self._today_local()
 
     def get_usage(self, model_name: str, model: Model | None = None) -> dict[str, int]:
+        """Return today's token, call, and request totals for one model.
+
+        Args:
+            model_name: Text or path value identifying the model name.
+            model: Model used for this operation.
+
+        Returns:
+            Mapping from ``str`` keys to ``int`` values.
+        """
         day = self._day_key(model) if model else self._today_local()
         entry = self._data.get(day, {}).get(model_name, {})
         calls = int(entry.get("calls", 0))
@@ -58,6 +92,13 @@ class QuotaTracker:
         }
 
     def record_usage(self, model_name: str, tokens: int, model: Model | None = None) -> None:
+        """Lock, reload, and persist one model's incremented usage counters.
+
+        Args:
+            model_name: Text or path value identifying the model name.
+            tokens: Numeric value used for the tokens.
+            model: Model used for this operation.
+        """
         day = self._day_key(model) if model else self._today_local()
         lock_path = self.state_dir / "usage.lock"
         self.state_dir.mkdir(parents=True, exist_ok=True)
@@ -77,7 +118,14 @@ class QuotaTracker:
             fcntl.flock(lock_fh, fcntl.LOCK_UN)
 
     def quota_exceeded(self, model: Model) -> bool:
-        """Check if a model has exceeded its daily quota."""
+        """Check if a model has exceeded its daily quota.
+
+        Args:
+            model: Model used for this operation.
+
+        Returns:
+            Whether quota exceeded meets the requested condition.
+        """
         usage = self.get_usage(model.display_name, model)
         if model.rpd is not None:
             return usage["requests"] >= max(0, model.rpd - _RPD_SAFETY)
@@ -86,7 +134,14 @@ class QuotaTracker:
         return usage["tokens"] >= model.quota_daily
 
     def remaining(self, model: Model) -> int:
-        """Remaining budget for today. Returns -1 for unlimited tokens."""
+        """Remaining budget for today. Returns -1 for unlimited tokens.
+
+        Args:
+            model: Model used for this operation.
+
+        Returns:
+            Numeric result returned by ``remaining``.
+        """
         usage = self.get_usage(model.display_name, model)
         if model.rpd is not None:
             return max(0, model.rpd - _RPD_SAFETY - usage["requests"])
@@ -103,6 +158,12 @@ class ModelRouter:
         models: list[Model] | None = None,
         state_dir: Path | None = None,
     ):
+        """Initialize ModelRouter and its owned state.
+
+        Args:
+            models: Items supplied for the models, in input order.
+            state_dir: State dir used by the operation described above.
+        """
         self.models = models or load_models()
         state_dir = (
             state_dir or Path(__file__).resolve().parent.parent / "outputs" / "orchestra" / "state"
@@ -113,7 +174,14 @@ class ModelRouter:
         self.health.probe_tier0(self.models, check_version=False)
 
     def get_candidates(self, role: str) -> list[Model]:
-        """Get all models that can fulfill a role, sorted by priority."""
+        """Get all models that can fulfill a role, sorted by priority.
+
+        Args:
+            role: Text or path value identifying the role.
+
+        Returns:
+            Values returned by ``get_candidates``, in the declared order.
+        """
         candidates = [m for m in self.models if role in m.roles and m.enabled]
         candidates.sort(key=lambda m: (m.priority, m.cost_rank()))
         return candidates
@@ -125,6 +193,17 @@ class ModelRouter:
         escalate: bool = False,
         exclude: tuple[str, str] | None = None,
     ) -> list[Model]:
+        """Process candidates.
+
+        Args:
+            candidates: Items supplied for the candidates, in input order.
+            task_tier: Text or path value identifying the task tier.
+            escalate: Whether to enable or require the escalate.
+            exclude: Items supplied for the exclude, in input order.
+
+        Returns:
+            Values returned by ``_filter_candidates``, in the declared order.
+        """
         tier_n = tier_rank(task_tier)
         filtered: list[Model] = []
         for m in candidates:
@@ -152,7 +231,18 @@ class ModelRouter:
         task_tier: str | None = None,
         escalate: bool = False,
     ) -> list[Model]:
-        """Select models for a role. Returns empty list when no candidate (PARK)."""
+        """Select models for a role. Returns empty list when no candidate (PARK).
+
+        Args:
+            role: Text or path value identifying the role.
+            count: Numeric value used for the count.
+            task_complexity: Text or path value identifying the task complexity.
+            task_tier: Task tier used by the operation described above.
+            escalate: Whether to enable or require the escalate.
+
+        Returns:
+            Values returned by ``select``, in the declared order.
+        """
         from .model_provider_registry import complexity_to_tier
 
         tier = task_tier or complexity_to_tier(task_complexity)
@@ -168,7 +258,18 @@ class ModelRouter:
         task_tier: str | None = None,
         escalate: bool = False,
     ) -> list[Model]:
-        """Other available models for role if primary fails."""
+        """Other available models for role if primary fails.
+
+        Args:
+            primary: Primary used by the operation described above.
+            role: Text or path value identifying the role.
+            task_complexity: Text or path value identifying the task complexity.
+            task_tier: Task tier used by the operation described above.
+            escalate: Whether to enable or require the escalate.
+
+        Returns:
+            Values returned by ``fallback_chain``, in the declared order.
+        """
         from .model_provider_registry import complexity_to_tier
 
         tier = task_tier or complexity_to_tier(task_complexity)
@@ -188,7 +289,18 @@ class ModelRouter:
         task_tier: str | None = None,
         escalate: bool = False,
     ) -> list[tuple[Model, list[Model]]]:
-        """Select models with their fallback chains."""
+        """Select models with their fallback chains.
+
+        Args:
+            role: Text or path value identifying the role.
+            count: Numeric value used for the count.
+            task_complexity: Text or path value identifying the task complexity.
+            task_tier: Task tier used by the operation described above.
+            escalate: Whether to enable or require the escalate.
+
+        Returns:
+            Values returned by ``select_with_fallback``, in the declared order.
+        """
         selected = self.select(role, count, task_complexity, task_tier, escalate)
         return [
             (
@@ -199,7 +311,11 @@ class ModelRouter:
         ]
 
     def stats(self) -> dict[str, Any]:
-        """Return quota usage stats for all models."""
+        """Return quota usage stats for all models.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         stats: dict[str, Any] = {}
         for model in self.models:
             usage = self.quota.get_usage(model.display_name, model)

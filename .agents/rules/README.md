@@ -14,12 +14,12 @@ Rules live here rather than in tool-specific folders. Entry points are root
 | [git-commit-rules.md](git-commit-rules.md) | Commit format + pre-commit checks | On commit/PR |
 | [python-coding-standards.md](python-coding-standards.md) | Python style & structure | On `.py` edits |
 | [code-review-graph.md](code-review-graph.md) | Graph-based change review | On multi-file review |
-| [testing-rules.md](testing-rules.md) | TDD, AAA, coverage ≥80% | On feature/bugfix work |
+| [testing-rules.md](testing-rules.md) | TDD, AAA, measured line and branch coverage baseline | On feature/bugfix work |
 | [security-rules.md](security-rules.md) | Secret & input safety checklist | Always at commit; deep on sensitive code |
 | [development-workflow.md](development-workflow.md) | Research-first → plan → TDD → review → commit | On non-trivial features |
 | [agent-planning-implementation.md](agent-planning-implementation.md) | Consistent repository inspection, naming, implementation, verification, and handoff rules for every agent model; keep agent plans outside the repo | Always |
 | [ci-verification.md](ci-verification.md) | **Blocking** full-tree `ruff` + `mypy .` (not path-scoped); scoped pytest before commit/push | On commit/push |
-| [triton-slurm.md](triton-slurm.md) | Use suitable existing GPU-node allocations for thesis computation when GPU-capable; CPU-only heavy work runs inside a properly sized CPU-node `srun` launched from persistent login tmux; heavy work never runs on normal login; inspect GPU/CPU/RAM; never use `srun --test-only` or `scancel`; preserve pending/active jobs | On Triton / GPU training |
+| [triton-slurm.md](triton-slurm.md) | Use suitable existing GPU-node allocations for research computation when GPU-capable; CPU-only heavy work runs inside a properly sized CPU-node `srun` launched from persistent login tmux; heavy work never runs on normal login; inspect GPU/CPU/RAM; never use `srun --test-only` or `scancel`; preserve pending/active jobs | On Triton / GPU training |
 
 ## Activation flow
 
@@ -53,10 +53,10 @@ Layered principle: **specific overrides general**.
 1. **RTK** wraps every command — never run raw commands.
 2. **Token-efficiency** (context + shell) governs all I/O volume.
 3. **Domain rules** (Python standards, testing, security, commit rules, review graph, workflow) apply by activity, layered on top of 1–2.
-4. **Triton:** reuse existing GPU tmux/`srun` first for GPU-capable thesis
+4. **Triton:** reuse existing GPU tmux/`srun` first for GPU-capable research
    computation. CPU-only work runs inside a properly sized CPU-node `srun`
    launched from persistent login tmux; never run compute on normal login.
-   Standing user authorization permits necessary thesis allocations. Inspect each candidate
+   Standing user authorization permits necessary research allocations. Inspect each candidate
    node's live GPU, CPU, and RAM inventory, then run a real bounded `srun`
    from a named, persistent login tmux session when a compatible GPU is idle.
    Never use `srun --test-only` or scheduler forecasts.

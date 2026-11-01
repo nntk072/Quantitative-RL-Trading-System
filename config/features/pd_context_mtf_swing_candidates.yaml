@@ -1,4 +1,4 @@
-# Thesis candidate profile for the final matched runs after stop-menu freeze.
+# Entry-candidate profile for matched runs after stop-menu freeze.
 # Merge over default.yaml (or config/features/pd_context.yaml).
 features:
   include_pd_context: true

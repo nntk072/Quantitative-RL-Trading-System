@@ -4,7 +4,7 @@ Training resolves configuration and input identity, builds environment
 workers, then alternates policy rollout collection with learner updates. It
 records optimization diagnostics, account behavior, checkpoint state, and run
 provenance. See the [training module guide](../../modules/training.md) and
-[local package guide](../../../training/README.md).
+[local package guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/training/README.md).
 
 ```mermaid
 sequenceDiagram

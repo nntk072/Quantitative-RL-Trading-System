@@ -17,11 +17,11 @@ ruff format \
     scripts/research/audits/fingerprint_tick_decision_schedule.py
 format_apply_rc=$?
 
-coverage_out=docs/thesis/evidence/replacement_data_20261017/tick_execution_coverage_schedule_freeze.json
-fingerprint_out=docs/thesis/evidence/replacement_data_20261017/decision_schedule_fingerprint.json
+coverage_out=outputs/research_audits/replacement_data_20261017/tick_execution_coverage_schedule_freeze.json
+fingerprint_out=outputs/research_audits/replacement_data_20261017/decision_schedule_fingerprint.json
 if [[ "$validate_only" == true ]]; then
-    coverage_out=docs/thesis/evidence/replacement_data_20261017/tick_execution_coverage_schedule_freeze_final.json
-    fingerprint_out=docs/thesis/evidence/replacement_data_20261017/decision_schedule_fingerprint_final.json
+    coverage_out=outputs/research_audits/replacement_data_20261017/tick_execution_coverage_schedule_freeze_final.json
+    fingerprint_out=outputs/research_audits/replacement_data_20261017/decision_schedule_fingerprint_final.json
 fi
 
 python -m pytest tests/unit/simulation/test_environment/test_eligibility_wiring.py -q

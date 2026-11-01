@@ -21,6 +21,15 @@ def build_po3_ifvg_state(
     Distribution begins on the confirmation row. The later-ready flag starts
     on the next row. Reset/rearm remains the legacy policy: a fresh sweep
     replaces the current setup; otherwise distribution persists.
+
+    Args:
+        bars: Market bars to process.
+        sweeps: Tabular data used for the sweeps.
+        ifvg_zones: Tabular data used for the ifvg zones.
+        max_ifvg_age_bars: Market bar or price data used for build the revised causal phase sequence for Idea 1/2.
+
+    Returns:
+        DataFrame returned by ``build_po3_ifvg_state``.
     """
     if max_ifvg_age_bars < 0:
         raise ValueError("max_ifvg_age_bars must be non-negative")

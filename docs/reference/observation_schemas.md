@@ -23,7 +23,7 @@ Options add branches only when enabled by configuration:
 | `mask_m3` … `mask_d1` | Real-row masks for each enabled MTF sequence window. |
 | `regime` | Compact completed-D1 regime feature vector when regime observation is enabled. |
 | `regime_mask` | Per-coordinate validity mask for `regime`; missing values are zero-filled and marked invalid. |
-| `thesis_mask` | Legacy serialized name for the optional setup-candidate eligibility mask. `1` means eligible; the no-trade category remains eligible. |
+| `trade_setup_mask` | Optional setup-candidate eligibility mask. `1` means eligible; the no-trade category remains eligible. |
 | `vae_z` | Optional latent branch when VAE context is enabled. |
 
 The exact available MTF branches are defined by the environment schema and
@@ -92,14 +92,12 @@ decision index. Its mask distinguishes valid rows from padding. Regime context
 uses the last completed D1 value aligned to the decision row. These rules are
 part of the observation semantics and are protected by causal-feature tests.
 
-## Eligibility mask compatibility name
+## Setup-candidate mask
 
-The current setup-conditioned policy schema was serialized with names such as
-`thesis_mask` and `thesis-observation-v1`. These are historical wire
-identifiers for a categorical setup candidate, not academic claims. Do not
-rename them in an artifact or silently change mask ordering. A future
-canonical rename must translate old checkpoint metadata explicitly and
-preserve category meanings.
+The setup-conditioned observation schema uses `trade_setup_mask` and the
+version `trade-setup-observation-v1`. The mask is stored with checkpoints and
+must match the 109-category order documented in the
+[candidate catalog](trade_setup_catalog.md).
 
 ## Checkpoint validation
 

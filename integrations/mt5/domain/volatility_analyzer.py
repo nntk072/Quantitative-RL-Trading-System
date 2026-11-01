@@ -9,8 +9,8 @@ from integrations.mt5.domain.mt5_connection import ensure_mt5_logged_in
 
 
 class VolatilityAnalyzer:
-    """
-    Analyzes symbol volatility using ATR (Average True Range) and other metrics.
+    """Analyze symbol volatility using ATR and related metrics.
+
     Ranks symbols by volatility to identify the most volatile trading opportunities.
     """
 
@@ -23,8 +23,7 @@ class VolatilityAnalyzer:
         atr_period: int = 14,
         lookback_period: int = 20,
     ):
-        """
-        Initialize the volatility analyzer.
+        """Initialize the volatility analyzer.
 
         Args:
             login: MT5 account login
@@ -49,8 +48,7 @@ class VolatilityAnalyzer:
         )
 
     def calculate_atr(self, df: pd.DataFrame) -> float:
-        """
-        Calculate Average True Range (ATR) for the given dataframe.
+        """Calculate Average True Range (ATR) for the given dataframe.
 
         Args:
             df: DataFrame with OHLC data
@@ -96,8 +94,7 @@ class VolatilityAnalyzer:
     def calculate_volatility_metrics(
         self, symbol: str, timeframe: int = mt5.TIMEFRAME_H1
     ) -> dict[str, Any] | None:
-        """
-        Calculate volatility metrics for a symbol.
+        """Calculate volatility metrics for a symbol.
 
         Args:
             symbol: Trading symbol
@@ -158,8 +155,7 @@ class VolatilityAnalyzer:
     def rank_symbols_by_volatility(
         self, symbols: list[str], timeframe: int = mt5.TIMEFRAME_H1
     ) -> list[dict[str, Any]]:
-        """
-        Rank symbols by volatility (highest first).
+        """Rank symbols by volatility (highest first).
 
         Args:
             symbols: List of symbols to analyze
@@ -187,8 +183,7 @@ class VolatilityAnalyzer:
         min_volatility_threshold: float = 0.0,
         timeframe: int = mt5.TIMEFRAME_H1,
     ) -> list[str]:
-        """
-        Select top N most volatile symbols.
+        """Select top N most volatile symbols.
 
         Args:
             symbols: List of symbols to analyze
@@ -215,8 +210,7 @@ class VolatilityAnalyzer:
         return selected
 
     def get_symbol_info(self, symbol: str) -> dict[str, Any] | None:
-        """
-        Get basic information about a symbol.
+        """Get basic information about a symbol.
 
         Args:
             symbol: Trading symbol

@@ -44,7 +44,15 @@ def split_obs_columns(
     names: list[str],
     timeframes: tuple[str, ...] | list[str] = AVAILABLE_OBSERVATION_TIMEFRAMES,
 ) -> tuple[np.ndarray[Any, Any], dict[str, np.ndarray[Any, Any]]]:
-    """Route timeframe-prefixed features to their own model stream."""
+    """Route timeframe-prefixed features to their own model stream.
+
+    Args:
+        names: Items supplied for the names, in input order.
+        timeframes: Items supplied for the timeframes, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``np.ndarray[Any, Any]]`` values.
+    """
     m1: list[int] = []
     configured = {str(timeframe).upper() for timeframe in timeframes}
     branches = tuple(branch for branch in HTF_BRANCHES if branch[0].upper() in configured)
@@ -66,7 +74,14 @@ def split_obs_columns(
 
 
 def run_starts(block: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-    """Index of the first row of each run of constant columns. NaN matches NaN."""
+    """Index of the first row of each run of constant columns. NaN matches NaN.
+
+    Args:
+        block: Block used by the operation described above.
+
+    Returns:
+        Array returned by ``run_starts``.
+    """
     rows = int(block.shape[0]) if block.ndim == 2 else 0
     if rows == 0 or int(block.shape[1]) == 0:
         return np.zeros(0, dtype=np.int64)
@@ -89,6 +104,15 @@ def timeframe_starts(
 
     Boundaries come from resampled M1 timestamps rather than feature changes,
     so identical consecutive feature rows remain separate candle observations.
+
+    Args:
+        index: Position or label identifying the requested item.
+        timeframe: Text or path value identifying the timeframe.
+        scheduled_closes: Key-value data used for the scheduled closes.
+        session_start: Text or path value identifying the session start.
+
+    Returns:
+        Array returned by ``timeframe_starts``.
     """
     if len(index) == 0:
         return np.zeros(0, dtype=np.int64)
@@ -112,6 +136,16 @@ def closed_window(
     ``end`` is the decision row and is included. The row kept for the run that
     contains it is ``end`` itself, so a candle that first appears later is absent.
     A block with no columns is shape ``(length, 1)`` of zeros and a zero mask.
+
+    Args:
+        block: Block used by the operation described above.
+        starts: Starts used by the operation described above.
+        end: Numeric value used for the end.
+        length: Numeric value used for the length.
+        columns: Columns used by the operation described above.
+
+    Returns:
+        Array returned by ``closed_window``.
     """
     if block.ndim != 2:
         empty = np.zeros((0, 1), dtype=np.float32)

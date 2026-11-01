@@ -27,6 +27,14 @@ def run_backtest(
 
     Returns the ``cerebro`` instance after the run so callers can inspect
     analyzers or portfolio value.
+
+    Args:
+        data_feed: Data feed used by the operation described above.
+        strategy: Strategy used to select or evaluate trades.
+        **kwargs: Kwargs used by the operation described above.
+
+    Returns:
+        Result of run a backtest with the given data feed and strategy.
     """
     cerebro = bt.Cerebro()
     cerebro.adddata(data_feed)
@@ -62,7 +70,14 @@ def run_backtest(
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run a standalone Backtrader strategy from a local CSV file."""
+    """Run a standalone Backtrader strategy from a local CSV file.
+
+    Args:
+        argv: Items supplied for the argv, in input order.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Run a single backtrader backtest.")

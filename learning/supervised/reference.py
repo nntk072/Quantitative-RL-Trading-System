@@ -30,6 +30,13 @@ from learning.contracts import FitRequest, FitResult, Learner
 
 class _ReferenceClassifier(nn.Module):
     def __init__(self, sequence_shape: tuple[int, int], account_width: int, n_actions: int) -> None:
+        """Initialize _ReferenceClassifier and its owned state.
+
+        Args:
+            sequence_shape: Items supplied for the sequence shape, in input order.
+            account_width: Number specifying the account width for this operation.
+            n_actions: Numeric value used for the n actions.
+        """
         super().__init__()
         input_width = sequence_shape[0] * sequence_shape[1] + account_width
         self.network = nn.Sequential(
@@ -39,12 +46,26 @@ class _ReferenceClassifier(nn.Module):
         )
 
     def forward(self, sequence: torch.Tensor, account: torch.Tensor) -> torch.Tensor:
+        """Classify sequence features together with account state.
+
+        Args:
+            sequence: Batched window with shape ``[batch, time, features]``.
+            account: Batched account vector with shape ``[batch, account_width]``.
+
+        Returns:
+            Class scores with shape ``[batch, n_actions]``.
+        """
         batch = sequence.shape[0]
         flattened = sequence.reshape(batch, -1)
         return cast(torch.Tensor, self.network(torch.cat((flattened, account), dim=1)))
 
 
 def _action_schema_ref() -> ActionSchemaRef:
+    """Process schema ref.
+
+    Returns:
+        Result of process schema ref.
+    """
     schema = build_discrete_trading_action_schema()
     return ActionSchemaRef(
         version=schema.version,
@@ -64,6 +85,13 @@ class ReferenceTorchProvider:
         input_schema_version: str,
         action_schema: ActionSchemaRef | None = None,
     ) -> None:
+        """Initialize ReferenceTorchProvider and its owned state.
+
+        Args:
+            model: Model used for this operation.
+            input_schema_version: Text or path value identifying the input schema version.
+            action_schema: Action schema used by the operation described above.
+        """
         self.model = model.eval()
         self._metadata = PredictorMetadata(
             provider_id="reference-torch-supervised",
@@ -75,9 +103,23 @@ class ReferenceTorchProvider:
 
     @property
     def metadata(self) -> PredictorMetadata:
+        """Return schema and provenance metadata for the fitted model.
+
+        Returns:
+            Result of return schema and provenance metadata for the fitted model.
+        """
         return self._metadata
 
     def predict(self, input: DecisionInput, *, deterministic: bool = True) -> Decision:
+        """Predict one action from a versioned observation.
+
+        Args:
+            input: Versioned observation and schema identity.
+            deterministic: Use the deterministic action when supported.
+
+        Returns:
+            Action output with matching schema metadata.
+        """
         del deterministic  # Classification uses deterministic argmax inference.
         if input.schema_version != self.metadata.input_schema_version:
             raise ValueError("decision input schema does not match the fitted predictor")
@@ -111,6 +153,14 @@ class ReferenceTorchLearner(Learner):
         checkpoint_path: str | Path,
         learning_rate: float = 1e-2,
     ) -> None:
+        """Initialize ReferenceTorchLearner and its owned state.
+
+        Args:
+            observations: Observations to evaluate, in input order.
+            labels: Labels used by the operation described above.
+            checkpoint_path: Path or filename identifying the checkpoint.
+            learning_rate: Numeric value used for the learning rate.
+        """
         self.observations = observations
         self.labels = labels
         self.checkpoint_path = Path(checkpoint_path)
@@ -118,6 +168,14 @@ class ReferenceTorchLearner(Learner):
         self.provider: ReferenceTorchProvider | None = None
 
     def fit(self, request: FitRequest) -> FitResult:
+        """Fit the reference PyTorch policy on the supplied supervised examples.
+
+        Args:
+            request: Arrays, split information, and learner configuration.
+
+        Returns:
+            Fitted provider and training metadata.
+        """
         sequence = np.asarray(self.observations.get("seq"), dtype=np.float32)
         account = np.asarray(self.observations.get("account"), dtype=np.float32)
         labels = np.asarray(self.labels, dtype=np.int64)
@@ -189,7 +247,14 @@ class ReferenceTorchLearner(Learner):
 
 
 def load_reference_torch_provider(path: str | Path) -> ReferenceTorchProvider:
-    """Load a reference artifact and validate its declared schemas before use."""
+    """Load a reference artifact and validate its declared schemas before use.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Result of load a reference artifact and validate its declared schemas before use.
+    """
     payload = torch.load(path, map_location="cpu", weights_only=True)
     if not isinstance(payload, dict):
         raise ValueError("reference classifier artifact must contain a mapping")
@@ -244,7 +309,17 @@ def build_reference_torch_learner(
     checkpoint_path: str | Path,
     learning_rate: float = 1e-2,
 ) -> Learner:
-    """Construct the optional supervised reference backend."""
+    """Construct the optional supervised reference backend.
+
+    Args:
+        observations: Observations to evaluate, in input order.
+        labels: Labels used by the operation described above.
+        checkpoint_path: Path or filename identifying the checkpoint.
+        learning_rate: Numeric value used for the learning rate.
+
+    Returns:
+        Result of construct the optional supervised reference backend.
+    """
     return ReferenceTorchLearner(
         observations,
         labels,

@@ -1,4 +1,4 @@
-"""Checks for the thesis saved-checkpoint backend parity comparison."""
+"""Checks for the trade_setup saved-checkpoint backend parity comparison."""
 
 from __future__ import annotations
 

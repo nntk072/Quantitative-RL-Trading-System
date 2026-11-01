@@ -9,6 +9,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class RiskEntryInitializationMixin(RuntimeMixinBase):
+    """Initialize risk, eligibility, and entry-control rules for the episode."""
+
     def _initialize_risk_and_entry_controls(
         self,
         episodic: bool,
@@ -45,6 +47,43 @@ class RiskEntryInitializationMixin(RuntimeMixinBase):
         observation_age_scale_bars: float,
         risk_floor: float,
     ) -> None:
+        """Initialize risk and entry controls.
+
+        Args:
+            episodic: Whether to enable or require the episodic.
+            legacy_sequence_columns: Legacy sequence columns used by the operation described above.
+            use_sweep_reward: Whether to enable or require the use sweep reward.
+            min_sl_atr_mult: Numeric value used for the min sl atr mult.
+            min_sl_points: Numeric value used for the min sl points.
+            max_entries_per_session: Numeric value used for the max entries per session.
+            risk_mode: Text or path value identifying the risk mode.
+            fixed_risk_usd: Numeric value used for the fixed risk usd.
+            risk_band_max_usd: Numeric value used for the risk band max usd.
+            risk_band_hold_below_usd: Numeric value used for the risk band hold below usd.
+            open_manipulation_bars: Market bar or price data used for initialize risk and entry controls.
+            entry_cooldown_bars: Market bar or price data used for initialize risk and entry controls.
+            allow_ema_exit: Whether to enable or require the allow ema exit.
+            ema_runner_fraction: Numeric value used for the ema runner fraction.
+            reward_mode: Text or path value identifying the reward mode.
+            entry_intensity_threshold: Numeric value used for the entry intensity threshold.
+            peak_trailing_dd_limit: Numeric value used for the peak trailing dd limit.
+            agent_direction_control: Whether to enable or require the agent direction control.
+            direction_override_threshold: Numeric value used for the direction override threshold.
+            allow_agent_sl_mode: Whether to enable or require the allow agent sl mode.
+            sl_mode_defer_threshold: Numeric value used for the sl mode defer threshold.
+            allow_agent_tp_mode: Whether to enable or require the allow agent tp mode.
+            tp_mode_defer_threshold: Numeric value used for the tp mode defer threshold.
+            allow_multi_tp: Whether to enable or require the allow multi tp.
+            tp_breakeven_alpha: Numeric value used for the tp breakeven alpha.
+            allow_simplex: Whether to enable or require the allow simplex.
+            entry_state_machine: Whether to enable or require the entry state machine.
+            candidate_max_age_bars: Market bar or price data used for initialize risk and entry controls.
+            arm_requires_retest: Whether to enable or require the arm requires retest.
+            entry_state_observation: Whether to enable or require the entry state observation.
+            observation_schema_version: Text or path value identifying the observation schema version.
+            observation_age_scale_bars: Market bar or price data used for initialize risk and entry controls.
+            risk_floor: Numeric value used for the risk floor.
+        """
         self._ny_pos = 0
         self.episodic = episodic
         if legacy_sequence_columns is True and episodic:

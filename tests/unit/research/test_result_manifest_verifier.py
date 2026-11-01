@@ -1,4 +1,4 @@
-"""Tests for the thesis-facing result-manifest verifier."""
+"""Tests for the research result-manifest verifier."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def _artifact(path: str, content: bytes) -> dict[str, str]:
 
 def _manifest(artifact: dict[str, str]) -> dict[str, Any]:
     return {
-        "schema": "aalto.thesis_result_manifest.v1",
+        "schema": "qrl.research_result_manifest.v1",
         "manifest_status": "draft",
         "created_at_utc": "2026-10-18T00:00:00Z",
         "frozen_at_utc": None,
@@ -79,7 +79,7 @@ def _manifest(artifact: dict[str, str]) -> dict[str, Any]:
 
 
 def _schema() -> dict[str, Any]:
-    path = Path(__file__).resolve().parents[3] / "docs/thesis/result_manifest.schema.json"
+    path = Path(__file__).resolve().parents[3] / "schemas/research_result_manifest.schema.json"
     return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
 
 
@@ -208,7 +208,7 @@ def test_frozen_manifest_requires_supporting_roles(tmp_path: Path) -> None:
 def test_result_manifest_checks_runs_against_linked_trial_ledger(tmp_path: Path) -> None:
     ledger_path = tmp_path / "ledger.json"
     ledger = {
-        "schema": "aalto.thesis_trial_ledger.v1",
+        "schema": "qrl.research_trial_ledger.v1",
         "updated_at_utc": "2026-10-18T00:00:00Z",
         "records": [_ledger_record()],
     }
@@ -228,7 +228,7 @@ def test_result_manifest_checks_runs_against_linked_trial_ledger(tmp_path: Path)
     historical_record = _ledger_record()
     historical_record["campaign_id"] = historical_record.pop("experiment_run_id")
     historical_ledger = {
-        "schema": "aalto.thesis_trial_ledger.v1",
+        "schema": "qrl.research_trial_ledger.v1",
         "updated_at_utc": "2026-10-18T00:00:00Z",
         "campaign_ids": ["experiment-run-1"],
         "records": [historical_record],

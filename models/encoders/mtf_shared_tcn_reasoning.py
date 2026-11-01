@@ -27,6 +27,15 @@ class _SharedTCNCore(nn.Module):
         kernel_size: int,
         dropout: float,
     ) -> None:
+        """Initialize _SharedTCNCore and its owned state.
+
+        Args:
+            input_dim: Numeric value used for the input dim.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+        """
         super().__init__()
         if not channels:
             raise ValueError("channels must contain at least one width")
@@ -46,6 +55,15 @@ class _SharedTCNCore(nn.Module):
         self.proj = nn.Linear(self.channels[-1], latent_dim)
 
     def forward(self, seq: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        """Encode a masked timeframe stream through the shared causal TCN.
+
+        Args:
+            seq: Batched timeframe features with shape ``[batch, time, features]``.
+            mask: Valid-timestep mask; padded positions stay zero between blocks.
+
+        Returns:
+            The projected representation at the final sequence position.
+        """
         hidden = seq.transpose(1, 2)
         valid = mask.to(device=hidden.device, dtype=hidden.dtype).unsqueeze(1)
         # Keep convolution biases from creating artificial pre-history state in
@@ -73,6 +91,19 @@ class SharedTCNMTFReasoningEncoder(MTFReasoningOutput):
         feedforward_dim: int = 256,
         adapter_dim: int = 64,
     ) -> None:
+        """Initialize SharedTCNMTFReasoningEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+            account_dim: Account dim used by the operation described above.
+            attention_heads: Numeric value used for the attention heads.
+            feedforward_dim: Numeric value used for the feedforward dim.
+            adapter_dim: Numeric value used for the adapter dim.
+        """
         if adapter_dim < 1:
             raise ValueError("adapter_dim must be positive")
         super().__init__(
@@ -98,6 +129,11 @@ class SharedTCNMTFReasoningEncoder(MTFReasoningOutput):
 
     @property
     def encoder_provenance(self) -> dict[str, Any]:
+        """Return the shared encoder architecture and stream map for checkpoint provenance.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         return {
             "encoder_id": self.encoder_id,
             "adapter_width": self.adapter_dim,
@@ -111,6 +147,14 @@ class SharedTCNMTFReasoningEncoder(MTFReasoningOutput):
         }
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode multiple timeframe streams with a shared temporal convolution.
+
+        Args:
+            observations: Mapping of stream sequences, masks, and account tensors.
+
+        Returns:
+            Fused latent representation with account context.
+        """
         adapted: list[torch.Tensor] = []
         masks: list[torch.Tensor] = []
         for adapter, (seq_key, mask_key, _, _) in zip(self.adapters, self.streams, strict=True):

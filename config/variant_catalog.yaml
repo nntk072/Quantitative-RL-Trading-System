@@ -142,8 +142,8 @@ families:
         changed_factors: [encoder architecture]
 
   - id: mtf_reasoning_models
-    title: Core, multi-timeframe, and thesis-reasoning PPO models
-    question: How do the matched core TCN, multi-timeframe encoder, and thesis-conditioned reasoning policies compare?
+    title: Core and setup-conditioned multi-timeframe PPO models
+    question: How do the matched core TCN, multi-timeframe encoder, and setup-conditioned policies compare?
     comparison_type: matched
     entries:
       - variant: rq_mtf_control_tcn
@@ -159,8 +159,8 @@ families:
       - variant: rq_mtf_treatment_reasoning
         label: C
         role: treatment
-        description: PPO with multi-timeframe thesis reasoning and a thesis-aware action distribution.
-        changed_factors: [multi-timeframe reasoning encoder, thesis selection, thesis-aware action distribution]
+        description: PPO with a multi-timeframe reasoning encoder and a trade-setup action distribution.
+        changed_factors: [multi-timeframe reasoning encoder, setup selection, setup-aware action distribution]
 
   - id: a4b_strategy_overlay
     title: A4b strategy overlays

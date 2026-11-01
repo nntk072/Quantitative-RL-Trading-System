@@ -20,13 +20,37 @@ class BaselineStrategy(TradingStrategy):
     raw_columns = ()
 
     def validate_entry(self, *, direction: int, row: pd.Series) -> bool:  # noqa: ARG002
-        """No gate: the baseline agent decides freely."""
+        """No gate: the baseline agent decides freely.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Whether validate entry meets the requested condition.
+        """
         return True
 
     def sl_reference(self, *, direction: int, row: FeatureRow | pd.Series) -> float | None:  # noqa: ARG002
-        """No structural stop: baseline keeps its existing SL behaviour."""
+        """No structural stop: baseline keeps its existing SL behaviour.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Result of no structural stop: baseline keeps its existing SL behaviour.
+        """
         return None
 
     def target_candidates(self, *, direction: int, row: pd.Series) -> dict[str, float]:  # noqa: ARG002
-        """No structural targets: baseline keeps its existing TP behaviour."""
+        """No structural targets: baseline keeps its existing TP behaviour.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Mapping from ``str`` keys to ``float`` values.
+        """
         return {}

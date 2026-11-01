@@ -253,7 +253,8 @@ def test_live_robot_does_not_replace_sizing_error_with_default_lot() -> None:
 
 def test_robot_feed_secondary_bars_for_smt() -> None:
     """Stage 8 Task 8.4: a secondary data source must reach the adapter each
-    cycle so SMT features are present in the live observation."""
+    cycle so SMT features are present in the live observation.
+    """
     secondary = _make_bars(n=300, seed=99)
     robot, adapter = _make_robot(secondary_bars=secondary)
 
@@ -265,7 +266,8 @@ def test_robot_feed_secondary_bars_for_smt() -> None:
 
 def test_too_few_bars_yields_no_signal() -> None:
     """With insufficient history the bridge returns NONE and the robot
-    neither opens nor closes anything."""
+    neither opens nor closes anything.
+    """
     from integrations.mt5.robot.rl_robot import RLRobot
     from live.runtime.strategy import RLStrategyAdapter
 
@@ -295,7 +297,8 @@ def _load_entrypoint_helpers():
 def test_live_risk_overrides_align_with_ftmo_block() -> None:
     """Stage 8 Task 8.2: the live (percentage) risk model is explicitly
     configured, and its $100k-equivalent per-trade risk matches the training
-    ftmo.risk_per_trade_limit — no silent divergence."""
+    ftmo.risk_per_trade_limit — no silent divergence.
+    """
     import live_trading_rl  # noqa: PLC0415
     from omegaconf import OmegaConf
 
@@ -310,7 +313,8 @@ def test_live_risk_overrides_align_with_ftmo_block() -> None:
 
 def test_use_secondary_symbol_decision() -> None:
     """Task 8.4: SMT-capable models need secondary live data; primary_only /
-    use_m1_only models do not."""
+    use_m1_only models do not.
+    """
     import live_trading_rl  # noqa: PLC0415
     from omegaconf import OmegaConf
 
@@ -325,7 +329,8 @@ def test_use_secondary_symbol_decision() -> None:
 
 def test_resolve_run_config_prefers_saved_run_config(tmp_path) -> None:
     """The entrypoint must use the model run's saved config.yaml when
-    available (train/live parity) and fall back to the repo default."""
+    available (train/live parity) and fall back to the repo default.
+    """
     import live_trading_rl  # noqa: PLC0415
 
     run_dir = tmp_path / "rl_run" / "model"

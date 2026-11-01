@@ -10,7 +10,6 @@ import pytest
 import torch
 from gymnasium import spaces
 from stable_baselines3 import PPO
-from stable_baselines3.common.torch_layers import CombinedExtractor
 
 from decisioning.actions import build_action_schema
 from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT, trade_setup_id_from_box
@@ -19,10 +18,9 @@ from learning.rl.hybrid import (
     HybridActorHeads,
     HybridBoxDistribution,
     HybridClampedStdMultiInputPolicy,
-    ThesisConditionedActorHeads,
-    ThesisConditionedClampedStdMultiInputPolicy,
-    ThesisConditionedHybridBoxDistribution,
+    TradeSetupConditionedActorHeads,
     TradeSetupConditionedClampedStdMultiInputPolicy,
+    TradeSetupConditionedHybridBoxDistribution,
     _encoded_centers,
 )
 from models.encoders import TCNEncoder
@@ -93,8 +91,8 @@ def test_hybrid_distribution_deterministic_mode_uses_valid_category_codes() -> N
     assert torch.isfinite(distribution.log_prob(actions)).all()
 
 
-def test_thesis_hybrid_distribution_samples_only_each_rows_valid_candidates() -> None:
-    coordinates = ("thesis", "risk", "exit")
+def test_trade_setup_hybrid_distribution_samples_only_each_rows_valid_candidates() -> None:
+    coordinates = ("trade_setup", "risk", "exit")
     actor = HybridActorHeads(4, coordinates, {})
     distribution = HybridBoxDistribution(actor, len(coordinates))
     latent = torch.randn(3, 4)
@@ -106,7 +104,7 @@ def test_thesis_hybrid_distribution_samples_only_each_rows_valid_candidates() ->
     masks[1, 37] = 1.0
     masks[2, 2] = 1.0
     distribution.proba_distribution(
-        means, torch.zeros(len(actor.continuous_indices)), logits, masks={"thesis": masks}
+        means, torch.zeros(len(actor.continuous_indices)), logits, masks={"trade_setup": masks}
     )
 
     for deterministic in (False, True):
@@ -120,31 +118,31 @@ def test_thesis_hybrid_distribution_samples_only_each_rows_valid_candidates() ->
     assert torch.isfinite(distribution.entropy()).all()
 
 
-def test_thesis_conditioned_distribution_masks_and_conditions_execution() -> None:
+def test_trade_setup_conditioned_distribution_masks_and_conditions_execution() -> None:
     torch.manual_seed(91)
-    coordinates = ("thesis", "risk", "sl_mode", "exit")
-    actor = ThesisConditionedActorHeads(8, coordinates, {"sl_mode": 0.1})
-    distribution = ThesisConditionedHybridBoxDistribution(actor, len(coordinates))
+    coordinates = ("trade_setup", "risk", "sl_mode", "exit")
+    actor = TradeSetupConditionedActorHeads(8, coordinates, {"sl_mode": 0.1})
+    distribution = TradeSetupConditionedHybridBoxDistribution(actor, len(coordinates))
     latent = torch.randn(2, 8)
-    thesis_logits = actor.thesis(latent)
+    trade_setup_logits = actor.trade_setup(latent)
     masks = torch.zeros((2, TRADE_SETUP_CATEGORY_COUNT), dtype=torch.float32)
     masks[0, [0, 5, 31]] = 1.0
     masks[1, [0, 12]] = 1.0
     distribution.proba_distribution(
         latent,
         torch.zeros(len(actor.continuous_indices), requires_grad=True),
-        thesis_logits,
-        masks={"thesis": masks},
+        trade_setup_logits,
+        masks={"trade_setup": masks},
     )
 
-    assert distribution.thesis is not None
-    assert torch.all(distribution.thesis.probs[~masks.bool()] == 0.0)
+    assert distribution.trade_setup is not None
+    assert torch.all(distribution.trade_setup.probs[~masks.bool()] == 0.0)
     first, _ = actor.execution(latent[:1], torch.tensor([5]))
     second, _ = actor.execution(latent[:1], torch.tensor([31]))
     assert not torch.allclose(first, second)
     # The selector receives only market latent; changing a proposed execution
-    # thesis cannot feed back into primary-thesis logits.
-    assert torch.equal(actor.thesis(latent), thesis_logits)
+    # trade_setup cannot feed back into primary-trade_setup logits.
+    assert torch.equal(actor.trade_setup(latent), trade_setup_logits)
 
     for deterministic in (False, True):
         actions = distribution.get_actions(deterministic=deterministic)
@@ -153,25 +151,25 @@ def test_thesis_conditioned_distribution_masks_and_conditions_execution() -> Non
         assert selected[1] in {0, 12}
         assert torch.isfinite(distribution.log_prob(actions)).all()
         assert torch.isfinite(distribution.entropy()).all()
-        assert torch.isfinite(distribution.thesis_entropy()).all()
+        assert torch.isfinite(distribution.trade_setup_entropy()).all()
     objective = -distribution.log_prob(actions).mean() - distribution.entropy().mean()
     torch.autograd.backward(objective)
-    assert actor.thesis_logits.weight.grad is not None
-    assert actor.thesis_embedding.weight.grad is not None
+    assert actor.trade_setup_logits.weight.grad is not None
+    assert actor.trade_setup_embedding.weight.grad is not None
     assert actor.execution_body[0].weight.grad is not None
     assert actor.continuous_mean.weight.grad is not None
     assert actor.execution_categorical_logits["sl_mode"].weight.grad is not None
     assert actor.execution_categorical_logits["exit"].weight.grad is not None
-    assert torch.isfinite(actor.thesis_embedding.weight.grad).all()
+    assert torch.isfinite(actor.trade_setup_embedding.weight.grad).all()
 
 
-def test_thesis_conditioned_entropy_matches_full_category_reference() -> None:
+def test_trade_setup_conditioned_entropy_matches_full_category_reference() -> None:
     torch.manual_seed(17)
-    coordinates = ("thesis", "risk", "sl_mode", "exit")
-    actor = ThesisConditionedActorHeads(8, coordinates, {"sl_mode": 0.1})
-    distribution = ThesisConditionedHybridBoxDistribution(actor, len(coordinates))
+    coordinates = ("trade_setup", "risk", "sl_mode", "exit")
+    actor = TradeSetupConditionedActorHeads(8, coordinates, {"sl_mode": 0.1})
+    distribution = TradeSetupConditionedHybridBoxDistribution(actor, len(coordinates))
     latent = torch.randn(3, 8)
-    thesis_logits = actor.thesis(latent)
+    trade_setup_logits = actor.trade_setup(latent)
     masks = torch.zeros((3, TRADE_SETUP_CATEGORY_COUNT), dtype=torch.float32)
     masks[0, 0] = 1.0
     masks[1, [0, 5]] = 1.0
@@ -180,8 +178,8 @@ def test_thesis_conditioned_entropy_matches_full_category_reference() -> None:
     distribution.proba_distribution(
         latent,
         log_std,
-        thesis_logits,
-        masks={"thesis": masks},
+        trade_setup_logits,
+        masks={"trade_setup": masks},
     )
 
     actual = distribution.entropy()
@@ -196,26 +194,26 @@ def test_thesis_conditioned_entropy_matches_full_category_reference() -> None:
             categorical = torch.distributions.Categorical(logits=values)
             conditional += categorical.entropy()  # type: ignore[no-untyped-call]
         conditional = conditional.reshape(len(latent), TRADE_SETUP_CATEGORY_COUNT)
-        assert distribution.thesis is not None
-        probs = distribution.thesis.probs
-        reference = distribution.thesis_entropy() + (probs * conditional).sum(dim=1)
+        assert distribution.trade_setup is not None
+        probs = distribution.trade_setup.probs
+        reference = distribution.trade_setup_entropy() + (probs * conditional).sum(dim=1)
 
     assert torch.allclose(actual, reference, atol=1e-6, rtol=1e-6)
     assert torch.isfinite(actual).all()
 
 
-def test_thesis_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
-    env = _ThesisOverlayEnv()
+def test_trade_setup_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
+    env = _TradeSetupOverlayEnv()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     diagnostics_path = tmp_path / "learning_diagnostics.csv"
     model = PPO(
-        ThesisConditionedClampedStdMultiInputPolicy,
+        TradeSetupConditionedClampedStdMultiInputPolicy,
         env,
         policy_kwargs={
-            "hybrid_action_coordinates": ("thesis", "risk", "exit"),
-            "thesis_mask_key": "thesis_mask",
-            "thesis_embedding_dim": 16,
-            "thesis_execution_hidden_dim": 32,
+            "hybrid_action_coordinates": ("trade_setup", "risk", "exit"),
+            "trade_setup_mask_key": "trade_setup_mask",
+            "trade_setup_embedding_dim": 16,
+            "trade_setup_execution_hidden_dim": 32,
             "net_arch": {"pi": [32], "vf": [32]},
             "features_extractor_class": TCNEncoder,
             "features_extractor_kwargs": {
@@ -235,8 +233,8 @@ def test_thesis_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -> Non
     )
     training_diagnostics = pd.read_csv(diagnostics_path)
     assert len(training_diagnostics) == 2
-    assert training_diagnostics["thesis/entropy_mean_nats"].notna().all()
-    assert (training_diagnostics["thesis/invalid_selection_count"] == 0).all()
+    assert training_diagnostics["trade_setup/entropy_mean_nats"].notna().all()
+    assert (training_diagnostics["trade_setup/invalid_selection_count"] == 0).all()
     observation, _ = env.reset()
     predicted, _ = model.predict(observation, deterministic=True)
     assert trade_setup_id_from_box(float(predicted[0])) in {0, 12, 51}
@@ -253,23 +251,23 @@ def test_thesis_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -> Non
     assert torch.isfinite(entropy).all()
     assert torch.allclose(log_prob, expected_log_prob)
 
-    checkpoint = tmp_path / "thesis_conditioned_policy.zip"
+    checkpoint = tmp_path / "trade_setup_conditioned_policy.zip"
     model.save(checkpoint)
     loaded = PPO.load(checkpoint, device=device)
-    assert loaded.policy.thesis_embedding_dim == 16
-    assert loaded.policy.thesis_execution_hidden_dim == 32
+    assert loaded.policy.trade_setup_embedding_dim == 16
+    assert loaded.policy.trade_setup_execution_hidden_dim == 32
     loaded_action, _ = loaded.predict(observation, deterministic=True)
     assert np.allclose(loaded_action, predicted)
 
 
-class _ThesisOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):
+class _TradeSetupOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):
     def __init__(self) -> None:
         self.observation_space = spaces.Dict(
             {
                 "seq": spaces.Box(-1.0, 1.0, (8, 3), dtype=np.float32),
                 "seq_mask": spaces.Box(0.0, 1.0, (8,), dtype=np.float32),
                 "account": spaces.Box(-10.0, 10.0, (6,), dtype=np.float32),
-                "thesis_mask": spaces.Box(
+                "trade_setup_mask": spaces.Box(
                     0.0, 1.0, (TRADE_SETUP_CATEGORY_COUNT,), dtype=np.float32
                 ),
             }
@@ -290,7 +288,7 @@ class _ThesisOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[
         }
         mask = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
         mask[[0, 12, 51]] = 1.0
-        observation["thesis_mask"] = mask
+        observation["trade_setup_mask"] = mask
         return observation, {}
 
     def step(
@@ -301,34 +299,14 @@ class _ThesisOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[
         return observation, 0.0, True, False, {}
 
 
-class _TradeSetupOverlayEnv(_ThesisOverlayEnv):
-    """Equivalent fake environment exposing the canonical observation key."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        assert isinstance(self.observation_space, spaces.Dict)
-        mask_space = self.observation_space.spaces.pop("thesis_mask")
-        self.observation_space.spaces["trade_setup_mask"] = mask_space
-
-    def reset(
-        self,
-        *,
-        seed: int | None = None,
-        options: dict[str, object] | None = None,
-    ) -> tuple[dict[str, npt.NDArray[np.float32]], dict[str, object]]:
-        observation, info = super().reset(seed=seed, options=options)
-        observation["trade_setup_mask"] = observation.pop("thesis_mask")
-        return observation, info
-
-
-def test_thesis_hybrid_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
-    env = _ThesisOverlayEnv()
+def test_trade_setup_hybrid_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
+    env = _TradeSetupOverlayEnv()
     model = PPO(
         HybridClampedStdMultiInputPolicy,
         env,
         policy_kwargs={
-            "hybrid_action_coordinates": ("thesis", "risk", "exit"),
-            "thesis_mask_key": "thesis_mask",
+            "hybrid_action_coordinates": ("trade_setup", "risk", "exit"),
+            "trade_setup_mask_key": "trade_setup_mask",
             "net_arch": {"pi": [32], "vf": [32]},
             "features_extractor_class": TCNEncoder,
             "features_extractor_kwargs": {
@@ -347,45 +325,11 @@ def test_thesis_hybrid_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
     for deterministic in (False, True):
         action, _ = model.predict(observation, deterministic=deterministic)
         assert trade_setup_id_from_box(float(action[0])) in {0, 12, 51}
-    checkpoint = tmp_path / "thesis_hybrid_policy.zip"
+    checkpoint = tmp_path / "trade_setup_hybrid_policy.zip"
     model.save(checkpoint)
     loaded = PPO.load(checkpoint, device="cpu")
     action, _ = loaded.predict(observation, deterministic=True)
     assert trade_setup_id_from_box(float(action[0])) in {0, 12, 51}
-
-
-def test_trade_setup_conditioned_policy_checkpoint_roundtrip(tmp_path) -> None:
-    env = _TradeSetupOverlayEnv()
-    model = PPO(
-        TradeSetupConditionedClampedStdMultiInputPolicy,
-        env,
-        policy_kwargs={
-            "hybrid_action_coordinates": ("trade_setup", "risk", "exit"),
-            "trade_setup_mask_key": "trade_setup_mask",
-            "trade_setup_embedding_dim": 16,
-            "trade_setup_execution_hidden_dim": 32,
-            "net_arch": {"pi": [32], "vf": [32]},
-            "features_extractor_class": CombinedExtractor,
-        },
-        n_steps=2,
-        batch_size=2,
-        n_epochs=1,
-        device="cpu",
-    )
-    observation, _ = env.reset()
-    prediction, _ = model.predict(observation, deterministic=True)
-    assert trade_setup_id_from_box(float(prediction[0])) in {0, 12, 51}
-    observation_tensor, _ = model.policy.obs_to_tensor(observation)
-    _, log_prob, entropy = model.policy.evaluate_actions(
-        observation_tensor, torch.as_tensor(prediction, device=model.device).reshape(1, -1)
-    )
-    assert torch.isfinite(log_prob).all()
-    assert entropy is not None and torch.isfinite(entropy).all()
-    checkpoint = tmp_path / "trade_setup_conditioned_policy.zip"
-    model.save(checkpoint)
-    loaded = PPO.load(checkpoint, device="cpu")
-    loaded_prediction, _ = loaded.predict(observation, deterministic=True)
-    assert np.allclose(loaded_prediction, prediction)
 
 
 class _HybridOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):

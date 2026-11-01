@@ -33,25 +33,16 @@ _ZONE_SPECS: list[tuple[str, str, str, str, str]] = [
 class FVGZone:
     """A drawable FVG/IFVG zone rectangle.
 
-    Attributes
-    ----------
-    kind : str
-        'htf_fvg' for a higher-timeframe FVG or 'ltf_ifvg' for a confirmed IFVG.
-    side : str
-        'bullish' or 'bearish'.
-    start_ts : pd.Timestamp
-        First bar timestamp of the zone.
-    end_ts : pd.Timestamp
-        Last bar timestamp: the bar where the zone was filled (invalidated) or
-        where the horizon expired.
-    zone_low : float
-        Lower price bound of the zone.
-    zone_high : float
-        Upper price bound of the zone.
-    confirmed : bool
-        True if the zone was confirmed as an IFVG.
-    invalidated : bool
-        True if price traded back through the gap (zone filled) before expiry.
+    Attributes:
+        kind (str): 'htf_fvg' for a higher-timeframe FVG or 'ltf_ifvg' for a confirmed IFVG.
+        side (str): 'bullish' or 'bearish'.
+        start_ts (pd.Timestamp): First bar timestamp of the zone.
+        end_ts (pd.Timestamp): Last bar timestamp: the bar where the zone was filled (invalidated) or
+            where the horizon expired.
+        zone_low (float): Lower price bound of the zone.
+        zone_high (float): Upper price bound of the zone.
+        confirmed (bool): True if the zone was confirmed as an IFVG.
+        invalidated (bool): True if price traded back through the gap (zone filled) before expiry.
     """
 
     kind: str
@@ -75,21 +66,15 @@ def build_fvg_zones(
     produces exactly one :class:`FVGZone`.  A zone ends when price trades back
     through the gap (``invalidated=True``) or after ``max_zone_bars`` bars.
 
-    Parameters
-    ----------
-    bars : pd.DataFrame
-        M1 OHLC bars (DatetimeIndex, 'high'/'low' columns) that produced the signals.
-    signals : pd.DataFrame
-        Output of :func:`detect_htf_fvg`, :func:`detect_ltf_ifvg`, or the
-        combined output of :func:`detect_po3_entries`.  Must share the index of
-        ``bars`` and contain a subset of the well-known column names.
-    max_zone_bars : int
-        Maximum number of bars a zone stays active before it is considered expired.
+    Args:
+        bars (pd.DataFrame): M1 OHLC bars (DatetimeIndex, 'high'/'low' columns) that produced the signals.
+        signals (pd.DataFrame): Output of :func:`detect_htf_fvg`, :func:`detect_ltf_ifvg`, or the
+            combined output of :func:`detect_po3_entries`.  Must share the index of
+            ``bars`` and contain a subset of the well-known column names.
+        max_zone_bars (int): Maximum number of bars a zone stays active before it is considered expired.
 
-    Returns
-    -------
-    list[FVGZone]
-        One zone per formation event, ordered by start timestamp.
+    Returns:
+        list[FVGZone]: One zone per formation event, ordered by start timestamp.
     """
     zones: list[FVGZone] = []
 
@@ -154,7 +139,18 @@ def _invalidate_zone_on_tf(
     zone_low: float,
     zone_high: float,
 ) -> tuple[pd.Timestamp, bool]:
-    """Scan ``bars`` after ``start_i`` for gap fill; return (end_ts, invalidated)."""
+    """Scan ``bars`` after ``start_i`` for gap fill; return (end_ts, invalidated).
+
+    Args:
+        bars: Market bars to process.
+        side: Text or path value identifying the side.
+        start_i: Numeric value used for the start i.
+        zone_low: Numeric value used for the zone low.
+        zone_high: Numeric value used for the zone high.
+
+    Returns:
+        Whether invalidate zone on tf meets the requested condition.
+    """
     n = len(bars)
     end_ts = bars.index[n - 1]
     invalidated = False
@@ -180,6 +176,16 @@ def build_fvg_zones_for_plot(
     M1 0→1 edge (next HTF open), this places the left edge on the imbalance
     candle between bar1 and bar3 (bar2 open) and ends at true gap fill with
     no M1 ``max_zone_bars`` cap. Agent feature causality is unchanged.
+
+    Args:
+        m1_bars: One-minute OHLCV bars used to build the sequences.
+        htf: Text or path value identifying the htf.
+        ltf: Text or path value identifying the ltf.
+        fvg_config: Fvg config used by the operation described above.
+        ifvg_config: Ifvg config used by the operation described above.
+
+    Returns:
+        Values returned by ``build_fvg_zones_for_plot``, in the declared order.
     """
     from market_data.transforms.resample import resample
 

@@ -25,7 +25,15 @@ RUNG_ORDER = {name: index for index, name in enumerate(("a0", "a1", "a2", "a3", 
 
 
 def command(args: list[str], *, timeout: int = 8) -> str:
-    """Run a bounded, read-only status command and return stdout."""
+    """Run a bounded, read-only status command and return stdout.
+
+    Args:
+        args: Items supplied for the args, in input order.
+        timeout: Maximum time to wait, in seconds.
+
+    Returns:
+        Text returned by ``command``.
+    """
     try:
         result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
     except (OSError, subprocess.TimeoutExpired):
@@ -34,10 +42,23 @@ def command(args: list[str], *, timeout: int = 8) -> str:
 
 
 def fields(text: str) -> dict[str, str]:
+    """Parse whitespace-delimited ``key=value`` fields from Slurm output.
+
+    Args:
+        text: Text or path value identifying the text.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     return dict(re.findall(r"(?:^|\s)([A-Za-z][A-Za-z0-9_]*)=([^\s]+)", text))
 
 
 def scheduler_jobs() -> list[dict[str, str]]:
+    """Return the current user's jobs from structured ``squeue`` output.
+
+    Returns:
+        Mapping from ``str`` keys to ``str]`` values.
+    """
     raw = command(
         [
             "squeue",
@@ -59,7 +80,14 @@ def scheduler_jobs() -> list[dict[str, str]]:
 
 
 def expand_nodes(node_list: str) -> set[str]:
-    """Expand common Slurm node-list ranges such as gpuarm[1-2]."""
+    """Expand common Slurm node-list ranges such as gpuarm[1-2].
+
+    Args:
+        node_list: Text or path value identifying the node list.
+
+    Returns:
+        Result of expand common Slurm node-list ranges such as gpuarm[1-2].
+    """
     match = re.fullmatch(r"([^,\[]*)\[([^\]]+)\]", node_list)
     if not match:
         return set(node_list.split(",")) if node_list else set()
@@ -80,6 +108,16 @@ def expand_nodes(node_list: str) -> set[str]:
 def find_job_id(
     explicit: str | None, manifest: dict[str, Any], nodes: list[str]
 ) -> tuple[str | None, str]:
+    """Resolve a job ID from explicit input or live manifest/node evidence.
+
+    Args:
+        explicit: Explicit used by the operation described above.
+        manifest: Key-value data used for the manifest.
+        nodes: Items supplied for the nodes, in input order.
+
+    Returns:
+        Values returned by ``find_job_id``, in the declared order.
+    """
     if explicit:
         return explicit, "explicit argument"
     candidates = [
@@ -97,6 +135,14 @@ def find_job_id(
 
 
 def slurm_job(job_id: str | None) -> tuple[dict[str, str], str]:
+    """Read one job's live Slurm fields and identify the result source.
+
+    Args:
+        job_id: Job id used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``str], str`` values.
+    """
     if not job_id:
         return {}, "not identified"
     raw = command(["scontrol", "show", "job", job_id])
@@ -104,10 +150,27 @@ def slurm_job(job_id: str | None) -> tuple[dict[str, str], str]:
 
 
 def slurm_node(node: str) -> dict[str, str]:
+    """Read live resource and state fields for one Slurm node.
+
+    Args:
+        node: Text or path value identifying the node.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     return fields(command(["scontrol", "show", "node", node]))
 
 
 def parse_gres_count(value: str, family: str | None = None) -> int | None:
+    """Extract a GPU count from Slurm GRES or allocated-resource text.
+
+    Args:
+        value: Value to process.
+        family: Family used by the operation described above.
+
+    Returns:
+        Result of extract a GPU count from Slurm GRES or allocated-resource text.
+    """
     if "gres/gpu" in value:
         pattern = (
             rf"gres/gpu(?::{re.escape(family)})?=(\d+)" if family else r"gres/gpu(?::[^,]+)?=(\d+)"
@@ -119,6 +182,14 @@ def parse_gres_count(value: str, family: str | None = None) -> int | None:
 
 
 def latest_resource_sample(path: pathlib.Path) -> dict[str, str]:
+    """Return the newest valid resource-monitor row from a CSV file.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     if not path.is_file():
         return {}
     try:
@@ -130,6 +201,16 @@ def latest_resource_sample(path: pathlib.Path) -> dict[str, str]:
 
 
 def manager_ready(experiment_run_dir: pathlib.Path, job_id: str | None, node: str) -> bool | None:
+    """Find manager-log evidence that the worker manager is ready on the node.
+
+    Args:
+        experiment_run_dir: Text or path value identifying the experiment run dir.
+        job_id: Job id used by the operation described above.
+        node: Text or path value identifying the node.
+
+    Returns:
+        Whether manager ready meets the requested condition.
+    """
     if not job_id:
         return None
     logs = sorted(
@@ -146,6 +227,14 @@ def manager_ready(experiment_run_dir: pathlib.Path, job_id: str | None, node: st
 
 
 def variant_sort_key(job: dict[str, Any]) -> tuple[int, int, str]:
+    """Sort jobs by ladder rung, variant family, and name.
+
+    Args:
+        job: Key-value data used for the job.
+
+    Returns:
+        Values returned by ``variant_sort_key``, in the declared order.
+    """
     name = str(job.get("variant", job.get("key", "unknown")))
     match = re.search(r"(?:^|_)((?:a[0-3])|(?:a4[ab]))(?:_|$)", name)
     rung = match.group(1) if match else "unknown"
@@ -159,6 +248,14 @@ def variant_sort_key(job: dict[str, Any]) -> tuple[int, int, str]:
 
 
 def logged_steps(log_path: pathlib.Path) -> int | None:
+    """Read the latest completed-timestep count from a worker log.
+
+    Args:
+        log_path: Path or filename identifying the log.
+
+    Returns:
+        Result of read the latest completed-timestep count from a worker log.
+    """
     try:
         text = log_path.read_text(encoding="utf-8", errors="replace")
     except OSError:
@@ -178,7 +275,15 @@ def logged_steps(log_path: pathlib.Path) -> int | None:
 
 
 def recent_fps(log_path: pathlib.Path, sample_count: int = 5) -> tuple[float, int] | None:
-    """Return the median of recent Stable-Baselines FPS samples and their count."""
+    """Return the median of recent Stable-Baselines FPS samples and their count.
+
+    Args:
+        log_path: Path or filename identifying the log.
+        sample_count: Number specifying the sample count for this operation.
+
+    Returns:
+        Values returned by ``recent_fps``, in the declared order.
+    """
     try:
         text = log_path.read_text(encoding="utf-8", errors="replace")
     except OSError:
@@ -199,13 +304,32 @@ def recent_fps(log_path: pathlib.Path, sample_count: int = 5) -> tuple[float, in
 
 
 def estimate_remaining_seconds(steps: int | None, target: int, fps: float | None) -> int | None:
-    """Project remaining training time from the latest FPS window, if available."""
+    """Project remaining training time from the latest FPS window, if available.
+
+    Args:
+        steps: Number of environment or optimization steps to run.
+        target: Path or filename identifying the target.
+        fps: Fps used by the operation described above.
+
+    Returns:
+        Result of project remaining training time from the latest FPS window, if available.
+    """
     if steps is None or target <= steps or fps is None or fps <= 0:
         return None
     return math.ceil((target - steps) / fps)
 
 
 def latest_checkpoint(experiment_run_dir: pathlib.Path, key: str, now: dt.datetime) -> str:
+    """Describe the newest checkpoint artifact for one job.
+
+    Args:
+        experiment_run_dir: Text or path value identifying the experiment run dir.
+        key: Text or path value identifying the key.
+        now: Now used by the operation described above.
+
+    Returns:
+        Text returned by ``latest_checkpoint``.
+    """
     try:
         attempt_root = ExperimentRunArtifactLayout(experiment_run_dir).run_attempts(key)
     except ValueError:
@@ -221,6 +345,15 @@ def latest_checkpoint(experiment_run_dir: pathlib.Path, key: str, now: dt.dateti
 
 
 def job_phase(job: dict[str, Any], log_path: pathlib.Path) -> str:
+    """Infer a job's training/evaluation phase from status and its recent log.
+
+    Args:
+        job: Key-value data used for the job.
+        log_path: Path or filename identifying the log.
+
+    Returns:
+        Text returned by ``job_phase``.
+    """
     status = str(job.get("status", "unknown"))
     try:
         text = log_path.read_text(encoding="utf-8", errors="replace")[-16000:]
@@ -237,6 +370,15 @@ def job_phase(job: dict[str, Any], log_path: pathlib.Path) -> str:
 
 
 def failure_detail(job: dict[str, Any], log_path: pathlib.Path) -> str:
+    """Extract the latest dispatch error or manifest failure reason.
+
+    Args:
+        job: Key-value data used for the job.
+        log_path: Path or filename identifying the log.
+
+    Returns:
+        Text returned by ``failure_detail``.
+    """
     try:
         lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
@@ -251,6 +393,14 @@ def failure_detail(job: dict[str, Any], log_path: pathlib.Path) -> str:
 
 
 def fmt_time(seconds: str | None) -> str:
+    """Format a Slurm duration value for the human-readable report.
+
+    Args:
+        seconds: Seconds used by the operation described above.
+
+    Returns:
+        Text returned by ``fmt_time``.
+    """
     if not seconds:
         return "unavailable"
     try:
@@ -261,6 +411,14 @@ def fmt_time(seconds: str | None) -> str:
 
 
 def get_tmux_supervisor(explicit: str | None) -> str:
+    """Return the explicit supervisor or a summary of detected tmux sessions.
+
+    Args:
+        explicit: Explicit used by the operation described above.
+
+    Returns:
+        Text returned by ``get_tmux_supervisor``.
+    """
     if explicit:
         return explicit
     raw = command(["tmux", "list-sessions", "-F", "#{session_name}"])
@@ -268,6 +426,14 @@ def get_tmux_supervisor(explicit: str | None) -> str:
 
 
 def cell(value: object) -> str:
+    """Escape a value for safe placement inside one Markdown table cell.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``cell``.
+    """
     return str(value).replace("|", "\\|").replace("\n", " ")
 
 
@@ -278,7 +444,18 @@ def elapsed_for_job(
     now: dt.datetime,
     timezone: dt.tzinfo,
 ) -> str:
-    """Calculate the current attempt's elapsed time, ignoring stale end times."""
+    """Calculate the current attempt's elapsed time, ignoring stale end times.
+
+    Args:
+        started: Started used by the operation described above.
+        ended: Ended used by the operation described above.
+        status: Text or path value identifying the status.
+        now: Now used by the operation described above.
+        timezone: Timezone used by the operation described above.
+
+    Returns:
+        Text returned by ``elapsed_for_job``.
+    """
     if not isinstance(started, str):
         return "unavailable"
     try:
@@ -297,6 +474,16 @@ def elapsed_for_job(
 def render(
     experiment_run_path: pathlib.Path, job_id_arg: str | None, supervisor: str | None
 ) -> str:
+    """Render run metadata, Slurm state, progress logs, and checkpoint status.
+
+    Args:
+        experiment_run_path: Path or filename identifying the experiment run.
+        job_id_arg: Job id arg used by the operation described above.
+        supervisor: Supervisor used by the operation described above.
+
+    Returns:
+        Text returned by ``render``.
+    """
     experiment_run_dir = experiment_run_path.parent
     experiment_run_artifacts = ExperimentRunArtifactLayout(experiment_run_dir)
     experiment_run = json.loads(experiment_run_path.read_text(encoding="utf-8"))
@@ -482,6 +669,11 @@ def render(
 
 
 def main() -> int:
+    """Print the generated status report and return a nonzero error code on failure.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "experiment_run", type=pathlib.Path, help="experiment_run.json or experiment run directory"

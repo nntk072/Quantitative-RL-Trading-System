@@ -7,10 +7,22 @@ from integrations.mt5.domain.signal import Signal
 
 
 class CrossOverStrategy(TradingStrategy):
+    """Moving-average crossover strategy for broker-neutral execution."""
+
     def __init__(self, trading_data: TradingData) -> None:
+        """Initialize CrossOverStrategy and its owned state.
+
+        Args:
+            trading_data: Trading data used by the operation described above.
+        """
         self.data = trading_data
 
     def signal(self) -> tuple[str, Signal]:
+        """Evaluate the latest bars and return the crossover signal.
+
+        Returns:
+            Pair of broker symbol and long, short, or neutral signal.
+        """
         df: pd.DataFrame = self.data.get_data()
         symbol = self.data.get_symbol()
         if df.empty:

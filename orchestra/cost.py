@@ -26,23 +26,42 @@ class CostTracker:
     """Tracks token usage and cost per model and per task."""
 
     def __init__(self, state_dir: Path):
+        """Initialize CostTracker and its owned state.
+
+        Args:
+            state_dir: Text or path value identifying the state dir.
+        """
         self.state_dir = state_dir
         self.cost_file = state_dir / "costs.json"
         self._data: dict[str, Any] = {}
         self._load()
 
     def _load(self) -> None:
+        """Load CostTracker."""
         if self.cost_file.exists():
             self._data = json.loads(self.cost_file.read_text())
 
     def _save(self) -> None:
+        """Save CostTracker."""
         write_text_atomic(self.cost_file, json.dumps(self._data, indent=2, default=str))
 
     def _today(self) -> str:
+        """Process CostTracker.
+
+        Returns:
+            Text returned by ``_today``.
+        """
         return time.strftime("%Y-%m-%d")
 
     def estimate_tokens(self, text: str) -> int:
-        """Rough token estimation (4 chars per token)."""
+        """Rough token estimation (4 chars per token).
+
+        Args:
+            text: Text or path value identifying the text.
+
+        Returns:
+            Numeric result returned by ``estimate_tokens``.
+        """
         return len(text) // 4
 
     def record_usage(
@@ -52,7 +71,17 @@ class CostTracker:
         completion_tokens: int,
         task_id: str | None = None,
     ) -> dict[str, Any]:
-        """Record token usage for a model call. Returns cost breakdown."""
+        """Record token usage for a model call. Returns cost breakdown.
+
+        Args:
+            model: Model used for this operation.
+            prompt_tokens: Numeric value used for the prompt tokens.
+            completion_tokens: Numeric value used for the completion tokens.
+            task_id: Task id used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         today = self._today()
 
         model_cost = MODEL_COSTS.get(model, {"input": 0.10, "output": 0.30})
@@ -91,7 +120,14 @@ class CostTracker:
         return record
 
     def get_daily_summary(self, date: str | None = None) -> dict[str, Any]:
-        """Get cost summary for a specific date (defaults to today)."""
+        """Get cost summary for a specific date (defaults to today).
+
+        Args:
+            date: Date used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         date = date or self._today()
         day_data = self._data.get(date, {"calls": [], "totals": {}})
         totals = day_data.get("totals", {})
@@ -109,7 +145,14 @@ class CostTracker:
         }
 
     def get_monthly_summary(self, month: str | None = None) -> dict[str, Any]:
-        """Get aggregated cost summary for a month."""
+        """Get aggregated cost summary for a month.
+
+        Args:
+            month: Month used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         month = month or time.strftime("%Y-%m")
         monthly: dict[str, Any] = {
             "prompt_tokens": 0,
@@ -132,7 +175,14 @@ class CostTracker:
         return monthly
 
     def get_task_cost(self, task_id: str) -> dict[str, Any] | None:
-        """Get total cost for a specific task across all days."""
+        """Get total cost for a specific task across all days.
+
+        Args:
+            task_id: Text or path value identifying the task id.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         task_calls = []
         total_cost = 0.0
         total_prompt = 0

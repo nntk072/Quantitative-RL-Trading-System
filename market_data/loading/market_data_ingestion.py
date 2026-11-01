@@ -52,12 +52,13 @@ def run_pipeline(
 
     Full-day M1 is kept for every timeframe. ``filter_session`` is not applied.
 
-    Parameters
-    ----------
-    cfg:
-        OmegaConf config (config/base/default.yaml).
-    force:
-        If True, ignore existing parquet cache and reprocess from CSV.
+    Args:
+        cfg: OmegaConf config (config/base/default.yaml).
+        force: If True, ignore existing parquet cache and reprocess from CSV.
+        datasets: Optional configured dataset names to process; None selects all datasets.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, pd.DataFrame]`` values.
     """
     cache_dir = Path(cfg.data.cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -107,6 +108,14 @@ def run_pipeline(
             source_hashes = {m1_path: file_sha256(m1_path)}
 
             def input_hash(path: Path) -> str:
+                """Return a memoized content hash for a source file.
+
+                Args:
+                    path: Raw market-data file to fingerprint.
+
+                Returns:
+                    SHA-256 digest used in the cache identity.
+                """
                 if path not in source_hashes:
                     source_hashes[path] = file_sha256(path)
                 return source_hashes[path]

@@ -5,10 +5,10 @@ using structure-aware features (SMT divergence, PO3 state, liquidity sweeps, FVG
 
 ## Active research workflow
 
-Use [`docs/thesis/master_project_execution_plan.md`](docs/thesis/master_project_execution_plan.md)
-as the operational queue for the current thesis submission work. It is a
-project-specific research plan, not the architecture or documentation index.
-Use [Research](docs/research/README.md) for the framework's general research
+Use [`docs/operations/research_execution_plan.md`](docs/operations/research_execution_plan.md)
+as the operational queue for the active research program. It is a
+project-specific plan, not the architecture or documentation index. Use
+[Research](docs/research/README.md) for the framework's general research
 methodology and evidence. Older plans are references, not parallel work
 queues. Agent implementation plans and working notes belong outside the
 repository in `/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/`.
@@ -119,7 +119,7 @@ Domain-level context: `.agents/domain_maps/*.md`
 7. **Live risk ≈ training risk** — `live_risk_overrides` must stay aligned with
    `ftmo` dollar limits. Silent divergence is the failure mode.
 8. **Locked OOS is final report** — do not select architectures on the locked
-   holdout; see `docs/thesis/validation_protocol.md`.
+   holdout; see `docs/research/validation_protocol.md`.
 
 ## Context Routing
 

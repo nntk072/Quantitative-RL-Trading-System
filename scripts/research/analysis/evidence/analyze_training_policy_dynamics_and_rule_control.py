@@ -133,7 +133,7 @@ def _p6_net_expectancy(root: Path) -> dict[str, Any]:
     for arm in ARMS:
         path = (
             root
-            / "docs/thesis/evidence/p6_monthly_entry_exit_20261025"
+            / "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025"
             / f"{arm}_paired_trades.csv"
         )
         trades = pd.read_csv(path)
@@ -455,7 +455,7 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("docs/thesis/evidence/p6_monthly_entry_exit_20261025"),
+        default=Path("outputs/research_audits/p6_training_dynamics_20261025"),
     )
     args = parser.parse_args()
     root = args.repo_root.resolve()

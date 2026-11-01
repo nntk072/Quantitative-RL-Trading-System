@@ -17,6 +17,12 @@ def pair_trades(trades: pd.DataFrame) -> list[tuple[pd.Series, pd.Series]]:
     exit can never desync the pairing and cause a later open to be matched
     with the wrong close (which previously mixed one order's entry/volume
     with a different order's PnL on the chart).
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        Values returned by ``pair_trades``, in the declared order.
     """
     if "bar" in trades.columns and trades["bar"].notna().any():
         trades = trades.sort_values("bar", kind="stable")

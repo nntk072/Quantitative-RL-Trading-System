@@ -18,7 +18,14 @@ from experiments.runs.source_snapshot import (
 
 
 def validate_experiment_run_evaluation(value: object) -> dict[str, Any]:
-    """Validate action mode, report role, and explicit selection on exposed data."""
+    """Validate action mode, report role, and explicit selection on exposed data.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     if not isinstance(value, dict) or not isinstance(value.get("deterministic"), bool):
         raise ValueError("experiment run evaluation deterministic must be a boolean")
     allowed = {"locked_oos_role", "deterministic", "locked_oos_exposure", "selection_allowed"}
@@ -46,7 +53,18 @@ def verify_run_artifacts(
     expected_fingerprint: str,
     expected_attempt: int,
 ) -> tuple[bool, str]:
-    """Require the requested budget, a readable checkpoint, and a valid training record."""
+    """Require the requested budget, a readable checkpoint, and a valid training record.
+
+    Args:
+        run_out: Text or path value identifying the run out.
+        key: Text or path value identifying the key.
+        expected_steps: Number specifying the expected steps for this operation.
+        expected_fingerprint: Text or path value identifying the expected fingerprint.
+        expected_attempt: Numeric value used for the expected attempt.
+
+    Returns:
+        Whether verify run artifacts meets the requested condition.
+    """
     provenance_path = run_out / "attempt_provenance.json"
     try:
         provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
@@ -298,7 +316,14 @@ def verify_run_artifacts(
 
 
 def hash_run_artifacts(run_out: pathlib.Path) -> dict[str, str]:
-    """Record checksums for completed logs, configs, and model checkpoints."""
+    """Record checksums for completed logs, configs, and model checkpoints.
+
+    Args:
+        run_out: Text or path value identifying the run out.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     suffixes = {
         "training_log.json",
         "ppo_final.zip",

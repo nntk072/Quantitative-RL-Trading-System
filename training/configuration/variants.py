@@ -43,6 +43,15 @@ def merge_variant_cfg(
 
     This is extracted from ablation_runner.merge_variant_cfg so train_rl.py
     can apply the same variant semantics without importing from scripts/.
+
+    Args:
+        base: Base used by the operation described above.
+        strategy: Strategy used to select or evaluate trades.
+        include_pd_context: Whether to enable or require the include pd context.
+        variant: Key-value data used for the variant.
+
+    Returns:
+        Result of merge strategy / PD-context overlays onto a base config.
     """
     cfg = cast(DictConfig, OmegaConf.create(OmegaConf.to_container(base, resolve=True)))
     if include_pd_context:
@@ -77,6 +86,13 @@ def compute_tier1_funnel(
     ``entry_state_diagnostics()``.
 
     Returns a flat dict suitable for inclusion in training_log.json.
+
+    Args:
+        entry_diag: Key-value data used for the entry diag.
+        entry_state_diag: Key-value data used for the entry state diag.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     entry_diag = entry_diag or {}
     entry_state_diag = entry_state_diag or {}

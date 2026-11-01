@@ -37,7 +37,17 @@ def plot_daily_pnl(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Per-session P&L bars with the FTMO daily-loss dollar cap."""
+    """Per-session P&L bars with the FTMO daily-loss dollar cap.
+
+    Args:
+        equity: Current account equity in account currency.
+        daily_loss_limit: Daily loss limit used by the operation described above.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of per-session P&L bars with the FTMO daily-loss dollar cap.
+    """
     _apply_style()
     pnl = daily_pnl(equity)
     fig, ax = plt.subplots(figsize=(14, 4))
@@ -74,7 +84,16 @@ def plot_trade_pnl_hist(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Histogram of per-trade PnL with win / loss colour split."""
+    """Histogram of per-trade PnL with win / loss colour split.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of histogram of per-trade PnL with win / loss colour split.
+    """
     _apply_style()
     if "pnl" not in trades.columns or trades["pnl"].dropna().empty:
         fig, ax = plt.subplots(figsize=(8, 4))
@@ -120,7 +139,16 @@ def plot_direction_summary(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Plot completed-trade counts and PnL distributions by direction."""
+    """Plot completed-trade counts and PnL distributions by direction.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of plot completed-trade counts and PnL distributions by direction.
+    """
     _apply_style()
     pairs = _pair_trades(trades)
     rows = [
@@ -185,7 +213,16 @@ def plot_returns_dist(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Bar-return distribution with normal overlay."""
+    """Bar-return distribution with normal overlay.
+
+    Args:
+        equity: Current account equity in account currency.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of bar-return distribution with normal overlay.
+    """
     _apply_style()
     rets = equity.pct_change().dropna()
 
@@ -226,7 +263,16 @@ def plot_monthly_returns_heatmap(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Calendar heatmap of monthly returns."""
+    """Calendar heatmap of monthly returns.
+
+    Args:
+        equity: Current account equity in account currency.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of calendar heatmap of monthly returns.
+    """
     _apply_style()
     monthly = equity.resample("ME").last().pct_change().dropna() * 100
     if monthly.empty:

@@ -3,7 +3,7 @@
 ## Ownership
 
 Own engineering-task orchestration, phase transitions, agent invocation, and
-verification policy. It does not own thesis experiment or trading semantics.
+verification policy. It does not own research experiment or trading semantics.
 
 ## Boundary
 
@@ -26,7 +26,7 @@ verification policy. It does not own thesis experiment or trading semantics.
 
 | Task | Axis | Start file | Contract and test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Add or change a pipeline phase | workflow state | `orchestra/task_orchestration.py` | phase/state contract; orchestra tests | one phase and routing tests | thesis training semantics |
+| Add or change a pipeline phase | workflow state | `orchestra/task_orchestration.py` | phase/state contract; orchestra tests | one phase and routing tests | research training semantics |
 
 ## Phase Ownership
 
@@ -45,7 +45,7 @@ verification policy. It does not own thesis experiment or trading semantics.
 - **Owner:** `orchestra/` owns task orchestration, not scientific workflows.
 - **Stable boundary:** pipeline state and phase result contracts.
 - **Expected edit radius:** one phase and routing/verification tests.
-- **Must not depend on:** thesis trading or model semantics.
+- **Must not depend on:** research trading or model semantics.
 
 ## Verified Source Paths
 

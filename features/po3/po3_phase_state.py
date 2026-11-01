@@ -1,9 +1,10 @@
 """PO3 manipulation/distribution state machine and IFVG active zones.
 
 All outputs are causal: they are computed from the current and earlier bars
-only, so adding future bars never changes historical values (Agent.md §3).
+only, so adding future bars never changes historical values.
 
-Manipulation/distribution semantics (Agent.md §6.3), long side:
+Long-side manipulation and distribution sequence:
+
 1. Asian accumulation context is available (``asian_high``/``asian_low``).
 2. A sell-side liquidity sweep fires (``sweep_low`` event).
 3. The manipulation leg starts: ``po3_manipulation_low/high`` track the
@@ -16,6 +17,7 @@ Manipulation/distribution semantics (Agent.md §6.3), long side:
    distribution phase is active (the environment needs the raw price for
    structural SL placement). A fresh same-side sweep re-arms the setup with
    new extremes; an opposite-side sweep flips the setup to the mirror side.
+
 The short side mirrors all of the above.
 """
 
@@ -34,7 +36,15 @@ _IDLE, _MANIP_LONG, _MANIP_SHORT, _DIST_LONG, _DIST_SHORT = 0, 1, 2, 3, 4
 
 
 def _asian_context(asian_levels: pd.DataFrame | None, n: int) -> npt.NDArray[np.bool_]:
-    """Per-bar mask: True where Asian accumulation levels are available."""
+    """Per-bar mask: True where Asian accumulation levels are available.
+
+    Args:
+        asian_levels: Tabular data used for the asian levels.
+        n: Numeric value used for the n.
+
+    Returns:
+        Whether asian context meets the requested condition.
+    """
     if asian_levels is None or "asian_high" not in asian_levels.columns:
         return np.ones(n, dtype=bool)
     ah = asian_levels["asian_high"].to_numpy(dtype=float)
@@ -50,22 +60,16 @@ def build_po3_state(
 ) -> pd.DataFrame:
     """Build causal PO3 manipulation/distribution state columns.
 
-    Parameters
-    ----------
-    bars:
-        OHLC DataFrame with 'high', 'low', 'close' columns.
-    sweeps:
-        Output of :func:`features.context.liquidity.detect_liquidity_sweeps`.
-    asian_levels:
-        DataFrame with ``asian_high``/``asian_low`` columns (e.g. the output
-        of ``detect_session_levels``). Rows with NaN levels carry no context.
+    Args:
+        bars: OHLC DataFrame with 'high', 'low', 'close' columns.
+        sweeps: Output of :func:`features.context.liquidity.detect_liquidity_sweeps`.
+        asian_levels: DataFrame with ``asian_high``/``asian_low`` columns (e.g. the output
+            of ``detect_session_levels``). Rows with NaN levels carry no context.
 
-    Returns
-    -------
-    pd.DataFrame
-        Columns ``po3_manipulation_active``, ``po3_manipulation_high``,
-        ``po3_manipulation_low``, ``po3_manipulation_end``,
-        ``po3_distribution``, ``po3_distribution_direction``.
+    Returns:
+        pd.DataFrame: Columns ``po3_manipulation_active``, ``po3_manipulation_high``,
+            ``po3_manipulation_low``, ``po3_manipulation_end``,
+            ``po3_distribution``, ``po3_distribution_direction``.
     """
     n = len(bars)
     high = bars["high"].to_numpy(dtype=float)
@@ -167,6 +171,16 @@ def build_distribution_after_ifvg(
     arms a short leg. The confirmation bar itself stays off. A new leg, or a
     return to idle, clears the arm. A confirmation from an earlier leg does
     not carry over.
+
+    Args:
+        distribution_direction: Distribution direction used by the operation described above.
+        manipulation_active: Manipulation active used by the operation described above.
+        manipulation_direction: Manipulation direction used by the operation described above.
+        bull_confirmed: Bull confirmed used by the operation described above.
+        bear_confirmed: Bear confirmed used by the operation described above.
+
+    Returns:
+        Array returned by ``build_distribution_after_ifvg``.
     """
     n = int(distribution_direction.shape[0])
     out = np.zeros(n, dtype=float)
@@ -220,25 +234,19 @@ def build_ifvg_zone_features(
     its high. ``ifvg_retest_*`` confirms only after a later candle closes
     beyond the high (bullish) or low (bearish) of a candle that retested it.
 
-    Parameters
-    ----------
-    bars:
-        OHLC DataFrame with 'high', 'low', 'close' columns.
-    max_age_bars:
-        Zone lifetime in bars after confirmation.
-    fvg_config / ifvg_config:
-        Optional detector configurations.
-    atr_period:
-        ATR period used to normalise the price-to-zone distance.
+    Args:
+        bars: OHLC DataFrame with 'high', 'low', 'close' columns.
+        max_age_bars: Zone lifetime in bars after confirmation.
+        fvg_config: Optional configuration for fair-value-gap detection.
+        ifvg_config: Optional configuration for inverse-gap confirmation.
+        atr_period: ATR period used to normalise the price-to-zone distance.
 
-    Returns
-    -------
-    pd.DataFrame
-        Columns ``ifvg_bull_active``, ``ifvg_bull_low``, ``ifvg_bull_high``,
-        ``price_in_ifvg_bull``, ``ifvg_bull_distance_atr``, ``ifvg_retest_bull``,
-        ``ifvg_bull_origin`` and the bearish mirrors. ``ifvg_*_origin`` is the
-        low (bull) or high (bear) of candle 1 in the 1-2-3 that left the gap.
-        Distance is 5 when no zone is live.
+    Returns:
+        pd.DataFrame: Columns ``ifvg_bull_active``, ``ifvg_bull_low``, ``ifvg_bull_high``,
+            ``price_in_ifvg_bull``, ``ifvg_bull_distance_atr``, ``ifvg_retest_bull``,
+            ``ifvg_bull_origin`` and the bearish mirrors. ``ifvg_*_origin`` is the
+            low (bull) or high (bear) of candle 1 in the 1-2-3 that left the gap.
+            Distance is 5 when no zone is live.
     """
     n = len(bars)
     idx = bars.index
@@ -306,7 +314,17 @@ def build_ifvg_zone_features(
     fvg_bear_hi = fvg["fvg_bearish_high"].to_numpy(dtype=float)
 
     def _candle1(confirm_i: int, zlo: float, zhi: float, *, bull: bool) -> float:
-        """Low of candle 1 for a bull gap, high of candle 1 for a bear gap."""
+        """Low of candle 1 for a bull gap, high of candle 1 for a bear gap.
+
+        Args:
+            confirm_i: Numeric value used for the confirm i.
+            zlo: Numeric value used for the zlo.
+            zhi: Numeric value used for the zhi.
+            bull: Whether to enable or require the bull.
+
+        Returns:
+            Numeric result returned by ``_candle1``.
+        """
         flag = fvg_bull_flag if bull else fvg_bear_flag
         lo = fvg_bull_lo if bull else fvg_bear_lo
         hi = fvg_bull_hi if bull else fvg_bear_hi
@@ -438,6 +456,15 @@ def align_ifvg_zone_timeframes(
     confirmations of the same side coincide; otherwise the first timeframe
     in mapping order wins. Origin bars are translated to M1 bar indexes before
     passing the merged events to the M1 PO3 state machine.
+
+    Args:
+        primary_bars: Market bar or price data used for causally align HTF IFVG zones and merge their confirmation pulses.
+        primary_zones: Tabular data used for the primary zones.
+        higher: Tabular data used for the higher.
+        availability_times: Tabular data used for the availability times.
+
+    Returns:
+        DataFrame returned by ``align_ifvg_zone_timeframes``.
     """
     from market_data.transforms.align import align_timeframes
 
@@ -463,6 +490,15 @@ def align_ifvg_zone_timeframes(
     }
 
     def event_pulse(values: pd.Series, closes: pd.Series | None) -> npt.NDArray[np.float64]:
+        """Place confirmed higher-timeframe events on their eligible primary bars.
+
+        Args:
+            values: Per-source-bar event strengths.
+            closes: Event availability timestamps, or ``None`` for shifted bars.
+
+        Returns:
+            Primary-indexed event pulse values with no pre-close visibility.
+        """
         result = np.zeros(len(primary_bars), dtype=float)
         if closes is None:
             return values.shift(1).reindex(primary_bars.index).fillna(0.0).to_numpy(dtype=float)

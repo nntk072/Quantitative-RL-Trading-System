@@ -65,8 +65,8 @@ allocation_state() {
     return
   fi
   printf '%s\n' "$queued" | awk '
-    $1 == "thesis18maskv3" && $2 == "RUNNING" { state="running" }
-    $1 == "thesis18maskv3" && ($2 == "PENDING" || $2 == "CONFIGURING") { state="pending" }
+    $1 == "qrl18maskv3" && $2 == "RUNNING" { state="running" }
+    $1 == "qrl18maskv3" && ($2 == "PENDING" || $2 == "CONFIGURING") { state="pending" }
     END { print state == "" ? "none" : state }
   '
 }
@@ -85,7 +85,7 @@ while true; do
   allocation_status="$(allocation_state)"
   case "$allocation_status" in
     running)
-      echo "$(date --iso-8601=seconds) waiting for running thesis18cpumask allocation"
+      echo "$(date --iso-8601=seconds) waiting for running qrl18cpumask allocation"
       sleep 60
       continue
       ;;
@@ -103,7 +103,7 @@ while true; do
     --partition=gpu-grace-h200-141g \
     --nodes=2 --ntasks=2 --ntasks-per-node=1 \
     --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G \
-    --time=06:00:00 --job-name=thesis18maskv3 \
+    --time=06:00:00 --job-name=qrl18maskv3 \
     --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC",EXPERIMENT_RUN_ID="$EXPERIMENT_RUN_ID",SOURCE_EXPERIMENT_RUN="$SOURCE_EXPERIMENT_RUN" \
     --chdir="$REPO" \
     bash "$REPO/scripts/compute/slurm/experiment_runs/run_18way_cpumask_allocation.sh"

@@ -99,4 +99,4 @@ classDiagram
 
 The `evaluation/` module owns rollouts, metrics, report assembly, and plots.
 Training, validation, exploratory, and confirmatory period roles are defined
-in the [validation protocol](../thesis/validation_protocol.md).
+in the [validation protocol](../research/validation_protocol.md).

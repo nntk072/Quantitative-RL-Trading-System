@@ -14,7 +14,7 @@ from stable_baselines3 import PPO
 
 from decisioning.trade_setup import (
     TRADE_SETUP_CATEGORY_COUNT,
-    build_legacy_thesis_action_schema,
+    build_trade_setup_action_schema,
     trade_setup_id_from_box,
     trade_setup_observation_schema,
 )
@@ -46,30 +46,30 @@ _VARIANTS: tuple[tuple[str, type[torch.nn.Module]], ...] = (
 )
 
 
-class _ThesisMTFEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):
+class _TradeSetupMTFEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):
     def __init__(self) -> None:
         schema: dict[str, spaces.Space[Any]] = {
             "account": spaces.Box(-10.0, 10.0, (6,), dtype=np.float32),
-            "thesis_mask": spaces.Box(0.0, 1.0, (TRADE_SETUP_CATEGORY_COUNT,), dtype=np.float32),
+            "trade_setup_mask": spaces.Box(
+                0.0, 1.0, (TRADE_SETUP_CATEGORY_COUNT,), dtype=np.float32
+            ),
         }
         for seq_key, mask_key, length, width in _STREAMS:
             schema[seq_key] = spaces.Box(-1.0, 1.0, (length, width), dtype=np.float32)
             schema[mask_key] = spaces.Box(0.0, 1.0, (length,), dtype=np.float32)
         self.observation_space = spaces.Dict(schema)
         self.action_space = spaces.Box(-1.0, 1.0, (5,), dtype=np.float32)
-        self.action_schema = build_legacy_thesis_action_schema()
+        self.action_schema = build_trade_setup_action_schema()
         self.trade_setup_actions = True
-        self.legacy_thesis_contract = True
-        self.thesis_actions = True
         self.strategy_actions = True
         self.trade_setup_observation_schema = trade_setup_observation_schema()
 
     def _observation(self) -> dict[str, npt.NDArray[np.float32]]:
         observation: dict[str, npt.NDArray[np.float32]] = {
             "account": np.zeros(6, dtype=np.float32),
-            "thesis_mask": np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32),
+            "trade_setup_mask": np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32),
         }
-        observation["thesis_mask"][[0, 12, 51]] = 1.0
+        observation["trade_setup_mask"][[0, 12, 51]] = 1.0
         for seq_key, mask_key, length, width in _STREAMS:
             observation[seq_key] = np.zeros((length, width), dtype=np.float32)
             observation[mask_key] = np.ones(length, dtype=np.float32)
@@ -91,7 +91,7 @@ class _ThesisMTFEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.f
 def _agent_config(arch: str) -> Any:
     return OmegaConf.create(
         {
-            "env": {"n_envs": 1, "thesis_actions": True, "strategy_actions": True},
+            "env": {"n_envs": 1, "trade_setup_actions": True, "strategy_actions": True},
             "agent": {
                 "arch": arch,
                 "head_arch": {arch: [32]},
@@ -106,9 +106,9 @@ def _agent_config(arch: str) -> Any:
                 },
             },
             "ppo": {
-                "policy_distribution": "thesis_conditioned_v1",
+                "policy_distribution": "trade_setup_conditioned_v1",
                 "actor_arch": "shared",
-                "thesis_conditioned": {"embedding_dim": 8, "execution_hidden_dim": 16},
+                "trade_setup_conditioned": {"embedding_dim": 8, "execution_hidden_dim": 16},
                 "n_steps": 2,
                 "batch_size": 2,
                 "n_epochs": 1,
@@ -132,16 +132,16 @@ def test_encoder_registry_maps_new_ids_and_rejects_unknown() -> None:
 
 
 @pytest.mark.parametrize("arch,encoder_class", _VARIANTS)
-def test_thesis_conditioned_ppo_checkpoint_roundtrip_preserves_encoder(
+def test_trade_setup_conditioned_ppo_checkpoint_roundtrip_preserves_encoder(
     arch: str,
     encoder_class: type[torch.nn.Module],
     tmp_path: Path,
 ) -> None:
-    env = _ThesisMTFEnv()
+    env = _TradeSetupMTFEnv()
     config = _agent_config(arch)
     model = build_agent(env, config, arch=arch, device="cpu", seed=17)
     assert type(model.policy.features_extractor) is encoder_class
-    assert type(model.policy).__name__ == "ThesisConditionedClampedStdMultiInputPolicy"
+    assert type(model.policy).__name__ == "TradeSetupConditionedClampedStdMultiInputPolicy"
     run_provenance = _training_architecture_provenance(model, config, arch)
     encoder_details = run_provenance["encoder_specific"]
     assert isinstance(encoder_details, dict)
@@ -170,7 +170,7 @@ def test_thesis_conditioned_ppo_checkpoint_roundtrip_preserves_encoder(
     (-differentiable_log_prob.mean() + values.mean() - differentiable_entropy.mean()).backward()
     for name, module in (
         ("encoder", model.policy.features_extractor),
-        ("thesis-conditioned actor", model.policy.action_net),
+        ("trade_setup-conditioned actor", model.policy.action_net),
     ):
         gradients = [
             parameter.grad

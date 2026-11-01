@@ -20,7 +20,15 @@ _PRICE_TOL = 1e-4
 def collapse_levels(
     items: list[tuple[str, float]], *, price_increment: float | None = None
 ) -> list[tuple[str, float]]:
-    """Merge prices within ``1e-4`` and join their names with ``|``."""
+    """Merge prices within ``1e-4`` and join their names with ``|``.
+
+    Args:
+        items: Items supplied for the items, in input order.
+        price_increment: Price increment used by the operation described above.
+
+    Returns:
+        Values returned by ``collapse_levels``, in the declared order.
+    """
     if price_increment is not None and (not np.isfinite(price_increment) or price_increment <= 0.0):
         raise ValueError("price_increment must be finite and positive")
     groups: list[tuple[str, float]] = []
@@ -61,6 +69,24 @@ def target_menu(
     source_prices: dict[str, float] | None = None,
     min_timeframe: str | None = None,
 ) -> list[tuple[str, float, float]]:
+    """Build eligible take-profit prices from reward-risk and market-structure levels.
+
+    Args:
+        direction: Trade direction, positive for long and negative for short.
+        entry_price: Proposed entry price.
+        row: Current feature row containing structure levels.
+        stop_dist: Stop distance in price units.
+        max_tp_distance: Maximum permitted target distance.
+        rr_bounds: Optional inclusive reward-risk bounds.
+        htf: Higher timeframes whose structure levels may be considered.
+        front_run_pts: Offset used to avoid placing targets directly on levels.
+        price_increment: Optional instrument tick size.
+        source_prices: Optional explicit source-level prices.
+        min_timeframe: Optional minimum timeframe accepted for a target.
+
+    Returns:
+        Ordered target candidates that pass direction and distance checks.
+    """
     if not np.isfinite(front_run_pts) or front_run_pts < 0.0:
         raise ValueError("front_run_pts must be finite and nonnegative")
     if price_increment is not None and (not np.isfinite(price_increment) or price_increment <= 0.0):
@@ -187,6 +213,13 @@ def deviation_candidates(
     Prices are precomputed from the latest *confirmed* swing source on each
     timeframe. Recomputing from current bars or session ranges here could make
     target choices disagree with the feature/plot source.
+
+    Args:
+        row: Row index or record being processed.
+        allow_extreme_extension: Whether to enable or require the allow extreme extension.
+
+    Returns:
+        Values returned by ``deviation_candidates``, in the declared order.
     """
     columns = getattr(row, "index", ())
     levels_by_name = {
@@ -213,6 +246,15 @@ def deviation_candidates(
 
 
 def suffixed_levels(row: Any, suffixes: tuple[str, ...]) -> list[tuple[str, float]]:
+    """Collect finite row values whose column names match a requested suffix.
+
+    Args:
+        row: Series-like feature row with an index and ``get`` method.
+        suffixes: Exact names or suffixes identifying target-level columns.
+
+    Returns:
+        Matching column names and finite price levels in row order.
+    """
     index = getattr(row, "index", ())
     found: list[tuple[str, float]] = []
     for col in index:
@@ -225,6 +267,15 @@ def suffixed_levels(row: Any, suffixes: tuple[str, ...]) -> list[tuple[str, floa
 
 
 def finite_level(row: Any, name: str) -> float | None:
+    """Read one finite price level from a Series-like feature row.
+
+    Args:
+        row: Feature row containing named levels.
+        name: Column whose numeric value is requested.
+
+    Returns:
+        The finite level, or ``None`` when it is absent or invalid.
+    """
     index = getattr(row, "index", None)
     if index is not None and name not in index:
         return None

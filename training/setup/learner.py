@@ -24,7 +24,19 @@ def build_fit_request(
     seed: int,
     requested_steps: int,
 ) -> FitRequest:
-    """Resolve a stable fitting request from prepared run identities."""
+    """Resolve a stable fitting request from prepared run identities.
+
+    Args:
+        dataset_record: Key-value data used for the dataset record.
+        instrument_id: Text or path value identifying the instrument id.
+        config: Configuration values used by this operation.
+        input_schema: Key-value data used for the input schema.
+        seed: Random seed used to make sampling reproducible.
+        requested_steps: Number specifying the requested steps for this operation.
+
+    Returns:
+        Result of resolve a stable fitting request from prepared run identities.
+    """
     digest = dataset_record.get("sha256")
     start_value, end_value = dataset_record.get("start"), dataset_record.get("end")
     columns_value = dataset_record.get("columns")
@@ -79,7 +91,18 @@ def build_training_learner(
     log_interval: int,
     reset_num_timesteps: bool,
 ) -> Learner:
-    """Select the configured learner implementation for this RL workflow."""
+    """Select the configured learner implementation for this RL workflow.
+
+    Args:
+        model: Model used for this operation.
+        callbacks: Callbacks invoked at their registered events.
+        checkpoint_path: Path or filename identifying the checkpoint.
+        log_interval: Numeric value used for the log interval.
+        reset_num_timesteps: Whether to enable or require the reset num timesteps.
+
+    Returns:
+        Result of select the configured learner implementation for this RL workflow.
+    """
     return build_learner(
         "stable_baselines3",
         model=model,

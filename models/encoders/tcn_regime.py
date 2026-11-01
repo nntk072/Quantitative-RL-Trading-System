@@ -18,6 +18,12 @@ class TCNRegimeEncoder(TCNEncoder):
     regime_embedding_dim = 16
 
     def __init__(self, observation_space: Any, **kwargs: Any) -> None:
+        """Initialize TCNRegimeEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            **kwargs: Kwargs used by the operation described above.
+        """
         spaces_map = getattr(observation_space, "spaces", {})
         regime_space = spaces_map.get("regime")
         mask_space = spaces_map.get("regime_mask")
@@ -41,6 +47,14 @@ class TCNRegimeEncoder(TCNEncoder):
         self.features_dim += self.regime_embedding_dim
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode temporal features together with the regime observation.
+
+        Args:
+            observations: Mapping containing sequence, account, regime, and regime-mask tensors.
+
+        Returns:
+            Policy feature tensor combining sequence and regime context.
+        """
         base = super().forward(observations)
         regime = observations["regime"]
         mask = observations["regime_mask"].to(dtype=regime.dtype)

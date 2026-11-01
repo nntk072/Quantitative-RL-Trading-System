@@ -9,7 +9,14 @@ import pandas as pd
 
 
 def geometry_summary(trades: pd.DataFrame) -> pd.DataFrame:
-    """One row per ``(sl_ref, tp_ref)`` from the open records."""
+    """One row per ``(sl_ref, tp_ref)`` from the open records.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        DataFrame returned by ``geometry_summary``.
+    """
     columns = [
         "sl_ref",
         "tp_ref",

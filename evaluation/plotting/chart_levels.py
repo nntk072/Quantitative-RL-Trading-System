@@ -36,6 +36,15 @@ def at_sample_extreme(
     A reward-ratio target above the high does not count. Only a long whose
     recent bars printed the highest high up to entry (or a short at the lowest
     low) is at the extreme.
+
+    Args:
+        bars: Market bars to process.
+        t_open: T open used by the operation described above.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        recent_bars: Market bar or price data used for true when the recent candles themselves hold the sample high or low.
+
+    Returns:
+        Whether at sample extreme meets the requested condition.
     """
     if bars.empty or direction not in (1, -1):
         return False
@@ -60,7 +69,16 @@ def chart_ylim(
     candle_hi: float,
     extra: list[float] | None = None,
 ) -> tuple[float, float]:
-    """Y limits from the candles, plus nearby levels, with a small margin."""
+    """Y limits from the candles, plus nearby levels, with a small margin.
+
+    Args:
+        candle_lo: Numeric value used for the candle lo.
+        candle_hi: Numeric value used for the candle hi.
+        extra: Items supplied for the extra, in input order.
+
+    Returns:
+        Values returned by ``chart_ylim``, in the declared order.
+    """
     lo = float(candle_lo)
     hi = float(candle_hi)
     for price in extra or []:

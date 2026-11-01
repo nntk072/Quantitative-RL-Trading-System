@@ -1,7 +1,7 @@
 # Distributional Performance Methodology
 
-This note documents the distribution-focused evaluation layer added in
-PLAN 9 so it can be cited directly in the thesis.
+This note documents the distribution-focused evaluation layer used by
+research and model-comparison reports.
 
 ## Observation semantics
 
@@ -82,5 +82,6 @@ few extreme winners.
 
 Also apply **TI-7**: do not claim superiority on default transaction costs
 alone — cite the cost-stress grid (`scripts/research/analysis/evaluation/test_oos.py --cost-multipliers`).
-When many variants share the locked OOS, state the trial count; full DSR/PBO
-is out of scope for Thesis_plan (see Integrated_startup_plan plan 09).
+When many variants share a locked out-of-sample interval, state the trial
+count. DSR/PBO analysis requires a separate, predeclared protocol and is not
+implied by these distribution summaries.

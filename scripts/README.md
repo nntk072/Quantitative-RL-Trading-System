@@ -11,7 +11,6 @@ behavior, and write clearly identified outputs.
 |---|---|
 | `scripts/research/analysis/` | Canonical analysis, evaluation, report, and evidence-verification commands |
 | `scripts/research/audits/`, `benchmarks/`, `strategy_checks/` | Focused data, performance, and strategy diagnostics |
-| `scripts/research/thesis/` | Deprecated import and command-path adapters for preserved research references |
 | `scripts/maintenance/` | Controlled data/cache and repository maintenance workflows |
 | `scripts/compute/slurm/` | Slurm wrappers and allocation-side command launchers |
 | `scripts/dev/` | Developer checks and repository-local support commands |
@@ -26,6 +25,5 @@ The production dependency tests prohibit importing `scripts/` from reusable
 packages. See [repository architecture](../docs/architecture/README.md) and
 [running commands](../docs/operations/RUNNING_COMMANDS.md).
 
-The canonical analysis commands and compatibility boundary are described in
-[`research/analysis/`](research/analysis/README.md) and
-[`research/thesis/`](research/thesis/README.md).
+The canonical analysis commands are described in
+[`research/analysis/`](research/analysis/README.md).

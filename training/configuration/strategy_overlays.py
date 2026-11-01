@@ -17,7 +17,14 @@ _STRATEGY_CONFIGS = {
 
 
 def strategy_overlay_path(strategy: str) -> Path | None:
-    """Return a strategy overlay path, with baseline as the no-overlay case."""
+    """Return a strategy overlay path, with baseline as the no-overlay case.
+
+    Args:
+        strategy: Strategy used to select or evaluate trades.
+
+    Returns:
+        Path returned by ``strategy_overlay_path``.
+    """
     if strategy == "baseline":
         return None
     try:
@@ -30,7 +37,15 @@ def strategy_overlay_path(strategy: str) -> Path | None:
 
 
 def merge_strategy_config(base: DictConfig, strategy: str) -> DictConfig:
-    """Apply one validated strategy overlay to a complete base configuration."""
+    """Apply one validated strategy overlay to a complete base configuration.
+
+    Args:
+        base: Base used by the operation described above.
+        strategy: Strategy used to select or evaluate trades.
+
+    Returns:
+        Result of apply one validated strategy overlay to a complete base configuration.
+    """
     path = strategy_overlay_path(strategy)
     if path is None:
         return base

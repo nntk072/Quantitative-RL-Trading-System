@@ -10,13 +10,13 @@ import pandas as pd
 def clean(df: pd.DataFrame, tz: str = "Etc/GMT-3") -> pd.DataFrame:
     """Deduplicate, sort, localise timezone, and add a ``gap_flag`` column.
 
-    Parameters
-    ----------
-    df:
-        Raw bar DataFrame from :func:`market_data.loading.bars.load_bars`.
-    tz:
-        Timezone used to carry naive source wall-clock labels in the index.
-        It is not an absolute-timezone claim when the source clock observes DST.
+    Args:
+        df: Raw bar DataFrame from :func:`market_data.loading.bars.load_bars`.
+        tz: Timezone used to carry naive source wall-clock labels in the index.
+            It is not an absolute-timezone claim when the source clock observes DST.
+
+    Returns:
+        DataFrame returned by ``clean``.
     """
     df = df.copy()
     # Remove duplicate timestamps (keep last – most recent update wins)

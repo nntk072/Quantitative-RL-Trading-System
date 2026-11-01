@@ -1,4 +1,4 @@
-"""Run the weekly thesis experiment matrix without overwriting evidence."""
+"""Run the weekly experiment matrix without overwriting evidence."""
 
 from __future__ import annotations
 
@@ -9,7 +9,11 @@ from experiments.orchestration.weekly import STRATEGIES, BatchSpec, WeeklyOrches
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse weekly orchestration options."""
+    """Parse weekly orchestration options.
+
+    Returns:
+        Result of parse weekly orchestration options.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--week", type=int, required=True)
     parser.add_argument("--batches", type=int, default=1)
@@ -22,7 +26,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--evaluation-protocol", default="validation_only")
     parser.add_argument("--train-end")
     parser.add_argument("--test-start")
-    parser.add_argument("--output-root", default="outputs/thesis_progress")
+    parser.add_argument("--output-root", default="outputs/research_progress")
     parser.add_argument("--retries", type=int, default=0)
     return parser.parse_args()
 

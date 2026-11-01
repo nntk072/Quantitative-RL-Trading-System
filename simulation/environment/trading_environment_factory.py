@@ -21,7 +21,14 @@ from trading.strategies import (
 
 
 def strategy_risk_ranges(cfg: Any) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Risk/RR ranges for TradingEnv; repeated-payout owns the risk range."""
+    """Risk/RR ranges for TradingEnv; repeated-payout owns the risk range.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Values returned by ``strategy_risk_ranges``, in the declared order.
+    """
     policy = resolve_trading_policy(cfg)
     if policy.repeated_payout:
         rr_block = (
@@ -44,7 +51,14 @@ def strategy_risk_ranges(cfg: Any) -> tuple[tuple[float, float], tuple[float, fl
 
 
 def max_loss_per_trade(cfg: Any) -> float:
-    """Static sizing ceiling; current-equity percentages are enforced at runtime."""
+    """Static sizing ceiling; current-equity percentages are enforced at runtime.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Numeric result returned by ``max_loss_per_trade``.
+    """
     policy = resolve_trading_policy(cfg)
     if policy.repeated_payout:
         return policy.operating_balance * policy.max_agent_risk_frac
@@ -54,7 +68,14 @@ def max_loss_per_trade(cfg: Any) -> float:
 
 
 def guardrail_kwargs(cfg: Any) -> dict[str, Any]:
-    """Resolve policy-specific hard/soft guardrails."""
+    """Resolve policy-specific hard/soft guardrails.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     policy = resolve_trading_policy(cfg)
     if policy.repeated_payout:
         return {
@@ -92,7 +113,14 @@ def guardrail_kwargs(cfg: Any) -> dict[str, Any]:
 
 
 def eval_guardrail_kwargs(cfg: Any) -> dict[str, float]:
-    """FTMO rules for train/test rollouts: daily $5k + max $10k from initial."""
+    """FTMO rules for train/test rollouts: daily $5k + max $10k from initial.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     kwargs = guardrail_kwargs(cfg)
     kwargs["trailing_dd_limit"] = 0.0
     kwargs["soft_trailing_dd_limit"] = 0.0
@@ -100,7 +128,14 @@ def eval_guardrail_kwargs(cfg: Any) -> dict[str, float]:
 
 
 def max_episode_steps(cfg: Any) -> int | None:
-    """Parse ``env.max_episode_steps``; YAML ``null`` → full-year episode."""
+    """Parse ``env.max_episode_steps``; YAML ``null`` → full-year episode.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Result of parse ``env.max_episode_steps``; YAML ``null`` → full-year episode.
+    """
     raw = cfg.env.get("max_episode_steps", None)
     if raw is None:
         return None
@@ -114,6 +149,12 @@ def strategy_from_cfg(cfg: Any) -> tuple[Any, Any, float]:
 
     Baseline (Idea 3, P2) keeps the no-op strategy and no alignment reward
     unless ``env.strategy_actions`` is explicitly enabled by a variant config.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Values returned by ``strategy_from_cfg``, in the declared order.
     """
     strat_cfg = getattr(cfg, "strategy", None)
     if strat_cfg is None or not bool(cfg.env.get("strategy_actions", False)):
@@ -184,7 +225,19 @@ def build_eval_common(
     arch: str | None = None,
     tick_fill_slippage_points: float = 0.0,
 ) -> tuple[dict[str, Any], Any, Any, float, bool]:
-    """Kwargs shared by the in-loop dashboard slice and the final eval."""
+    """Kwargs shared by the in-loop dashboard slice and the final eval.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        args: Parsed command-line arguments for this operation.
+        env_vae: Env vae used by the operation described above.
+        pre_ny_by_date: Key-value data used for the pre ny by date.
+        arch: Arch used by the operation described above.
+        tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+
+    Returns:
+        Whether build eval common meets the requested condition.
+    """
     strategy, strategy_reward, strategy_weight = strategy_from_cfg(cfg)
     strategy_actions = bool(cfg.env.get("strategy_actions", False))
     sl_buffer_pts = float(cfg.env.get("sl_buffer_pts", 0.0))
@@ -218,7 +271,6 @@ def build_eval_common(
         "vae": env_vae,
         "strategy": strategy,
         "strategy_actions": strategy_actions,
-        "thesis_actions": bool(cfg.env.get("thesis_actions", False)),
         "trade_setup_actions": bool(cfg.env.get("trade_setup_actions", False)),
         "entry_state_machine": bool(cfg.env.get("entry_state_machine", False)),
         "candidate_max_age_bars": int(cfg.env.get("candidate_max_age_bars", 5)),
@@ -280,7 +332,14 @@ def build_eval_common(
 
 
 def fill_delay_ms(cfg: Any) -> int:
-    """Milliseconds between the crossing tick and the SL/TP fill."""
+    """Milliseconds between the crossing tick and the SL/TP fill.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Numeric result returned by ``fill_delay_ms``.
+    """
     execution = cfg.get("execution") if hasattr(cfg, "get") else None
     if execution is None:
         return 0
@@ -291,7 +350,14 @@ def fill_delay_ms(cfg: Any) -> int:
 
 
 def randomized_fill_latency_ms(cfg: Any) -> float:
-    """Maximum exclusive randomized tick latency; zero means immediate tick."""
+    """Maximum exclusive randomized tick latency; zero means immediate tick.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Numeric result returned by ``randomized_fill_latency_ms``.
+    """
     execution = cfg.get("execution") if hasattr(cfg, "get") else None
     if execution is None:
         return 0.0
@@ -302,13 +368,27 @@ def randomized_fill_latency_ms(cfg: Any) -> float:
 
 
 def tick_execution_required(cfg: Any) -> bool:
-    """Whether the effective config forbids candle-priced execution fills."""
+    """Whether the effective config forbids candle-priced execution fills.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Whether tick execution required meets the requested condition.
+    """
     costs = cfg.get("costs", {}) if hasattr(cfg, "get") else {}
     return bool(costs.get("use_tick_execution", False)) if hasattr(costs, "get") else False
 
 
 def regime_observation_enabled(cfg: Any) -> bool:
-    """Resolve the opt-in D1 branch and require its train-only source scaling."""
+    """Resolve the opt-in D1 branch and require its train-only source scaling.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Whether regime observation enabled meets the requested condition.
+    """
     env_cfg = cfg.get("env", {}) if hasattr(cfg, "get") else {}
     enabled = bool(env_cfg.get("regime_observation", False)) if hasattr(env_cfg, "get") else False
     features_cfg = cfg.get("features", {}) if hasattr(cfg, "get") else {}
@@ -325,7 +405,14 @@ def regime_observation_enabled(cfg: Any) -> bool:
 
 
 def max_tick_quote_wait_ms(cfg: Any) -> int:
-    """Maximum permitted delay from sampled arrival to the next tick quote."""
+    """Maximum permitted delay from sampled arrival to the next tick quote.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Numeric result returned by ``max_tick_quote_wait_ms``.
+    """
     execution = cfg.get("execution") if hasattr(cfg, "get") else None
     if execution is None:
         return 60_000
@@ -336,7 +423,15 @@ def max_tick_quote_wait_ms(cfg: Any) -> int:
 
 
 def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
-    """Enable multi-window observations for each architecture that consumes them."""
+    """Enable multi-window observations for each architecture that consumes them.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        arch: Arch used by the operation described above.
+
+    Returns:
+        Whether mtf settings meets the requested condition.
+    """
     from simulation.environment.observations import DEFAULT_HTF_WINDOWS
 
     chosen = arch
@@ -360,7 +455,14 @@ def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
 
 
 def scheduled_session_closes(cfg: Any) -> dict[str, str]:
-    """Read the configured market-data session calendar."""
+    """Read the configured market-data session calendar.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     from market_data.transforms import scheduled_session_close_map
 
     return scheduled_session_close_map(cfg)
@@ -372,6 +474,12 @@ def cost_model(cfg: Any) -> CostModel:
     ``make_env`` used to leave the env on its ``COST_US100`` default, so the
     ``costs.slippage_points: 5`` YAML value never reached fills. Spreads come
     from the primary-symbol YAML key; slippage is quoted in price points.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Result of build the broker ``CostModel`` from ``costs.*``.
     """
     costs = cfg.get("costs", {}) if hasattr(cfg, "get") else {}
     if costs is None:
@@ -402,6 +510,25 @@ def make_env(
     tickbook: TickBook | None = None,
     arch: str | None = None,
 ) -> TradingEnv:
+    """Construct a configured trading environment and its feature/observation adapters.
+
+    Args:
+        bars: Market bars used by the simulation.
+        features: Causal feature frame aligned with bars.
+        cfg: Resolved run configuration.
+        algo: Learning algorithm name used to select policy settings.
+        reward: Reward implementation to construct.
+        episodic: Whether episode boundaries reset account state.
+        use_vae: Enable the configured VAE observation path.
+        vae: Optional fitted VAE used by that path.
+        pre_ny_by_date: Optional per-session pre-market context.
+        obs_features_mmap: Optional memory-mapped observation feature file.
+        tickbook: Optional tick-level execution data.
+        arch: Optional encoder architecture identifier.
+
+    Returns:
+        Configured Gymnasium trading environment.
+    """
     continuous_actions = algo == "sac"
     use_sweep_reward = reward == "sweep"
     use_mtf, mtf_windows = mtf_settings(cfg, arch)
@@ -435,7 +562,6 @@ def make_env(
         use_sweep_reward=use_sweep_reward,
         strategy=strategy,
         strategy_actions=bool(cfg.env.get("strategy_actions", False)),
-        thesis_actions=bool(cfg.env.get("thesis_actions", False)),
         trade_setup_actions=bool(cfg.env.get("trade_setup_actions", False)),
         entry_state_machine=bool(cfg.env.get("entry_state_machine", False)),
         candidate_max_age_bars=int(cfg.env.get("candidate_max_age_bars", 5)),

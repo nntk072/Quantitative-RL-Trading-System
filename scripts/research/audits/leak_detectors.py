@@ -1,4 +1,4 @@
-"""CLI for thesis leak detectors (T-03.3).
+r"""CLI for research leak detectors (T-03.3).
 
 Example:
     uv run python scripts/leak_detectors.py \\

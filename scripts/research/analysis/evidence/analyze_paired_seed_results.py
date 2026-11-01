@@ -4,7 +4,7 @@
 The percentile interval resamples paired seeds. It is separate from the
 moving-block within-path interval in ``evaluation.metrics.bootstrap``.
 The exact sign-flip test tests a zero-centered paired mean under sign symmetry;
-it is not a substitute for the thesis validity, selection, or holdout gates.
+it is not a substitute for validity, selection, or holdout gates.
 """
 
 from __future__ import annotations

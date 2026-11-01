@@ -21,12 +21,12 @@ class CostModel:
         Spread/slippage are modeled in :meth:`fill_price` (bid/ask execution),
         so this method should only include explicit broker fees (commission).
 
-        Parameters
-        ----------
-        lots:
-            Positive trade size in lots.
-        direction:
-            +1 = long, -1 = short (unused here but provided for extensibility).
+        Args:
+            lots: Positive trade size in lots.
+            direction: +1 = long, -1 = short (unused here but provided for extensibility).
+
+        Returns:
+            Numeric result returned by ``total_cost``.
         """
         return self.commission_per_lot * lots
 
@@ -37,14 +37,13 @@ class CostModel:
         - ``+1``: buy side (ask)
         - ``-1``: sell side (bid)
 
-        Parameters
-        ----------
-        bid : float
-            Bid price
-        ask : float
-            Ask price
-        direction : int
-            +1 for long (buy at ask), -1 for short (sell at bid)
+        Args:
+            bid (float): Bid price
+            ask (float): Ask price
+            direction (int): +1 for long (buy at ask), -1 for short (sell at bid)
+
+        Returns:
+            Numeric result returned by ``fill_price``.
         """
         if direction == 1:
             return ask
@@ -57,17 +56,12 @@ class CostModel:
         In MT5 data, close is typically the bid price.
         Ask is derived as bid + spread.
 
-        Parameters
-        ----------
-        close : float
-            Bar close price (MT5 close = bid)
-        bar_spread : float | None
-            Spread in points from data, or use default
+        Args:
+            close (float): Bar close price (MT5 close = bid)
+            bar_spread (float | None): Spread in points from data, or use default
 
-        Returns
-        -------
-        tuple[float, float]
-            (bid, ask) prices
+        Returns:
+            tuple[float, float]: (bid, ask) prices
         """
         sp = bar_spread if bar_spread is not None else self.spread_points
         bid = close
@@ -90,12 +84,9 @@ class TradingCostModel:
     def __init__(self, spread: float = 1.5, slippage_frac: float = 0.1):
         """Initialize trading cost model.
 
-        Parameters
-        ----------
-        spread : float
-            Base spread in price units (default: 1.5)
-        slippage_frac : float
-            Slippage as fraction of spread (default: 0.1 = 10%)
+        Args:
+            spread (float): Base spread in price units (default: 1.5)
+            slippage_frac (float): Slippage as fraction of spread (default: 0.1 = 10%)
         """
         self.spread = spread
         self.slippage_frac = slippage_frac
@@ -103,17 +94,12 @@ class TradingCostModel:
     def compute_cost(self, position_size: float, price: float) -> float:
         """Compute cost for a trade.
 
-        Parameters
-        ----------
-        position_size : float
-            Size of the position (in lots or contracts)
-        price : float
-            Current price
+        Args:
+            position_size (float): Size of the position (in lots or contracts)
+            price (float): Current price
 
-        Returns
-        -------
-        float
-            Total trading cost
+        Returns:
+            float: Total trading cost
         """
         if position_size == 0:
             return 0.0
@@ -123,5 +109,9 @@ class TradingCostModel:
         return cost * abs(position_size)
 
     def compute_spread(self) -> float:
-        """Return the total effective spread including slippage."""
+        """Return the total effective spread including slippage.
+
+        Returns:
+            Numeric result returned by ``compute_spread``.
+        """
         return self.spread * (1 + self.slippage_frac)

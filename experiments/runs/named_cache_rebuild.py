@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage, verify, and transactionally publish the thesis variant caches.
+"""Stage, verify, and transactionally publish historical experiment caches.
 
 Run only after the training source boundary. The script uses the same variant
 resolution and config merge path as ``train_rl``. It builds into a temporary
@@ -82,7 +82,15 @@ STRATEGY_CONFIGS = {
 
 
 def _historical_named_cache_path(name: str, resolved: dict[str, Any]) -> str:
-    """Map a historical thesis variant to the legacy named feature cache."""
+    """Map a historical experiment variant to its named feature cache.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+        resolved: Key-value data used for the resolved.
+
+    Returns:
+        Text returned by ``_historical_named_cache_path``.
+    """
     strategy = str(resolved["strategy"])
     if strategy == "po3_ifvg":
         filename = "idea1_po3_ifvg.parquet"
@@ -96,6 +104,14 @@ def _historical_named_cache_path(name: str, resolved: dict[str, Any]) -> str:
 
 
 def sha256_file(path: Path) -> str:
+    """Return the SHA-256 digest of a file streamed in bounded chunks.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Text returned by ``sha256_file``.
+    """
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         for block in iter(lambda: stream.read(8 * 1024 * 1024), b""):
@@ -104,6 +120,14 @@ def sha256_file(path: Path) -> str:
 
 
 def _resolved_config_record(cfg: DictConfig) -> dict[str, Any]:
+    """Process config record.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     resolved = OmegaConf.to_container(cfg, resolve=True)
     encoded = json.dumps(resolved, sort_keys=True, separators=(",", ":"), default=str)
     return {
@@ -113,7 +137,11 @@ def _resolved_config_record(cfg: DictConfig) -> dict[str, Any]:
 
 
 def _loaded_project_source_hashes() -> dict[str, str]:
-    """Hash project Python modules loaded by this cache-build process."""
+    """Hash project Python modules loaded by this cache-build process.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     paths: set[Path] = {Path(__file__).resolve()}
     for module in tuple(sys.modules.values()):
         module_path = getattr(module, "__file__", None)
@@ -132,6 +160,11 @@ def _loaded_project_source_hashes() -> dict[str, str]:
 
 
 def _dependency_versions() -> dict[str, str | None]:
+    """Process versions.
+
+    Returns:
+        Mapping from ``str`` keys to ``str | None`` values.
+    """
     versions: dict[str, str | None] = {"python": platform.python_version()}
     for package in ("numpy", "pandas", "pyarrow", "omegaconf"):
         try:
@@ -144,7 +177,14 @@ def _dependency_versions() -> dict[str, str | None]:
 def _load_fresh_market(
     cfg: DictConfig,
 ) -> dict[str, dict[str, pd.DataFrame]]:
-    """Rebuild bars from raw inputs without reading or replacing shared caches."""
+    """Rebuild bars from raw inputs without reading or replacing shared caches.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, pd.DataFrame]`` values.
+    """
     raw_dir = Path(str(cfg.data.raw_dir))
     if not raw_dir.is_absolute():
         raw_dir = ROOT / raw_dir
@@ -159,6 +199,14 @@ def _load_fresh_market(
 
 
 def load_variant(name: str) -> tuple[dict[str, Any], DictConfig]:
+    """Resolve a named variant with its historical cache path and merged config.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any], DictConfig`` values.
+    """
     from training.configuration.cli import load_merged_config
 
     resolved = resolve_variant(name, steps=100_000, seeds=[42])
@@ -196,6 +244,14 @@ def load_variant(name: str) -> tuple[dict[str, Any], DictConfig]:
 
 
 def _raw_input_paths(cfg: DictConfig) -> dict[str, Path]:
+    """Process input paths.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Path`` values.
+    """
     raw_dir = Path(str(cfg.data.raw_dir))
     if not raw_dir.is_absolute():
         raw_dir = ROOT / raw_dir
@@ -205,6 +261,14 @@ def _raw_input_paths(cfg: DictConfig) -> dict[str, Path]:
 
 
 def _cache_config_signature(cfg: DictConfig) -> str:
+    """Process config signature.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Text returned by ``_cache_config_signature``.
+    """
     payload = OmegaConf.to_container(cfg.data, resolve=True)
     if not isinstance(payload, dict):
         raise TypeError("resolved data configuration must be a mapping")
@@ -213,12 +277,29 @@ def _cache_config_signature(cfg: DictConfig) -> str:
 
 
 def _requires_htf_sweep_audit(cfg: DictConfig) -> bool:
+    """Process htf sweep audit.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Whether requires htf sweep audit meets the requested condition.
+    """
     return str(OmegaConf.select(cfg, "features.po3_reference_mode") or "m1_legacy") == (
         "htf_confirmed"
     )
 
 
 def _validate_staged_sweep_audit(cache_path: Path, cfg: DictConfig) -> Path | None:
+    """Validate staged sweep audit.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Path returned by ``_validate_staged_sweep_audit``.
+    """
     audit_path = Path(f"{cache_path}.htf_sweeps.parquet")
     if _requires_htf_sweep_audit(cfg) and not audit_path.is_file():
         raise RuntimeError(
@@ -228,6 +309,11 @@ def _validate_staged_sweep_audit(cache_path: Path, cfg: DictConfig) -> Path | No
 
 
 def plan() -> list[dict[str, Any]]:
+    """Build the expected cache identity and source inventory for each variant.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     rows: list[dict[str, Any]] = []
     for name in VARIANTS:
         resolved, cfg = load_variant(name)
@@ -274,7 +360,9 @@ def plan() -> list[dict[str, Any]]:
         if line.strip()
     ]
     if len(names) != 18 or len(names) != len(set(names)):
-        raise RuntimeError("the thesis experiment run variant list must contain 18 unique variants")
+        raise RuntimeError(
+            "the historical experiment run variant list must contain 18 unique variants"
+        )
     bindings: dict[str, str] = {}
     for name in names:
         resolved = resolve_variant(name, steps=100_000, seeds=[42])
@@ -295,7 +383,15 @@ def _publish_staged_files(
     report_path: Path,
     validate_published: Callable[[], None],
 ) -> None:
-    """Replace the staged artifacts and restore old targets on any failure."""
+    """Replace the staged artifacts and restore old targets on any failure.
+
+    Args:
+        staged_by_target: Key-value data used for the staged by target.
+        backup_dir: Text or path value identifying the backup dir.
+        report_tmp: Text or path value identifying the report tmp.
+        report_path: Path or filename identifying the report.
+        validate_published: Validate published used by the operation described above.
+    """
     published: list[Path] = []
     try:
         for target, staged in staged_by_target.items():
@@ -314,6 +410,15 @@ def _publish_staged_files(
 
 
 def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
+    """Rebuild named-variant caches with backup, staged validation, and rollback.
+
+    Args:
+        backup_dir: Destination for the existing published cache files.
+        report_path: New repository-local report path for the completed rebuild.
+
+    Returns:
+        Per-variant cache paths, content identities, and validation results.
+    """
     rows = plan()
     plan_by_variant = {str(row["variant"]): row for row in rows}
     report_path = report_path.resolve()
@@ -533,6 +638,7 @@ def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
             raise
 
         def validate_published() -> None:
+            """Verify published cache hashes and required sweep-audit sidecars."""
             for item in cache_results:
                 target = ROOT / item["target"]
                 actual = Path(f"{target}.hash").read_text(encoding="utf-8").strip()
@@ -563,7 +669,11 @@ def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
 
 
 def main() -> int:
-    """Compatibility entry point forwarded to the stable experiments CLI."""
+    """Compatibility entry point forwarded to the stable experiments CLI.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     from experiments.cli import run_named_cache_rebuild_cli
 
     return run_named_cache_rebuild_cli(sys.argv[1:])

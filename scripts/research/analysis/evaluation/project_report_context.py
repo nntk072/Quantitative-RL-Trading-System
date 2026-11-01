@@ -1,4 +1,4 @@
-"""Deterministic project and run context for human-readable thesis reports."""
+"""Deterministic project and run context for human-readable research reports."""
 
 from __future__ import annotations
 

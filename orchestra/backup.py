@@ -30,11 +30,27 @@ _ARCHIVE = "tree.tar.gz"
 
 
 def _rel(path: Path, root: Path) -> Path:
+    """Process the requested value.
+
+    Args:
+        path: Path to the input file or directory.
+        root: Root directory for the operation.
+
+    Returns:
+        Path returned by ``_rel``.
+    """
     return path.relative_to(root)
 
 
 def iter_backup_paths(workspace: Path) -> list[Path]:
-    """Snapshot source files while excluding runtime, data, and cache roots."""
+    """Snapshot source files while excluding runtime, data, and cache roots.
+
+    Args:
+        workspace: Workspace directory used for file and process operations.
+
+    Returns:
+        Path returned by ``iter_backup_paths``.
+    """
     found: list[Path] = []
     for path in sorted(workspace.rglob("*")):
         if not path.is_file():
@@ -54,7 +70,15 @@ def iter_backup_paths(workspace: Path) -> list[Path]:
 
 
 def create_snapshot(workspace: Path, dest: Path) -> dict[str, Any]:
-    """Write a tar.gz of the workspace and return backup metadata."""
+    """Write a tar.gz of the workspace and return backup metadata.
+
+    Args:
+        workspace: Workspace directory used for file and process operations.
+        dest: Text or path value identifying the dest.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     dest.mkdir(parents=True, exist_ok=True)
     files = iter_backup_paths(workspace)
     archive = dest / _ARCHIVE
@@ -78,6 +102,13 @@ def restore_snapshot(workspace: Path, dest: Path) -> int:
 
     Deletes workspace files (same include rules) that were not in the snapshot
     so orchestra-created files disappear.
+
+    Args:
+        workspace: Workspace directory used for file and process operations.
+        dest: Text or path value identifying the dest.
+
+    Returns:
+        Numeric result returned by ``restore_snapshot``.
     """
     manifest = json.loads((dest / _MANIFEST).read_text(encoding="utf-8"))
     keep = set(manifest["paths"])
@@ -98,7 +129,14 @@ def restore_snapshot(workspace: Path, dest: Path) -> int:
 
 
 def list_slots(task_root: Path) -> list[str]:
-    """Backup slot names for a task (legacy flat snapshot is ``start``)."""
+    """Backup slot names for a task (legacy flat snapshot is ``start``).
+
+    Args:
+        task_root: Text or path value identifying the task root.
+
+    Returns:
+        Values returned by ``list_slots``, in the declared order.
+    """
     if (task_root / _MANIFEST).is_file():
         return ["start"]
     if not task_root.is_dir():
@@ -107,7 +145,15 @@ def list_slots(task_root: Path) -> list[str]:
 
 
 def resolve_slot(task_root: Path, step: str) -> Path:
-    """Resolve ``5`` / ``implementation`` / ``00-start`` to a snapshot directory."""
+    """Resolve ``5`` / ``implementation`` / ``00-start`` to a snapshot directory.
+
+    Args:
+        task_root: Text or path value identifying the task root.
+        step: Text or path value identifying the step.
+
+    Returns:
+        Path returned by ``resolve_slot``.
+    """
     key = step.strip().lower().replace("_", "-").replace(" ", "-")
     if key in {"0", "start"}:
         key = "00-start"

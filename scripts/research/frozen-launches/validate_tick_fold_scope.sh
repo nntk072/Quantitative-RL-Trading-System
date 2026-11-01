@@ -6,8 +6,8 @@ RUN_DIR="$ROOT/outputs/gpu_ci_gates/p1_tick_fold_validation_job${SLURM_JOB_ID:-m
 VENV_X86="$ROOT/.venv-x86"
 VENV_MI210=/scratch/work/nguyenl37/.venv-mi210
 LOG="$RUN_DIR/validation.log"
-AUDIT_REPORT="${P1_FOLD_AUDIT_OUTPUT:-$ROOT/docs/thesis/g1_real_market_fold_fit_full_train_post_observation_schema_2026-10-17.json}"
-TICK_AUDIT_REPORT="${P1_TICK_AUDIT_OUTPUT:-$ROOT/docs/thesis/g1_tick_quality_current_recovery_2026-10-17.json}"
+AUDIT_REPORT="${P1_FOLD_AUDIT_OUTPUT:-$ROOT/outputs/research_audits/g1_real_market_fold_fit_full_train_2026-10-17_job${SLURM_JOB_ID:-manual}.json}"
+TICK_AUDIT_REPORT="${P1_TICK_AUDIT_OUTPUT:-$ROOT/outputs/research_audits/g1_tick_quality_2026-10-17_job${SLURM_JOB_ID:-manual}.json}"
 
 cd "$ROOT"
 mkdir -p "$RUN_DIR"
@@ -46,8 +46,6 @@ run_gate() {
   return 0
 }
 
-run_gate touched_source_format_apply "$VENV_X86/bin/ruff" format \
-  docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py
 echo "validated_source_tracked_worktree_diff_sha256=$(git -C "$ROOT" diff --binary HEAD | sha256sum | cut -d' ' -f1)"
 run_gate full_tree_ruff_format_verify "$VENV_X86/bin/ruff" format --check .
 run_gate full_tree_ruff_lint "$VENV_X86/bin/ruff" check .
@@ -66,11 +64,11 @@ if (( failures != 0 )); then
   exit 1
 fi
 run_gate raw_tick_quality_audit "$VENV_MI210/bin/python" \
-  docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py \
+  scripts/research/audits/audit_replacement_tick_quality.py \
   --out "$TICK_AUDIT_REPORT"
 run_gate full_training_interval_fold_audit "$VENV_MI210/bin/python" \
-  docs/thesis/audit_real_market_fold_fit_scope_full_train_2026-10-17.py \
-  --out "$AUDIT_REPORT"
+  scripts/research/audits/audit_replacement_fold_fit.py \
+  --report "$AUDIT_REPORT"
 
 echo "P1 tick/fold validation end: $(date --iso-8601=seconds)"
 echo "CI gate failures=$failures"

@@ -23,7 +23,17 @@ def save_seed_artifacts(
     train_m: Any,
     test_m: Any,
 ) -> None:
-    """Write per-seed artifacts for multi-seed mode."""
+    """Write per-seed artifacts for multi-seed mode.
+
+    Args:
+        seed_dir: Text or path value identifying the seed dir.
+        seed: Random seed used to make sampling reproducible.
+        cfg: Run configuration used by this operation.
+        train_result: Key-value data used for the train result.
+        test_result: Key-value data used for the test result.
+        train_m: Train m used by the operation described above.
+        test_m: Test m used by the operation described above.
+    """
     train_trades = train_result.get("trades")
     test_trades = test_result.get("trades")
     trade_log = {
@@ -65,7 +75,27 @@ def aggregate_seed_results(
     args: Any,
     run_dir: Path,
 ) -> dict[str, Any]:
-    """Aggregate per-seed results into a multi-seed training_log.json."""
+    """Aggregate per-seed results into a multi-seed training_log.json.
+
+    Args:
+        seed_results: Items supplied for the seed results, in input order.
+        seed: Random seed used to make sampling reproducible.
+        mvp: Whether to enable or require the mvp.
+        algo: Text or path value identifying the algo.
+        arch: Text or path value identifying the arch.
+        reward: Text or path value identifying the reward.
+        timesteps: Numeric value used for the timesteps.
+        train_bars: Market bar or price data used for aggregate per-seed results into a multi-seed training_log.json.
+        test_bars: Market bar or price data used for aggregate per-seed results into a multi-seed training_log.json.
+        strategy: Strategy used to select or evaluate trades.
+        strategy_actions: Whether to enable or require the strategy actions.
+        cfg: Run configuration used by this operation.
+        args: Parsed command-line arguments for this operation.
+        run_dir: Text or path value identifying the run dir.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     ok_seeds = [r for r in seed_results if r["test_m"].n_trades > 0]
     n_seeds_ok = len(ok_seeds)
 

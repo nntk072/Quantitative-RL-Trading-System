@@ -21,6 +21,8 @@ from .sweep_reward import CompositeReward
 
 
 class EpisodeRuntimeMixin(RuntimeMixinBase):
+    """Manage reset, bar progression, reward accounting, and episode termination."""
+
     prev_session: int | None
     position: Position | None
     _selected_trade_setup: TradeSetupCandidate | None
@@ -34,7 +36,15 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         seed: int | None = None,
         options: dict[str, Any] | None = None,
     ) -> tuple[dict[str, np.ndarray[Any, Any]], dict[str, Any]]:
-        """Reset environment to initial state."""
+        """Reset environment to initial state.
+
+        Args:
+            seed: Random seed used to make sampling reproducible.
+            options: Key-value data used for the options.
+
+        Returns:
+            Mapping from ``str`` keys to ``np.ndarray[Any, Any]], dict[str, Any]`` values.
+        """
         gym.Env.reset(cast(gym.Env[Any, Any], self), seed=seed, options=options)
 
         self._ny_pos = int(np.searchsorted(self._ny_indices, self.obs_window, side="left"))
@@ -62,7 +72,6 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         # Warn-once flag for the entry gate; re-arm per episode so a new
         # feature matrix (possibly missing gate columns) warns again.
 
-        # Reset reward function
         self.reward_fn.reset()
 
         # Non-episodic full-split bookkeeping, used by evaluation and
@@ -97,10 +106,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._entry_rejection_reason = ""
         self._ep_start_equity = float(self.initial_balance)
         self._ep_reward_sum = 0.0
-        self._entry_diag = _empty_entry_diag(
-            self.entry_state_machine is not None,
-            legacy_thesis_contract=self.legacy_thesis_contract,
-        )
+        self._entry_diag = _empty_entry_diag(self.entry_state_machine is not None)
         self._previous_constraint_ratios = {"daily": 0.0, "max_loss": 0.0, "trailing": 0.0}
         self.cumulative_payouts = 0.0
         self.cycle_count = 1
@@ -123,7 +129,14 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self,
         action: int | float | np.ndarray[Any, Any],
     ) -> SimulationTransition[dict[str, np.ndarray[Any, Any]]]:
-        """Execute one environment step through explicit semantic stages."""
+        """Execute one environment step through explicit semantic stages.
+
+        Args:
+            action: Action to apply to the current state.
+
+        Returns:
+            Mapping from ``str`` keys to ``np.ndarray[Any, Any]]`` values.
+        """
         if self.step_idx >= self._n_bars or self._ny_pos >= len(self._ny_indices):
             return SimulationTransition(self._get_observation(), 0.0, False, True, {})
 
@@ -292,6 +305,16 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         Returns ``(fill_bid, fill_ask, None)`` — ``None`` is retained for
         API compatibility; the caller in :meth:`step` does not consume the
         latency-shifted bar.
+
+        Args:
+            bar: Bar used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            fill_idx: Numeric value used for the fill idx.
+
+        Returns:
+            Values returned by ``_progress_market``, in the declared order.
         """
         price = float(bar.close)
         for level_name, level_value in (
@@ -387,7 +410,14 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         return fill_bid, fill_ask, None
 
     def _handle_repeated_payout(self, event_time: Any) -> bool:
-        """Record a flat realized payout success; reset capital only for continued eval."""
+        """Record a flat realized payout success; reset capital only for continued eval.
+
+        Args:
+            event_time: Event time used by the operation described above.
+
+        Returns:
+            Whether handle repeated payout meets the requested condition.
+        """
         if not self.repeated_payout_policy or self.position is not None:
             return False
         decision = evaluate_payout(
@@ -430,6 +460,16 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
 
         Delegates to the active reward implementation (DSR or composite)
         with the appropriate kwargs.
+
+        Args:
+            pnl_step: Numeric value used for the pnl step.
+            bar: Bar used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            done: Whether to enable or require the done.
+            truncated: Whether to enable or require the truncated.
+
+        Returns:
+            Numeric result returned by ``_calculate_reward``.
         """
         daily_loss = float(self.account.canonical_daily_loss())
         # Elapsed session time in minutes. Derived from the bar spacing rather
@@ -529,7 +569,14 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         return float(self.reward_fn(pnl_step, **reward_kwargs))
 
     def _resolve_ny_indices(self, bars: pd.DataFrame) -> np.ndarray[Any, Any]:
-        """Absolute indices of NY tradable bars, or all bars if none match."""
+        """Absolute indices of NY tradable bars, or all bars if none match.
+
+        Args:
+            bars: Market bars to process.
+
+        Returns:
+            Array returned by ``_resolve_ny_indices``.
+        """
         if "session" in bars.columns:
             mask = bars["session"].eq("ny").to_numpy()
         else:
@@ -542,7 +589,11 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         return ny
 
     def _is_ny_session_boundary(self) -> bool:
-        """True on the last NY bar of a session (next NY index jumps)."""
+        """True on the last NY bar of a session (next NY index jumps).
+
+        Returns:
+            Whether is ny session boundary meets the requested condition.
+        """
         if self._ny_pos + 1 >= len(self._ny_indices):
             # The final eligible bar is also the end of the available session.
             return bool(len(self._ny_indices))
@@ -574,7 +625,12 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self.step_idx = nxt
 
     def _replay_skipped_bars(self, start: int, end: int) -> None:
-        """Mark-to-market and check SL/TP/age on bars the agent does not step."""
+        """Mark-to-market and check SL/TP/age on bars the agent does not step.
+
+        Args:
+            start: Numeric value used for the start.
+            end: Numeric value used for the end.
+        """
         for i in range(start, end):
             if self.position is None:
                 break

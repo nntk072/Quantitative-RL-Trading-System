@@ -13,6 +13,13 @@ _RR_PCTS: tuple[int, ...] = (10, 25, 50, 75, 90, 95)
 
 
 def render_decision_diversity_figures(report: DiversityReport, directory: Path, dpi: int) -> None:
+    """Write stop, target, risk-reward, and conditioning diversity charts.
+
+    Args:
+        report: Report used by the operation described above.
+        directory: Text or path value identifying the directory.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     import matplotlib
 
     matplotlib.use("Agg")
@@ -33,6 +40,14 @@ def render_decision_diversity_figures(report: DiversityReport, directory: Path, 
 
 
 def _bar(shares: pd.Series, path: Path, title: str, dpi: int) -> None:
+    """Process the requested value.
+
+    Args:
+        shares: Tabular data used for the shares.
+        path: Path to the input file or directory.
+        title: Text or path value identifying the title.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(6, 3))
@@ -49,6 +64,13 @@ def _bar(shares: pd.Series, path: Path, title: str, dpi: int) -> None:
 
 
 def _rr_hist(rr: pd.Series, path: Path, dpi: int) -> None:
+    """Process hist.
+
+    Args:
+        rr: Tabular data used for the rr.
+        path: Path to the input file or directory.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(6, 3))
@@ -64,6 +86,13 @@ def _rr_hist(rr: pd.Series, path: Path, dpi: int) -> None:
 
 
 def _heatmap(opens: pd.DataFrame, path: Path, dpi: int) -> None:
+    """Process the requested value.
+
+    Args:
+        opens: Tabular data used for the opens.
+        path: Path to the input file or directory.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(4, 4))
@@ -83,6 +112,13 @@ def _heatmap(opens: pd.DataFrame, path: Path, dpi: int) -> None:
 
 
 def _manipulation(table: pd.DataFrame, path: Path, dpi: int) -> None:
+    """Process the requested value.
+
+    Args:
+        table: Tabular data used for the table.
+        path: Path to the input file or directory.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(6, 3))
@@ -97,6 +133,15 @@ def _manipulation(table: pd.DataFrame, path: Path, dpi: int) -> None:
 
 
 def _staircase(opens: pd.DataFrame, x_name: str, y_name: str, path: Path, dpi: int) -> None:
+    """Process the requested value.
+
+    Args:
+        opens: Tabular data used for the opens.
+        x_name: Text or path value identifying the x name.
+        y_name: Text or path value identifying the y name.
+        path: Path to the input file or directory.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(4, 3))

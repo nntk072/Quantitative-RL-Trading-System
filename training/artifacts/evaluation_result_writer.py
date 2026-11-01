@@ -24,7 +24,20 @@ def write_evaluation_artifacts(
     train_activity_gate: dict[str, Any],
     account_currency: str,
 ) -> None:
-    """Write an explicit train/test evaluation report with unambiguous roles."""
+    """Write an explicit train/test evaluation report with unambiguous roles.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+        seed: Random seed used to make sampling reproducible.
+        completed_timesteps: Numeric value used for the completed timesteps.
+        train_result: Key-value data used for the train result.
+        test_result: Key-value data used for the test result.
+        train_metrics: Train metrics used by the operation described above.
+        test_metrics: Test metrics used by the operation described above.
+        train_gate: Key-value data used for the train gate.
+        train_activity_gate: Key-value data used for the train activity gate.
+        account_currency: Text or path value identifying the account currency.
+    """
     evaluation_dir = run_dir / "evaluations"
     evaluation_dir.mkdir(parents=True, exist_ok=True)
 
@@ -35,6 +48,17 @@ def write_evaluation_artifacts(
         *,
         activity_status: str,
     ) -> dict[str, Any]:
+        """Build one split's role-tagged metrics and activity record.
+
+        Args:
+            role: Text or path value identifying the role.
+            result: Key-value data used for the result.
+            metrics: Metrics used by the operation described above.
+            activity_status: Text or path value identifying the activity status.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         return {
             "role": role,
             "policy_action_mode": str(result.get("policy_action_mode", "stochastic")),
@@ -157,6 +181,15 @@ def write_evaluation_artifacts(
     )
 
     def line(label: str, payload: dict[str, Any]) -> str:
+        """Format one role's return, PnL, and risk metrics as a Markdown row.
+
+        Args:
+            label: Text or path value identifying the label.
+            payload: Key-value data used for the payload.
+
+        Returns:
+            Text returned by ``line``.
+        """
         metrics = payload["metrics"]
         return (
             f"| {label} | {metrics['total_return_pct']:+.2f}% | "

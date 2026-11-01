@@ -11,7 +11,12 @@ from learning.contracts import FitRequest, FitResult, Learner
 
 
 def save_sb3_checkpoint(model: Any, path: str | Path) -> None:
-    """Save SB3 weights without serializing unpickleable ``train``/``learn`` hooks."""
+    """Save SB3 weights without serializing unpickleable ``train``/``learn`` hooks.
+
+    Args:
+        model: Model used for this operation.
+        path: Path to the input file or directory.
+    """
     model.save(path, exclude=["train", "learn"])
 
 
@@ -27,6 +32,15 @@ class SB3Learner:
         log_interval: int,
         reset_num_timesteps: bool,
     ) -> None:
+        """Initialize SB3Learner and its owned state.
+
+        Args:
+            model: Model used for this operation.
+            callbacks: Callbacks invoked at their registered events.
+            checkpoint_path: Path or filename identifying the checkpoint.
+            log_interval: Numeric value used for the log interval.
+            reset_num_timesteps: Whether to enable or require the reset num timesteps.
+        """
         self.model = model
         self.callbacks = callbacks
         self.checkpoint_path = Path(checkpoint_path)
@@ -34,7 +48,14 @@ class SB3Learner:
         self.reset_num_timesteps = reset_num_timesteps
 
     def fit(self, request: FitRequest) -> FitResult:
-        """Run the requested remaining steps and return a content-addressed checkpoint."""
+        """Run the requested remaining steps and return a content-addressed checkpoint.
+
+        Args:
+            request: Request used by the operation described above.
+
+        Returns:
+            Result of run the requested remaining steps and return a content-addressed checkpoint.
+        """
         if request.requested_steps:
             self.model.learn(
                 total_timesteps=request.requested_steps,
@@ -73,7 +94,18 @@ def build_sb3_learner(
     log_interval: int,
     reset_num_timesteps: bool,
 ) -> Learner:
-    """Construct the current learner backend behind the stable training port."""
+    """Construct the current learner backend behind the stable training port.
+
+    Args:
+        model: Model used for this operation.
+        callbacks: Callbacks invoked at their registered events.
+        checkpoint_path: Path or filename identifying the checkpoint.
+        log_interval: Numeric value used for the log interval.
+        reset_num_timesteps: Whether to enable or require the reset num timesteps.
+
+    Returns:
+        Result of construct the current learner backend behind the stable training port.
+    """
     return SB3Learner(
         model,
         callbacks=callbacks,

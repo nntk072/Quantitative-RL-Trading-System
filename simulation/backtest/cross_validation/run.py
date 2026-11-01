@@ -36,13 +36,20 @@ class _DelayedSignalStrategy(bt.Strategy):
     params = (("last_bar", 0),)
 
     def __init__(self) -> None:
+        """Initialize _DelayedSignalStrategy and its owned state."""
         self.order = None
 
     def notify_order(self, order: bt.Order) -> None:
+        """Release the pending-order marker when Backtrader finishes an order.
+
+        Args:
+            order: Order whose latest broker status was delivered.
+        """
         if order.status not in (order.Submitted, order.Accepted):
             self.order = None
 
     def next(self) -> None:
+        """Apply the delayed signal for this bar while avoiding duplicate orders."""
         if self.order is not None:
             return
         if len(self) == self.p.last_bar + 1:
@@ -69,7 +76,14 @@ class _DelayedSignalStrategy(bt.Strategy):
 
 
 def _crossover_actions(close: pd.Series) -> pd.Series:
-    """Encode long-entry and flat-exit SMA crossovers as discrete actions."""
+    """Encode long-entry and flat-exit SMA crossovers as discrete actions.
+
+    Args:
+        close: Tabular data used for the close.
+
+    Returns:
+        Result of encode long-entry and flat-exit SMA crossovers as discrete actions.
+    """
     short = close.rolling(20, min_periods=20).mean()
     long = close.rolling(50, min_periods=50).mean()
     previous_difference = (short - long).shift(1)
@@ -81,7 +95,14 @@ def _crossover_actions(close: pd.Series) -> pd.Series:
 
 
 def load_data(data_path: str | Path) -> pd.DataFrame:
-    """Load data from CSV file."""
+    """Load data from CSV file.
+
+    Args:
+        data_path: Path or filename identifying the data.
+
+    Returns:
+        DataFrame returned by ``load_data``.
+    """
     from .utils.data_loader import load_data_from_csv
 
     path = Path(data_path)
@@ -112,6 +133,14 @@ def run_backtrader_engine(
     """Run Backtrader with the same precomputed action trace as the custom engine.
 
     Returns dict with trade_count, total_pnl, max_drawdown.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        tolerance: Numeric value used for the tolerance.
+        actions: Actions to apply, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     del tolerance  # Kept for call compatibility with the CLI.
     action_series = _crossover_actions(df["close"]) if actions is None else actions
@@ -156,6 +185,14 @@ def run_custom_engine(
     """Run the custom engine with the shared precomputed action trace.
 
     Returns dict with trade_count, total_pnl, max_drawdown.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        tolerance: Numeric value used for the tolerance.
+        actions: Actions to apply, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     del tolerance  # Kept for call compatibility with the CLI.
     action_series = _crossover_actions(df["close"]) if actions is None else actions
@@ -191,7 +228,16 @@ def run_custom_engine(
 def compare_results(
     backtrader_result: dict[str, Any], custom_result: dict[str, Any], tolerance: float = 0.01
 ) -> dict[str, Any]:
-    """Compare results from both engines."""
+    """Compare results from both engines.
+
+    Args:
+        backtrader_result: Key-value data used for the backtrader result.
+        custom_result: Key-value data used for the custom result.
+        tolerance: Numeric value used for the tolerance.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     comparison = {
         "backtrader": backtrader_result,
         "custom": custom_result,
@@ -231,7 +277,11 @@ def compare_results(
 
 
 def print_report(comparison: dict[str, Any]) -> None:
-    """Print the comparison report."""
+    """Print the comparison report.
+
+    Args:
+        comparison: Key-value data used for the comparison.
+    """
     print("=" * 60)
     print("ENGINE CROSS-VALIDATION REPORT")
     print("=" * 60)
@@ -274,6 +324,7 @@ def print_report(comparison: dict[str, Any]) -> None:
 
 
 def main() -> None:
+    """Run the Backtrader/custom-engine crossover comparison CLI."""
     parser = argparse.ArgumentParser(
         description="Run engine cross-validation comparing backtrader and custom engines"
     )
@@ -294,7 +345,6 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        # Load data
         log.info(f"Loading data from: {args.data_path}")
         df = load_data(args.data_path)
         log.info(f"Loaded {len(df)} bars")

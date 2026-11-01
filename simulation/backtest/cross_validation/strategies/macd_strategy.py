@@ -21,6 +21,7 @@ class MACDStrategy(bt.Strategy):
 
     def __init__(self) -> None:
         # Keep reference to close
+        """Initialize MACDStrategy and its owned state."""
         self.dataclose = self.datas[0].close
 
         # MACD parameters
@@ -42,12 +43,23 @@ class MACDStrategy(bt.Strategy):
         self.buycomm = None
 
     def log(self, txt: str, dt: object | None = None, doprint: bool = False) -> None:
-        """Logging function."""
+        """Logging function.
+
+        Args:
+            txt: Text or path value identifying the txt.
+            dt: Dt used by the operation described above.
+            doprint: Whether to enable or require the doprint.
+        """
         if self.p.printlog or doprint:  # noqa: SLF001
             dt = dt or self.datas[0].datetime.date(0)
             print(f"{dt.isoformat() if hasattr(dt, 'isoformat') else str(dt)} {txt}")
 
     def notify_order(self, order) -> None:
+        """Update pending-order state when the broker reports an order status.
+
+        Args:
+            order: Order used by the operation described above.
+        """
         if order.status in [order.Submitted, order.Accepted]:
             return
 
@@ -73,6 +85,11 @@ class MACDStrategy(bt.Strategy):
         self.order = None
 
     def notify_trade(self, trade) -> None:
+        """Record gross and net results when a trade closes.
+
+        Args:
+            trade: Trade used by the operation described above.
+        """
         if not trade.isclosed:
             return
 
@@ -80,6 +97,7 @@ class MACDStrategy(bt.Strategy):
 
     def next(self) -> None:
         # Log close price
+        """Evaluate the current MACD signal and submit an order when eligible."""
         self.log(f"Close: {self.dataclose[0]:.2f}")
 
         # Check if order is pending
@@ -101,6 +119,7 @@ class MACDStrategy(bt.Strategy):
                 self.order = self.sell()
 
     def stop(self) -> None:
+        """Report strategy state when the backtest finishes."""
         self.log(
             f"MACD Fast: {self.p.fast}, Slow: {self.p.slow}, Signal: {self.p.signal_period}",
             doprint=True,
@@ -130,6 +149,7 @@ class EMAMACDStrategy(bt.Strategy):
 
     def __init__(self) -> None:
         # Keep reference to close
+        """Initialize EMAMACDStrategy and its owned state."""
         self.dataclose = self.datas[0].close
 
         # Parameters
@@ -158,12 +178,23 @@ class EMAMACDStrategy(bt.Strategy):
         self.cooldown_counter = 0
 
     def log(self, txt: str, dt: object | None = None, doprint: bool = False) -> None:
-        """Logging function."""
+        """Logging function.
+
+        Args:
+            txt: Text or path value identifying the txt.
+            dt: Dt used by the operation described above.
+            doprint: Whether to enable or require the doprint.
+        """
         if self.p.printlog or doprint:  # noqa: SLF001
             dt = dt or self.datas[0].datetime.date(0)
             print(f"{dt.isoformat() if hasattr(dt, 'isoformat') else str(dt)} {txt}")
 
     def notify_order(self, order) -> None:
+        """Update pending-order state when the broker reports an order status.
+
+        Args:
+            order: Order used by the operation described above.
+        """
         if order.status in [order.Submitted, order.Accepted]:
             return
 
@@ -190,6 +221,7 @@ class EMAMACDStrategy(bt.Strategy):
 
     def next(self) -> None:
         # Decrement cooldown
+        """Evaluate the EMA and MACD crossover on the current bar and trade when eligible."""
         if self.cooldown_counter > 0:
             self.cooldown_counter -= 1
 

@@ -13,6 +13,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
+    """Append an open-trade record with entry, sizing, and setup context."""
+
     def _append_open_trade(
         self,
         *,
@@ -38,23 +40,42 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
         entry_level: str | None,
         sweep_delay: float,
     ) -> None:
+        """Process open trade.
+
+        Args:
+            discrete_action: Numeric value used for the discrete action.
+            risk_frac: Numeric value used for the risk frac.
+            bar: Bar used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            fill_time: Fill time used by the operation described above.
+            sl_price: Sl price used by the operation described above.
+            tp_price: Tp price used by the operation described above.
+            placed: Placed used by the operation described above.
+            entry_price: Price at which the position was opened.
+            entry_equity: Numeric value used for the entry equity.
+            execution_meta: Key-value data used for the execution meta.
+            entry_candidate: Entry candidate used by the operation described above.
+            fill_bar_idx: Fill bar idx used by the operation described above.
+            order_submission_time: Order submission time used by the operation described above.
+            decision_bar_idx: Decision bar idx used by the operation described above.
+            signal_bar: Numeric value used for the signal bar.
+            signal_time: Signal time used by the operation described above.
+            entry_level: Entry level used by the operation described above.
+            sweep_delay: Numeric value used for the sweep delay.
+        """
         assert self.position is not None
-        thesis = self._selected_trade_setup if self.trade_setup_actions else None
-        primary_id = int(thesis.candidate_id) if thesis is not None else None
+        selected_setup = self._selected_trade_setup if self.trade_setup_actions else None
+        primary_id = int(selected_setup.candidate_id) if selected_setup is not None else None
         supporting = [
             f"{candidate.idea}@{candidate.setup_timeframe}:{'long' if candidate.direction == 1 else 'short'}"
             for candidate in active_trade_setup_candidates(feat_row)
-            if thesis is None or candidate.candidate_id != primary_id
+            if selected_setup is None or candidate.candidate_id != primary_id
         ]
-        from decisioning.trade_setup import LEGACY_THESIS_ACTION_VERSION, TRADE_SETUP_ACTION_VERSION
+        if selected_setup is not None:
+            from decisioning.trade_setup import TRADE_SETUP_ACTION_VERSION
 
-        if thesis is not None and self.legacy_thesis_contract:
-            setup_identity = {
-                "thesis_candidate_id": primary_id,
-                "thesis_schema_version": LEGACY_THESIS_ACTION_VERSION,
-                "thesis_decision_time": self.position.thesis_decision_time,
-            }
-        elif thesis is not None:
             setup_identity = {
                 "trade_setup_candidate_id": primary_id,
                 "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
@@ -75,9 +96,11 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
                 "variant_id": str(getattr(self.strategy, "variant_id", self.strategy.name)),
                 "direction": discrete_action,
                 **setup_identity,
-                "primary_idea": thesis.idea if thesis is not None else "",
-                "primary_setup_timeframe": thesis.setup_timeframe if thesis is not None else "",
-                "primary_direction": thesis.direction if thesis is not None else 0,
+                "primary_idea": selected_setup.idea if selected_setup is not None else "",
+                "primary_setup_timeframe": (
+                    selected_setup.setup_timeframe if selected_setup is not None else ""
+                ),
+                "primary_direction": selected_setup.direction if selected_setup is not None else 0,
                 "supporting_idea_timeframes": supporting,
                 "price": self.position.entry_price,
                 "bar": self.step_idx if decision_bar_idx is None else decision_bar_idx,

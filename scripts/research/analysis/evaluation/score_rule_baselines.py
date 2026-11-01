@@ -1,5 +1,5 @@
 # mypy: ignore-errors
-"""Score rule baselines in TradingEnv on the thesis train and test splits.
+"""Score rule baselines in TradingEnv on the configured train and test splits.
 
 Does not train a network. Writes one summary per rule under outputs/rule_baselines/.
 """

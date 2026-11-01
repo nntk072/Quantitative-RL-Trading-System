@@ -67,13 +67,26 @@ def aggregate_seeds(results: Sequence[PerformanceMetrics]) -> pd.DataFrame:
 
 
 def print_report(df: pd.DataFrame) -> None:
-    """Print a describe()-style summary of an aggregated seed DataFrame."""
+    """Print a describe()-style summary of an aggregated seed DataFrame.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+    """
     print("\n=== Multi-Seed Report ===")
     print(df.describe().round(4).to_string())
     print()
 
 
 def _format_value(label: str, value: float) -> str:
+    """Format value.
+
+    Args:
+        label: Text or path value identifying the label.
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_format_value``.
+    """
     if label in ("Total Trades", "Max Consec Loss", "Breach Count"):
         return str(int(value))
     if label == "Total Return":
@@ -89,12 +102,26 @@ def _format_value(label: str, value: float) -> str:
 
 
 def activity_status(metrics: PerformanceMetrics) -> str:
-    """Zero completed trades means the run was inactive, not profitable."""
+    """Zero completed trades means the run was inactive, not profitable.
+
+    Args:
+        metrics: Metrics used by the operation described above.
+
+    Returns:
+        Text returned by ``activity_status``.
+    """
     return "INACTIVE" if metrics.n_trades == 0 else "ACTIVE"
 
 
 def build_summary_table(m: PerformanceMetrics) -> str:
-    """Return a human-readable text table of a single PerformanceMetrics."""
+    """Return a human-readable text table of a single PerformanceMetrics.
+
+    Args:
+        m: M used by the operation described above.
+
+    Returns:
+        Text returned by ``build_summary_table``.
+    """
     lines = [
         "=" * 42,
         f"  {'Metric':<22} {'Value':>12}",
@@ -110,13 +137,31 @@ def build_summary_table(m: PerformanceMetrics) -> str:
 def build_comparison_table(
     train_m: PerformanceMetrics, test_m: PerformanceMetrics | None = None
 ) -> str:
-    """Return a two-column Train vs Test comparison table."""
+    """Return a two-column Train vs Test comparison table.
+
+    Args:
+        train_m: Train m used by the operation described above.
+        test_m: Test m used by the operation described above.
+
+    Returns:
+        Text returned by ``build_comparison_table``.
+    """
     has_test = test_m is not None
     width = 62 if has_test else 42
     sep = "=" * width
     mid = "-" * width
 
     def row(label: str, train_val: str, test_val: str = "") -> str:
+        """Format one metric row for the train/test comparison table.
+
+        Args:
+            label: Text or path value identifying the label.
+            train_val: Text or path value identifying the train val.
+            test_val: Text or path value identifying the test val.
+
+        Returns:
+            Text returned by ``row``.
+        """
         base = f"  {label:<22} {train_val:>14}"
         return base + (f"  {test_val:>14}" if has_test else "")
 
@@ -138,7 +183,14 @@ def save_metrics_json(
     initial_balance: float | None = None,
     final_equity: float | None = None,
 ) -> None:
-    """Persist metrics plus account endpoints when supplied by the evaluator."""
+    """Persist metrics plus account endpoints when supplied by the evaluator.
+
+    Args:
+        m: M used by the operation described above.
+        path: Path to the input file or directory.
+        initial_balance: Initial balance used by the operation described above.
+        final_equity: Final equity used by the operation described above.
+    """
     payload = asdict(m)
     payload["activity_status"] = activity_status(m)
     if initial_balance is not None:

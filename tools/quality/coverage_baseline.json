@@ -1,0 +1,165 @@
+{
+  "captured_on": "2026-10-31",
+  "overall": {
+    "branch_ratio": 0.6100095177664975,
+    "branches": 12608,
+    "combined_ratio": 0.7106934779090468,
+    "covered_branches": 7691,
+    "covered_lines": 27440,
+    "files": 478,
+    "line_ratio": 0.7451661959591571,
+    "statements": 36824
+  },
+  "packages": {
+    "artifacts": {
+      "branch_ratio": 0.8636363636363636,
+      "branches": 88,
+      "covered_branches": 76,
+      "covered_lines": 341,
+      "files": 9,
+      "line_ratio": 0.9472222222222222,
+      "statements": 360
+    },
+    "compute": {
+      "branch_ratio": 0.476303317535545,
+      "branches": 422,
+      "covered_branches": 201,
+      "covered_lines": 647,
+      "files": 13,
+      "line_ratio": 0.5525192143467123,
+      "statements": 1171
+    },
+    "configuration": {
+      "branch_ratio": 0.8809523809523809,
+      "branches": 42,
+      "covered_branches": 37,
+      "covered_lines": 121,
+      "files": 5,
+      "line_ratio": 0.937984496124031,
+      "statements": 129
+    },
+    "decisioning": {
+      "branch_ratio": 0.8114754098360656,
+      "branches": 122,
+      "covered_branches": 99,
+      "covered_lines": 458,
+      "files": 11,
+      "line_ratio": 0.9443298969072165,
+      "statements": 485
+    },
+    "evaluation": {
+      "branch_ratio": 0.6299513551077137,
+      "branches": 2878,
+      "covered_branches": 1813,
+      "covered_lines": 6246,
+      "files": 77,
+      "line_ratio": 0.7925390178911306,
+      "statements": 7881
+    },
+    "experiments": {
+      "branch_ratio": 0.49225473321858865,
+      "branches": 1162,
+      "covered_branches": 572,
+      "covered_lines": 1852,
+      "files": 24,
+      "line_ratio": 0.5905612244897959,
+      "statements": 3136
+    },
+    "features": {
+      "branch_ratio": 0.8283333333333334,
+      "branches": 1200,
+      "covered_branches": 994,
+      "covered_lines": 3197,
+      "files": 40,
+      "line_ratio": 0.934522069570301,
+      "statements": 3421
+    },
+    "integrations": {
+      "branch_ratio": 0.24549549549549549,
+      "branches": 444,
+      "covered_branches": 109,
+      "covered_lines": 628,
+      "files": 29,
+      "line_ratio": 0.4453900709219858,
+      "statements": 1410
+    },
+    "learning": {
+      "branch_ratio": 0.6478723404255319,
+      "branches": 940,
+      "covered_branches": 609,
+      "covered_lines": 2037,
+      "files": 19,
+      "line_ratio": 0.8048202291584354,
+      "statements": 2531
+    },
+    "live": {
+      "branch_ratio": 0.40476190476190477,
+      "branches": 42,
+      "covered_branches": 17,
+      "covered_lines": 119,
+      "files": 5,
+      "line_ratio": 0.7986577181208053,
+      "statements": 149
+    },
+    "market_data": {
+      "branch_ratio": 0.5553191489361702,
+      "branches": 470,
+      "covered_branches": 261,
+      "covered_lines": 996,
+      "files": 28,
+      "line_ratio": 0.7318148420279207,
+      "statements": 1361
+    },
+    "models": {
+      "branch_ratio": 0.6693548387096774,
+      "branches": 124,
+      "covered_branches": 83,
+      "covered_lines": 796,
+      "files": 23,
+      "line_ratio": 0.951015531660693,
+      "statements": 837
+    },
+    "orchestra": {
+      "branch_ratio": 0.5435168738898757,
+      "branches": 1126,
+      "covered_branches": 612,
+      "covered_lines": 2140,
+      "files": 31,
+      "line_ratio": 0.6903225806451613,
+      "statements": 3100
+    },
+    "simulation": {
+      "branch_ratio": 0.6733333333333333,
+      "branches": 1800,
+      "covered_branches": 1212,
+      "covered_lines": 4162,
+      "files": 76,
+      "line_ratio": 0.8051847552718128,
+      "statements": 5169
+    },
+    "trading": {
+      "branch_ratio": 0.7386058981233244,
+      "branches": 746,
+      "covered_branches": 551,
+      "covered_lines": 1790,
+      "files": 42,
+      "line_ratio": 0.8540076335877863,
+      "statements": 2096
+    },
+    "training": {
+      "branch_ratio": 0.4441117764471058,
+      "branches": 1002,
+      "covered_branches": 445,
+      "covered_lines": 1910,
+      "files": 46,
+      "line_ratio": 0.532329988851728,
+      "statements": 3588
+    }
+  },
+  "pytest_execution_seconds": 317.34,
+  "schema_version": 1,
+  "scope": "unit and non-slow integration tests; collected with test contexts",
+  "source_branch": "main",
+  "source_commit": "5a23e6321653c45719dfb8fdb831e242ff8c3d78",
+  "test_cases": 2240
+}

@@ -16,6 +16,8 @@ class ExecutionRuntimeMixin(
     EmaExitRuntimeMixin,
     RuntimeMixinBase,
 ):
+    """Compose quote selection, protective levels, and trade accounting."""
+
     pass
 
 

@@ -57,6 +57,18 @@ class RLRobot:
         magic_number: int = 20240102,
         paper_trading: bool = True,
     ) -> None:
+        """Initialize RLRobot and its owned state.
+
+        Args:
+            adapter: Adapter used by the operation described above.
+            data_source: Data source used by the operation described above.
+            trader: Trader used by the operation described above.
+            risk_manager: Risk manager used by the operation described above.
+            secondary_data_source: Secondary data source used by the operation described above.
+            stop_loss_pips: Numeric value used for the stop loss pips.
+            magic_number: Numeric value used for the magic number.
+            paper_trading: Whether to enable or require the paper trading.
+        """
         self.adapter = adapter
         self.data_source = data_source
         self.strategy = adapter.as_strategy(data_source, secondary_data_source)
@@ -76,7 +88,14 @@ class RLRobot:
         )
 
     def calculate_position_size(self, symbol: str) -> float:
-        """Return risk-sized volume, or zero when sizing cannot be validated."""
+        """Return risk-sized volume, or zero when sizing cannot be validated.
+
+        Args:
+            symbol: Text or path value identifying the symbol.
+
+        Returns:
+            Numeric result returned by ``calculate_position_size``.
+        """
         try:
             size = self.risk_manager.calculate_position_size(symbol, self.stop_loss_pips)
             return float(size) if size > 0.0 else 0.0
@@ -85,11 +104,24 @@ class RLRobot:
             return 0.0
 
     def check_risk_before_trade(self, symbol: str, position_size: float) -> tuple[bool, str]:
-        """Check whether *position_size* is within live risk limits."""
+        """Check whether *position_size* is within live risk limits.
+
+        Args:
+            symbol: Text or path value identifying the symbol.
+            position_size: Number specifying the position size for this operation.
+
+        Returns:
+            Whether check risk before trade meets the requested condition.
+        """
         return self.risk_manager.check_risk_limits(symbol, position_size, self.stop_loss_pips)
 
     def _open(self, symbol: str, position_type: int) -> None:
-        """Open a BUY/SELL position, or log it in paper mode."""
+        """Open a BUY/SELL position, or log it in paper mode.
+
+        Args:
+            symbol: Text or path value identifying the symbol.
+            position_type: Numeric value used for the position type.
+        """
         position_size = self.calculate_position_size(symbol)
         if position_size <= 0.0:
             logger.warning(
@@ -136,7 +168,12 @@ class RLRobot:
             logger.error(f"Failed to open {direction} position for {symbol}: {result.retcode}")
 
     def _close(self, symbol: str, position_type: int) -> None:
-        """Close all positions of *position_type* for *symbol* (or log them)."""
+        """Close all positions of *position_type* for *symbol* (or log them).
+
+        Args:
+            symbol: Text or path value identifying the symbol.
+            position_type: Numeric value used for the position type.
+        """
         if self.paper_trading:
             logger.info(
                 f"[PAPER] would close all "

@@ -1,4 +1,4 @@
-"""Minimal leakage detectors for thesis validity (T-03.3)."""
+"""Minimal leakage detectors for research validity."""
 
 from __future__ import annotations
 
@@ -15,10 +15,19 @@ def label_shuffle_score(
     n_perm: int = 32,
     seed: int = 0,
 ) -> dict[str, float]:
-    """Compare |corr(y, pred)| to a label-permutation null.
+    """Compare ``|corr(y, pred)|`` to a label-permutation null.
 
     Returns the observed absolute correlation and the fraction of permutations
-    with |corr| at least as large (two-sided Monte Carlo p-proxy).
+    with ``|corr|`` at least as large (two-sided Monte Carlo p-proxy).
+
+    Args:
+        y: Tabular data used for the y.
+        pred: Tabular data used for the pred.
+        n_perm: Numeric value used for the n perm.
+        seed: Random seed used to make sampling reproducible.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
     """
     yt = np.asarray(y, dtype=float).ravel()
     pt = np.asarray(pred, dtype=float).ravel()
@@ -28,6 +37,15 @@ def label_shuffle_score(
         return {"observed_abs_corr": float("nan"), "null_exceed_frac": float("nan")}
 
     def _abs_corr(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
+        """Process corr.
+
+        Args:
+            a: A used by the operation described above.
+            b: B used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``_abs_corr``.
+        """
         if np.std(a) < 1e-12 or np.std(b) < 1e-12:
             return 0.0
         return float(abs(np.corrcoef(a, b)[0, 1]))
@@ -55,6 +73,14 @@ def time_shift_feature_scores(
 
     A causal feature should not improve when shifted forward into the future
     relative to the target (performance should not rise with +k).
+
+    Args:
+        feature: Tabular data used for the feature.
+        target: Path or filename identifying the target.
+        shifts: Items supplied for the shifts, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
     """
     f_arr = np.asarray(feature, dtype=float).ravel()
     y_arr = np.asarray(target, dtype=float).ravel()
@@ -64,6 +90,15 @@ def time_shift_feature_scores(
     y = y_arr[:n]
 
     def _abs_corr(a: np.ndarray[Any, Any], b: np.ndarray[Any, Any]) -> float:
+        """Process corr.
+
+        Args:
+            a: A used by the operation described above.
+            b: B used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``_abs_corr``.
+        """
         mask = np.isfinite(a) & np.isfinite(b)
         if mask.sum() < 8:
             return float("nan")

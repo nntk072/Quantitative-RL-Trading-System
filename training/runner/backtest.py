@@ -36,10 +36,19 @@ log = logging.getLogger(__name__)
 
 
 def _random_policy(obs: np.ndarray[Any, Any]) -> int:
+    """Process policy.
+
+    Args:
+        obs: Obs used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_random_policy``.
+    """
     return random.choice([-1, 0, 1])
 
 
 def main() -> None:
+    """Run a configured policy backtest and write evaluation artifacts."""
     parser = argparse.ArgumentParser()
     parser.add_argument("overrides", nargs="*")
     parser.add_argument("--seed", type=int, default=0)
@@ -113,6 +122,17 @@ def main() -> None:
         ticks: Any,
         label: str,
     ) -> tuple[dict[str, Any], PerformanceMetrics]:
+        """Run the requested value.
+
+        Args:
+            bars: Market bars to process.
+            feats: Tabular data used for the feats.
+            ticks: Ticks used by the operation described above.
+            label: Text or path value identifying the label.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any], PerformanceMetrics`` values.
+        """
         log.info("Running backtest [%s] seed=%d …", label, args.seed)
         result = run_backtest(
             bars=bars,

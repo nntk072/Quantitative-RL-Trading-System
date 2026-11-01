@@ -255,7 +255,7 @@ def test_short_direction_is_labelled() -> None:
     assert "Short" in joined
 
 
-def test_thesis_report_separates_primary_idea_from_supporting_context() -> None:
+def test_trade_setup_report_separates_primary_idea_from_supporting_context() -> None:
     row = {
         **_OPEN_EMA,
         "primary_idea": "fvg_retest",
@@ -266,7 +266,7 @@ def test_thesis_report_separates_primary_idea_from_supporting_context() -> None:
         "entry_idea_timeframes": {"po3": ["H1"], "fvg_retest": ["M5"]},
     }
     reason = entry_reason(row)
-    assert "Primary thesis: FVG retest (M5, long)" in reason
+    assert "Primary setup: FVG retest (M5, long)" in reason
     assert "Supporting context: po3@H1:long; ifvg_retest@M3:long" in reason
     assert "3 entry ideas overlap" not in reason
 

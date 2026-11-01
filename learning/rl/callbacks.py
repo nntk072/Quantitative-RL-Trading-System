@@ -19,11 +19,25 @@ log = logging.getLogger(__name__)
 
 
 def save_ppo_checkpoint(model: Any, path: str | Path) -> None:
-    """Compatibility entry point for callback-owned checkpoint saves."""
+    """Compatibility entry point for callback-owned checkpoint saves.
+
+    Args:
+        model: Model used for this operation.
+        path: Path to the input file or directory.
+    """
     save_sb3_checkpoint(model, path)
 
 
 def _action_coordinate_names(env: Any, width: int) -> list[str]:
+    """Process coordinate names.
+
+    Args:
+        env: Environment whose state is read or updated.
+        width: Numeric value used for the width.
+
+    Returns:
+        Values returned by ``_action_coordinate_names``, in the declared order.
+    """
     schema = getattr(env, "action_schema", None)
     to_dict = getattr(schema, "to_dict", None)
     if callable(to_dict):
@@ -36,6 +50,13 @@ def _action_coordinate_names(env: Any, width: int) -> list[str]:
 def _record_action_coordinates(
     totals: dict[str, dict[str, float]], action: Any, names: list[str]
 ) -> None:
+    """Record action coordinates.
+
+    Args:
+        totals: Key-value data used for the totals.
+        action: Action to apply to the current state.
+        names: Items supplied for the names, in input order.
+    """
     values = np.asarray(action, dtype=np.float64).reshape(-1)
     if values.size != len(names):
         return
@@ -64,6 +85,14 @@ def _record_action_coordinates(
 def _summarize_action_coordinates(
     totals: dict[str, dict[str, float]],
 ) -> dict[str, dict[str, float | int]]:
+    """Summarize action coordinates.
+
+    Args:
+        totals: Key-value data used for the totals.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, float | int]`` values.
+    """
     summary: dict[str, dict[str, float | int]] = {}
     for name, item in totals.items():
         count = int(item["count"])
@@ -95,6 +124,13 @@ if _SB3_AVAILABLE:
         """Log a cheap step/FPS heartbeat without running dashboard work."""
 
         def __init__(self, log_every: int, total_timesteps: int, verbose: int = 0) -> None:
+            """Initialize TrainingProgressCallback and its owned state.
+
+            Args:
+                log_every: Numeric value used for the log every.
+                total_timesteps: Numeric value used for the total timesteps.
+                verbose: Numeric value used for the verbose.
+            """
             super().__init__(verbose=verbose)
             self.log_every = max(0, int(log_every))
             self.total_timesteps = max(0, int(total_timesteps))
@@ -105,12 +141,18 @@ if _SB3_AVAILABLE:
             self._next_log = self.log_every
 
         def _on_training_start(self) -> None:
+            """Process training start."""
             self._started_at = time.monotonic()
             self._started_step = int(self.num_timesteps)
             self._last_logged_at = self._started_at
             self._last_logged_step = self._started_step
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             step = int(self.num_timesteps)
             if self.log_every <= 0 or step < self._next_log:
                 return True
@@ -138,6 +180,12 @@ if _SB3_AVAILABLE:
         """Write per-PPO-rollout action, advantage, reward, and funnel diagnostics."""
 
         def __init__(self, log_path: str | Path, verbose: int = 0) -> None:
+            """Initialize LearningDiagnosticsCallback and its owned state.
+
+            Args:
+                log_path: Path or filename identifying the log.
+                verbose: Numeric value used for the verbose.
+            """
             super().__init__(verbose=verbose)
             self._log_path = Path(log_path)
             self._log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -146,10 +194,15 @@ if _SB3_AVAILABLE:
             self._reward_parts: dict[str, float] = {}
             self._constraints: dict[str, float] = {}
             self._window_steps = 0
-            self._thesis_entropy_sum: Any = 0.0
-            self._thesis_entropy_count: Any = 0
+            self._trade_setup_entropy_sum: Any = 0.0
+            self._trade_setup_entropy_count: Any = 0
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             infos = self.locals.get("infos") or []
             for info in infos:
                 if not isinstance(info, dict):
@@ -174,7 +227,7 @@ if _SB3_AVAILABLE:
                                 metric_key, 0.0
                             ) + float(value)
             policy_entropy = getattr(
-                getattr(self.model, "policy", None), "last_thesis_entropy", None
+                getattr(self.model, "policy", None), "last_trade_setup_entropy", None
             )
             if policy_entropy is not None:
                 detach = getattr(policy_entropy, "detach", None)
@@ -186,34 +239,37 @@ if _SB3_AVAILABLE:
                     import torch
 
                     finite_mask = torch.isfinite(entropy_values)
-                    self._thesis_entropy_sum = (
-                        self._thesis_entropy_sum
+                    self._trade_setup_entropy_sum = (
+                        self._trade_setup_entropy_sum
                         + torch.where(
                             finite_mask, entropy_values, torch.zeros_like(entropy_values)
                         ).sum()
                     )
-                    self._thesis_entropy_count = self._thesis_entropy_count + finite_mask.sum()
+                    self._trade_setup_entropy_count = (
+                        self._trade_setup_entropy_count + finite_mask.sum()
+                    )
                 else:
                     entropy_values = np.asarray(policy_entropy, dtype=np.float64).reshape(-1)
                     finite = entropy_values[np.isfinite(entropy_values)]
-                    self._thesis_entropy_sum += float(finite.sum())
-                    self._thesis_entropy_count += int(finite.size)
+                    self._trade_setup_entropy_sum += float(finite.sum())
+                    self._trade_setup_entropy_count += int(finite.size)
             return True
 
         def _on_rollout_end(self) -> None:
+            """Process rollout end."""
             model: Any = self.model
             buffer = model.rollout_buffer
-            entropy_sum = self._thesis_entropy_sum
+            entropy_sum = self._trade_setup_entropy_sum
             if hasattr(entropy_sum, "item"):
                 entropy_sum = float(entropy_sum.item())
-            entropy_count = self._thesis_entropy_count
+            entropy_count = self._trade_setup_entropy_count
             if hasattr(entropy_count, "item"):
                 entropy_count = int(entropy_count.item())
             entropy_mean = (
                 float(entropy_sum) / int(entropy_count) if entropy_count else float("nan")
             )
-            self._thesis_entropy_sum = 0.0
-            self._thesis_entropy_count = 0
+            self._trade_setup_entropy_sum = 0.0
+            self._trade_setup_entropy_count = 0
             raw_actions = np.asarray(buffer.actions, dtype=np.float64)
             if isinstance(model.action_space, spaces.Box):
                 actions = raw_actions.reshape(-1, raw_actions.shape[-1])
@@ -252,14 +308,13 @@ if _SB3_AVAILABLE:
                     bins = np.digitize(coordinate, [-1.0 / 3.0, 1.0 / 3.0])
                     for bin_index, label in enumerate(("low", "mid", "high")):
                         row[f"action/{name}_hist/{label}"] = float(np.mean(bins == bin_index))
-            setup_coordinate = next(
-                (name for name in ("trade_setup", "thesis") if name in names), None
-            )
+            setup_coordinate = "trade_setup" if "trade_setup" in names else None
             setup_index = names.index(setup_coordinate) if setup_coordinate is not None else None
-            setup_prefix = "thesis" if setup_coordinate == "thesis" else "trade_setup"
+            setup_prefix = "trade_setup"
             observations = getattr(buffer, "observations", {})
-            mask_key = "thesis_mask" if setup_coordinate == "thesis" else "trade_setup_mask"
-            setup_mask = observations.get(mask_key) if isinstance(observations, dict) else None
+            setup_mask = (
+                observations.get("trade_setup_mask") if isinstance(observations, dict) else None
+            )
             if setup_index is not None and setup_mask is not None:
                 from decisioning.trade_setup import (
                     TRADE_SETUP_CANDIDATES,
@@ -357,10 +412,11 @@ if _SB3_AVAILABLE:
             self._reward_parts.clear()
             self._constraints.clear()
             self._window_steps = 0
-            self._thesis_entropy_sum = 0.0
-            self._thesis_entropy_count = 0
+            self._trade_setup_entropy_sum = 0.0
+            self._trade_setup_entropy_count = 0
 
         def _on_training_end(self) -> None:
+            """Process training end."""
             if self._rows:
                 pd.DataFrame(self._rows).to_csv(self._log_path, index=False)
 
@@ -391,6 +447,20 @@ if _SB3_AVAILABLE:
             trailing_dd_limit_usd: float = 0.0,
             verbose: int = 0,
         ) -> None:
+            """Initialize LagrangianRiskCallback and its owned state.
+
+            Args:
+                episode_cost_budget: Numeric value used for the episode cost budget.
+                dual_learning_rate: Numeric value used for the dual learning rate.
+                lambda_initial: Numeric value used for the lambda initial.
+                lambda_max: Numeric value used for the lambda max.
+                gamma: Numeric value used for the gamma.
+                cost_discount_gamma: Cost discount gamma used by the operation described above.
+                daily_loss_limit_usd: Numeric value used for the daily loss limit usd.
+                max_loss_limit_usd: Numeric value used for the max loss limit usd.
+                trailing_dd_limit_usd: Numeric value used for the trailing dd limit usd.
+                verbose: Numeric value used for the verbose.
+            """
             super().__init__(verbose=verbose)
             cost_gamma = gamma if cost_discount_gamma is None else cost_discount_gamma
             configured_values = np.asarray(
@@ -440,6 +510,11 @@ if _SB3_AVAILABLE:
             self._dual_updates = 0
 
         def _config_state(self) -> dict[str, float | int]:
+            """Process state.
+
+            Returns:
+                Mapping from ``str`` keys to ``float | int`` values.
+            """
             return {
                 "version": self._STATE_VERSION,
                 "episode_cost_budget": self.episode_cost_budget,
@@ -454,6 +529,7 @@ if _SB3_AVAILABLE:
             }
 
         def _persist_state(self) -> None:
+            """Process state."""
             setattr(
                 self.model,
                 "_constrained_rl_state",
@@ -465,6 +541,7 @@ if _SB3_AVAILABLE:
             )
 
         def _on_training_start(self) -> None:
+            """Process training start."""
             state = getattr(self.model, "_constrained_rl_state", None)
             if state is not None:
                 expected = self._config_state()
@@ -482,6 +559,14 @@ if _SB3_AVAILABLE:
             self._persist_state()
 
         def _episode_cost(self, info: Any) -> float:
+            """Process cost.
+
+            Args:
+                info: Info used by the operation described above.
+
+            Returns:
+                Numeric result returned by ``_episode_cost``.
+            """
             if not isinstance(info, dict):
                 return 0.0
             constraints = info.get("constraints", {})
@@ -506,6 +591,11 @@ if _SB3_AVAILABLE:
             return max([*costs, float(breached)], default=0.0)
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             rewards = self.locals.get("rewards")
             dones = self.locals.get("dones")
             infos = self.locals.get("infos")
@@ -532,6 +622,7 @@ if _SB3_AVAILABLE:
             return True
 
         def _on_rollout_end(self) -> None:
+            """Process rollout end."""
             model: Any = self.model
             steps = max(1, self._rollout_transitions)
             model.logger.record(
@@ -572,15 +663,27 @@ if _SB3_AVAILABLE:
         """
 
         def __init__(self, log_path: str | Path, verbose: int = 0) -> None:
+            """Initialize ProgressLoggerCallback and its owned state.
+
+            Args:
+                log_path: Path or filename identifying the log.
+                verbose: Numeric value used for the verbose.
+            """
             super().__init__(verbose=verbose)
             self._log_path = Path(log_path)
             self._log_path.parent.mkdir(parents=True, exist_ok=True)
             self._rows: list[dict[str, Any]] = []
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             return True
 
         def _on_rollout_end(self) -> None:
+            """Process rollout end."""
             row: dict[str, Any] = {"timestep": self.num_timesteps}
             for k, v in self.model.logger.name_to_value.items():
                 try:
@@ -590,6 +693,7 @@ if _SB3_AVAILABLE:
             self._rows.append(row)
 
         def _on_training_end(self) -> None:
+            """Process training end."""
             if self._rows:
                 pd.DataFrame(self._rows).to_csv(self._log_path, index=False)
 
@@ -601,6 +705,12 @@ if _SB3_AVAILABLE:
         """
 
         def __init__(self, log_path: str | Path, verbose: int = 0) -> None:
+            """Initialize EpisodeEquityCallback and its owned state.
+
+            Args:
+                log_path: Path or filename identifying the log.
+                verbose: Numeric value used for the verbose.
+            """
             super().__init__(verbose=verbose)
             self._log_path = Path(log_path)
             self._log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -619,6 +729,11 @@ if _SB3_AVAILABLE:
             ]
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             dones = self.locals.get("dones")
             infos = self.locals.get("infos") or []
             if dones is None:
@@ -665,6 +780,7 @@ if _SB3_AVAILABLE:
             return True
 
         def _on_training_end(self) -> None:
+            """Process training end."""
             if not self._log_path.exists():
                 pd.DataFrame(columns=self._columns).to_csv(self._log_path, index=False)
 
@@ -676,20 +792,15 @@ if _SB3_AVAILABLE:
         replace the saved checkpoint. The rollout uses deterministic actions
         so a repeated evaluation of a fixed policy and data slice is stable.
 
-        Parameters
-        ----------
-        eval_env_factory : callable
-            ``() -> TradingEnv`` returning a *fresh* evaluation environment.
-            Called every ``eval_freq`` rollouts; reusing the same env would
-            leak rollout state between evals.
-        eval_freq : int
-            Run an evaluation every ``eval_freq`` rollout steps.
-        best_model_path : str | Path
-            File path to write the best model to (SB3 ``.save()`` format).
-        n_eval_episodes : int
-            Number of independent rollouts to average over for the best-model
-            decision. Defaults to 1, which is noisy but cheap; training runs
-            should use 3–5 once ``eval_freq`` is tuned.
+        Args:
+            eval_env_factory (callable): ``() -> TradingEnv`` returning a *fresh* evaluation environment.
+                Called every ``eval_freq`` rollouts; reusing the same env would
+                leak rollout state between evals.
+            eval_freq (int): Run an evaluation every ``eval_freq`` rollout steps.
+            best_model_path (str | Path): File path to write the best model to (SB3 ``.save()`` format).
+            n_eval_episodes (int): Number of independent rollouts to average over for the best-model
+                decision. Defaults to 1, which is noisy but cheap; training runs
+                should use 3–5 once ``eval_freq`` is tuned.
         """
 
         def __init__(
@@ -702,6 +813,17 @@ if _SB3_AVAILABLE:
             viability_eval_env_factory: Any | None = None,
             viability_eval_freq: int = 5_000_000,
         ) -> None:
+            """Initialize BestCheckpointEvalCallback and its owned state.
+
+            Args:
+                eval_env_factory: Eval env factory used by the operation described above.
+                eval_freq: Numeric value used for the eval freq.
+                best_model_path: Path or filename identifying the best model.
+                n_eval_episodes: Numeric value used for the n eval episodes.
+                verbose: Numeric value used for the verbose.
+                viability_eval_env_factory: Viability eval env factory used by the operation described above.
+                viability_eval_freq: Numeric value used for the viability eval freq.
+            """
             super().__init__(verbose=verbose)
             self._eval_env_factory = eval_env_factory
             self._eval_freq = int(eval_freq)
@@ -724,6 +846,11 @@ if _SB3_AVAILABLE:
         def _on_step(self) -> bool:
             # Use threshold crossings because vectorized PPO increments by
             # n_envs and may never land exactly on a requested interval.
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             if self._eval_freq > 0 and self.num_timesteps >= self._next_eval_at:
                 self._run_eval()
                 while self._next_eval_at <= self.num_timesteps:
@@ -737,6 +864,7 @@ if _SB3_AVAILABLE:
             return True
 
         def _run_eval(self) -> None:
+            """Run eval."""
             end_equities: list[float] = []
             completed_trades = 0
             survival_valid = True
@@ -902,23 +1030,39 @@ if _SB3_AVAILABLE:
             log_std_max: float = 0.0,
             verbose: int = 0,
         ) -> None:
+            """Initialize ClipLogStdCallback and its owned state.
+
+            Args:
+                log_std_min: Numeric value used for the log std min.
+                log_std_max: Numeric value used for the log std max.
+                verbose: Numeric value used for the verbose.
+            """
             super().__init__(verbose=verbose)
             self.log_std_min = float(log_std_min)
             self.log_std_max = float(log_std_max)
 
         def _clip(self) -> None:
+            """Process ClipLogStdCallback."""
             clip_policy_log_std(self.model.policy, self.log_std_min, self.log_std_max)
 
         def _on_training_start(self) -> None:
+            """Process training start."""
             self._clip()
 
         def _on_rollout_start(self) -> None:
+            """Process rollout start."""
             self._clip()
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             return True
 
         def _on_training_end(self) -> None:
+            """Process training end."""
             self._clip()
 
     class PeriodicCheckpointCallback(_Base):
@@ -937,6 +1081,15 @@ if _SB3_AVAILABLE:
             latest_name: str = "ppo_latest",
             verbose: int = 1,
         ) -> None:
+            """Initialize PeriodicCheckpointCallback and its owned state.
+
+            Args:
+                save_freq: Numeric value used for the save freq.
+                save_path: Path or filename identifying the save.
+                name_prefix: Text or path value identifying the name prefix.
+                latest_name: Text or path value identifying the latest name.
+                verbose: Numeric value used for the verbose.
+            """
             super().__init__(verbose=verbose)
             self.save_freq = int(save_freq)
             self.save_path = Path(save_path)
@@ -945,12 +1098,14 @@ if _SB3_AVAILABLE:
             self._next_save = self.save_freq if self.save_freq > 0 else None
 
         def _init_callback(self) -> None:
+            """Process callback."""
             self.save_path.mkdir(parents=True, exist_ok=True)
             current = int(getattr(self.model, "num_timesteps", 0))
             if self.save_freq > 0:
                 self._next_save = (current // self.save_freq + 1) * self.save_freq
 
         def _save(self) -> None:
+            """Save PeriodicCheckpointCallback."""
             ckpt = self.save_path / f"{self.name_prefix}_{self.num_timesteps}_steps"
             save_ppo_checkpoint(self.model, ckpt)
             save_ppo_checkpoint(self.model, self.save_path / self.latest_name)
@@ -958,6 +1113,11 @@ if _SB3_AVAILABLE:
                 print(f"[PeriodicCheckpoint] timestep={self.num_timesteps} → {ckpt}.zip")
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             if self._next_save is None or self.save_freq <= 0:
                 return True
             if self.num_timesteps >= self._next_save:
@@ -984,6 +1144,16 @@ if _SB3_AVAILABLE:
             stop_on_equity_gate: bool = False,
             verbose: int = 0,
         ) -> None:
+            """Initialize EarlyAbortCallback and its owned state.
+
+            Args:
+                min_timesteps: Numeric value used for the min timesteps.
+                window: Numeric value used for the window.
+                stop_on_nonfinite: Whether to enable or require the stop on nonfinite.
+                stop_on_no_trades: Whether to enable or require the stop on no trades.
+                stop_on_equity_gate: Whether to enable or require the stop on equity gate.
+                verbose: Numeric value used for the verbose.
+            """
             super().__init__(verbose=verbose)
             self.min_timesteps = int(min_timesteps)
             self.window = int(window)
@@ -995,6 +1165,11 @@ if _SB3_AVAILABLE:
             self.reason: str | None = None
 
         def _note_episode(self, ep: dict[str, Any]) -> None:
+            """Process episode.
+
+            Args:
+                ep: Key-value data used for the ep.
+            """
             for key in (
                 "end_equity",
                 "start_equity",
@@ -1013,6 +1188,7 @@ if _SB3_AVAILABLE:
             self._episodes.append(ep)
 
         def _on_rollout_end(self) -> None:
+            """Process rollout end."""
             if not self.stop_on_nonfinite:
                 return
             logger = getattr(self.model, "logger", None)
@@ -1029,6 +1205,11 @@ if _SB3_AVAILABLE:
                     continue
 
         def _on_step(self) -> bool:
+            """Process step.
+
+            Returns:
+                Whether on step meets the requested condition.
+            """
             dones = self.locals.get("dones")
             infos = self.locals.get("infos") or []
             if dones is not None:
@@ -1061,18 +1242,36 @@ else:
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize TrainingProgressCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError("stable-baselines3 is required for TrainingProgressCallback")
 
     class LearningDiagnosticsCallback:  # type: ignore[no-redef]
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize LearningDiagnosticsCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError("stable-baselines3 is required for LearningDiagnosticsCallback")
 
     class ProgressLoggerCallback:  # type: ignore[no-redef]
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize ProgressLoggerCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError(
                 "stable-baselines3 is required for ProgressLoggerCallback. "
                 "Install it with: pip install stable-baselines3"
@@ -1082,6 +1281,12 @@ else:
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize EpisodeEquityCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError(
                 "stable-baselines3 is required for EpisodeEquityCallback. "
                 "Install it with: pip install stable-baselines3"
@@ -1091,6 +1296,12 @@ else:
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize BestCheckpointEvalCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError(
                 "stable-baselines3 is required for BestCheckpointEvalCallback. "
                 "Install it with: pip install stable-baselines3"
@@ -1100,6 +1311,12 @@ else:
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize ClipLogStdCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError(
                 "stable-baselines3 is required for ClipLogStdCallback. "
                 "Install it with: pip install stable-baselines3"
@@ -1109,6 +1326,12 @@ else:
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize PeriodicCheckpointCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError(
                 "stable-baselines3 is required for PeriodicCheckpointCallback. "
                 "Install it with: pip install stable-baselines3"
@@ -1118,12 +1341,24 @@ else:
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize LagrangianRiskCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError("stable-baselines3 is required for LagrangianRiskCallback")
 
     class EarlyAbortCallback:  # type: ignore[no-redef]
         """Stub — stable-baselines3 is not installed."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
+            """Initialize EarlyAbortCallback and its owned state.
+
+            Args:
+                *args: Parsed command-line arguments for this operation.
+                **kwargs: Kwargs used by the operation described above.
+            """
             raise ImportError(
                 "stable-baselines3 is required for EarlyAbortCallback. "
                 "Install it with: pip install stable-baselines3"

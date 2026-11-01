@@ -18,7 +18,14 @@ from decisioning.trade_setup import (
 
 
 def _value_is_active(value: Any) -> bool:
-    """Treat any finite positive feature value as an active binary context."""
+    """Treat any finite positive feature value as an active binary context.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Whether value is active meets the requested condition.
+    """
     if isinstance(value, pd.Series):
         return any(_value_is_active(item) for item in value.tolist())
     if isinstance(value, (list, tuple, np.ndarray)):
@@ -31,6 +38,15 @@ def _value_is_active(value: Any) -> bool:
 
 
 def _signal_value(row: Mapping[str, Any] | pd.Series | _FeatureRowLike, name: str) -> Any:
+    """Process value.
+
+    Args:
+        row: Row index or record being processed.
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Result of process value.
+    """
     if name not in row:
         return 0.0
     if isinstance(row, pd.Series):
@@ -39,19 +55,60 @@ def _signal_value(row: Mapping[str, Any] | pd.Series | _FeatureRowLike, name: st
 
 
 class _FeatureRowLike(Protocol):
-    def get(self, key: str, default: Any = ...) -> Any: ...
+    def get(self, key: str, default: Any = ...) -> Any:
+        """Read a feature value with a fallback for missing columns.
 
-    def __getitem__(self, key: str) -> Any: ...
+        Args:
+            key: Feature name to look up.
+            default: Value returned when the feature is absent.
 
-    def __iter__(self) -> Any: ...
+        Returns:
+            Feature value or the supplied default.
+        """
+        ...
 
-    def __contains__(self, key: object) -> bool: ...
+    def __getitem__(self, key: str) -> Any:
+        """Process _FeatureRowLike.
+
+        Args:
+            key: Text or path value identifying the key.
+
+        Returns:
+            Result of process _FeatureRowLike.
+        """
+        ...
+
+    def __iter__(self) -> Any:
+        """Iterate over _FeatureRowLike.
+
+        Returns:
+            Result of iterate over _FeatureRowLike.
+        """
+        ...
+
+    def __contains__(self, key: object) -> bool:
+        """Process _FeatureRowLike.
+
+        Args:
+            key: Key used by the operation described above.
+
+        Returns:
+            Whether contains meets the requested condition.
+        """
+        ...
 
 
 def active_trade_setup_candidates(
     row: Mapping[str, Any] | pd.Series | _FeatureRowLike,
 ) -> tuple[TradeSetupCandidate, ...]:
-    """Return active candidates from their exact per-timeframe feature columns."""
+    """Return active candidates from their exact per-timeframe feature columns.
+
+    Args:
+        row: Row index or record being processed.
+
+    Returns:
+        Values returned by ``active_trade_setup_candidates``, in the declared order.
+    """
     active: list[TradeSetupCandidate] = []
     for candidate in TRADE_SETUP_CANDIDATES[1:]:
         assert candidate.idea is not None
@@ -64,7 +121,11 @@ def active_trade_setup_candidates(
 
 
 def trade_setup_candidate_feature_columns() -> tuple[tuple[int, str], ...]:
-    """Map each candidate ID to the exact per-timeframe eligibility feature."""
+    """Map each candidate ID to the exact per-timeframe eligibility feature.
+
+    Returns:
+        Values returned by ``trade_setup_candidate_feature_columns``, in the declared order.
+    """
     columns: list[tuple[int, str]] = []
     for candidate in TRADE_SETUP_CANDIDATES[1:]:
         assert candidate.idea is not None
@@ -78,7 +139,14 @@ def trade_setup_candidate_feature_columns() -> tuple[tuple[int, str], ...]:
 def trade_setup_candidate_mask(
     row: Mapping[str, Any] | pd.Series | _FeatureRowLike,
 ) -> np.ndarray[Any, np.dtype[np.float32]]:
-    """Build the stable eligibility mask, with NO_TRADE always available."""
+    """Build the stable eligibility mask, with NO_TRADE always available.
+
+    Args:
+        row: Row index or record being processed.
+
+    Returns:
+        Array returned by ``trade_setup_candidate_mask``.
+    """
     mask = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
     mask[NO_TRADE_ID] = 1.0
     for candidate in active_trade_setup_candidates(row):
@@ -90,16 +158,8 @@ def trade_setup_candidate_mask(
     return mask
 
 
-# Compatibility aliases. The feature names stored in observations remain unchanged.
-active_thesis_candidates = active_trade_setup_candidates
-thesis_candidate_feature_columns = trade_setup_candidate_feature_columns
-thesis_candidate_mask = trade_setup_candidate_mask
-
 __all__ = [
     "active_trade_setup_candidates",
     "trade_setup_candidate_feature_columns",
     "trade_setup_candidate_mask",
-    "active_thesis_candidates",
-    "thesis_candidate_feature_columns",
-    "thesis_candidate_mask",
 ]

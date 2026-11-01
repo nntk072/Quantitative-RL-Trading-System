@@ -566,7 +566,7 @@ def build_trial_ledger(
                 )
 
     return {
-        "schema": "aalto.thesis_trial_ledger.v1",
+        "schema": "qrl.research_trial_ledger.v1",
         "updated_at_utc": datetime.now(UTC).isoformat(),
         "records": records,
         "limitations": sorted(

@@ -33,6 +33,19 @@ class M1TCNHTFSnapshotReasoningEncoder(MTFReasoningOutput):
         feedforward_dim: int = 256,
         adapter_dim: int = 32,
     ) -> None:
+        """Initialize M1TCNHTFSnapshotReasoningEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+            account_dim: Account dim used by the operation described above.
+            attention_heads: Numeric value used for the attention heads.
+            feedforward_dim: Numeric value used for the feedforward dim.
+            adapter_dim: Numeric value used for the adapter dim.
+        """
         if adapter_dim < 1:
             raise ValueError("adapter_dim must be positive")
         super().__init__(
@@ -64,6 +77,11 @@ class M1TCNHTFSnapshotReasoningEncoder(MTFReasoningOutput):
 
     @property
     def encoder_provenance(self) -> dict[str, Any]:
+        """Return architecture identifiers and snapshot-stream details for checkpoint provenance.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         return {
             "encoder_id": self.encoder_id,
             "adapter_width": self.adapter_dim,
@@ -77,6 +95,14 @@ class M1TCNHTFSnapshotReasoningEncoder(MTFReasoningOutput):
         }
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode M1 history and aligned higher-timeframe snapshots.
+
+        Args:
+            observations: Mapping of sequence, snapshot, mask, and account tensors.
+
+        Returns:
+            Fused policy feature tensor for the observation batch.
+        """
         m1_key, m1_mask_key, _, _ = self.streams[0]
         m1_token = self.m1_tcn(observations[m1_key], observations[m1_mask_key])
         tokens = [m1_token]

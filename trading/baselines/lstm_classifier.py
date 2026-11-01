@@ -1,4 +1,4 @@
-"""LSTM sweep-direction classifier (supervised baseline, thesis Week 8).
+"""LSTM sweep-direction classifier (supervised baseline).
 
 Predicts the direction of the next liquidity sweep from a window of
 market features: class 1 = upward sweep of a high level within the
@@ -132,7 +132,14 @@ class LSTMSweepClassifier(nn.Module):
         self.head = nn.Linear(hidden_size, 3)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Return logits of shape ``(batch, 3)`` for classes {-1, 0, 1}."""
+        """Return logits of shape ``(batch, 3)`` for classes {-1, 0, 1}.
+
+        Args:
+            x: X used by the operation described above.
+
+        Returns:
+            Result of return logits of shape ``(batch, 3)`` for classes {-1, 0, 1}.
+        """
         output, _ = self.lstm(x)
         logits: torch.Tensor = self.head(output[:, -1, :])
         return logits
@@ -181,4 +188,12 @@ class LSTMStrategy(BaseStrategy):
         super().__init__(len(actions))
 
     def _signal(self, idx: int) -> float:
+        """Process LSTMStrategy.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Numeric result returned by ``_signal``.
+        """
         return float(self._signals[idx])

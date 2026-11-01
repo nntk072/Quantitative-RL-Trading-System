@@ -30,7 +30,14 @@ _TIMEFRAME_IDS = {
 
 
 def observation_streams(observation_space: Any) -> tuple[tuple[str, str, int, int], ...]:
-    """Return the complete ordered M1+HTF stream contract from a Dict space."""
+    """Return the complete ordered M1+HTF stream contract from a Dict space.
+
+    Args:
+        observation_space: Observation space used by the operation described above.
+
+    Returns:
+        Values returned by ``observation_streams``, in the declared order.
+    """
     spaces_map = getattr(observation_space, "spaces", None)
     if not isinstance(spaces_map, Mapping):
         raise TypeError("efficient MTF encoders require a Dict observation space")
@@ -51,7 +58,16 @@ def observation_streams(observation_space: Any) -> tuple[tuple[str, str, int, in
 
 
 def batch_mask(mask: torch.Tensor, batch_size: int, timesteps: int) -> torch.Tensor:
-    """Normalize an observation mask to a boolean ``(B,T)`` tensor."""
+    """Normalize an observation mask to a boolean ``(B,T)`` tensor.
+
+    Args:
+        mask: Boolean eligibility mask aligned with the input rows.
+        batch_size: Number specifying the batch size for this operation.
+        timesteps: Numeric value used for the timesteps.
+
+    Returns:
+        Result of normalize an observation mask to a boolean ``(B,T)`` tensor.
+    """
     if mask.ndim == 1:
         mask = mask.unsqueeze(0)
     if mask.shape[-1] != timesteps:
@@ -66,7 +82,15 @@ def batch_mask(mask: torch.Tensor, batch_size: int, timesteps: int) -> torch.Ten
 def latest_two_valid(
     values: torch.Tensor, mask: torch.Tensor
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Return latest, previous, and any-valid values without host synchronization."""
+    """Return latest, previous, and any-valid values without host synchronization.
+
+    Args:
+        values: Values to process, in input order.
+        mask: Boolean eligibility mask aligned with the input rows.
+
+    Returns:
+        Values returned by ``latest_two_valid``, in the declared order.
+    """
     batch, timesteps, _ = values.shape
     valid = batch_mask(mask, batch, timesteps).to(device=values.device)
     positions = torch.arange(timesteps, device=values.device).expand(batch, -1)
@@ -98,6 +122,16 @@ class MTFReasoningOutput(BaseFeaturesExtractor):
         feedforward_dim: int,
         dropout: float,
     ) -> None:
+        """Initialize MTFReasoningOutput and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            latent_dim: Number of dimensions in the learned latent representation.
+            account_dim: Account dim used by the operation described above.
+            attention_heads: Numeric value used for the attention heads.
+            feedforward_dim: Numeric value used for the feedforward dim.
+            dropout: Numeric value used for the dropout.
+        """
         if latent_dim % attention_heads:
             raise ValueError("latent_dim must be divisible by attention_heads")
         super().__init__(observation_space, features_dim=latent_dim + ACCOUNT_EMB_DIM)
@@ -126,7 +160,16 @@ class MTFReasoningOutput(BaseFeaturesExtractor):
     def finish(
         self, tokens: torch.Tensor, valid: torch.Tensor, account: torch.Tensor
     ) -> torch.Tensor:
-        """Apply D-shaped timeframe attention, masked pooling, and account embedding."""
+        """Apply D-shaped timeframe attention, masked pooling, and account embedding.
+
+        Args:
+            tokens: Tokens used by the operation described above.
+            valid: Valid used by the operation described above.
+            account: Account used by the operation described above.
+
+        Returns:
+            Result of apply D-shaped timeframe attention, masked pooling, and account embedding.
+        """
         if tokens.ndim != 3 or tokens.shape[1:] != (len(_TIMEFRAME_IDS), self.latent_dim):
             raise ValueError("MTF tokens must have shape (batch, 9, latent_dim)")
         if valid.shape != tokens.shape[:2]:

@@ -16,6 +16,11 @@ from typing import Any
 
 
 def read_process_table() -> dict[int, int]:
+    """Read the parent process ID for every accessible Linux process.
+
+    Returns:
+        A mapping from process ID to parent process ID.
+    """
     table: dict[int, int] = {}
     for entry in pathlib.Path("/proc").iterdir():
         if not entry.name.isdigit():
@@ -33,6 +38,15 @@ def read_process_table() -> dict[int, int]:
 
 
 def descendant_pids(roots: list[int], parents: dict[int, int]) -> set[int]:
+    """Find all process IDs rooted at the supplied experiment workers.
+
+    Args:
+        roots: Process IDs that start the tracked trees.
+        parents: Process-to-parent relationships from ``/proc``.
+
+    Returns:
+        Root and descendant process IDs.
+    """
     descendants = set(roots)
     changed = True
     while changed:
@@ -45,6 +59,14 @@ def descendant_pids(roots: list[int], parents: dict[int, int]) -> set[int]:
 
 
 def pss_bytes(pids: set[int]) -> int:
+    """Sum proportional resident memory for readable process records.
+
+    Args:
+        pids: Process IDs whose memory usage should be measured.
+
+    Returns:
+        Total proportional-set-size bytes across the processes.
+    """
     total = 0
     for pid in pids:
         try:
@@ -59,7 +81,14 @@ def pss_bytes(pids: set[int]) -> int:
 
 
 def process_io_bytes(pids: set[int]) -> tuple[int, int, int, int]:
-    """Aggregate Linux process I/O counters for the experiment run process tree."""
+    """Aggregate Linux process I/O counters for the experiment run process tree.
+
+    Args:
+        pids: Pids used by the operation described above.
+
+    Returns:
+        Values returned by ``process_io_bytes``, in the declared order.
+    """
     totals = [0, 0, 0, 0]
     keys = ("rchar", "wchar", "read_bytes", "write_bytes")
     for pid in pids:
@@ -81,7 +110,15 @@ def process_io_bytes(pids: set[int]) -> tuple[int, int, int, int]:
 
 
 def _process_stat_cpu_usec(text: str, ticks_per_second: int) -> int:
-    """Read user+system CPU time from one Linux ``/proc/<pid>/stat`` record."""
+    """Read user+system CPU time from one Linux ``/proc/<pid>/stat`` record.
+
+    Args:
+        text: Text or path value identifying the text.
+        ticks_per_second: Numeric value used for the ticks per second.
+
+    Returns:
+        Numeric result returned by ``_process_stat_cpu_usec``.
+    """
     # comm is parenthesized and may itself contain spaces or ')' characters.
     fields = text[text.rfind(")") + 2 :].split()
     if len(fields) <= 12:
@@ -91,7 +128,14 @@ def _process_stat_cpu_usec(text: str, ticks_per_second: int) -> int:
 
 
 def process_tree_cpu_usec(pids: set[int]) -> int:
-    """Aggregate cumulative user+system CPU time for the tracked process tree."""
+    """Aggregate cumulative user+system CPU time for the tracked process tree.
+
+    Args:
+        pids: Pids used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``process_tree_cpu_usec``.
+    """
     ticks_per_second = int(os.sysconf("SC_CLK_TCK"))
     total = 0
     for pid in pids:
@@ -106,7 +150,16 @@ def process_tree_cpu_usec(pids: set[int]) -> int:
 def cgroup_file(
     name: str, *, proc_cgroup: pathlib.Path | None = None, cgroup_root: pathlib.Path | None = None
 ) -> pathlib.Path | None:
-    """Find a cgroup v2 or v1 memory file for this process, safely below root."""
+    """Find a cgroup v2 or v1 memory file for this process, safely below root.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+        proc_cgroup: Proc cgroup used by the operation described above.
+        cgroup_root: Cgroup root used by the operation described above.
+
+    Returns:
+        Path returned by ``cgroup_file``.
+    """
     root = cgroup_root or pathlib.Path("/sys/fs/cgroup")
     proc = proc_cgroup or pathlib.Path("/proc/self/cgroup")
     try:
@@ -146,7 +199,16 @@ def cgroup_file(
 def allocation_cgroup_file(
     name: str, *, proc_cgroup: pathlib.Path | None = None, cgroup_root: pathlib.Path | None = None
 ) -> pathlib.Path | None:
-    """Resolve a Slurm job-level cgroup file, not the sampler's step cgroup."""
+    """Resolve a Slurm job-level cgroup file, not the sampler's step cgroup.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+        proc_cgroup: Proc cgroup used by the operation described above.
+        cgroup_root: Cgroup root used by the operation described above.
+
+    Returns:
+        Path returned by ``allocation_cgroup_file``.
+    """
     root = cgroup_root or pathlib.Path("/sys/fs/cgroup")
     path = cgroup_file(name, proc_cgroup=proc_cgroup, cgroup_root=root)
     if path is None:
@@ -162,6 +224,14 @@ def allocation_cgroup_file(
 
 
 def cgroup_value(name: str) -> str:
+    """Read one allocation-level cgroup resource value when available.
+
+    Args:
+        name: Memory-controller filename to read.
+
+    Returns:
+        The trimmed cgroup value, or an empty string if it is unavailable.
+    """
     path = allocation_cgroup_file(name)
     try:
         return path.read_text().strip() if path is not None else ""
@@ -170,7 +240,11 @@ def cgroup_value(name: str) -> str:
 
 
 def cgroup_memory_scope() -> str:
-    """Label whether memory fields cover the Slurm job or only the sampler step."""
+    """Label whether memory fields cover the Slurm job or only the sampler step.
+
+    Returns:
+        Text returned by ``cgroup_memory_scope``.
+    """
     for name in ("memory.current", "memory.usage_in_bytes"):
         process_path = cgroup_file(name)
         if process_path is None:
@@ -181,7 +255,11 @@ def cgroup_memory_scope() -> str:
 
 
 def gpu_sample() -> tuple[list[int], list[int]]:
-    """Return utilization and memory use for each visible GPU, in device order."""
+    """Return utilization and memory use for each visible GPU, in device order.
+
+    Returns:
+        Values returned by ``gpu_sample``, in the declared order.
+    """
     try:
         result = subprocess.run(
             [
@@ -211,6 +289,14 @@ def gpu_sample() -> tuple[list[int], list[int]]:
 
 
 def active_roots(path: pathlib.Path) -> tuple[list[int], bool]:
+    """Resolve local process roots for active workers in a run manifest.
+
+    Args:
+        path: Experiment-run manifest containing current worker records.
+
+    Returns:
+        Worker process IDs and whether any worker is pending or running.
+    """
     try:
         experiment_run: dict[str, Any] = json.loads(path.read_text())
     except (OSError, ValueError):
@@ -243,6 +329,12 @@ def active_roots(path: pathlib.Path) -> tuple[list[int], bool]:
 
 
 def sample(path: pathlib.Path, experiment_run: pathlib.Path) -> None:
+    """Append one resource sample for the experiment-run process tree.
+
+    Args:
+        path: CSV file that receives the sample row.
+        experiment_run: Manifest used to resolve active worker processes.
+    """
     roots, active = active_roots(experiment_run)
     parents = read_process_table()
     tree = descendant_pids(roots, parents)
@@ -279,6 +371,11 @@ def sample(path: pathlib.Path, experiment_run: pathlib.Path) -> None:
 
 
 def main() -> int:
+    """Run the process and accelerator resource sampler command-line tool.
+
+    Returns:
+        Exit status after the requested samples have been written.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--experiment-run", type=pathlib.Path, required=True)
     parser.add_argument("--out", type=pathlib.Path, required=True)

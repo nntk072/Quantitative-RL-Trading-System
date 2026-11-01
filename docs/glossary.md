@@ -11,7 +11,7 @@ Use these terms consistently in documentation and reports.
 | IFVG | Inverse fair-value gap: an imbalance whose role changes after the configured invalidation/close condition. |
 | SMT | Smart Money Technique divergence: relative disagreement between related instruments under the configured comparison. |
 | Order block | A candle/price region classified by a configured market-structure rule; the label alone does not imply predictive power. |
-| Trade setup | A selected entry idea, setup timeframe, and direction with eligibility and structural context. Historical serialized `thesis_*` names may represent this same domain concept. |
+| Trade setup | A selected entry idea, setup timeframe, and direction with eligibility and structural context. |
 | Entry idea | A rule family used to describe a potential trade rationale, such as a gap reaction or structure setup. |
 | Entry state | The lifecycle state of a possible trade before and after an order opens. |
 | Observation schema | Versioned contract describing model inputs, tensor layout, optional branches, and masks. |

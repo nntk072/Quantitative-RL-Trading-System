@@ -14,6 +14,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class EntryOrderRuntimeMixin(RuntimeMixinBase):
+    """Construct entry levels from the action, risk budget, and market row."""
+
     def _build_entry_levels(
         self,
         discrete_action: int,
@@ -23,6 +25,19 @@ class EntryOrderRuntimeMixin(RuntimeMixinBase):
         fill_bid: float,
         fill_ask: float,
     ) -> tuple[float, float | None, float | None, float, bool, Any]:
+        """Build entry levels.
+
+        Args:
+            discrete_action: Numeric value used for the discrete action.
+            risk_frac: Numeric value used for the risk frac.
+            rr_ratio: Numeric value used for the rr ratio.
+            feat_row: Feature values for the current market bar.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+
+        Returns:
+            Whether build entry levels meets the requested condition.
+        """
         sl_price = None
         tp_price = None
 
@@ -82,7 +97,7 @@ class EntryOrderRuntimeMixin(RuntimeMixinBase):
                     self.ema_runner_fraction if self._selected_exit_mode == "ema_21" else 0.0
                 ),
                 price_increment=float(self.cost_model.point_size),
-                thesis=selected_trade_setup,
+                trade_setup=selected_trade_setup,
             )
             sl_price = placed.sl_price
             tp_price = placed.tp_price

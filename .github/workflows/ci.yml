@@ -44,6 +44,15 @@ jobs:
       - run: uv sync --extra dev
       - run: ./tools/check quality
 
+  docs:
+    needs: dependency-lock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --extra dev --extra docs
+      - run: ./tools/check docs
+
   architecture:
     needs: dependency-lock
     runs-on: ubuntu-latest
@@ -82,7 +91,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --extra dev
-      - run: ./tools/check unit
+      - run: QRL_COVERAGE_FILE=.coverage.unit ./tools/check unit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qrl-coverage-unit
+          path: .coverage.unit*
+          include-hidden-files: true
+          if-no-files-found: ignore
 
   build-smoke:
     needs: dependency-lock
@@ -100,7 +116,36 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --extra dev
-      - run: ./tools/check integration
+      - run: QRL_COVERAGE_FILE=.coverage.integration ./tools/check integration
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qrl-coverage-integration
+          path: .coverage.integration*
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+  coverage-report:
+    needs: [unit, integration]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --extra dev
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qrl-coverage-*
+          path: coverage-data
+          merge-multiple: true
+      - run: QRL_COVERAGE_DATA_DIR=coverage-data ./tools/check coverage-report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qrl-coverage-report
+          path: |
+            coverage.xml
+            coverage.json
+          if-no-files-found: ignore
 
   parity:
     needs: [architecture, contracts, unit]
@@ -122,7 +167,7 @@ jobs:
 
   ci-success:
     if: always()
-    needs: [dependency-lock, security-deps, security-secrets, quality, architecture, graph-quality, contracts, unit, build-smoke, integration, parity, training-smoke]
+    needs: [dependency-lock, security-deps, security-secrets, quality, docs, architecture, graph-quality, contracts, unit, build-smoke, integration, coverage-report, parity, training-smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Require all semantic gates

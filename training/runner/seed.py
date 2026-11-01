@@ -9,7 +9,11 @@ import torch
 
 
 def _setup_rngs(seed: int) -> None:
-    """Seed numpy, random, and torch for reproducible training."""
+    """Seed numpy, random, and torch for reproducible training.
+
+    Args:
+        seed: Random seed used to make sampling reproducible.
+    """
     np.random.seed(seed)
     import random
 
@@ -21,7 +25,14 @@ def _setup_rngs(seed: int) -> None:
 
 
 def _direction_summary(trades: Any) -> dict[str, int]:
-    """Count open directions from an evaluate_model trade log."""
+    """Count open directions from an evaluate_model trade log.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        Mapping from ``str`` keys to ``int`` values.
+    """
     if trades is None or getattr(trades, "empty", True):
         return {"long": 0, "short": 0, "opens": 0}
     opens = trades[trades["type"] == "open"] if "type" in trades.columns else trades

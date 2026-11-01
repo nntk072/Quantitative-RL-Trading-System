@@ -9,6 +9,12 @@ from pathlib import Path
 
 
 def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
+    """Process the requested value.
+
+    Args:
+        callable_main: Callable main used by the operation described above.
+        argv: Items supplied for the argv, in input order.
+    """
     original = sys.argv
     try:
         sys.argv = [original[0], *argv]
@@ -20,6 +26,7 @@ def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
 
 
 def main() -> None:
+    """Dispatch the selected compute command with its remaining arguments."""
     program = Path(sys.argv[0]).name
     parser = argparse.ArgumentParser(prog=program if program != "pytest" else "qrl-compute")
     parser.add_argument("command", choices=("capacity", "resources", "continuation", "worker"))

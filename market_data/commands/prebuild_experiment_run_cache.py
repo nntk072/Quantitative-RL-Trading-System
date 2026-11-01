@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the shared bar cache once before concurrent thesis workers start."""
+"""Build the shared bar cache once before concurrent experiment workers start."""
 
 from __future__ import annotations
 
@@ -25,7 +25,15 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _flatten_data(value: Any, prefix: str = "data") -> dict[str, bool | int | float | str]:
-    """Flatten only scalar data settings from an experiment run profile."""
+    """Flatten only scalar data settings from an experiment run profile.
+
+    Args:
+        value: Value to process.
+        prefix: Text or path value identifying the prefix.
+
+    Returns:
+        Whether flatten data meets the requested condition.
+    """
     if not isinstance(value, dict):
         raise ValueError("experiment run data settings must be mappings")
     result: dict[str, bool | int | float | str] = {}
@@ -41,6 +49,14 @@ def _flatten_data(value: Any, prefix: str = "data") -> dict[str, bool | int | fl
 
 
 def _experiment_run_profile_overrides(profile: Any) -> dict[str, bool | int | float | str]:
+    """Process run profile overrides.
+
+    Args:
+        profile: Profile used by the operation described above.
+
+    Returns:
+        Whether experiment run profile overrides meets the requested condition.
+    """
     if profile is None:
         return {}
     if not isinstance(profile, str) or not profile.strip():
@@ -59,6 +75,15 @@ def _experiment_run_profile_overrides(profile: Any) -> dict[str, bool | int | fl
 
 
 def _variant_data_overrides(name: str, experiments: dict[str, Any]) -> dict[str, str]:
+    """Process data overrides.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+        experiments: Key-value data used for the experiments.
+
+    Returns:
+        Mapping from ``str`` keys to ``str`` values.
+    """
     defaults = experiments.get("defaults") or {}
     matches = [item for item in experiments.get("variants", []) if item.get("name") == name]
     if len(matches) != 1:
@@ -97,7 +122,11 @@ def _variant_data_overrides(name: str, experiments: dict[str, Any]) -> dict[str,
 
 
 def _experiment_run_data_overrides() -> list[str]:
-    """Use the same data transform and cache policy as every experiment run worker."""
+    """Use the same data transform and cache policy as every experiment run worker.
+
+    Returns:
+        Values returned by ``_experiment_run_data_overrides``, in the declared order.
+    """
     spec_value = os.environ.get("EXPERIMENT_RUN_SPEC")
     if not spec_value:
         return []
@@ -141,6 +170,7 @@ def _experiment_run_data_overrides() -> list[str]:
 
 
 def main() -> None:
+    """Build shared market-data caches before experiment workers start."""
     cfg = load_config(overrides=_experiment_run_data_overrides())
     cache_dir = Path(str(cfg.data.cache_dir))
     if cache_dir.is_symlink():

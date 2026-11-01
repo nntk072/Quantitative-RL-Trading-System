@@ -33,7 +33,7 @@ from trading.execution import Position
 from trading.orders import OrderGeometry, decode_tp_mode, place_strategy_order
 
 ARCHIVED_TRAINING_COMMIT = "cbf7825170dee7f68ad578a19023e0847b11393f"
-EVIDENCE_ROOT = Path("docs/thesis/evidence/exit_action_semantics_20261024")
+EVIDENCE_ROOT = Path("evidence/research/archive_2026/evidence/exit_action_semantics_20261024")
 G0_ROOT = Path("outputs/exit_semantics_counterfactual_20261024_g0_v2_repro_job21190658")
 BAR_RELATIVE = Path(
     "cache/train_test_2025_2026/training/US100.cash_M1_v3-native-timeframes.parquet"
@@ -1203,7 +1203,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=EVIDENCE_ROOT / "fixed_entry_shadow",
+        default=Path("outputs/research_audits/exit_action_semantics_20261024/fixed_entry_shadow"),
     )
     parser.add_argument("--bootstrap-resamples", type=int, default=10_000)
     parser.add_argument("--no-repeat", action="store_true")

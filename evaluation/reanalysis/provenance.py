@@ -24,7 +24,14 @@ log = logging.getLogger(__name__)
 
 
 def _load_run_config(run_dir: Path) -> DictConfig:
-    """Require the original run snapshot for checkpoint evaluation parity."""
+    """Require the original run snapshot for checkpoint evaluation parity.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+
+    Returns:
+        Result of require the original run snapshot for checkpoint evaluation parity.
+    """
     cfg_path = run_dir / "config.yaml"
     if not cfg_path.is_file():
         raise FileNotFoundError(
@@ -52,7 +59,13 @@ def _load_run_config(run_dir: Path) -> DictConfig:
 def _validate_reanalysis_request(
     source: Path, output: Path, *, allow_historical: bool = False
 ) -> None:
-    """Require holdout acknowledgement and an entirely new output location."""
+    """Require holdout acknowledgement and an entirely new output location.
+
+    Args:
+        source: Path or filename identifying the source.
+        output: Output value produced by the preceding operation.
+        allow_historical: Whether to enable or require the allow historical.
+    """
     if not allow_historical:
         raise ValueError("historical holdout reanalysis requires --allow-historical")
     source_path, output_path = source.resolve(), output.resolve()
@@ -73,7 +86,22 @@ def _feature_build_scope(
     timeframe_bars: dict[str, Any] | None = None,
     secondary_timeframe_bars: dict[str, Any] | None = None,
 ) -> tuple[Any, Path]:
-    """Reproduce the mask and content-hashed cache identity of training."""
+    """Reproduce the mask and content-hashed cache identity of training.
+
+    Args:
+        bars: Market bars to process.
+        cfg: Run configuration used by this operation.
+        cache_dir: Directory used to store or read cached data.
+        symbol: Text or path value identifying the symbol.
+        train_end: Text or path value identifying the train end.
+        secondary: Secondary used by the operation described above.
+        train_start: Train start used by the operation described above.
+        timeframe_bars: Market bar or price data used for reproduce the mask and content-hashed cache identity of training.
+        secondary_timeframe_bars: Market bar or price data used for reproduce the mask and content-hashed cache identity of training.
+
+    Returns:
+        Path returned by ``_feature_build_scope``.
+    """
     mask = make_train_mask(cast(Any, bars.index), train_end, train_start)
     prebuilt_value = OmegaConf.select(cfg, "data.prebuilt_feature_cache", default=None)
     if prebuilt_value:
@@ -133,6 +161,14 @@ def _validate_reanalysis_feature_cache(
     A current feature cache is not evidence that a legacy checkpoint was
     trained with those feature values. Versioned source manifests must match
     both the content-derived cache identity and the cache's recorded digest.
+
+    Args:
+        source_feature_cache: Source feature cache used by the operation described above.
+        evaluated_cache_path: Path or filename identifying the evaluated cache.
+        allow_legacy: Whether to enable or require the allow legacy.
+
+    Returns:
+        Values returned by ``_validate_reanalysis_feature_cache``, in the declared order.
     """
     hash_path = Path(f"{evaluated_cache_path}.hash")
     if not hash_path.is_file():
@@ -198,6 +234,13 @@ def _load_exact_source_feature_cache(
     This is for historical replay after the current feature builder/cache has
     changed. It never rebuilds or writes the supplied cache; the caller must
     still verify the train/test feature fingerprints against the run manifest.
+
+    Args:
+        source_feature_cache: Source feature cache used by the operation described above.
+        cache_path: Path or filename identifying the cache.
+
+    Returns:
+        DataFrame returned by ``_load_exact_source_feature_cache``.
     """
     if not isinstance(source_feature_cache, dict):
         raise ValueError("exact source-cache replay requires a feature_cache manifest object")
@@ -226,7 +269,17 @@ def _validate_reanalysis_datasets(
     allow_legacy: bool,
     train_only: bool = False,
 ) -> str:
-    """Require the evaluation bars/features/ticks to match the training record."""
+    """Require the evaluation bars/features/ticks to match the training record.
+
+    Args:
+        source_datasets: Source datasets used by the operation described above.
+        evaluated_datasets: Key-value data used for the evaluated datasets.
+        allow_legacy: Whether to enable or require the allow legacy.
+        train_only: Whether to enable or require the train only.
+
+    Returns:
+        Text returned by ``_validate_reanalysis_datasets``.
+    """
     if source_datasets is None:
         if not allow_legacy:
             raise ValueError(
@@ -285,7 +338,20 @@ def _evaluation_dataset_records(
     test_secondary: Any | None = None,
     primary_ticks: Any | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """Fingerprint the exact frames and ticks consumed by checkpoint evaluation."""
+    """Fingerprint the exact frames and ticks consumed by checkpoint evaluation.
+
+    Args:
+        train_bars: Market bar or price data used for fingerprint the exact frames and ticks consumed by checkpoint evaluation.
+        train_features: Train features used by the operation described above.
+        test_bars: Market bar or price data used for fingerprint the exact frames and ticks consumed by checkpoint evaluation.
+        test_features: Test features used by the operation described above.
+        train_secondary: Train secondary used by the operation described above.
+        test_secondary: Test secondary used by the operation described above.
+        primary_ticks: Primary ticks used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, Any]`` values.
+    """
     records = {
         "train_bars": dataset_record(train_bars),
         "train_features": dataset_record(train_features),
@@ -324,7 +390,15 @@ def _evaluation_dataset_records(
 def _reanalysis_backend_disposition(
     source_protocol: Any, evaluation_backend: str
 ) -> tuple[str, str]:
-    """Label whether report-only reanalysis uses the training execution backend."""
+    """Label whether report-only reanalysis uses the training execution backend.
+
+    Args:
+        source_protocol: Source protocol used by the operation described above.
+        evaluation_backend: Text or path value identifying the evaluation backend.
+
+    Returns:
+        Values returned by ``_reanalysis_backend_disposition``, in the declared order.
+    """
     if not isinstance(source_protocol, dict):
         return "unknown", "legacy_unverified"
     source_backend = source_protocol.get("data_source")

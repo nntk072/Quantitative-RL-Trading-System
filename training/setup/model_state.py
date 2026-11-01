@@ -9,7 +9,12 @@ import torch
 
 
 def _initialize_value_head(model: Any, *, resumed: bool) -> None:
-    """Zero the critic head only for a new run, never for a loaded checkpoint."""
+    """Zero the critic head only for a new run, never for a loaded checkpoint.
+
+    Args:
+        model: Model used for this operation.
+        resumed: Whether to enable or require the resumed.
+    """
     if resumed:
         return
     value_net = getattr(model.policy, "value_net", None)
@@ -26,6 +31,10 @@ def _validate_q5_resume_state(cfg: Any, *, resume_checkpoint: str | Path | None)
     PPO checkpoints preserve the learned multiplier, but the training CLI builds
     fresh environments when resuming. That would combine a partial episode's
     saved risk cost with a new episode starting at the first training bar.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        resume_checkpoint: Resume checkpoint used by the operation described above.
     """
     constrained = cfg.get("constrained_rl", {})
     if resume_checkpoint and bool(constrained.get("enabled", False)):

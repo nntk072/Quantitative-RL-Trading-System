@@ -1,5 +1,8 @@
 # Operations
 
+The [research execution plan](research_execution_plan.md) records the active
+research queue and its evidence gates.
+
 Operational guides describe supported environments and procedures. Agent
 allocation rules in `.agents/rules/` govern how coding agents use those
 resources; this directory is the human-facing explanation.

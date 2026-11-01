@@ -5,6 +5,10 @@ Documentation has one primary home for each kind of knowledge:
 | Location | Owns |
 |---|---|
 | Root `README.md` | Project purpose, capabilities, quick entry points, and limitations |
+| Root `ARCHITECTURE.md` | Short architecture entry point linking to maintained system maps |
+| Root `CHANGELOG.md` | Curated user and maintainer changes; not experiment history |
+| Root `SECURITY.md` and `SUPPORT.md` | Vulnerability reporting and project support routes |
+| Root `CITATION.cff` | Machine-readable citation metadata |
 | Package `README.md` | Local subsystem ownership, architecture, contracts, tests, and extension path |
 | `docs/architecture/` | System structure, dependencies, flows, deployment, and cross-cutting constraints |
 | `docs/modules/` | Short cross-package module map and reading order |
@@ -14,9 +18,17 @@ Documentation has one primary home for each kind of knowledge:
 | `docs/tutorials/` | Guided learning examples with explicit evidence limits |
 | `docs/research/` | Research questions, methods, findings, and validity statements |
 | `docs/operations/` | Human-facing runtime and deployment procedures |
+| `docs/development/` | Development setup, testing, and engineering standards |
 | `.agents/` | Agent navigation and implementation rules |
 | Tests | Executable architecture and compatibility rules |
 | `config/` | Behavior settings and experiment metadata |
+| `evidence/` | Machine-verifiable result records and preserved historical snapshots |
+
+The Sphinx site is configured in `docs/conf.py`. Its landing page and
+navigation live in `docs/index.md`; the generated package reference is linked
+from `docs/api/index.md`. Do not edit generated API pages by hand. The Pages
+workflow publishes the generated HTML after the repository owner enables
+GitHub Pages for this repository.
 
 ## Change documentation with the owning interface
 

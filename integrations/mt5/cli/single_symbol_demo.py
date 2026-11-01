@@ -51,7 +51,11 @@ _cross_over_robot: CrossOverRobot | None = None
 
 
 def get_robot() -> CrossOverRobot:
-    """Lazy initialization of the trading robot."""
+    """Lazy initialization of the trading robot.
+
+    Returns:
+        Result of lazy initialization of the trading robot.
+    """
     global _cross_over_robot
 
     if _cross_over_robot is None:
@@ -79,6 +83,7 @@ scheduler = sched.scheduler(time.time, time.sleep)
 
 
 def run_job() -> None:
+    """Run one scheduled robot cycle and log failures without stopping the scheduler."""
     try:
         logger.info("Running scheduled trade cycle...")
         robot = get_robot()
@@ -89,11 +94,13 @@ def run_job() -> None:
 
 
 def schedule_hourly() -> None:
+    """Run a trade cycle and schedule the next one after sixty minutes."""
     run_job()
     scheduler.enter(60 * 60, 1, schedule_hourly)
 
 
 def start_scheduler() -> None:
+    """Start the hourly scheduler in a daemon thread."""
     scheduler.enter(0, 1, schedule_hourly)
     t = threading.Thread(target=scheduler.run, daemon=True)
     t.start()

@@ -35,7 +35,21 @@ class EnvSpec:
         use_vae: bool = False,
         evaluation: bool = False,
     ) -> EnvSpec:
-        """Copy resolved config primitives into a compact immutable worker spec."""
+        """Copy resolved config primitives into a compact immutable worker spec.
+
+        Args:
+            cfg: Run configuration used by this operation.
+            algo: Text or path value identifying the algo.
+            reward: Text or path value identifying the reward.
+            arch: Text or path value identifying the arch.
+            bundle_dir: Text or path value identifying the bundle dir.
+            episodic: Whether to enable or require the episodic.
+            use_vae: Whether to enable or require the use vae.
+            evaluation: Whether to enable or require the evaluation.
+
+        Returns:
+            Result of copy resolved config primitives into a compact immutable worker spec.
+        """
         raw = OmegaConf.to_container(cfg, resolve=True) if isinstance(cfg, DictConfig) else cfg
         if not isinstance(raw, Mapping):
             raise TypeError("environment config must be a mapping")

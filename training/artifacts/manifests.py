@@ -13,7 +13,15 @@ from evaluation.reporting.run_manifest import build_sequence_feature_schema
 def entry_funnel_by_split(
     train_result: dict[str, Any] | None, test_result: dict[str, Any] | None
 ) -> dict[str, dict[str, Any]]:
-    """Build separately labeled train and report-only test entry funnels."""
+    """Build separately labeled train and report-only test entry funnels.
+
+    Args:
+        train_result: Key-value data used for the train result.
+        test_result: Key-value data used for the test result.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, Any]`` values.
+    """
     from training.configuration.variants import compute_tier1_funnel
 
     result: dict[str, dict[str, Any]] = {}
@@ -51,7 +59,35 @@ def build_training_log(
     env_flags: dict[str, Any] | None = None,
     oos_role: str = "final_report_only",
 ) -> dict[str, Any]:
-    """Build the training_log.json dict from run results."""
+    """Build the training_log.json dict from run results.
+
+    Args:
+        seed: Random seed used to make sampling reproducible.
+        mvp: Whether to enable or require the mvp.
+        algo: Text or path value identifying the algo.
+        arch: Text or path value identifying the arch.
+        reward: Text or path value identifying the reward.
+        timesteps: Numeric value used for the timesteps.
+        train_bars: Market bar or price data used for build the training_log.json dict from run results.
+        test_bars: Market bar or price data used for build the training_log.json dict from run results.
+        test_m: Test m used by the operation described above.
+        test_result: Key-value data used for the test result.
+        environment_reward_mode: Text or path value identifying the environment reward mode.
+        equity_log_growth_scale: Numeric value used for the equity log growth scale.
+        train_result: Key-value data used for the train result.
+        strategy: Strategy used to select or evaluate trades.
+        strategy_actions: Whether to enable or require the strategy actions.
+        action_space_width: Number specifying the action space width for this operation.
+        observation_account_dim: Observation account dim used by the operation described above.
+        observation_space_shapes: Items supplied for the observation space shapes, in input order.
+        action_schema: Key-value data used for the action schema.
+        observation_schema: Key-value data used for the observation schema.
+        env_flags: Boolean or status values aligned with the input env flags.
+        oos_role: Text or path value identifying the oos role.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     log_dict: dict[str, Any] = {
         "seed": seed,
         "mvp": mvp,
@@ -101,7 +137,14 @@ def build_training_log(
 
 
 def action_space_width(env: Any) -> int | None:
-    """Return the action space width for logging."""
+    """Return the action space width for logging.
+
+    Args:
+        env: Environment whose state is read or updated.
+
+    Returns:
+        Result of return the action space width for logging.
+    """
     action_space = getattr(env, "action_space", None)
     if action_space is None:
         return None
@@ -114,7 +157,14 @@ def action_space_width(env: Any) -> int | None:
 
 
 def action_schema_manifest(env: Any) -> dict[str, Any] | None:
-    """Return declared coordinate names and flags, never infer from width."""
+    """Return declared coordinate names and flags, never infer from width.
+
+    Args:
+        env: Environment whose state is read or updated.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     schema = getattr(env, "action_schema", None)
     to_dict = getattr(schema, "to_dict", None)
     if not callable(to_dict):
@@ -124,7 +174,14 @@ def action_schema_manifest(env: Any) -> dict[str, Any] | None:
 
 
 def observation_schema_manifest(env: Any) -> dict[str, Any] | None:
-    """Return explicit account observation coordinate meanings."""
+    """Return explicit account observation coordinate meanings.
+
+    Args:
+        env: Environment whose state is read or updated.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     schema = getattr(env, "observation_schema", None)
     to_dict = getattr(schema, "to_dict", None)
     if not callable(to_dict):
@@ -135,20 +192,21 @@ def observation_schema_manifest(env: Any) -> dict[str, Any] | None:
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
         result["regime_observation"] = regime_schema
-    legacy_setup = bool(getattr(env, "legacy_thesis_contract", False))
-    setup_schema = getattr(
-        env,
-        "thesis_observation_schema" if legacy_setup else "trade_setup_observation_schema",
-        None,
-    )
+    setup_schema = getattr(env, "trade_setup_observation_schema", None)
     if isinstance(setup_schema, dict):
-        result_key = "thesis_observation" if legacy_setup else "trade_setup_observation"
-        result[result_key] = setup_schema
+        result["trade_setup_observation"] = setup_schema
     return result
 
 
 def sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:
-    """Return ordered model sequence coordinates from the effective environment."""
+    """Return ordered model sequence coordinates from the effective environment.
+
+    Args:
+        env: Environment whose state is read or updated.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     columns = getattr(env, "_obs_columns", None)
     if not isinstance(columns, (list, tuple)):
         raise RuntimeError("training environment does not expose sequence feature columns")
@@ -158,7 +216,19 @@ def sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:
 def training_protocol_manifest(
     *, model: Any, cfg: Any, args: Any, seed: int, requested_steps: int, algo: str = "ppo"
 ) -> dict[str, Any]:
-    """Persist the effective optimizer/reward/risk protocol for later reproduction."""
+    """Persist the effective optimizer/reward/risk protocol for later reproduction.
+
+    Args:
+        model: Model used for this operation.
+        cfg: Run configuration used by this operation.
+        args: Parsed command-line arguments for this operation.
+        seed: Random seed used to make sampling reproducible.
+        requested_steps: Number specifying the requested steps for this operation.
+        algo: Text or path value identifying the algo.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     n_envs = int(model.n_envs)
     if algo == "ppo":
         n_steps = int(model.n_steps)
@@ -284,7 +354,14 @@ def training_protocol_manifest(
 
 
 def observation_account_dim(env: Any) -> int:
-    """Return the account observation dimension from the env's observation space."""
+    """Return the account observation dimension from the env's observation space.
+
+    Args:
+        env: Environment whose state is read or updated.
+
+    Returns:
+        Numeric result returned by ``observation_account_dim``.
+    """
     obs_space = getattr(env, "observation_space", None)
     if obs_space is None:
         return 0
@@ -295,7 +372,14 @@ def observation_account_dim(env: Any) -> int:
 
 
 def observation_space_shapes(env: Any) -> dict[str, list[int]]:
-    """Return every observation branch shape for the run manifest."""
+    """Return every observation branch shape for the run manifest.
+
+    Args:
+        env: Environment whose state is read or updated.
+
+    Returns:
+        Mapping from ``str`` keys to ``list[int]`` values.
+    """
     obs_space = getattr(env, "observation_space", None)
     spaces_by_key = getattr(obs_space, "spaces", {})
     return {

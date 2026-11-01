@@ -35,6 +35,15 @@ _EVENT_FLAGS = (
 
 
 def _first_col(df: pd.DataFrame, names: tuple[str, ...]) -> str | None:
+    """Process col.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        names: Items supplied for the names, in input order.
+
+    Returns:
+        Result of process col.
+    """
     for name in names:
         if name in df.columns:
             return name
@@ -45,6 +54,15 @@ def _first_col(df: pd.DataFrame, names: tuple[str, ...]) -> str | None:
 
 
 def _flag_union(features: pd.DataFrame, names: tuple[str, ...]) -> pd.Series:
+    """Process union.
+
+    Args:
+        features: Feature values supplied to the operation.
+        names: Items supplied for the names, in input order.
+
+    Returns:
+        Result of process union.
+    """
     acc: pd.Series | None = None
     for name in names:
         col = _first_col(features, (name,))
@@ -58,11 +76,24 @@ def _flag_union(features: pd.DataFrame, names: tuple[str, ...]) -> pd.Series:
 
 
 def _ny_mask(index: pd.DatetimeIndex) -> NDArray[np.bool_]:
+    """Process mask.
+
+    Args:
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Whether ny mask meets the requested condition.
+    """
     return np.asarray(ny_session_mask(index), dtype=bool)
 
 
 def _normal_qq(ax: Any, vals: NDArray[np.float64]) -> None:
-    """QQ against N(0,1) using stdlib inverse CDF (no scipy)."""
+    """QQ against N(0,1) using stdlib inverse CDF (no scipy).
+
+    Args:
+        ax: Ax used by the operation described above.
+        vals: Vals used by the operation described above.
+    """
     x = np.sort(np.asarray(vals, dtype=float))
     n = int(x.size)
     if n < 2:
@@ -81,7 +112,16 @@ def plot_coverage_with_gaps(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Daily bar counts plus missing minutes vs a 1440-bar weekday."""
+    """Daily bar counts plus missing minutes vs a 1440-bar weekday.
+
+    Args:
+        bars: Market bars to process.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of daily bar counts plus missing minutes vs a 1440-bar weekday.
+    """
     _apply_style()
     idx = pd.DatetimeIndex(bars.index)
     days = idx.normalize()
@@ -116,7 +156,17 @@ def plot_spread_regime(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Spread in price units: NY vs off-hours."""
+    """Spread in price units: NY vs off-hours.
+
+    Args:
+        bars: Market bars to process.
+        point_size: Number specifying the point size for this operation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of spread in price units: NY vs off-hours.
+    """
     _apply_style()
     fig, ax = plt.subplots(figsize=(10, 4))
     if "spread" not in bars.columns:
@@ -148,7 +198,16 @@ def plot_activity_24h(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Mean tick-count activity by minute-of-day; NY window shaded."""
+    """Mean tick-count activity by minute-of-day; NY window shaded.
+
+    Args:
+        bars: Market bars to process.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of mean tick-count activity by minute-of-day; NY window shaded.
+    """
     _apply_style()
     fig, ax = plt.subplots(figsize=(12, 4))
     act = activity_series(bars)
@@ -186,7 +245,16 @@ def plot_ny_return_tails(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """NY M1 log returns: log-y histogram + normal QQ."""
+    """NY M1 log returns: log-y histogram + normal QQ.
+
+    Args:
+        bars: Market bars to process.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of nY M1 log returns: log-y histogram + normal QQ.
+    """
     _apply_style()
     idx = pd.DatetimeIndex(bars.index)
     ny = bars.loc[_ny_mask(idx)]
@@ -219,7 +287,16 @@ def plot_curated_feature_hists(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Clipped histograms for a small observation subset (NY bars)."""
+    """Clipped histograms for a small observation subset (NY bars).
+
+    Args:
+        features: Feature values supplied to the operation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of clipped histograms for a small observation subset (NY bars).
+    """
     _apply_style()
     idx = pd.DatetimeIndex(features.index)
     frame = features.loc[_ny_mask(idx)] if _ny_mask(idx).any() else features
@@ -251,6 +328,16 @@ def plot_curated_feature_hists(
 def _split_mask(
     index: pd.DatetimeIndex, train_end: str, test_start: str
 ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
+    """Split mask.
+
+    Args:
+        index: Position or label identifying the requested item.
+        train_end: Text or path value identifying the train end.
+        test_start: Text or path value identifying the test start.
+
+    Returns:
+        Whether split mask meets the requested condition.
+    """
     te = pd.Timestamp(train_end)
     ts = pd.Timestamp(test_start)
     if index.tz is not None:
@@ -269,7 +356,18 @@ def plot_event_rates(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Percent of NY minutes with IFVG / PO3 / entry flags, train vs test."""
+    """Percent of NY minutes with IFVG / PO3 / entry flags, train vs test.
+
+    Args:
+        features: Feature values supplied to the operation.
+        train_end: Text or path value identifying the train end.
+        test_start: Text or path value identifying the test start.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of percent of NY minutes with IFVG / PO3 / entry flags, train vs test.
+    """
     _apply_style()
     idx = pd.DatetimeIndex(features.index)
     ny = _ny_mask(idx)
@@ -306,7 +404,17 @@ def plot_ifvg_occupancy_monthly(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Monthly % of NY minutes inside IFVG, with locked-OOS line."""
+    """Monthly % of NY minutes inside IFVG, with locked-OOS line.
+
+    Args:
+        features: Feature values supplied to the operation.
+        test_start: Text or path value identifying the test start.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of monthly % of NY minutes inside IFVG, with locked-OOS line.
+    """
     _apply_style()
     idx = pd.DatetimeIndex(features.index)
     flag = _flag_union(features, ("price_in_ifvg_bull", "price_in_ifvg_bear"))
@@ -349,7 +457,20 @@ def plot_ifvg_event_study(
     dpi: int = 150,
     seed: int = 0,
 ) -> Figure:
-    """Purged train-only forward returns after IFVG+distribution vs random NY."""
+    """Purged train-only forward returns after IFVG+distribution vs random NY.
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        train_end: Text or path value identifying the train end.
+        horizon: Numeric value used for the horizon.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+        seed: Random seed used to make sampling reproducible.
+
+    Returns:
+        Result of purged train-only forward returns after IFVG+distribution vs random NY.
+    """
     _apply_style()
     idx = pd.DatetimeIndex(features.index)
     train_m, _ = _split_mask(idx, train_end, "2099-01-01")
@@ -389,7 +510,17 @@ def plot_ifvg_event_study(
 def _mean_path(
     close: NDArray[np.float64], onset: NDArray[np.bool_], horizon: int, *, purge: int
 ) -> NDArray[np.float64]:
-    """Mean relative return path; skip onsets within *purge* bars of a prior pick."""
+    """Mean relative return path; skip onsets within *purge* bars of a prior pick.
+
+    Args:
+        close: Close used by the operation described above.
+        onset: Onset used by the operation described above.
+        horizon: Numeric value used for the horizon.
+        purge: Numeric value used for the purge.
+
+    Returns:
+        Array returned by ``_mean_path``.
+    """
     acc = np.zeros(horizon + 1, dtype=float)
     n_used = 0
     last = -purge - 1
@@ -419,7 +550,19 @@ def plot_pca_ifvg(
     dpi: int = 150,
     seed: int = 0,
 ) -> Figure:
-    """2-D PCA of technical columns, coloured by in-IFVG (NY train subsample)."""
+    """2-D PCA of technical columns, coloured by in-IFVG (NY train subsample).
+
+    Args:
+        features: Feature values supplied to the operation.
+        train_end: Text or path value identifying the train end.
+        max_points: Numeric value used for the max points.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+        seed: Random seed used to make sampling reproducible.
+
+    Returns:
+        Result of 2-D PCA of technical columns, coloured by in-IFVG (NY train subsample).
+    """
     _apply_style()
     idx = pd.DatetimeIndex(features.index)
     train_m, _ = _split_mask(idx, train_end, "2099-01-01")

@@ -1,0 +1,22 @@
+name: Critical mutation checks
+
+on:
+  schedule:
+    - cron: "43 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --extra dev --extra mutation
+      - run: ./tools/check mutation-critical
+        env:
+          QRL_CHECK_NO_SYNC: "1"

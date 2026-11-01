@@ -15,8 +15,14 @@ from .mixin_base import RuntimeMixinBase
 
 
 class EntryRuntimeMixin(RuntimeMixinBase):
+    """Expose entry and setup evidence produced by the current transition."""
+
     def _prior_open_payload(self) -> dict[str, float | str] | None:
-        """Detector fields for the open that happened on this step."""
+        """Detector fields for the open that happened on this step.
+
+        Returns:
+            Mapping from ``str`` keys to ``float | str`` values.
+        """
         if not self._opened_this_step or not self.trade_log:
             return None
         row = self.trade_log[-1]
@@ -24,12 +30,28 @@ class EntryRuntimeMixin(RuntimeMixinBase):
             return None
 
         def _num(value: Any) -> float:
+            """Process EntryRuntimeMixin.
+
+            Args:
+                value: Value to process.
+
+            Returns:
+                Numeric result returned by ``_num``.
+            """
             try:
                 return float(value)
             except (TypeError, ValueError):
                 return float("nan")
 
         def _text(value: Any) -> str:
+            """Process EntryRuntimeMixin.
+
+            Args:
+                value: Value to process.
+
+            Returns:
+                Text returned by ``_text``.
+            """
             if value is None:
                 return ""
             return str(value)
@@ -58,7 +80,19 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         feat_row: FeatureRow | pd.Series,
         bar_time: Any,
     ) -> dict[str, Any]:
-        """Action coordinates and context for one strategy open."""
+        """Action coordinates and context for one strategy open.
+
+        Args:
+            placed: Placed used by the operation described above.
+            entry_price: Price at which the position was opened.
+            risk_frac: Numeric value used for the risk frac.
+            entry_equity: Numeric value used for the entry equity.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         from market_data.transforms.sessions import get_session
 
         target = placed.tp_price
@@ -147,7 +181,11 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         }
 
     def _volatility_regime(self) -> str:
-        """Causal tertile of ``atr_5`` over bars already seen in this episode."""
+        """Causal tertile of ``atr_5`` over bars already seen in this episode.
+
+        Returns:
+            Text returned by ``_volatility_regime``.
+        """
         if self._bundle_arrays is not None:
             values = self._bundle_arrays["atr_5"][: self.step_idx + 1]
             finite = values[np.isfinite(values)]
@@ -176,6 +214,14 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         return "mid"
 
     def _trend_regime(self, feat_row: FeatureRow | pd.Series) -> str:
+        """Process regime.
+
+        Args:
+            feat_row: Feature values for the current market bar.
+
+        Returns:
+            Text returned by ``_trend_regime``.
+        """
         if "htf_day_bias" not in feat_row.index:
             return ""
         try:
@@ -191,7 +237,14 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         return "flat"
 
     def _min_sl_distance(self, feat_row: FeatureRow | pd.Series) -> float:
-        """Minimum allowed |entry - SL| in price points."""
+        """Minimum allowed |entry - SL| in price points.
+
+        Args:
+            feat_row: Feature values for the current market bar.
+
+        Returns:
+            Numeric result returned by ``_min_sl_distance``.
+        """
         atr_val = feat_row.get("atr_5", feat_row.get("atr", np.nan))
         atr_f = float(atr_val) if atr_val is not None else float("nan")
         atr = atr_f if np.isfinite(atr_f) and atr_f > 0 else 0.0
@@ -205,6 +258,17 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         candidates: list[tuple[str, float]],
         min_dist: float,
     ) -> list[tuple[str, float]]:
+        """Process sl candidates.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            entry_price: Price at which the position was opened.
+            candidates: Items supplied for the candidates, in input order.
+            min_dist: Numeric value used for the min dist.
+
+        Returns:
+            Values returned by ``_filter_sl_candidates``, in the declared order.
+        """
         return filter_sl_candidates(
             direction=direction,
             entry_price=entry_price,
@@ -213,7 +277,11 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         )
 
     def _max_tp_here(self) -> float:
-        """Reachable take-profit distance at the current bar, or NaN."""
+        """Reachable take-profit distance at the current bar, or NaN.
+
+        Returns:
+            Numeric result returned by ``_max_tp_here``.
+        """
         if self._max_tp_dist is None:
             return float("nan")
         i = self.step_idx
@@ -222,6 +290,16 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         return float(self._max_tp_dist[i])
 
     def _rr_fits(self, entry_price: float, sl_price: float, rr_ratio: float) -> bool:
+        """Process fits.
+
+        Args:
+            entry_price: Price at which the position was opened.
+            sl_price: Numeric value used for the sl price.
+            rr_ratio: Numeric value used for the rr ratio.
+
+        Returns:
+            Whether rr fits meets the requested condition.
+        """
         from features.context.reachability import rr_reaches
 
         return rr_reaches(entry_price, sl_price, rr_ratio, self._max_tp_here())
@@ -236,6 +314,19 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         feat_row: FeatureRow | pd.Series | None = None,
         max_tp_distance: float | None = None,
     ) -> float | None:
+        """Resolve trader tp.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            entry_price: Price at which the position was opened.
+            sl_price: Numeric value used for the sl price.
+            reward_fraction: Numeric value used for the reward fraction.
+            feat_row: Feature values for the current market bar.
+            max_tp_distance: Max tp distance used by the operation described above.
+
+        Returns:
+            Result of resolve trader tp.
+        """
         del feat_row
         tp, rejected = dynamic_tp(
             direction=direction,
@@ -257,6 +348,13 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         only when its conviction is wider than
         ``direction_override_threshold``; otherwise ``ctx`` stands, so the
         heuristic side still governs at neutral. Returns ``-1``/``0``/``+1``.
+
+        Args:
+            ctx: Numeric value used for the ctx.
+            u: U used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``_apply_direction_control``.
         """
         conviction = float(u[0]) - 0.5
         if abs(conviction) < max(self.direction_override_threshold, 1e-6):
@@ -264,6 +362,15 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         return 1 if conviction > 0.0 else -1
 
     def _finite(self, series: FeatureRow | pd.Series | BarView | None, name: str) -> float | None:
+        """Process EntryRuntimeMixin.
+
+        Args:
+            series: Tabular data used for the series.
+            name: Name used to identify the requested file, artifact, or item.
+
+        Returns:
+            Result of process EntryRuntimeMixin.
+        """
         if series is None or name not in series.index:
             return None
         value = float(series.get(name, np.nan))
@@ -275,6 +382,12 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         - ``fixed``: reference level not yet tested and TP is beyond the swing.
         - ``breakeven``: reference level has been tested.
         - ``trailing``: a new local swing formed during the move.
+
+        Args:
+            pos: Pos used by the operation described above.
+
+        Returns:
+            Text returned by ``_default_sl_mode``.
         """
         if pos is None:
             pos = self.position
@@ -330,7 +443,14 @@ class EntryRuntimeMixin(RuntimeMixinBase):
         return "fixed"
 
     def _default_tp_mode(self, pos: Position | None = None) -> str:
-        """State-machine default TP mode. fixed -> breakeven -> trailing (monotonic)."""
+        """State-machine default TP mode. fixed -> breakeven -> trailing (monotonic).
+
+        Args:
+            pos: Pos used by the operation described above.
+
+        Returns:
+            Text returned by ``_default_tp_mode``.
+        """
         if pos is None:
             pos = self.position
         if pos is None:

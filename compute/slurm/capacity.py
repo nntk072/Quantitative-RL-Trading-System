@@ -10,11 +10,29 @@ import sys
 
 
 def _field(output: str, name: str) -> str | None:
+    """Process the requested value.
+
+    Args:
+        output: Output value produced by the preceding operation.
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Result of process the requested value.
+    """
     match = re.search(rf"(?:^|\s){re.escape(name)}=([^\s]+)", output)
     return match.group(1) if match else None
 
 
 def _tres_value(tres: str, name: str) -> int:
+    """Process value.
+
+    Args:
+        tres: Text or path value identifying the tres.
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Numeric result returned by ``_tres_value``.
+    """
     match = re.search(rf"(?:^|,){re.escape(name)}=(\d+)(?:,|$)", tres)
     return int(match.group(1)) if match else 0
 
@@ -27,7 +45,18 @@ def node_has_capacity(
     cpus: int,
     memory_mb: int,
 ) -> bool:
-    """Return whether one Slurm node has the requested free resources."""
+    """Return whether one Slurm node has the requested free resources.
+
+    Args:
+        output: Output value produced by the preceding operation.
+        gpu_type: Text or path value identifying the gpu type.
+        gpus: Numeric value used for the gpus.
+        cpus: Numeric value used for the cpus.
+        memory_mb: Numeric value used for the memory mb.
+
+    Returns:
+        Whether node has capacity meets the requested condition.
+    """
     state = _field(output, "State")
     if state is None:
         return False
@@ -65,7 +94,18 @@ def available_nodes(
     cpus_per_node: int,
     memory_mb: int,
 ) -> list[str]:
-    """List distinct nodes with the requested free resources; Slurm errors raise."""
+    """List distinct nodes with the requested free resources; Slurm errors raise.
+
+    Args:
+        partition: Text or path value identifying the partition.
+        gpu_type: Text or path value identifying the gpu type.
+        gpus_per_node: Numeric value used for the gpus per node.
+        cpus_per_node: Numeric value used for the cpus per node.
+        memory_mb: Numeric value used for the memory mb.
+
+    Returns:
+        Values returned by ``available_nodes``, in the declared order.
+    """
     listed = subprocess.run(
         ["sinfo", "-N", "-h", "-p", partition, "-o", "%N"],
         capture_output=True,
@@ -95,6 +135,11 @@ def available_nodes(
 
 
 def main() -> int:
+    """List allocated nodes that meet a requested Slurm resource profile.
+
+    Returns:
+        Exit status indicating whether the capacity inspection succeeded.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--partition", required=True)
     parser.add_argument("--node", help="inspect only this named node")

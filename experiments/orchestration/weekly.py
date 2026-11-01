@@ -49,15 +49,34 @@ class RunSpec:
 
 
 def _json_dump(path: Path, value: Any) -> None:
+    """Process dump.
+
+    Args:
+        path: Path to the input file or directory.
+        value: Value to process.
+    """
     write_json_atomic(path, value, default=None)
 
 
 def _hash(value: Any) -> str:
+    """Process the requested value.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_hash``.
+    """
     payload = json.dumps(value, sort_keys=True, default=str).encode()
     return hashlib.sha256(payload).hexdigest()[:16]
 
 
 def _git_commit() -> str:
+    """Process commit.
+
+    Returns:
+        Text returned by ``_git_commit``.
+    """
     try:
         return subprocess.check_output(
             ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
@@ -67,6 +86,15 @@ def _git_commit() -> str:
 
 
 def _relative_link(path: Path, report: Path) -> str:
+    """Process link.
+
+    Args:
+        path: Path to the input file or directory.
+        report: Text or path value identifying the report.
+
+    Returns:
+        Text returned by ``_relative_link``.
+    """
     return (
         Path(path).relative_to(report.parent).as_posix()
         if path.is_relative_to(report.parent)
@@ -75,7 +103,15 @@ def _relative_link(path: Path, report: Path) -> str:
 
 
 def render_batch_report(batch_dir: Path, manifest: dict[str, Any]) -> str:
-    """Render a Markdown report retaining successful and failed runs."""
+    """Render a Markdown report retaining successful and failed runs.
+
+    Args:
+        batch_dir: Text or path value identifying the batch dir.
+        manifest: Key-value data used for the manifest.
+
+    Returns:
+        Text returned by ``render_batch_report``.
+    """
     lines = [f"# Batch {manifest['batch']}", "", f"**Objective:** {manifest['objective']}", ""]
     lines.append("| Strategy | Seed | Status | Retry of | Artifacts |")
     lines.append("|---|---:|---|---|---|")
@@ -92,7 +128,15 @@ def render_batch_report(batch_dir: Path, manifest: dict[str, Any]) -> str:
 
 
 def render_weekly_report(week_dir: Path, batches: Iterable[dict[str, Any]]) -> str:
-    """Render a weekly index linking every batch and run."""
+    """Render a weekly index linking every batch and run.
+
+    Args:
+        week_dir: Text or path value identifying the week dir.
+        batches: Batches to process, in order.
+
+    Returns:
+        Text returned by ``render_weekly_report``.
+    """
     batch_list = list(batches)
     lines = [
         f"# Week {week_dir.name.removeprefix('week_')}",
@@ -123,13 +167,22 @@ def render_weekly_report(week_dir: Path, batches: Iterable[dict[str, Any]]) -> s
 class WeeklyOrchestrator:
     """Execute a matrix while preserving evidence for failures and retries."""
 
-    output_root: Path = Path("outputs/thesis_progress")
+    output_root: Path = Path("outputs/research_progress")
     runner: Runner | None = None
     clock: Callable[[], datetime] = lambda: datetime.now(UTC)
     _batches: list[dict[str, Any]] = field(default_factory=list, init=False)
 
     def run_week(self, week: int, batches: Iterable[BatchSpec], *, retries: int = 0) -> Path:
-        """Execute all batches and write weekly and batch manifests."""
+        """Execute all batches and write weekly and batch manifests.
+
+        Args:
+            week: Numeric value used for the week.
+            batches: Batches to process, in order.
+            retries: Numeric value used for the retries.
+
+        Returns:
+            Path returned by ``run_week``.
+        """
         week_dir = self.output_root / f"week_{week}"
         (week_dir / "batches").mkdir(parents=True, exist_ok=True)
         self._batches = []
@@ -142,6 +195,15 @@ class WeeklyOrchestrator:
     def _run_batch(
         self, week: int, number: int, spec: BatchSpec, week_dir: Path, retries: int
     ) -> None:
+        """Run batch.
+
+        Args:
+            week: Numeric value used for the week.
+            number: Numeric value used for the number.
+            spec: Spec used by the operation described above.
+            week_dir: Text or path value identifying the week dir.
+            retries: Numeric value used for the retries.
+        """
         if not set(spec.strategies).issubset(STRATEGIES):
             raise ValueError(f"unknown strategy: {sorted(set(spec.strategies) - set(STRATEGIES))}")
         batch_dir = week_dir / "batches" / f"batch_{number}"
@@ -197,6 +259,17 @@ class WeeklyOrchestrator:
         self._batches.append(manifest)
 
     def _run_id(self, strategy: str, seed: int, attempt: int, batch_dir: Path) -> str:
+        """Run id.
+
+        Args:
+            strategy: Strategy used to select or evaluate trades.
+            seed: Random seed used to make sampling reproducible.
+            attempt: Numeric value used for the attempt.
+            batch_dir: Text or path value identifying the batch dir.
+
+        Returns:
+            Text returned by ``_run_id``.
+        """
         stamp = self.clock().strftime("%Y%m%dT%H%M%SZ")
         suffix = f"_r{attempt}" if attempt else ""
         base = f"run_{stamp}_{strategy}_s{seed}{suffix}"
@@ -209,12 +282,27 @@ class WeeklyOrchestrator:
 
     @staticmethod
     def _incomparable_reasons(runs: list[dict[str, Any]]) -> list[str]:
+        """Process reasons.
+
+        Args:
+            runs: Items supplied for the runs, in input order.
+
+        Returns:
+            Values returned by ``_incomparable_reasons``, in the declared order.
+        """
         keys = {run.get("comparability_key") for run in runs if run.get("status") != "failed"}
         return ["comparability metadata differs"] if len(keys) > 1 else []
 
     @staticmethod
     def _default_runner(run: RunSpec) -> dict[str, Any]:
-        """Run the canonical training entrypoint in the isolated run directory."""
+        """Run the canonical training entrypoint in the isolated run directory.
+
+        Args:
+            run: Run used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         command = [
             "python",
             "-m",

@@ -16,6 +16,14 @@ _DEFAULT_MAX_CHARS = 48_000
 
 
 def _parse_json_line(line: str) -> dict[str, Any] | None:
+    """Parse json line.
+
+    Args:
+        line: Text or path value identifying the line.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     stripped = line.strip()
     if not stripped.startswith("{"):
         return None
@@ -27,6 +35,14 @@ def _parse_json_line(line: str) -> dict[str, Any] | None:
 
 
 def _event_text(event: dict[str, Any]) -> str | None:
+    """Process text.
+
+    Args:
+        event: Key-value data used for the event.
+
+    Returns:
+        Result of process text.
+    """
     for key in ("text", "content", "message"):
         value = event.get(key)
         if isinstance(value, str) and value.strip():
@@ -35,7 +51,14 @@ def _event_text(event: dict[str, Any]) -> str | None:
 
 
 def extract_from_jsonl(raw: str) -> str:
-    """Keep assistant text from JSONL agent events; drop tool/file dumps."""
+    """Keep assistant text from JSONL agent events; drop tool/file dumps.
+
+    Args:
+        raw: Text or path value identifying the raw.
+
+    Returns:
+        Text returned by ``extract_from_jsonl``.
+    """
     parts: list[str] = []
     for line in raw.splitlines():
         obj = _parse_json_line(line)
@@ -66,6 +89,14 @@ def extract_from_jsonl(raw: str) -> str:
 
 
 def strip_orchestra_header(raw: str) -> str:
+    """Remove terminal escapes and launcher/header lines from captured output.
+
+    Args:
+        raw: Text or path value identifying the raw.
+
+    Returns:
+        Text returned by ``strip_orchestra_header``.
+    """
     lines = [
         ln
         for ln in _ANSI_RE.sub("", raw).splitlines()
@@ -75,6 +106,14 @@ def strip_orchestra_header(raw: str) -> str:
 
 
 def looks_like_jsonl_agent_log(text: str) -> bool:
+    """Return whether the captured text appears to contain structured agent events.
+
+    Args:
+        text: Text or path value identifying the text.
+
+    Returns:
+        Whether looks like jsonl agent log meets the requested condition.
+    """
     if '"type":"agent_event"' in text or '"type": "agent_event"' in text:
         return True
     return any(line.strip().startswith('{"ts":') for line in text.splitlines()[:20])
@@ -86,7 +125,16 @@ def extract_usable_output(
     *,
     max_chars: int = _DEFAULT_MAX_CHARS,
 ) -> str:
-    """Return assistant-facing text for routing, parsing, and state — not raw tool I/O."""
+    """Return assistant-facing text for routing, parsing, and state — not raw tool I/O.
+
+    Args:
+        raw: Text or path value identifying the raw.
+        cli: Text or path value identifying the cli.
+        max_chars: Numeric value used for the max chars.
+
+    Returns:
+        Text returned by ``extract_usable_output``.
+    """
     body = strip_orchestra_header(raw)
     if not body:
         return ""

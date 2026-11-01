@@ -33,6 +33,15 @@ log = logging.getLogger(__name__)
 def _prepare_run_assets(
     config_stage: TrainingConfigurationStage, data_stage: TrainingDataStage
 ) -> TrainingPreparation:
+    """Prepare run assets.
+
+    Args:
+        config_stage: Config stage used by the operation described above.
+        data_stage: Data stage used by the operation described above.
+
+    Returns:
+        Result of prepare run assets.
+    """
     args = config_stage.args
     cfg = config_stage.cfg
     primary_ticks = data_stage.primary_ticks

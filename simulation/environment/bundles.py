@@ -28,7 +28,17 @@ def observation_features(
     *,
     legacy_sequence_columns: bool = False,
 ) -> tuple[NDArray[np.float32], list[str]]:
-    """Build the same contiguous float32 observation matrix used by training."""
+    """Build the same contiguous float32 observation matrix used by training.
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        raw_columns: Items supplied for the raw columns, in input order.
+        legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
+
+    Returns:
+        Array returned by ``observation_features``.
+    """
     selector = select_legacy_obs_columns if legacy_sequence_columns else select_obs_columns
     frame = attach_reachable_r(selector(features, raw_columns), bars, features)
     array = np.ascontiguousarray(frame.to_numpy(dtype=np.float32))
@@ -36,7 +46,14 @@ def observation_features(
 
 
 def _numeric_feature_array(features: pd.DataFrame) -> tuple[NDArray[Any], list[str]]:
-    """Return numeric feature values in the same column order as TradingEnv."""
+    """Return numeric feature values in the same column order as TradingEnv.
+
+    Args:
+        features: Feature values supplied to the operation.
+
+    Returns:
+        Array returned by ``_numeric_feature_array``.
+    """
     numeric = features.select_dtypes(include="number")
     array = numeric.to_numpy(copy=True)
     if array.dtype != np.dtype(np.float64):
@@ -45,7 +62,15 @@ def _numeric_feature_array(features: pd.DataFrame) -> tuple[NDArray[Any], list[s
 
 
 def _numeric_column(features: pd.DataFrame, name: str) -> NDArray[np.float64]:
-    """Match pandas ``to_numeric(errors='coerce')`` semantics for one column."""
+    """Match pandas ``to_numeric(errors='coerce')`` semantics for one column.
+
+    Args:
+        features: Feature values supplied to the operation.
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Array returned by ``_numeric_column``.
+    """
     if name not in features:
         return np.full(len(features), np.nan, dtype=np.float64)
     values = pd.to_numeric(features[name], errors="coerce")
@@ -53,7 +78,14 @@ def _numeric_column(features: pd.DataFrame, name: str) -> NDArray[np.float64]:
 
 
 def _session_codes(bars: pd.DataFrame) -> tuple[NDArray[np.int32], list[str]]:
-    """Encode session labels as int32 codes and return their manifest labels."""
+    """Encode session labels as int32 codes and return their manifest labels.
+
+    Args:
+        bars: Market bars to process.
+
+    Returns:
+        Array returned by ``_session_codes``.
+    """
     if "session" not in bars:
         return np.zeros(len(bars), dtype=np.int32), [""]
     codes, labels = pd.factorize(bars["session"], sort=True)
@@ -63,7 +95,14 @@ def _session_codes(bars: pd.DataFrame) -> tuple[NDArray[np.int32], list[str]]:
 def _pre_ny_arrays(
     pre_ny_by_date: Mapping[Any, NDArray[Any]] | None,
 ) -> tuple[NDArray[np.float32], dict[str, int]]:
-    """Stack day-keyed VAE inputs in a stable order and return their row map."""
+    """Stack day-keyed VAE inputs in a stable order and return their row map.
+
+    Args:
+        pre_ny_by_date: Key-value data used for the pre ny by date.
+
+    Returns:
+        Mapping from ``str`` keys to ``int]`` values.
+    """
     if not pre_ny_by_date:
         return np.empty((0, 0, 0), dtype=np.float32), {}
     entries = sorted(
@@ -81,7 +120,14 @@ def _pre_ny_arrays(
 
 
 def _tick_arrays(tickbook: TickBook | None) -> dict[str, NDArray[Any]]:
-    """Expose the source tick arrays, or correctly typed empty arrays."""
+    """Expose the source tick arrays, or correctly typed empty arrays.
+
+    Args:
+        tickbook: Tickbook used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``NDArray[Any]`` values.
+    """
     if tickbook is None:
         return {
             "tick_ts": np.empty(0, dtype=np.int64),
@@ -96,12 +142,27 @@ def _tick_arrays(tickbook: TickBook | None) -> dict[str, NDArray[Any]]:
 
 
 def _bundle_source_fingerprints(cfg: DictConfig) -> dict[str, dict[str, Any]]:
-    """Content-hash every configured split bar and tick source."""
+    """Content-hash every configured split bar and tick source.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, Any]`` values.
+    """
     import hashlib
 
     fingerprints: dict[str, dict[str, Any]] = {}
 
     def record(field: str, symbol: str, filename: Any, raw_dir: Path) -> None:
+        """Record a source file's identity or its missing-file state.
+
+        Args:
+            field: Text or path value identifying the field.
+            symbol: Text or path value identifying the symbol.
+            filename: Filename used by the operation described above.
+            raw_dir: Text or path value identifying the raw dir.
+        """
         relative = str(filename)
         path = raw_dir / relative
         key = f"{field}/{symbol}"
@@ -147,7 +208,14 @@ def _bundle_source_fingerprints(cfg: DictConfig) -> dict[str, dict[str, Any]]:
 
 
 def _bars_digest(bars: pd.DataFrame) -> str:
-    """SHA-256 over every stored price/volume value of the train bars."""
+    """SHA-256 over every stored price/volume value of the train bars.
+
+    Args:
+        bars: Market bars to process.
+
+    Returns:
+        Text returned by ``_bars_digest``.
+    """
     import hashlib
 
     digest = hashlib.sha256()
@@ -172,7 +240,23 @@ def build_env_bundle(
     reuse_only: bool = False,
     legacy_sequence_columns: bool = False,
 ) -> Path:
-    """Build the complete read-only data bundle for one train split."""
+    """Build the complete read-only data bundle for one train split.
+
+    Args:
+        cache_dir: Directory used to store or read cached data.
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        cfg: Run configuration used by this operation.
+        raw_columns: Items supplied for the raw columns, in input order.
+        feature_config_hash: Text or path value identifying the feature config hash.
+        tickbook: Tickbook used by the operation described above.
+        pre_ny_by_date: Key-value data used for the pre ny by date.
+        reuse_only: Whether to enable or require the reuse only.
+        legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
+
+    Returns:
+        Path returned by ``build_env_bundle``.
+    """
     obs_features, obs_columns = observation_features(
         bars, features, raw_columns, legacy_sequence_columns=legacy_sequence_columns
     )
@@ -261,7 +345,14 @@ def build_env_bundle(
 
 
 def bars_for_export(bundle_path: Path | str) -> pd.DataFrame:
-    """Materialize the small OHLC view used by end-of-run chart exporters."""
+    """Materialize the small OHLC view used by end-of-run chart exporters.
+
+    Args:
+        bundle_path: Path or filename identifying the bundle.
+
+    Returns:
+        DataFrame returned by ``bars_for_export``.
+    """
     bundle = load_bundle(bundle_path)
     arrays = bundle.arrays
     labels = bundle.manifest.get("labels", {})

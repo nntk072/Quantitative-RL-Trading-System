@@ -8,7 +8,15 @@ from learning.contracts import Learner
 
 
 def build_learner(backend: str, **options: Any) -> Learner:
-    """Construct one supported learner backend behind the stable learner port."""
+    """Construct one supported learner backend behind the stable learner port.
+
+    Args:
+        backend: Text or path value identifying the backend.
+        **options: Options used by the operation described above.
+
+    Returns:
+        Result of construct one supported learner backend behind the stable learner port.
+    """
     if backend == "stable_baselines3":
         from learning.rl.learner import build_sb3_learner
 

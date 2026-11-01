@@ -47,7 +47,11 @@ DEFAULT_CONFIG = str(repository_root(__file__) / "config" / "base" / "default.ya
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse CLI arguments."""
+    """Parse CLI arguments.
+
+    Returns:
+        Result of parse CLI arguments.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bars-csv", required=True, help="OHLCV CSV with DatetimeIndex")
     parser.add_argument("--features-csv", help="Feature CSV; built from bars if omitted")
@@ -68,7 +72,15 @@ def parse_args() -> argparse.Namespace:
 
 
 def _load_csv(path: str, index_col: str | None) -> pd.DataFrame:
-    """Load a CSV with a datetime index."""
+    """Load a CSV with a datetime index.
+
+    Args:
+        path: Path to the input file or directory.
+        index_col: Index col used by the operation described above.
+
+    Returns:
+        DataFrame returned by ``_load_csv``.
+    """
     df = pd.read_csv(path, index_col=index_col or 0, parse_dates=True)
     if not isinstance(df.index, pd.DatetimeIndex):
         df.index = pd.to_datetime(df.index)

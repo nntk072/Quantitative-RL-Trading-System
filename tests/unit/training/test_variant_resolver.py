@@ -103,7 +103,7 @@ def test_variant_row_overrides_registry_defaults() -> None:
     assert resolved["seeds"] == [7, 8]
 
 
-def test_all_18_thesis_variants_build_features_from_the_active_split() -> None:
+def test_all_18_research_variants_build_features_from_the_active_split() -> None:
     base_config = yaml.safe_load((PROJECT_ROOT / "config" / "base" / "default.yaml").read_text())
     assert base_config["env"]["peak_trailing_dd_limit"] == 0.0
     experiment_run_names = [

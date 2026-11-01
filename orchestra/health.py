@@ -24,6 +24,8 @@ _PROBE_TIMEOUT = 20
 
 
 class RoutingStatus(StrEnum):
+    """Availability states used when selecting a model for a task role."""
+
     AVAILABLE = "available"
     THROTTLED = "throttled"
     EXHAUSTED = "exhausted"
@@ -35,6 +37,8 @@ class RoutingStatus(StrEnum):
 
 @dataclass
 class FailureRecord:
+    """Persisted summary of a model's most recent classified failure."""
+
     kind: str = ""
     message: str = ""
     at: float = 0.0
@@ -42,6 +46,8 @@ class FailureRecord:
 
 @dataclass
 class ProbeFacts:
+    """Persisted binary, auth, catalog, quota, and recent-probe observations."""
+
     registry_id: str
     binary_ok: bool = False
     binary_version: str | None = None
@@ -58,6 +64,11 @@ class ProbeFacts:
     consecutive_failures: int = 0
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize probe facts and the nested failure record for persistence.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         d = asdict(self)
         if self.last_failure is None:
             d["last_failure"] = None
@@ -65,6 +76,14 @@ class ProbeFacts:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ProbeFacts:
+        """Restore probe facts from a health-registry mapping.
+
+        Args:
+            data: Input data to process.
+
+        Returns:
+            Result of restore probe facts from a health-registry mapping.
+        """
         lf = data.get("last_failure")
         failure = FailureRecord(**lf) if isinstance(lf, dict) else None
         return cls(
@@ -86,7 +105,15 @@ class ProbeFacts:
 
 
 def derive_status(facts: ProbeFacts, now: float | None = None) -> RoutingStatus:
-    """Derive routing status from persisted probe facts."""
+    """Derive routing status from persisted probe facts.
+
+    Args:
+        facts: Facts used by the operation described above.
+        now: Now used by the operation described above.
+
+    Returns:
+        Result of derive routing status from persisted probe facts.
+    """
     now = now or time.time()
     if facts.disabled:
         return RoutingStatus.DISABLED
@@ -107,12 +134,18 @@ class HealthRegistry:
     """Persisted health facts per registry model id."""
 
     def __init__(self, state_dir: Path):
+        """Initialize HealthRegistry and its owned state.
+
+        Args:
+            state_dir: Text or path value identifying the state dir.
+        """
         self.state_dir = state_dir
         self.health_file = state_dir / "health.json"
         self._facts: dict[str, ProbeFacts] = {}
         self._load()
 
     def _load(self) -> None:
+        """Load HealthRegistry."""
         if not self.health_file.exists():
             return
         raw = json.loads(self.health_file.read_text())
@@ -121,16 +154,33 @@ class HealthRegistry:
             self._facts[rid] = ProbeFacts.from_dict(data)
 
     def _save(self) -> None:
+        """Save HealthRegistry."""
         payload = {"models": {rid: f.to_dict() for rid, f in self._facts.items()}}
         write_text_atomic(self.health_file, json.dumps(payload, indent=2))
 
     def get(self, model: Model) -> ProbeFacts:
+        """Return or initialize the persisted facts for one registry model.
+
+        Args:
+            model: Model used for this operation.
+
+        Returns:
+            Result of return or initialize the persisted facts for one registry model.
+        """
         rid = model.registry_id
         if rid not in self._facts:
             self._facts[rid] = ProbeFacts(registry_id=rid)
         return self._facts[rid]
 
     def status(self, model: Model) -> RoutingStatus:
+        """Derive the current routing state from the model's latest probe facts.
+
+        Args:
+            model: Model used for this operation.
+
+        Returns:
+            Result of derive the current routing state from the model's latest probe facts.
+        """
         return derive_status(self.get(model))
 
     def record_failure(
@@ -141,6 +191,15 @@ class HealthRegistry:
         throttled_until: float | None = None,
         exhausted_until: float | None = None,
     ) -> None:
+        """Persist failure details and optional throttling or exhaustion deadlines.
+
+        Args:
+            model: Model used for this operation.
+            kind: Text or path value identifying the kind.
+            message: Text or path value identifying the message.
+            throttled_until: Throttled until used by the operation described above.
+            exhausted_until: Exhausted until used by the operation described above.
+        """
         facts = self.get(model)
         facts.last_failure = FailureRecord(kind=kind, message=message[:500], at=time.time())
         facts.consecutive_failures += 1
@@ -151,13 +210,23 @@ class HealthRegistry:
         self._save()
 
     def record_success(self, model: Model) -> None:
+        """Record a successful model call and clear its consecutive-failure count.
+
+        Args:
+            model: Model used for this operation.
+        """
         facts = self.get(model)
         facts.last_success_at = time.time()
         facts.consecutive_failures = 0
         self._save()
 
     def probe_tier0(self, models: list[Model], check_version: bool = False) -> None:
-        """Local-only health checks; never calls generation APIs."""
+        """Local-only health checks; never calls generation APIs.
+
+        Args:
+            models: Items supplied for the models, in input order.
+            check_version: Whether to enable or require the check version.
+        """
         for model in models:
             facts = self.get(model)
             facts.binary_ok = bool(shutil.which(model.cli))
@@ -179,7 +248,11 @@ class HealthRegistry:
         self._save()
 
     def probe_tier1(self, models: list[Model]) -> None:
-        """Network catalog probes; doctor only."""
+        """Network catalog probes; doctor only.
+
+        Args:
+            models: Items supplied for the models, in input order.
+        """
         gemini_models = [m for m in models if m.cli == "gemini" and not m.probe_forbidden]
         if gemini_models:
             catalog = _gemini_list_models()
@@ -217,6 +290,14 @@ class HealthRegistry:
         self._save()
 
     def is_selectable(self, model: Model) -> bool:
+        """Return whether health and probe policy allow routing to this model.
+
+        Args:
+            model: Model used for this operation.
+
+        Returns:
+            Whether is selectable meets the requested condition.
+        """
         status = self.status(model)
         if status in (RoutingStatus.EXHAUSTED, RoutingStatus.DISABLED, RoutingStatus.MISSING):
             return False
@@ -231,6 +312,14 @@ class HealthRegistry:
 
 
 def _cli_version(cli: str) -> str | None:
+    """Process version.
+
+    Args:
+        cli: Text or path value identifying the cli.
+
+    Returns:
+        Result of process version.
+    """
     try:
         result = subprocess.run(
             [cli, "--version"],
@@ -246,17 +335,31 @@ def _cli_version(cli: str) -> str | None:
 
 
 def vibe_mistral_auth_ok() -> bool:
-    """True when Vibe can reach Mistral cloud (env, ~/.vibe/.env, or whoami cache)."""
+    """True when Vibe can reach Mistral cloud (env, ~/.vibe/.env, or whoami cache).
+
+    Returns:
+        Whether vibe mistral auth ok meets the requested condition.
+    """
     if _vibe_env_api_key():
         return True
     return _vibe_whoami_authenticated()
 
 
 def _vibe_config_dir() -> Path:
+    """Process config dir.
+
+    Returns:
+        Path returned by ``_vibe_config_dir``.
+    """
     return Path.home() / ".vibe"
 
 
 def _vibe_env_api_key() -> str | None:
+    """Process env api key.
+
+    Returns:
+        Result of process env api key.
+    """
     key = os.environ.get("MISTRAL_API_KEY")
     if key:
         return key
@@ -284,6 +387,11 @@ def _vibe_env_api_key() -> str | None:
 
 
 def _vibe_whoami_authenticated() -> bool:
+    """Process whoami authenticated.
+
+    Returns:
+        Whether vibe whoami authenticated meets the requested condition.
+    """
     cache = _vibe_config_dir() / "whoami_cache.json"
     if not cache.exists():
         return False
@@ -303,6 +411,14 @@ def _vibe_whoami_authenticated() -> bool:
 
 
 def _vibe_model_in_config(model: Model) -> bool | None:
+    """Process model in config.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Whether vibe model in config meets the requested condition.
+    """
     cfg = _vibe_config_dir() / "config.toml"
     if not cfg.exists():
         return False
@@ -324,10 +440,27 @@ def _vibe_model_in_config(model: Model) -> bool | None:
 
 
 def _vibe_model_ids_match(target: str, candidate: str) -> bool:
+    """Process model ids match.
+
+    Args:
+        target: Path or filename identifying the target.
+        candidate: Text or path value identifying the candidate.
+
+    Returns:
+        Whether vibe model ids match meets the requested condition.
+    """
     return target == candidate or target in candidate or candidate in target
 
 
 def _tier0_auth(model: Model) -> bool | None:
+    """Process auth.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Whether tier0 auth meets the requested condition.
+    """
     if model.cli == "vibe" and model.provider == "mistral":
         return vibe_mistral_auth_ok()
     if model.env_var:
@@ -353,6 +486,11 @@ def _tier0_auth(model: Model) -> bool | None:
 
 
 def _cline_auth_ok() -> bool | None:
+    """Process auth ok.
+
+    Returns:
+        Whether cline auth ok meets the requested condition.
+    """
     path = Path.home() / ".cline" / "data" / "settings" / "providers.json"
     if not path.exists():
         return False
@@ -372,6 +510,14 @@ def _cline_auth_ok() -> bool | None:
 
 
 def _cline_model_configured(model: Model) -> bool | None:
+    """Process model configured.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Whether cline model configured meets the requested condition.
+    """
     path = Path.home() / ".cline" / "data" / "settings" / "providers.json"
     if not path.exists():
         return False
@@ -387,6 +533,11 @@ def _cline_model_configured(model: Model) -> bool | None:
 
 
 def _ollama_reachable() -> bool:
+    """Process reachable.
+
+    Returns:
+        Whether ollama reachable meets the requested condition.
+    """
     try:
         req = Request("http://localhost:11434/api/tags", method="GET")
         with urlopen(req, timeout=2) as resp:
@@ -396,6 +547,15 @@ def _ollama_reachable() -> bool:
 
 
 def _http_get_json(url: str, headers: dict[str, str]) -> dict[str, Any] | None:
+    """Process get json.
+
+    Args:
+        url: Text or path value identifying the url.
+        headers: Key-value data used for the headers.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     try:
         req = Request(url, headers=headers, method="GET")
         with urlopen(req, timeout=_PROBE_TIMEOUT) as resp:
@@ -405,6 +565,11 @@ def _http_get_json(url: str, headers: dict[str, str]) -> dict[str, Any] | None:
 
 
 def _gemini_list_models() -> list[str] | None:
+    """Process list models.
+
+    Returns:
+        Values returned by ``_gemini_list_models``, in the declared order.
+    """
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
         return None
@@ -418,6 +583,14 @@ def _gemini_list_models() -> list[str] | None:
 
 
 def _mistral_in_catalog(model: Model) -> bool | None:
+    """Process in catalog.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Whether mistral in catalog meets the requested condition.
+    """
     key = _vibe_env_api_key() or os.environ.get(model.env_var or "MISTRAL_API_KEY")
     if not key:
         return False
@@ -433,6 +606,14 @@ def _mistral_in_catalog(model: Model) -> bool | None:
 
 
 def _run_cli_json(cmd: list[str]) -> str | None:
+    """Run cli json.
+
+    Args:
+        cmd: Items supplied for the cmd, in input order.
+
+    Returns:
+        Result of run cli json.
+    """
     try:
         result = subprocess.run(
             cmd,
@@ -448,6 +629,14 @@ def _run_cli_json(cmd: list[str]) -> str | None:
 
 
 def _kilo_in_catalog(model: Model) -> bool | None:
+    """Process in catalog.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Whether kilo in catalog meets the requested condition.
+    """
     out = _run_cli_json(["kilo", "models"])
     if out is None:
         return None
@@ -457,6 +646,14 @@ def _kilo_in_catalog(model: Model) -> bool | None:
 
 
 def _opencode_in_catalog(model: Model) -> bool | None:
+    """Process in catalog.
+
+    Args:
+        model: Model used for this operation.
+
+    Returns:
+        Whether opencode in catalog meets the requested condition.
+    """
     out = _run_cli_json(["opencode", "models"])
     if out is None:
         return None

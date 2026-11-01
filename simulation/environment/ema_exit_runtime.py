@@ -14,9 +14,19 @@ from .mixin_base import RuntimeMixinBase
 
 
 class EmaExitRuntimeMixin(RuntimeMixinBase):
+    """Apply EMA-based exits using the environment's indexed market data."""
+
     position: Position | None
 
     def _ema21_at(self, idx: int) -> float:
+        """Process at.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Numeric result returned by ``_ema21_at``.
+        """
         if idx < 0 or idx >= self._n_bars:
             return float("nan")
         if self._bundle_arrays is not None:
@@ -34,6 +44,11 @@ class EmaExitRuntimeMixin(RuntimeMixinBase):
 
         A long exits when the bar close is below ``ema_21``. A short exits when
         the close is above it. The stop check runs before this.
+
+        Args:
+            bar: Bar used by the operation described above.
+            idx: Numeric value used for the idx.
+            log_time: Log time used by the operation described above.
         """
         pos = self.position
         if pos is None or pos.exit_mode != "ema_21":

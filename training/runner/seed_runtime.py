@@ -100,6 +100,8 @@ log = logging.getLogger(__name__)
 
 @dataclass(slots=True)
 class SeedRunContext:
+    """Prepared configuration, data, and assets shared by one seed lifecycle."""
+
     preparation: TrainingPreparation
 
 
@@ -107,6 +109,12 @@ class SeedRunner:
     """Execute one seed through preparation, learning, evaluation, and export."""
 
     def __init__(self, context: SeedRunContext, seed: int) -> None:
+        """Initialize SeedRunner and its owned state.
+
+        Args:
+            context: Context values required to resolve the operation.
+            seed: Random seed used to make sampling reproducible.
+        """
         self.context = context
         self.seed = int(seed)
         self.fit_result: FitResult | None = None
@@ -118,12 +126,24 @@ class SeedRunner:
 
     @staticmethod
     def _bundle_eval_factory(env_spec: Any) -> Any:
-        """Build an evaluation factory from a bundle after source frames are released."""
+        """Build an evaluation factory from a bundle after source frames are released.
+
+        Args:
+            env_spec: Env spec used by the operation described above.
+
+        Returns:
+            Result of build an evaluation factory from a bundle after source frames are released.
+        """
         from simulation.environment.worker import make_bundle_env
 
         return partial(make_bundle_env, env_spec)
 
     def prepare_training(self) -> PreparedSeedRun:
+        """Create the seed environment, learner, callbacks, and checkpoint context.
+
+        Returns:
+            Result of create the seed environment, learner, callbacks, and checkpoint context.
+        """
         ctx = self.context
         args = ctx.preparation.configuration.args
         cfg = ctx.preparation.configuration.cfg
@@ -146,7 +166,6 @@ class SeedRunner:
         phase_timings_seconds: dict[str, float] = {}
         log.info("=== Seed %d / %d ===", seed, len(seeds))
 
-        # Per-seed output dirs
         if is_multi_seed:
             seed_dir = run_dir / "seeds" / f"seed{seed}"
             seed_model_dir = seed_dir / "model"
@@ -155,7 +174,6 @@ class SeedRunner:
             seed_dir = run_dir
             seed_model_dir = model_dir
 
-            # Create training environment
         log.info("Creating training environment...")
         if train_env_spec is not None:
             from simulation.environment.worker import make_bundle_env
@@ -194,7 +212,6 @@ class SeedRunner:
 
         checkpoint_callback = _periodic_checkpoint_callback(cfg, seed_model_dir)
 
-        # Train agent
         timesteps = cfg.ppo.total_timesteps if not args.mvp else cfg.training.total_timesteps_mvp
         log.info("Training %s for %d timesteps...", args.algo.upper(), timesteps)
 
@@ -219,12 +236,7 @@ class SeedRunner:
             )
             validate_model_trade_setup_observation_schema(
                 model,
-                (
-                    train_env.thesis_observation_schema
-                    if bool(getattr(train_env, "legacy_thesis_contract", False))
-                    else train_env.trade_setup_observation_schema
-                ),
-                legacy=bool(getattr(train_env, "legacy_thesis_contract", False)),
+                train_env.trade_setup_observation_schema,
             )
             if int(model.num_timesteps) > int(timesteps):
                 raise ValueError(
@@ -301,12 +313,10 @@ class SeedRunner:
             )
 
         callbacks.append(EpisodeEquityCallback(log_path=seed_model_dir / "episode_equity.csv"))
-        thesis_diagnostics_enabled = bool(
-            cfg.env.get("thesis_actions", False) or cfg.env.get("trade_setup_actions", False)
-        )
+        trade_setup_diagnostics_enabled = bool(cfg.env.get("trade_setup_actions", False))
         if (
             bool(cfg.get("quality_diagnostics", {}).get("enabled", False))
-            or thesis_diagnostics_enabled
+            or trade_setup_diagnostics_enabled
         ):
             callbacks.append(
                 LearningDiagnosticsCallback(log_path=seed_model_dir / "learning_diagnostics.csv")
@@ -335,6 +345,11 @@ class SeedRunner:
         )
 
     def train_model(self) -> TrainedSeedRun:
+        """Fit the learner and retain checkpoint, activity, and timing evidence.
+
+        Returns:
+            Result of fit the learner and retain checkpoint, activity, and timing evidence.
+        """
         ctx = self.context
         args = ctx.preparation.configuration.args
         cfg = ctx.preparation.configuration.cfg
@@ -471,6 +486,11 @@ class SeedRunner:
             )
 
             def _dashboard_eval() -> dict[str, Any]:
+                """Process eval.
+
+                Returns:
+                    Mapping from ``str`` keys to ``Any`` values.
+                """
                 if self.provider is None:
                     raise RuntimeError("decision provider was not created for evaluation")
                 result = evaluate_provider(
@@ -609,6 +629,7 @@ class SeedRunner:
         )
 
     def evaluate_test_split(self) -> None:
+        """Evaluate the fitted provider on the report-only test split."""
         ctx = self.context
         cfg = ctx.preparation.configuration.cfg
         seed = self.seed
@@ -623,13 +644,11 @@ class SeedRunner:
         test_bars = ctx.preparation.data.test_bars
         test_feat = ctx.preparation.data.test_feat
         primary_ticks = ctx.preparation.data.primary_ticks
-        # The learner saved the final model and returned its content identity.
         model_path = self.model_path
         if model_path is None:
             raise RuntimeError("learner did not produce a final checkpoint path")
         log.info("Model saved: %s", model_path)
 
-        # Learning-curve / loss charts from the SB3 progress CSV.
         try:
             from training.reporting.training_curves import (
                 save_dashboard_plots,
@@ -642,18 +661,16 @@ class SeedRunner:
                 dpi=getattr(cfg.output, "dpi", 150),
                 save_html=getattr(cfg.output, "save_html", False),
             )
-            if bool(
-                cfg.env.get("thesis_actions", False) or cfg.env.get("trade_setup_actions", False)
-            ):
+            if bool(cfg.env.get("trade_setup_actions", False)):
                 from evaluation.reporting.trade_setup_plots import write_trade_setup_learning_plots
 
-                thesis_plots = write_trade_setup_learning_plots(
+                trade_setup_plots = write_trade_setup_learning_plots(
                     seed_model_dir / "learning_diagnostics.csv",
                     seed_model_dir,
                     dpi=getattr(cfg.output, "dpi", 150),
                 )
-                if thesis_plots:
-                    log.info("Saved thesis learning plots: %s", thesis_plots)
+                if trade_setup_plots:
+                    log.info("Saved trade-setup learning plots: %s", trade_setup_plots)
             save_dashboard_plots(
                 seed_model_dir / "dashboard_log.csv",
                 out_dir=seed_model_dir,
@@ -733,6 +750,11 @@ class SeedRunner:
         self.test_m = test_m
 
     def evaluate_train_split(self) -> EvaluatedSeedRun:
+        """Evaluate training viability and apply the configured in-sample gates.
+
+        Returns:
+            Result of evaluate training viability and apply the configured in-sample gates.
+        """
         ctx = self.context
         cfg = ctx.preparation.configuration.cfg
         seed = self.seed
@@ -868,6 +890,11 @@ class SeedRunner:
         )
 
     def write_artifacts(self) -> PersistedSeedRun:
+        """Write split reports, curves, schemas, and the seed run manifest.
+
+        Returns:
+            Result of write split reports, curves, schemas, and the seed run manifest.
+        """
         ctx = self.context
         args = ctx.preparation.configuration.args
         cfg = ctx.preparation.configuration.cfg
@@ -935,7 +962,6 @@ class SeedRunner:
         if bundle_path is not None:
             del train_export_bars, test_export_bars
 
-            # Save config snapshot for this seed
         write_run_config_snapshot(seed_dir, cfg)
         per_run_cache_hash = Path(str(feat_cache) + ".hash")
         cache_hash = per_run_cache_hash.read_text(encoding="utf-8").strip()
@@ -1052,7 +1078,6 @@ class SeedRunner:
         phase_timings_seconds["report_export"] = time.perf_counter() - phase_started
         log.info("PHASE_TIMING report_export_seconds=%.3f", phase_timings_seconds["report_export"])
 
-        # Per-seed artifacts (multi-seed mode only)
         if is_multi_seed:
             save_seed_artifacts(seed_dir, seed, cfg, train_result, test_result, train_m, test_m)
 
@@ -1064,6 +1089,11 @@ class SeedRunner:
         )
 
     def build_result(self) -> dict[str, Any]:
+        """Assemble per-seed metrics and provenance for aggregation.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         ctx = self.context
         args = ctx.preparation.configuration.args
         cfg = ctx.preparation.configuration.cfg
@@ -1082,7 +1112,6 @@ class SeedRunner:
         phase_timings_seconds = self.phase_timings_seconds
         manifest_path = self.manifest_path
         run_dir = ctx.preparation.run_assets.run_dir
-        # Collect per-seed results for aggregation
         entry_diag = test_result.get("entry_diag", {})
         entry_state_diag = test_result.get("entry_state_diagnostics", {})
         action_space_width = get_action_space_width(train_env)
@@ -1094,7 +1123,6 @@ class SeedRunner:
             key: bool(cfg.env.get(key, False))
             for key in (
                 "strategy_actions",
-                "thesis_actions",
                 "trade_setup_actions",
                 "allow_agent_sl_mode",
                 "allow_agent_tp_mode",
@@ -1141,6 +1169,11 @@ class SeedRunner:
         }
 
     def run(self) -> dict[str, Any]:
+        """Execute preparation, fitting, evaluation, export, and result assembly.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         self.prepared: PreparedSeedRun = self.prepare_training()
         self.trained: TrainedSeedRun = self.train_model()
         self.evaluate_test_split()
@@ -1150,7 +1183,14 @@ class SeedRunner:
 
 
 def run_seed_training(context: SeedRunContext) -> tuple[list[dict[str, Any]], int]:
-    """Run every configured seed and return aggregation payloads plus requested timesteps."""
+    """Run every configured seed and return aggregation payloads plus requested timesteps.
+
+    Args:
+        context: Context values required to resolve the operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]], int`` values.
+    """
     results: list[dict[str, Any]] = []
     timesteps = 0
     for seed in context.preparation.run_assets.seeds:

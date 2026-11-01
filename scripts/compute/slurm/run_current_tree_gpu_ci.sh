@@ -89,7 +89,7 @@ run_mypy_full() {
 run_gate mypy_full run_mypy_full
 run_gate pytest_full python -m pytest tests/ -q
 run_gate p1_tick_coverage_audit python scripts/research/audits/audit_tick_execution_coverage.py \
-  --out "docs/thesis/evidence/p1_tick_execution_coverage_${RUN_DATE}_job${SLURM_JOB_ID}.json" \
+  --out "outputs/research_audits/p1_tick_execution_coverage_${RUN_DATE}_job${SLURM_JOB_ID}.json" \
   --latency-ms 30 --max-quote-wait-ms 60000
 run_gate whitespace git diff --check
 

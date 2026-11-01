@@ -36,7 +36,7 @@ PY
       --partition=gpu-grace-h200-141g \
       --nodes=2 --ntasks=2 --ntasks-per-node=1 \
       --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G \
-      --time=06:00:00 --job-name=thesis18maskv3 \
+      --time=06:00:00 --job-name=qrl18maskv3 \
       --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC",EXPERIMENT_RUN_ID="$EXPERIMENT_RUN_ID",SOURCE_EXPERIMENT_RUN="$SOURCE_EXPERIMENT_RUN" \
       --chdir="$REPO" \
       bash "$REPO/scripts/compute/slurm/experiment_runs/run_18way_cpumask_allocation.sh"

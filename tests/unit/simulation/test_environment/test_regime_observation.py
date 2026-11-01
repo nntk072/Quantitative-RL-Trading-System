@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 from decisioning.regime_observations import REGIME_FEATURES, regime_observation_schema
 from simulation.environment import regime_observation_enabled
 from simulation.environment.env import TradingEnv
-from tests.unit.simulation.test_environment.test_account_normalization import (
+from tests.unit.simulation.test_environment._account_fixtures import (
     _make_bars,
     _make_features,
 )

@@ -17,6 +17,19 @@ from artifacts.layout import ExperimentRunArtifactLayout
 def resolve_handoff(
     repo: Path, source_experiment_run: Path, handoff_path: Path
 ) -> tuple[str, str, str]:
+    """Validate a checkpoint continuation against its preserved source run.
+
+    Args:
+        repo: Repository root that contains the target run specification.
+        source_experiment_run: Preserved run whose manifest anchors provenance.
+        handoff_path: Handoff document naming the target run and checkpoint map.
+
+    Returns:
+        Target run ID, target specification path, and source run path.
+
+    Raises:
+        ValueError: If paths, identities, schemas, or checkpoint lineage disagree.
+    """
     repo = repo.resolve()
     source_experiment_run = source_experiment_run.resolve()
     handoff_path = handoff_path.resolve()
@@ -93,6 +106,11 @@ def resolve_handoff(
 
 
 def main() -> int:
+    """Validate a continuation handoff from command-line path arguments.
+
+    Returns:
+        Zero after printing the target run and source paths.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", required=True, type=Path)
     parser.add_argument("--source-experiment-run", required=True, type=Path)

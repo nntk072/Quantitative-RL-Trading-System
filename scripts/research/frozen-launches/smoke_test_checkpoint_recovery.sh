@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)}"
 JOB_ID="${SLURM_JOB_ID:?run inside the approved P3 allocation}"
-OUT_DIR="${P3_OUT_DIR:-$REPO/outputs/thesis_validation/p3_recovery_${JOB_ID}}"
+OUT_DIR="${P3_OUT_DIR:-$REPO/outputs/research_validation/p3_recovery_${JOB_ID}}"
 # Use the existing full-PO3 profile so the smoke exercises supplied native
 # M3-D1 context through training, checkpoint restore, and deterministic replay.
 VARIANT="ladder_a0_flat_po3"
@@ -263,7 +263,7 @@ resolved_profile_passed = resolved_ltf == "M1" and resolved_htfs == [
 ]
 passed = passed and resolved_profile_passed
 report = {
-    "schema": "thesis.p3_checkpoint_recovery_smoke.v1",
+    "schema": "qrl.research.p3_checkpoint_recovery_smoke.v1",
     "created_at_utc": datetime.now(timezone.utc).isoformat(),
     "status": "passed" if passed else "failed",
     "run_manifest_path": str(run_manifest_path.relative_to(repo)),

@@ -44,6 +44,15 @@ _MAX_PHASE_STEPS = 40
 
 
 def _cmd_tail(result: CompletedProcess[str], limit: int = 1000) -> str:
+    """Process tail.
+
+    Args:
+        result: Result used by the operation described above.
+        limit: Numeric value used for the limit.
+
+    Returns:
+        Text returned by ``_cmd_tail``.
+    """
     text = (result.stdout or "") + (result.stderr or "")
     return text[-limit:]
 
@@ -71,6 +80,17 @@ class Pipeline(
         max_fixes: int = 3,
         keep_alive: bool = False,
     ):
+        """Initialize Pipeline and its owned state.
+
+        Args:
+            workspace: Workspace directory used for file and process operations.
+            planner_count: Number specifying the planner count for this operation.
+            critic_count: Number specifying the critic count for this operation.
+            reviewer_count: Number specifying the reviewer count for this operation.
+            dry_run: Whether to enable or require the dry run.
+            max_fixes: Numeric value used for the max fixes.
+            keep_alive: Whether to enable or require the keep alive.
+        """
         self.workspace = workspace
         self.planner_count = planner_count
         self.critic_count = critic_count
@@ -93,13 +113,22 @@ class Pipeline(
 
     @property
     def state(self) -> TaskState:
-        """The active task state; set once the pipeline begins running."""
+        """The active task state; set once the pipeline begins running.
+
+        Returns:
+            Result of the active task state; set once the pipeline begins running.
+        """
         if self._state is None:
             raise RuntimeError("Pipeline has not loaded a task state")
         return self._state
 
     @state.setter
     def state(self, value: TaskState) -> None:
+        """Bind the task state used by subsequent phase execution.
+
+        Args:
+            value: Value to process.
+        """
         self._state = value
 
     def _record_model_call(
@@ -111,7 +140,16 @@ class Pipeline(
         success: bool = True,
         role: str = "general",
     ) -> None:
-        """Estimate tokens and record cost + quota for a model call."""
+        """Estimate tokens and record cost + quota for a model call.
+
+        Args:
+            model: Model used for this operation.
+            prompt: Prompt submitted to the selected model.
+            output: Output value produced by the preceding operation.
+            task_id: Task id used by the operation described above.
+            success: Whether to enable or require the success.
+            role: Text or path value identifying the role.
+        """
         model_name = model.display_name
         prompt_tokens = self.cost_tracker.estimate_tokens(prompt)
         completion_tokens = self.cost_tracker.estimate_tokens(output)
@@ -123,6 +161,11 @@ class Pipeline(
             )
 
     def _task_tier(self) -> str:
+        """Process tier.
+
+        Returns:
+            Text returned by ``_task_tier``.
+        """
         if self._tier_override:
             return self._tier_override
         tier = self.state.data.get("tier")
@@ -132,11 +175,25 @@ class Pipeline(
         return complexity_to_tier(str(complexity))
 
     def _parse_complexity(self, triage_output: str) -> str:
-        """Extract complexity from triage JSON output."""
+        """Extract complexity from triage JSON output.
+
+        Args:
+            triage_output: Text or path value identifying the triage output.
+
+        Returns:
+            Text returned by ``_parse_complexity``.
+        """
         return parse_complexity(triage_output)
 
     def _parse_verdict(self, synthesis_output: str) -> str:
-        """Extract verdict from review synthesis output."""
+        """Extract verdict from review synthesis output.
+
+        Args:
+            synthesis_output: Text or path value identifying the synthesis output.
+
+        Returns:
+            Text returned by ``_parse_verdict``.
+        """
         return parse_verdict(synthesis_output)
 
     def run(
@@ -155,6 +212,16 @@ class Pipeline(
 
         ``start_phase`` (name or step number) jumps to that phase on resume,
         including from DONE/FAILED. Stuck at planning → ``--from 2``.
+
+        Args:
+            task_description: Text or path value identifying the task description.
+            resume_from: Resume from used by the operation described above.
+            complexity: Complexity used by the operation described above.
+            start_phase: Start phase used by the operation described above.
+            tier: Tier used by the operation described above.
+
+        Returns:
+            Result of run the full pipeline for a task.
         """
         if start_phase and not resume_from:
             raise ValueError("--from requires --resume <task-id>")
@@ -186,7 +253,18 @@ class Pipeline(
         start_phase: str | None,
         tier: str | None,
     ) -> TaskState:
-        """Execute phase loop; ``run`` always reaps tmux sessions after this."""
+        """Execute phase loop; ``run`` always reaps tmux sessions after this.
+
+        Args:
+            task_description: Text or path value identifying the task description.
+            resume_from: Resume from used by the operation described above.
+            complexity: Complexity used by the operation described above.
+            start_phase: Start phase used by the operation described above.
+            tier: Tier used by the operation described above.
+
+        Returns:
+            Result of execute phase loop; ``run`` always reaps tmux sessions after this.
+        """
         if resume_from:
             self.state = TaskState.load(resume_from, self.state_dir)
             self.state.data["fix_loop_max"] = self.max_fixes
@@ -279,7 +357,14 @@ class Pipeline(
         return self.state
 
     def _resume_phase(self, start_phase: str | None) -> Phase | None:
-        """Phase to execute next on resume, or None to leave a DONE task alone."""
+        """Phase to execute next on resume, or None to leave a DONE task alone.
+
+        Args:
+            start_phase: Start phase used by the operation described above.
+
+        Returns:
+            Result of phase to execute next on resume, or None to leave a DONE task alone.
+        """
         if start_phase:
             return Phase.parse(start_phase)
         current = self.state.phase
@@ -295,6 +380,14 @@ class Pipeline(
         return None
 
     def _backup_slot(self, phase: Phase) -> str:
+        """Process slot.
+
+        Args:
+            phase: Phase used by the operation described above.
+
+        Returns:
+            Text returned by ``_backup_slot``.
+        """
         numbers = {
             Phase.TRIAGE: 1,
             Phase.PLANNING: 2,
@@ -314,6 +407,11 @@ class Pipeline(
         return f"{n:02d}-{phase.value}"
 
     def _snapshot(self, slot: str) -> None:
+        """Process Pipeline.
+
+        Args:
+            slot: Text or path value identifying the slot.
+        """
         if self.dry_run:
             return
         dest = self.state_dir / "backups" / self.state.task_id / slot
@@ -329,15 +427,38 @@ class Pipeline(
         click.echo(f"  Backup [{slot}]: {meta['files']} files")
 
     def _effective_planner_count(self) -> int:
+        """Process planner count.
+
+        Returns:
+            Numeric result returned by ``_effective_planner_count``.
+        """
         return effective_planner_count(self.state.data, self.planner_count)
 
     def _effective_critic_count(self) -> int:
+        """Process critic count.
+
+        Returns:
+            Numeric result returned by ``_effective_critic_count``.
+        """
         return effective_critic_count(self.state.data, self.critic_count)
 
     def _effective_reviewer_count(self) -> int:
+        """Process reviewer count.
+
+        Returns:
+            Numeric result returned by ``_effective_reviewer_count``.
+        """
         return effective_reviewer_count(self.state.data, self.reviewer_count)
 
     def _phase_agent_output(self, phase: Phase) -> str:
+        """Process agent output.
+
+        Args:
+            phase: Phase used by the operation described above.
+
+        Returns:
+            Text returned by ``_phase_agent_output``.
+        """
         data = self.state.data
         if phase is Phase.TRIAGE:
             return str(data.get("triage_output") or "")
@@ -367,6 +488,12 @@ class Pipeline(
         *,
         verification_passed: bool | None = None,
     ) -> None:
+        """Process after phase.
+
+        Args:
+            completed: Completed used by the operation described above.
+            verification_passed: Verification passed used by the operation described above.
+        """
         output = self._phase_agent_output(completed)
         update = parse_route_from_text(output) if output else None
         merge_route(self.state.data, update)
@@ -386,7 +513,14 @@ class Pipeline(
         self.state.set_phase(next_phase)
 
     def _execute_phase(self, phase: Phase) -> bool | None:
-        """Execute a single pipeline phase. Returns verification pass/fail when applicable."""
+        """Execute a single pipeline phase. Returns verification pass/fail when applicable.
+
+        Args:
+            phase: Phase used by the operation described above.
+
+        Returns:
+            Whether execute phase meets the requested condition.
+        """
         self.state.set_phase(phase)
         if phase is not Phase.REPORTING:
             self._snapshot(self._backup_slot(phase))
@@ -422,6 +556,12 @@ class Pipeline(
         return None
 
     def _echo_cmd(self, model: Model, role: str | None = None) -> None:
+        """Process cmd.
+
+        Args:
+            model: Model used for this operation.
+            role: Role used by the operation described above.
+        """
         effort = self.sessions.resolve_effort(model, self._task_tier(), role=role)
         cmd = self.sessions.build_command(model, "<prompt>", effort=effort)
         click.echo(f"    Command: {' '.join(cmd)}")
@@ -435,7 +575,19 @@ class Pipeline(
         lines: int = 0,
         native_session_id: str | None = None,
     ) -> tuple[str, str]:
-        """Spawn an agent, wait, and return ``(session, output)``. Raises on failure."""
+        """Spawn an agent, wait, and return ``(session, output)``. Raises on failure.
+
+        Args:
+            model: Model used for this operation.
+            role: Text or path value identifying the role.
+            prompt: Prompt submitted to the selected model.
+            timeout: Maximum time to wait, in seconds.
+            lines: Numeric value used for the lines.
+            native_session_id: Native session id used by the operation described above.
+
+        Returns:
+            Values returned by ``_invoke``, in the declared order.
+        """
         session = self.sessions.spawn(
             model,
             role,
@@ -469,6 +621,17 @@ class Pipeline(
         Records cost/performance under ``role``. ``select_role`` overrides the
         roster role used to build the fallback chain (e.g. a fixer picked from
         the implementer roster) and defaults to ``role``.
+
+        Args:
+            model: Model used for this operation.
+            role: Text or path value identifying the role.
+            prompt: Prompt submitted to the selected model.
+            timeout: Maximum time to wait, in seconds.
+            lines: Numeric value used for the lines.
+            select_role: Select role used by the operation described above.
+
+        Returns:
+            Values returned by ``_invoke_required``, in the declared order.
         """
         complexity = self.state.data.get("complexity") or "medium"
         task_tier = self._task_tier()
@@ -591,7 +754,15 @@ class Pipeline(
         raise RuntimeError("Task parked: all models failed")
 
     def _select_models(self, role: str, count: int = 1) -> list[Model]:
-        """Select models or park the task when none are available."""
+        """Select models or park the task when none are available.
+
+        Args:
+            role: Text or path value identifying the role.
+            count: Numeric value used for the count.
+
+        Returns:
+            Values returned by ``_select_models``, in the declared order.
+        """
         complexity = self.state.data.get("complexity") or "medium"
         models = self.router.select(
             role,
@@ -605,7 +776,11 @@ class Pipeline(
         return models
 
     def _git_diff(self) -> str:
-        """Return unstaged+staged diff, truncated for prompts."""
+        """Return unstaged+staged diff, truncated for prompts.
+
+        Returns:
+            Text returned by ``_git_diff``.
+        """
         result = self.sessions._run(["git", "diff", "HEAD"], capture=True)
         if result.returncode != 0 or not (result.stdout or "").strip():
             result = self.sessions._run(["git", "diff"], capture=True)
@@ -615,12 +790,25 @@ class Pipeline(
         return text
 
     def _verification_gate_failed(self) -> bool:
+        """Process gate failed.
+
+        Returns:
+            Whether verification gate failed meets the requested condition.
+        """
         result = self.state.data.get("verification_result")
         if not result:
             return False
         return not gate_passed(result)
 
     def _format_ci_failure_output(self, results: dict[str, Any]) -> str:
+        """Format ci failure output.
+
+        Args:
+            results: Key-value data used for the results.
+
+        Returns:
+            Text returned by ``_format_ci_failure_output``.
+        """
         parts: list[str] = []
         for check in CI_CHECKS:
             entry = results.get(check.name) or {}
@@ -632,7 +820,11 @@ class Pipeline(
         return "\n\n".join(parts) if parts else ""
 
     def _run_verification(self) -> dict[str, Any]:
-        """Run the canonical repository gate used by local and hosted CI."""
+        """Run the canonical repository gate used by local and hosted CI.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         results: dict[str, Any] = {}
         for check in CI_CHECKS:
             argv = check.argv

@@ -36,8 +36,8 @@ accounting, training, checkpoint recovery, and reporting.
 
 Use the Python environment matching the current machine architecture. For a
 focused change, run the directly affected test modules and required static
-checks. The repository’s [agent guide](../../AGENTS.md) and
-[verification rule](../../.agents/rules/ci-verification.md) define the current
+checks. The repository’s [agent guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/AGENTS.md) and
+[verification rule](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/ci-verification.md) define the current
 commit gate. Full-suite execution is reserved for the configured CI workflow.
 
 For a local change, use the focused test path that covers its contract, for

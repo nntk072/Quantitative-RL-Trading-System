@@ -1,0 +1,86 @@
+{
+  "artifact_report": "outputs/agent_state/trade_setup_checkpoint_migrations_20261031/migration_manifest.json",
+  "artifact_report_sha256": "4ba937043d0e380c999c7eaafe747145e053bee071952de5093b80167b592c63",
+  "baseline_branch": "main",
+  "baseline_commit": "5a23e6321653c45719dfb8fdb831e242ff8c3d78",
+  "checkpoints": [
+    {
+      "deterministic_action_equal_after_save_load": true,
+      "deterministic_setup_logits_equal": true,
+      "migrated_copy": "outputs/agent_state/trade_setup_checkpoint_migrations_20261031/attempt1/ppo_ckpt_1000000_steps.trade_setup.zip",
+      "migrated_sha256": "e8e35ed5f4962a80c6082cf5db0a6ff47b88ce8ce9199422ca34abff16a47694",
+      "old_contract_identifiers_remaining": [],
+      "source_artifact": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt1/rq_mtf_treatment_reasoning__seed42/20261031_131743_285849_rl_train_seed42_mtf_reasoning/model/ppo_ckpt_1000000_steps.zip",
+      "source_sha256": "afecff6926b2f6898451bc565e2a18cd9bf302851f1e5ef9f7f3b6b1e39bffa1",
+      "state_dict_equal_after_primary_label_rename": true,
+      "training_progress_unchanged": true
+    },
+    {
+      "deterministic_action_equal_after_save_load": true,
+      "deterministic_setup_logits_equal": true,
+      "migrated_copy": "outputs/agent_state/trade_setup_checkpoint_migrations_20261031/attempt1/ppo_latest.trade_setup.zip",
+      "migrated_sha256": "977151ef2aef4cb95b6169d92b9602c58d3b63b30eec66fdbad8497d4d80bf74",
+      "old_contract_identifiers_remaining": [],
+      "source_artifact": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt1/rq_mtf_treatment_reasoning__seed42/20261031_131743_285849_rl_train_seed42_mtf_reasoning/model/ppo_latest.zip",
+      "source_sha256": "024021555388855f2093b8a80f166eacd118a06e3252998880ac3effce9f4534",
+      "state_dict_equal_after_primary_label_rename": true,
+      "training_progress_unchanged": true
+    },
+    {
+      "deterministic_action_equal_after_save_load": true,
+      "deterministic_setup_logits_equal": true,
+      "migrated_copy": "outputs/agent_state/trade_setup_checkpoint_migrations_20261031/attempt2/ppo_best.trade_setup.zip",
+      "migrated_sha256": "94b3c87124711c9744dad02eb6b5e931a6f6bcc9f074e1538c99da04846b6ead",
+      "old_contract_identifiers_remaining": [],
+      "source_artifact": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt2/rq_mtf_treatment_reasoning__seed42/20261031_160620_717429_rl_train_seed42_mtf_reasoning/model/ppo_best.zip",
+      "source_sha256": "cebef5884c8eee45493d40a681ef800505948c9b6430eb295d8b290043ba14da",
+      "state_dict_equal_after_primary_label_rename": true,
+      "training_progress_unchanged": true
+    },
+    {
+      "deterministic_action_equal_after_save_load": true,
+      "deterministic_setup_logits_equal": true,
+      "migrated_copy": "outputs/agent_state/trade_setup_checkpoint_migrations_20261031/attempt2/ppo_ckpt_2000000_steps.trade_setup.zip",
+      "migrated_sha256": "093a30a4738d7ce6c1a0d319b5f27aae581c6c3e2a9426882bb3748f43d55798",
+      "old_contract_identifiers_remaining": [],
+      "source_artifact": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt2/rq_mtf_treatment_reasoning__seed42/20261031_160620_717429_rl_train_seed42_mtf_reasoning/model/ppo_ckpt_2000000_steps.zip",
+      "source_sha256": "847feb87dd9bfe7aef7a74bb2b66daf7c0c6df9cb18a52adb924217787e0bf34",
+      "state_dict_equal_after_primary_label_rename": true,
+      "training_progress_unchanged": true
+    },
+    {
+      "deterministic_action_equal_after_save_load": true,
+      "deterministic_setup_logits_equal": true,
+      "migrated_copy": "outputs/agent_state/trade_setup_checkpoint_migrations_20261031/attempt2/ppo_final.trade_setup.zip",
+      "migrated_sha256": "13f0c5f86803b5c94d0b19ef6dbde38771dc5d92d6cd915e064efe74a6f143dd",
+      "old_contract_identifiers_remaining": [],
+      "source_artifact": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt2/rq_mtf_treatment_reasoning__seed42/20261031_160620_717429_rl_train_seed42_mtf_reasoning/model/ppo_final.zip",
+      "source_sha256": "8b96423a7b3e868e76b21f45ab4aa269874af897d2651f85c8f94bb75f4c3e7e",
+      "state_dict_equal_after_primary_label_rename": true,
+      "training_progress_unchanged": true
+    },
+    {
+      "deterministic_action_equal_after_save_load": true,
+      "deterministic_setup_logits_equal": true,
+      "migrated_copy": "outputs/agent_state/trade_setup_checkpoint_migrations_20261031/attempt2/ppo_latest.trade_setup.zip",
+      "migrated_sha256": "2f174134ed7f102f8d5e52583b3de7729f1a4c43f6c78ca84456f59138b70970",
+      "old_contract_identifiers_remaining": [],
+      "source_artifact": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt2/rq_mtf_treatment_reasoning__seed42/20261031_160620_717429_rl_train_seed42_mtf_reasoning/model/ppo_latest.zip",
+      "source_sha256": "c7e2b4f0489da1d1a11c9b6558852652116db28d6a077d743357d7efe44ed551",
+      "state_dict_equal_after_primary_label_rename": true,
+      "training_progress_unchanged": true
+    }
+  ],
+  "date": "2026-11-01",
+  "parity_checks": [
+    "action and observation schema migration",
+    "state dictionary equality after primary-coordinate rename",
+    "selected category equality",
+    "deterministic action equality after save and reload",
+    "setup-logit equality",
+    "PPO training progress equality"
+  ],
+  "purpose": "Record metadata-only migration of six retained PPO checkpoints to the canonical trade-setup action and observation contracts.",
+  "schema_version": 1,
+  "source_artifacts_modified": false
+}

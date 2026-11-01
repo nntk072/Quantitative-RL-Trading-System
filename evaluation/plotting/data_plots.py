@@ -1,4 +1,4 @@
-"""Data and feature EDA charts for thesis figure packs."""
+"""Data and feature exploratory-analysis charts."""
 
 from __future__ import annotations
 
@@ -65,7 +65,16 @@ def plot_coverage_calendar(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Daily bar counts with NY vs full-day breakdown."""
+    """Daily bar counts with NY vs full-day breakdown.
+
+    Args:
+        bars: Market bars to process.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of daily bar counts with NY vs full-day breakdown.
+    """
     _apply_style()
     idx = pd.DatetimeIndex(bars.index)
     days = idx.normalize()
@@ -109,7 +118,16 @@ def plot_log_return_dist(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """M1 log-return histogram with normal overlay (fat-tail check)."""
+    """M1 log-return histogram with normal overlay (fat-tail check).
+
+    Args:
+        bars: Market bars to process.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of m1 log-return histogram with normal overlay (fat-tail check).
+    """
     _apply_style()
     close = bars["close"].astype(float)
     log_rets = np.log(close / close.shift(1))
@@ -139,13 +157,28 @@ def plot_log_return_dist(
 
 
 def _volume_series(df: pd.DataFrame) -> pd.Series | None:
-    """Tick-count activity; ignores all-zero CFD ``vol`` / ``volume``."""
+    """Tick-count activity; ignores all-zero CFD ``vol`` / ``volume``.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+
+    Returns:
+        Result of tick-count activity; ignores all-zero CFD ``vol`` / ``volume``.
+    """
     from market_data.transforms.activity import activity_series
 
     return activity_series(df)
 
 
 def _minute_to_hhmm(minute: float) -> str:
+    """Process to hhmm.
+
+    Args:
+        minute: Numeric value used for the minute.
+
+    Returns:
+        Text returned by ``_minute_to_hhmm``.
+    """
     m = int(minute) % (24 * 60)
     return f"{m // 60:02d}:{m % 60:02d}"
 
@@ -155,7 +188,16 @@ def plot_session_profile(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Mean range and volume by minute-of-day inside the NY window."""
+    """Mean range and volume by minute-of-day inside the NY window.
+
+    Args:
+        bars: Market bars to process.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of mean range and volume by minute-of-day inside the NY window.
+    """
     _apply_style()
     idx = pd.DatetimeIndex(bars.index)
     mask = ny_session_mask(idx)
@@ -200,7 +242,18 @@ def plot_split_overlay(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Close price with train/test split shading."""
+    """Close price with train/test split shading.
+
+    Args:
+        bars: Market bars to process.
+        train_end: Train end used by the operation described above.
+        test_start: Test start used by the operation described above.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of close price with train/test split shading.
+    """
     _apply_style()
     close = bars["close"].astype(float)
     # Downsample for readability on long histories.
@@ -251,7 +304,15 @@ def plot_split_overlay(
 
 
 def _select_hist_columns(numeric: pd.DataFrame, max_cols: int) -> list[str]:
-    """Curated continuous + flag columns present in ``numeric``."""
+    """Curated continuous + flag columns present in ``numeric``.
+
+    Args:
+        numeric: Tabular data used for the numeric.
+        max_cols: Numeric value used for the max cols.
+
+    Returns:
+        Values returned by ``_select_hist_columns``, in the declared order.
+    """
     cols: list[str] = []
     for name in _HIST_CONTINUOUS:
         if name in numeric.columns and numeric[name].notna().any():
@@ -270,7 +331,17 @@ def plot_feature_histograms(
     dpi: int = 150,
     max_cols: int = 12,
 ) -> Figure:
-    """Grid of histograms for curated observation feature columns (NY bars)."""
+    """Grid of histograms for curated observation feature columns (NY bars).
+
+    Args:
+        features: Feature values supplied to the operation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+        max_cols: Numeric value used for the max cols.
+
+    Returns:
+        Result of grid of histograms for curated observation feature columns (NY bars).
+    """
     _apply_style()
     idx = pd.DatetimeIndex(features.index)
     ny_mask = ny_session_mask(idx)
@@ -323,7 +394,15 @@ def plot_feature_histograms(
 
 
 def _signal_columns(features: pd.DataFrame, names: tuple[str, ...]) -> list[str]:
-    """Match exact names plus ``{TF}_``-prefixed variants present in features."""
+    """Match exact names plus ``{TF}_``-prefixed variants present in features.
+
+    Args:
+        features: Feature values supplied to the operation.
+        names: Items supplied for the names, in input order.
+
+    Returns:
+        Values returned by ``_signal_columns``, in the declared order.
+    """
     found: list[str] = []
     for name in names:
         if name in features.columns:
@@ -339,7 +418,16 @@ def plot_signal_counts(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Daily counts of PO3/FVG signals: events vs state flags in two panels."""
+    """Daily counts of PO3/FVG signals: events vs state flags in two panels.
+
+    Args:
+        features: Feature values supplied to the operation.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of daily counts of PO3/FVG signals: events vs state flags in two panels.
+    """
     _apply_style()
     event_cols = _signal_columns(features, _EVENT_SIGNAL_NAMES)
     state_cols = _signal_columns(features, _STATE_SIGNAL_NAMES)
@@ -347,6 +435,13 @@ def plot_signal_counts(
     days = pd.DatetimeIndex(features.index).normalize()
 
     def _draw(ax: Any, cols: list[str], title: str) -> None:
+        """Process the requested value.
+
+        Args:
+            ax: Ax used by the operation described above.
+            cols: Items supplied for the cols, in input order.
+            title: Text or path value identifying the title.
+        """
         if not cols:
             ax.text(
                 0.5,
@@ -386,7 +481,17 @@ def plot_signals_for_day(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """NY-session timeline of event/state flags for one calendar day."""
+    """NY-session timeline of event/state flags for one calendar day.
+
+    Args:
+        features: Feature values supplied to the operation.
+        day: Day used by the operation described above.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of nY-session timeline of event/state flags for one calendar day.
+    """
     _apply_style()
     idx = pd.DatetimeIndex(features.index)
     day_norm = pd.Timestamp(day).normalize()
@@ -431,7 +536,7 @@ def write_data_eda(
     dpi: int = 150,
     po3_sample: bool = True,
 ) -> Path:
-    """Write the thesis data/EDA figure pack under ``out_dir``.
+    """Write the data and feature figure pack under ``out_dir``.
 
     Args:
         out_dir: Destination folder (created if needed).
@@ -472,7 +577,14 @@ def write_data_eda(
 
 
 def _ny_session_days(bars: pd.DataFrame) -> list[pd.Timestamp]:
-    """Unique calendar days that have at least one NY-session bar."""
+    """Unique calendar days that have at least one NY-session bar.
+
+    Args:
+        bars: Market bars to process.
+
+    Returns:
+        Values returned by ``_ny_session_days``, in the declared order.
+    """
     idx = pd.DatetimeIndex(bars.index)
     mask = ny_session_mask(idx)
     if not mask.any():
@@ -482,7 +594,13 @@ def _ny_session_days(bars: pd.DataFrame) -> list[pd.Timestamp]:
 
 
 def _write_signals_by_day(features: pd.DataFrame, out_dir: Path, dpi: int) -> None:
-    """One NY-session signal timeline PNG per calendar day."""
+    """One NY-session signal timeline PNG per calendar day.
+
+    Args:
+        features: Feature values supplied to the operation.
+        out_dir: Text or path value identifying the out dir.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     for day in _ny_session_days(features):
         day_str = pd.Timestamp(day).strftime("%Y-%m-%d")
@@ -498,7 +616,16 @@ def _slice_ny_day(
     *,
     lookback_bars: int = 200,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Return (plot_bars for NY window, lookback_bars for signal detection)."""
+    """Return (plot_bars for NY window, lookback_bars for signal detection).
+
+    Args:
+        bars: Market bars to process.
+        day: Day used by the operation described above.
+        lookback_bars: Market bar or price data used for return (plot_bars for NY window, lookback_bars for signal detection).
+
+    Returns:
+        DataFrame returned by ``_slice_ny_day``.
+    """
     idx = pd.DatetimeIndex(bars.index)
     day_norm = pd.Timestamp(day).normalize()
     if idx.tz is not None and day_norm.tzinfo is None:
@@ -524,6 +651,14 @@ def _slice_calendar_day(
 
     Plotting shows every M1 bar on the broker calendar day so off-session FVGs
     remain visible. Session filtering for trading stays in the env/features.
+
+    Args:
+        bars: Market bars to process.
+        day: Day used by the operation described above.
+        lookback_bars: Market bar or price data used for return (full calendar-day bars, lookback+day spine for zone geometry).
+
+    Returns:
+        DataFrame returned by ``_slice_calendar_day``.
     """
     idx = pd.DatetimeIndex(bars.index)
     day_norm = pd.Timestamp(day).normalize()
@@ -545,7 +680,14 @@ def _write_po3_charts(
     out: Path,
     dpi: int,
 ) -> None:
-    """Overview sample + one PO3/FVG PNG per calendar day (full-day candles)."""
+    """Overview sample + one PO3/FVG PNG per calendar day (full-day candles).
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        out: Destination directory for generated output files.
+        dpi: Resolution of generated plots, in dots per inch.
+    """
     signal_cols = [
         c
         for c in features.columns
@@ -560,7 +702,7 @@ def _write_po3_charts(
         log.warning("PO3 charts skipped (import): %s", exc)
         return
 
-        # Still key off NY session days (thesis trading days), but draw the full day.
+        # Key off NY trading sessions while drawing each complete calendar day.
     days = _ny_session_days(bars)
     if not days:
         return
@@ -579,6 +721,12 @@ def _write_po3_charts(
     by_day.mkdir(parents=True, exist_ok=True)
 
     def _plot_day(day: pd.Timestamp, path: Path) -> None:
+        """Process day.
+
+        Args:
+            day: Day used by the operation described above.
+            path: Path to the input file or directory.
+        """
         plot_bars, lookback = _slice_calendar_day(bars, day)
         if plot_bars.empty:
             return

@@ -15,6 +15,8 @@ from .routing import (
 
 
 class PhaseTriageMixin(PipelineMixinBase):
+    """Classify task complexity and route the request to suitable roles."""
+
     def _phase_triage(self) -> None:
         """Phase 1: Triage the task."""
         click.echo("\n[1/10] TRIAGE")

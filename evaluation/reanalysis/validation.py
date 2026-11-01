@@ -11,7 +11,15 @@ from artifacts.identity import file_sha256
 def resolve_execution_seed(
     requested_seed: int | None, source_manifest: dict[str, Any]
 ) -> int | None:
-    """Use an explicit replay seed or the recorded training seed for fill jitter."""
+    """Use an explicit replay seed or the recorded training seed for fill jitter.
+
+    Args:
+        requested_seed: Requested seed used by the operation described above.
+        source_manifest: Key-value data used for the source manifest.
+
+    Returns:
+        Result of use an explicit replay seed or the recorded training seed for fill jitter.
+    """
     if requested_seed is not None:
         if requested_seed < 0:
             raise ValueError("evaluation seed must be non-negative")
@@ -30,7 +38,15 @@ def resolve_execution_seed(
 
 
 def validate_sequence_input_width(model: Any, expected_width: int) -> int:
-    """Require the checkpoint's sequence tensor width to match its feature schema."""
+    """Require the checkpoint's sequence tensor width to match its feature schema.
+
+    Args:
+        model: Model used for this operation.
+        expected_width: Number specifying the expected width for this operation.
+
+    Returns:
+        Numeric result returned by ``validate_sequence_input_width``.
+    """
     observation_spaces = getattr(getattr(model, "observation_space", None), "spaces", None)
     get_space = getattr(observation_spaces, "get", None)
     sequence_space = get_space("seq") if callable(get_space) else None
@@ -50,7 +66,17 @@ def validate_stop_candidate_schema(
     expected_schema: dict[str, Any],
     allow_legacy: bool,
 ) -> str:
-    """Reject checkpoint/config drift and label explicit latest-swing legacy use."""
+    """Reject checkpoint/config drift and label explicit latest-swing legacy use.
+
+    Args:
+        checkpoint_schema: Key-value data used for the checkpoint schema.
+        manifest_schema: Key-value data used for the manifest schema.
+        expected_schema: Key-value data used for the expected schema.
+        allow_legacy: Whether to enable or require the allow legacy.
+
+    Returns:
+        Text returned by ``validate_stop_candidate_schema``.
+    """
     if checkpoint_schema is None or manifest_schema is None:
         if not allow_legacy:
             raise ValueError(
@@ -82,7 +108,15 @@ def validate_stop_candidate_schema(
 
 
 def validate_checkpoint_manifest_hash(path: Path, manifest: dict[str, Any]) -> str:
-    """Verify the checkpoint is the exact artifact recorded by its run manifest."""
+    """Verify the checkpoint is the exact artifact recorded by its run manifest.
+
+    Args:
+        path: Path to the input file or directory.
+        manifest: Key-value data used for the manifest.
+
+    Returns:
+        Text returned by ``validate_checkpoint_manifest_hash``.
+    """
     checkpoint_record = manifest.get("checkpoint")
     expected_hash = checkpoint_record.get("sha256") if isinstance(checkpoint_record, dict) else None
     if expected_hash is None:

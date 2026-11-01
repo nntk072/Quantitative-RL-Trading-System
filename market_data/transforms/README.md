@@ -15,7 +15,7 @@ earlier observation.
 Changes require tests for timezone/DST, timeframe completion, missing rows,
 session boundaries, and chronological split inclusivity. See
 [market data](../README.md), [data flow](../../docs/architecture/runtime/data_and_features.md),
-and the [validation protocol](../../docs/thesis/validation_protocol.md).
+and the [validation protocol](../../docs/research/validation_protocol.md).
 
 ## UML module view
 

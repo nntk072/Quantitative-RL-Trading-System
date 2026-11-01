@@ -6,7 +6,9 @@ The framework supports historical research; it does not guarantee profitable tra
 
 ## Start here
 
+- [Documentation website](https://nntk072.github.io/Quantitative-RL-Trading-System/)
 - [Documentation index](docs/README.md)
+- [Python API reference](https://nntk072.github.io/Quantitative-RL-Trading-System/api/)
 - [System architecture](docs/architecture/README.md)
 - [Module guides](docs/modules/README.md)
 - [Concepts](docs/concepts/README.md)
@@ -45,7 +47,7 @@ uv run qrl-evaluate --help
 uv run qrl-experiment --help
 ```
 
-These command names are retained for compatibility during the project identity migration. Use `--help` before invoking a potentially long-running operation. For a reproducible workflow, start with the [training how-to](docs/how-to/run_training.md) and follow the repository's resource rules.
+Use `--help` before invoking a potentially long-running operation. For a reproducible workflow, start with the [training how-to](docs/how-to/run_training.md) and follow the repository's resource rules.
 
 ## Quality checks
 
@@ -58,3 +60,15 @@ For a scoped code change, run relevant quality checks. Before a commit, follow [
 ## Research limits
 
 Training reward, checkpoint creation, and throughput are engineering diagnostics. Economic claims require chronological evaluation with matched execution rules, trade and equity ledgers, risk outcomes, and appropriate uncertainty. Previously exposed test periods are exploratory unless a genuinely untouched period is documented.
+
+## License
+
+Original project source code and developer-authored documentation are available
+under the [MIT License](LICENSE). Market data, model artifacts, experiment
+evidence, and third-party dependencies may have separate terms; the project
+license does not grant additional rights to those materials.
+
+## Support and security
+
+See [support guidance](SUPPORT.md) for project help and [security policy](SECURITY.md)
+for private vulnerability reporting.

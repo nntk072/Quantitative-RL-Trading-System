@@ -1,4 +1,4 @@
-"""Smoke tests for data/EDA thesis charts."""
+"""Smoke tests for data/EDA trade_setup charts."""
 
 from __future__ import annotations
 

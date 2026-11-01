@@ -26,6 +26,12 @@ class SessionManager:
     """Manages tmux sessions for agent execution."""
 
     def __init__(self, workspace: Path, dry_run: bool = False):
+        """Initialize SessionManager and its owned state.
+
+        Args:
+            workspace: Workspace directory used for file and process operations.
+            dry_run: Whether to enable or require the dry run.
+        """
         self.workspace = workspace
         self.dry_run = dry_run
         self.active_sessions: dict[str, dict[str, Any]] = {}
@@ -37,6 +43,14 @@ class SessionManager:
 
         Format: ``orchestra-{role}-{provider}-{model}-{cli}[-{task_id}]-{ts}``
         so ``tmux ls`` and the Oasis GUI show role + model + CLI at a glance.
+
+        Args:
+            role: Text or path value identifying the role.
+            model: Model used for this operation.
+            task_id: Text or path value identifying the task id.
+
+        Returns:
+            Text returned by ``display_session_name``.
         """
         safe_model = model.name.replace("/", "-").replace(":", "-").replace(".", "-")
         parts = ["orchestra", role, model.provider, safe_model, model.cli]
@@ -52,7 +66,17 @@ class SessionManager:
         timeout: float | None = None,
         heartbeat: float = 0,
     ) -> subprocess.CompletedProcess[str]:
-        """Run a command as argv (never through a shell)."""
+        """Run a command as argv (never through a shell).
+
+        Args:
+            cmd: Items supplied for the cmd, in input order.
+            capture: Whether to enable or require the capture.
+            timeout: Maximum time to wait, in seconds.
+            heartbeat: Numeric value used for the heartbeat.
+
+        Returns:
+            Result of run a command as argv (never through a shell).
+        """
         if self.dry_run:
             print(f"[DRY RUN] {' '.join(cmd)}")
             return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
@@ -82,7 +106,16 @@ class SessionManager:
         timeout: float | None,
         heartbeat: float,
     ) -> subprocess.CompletedProcess[str]:
-        """Run ``cmd``, streaming stdout and printing a beat when it is silent."""
+        """Run ``cmd``, streaming stdout and printing a beat when it is silent.
+
+        Args:
+            cmd: Items supplied for the cmd, in input order.
+            timeout: Maximum time to wait, in seconds.
+            heartbeat: Numeric value used for the heartbeat.
+
+        Returns:
+            Result of run ``cmd``, streaming stdout and printing a beat when it is silent.
+        """
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -127,18 +160,34 @@ class SessionManager:
 
     @staticmethod
     def _kill_pg(proc: subprocess.Popen[str]) -> None:
+        """Process pg.
+
+        Args:
+            proc: Proc used by the operation described above.
+        """
         try:
             os.killpg(proc.pid, signal.SIGKILL)
         except (ProcessLookupError, PermissionError, OSError):
             proc.kill()
 
     def session_exists(self, name: str) -> bool:
-        """Check if a tmux session exists."""
+        """Check if a tmux session exists.
+
+        Args:
+            name: Name used to identify the requested file, artifact, or item.
+
+        Returns:
+            Whether session exists meets the requested condition.
+        """
         result = self._run(["tmux", "has-session", "-t", name], timeout=10)
         return result.returncode == 0
 
     def list_sessions(self) -> list[str]:
-        """List all tmux session names."""
+        """List all tmux session names.
+
+        Returns:
+            Values returned by ``list_sessions``, in the declared order.
+        """
         result = self._run(["tmux", "list-sessions", "-F", "#{session_name}"], timeout=10)
         if result.returncode != 0:
             return []
@@ -146,7 +195,15 @@ class SessionManager:
 
     @staticmethod
     def extract_session_id(cli: str, log_text: str) -> str | None:
-        """Best-effort native session id from agent output (Phase 5)."""
+        """Best-effort native session id from agent output (Phase 5).
+
+        Args:
+            cli: Text or path value identifying the cli.
+            log_text: Text or path value identifying the log text.
+
+        Returns:
+            Result of best-effort native session id from agent output (Phase 5).
+        """
         if cli in ("opencode", "kilo"):
             match = re.search(r'"sessionID"\s*:\s*"([^"]+)"', log_text)
             if match:
@@ -161,7 +218,16 @@ class SessionManager:
 
     @staticmethod
     def resolve_effort(model: Model, tier: str, role: str | None = None) -> str | None:
-        """Map task tier to CLI effort/variant for this model."""
+        """Map task tier to CLI effort/variant for this model.
+
+        Args:
+            model: Model used for this operation.
+            tier: Text or path value identifying the tier.
+            role: Role used by the operation described above.
+
+        Returns:
+            Result of map task tier to CLI effort/variant for this model.
+        """
         if not model.effort_flag:
             return None
         if model.effort_flag == "codex_reasoning":
@@ -175,7 +241,14 @@ class SessionManager:
 
     @staticmethod
     def build_command_env(model: Model) -> dict[str, str]:
-        """Extra environment variables for the agent subprocess."""
+        """Extra environment variables for the agent subprocess.
+
+        Args:
+            model: Model used for this operation.
+
+        Returns:
+            Mapping from ``str`` keys to ``str`` values.
+        """
         env: dict[str, str] = {}
         if model.cli == "vibe" and model.name:
             env["VIBE_ACTIVE_MODEL"] = model.vibe_model_env()
@@ -194,6 +267,16 @@ class SessionManager:
         When ``prompt_file`` is set it is reserved for CLIs that take a path
         flag; OpenCode/Kilo get flags first, then the prompt as the message
         (their ``--file`` option is a greedy array and must not precede text).
+
+        Args:
+            model: Model used for this operation.
+            prompt: Prompt submitted to the selected model.
+            prompt_file: Path or filename identifying the prompt.
+            effort: Effort used by the operation described above.
+            native_session_id: Native session id used by the operation described above.
+
+        Returns:
+            Values returned by ``build_command``, in the declared order.
         """
         if model.cli == "gemini":
             cmd = ["gemini", "-p", prompt]
@@ -249,6 +332,14 @@ class SessionManager:
         return cmd
 
     def _job_dir(self, session_name: str) -> Path:
+        """Process dir.
+
+        Args:
+            session_name: Text or path value identifying the session name.
+
+        Returns:
+            Path returned by ``_job_dir``.
+        """
         path = self.runs_dir / session_name
         path.mkdir(parents=True, exist_ok=True)
         return path
@@ -273,6 +364,20 @@ class SessionManager:
         When ``keep_alive`` is True, ``remain-on-exit`` is set before the runner
         starts so the pane stays visible after the agent exits. Completion is
         detected via the exit-code file / ``#{pane_dead}``, not shell liveness.
+
+        Args:
+            model: Model used for this operation.
+            role: Text or path value identifying the role.
+            prompt: Prompt submitted to the selected model.
+            session_name: Session name used by the operation described above.
+            task_id: Text or path value identifying the task id.
+            keep_alive: Whether to enable or require the keep alive.
+            effort: Effort used by the operation described above.
+            native_session_id: Native session id used by the operation described above.
+            tier: Text or path value identifying the tier.
+
+        Returns:
+            Text returned by ``spawn``.
         """
         if session_name is None:
             session_name = self.display_session_name(role, model, task_id)
@@ -357,7 +462,14 @@ class SessionManager:
         return session_name
 
     def exit_code(self, session_name: str) -> int | None:
-        """Return the agent exit code if the runner has finished, else None."""
+        """Return the agent exit code if the runner has finished, else None.
+
+        Args:
+            session_name: Text or path value identifying the session name.
+
+        Returns:
+            Result of return the agent exit code if the runner has finished, else None.
+        """
         info = self.active_sessions.get(session_name, {})
         path = Path(info["exit_file"]) if info.get("exit_file") else None
         if path is None:
@@ -372,6 +484,14 @@ class SessionManager:
             return 1
 
     def _session_cli(self, session_name: str) -> str:
+        """Process cli.
+
+        Args:
+            session_name: Text or path value identifying the session name.
+
+        Returns:
+            Text returned by ``_session_cli``.
+        """
         info = self.active_sessions.get(session_name, {})
         cli = info.get("cli")
         if isinstance(cli, str) and cli:
@@ -388,7 +508,15 @@ class SessionManager:
         return ""
 
     def read_output(self, session_name: str, lines: int = 0) -> str:
-        """Read agent output from the run log (tmux pane is fallback only)."""
+        """Read agent output from the run log (tmux pane is fallback only).
+
+        Args:
+            session_name: Text or path value identifying the session name.
+            lines: Numeric value used for the lines.
+
+        Returns:
+            Text returned by ``read_output``.
+        """
         info = self.active_sessions.get(session_name, {})
         log_path = Path(info["log_file"]) if info.get("log_file") else None
         if log_path is None:
@@ -412,7 +540,14 @@ class SessionManager:
         return ""
 
     def is_running(self, session_name: str) -> bool:
-        """True while the agent runner is still the pane process."""
+        """True while the agent runner is still the pane process.
+
+        Args:
+            session_name: Text or path value identifying the session name.
+
+        Returns:
+            Whether is running meets the requested condition.
+        """
         if self.exit_code(session_name) is not None:
             return False
         if not self.session_exists(session_name):
@@ -429,6 +564,14 @@ class SessionManager:
         return True
 
     def _log_path(self, session_name: str) -> Path | None:
+        """Process path.
+
+        Args:
+            session_name: Text or path value identifying the session name.
+
+        Returns:
+            Path returned by ``_log_path``.
+        """
         info = self.active_sessions.get(session_name, {})
         if info.get("log_file"):
             return Path(info["log_file"])
@@ -449,6 +592,15 @@ class SessionManager:
         permission prompt). Log growth resets the idle timer so a working
         agent is not killed mid-read. If the tmux session disappears without an
         exit file, this returns False (failure), not success.
+
+        Args:
+            session_name: Text or path value identifying the session name.
+            timeout: Maximum time to wait, in seconds.
+            poll_interval: Numeric value used for the poll interval.
+            idle_timeout: Numeric value used for the idle timeout.
+
+        Returns:
+            Whether wait for idle meets the requested condition.
         """
         start = time.time()
         last_change = start
@@ -514,6 +666,16 @@ class SessionManager:
         Closes the tmux session afterwards unless ``keep_alive`` and the run
         succeeded. Failures always tear the pane down so fallback cannot leave
         stuck terminals.
+
+        Args:
+            session_name: Text or path value identifying the session name.
+            timeout: Maximum time to wait, in seconds.
+            lines: Numeric value used for the lines.
+            idle_timeout: Numeric value used for the idle timeout.
+            keep_alive: Whether to enable or require the keep alive.
+
+        Returns:
+            Text returned by ``collect``.
         """
         succeeded = False
         try:
@@ -544,7 +706,11 @@ class SessionManager:
                 self.kill(session_name)
 
     def kill(self, session_name: str) -> None:
-        """Tear down the tmux session and the agent_runner process tree."""
+        """Tear down the tmux session and the agent_runner process tree.
+
+        Args:
+            session_name: Text or path value identifying the session name.
+        """
         self._run(["tmux", "kill-session", "-t", session_name], timeout=10)
         pid_path = self.runs_dir / session_name / "pid"
         if pid_path.exists():
@@ -566,7 +732,16 @@ class SessionManager:
         task_id: str | None = None,
         role: str | None = None,
     ) -> int:
-        """Kill orchestra tmux sessions. Optionally limit to a task and/or role."""
+        """Kill orchestra tmux sessions. Optionally limit to a task and/or role.
+
+        Args:
+            prefix: Text or path value identifying the prefix.
+            task_id: Task id used by the operation described above.
+            role: Role used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``cleanup``.
+        """
         start = f"orchestra-{role}-" if role else prefix
         killed = 0
         for name in self.list_sessions():

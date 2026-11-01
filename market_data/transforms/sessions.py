@@ -32,6 +32,14 @@ _NY_END_DEFAULT = "23:00"
 
 
 def _hhmm(value: str) -> pd.Timestamp:
+    """Process the requested value.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Result of process the requested value.
+    """
     return pd.Timestamp(f"2000-01-01 {value}")
 
 
@@ -46,6 +54,9 @@ def get_session(
         timestamp: Timestamp to classify (naive timestamps are localized to ``tz``).
         tz: Broker timezone used when ``timestamp`` is naive.
         ny_end: Inclusive NY session end as HH:MM (default 23:00).
+
+    Returns:
+        Result of return the broker-tz session label for a timestamp.
     """
     if isinstance(timestamp, str):
         ts = pd.Timestamp(timestamp)
@@ -74,7 +85,16 @@ def ny_session_mask(
     start: str = "16:30",
     end: str = "23:00",
 ) -> pd.Series:
-    """Boolean mask of bars whose clock time falls in the tradable NY window."""
+    """Boolean mask of bars whose clock time falls in the tradable NY window.
+
+    Args:
+        index: Position or label identifying the requested item.
+        start: Text or path value identifying the start.
+        end: Text or path value identifying the end.
+
+    Returns:
+        Result of boolean mask of bars whose clock time falls in the tradable NY window.
+    """
     t = index.time
     start_t = _hhmm(start).time()
     end_t = _hhmm(end).time()
@@ -86,7 +106,16 @@ def add_session_labels(
     tz: str = "Etc/GMT-3",
     ny_end: str = _NY_END_DEFAULT,
 ) -> pd.DataFrame:
-    """Add a ``session`` column (asia/london/ny/closed) using :func:`get_session`."""
+    """Add a ``session`` column (asia/london/ny/closed) using :func:`get_session`.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        tz: Text or path value identifying the tz.
+        ny_end: Text or path value identifying the ny end.
+
+    Returns:
+        DataFrame returned by ``add_session_labels``.
+    """
     df = df.copy()
     index = cast(pd.DatetimeIndex, df.index)
     if index.tz is None:
@@ -115,6 +144,14 @@ def filter_session(
     """Keep only bars inside the NY tradable window.
 
     This is an eligibility-mask helper. Do not apply it to the feature dataset.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        start: Text or path value identifying the start.
+        end: Text or path value identifying the end.
+
+    Returns:
+        DataFrame returned by ``filter_session``.
     """
     df = df.copy()
     index = cast(pd.DatetimeIndex, df.index)
@@ -123,7 +160,14 @@ def filter_session(
 
 
 def add_session_id(df: pd.DataFrame) -> pd.DataFrame:
-    """Add a ``session_id`` integer column: unique per calendar date."""
+    """Add a ``session_id`` integer column: unique per calendar date.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+
+    Returns:
+        DataFrame returned by ``add_session_id``.
+    """
     df = df.copy()
     dates = cast(pd.DatetimeIndex, df.index).normalize()
     unique_dates = sorted(set(dates))

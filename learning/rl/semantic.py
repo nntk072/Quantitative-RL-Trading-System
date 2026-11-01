@@ -12,7 +12,14 @@ from learning.rl.ppo import ClampedStdMultiInputPolicy
 
 
 def semantic_action_groups(coordinates: Sequence[str]) -> dict[str, tuple[int, ...]]:
-    """Map the stable action coordinate names into four decision families."""
+    """Map the stable action coordinate names into four decision families.
+
+    Args:
+        coordinates: Items supplied for the coordinates, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``tuple[int, ...]`` values.
+    """
     groups: dict[str, list[int]] = {
         "entry": [],
         "risk_sl": [],
@@ -53,6 +60,13 @@ class SemanticActorHeads(nn.Module):
         coordinates: Sequence[str],
         hidden_dim: int = 64,
     ) -> None:
+        """Initialize SemanticActorHeads and its owned state.
+
+        Args:
+            latent_dim: Number of dimensions in the learned latent representation.
+            coordinates: Items supplied for the coordinates, in input order.
+            hidden_dim: Numeric value used for the hidden dim.
+        """
         super().__init__()
         self.coordinates = tuple(str(value) for value in coordinates)
         self.groups = semantic_action_groups(self.coordinates)
@@ -69,6 +83,7 @@ class SemanticActorHeads(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
+        """Initialize each semantic head and its low-gain action output layer."""
         for module in self.heads.values():
             if not isinstance(module, nn.Sequential):
                 raise TypeError("semantic actor head must be a sequential network")
@@ -83,6 +98,14 @@ class SemanticActorHeads(nn.Module):
             nn.init.zeros_(final.bias)
 
     def forward(self, latent: torch.Tensor) -> torch.Tensor:
+        """Write decision-family head outputs into configured Box coordinates.
+
+        Args:
+            latent: Actor features with shape ``[batch, latent_dim]``.
+
+        Returns:
+            Action means with shape ``[batch, number_of_coordinates]``.
+        """
         output = latent.new_zeros((latent.shape[0], len(self.coordinates)))
         for name, indices in self.groups.items():
             values = self.heads[name](latent)
@@ -101,6 +124,14 @@ class SemanticClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         semantic_head_width: int = 64,
         **kwargs: Any,
     ) -> None:
+        """Initialize SemanticClampedStdMultiInputPolicy and its owned state.
+
+        Args:
+            *args: Parsed command-line arguments for this operation.
+            semantic_action_coordinates: Items supplied for the semantic action coordinates, in input order.
+            semantic_head_width: Number specifying the semantic head width for this operation.
+            **kwargs: Kwargs used by the operation described above.
+        """
         self.semantic_action_coordinates = tuple(
             str(value) for value in semantic_action_coordinates
         )
@@ -110,6 +141,11 @@ class SemanticClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         super().__init__(*args, **kwargs)
 
     def _build(self, lr_schedule: Any) -> None:
+        """Build SemanticClampedStdMultiInputPolicy.
+
+        Args:
+            lr_schedule: Lr schedule used by the operation described above.
+        """
         super()._build(lr_schedule)
         if not isinstance(self.action_net, nn.Linear):
             raise TypeError("semantic actor heads currently require a diagonal Gaussian Box policy")
@@ -133,6 +169,11 @@ class SemanticClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         )
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
+        """Return constructor parameters.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         data = super()._get_constructor_parameters()
         data.update(
             semantic_action_coordinates=self.semantic_action_coordinates,

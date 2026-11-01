@@ -1,45 +1,66 @@
 from __future__ import annotations
 
-import decisioning.thesis as legacy
-import decisioning.trade_setup as current
+import pytest
+
+from decisioning.trade_setup import (
+    NO_TRADE_ID,
+    TRADE_SETUP_CANDIDATES,
+    TRADE_SETUP_CATEGORY_COUNT,
+    build_trade_setup_action_schema,
+    trade_setup_candidate,
+    trade_setup_candidate_id,
+    trade_setup_center,
+    trade_setup_id_from_box,
+    trade_setup_observation_schema,
+)
 
 
-def test_canonical_and_legacy_catalogs_preserve_ids_and_meaning() -> None:
-    assert current.TRADE_SETUP_CATEGORY_COUNT == 109
-    assert current.TRADE_SETUP_CANDIDATES[0].is_no_trade
-    assert current.TRADE_SETUP_CANDIDATES == legacy.THESIS_CANDIDATES
-    for candidate_id, candidate in enumerate(current.TRADE_SETUP_CANDIDATES):
+def test_candidate_ids_and_semantics_round_trip_for_the_full_catalog() -> None:
+    assert TRADE_SETUP_CATEGORY_COUNT == len(TRADE_SETUP_CANDIDATES) == 109
+    assert trade_setup_candidate(NO_TRADE_ID).is_no_trade
+
+    for candidate_id, candidate in enumerate(TRADE_SETUP_CANDIDATES):
         assert candidate.candidate_id == candidate_id
-        assert legacy.thesis_candidate(candidate_id) == candidate
-        assert legacy.ThesisCandidate is current.TradeSetupCandidate
+        assert trade_setup_id_from_box(trade_setup_center(candidate_id)) == candidate_id
+        if candidate.is_no_trade:
+            continue
+        assert candidate.idea is not None
+        assert candidate.setup_timeframe is not None
+        assert (
+            trade_setup_candidate_id(candidate.idea, candidate.setup_timeframe, candidate.direction)
+            == candidate_id
+        )
 
 
-def test_action_and_observation_wire_schemas_remain_compatible() -> None:
-    current_action = current.build_trade_setup_action_schema(
+@pytest.mark.parametrize("value", [-1.0001, 1.0001, float("nan"), float("inf")])
+def test_box_decoder_rejects_values_outside_its_finite_normalized_domain(value: float) -> None:
+    with pytest.raises(ValueError):
+        trade_setup_id_from_box(value)
+
+
+def test_action_and_observation_schemas_use_canonical_coordinates() -> None:
+    action_schema = build_trade_setup_action_schema(
         has_sl_mode=True, has_tp_mode=True, has_multi_tp=True, has_simplex=True
     )
-    legacy_action = legacy.build_thesis_action_schema(
-        has_sl_mode=True, has_tp_mode=True, has_multi_tp=True, has_simplex=True
+    assert action_schema.names == (
+        "trade_setup",
+        "stop",
+        "risk",
+        "tp1_sel",
+        "tp2_sel",
+        "tp3_sel",
+        "sl_mode",
+        "tp_mode",
+        "z1",
+        "z2",
+        "exit",
     )
-    assert current_action.width == legacy_action.width
-    assert current_action.names != legacy_action.names
-    assert current_action.to_dict()["kind"] == "trade_setup_overlay"
-    assert current_action.to_dict()["trade_setup_candidate_schema_version"] == (
-        "trade-setup-candidate-v1"
-    )
-    assert legacy_action.to_dict()["kind"] == "thesis_overlay"
-    assert legacy_action.to_dict()["thesis_candidate_schema_version"] == "thesis-candidate-v1"
-    assert current.trade_setup_observation_schema()["mask_key"] == "trade_setup_mask"
-    assert legacy.thesis_observation_schema()["mask_key"] == "thesis_mask"
-    assert (
-        current.translate_legacy_thesis_observation_schema(legacy.thesis_observation_schema())
-        == current.trade_setup_observation_schema()
-    )
+    assert action_schema.indices["trade_setup"] == 0
+    assert action_schema.to_dict()["kind"] == "trade_setup_overlay"
+    assert action_schema.to_dict()["has_trade_setup"] is True
+    assert trade_setup_observation_schema()["mask_key"] == "trade_setup_mask"
 
 
-def test_candidate_box_encoding_matches_legacy_api() -> None:
-    for candidate_id in (0, 1, 17, 54, 108):
-        box_value = current.trade_setup_center(candidate_id)
-        assert box_value == legacy.thesis_center(candidate_id)
-        assert current.trade_setup_id_from_box(box_value) == candidate_id
-        assert legacy.thesis_id_from_box(box_value) == candidate_id
+def test_simplex_action_requires_multi_target_layout() -> None:
+    with pytest.raises(ValueError, match="simplex fractions require multi-TP"):
+        build_trade_setup_action_schema(has_simplex=True)

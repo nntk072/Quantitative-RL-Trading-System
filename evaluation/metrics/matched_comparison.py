@@ -52,6 +52,19 @@ def compare_matched_returns(
     of a new untouched OOS evaluation. When an intervention is declared, its
     provenance field must be one of the supported design dimensions and must
     differ between arms; every other required field still has to match.
+
+    Args:
+        treatment: Tabular data used for the treatment.
+        control: Tabular data used for the control.
+        treatment_provenance: Key-value data used for the treatment provenance.
+        control_provenance: Key-value data used for the control provenance.
+        intervention_field: Intervention field used by the operation described above.
+        n_boot: Numeric value used for the n boot.
+        level: Numeric value used for the level.
+        rng_seed: Numeric value used for the rng seed.
+
+    Returns:
+        Result of paired mean return difference only when the declared conditions match.
     """
     if intervention_field is not None and intervention_field not in INTERVENTION_FIELDS:
         raise ValueError(f"Unsupported comparison intervention field: {intervention_field}")

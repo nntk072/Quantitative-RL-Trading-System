@@ -11,6 +11,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class MarketSourceInitializationMixin(RuntimeMixinBase):
+    """Select and validate the frame- or bundle-backed market input."""
+
     def _initialize_market_source(
         self,
         bars: pd.DataFrame | None,
@@ -18,6 +20,14 @@ class MarketSourceInitializationMixin(RuntimeMixinBase):
         bundle_data: Any | None,
         strict_research_eligibility: bool,
     ) -> None:
+        """Initialize market source.
+
+        Args:
+            bars: Market bars to process.
+            features: Feature values supplied to the operation.
+            bundle_data: Bundle data used by the operation described above.
+            strict_research_eligibility: Whether to enable or require the strict research eligibility.
+        """
         self.bars: pd.DataFrame = cast(pd.DataFrame, bars)
         self.features: pd.DataFrame = cast(pd.DataFrame, features)
         self._bundle_arrays: dict[str, np.ndarray[Any, Any]] | None = (

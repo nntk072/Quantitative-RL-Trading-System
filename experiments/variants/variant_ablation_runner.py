@@ -83,6 +83,17 @@ def evaluate_oos(
     Returns the report plus the raw env artifacts (trade log, entry
     diagnostics, FSM lifecycle) so the caller can write per-seed full
     artifacts for debugging without re-running the episode.
+
+    Args:
+        model: Model used for this operation.
+        algo: Text or path value identifying the algo.
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        cfg: Run configuration used by this operation.
+        reward: Text or path value identifying the reward.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     env = make_env(bars, features, cfg, algo=algo, reward=reward, episodic=False)
     metrics = run_episode(
@@ -117,7 +128,25 @@ def train_and_score_variant(
     out_dir: str,
     name: str,
 ) -> dict[str, Any]:
-    """Train one seed of a variant and return the OOS report (+ metadata)."""
+    """Train one seed of a variant and return the OOS report (+ metadata).
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        base_cfg: Base cfg used by the operation described above.
+        variant: Key-value data used for the variant.
+        defaults: Key-value data used for the defaults.
+        steps: Number of environment or optimization steps to run.
+        seed: Random seed used to make sampling reproducible.
+        reward: Text or path value identifying the reward.
+        train_end: Text or path value identifying the train end.
+        test_start: Text or path value identifying the test start.
+        out_dir: Text or path value identifying the out dir.
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     algo = str(variant.get("algo", defaults.get("algo", "ppo")))
     arch = str(variant.get("arch", defaults.get("arch", "gru")))
     use_vae = bool(int(variant.get("use_vae", defaults.get("use_vae", 0))))
@@ -217,7 +246,14 @@ def train_and_score_variant(
 
 
 def _flatten_report_metrics(report: dict[str, Any]) -> dict[str, Any]:
-    """Lift ``extras`` scalar keys (e.g. ``pnl_dist_*``) to the top level."""
+    """Lift ``extras`` scalar keys (e.g. ``pnl_dist_*``) to the top level.
+
+    Args:
+        report: Key-value data used for the report.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     flat = dict(report)
     extras = report.get("extras")
     if isinstance(extras, dict):
@@ -228,7 +264,14 @@ def _flatten_report_metrics(report: dict[str, Any]) -> dict[str, Any]:
 
 
 def _average_seed_reports(seed_reports: list[dict[str, Any]]) -> dict[str, Any]:
-    """Mean numeric metrics over successful seed reports."""
+    """Mean numeric metrics over successful seed reports.
+
+    Args:
+        seed_reports: Items supplied for the seed reports, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     ok = [_flatten_report_metrics(r) for r in seed_reports if r.get("status") == "ok"]
     if not ok:
         return {"status": "all_skipped", "n_ok": 0}
@@ -249,7 +292,14 @@ def _average_seed_reports(seed_reports: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def load_experiments(path: Path) -> dict[str, Any]:
-    """Load the experiments YAML as a plain dict."""
+    """Load the experiments YAML as a plain dict.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     raw = yaml.safe_load(path.read_text())
     if not isinstance(raw, dict):
         raise ValueError(f"expected mapping in {path}")
@@ -257,7 +307,11 @@ def load_experiments(path: Path) -> dict[str, Any]:
 
 
 def run_variant_ablation(request: VariantAblationRequest) -> None:
-    """Train and score selected variants, writing one JSON report per variant."""
+    """Train and score selected variants, writing one JSON report per variant.
+
+    Args:
+        request: Request used by the operation described above.
+    """
     print(
         "WARNING: this legacy ablation workflow shares one features CSV across variants; "
         "do not use it as a matched qrl-experiment runner."

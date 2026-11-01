@@ -1,9 +1,8 @@
 # Trade-setup candidate catalog
 
 This page defines the ordered categorical candidates used by the
-setup-conditioned policy. “Trade setup” is the reader-facing concept; the
-serialized implementation currently retains `thesis*` names for checkpoint
-compatibility.
+setup-conditioned policy. The identifiers, category order, and eligibility
+mask are serialized policy contracts.
 
 ## Candidate dimensions
 
@@ -68,16 +67,15 @@ category ordering, and mask semantics unchanged for the legacy schema.
 
 | Domain concept | Current serialized identifier |
 |---|---|
-| Candidate catalog schema | `thesis-candidate-v1` |
-| Observation schema | `thesis-observation-v1` |
-| Mask key | `thesis_mask` |
-| Action schema | `thesis-overlay-action-v1` |
-| Action coordinate | `thesis` |
+| Candidate catalog schema | `trade-setup-candidate-v1` |
+| Observation schema | `trade-setup-observation-v1` |
+| Mask key | `trade_setup_mask` |
+| Action schema | `trade-setup-overlay-action-v1` |
+| Action coordinate | `trade_setup` |
 
-These names are preserved because checkpoints and historical manifests may
-contain them. A canonical wire rename requires a versioned migration and
-parity tests over all 109 IDs, masks, Box centers/decoding, no-trade behavior,
-optional action layouts, save/load, and deterministic inference. See
+The category identifiers and ordering are protected by parity tests over all
+109 IDs, masks, Box centers/decoding, no-trade behavior, optional action
+layouts, save/load, and deterministic inference. See
 [checkpoint compatibility](checkpoint_compatibility.md).
 
 ## Ownership
@@ -87,5 +85,5 @@ eligibility comes from feature context; the policy masks the distribution; the
 environment still validates execution and account risk. An eligible category
 does not guarantee a fill. See [trade setups](../concepts/trade_setups.md) for
 the domain explanation and
-[`decisioning/README.md`](../../decisioning/README.md) for the local contract
+[decisioning package guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/decisioning/README.md) for the local contract
 guide.

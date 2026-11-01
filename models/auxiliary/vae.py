@@ -29,20 +29,13 @@ class VAEEncoder(nn.Module):
     Uses 1D CNN layers to extract features from the sequence and produce
     mean and log-variance for the latent distribution.
 
-    Parameters
-    ----------
-    seq_len : int
-        Length of the input sequence (number of 5-minute bars)
-    n_features : int
-        Number of features per bar (OHLCV = 5)
-    latent_dim : int
-        Dimension of the latent space (default: 16)
-    channels : tuple[int, ...]
-        Number of channels for each CNN layer
-    kernel_size : int
-        Kernel size for CNN layers
-    stride : int
-        Stride for CNN layers
+    Args:
+        seq_len (int): Length of the input sequence (number of 5-minute bars)
+        n_features (int): Number of features per bar (OHLCV = 5)
+        latent_dim (int): Dimension of the latent space (default: 16)
+        channels (tuple[int, ...]): Number of channels for each CNN layer
+        kernel_size (int): Kernel size for CNN layers
+        stride (int): Stride for CNN layers
     """
 
     def __init__(
@@ -54,6 +47,16 @@ class VAEEncoder(nn.Module):
         kernel_size: int = 3,
         stride: int = 2,
     ) -> None:
+        """Initialize VAEEncoder and its owned state.
+
+        Args:
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            stride: Numeric value used for the stride.
+        """
         super().__init__()
         self.seq_len = seq_len
         self.n_features = n_features
@@ -95,7 +98,18 @@ class VAEEncoder(nn.Module):
         kernel_size: int,
         stride: int,
     ) -> int:
-        """Calculate the flattened size after all CNN layers."""
+        """Calculate the flattened size after all CNN layers.
+
+        Args:
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            stride: Numeric value used for the stride.
+
+        Returns:
+            Numeric result returned by ``_calculate_flattened_size``.
+        """
         current_len = seq_len
         for _ in channels:
             # Simplified: assume padding maintains length for odd kernel sizes
@@ -105,17 +119,12 @@ class VAEEncoder(nn.Module):
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Forward pass through the encoder.
 
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input tensor of shape (batch_size, seq_len, n_features)
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, seq_len, n_features)
 
-        Returns
-        -------
-        mu : torch.Tensor
-            Mean of the latent distribution, shape (batch_size, latent_dim)
-        log_var : torch.Tensor
-            Log-variance of the latent distribution, shape (batch_size, latent_dim)
+        Returns:
+            torch.Tensor: Mean of the latent distribution, shape (batch_size, latent_dim)
+            torch.Tensor: Log-variance of the latent distribution, shape (batch_size, latent_dim)
         """
         # x shape: [B, T, F] -> [B, F, T] for CNN
         x = x.transpose(1, 2)
@@ -139,20 +148,13 @@ class VAEDecoder(nn.Module):
     Uses transposed 1D CNN layers to upsample the latent vector back to
     the original sequence length.
 
-    Parameters
-    ----------
-    seq_len : int
-        Length of the output sequence (number of 5-minute bars)
-    n_features : int
-        Number of features per bar (OHLCV = 5)
-    latent_dim : int
-        Dimension of the latent space (default: 16)
-    channels : tuple[int, ...]
-        Number of channels for each CNN layer (in reverse order of encoder)
-    kernel_size : int
-        Kernel size for CNN layers
-    stride : int
-        Stride for CNN layers
+    Args:
+        seq_len (int): Length of the output sequence (number of 5-minute bars)
+        n_features (int): Number of features per bar (OHLCV = 5)
+        latent_dim (int): Dimension of the latent space (default: 16)
+        channels (tuple[int, ...]): Number of channels for each CNN layer (in reverse order of encoder)
+        kernel_size (int): Kernel size for CNN layers
+        stride (int): Stride for CNN layers
     """
 
     def __init__(
@@ -164,6 +166,16 @@ class VAEDecoder(nn.Module):
         kernel_size: int = 3,
         stride: int = 2,
     ) -> None:
+        """Initialize VAEDecoder and its owned state.
+
+        Args:
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            stride: Numeric value used for the stride.
+        """
         super().__init__()
         self.seq_len = seq_len
         self.n_features = n_features
@@ -206,15 +218,11 @@ class VAEDecoder(nn.Module):
     def forward(self, z: torch.Tensor) -> torch.Tensor:
         """Forward pass through the decoder.
 
-        Parameters
-        ----------
-        z : torch.Tensor
-            Latent vector of shape (batch_size, latent_dim)
+        Args:
+            z (torch.Tensor): Latent vector of shape (batch_size, latent_dim)
 
-        Returns
-        -------
-        x_recon : torch.Tensor
-            Reconstructed sequence of shape (batch_size, seq_len, n_features)
+        Returns:
+            torch.Tensor: Reconstructed sequence of shape (batch_size, seq_len, n_features)
         """
         # Expand latent to CNN input size
         h = self.fc(z)  # [B, C * T']
@@ -252,22 +260,14 @@ class VAE(nn.Module):
     After training, the encoder is frozen and used as a feature extractor
     for the RL agent.
 
-    Parameters
-    ----------
-    seq_len : int
-        Length of the sequence (number of 5-minute bars)
-    n_features : int
-        Number of features per bar (OHLCV = 5)
-    latent_dim : int
-        Dimension of the latent space (default: 16)
-    encoder_channels : tuple[int, ...]
-        Channels for encoder CNN layers
-    decoder_channels : tuple[int, ...]
-        Channels for decoder CNN layers
-    kernel_size : int
-        Kernel size for CNN layers
-    stride : int
-        Stride for CNN layers
+    Args:
+        seq_len (int): Length of the sequence (number of 5-minute bars)
+        n_features (int): Number of features per bar (OHLCV = 5)
+        latent_dim (int): Dimension of the latent space (default: 16)
+        encoder_channels (tuple[int, ...]): Channels for encoder CNN layers
+        decoder_channels (tuple[int, ...]): Channels for decoder CNN layers
+        kernel_size (int): Kernel size for CNN layers
+        stride (int): Stride for CNN layers
     """
 
     def __init__(
@@ -280,6 +280,17 @@ class VAE(nn.Module):
         kernel_size: int = 3,
         stride: int = 2,
     ) -> None:
+        """Initialize VAE and its owned state.
+
+        Args:
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            encoder_channels: Items supplied for the encoder channels, in input order.
+            decoder_channels: Items supplied for the decoder channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            stride: Numeric value used for the stride.
+        """
         super().__init__()
         self.encoder = VAEEncoder(
             seq_len=seq_len,
@@ -301,17 +312,12 @@ class VAE(nn.Module):
     def encode(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Encode input sequence to latent distribution parameters.
 
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input sequence of shape (batch_size, seq_len, n_features)
+        Args:
+            x (torch.Tensor): Input sequence of shape (batch_size, seq_len, n_features)
 
-        Returns
-        -------
-        mu : torch.Tensor
-            Mean of latent distribution, shape (batch_size, latent_dim)
-        log_var : torch.Tensor
-            Log-variance of latent distribution, shape (batch_size, latent_dim)
+        Returns:
+            torch.Tensor: Mean of latent distribution, shape (batch_size, latent_dim)
+            torch.Tensor: Log-variance of latent distribution, shape (batch_size, latent_dim)
         """
         mu: torch.Tensor
         log_var: torch.Tensor
@@ -321,15 +327,11 @@ class VAE(nn.Module):
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         """Decode latent vector to reconstructed sequence.
 
-        Parameters
-        ----------
-        z : torch.Tensor
-            Latent vector of shape (batch_size, latent_dim)
+        Args:
+            z (torch.Tensor): Latent vector of shape (batch_size, latent_dim)
 
-        Returns
-        -------
-        x_recon : torch.Tensor
-            Reconstructed sequence of shape (batch_size, seq_len, n_features)
+        Returns:
+            torch.Tensor: Reconstructed sequence of shape (batch_size, seq_len, n_features)
         """
         x_recon: torch.Tensor = self.decoder(z)
         return x_recon
@@ -337,17 +339,12 @@ class VAE(nn.Module):
     def reparameterize(self, mu: torch.Tensor, log_var: torch.Tensor) -> torch.Tensor:
         """Reparameterization trick for sampling from latent distribution.
 
-        Parameters
-        ----------
-        mu : torch.Tensor
-            Mean of latent distribution, shape (batch_size, latent_dim)
-        log_var : torch.Tensor
-            Log-variance of latent distribution, shape (batch_size, latent_dim)
+        Args:
+            mu (torch.Tensor): Mean of latent distribution, shape (batch_size, latent_dim)
+            log_var (torch.Tensor): Log-variance of latent distribution, shape (batch_size, latent_dim)
 
-        Returns
-        -------
-        z : torch.Tensor
-            Sampled latent vector, shape (batch_size, latent_dim)
+        Returns:
+            torch.Tensor: Sampled latent vector, shape (batch_size, latent_dim)
         """
         std = torch.exp(0.5 * log_var)
         eps = torch.randn_like(std)
@@ -356,19 +353,13 @@ class VAE(nn.Module):
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Forward pass through VAE.
 
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input sequence of shape (batch_size, seq_len, n_features)
+        Args:
+            x (torch.Tensor): Input sequence of shape (batch_size, seq_len, n_features)
 
-        Returns
-        -------
-        x_recon : torch.Tensor
-            Reconstructed sequence, shape (batch_size, seq_len, n_features)
-        mu : torch.Tensor
-            Mean of latent distribution, shape (batch_size, latent_dim)
-        log_var : torch.Tensor
-            Log-variance of latent distribution, shape (batch_size, latent_dim)
+        Returns:
+            torch.Tensor: Reconstructed sequence, shape (batch_size, seq_len, n_features)
+            torch.Tensor: Mean of latent distribution, shape (batch_size, latent_dim)
+            torch.Tensor: Log-variance of latent distribution, shape (batch_size, latent_dim)
         """
         mu: torch.Tensor
         log_var: torch.Tensor

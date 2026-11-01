@@ -16,7 +16,13 @@ _GREEN = "#2e7d32"
 def draw_order_levels_mpl(
     ax: Any, levels: OrderLevels, stop_updates: pd.DataFrame | None = None
 ) -> None:
-    """Light SL/TP fills, the entry dash, candle marks, and offset arrows."""
+    """Light SL/TP fills, the entry dash, candle marks, and offset arrows.
+
+    Args:
+        ax: Ax used by the operation described above.
+        levels: Levels used by the operation described above.
+        stop_updates: Tabular data used for the stop updates.
+    """
     updates = pd.DataFrame() if stop_updates is None else stop_updates.copy()
     if not updates.empty:
         updates = updates.loc[updates["type"].eq("sl_update")].copy()
@@ -232,7 +238,17 @@ def _arrow(
     offset: float,
     label: str,
 ) -> None:
-    """Triangle whose tip sits on ``price``, a little off the candle."""
+    """Triangle whose tip sits on ``price``, a little off the candle.
+
+    Args:
+        ax: Ax used by the operation described above.
+        when: When used by the operation described above.
+        price: Numeric value used for the price.
+        point_up: Whether to enable or require the point up.
+        color: Text or path value identifying the color.
+        offset: Numeric value used for the offset.
+        label: Text or path value identifying the label.
+    """
     text_y = price - offset if point_up else price + offset
     ax.annotate(
         "",
@@ -245,7 +261,12 @@ def _arrow(
 
 
 def draw_order_levels_plotly(fig: Any, levels: OrderLevels) -> None:
-    """Plotly twin of :func:`draw_order_levels_mpl`."""
+    """Plotly twin of :func:`draw_order_levels_mpl`.
+
+    Args:
+        fig: Fig used by the operation described above.
+        levels: Levels used by the operation described above.
+    """
     import plotly.graph_objects as go
 
     for t0, t1 in levels.manip_spans:
@@ -279,6 +300,12 @@ def draw_order_levels_plotly(fig: Any, levels: OrderLevels) -> None:
         )
 
     def _band(band: tuple[float, float] | None, color: str) -> None:
+        """Process the requested value.
+
+        Args:
+            band: Items supplied for the band, in input order.
+            color: Text or path value identifying the color.
+        """
         if band is None:
             return
         fig.add_shape(

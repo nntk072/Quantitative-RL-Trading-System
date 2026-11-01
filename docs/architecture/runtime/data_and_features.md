@@ -22,6 +22,6 @@ Feature calculation must not expose incomplete higher-timeframe candles or
 future rows. Fitted normalization uses training rows only. Session labels are
 eligibility/context flags; they are not permission to silently discard data.
 
-See [`market_data/README.md`](../../../market_data/README.md),
-[`features/README.md`](../../../features/README.md), and the
-[validation protocol](../../thesis/validation_protocol.md).
+See the [market data package guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/market_data/README.md),
+[features package guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/features/README.md), and the
+[validation protocol](../../research/validation_protocol.md).

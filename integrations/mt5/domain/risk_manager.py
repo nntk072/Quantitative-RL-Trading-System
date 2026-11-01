@@ -8,8 +8,8 @@ from integrations.mt5.risk_configuration import DEFAULT_MAX_TOTAL_RISK, DEFAULT_
 
 
 class RiskManager:
-    """
-    Manages risk across multiple trading positions.
+    """Manage risk across multiple trading positions.
+
     Calculates position sizes based on volatility and risk parameters.
     Ensures total exposure doesn't exceed risk limits.
     """
@@ -19,8 +19,7 @@ class RiskManager:
         risk_per_symbol: float = DEFAULT_RISK_PER_SYMBOL,
         max_total_risk: float = DEFAULT_MAX_TOTAL_RISK,
     ):
-        """
-        Initialize the risk manager.
+        """Initialize the risk manager.
 
         Args:
             risk_per_symbol: Maximum risk per symbol as percentage of account balance (default: 1%)
@@ -30,8 +29,7 @@ class RiskManager:
         self.max_total_risk = max_total_risk
 
     def get_account_balance(self) -> float:
-        """
-        Get current account balance.
+        """Get current account balance.
 
         Returns:
             Account balance in account currency
@@ -47,8 +45,7 @@ class RiskManager:
             return 0.0
 
     def get_account_equity(self) -> float:
-        """
-        Get current account equity (balance + floating P/L).
+        """Get current account equity (balance + floating P/L).
 
         Returns:
             Account equity in account currency
@@ -65,6 +62,16 @@ class RiskManager:
 
     @staticmethod
     def _position_value(position: Any, name: str, default: Any = None) -> Any:
+        """Process value.
+
+        Args:
+            position: Position used by the operation described above.
+            name: Name used to identify the requested file, artifact, or item.
+            default: Default used by the operation described above.
+
+        Returns:
+            Result of process value.
+        """
         if isinstance(position, dict):
             return position.get(name, default)
         as_dict = getattr(position, "_asdict", None)
@@ -74,7 +81,15 @@ class RiskManager:
 
     @staticmethod
     def _symbol_risk_units(symbol_info: Any, stop_loss_pips: float) -> tuple[float, float, float]:
-        """Return price distance, tick size and tick value for the configured stop."""
+        """Return price distance, tick size and tick value for the configured stop.
+
+        Args:
+            symbol_info: Symbol info used by the operation described above.
+            stop_loss_pips: Numeric value used for the stop loss pips.
+
+        Returns:
+            Values returned by ``_symbol_risk_units``, in the declared order.
+        """
         tick_size = float(getattr(symbol_info, "trade_tick_size", 0.0))
         tick_value = float(getattr(symbol_info, "trade_tick_value", 0.0))
         digits = int(getattr(symbol_info, "digits", -1))
@@ -98,6 +113,12 @@ class RiskManager:
 
         A missing stop or incomplete broker metadata is unknown risk. Callers
         must fail closed instead of substituting floating P/L for stop risk.
+
+        Args:
+            position: Position used by the operation described above.
+
+        Returns:
+            Result of estimate an open position's dollar risk to its broker-side stop.
         """
         symbol = RiskManager._position_value(position, "symbol")
         volume = RiskManager._position_value(position, "volume")
@@ -134,8 +155,7 @@ class RiskManager:
         risk_amount: float | None = None,
         volatility_multiplier: float = 1.0,
     ) -> float:
-        """
-        Calculate position size based on stop loss and risk amount.
+        """Calculate position size based on stop loss and risk amount.
 
         Args:
             symbol: Trading symbol
@@ -221,7 +241,16 @@ class RiskManager:
     def calculate_stop_loss_price(
         self, symbol: str, position_type: int, stop_loss_pips: float
     ) -> float:
-        """Build the broker-side SL using the same distance used for sizing."""
+        """Build the broker-side SL using the same distance used for sizing.
+
+        Args:
+            symbol: Text or path value identifying the symbol.
+            position_type: Numeric value used for the position type.
+            stop_loss_pips: Numeric value used for the stop loss pips.
+
+        Returns:
+            Numeric result returned by ``calculate_stop_loss_price``.
+        """
         if not mt5.symbol_select(symbol, True):
             raise ValueError(f"Symbol {symbol} not available")
         info = mt5.symbol_info(symbol)
@@ -243,8 +272,7 @@ class RiskManager:
         return float(round(stop_price, digits))
 
     def get_total_exposure(self, symbols: list[str] | None = None) -> dict[str, Any]:
-        """
-        Get total exposure across all open positions.
+        """Get total exposure across all open positions.
 
         Args:
             symbols: Optional list of symbols to filter by
@@ -329,8 +357,7 @@ class RiskManager:
     def check_risk_limits(
         self, symbol: str, proposed_position_size: float, stop_loss_pips: float
     ) -> tuple[bool, str]:
-        """
-        Check if proposed position would exceed risk limits.
+        """Check if proposed position would exceed risk limits.
 
         Args:
             symbol: Trading symbol
@@ -393,8 +420,8 @@ class RiskManager:
             return False, f"Error checking risk limits: {e}"
 
     def get_volatility_multiplier(self, atr_percentage: float, base_atr: float = 1.0) -> float:
-        """
-        Calculate volatility multiplier for position sizing.
+        """Calculate the volatility multiplier for position sizing.
+
         Higher volatility = smaller position size.
 
         Args:

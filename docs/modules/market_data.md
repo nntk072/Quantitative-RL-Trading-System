@@ -116,5 +116,5 @@ classDiagram
 
 The market-data module owns file loading, timeframe alignment, split handling,
 and cache preparation. Reusable bar/tick cache identity and completion checks
-are described in the local [cache guide](../../market_data/cache/README.md).
+are described in the local [cache guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/market_data/cache/README.md).
 Data files and split settings are selected by the configuration module.

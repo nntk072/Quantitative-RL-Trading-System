@@ -1,4 +1,4 @@
-"""Focused lifecycle tests for the weekly thesis orchestrator."""
+"""Focused lifecycle tests for the weekly trade_setup orchestrator."""
 
 from __future__ import annotations
 

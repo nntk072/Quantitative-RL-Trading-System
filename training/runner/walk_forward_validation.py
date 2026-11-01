@@ -53,7 +53,26 @@ def run_walk_forward_validation(
     vae_model: Any,
     seed: int,
 ) -> None:
-    """Run optional purged walk-forward validation without altering the main split flow."""
+    """Run optional purged walk-forward validation without altering the main split flow.
+
+    Args:
+        args: Parsed command-line arguments for this operation.
+        timesteps: Numeric value used for the timesteps.
+        train_bars: Market bar or price data used for run optional purged walk-forward validation without altering the main split flow.
+        train_sec: Tabular data used for the train sec.
+        cfg: Run configuration used by this operation.
+        cache_dir: Directory used to store or read cached data.
+        primary_sym: Text or path value identifying the primary sym.
+        primary_ticks: Primary ticks used by the operation described above.
+        schedule_path: Path or filename identifying the schedule.
+        feature_columns: Items supplied for the feature columns, in input order.
+        run_dir: Text or path value identifying the run dir.
+        env_vae: Env vae used by the operation described above.
+        pre_ny_by_date: Pre ny by date used by the operation described above.
+        device: Compute device on which to perform the operation.
+        vae_model: Vae model used by the operation described above.
+        seed: Random seed used to make sampling reproducible.
+    """
     if not args.walk_forward:
         return
 
@@ -181,7 +200,6 @@ def run_walk_forward_validation(
             eod_risk=dict(cfg.env.get("eod_risk", {})),
             strategy=strategy_from_cfg(cfg)[0],
             strategy_actions=bool(cfg.env.get("strategy_actions", False)),
-            thesis_actions=bool(cfg.env.get("thesis_actions", False)),
             trade_setup_actions=bool(cfg.env.get("trade_setup_actions", False)),
             entry_state_machine=bool(cfg.env.get("entry_state_machine", False)),
             candidate_max_age_bars=int(cfg.env.get("candidate_max_age_bars", 5)),

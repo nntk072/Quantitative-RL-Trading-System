@@ -11,16 +11,29 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 
 def ema(s: pd.Series, span: int) -> pd.Series:
+    """Compute a causal exponentially weighted moving average.
+
+    Args:
+        s: Input price or indicator series.
+        span: Exponential weighting span in bars.
+
+    Returns:
+        The moving average aligned to the input index.
+    """
     return s.ewm(span=span, adjust=False).mean()
 
 
 def _true_range(df: pd.DataFrame) -> pd.Series:
+    """Process range.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+
+    Returns:
+        Result of process range.
+    """
     prev_close = df["close"].shift(1)
     tr = pd.concat(
         [
@@ -32,12 +45,17 @@ def _true_range(df: pd.DataFrame) -> pd.Series:
     ).max(axis=1)
     return tr
 
-    # ---------------------------------------------------------------------------
-    # Individual indicators
-    # ---------------------------------------------------------------------------
-
 
 def rsi(close: pd.Series, period: int = 14) -> pd.Series:
+    """Compute relative strength from exponentially smoothed gains and losses.
+
+    Args:
+        close: Closing prices in chronological order.
+        period: Number of bars used to smooth gains and losses.
+
+    Returns:
+        RSI values aligned to the closing-price index.
+    """
     delta = close.diff()
     gain = delta.clip(lower=0).ewm(alpha=1 / period, adjust=False).mean()
     loss = (-delta.clip(upper=0)).ewm(alpha=1 / period, adjust=False).mean()
@@ -46,6 +64,17 @@ def rsi(close: pd.Series, period: int = 14) -> pd.Series:
 
 
 def macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    """Compute the MACD line, signal line, and histogram.
+
+    Args:
+        close: Closing prices in chronological order.
+        fast: Span for the fast exponential average.
+        slow: Span for the slow exponential average.
+        signal: Span for smoothing the MACD line.
+
+    Returns:
+        A frame containing ``macd``, ``macd_signal``, and ``macd_hist``.
+    """
     fast_ema = ema(close, fast)
     slow_ema = ema(close, slow)
     macd_line = fast_ema - slow_ema
@@ -58,7 +87,15 @@ def macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> p
 
 
 def ema_features(close: pd.Series, periods: list[int]) -> pd.DataFrame:
-    """EMA values + slopes (1-bar diff) for each period."""
+    """EMA values + slopes (1-bar diff) for each period.
+
+    Args:
+        close: Tabular data used for the close.
+        periods: Items supplied for the periods, in input order.
+
+    Returns:
+        DataFrame returned by ``ema_features``.
+    """
     out: dict[str, pd.Series] = {}
     for p in periods:
         e = ema(close, p)
@@ -69,6 +106,15 @@ def ema_features(close: pd.Series, periods: list[int]) -> pd.DataFrame:
 
 
 def atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
+    """Calculate the exponentially smoothed average true range.
+
+    Args:
+        df: OHLC data with high, low, and close columns.
+        period: Smoothing period used for the true range.
+
+    Returns:
+        A series named atr aligned to the input index.
+    """
     tr = _true_range(df)
     return tr.ewm(alpha=1 / period, adjust=False).mean().rename("atr")
 
@@ -76,23 +122,27 @@ def atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
 def volume_spike(volume: pd.Series, window: int = 20) -> pd.Series:
     """Compute volume spike as ratio to rolling median.
 
-    Parameters
-    ----------
-    volume : pd.Series
-        Volume series
-    window : int
-        Rolling window for median calculation (default: 20)
+    Args:
+        volume (pd.Series): Volume series
+        window (int): Rolling window for median calculation (default: 20)
 
-    Returns
-    -------
-    pd.Series
-        Volume spike ratio (volume / median_volume)
+    Returns:
+        pd.Series: Volume spike ratio (volume / median_volume)
     """
     median_vol = volume.rolling(window, min_periods=1).median()
     return volume / median_vol.replace(0, np.nan)
 
 
 def adx(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
+    """Compute ADX and positive/negative directional indicators.
+
+    Args:
+        df: OHLC bars with high, low, and close columns.
+        period: Exponential smoothing period for directional movement.
+
+    Returns:
+        A frame containing ``adx``, ``plus_di``, and ``minus_di``.
+    """
     tr = _true_range(df)
     up = df["high"].diff()
     down = -df["low"].diff()
@@ -110,6 +160,16 @@ def adx(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
 
 
 def bollinger(close: pd.Series, period: int = 20, std_mult: float = 2.0) -> pd.DataFrame:
+    """Compute Bollinger percent-B, normalized band width, and midpoint.
+
+    Args:
+        close: Closing prices in chronological order.
+        period: Rolling window used for the midpoint and standard deviation.
+        std_mult: Number of standard deviations on each side of the midpoint.
+
+    Returns:
+        A frame containing ``bb_pct_b``, ``bb_width``, and ``bb_mid``.
+    """
     mid = close.rolling(period).mean()
     std = close.rolling(period).std(ddof=0)
     upper = mid + std_mult * std
@@ -123,6 +183,16 @@ def bollinger(close: pd.Series, period: int = 20, std_mult: float = 2.0) -> pd.D
 
 
 def stochastic(df: pd.DataFrame, k_period: int = 14, d_period: int = 3) -> pd.DataFrame:
+    """Compute the rolling stochastic K and smoothed D lines.
+
+    Args:
+        df: OHLC bars with high, low, and close columns.
+        k_period: Window used to find the rolling high and low.
+        d_period: Window used to smooth the K line.
+
+    Returns:
+        A frame containing ``stoch_k`` and ``stoch_d``.
+    """
     low_k = df["low"].rolling(k_period).min()
     high_k = df["high"].rolling(k_period).max()
     stoch_k = 100 * (df["close"] - low_k) / (high_k - low_k).replace(0, np.nan)
@@ -135,6 +205,12 @@ def vwap_level(df: pd.DataFrame) -> pd.Series:
 
     Weights typical price by :func:`~market_data.transforms.activity.activity_series`
     (MT5 tick count). This is not exchange volume; CFD ``<VOL>`` is unused.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+
+    Returns:
+        Result of tick-count session VWAP (resets per ``session_id``).
     """
     from market_data.transforms.activity import activity_series
 
@@ -154,14 +230,29 @@ def vwap_level(df: pd.DataFrame) -> pd.Series:
 
 
 def vwap_from_session(df: pd.DataFrame) -> pd.Series:
-    """Normalized (close - vwap) / vwap distance using ``session_id``."""
+    """Normalized (close - vwap) / vwap distance using ``session_id``.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+
+    Returns:
+        Result of normalized (close - vwap) / vwap distance using ``session_id``.
+    """
     vwap = vwap_level(df)
     dist = (df["close"] - vwap) / vwap.replace(0, np.nan)
     return dist.rename("vwap_dist")
 
 
 def returns(close: pd.Series, horizons: list[int]) -> pd.DataFrame:
-    """Log returns at multiple horizons."""
+    """Log returns at multiple horizons.
+
+    Args:
+        close: Tabular data used for the close.
+        horizons: Items supplied for the horizons, in input order.
+
+    Returns:
+        DataFrame returned by ``returns``.
+    """
     log_c = np.log(close.replace(0, np.nan))
     out = {}
     for h in horizons:
@@ -170,6 +261,15 @@ def returns(close: pd.Series, horizons: list[int]) -> pd.DataFrame:
 
 
 def realized_vol(close: pd.Series, period: int = 20) -> pd.Series:
+    """Compute rolling population volatility of log returns.
+
+    Args:
+        close: Closing prices in chronological order.
+        period: Rolling window used to estimate return volatility.
+
+    Returns:
+        Realized volatility values aligned to the closing-price index.
+    """
     lr = np.log(close.replace(0, np.nan)).diff()
     vol = lr.rolling(period).std(ddof=0)
     vol.name = "realized_vol"
@@ -187,6 +287,14 @@ def ny_session_clock(
     session clip onto the endpoints, so the sin/cos stay in ``[-1, 1]`` and
     minutes-to-close stays in ``[0, 1]``. These columns are concatenated
     after the z-score and must not be rescaled.
+
+    Args:
+        index: Position or label identifying the requested item.
+        start: Text or path value identifying the start.
+        end: Text or path value identifying the end.
+
+    Returns:
+        DataFrame returned by ``ny_session_clock``.
     """
     start_h, start_m = (int(part) for part in start.split(":"))
     end_h, end_m = (int(part) for part in end.split(":"))
@@ -212,7 +320,14 @@ def ny_session_clock(
 
 
 def time_features(index: pd.DatetimeIndex) -> pd.DataFrame:
-    """Cyclical sin/cos encoding of time-of-day and day-of-week."""
+    """Cyclical sin/cos encoding of time-of-day and day-of-week.
+
+    Args:
+        index: Position or label identifying the requested item.
+
+    Returns:
+        DataFrame returned by ``time_features``.
+    """
     hour_min = index.hour + index.minute / 60.0
     tod_sin = np.sin(2 * np.pi * hour_min / 24.0)
     tod_cos = np.cos(2 * np.pi * hour_min / 24.0)
@@ -225,7 +340,15 @@ def time_features(index: pd.DatetimeIndex) -> pd.DataFrame:
 
 
 def atr_normalized_price(df: pd.DataFrame, period: int = 14) -> pd.Series:
-    """Close distance from previous close, normalised by ATR."""
+    """Close distance from previous close, normalised by ATR.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        period: Numeric value used for the period.
+
+    Returns:
+        Result of close distance from previous close, normalised by ATR.
+    """
     atr_s = atr(df, period)
     return df["close"].diff() / atr_s.replace(0, np.nan)
 
@@ -243,30 +366,20 @@ def sweep_velocity(
     Bullish Sweep Velocity: (Close - LondonHigh) / ATR_5
     Bearish Sweep Velocity: (LondonLow - Close) / ATR_5
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        OHLCV DataFrame
-    london_high : pd.Series or None
-        London session high (will be computed from df if None)
-    london_low : pd.Series or None
-        London session low (will be computed from df if None)
-    asian_high : pd.Series or None
-        Asian session high (will be computed from df if None)
-    asian_low : pd.Series or None
-        Asian session low (will be computed from df if None)
-    atr_period : int
-        ATR period for normalization (default: 5)
+    Args:
+        df (pd.DataFrame): OHLCV DataFrame
+        london_high (pd.Series or None): London session high (will be computed from df if None)
+        london_low (pd.Series or None): London session low (will be computed from df if None)
+        asian_high (pd.Series or None): Asian session high (will be computed from df if None)
+        asian_low (pd.Series or None): Asian session low (will be computed from df if None)
+        atr_period (int): ATR period for normalization (default: 5)
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with columns: sweep_velocity_bullish, sweep_velocity_bearish
+    Returns:
+        pd.DataFrame: DataFrame with columns: sweep_velocity_bullish, sweep_velocity_bearish
     """
     close = df["close"]
     atr_val = atr(df, atr_period)
 
-    # Compute velocities
     if london_high is None:
         london_high = df.get("london_high", pd.Series(dtype=float))
     if london_low is None:
@@ -285,54 +398,42 @@ def sweep_velocity(
 
 
 def wick_ratio(df: pd.DataFrame) -> pd.Series:
-    """Compute wick ratio: |High - max(Open, Close)| / (High - Low).
+    """Compute wick ratio as ``abs(High - max(Open, Close)) / (High - Low)``.
 
     High values indicate rejection (false sweep).
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        OHLCV DataFrame
+    Args:
+        df (pd.DataFrame): OHLCV DataFrame
 
-    Returns
-    -------
-    pd.Series
-        Wick ratio values
+    Returns:
+        pd.Series: Wick ratio values
     """
     high = df["high"]
     low = df["low"]
     open_ = df["open"]
     close = df["close"]
 
-    # max(Open, Close)
     max_oc = pd.concat([open_, close], axis=1).max(axis=1)
 
-    # |High - max(Open, Close)|
     wick = (high - max_oc).abs()
 
-    # High - Low
     range_ = high - low
 
-    # Wick ratio
     wick_ratio = wick / range_.replace(0, np.nan)
     wick_ratio.name = "wick_ratio"
 
     return wick_ratio
 
-    # ---------------------------------------------------------------------------
-    # Master builder
-    # ---------------------------------------------------------------------------
-
 
 def build_indicators(df: pd.DataFrame, cfg: Any) -> pd.DataFrame:
     """Compute all indicators and return a wide feature DataFrame.
 
-    Parameters
-    ----------
-    df:
-        Cleaned, session-filtered M1 DataFrame with a tz-aware index.
-    cfg:
-        OmegaConf ``features`` sub-config.
+    Args:
+        df: Cleaned, session-filtered M1 bars with a timezone-aware index.
+        cfg: OmegaConf ``features`` sub-config.
+
+    Returns:
+        A DataFrame containing the configured causal technical features.
     """
     close = df["close"]
     parts: list[pd.DataFrame | pd.Series] = []

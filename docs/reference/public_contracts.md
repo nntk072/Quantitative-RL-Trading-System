@@ -65,13 +65,13 @@ protect dependency direction and the explicitly public import surface.
 
 Serialized checkpoints, historical run configurations, and reports may
 depend on import paths, schema names, category indices, feature ordering, or
-artifact field names. The current setup-conditioned contract still includes
-legacy `thesis*` identifiers. These are kept as wire-compatibility names until
-an explicit translation is implemented and parity-tested.
+artifact field names. Retained setup-conditioned checkpoints were migrated
+with deterministic parity checks; see the migration records in
+[`docs/architecture/migrations/`](../architecture/migrations/README.md).
 
-Compatibility names are not canonical project terminology. New explanatory
-documentation uses “trade setup”; persisted names must be quoted exactly when
-describing historical artifacts.
+Historical identifiers appear only in the immutable evidence archive and
+migration provenance. New artifacts use the canonical names listed in the
+action and observation references.
 
 ## Experimental and research-specific interfaces
 

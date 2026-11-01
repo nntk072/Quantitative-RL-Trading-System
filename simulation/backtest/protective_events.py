@@ -49,7 +49,34 @@ def process_protective_and_account_events(
     bar_spread_price_units: Callable[[pd.Series, CostModel], float | None],
     is_last_ny_bar: Callable[[pd.DataFrame, int, bool], bool],
 ) -> bool:
-    """Apply protective exits, guardrail liquidation, and session-end close."""
+    """Apply protective exits, guardrail liquidation, and session-end close.
+
+    Args:
+        state: State object read or updated by the operation.
+        settings: Settings used by the operation described above.
+        broker: Broker used by the operation described above.
+        guardrails: Guardrails used by the operation described above.
+        bars: Market bars to process.
+        row: Row index or record being processed.
+        i: Numeric value used for the i.
+        bar_time: Bar time used by the operation described above.
+        bar_duration: Bar duration used by the operation described above.
+        session: Session identifier used by the operation.
+        is_ny: Whether to enable or require the is ny.
+        bar_quote: Items supplied for the bar quote, in input order.
+        entry_time: Entry time used by the operation described above.
+        position_active_in_bar: Whether to enable or require the position active in bar.
+        full_bar_available_after_entry: Whether to enable or require the full bar available after entry.
+        execution_rng: Execution rng used by the operation described above.
+        resolve_bar_execution: Resolve bar execution used by the operation described above.
+        fill_quote_event: Fill quote event used by the operation described above.
+        sl_tp_fill_quote: Items supplied for the sl tp fill quote, in input order.
+        bar_spread_price_units: Tabular data used for the bar spread price units.
+        is_last_ny_bar: Tabular data used for the is last ny bar.
+
+    Returns:
+        Whether process protective and account events meets the requested condition.
+    """
     position = state.position
     tick_hit: tuple[str, pd.Timestamp, float, float, dict[str, Any]] | None = None
     if (
@@ -347,7 +374,19 @@ def liquidate_terminal_position(
     fill_quote_event: Callable[..., ExecutionEvent],
     bar_quote: Callable[[pd.Series, CostModel], tuple[float, float]],
 ) -> None:
-    """Realize any remaining position at the final bar-close valuation point."""
+    """Realize any remaining position at the final bar-close valuation point.
+
+    Args:
+        state: State object read or updated by the operation.
+        settings: Settings used by the operation described above.
+        broker: Broker used by the operation described above.
+        bars: Market bars to process.
+        bar_times: Bar times used by the operation described above.
+        bar_duration: Bar duration used by the operation described above.
+        execution_rng: Execution rng used by the operation described above.
+        fill_quote_event: Fill quote event used by the operation described above.
+        bar_quote: Tabular data used for the bar quote.
+    """
     if state.position is None:
         return
 

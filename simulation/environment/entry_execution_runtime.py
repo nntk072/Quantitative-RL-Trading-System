@@ -20,6 +20,8 @@ class EntryExecutionRuntimeMixin(
     TradeEntryRecordRuntimeMixin,
     RuntimeMixinBase,
 ):
+    """Resolve entry quotes, opposing positions, and accepted position opens."""
+
     position: Position | None
     _opened_this_step: bool
     _position_sequence: int
@@ -31,6 +33,17 @@ class EntryExecutionRuntimeMixin(
         fill_time: Any,
         order_submission_time: Any | None,
     ) -> tuple[float, float, Any, dict[str, Any]]:
+        """Resolve entry execution quote.
+
+        Args:
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            fill_time: Fill time used by the operation described above.
+            order_submission_time: Order submission time used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any]`` values.
+        """
         execution_meta: dict[str, Any] = {}
         if (
             getattr(self, "tick_execution_required", False)
@@ -68,6 +81,18 @@ class EntryExecutionRuntimeMixin(
         session_id: int,
         execution_meta: dict[str, Any],
     ) -> None:
+        """Close opposing position.
+
+        Args:
+            discrete_action: Numeric value used for the discrete action.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            fill_time: Fill time used by the operation described above.
+            bar_time: Bar time used by the operation described above.
+            order_submission_time: Order submission time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            execution_meta: Key-value data used for the execution meta.
+        """
         if self.position is not None and self.position.direction != discrete_action:
             pnl, fill_price = self._close_at_quote(
                 self.position,
@@ -103,6 +128,18 @@ class EntryExecutionRuntimeMixin(
         lots: float,
         sl_price: float | None,
     ) -> tuple[float, bool]:
+        """Open entry position.
+
+        Args:
+            discrete_action: Numeric value used for the discrete action.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            lots: Numeric value used for the lots.
+            sl_price: Sl price used by the operation described above.
+
+        Returns:
+            Whether open entry position meets the requested condition.
+        """
         entry_equity = float(self.account.equity)
         sl_already_hit = False
         if sl_price is not None:
@@ -143,7 +180,25 @@ class EntryExecutionRuntimeMixin(
         decision_bar_idx: int | None = None,
         signal_bar_idx: int | None = None,
     ) -> None:
-        """Attempt a flip or new entry through explicit execution stages."""
+        """Attempt a flip or new entry through explicit execution stages.
+
+        Args:
+            discrete_action: Numeric value used for the discrete action.
+            risk_frac: Numeric value used for the risk frac.
+            rr_ratio: Numeric value used for the rr ratio.
+            bar: Bar used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            fill_time: Fill time used by the operation described above.
+            entry_candidate: Entry candidate used by the operation described above.
+            fill_bar_idx: Fill bar idx used by the operation described above.
+            order_submission_time: Order submission time used by the operation described above.
+            decision_bar_idx: Decision bar idx used by the operation described above.
+            signal_bar_idx: Signal bar idx used by the operation described above.
+        """
         fill_bid, fill_ask, fill_time, execution_meta = self._resolve_entry_execution_quote(
             fill_bid, fill_ask, fill_time, order_submission_time
         )

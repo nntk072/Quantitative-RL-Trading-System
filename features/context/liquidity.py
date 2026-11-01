@@ -3,9 +3,10 @@
 All detectors use only information available at decision time ``t``:
 sweep/BOS events reference the most recent *confirmed* swing level as of the
 previous bar (``structure_levels(...)`` output shifted by one), so adding
-future bars never changes historical feature values (Agent.md §3, §19, §26).
+future bars never changes historical feature values.
 
-Sweep semantics (Agent.md §5):
+Sweep semantics:
+
 - ``sweep_high = 1``: current bar takes liquidity above a previously known
   swing-high level (fresh take: the previous bar did not already sit above
   the same level, and the overshoot is within ``max_sweep_distance_atr`` ×
@@ -48,6 +49,17 @@ def _detect_side_sweeps(
     first confirmation). ``side=1`` detects takes above a swing high (attack
     = high, reclaim = close back below the level); ``side=-1`` detects takes
     below a swing low (attack = low, reclaim = close back above the level).
+
+    Args:
+        level: Level used by the operation described above.
+        attack: Attack used by the operation described above.
+        close: Close used by the operation described above.
+        atr_arr: Atr arr used by the operation described above.
+        side: Numeric value used for the side.
+        max_sweep_distance_atr: Numeric value used for the max sweep distance atr.
+
+    Returns:
+        Array returned by ``_detect_side_sweeps``.
     """
     n = len(level)
     event = np.zeros(n)
@@ -101,24 +113,17 @@ def detect_liquidity_sweeps(
 ) -> pd.DataFrame:
     """Detect causal liquidity sweep events and associated levels.
 
-    Parameters
-    ----------
-    bars:
-        OHLC DataFrame with 'high', 'low', 'close' columns and a DatetimeIndex.
-    swing_period:
-        Bars on each side used to confirm swing levels (see ``structure_levels``).
-    max_sweep_distance_atr:
-        Maximum distance beyond the level (in ATRs) for the take to count as
-        a sweep rather than a breakout.
-    atr_period:
-        ATR period for the distance filter.
+    Args:
+        bars: OHLC DataFrame with 'high', 'low', 'close' columns and a DatetimeIndex.
+        swing_period: Bars on each side used to confirm swing levels (see ``structure_levels``).
+        max_sweep_distance_atr: Maximum distance beyond the level (in ATRs) for the take to count as
+            a sweep rather than a breakout.
+        atr_period: ATR period for the distance filter.
 
-    Returns
-    -------
-    pd.DataFrame
-        Indexed like ``bars`` with columns ``sweep_high``, ``sweep_low``,
-        ``sweep_high_level``, ``sweep_low_level``, ``sweep_high_reclaimed``,
-        ``sweep_low_reclaimed``, ``sweep_high_age``, ``sweep_low_age``.
+    Returns:
+        pd.DataFrame: Indexed like ``bars`` with columns ``sweep_high``, ``sweep_low``,
+            ``sweep_high_level``, ``sweep_low_level``, ``sweep_high_reclaimed``,
+            ``sweep_low_reclaimed``, ``sweep_high_age``, ``sweep_low_age``.
     """
     levels = structure_levels(bars, swing_period)
     # Level known *before* the current bar (strict causality).
@@ -260,18 +265,13 @@ def detect_bos(bars: pd.DataFrame, structure: pd.DataFrame) -> pd.DataFrame:
     the level as of the previous bar. Wick penetration without close-through
     does not fire a BOS.
 
-    Parameters
-    ----------
-    bars:
-        OHLC DataFrame with a 'close' column.
-    structure:
-        Output of :func:`features.technical.structure.structure_levels`.
+    Args:
+        bars: OHLC DataFrame with a 'close' column.
+        structure: Output of :func:`features.technical.structure.structure_levels`.
 
-    Returns
-    -------
-    pd.DataFrame
-        Columns ``bos_up``, ``bos_down`` (0/1) and ``bos_up_level``,
-        ``bos_down_level`` (the level crossed, NaN when no BOS on that bar).
+    Returns:
+        pd.DataFrame: Columns ``bos_up``, ``bos_down`` (0/1) and ``bos_up_level``,
+            ``bos_down_level`` (the level crossed, NaN when no BOS on that bar).
     """
     prev_sh = structure["last_swing_high"].shift(1)
     prev_sl = structure["last_swing_low"].shift(1)
@@ -306,6 +306,14 @@ def detect_mss(
     - ``mss_down = 1``: ``bos_down`` while the last completed BOS was ``bos_up``
 
     Levels are the swing level crossed on the MSS bar (same as the BOS level).
+
+    Args:
+        bars: Market bars to process.
+        structure: Tabular data used for the structure.
+        bos: Tabular data used for the bos.
+
+    Returns:
+        DataFrame returned by ``detect_mss``.
     """
     if bos is None:
         bos = detect_bos(bars, structure)

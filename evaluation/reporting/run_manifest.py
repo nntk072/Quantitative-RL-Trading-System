@@ -27,7 +27,14 @@ _PYTHONHASHSEED_ENV_AT_STARTUP = os.environ.get("PYTHONHASHSEED")
 
 
 def build_sequence_feature_schema(columns: list[str] | tuple[str, ...]) -> dict[str, Any]:
-    """Describe the ordered numeric feature coordinates supplied to the policy."""
+    """Describe the ordered numeric feature coordinates supplied to the policy.
+
+    Args:
+        columns: Items supplied for the columns, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     names = [str(column) for column in columns]
     if not names or len(names) != len(set(names)):
         raise ValueError("sequence feature schema requires non-empty unique column names")
@@ -46,7 +53,16 @@ def validate_sequence_feature_schema(
     *,
     allow_legacy: bool = False,
 ) -> str:
-    """Fail closed on missing or reordered model sequence coordinates."""
+    """Fail closed on missing or reordered model sequence coordinates.
+
+    Args:
+        actual: Key-value data used for the actual.
+        expected: Key-value data used for the expected.
+        allow_legacy: Whether to enable or require the allow legacy.
+
+    Returns:
+        Text returned by ``validate_sequence_feature_schema``.
+    """
     if actual is None:
         if allow_legacy:
             return "legacy_unverified"
@@ -65,6 +81,12 @@ def build_stop_candidate_schema(cfg: DictConfig) -> dict[str, Any]:
     This is stored both in the run manifest and the SB3 checkpoint. The feature
     cache identity still carries the full feature configuration and data hash;
     this compact record makes the stop-menu compatibility boundary explicit.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     structure = OmegaConf.select(cfg, "features.structure", default={})
     if not isinstance(structure, (DictConfig, dict)):
@@ -164,7 +186,14 @@ def build_stop_candidate_schema(cfg: DictConfig) -> dict[str, Any]:
 
 
 def dataframe_sha256(frame: pd.DataFrame) -> str:
-    """Hash column names, index and typed cell values deterministically."""
+    """Hash column names, index and typed cell values deterministically.
+
+    Args:
+        frame: Input data frame to process.
+
+    Returns:
+        Text returned by ``dataframe_sha256``.
+    """
     digest = hashlib.sha256()
     digest.update(json.dumps([str(column) for column in frame.columns]).encode())
     row_hashes = pd.util.hash_pandas_object(frame, index=True, categorize=True).to_numpy(
@@ -175,7 +204,14 @@ def dataframe_sha256(frame: pd.DataFrame) -> str:
 
 
 def dataset_record(frame: pd.DataFrame) -> dict[str, Any]:
-    """Describe and fingerprint one concrete dataset split."""
+    """Describe and fingerprint one concrete dataset split.
+
+    Args:
+        frame: Input data frame to process.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     return {
         "rows": int(len(frame)),
         "columns": [str(column) for column in frame.columns],
@@ -186,7 +222,14 @@ def dataset_record(frame: pd.DataFrame) -> dict[str, Any]:
 
 
 def array_sha256(array: np.ndarray[Any, Any]) -> str:
-    """Hash an array with its dtype and shape included."""
+    """Hash an array with its dtype and shape included.
+
+    Args:
+        array: Array used by the operation described above.
+
+    Returns:
+        Text returned by ``array_sha256``.
+    """
     contiguous = np.ascontiguousarray(array)
     digest = hashlib.sha256()
     digest.update(str(contiguous.dtype).encode())
@@ -196,7 +239,14 @@ def array_sha256(array: np.ndarray[Any, Any]) -> str:
 
 
 def _source_state(repository: Path) -> dict[str, Any]:
-    """Capture the source commit and dirty path list when Git is available."""
+    """Capture the source commit and dirty path list when Git is available.
+
+    Args:
+        repository: Text or path value identifying the repository.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     try:
         head = subprocess.run(
             ["git", "-C", str(repository), "rev-parse", "HEAD"],
@@ -252,6 +302,11 @@ def _source_state(repository: Path) -> dict[str, Any]:
 
 
 def _runtime_versions() -> dict[str, str | None]:
+    """Process versions.
+
+    Returns:
+        Mapping from ``str`` keys to ``str | None`` values.
+    """
     versions: dict[str, str | None] = {
         "python": platform.python_version(),
         "platform": platform.platform(),
@@ -275,7 +330,14 @@ def _runtime_versions() -> dict[str, str | None]:
 
 
 def build_evaluation_provenance(repository: Path) -> dict[str, Any]:
-    """Capture the code tree and runtime that produced a deterministic replay."""
+    """Capture the code tree and runtime that produced a deterministic replay.
+
+    Args:
+        repository: Text or path value identifying the repository.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     return {
         "source": _source_state(repository.resolve()),
         "runtime": _runtime_versions(),
@@ -305,7 +367,32 @@ def build_training_run_manifest(
     training_architecture: dict[str, Any] | None = None,
     training_protocol: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Build a source/data/config/checkpoint/runtime manifest for one trial."""
+    """Build a source/data/config/checkpoint/runtime manifest for one trial.
+
+    Args:
+        repository: Text or path value identifying the repository.
+        config_path: Path to the configuration file.
+        datasets: Tabular data used for the datasets.
+        dataset_records: Key-value data used for the dataset records.
+        split: Key-value data used for the split.
+        seed: Random seed used to make sampling reproducible.
+        completed_steps: Number specifying the completed steps for this operation.
+        action_schema: Key-value data used for the action schema.
+        observation_schema: Key-value data used for the observation schema.
+        sequence_feature_schema: Key-value data used for the sequence feature schema.
+        stop_candidate_schema: Key-value data used for the stop candidate schema.
+        feature_cache_path: Path or filename identifying the feature cache.
+        feature_cache_hash: Feature cache hash used by the operation described above.
+        checkpoint_path: Path or filename identifying the checkpoint.
+        execution_protocol: Key-value data used for the execution protocol.
+        metrics_protocol: Key-value data used for the metrics protocol.
+        artifact_paths: Key-value data used for the artifact paths.
+        training_architecture: Key-value data used for the training architecture.
+        training_protocol: Key-value data used for the training protocol.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     action_schema = _validate_named_schema(
         action_schema,
         label="action",
@@ -427,7 +514,18 @@ def _validate_named_schema(
     width_key: str,
     identity_key: str | None = None,
 ) -> dict[str, Any]:
-    """Require a complete named coordinate contract in each training manifest."""
+    """Require a complete named coordinate contract in each training manifest.
+
+    Args:
+        schema: Key-value data used for the schema.
+        label: Text or path value identifying the label.
+        coordinate_key: Text or path value identifying the coordinate key.
+        width_key: Text or path value identifying the width key.
+        identity_key: Identity key used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     if not isinstance(schema, dict):
         raise ValueError(f"run manifest requires an explicit {label} schema")
     if not isinstance(schema.get("version"), str) or not schema["version"]:
@@ -453,5 +551,10 @@ def _validate_named_schema(
 
 
 def write_run_manifest(path: Path, manifest: dict[str, Any]) -> None:
-    """Atomically write a JSON manifest so interrupted writes are not valid artifacts."""
+    """Atomically write a JSON manifest so interrupted writes are not valid artifacts.
+
+    Args:
+        path: Path to the input file or directory.
+        manifest: Key-value data used for the manifest.
+    """
     write_json_atomic(path, manifest, default=None)

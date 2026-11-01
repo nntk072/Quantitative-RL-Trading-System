@@ -16,7 +16,7 @@ from decisioning.trade_setup import (
 )
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
 from simulation.environment.env import TradingEnv
-from tests.unit.simulation.test_environment.test_account_normalization import (
+from tests.unit.simulation.test_environment._account_fixtures import (
     _make_bars,
     _make_features,
 )
@@ -25,18 +25,18 @@ from tests.unit.simulation.test_environment.test_account_normalization import (
 def _features_with_trade_setup_columns() -> tuple[pd.DataFrame, pd.DataFrame]:
     bars = _make_bars(120)
     features = _make_features(bars)
-    thesis_features = pd.DataFrame(
+    trade_setup_features = pd.DataFrame(
         0.0,
         index=features.index,
         columns=[column for _, column in trade_setup_candidate_feature_columns()],
     )
-    features = pd.concat([features, thesis_features], axis=1)
+    features = pd.concat([features, trade_setup_features], axis=1)
     active_column = "entry_idea_fvg_retest_M5_long"
     features.loc[bars.index[50], active_column] = 1.0
     return bars, features
 
 
-def test_trade_setup_observation_mask_is_exact_and_legacy_observation_is_preserved() -> None:
+def test_trade_setup_observation_mask_is_exact_and_optional() -> None:
     bars, features = _features_with_trade_setup_columns()
     trade_setup_env = TradingEnv(
         bars=bars,
@@ -67,25 +67,14 @@ def test_trade_setup_observation_mask_is_exact_and_legacy_observation_is_preserv
     assert current[trade_setup_candidate_id("fvg_retest", "M5", -1)] == 0.0
     assert int(current.sum()) == 2
 
-    legacy_env = TradingEnv(
-        bars=bars,
-        features=features,
-        obs_window=10,
-        strategy_actions=True,
-        thesis_actions=True,
+    env_without_trade_setup = TradingEnv(
+        bars=bars, features=features, obs_window=10, strategy_actions=True
     )
-    legacy_obs, _ = legacy_env.reset(seed=3)
-    assert legacy_env.thesis_observation_schema is not None
-    assert legacy_env.thesis_observation_schema["version"] == "thesis-observation-v1"
-    assert "thesis_mask" in legacy_obs
-    assert "trade_setup_mask" not in legacy_obs
-
-    legacy_env = TradingEnv(bars=bars, features=features, obs_window=10, strategy_actions=True)
-    legacy_obs, _ = legacy_env.reset(seed=3)
-    assert "thesis_mask" not in legacy_obs
-    assert isinstance(legacy_env.observation_space, spaces.Dict)
-    assert "thesis_mask" not in legacy_env.observation_space
-    assert legacy_env.trade_setup_observation_schema is None
+    observation, _ = env_without_trade_setup.reset(seed=3)
+    assert "trade_setup_mask" not in observation
+    assert isinstance(env_without_trade_setup.observation_space, spaces.Dict)
+    assert "trade_setup_mask" not in env_without_trade_setup.observation_space
+    assert env_without_trade_setup.trade_setup_observation_schema is None
 
 
 def test_trade_setup_observation_requires_strategy_overlay_and_idea_features() -> None:

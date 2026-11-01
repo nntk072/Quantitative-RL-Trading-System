@@ -16,7 +16,17 @@ def stop_loss_risk_usd(
     contract_size: float,
     point_value: float = 1.0,
 ) -> float:
-    """Return the account-currency loss at a stop for the requested position."""
+    """Return the account-currency loss at a stop for the requested position.
+
+    Args:
+        stop_distance: Entry-to-stop distance in price units.
+        lots: Numeric value used for the lots.
+        contract_size: Number specifying the contract size for this operation.
+        point_value: Numeric value used for the point value.
+
+    Returns:
+        Numeric result returned by ``stop_loss_risk_usd``.
+    """
     return abs(float(stop_distance)) * float(lots) * float(contract_size) * float(point_value)
 
 
@@ -28,26 +38,17 @@ def compute_sl_tp_long(
 ) -> tuple[float, float]:
     """Compute SL and TP for a long trade.
 
-    Parameters
-    ----------
-    entry_price : float
-        Entry fill price.
-    last_swing_low : float
-        Most recent confirmed swing low price.
-    buffer_pts : float
-        Buffer below swing low for SL placement (in price points).
-    rr_ratio : float
-        Risk:reward ratio (e.g. 2.0 means TP distance = 2 × SL distance).
+    Args:
+        entry_price (float): Entry fill price.
+        last_swing_low (float): Most recent confirmed swing low price.
+        buffer_pts (float): Buffer below swing low for SL placement (in price points).
+        rr_ratio (float): Risk:reward ratio (e.g. 2.0 means TP distance = 2 × SL distance).
 
-    Returns
-    -------
-    tuple[float, float]
-        (sl_price, tp_price)
+    Returns:
+        tuple[float, float]: (sl_price, tp_price)
 
-    Raises
-    ------
-    ValueError
-        If ``last_swing_low`` is not strictly below ``entry_price``.
+    Raises:
+        ValueError: If ``last_swing_low`` is not strictly below ``entry_price``.
     """
     if last_swing_low >= entry_price:
         raise ValueError(
@@ -67,26 +68,17 @@ def compute_sl_tp_short(
 ) -> tuple[float, float]:
     """Compute SL and TP for a short trade.
 
-    Parameters
-    ----------
-    entry_price : float
-        Entry fill price.
-    last_swing_high : float
-        Most recent confirmed swing high price.
-    buffer_pts : float
-        Buffer above swing high for SL placement (in price points).
-    rr_ratio : float
-        Risk:reward ratio.
+    Args:
+        entry_price (float): Entry fill price.
+        last_swing_high (float): Most recent confirmed swing high price.
+        buffer_pts (float): Buffer above swing high for SL placement (in price points).
+        rr_ratio (float): Risk:reward ratio.
 
-    Returns
-    -------
-    tuple[float, float]
-        (sl_price, tp_price)
+    Returns:
+        tuple[float, float]: (sl_price, tp_price)
 
-    Raises
-    ------
-    ValueError
-        If ``last_swing_high`` is not strictly above ``entry_price``.
+    Raises:
+        ValueError: If ``last_swing_high`` is not strictly above ``entry_price``.
     """
     if last_swing_high <= entry_price:
         raise ValueError(
@@ -112,41 +104,28 @@ def compute_lots(
 ) -> float:
     """Compute lot size from risk budget and SL distance.
 
-    Parameters
-    ----------
-    equity : float
-        Current account equity. Ignored when ``risk_usd`` is given.
-    risk_frac : float
-        Fraction of equity at risk (e.g. 0.01 for 1%). Ignored when ``risk_usd``
-        is given, so a caller asking for a fixed dollar risk cannot have it
-        silently scaled to zero by a ``risk_frac`` of 0.
-    entry_price : float
-        Entry price.
-    sl_price : float
-        Stop loss price.
-    contract_size : float
-        Contract multiplier (default 1.0).
-    point_value : float
-        Dollar value per point per contract (default 1.0).
-    min_lot : float
-        Minimum lot size to trade.
-    max_lot : float
-        Maximum lot size to trade.
-    max_loss_cap : float | None
-        If set, cap the USD loss at this amount (e.g. 100 for $100). Ignored when
-        ``risk_usd`` is given: that cap is a guard rail for fractional sizing, and
-        letting it apply would silently override the caller's explicit request
-        (a $500 ask was clamped to the $100 default, so no trade could ever risk
-        $500).
-    risk_usd : float | None
-        Explicit dollar risk for this trade. When set it takes precedence over
-        ``equity * risk_frac`` and makes 1R a known constant independent of
-        account equity and of the agent's chosen fraction.
+    Args:
+        equity (float): Current account equity. Ignored when ``risk_usd`` is given.
+        risk_frac (float): Fraction of equity at risk (e.g. 0.01 for 1%). Ignored when ``risk_usd``
+            is given, so a caller asking for a fixed dollar risk cannot have it
+            silently scaled to zero by a ``risk_frac`` of 0.
+        entry_price (float): Entry price.
+        sl_price (float): Stop loss price.
+        contract_size (float): Contract multiplier (default 1.0).
+        point_value (float): Dollar value per point per contract (default 1.0).
+        min_lot (float): Minimum lot size to trade.
+        max_lot (float): Maximum lot size to trade.
+        max_loss_cap (float | None): If set, cap the USD loss at this amount (e.g. 100 for $100). Ignored when
+            ``risk_usd`` is given: that cap is a guard rail for fractional sizing, and
+            letting it apply would silently override the caller's explicit request
+            (a $500 ask was clamped to the $100 default, so no trade could ever risk
+            $500).
+        risk_usd (float | None): Explicit dollar risk for this trade. When set it takes precedence over
+            ``equity * risk_frac`` and makes 1R a known constant independent of
+            account equity and of the agent's chosen fraction.
 
-    Returns
-    -------
-    float
-        Computed lot size, clipped to [min_lot, max_lot].
+    Returns:
+        float: Computed lot size, clipped to [min_lot, max_lot].
     """
     budget = float(risk_usd) if risk_usd is not None else float(equity) * float(risk_frac)
     sl_distance = abs(entry_price - sl_price)
@@ -181,7 +160,22 @@ def compute_lots_with_execution_reserve(
     min_lot: float = 0.01,
     max_lot: float = 100.0,
 ) -> float:
-    """Size the stop exposure so stop risk plus per-lot costs fit the budget."""
+    """Size the stop exposure so stop risk plus per-lot costs fit the budget.
+
+    Args:
+        total_risk_budget_usd: Numeric value used for the total risk budget usd.
+        equity: Current account equity in account currency.
+        risk_frac: Numeric value used for the risk frac.
+        entry_price: Price at which the position was opened.
+        sl_price: Numeric value used for the sl price.
+        contract_size: Number specifying the contract size for this operation.
+        execution_reserve_per_lot: Numeric value used for the execution reserve per lot.
+        min_lot: Numeric value used for the min lot.
+        max_lot: Numeric value used for the max lot.
+
+    Returns:
+        Numeric result returned by ``compute_lots_with_execution_reserve``.
+    """
     stop_risk_per_lot = stop_loss_risk_usd(float(entry_price) - float(sl_price), 1.0, contract_size)
     if total_risk_budget_usd <= 0.0 or stop_risk_per_lot <= 0.0:
         return 0.0
@@ -222,11 +216,19 @@ def compute_sl_tp_from_structure(
     ``buffer_pts=0.0`` implements the ``sl_mode: exact`` configuration;
     a positive buffer implements ``sl_mode: buffered``.
 
-    Raises
-    ------
-    ValueError
-        If ``direction`` is not +/-1 or the geometry is invalid (the level is
-        on the wrong side of the entry), so a backwards stop is never created.
+    Args:
+        direction: Signed trade direction: 1 for long and -1 for short.
+        entry_price: Price at which the position was opened.
+        structure_level: Numeric value used for the structure level.
+        rr_ratio: Numeric value used for the rr ratio.
+        buffer_pts: Numeric value used for the buffer pts.
+
+    Returns:
+        Values returned by ``compute_sl_tp_from_structure``, in the declared order.
+
+    Raises:
+        ValueError: If ``direction`` is not +/-1 or the geometry is invalid (the level is
+            on the wrong side of the entry), so a backwards stop is never created.
     """
     if direction == 1:
         return compute_sl_tp_long(entry_price, structure_level, buffer_pts, rr_ratio)
@@ -248,7 +250,17 @@ _TARGET_LEVELS: dict[str, dict[int, tuple[str, ...]]] = {
 def _structural_target(
     direction: int, target_mode: str, row: pd.Series, entry_price: float
 ) -> float:
-    """Return a valid structural target for the direction, or NaN."""
+    """Return a valid structural target for the direction, or NaN.
+
+    Args:
+        direction: Signed trade direction: 1 for long and -1 for short.
+        target_mode: Text or path value identifying the target mode.
+        row: Row index or record being processed.
+        entry_price: Price at which the position was opened.
+
+    Returns:
+        Numeric result returned by ``_structural_target``.
+    """
     per_dir = _TARGET_LEVELS.get(target_mode)
     if not per_dir:
         raise ValueError(f"unknown target_mode: {target_mode!r}")
@@ -278,10 +290,19 @@ def resolve_tp_target(
     wrong side of the entry fall back to the RR target (``rr_fallback``
     policy) — an invalid TP is never silently created.
 
-    Raises
-    ------
-    ValueError
-        If ``target_mode`` is unknown or the RR fallback itself is invalid.
+    Args:
+        direction: Signed trade direction: 1 for long and -1 for short.
+        entry_price: Price at which the position was opened.
+        sl_price: Numeric value used for the sl price.
+        rr_ratio: Numeric value used for the rr ratio.
+        target_mode: Text or path value identifying the target mode.
+        row: Row index or record being processed.
+
+    Returns:
+        Numeric result returned by ``resolve_tp_target``.
+
+    Raises:
+        ValueError: If ``target_mode`` is unknown or the RR fallback itself is invalid.
     """
     risk = (entry_price - sl_price) if direction == 1 else (sl_price - entry_price)
     rr_tp = entry_price + direction * rr_ratio * risk

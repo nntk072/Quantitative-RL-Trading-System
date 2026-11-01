@@ -55,7 +55,8 @@ def _run_report_g3(runs_dir: Path, capsys: pytest.CaptureFixture[str], threshold
 
 def test_reads_flat_training_log(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Canonical entrypoint output (training_log.json) must be read as the
-    out-of-sample block — no 'no metrics.json found' failure."""
+    out-of-sample block — no 'no metrics.json found' failure.
+    """
     runs_dir = _write(tmp_path, "20260901_054947_rl_train_seed42", FLAT_LOG, "training_log")
 
     out = _run_report_g3(runs_dir, capsys)
@@ -67,7 +68,8 @@ def test_reads_flat_training_log(tmp_path: Path, capsys: pytest.CaptureFixture[s
 
 def test_reads_metrics_json(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """scripts/train_rl.py rich schema must keep working (in-sample must NOT
-    leak into the G3 verdict)."""
+    leak into the G3 verdict).
+    """
     runs_dir = _write(
         tmp_path,
         "ppo_gru_vae1_seed42",

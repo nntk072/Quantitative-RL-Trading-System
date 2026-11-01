@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild the named thesis feature caches through the package-owned implementation."""
+"""Rebuild named research feature caches through the package-owned implementation."""
 
 from experiments.runs.named_cache_rebuild import main
 

@@ -8,8 +8,7 @@ from integrations.mt5.domain.strategies.trend_breakout_strategy import TrendBrea
 
 
 class CombinedStrategy(TradingStrategy):
-    """
-    Combined Strategy that uses multiple strategies and requires consensus.
+    """Combined Strategy that uses multiple strategies and requires consensus.
 
     Can combine:
     - Crossover Strategy
@@ -23,8 +22,7 @@ class CombinedStrategy(TradingStrategy):
         strategies: list[str] | None = None,
         require_all: bool = False,
     ) -> None:
-        """
-        Initialize Combined Strategy.
+        """Initialize Combined Strategy.
 
         Args:
             trading_data: Data source for trading
@@ -51,8 +49,7 @@ class CombinedStrategy(TradingStrategy):
             self.strategies["trend_breakout"] = TrendBreakoutStrategy(trading_data)
 
     def signal(self) -> tuple[str, Signal]:
-        """
-        Generate trading signal based on combined strategies.
+        """Generate trading signal based on combined strategies.
 
         Returns:
             Tuple of (symbol, signal)

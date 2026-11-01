@@ -32,7 +32,13 @@ def _shard_worker(
     parent_remote: Any,
     env_fns_wrapper: CloudpickleWrapper,
 ) -> None:
-    """Run a contiguous shard of environments behind one pipe."""
+    """Run a contiguous shard of environments behind one pipe.
+
+    Args:
+        remote: Remote used by the operation described above.
+        parent_remote: Parent remote used by the operation described above.
+        env_fns_wrapper: Env fns wrapper used by the operation described above.
+    """
     from stable_baselines3.common.env_util import is_wrapped
 
     parent_remote.close()
@@ -117,6 +123,15 @@ def _shard_worker(
 def _stack_observations(
     observations: Sequence[VecEnvObs], observation_space: spaces.Space[Any]
 ) -> VecEnvObs:
+    """Process observations.
+
+    Args:
+        observations: Observations to evaluate, in input order.
+        observation_space: Observation space used by the operation described above.
+
+    Returns:
+        Result of process observations.
+    """
     if isinstance(observation_space, spaces.Dict):
         dict_observations = [
             cast(dict[str, np.ndarray[Any, Any]], observation) for observation in observations
@@ -150,6 +165,13 @@ class ShardedBundleVecEnv(VecEnv):
         n_shards: int,
         start_method: str | None = None,
     ) -> None:
+        """Initialize ShardedBundleVecEnv and its owned state.
+
+        Args:
+            env_fns: Items supplied for the env fns, in input order.
+            n_shards: Numeric value used for the n shards.
+            start_method: Start method used by the operation described above.
+        """
         if not env_fns:
             raise ValueError("ShardedBundleVecEnv requires at least one environment")
         if n_shards < 1 or n_shards > len(env_fns):
@@ -192,6 +214,14 @@ class ShardedBundleVecEnv(VecEnv):
 
     @staticmethod
     def _receive(remote: Any) -> Any:
+        """Process ShardedBundleVecEnv.
+
+        Args:
+            remote: Remote used by the operation described above.
+
+        Returns:
+            Result of process ShardedBundleVecEnv.
+        """
         result = remote.recv()
         if isinstance(result, dict) and "worker_error" in result:
             raise RuntimeError(f"sharded environment worker failed:\n{result['worker_error']}")
@@ -199,6 +229,14 @@ class ShardedBundleVecEnv(VecEnv):
 
     @staticmethod
     def _receive_all(remotes: Sequence[Any]) -> list[Any]:
+        """Process all.
+
+        Args:
+            remotes: Items supplied for the remotes, in input order.
+
+        Returns:
+            Values returned by ``_receive_all``, in the declared order.
+        """
         results = [remote.recv() for remote in remotes]
         for result in results:
             if isinstance(result, dict) and "worker_error" in result:
@@ -207,13 +245,31 @@ class ShardedBundleVecEnv(VecEnv):
 
     @property
     def num_shards(self) -> int:
+        """Return the number of worker processes backing this VecEnv.
+
+        Returns:
+            Numeric result returned by ``num_shards``.
+        """
         return len(self.remotes)
 
     @property
     def logical_envs_per_shard(self) -> list[int]:
+        """Return the logical environment count assigned to each worker.
+
+        Returns:
+            Values returned by ``logical_envs_per_shard``, in the declared order.
+        """
         return [end - start for start, end in self._shard_ranges]
 
     def _group_indices(self, indices: VecEnvIndices) -> list[list[tuple[int, int]]]:
+        """Group indices.
+
+        Args:
+            indices: Indices used by the operation described above.
+
+        Returns:
+            Values returned by ``_group_indices``, in the declared order.
+        """
         groups: list[list[tuple[int, int]]] = [[] for _ in self.remotes]
         for env_idx in self._get_indices(indices):
             if env_idx < 0 or env_idx >= self.num_envs:
@@ -225,6 +281,14 @@ class ShardedBundleVecEnv(VecEnv):
         return groups
 
     def _requested_indices(self, indices: VecEnvIndices) -> list[int]:
+        """Process indices.
+
+        Args:
+            indices: Indices used by the operation described above.
+
+        Returns:
+            Values returned by ``_requested_indices``, in the declared order.
+        """
         result = list(self._get_indices(indices))
         for env_idx in result:
             if env_idx < 0 or env_idx >= self.num_envs:
@@ -232,6 +296,11 @@ class ShardedBundleVecEnv(VecEnv):
         return result
 
     def reset(self) -> VecEnvObs:
+        """Reset all logical environments and stack their observations.
+
+        Returns:
+            Result of reset all logical environments and stack their observations.
+        """
         for remote, (start, end) in zip(self.remotes, self._shard_ranges, strict=True):
             remote.send(
                 ("reset", list(zip(self._seeds[start:end], self._options[start:end], strict=True)))
@@ -249,6 +318,11 @@ class ShardedBundleVecEnv(VecEnv):
         return _stack_observations(observations, self.observation_space)
 
     def step_async(self, actions: np.ndarray[Any, Any]) -> None:
+        """Dispatch one action per logical environment without waiting for results.
+
+        Args:
+            actions: Actions to apply, in input order.
+        """
         if self.waiting:
             raise RuntimeError("step_async called while a previous step is pending")
         if len(actions) != self.num_envs:
@@ -258,6 +332,11 @@ class ShardedBundleVecEnv(VecEnv):
         self.waiting = True
 
     def step_wait(self) -> VecEnvStepReturn:
+        """Collect dispatched transitions and stack observations, rewards, and infos.
+
+        Returns:
+            Result of collect dispatched transitions and stack observations, rewards, and infos.
+        """
         if not self.waiting:
             raise RuntimeError("step_wait called without a pending step")
         try:
@@ -285,6 +364,7 @@ class ShardedBundleVecEnv(VecEnv):
         )
 
     def close(self) -> None:
+        """Ask every worker to close its environments and join the processes."""
         if self.closed:
             return
         if self.waiting:
@@ -313,6 +393,11 @@ class ShardedBundleVecEnv(VecEnv):
         self.closed = True
 
     def get_images(self) -> Sequence[np.ndarray[Any, Any] | None]:
+        """Render each logical environment when ``rgb_array`` mode is enabled.
+
+        Returns:
+            Array returned by ``get_images``.
+        """
         if self.render_mode != "rgb_array":
             warnings.warn(
                 f"render mode is {self.render_mode!r}; expected 'rgb_array' for get_images()"
@@ -323,6 +408,14 @@ class ShardedBundleVecEnv(VecEnv):
         return [image for remote in self.remotes for image in self._receive(remote)]
 
     def has_attr(self, attr_name: str) -> bool:
+        """Return whether the attribute exists in every selected environment.
+
+        Args:
+            attr_name: Text or path value identifying the attr name.
+
+        Returns:
+            Whether has attr meets the requested condition.
+        """
         groups = self._group_indices(None)
         for remote, group in zip(self.remotes, groups, strict=True):
             remote.send(("has_attr", (tuple(local for _, local in group), attr_name)))
@@ -330,6 +423,15 @@ class ShardedBundleVecEnv(VecEnv):
         return all(results)
 
     def get_attr(self, attr_name: str, indices: VecEnvIndices = None) -> list[Any]:
+        """Read an attribute from the selected logical environments in index order.
+
+        Args:
+            attr_name: Text or path value identifying the attr name.
+            indices: Indices used by the operation described above.
+
+        Returns:
+            Values returned by ``get_attr``, in the declared order.
+        """
         groups = self._group_indices(indices)
         for remote, group in zip(self.remotes, groups, strict=True):
             remote.send(("get_attr", (tuple(local for _, local in group), attr_name)))
@@ -342,6 +444,13 @@ class ShardedBundleVecEnv(VecEnv):
         return [values[env_idx] for env_idx in self._requested_indices(indices)]
 
     def set_attr(self, attr_name: str, value: Any, indices: VecEnvIndices = None) -> None:
+        """Assign an attribute on the selected logical environments.
+
+        Args:
+            attr_name: Text or path value identifying the attr name.
+            value: Value to process.
+            indices: Indices used by the operation described above.
+        """
         groups = self._group_indices(indices)
         for remote, group in zip(self.remotes, groups, strict=True):
             remote.send(("set_attr", (tuple(local for _, local in group), attr_name, value)))
@@ -355,6 +464,17 @@ class ShardedBundleVecEnv(VecEnv):
         indices: VecEnvIndices = None,
         **method_kwargs: Any,
     ) -> list[Any]:
+        """Call a method on selected environments and return results in index order.
+
+        Args:
+            method_name: Text or path value identifying the method name.
+            *method_args: Method args used by the operation described above.
+            indices: Indices used by the operation described above.
+            **method_kwargs: Method kwargs used by the operation described above.
+
+        Returns:
+            Values returned by ``env_method``, in the declared order.
+        """
         groups = self._group_indices(indices)
         for remote, group in zip(self.remotes, groups, strict=True):
             remote.send(
@@ -381,6 +501,15 @@ class ShardedBundleVecEnv(VecEnv):
         wrapper_class: type[gym.Wrapper[Any, Any, Any, Any]],
         indices: VecEnvIndices = None,
     ) -> list[bool]:
+        """Check the requested wrapper class on each selected environment.
+
+        Args:
+            wrapper_class: Wrapper class used by the operation described above.
+            indices: Indices used by the operation described above.
+
+        Returns:
+            Whether env is wrapped meets the requested condition.
+        """
         groups = self._group_indices(indices)
         for remote, group in zip(self.remotes, groups, strict=True):
             remote.send(("is_wrapped", (tuple(local for _, local in group), wrapper_class)))

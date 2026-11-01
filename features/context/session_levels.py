@@ -1,5 +1,6 @@
-"""Causal CT-anchored session levels: per-session OHLC, prior-period H/L,
-range quadrants.
+"""Compute causal session levels anchored to Chicago time.
+
+Features include per-session OHLC, prior-period highs and lows, and range quadrants.
 
 Session windows are defined in wall-clock ``America/Chicago`` (CT) time and
 resolved per bar via tz-aware conversion (``DatetimeIndex.tz_convert``), so
@@ -29,7 +30,14 @@ import pandas as pd
 
 
 def _parse_hhmm(value: str) -> dt.time:
-    """Parse an ``HH:MM`` string into a ``datetime.time``."""
+    """Parse an ``HH:MM`` string into a ``datetime.time``.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Result of parse an ``HH:MM`` string into a ``datetime.time``.
+    """
     return pd.Timestamp(f"2000-01-01 {value}").time()
 
 
@@ -45,6 +53,13 @@ def _session_reference_index(
     hours and localizing to New York reconstructs the corresponding NY clock
     and UTC instants for CT session calculations. Ambiguous/nonexistent source
     wall times fail closed because the export alone cannot resolve them.
+
+    Args:
+        index: Position or label identifying the requested item.
+        source_clock_model: Text or path value identifying the source clock model.
+
+    Returns:
+        Result of return an index with the instants implied by its source clock model.
     """
     if index.tz is None:
         raise ValueError("index must be timezone-aware (data tz), got naive index")
@@ -69,6 +84,16 @@ def session_mask(
     Each bar's timestamp is converted into ``session_tz`` so DST rules are
     resolved per bar. ``source_clock_model`` controls how source wall-clock
     labels are interpreted before that timezone conversion.
+
+    Args:
+        idx: Idx used by the operation described above.
+        start_ct: Text or path value identifying the start ct.
+        end_ct: Text or path value identifying the end ct.
+        session_tz: Text or path value identifying the session tz.
+        source_clock_model: Text or path value identifying the source clock model.
+
+    Returns:
+        Result of boolean mask of bars whose local wall-clock time falls in ``[start, end)``.
     """
     if idx.tz is None:
         raise ValueError("index must be timezone-aware (data tz), got naive index")
@@ -88,6 +113,14 @@ def _session_dates(idx_ct: pd.DatetimeIndex, start_t: dt.time, end_t: dt.time) -
 
     For windows crossing midnight (not the case for Asian/London/NY as
     configured), bars before ``end_t`` belong to the previous calendar date.
+
+    Args:
+        idx_ct: Idx ct used by the operation described above.
+        start_t: Start t used by the operation described above.
+        end_t: End t used by the operation described above.
+
+    Returns:
+        Result of calendar date in session_tz each bar's session window belongs to.
     """
     dates = pd.Series(idx_ct.date, index=idx_ct)
     if start_t > end_t:
@@ -113,16 +146,16 @@ def session_ohlc(
     final session O/H/L/C is held (forward-filled) until the next session's
     window starts; bars before the first session are NaN — never 0.
 
-    Parameters
-    ----------
-    df:
-        OHLC bars with a tz-aware DatetimeIndex in the data tz.
-    start_ct / end_ct:
-        Window boundaries as ``HH:MM`` strings in ``session_tz`` (end exclusive).
-    session_tz:
-        IANA tz the window is defined in (DST-aware; default America/Chicago).
-    prefix:
-        Column prefix; returns ``{prefix}_open/_high/_low/_close``.
+    Args:
+        df: OHLC bars with a tz-aware DatetimeIndex in the data tz.
+        start_ct: Session start as ``HH:MM`` in ``session_tz``.
+        end_ct: Session end as ``HH:MM`` in ``session_tz`` (exclusive).
+        session_tz: IANA tz the window is defined in (DST-aware; default America/Chicago).
+        prefix: Column prefix; returns ``{prefix}_open/_high/_low/_close``.
+        source_clock_model: Timestamp interpretation used before converting to ``session_tz``.
+
+    Returns:
+        DataFrame returned by ``session_ohlc``.
     """
     idx = pd.DatetimeIndex(df.index)
     reference_index = _session_reference_index(idx, source_clock_model)
@@ -164,6 +197,16 @@ def prior_period_high_low(
 
     ``freq="D"`` returns ``yesterday_high``/``yesterday_low``;
     ``freq="W"`` returns ``lastweek_high``/``lastweek_low``.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        freq: Text or path value identifying the freq.
+        tz: Text or path value identifying the tz.
+        prefix: Prefix used by the operation described above.
+        source_clock_model: Text or path value identifying the source clock model.
+
+    Returns:
+        DataFrame returned by ``prior_period_high_low``.
     """
     idx = pd.DatetimeIndex(df.index)
     if idx.tz is None:
@@ -202,6 +245,14 @@ def range_quadrants(high: pd.Series, low: pd.Series, prefix: str) -> pd.DataFram
     - ``{prefix}_q_upper_inner``: equilibrium ``low + 0.50 * span``
     - ``{prefix}_q_lower_inner``: equilibrium (duplicate, both names requested)
     - ``{prefix}_q_lower_outer``: ``low + 0.25 * span`` (discount extreme band)
+
+    Args:
+        high: Tabular data used for the high.
+        low: Tabular data used for the low.
+        prefix: Text or path value identifying the prefix.
+
+    Returns:
+        DataFrame returned by ``range_quadrants``.
     """
     span = high - low
     eq = low + 0.5 * span
@@ -230,6 +281,16 @@ def prev_ny_high_low(
     the reference. Session extrema use available rows; missing-bar quality is
     audited separately and does not silently disqualify a session here. Bars
     before the first session close are NaN.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        start_ct: Text or path value identifying the start ct.
+        end_ct: Text or path value identifying the end ct.
+        session_tz: Text or path value identifying the session tz.
+        source_clock_model: Text or path value identifying the source clock model.
+
+    Returns:
+        DataFrame returned by ``prev_ny_high_low``.
     """
     idx = pd.DatetimeIndex(df.index)
     reference_index = _session_reference_index(idx, source_clock_model)
@@ -284,6 +345,16 @@ def previous_labeled_session_ohlc(
     wall-clock windows. The calendar is evaluated in ``session_tz`` for each
     bar, including DST transitions. Codes are assigned by sorted label name
     starting at 1; zero means no completed session is available.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        sessions: Key-value data used for the sessions.
+        session_tz: Text or path value identifying the session tz.
+        bar_minutes: Numeric value used for the bar minutes.
+        source_clock_model: Text or path value identifying the source clock model.
+
+    Returns:
+        DataFrame returned by ``previous_labeled_session_ohlc``.
     """
     idx = pd.DatetimeIndex(df.index)
     if idx.tz is None:

@@ -13,6 +13,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class StepInfoRuntimeMixin(RuntimeMixinBase):
+    """Build info fields describing the just-completed environment transition."""
+
     _decision_action: dict[str, float]
     _previous_constraint_ratios: dict[str, float]
 
@@ -28,6 +30,22 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
         entry_state_for_action: str | None,
         done: bool,
     ) -> tuple[dict[str, np.ndarray[Any, Any]], str, dict[str, Any]]:
+        """Build step info.
+
+        Args:
+            bar: Bar used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+            valuation_time: Valuation time used by the operation described above.
+            reward_parts: Key-value data used for the reward parts.
+            entry_funnel: Key-value data used for the entry funnel.
+            entry_machine: Entry machine used by the operation described above.
+            entry_state_for_action: Entry state for action used by the operation described above.
+            done: Whether to enable or require the done.
+
+        Returns:
+            Mapping from ``str`` keys to ``np.ndarray[Any, Any]], str, dict[str, Any]`` values.
+        """
         obs = self._get_observation()
         close_reason = ""
         if self.trade_log:

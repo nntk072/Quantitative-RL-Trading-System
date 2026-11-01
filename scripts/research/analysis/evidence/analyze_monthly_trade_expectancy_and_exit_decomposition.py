@@ -515,7 +515,7 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("docs/thesis/evidence/p6_monthly_entry_exit_20261025"),
+        default=Path("outputs/research_audits/p6_monthly_entry_exit_20261025"),
     )
     args = parser.parse_args()
     root = args.repo_root.resolve()

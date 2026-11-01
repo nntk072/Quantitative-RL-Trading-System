@@ -12,17 +12,12 @@ from __future__ import annotations
 class PO3Reward:
     """Reward for a single position-entry event under the Idea 1 chain.
 
-    Parameters
-    ----------
-    entry_bonus:
-        Positive bonus for a sweep or protected-swing entry.
-    manipulation_penalty:
-        Negative reward for an entry that is not a sweep or swing while
-        manipulation is still running.
-    invalid_ifvg_penalty:
-        Negative reward for an entry that is not a sweep or protected swing.
-    distribution_bonus:
-        Positive bonus for entering during the distribution phase.
+    Args:
+        entry_bonus: Positive bonus for a sweep or protected-swing entry.
+        manipulation_penalty: Negative reward for an entry that is not a sweep or swing while
+            manipulation is still running.
+        invalid_ifvg_penalty: Negative reward for an entry that is not a sweep or protected swing.
+        distribution_bonus: Positive bonus for entering during the distribution phase.
     """
 
     #: Keyword inputs this reward consumes (for CompositeReward filtering).
@@ -46,6 +41,15 @@ class PO3Reward:
         distribution_bonus: float,
         sweep_penalty: float = 0.0,
     ) -> None:
+        """Initialize PO3Reward and its owned state.
+
+        Args:
+            entry_bonus: Numeric value used for the entry bonus.
+            manipulation_penalty: Numeric value used for the manipulation penalty.
+            invalid_ifvg_penalty: Numeric value used for the invalid ifvg penalty.
+            distribution_bonus: Numeric value used for the distribution bonus.
+            sweep_penalty: Numeric value used for the sweep penalty.
+        """
         self.entry_bonus = float(entry_bonus)
         self.manipulation_penalty = float(manipulation_penalty)
         self.invalid_ifvg_penalty = float(invalid_ifvg_penalty)
@@ -73,6 +77,20 @@ class PO3Reward:
         Only a position *transition* (``position_changed`` and a non-zero
         ``direction``) earns anything — a position that merely stays open is
         never rewarded here (Agent.md §21).
+
+        Args:
+            position_changed: Whether to enable or require the position changed.
+            direction: Signed trade direction: 1 for long and -1 for short.
+            in_ifvg: Whether to enable or require the in ifvg.
+            manipulation_active: Whether to enable or require the manipulation active.
+            manipulation_end: Whether to enable or require the manipulation end.
+            distribution_phase: Whether to enable or require the distribution phase.
+            liquidity: Whether to enable or require the liquidity.
+            in_gap: In gap used by the operation described above.
+            entry_setup: Whether to enable or require the entry setup.
+
+        Returns:
+            Numeric result returned by ``__call__``.
         """
         if not position_changed or direction == 0:
             return 0.0

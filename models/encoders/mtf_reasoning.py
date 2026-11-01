@@ -24,6 +24,18 @@ class MTFReasoningEncoder(MTFEncoder):
         attention_heads: int = 4,
         feedforward_dim: int = 256,
     ) -> None:
+        """Initialize MTFReasoningEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            latent_dim: Number of dimensions in the learned latent representation.
+            channels: Items supplied for the channels, in input order.
+            kernel_size: Number specifying the kernel size for this operation.
+            dropout: Numeric value used for the dropout.
+            account_dim: Account dim used by the operation described above.
+            attention_heads: Numeric value used for the attention heads.
+            feedforward_dim: Numeric value used for the feedforward dim.
+        """
         if latent_dim % attention_heads:
             raise ValueError("latent_dim must be divisible by attention_heads")
         super().__init__(
@@ -61,6 +73,14 @@ class MTFReasoningEncoder(MTFEncoder):
         self.market_norm = nn.LayerNorm(latent_dim)
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode available timeframe streams while respecting each stream's validity mask.
+
+        Args:
+            observations: Mapping of timeframe sequences, masks, and account tensors.
+
+        Returns:
+            Fused latent representation with account context.
+        """
         tokens = torch.stack(
             [
                 branch(observations[seq_key], observations[mask_key])

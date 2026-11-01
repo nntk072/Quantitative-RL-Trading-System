@@ -43,13 +43,13 @@ def resample(m1: pd.DataFrame, tf: TF) -> pd.DataFrame:
     to broker midnight of ``m1``'s timezone (typically ``Etc/GMT-3``), not
     UTC midnight and not NY close.
 
-    Parameters
-    ----------
-    m1:
-        DataFrame produced by :func:`market_data.loading.bars.load_bars`
-        with a DatetimeIndex.
-    tf:
-        Target timeframe string.
+    Args:
+        m1: DataFrame produced by :func:`market_data.loading.bars.load_bars`
+            with a DatetimeIndex.
+        tf: Target timeframe string.
+
+    Returns:
+        DataFrame returned by ``resample``.
     """
     if tf == "M1":
         return m1.copy()
@@ -62,5 +62,12 @@ def resample(m1: pd.DataFrame, tf: TF) -> pd.DataFrame:
 
 
 def build_all_timeframes(m1: pd.DataFrame) -> dict[TF, pd.DataFrame]:
-    """Build all standard timeframes from M1 data."""
+    """Build all standard timeframes from M1 data.
+
+    Args:
+        m1: Tabular data used for the m1.
+
+    Returns:
+        Mapping from ``TF`` keys to ``pd.DataFrame`` values.
+    """
     return {tf: resample(m1, tf) for tf in _TF_TO_RULE}

@@ -44,6 +44,16 @@ def decode_tp_mode(
 
 
 def _decode_single_slot(val: Any, menu_size: int, continuous: bool | None = None) -> int | None:
+    """Decode single slot.
+
+    Args:
+        val: Val used by the operation described above.
+        menu_size: Number specifying the menu size for this operation.
+        continuous: Continuous used by the operation described above.
+
+    Returns:
+        Result of decode single slot.
+    """
     if val is None or val is DISABLED:
         return None
     if isinstance(val, (int, np.integer)):

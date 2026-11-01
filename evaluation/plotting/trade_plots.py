@@ -32,6 +32,17 @@ except ImportError:
 
 
 def _empty_mpl(title: str, msg: str, out_path: Path | str | None, dpi: int) -> Figure:
+    """Process mpl.
+
+    Args:
+        title: Text or path value identifying the title.
+        msg: Text or path value identifying the msg.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of process mpl.
+    """
     _apply_style()
     fig, ax = plt.subplots(figsize=(8, 4))
     ax.text(0.5, 0.5, msg, ha="center", va="center", transform=ax.transAxes)
@@ -47,7 +58,16 @@ def plot_mae_mfe(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Scatter of MAE vs MFE in USD; marker shows whether SL/TP was reached."""
+    """Scatter of MAE vs MFE in USD; marker shows whether SL/TP was reached.
+
+    Args:
+        table: Tabular data used for the table.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of scatter of MAE vs MFE in USD; marker shows whether SL/TP was reached.
+    """
     if table.empty:
         return _empty_mpl("MAE vs MFE", "No MAE/MFE data", out_path, dpi)
     _apply_style()
@@ -89,7 +109,16 @@ def plot_hold_time_pnl(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Hold duration versus realized PnL."""
+    """Hold duration versus realized PnL.
+
+    Args:
+        closed: Tabular data used for the closed.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of hold duration versus realized PnL.
+    """
     if closed.empty:
         return _empty_mpl("Hold time vs PnL", "No closed trades", out_path, dpi)
     _apply_style()
@@ -117,7 +146,17 @@ def plot_rolling_winrate(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Rolling win rate across consecutive closed trades."""
+    """Rolling win rate across consecutive closed trades.
+
+    Args:
+        closed: Tabular data used for the closed.
+        window: Numeric value used for the window.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of rolling win rate across consecutive closed trades.
+    """
     roll = rolling_win_rate(closed, window=window)
     if roll.empty:
         return _empty_mpl("Rolling win rate", "No closed trades", out_path, dpi)
@@ -148,7 +187,16 @@ def plot_tod_heatmap(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Weekday × hour-of-entry heatmap of summed PnL."""
+    """Weekday × hour-of-entry heatmap of summed PnL.
+
+    Args:
+        closed: Tabular data used for the closed.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of weekday × hour-of-entry heatmap of summed PnL.
+    """
     matrix, weekdays, hours = weekday_hour_pnl(closed)
     if closed.empty or len(hours) == 0:
         return _empty_mpl("Time-of-day PnL", "No closed trades", out_path, dpi)
@@ -185,12 +233,26 @@ def plot_tod_heatmap(
 
 
 def _save_html(fig: Any, path: Path | str) -> None:
+    """Save html.
+
+    Args:
+        fig: Fig used by the operation described above.
+        path: Path to the input file or directory.
+    """
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     fig.write_html(str(path), include_plotlyjs="cdn")
 
 
 def plot_mae_mfe_html(table: pd.DataFrame, out_path: Path | str | None = None) -> Any:
-    """Interactive MAE vs MFE scatter."""
+    """Interactive MAE vs MFE scatter.
+
+    Args:
+        table: Tabular data used for the table.
+        out_path: Path or filename identifying the out.
+
+    Returns:
+        Result of interactive MAE vs MFE scatter.
+    """
     if not _PLOTLY:
         raise ImportError("plotly is required")
     fig = go.Figure()
@@ -246,7 +308,15 @@ def plot_mae_mfe_html(table: pd.DataFrame, out_path: Path | str | None = None) -
 
 
 def plot_hold_time_pnl_html(closed: pd.DataFrame, out_path: Path | str | None = None) -> Any:
-    """Interactive hold time vs PnL scatter."""
+    """Interactive hold time vs PnL scatter.
+
+    Args:
+        closed: Tabular data used for the closed.
+        out_path: Path or filename identifying the out.
+
+    Returns:
+        Result of interactive hold time vs PnL scatter.
+    """
     if not _PLOTLY:
         raise ImportError("plotly is required")
     fig = go.Figure()
@@ -284,7 +354,16 @@ def plot_rolling_winrate_html(
     window: int = 20,
     out_path: Path | str | None = None,
 ) -> Any:
-    """Interactive rolling win rate."""
+    """Interactive rolling win rate.
+
+    Args:
+        closed: Tabular data used for the closed.
+        window: Numeric value used for the window.
+        out_path: Path or filename identifying the out.
+
+    Returns:
+        Result of interactive rolling win rate.
+    """
     if not _PLOTLY:
         raise ImportError("plotly is required")
     roll = rolling_win_rate(closed, window=window)
@@ -318,7 +397,15 @@ def plot_rolling_winrate_html(
 
 
 def plot_tod_heatmap_html(closed: pd.DataFrame, out_path: Path | str | None = None) -> Any:
-    """Interactive weekday × hour PnL heatmap."""
+    """Interactive weekday × hour PnL heatmap.
+
+    Args:
+        closed: Tabular data used for the closed.
+        out_path: Path or filename identifying the out.
+
+    Returns:
+        Result of interactive weekday × hour PnL heatmap.
+    """
     if not _PLOTLY:
         raise ImportError("plotly is required")
     matrix, weekdays, hours = weekday_hour_pnl(closed)
@@ -365,7 +452,20 @@ def write_trade_diagnostics(
     max_loss_per_trade_usd: float | None = None,
     take_profit_per_trade_usd: float | None = None,
 ) -> None:
-    """Write hold-time, win-rate, heatmap, and MAE/MFE charts into *split_dir*."""
+    """Write hold-time, win-rate, heatmap, and MAE/MFE charts into *split_dir*.
+
+    Args:
+        split_dir: Text or path value identifying the split dir.
+        trades: Trade records used to calculate the requested report or metric.
+        bars: Market bars to process.
+        dpi: Resolution of generated plots, in dots per inch.
+        save_plots: Whether to enable or require the save plots.
+        save_html: Whether to enable or require the save html.
+        lots: Numeric value used for the lots.
+        contract_size: Number specifying the contract size for this operation.
+        max_loss_per_trade_usd: Max loss per trade usd used by the operation described above.
+        take_profit_per_trade_usd: Take profit per trade usd used by the operation described above.
+    """
     closed = closed_trades_table(trades)
     if save_plots:
         plot_hold_time_pnl(closed, out_path=split_dir / "hold_time_pnl.png", dpi=dpi)

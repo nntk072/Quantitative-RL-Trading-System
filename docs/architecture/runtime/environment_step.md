@@ -3,7 +3,7 @@
 One environment decision consumes the current observation and action,
 advances the simulated market/account, and emits the next observation plus
 reward and diagnostics. The detailed lifecycle and component map are in the
-[environment package guide](../../../simulation/environment/README.md).
+[environment package guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/simulation/environment/README.md).
 
 ```mermaid
 sequenceDiagram

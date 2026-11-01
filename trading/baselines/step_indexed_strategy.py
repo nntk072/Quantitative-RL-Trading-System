@@ -42,6 +42,9 @@ class BaseStrategy(ABC):
         strategy evaluated through :func:`run_episode` must skip the first
         ``obs_window`` pre-computed signals to stay aligned with the bars
         the environment actually trades.
+
+        Args:
+            n_bars: Market bar or price data used for advance the step counter by ``n_bars`` without emitting actions.
         """
         self._idx = min(self._idx + max(n_bars, 0), self._n_bars)
 
@@ -61,4 +64,11 @@ class BaseStrategy(ABC):
 
     @abstractmethod
     def _signal(self, idx: int) -> float:
-        """Return the action for bar ``idx``."""
+        """Return the action for bar ``idx``.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Numeric result returned by ``_signal``.
+        """

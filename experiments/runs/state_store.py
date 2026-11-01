@@ -13,24 +13,57 @@ from artifacts.atomic import write_json_atomic
 
 
 def utc() -> str:
+    """Return the current UTC timestamp in ISO-8601 form.
+
+    Returns:
+        Text returned by ``utc``.
+    """
     return dt.datetime.now(dt.timezone.utc).isoformat()  # noqa: UP017
 
 
 def atomic_json(path: pathlib.Path, value: object) -> None:
+    """Atomically write a JSON-compatible value to the state path.
+
+    Args:
+        path: Path to the input file or directory.
+        value: Value to process.
+    """
     write_json_atomic(path, value, default=None)
 
 
 def record(path: pathlib.Path, value: dict[str, object]) -> None:
+    """Append one timestamped JSON record and flush it to the event log.
+
+    Args:
+        path: Path to the input file or directory.
+        value: Value to process.
+    """
     with path.open("a", encoding="utf-8") as out:
         out.write(json.dumps({"timestamp": utc(), **value}, sort_keys=True) + "\n")
         out.flush()
 
 
 def read_manifest(path: pathlib.Path) -> dict[str, Any]:
+    """Load a run manifest as a JSON mapping.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
 
 
 def validate_inputs(args: argparse.Namespace) -> list[dict[str, Any]]:
+    """Validate CLI variant, seed, and resource values and expand the job list.
+
+    Args:
+        args: Parsed command-line arguments for this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     variants = [
         v.strip()
         for v in args.variant_file.read_text().splitlines()

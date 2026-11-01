@@ -20,6 +20,12 @@ from models.encoders.sequence_encoder_components import (
 
 class _PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, max_len: int = 512) -> None:
+        """Initialize _PositionalEncoding and its owned state.
+
+        Args:
+            d_model: Numeric value used for the d model.
+            max_len: Numeric value used for the max len.
+        """
         super().__init__()
         pe = torch.zeros(max_len, d_model)
         pos = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
@@ -31,6 +37,14 @@ class _PositionalEncoding(nn.Module):
         self.register_buffer("pe", pe.unsqueeze(0))  # [1, max_len, d_model]
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Add the registered sinusoidal position vectors to sequence tokens.
+
+        Args:
+            x: Token embeddings with shape ``[batch, time, d_model]``.
+
+        Returns:
+            Position-encoded tokens with the same shape and dtype as ``x``.
+        """
         pe = cast(torch.Tensor, self.pe)
         return x + pe[:, : x.size(1)]
 
@@ -40,16 +54,17 @@ class TransformerEncoder(BaseFeaturesExtractor):
 
     An upper-triangular ``-inf`` mask makes each position attend only to ≤ t.
 
-    Parameters (pass via ``policy_kwargs["features_extractor_kwargs"]``)
-    --------------------------------------------------------------------
-    seq_len        : T
-    n_features     : F
-    latent_dim     : D
-    d_model        : internal transformer embedding dim
-    nhead          : number of attention heads (d_model must be divisible)
-    num_layers     : stacked encoder layers
-    dim_feedforward: FFN hidden dim
-    dropout        : dropout inside transformer layers
+    Args:
+        seq_len: Maximum configured observation window in bars.
+        n_features: Number of input features per bar.
+        latent_dim: Width of the encoded sequence representation.
+        d_model: Width of the Transformer token embeddings, divisible by ``nhead``.
+        nhead: Number of attention heads per Transformer layer.
+        num_layers: Number of stacked Transformer encoder layers.
+        dim_feedforward: Width of the feed-forward network in each layer.
+        dropout: Dropout probability used inside Transformer layers.
+        account_dim: Optional width of account inputs; inferred from the observation
+            space when omitted.
     """
 
     def __init__(
@@ -65,6 +80,20 @@ class TransformerEncoder(BaseFeaturesExtractor):
         dropout: float = 0.1,
         account_dim: int | None = None,
     ) -> None:
+        """Initialize TransformerEncoder and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            seq_len: Number of consecutive bars in each input sequence.
+            n_features: Number of feature columns in each observation.
+            latent_dim: Number of dimensions in the learned latent representation.
+            d_model: Numeric value used for the d model.
+            nhead: Numeric value used for the nhead.
+            num_layers: Numeric value used for the num layers.
+            dim_feedforward: Numeric value used for the dim feedforward.
+            dropout: Numeric value used for the dropout.
+            account_dim: Account dim used by the operation described above.
+        """
         super().__init__(observation_space, features_dim=latent_dim + ACCOUNT_EMB_DIM)
         self.seq_len = seq_len
         self.n_features = n_features
@@ -95,6 +124,15 @@ class TransformerEncoder(BaseFeaturesExtractor):
         self.register_buffer("_causal_mask", mask)
 
     def _get_mask(self, t: int, device: torch.device) -> torch.Tensor:
+        """Return mask.
+
+        Args:
+            t: Numeric value used for the t.
+            device: Compute device on which to perform the operation.
+
+        Returns:
+            Result of return mask.
+        """
         causal_mask = cast(torch.Tensor, self._causal_mask)
         if t <= causal_mask.size(0):
             return causal_mask[:t, :t]
@@ -102,12 +140,28 @@ class TransformerEncoder(BaseFeaturesExtractor):
         return mask
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
+        """Encode sequence and account observations with self-attention.
+
+        Args:
+            observations: Mapping containing batched seq and account tensors, plus optional valid-length metadata.
+
+        Returns:
+            Concatenated latent sequence representation and account embedding.
+        """
         seq = torch.nan_to_num(observations["seq"], nan=0.0, posinf=0.0, neginf=0.0)
         account = observations["account"]  # [B, A]
         lengths = _valid_lengths(seq, observations)
 
         def _encode(valid: torch.Tensor) -> torch.Tensor:
             # Rows in one length group have no padding left, so only the causal mask.
+            """Process TransformerEncoder.
+
+            Args:
+                valid: Valid used by the operation described above.
+
+            Returns:
+                Result of process TransformerEncoder.
+            """
             hidden_in = self.pos_enc(self.input_proj(valid))
             causal = self._get_mask(hidden_in.size(1), hidden_in.device)
             hidden = self.transformer(hidden_in, mask=causal)

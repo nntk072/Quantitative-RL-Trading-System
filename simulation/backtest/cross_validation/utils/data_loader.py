@@ -7,20 +7,15 @@ import yfinance as yf
 
 
 def load_data_from_csv(file_path, date_format="%Y-%m-%d"):
-    """
-    Load data from a CSV file into a Backtrader data feed
+    """Load data from a CSV file into a Backtrader data feed.
 
     Args:
         file_path (str): Path to the CSV file
         date_format (str): Format of the date column in the CSV
-
-    Returns:
-        bt.feeds.PandasData: Backtrader data feed
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File {file_path} not found")
 
-        # Load the data from the CSV file
     df = pd.read_csv(file_path, parse_dates=True)
 
     # Convert the date column to datetime if it's not already
@@ -32,7 +27,6 @@ def load_data_from_csv(file_path, date_format="%Y-%m-%d"):
             df["datetime"] = pd.to_datetime(df["datetime"], format=date_format)
             df.set_index("datetime", inplace=True)
 
-            # Create a Backtrader data feed
     data_feed = bt.feeds.PandasData(
         dataname=df,
         datetime=None,  # None if the index is the datetime
@@ -48,17 +42,13 @@ def load_data_from_csv(file_path, date_format="%Y-%m-%d"):
 
 
 def download_data_from_yahoo(symbol, start_date, end_date, timeframe="1d"):
-    """
-    Download data from Yahoo Finance
+    """Download data from Yahoo Finance.
 
     Args:
         symbol (str): Symbol to download data for
         start_date (str or datetime): Start date in format 'YYYY-MM-DD'
         end_date (str or datetime): End date in format 'YYYY-MM-DD'
         timeframe (str): Timeframe for the data (default: '1d')
-
-    Returns:
-        bt.feeds.PandasData: Backtrader data feed
     """
     # Convert string dates to datetime if needed
     if isinstance(start_date, str):

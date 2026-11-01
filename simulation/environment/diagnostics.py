@@ -24,6 +24,13 @@ class DebugStepError(Exception):
         snapshot: Mapping[str, Any],
         original: BaseException | None = None,
     ) -> None:
+        """Initialize DebugStepError and its owned state.
+
+        Args:
+            reason: Text or path value identifying the reason.
+            snapshot: Key-value data used for the snapshot.
+            original: Original used by the operation described above.
+        """
         super().__init__(reason)
         self.reason = reason
         self.snapshot = dict(snapshot)
@@ -31,7 +38,11 @@ class DebugStepError(Exception):
 
 
 def new_debug_window() -> dict[str, Any]:
-    """Empty per-env counters for one rollout."""
+    """Empty per-env counters for one rollout.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     return {
         "n": 0,
         "parts": {},
@@ -67,7 +78,20 @@ def note_debug_step(
     position: bool,
     position_direction: int,
 ) -> None:
-    """Update counters. A non-finite reward raises :class:`DebugStepError`."""
+    """Update counters. A non-finite reward raises :class:`DebugStepError`.
+
+    Args:
+        window: Key-value data used for the window.
+        reward: Numeric value used for the reward.
+        reward_parts: Key-value data used for the reward parts.
+        opened: Whether to enable or require the opened.
+        entered: Whether to enable or require the entered.
+        risk_frac: Numeric value used for the risk frac.
+        close_reason: Text or path value identifying the close reason.
+        action: Action to apply to the current state.
+        position: Whether to enable or require the position.
+        position_direction: Numeric value used for the position direction.
+    """
     if not math.isfinite(float(reward)):
         raise DebugStepError(
             "non-finite reward",
@@ -116,7 +140,14 @@ def note_debug_step(
 
 
 def summarize_window(window: Mapping[str, Any]) -> dict[str, Any]:
-    """Turn one env window into a JSON-ready summary."""
+    """Turn one env window into a JSON-ready summary.
+
+    Args:
+        window: Key-value data used for the window.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     n = int(window["n"])
     rewards = [float(value) for value in window["rewards"]]
     nonzero = float(np.mean(np.abs(rewards) > 1e-8)) if rewards else 0.0
@@ -142,7 +173,14 @@ def summarize_window(window: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def wiring_from_env(env: Any) -> dict[str, Any]:
-    """Reward and risk settings the train env was built with."""
+    """Reward and risk settings the train env was built with.
+
+    Args:
+        env: Environment whose state is read or updated.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     reward = getattr(env, "reward_fn", None)
     base = getattr(reward, "_dsr_fn", None)
     if isinstance(reward, PnLReward):
@@ -163,6 +201,14 @@ def wiring_from_env(env: Any) -> dict[str, Any]:
 
 
 def _spike_share(rewards: Sequence[float]) -> float:
+    """Process share.
+
+    Args:
+        rewards: Items supplied for the rewards, in input order.
+
+    Returns:
+        Numeric result returned by ``_spike_share``.
+    """
     if not rewards:
         return 0.0
     values = np.asarray(rewards, dtype=float)
@@ -176,6 +222,14 @@ def _spike_share(rewards: Sequence[float]) -> float:
 
 
 def jsonable(value: Any) -> Any:
+    """Convert nested NumPy values into finite JSON-compatible values.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Result of convert nested NumPy values into finite JSON-compatible values.
+    """
     if isinstance(value, dict):
         return {str(key): jsonable(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):

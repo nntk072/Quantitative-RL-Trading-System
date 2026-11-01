@@ -20,17 +20,40 @@ from trading.orders.timeframes import (
 
 
 def _timeframe_rank_for_stop(name: str) -> int:
-    """Return the source timeframe rank; session/day/week references are HTF."""
+    """Return the source timeframe rank; session/day/week references are HTF.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Numeric result returned by ``_timeframe_rank_for_stop``.
+    """
     return reference_timeframe_index(name)
 
 
 def _flag(row: Any, name: str) -> bool:
+    """Process the requested value.
+
+    Args:
+        row: Row index or record being processed.
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Whether flag meets the requested condition.
+    """
     value = finite_level(row, name)
     return value is not None and value > 0.0
 
 
 def manipulation_state(row: pd.Series | Any) -> str:
-    """Return the PO3 manipulation state that filters structural stops."""
+    """Return the PO3 manipulation state that filters structural stops.
+
+    Args:
+        row: Row index or record being processed.
+
+    Returns:
+        Text returned by ``manipulation_state``.
+    """
     if _flag(row, "po3_manipulation_end"):
         return "done"
     if _flag(row, "po3_manipulation_active"):
@@ -39,7 +62,14 @@ def manipulation_state(row: pd.Series | Any) -> str:
 
 
 def stop_buffer(buffer_pts: float) -> float:
-    """Return the configured structural stop buffer, clamped at zero."""
+    """Return the configured structural stop buffer, clamped at zero.
+
+    Args:
+        buffer_pts: Numeric value used for the buffer pts.
+
+    Returns:
+        Numeric result returned by ``stop_buffer``.
+    """
     return max(float(buffer_pts), 0.0)
 
 
@@ -50,7 +80,17 @@ def filter_sl_candidates(
     candidates: list[tuple[str, float]],
     min_dist: float,
 ) -> list[tuple[str, float]]:
-    """Keep SL levels on the correct side and at least ``min_dist`` away."""
+    """Keep SL levels on the correct side and at least ``min_dist`` away.
+
+    Args:
+        direction: Signed trade direction: 1 for long and -1 for short.
+        entry_price: Price at which the position was opened.
+        candidates: Items supplied for the candidates, in input order.
+        min_dist: Numeric value used for the min dist.
+
+    Returns:
+        Values returned by ``filter_sl_candidates``, in the declared order.
+    """
     valid: list[tuple[str, float]] = []
     for name, level in candidates:
         if direction == 1 and level < entry_price:
@@ -83,6 +123,22 @@ def stop_menu(
     Standard-deviation stops may use only level 1. When a
     standard-deviation entry is active, that level must also come from one of
     the entry's active standard-deviation timeframes.
+
+    Args:
+        strategy: Strategy used to select or evaluate trades.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        entry_price: Price at which the position was opened.
+        row: Row index or record being processed.
+        min_dist: Numeric value used for the min dist.
+        buffer: Numeric value used for the buffer.
+        manipulation: Text or path value identifying the manipulation.
+        htf: Items supplied for the htf, in input order.
+        min_timeframe: Text or path value identifying the min timeframe.
+        standard_deviation_timeframes: Items supplied for the standard deviation timeframes, in input order.
+        price_increment: Price increment used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]]`` values.
     """
     early_audit: list[dict[str, Any]] = []
     candidate_meta: dict[str, dict[str, Any]] = {}

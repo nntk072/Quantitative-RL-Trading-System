@@ -10,6 +10,8 @@ from market_data.contracts import DatasetRef
 
 @dataclass(frozen=True, slots=True)
 class EvaluationCase:
+    """Describe one dataset, prediction schema, and metric-suite evaluation."""
+
     case_id: str
     dataset: DatasetRef
     input_schema_version: str
@@ -19,6 +21,8 @@ class EvaluationCase:
 
 @dataclass(frozen=True, slots=True)
 class MetricResult:
+    """Store one named evaluation metric with its value and unit."""
+
     name: str
     value: float
     unit: str = ""
@@ -26,6 +30,8 @@ class MetricResult:
 
 @dataclass(frozen=True, slots=True)
 class ReportDataset:
+    """Combine an evaluation case with its computed metric results."""
+
     case: EvaluationCase
     metrics: tuple[MetricResult, ...]
 

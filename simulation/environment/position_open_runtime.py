@@ -14,6 +14,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class PositionOpenRuntimeMixin(RuntimeMixinBase):
+    """Open positions after checking entry geometry, sizing, and costs."""
+
     _position_sequence: int
 
     def _initialize_open_position(
@@ -32,33 +34,40 @@ class PositionOpenRuntimeMixin(RuntimeMixinBase):
         bar_time: Any,
         signal_bar_idx: int | None,
     ) -> tuple[str | None, float, int, pd.Timestamp]:
+        """Initialize open position.
+
+        Args:
+            discrete_action: Numeric value used for the discrete action.
+            risk_frac: Numeric value used for the risk frac.
+            rr_ratio: Numeric value used for the rr ratio.
+            entry_price: Price at which the position was opened.
+            sl_price: Sl price used by the operation described above.
+            tp_price: Tp price used by the operation described above.
+            placed: Placed used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            fill_time: Fill time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            entry_candidate: Entry candidate used by the operation described above.
+            bar_time: Bar time used by the operation described above.
+            signal_bar_idx: Signal bar idx used by the operation described above.
+
+        Returns:
+            Values returned by ``_initialize_open_position``, in the declared order.
+        """
         assert self.position is not None
         self._entry_diag["opened"] += 1
         self._position_sequence += 1
         self.position.position_id = f"e{self._episode_identity}:p{self._position_sequence}"
         self.position.initial_size = float(self.position.size)
-        thesis = self._selected_trade_setup if self.trade_setup_actions else None
-        if thesis is not None:
-            from decisioning.trade_setup import (
-                LEGACY_THESIS_ACTION_VERSION,
-                TRADE_SETUP_ACTION_VERSION,
-            )
+        selected_setup = self._selected_trade_setup if self.trade_setup_actions else None
+        if selected_setup is not None:
+            from decisioning.trade_setup import TRADE_SETUP_ACTION_VERSION
 
-            schema_version = (
-                LEGACY_THESIS_ACTION_VERSION
-                if self.legacy_thesis_contract
-                else TRADE_SETUP_ACTION_VERSION
-            )
-            if self.legacy_thesis_contract:
-                self.position.thesis_candidate_id = int(thesis.candidate_id)
-                self.position.thesis_schema_version = schema_version
-                self.position.thesis_decision_time = bar_time
-            else:
-                self.position.trade_setup_candidate_id = int(thesis.candidate_id)
-                self.position.trade_setup_schema_version = schema_version
-                self.position.trade_setup_decision_time = bar_time
-            self.position.primary_idea = str(thesis.idea or "")
-            self.position.primary_setup_timeframe = str(thesis.setup_timeframe or "")
+            self.position.trade_setup_candidate_id = int(selected_setup.candidate_id)
+            self.position.trade_setup_schema_version = TRADE_SETUP_ACTION_VERSION
+            self.position.trade_setup_decision_time = bar_time
+            self.position.primary_idea = str(selected_setup.idea or "")
+            self.position.primary_setup_timeframe = str(selected_setup.setup_timeframe or "")
         self.position.sl_price = sl_price
         self.position.sl_initial_price = sl_price
         self.position.breakeven_done = False

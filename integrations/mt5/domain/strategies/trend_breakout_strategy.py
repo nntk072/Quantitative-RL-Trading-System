@@ -7,8 +7,7 @@ from integrations.mt5.domain.signal import Signal
 
 
 class TrendBreakoutStrategy(TradingStrategy):
-    """
-    Trend Breakout Strategy
+    """Trend Breakout Strategy.
 
     This strategy identifies:
     - Support and resistance levels
@@ -23,8 +22,7 @@ class TrendBreakoutStrategy(TradingStrategy):
         lookback_period: int = 20,
         breakout_threshold: float = 0.001,
     ) -> None:
-        """
-        Initialize Trend Breakout Strategy.
+        """Initialize Trend Breakout Strategy.
 
         Args:
             trading_data: Data source for trading
@@ -36,8 +34,10 @@ class TrendBreakoutStrategy(TradingStrategy):
         self.breakout_threshold = breakout_threshold
 
     def identify_support_resistance(self, df: pd.DataFrame) -> tuple[float, float]:
-        """
-        Identify support and resistance levels.
+        """Identify support and resistance levels.
+
+        Args:
+            df: Input DataFrame supplying the rows used by this calculation.
 
         Returns:
             Tuple of (support_level, resistance_level)
@@ -56,8 +56,10 @@ class TrendBreakoutStrategy(TradingStrategy):
         return support_level, resistance_level
 
     def identify_consolidation(self, df: pd.DataFrame) -> bool:
-        """
-        Identify if market is in consolidation (ranging).
+        """Identify if market is in consolidation (ranging).
+
+        Args:
+            df: Input DataFrame supplying the rows used by this calculation.
 
         Returns:
             True if market is consolidating, False otherwise
@@ -78,8 +80,10 @@ class TrendBreakoutStrategy(TradingStrategy):
         return range_percentage < 1.0
 
     def calculate_volume_profile(self, df: pd.DataFrame) -> pd.Series:
-        """
-        Calculate volume-weighted average price (VWAP) for trend confirmation.
+        """Calculate volume-weighted average price (VWAP) for trend confirmation.
+
+        Args:
+            df: Input DataFrame supplying the rows used by this calculation.
 
         Returns:
             VWAP series
@@ -101,8 +105,12 @@ class TrendBreakoutStrategy(TradingStrategy):
     def detect_breakout(
         self, df: pd.DataFrame, support: float, resistance: float
     ) -> tuple[bool, str]:
-        """
-        Detect breakout from support or resistance.
+        """Detect breakout from support or resistance.
+
+        Args:
+            df: Input DataFrame supplying the rows used by this calculation.
+            support: Numeric value used for the support.
+            resistance: Numeric value used for the resistance.
 
         Returns:
             Tuple of (is_breakout, direction) where direction is 'bullish' or 'bearish'
@@ -130,8 +138,10 @@ class TrendBreakoutStrategy(TradingStrategy):
         return False, ""
 
     def calculate_trend_strength(self, df: pd.DataFrame) -> float:
-        """
-        Calculate trend strength using ADX (Average Directional Index).
+        """Calculate trend strength using ADX (Average Directional Index).
+
+        Args:
+            df: Input DataFrame supplying the rows used by this calculation.
 
         Returns:
             ADX value (0-100, higher = stronger trend)
@@ -151,8 +161,7 @@ class TrendBreakoutStrategy(TradingStrategy):
             return 0.0
 
     def signal(self) -> tuple[str, Signal]:
-        """
-        Generate trading signal based on trend breakouts.
+        """Generate trading signal based on trend breakouts.
 
         Returns:
             Tuple of (symbol, signal)

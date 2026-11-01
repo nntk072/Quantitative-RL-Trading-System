@@ -1,3 +1,5 @@
+"""Evaluate trained policies, calculate metrics, and write reports."""
+
 from market_data.splits.walkforward import WFSplit, purged_walk_forward
 
 from .metrics.bootstrap import CI, bootstrap_ci, sharpe_stat

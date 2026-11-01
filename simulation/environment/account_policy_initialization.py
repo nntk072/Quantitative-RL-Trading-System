@@ -13,6 +13,8 @@ from .position_constants import _SL_MODE_RANK, _TP_MODE_RANK
 
 
 class AccountPolicyInitializationMixin(RuntimeMixinBase):
+    """Initialize account constraints, broker costs, and the trading policy."""
+
     def _initialize_account_policy(
         self,
         obs_window: int,
@@ -34,6 +36,28 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
         block_overnight: bool,
         eod_risk: dict[str, Any] | None,
     ) -> None:
+        """Initialize account policy.
+
+        Args:
+            obs_window: Numeric value used for the obs window.
+            initial_balance: Numeric value used for the initial balance.
+            cost_model: Cost model used by the operation described above.
+            broker_kwargs: Key-value data used for the broker kwargs.
+            trading_policy: Key-value data used for the trading policy.
+            guardrail_kwargs: Key-value data used for the guardrail kwargs.
+            risk_frac_range: Items supplied for the risk frac range, in input order.
+            rr_ratio_range: Items supplied for the rr ratio range, in input order.
+            sl_buffer_pts: Numeric value used for the sl buffer pts.
+            sl_mode: Text or path value identifying the sl mode.
+            tp_mode: Text or path value identifying the tp mode.
+            tp_reference: Text or path value identifying the tp reference.
+            min_lot: Numeric value used for the min lot.
+            max_lot: Numeric value used for the max lot.
+            contract_size: Number specifying the contract size for this operation.
+            max_loss_per_trade_usd: Numeric value used for the max loss per trade usd.
+            block_overnight: Whether to enable or require the block overnight.
+            eod_risk: Key-value data used for the eod risk.
+        """
         self.obs_window = obs_window
         self.initial_balance = initial_balance
         self.cost_model = cost_model
@@ -93,7 +117,7 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
         # Risk/sizing alignment: the intraday adverse-excursion cut never
         # fires closer than the trade's own planned loss at the structural
         # stop. Without this, a $500 cutoff flattens a position sized to
-        # risk $1,000 and the structural thesis never gets to play out.
+        # risk $1,000 and the structural stop never gets a chance to act.
         self._eod_respect_planned_risk = bool(eod.get("respect_planned_risk", True))
         self._eod_planned_risk_mult = float(eod.get("planned_risk_mult", 1.1))
         # Breakeven management: once favorable excursion reaches this many

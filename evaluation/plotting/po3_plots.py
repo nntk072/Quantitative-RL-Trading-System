@@ -41,13 +41,16 @@ ENTRY_LONG_COLOR = LONG_COLOR
 ENTRY_SHORT_COLOR = SHORT_COLOR
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
 def _resample_ohlc(bars: pd.DataFrame, candle_tf: str) -> pd.DataFrame:
-    """Resample M1 bars to a coarser candle rule (e.g. '5min')."""
+    """Resample M1 bars to a coarser candle rule (e.g. '5min').
+
+    Args:
+        bars: Market bars to process.
+        candle_tf: Text or path value identifying the candle tf.
+
+    Returns:
+        DataFrame returned by ``_resample_ohlc``.
+    """
     ohlcv = bars[["open", "high", "low", "close"]].copy()
     agg_spec: dict[str, str] = {"open": "first", "high": "max", "low": "min", "close": "last"}
     if "volume" in bars.columns:
@@ -62,20 +65,22 @@ def _draw_candles(ax: Axes, ohlcv: pd.DataFrame) -> None:
     Body width is a fraction of the median bar spacing in matplotlib date
     units (days). A fixed width of 0.7 days is ~200× a 5-minute bar and
     paints the chart as solid blobs.
+
+    Args:
+        ax: Ax used by the operation described above.
+        ohlcv: Tabular data used for the ohlcv.
     """
     xs = np.asarray(mdates.date2num(ohlcv.index), dtype=float)  # type: ignore[no-untyped-call,type-var]
     if len(xs) >= 2:
         spacing = float(np.median(np.diff(xs)))
     else:
-        spacing = 1.0 / (24.0 * 60.0)  # 1 minute fallback
+        spacing = 1.0 / (24.0 * 60.0)
     half = 0.3 * max(spacing, 1e-9)
     width = 2.0 * half
     for i, (_, row) in enumerate(ohlcv.iterrows()):
         x = float(xs[i])
         color = LONG_COLOR if row["close"] >= row["open"] else SHORT_COLOR
-        # Wick
         ax.plot([x, x], [row["low"], row["high"]], color=color, linewidth=1.0)
-        # Body
         y_low = min(row["open"], row["close"])
         height = abs(row["close"] - row["open"])
         if height < 1e-12:
@@ -94,13 +99,28 @@ def _draw_candles(ax: Axes, ohlcv: pd.DataFrame) -> None:
 
 
 def _zone_color(zone: FVGZone) -> str:
+    """Process color.
+
+    Args:
+        zone: Zone used by the operation described above.
+
+    Returns:
+        Text returned by ``_zone_color``.
+    """
     if zone.kind == "htf_fvg":
         return HTF_FVG_BULL_COLOR if zone.side == "bullish" else HTF_FVG_BEAR_COLOR
     return LTF_IFVG_BULL_COLOR if zone.side == "bullish" else LTF_IFVG_BEAR_COLOR
 
 
 def _candle_half_width(ohlcv: pd.DataFrame) -> float:
-    """Half candle body width in matplotlib date units (matches ``_draw_candles``)."""
+    """Half candle body width in matplotlib date units (matches ``_draw_candles``).
+
+    Args:
+        ohlcv: Tabular data used for the ohlcv.
+
+    Returns:
+        Numeric result returned by ``_candle_half_width``.
+    """
     xs = np.asarray(mdates.date2num(ohlcv.index), dtype=float)  # type: ignore[no-untyped-call,type-var]
     if len(xs) >= 2:
         spacing = float(np.median(np.diff(xs)))
@@ -110,7 +130,16 @@ def _candle_half_width(ohlcv: pd.DataFrame) -> float:
 
 
 def _snap_ts_to_candle_x(ts: pd.Timestamp, ohlcv: pd.DataFrame, *, side: str) -> float:
-    """Map a zone timestamp to the left (``side='left'``) or right candle edge."""
+    """Map a zone timestamp to the left (``side='left'``) or right candle edge.
+
+    Args:
+        ts: Ts used by the operation described above.
+        ohlcv: Tabular data used for the ohlcv.
+        side: Text or path value identifying the side.
+
+    Returns:
+        Numeric result returned by ``_snap_ts_to_candle_x``.
+    """
     idx = ohlcv.index
     loc = int(idx.searchsorted(ts, side="left"))
     if loc >= len(idx):
@@ -123,7 +152,13 @@ def _snap_ts_to_candle_x(ts: pd.Timestamp, ohlcv: pd.DataFrame, *, side: str) ->
 
 
 def _draw_zones(ax: Axes, zones: list[FVGZone], ohlcv: pd.DataFrame) -> None:
-    """Overlay translucent zone rectangles snapped to displayed candle edges."""
+    """Overlay translucent zone rectangles snapped to displayed candle edges.
+
+    Args:
+        ax: Ax used by the operation described above.
+        zones: Items supplied for the zones, in input order.
+        ohlcv: Tabular data used for the ohlcv.
+    """
     if not zones:
         return
     x_min = float(mdates.date2num(ohlcv.index.min()))  # type: ignore[no-untyped-call]
@@ -155,7 +190,13 @@ def _draw_zones(ax: Axes, zones: list[FVGZone], ohlcv: pd.DataFrame) -> None:
 
 
 def _draw_entries(ax: Axes, signals: pd.DataFrame, ohlcv: pd.DataFrame) -> None:
-    """Scatter entry markers at the containing candle's close."""
+    """Scatter entry markers at the containing candle's close.
+
+    Args:
+        ax: Ax used by the operation described above.
+        signals: Tabular data used for the signals.
+        ohlcv: Tabular data used for the ohlcv.
+    """
     for col, marker, color in (
         ("entry_long", "^", ENTRY_LONG_COLOR),
         ("entry_short", "v", ENTRY_SHORT_COLOR),
@@ -182,10 +223,6 @@ def _draw_entries(ax: Axes, signals: pd.DataFrame, ohlcv: pd.DataFrame) -> None:
         if xs:
             ax.scatter(xs, ys, marker=marker, s=55, color=color, zorder=5, label=col)
 
-            # ---------------------------------------------------------------------------
-            # Public API
-            # ---------------------------------------------------------------------------
-
 
 def plot_fvg_signals(
     bars: pd.DataFrame,
@@ -209,27 +246,23 @@ def plot_fvg_signals(
     agent causality unchanged).  Pass lookback in ``bars`` and set ``window``
     to the NY session so pre-session formations still define box starts.
 
-    Parameters
-    ----------
-    bars : pd.DataFrame
-        M1 OHLC bars (DatetimeIndex). May include lookback before ``window``.
-    signals : pd.DataFrame
-        Entry columns (``entry_long`` / ``entry_short``) for markers; zones
-        are built from OHLC, not from these signal columns.
-    window : tuple[Timestamp, Timestamp], optional
-        Slice of the data to display (inclusive).  Zones still use full ``bars``.
-    candle_tf : str
-        Pandas resample rule for the candles, e.g. ``'1min'``, ``'5min'``, ``'15min'``.
-    max_points : int
-        Cap on candle count; keeps the PNG readable.
-    show_entries : bool
-        Draw entry_long/entry_short markers when those columns are present.
-    out_path : Path | str, optional
-        If given, the PNG is written here (parents created).
-    dpi : int
-        PNG resolution.
-    htf, ltf : str
-        Native timeframes for plot-only FVG / IFVG zone detection.
+    Args:
+        bars (pd.DataFrame): M1 OHLC bars (DatetimeIndex). May include lookback before ``window``.
+        signals (pd.DataFrame): Entry columns (``entry_long`` / ``entry_short``) for markers; zones
+            are built from OHLC, not from these signal columns.
+        window (tuple[Timestamp, Timestamp], optional): Slice of the data to display (inclusive).  Zones still use full ``bars``.
+        candle_tf (str): Pandas resample rule for the candles, e.g. ``'1min'``, ``'5min'``, ``'15min'``.
+        max_points (int): Cap on candle count; keeps the PNG readable.
+        show_entries (bool): Draw entry_long/entry_short markers when those columns are present.
+        out_path (Path | str, optional): If given, the PNG is written here (parents created).
+        dpi (int): PNG resolution.
+        htf: Native higher timeframe for plot-only FVG zone detection.
+        ltf: Native lower timeframe for plot-only IFVG zone detection.
+        zone_kinds: Optional subset of detected zone categories to render.
+        max_zones: Optional cap on the number of zones drawn.
+
+    Returns:
+        Result of render PO3/IFVG signals on a candlestick chart.
     """
     _apply_style()
 
@@ -327,6 +360,18 @@ def plot_annotated_ny_session(
     """NY-window pedagogy chart: Asian range, IFVG, entry, structural SL, RR TP.
 
     Does not draw scaled 3-TP. Zones are clipped to the NY window.
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        day: Day used by the operation described above.
+        rr_ratio: Numeric value used for the rr ratio.
+        candle_tf: Text or path value identifying the candle tf.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of nY-window pedagogy chart: Asian range, IFVG, entry, structural SL, RR TP.
     """
     from evaluation.plotting.data_plots import _slice_ny_day
     from market_data.transforms.sessions import ny_session_mask

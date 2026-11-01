@@ -11,9 +11,34 @@ from pathlib import Path
 
 import pytest
 
+from compute.slurm import worker_resources
 from compute.slurm.worker_dispatch import _gpu_device_for_request, _host_key, _parse_srun
 
 DISPATCHER = Path(__file__).resolve().parents[3] / "compute" / "slurm" / "worker_dispatch.py"
+
+
+def test_available_resources_treats_zero_cgroup_memory_as_unknown(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        worker_resources,
+        "cgroup_memory_file",
+        lambda name: Path("/sys/fs/cgroup/memory.max") if name == "memory.max" else None,
+    )
+    read_text = Path.read_text
+
+    def read_zero_memory_limit(
+        path: Path,
+        encoding: str | None = None,
+        errors: str | None = None,
+    ) -> str:
+        if path.name == "memory.max":
+            return "0"
+        return read_text(path, encoding=encoding, errors=errors)
+
+    monkeypatch.setattr(Path, "read_text", read_zero_memory_limit)
+
+    assert worker_resources.available_resources()["memory_limit_bytes"] is None
 
 
 def test_parse_experiment_run_worker_command() -> None:

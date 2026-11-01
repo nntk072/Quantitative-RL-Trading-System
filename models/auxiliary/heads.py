@@ -26,14 +26,10 @@ class ReturnPredictionHead(nn.Module):
     This head takes the encoder's latent representation and predicts
     the cumulative return over the next N bars.
 
-    Parameters
-    ----------
-    latent_dim : int
-        Dimension of the latent representation from the encoder.
-    hidden_dim : int
-        Dimension of the hidden layer in the prediction head.
-    prediction_horizon : int
-        Number of bars ahead to predict (default: 5).
+    Args:
+        latent_dim (int): Dimension of the latent representation from the encoder.
+        hidden_dim (int): Dimension of the hidden layer in the prediction head.
+        prediction_horizon (int): Number of bars ahead to predict (default: 5).
     """
 
     def __init__(
@@ -42,6 +38,13 @@ class ReturnPredictionHead(nn.Module):
         hidden_dim: int = 128,
         prediction_horizon: int = 5,
     ) -> None:
+        """Initialize ReturnPredictionHead and its owned state.
+
+        Args:
+            latent_dim: Number of dimensions in the learned latent representation.
+            hidden_dim: Numeric value used for the hidden dim.
+            prediction_horizon: Numeric value used for the prediction horizon.
+        """
         super().__init__()
         self.latent_dim = latent_dim
         self.hidden_dim = hidden_dim
@@ -56,15 +59,11 @@ class ReturnPredictionHead(nn.Module):
     def forward(self, latent: torch.Tensor) -> torch.Tensor:
         """Predict future returns from latent representation.
 
-        Parameters
-        ----------
-        latent : torch.Tensor
-            Latent representation of shape (batch_size, latent_dim).
+        Args:
+            latent (torch.Tensor): Latent representation of shape (batch_size, latent_dim).
 
-        Returns
-        -------
-        torch.Tensor
-            Predicted returns of shape (batch_size, prediction_horizon).
+        Returns:
+            torch.Tensor: Predicted returns of shape (batch_size, prediction_horizon).
         """
         pred: torch.Tensor = self.net(latent)
         return pred
@@ -75,14 +74,10 @@ class AuxiliaryLoss:
 
     Combines the RL loss with the auxiliary prediction loss.
 
-    Parameters
-    ----------
-    prediction_head : ReturnPredictionHead
-        The auxiliary prediction head.
-    aux_weight : float
-        Weight for the auxiliary loss (default: 0.1).
-    loss_fn : nn.Module
-        Loss function for the auxiliary task (default: MSE).
+    Args:
+        prediction_head (ReturnPredictionHead): The auxiliary prediction head.
+        aux_weight (float): Weight for the auxiliary loss (default: 0.1).
+        loss_fn (nn.Module): Loss function for the auxiliary task (default: MSE).
     """
 
     def __init__(
@@ -91,6 +86,13 @@ class AuxiliaryLoss:
         aux_weight: float = 0.1,
         loss_fn: nn.Module | None = None,
     ) -> None:
+        """Initialize AuxiliaryLoss and its owned state.
+
+        Args:
+            prediction_head: Prediction head used by the operation described above.
+            aux_weight: Numeric value used for the aux weight.
+            loss_fn: Loss fn used by the operation described above.
+        """
         super().__init__()
         self.prediction_head = prediction_head
         self.aux_weight = aux_weight
@@ -104,19 +106,13 @@ class AuxiliaryLoss:
     ) -> torch.Tensor:
         """Compute combined loss.
 
-        Parameters
-        ----------
-        rl_loss : torch.Tensor
-            The primary RL loss.
-        latent : torch.Tensor
-            Latent representation of shape (batch_size, latent_dim).
-        target_returns : torch.Tensor
-            Target returns of shape (batch_size, prediction_horizon).
+        Args:
+            rl_loss (torch.Tensor): The primary RL loss.
+            latent (torch.Tensor): Latent representation of shape (batch_size, latent_dim).
+            target_returns (torch.Tensor): Target returns of shape (batch_size, prediction_horizon).
 
-        Returns
-        -------
-        torch.Tensor
-            Combined loss = RL loss + aux_weight * auxiliary loss.
+        Returns:
+            torch.Tensor: Combined loss = RL loss + aux_weight * auxiliary loss.
         """
         # Predict future returns
         pred_returns: torch.Tensor = self.prediction_head(latent)
@@ -137,29 +133,28 @@ class CumulativeReturnPredictor:
     from the current state, which can be used as the target for
     the auxiliary prediction head.
 
-    Parameters
-    ----------
-    horizon : int
-        Number of bars ahead to compute cumulative return for.
+    Args:
+        horizon (int): Number of bars ahead to compute cumulative return for.
     """
 
     def __init__(self, horizon: int = 5) -> None:
+        """Initialize CumulativeReturnPredictor and its owned state.
+
+        Args:
+            horizon: Numeric value used for the horizon.
+        """
         self.horizon = horizon
 
     def compute_targets(self, returns: torch.Tensor) -> torch.Tensor:
         """Compute cumulative returns for each position in the sequence.
 
-        Parameters
-        ----------
-        returns : torch.Tensor
-            Per-bar returns of shape (batch_size, seq_len).
+        Args:
+            returns (torch.Tensor): Per-bar returns of shape (batch_size, seq_len).
 
-        Returns
-        -------
-        torch.Tensor
-            Cumulative returns of shape (batch_size, seq_len - horizon, horizon).
-            Each target at position t, horizon h equals the sum of returns
-            ``t+1`` through ``t+h+1`` (forward-looking).
+        Returns:
+            torch.Tensor: Cumulative returns of shape (batch_size, seq_len - horizon, horizon).
+                Each target at position t, horizon h equals the sum of returns
+                ``t+1`` through ``t+h+1`` (forward-looking).
         """
         batch_size, seq_len = returns.shape
 
@@ -195,14 +190,10 @@ class EntropyBonus:
     The entropy bonus is computed as the negative entropy of the action
     distribution, scaled by a temperature parameter.
 
-    Parameters
-    ----------
-    action_dim : int
-        Dimension of the action space.
-    entropy_coef : float
-        Weight for the entropy bonus (default: 0.01).
-    temperature : float
-        Temperature parameter for the softmax (default: 1.0).
+    Args:
+        action_dim (int): Dimension of the action space.
+        entropy_coef (float): Weight for the entropy bonus (default: 0.01).
+        temperature (float): Temperature parameter for the softmax (default: 1.0).
     """
 
     def __init__(
@@ -211,6 +202,13 @@ class EntropyBonus:
         entropy_coef: float = 0.01,
         temperature: float = 1.0,
     ) -> None:
+        """Initialize EntropyBonus and its owned state.
+
+        Args:
+            action_dim: Numeric value used for the action dim.
+            entropy_coef: Numeric value used for the entropy coef.
+            temperature: Numeric value used for the temperature.
+        """
         self.action_dim = action_dim
         self.entropy_coef = entropy_coef
         self.temperature = temperature
@@ -218,15 +216,11 @@ class EntropyBonus:
     def __call__(self, log_probs: torch.Tensor) -> torch.Tensor:
         """Compute entropy bonus from log probabilities.
 
-        Parameters
-        ----------
-        log_probs : torch.Tensor
-            Log probabilities of actions of shape (batch_size, action_dim).
+        Args:
+            log_probs (torch.Tensor): Log probabilities of actions of shape (batch_size, action_dim).
 
-        Returns
-        -------
-        torch.Tensor
-            Entropy bonus of shape (batch_size,).
+        Returns:
+            torch.Tensor: Entropy bonus of shape (batch_size,).
         """
         # Compute entropy: -sum(p * log(p))
         # With log_probs: -sum(exp(log_p) * log_p) = -sum(p * log_p)
@@ -244,17 +238,12 @@ class EntropyBonus:
         For a Gaussian distribution, the entropy is:
         H = 0.5 * log(2 * pi * e * sigma^2) = 0.5 * (1 + log(2 * pi) + 2 * log(sigma))
 
-        Parameters
-        ----------
-        mean : torch.Tensor
-            Mean of the Gaussian distribution of shape (batch_size, action_dim).
-        log_std : torch.Tensor
-            Log standard deviation of shape (batch_size, action_dim).
+        Args:
+            mean (torch.Tensor): Mean of the Gaussian distribution of shape (batch_size, action_dim).
+            log_std (torch.Tensor): Log standard deviation of shape (batch_size, action_dim).
 
-        Returns
-        -------
-        torch.Tensor
-            Entropy bonus of shape (batch_size,).
+        Returns:
+            torch.Tensor: Entropy bonus of shape (batch_size,).
         """
         # Entropy of Gaussian: 0.5 * (1 + log(2 * pi) + 2 * log(std))
         # log_std is log(std), so 2 * log(std) = 2 * log_std
@@ -274,13 +263,16 @@ class JointEntropyLoss:
     This combines the RL policy loss with an entropy bonus to encourage
     exploration. This is particularly useful for continuous action spaces.
 
-    Parameters
-    ----------
-    entropy_bonus : EntropyBonus
-        The entropy bonus calculator.
+    Args:
+        entropy_bonus (EntropyBonus): The entropy bonus calculator.
     """
 
     def __init__(self, entropy_bonus: EntropyBonus) -> None:
+        """Initialize JointEntropyLoss and its owned state.
+
+        Args:
+            entropy_bonus: Entropy bonus used by the operation described above.
+        """
         self.entropy_bonus = entropy_bonus
 
     def __call__(
@@ -292,21 +284,14 @@ class JointEntropyLoss:
     ) -> torch.Tensor:
         """Compute combined loss with entropy regularization.
 
-        Parameters
-        ----------
-        rl_loss : torch.Tensor
-            The primary RL loss.
-        log_probs : torch.Tensor | None
-            Log probabilities for discrete actions.
-        mean : torch.Tensor | None
-            Mean for Gaussian actions.
-        log_std : torch.Tensor | None
-            Log std for Gaussian actions.
+        Args:
+            rl_loss (torch.Tensor): The primary RL loss.
+            log_probs (torch.Tensor | None): Log probabilities for discrete actions.
+            mean (torch.Tensor | None): Mean for Gaussian actions.
+            log_std (torch.Tensor | None): Log std for Gaussian actions.
 
-        Returns
-        -------
-        torch.Tensor
-            Combined loss = RL loss - entropy bonus.
+        Returns:
+            torch.Tensor: Combined loss = RL loss - entropy bonus.
         """
         # Compute entropy bonus
         if log_probs is not None:

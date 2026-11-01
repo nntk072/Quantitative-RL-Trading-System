@@ -41,7 +41,22 @@ def apply_policy_action(
     resolve_bar_execution: ResolveExecution,
     is_last_ny_bar: Callable[[pd.DataFrame, int, bool], bool],
 ) -> None:
-    """Apply one policy action using the next executable quote."""
+    """Apply one policy action using the next executable quote.
+
+    Args:
+        state: State object read or updated by the operation.
+        settings: Settings used by the operation described above.
+        broker: Broker used by the operation described above.
+        guardrails: Guardrails used by the operation described above.
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        i: Numeric value used for the i.
+        bar_time: Bar time used by the operation described above.
+        session: Session identifier used by the operation.
+        action: Action to apply to the current state.
+        resolve_bar_execution: Resolve bar execution used by the operation described above.
+        is_last_ny_bar: Tabular data used for the is last ny bar.
+    """
     if action == settings.exit_action and state.position is not None:
         fq, execution_time, fill_source, _ = resolve_bar_execution()
         _record_close(

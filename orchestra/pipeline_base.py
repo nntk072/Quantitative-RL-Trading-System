@@ -6,6 +6,17 @@ from typing import TYPE_CHECKING, Any
 
 
 class PipelineMixinBase:
+    """Shared dependency surface and helpers consumed by phase mixins."""
+
     if TYPE_CHECKING:
 
-        def __getattr__(self, name: str) -> Any: ...
+        def __getattr__(self, name: str) -> Any:
+            """Process PipelineMixinBase.
+
+            Args:
+                name: Name used to identify the requested file, artifact, or item.
+
+            Returns:
+                Result of process PipelineMixinBase.
+            """
+            ...

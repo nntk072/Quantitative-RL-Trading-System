@@ -1,22 +1,9 @@
-"""RL→MT5 live inference bridge (Chain C).
+"""Adapt a trained decision provider for the live strategy boundary.
 
-Adapts a trained SB3 RL model into the ``integrations.mt5`` stack's
-``TradingStrategy`` interface so live execution can consume the same
-policy evaluated in backtests.
-
-Contract:
-- Input: an ``MT5Data``-like data source returning M1 OHLCV bars.
-- Internally rebuilds the **exact** feature matrix used at training time
-  via :func:`features.pipeline.feature_matrix_builder.build_features` (same config file),
-  so train/live feature parity holds by construction.
-- Observations are built with the same dict contract as
-  ``TradingEnv._get_observation``:
-  ``{"seq": (T, F), "seq_mask": (T,), "account": (6,)}``.
-- Output: ``LiveSignal.BUY/SELL/HOLD`` mapped from the policy's action
-  (discrete PPO action ids or continuous SAC sizing fraction).
-
-This module imports ``integrations.mt5`` lazily so the RL stack remains
-installable/usable without the MT5 runtime.
+The adapter rebuilds configured features from incoming bars, constructs the
+versioned observation, and exposes a signal for integrations that implement
+``integrations.mt5.adapters.strategy.TradingStrategy``. Broker connectivity and
+order execution remain in the integration layer.
 """
 
 from __future__ import annotations
@@ -56,7 +43,14 @@ DEFAULT_CONFIG = repository_root(__file__) / "config" / "base" / "default.yaml"
 
 
 def build_live_observation_schema(cfg: Any) -> ObservationSchema:
-    """Resolve the live observation schema using the training policy rules."""
+    """Resolve the live observation schema using the training policy rules.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Result of resolve the live observation schema using the training policy rules.
+    """
     env_cfg = getattr(cfg, "env", None)
     version = (
         "account-state-v3-repeated-payout"
@@ -90,6 +84,16 @@ class RLStrategyAdapter:
         *,
         provider: DecisionProvider | None = None,
     ) -> None:
+        """Initialize RLStrategyAdapter and its owned state.
+
+        Args:
+            model: Model used for this operation.
+            config_path: Path to the configuration file.
+            features_config_path: Path or filename identifying the features config.
+            obs_window: Numeric value used for the obs window.
+            allow_legacy_observation_schema: Whether to enable or require the allow legacy observation schema.
+            provider: Provider used by the operation described above.
+        """
         if (model is None) == (provider is None):
             raise ValueError("provide exactly one of model or provider")
         cfg = load_config(config_path=config_path)
@@ -123,12 +127,15 @@ class RLStrategyAdapter:
         self._feature_lock = threading.Lock()
         self._secondary_bars: pd.DataFrame | None = None
 
-        # ------------------------------------------------------------------
-        # Feature (re)build — mirrors training-time pipeline exactly.
-        # ------------------------------------------------------------------
-
     def _rebuild_features(self, bars: pd.DataFrame) -> pd.DataFrame:
-        """Rebuild the feature matrix from raw M1 bars (train-parity path)."""
+        """Rebuild the feature matrix from raw M1 bars (train-parity path).
+
+        Args:
+            bars: Market bars to process.
+
+        Returns:
+            DataFrame returned by ``_rebuild_features``.
+        """
         from features import build_features  # local: heavy import
 
         secondary: pd.DataFrame | None = None
@@ -151,12 +158,13 @@ class RLStrategyAdapter:
             )
         return self._features
 
-        # ------------------------------------------------------------------
-        # Public API
-        # ------------------------------------------------------------------
-
     def update_bars(self, bars: pd.DataFrame, secondary_bars: pd.DataFrame | None = None) -> None:
-        """Feed the latest M1 bars; rebuilds features (call once per new bar)."""
+        """Feed the latest M1 bars; rebuilds features (call once per new bar).
+
+        Args:
+            bars: Market bars to process.
+            secondary_bars: Market bar or price data used for feed the latest M1 bars; rebuilds features (call once per new bar).
+        """
         self._secondary_bars = secondary_bars
         self._bars = bars
         if "close" in bars.columns and len(bars):
@@ -164,6 +172,11 @@ class RLStrategyAdapter:
         self._rebuild_features(bars)
 
     def _raw_columns(self) -> tuple[str, ...]:
+        """Process columns.
+
+        Returns:
+            Values returned by ``_raw_columns``, in the declared order.
+        """
         env_cfg = getattr(self.cfg, "env", None)
         if not bool(getattr(env_cfg, "strategy_actions", False)):
             return ()
@@ -181,7 +194,14 @@ class RLStrategyAdapter:
     def build_observation(
         self, account_state: dict[str, Any] | None = None
     ) -> dict[str, np.ndarray[Any, Any]]:
-        """Construct the dict observation with the same contract as the env."""
+        """Construct the dict observation with the same contract as the env.
+
+        Args:
+            account_state: Key-value data used for the account state.
+
+        Returns:
+            Mapping from ``str`` keys to ``np.ndarray[Any, Any]`` values.
+        """
         if self._features is None:
             raise RuntimeError("update_bars() must be called before build_observation()")
 
@@ -277,7 +297,14 @@ class RLStrategyAdapter:
         return {"seq": seq, "seq_mask": seq_mask, "account": account}
 
     def predict_signal(self, account_state: dict[str, float] | None = None) -> int | float:
-        """Run the provider and return its discrete id or scalar direction."""
+        """Run the provider and return its discrete id or scalar direction.
+
+        Args:
+            account_state: Key-value data used for the account state.
+
+        Returns:
+            Result of run the provider and return its discrete id or scalar direction.
+        """
         obs = self.build_observation(account_state)
         decision = self.provider.predict(
             DecisionInput(
@@ -295,29 +322,21 @@ class RLStrategyAdapter:
             return float(action.coordinates["direction"])
         raise ValueError("live decisions must be discrete, scalar or include direction")
 
-        # ------------------------------------------------------------------
-        # integrations.mt5 adapter
-        # ------------------------------------------------------------------
-
     def as_strategy(
         self,
         data_source: MarketDataSource,
         secondary_data_source: MarketDataSource | None = None,
     ) -> Any:
-        """Return a duck-typed ``TradingStrategy`` wrapping this adapter.
+        """Return a duck-typed MT5 strategy that wraps this adapter.
 
-        Parameters
-        ----------
-        data_source:
-            Primary-symbol MT5 data source (M1 bars).
-        secondary_data_source:
-            Optional secondary-symbol data source used for SMT divergence
-            features. When the deployed model was trained with SMT enabled
-            (``training.use_m1_only``/``primary_only`` both false), the live
-            feature vector silently misses those features unless the
-            secondary bars are fed each tick via ``update_bars(...,
-            secondary_bars=...)`` — this wired path exists precisely to avoid
-            that train/live mismatch.
+        Args:
+            data_source: Primary-symbol data source returning M1 bars.
+            secondary_data_source: Optional source used for secondary-symbol
+                features. Supply it when the policy's configured observations
+                include those features.
+
+        Returns:
+            Result of return a duck-typed MT5 strategy that wraps this adapter.
         """
         adapter = self
 
@@ -325,9 +344,15 @@ class RLStrategyAdapter:
             """Duck-typed TradingStrategy: exposes .data and .signal()."""
 
             def __init__(self) -> None:
+                """Initialize _RLStrategy and its owned state."""
                 self.data = data_source
 
             def signal(self) -> tuple[str, LiveSignal]:
+                """Return the current symbol's action, or ``NONE`` on unavailable data.
+
+                Returns:
+                    Values returned by ``signal``, in the declared order.
+                """
                 symbol = self.data.get_symbol()
                 bars = self.data.get_data()
                 if bars is None or len(bars) < adapter.obs_window + 10:

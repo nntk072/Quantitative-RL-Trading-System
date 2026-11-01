@@ -12,6 +12,8 @@ from .routing import (
 
 
 class PhaseImplementationMixin(PipelineMixinBase):
+    """Run the selected implementer against the synthesized task plan."""
+
     def _phase_implementation(self) -> None:
         """Phase 5: Implement the final plan."""
         click.echo("\n[5/10] IMPLEMENTATION")

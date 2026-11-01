@@ -18,7 +18,11 @@ from stable_baselines3.common.type_aliases import DictRolloutBufferSamples
 
 
 def install_single_copy_add(buffer: Any) -> None:
-    """Replace ``buffer.add`` so each observation is copied once."""
+    """Replace ``buffer.add`` so each observation is copied once.
+
+    Args:
+        buffer: Buffer used by the operation described above.
+    """
     if getattr(buffer, "_single_copy_add", False):
         return
     if not isinstance(getattr(buffer, "observations", None), dict):
@@ -36,6 +40,17 @@ def _single_copy_add(
     value: Any,
     log_prob: Any,
 ) -> None:
+    """Process copy add.
+
+    Args:
+        self: Rollout buffer whose storage is updated.
+        obs: Key-value data used for the obs.
+        action: Action to apply to the current state.
+        reward: Reward used by the operation described above.
+        episode_start: Episode start used by the operation described above.
+        value: Value to process.
+        log_prob: Log prob used by the operation described above.
+    """
     if len(log_prob.shape) == 0:
         log_prob = log_prob.reshape(-1, 1)
 
@@ -70,10 +85,19 @@ class DeviceDictRolloutBuffer(DictRolloutBuffer):
     """
 
     def reset(self) -> None:
+        """Discard staged device tensors before resetting the NumPy rollout."""
         self._device_rollout: dict[str, torch.Tensor] = {}
         super().reset()
 
     def get(self, batch_size: int | None = None) -> Generator[DictRolloutBufferSamples, None, None]:  # type: ignore[override]
+        """Yield shuffled PPO minibatches from the staged device-side rollout.
+
+        Args:
+            batch_size: Transitions per batch; defaults to the full rollout.
+
+        Yields:
+            Dict observations and PPO targets indexed on the learner device.
+        """
         assert self.full, ""
         sample_count = self.buffer_size * self.n_envs
         indices = np.random.permutation(sample_count)

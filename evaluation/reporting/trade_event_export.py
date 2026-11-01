@@ -28,14 +28,11 @@ _EMPTY_TRADE_COLUMNS = (
 _POSITION_COLUMNS = (
     "position_id",
     "direction",
-    "thesis_candidate_id",
-    "thesis_schema_version",
     "trade_setup_candidate_id",
     "trade_setup_schema_version",
     "primary_idea",
     "primary_setup_timeframe",
     "primary_direction",
-    "thesis_decision_time",
     "trade_setup_decision_time",
     "entry_time",
     "exit_time",
@@ -57,14 +54,11 @@ _POSITION_COLUMNS = (
     "reconstruction_status",
 )
 _POSITION_ENTRY_METADATA = (
-    "thesis_candidate_id",
-    "thesis_schema_version",
     "trade_setup_candidate_id",
     "trade_setup_schema_version",
     "primary_idea",
     "primary_setup_timeframe",
     "primary_direction",
-    "thesis_decision_time",
     "trade_setup_decision_time",
     "sl_price",
     "sl_ref",
@@ -76,14 +70,28 @@ _POSITION_ENTRY_METADATA = (
 
 
 def _fill_events(trades: pd.DataFrame) -> pd.DataFrame:
-    """Return actual execution events, excluding rejects and order-only records."""
+    """Return actual execution events, excluding rejects and order-only records.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        DataFrame returned by ``_fill_events``.
+    """
     if trades.empty or "type" not in trades.columns:
         return pd.DataFrame(columns=_EMPTY_TRADE_COLUMNS)
     return trades.loc[trades["type"].astype(str).isin(_FILL_EVENT_TYPES)].copy()
 
 
 def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
-    """Reconstruct position-level rows from identified raw fill events."""
+    """Reconstruct position-level rows from identified raw fill events.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        DataFrame returned by ``_position_summaries``.
+    """
     fills = _fill_events(trades)
     if fills.empty:
         return pd.DataFrame(columns=_POSITION_COLUMNS)

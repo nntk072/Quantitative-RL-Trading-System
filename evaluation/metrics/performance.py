@@ -19,27 +19,10 @@ DEFAULT_PERIODS_PER_YEAR = 252 * 24  # hourly bars fallback
 
 @dataclass(frozen=True)
 class PerformanceMetrics:
-    """Immutable container for evaluation output.
+    """Aggregate returns, trade statistics, and risk-breach measures for a run.
 
-    Attributes:
-        sharpe: Annualised Sharpe ratio of bar returns.
-        sortino: Annualised Sortino ratio (downside deviation).
-        calmar: Annualised return divided by max drawdown.
-        max_drawdown: Peak-to-trough equity decline as a positive fraction.
-        total_return_pct: Total return over the period, in percent.
-        total_pnl: Absolute PnL (final equity minus initial balance).
-        profit_factor: Gross profit / abs(gross loss); inf if no losses.
-        win_rate: Fraction of winning trades.
-        expectancy: Mean PnL per trade.
-        n_trades: Number of closed trades used for trade statistics.
-        breach_count: Number of risk-limit breach events recorded by the caller.
-        breach_rate: Fraction of sessions with at least one breach event
-            (``breach_count / n_sessions``).  Session-level semantics from the
-            legacy metrics dataclass, kept alongside
-            the raw event count because they answer different questions.
-        turnover: Number of trades per evaluation bar.
-        max_consec_loss: Longest streak of consecutive losing trades.
-        avg_trade: Alias of ``expectancy`` (mean PnL per trade).
+    ``breach_count`` records events; ``breach_rate`` records sessions with an
+    event. They intentionally represent different quantities.
     """
 
     sharpe: float = 0.0
@@ -69,9 +52,23 @@ def completed_position_trade_pnls(
     position. Identified positions without a completion marker or final close
     remain excluded from completed-trade statistics. Older records without a
     position ID retain the legacy one-record-per-trade convention.
+
+    Args:
+        trade_records: Items supplied for the trade records, in input order.
+
+    Returns:
+        Values returned by ``completed_position_trade_pnls``, in the declared order.
     """
 
     def finite_value(value: Any) -> float | None:
+        """Coerce one trade-log value to a finite float when possible.
+
+        Args:
+            value: Value to process.
+
+        Returns:
+            Result of coerce one trade-log value to a finite float when possible.
+        """
         if value is None:
             return None
         try:
@@ -196,7 +193,14 @@ def sweep_delay_breakdown(
 
 
 def _bar_returns(equity: NDArray[np.float64]) -> NDArray[np.float64]:
-    """Compute simple bar-over-bar returns from an equity curve."""
+    """Compute simple bar-over-bar returns from an equity curve.
+
+    Args:
+        equity: Current account equity in account currency.
+
+    Returns:
+        Array returned by ``_bar_returns``.
+    """
     if equity.size < 2:
         return np.empty(0)
     return equity[1:] / equity[:-1] - 1.0
@@ -220,6 +224,15 @@ def max_drawdown(equity: Sequence[float] | NDArray[np.float64]) -> float:
 
 
 def _sharpe(returns: NDArray[np.float64], periods_per_year: int) -> float:
+    """Process the requested value.
+
+    Args:
+        returns: Returns used by the operation described above.
+        periods_per_year: Numeric value used for the periods per year.
+
+    Returns:
+        Numeric result returned by ``_sharpe``.
+    """
     if returns.size < 2:
         return 0.0
     std = returns.std(ddof=1)
@@ -229,6 +242,15 @@ def _sharpe(returns: NDArray[np.float64], periods_per_year: int) -> float:
 
 
 def _sortino(returns: NDArray[np.float64], periods_per_year: int) -> float:
+    """Process the requested value.
+
+    Args:
+        returns: Returns used by the operation described above.
+        periods_per_year: Numeric value used for the periods per year.
+
+    Returns:
+        Numeric result returned by ``_sortino``.
+    """
     if returns.size < 2:
         return 0.0
     downside = np.minimum(returns, 0.0)
@@ -239,7 +261,14 @@ def _sortino(returns: NDArray[np.float64], periods_per_year: int) -> float:
 
 
 def _trade_stats(trade_pnls: NDArray[np.float64]) -> dict[str, float]:
-    """Profit factor, win rate and expectancy from per-trade PnLs."""
+    """Profit factor, win rate and expectancy from per-trade PnLs.
+
+    Args:
+        trade_pnls: Trade pnls used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``float`` values.
+    """
     n = int(trade_pnls.size)
     if n == 0:
         return {"profit_factor": 0.0, "win_rate": 0.0, "expectancy": 0.0}
@@ -258,7 +287,14 @@ def _trade_stats(trade_pnls: NDArray[np.float64]) -> dict[str, float]:
 
 
 def _max_consec_loss(pnls: NDArray[np.float64]) -> int:
-    """Longest streak of consecutive negative trade PnLs."""
+    """Longest streak of consecutive negative trade PnLs.
+
+    Args:
+        pnls: Pnls used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_max_consec_loss``.
+    """
     max_streak = current = 0
     for pnl in pnls:
         if pnl < 0:
@@ -353,7 +389,14 @@ LEGACY_M1_PERIODS_PER_YEAR = 252 * 390
 
 
 def evaluation_periods_per_year(config: Mapping[str, Any]) -> int:
-    """Resolve annualization basis, preserving legacy M1 values for old configs."""
+    """Resolve annualization basis, preserving legacy M1 values for old configs.
+
+    Args:
+        config: Configuration values used by this operation.
+
+    Returns:
+        Numeric result returned by ``evaluation_periods_per_year``.
+    """
     evaluation = config.get("evaluation", {})
     raw = (
         evaluation.get("periods_per_year", LEGACY_M1_PERIODS_PER_YEAR)

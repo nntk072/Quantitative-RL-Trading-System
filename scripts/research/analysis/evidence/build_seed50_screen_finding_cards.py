@@ -23,7 +23,8 @@ EXPERIMENT_RUN_DIR = (
 )
 SUMMARY_PATH = EXPERIMENT_RUN_DIR / "reports/experiment_run_results_summary_v2.json"
 RECOVERABILITY_PATH = (
-    ROOT / "docs/thesis/evidence/p3_seed50_report_pack_recoverability_20261018.json"
+    ROOT
+    / "evidence/research/archive_2026/evidence/p3_seed50_report_pack_recoverability_20261018.json"
 )
 DEFAULT_OUTPUT = EXPERIMENT_RUN_DIR / "reports/findings/seed50_run_cards_20261018"
 EXPECTED_FINGERPRINT = "91d2f05c4c13e67753a47b88a1c900f4887ced66dad51980a018eb09465dd10e"
@@ -205,7 +206,7 @@ def render_card(
         "- This run does not establish profitability, robustness, generalization, or causal "
         "treatment effects.",
         "",
-        "**Likely thesis destination:** appendix table documenting exploratory screen "
+        "**Likely reporting location:** appendix table documenting exploratory screen "
         "dispositions and unavailable artifacts, with no performance-selection claim.",
         "",
     ]

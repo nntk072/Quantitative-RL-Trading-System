@@ -28,12 +28,23 @@ CI_CHECKS: tuple[CiCheck, ...] = (
 
 
 def ci_command_lines() -> str:
-    """Render the canonical verification command for prompts and reports."""
+    """Render the canonical verification command for prompts and reports.
+
+    Returns:
+        Text returned by ``ci_command_lines``.
+    """
     return "\n".join(f"- `{' '.join(check.argv)}`" for check in CI_CHECKS)
 
 
 def gate_passed(results: dict[str, dict[str, object]]) -> bool:
-    """Return true only when every required verification operation succeeded."""
+    """Return true only when every required verification operation succeeded.
+
+    Args:
+        results: Key-value data used for the results.
+
+    Returns:
+        Whether gate passed meets the requested condition.
+    """
     for check in CI_CHECKS:
         entry = results.get(check.name)
         if not entry or not entry.get("success") or entry.get("skipped"):
@@ -42,6 +53,14 @@ def gate_passed(results: dict[str, dict[str, object]]) -> bool:
 
 
 def first_failure(results: dict[str, dict[str, object]]) -> str | None:
+    """Return the first required CI gate that failed or was skipped.
+
+    Args:
+        results: Key-value data used for the results.
+
+    Returns:
+        Result of return the first required CI gate that failed or was skipped.
+    """
     for check in CI_CHECKS:
         entry = results.get(check.name, {})
         if not entry.get("success") or entry.get("skipped"):

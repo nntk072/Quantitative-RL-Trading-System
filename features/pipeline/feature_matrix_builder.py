@@ -1,17 +1,9 @@
-"""Feature build pipeline: indicators + SMT + normalisation → feature matrix.
+"""Build configured market features on a causal minute-level time index.
 
-Chain A: per-timeframe technical features. For every timeframe listed in
-``cfg.features.htf_timeframes`` the same ``build_indicators()`` call used
-for M1 is run on that timeframe's own bars, then causally forward-filled
-onto the M1 spine via :func:`market_data.transforms.align.align_timeframes` with
-``{TF}_{indicator}`` column names.
-
-MTF extensions (mtf_feature_expansion_plan.md §§4.1-4.6): SMT divergence
-(§4.1), structure levels + BOS (§4.2) and liquidity sweeps (§4.3) follow the
-same resample → per-TF compute → ``align_timeframes`` pattern; FVG zones
-(§4.5) run over the full ladder (M1 + HTFs); PO3 manipulation/distribution
-state (§4.4) and IFVG active zones (§4.6) are independently computed on
-configured standard timeframes, including M10, then aligned to the M1 spine.
+Technical indicators, structure, SMT, liquidity, session, and trade-setup
+features are calculated on their configured source timeframes. Higher-timeframe
+results are forward-filled onto the primary minute series only after the source
+bar closes, preserving causal timing for the simulation and live consumers.
 """
 
 from __future__ import annotations
@@ -70,37 +62,6 @@ from market_data.transforms.align import align_timeframes, timeframe_close_times
 from market_data.transforms.resample import resample
 from market_data.transforms.session_schedule import scheduled_session_close_map
 
-# Bump whenever build_features() output schema changes so stale caches are
-# not silently reused by the {symbol}_features.parquet call sites.
-# v4: Chain F + causal PO3 mapping — detect_htf_fvg/detect_ltf_ifvg now shift
-# signals one HTF/primary period forward (no within-period lookahead).
-# v5: Idea 1 strategy state — liquidity sweeps, PO3 manipulation/distribution
-# state and IFVG active zones (include_strategy_state opt-in block).
-# v6: CT-anchored session levels — session OHLC, yesterday/last-week H/L,
-# range quadrants and raw vwap (include_session_ohlc opt-in block).
-# v7: MTF expansion (plan §§4.1-4.6) — per-TF SMT divergence (§4.1),
-# structure/BOS (§4.2) and liquidity sweeps (§4.3) via the Chain-A
-# resample → per-TF compute → align_timeframes pattern; FVG zones over the
-# full M1+HTF ladder (§4.5); PO3 state (§4.4) and IFVG zones (§4.6) use
-# configured supported timeframes and align onto the M1 spine.
-# v8: full-day M1 spine, completed-bar HTF ffill, confirmed ATR swings.
-# v10: PD context, VWAP off.
-# v11: content-hash cache key (config + data identity + optional train_mask).
-# v12: trader-context columns (htf_day_bias, manip_reverses_htf, context_trade_direction).
-# v13: tick-count VWAP / activity (ignore CFD vol=0).
-# v14: swing age in [0, 1], London ATR distances, NY session clock.
-# v15: swing confirmation pulses and the distribution-after-IFVG latch.
-# v16: SL modes (state machine + agent veto), prev-NY session H/L, swing
-#      history columns (swing_high_{1..3}/swing_low_{1..3}), TF-SMT enablement.
-# v22: causal completed prior-NY levels use the configured NY session window.
-# v25: context-qualified order-block zones across the configured timeframe ladder.
-# v26: separate, overlapping PO3, Order Block, FVG-retest, and swing-retracement ideas.
-# v31: a confirmed IFVG body-close is a directional entry idea; cache identity
-#      also includes strategy.ifvg settings, including its close-through buffer.
-# v32: expose FVG retest, IFVG retest, and unretested IFVG as separate ideas.
-# v33: retain per-timeframe idea and same-timeframe overlap flags for the policy.
-
-
 _DEFAULT_HTF_TIMEFRAMES = DEFAULT_MTF_CONTEXT_TIMEFRAMES
 # Capped normalised FVG distance: value used when no zone is active nearby.
 _FVG_DIST_CAP = 5.0
@@ -111,9 +72,9 @@ _FVG_DIST_CAP = 5.0
 # the feature matrix stays homogeneous float (TradingEnv casts to float32).
 _PO3_TRIGGER_CODE = {"": 0, "retest": 1, "close_through": 2, "ltf_fvg": 3}
 
-# Default MTF subset for SMT divergence (§4.1), structure/BOS (§4.2), and
-# liquidity sweeps (§4.3). Each block accepts an explicit list of any standard
-# resampled timeframe; the bounded default keeps column growth predictable.
+# Default MTF subset for SMT divergence, structure, and liquidity sweeps. Each
+# block accepts an explicit list of standard resampled timeframes; the bounded
+# default keeps column growth predictable.
 
 
 def build_features(
@@ -129,20 +90,19 @@ def build_features(
 ) -> pd.DataFrame:
     """Build the full feature matrix for the primary instrument.
 
-    Parameters
-    ----------
-    primary:
-        Cleaned, session-filtered M1 DataFrame (US100).
-    secondary:
-        US500 M1 DataFrame for SMT divergence (optional but recommended).
-    cfg:
-        Full OmegaConf config; ``cfg.features`` sub-node is used.
-    train_mask:
-        Boolean Series aligned to primary index; True = training bar.
-    cache_path:
-        If given, save/load feature parquet here.
-    force:
-        Ignore existing cache.
+    Args:
+        primary: Cleaned, session-filtered M1 DataFrame (US100).
+        secondary: US500 M1 DataFrame for SMT divergence (optional but recommended).
+        cfg: Full OmegaConf config; ``cfg.features`` sub-node is used.
+        train_mask: Boolean Series aligned to primary index; True = training bar.
+        cache_path: If given, save/load feature parquet here.
+        force: Ignore existing cache.
+        normalization_mode: Normalization behavior used for continuous feature columns.
+        timeframe_bars: Optional precomputed primary bars indexed by timeframe.
+        secondary_timeframe_bars: Optional precomputed correlated-symbol bars by timeframe.
+
+    Returns:
+        DataFrame returned by ``build_features``.
     """
     expected_hash = feature_cache_content_hash(
         cfg,
@@ -184,6 +144,14 @@ def build_features(
     session_start = str(OmegaConf.select(cfg, "session.start") or "16:30") if cfg else "16:30"
 
     def primary_tf_bars(tf: str) -> pd.DataFrame:
+        """Return cached primary bars or derive them for one timeframe.
+
+        Args:
+            tf: Target market timeframe label.
+
+        Returns:
+            Primary-symbol OHLC bars at the requested timeframe.
+        """
         key = str(tf).upper()
         frame = primary_timeframes.get(key)
         if frame is None:
@@ -197,6 +165,16 @@ def build_features(
         *,
         completed_bars: bool = True,
     ) -> pd.DataFrame:
+        """Align feature blocks using their timestamped bar-close availability.
+
+        Args:
+            target: Base timeframe index that receives the merged features.
+            blocks: Higher-timeframe feature blocks keyed by timeframe.
+            completed_bars: Whether to shift blocks that lack close timestamps.
+
+        Returns:
+            Target rows with causally aligned feature columns.
+        """
         availability = {
             str(tf): timeframe_close_times(
                 primary_tf_bars(str(tf)), str(tf), scheduled_closes, session_start
@@ -212,7 +190,6 @@ def build_features(
 
     htf_sweep_audit = pd.DataFrame()
 
-    # --- base indicators ---
     if feat_cfg is not None:
         feat = build_indicators(primary, feat_cfg)
     else:
@@ -222,7 +199,6 @@ def build_features(
             index=primary.index,
         )
 
-        # --- SMT divergence (M1 always; MTF optional §4.1) ---
         # M1 block is z-scored with the rest; per-TF blocks join before
         # normalisation for the same treatment. Secondary is resampled from its
         # own M1 bars so each TF compares like-for-like bars.
@@ -258,7 +234,6 @@ def build_features(
             if smt_blocks:
                 feat = align_blocks(feat, smt_blocks)
 
-                # --- Higher-timeframe technical features (Chain A) ---
                 # Run the same indicator build on each HTF's own bars, then causally
                 # forward-fill onto the M1 spine. Done BEFORE normalisation so HTF
                 # columns are z-scored like the M1 ones.
@@ -293,7 +268,6 @@ def build_features(
                 htf_blocks[tf_name] = block
             feat = align_blocks(feat, htf_blocks)
 
-            # --- Chain B variant blocks (opt-in via config flags) ---
     _fvg_raw = pd.DataFrame(index=primary.index)
     if feat_cfg is not None:
         # PO3 phase tag: time-derived, identical across TFs once aligned.
@@ -306,7 +280,7 @@ def build_features(
             )
             feat = pd.concat([feat, po3], axis=1)
 
-            # FVG zone features (plan §4.5): full M1+HTF ladder, not HTFs only.
+            # FVG zones cover the primary timeframe and configured higher timeframes.
             # build_fvg_zone_features is TF-agnostic, so this is purely what goes
             # into the loop: ["M1"] + htf_timeframes (config-overridable via
             # fvg_timeframes), giving M1_fvg_*/M5_fvg_*/... columns.
@@ -353,7 +327,6 @@ def build_features(
             # columns above are normalised with the rest of the matrix.
             feat, _fvg_raw = split_raw_fvg_features(feat)
 
-            # --- normalisation ---
     window = feat_cfg.zscore_window if feat_cfg is not None else 252
     if feat_cfg is not None and d1_source_normalized_columns:
         source_normalized_columns = [
@@ -432,7 +405,6 @@ def build_features(
         if ob_blocks:
             feat = align_blocks(feat, ob_blocks)
 
-            # --- Full PO3 pipeline (Chain F): HTF FVG -> LTF IFVG -> entry triggers ---
             # Added AFTER normalization so the 0/1 entry signals and the numeric
             # trigger code keep their raw meaning (exactly like structure levels).
     if feat_cfg is not None and bool(getattr(feat_cfg, "include_po3_full", False)):
@@ -460,7 +432,6 @@ def build_features(
         )
         feat = pd.concat([feat, po3_feats], axis=1)
 
-        # --- Liquidity Levels + Volume Spike + ATR - add AFTER normalization ---
     levels = detect_session_levels(primary)
     feat = pd.concat([feat, levels], axis=1)
     from market_data.transforms.activity import activity_series
@@ -470,7 +441,6 @@ def build_features(
         feat["volume_spike"] = volume_spike(vol_s, window=20)
     feat["atr_5"] = atr(primary, period=5)
 
-    # --- Session-conditional PD context (opt-in) ---
     include_pd = feat_cfg is not None and bool(getattr(feat_cfg, "include_pd_context", False))
     if include_pd:
         sess_tz = "Etc/GMT-3"
@@ -484,7 +454,8 @@ def build_features(
         pd_ctx = build_pd_context_features(primary, feat["atr_5"], tz=sess_tz)
         feat = pd.concat([feat, pd_ctx], axis=1)
 
-        # HTF swing / session-range PD distances onto M1 (beyond indicator copies).
+        # Align higher-timeframe swing and session-range distances separately
+        # from the copied technical indicators.
         htf_cfg_tfs = getattr(feat_cfg, "htf_timeframes", None)
         htf_tfs = list(htf_cfg_tfs) if htf_cfg_tfs is not None else list(_DEFAULT_HTF_TIMEFRAMES)
         pd_htf_blocks: dict[str, pd.DataFrame] = {}
@@ -502,8 +473,6 @@ def build_features(
         if pd_htf_blocks:
             feat = align_blocks(feat, pd_htf_blocks)
 
-            # --- Sweep Velocity and Wick Ratio - for PLAN 3 ---
-            # Add sweep velocity (uses liquidity levels from levels)
     sweep_vel = sweep_velocity(
         primary,
         london_high=levels.get("london_high"),
@@ -514,12 +483,10 @@ def build_features(
     )
     feat = pd.concat([feat, sweep_vel], axis=1)
 
-    # Add wick ratio
     feat["wick_ratio"] = wick_ratio(primary)
 
-    # --- Liquidity sweep MTF (plan §4.3) ---
-    # True per-TF sweeps on genuinely resampled OHLC (not M1 proxies with
-    # wider windows). Opt-in; follows the structure/BOS placement rule.
+    # Build sweeps on each resampled timeframe to preserve source-bar timing;
+    # widened M1 windows would change their meaning.
     _mtf_sweep_levels: dict[str, pd.DataFrame] = {}
     if feat_cfg is not None and feature_block_enabled(feat_cfg, "liquidity", False):
         swing = int(getattr(feat_cfg, "smt_swing_period", 5))
@@ -542,7 +509,6 @@ def build_features(
         if sweep_blocks:
             feat = align_blocks(feat, sweep_blocks)
 
-            # --- MTF structure/BOS ATR distances (plan §4.2, second half) ---
             # Needs atr_5 (computed above) + aligned {TF}_swing levels via ffill.
     if (
         feat_cfg is not None
@@ -570,7 +536,6 @@ def build_features(
         align_blocks=align_blocks,
     )
 
-    # --- LTF BOS + MSS decision stack ---
     # With include_strategy_state, BOS is already present; with include_pd_context
     # alone we add BOS here. MSS is always paired when either flag is on.
     need_ltf_stack = feat_cfg is not None and (
@@ -595,8 +560,7 @@ def build_features(
 
     feat = append_session_features(primary, feat, cfg, feat_cfg)
 
-    # --- Trader-context HTF bias / manip reverse / trade direction ---
-    # Wired when PD context or strategy state is on (Idea 1/2).
+    # Trader-context columns depend on premium/discount context or strategy-state features.
     need_trader_ctx = feat_cfg is not None and (
         bool(getattr(feat_cfg, "include_strategy_state", False))
         or bool(getattr(feat_cfg, "include_pd_context", False))
@@ -607,8 +571,8 @@ def build_features(
             feat[col] = trader_ctx[col]
 
     feat = ensure_london_atr_distances(feat, primary["close"])
-    # Raw decision price is retained only for the opt-in Idea 2 entry gate
-    # and excluded from the model observation sequence.
+    # Retain decision price for opt-in setup-entry gating but exclude it from
+    # the model observation sequence.
     if feat_cfg is not None and bool(getattr(feat_cfg, "include_previous_session_pd", False)):
         feat["decision_close"] = primary["close"].reindex(feat.index)
     session = OmegaConf.select(cfg, "session") if cfg is not None else None
@@ -656,11 +620,10 @@ def build_features(
         if retracement_blocks:
             feat = align_blocks(feat, retracement_blocks)
 
-            # Add explicit directional multi-hot flags after all source families
-            # exist. Concurrent ideas stay visible together; none gates another.
+            # Preserve concurrent ideas as independent flags; one candidate
+            # must not suppress another.
         feat = pd.concat([feat, build_entry_idea_features(feat)], axis=1)
 
-        # Drop leading NaNs from warmup
     feat = feat.dropna(how="all")
     feat.columns = feat.columns.map(str)
     duplicate_columns = feat.columns[feat.columns.duplicated()].unique().tolist()

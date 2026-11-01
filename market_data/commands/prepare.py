@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 
 
 def main() -> None:
+    """Prepare configured raw data into canonical per-symbol bar caches."""
     parser = argparse.ArgumentParser(description="Prepare raw CSV data into canonical bar caches")
     parser.add_argument("overrides", nargs="*", help="key=value config overrides")
     parser.add_argument("--force", action="store_true", help="Ignore cached parquet files")

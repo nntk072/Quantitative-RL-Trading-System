@@ -17,25 +17,19 @@ def rolling_zscore(
 ) -> pd.DataFrame:
     """Apply a rolling z-score to each column.
 
-    Parameters
-    ----------
-    df:
-        Feature DataFrame.
-    window:
-        Look-back window for mean/std (bars).
-    train_mask:
-        Boolean Series; if provided, statistics are computed only from rows
-        where mask=True (the training fold).  Test rows are normalised using
-        the last known training statistics.
-    mode:
-        ``legacy_masked_window`` retains the historical masked calendar-window
-        convention for checkpoint compatibility. ``frozen_fold`` computes
-        rolling statistics across training observations and forward-fills the
-        final fitted mean/std throughout validation, without validation input.
+    Args:
+        df: Feature DataFrame.
+        window: Look-back window for mean/std (bars).
+        train_mask: Boolean Series; if provided, statistics are computed only from rows
+            where mask=True (the training fold).  Test rows are normalised using
+            the last known training statistics.
+        mode: ``legacy_masked_window`` retains the historical masked calendar-window
+            convention for checkpoint compatibility. ``frozen_fold`` computes
+            rolling statistics across training observations and forward-fills the
+            final fitted mean/std throughout validation, without validation input.
 
-    Returns
-    -------
-    Normalised DataFrame (same shape as input).
+    Returns:
+        Normalised DataFrame (same shape as input).:
     """
     if mode not in {"legacy_masked_window", "frozen_fold"}:
         raise ValueError(f"Unknown normalization mode: {mode}")

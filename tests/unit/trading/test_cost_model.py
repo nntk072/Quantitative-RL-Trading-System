@@ -9,6 +9,12 @@ from trading.execution.broker import Broker
 from trading.execution.costs import CostModel
 
 
+def test_broker_constructs_default_cost_model() -> None:
+    broker = Broker()
+
+    assert isinstance(broker.cost_model, CostModel)
+
+
 def test_fill_price_buy_is_ask():
     c = CostModel(spread_points=1.0, slippage_points=0.0)
     fill = c.fill_price(bid=99.5, ask=100.5, direction=1)

@@ -13,6 +13,8 @@ from .routing import (
 
 
 class PhaseCritiqueMixin(PipelineMixinBase):
+    """Run independent critic reviews and synthesize their findings."""
+
     def _phase_critique(self) -> None:
         """Phase 3: Critique each plan independently."""
         critic_n = self._effective_critic_count()

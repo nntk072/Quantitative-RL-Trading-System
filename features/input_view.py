@@ -13,7 +13,16 @@ def input_view_from_frame(
     dataset_id: str,
     schema: InputSchema,
 ) -> InputView:
-    """Select declared columns from a tabular source without adding features."""
+    """Select declared columns from a tabular source without adding features.
+
+    Args:
+        frame: Input data frame to process.
+        dataset_id: Text or path value identifying the dataset id.
+        schema: Schema used by the operation described above.
+
+    Returns:
+        Result of select declared columns from a tabular source without adding features.
+    """
     missing = [column for column in schema.columns if column not in frame.columns]
     if missing:
         raise ValueError(f"input frame is missing schema columns: {missing}")

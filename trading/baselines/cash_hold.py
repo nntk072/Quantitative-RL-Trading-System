@@ -14,7 +14,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-# US100 specification used by the thesis account. Swap long is in MT5 points.
+# US100 contract specification for the configured account. Swap long is in MT5 points.
 POINT_SIZE = 0.01
 CONTRACT_SIZE = 1.0
 SPREAD = 0.6
@@ -32,18 +32,43 @@ def swap_usd_per_lot(
     point_size: float = POINT_SIZE,
     contract_size: float = CONTRACT_SIZE,
 ) -> float:
-    """Dollar swap for one lot for one night. Negative is a charge."""
+    """Dollar swap for one lot for one night. Negative is a charge.
+
+    Args:
+        swap_points: Numeric value used for the swap points.
+        point_size: Number specifying the point size for this operation.
+        contract_size: Number specifying the contract size for this operation.
+
+    Returns:
+        Numeric result returned by ``swap_usd_per_lot``.
+    """
     return float(swap_points) * float(point_size) * float(contract_size)
 
 
 def _slice_from_warmup(bars: pd.DataFrame, obs_window: int = OBS_WINDOW) -> pd.DataFrame:
+    """Process from warmup.
+
+    Args:
+        bars: Market bars to process.
+        obs_window: Numeric value used for the obs window.
+
+    Returns:
+        DataFrame returned by ``_slice_from_warmup``.
+    """
     if len(bars) <= obs_window:
         raise ValueError("need bars after the observation window")
     return bars.iloc[obs_window:]
 
 
 def _night_multiplier(previous_day: pd.Timestamp) -> int:
-    """MT5 posts three nights of swap on Wednesday."""
+    """MT5 posts three nights of swap on Wednesday.
+
+    Args:
+        previous_day: Previous day used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_night_multiplier``.
+    """
     return 3 if int(previous_day.dayofweek) == 2 else 1
 
 
@@ -112,6 +137,21 @@ def simulate_hold(
 
     The position closes early when equity has fallen by ``max_loss_usd`` from
     the start, or by ``daily_loss_usd`` from that session's starting equity.
+
+    Args:
+        bars: Market bars to process.
+        lots: Numeric value used for the lots.
+        initial_balance: Numeric value used for the initial balance.
+        max_loss_usd: Numeric value used for the max loss usd.
+        daily_loss_usd: Numeric value used for the daily loss usd.
+        swap_per_lot: Swap per lot used by the operation described above.
+        spread: Numeric value used for the spread.
+        obs_window: Numeric value used for the obs window.
+        leverage_intraday: Numeric value used for the leverage intraday.
+        leverage_swing: Numeric value used for the leverage swing.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     path = _slice_from_warmup(bars, obs_window)
     per_lot = swap_usd_per_lot() if swap_per_lot is None else float(swap_per_lot)
@@ -177,6 +217,15 @@ def simulate_hold(
 
 
 def _nights_between(start: pd.Timestamp, end: pd.Timestamp) -> int:
+    """Process between.
+
+    Args:
+        start: Start used by the operation described above.
+        end: End used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_nights_between``.
+    """
     days = pd.date_range(start.normalize(), end.normalize(), freq="D", tz=start.tz)
     total = 0
     for day in days[:-1]:
@@ -185,6 +234,15 @@ def _nights_between(start: pd.Timestamp, end: pd.Timestamp) -> int:
 
 
 def _worst_session_drop(path: pd.DataFrame, ts: pd.DatetimeIndex) -> float:
+    """Process session drop.
+
+    Args:
+        path: Path to the input file or directory.
+        ts: Ts used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_worst_session_drop``.
+    """
     day = ts.normalize()
     worst = 0.0
     for _, group in path.groupby(day):
@@ -195,4 +253,14 @@ def _worst_session_drop(path: pd.DataFrame, ts: pd.DatetimeIndex) -> float:
 
 
 def _margin(price: float, lots: float, leverage: int) -> float:
+    """Process the requested value.
+
+    Args:
+        price: Numeric value used for the price.
+        lots: Numeric value used for the lots.
+        leverage: Numeric value used for the leverage.
+
+    Returns:
+        Numeric result returned by ``_margin``.
+    """
     return float(price) * float(lots) * CONTRACT_SIZE / float(leverage)

@@ -25,5 +25,9 @@ A passing software test establishes only the behavior it covers. Research
 claims require the declared data split, execution assumptions, run identity,
 and evaluation evidence described in the [research guide](docs/research/README.md).
 
-Do not add a license or claim permission to reuse this project until the owner
-has chosen and added one. See [project limitations](docs/architecture/risks_and_technical_debt.md).
+The project source and developer-authored documentation are licensed under the
+[MIT License](LICENSE). Do not contribute material that you do not have the
+right to license under those terms. Dependencies, market data, model artifacts,
+and research evidence may have separate terms; see the
+[repository standards decisions](docs/decisions/repository_standards.md) and
+[project limitations](docs/architecture/risks_and_technical_debt.md).

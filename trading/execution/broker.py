@@ -28,7 +28,14 @@ Quote = tuple[float, float]  # (bid, ask)
 
 
 def _validate_quote(quote: Quote) -> Quote:
-    """Refuse impossible or non-finite executable prices before account mutation."""
+    """Refuse impossible or non-finite executable prices before account mutation.
+
+    Args:
+        quote: Quote used by the operation described above.
+
+    Returns:
+        Result of refuse impossible or non-finite executable prices before account mutation.
+    """
     bid, ask = quote
     if not isfinite(bid) or not isfinite(ask) or bid <= 0.0 or ask < bid:
         raise ValueError("Invalid bid/ask quote: prices must be finite, positive and ask >= bid")
@@ -37,6 +44,13 @@ def _validate_quote(quote: Quote) -> Quote:
 
 @dataclass
 class Position:
+    """Open position state tracked by the broker adapter.
+
+    Attributes:
+        size: Signed position size, positive for long and negative for short.
+        entry_price: Average entry price for the open position.
+    """
+
     direction: int  # +1 long, -1 short
     size: float  # lots
     entry_price: float
@@ -90,11 +104,8 @@ class Position:
     tp_mode_overridden: bool = False
     tp_breakeven_done: bool = False
     tp_initial_price: float | None = None
-    thesis_candidate_id: int | None = None
-    thesis_schema_version: str = ""
     primary_idea: str = ""
     primary_setup_timeframe: str = ""
-    thesis_decision_time: object | None = None
     trade_setup_candidate_id: int | None = None
     trade_setup_schema_version: str = ""
     trade_setup_decision_time: object | None = None
@@ -114,16 +125,33 @@ class Position:
 
 @dataclass
 class Broker:
+    """Simple broker model used by the simulation execution layer.
+
+    Attributes:
+        margin_pct: Required margin fraction.
+        contract_size: Units represented by one lot.
+    """
+
     leverage: int = 50
     margin_pct: float = 0.02  # 2%
     contract_size: float = 1.0  # multiplier per lot
     cost_model: CostModel = None  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
+        """Validate and initialize Broker after construction."""
         if self.cost_model is None:
             self.cost_model = CostModel()
 
     def required_margin(self, price: float, lots: float) -> float:
+        """Calculate margin required to open the requested position.
+
+        Args:
+            price: Current instrument price.
+            lots: Absolute number of lots requested.
+
+        Returns:
+            Required margin in account currency.
+        """
         return price * lots * self.contract_size * self.margin_pct
 
     def open_position(
@@ -138,6 +166,15 @@ class Broker:
         Long opens fill at ask; short opens fill at bid.
         Returns the new ``Position`` or ``None`` if margin is insufficient or
         *direction* is not a valid trade side (must be ``+1`` or ``-1``).
+
+        Args:
+            acc: Acc used by the operation described above.
+            quote: Quote used by the operation described above.
+            lots: Numeric value used for the lots.
+            direction: Signed trade direction: 1 for long and -1 for short.
+
+        Returns:
+            Result of attempt to open a position.
         """
         if direction not in (1, -1) or not isfinite(lots) or lots <= 0.0:
             # Regression guard: engine action codes like exit_action (e.g. 2)
@@ -170,6 +207,12 @@ class Broker:
 
         Long closes fill at bid; short closes fill at ask.
         Commission is deducted from P&L before booking to the account.
+
+        Args:
+            acc: Acc used by the operation described above.
+            position: Position used by the operation described above.
+            quote: Quote used by the operation described above.
+            size: Size used by the operation described above.
 
         Returns:
             tuple of (realised_pnl, fill_price)
@@ -206,6 +249,14 @@ class Broker:
 
         * Long positions are valued at bid (what you'd receive if you sold now).
         * Short positions are valued at ask (what you'd pay to buy back now).
+
+        Args:
+            acc: Acc used by the operation described above.
+            position: Position used by the operation described above.
+            quote: Quote used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``mark_to_market``.
         """
         bid, ask = _validate_quote(quote)
         mtm_price = bid if position.direction == 1 else ask

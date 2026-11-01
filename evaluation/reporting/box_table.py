@@ -16,6 +16,12 @@ def render_box_table(boxes: Sequence[tuple[str, Sequence[str]]]) -> str:
 
     Every line of every box shares one width computed from the longest
     content line, so borders always match the rows exactly.
+
+    Args:
+        boxes: Items supplied for the boxes, in input order.
+
+    Returns:
+        Text returned by ``render_box_table``.
     """
     clean: list[tuple[str, list[str]]] = []
     width = 1
@@ -43,7 +49,14 @@ def render_box_table(boxes: Sequence[tuple[str, Sequence[str]]]) -> str:
 
 
 def kv_widths(pairs: Iterable[tuple[str, str]]) -> tuple[int, int]:
-    """Shared key/value column widths for a flat metric box."""
+    """Shared key/value column widths for a flat metric box.
+
+    Args:
+        pairs: Items supplied for the pairs, in input order.
+
+    Returns:
+        Values returned by ``kv_widths``, in the declared order.
+    """
     items = list(pairs)
     key_width = max((len(str(key)) for key, _ in items), default=1) + 2
     value_width = max((len(str(value)) for _, value in items), default=1) + 2
@@ -55,5 +68,14 @@ def kv_lines(
     key_width: int,
     value_width: int,
 ) -> list[str]:
-    """Align key/value pairs with shared widths (keys left, values right)."""
+    """Align key/value pairs with shared widths (keys left, values right).
+
+    Args:
+        pairs: Items supplied for the pairs, in input order.
+        key_width: Number specifying the key width for this operation.
+        value_width: Number specifying the value width for this operation.
+
+    Returns:
+        Values returned by ``kv_lines``, in the declared order.
+    """
     return [f"{str(key).ljust(key_width)}{str(value).rjust(value_width)}" for key, value in pairs]

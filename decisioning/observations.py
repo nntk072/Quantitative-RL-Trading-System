@@ -18,7 +18,15 @@ def pad_observation_window(
     seq: np.ndarray[Any, Any],
     window: int,
 ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-    """Left-pad a sequence window and mark which rows contain real events."""
+    """Left-pad a sequence window and mark which rows contain real events.
+
+    Args:
+        seq: Seq used by the operation described above.
+        window: Numeric value used for the window.
+
+    Returns:
+        Array returned by ``pad_observation_window``.
+    """
     values = np.asarray(seq, dtype=np.float32)
     if values.ndim == 1:
         width = 1
@@ -47,7 +55,21 @@ def normalized_account_vector(
     close: float,
     entry_state: str | None = None,
 ) -> np.ndarray[Any, Any]:
-    """Build the legacy normalized account input coordinates."""
+    """Build the legacy normalized account input coordinates.
+
+    Args:
+        equity: Current account equity in account currency.
+        initial_balance: Numeric value used for the initial balance.
+        pos_dir: Numeric value used for the pos dir.
+        open_pnl: Numeric value used for the open pnl.
+        dist_to_sl: Numeric value used for the dist to sl.
+        trailing_dd: Numeric value used for the trailing dd.
+        close: Numeric value used for the close.
+        entry_state: Entry state used by the operation described above.
+
+    Returns:
+        Array returned by ``normalized_account_vector``.
+    """
     norm_equity = float(np.log(equity / initial_balance)) if initial_balance > 0 else 0.0
     norm_pnl = open_pnl / initial_balance if initial_balance > 0 else 0.0
     unrealised_r = (open_pnl / equity * 100.0) if equity > 0 else 0.0
@@ -113,9 +135,19 @@ class ObservationSchema:
 
     @property
     def width(self) -> int:
+        """Return the total number of flattened observation coordinates.
+
+        Returns:
+            Numeric result returned by ``width``.
+        """
         return len(self.coordinates)
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the ordered observation contract as JSON-compatible data.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         return {
             "version": self.version,
             "observation_width": self.width,
@@ -129,7 +161,15 @@ def build_observation_schema(
     *,
     entry_state_visibility: bool = False,
 ) -> ObservationSchema:
-    """Return a named schema; never infer semantics from a vector width."""
+    """Return a named schema; never infer semantics from a vector width.
+
+    Args:
+        version: Text or path value identifying the version.
+        entry_state_visibility: Whether to enable or require the entry state visibility.
+
+    Returns:
+        Result of return a named schema; never infer semantics from a vector width.
+    """
     coordinates: tuple[str, ...]
     if version == OBSERVATION_SCHEMA_V1:
         coordinates = V1_COORDINATES
@@ -148,7 +188,13 @@ def validate_observation_schema(
     *,
     allow_legacy_v1: bool = False,
 ) -> None:
-    """Validate saved observation semantics before checkpoint evaluation/resume."""
+    """Validate saved observation semantics before checkpoint evaluation/resume.
+
+    Args:
+        actual: Key-value data used for the actual.
+        expected: Expected used by the operation described above.
+        allow_legacy_v1: Whether to enable or require the allow legacy v1.
+    """
     if actual is None:
         if expected.version == OBSERVATION_SCHEMA_V1 and allow_legacy_v1:
             return
@@ -170,6 +216,15 @@ def validate_observation_schema(
 
 
 def _ratio(numerator: float, denominator: float) -> float:
+    """Process the requested value.
+
+    Args:
+        numerator: Numeric value used for the numerator.
+        denominator: Numeric value used for the denominator.
+
+    Returns:
+        Numeric result returned by ``_ratio``.
+    """
     return float(numerator / denominator) if denominator > 0.0 else 0.0
 
 
@@ -208,6 +263,37 @@ def account_state_v2(
     remains legacy realized-loss-only; repeated-payout v3 supplies the fixed-session
     equity loss. ``active_sl_headroom_over_initial_risk`` is positive when the
     current price is on the safe side of the active stop.
+
+    Args:
+        equity: Current account equity in account currency.
+        initial_balance: Numeric value used for the initial balance.
+        position_direction: Numeric value used for the position direction.
+        open_pnl: Numeric value used for the open pnl.
+        planned_risk_usd: Numeric value used for the planned risk usd.
+        trailing_drawdown_pct: Numeric value used for the trailing drawdown pct.
+        trailing_drawdown_limit: Numeric value used for the trailing drawdown limit.
+        daily_loss: Numeric value used for the daily loss.
+        daily_loss_limit: Numeric value used for the daily loss limit.
+        loss_from_initial: Numeric value used for the loss from initial.
+        max_loss_limit: Numeric value used for the max loss limit.
+        risk_per_trade_limit: Numeric value used for the risk per trade limit.
+        current_price: Numeric value used for the current price.
+        entry_price: Price at which the position was opened.
+        initial_sl_price: Initial sl price used by the operation described above.
+        active_sl_price: Active sl price used by the operation described above.
+        remaining_size: Number specifying the remaining size for this operation.
+        initial_size: Number specifying the initial size for this operation.
+        position_age_bars: Market bar or price data used for build normalized v2 state without changing account or risk semantics.
+        position_age_scale_bars: Market bar or price data used for build normalized v2 state without changing account or risk semantics.
+        tp_hit_mask: Boolean or status values aligned with the input tp hit.
+        tp_prices: Market bar or price data used for build normalized v2 state without changing account or risk semantics.
+        sl_mode: Text or path value identifying the sl mode.
+        tp_mode: Text or path value identifying the tp mode.
+        exit_mode: Text or path value identifying the exit mode.
+        entry_state: Entry state used by the operation described above.
+
+    Returns:
+        Array returned by ``account_state_v2``.
     """
     has_position = float(position_direction) != 0.0
     initial_risk = (

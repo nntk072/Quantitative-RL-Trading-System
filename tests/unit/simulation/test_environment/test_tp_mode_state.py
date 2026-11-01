@@ -167,7 +167,6 @@ class TestTPModeStateMachine:
 
     def test_tp_mode_agent_override(self) -> None:
         """Agent-selected mode (outside defer band) persists and tp_mode_overridden=True blocks state machine."""
-
         # Agent action value outside defer band
         u_tp = 0.9  # Outside defer threshold of 0.1 (abs(0.9 - 0.5) = 0.4 > 0.1)
         default_mode = "fixed"
@@ -180,7 +179,6 @@ class TestTPModeStateMachine:
 
     def test_tp_mode_defer_to_default(self) -> None:
         """Agent near center (within defer band) falls back to default state machine."""
-
         # Agent action value in the defer band
         # To be in the defer band, the unit value u must satisfy abs(u - 0.5) < defer_threshold
         # With default_mode, when action_val is raw [-1,1]: u = 0.5 * (action_val + 1.0)

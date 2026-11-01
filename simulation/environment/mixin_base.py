@@ -10,7 +10,16 @@ class RuntimeMixinBase:
 
     if TYPE_CHECKING:
 
-        def __getattr__(self, name: str) -> Any: ...
+        def __getattr__(self, name: str) -> Any:
+            """Process RuntimeMixinBase.
+
+            Args:
+                name: Name used to identify the requested file, artifact, or item.
+
+            Returns:
+                Result of process RuntimeMixinBase.
+            """
+            ...
 
 
 __all__ = ["RuntimeMixinBase"]

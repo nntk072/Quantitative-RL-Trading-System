@@ -56,7 +56,8 @@ def test_structure_levels_forward_fill(sample_bars: pd.DataFrame) -> None:
 
 def test_structure_levels_record_swing_extremum_price() -> None:
     """The recorded level must be the swing bar's extremum price, not the
-    confirmation bar's price (the flag fires ``swing_period`` bars later)."""
+    confirmation bar's price (the flag fires ``swing_period`` bars later).
+    """
     idx = pd.date_range("2024-01-02 01:05", periods=10, freq="1min")
     highs = [101.0, 101.2, 101.4, 101.6, 102.0, 101.5, 101.0, 100.8, 100.6, 100.4]
     lows = [100.5, 100.3, 100.1, 99.9, 99.5, 100.0, 100.5, 100.8, 101.0, 101.2]

@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Quantitative RL research trial ledger",
+  "description": "Append-only inventory of research runs and attempts, including failed, interrupted, inactive, and excluded work.",
+  "type": "object",
+  "required": [
+    "schema",
+    "updated_at_utc",
+    "records"
+  ],
+  "properties": {
+    "schema": {
+      "const": "qrl.research_trial_ledger.v1"
+    },
+    "updated_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "campaign_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "experiment_run_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "record": {
+      "type": "object",
+      "required": [
+        "record_id",
+        "record_type",
+        "run_id",
+        "status",
+        "evidence_role",
+        "source_sha",
+        "config_sha256",
+        "artifacts",
+        "disposition",
+        "identity_completeness"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "campaign_id"
+          ]
+        },
+        {
+          "required": [
+            "experiment_run_id"
+          ]
+        }
+      ],
+      "properties": {
+        "record_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "record_type": {
+          "enum": [
+            "run",
+            "attempt"
+          ]
+        },
+        "campaign_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "experiment_run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attempt": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "variant": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "evidence_role": {
+          "enum": [
+            "smoke",
+            "development",
+            "selection",
+            "robustness",
+            "final_report_only",
+            "runtime_benchmark",
+            "correctness",
+            "other"
+          ]
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "running",
+            "succeeded",
+            "failed",
+            "interrupted",
+            "inactive",
+            "excluded"
+          ]
+        },
+        "source_sha": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "config_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "data_sha256": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "cache_sha256": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "checkpoint_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "requested_timesteps": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "completed_timesteps": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "n_envs": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "started_at_utc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "ended_at_utc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "disposition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supersedes_record_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "campaign_fingerprint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "experiment_run_fingerprint": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "previous_fingerprint": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "slurm_job_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "slurm_job_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "uniqueItems": true
+        },
+        "scheduler_state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "identity_completeness": {
+          "enum": [
+            "complete",
+            "partial",
+            "missing"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

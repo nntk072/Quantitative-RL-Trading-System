@@ -22,21 +22,17 @@ def split_train_test(
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Split aligned bars + features into train (≤ *train_end*) and test (≥ *test_start*).
 
-    Parameters
-    ----------
-    bars, features:
-        Must share the same DatetimeIndex (timezone-aware).
-    train_end:
-        Last date included in the training set (inclusive, full day).
-    test_start:
-        First date included in the test set (inclusive, midnight).
-    train_start:
-        Optional first date exposed to the training environment. Earlier rows
-        remain available for causal feature warmup but are not training rows.
+    Args:
+        bars: Market bars indexed by timestamp.
+        features: Feature rows aligned to the market bars' index.
+        train_end: Last date included in the training set (inclusive, full day).
+        test_start: First date included in the test set (inclusive, midnight).
+        train_start: Optional first date exposed to the training environment. Earlier rows
+            remain available for causal feature warmup but are not training rows.
 
-    Returns
-    -------
-    train_bars, test_bars, train_features, test_features
+    Returns:
+        Tuple of ``train_bars``, ``test_bars``, ``train_features``, and
+        ``test_features`` in that order.
     """
     # Align to common index first
     common = bars.index.intersection(features.index)
@@ -82,13 +78,30 @@ def split_bars(
     test_start: str = "2026-01-01",
     train_start: str | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Split a single bar frame on the same date boundaries as ``split_train_test``."""
+    """Split a single bar frame on the same date boundaries as ``split_train_test``.
+
+    Args:
+        bars: Market bars to process.
+        train_end: Text or path value identifying the train end.
+        test_start: Text or path value identifying the test start.
+        train_start: Train start used by the operation described above.
+
+    Returns:
+        DataFrame returned by ``split_bars``.
+    """
     train, test, _, _ = split_train_test(bars, bars, train_end, test_start, train_start)
     return train, test
 
 
 def get_split_config(cfg: Any) -> tuple[str, str]:
-    """Extract *train_end* / *test_start* from config with fallback defaults."""
+    """Extract *train_end* / *test_start* from config with fallback defaults.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Values returned by ``get_split_config``, in the declared order.
+    """
     try:
         train_end = str(cfg.data.split.train_end)
         test_start = str(cfg.data.split.test_start)
@@ -99,7 +112,14 @@ def get_split_config(cfg: Any) -> tuple[str, str]:
 
 
 def get_train_start_config(cfg: Any) -> str | None:
-    """Read the optional first train date without changing legacy split config."""
+    """Read the optional first train date without changing legacy split config.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Result of read the optional first train date without changing legacy split config.
+    """
     try:
         value = cfg.data.split.train_start
     except Exception:
@@ -112,7 +132,16 @@ def make_train_mask(
     train_end: str,
     train_start: str | None = None,
 ) -> pd.Series:
-    """Boolean mask for the inclusive configured training date range."""
+    """Boolean mask for the inclusive configured training date range.
+
+    Args:
+        index: Position or label identifying the requested item.
+        train_end: Text or path value identifying the train end.
+        train_start: Train start used by the operation described above.
+
+    Returns:
+        Result of boolean mask for the inclusive configured training date range.
+    """
     tz = index.tz
     train_end_ts = pd.Timestamp(train_end)
     if tz is not None:

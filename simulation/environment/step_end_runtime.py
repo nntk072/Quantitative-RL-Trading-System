@@ -15,6 +15,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class StepEndRuntimeMixin(RuntimeMixinBase):
+    """Resolve pending orders, transition completion, and episode accounting."""
+
     _pending_entry_order: dict[str, Any] | None
     _opened_this_step: bool
     episode_step_count: int
@@ -35,6 +37,25 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
         done: bool,
         truncated: bool,
     ) -> tuple[dict[str, np.ndarray[Any, Any]], float, bool, bool, dict[str, Any]]:
+        """Resolve step end.
+
+        Args:
+            action: Action to apply to the current state.
+            discrete_action: Numeric value used for the discrete action.
+            risk_frac: Numeric value used for the risk frac.
+            entry_machine: Entry machine used by the operation described above.
+            valuation_time: Valuation time used by the operation described above.
+            close_reason: Text or path value identifying the close reason.
+            reward: Numeric value used for the reward.
+            reward_parts: Key-value data used for the reward parts.
+            obs: Key-value data used for the obs.
+            info: Key-value data used for the info.
+            done: Whether to enable or require the done.
+            truncated: Whether to enable or require the truncated.
+
+        Returns:
+            Whether resolve step end meets the requested condition.
+        """
         self._advance_ny_step()
         if entry_machine is not None and entry_machine.state == "IN_POSITION":
             if self.position is None:

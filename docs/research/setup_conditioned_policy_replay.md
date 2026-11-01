@@ -64,7 +64,7 @@ At the final 98,304-transition PPO diagnostic row, both variants had finite lear
 | Explained variance | −0.25 | 0.421 |
 | Approximate KL | 0.0198 | 0.0160 |
 
-These are one-seed, short-training diagnostics. The full-replay wrapper did not preserve a per-decision setup trace, so it does not establish evaluation-time setup entropy, idea/timeframe diversity, or a setup-dependent execution effect. An empty legacy `thesis_metrics` field in the replay record means **not recorded**, not zero.
+These are one-seed, short-training diagnostics. The full-replay wrapper did not preserve a per-decision setup trace, so it does not establish evaluation-time setup entropy, idea/timeframe diversity, or a setup-dependent execution effect. An empty setup-metrics field in the replay record means **not recorded**, not zero.
 
 ## Evaluation setup
 

@@ -20,10 +20,23 @@ class Chomp1d(nn.Module):
     """Trim right-side convolution padding to preserve causal output length."""
 
     def __init__(self, chomp_size: int) -> None:
+        """Initialize Chomp1d and its owned state.
+
+        Args:
+            chomp_size: Number specifying the chomp size for this operation.
+        """
         super().__init__()
         self.chomp_size = chomp_size
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Remove right padding while preserving the causal convolution length.
+
+        Args:
+            x: Channel-first convolution output with padded time dimension.
+
+        Returns:
+            Contiguous output with ``chomp_size`` rightmost positions removed.
+        """
         return x if self.chomp_size == 0 else x[:, :, : -self.chomp_size].contiguous()
 
 
@@ -31,13 +44,27 @@ class BaseFeaturesExtractor(nn.Module):
     """Framework-neutral input/output contract for reusable encoders."""
 
     def __init__(self, observation_space: Any, features_dim: int) -> None:
+        """Initialize BaseFeaturesExtractor and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            features_dim: Numeric value used for the features dim.
+        """
         super().__init__()
         self.observation_space = observation_space
         self.features_dim = features_dim
 
 
 def _resolve_account_dim(observation_space: Any, account_dim: int | None) -> int:
-    """Read the account input width from the configured observation space."""
+    """Read the account input width from the configured observation space.
+
+    Args:
+        observation_space: Observation space used by the operation described above.
+        account_dim: Account dim used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_resolve_account_dim``.
+    """
     observation_spaces = getattr(observation_space, "spaces", None)
     if not isinstance(observation_spaces, Mapping):
         raise TypeError("sequence encoders require a Dict observation space")
@@ -57,6 +84,11 @@ class AccountMLP(nn.Module):
     """Map normalized account values to a fixed embedding."""
 
     def __init__(self, account_dim: int = BASE_ACCOUNT_DIM) -> None:
+        """Initialize AccountMLP and its owned state.
+
+        Args:
+            account_dim: Numeric value used for the account dim.
+        """
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(account_dim, ACCOUNT_EMB_DIM),
@@ -66,11 +98,27 @@ class AccountMLP(nn.Module):
         )
 
     def forward(self, account: torch.Tensor) -> torch.Tensor:
+        """Map normalized account-state vectors to the fixed-width embedding.
+
+        Args:
+            account: Batched account observations with shape ``[batch, account_dim]``.
+
+        Returns:
+            Account embedding with shape ``[batch, ACCOUNT_EMB_DIM]``.
+        """
         return cast(torch.Tensor, self.net(account))
 
 
 def _valid_lengths(seq: torch.Tensor, observations: dict[str, torch.Tensor]) -> torch.Tensor:
-    """Per-row count of real timesteps. A missing mask means the window is full."""
+    """Per-row count of real timesteps. A missing mask means the window is full.
+
+    Args:
+        seq: Seq used by the operation described above.
+        observations: Observations to evaluate, in input order.
+
+    Returns:
+        Result of per-row count of real timesteps. A missing mask means the window is full.
+    """
     batch, timesteps, _ = seq.shape
     mask = observations.get("seq_mask")
     if mask is None:
@@ -88,7 +136,16 @@ def _encode_valid_suffix(
     lengths: torch.Tensor,
     encode_fn: Callable[[torch.Tensor], torch.Tensor],
 ) -> torch.Tensor:
-    """Run ``encode_fn`` on each distinct valid suffix. Pad values never enter."""
+    """Run ``encode_fn`` on each distinct valid suffix. Pad values never enter.
+
+    Args:
+        seq: Seq used by the operation described above.
+        lengths: Lengths used by the operation described above.
+        encode_fn: Encode fn used by the operation described above.
+
+    Returns:
+        Result of run ``encode_fn`` on each distinct valid suffix. Pad values never enter.
+    """
     unique = torch.unique(lengths)
     if int(unique.numel()) == 1:
         length = int(unique[0].item())

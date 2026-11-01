@@ -146,7 +146,16 @@ def plot_holding_time_hist(
     path: str | Path | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Histogram of per-trade holding times in minutes."""
+    """Histogram of per-trade holding times in minutes.
+
+    Args:
+        holding_s: Items supplied for the holding s, in input order.
+        path: Path to the input file or directory.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of histogram of per-trade holding times in minutes.
+    """
     _apply_style()
     values = np.asarray(holding_s, dtype=float)
     values = values[np.isfinite(values)]

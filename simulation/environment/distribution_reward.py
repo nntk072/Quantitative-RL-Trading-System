@@ -11,14 +11,10 @@ from __future__ import annotations
 class DistributionReward:
     """Reward for a single position-entry event under the Idea 2 chain.
 
-    Parameters
-    ----------
-    entry_bonus:
-        Positive bonus for an entry on a distribution bar after the gap failed.
-    sweep_penalty:
-        Negative reward for an entry that is not on that bar.
-    distribution_bonus:
-        Positive bonus for an entry during the distribution phase.
+    Args:
+        entry_bonus: Positive bonus for an entry on a distribution bar after the gap failed.
+        sweep_penalty: Negative reward for an entry that is not on that bar.
+        distribution_bonus: Positive bonus for an entry during the distribution phase.
     """
 
     #: Keyword inputs this reward consumes (for CompositeReward filtering).
@@ -35,6 +31,13 @@ class DistributionReward:
         sweep_penalty: float,
         distribution_bonus: float,
     ) -> None:
+        """Initialize DistributionReward and its owned state.
+
+        Args:
+            entry_bonus: Numeric value used for the entry bonus.
+            sweep_penalty: Numeric value used for the sweep penalty.
+            distribution_bonus: Numeric value used for the distribution bonus.
+        """
         self.entry_bonus = float(entry_bonus)
         self.sweep_penalty = float(sweep_penalty)
         self.distribution_bonus = float(distribution_bonus)
@@ -55,6 +58,15 @@ class DistributionReward:
         Only a position *transition* (``position_changed`` and a non-zero
         ``direction``) earns anything. The entry is consistent when the
         open is on a distribution bar after the opposing gap failed.
+
+        Args:
+            position_changed: Whether to enable or require the position changed.
+            direction: Signed trade direction: 1 for long and -1 for short.
+            distribution_after_ifvg: Whether to enable or require the distribution after ifvg.
+            distribution_phase: Whether to enable or require the distribution phase.
+
+        Returns:
+            Numeric result returned by ``__call__``.
         """
         if not position_changed or direction == 0:
             return 0.0

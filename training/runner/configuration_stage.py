@@ -19,6 +19,11 @@ log = logging.getLogger(__name__)
 
 
 def _prepare_training_configuration() -> TrainingConfigurationStage:
+    """Prepare training configuration.
+
+    Returns:
+        Result of prepare training configuration.
+    """
     args = parse_train_args()
 
     if args.use_vae and not args.vae_path:

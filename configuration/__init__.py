@@ -1,3 +1,5 @@
+"""Load, merge, and validate framework run configuration."""
+
 from .configuration_loader import (
     apply_overrides,
     load_config,

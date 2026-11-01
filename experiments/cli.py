@@ -14,12 +14,22 @@ if TYPE_CHECKING:
 
 
 def _cli_program() -> str:
-    """Return the actual installed entrypoint name, defaulting to the canonical name."""
+    """Return the actual installed entrypoint name, defaulting to the canonical name.
+
+    Returns:
+        Text returned by ``_cli_program``.
+    """
     program = Path(sys.argv[0]).name
     return program if program not in {"pytest", "-c"} else "qrl-experiment"
 
 
 def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
+    """Process the requested value.
+
+    Args:
+        callable_main: Callable main used by the operation described above.
+        argv: Items supplied for the argv, in input order.
+    """
     original = sys.argv
     try:
         sys.argv = [original[0], *argv]
@@ -33,7 +43,14 @@ def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
 def parse_variant_ablation_args(
     argv: Sequence[str] | None = None,
 ) -> VariantAblationRequest:
-    """Parse the legacy ablation command at the stable CLI boundary."""
+    """Parse the legacy ablation command at the stable CLI boundary.
+
+    Args:
+        argv: Items supplied for the argv, in input order.
+
+    Returns:
+        Result of parse the legacy ablation command at the stable CLI boundary.
+    """
     from experiments.variants.variant_ablation_runner import VariantAblationRequest
 
     parser = argparse.ArgumentParser(
@@ -82,14 +99,25 @@ def parse_variant_ablation_args(
 
 
 def run_variant_ablation_cli(argv: Sequence[str] | None = None) -> None:
-    """Run the variant ablation through its stable package API."""
+    """Run the variant ablation through its stable package API.
+
+    Args:
+        argv: Items supplied for the argv, in input order.
+    """
     from experiments.variants.variant_ablation_runner import run_variant_ablation
 
     run_variant_ablation(parse_variant_ablation_args(argv))
 
 
 def run_named_cache_rebuild_cli(argv: Sequence[str] | None = None) -> int:
-    """Parse and dispatch the named-cache transaction command."""
+    """Parse and dispatch the named-cache transaction command.
+
+    Args:
+        argv: Items supplied for the argv, in input order.
+
+    Returns:
+        Numeric result returned by ``run_named_cache_rebuild_cli``.
+    """
     parser = argparse.ArgumentParser(
         prog=f"{_cli_program()} rebuild-named-cache",
         description="Stage, validate, and transactionally publish named feature caches.",
@@ -116,13 +144,21 @@ def run_named_cache_rebuild_cli(argv: Sequence[str] | None = None) -> int:
 
 
 def run_variant_catalog_cli(argv: Sequence[str] | None = None) -> int:
-    """Generate or validate the model and experiment variant catalog."""
+    """Generate or validate the model and experiment variant catalog.
+
+    Args:
+        argv: Items supplied for the argv, in input order.
+
+    Returns:
+        Numeric result returned by ``run_variant_catalog_cli``.
+    """
     from experiments.variants.catalog import main as catalog_main
 
     return catalog_main(list(argv) if argv is not None else None)
 
 
 def main() -> None:
+    """Parse experiment-run commands and delegate to the selected workflow."""
     parser = argparse.ArgumentParser(prog=_cli_program())
     parser.add_argument(
         "command",

@@ -19,6 +19,13 @@ from trading.account import AccountState
 
 @dataclass(frozen=True)
 class FTMOGuardrails:
+    """Training-compatible account guardrails for daily and total loss limits.
+
+    Attributes:
+        max_loss_limit: Maximum permitted total account loss.
+        risk_per_trade_limit: Maximum risk budget for one trade.
+    """
+
     daily_loss_limit: float = 5_000.0
     max_loss_limit: float = 10_000.0
     risk_per_trade_limit: float = 1_000.0
@@ -36,6 +43,7 @@ class FTMOGuardrails:
     soft_max_loss_limit_initial_pct: float = 0.10
 
     def __post_init__(self) -> None:
+        """Validate and initialize FTMOGuardrails after construction."""
         if self.limit_value_mode not in {"fixed_usd", "percent_equity"}:
             raise ValueError("ftmo.limit_value_mode must be 'fixed_usd' or 'percent_equity'")
         percentages = (
@@ -51,25 +59,53 @@ class FTMOGuardrails:
             raise ValueError("FTMO percentage limits must be fractions in [0, 1]")
 
     def daily_limit_for(self, acc: AccountState) -> float:
-        """Resolve the hard daily-loss threshold from the selected value mode."""
+        """Resolve the hard daily-loss threshold from the selected value mode.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``daily_limit_for``.
+        """
         if self.limit_value_mode == "percent_equity":
             return max(0.0, float(acc.equity)) * float(self.daily_loss_limit_pct)
         return float(self.daily_loss_limit)
 
     def soft_daily_limit_for(self, acc: AccountState) -> float:
-        """Resolve the soft daily threshold from current equity when requested."""
+        """Resolve the soft daily threshold from current equity when requested.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``soft_daily_limit_for``.
+        """
         if self.limit_value_mode == "percent_equity":
             return max(0.0, float(acc.equity)) * float(self.soft_daily_loss_limit_pct)
         return float(self.soft_daily_loss_limit)
 
     def max_loss_limit_for(self, acc: AccountState) -> float:
-        """Resolve the maximum-loss threshold; percentage mode uses initial equity."""
+        """Resolve the maximum-loss threshold; percentage mode uses initial equity.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``max_loss_limit_for``.
+        """
         if self.limit_value_mode == "percent_equity":
             return max(0.0, float(acc.initial_balance)) * float(self.max_loss_limit_initial_pct)
         return float(self.max_loss_limit)
 
     def soft_max_loss_limit_for(self, acc: AccountState) -> float:
-        """Resolve the soft maximum-loss threshold from initial equity."""
+        """Resolve the soft maximum-loss threshold from initial equity.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``soft_max_loss_limit_for``.
+        """
         if self.limit_value_mode == "percent_equity":
             return max(0.0, float(acc.initial_balance)) * float(
                 self.soft_max_loss_limit_initial_pct
@@ -77,19 +113,38 @@ class FTMOGuardrails:
         return float(self.soft_max_loss_limit)
 
     def risk_per_trade_limit_for(self, acc: AccountState) -> float:
-        """Resolve the hard per-trade threshold from current equity if selected."""
+        """Resolve the hard per-trade threshold from current equity if selected.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``risk_per_trade_limit_for``.
+        """
         if self.limit_value_mode == "percent_equity":
             return max(0.0, float(acc.equity)) * float(self.risk_per_trade_limit_pct)
         return float(self.risk_per_trade_limit)
 
-        # ------------------------------------------------------------------
-
     def check_daily(self, acc: AccountState) -> bool:
-        """Return True (breached) if daily loss exceeds the hard limit."""
+        """Return True (breached) if daily loss exceeds the hard limit.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Whether check daily meets the requested condition.
+        """
         return acc.canonical_daily_loss() >= self.daily_limit_for(acc)
 
     def check_soft_daily(self, acc: AccountState) -> bool:
-        """Return True when the soft brick is active (no new entries)."""
+        """Return True when the soft brick is active (no new entries).
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Whether check soft daily meets the requested condition.
+        """
         soft = self.soft_daily_limit_for(acc)
         if soft <= 0.0:
             return False
@@ -100,11 +155,24 @@ class FTMOGuardrails:
 
         This is FTMO-style max loss (fixed from deposit), **not** trailing
         high-water-mark drawdown from peak equity.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Whether check max drawdown meets the requested condition.
         """
         return acc.loss_from_initial() >= self.max_loss_limit_for(acc)
 
     def check_trailing_dd(self, acc: AccountState) -> bool:
-        """Return True if enabled peak-to-trough DD reaches its initial-balance cap."""
+        """Return True if enabled peak-to-trough DD reaches its initial-balance cap.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Whether check trailing dd meets the requested condition.
+        """
         hard = float(self.trailing_dd_limit)
         if hard <= 0.0:
             return False
@@ -112,7 +180,14 @@ class FTMOGuardrails:
         return (acc.peak_equity - acc.equity) >= cap
 
     def check_soft_trailing_dd(self, acc: AccountState) -> bool:
-        """Return True when the trailing-DD soft brick is active."""
+        """Return True when the trailing-DD soft brick is active.
+
+        Args:
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Whether check soft trailing dd meets the requested condition.
+        """
         soft = float(self.soft_trailing_dd_limit)
         if soft <= 0.0:
             return False
@@ -120,14 +195,38 @@ class FTMOGuardrails:
         return (acc.peak_equity - acc.equity) >= cap
 
     def check_trade_risk(self, risk: float, acc: AccountState | None = None) -> bool:
-        """Return True (breached) if *risk* $ per trade exceeds the limit."""
+        """Return True (breached) if *risk* $ per trade exceeds the limit.
+
+        Args:
+            risk: Numeric value used for the risk.
+            acc: Acc used by the operation described above.
+
+        Returns:
+            Whether check trade risk meets the requested condition.
+        """
         limit = self.risk_per_trade_limit if acc is None else self.risk_per_trade_limit_for(acc)
         return risk > limit
 
     def any_breach(self, acc: AccountState) -> bool:
+        """Return whether any configured account guardrail is breached.
+
+        Args:
+            acc: Current account state to evaluate.
+
+        Returns:
+            True when a daily, total-loss, or trade-risk limit is exceeded.
+        """
         return self.check_trailing_dd(acc) or self.check_daily(acc) or self.check_max_drawdown(acc)
 
     def breach_reason(self, acc: AccountState) -> str | None:
+        """Return the first breached guardrail name, or None when all pass.
+
+        Args:
+            acc: Current account state to evaluate.
+
+        Returns:
+            Stable reason code for the first breach, otherwise None.
+        """
         if self.check_trailing_dd(acc):
             return "trailing_dd"
         if self.check_max_drawdown(acc):

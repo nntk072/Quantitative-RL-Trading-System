@@ -13,6 +13,8 @@ from .routing import (
 
 
 class PhaseReviewMixin(PipelineMixinBase):
+    """Collect independent implementation reviews and resolve their verdicts."""
+
     def _phase_review(self) -> None:
         """Phase 6: Independent review of implementation."""
         reviewer_n = self._effective_reviewer_count()

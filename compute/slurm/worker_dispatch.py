@@ -47,11 +47,26 @@ ENV_KEYS = (
 
 
 def _host_key(value: str) -> str:
+    """Process key.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_host_key``.
+    """
     return value.split(".", maxsplit=1)[0]
 
 
 def _parse_srun(argv: list[str]) -> dict[str, Any]:
-    """Parse only the fixed worker_command() options used by the experiment run."""
+    """Parse only the fixed worker_command() options used by the experiment run.
+
+    Args:
+        argv: Items supplied for the argv, in input order.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     node: str | None = None
     cwd: str | None = None
     gpu_count = 0
@@ -133,12 +148,26 @@ def _parse_srun(argv: list[str]) -> dict[str, Any]:
 
 
 def _paths(queue: Path, node: str) -> tuple[Path, Path, Path, Path]:
+    """Process the requested value.
+
+    Args:
+        queue: Text or path value identifying the queue.
+        node: Text or path value identifying the node.
+
+    Returns:
+        Path returned by ``_paths``.
+    """
     root = queue / str(os.environ.get("SLURM_JOB_ID", "unknown"))
     host = root / _host_key(node)
     return host / "pending", host / "claimed", root / "results", host / "ready"
 
 
 def _request() -> int:
+    """Process the requested value.
+
+    Returns:
+        Numeric result returned by ``_request``.
+    """
     queue_value = os.environ.get("EXPERIMENT_RUN_WORKER_QUEUE")
     if not queue_value:
         raise RuntimeError("EXPERIMENT_RUN_WORKER_QUEUE is not set")
@@ -161,6 +190,12 @@ def _request() -> int:
     cancel_path = cancel_dir / f"{request_id}.cancel"
 
     def cancel_request(signum: int, _frame: object) -> None:
+        """Mark the queued request cancelled when the shim receives a signal.
+
+        Args:
+            signum: Signal number delivered to the worker shim.
+            _frame: Python signal frame supplied by the runtime.
+        """
         cancel_dir.mkdir(parents=True, exist_ok=True)
         cancel_path.touch()
         raise SystemExit(128 + signum)
@@ -190,6 +225,16 @@ def _request() -> int:
 
 
 def _log_path(env: dict[str, str], cwd: str, argv: list[str]) -> Path:
+    """Process path.
+
+    Args:
+        env: Environment whose state is read or updated.
+        cwd: Text or path value identifying the cwd.
+        argv: Items supplied for the argv, in input order.
+
+    Returns:
+        Path returned by ``_log_path``.
+    """
     out_dir = env.get("OUT_DIR")
     log_dir = env.get("LOG_DIR")
     if out_dir and log_dir and Path(out_dir).name.startswith("attempt"):
@@ -202,6 +247,13 @@ def _log_path(env: dict[str, str], cwd: str, argv: list[str]) -> Path:
 
 
 def _write_result(results: Path, request_id: str, returncode: int) -> None:
+    """Write result.
+
+    Args:
+        results: Text or path value identifying the results.
+        request_id: Text or path value identifying the request id.
+        returncode: Numeric value used for the returncode.
+    """
     result_path = results / f"{request_id}.json"
     temporary = result_path.with_suffix(".tmp")
     temporary.write_text(json.dumps({"returncode": returncode}), encoding="utf-8")
@@ -209,6 +261,15 @@ def _write_result(results: Path, request_id: str, returncode: int) -> None:
 
 
 def _gpu_device_for_request(payload: dict[str, Any], allocated_devices: list[str]) -> str | None:
+    """Process device for request.
+
+    Args:
+        payload: Key-value data used for the payload.
+        allocated_devices: Items supplied for the allocated devices, in input order.
+
+    Returns:
+        Result of process device for request.
+    """
     if not payload["gpu_count"]:
         return None
     gpu_id = int(payload["gpu_id"])
@@ -221,6 +282,15 @@ def _gpu_device_for_request(payload: dict[str, Any], allocated_devices: list[str
 
 
 def _launch(payload: dict[str, Any], results: Path) -> subprocess.Popen[bytes]:
+    """Process the requested value.
+
+    Args:
+        payload: Key-value data used for the payload.
+        results: Text or path value identifying the results.
+
+    Returns:
+        Result of process the requested value.
+    """
     env = dict(os.environ)
     env.pop("RESUME_CHECKPOINT", None)
     env.pop("CUDA_VISIBLE_DEVICES", None)
@@ -246,6 +316,7 @@ def _launch(payload: dict[str, Any], results: Path) -> subprocess.Popen[bytes]:
     cpu_ids = {int(value) for value in payload["cpu_ids"]}
 
     def apply_affinity() -> None:
+        """Constrain the child process to its allocated CPU IDs."""
         os.sched_setaffinity(0, cpu_ids)
 
     stdout_path = str(payload.get("stdout_path", ""))
@@ -273,6 +344,11 @@ def _launch(payload: dict[str, Any], results: Path) -> subprocess.Popen[bytes]:
 
 
 def _manager() -> int:
+    """Process the requested value.
+
+    Returns:
+        Numeric result returned by ``_manager``.
+    """
     queue_value = os.environ.get("EXPERIMENT_RUN_WORKER_QUEUE")
     node_value = os.environ.get("SLURMD_NODENAME") or socket.gethostname()
     job_id = os.environ.get("SLURM_JOB_ID")
@@ -287,11 +363,12 @@ def _manager() -> int:
     results.mkdir(parents=True, exist_ok=True)
     ready.parent.mkdir(parents=True, exist_ok=True)
     host_resources = available_resources()
+    raw_memory_limit = host_resources["memory_limit_bytes"]
     ready_metadata = {
         "node": _host_key(node_value),
         "job_id": job_id,
         "cpu_ids": sorted(os.sched_getaffinity(0)),
-        "memory_limit_bytes": int(host_resources["memory_limit_bytes"]),
+        "memory_limit_bytes": raw_memory_limit if raw_memory_limit else None,
         "gpu_memory": gpu_memory_inventory(),
     }
     ready_tmp = ready.with_suffix(".tmp")
@@ -386,6 +463,11 @@ def _manager() -> int:
 
 
 def main() -> int:
+    """Run the persistent worker manager or one Slurm request shim.
+
+    Returns:
+        Exit status from the manager or dispatched worker request.
+    """
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--manager", action="store_true")

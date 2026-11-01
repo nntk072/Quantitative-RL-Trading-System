@@ -13,6 +13,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from configuration.paths import repository_root
 
+# Increment when feature output or cache-key semantics change.
 FEATURE_CACHE_VERSION = "v33-timeframe-entry-ideas"
 
 
@@ -30,6 +31,18 @@ def feature_cache_content_hash(
     Inputs: ``FEATURE_CACHE_VERSION``, resolved ``cfg.features`` (plus tz keys
     that affect PD/session), both instruments' full indexes and OHLCV/spread
     values, and the full ``train_mask``.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        primary: Tabular data used for the primary.
+        train_mask: Boolean mask identifying rows available for fitting.
+        secondary: Tabular data used for the secondary.
+        normalization_mode: Text or path value identifying the normalization mode.
+        timeframe_bars: Market bar or price data used for stable short hash for feature-cache invalidation (TI-3).
+        secondary_timeframe_bars: Market bar or price data used for stable short hash for feature-cache invalidation (TI-3).
+
+    Returns:
+        Text returned by ``feature_cache_content_hash``.
     """
     h = hashlib.sha256()
     h.update(FEATURE_CACHE_VERSION.encode())
@@ -146,7 +159,22 @@ def feature_cache_path(
     timeframe_bars: dict[str, pd.DataFrame] | None = None,
     secondary_timeframe_bars: dict[str, pd.DataFrame] | None = None,
 ) -> Path:
-    """Build ``{symbol}_features_{version}_{hash}.parquet`` under ``cache_dir``."""
+    """Build ``{symbol}_features_{version}_{hash}.parquet`` under ``cache_dir``.
+
+    Args:
+        cache_dir: Directory used to store or read cached data.
+        symbol: Text or path value identifying the symbol.
+        cfg: Run configuration used by this operation.
+        primary: Tabular data used for the primary.
+        train_mask: Boolean mask identifying rows available for fitting.
+        secondary: Tabular data used for the secondary.
+        normalization_mode: Text or path value identifying the normalization mode.
+        timeframe_bars: Market bar or price data used for build ``{symbol}_features_{version}_{hash}.parquet`` under ``cache_dir``.
+        secondary_timeframe_bars: Market bar or price data used for build ``{symbol}_features_{version}_{hash}.parquet`` under ``cache_dir``.
+
+    Returns:
+        Path returned by ``feature_cache_path``.
+    """
     digest = feature_cache_content_hash(
         cfg,
         primary,

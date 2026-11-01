@@ -222,7 +222,8 @@ class TestBaselineSLTP:
         self, bars: pd.DataFrame, features: pd.DataFrame
     ) -> None:
         """When a long fills in baseline mode, SL must come from last_swing_low,
-        NOT from BaselineStrategy.sl_reference (which returns None)."""
+        NOT from BaselineStrategy.sl_reference (which returns None).
+        """
         env = TradingEnv(bars, features, obs_window=20)
         env.reset()
         for _ in range(len(bars) - 20):

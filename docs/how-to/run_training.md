@@ -29,5 +29,4 @@ uv run qrl-train train --help
 uv run qrl-experiment --help
 ```
 
-The `thesis-*` names are deprecated compatibility aliases. New run
-instructions should use the canonical `qrl-*` commands.
+Use the canonical `qrl-*` commands for new runs.

@@ -15,6 +15,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class StepActionExecutionMixin(RuntimeMixinBase):
+    """Apply decoded actions to exits, pending entries, and execution."""
+
     position: Position | None
     _pending_entry_order: dict[str, Any] | None
 
@@ -45,6 +47,33 @@ class StepActionExecutionMixin(RuntimeMixinBase):
         peak_dd_block: bool,
     ) -> None:
         # Action handling
+        """Execute step action.
+
+        Args:
+            action: Action to apply to the current state.
+            discrete_action: Numeric value used for the discrete action.
+            risk_frac: Numeric value used for the risk frac.
+            rr_ratio: Numeric value used for the rr ratio.
+            bar: Bar used by the operation described above.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            fill_idx: Numeric value used for the fill idx.
+            action_fill_time: Action fill time used by the operation described above.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            fill_time: Fill time used by the operation described above.
+            entry_fill_bid: Numeric value used for the entry fill bid.
+            entry_fill_ask: Numeric value used for the entry fill ask.
+            entry_fill_time: Entry fill time used by the operation described above.
+            market_fill_idx: Numeric value used for the market fill idx.
+            entry_candidate: Entry candidate used by the operation described above.
+            entry_machine: Entry machine used by the operation described above.
+            done: Whether to enable or require the done.
+            pending_due: Whether to enable or require the pending due.
+            session_blocked: Whether to enable or require the session blocked.
+            peak_dd_block: Whether to enable or require the peak dd block.
+        """
         if not done and not pending_due:
             if not self.strategy_actions and action == 19:  # exit action
                 if self.position is not None:
@@ -126,19 +155,14 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             "decision_action": dict(self._decision_action),
                             "selected": {name: getattr(self, name) for name in selected_names},
                         }
-                        thesis = self._selected_trade_setup if self.trade_setup_actions else None
-                        if thesis is not None and self.legacy_thesis_contract:
-                            from decisioning.trade_setup import LEGACY_THESIS_ACTION_VERSION
-
-                            setup_identity = {
-                                "thesis_candidate_id": int(thesis.candidate_id),
-                                "thesis_schema_version": LEGACY_THESIS_ACTION_VERSION,
-                            }
-                        elif thesis is not None:
+                        selected_setup = (
+                            self._selected_trade_setup if self.trade_setup_actions else None
+                        )
+                        if selected_setup is not None:
                             from decisioning.trade_setup import TRADE_SETUP_ACTION_VERSION
 
                             setup_identity = {
-                                "trade_setup_candidate_id": int(thesis.candidate_id),
+                                "trade_setup_candidate_id": int(selected_setup.candidate_id),
                                 "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
                             }
                         else:
@@ -148,11 +172,17 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                                 "type": "order_submit",
                                 "direction": discrete_action,
                                 **setup_identity,
-                                "primary_idea": thesis.idea if thesis is not None else "",
-                                "primary_setup_timeframe": (
-                                    thesis.setup_timeframe if thesis is not None else ""
+                                "primary_idea": (
+                                    selected_setup.idea if selected_setup is not None else ""
                                 ),
-                                "primary_direction": thesis.direction if thesis is not None else 0,
+                                "primary_setup_timeframe": (
+                                    selected_setup.setup_timeframe
+                                    if selected_setup is not None
+                                    else ""
+                                ),
+                                "primary_direction": (
+                                    selected_setup.direction if selected_setup is not None else 0
+                                ),
                                 "time": bar_time,
                                 "decision_time": bar_time,
                                 "signal_bar": self.step_idx,

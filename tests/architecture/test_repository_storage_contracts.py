@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import csv
 import shutil
 import subprocess
+import tomllib
 from pathlib import Path
 
 import yaml
@@ -10,33 +10,37 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_architecture_inventory_covers_active_repository_files() -> None:
-    inventory_path = ROOT / ".agents/architecture/repository_file_ownership_inventory.csv"
-    with inventory_path.open(newline="", encoding="utf-8") as source:
-        rows = list(csv.DictReader(source))
-    inventory_paths = [row["path"] for row in rows]
-    repository_paths = set(
-        filter(
-            None,
-            subprocess.check_output(
-                ["git", "ls-files", "-co", "--exclude-standard", "-z"], cwd=ROOT
-            )
-            .decode()
-            .split("\0"),
-        )
-    )
-    active_repository_files = {
-        path for path in repository_paths if (ROOT / path).is_file() or (ROOT / path).is_symlink()
-    }
-    inventory_files = {
-        path for path in inventory_paths if (ROOT / path).is_file() or (ROOT / path).is_symlink()
-    }
+def test_architecture_docs_cover_active_production_packages() -> None:
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    packages = pyproject["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
+    building_blocks = (ROOT / "docs/architecture/building_blocks.md").read_text(encoding="utf-8")
+    dependency_model = (ROOT / "docs/architecture/dependency_model.md").read_text(encoding="utf-8")
 
-    assert len(inventory_paths) == len(set(inventory_paths)), "inventory paths must be unique"
-    assert inventory_files == active_repository_files, {
-        "unlisted": sorted(active_repository_files - inventory_files),
-        "stale": sorted(inventory_files - active_repository_files),
-    }
+    for package in packages:
+        assert f"`{package}/`" in building_blocks, package
+        assert package in dependency_model, package
+        assert (ROOT / package / "README.md").is_file(), package
+
+    architecture_views = (
+        "context.md",
+        "building_blocks.md",
+        "dependency_model.md",
+        "domain_model.md",
+        "data_flow.md",
+        "model_and_policy_architecture.md",
+        "runtime/data_and_features.md",
+        "runtime/environment_step.md",
+        "runtime/training.md",
+        "runtime/evaluation.md",
+        "runtime/experiment_run.md",
+        "runtime/live_execution.md",
+        "deployment.md",
+        "cross_cutting_concerns.md",
+        "quality_attributes.md",
+        "risks_and_technical_debt.md",
+    )
+    for view in architecture_views:
+        assert (ROOT / "docs/architecture" / view).is_file(), view
 
 
 def test_generated_data_and_runtime_paths_follow_repository_ignore_policy(

@@ -32,6 +32,11 @@ from experiments.runs.state_store import atomic_json, read_manifest
 
 
 def main() -> int:
+    """Validate migration inputs and emit the bounded preflight report.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--experiment-run-id", required=True)
     parser.add_argument("--experiment-run-spec", required=True, type=pathlib.Path)

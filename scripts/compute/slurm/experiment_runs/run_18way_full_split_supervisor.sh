@@ -44,7 +44,7 @@ allocation_active() {
     return 0
   fi
   printf '%s\n' "$queued" | awk '
-    $1 == "thesis18fullsplit" && ($2 == "RUNNING" || $2 == "PENDING" || $2 == "CONFIGURING") { found=1 }
+    $1 == "qrl18fullsplit" && ($2 == "RUNNING" || $2 == "PENDING" || $2 == "CONFIGURING") { found=1 }
     END { exit !found }
   '
 }
@@ -62,7 +62,7 @@ while true; do
   fi
 
   if allocation_active; then
-    echo "$(date --iso-8601=seconds) waiting for current thesis18fullsplit allocation"
+    echo "$(date --iso-8601=seconds) waiting for current qrl18fullsplit allocation"
     sleep 60
     continue
   fi
@@ -74,7 +74,7 @@ while true; do
     --partition=gpu-grace-h200-141g \
     --nodes=2 --ntasks=2 --ntasks-per-node=1 \
     --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G \
-    --time=06:00:00 --job-name=thesis18fullsplit \
+    --time=06:00:00 --job-name=qrl18fullsplit \
     --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC" \
     --chdir="$REPO" \
     bash "$REPO/scripts/compute/slurm/experiment_runs/run_18way_full_split_allocation.sh"

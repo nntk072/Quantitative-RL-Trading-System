@@ -10,6 +10,13 @@ def ensure_london_atr_distances(feat: pd.DataFrame, close: pd.Series) -> pd.Data
 
     ``price_to_london_high_atr = (london_high - close) / atr_5``
     ``price_to_london_low_atr = (close - london_low) / atr_5``
+
+    Args:
+        feat: Tabular data used for the feat.
+        close: Tabular data used for the close.
+
+    Returns:
+        DataFrame returned by ``ensure_london_atr_distances``.
     """
     if "ctx_london_high_dist_atr" in feat.columns and "ctx_london_low_dist_atr" in feat.columns:
         return feat

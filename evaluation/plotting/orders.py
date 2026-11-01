@@ -46,6 +46,17 @@ def plot_price_with_orders(
 
     Resamples `bars` (M1) to `candle_tf` (e.g. "15min") and caps at
     `max_points` candles so the PNG stays readable.
+
+    Args:
+        bars: Market bars to process.
+        trades: Trade records used to calculate the requested report or metric.
+        max_points: Numeric value used for the max points.
+        candle_tf: Text or path value identifying the candle tf.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of candlestick chart with buy/sell/close markers.
     """
     try:
         import mplfinance as mpf
@@ -87,7 +98,14 @@ def plot_price_with_orders(
         max_ts = ohlcv.index.max()
 
         def _bin_time(ts: pd.Timestamp) -> pd.Timestamp | None:
-            """Floor timestamp to candle bin and drop markers outside the plotted window."""
+            """Floor timestamp to candle bin and drop markers outside the plotted window.
+
+            Args:
+                ts: Ts used by the operation described above.
+
+            Returns:
+                Result of floor timestamp to candle bin and drop markers outside the plotted window.
+            """
             if ts < min_ts or ts > max_ts:
                 return None
             binned = ts.floor(candle_tf)
@@ -103,6 +121,15 @@ def plot_price_with_orders(
             return pd.Timestamp(candidate)
 
         def _make_series(subset: pd.DataFrame, direction: int) -> pd.Series | None:
+            """Create series.
+
+            Args:
+                subset: Tabular data used for the subset.
+                direction: Signed trade direction: 1 for long and -1 for short.
+
+            Returns:
+                Result of create series.
+            """
             mask = (
                 (subset["direction"] == direction)
                 if "direction" in subset.columns
@@ -205,7 +232,18 @@ def _plot_price_line_fallback(
     out_path: Path | str | None,
     dpi: int,
 ) -> Figure:
-    """Fallback to a simple line chart when mplfinance is not installed."""
+    """Fallback to a simple line chart when mplfinance is not installed.
+
+    Args:
+        bars: Market bars to process.
+        trades: Trade records used to calculate the requested report or metric.
+        max_points: Numeric value used for the max points.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of fallback to a simple line chart when mplfinance is not installed.
+    """
     _apply_style()
     close = bars["close"].copy()
     if len(close) > max_points:
@@ -288,6 +326,13 @@ def _per_trade_equity(
     Prefer the close-row ``equity`` from the trade log (authoritative). Only
     fall back to reindexing the continuous equity series when that column is
     missing — reindex is unsafe when equity timestamps were misaligned.
+
+    Args:
+        pairs: Tabular data used for the pairs.
+        equity: Current account equity in account currency.
+
+    Returns:
+        Array returned by ``_per_trade_equity``.
     """
     # Trades can combine timestamps emitted by different market-data paths,
     # some naive and some timezone-aware. Normalize them before constructing
@@ -309,7 +354,14 @@ def _per_trade_equity(
 
 
 def _candle_body_days(index: pd.DatetimeIndex) -> float:
-    """Body width of one bar, in matplotlib day units."""
+    """Body width of one bar, in matplotlib day units.
+
+    Args:
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Numeric result returned by ``_candle_body_days``.
+    """
     if len(index) < 2:
         step = pd.Timedelta("1min")
     else:
@@ -322,7 +374,14 @@ def _candle_body_days(index: pd.DatetimeIndex) -> float:
 
 
 def _axis_date_format(window: pd.DataFrame) -> str:
-    """``%H:%M`` for a single calendar day; include month/day otherwise."""
+    """``%H:%M`` for a single calendar day; include month/day otherwise.
+
+    Args:
+        window: Tabular data used for the window.
+
+    Returns:
+        Text returned by ``_axis_date_format``.
+    """
     idx = pd.DatetimeIndex(window.index)
     if len(idx) == 0:
         return "%H:%M"
@@ -331,7 +390,15 @@ def _axis_date_format(window: pd.DataFrame) -> str:
 
 
 def _close_time_label(t_open: pd.Timestamp, t_close: pd.Timestamp) -> str:
-    """Close time for chart titles; include the date when it differs from open."""
+    """Close time for chart titles; include the date when it differs from open.
+
+    Args:
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+
+    Returns:
+        Text returned by ``_close_time_label``.
+    """
     if pd.Timestamp(t_open).normalize() == pd.Timestamp(t_close).normalize():
         return pd.Timestamp(t_close).strftime("%H:%M")
     return pd.Timestamp(t_close).strftime("%Y-%m-%d %H:%M")
@@ -348,6 +415,16 @@ def _trade_filename(
     """Build a descriptive filename for a per-trade chart.
 
     Format: ``trade_NNNN_YYYYMMDD_HHMMopen_HHMMclose_{L|S}_{p|m}PnL.{ext}``
+
+    Args:
+        idx: Numeric value used for the idx.
+        open_row: Tabular data used for the open row.
+        close_row: Tabular data used for the close row.
+        ext: Text or path value identifying the ext.
+        pnl_override: Pnl override used by the operation described above.
+
+    Returns:
+        Text returned by ``_trade_filename``.
     """
     t_open = pd.Timestamp(open_row["time"])
     t_close = pd.Timestamp(close_row["time"])
@@ -374,7 +451,17 @@ def _position_events(
     *,
     breakeven_buffer_pts: float = 0.0,
 ) -> pd.DataFrame:
-    """Return lifecycle rows for one position, including partials and SL changes."""
+    """Return lifecycle rows for one position, including partials and SL changes.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+        open_row: Tabular data used for the open row.
+        close_row: Tabular data used for the close row.
+        breakeven_buffer_pts: Numeric value used for the breakeven buffer pts.
+
+    Returns:
+        DataFrame returned by ``_position_events``.
+    """
     position_id = open_row.get("position_id")
     if position_id is not None and pd.notna(position_id) and "position_id" in trades.columns:
         events: pd.DataFrame = trades.loc[trades["position_id"] == position_id].copy()
@@ -424,6 +511,18 @@ def _position_events(
 def _position_pnl_from_fills(
     events: pd.DataFrame, direction: int, entry: float, initial_lots: float, contract: float
 ) -> float:
+    """Process pnl from fills.
+
+    Args:
+        events: Tabular data used for the events.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        entry: Numeric value used for the entry.
+        initial_lots: Numeric value used for the initial lots.
+        contract: Numeric value used for the contract.
+
+    Returns:
+        Numeric result returned by ``_position_pnl_from_fills``.
+    """
     exits = events.loc[events["type"].isin(_EXIT_TYPES)]
     logged = (
         pd.to_numeric(exits["pnl"], errors="coerce")
@@ -438,12 +537,25 @@ def _position_pnl_from_fills(
 
 
 def _clock_label(value: object) -> str:
+    """Process label.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_clock_label``.
+    """
     text = str(value)
     return text[11:23] if len(text) >= 19 else text
 
 
 def _draw_position_fills(ax: Any, events: pd.DataFrame) -> None:
-    """Mark actual logged partial/final fills and stop changes distinctly."""
+    """Mark actual logged partial/final fills and stop changes distinctly.
+
+    Args:
+        ax: Ax used by the operation described above.
+        events: Tabular data used for the events.
+    """
     for _, event in events.iterrows():
         event_type = event.get("type")
         if event_type in _EXIT_TYPES:
@@ -462,7 +574,12 @@ def _draw_position_fills(ax: Any, events: pd.DataFrame) -> None:
 
 
 def _draw_target_updates(ax: Any, events: pd.DataFrame) -> None:
-    """Show changed structural targets through their matching partial fill."""
+    """Show changed structural targets through their matching partial fill.
+
+    Args:
+        ax: Ax used by the operation described above.
+        events: Tabular data used for the events.
+    """
     if "type" not in events or "tp_slot" not in events:
         return
     updates = events.loc[events["type"].eq("tp_update")]
@@ -532,29 +649,32 @@ def plot_per_trade_orders(
 ) -> None:
     """Generate 2-panel PNG per trade with datetime axes, EMA50, MACD, and trade info.
 
-    Filenames encode the key trade metadata::
+    Filenames encode symbol, time range, side, and PnL sign.
 
-        trade_NNNN_YYYYMMDD_HHMMopen_HHMMclose_{L|S}_{p|m}PnL.png
-
-    Parameters
-    ----------
-    bars : M1 price bars (DatetimeIndex, open/high/low/close columns).
-    trades : Trade log with type/direction/price/time/pnl columns.
-    orders_dir : Destination folder; created if absent.
-    context_bars : M1 bars to show before entry and after exit (~1 min each).
-    max_charts : Cap on number of charts; trades are sampled evenly when
-        the total exceeds this limit.
-    dpi : PNG resolution.
-    max_loss_per_trade_usd : Maximum loss limit for SL calculation.
-    take_profit_per_trade_usd : Take profit limit for TP calculation.
-    lots : Position size in lots.
-    contract_size : Contract size.
-    show_mae_mfe : Whether to plot MAE/MFE lines.
-    show_sl_tp : Whether to plot SL/TP lines.
-    show_vwap : Draw session VWAP. Off until the feed has real tick volume.
-    secondary_bars : Optional US500 (or correlated) bars for SMT lines.
+    Args:
+        bars: M1 price bars with a ``DatetimeIndex`` and OHLC columns.
+        trades: Trade log with type, direction, price, time, and PnL columns.
+        orders_dir: Destination folder, created if absent.
+        context_bars: M1 bars shown before entry and after exit.
+        max_charts: Maximum number of charts; larger sets are sampled evenly.
+        dpi: PNG resolution.
+        max_loss_per_trade_usd: Maximum loss limit used for stop-loss calculation.
+        take_profit_per_trade_usd: Take-profit limit used for target calculation.
+        lots: Position size in lots.
+        contract_size: Contract size used by chart price conversion.
+        show_mae_mfe: Whether to display maximum adverse/favorable excursion lines.
+        show_sl_tp: Whether to display stop-loss and take-profit lines.
+        show_vwap: Whether to draw session VWAP. It requires real tick volume.
+        secondary_bars: Optional correlated instrument bars used for SMT lines.
+        features: Optional feature frame used for structure and setup overlays.
+        order_block_timeframes: Timeframes whose order-block levels are displayed.
+        fvg_timeframes: Timeframes whose fair-value gaps are displayed.
+        ifvg_timeframes: Timeframes whose inverse fair-value gaps are displayed.
+        ema_timeframes: Timeframes used for EMA overlays.
+        swing_timeframes: Timeframes used for swing overlays.
+        breakeven_buffer_pts: Buffer applied to displayed break-even levels.
+        entry_idea_plot_config: Optional per-idea overlay configuration.
     """
-
     from evaluation.reporting.trade_note import build_trade_plot_note
 
     from .chart_indicators import (

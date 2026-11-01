@@ -17,7 +17,16 @@ def _table(
     rows: list[list[str]],
     left_cols: tuple[int, ...] = (0,),
 ) -> list[str]:
-    """Align a column table: first column left, the rest right."""
+    """Align a column table: first column left, the rest right.
+
+    Args:
+        header: Items supplied for the header, in input order.
+        rows: Items supplied for the rows, in input order.
+        left_cols: Items supplied for the left cols, in input order.
+
+    Returns:
+        Values returned by ``_table``, in the declared order.
+    """
     if not rows:
         return []
     ncol = len(header)
@@ -27,6 +36,14 @@ def _table(
             widths[i] = max(widths[i], len(str(row[i])))
 
     def fmt(cells: list[str]) -> str:
+        """Align one row's cells to the report's computed column widths.
+
+        Args:
+            cells: Items supplied for the cells, in input order.
+
+        Returns:
+            Text returned by ``fmt``.
+        """
         parts = []
         for i, cell in enumerate(cells):
             text = str(cell)
@@ -48,6 +65,13 @@ def format_diversity_table(
     Each group renders as its own box with metrics as columns: SL/TP
     summary + families, exit + planned RR, rank + stats, one box per
     conditioner, and warnings.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+        thresholds: Thresholds used by the operation described above.
+
+    Returns:
+        Text returned by ``format_diversity_table``.
     """
     from evaluation.reporting.box_table import render_box_table
 

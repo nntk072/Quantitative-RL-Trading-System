@@ -154,10 +154,10 @@ def test_variant_config_uses_production_strategy_merge_and_cli_override(
 @pytest.mark.parametrize(
     ("config_path", "expected_distribution"),
     [
-        ("config/research/thesis_mtf_reasoning_2m.yaml", "thesis_hybrid_v1"),
+        ("config/research/trade_setup_mtf_reasoning_2m.yaml", "trade_setup_hybrid_v1"),
         (
-            "config/research/thesis_mtf_reasoning_conditioned_2m.yaml",
-            "thesis_conditioned_v1",
+            "config/research/trade_setup_mtf_reasoning_conditioned_2m.yaml",
+            "trade_setup_conditioned_v1",
         ),
     ],
 )

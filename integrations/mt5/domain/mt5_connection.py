@@ -8,9 +8,15 @@ from loguru import logger
 def ensure_mt5_logged_in(
     *, login: str | int, password: str, server: str, terminal_path: str
 ) -> None:
-    """
-    Initialize the MT5 terminal and login once per process.
+    """Initialize the MT5 terminal and login once per process.
+
     Safe to call multiple times; it won't re-login if already on the same account.
+
+    Args:
+        login: Login used by the operation described above.
+        password: Text or path value identifying the password.
+        server: Text or path value identifying the server.
+        terminal_path: Path or filename identifying the terminal.
     """
     if mt5.terminal_info() is None:
         if not mt5.initialize(path=terminal_path):

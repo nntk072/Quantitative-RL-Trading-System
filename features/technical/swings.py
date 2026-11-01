@@ -101,6 +101,9 @@ def detect_swings(
         pivots: Output of :func:`detect_pivots`.
         atr: ATR series; computed from ``df`` when None.
         atr_mult: Reversal threshold in ATR units.
+
+    Returns:
+        DataFrame returned by ``detect_swings``.
     """
     n = len(df)
     close = df["close"].to_numpy(dtype=float)
@@ -132,6 +135,14 @@ def detect_swings(
     last_side = 0
 
     def _atr_at(i: int) -> float:
+        """Process at.
+
+        Args:
+            i: Numeric value used for the i.
+
+        Returns:
+            Numeric result returned by ``_atr_at``.
+        """
         a = atr_arr[i]
         return float(a) if np.isfinite(a) else 0.0
 
@@ -277,6 +288,10 @@ def swing_features(
         swings: Output of :func:`detect_swings`.
         structure: Output of :func:`classify_structure`.
         atr: ATR series; computed when None.
+        obs_window: Maximum bar age used to normalize time since the latest swing.
+
+    Returns:
+        DataFrame returned by ``swing_features``.
     """
     if atr is None:
         atr_s = compute_atr(df, period=14)
@@ -460,6 +475,16 @@ def recent_unswept_swing_candidates(
     exceeded; this event-recency rule defines staleness, with no arbitrary
     wall-clock expiry. Pivot/confirmation times are epoch milliseconds so they
     remain exact in the numeric shared-bundle matrix for minute-based bars.
+
+    Args:
+        swings: Tabular data used for the swings.
+        bars: Market bars to process.
+        count: Numeric value used for the count.
+        price_increment: Price increment used by the operation described above.
+        confirmation_delay_ms: Numeric value used for the confirmation delay ms.
+
+    Returns:
+        DataFrame returned by ``recent_unswept_swing_candidates``.
     """
     if not swings.index.equals(bars.index):
         raise ValueError("swings and bars must have identical indexes")
@@ -487,11 +512,28 @@ def recent_unswept_swing_candidates(
     lows: list[Candidate] = []
 
     def tick_key(price: float) -> int | float:
+        """Normalize a price to its configured tick or retain its raw value.
+
+        Args:
+            price: Candidate pivot price.
+
+        Returns:
+            Integer tick coordinate, or the original price without a grid.
+        """
         if price_increment is None:
             return price
         return int(np.rint(price / price_increment))
 
     def add_distinct(candidates: list[Candidate], candidate: Candidate) -> list[Candidate]:
+        """Keep only the newest confirmed pivot at a given price level.
+
+        Args:
+            candidates: Existing pivot candidates for one direction.
+            candidate: Newly confirmed pivot to append.
+
+        Returns:
+            Candidates with older representatives of the same tick removed.
+        """
         key = tick_key(candidate[0])
         # Keep the most recently confirmed representative of a price level.
         candidates = [item for item in candidates if tick_key(item[0]) != key]
@@ -534,6 +576,14 @@ def recent_unswept_swing_candidates(
 
 
 def _bars_since(events: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    """Process since.
+
+    Args:
+        events: Events used by the operation described above.
+
+    Returns:
+        Array returned by ``_bars_since``.
+    """
     n = len(events)
     out = np.full(n, np.nan)
     last = -1
@@ -551,6 +601,13 @@ def swing_history(swings: pd.DataFrame, n: int = 3) -> pd.DataFrame:
     ``swing_high_1`` is the most recent accepted swing high; ``swing_high_2``
     is the one before that, and so on. Same for ``swing_low_*``. Bars before
     the first accepted swing are NaN.
+
+    Args:
+        swings: Tabular data used for the swings.
+        n: Numeric value used for the n.
+
+    Returns:
+        DataFrame returned by ``swing_history``.
     """
     n = max(int(n), 1)
     ev_h = swings["swing_high_event"].to_numpy(dtype=bool)

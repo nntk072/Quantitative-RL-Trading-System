@@ -3,8 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 GATE="${1:-fast}"
-# QRL_* names are canonical; THESIS_* remain deprecated fallbacks during migration.
-PYTHON_BIN="${QRL_PYTHON:-${THESIS_PYTHON:-}}"
+PYTHON_BIN="${QRL_PYTHON:-}"
 if [[ -z "$PYTHON_BIN" ]]; then
   case "$(uname -m)" in
     aarch64|arm64)
@@ -19,7 +18,7 @@ if [[ -z "$PYTHON_BIN" ]]; then
       ;;
   esac
 fi
-UV_BIN="${QRL_UV:-${THESIS_UV:-}}"
+UV_BIN="${QRL_UV:-}"
 if [[ -z "$UV_BIN" && -n "$PYTHON_BIN" ]]; then
   PROJECT_UV="$(dirname "$PYTHON_BIN")/uv"
   if [[ -x "$PROJECT_UV" ]]; then
@@ -32,13 +31,30 @@ run_module() {
   if [[ -n "$PYTHON_BIN" ]]; then
     "$PYTHON_BIN" -m "$@"
   else
-    "$UV_BIN" run "$@"
+    "$UV_BIN" run -- python -m "$@"
   fi
 }
 
 sync_dev() {
-  if [[ -z "$PYTHON_BIN" && "${QRL_CHECK_NO_SYNC:-${THESIS_CHECK_NO_SYNC:-0}}" != "1" ]]; then
+  if [[ -z "$PYTHON_BIN" && "${QRL_CHECK_NO_SYNC:-0}" != "1" ]]; then
     "$UV_BIN" sync --extra dev
+  fi
+}
+sync_docs() {
+  if [[ -z "$PYTHON_BIN" && "${QRL_CHECK_NO_SYNC:-0}" != "1" ]]; then
+    "$UV_BIN" sync --extra dev --extra docs
+  fi
+}
+sync_mutation() {
+  if [[ -z "$PYTHON_BIN" && "${QRL_CHECK_NO_SYNC:-0}" != "1" ]]; then
+    "$UV_BIN" sync --extra dev --extra mutation
+  elif [[ -n "$PYTHON_BIN" && ! -x "$(dirname "$PYTHON_BIN")/mutmut" ]]; then
+    if [[ "${QRL_CHECK_NO_SYNC:-0}" == "1" ]]; then
+      echo "mutmut is missing from the selected Python environment; install with uv sync --extra dev --extra mutation" >&2
+      return 1
+    fi
+    UV_PROJECT_ENVIRONMENT="$(dirname "$(dirname "$PYTHON_BIN")")" \
+      "$UV_BIN" sync --extra dev --extra mutation
   fi
 }
 
@@ -71,11 +87,14 @@ run_quality() {
 }
 run_architecture() { sync_dev; run_module pytest -q tests/architecture; }
 run_docs() {
-  sync_dev
+  sync_docs
   run_module pytest -q tests/architecture/test_documentation_contracts.py
   run_module tools.documentation.check_docs
+  run_module tools.documentation.public_api --check
+  run_module tools.documentation.configuration_reference --check
   run_module tools.documentation.package_dependency_model --check
   run_module experiments.variants.catalog --check
+  run_module sphinx -W --keep-going -b html docs docs/_build/html
 }
 run_graph_quality() {
   sync_dev
@@ -123,13 +142,25 @@ run_contracts() {
     tests/unit/configuration/test_config_typo_safety.py \
     tests/integration/test_action_schema_contract.py \
     tests/unit/experiments/test_experiment_run_artifacts.py \
-    tests/unit/simulation/test_environment/test_observation_schema.py \
     tests/unit/features/test_cache_hash_full_column.py \
     tests/unit/features/test_feature_cache_and_fit_scope.py
 }
+run_pytest_gate() {
+  local marker_expression="$1"
+  shift
+  if [[ -n "${QRL_COVERAGE_FILE:-}" ]]; then
+    local COVERAGE_FILE="$QRL_COVERAGE_FILE"
+    export COVERAGE_FILE
+    mkdir -p "$(dirname "$QRL_COVERAGE_FILE")"
+    run_module pytest -q -m "$marker_expression" \
+      --cov --cov-context=test --cov-report= "$@"
+  else
+    run_module pytest -q -m "$marker_expression" "$@"
+  fi
+}
 run_unit() {
   sync_dev
-  run_module pytest -q -m "unit and not slow and not integration and not architecture and not gpu and not triton and not research" tests
+  run_pytest_gate "unit and not slow and not integration and not architecture and not gpu and not triton and not research" tests
 }
 run_build() {
   sync_dev
@@ -169,8 +200,36 @@ run_build() {
   rm -rf -- "$build_dir"
   return "$build_status"
 }
-run_integration() { sync_dev; run_module pytest -q -m "integration and not slow" tests; }
+run_integration() { sync_dev; run_pytest_gate "integration and not slow" tests; }
+run_coverage_report() {
+  sync_dev
+  local data_dir="${QRL_COVERAGE_DATA_DIR:-.}"
+  run_module coverage combine --keep "$data_dir"
+  run_module coverage report -m
+  run_module coverage json -o coverage.json
+  run_module coverage xml -o coverage.xml
+  run_module tools.quality.coverage_report --coverage-json coverage.json
+}
+run_coverage() {
+  QRL_COVERAGE_FILE=.coverage.unit run_unit
+  QRL_COVERAGE_FILE=.coverage.integration run_integration
+  QRL_COVERAGE_DATA_DIR=. run_coverage_report
+}
 run_research() { sync_dev; run_module pytest -q -m "research and not slow" tests; }
+run_test_overlap() { sync_dev; run_module tools.quality.test_overlap "$@"; }
+run_mutation_critical() {
+  local mutation_children="${QRL_MUTATION_MAX_CHILDREN:-4}"
+  if [[ ! "$mutation_children" =~ ^[1-9][0-9]*$ ]]; then
+    echo "QRL_MUTATION_MAX_CHILDREN must be a positive integer" >&2
+    return 2
+  fi
+  sync_mutation
+  if [[ -n "$PYTHON_BIN" ]]; then
+    "$(dirname "$PYTHON_BIN")/mutmut" run --max-children "$mutation_children"
+  else
+    "$UV_BIN" run --extra dev --extra mutation mutmut run --max-children "$mutation_children"
+  fi
+}
 run_slow() { sync_dev; run_module pytest -q -m slow tests; }
 run_parity() {
   sync_dev
@@ -203,17 +262,36 @@ case "$GATE" in
   quality) run_quality ;;
   architecture) run_architecture ;;
   docs) run_docs ;;
+  coverage) run_coverage ;;
+  coverage-report) run_coverage_report ;;
   graph-quality) run_graph_quality ;;
   contracts) run_contracts ;;
   unit) run_unit ;;
   build) run_build ;;
   integration) run_integration ;;
   research) run_research ;;
+  test-overlap) shift; run_test_overlap "$@" ;;
+  mutation-critical) run_mutation_critical ;;
   slow) run_slow ;;
   parity) run_parity ;;
   training-smoke) run_training_smoke ;;
   fast) run_deps; run_architecture; run_contracts ;;
-  full) run_deps; run_security_deps; run_security_secrets; run_quality; run_architecture; run_docs; run_graph_quality; run_contracts; run_unit; run_build; run_integration; run_parity; run_training_smoke ;;
+  full)
+    run_deps
+    run_security_deps
+    run_security_secrets
+    run_quality
+    run_architecture
+    run_docs
+    run_graph_quality
+    run_contracts
+    QRL_COVERAGE_FILE=.coverage.full.unit run_unit
+    run_build
+    QRL_COVERAGE_FILE=.coverage.full.integration run_integration
+    run_coverage_report
+    run_parity
+    run_training_smoke
+    ;;
   gpu|triton) run_gpu ;;
-  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|docs|graph-quality|contracts|unit|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
+  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|docs|coverage|coverage-report|graph-quality|contracts|unit|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
 esac

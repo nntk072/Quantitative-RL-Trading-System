@@ -173,7 +173,7 @@ def main() -> int:
     parser.add_argument(
         "--out",
         type=Path,
-        default=ROOT / "docs/thesis/evidence/scripted_training_reachability_20261023.json",
+        default=ROOT / "outputs/research_audits/scripted_training_reachability_20261023.json",
     )
     args = parser.parse_args()
     variants = args.variants or list(DEFAULT_VARIANTS)

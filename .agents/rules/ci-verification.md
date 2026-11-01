@@ -33,8 +33,7 @@ QRL_UV=/path/to/aarch64/uv ./tools/check deps
 ```
 
 The venv setup helpers, `tools/uv-install`, and `make deps-check` honor the same
-`QRL_UV` override. `THESIS_UV` remains a deprecated fallback for existing
-setups. `tools/check build` uses the selected project Python's
+`QRL_UV` override. `tools/check build` uses the selected project Python's
 `build` module when a matched environment is active.
 
 ## Hard rule — agent commit / push

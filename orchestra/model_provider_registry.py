@@ -52,26 +52,50 @@ class Model:
     enabled: bool = True
 
     def __post_init__(self) -> None:
+        """Validate and initialize Model after construction."""
         if not self.registry_id:
             self.registry_id = f"{self.provider}-{self.name}".replace("/", "-")
 
     @property
     def display_name(self) -> str:
+        """Return the provider-qualified model name used in logs and quota state.
+
+        Returns:
+            Text returned by ``display_name``.
+        """
         return f"{self.provider}/{self.name}"
 
     @property
     def model_id(self) -> str:
-        """CLI model identifier (alias for name when loaded from YAML)."""
+        """CLI model identifier (alias for name when loaded from YAML).
+
+        Returns:
+            Text returned by ``model_id``.
+        """
         return self.name
 
     def tier_rank(self) -> int:
+        """Return the numeric rank of this model's minimum task tier.
+
+        Returns:
+            Numeric result returned by ``tier_rank``.
+        """
         return _TIER_ORDER.get(self.min_tier.upper(), 0)
 
     def cost_rank(self) -> int:
+        """Return the numeric rank of this model's configured cost tier.
+
+        Returns:
+            Numeric result returned by ``cost_rank``.
+        """
         return _COST_ORDER.get(self.cost_tier, 1)
 
     def is_available(self) -> bool:
-        """Check if the model's CLI and credentials are available."""
+        """Check if the model's CLI and credentials are available.
+
+        Returns:
+            Whether is available meets the requested condition.
+        """
         from shutil import which
 
         if not which(self.cli):
@@ -85,22 +109,50 @@ class Model:
         return True
 
     def vibe_model_env(self) -> str:
-        """Model alias/id for VIBE_ACTIVE_MODEL."""
+        """Model alias/id for VIBE_ACTIVE_MODEL.
+
+        Returns:
+            Text returned by ``vibe_model_env``.
+        """
         if self.alias:
             return self.alias
         return self.name
 
 
 def tier_rank(tier: str) -> int:
+    """Map a task tier label to its ordering rank.
+
+    Args:
+        tier: Text or path value identifying the tier.
+
+    Returns:
+        Numeric result returned by ``tier_rank``.
+    """
     return _TIER_ORDER.get(tier.upper(), 2)
 
 
 def complexity_to_tier(complexity: str) -> str:
+    """Map a triage complexity label to the default execution tier.
+
+    Args:
+        complexity: Text or path value identifying the complexity.
+
+    Returns:
+        Text returned by ``complexity_to_tier``.
+    """
     mapping = {"trivial": "T0", "medium": "T2", "complex": "T3"}
     return mapping.get(complexity, "T2")
 
 
 def _model_from_yaml(entry: dict[str, Any]) -> Model:
+    """Process from yaml.
+
+    Args:
+        entry: Key-value data used for the entry.
+
+    Returns:
+        Result of process from yaml.
+    """
     model_id = entry.get("model_id", entry.get("name", "default"))
     return Model(
         name=model_id,
@@ -162,7 +214,14 @@ _config_cache: dict[str, Any] | None = None
 
 
 def load_orchestra_config(path: Path | None = None) -> dict[str, Any]:
-    """Load models.yaml; returns effort_map, error_signatures, and models list."""
+    """Load models.yaml; returns effort_map, error_signatures, and models list.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     global _config_cache
     path = path or _CONFIG_PATH
     if not path.exists():
@@ -178,7 +237,14 @@ def load_orchestra_config(path: Path | None = None) -> dict[str, Any]:
 
 
 def load_models(path: Path | None = None) -> list[Model]:
-    """Load roster from YAML, falling back to DEFAULT_MODELS."""
+    """Load roster from YAML, falling back to DEFAULT_MODELS.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Values returned by ``load_models``, in the declared order.
+    """
     cfg = load_orchestra_config(path)
     entries = cfg.get("models") or []
     if not entries:
@@ -187,11 +253,23 @@ def load_models(path: Path | None = None) -> list[Model]:
 
 
 def get_effort_map() -> dict[str, dict[str, str]]:
+    """Return configured per-provider effort mappings.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, str]`` values.
+    """
     return load_orchestra_config().get("effort_map") or {}
 
 
 def codex_effort_for_level(level: int) -> str:
-    """Map Orchestra's 1–10 effort scale to Codex's capped effort levels."""
+    """Map Orchestra's 1–10 effort scale to Codex's capped effort levels.
+
+    Args:
+        level: Numeric value used for the level.
+
+    Returns:
+        Text returned by ``codex_effort_for_level``.
+    """
     if not 1 <= level <= 10:
         raise ValueError("Codex effort level must be between 1 and 10")
     if level <= 2:
@@ -204,7 +282,14 @@ def codex_effort_for_level(level: int) -> str:
 
 
 def codex_effort_for_role(role: str) -> str:
-    """Resolve the configured Codex effort level for an Orchestra role."""
+    """Resolve the configured Codex effort level for an Orchestra role.
+
+    Args:
+        role: Text or path value identifying the role.
+
+    Returns:
+        Text returned by ``codex_effort_for_role``.
+    """
     config = load_orchestra_config()
     levels = config.get("codex_phase_effort") or {}
     raw_level = levels.get(role, 5)
@@ -216,4 +301,9 @@ def codex_effort_for_role(role: str) -> str:
 
 
 def get_error_signatures() -> dict[str, Any]:
+    """Return configured CLI-specific failure signatures.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     return load_orchestra_config().get("error_signatures") or {}

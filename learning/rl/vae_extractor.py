@@ -21,6 +21,14 @@ class VAEFeatureExtractor(BaseFeaturesExtractor):
         freeze: bool = True,
         account_dim: int | None = None,
     ) -> None:
+        """Initialize VAEFeatureExtractor and its owned state.
+
+        Args:
+            observation_space: Observation space used by the operation described above.
+            vae: Vae used by the operation described above.
+            freeze: Whether to enable or require the freeze.
+            account_dim: Account dim used by the operation described above.
+        """
         if not isinstance(observation_space, spaces.Dict):
             raise TypeError("VAEFeatureExtractor requires a Dict observation space")
         account_space = observation_space.spaces.get("account")
@@ -42,7 +50,14 @@ class VAEFeatureExtractor(BaseFeaturesExtractor):
                 parameter.requires_grad = False
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
-        """Encode ``pre_ny_seq`` (or use precomputed ``vae_z``) and append account state."""
+        """Encode ``pre_ny_seq`` (or use precomputed ``vae_z``) and append account state.
+
+        Args:
+            observations: Observations to evaluate, in input order.
+
+        Returns:
+            Result of encode ``pre_ny_seq`` (or use precomputed ``vae_z``) and append account state.
+        """
         account = observations["account"]
         if "vae_z" in observations:
             latent = observations["vae_z"]

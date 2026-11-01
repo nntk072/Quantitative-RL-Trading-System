@@ -13,6 +13,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class ActionIntentRuntimeMixin(RuntimeMixinBase):
+    """Translate decoded actions into entry intent and setup context."""
+
     _decision_action: dict[str, float]
 
     def _prepare_action_intent(
@@ -25,6 +27,19 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
         pending_order: dict[str, Any] | None,
     ) -> tuple[Any, str | None, int, float, float, str, EntryCandidate | None]:
         # Decode action (discrete or continuous)
+        """Prepare action intent.
+
+        Args:
+            action: Action to apply to the current state.
+            feat_row: Feature values for the current market bar.
+            bar_time: Bar time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            fill_idx: Numeric value used for the fill idx.
+            pending_order: Key-value data used for the pending order.
+
+        Returns:
+            Values returned by ``_prepare_action_intent``, in the declared order.
+        """
         self._note_session_open(session_id, feat_row)
         if not self.trade_setup_actions:
             self._arm_po3_confirm(session_id)

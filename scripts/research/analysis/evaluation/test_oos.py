@@ -1,4 +1,4 @@
-"""Out-of-sample cost-sensitivity harness for a saved SB3 model.
+r"""Out-of-sample cost-sensitivity harness for a saved SB3 model.
 
 Loads a trained PPO/SAC zip, runs deterministic episodes on OOS bars under a
 grid of ``CostModel(spread_points, slippage_points)`` assumptions, and writes

@@ -37,7 +37,11 @@ class SwingRay:
     mark_pivot: bool = True
 
     def pivot_time(self) -> pd.Timestamp:
-        """Candle that printed the swing, falling back to the visible start."""
+        """Candle that printed the swing, falling back to the visible start.
+
+        Returns:
+            Result of candle that printed the swing, falling back to the visible start.
+        """
         return self.origin if self.origin is not None else self.t0
 
 
@@ -79,6 +83,13 @@ class OverlayEvents:
         at the edge draws a dash that does not sit on its pivot. A sweep
         needs both ends on the chart. The forward end of a swing may still
         be trimmed to ``end`` so the ray does not leave the axis.
+
+        Args:
+            start: Start used by the operation described above.
+            end: End used by the operation described above.
+
+        Returns:
+            Result of keep events whose pivot candles lie inside ``[start, end]``.
         """
         swings: list[SwingRay] = []
         for r in self.swings:
@@ -119,7 +130,17 @@ def candidate_sweep_line(
     features: pd.DataFrame | None = None,
     events: OverlayEvents | None = None,
 ) -> SweepLine | None:
-    """Return only the sweep that created this entry candidate, if recorded."""
+    """Return only the sweep that created this entry candidate, if recorded.
+
+    Args:
+        bars: Market bars to process.
+        open_row: Tabular data used for the open row.
+        features: Feature values supplied to the operation.
+        events: Events used by the operation described above.
+
+    Returns:
+        Result of return only the sweep that created this entry candidate, if recorded.
+    """
     raw_types = open_row.get("entry_setup_types", ())
     if isinstance(raw_types, str):
         try:
@@ -141,6 +162,11 @@ def candidate_sweep_line(
     side: Side = "low" if direction == 1 else "high"
 
     def matching_recorded_event() -> SweepLine | None:
+        """Find the recorded sweep event matching this candidate line.
+
+        Returns:
+            Result of find the recorded sweep event matching this candidate line.
+        """
         if events is None:
             return None
         index = pd.DatetimeIndex(bars.index)
@@ -285,7 +311,14 @@ def candidate_sweep_line(
 
 
 def _bar_pad(index: pd.DatetimeIndex) -> pd.Timedelta:
-    """Extend sweep lines ~0.75 bars past each of the two candles."""
+    """Extend sweep lines ~0.75 bars past each of the two candles.
+
+    Args:
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Result of extend sweep lines ~0.75 bars past each of the two candles.
+    """
     if len(index) < 2:
         return pd.Timedelta("45s")
     delta = pd.Timedelta(index[1] - index[0])
@@ -295,7 +328,15 @@ def _bar_pad(index: pd.DatetimeIndex) -> pd.Timedelta:
 
 
 def _align_origin_ts(ts: pd.Timestamp, index: pd.DatetimeIndex) -> pd.Timestamp:
-    """Match ``ts`` to the timezone of ``index``."""
+    """Match ``ts`` to the timezone of ``index``.
+
+    Args:
+        ts: Ts used by the operation described above.
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Result of match ``ts`` to the timezone of ``index``.
+    """
     out = pd.Timestamp(ts)
     if index.tz is None:
         return out.tz_localize(None) if out.tzinfo is not None else out
@@ -316,6 +357,16 @@ def _swing_origins(
     The pivot is ``last_swing_*_time`` on the bar where the level changes.
     ``confirmation_bar - swing_period`` is only the fallback when that time
     is missing.
+
+    Args:
+        levels: Tabular data used for the levels.
+        wick: Tabular data used for the wick.
+        index: Position or label identifying the requested item.
+        swing_period: Numeric value used for the swing period.
+        side: Side used by the operation described above.
+
+    Returns:
+        Values returned by ``_swing_origins``, in the declared order.
     """
     pcol = "last_swing_high" if side == "high" else "last_swing_low"
     tcol = "last_swing_high_time" if side == "high" else "last_swing_low_time"
@@ -357,6 +408,17 @@ def _rays_from_origins(
     side: Side,
     bars: pd.DataFrame,
 ) -> list[SwingRay]:
+    """Process from origins.
+
+    Args:
+        index: Position or label identifying the requested item.
+        origins: Items supplied for the origins, in input order.
+        side: Side used by the operation described above.
+        bars: Market bars to process.
+
+    Returns:
+        Values returned by ``_rays_from_origins``, in the declared order.
+    """
     last_i = len(index) - 1
     wick = bars["high" if side == "high" else "low"].to_numpy(dtype=float)
     next_cross = np.full(len(wick), len(wick), dtype=int)
@@ -393,6 +455,18 @@ def _sweep_lines(
     side: Side,
     pad: pd.Timedelta,
 ) -> list[SweepLine]:
+    """Process lines.
+
+    Args:
+        index: Position or label identifying the requested item.
+        sweeps: Tabular data used for the sweeps.
+        origins: Items supplied for the origins, in input order.
+        side: Side used by the operation described above.
+        pad: Pad used by the operation described above.
+
+    Returns:
+        Values returned by ``_sweep_lines``, in the declared order.
+    """
     col = "sweep_high" if side == "high" else "sweep_low"
     lvl_col = "sweep_high_level" if side == "high" else "sweep_low_level"
     label = "Liquidity sweep"
@@ -452,6 +526,19 @@ def _smt_segments(
     swing_period: int,
     side: Side,
 ) -> list[SmtSegment]:
+    """Process segments.
+
+    Args:
+        index: Position or label identifying the requested item.
+        smt: Tabular data used for the smt.
+        origins: Items supplied for the origins, in input order.
+        prices: Price values used by the calculation.
+        swing_period: Numeric value used for the swing period.
+        side: Side used by the operation described above.
+
+    Returns:
+        Values returned by ``_smt_segments``, in the declared order.
+    """
     col = "smt_bearish" if side == "high" else "smt_bullish"
     label = "SMT divergence (M1)"
     flags = smt[col].to_numpy(dtype=float)
@@ -485,7 +572,16 @@ def build_overlay_events(
     secondary: pd.DataFrame | None = None,
     swing_period: int = 5,
 ) -> OverlayEvents:
-    """Compute swing rays, liquidity-sweep lines, and SMT segments on ``bars``."""
+    """Compute swing rays, liquidity-sweep lines, and SMT segments on ``bars``.
+
+    Args:
+        bars: Market bars to process.
+        secondary: Tabular data used for the secondary.
+        swing_period: Numeric value used for the swing period.
+
+    Returns:
+        Result of compute swing rays, liquidity-sweep lines, and SMT segments on ``bars``.
+    """
     if bars.empty or len(bars) < swing_period * 2 + 2:
         return OverlayEvents()
     idx = pd.DatetimeIndex(bars.index)
@@ -515,6 +611,14 @@ def confirmed_pivots(
     """Drop the pivot dot when that candle's high or low is not the ray price.
 
     The ray itself stays. A clipped window must not grow a dot on its first bar.
+
+    Args:
+        events: Events used by the operation described above.
+        bars: Market bars to process.
+        atol: Numeric value used for the atol.
+
+    Returns:
+        Result of drop the pivot dot when that candle's high or low is not the ray price.
     """
     if bars.empty:
         return events

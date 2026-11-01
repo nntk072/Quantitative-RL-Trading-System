@@ -29,6 +29,11 @@ class CalibrationReport:
     brier: float  # Brier score (lower is better, 0 = perfect)
 
     def summary(self) -> str:
+        """Return a compact, human-readable calibration summary.
+
+        Returns:
+            Text returned by ``summary``.
+        """
         return (
             f"ECE={self.ece:.4f}  Brier={self.brier:.4f}  "
             f"bins={len(self.bin_centers)}  n={int(self.bin_counts.sum())}"
@@ -42,14 +47,13 @@ def calibration_report(
 ) -> CalibrationReport:
     """Bin predictions into ``n_bins`` equal-width bins over [0, 1].
 
-    Parameters
-    ----------
-    predicted_probs:
-        Policy-implied probability of a winning trade, in [0, 1].
-    outcomes:
-        1.0 for winning trades, 0.0 for losers (same order as predictions).
-    n_bins:
-        Number of equal-width bins. Bins with zero samples are dropped.
+    Args:
+        predicted_probs: Policy-implied probability of a winning trade, in [0, 1].
+        outcomes: 1.0 for winning trades, 0.0 for losers (same order as predictions).
+        n_bins: Number of equal-width bins. Bins with zero samples are dropped.
+
+    Returns:
+        Result of bin predictions into ``n_bins`` equal-width bins over [0, 1].
     """
     p = np.asarray(predicted_probs, dtype=np.float64).ravel()
     y = np.asarray(outcomes, dtype=np.float64).ravel()
@@ -93,7 +97,15 @@ def calibration_report(
 def plot_reliability_diagram(
     report: CalibrationReport, ax: matplotlib.axes.Axes | None = None
 ) -> matplotlib.axes.Axes:
-    """Draw the reliability diagram; returns the matplotlib Axes."""
+    """Draw the reliability diagram; returns the matplotlib Axes.
+
+    Args:
+        report: Report used by the operation described above.
+        ax: Ax used by the operation described above.
+
+    Returns:
+        Result of draw the reliability diagram; returns the matplotlib Axes.
+    """
     import matplotlib.pyplot as plt
 
     if ax is None:

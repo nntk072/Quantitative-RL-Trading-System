@@ -38,6 +38,15 @@ Q5_MAX_LOSS_FRACTION_COST_SCHEMA = "q5_max_loss_fraction_cost_v1"
 
 
 def _finite_constraint_cost(constraints: dict[str, Any], key: str) -> float:
+    """Process constraint cost.
+
+    Args:
+        constraints: Key-value data used for the constraints.
+        key: Text or path value identifying the key.
+
+    Returns:
+        Numeric result returned by ``_finite_constraint_cost``.
+    """
     value = constraints.get(key, 0.0)
     if isinstance(value, bool) or not isinstance(value, (int, float, np.number)):
         raise ValueError(f"evaluation constraint cost {key!r} must be numeric")
@@ -66,8 +75,16 @@ def make_action_fn(
 
     This is the single shared implementation — ``scripts/train_rl.py`` and
     ``scripts/compare_encoders.py`` used to each carry private copies.
-    """
 
+    Args:
+        model: Model used for this operation.
+        continuous_actions: Whether to enable or require the continuous actions.
+        deterministic: Whether to enable or require the deterministic.
+        strategy_actions: Whether to enable or require the strategy actions.
+
+    Returns:
+        Result of return an observation → action callable with explicit action typing.
+    """
     if hasattr(model, "metadata") and hasattr(model, "predict"):
         from evaluation.rollout.provider import make_provider_action_fn
 
@@ -80,6 +97,14 @@ def make_action_fn(
         )
 
     def action_fn(obs: dict[str, Any]) -> Any:
+        """Predict one rollout action and adapt it to the configured action shape.
+
+        Args:
+            obs: Key-value data used for the obs.
+
+        Returns:
+            Result of predict one rollout action and adapt it to the configured action shape.
+        """
         action = model.predict(obs, deterministic=deterministic)[0]
         arr = np.asarray(action, dtype=np.float32).reshape(-1)
         if strategy_actions:
@@ -122,7 +147,6 @@ def evaluate_model(
     vae: Any | None = None,
     strategy: Any = None,
     strategy_actions: bool = False,
-    thesis_actions: bool = False,
     trade_setup_actions: bool = False,
     entry_state_machine: bool = False,
     candidate_max_age_bars: int = 5,
@@ -192,12 +216,100 @@ def evaluate_model(
     replay when the source manifest lacks ordered feature coordinates. It must
     not be used to train a new policy.
 
-    Returns
-    -------
-    dict with keys ``equity``, ``trades``, ``account``, ``breaches``,
-    ``breach_events``, ``n_sessions``, ``n_breach_sessions``,
-    ``n_sessions_with_trades``, ``n_sessions_skipped`` — the same shape
-    produced by ``simulation.backtest.run_backtest``.
+    Args:
+        model: Model used for this operation.
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        obs_window: Numeric value used for the obs window.
+        initial_balance: Numeric value used for the initial balance.
+        cost_model: Cost model used by the operation described above.
+        broker_kwargs: Key-value data used for the broker kwargs.
+        guardrail_kwargs: Key-value data used for the guardrail kwargs.
+        risk_frac_range: Items supplied for the risk frac range, in input order.
+        rr_ratio_range: Items supplied for the rr ratio range, in input order.
+        swing_buffer_pts: Numeric value used for the swing buffer pts.
+        min_lot: Numeric value used for the min lot.
+        max_lot: Numeric value used for the max lot.
+        contract_size: Number specifying the contract size for this operation.
+        max_loss_per_trade_usd: Numeric value used for the max loss per trade usd.
+        dsr_eta: Numeric value used for the dsr eta.
+        deterministic: Whether to enable or require the deterministic.
+        max_episode_steps: Number specifying the max episode steps for this operation.
+        continuous_actions: Whether to enable or require the continuous actions.
+        use_sweep_reward: Whether to enable or require the use sweep reward.
+        sweep_alpha: Numeric value used for the sweep alpha.
+        sweep_beta: Numeric value used for the sweep beta.
+        sweep_hold_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
+        dsr_weight: Numeric value used for the dsr weight.
+        sweep_weight: Numeric value used for the sweep weight.
+        block_overnight: Whether to enable or require the block overnight.
+        eod_risk: Key-value data used for the eod risk.
+        use_vae: Whether to enable or require the use vae.
+        vae: Vae used by the operation described above.
+        strategy: Strategy used to select or evaluate trades.
+        strategy_actions: Whether to enable or require the strategy actions.
+        trade_setup_actions: Whether to enable or require the trade setup actions.
+        entry_state_machine: Whether to enable or require the entry state machine.
+        candidate_max_age_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
+        arm_requires_retest: Whether to enable or require the arm requires retest.
+        entry_state_observation: Whether to enable or require the entry state observation.
+        observation_schema_version: Text or path value identifying the observation schema version.
+        observation_age_scale_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
+        strict_research_eligibility: Whether to enable or require the strict research eligibility.
+        strategy_reward: Strategy reward used by the operation described above.
+        strategy_weight: Numeric value used for the strategy weight.
+        sl_buffer_pts: Numeric value used for the sl buffer pts.
+        pre_ny_by_date: Key-value data used for the pre ny by date.
+        min_sl_atr_mult: Numeric value used for the min sl atr mult.
+        min_sl_points: Numeric value used for the min sl points.
+        max_entries_per_session: Numeric value used for the max entries per session.
+        open_manipulation_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
+        entry_cooldown_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
+        reward_mode: Text or path value identifying the reward mode.
+        equity_log_growth_scale: Numeric value used for the equity log growth scale.
+        fixed_risk_usd: Numeric value used for the fixed risk usd.
+        risk_band_max_usd: Numeric value used for the risk band max usd.
+        risk_band_hold_below_usd: Numeric value used for the risk band hold below usd.
+        risk_mode: Text or path value identifying the risk mode.
+        allow_ema_exit: Whether to enable or require the allow ema exit.
+        ema_runner_fraction: Numeric value used for the ema runner fraction.
+        entry_intensity_threshold: Numeric value used for the entry intensity threshold.
+        peak_trailing_dd_limit: Numeric value used for the peak trailing dd limit.
+        tickbook: Tickbook used by the operation described above.
+        tick_execution_required: Whether to enable or require the tick execution required.
+        fill_delay_ms: Numeric value used for the fill delay ms.
+        randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
+        max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
+        tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+        execution_seed: Execution seed used by the operation described above.
+        agent_direction_control: Whether to enable or require the agent direction control.
+        direction_override_threshold: Numeric value used for the direction override threshold.
+        sl_mode: Text or path value identifying the sl mode.
+        tp_mode: Text or path value identifying the tp mode.
+        tp_reference: Text or path value identifying the tp reference.
+        allow_agent_sl_mode: Whether to enable or require the allow agent sl mode.
+        sl_mode_defer_threshold: Numeric value used for the sl mode defer threshold.
+        allow_agent_tp_mode: Whether to enable or require the allow agent tp mode.
+        tp_mode_defer_threshold: Numeric value used for the tp mode defer threshold.
+        allow_multi_tp: Whether to enable or require the allow multi tp.
+        allow_simplex: Whether to enable or require the allow simplex.
+        tp_breakeven_alpha: Numeric value used for the tp breakeven alpha.
+        risk_floor: Numeric value used for the risk floor.
+        mtf: Whether to enable or require the mtf.
+        mtf_windows: Key-value data used for the mtf windows.
+        regime_observation: Whether to enable or require the regime observation.
+        target_timeframes: Items supplied for the target timeframes, in input order.
+        scheduled_session_closes: Key-value data used for the scheduled session closes.
+        session_start: Text or path value identifying the session start.
+        env: Environment whose state is read or updated.
+        legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
+        trading_policy: Key-value data used for the trading policy.
+
+    Returns:
+        dict with keys ``equity``, ``trades``, ``account``, ``breaches``,:
+        ``breach_events``, ``n_sessions``, ``n_breach_sessions``,:
+        ``n_sessions_with_trades``, ``n_sessions_skipped`` — the same shape:
+        produced by ``simulation.backtest.run_backtest``.:
     """
     if (
         env is not None
@@ -248,7 +360,6 @@ def evaluate_model(
             vae=vae,
             strategy=strategy,
             strategy_actions=strategy_actions,
-            thesis_actions=thesis_actions,
             trade_setup_actions=trade_setup_actions,
             entry_state_machine=entry_state_machine,
             candidate_max_age_bars=candidate_max_age_bars,
@@ -315,7 +426,7 @@ def evaluate_model(
         model, continuous_actions, deterministic, strategy_actions=strategy_actions
     )
     action_counts: Counter[str] = Counter()
-    thesis_decision_rows: list[dict[str, Any]] = []
+    trade_setup_decision_rows: list[dict[str, Any]] = []
     reward_sum = 0.0
     reward_attribution = RewardAttribution()
     n_steps = 0
@@ -362,54 +473,38 @@ def evaluate_model(
     discount_factor = 1.0
     while not (done or truncated):
         action = action_fn(obs)
-        thesis_record: dict[str, Any] | None = None
+        trade_setup_record: dict[str, Any] | None = None
         policy = getattr(model, "policy", None)
         coordinates = tuple(getattr(policy, "hybrid_action_coordinates", ()))
-        setup_coordinate = next(
-            (name for name in ("trade_setup", "thesis") if name in coordinates), None
-        )
+        setup_coordinate = "trade_setup" if "trade_setup" in coordinates else None
         if strategy_actions and setup_coordinate is not None and isinstance(obs, dict):
             from decisioning.trade_setup import TRADE_SETUP_CANDIDATES, trade_setup_id_from_box
 
             values = np.asarray(action, dtype=np.float32).reshape(-1)
             setup_index = coordinates.index(setup_coordinate)
             selected_id = trade_setup_id_from_box(float(values[setup_index]))
-            legacy_setup = setup_coordinate == "thesis"
-            mask_key = "thesis_mask" if legacy_setup else "trade_setup_mask"
-            mask = np.asarray(obs.get(mask_key, []), dtype=np.float32).reshape(-1)
+            mask = np.asarray(obs.get("trade_setup_mask", []), dtype=np.float32).reshape(-1)
             is_valid = selected_id < len(mask) and bool(mask[selected_id] > 0.0)
             candidate = TRADE_SETUP_CANDIDATES[selected_id]
-            raw_entropy = getattr(
-                policy,
-                "last_trade_setup_entropy",
-                getattr(policy, "last_thesis_entropy", None),
-            )
+            raw_entropy = getattr(policy, "last_trade_setup_entropy", None)
             entropy_value = (
                 float(np.asarray(raw_entropy.detach().cpu()).reshape(-1)[0])
                 if raw_entropy is not None
                 else float("nan")
             )
-            thesis_record = {
+            trade_setup_record = {
                 "step": n_steps + 1,
-                (
-                    "thesis_candidate_id" if legacy_setup else "trade_setup_candidate_id"
-                ): selected_id,
+                "trade_setup_candidate_id": selected_id,
                 "idea": candidate.idea or "",
                 "setup_timeframe": candidate.setup_timeframe or "",
                 "direction": int(candidate.direction),
                 "is_no_trade": bool(candidate.is_no_trade),
                 "selection_valid": is_valid,
-                ("eligible_thesis_count" if legacy_setup else "eligible_trade_setup_count"): int(
-                    np.count_nonzero(mask)
-                ),
-                (
-                    "eligible_candidate_ids" if legacy_setup else "eligible_trade_setup_ids"
-                ): np.flatnonzero(mask).astype(int).tolist(),
-                (
-                    "thesis_entropy_nats" if legacy_setup else "trade_setup_entropy_nats"
-                ): entropy_value,
+                "eligible_trade_setup_count": int(np.count_nonzero(mask)),
+                "eligible_trade_setup_ids": np.flatnonzero(mask).astype(int).tolist(),
+                "trade_setup_entropy_nats": entropy_value,
             }
-            thesis_record.update(
+            trade_setup_record.update(
                 {
                     f"action_{name}": float(values[index])
                     for index, name in enumerate(coordinates)
@@ -422,9 +517,9 @@ def evaluate_model(
             action_key = str(action)
         action_counts[action_key] += 1
         obs, reward, done, truncated, info = env.step(action)
-        if thesis_record is not None:
-            thesis_record["time"] = str(env.equity_times[-1]) if env.equity_times else ""
-            thesis_decision_rows.append(thesis_record)
+        if trade_setup_record is not None:
+            trade_setup_record["time"] = str(env.equity_times[-1]) if env.equity_times else ""
+            trade_setup_decision_rows.append(trade_setup_record)
         final_info = info
         reward_sum += float(reward)
         reward_attribution.add(float(reward), info.get("reward_parts"))
@@ -478,21 +573,17 @@ def evaluate_model(
         index=pd.DatetimeIndex(env.equity_times),
     )
     trades_df = pd.DataFrame(env.trade_log)
-    thesis_decisions = pd.DataFrame.from_records(thesis_decision_rows)
-    thesis_metrics: dict[str, Any] | None = None
-    if thesis_decision_rows:
+    trade_setup_decisions = pd.DataFrame.from_records(trade_setup_decision_rows)
+    trade_setup_metrics: dict[str, Any] | None = None
+    if trade_setup_decision_rows:
         from evaluation.metrics.trade_setup_policy import summarize_trade_setup_decisions
 
-        thesis_metrics = summarize_trade_setup_decisions(thesis_decisions, trades_df)
+        trade_setup_metrics = summarize_trade_setup_decisions(trade_setup_decisions, trades_df)
         policy_class = type(getattr(model, "policy", None)).__name__
-        thesis_metrics["policy_class"] = policy_class
-        setup_conditioning_active = policy_class in {
-            "ThesisConditionedClampedStdMultiInputPolicy",
-            "TradeSetupConditionedClampedStdMultiInputPolicy",
-        }
-        thesis_metrics["setup_conditioned_execution_active"] = setup_conditioning_active
-        if bool(thesis_actions):
-            thesis_metrics["variant_d_execution_conditioning_active"] = setup_conditioning_active
+        trade_setup_metrics["policy_class"] = policy_class
+        trade_setup_metrics["setup_conditioned_execution_active"] = (
+            policy_class == "TradeSetupConditionedClampedStdMultiInputPolicy"
+        )
 
     n_sessions = len(env.all_sessions)
     days_traded = len(env.sessions_with_trades)
@@ -582,16 +673,10 @@ def evaluate_model(
         "action_counts": dict(action_counts),
         **(
             {
-                (
-                    "thesis_decisions" if bool(thesis_actions) else "trade_setup_decisions"
-                ): thesis_decisions,
-                (
-                    "thesis_policy_metrics"
-                    if bool(thesis_actions)
-                    else "trade_setup_policy_metrics"
-                ): thesis_metrics,
+                "trade_setup_decisions": trade_setup_decisions,
+                "trade_setup_policy_metrics": trade_setup_metrics,
             }
-            if thesis_metrics is not None
+            if trade_setup_metrics is not None
             else {}
         ),
         "entry_diag": dict(env._entry_diag),
@@ -628,7 +713,17 @@ def evaluate_provider(
     features: pd.DataFrame,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Evaluate a backend-neutral decision provider through the trading environment."""
+    """Evaluate a backend-neutral decision provider through the trading environment.
+
+    Args:
+        provider: Provider used by the operation described above.
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        **kwargs: Kwargs used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     if not hasattr(provider, "metadata") or not hasattr(provider, "predict"):
         raise TypeError("evaluate_provider requires a DecisionProvider implementation")
     return evaluate_model(provider, bars, features, **kwargs)

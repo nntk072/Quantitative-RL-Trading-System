@@ -33,7 +33,7 @@ def _bars(n: int = 900) -> pd.DataFrame:
     )
 
 
-def _thesis_cfg() -> Any:
+def _trade_setup_cfg() -> Any:
     return OmegaConf.create(
         {
             "data": {"tz": "Etc/GMT-3"},
@@ -76,7 +76,7 @@ def _thesis_cfg() -> Any:
 def test_assembled_matrix_truncation_causality() -> None:
     """Prefix recomputation matches full-run values on the shared index."""
     bars = _bars()
-    cfg = _thesis_cfg()
+    cfg = _trade_setup_cfg()
     full = build_features(bars, cfg=cfg, force=True)
     # Cut well after HTF/PD warmup
     cut = bars.index[700]

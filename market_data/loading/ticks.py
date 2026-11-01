@@ -90,6 +90,16 @@ def resolve_tick_execution(
     is never eligible.
     The caller must treat ``None`` as unavailable tick execution, not substitute
     a candle quote.
+
+    Args:
+        book: Book used by the operation described above.
+        order_time: Order time used by the operation described above.
+        rng: Rng used by the operation described above.
+        max_latency_ns_exclusive: Numeric value used for the max latency ns exclusive.
+        max_quote_wait_ns: Max quote wait ns used by the operation described above.
+
+    Returns:
+        Result of apply optional sub-30 ms latency and select the first eligible tick.
     """
     if max_latency_ns_exclusive < 0:
         raise ValueError("max_latency_ns_exclusive cannot be negative")
@@ -139,6 +149,17 @@ def resolve_tick_execution_by_deadline(
     occur by the deadline and within the quote-wait limit. A pre-arrival quote
     is never an executable substitute when the market stops quoting before
     the order arrives.
+
+    Args:
+        book: Book used by the operation described above.
+        submission_time: Submission time used by the operation described above.
+        deadline: Deadline used by the operation described above.
+        rng: Rng used by the operation described above.
+        max_latency_ns_exclusive: Numeric value used for the max latency ns exclusive.
+        max_quote_wait_ns: Max quote wait ns used by the operation described above.
+
+    Returns:
+        Result of resolve a scheduled close using only a quote after sampled arrival.
     """
     if max_latency_ns_exclusive < 0:
         raise ValueError("max_latency_ns_exclusive cannot be negative")
@@ -189,6 +210,21 @@ def resolve_tick_exit(
     execution uses the first quote at or after the sampled arrival time. A
     triggered order without a timely subsequent quote raises rather than
     silently becoming a candle-priced fill.
+
+    Args:
+        book: Book used by the operation described above.
+        bar_start: Bar start used by the operation described above.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        sl: Sl used by the operation described above.
+        tp: Tp used by the operation described above.
+        rng: Rng used by the operation described above.
+        bar_minutes: Numeric value used for the bar minutes.
+        earliest_time: Earliest time used by the operation described above.
+        max_latency_ns_exclusive: Numeric value used for the max latency ns exclusive.
+        max_quote_wait_ns: Max quote wait ns used by the operation described above.
+
+    Returns:
+        Result of resolve the first tick-triggered SL/TP after randomized execution latency.
     """
     if direction not in (-1, 1):
         raise ValueError("direction must be -1 or 1")
@@ -232,7 +268,11 @@ def resolve_tick_exit(
 
 
 def _ffill_inplace(arr: np.ndarray[Any, Any]) -> None:
-    """In-place forward-fill of NaNs in a 1-D float array (no pandas)."""
+    """In-place forward-fill of NaNs in a 1-D float array (no pandas).
+
+    Args:
+        arr: Arr used by the operation described above.
+    """
     mask = np.isnan(arr)
     if not mask.any():
         return
@@ -258,6 +298,13 @@ class TickBook:
         bid: np.ndarray[Any, Any],
         ask: np.ndarray[Any, Any],
     ) -> None:
+        """Initialize TickBook and its owned state.
+
+        Args:
+            ts_ns: Ts ns used by the operation described above.
+            bid: Bid used by the operation described above.
+            ask: Ask used by the operation described above.
+        """
         self._ts = ts_ns
         self._bid = bid
         self._ask = ask
@@ -268,6 +315,12 @@ class TickBook:
         Returns ``None`` when *ts* is outside the recorded tick interval,
         including after the final recorded tick. A caller must not reuse a
         stale final quote as an execution price.
+
+        Args:
+            ts: Ts used by the operation described above.
+
+        Returns:
+            Values returned by ``quote_at``, in the declared order.
         """
         event = self.quote_event_at(ts)
         if event is None:
@@ -280,6 +333,12 @@ class TickBook:
 
         If several source rows share the selected millisecond timestamp, the
         first row in the stable TickBook order is returned.
+
+        Args:
+            ts: Ts used by the operation described above.
+
+        Returns:
+            Values returned by ``quote_event_at``, in the declared order.
         """
         n = len(self._ts)
         if n == 0:
@@ -304,6 +363,12 @@ class TickBook:
         Unlike ``quote_event_at``, this permits an arrival timestamp earlier
         than the first stored tick. Callers still need a finite quote-wait
         limit so that a distant first observation cannot masquerade as a fill.
+
+        Args:
+            ts: Ts used by the operation described above.
+
+        Returns:
+            Values returned by ``execution_quote_event_at``, in the declared order.
         """
         n = len(self._ts)
         if n == 0:
@@ -318,10 +383,23 @@ class TickBook:
         )
 
     def __len__(self) -> int:
+        """Process TickBook.
+
+        Returns:
+            Numeric result returned by ``__len__``.
+        """
         return len(self._ts)
 
     def has_ticks_between(self, start: pd.Timestamp, end: pd.Timestamp) -> bool:
-        """Return whether any quote falls in the half-open interval [start, end)."""
+        """Return whether any quote falls in the half-open interval [start, end).
+
+        Args:
+            start: Start used by the operation described above.
+            end: End used by the operation described above.
+
+        Returns:
+            Whether has ticks between meets the requested condition.
+        """
         start_ns = pd.Timestamp(start).value
         end_ns = pd.Timestamp(end).value
         if end_ns <= start_ns or len(self._ts) == 0:
@@ -332,7 +410,15 @@ class TickBook:
     def bar_quotes(
         self, bar_start: pd.Timestamp, bar_minutes: int = 1
     ) -> Iterator[tuple[pd.Timestamp, float, float]]:
-        """Yield recorded quotes in timestamp order within a half-open bar interval."""
+        """Yield recorded quotes in timestamp order within a half-open bar interval.
+
+        Args:
+            bar_start: Bar start used by the operation described above.
+            bar_minutes: Numeric value used for the bar minutes.
+
+        Yields:
+            Each bar quotes value, yielded in processing order.
+        """
         start_ns = pd.Timestamp(bar_start).value
         end_ns = start_ns + int(pd.Timedelta(minutes=bar_minutes).value)
         i0 = int(np.searchsorted(self._ts, start_ns, side="left"))
@@ -360,6 +446,17 @@ class TickBook:
         before the stop wins. Delay 0 fills that crossing tick, which is
         already through the level. Returns ``None`` when the bar has no
         crossing tick.
+
+        Args:
+            bar_start: Bar start used by the operation described above.
+            direction: Signed trade direction: 1 for long and -1 for short.
+            sl: Sl used by the operation described above.
+            tp: Tp used by the operation described above.
+            delay: Delay used by the operation described above.
+            bar_minutes: Numeric value used for the bar minutes.
+
+        Returns:
+            Values returned by ``delayed_exit_quote``, in the declared order.
         """
         event = self.delayed_exit_event(
             bar_start, direction, sl, tp, delay, bar_minutes=bar_minutes
@@ -379,7 +476,20 @@ class TickBook:
         bar_minutes: int = 1,
         earliest_time: pd.Timestamp | None = None,
     ) -> tuple[str, pd.Timestamp, float, float] | None:
-        """Return trigger kind, actual fill time, and delayed executable quote."""
+        """Return trigger kind, actual fill time, and delayed executable quote.
+
+        Args:
+            bar_start: Bar start used by the operation described above.
+            direction: Signed trade direction: 1 for long and -1 for short.
+            sl: Sl used by the operation described above.
+            tp: Tp used by the operation described above.
+            delay: Delay used by the operation described above.
+            bar_minutes: Numeric value used for the bar minutes.
+            earliest_time: Earliest time used by the operation described above.
+
+        Returns:
+            Values returned by ``delayed_exit_event``, in the declared order.
+        """
         n = len(self._ts)
         if n == 0 or direction not in (1, -1):
             return None
@@ -421,7 +531,15 @@ class TickBook:
         return kind, max(fill_time, quote_time), bid, ask
 
     def slice(self, start: pd.Timestamp, end: pd.Timestamp) -> TickBook:
-        """Return a sub-book covering the half-open interval [start, end)."""
+        """Return a sub-book covering the half-open interval [start, end).
+
+        Args:
+            start: Start used by the operation described above.
+            end: End used by the operation described above.
+
+        Returns:
+            Result of return a sub-book covering the half-open interval [start, end).
+        """
         i_s = int(np.searchsorted(self._ts, start.value, side="left"))
         i_e = int(np.searchsorted(self._ts, end.value, side="left"))
         return TickBook(
@@ -436,6 +554,13 @@ def ticks_covering(book: TickBook | None, bars: pd.DataFrame) -> TickBook | None
 
     An empty slice means this window has no tape, so the caller keeps the
     level fill.
+
+    Args:
+        book: Book used by the operation described above.
+        bars: Market bars to process.
+
+    Returns:
+        Result of slice *book* to the bars, plus one extra minute for the fill delay.
     """
     if book is None or len(book) == 0 or bars.empty:
         return None
@@ -461,6 +586,15 @@ def tick_execution_coverage(
     arrival within ``max_quote_wait``. A zero bound checks the immediate order
     time. This is a conservative preflight for environments requiring tick
     quotes at each candidate market step.
+
+    Args:
+        book: Book used by the operation described above.
+        order_times: Order times used by the operation described above.
+        max_latency_ns_exclusive: Numeric value used for the max latency ns exclusive.
+        max_quote_wait_ms: Numeric value used for the max quote wait ms.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     if max_latency_ns_exclusive < 0 or max_latency_ns_exclusive > 30_000_000:
         raise ValueError("max_latency_ns_exclusive must be in [0, 30_000_000]")
@@ -538,6 +672,19 @@ def build_tick_book(
     Peak memory is therefore roughly one chunk's worth of raw CSV data plus
     the final (already session-filtered, much smaller) tick arrays — not the
     full file size multiplied by pandas' usual 3-5x parsing overhead.
+
+    Args:
+        path: Path to the input file or directory.
+        tz: Text or path value identifying the tz.
+        session_start: Session start used by the operation described above.
+        session_end: Session end used by the operation described above.
+        cache_path: Path or filename identifying the cache.
+        force: Whether to enable or require the force.
+        chunksize: Numeric value used for the chunksize.
+        price_grid_increment: Price grid increment used by the operation described above.
+
+    Returns:
+        Result of load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
     """
     path = Path(path)
     cache_identity: dict[str, Any] | None = None

@@ -93,7 +93,22 @@ def run(
     resume: str | None,
     start_phase: str | None,
 ) -> None:
-    """Run a task through the full orchestra pipeline."""
+    """Run a task through the full orchestra pipeline.
+
+    Args:
+        task: Text or path value identifying the task.
+        complexity: Complexity used by the operation described above.
+        tier: Tier used by the operation described above.
+        planners: Numeric value used for the planners.
+        reviewers: Numeric value used for the reviewers.
+        critics: Numeric value used for the critics.
+        dry_run: Whether to enable or require the dry run.
+        escalate: Whether to enable or require the escalate.
+        max_fixes: Numeric value used for the max fixes.
+        keep_alive: Whether to enable or require the keep alive.
+        resume: Resume used by the operation described above.
+        start_phase: Start phase used by the operation described above.
+    """
     pipeline = Pipeline(
         planner_count=planners,
         critic_count=critics,
@@ -132,7 +147,11 @@ def run(
 @command_group.command()
 @click.option("--tier1", is_flag=True, help="Run Tier-1 network catalog probes (no generation).")
 def doctor(tier1: bool) -> None:
-    """Check model health (Tier-0 local; optional Tier-1 catalog)."""
+    """Check model health (Tier-0 local; optional Tier-1 catalog).
+
+    Args:
+        tier1: Whether to enable or require the tier1.
+    """
     from orchestra.health import derive_status
     from orchestra.model_provider_registry import load_models
 
@@ -158,7 +177,12 @@ def doctor(tier1: bool) -> None:
 @click.argument("task_id")
 @click.option("--max-fixes", default=3, help="Maximum fix iterations.", type=int)
 def fix(task_id: str, max_fixes: int) -> None:
-    """Run fix loop on an existing task."""
+    """Run fix loop on an existing task.
+
+    Args:
+        task_id: Text or path value identifying the task id.
+        max_fixes: Numeric value used for the max fixes.
+    """
     state_dir = WORKSPACE / "outputs" / "orchestra" / "state"
     try:
         state = TaskState.load(task_id, state_dir)
@@ -183,7 +207,11 @@ def fix(task_id: str, max_fixes: int) -> None:
 @command_group.command()
 @click.option("--all", "kill_all", is_flag=True, help="Kill all orchestra sessions.")
 def cleanup(kill_all: bool) -> None:
-    """Clean up orchestra-managed tmux sessions."""
+    """Clean up orchestra-managed tmux sessions.
+
+    Args:
+        kill_all: Whether to enable or require the kill all.
+    """
     pipeline = Pipeline()
     if kill_all:
         count = pipeline.sessions.cleanup(prefix="orchestra-")
@@ -204,7 +232,13 @@ def cleanup(kill_all: bool) -> None:
 @click.option("--model", help="Specific model to use.")
 @click.option("--dry-run", is_flag=True, help="Show commands without executing.")
 def plan(task: str, model: str | None, dry_run: bool) -> None:
-    """Quick plan: triage + single planner. No implementation."""
+    """Quick plan: triage + single planner. No implementation.
+
+    Args:
+        task: Text or path value identifying the task.
+        model: Model used for this operation.
+        dry_run: Whether to enable or require the dry run.
+    """
     pipeline = Pipeline(dry_run=dry_run)
     router = pipeline.router
     sessions = pipeline.sessions

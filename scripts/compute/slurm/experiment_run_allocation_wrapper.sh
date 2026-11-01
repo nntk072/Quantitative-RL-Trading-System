@@ -71,7 +71,7 @@ if [[ -s "$OUT_DIR/experiment_run.json" ]]; then
   index_retry=1
   while ! python "$REPO/scripts/research/analysis/evidence/build_experiment_run_evidence_index.py" \
     --experiment-run-dir "$OUT_DIR" \
-    --output "$OUT_DIR/reports/thesis_evidence_index_before_${SLURM_JOB_ID}.json"; do
+    --output "$OUT_DIR/reports/experiment_run_evidence_index_before_${SLURM_JOB_ID}.json"; do
     touch "$FAILED" "$GPU_GATE_FAILED"
     retry_marker="$OUT_DIR/retry_experiment_run_evidence_index.$index_retry"
     echo "Experiment run evidence index failed; fix the cause, then touch $retry_marker"
@@ -150,7 +150,7 @@ set -e
 wait "$manager_pid" || manager_status=$?
 if ! python "$REPO/scripts/research/analysis/evidence/build_experiment_run_evidence_index.py" \
   --experiment-run-dir "$OUT_DIR" \
-  --output "$OUT_DIR/reports/thesis_evidence_index_after_${SLURM_JOB_ID}.json"; then
+  --output "$OUT_DIR/reports/experiment_run_evidence_index_after_${SLURM_JOB_ID}.json"; then
   echo "ERROR: could not finalize the experiment run evidence index" >&2
   if [[ "${allocation_status:-0}" -eq 0 ]]; then
     allocation_status=1

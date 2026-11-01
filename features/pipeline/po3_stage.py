@@ -42,12 +42,37 @@ def append_po3_state_features(
     mtf_sweep_levels: dict[str, pd.DataFrame],
     align_blocks: AlignBlocks,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Append configured PO3/IFVG state and return its optional sweep audit."""
+    """Append configured PO3/IFVG state and return its optional sweep audit.
+
+    Args:
+        primary: Tabular data used for the primary.
+        features: Feature values supplied to the operation.
+        feature_config: Feature config used by the operation described above.
+        cfg: Run configuration used by this operation.
+        primary_timeframes: Tabular data used for the primary timeframes.
+        scheduled_closes: Key-value data used for the scheduled closes.
+        session_start: Text or path value identifying the session start.
+        levels: Tabular data used for the levels.
+        structure: Tabular data used for the structure.
+        mtf_sweep_levels: Tabular data used for the mtf sweep levels.
+        align_blocks: Align blocks used by the operation described above.
+
+    Returns:
+        DataFrame returned by ``append_po3_state_features``.
+    """
     sweep_audit = pd.DataFrame()
     if feature_config is None or not bool(getattr(feature_config, "include_strategy_state", False)):
         return features, sweep_audit
 
     def primary_tf_bars(timeframe: str) -> pd.DataFrame:
+        """Return cached primary bars or derive them for the requested timeframe.
+
+        Args:
+            timeframe: Market timeframe label used by the feature configuration.
+
+        Returns:
+            Primary-symbol bars at that timeframe.
+        """
         key = str(timeframe).upper()
         frame = primary_timeframes.get(key)
         if frame is None:
@@ -56,6 +81,15 @@ def append_po3_state_features(
         return frame
 
     def htf_list(key: str, default: tuple[str, ...]) -> list[str]:
+        """Resolve configured higher-timeframe names with a fallback list.
+
+        Args:
+            key: Feature configuration block or legacy timeframe key.
+            default: Timeframes used when the configured list is absent or empty.
+
+        Returns:
+            Configured timeframe labels in their declared order.
+        """
         block = getattr(feature_config, key, None)
         configured = (
             getattr(block, "timeframes")
@@ -68,6 +102,15 @@ def append_po3_state_features(
         return timeframes or list(default)
 
     def enabled(key: str, default: bool) -> bool:
+        """Resolve a feature block's enabled flag and its legacy fallback.
+
+        Args:
+            key: Feature configuration block name.
+            default: Value used when no enabled flag is declared.
+
+        Returns:
+            Whether the configured feature block is enabled.
+        """
         block = getattr(feature_config, key, None)
         if block is not None and hasattr(block, "enabled"):
             return bool(getattr(block, "enabled"))
@@ -75,6 +118,14 @@ def append_po3_state_features(
         return bool(value) if value is not None else default
 
     def resample_pair(timeframe: str) -> pd.DataFrame:
+        """Return cached primary bars or resample them for one timeframe.
+
+        Args:
+            timeframe: Target market timeframe label.
+
+        Returns:
+            Resampled primary-symbol OHLC bars.
+        """
         key = str(timeframe).upper()
         frame = primary_timeframes.get(key)
         if frame is None:

@@ -11,7 +11,7 @@ trading intent, then validates eligibility, risk, and execution constraints.
 | Discrete | Legacy menu of holds, entries, and exits | A stable named category set; current trading menu contains 20 actions. |
 | Scalar continuous | Minimal continuous-control adapters | One bounded scalar; meaning is declared by its provider. |
 | Strategy overlay | Continuous controls for an established strategy action | A flag-derived, ordered coordinate schema with version `overlay-action-v2`. |
-| Setup-conditioned overlay | Select a categorical setup plus continuous execution controls | Legacy serialized version `thesis-overlay-action-v1`; category mask and category ordering are part of the schema. |
+| Setup-conditioned overlay | Select a categorical setup plus continuous execution controls | Version `trade-setup-overlay-action-v1`; category mask and category ordering are part of the schema. |
 
 ## Discrete action menu
 
@@ -53,8 +53,8 @@ tests.
 ## Setup-conditioned overlay
 
 This action form replaces a separate direction coordinate with one categorical
-setup coordinate. Its current serialized name is `thesis`, and the action
-schema is `thesis-overlay-action-v1`. The remaining optional coordinates are
+setup coordinate named `trade_setup`, and the action schema is
+`trade-setup-overlay-action-v1`. The remaining optional coordinates are
 the selected stop, risk, target(s), management modes, partial fractions, and
 exit decision, according to configuration.
 
@@ -75,7 +75,7 @@ invalid categories must have zero probability. See the
 1. Store schema version and ordered coordinate names with model artifacts.
 2. Validate semantic metadata on checkpoint load; matching vector width is not enough.
 3. Do not reorder or repurpose a coordinate under an existing version.
-4. Treat historical `thesis*` values as serialized compatibility identifiers until an explicit migration is implemented.
+4. Store and validate the candidate-catalog and observation versions alongside the action schema.
 5. Test decode/encode parity, masks, no-trade behavior, and every supported optional layout.
 
 ## Decision-provider boundary
@@ -88,7 +88,7 @@ adapters to validate action meaning without importing PPO internals.
 ## Code navigation
 
 The action contract is defined in `decisioning/actions.py` and
-`decisioning/trade_setup.py`; `decisioning/thesis.py` is a legacy import shim.
+`decisioning/trade_setup.py`.
 Backend-neutral decision values are in `decisioning/contracts.py`. Environment interpretation is composed in
 `simulation/environment/action_runtime.py` and related entry/position
 components.

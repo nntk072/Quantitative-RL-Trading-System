@@ -28,11 +28,10 @@ TARGET_CACHE = ROOT / "cache" / "us100_us500_20241230_20261016"
 BACKUP = ROOT / "cache" / "backups" / f"full-period-rebuild-{RUN}"
 REPORT = (
     ROOT
-    / "docs"
-    / "thesis"
-    / "evidence"
+    / "outputs"
+    / "research_audits"
     / "replacement_data_20261017"
-    / (f"full_period_data_cache_rebuild_{RUN}.json")
+    / f"full_period_data_cache_rebuild_{RUN}.json"
 )
 
 

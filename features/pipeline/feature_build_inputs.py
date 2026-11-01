@@ -25,7 +25,14 @@ RAW_FVG_FEATURE_SUFFIXES = (
 
 
 def split_raw_fvg_features(features: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Separate raw FVG prices and active/retest flags from normalized features."""
+    """Separate raw FVG prices and active/retest flags from normalized features.
+
+    Args:
+        features: Feature values supplied to the operation.
+
+    Returns:
+        DataFrame returned by ``split_raw_fvg_features``.
+    """
     columns = [
         column
         for column in features.columns
@@ -42,7 +49,16 @@ def split_raw_fvg_features(features: pd.DataFrame) -> tuple[pd.DataFrame, pd.Dat
 def configured_feature_timeframes(
     feature_config: object, block_name: str, default: tuple[str, ...]
 ) -> list[str]:
-    """Read timeframe configuration from a nested feature block or flat key."""
+    """Read timeframe configuration from a nested feature block or flat key.
+
+    Args:
+        feature_config: Feature config used by the operation described above.
+        block_name: Text or path value identifying the block name.
+        default: Items supplied for the default, in input order.
+
+    Returns:
+        Values returned by ``configured_feature_timeframes``, in the declared order.
+    """
     raw: object = None
     if feature_config is not None:
         block = getattr(feature_config, block_name, None)
@@ -63,7 +79,18 @@ def resample_market_pair(
     primary_timeframes: dict[str, pd.DataFrame] | None = None,
     secondary_timeframes: dict[str, pd.DataFrame] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame | None]:
-    """Select native source bars or resample each instrument's own M1 bars."""
+    """Select native source bars or resample each instrument's own M1 bars.
+
+    Args:
+        primary_m1: Tabular data used for the primary m1.
+        secondary_m1: Tabular data used for the secondary m1.
+        timeframe: Text or path value identifying the timeframe.
+        primary_timeframes: Tabular data used for the primary timeframes.
+        secondary_timeframes: Tabular data used for the secondary timeframes.
+
+    Returns:
+        DataFrame returned by ``resample_market_pair``.
+    """
     primary = (primary_timeframes or {}).get(timeframe)
     if primary is None:
         primary = primary_m1 if timeframe == "M1" else resample(primary_m1, cast(TF, timeframe))
@@ -78,7 +105,16 @@ def resample_market_pair(
 
 
 def feature_block_enabled(feature_config: object, block_name: str, default: bool) -> bool:
-    """Read the enabled flag from a nested feature block or its flat config key."""
+    """Read the enabled flag from a nested feature block or its flat config key.
+
+    Args:
+        feature_config: Feature config used by the operation described above.
+        block_name: Text or path value identifying the block name.
+        default: Whether to enable or require the default.
+
+    Returns:
+        Whether feature block enabled meets the requested condition.
+    """
     if feature_config is None:
         return default
     block = getattr(feature_config, block_name, None)
@@ -96,7 +132,19 @@ def source_timeframe_training_mask(
     scheduled_closes: dict[str, str],
     session_start: str,
 ) -> pd.Series | None:
-    """Map the M1 training cutoff only to completed source-timeframe candles."""
+    """Map the M1 training cutoff only to completed source-timeframe candles.
+
+    Args:
+        source_bars: Market bar or price data used for map the M1 training cutoff only to completed source-timeframe candles.
+        primary_m1: Tabular data used for the primary m1.
+        train_mask: Boolean mask identifying rows available for fitting.
+        timeframe: Text or path value identifying the timeframe.
+        scheduled_closes: Key-value data used for the scheduled closes.
+        session_start: Text or path value identifying the session start.
+
+    Returns:
+        Result of map the M1 training cutoff only to completed source-timeframe candles.
+    """
     if train_mask is None:
         return None
     aligned_mask = train_mask.reindex(primary_m1.index).fillna(False).astype(bool)

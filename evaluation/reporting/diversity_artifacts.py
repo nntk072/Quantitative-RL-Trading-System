@@ -23,7 +23,19 @@ def write_decision_artifacts(
     save_plots: bool = True,
     dpi: int = 100,
 ) -> DiversityReport:
-    """Write the text report, count tables, and the diagnostic figures."""
+    """Write the text report, count tables, and the diagnostic figures.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+        directory: Text or path value identifying the directory.
+        thresholds: Thresholds used by the operation described above.
+        save_csv: Whether to enable or require the save csv.
+        save_plots: Whether to enable or require the save plots.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of write the text report, count tables, and the diagnostic figures.
+    """
     directory.mkdir(parents=True, exist_ok=True)
     report = diversity_report(trades, thresholds)
     if save_csv:
@@ -41,6 +53,12 @@ def write_decision_artifacts(
 
 
 def _write_shares(path: Path, shares: pd.Series) -> None:
+    """Write shares.
+
+    Args:
+        path: Path to the input file or directory.
+        shares: Tabular data used for the shares.
+    """
     if shares.empty:
         pd.DataFrame(columns=["family", "share"]).to_csv(path, index=False)
         return

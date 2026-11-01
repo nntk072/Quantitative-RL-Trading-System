@@ -40,7 +40,18 @@ def smt_divergence(
         *,
         high: bool,
     ) -> NDArray[np.float64]:
-        """Compare consecutive confirmed, time-matched swings without lookahead."""
+        """Compare consecutive confirmed, time-matched swings without lookahead.
+
+        Args:
+            primary_event: Tabular data used for the primary event.
+            secondary_event: Tabular data used for the secondary event.
+            primary_price: Tabular data used for the primary price.
+            secondary_price: Tabular data used for the secondary price.
+            high: Whether to enable or require the high.
+
+        Returns:
+            Array returned by ``_paired_divergences``.
+        """
         p_events = np.flatnonzero(primary_event.to_numpy(dtype=bool))
         s_events = np.flatnonzero(secondary_event.to_numpy(dtype=bool))
         p_prices = primary_price.to_numpy(dtype=float)

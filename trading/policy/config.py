@@ -8,11 +8,29 @@ from typing import Any
 
 
 def _float_or_default(value: Any, default: float) -> float:
+    """Process or default.
+
+    Args:
+        value: Value to process.
+        default: Numeric value used for the default.
+
+    Returns:
+        Numeric result returned by ``_float_or_default``.
+    """
     return default if value is None else float(value)
 
 
 @dataclass(frozen=True)
 class TradingPolicyConfig:
+    """Resolved account and payout policy settings used by simulation and live strategies.
+
+    Attributes:
+        operating_balance: Account balance retained after a payout.
+        profit_target_balance: Balance required to trigger payout eligibility.
+        account_floor: Minimum permitted account equity.
+        payout_amount: Optional configured payout amount.
+    """
+
     mode: str = "legacy"
     operating_balance: float = 100_000.0
     profit_target_balance: float = 110_000.0
@@ -30,9 +48,19 @@ class TradingPolicyConfig:
 
     @property
     def repeated_payout(self) -> bool:
+        """Return whether the account policy enables repeated payouts.
+
+        Returns:
+            Whether repeated payout meets the requested condition.
+        """
         return self.mode == "repeated_payout"
 
     def validate(self) -> TradingPolicyConfig:
+        """Validate payout thresholds and account-floor relationships.
+
+        Returns:
+            Result of validate payout thresholds and account-floor relationships.
+        """
         if self.mode not in {"legacy", "repeated_payout"}:
             raise ValueError(f"unknown trading_policy.mode: {self.mode!r}")
         if self.repeated_payout:
@@ -61,10 +89,23 @@ class TradingPolicyConfig:
         return self
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the policy settings as a JSON-compatible mapping.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         return asdict(self)
 
 
 def resolve_trading_policy(cfg: Any) -> TradingPolicyConfig:
+    """Resolve trading policy settings from an attribute-based configuration.
+
+    Args:
+        cfg: Configuration object containing the optional trading policy block.
+
+    Returns:
+        Validated policy settings with defaults applied.
+    """
     block = cfg.get("trading_policy", {}) if hasattr(cfg, "get") else {}
     if block is None:
         block = {}
@@ -115,4 +156,12 @@ def resolve_trading_policy(cfg: Any) -> TradingPolicyConfig:
 
 
 def resolve_trading_policy_mapping(cfg: Mapping[str, Any]) -> TradingPolicyConfig:
+    """Resolve trading policy settings from a mapping configuration.
+
+    Args:
+        cfg: Configuration mapping containing the optional trading policy block.
+
+    Returns:
+        Validated policy settings with defaults applied.
+    """
     return resolve_trading_policy(dict(cfg))

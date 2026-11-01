@@ -19,7 +19,14 @@ _PRE_NY_END = time(16, 29)
 
 
 def _ohlcv_frame(m1_bars: pd.DataFrame) -> pd.DataFrame:
-    """Return an OHLCV frame suitable for M5 resampling."""
+    """Return an OHLCV frame suitable for M5 resampling.
+
+    Args:
+        m1_bars: One-minute OHLCV bars used to build the sequences.
+
+    Returns:
+        DataFrame returned by ``_ohlcv_frame``.
+    """
     out = m1_bars.copy()
     if "volume" not in out.columns:
         if "tickvol" in out.columns:
@@ -40,6 +47,14 @@ def build_pre_ny_by_date(
 
     Window is broker-local 01:05–16:29 (inclusive end via last M5 bar ≤ 16:29).
     Days with no bars in the window are omitted.
+
+    Args:
+        m1_bars: One-minute OHLCV bars used to build the sequences.
+        seq_len: Number of consecutive bars in each input sequence.
+        n_features: Number of feature columns in each observation.
+
+    Returns:
+        Mapping from ``date`` keys to ``np.ndarray[Any, Any]`` values.
     """
     if m1_bars.empty:
         return {}
@@ -98,7 +113,15 @@ def load_vae_from_checkpoint(
     *,
     config_path: str | Path | None = None,
 ) -> VAE:
-    """Construct a VAE and load ``state_dict`` from ``path``."""
+    """Construct a VAE and load ``state_dict`` from ``path``.
+
+    Args:
+        path: Path to the input file or directory.
+        config_path: Path to the configuration file.
+
+    Returns:
+        Result of construct a VAE and load ``state_dict`` from ``path``.
+    """
     cfg: dict[str, Any] = {}
     if config_path is not None and Path(config_path).is_file():
         with open(config_path, encoding="utf-8") as fh:

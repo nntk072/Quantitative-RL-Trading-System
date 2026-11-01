@@ -33,6 +33,15 @@ def timeframe_close_times(
     Intraday bars normally close one timeframe after their open. If a bar
     overlaps a date's scheduled NY close, its availability is clipped to that
     known close. Daily bars keep their broker-midnight boundary.
+
+    Args:
+        bars: Market bars to process.
+        timeframe: Text or path value identifying the timeframe.
+        scheduled_closes: Key-value data used for the scheduled closes.
+        session_start: Text or path value identifying the session start.
+
+    Returns:
+        Result of return bar close timestamps from open-stamped bars and the session calendar.
     """
     tf = str(timeframe).upper()
     if tf not in _TIMEFRAME_DURATION:
@@ -57,6 +66,15 @@ def timeframe_close_times(
 
 
 def _prefix_cols(df: pd.DataFrame, prefix: str) -> pd.DataFrame:
+    """Process cols.
+
+    Args:
+        df: Input DataFrame supplying the rows used by this calculation.
+        prefix: Text or path value identifying the prefix.
+
+    Returns:
+        DataFrame returned by ``_prefix_cols``.
+    """
     df = df.copy()
     df.columns = [f"{prefix}_{c}" for c in df.columns]
     return df
@@ -76,22 +94,19 @@ def align_timeframes(
     that already shift (Chain F FVG/IFVG) must pass ``completed_bars=False``
     or align without this helper.
 
-    Parameters
-    ----------
-    m1:
-        M1 DataFrame (reference spine); must have a tz-aware DatetimeIndex.
-    higher:
-        Dict mapping timeframe label (e.g. ``"M5"``) to the corresponding
-        bar DataFrame.
-    prefix:
-        Optional column prefix (e.g. symbol name).
-    completed_bars:
-        If True (default), ``shift(1)`` before ffill.
-    availability_times:
-        Optional per-timeframe close timestamps indexed like ``higher[tf]``.
-        A feature becomes visible on the M1 spine at its close timestamp. This
-        handles gaps and shortened final bars without using the next observed
-        HTF row as a proxy for the close.
+    Args:
+        m1: M1 DataFrame (reference spine); must have a tz-aware DatetimeIndex.
+        higher: Dict mapping timeframe label (e.g. ``"M5"``) to the corresponding
+            bar DataFrame.
+        prefix: Optional column prefix (e.g. symbol name).
+        completed_bars: If True (default), ``shift(1)`` before ffill.
+        availability_times: Optional per-timeframe close timestamps indexed like ``higher[tf]``.
+            A feature becomes visible on the M1 spine at its close timestamp. This
+            handles gaps and shortened final bars without using the next observed
+            HTF row as a proxy for the close.
+
+    Returns:
+        DataFrame returned by ``align_timeframes``.
     """
     result = m1.copy()
     if prefix:
@@ -125,6 +140,14 @@ def join_symbols(
     """Join secondary (e.g. US500) columns onto the primary (US100) spine.
 
     Uses ``merge_asof`` (causal: secondary bar must be ≤ primary bar time).
+
+    Args:
+        primary: Tabular data used for the primary.
+        secondary: Tabular data used for the secondary.
+        secondary_prefix: Text or path value identifying the secondary prefix.
+
+    Returns:
+        DataFrame returned by ``join_symbols``.
     """
     sec = secondary.copy()
     sec = _prefix_cols(sec, secondary_prefix)

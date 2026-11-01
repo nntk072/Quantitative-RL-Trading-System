@@ -15,6 +15,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class StrategyInitializationMixin(RuntimeMixinBase):
+    """Initialize configured strategy actions and trade-setup selection."""
+
     _selected_trade_setup: TradeSetupCandidate | None
 
     def _initialize_strategy_runtime(
@@ -27,6 +29,16 @@ class StrategyInitializationMixin(RuntimeMixinBase):
         features: pd.DataFrame | None,
     ) -> None:
         # Strategy semantics (Idea 1/2) vs. legacy behaviour (Idea 3 baseline).
+        """Initialize strategy runtime.
+
+        Args:
+            strategy: Strategy used to select or evaluate trades.
+            strategy_actions: Whether to enable or require the strategy actions.
+            sl_buffer_pts: Numeric value used for the sl buffer pts.
+            bundle_data: Bundle data used by the operation described above.
+            bars: Market bars to process.
+            features: Feature values supplied to the operation.
+        """
         self.strategy: TradingStrategy = strategy if strategy is not None else BaselineStrategy()
         self.strategy_actions = strategy_actions
         self.sl_buffer_pts = float(sl_buffer_pts)

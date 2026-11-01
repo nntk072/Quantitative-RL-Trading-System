@@ -21,10 +21,25 @@ CACHE_FAILURE_SIGNATURE = "FileExistsError: [Errno 17] File exists: 'cache'"
 
 
 def _atomic_json(path: Path, value: dict[str, Any]) -> None:
+    """Process json.
+
+    Args:
+        path: Path to the input file or directory.
+        value: Value to process.
+    """
     write_json_atomic(path, value, default=None, new_file_mode=0o644)
 
 
 def _checkpoint_attempt(checkpoint: Path, experiment_run_dir: Path) -> int:
+    """Process attempt.
+
+    Args:
+        checkpoint: Text or path value identifying the checkpoint.
+        experiment_run_dir: Text or path value identifying the experiment run dir.
+
+    Returns:
+        Numeric result returned by ``_checkpoint_attempt``.
+    """
     relative = checkpoint.resolve().relative_to(experiment_run_dir.resolve())
     attempts = [
         int(match.group(1))
@@ -37,6 +52,12 @@ def _checkpoint_attempt(checkpoint: Path, experiment_run_dir: Path) -> int:
 
 
 def _write_immutable_backup(path: Path, contents: bytes) -> None:
+    """Write immutable backup.
+
+    Args:
+        path: Path to the input file or directory.
+        contents: Contents used by the operation described above.
+    """
     if path.exists():
         if path.read_bytes() != contents:
             raise FileExistsError(f"recovery backup differs from current evidence: {path}")
@@ -49,6 +70,14 @@ def _write_immutable_backup(path: Path, contents: bytes) -> None:
 
 
 def prepare_experiment_run_resume(experiment_run_dir: Path) -> dict[str, Any]:
+    """Prepare a failed run for resume while preserving its original manifest.
+
+    Args:
+        experiment_run_dir: Run directory containing the manifest and artifacts.
+
+    Returns:
+        Recovery actions and the validated fingerprint for the resume attempt.
+    """
     artifacts = ExperimentRunArtifactLayout(experiment_run_dir)
     manifest_path = artifacts.manifest
     original_bytes = manifest_path.read_bytes()
@@ -246,6 +275,7 @@ def prepare_experiment_run_resume(experiment_run_dir: Path) -> dict[str, Any]:
 
 
 def main() -> None:
+    """Print the recovery plan for one experiment-run directory."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--experiment-run-dir", type=Path, required=True)
     args = parser.parse_args()

@@ -8,7 +8,6 @@ import pandas as pd
 from decisioning.actions import ActionSchema
 from decisioning.trade_setup import (
     NO_TRADE_ID,
-    LegacyThesisActionSchema,
     TradeSetupActionSchema,
     TradeSetupCandidate,
     trade_setup_candidate,
@@ -22,6 +21,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class ActionDecodingMixin(RuntimeMixinBase):
+    """Decode policy outputs into trade intent and stop/target controls."""
+
     _selected_trade_setup: TradeSetupCandidate | None
 
     def _decode_strategy_action(
@@ -29,9 +30,18 @@ class ActionDecodingMixin(RuntimeMixinBase):
         action: int | float | np.ndarray[Any, Any],
         feat_row: FeatureRow | pd.Series | None,
     ) -> tuple[int, float, float, str]:
+        """Decode strategy action.
+
+        Args:
+            action: Action to apply to the current state.
+            feat_row: Feature values for the current market bar.
+
+        Returns:
+            Values returned by ``_decode_strategy_action``, in the declared order.
+        """
         assert isinstance(
             self.action_schema,
-            (ActionSchema, TradeSetupActionSchema, LegacyThesisActionSchema),
+            (ActionSchema, TradeSetupActionSchema),
         )
         arr = np.asarray(action, dtype=np.float32).reshape(-1)
         if arr.size != self.action_schema.width:
@@ -45,14 +55,12 @@ class ActionDecodingMixin(RuntimeMixinBase):
         rr_ratio = self.rr_ratio_range[0]
         if not np.isfinite(arr).all():
             raise ValueError("strategy action values must all be finite")
-        trade_setup_mode = isinstance(
-            self.action_schema, (TradeSetupActionSchema, LegacyThesisActionSchema)
-        )
+        trade_setup_mode = isinstance(self.action_schema, TradeSetupActionSchema)
         raw = np.clip(arr, -1.0, 1.0)
         u = 0.5 * (raw + 1.0)
         indices = self.action_schema.indices
         if trade_setup_mode:
-            candidate_index = indices.get("trade_setup", indices.get("thesis"))
+            candidate_index = indices.get("trade_setup")
             if candidate_index is None:
                 raise ValueError("trade setup action schema has no categorical setup coordinate")
             candidate_id = trade_setup_id_from_box(float(raw[candidate_index]))
@@ -65,9 +73,7 @@ class ActionDecodingMixin(RuntimeMixinBase):
                 discrete_action = 0
                 risk_frac = 0.0
                 self._selected_trade_setup = None
-                self._reject(
-                    "thesis_inactive" if self.legacy_thesis_contract else "trade_setup_inactive"
-                )
+                self._reject("trade_setup_inactive")
             else:
                 discrete_action = candidate.direction
         else:
@@ -169,6 +175,14 @@ class ActionDecodingMixin(RuntimeMixinBase):
     def _decode_continuous_action(
         self, action: int | float | np.ndarray[Any, Any]
     ) -> tuple[int, float, float, str]:
+        """Decode continuous action.
+
+        Args:
+            action: Action to apply to the current state.
+
+        Returns:
+            Values returned by ``_decode_continuous_action``, in the declared order.
+        """
         tp_mode = "rr"
         if isinstance(action, np.ndarray):
             action_value = float(action[0]) if action.size > 0 else 0.0
@@ -189,6 +203,14 @@ class ActionDecodingMixin(RuntimeMixinBase):
     def _decode_discrete_action(
         self, action: int | float | np.ndarray[Any, Any]
     ) -> tuple[int, float, float, str]:
+        """Decode discrete action.
+
+        Args:
+            action: Action to apply to the current state.
+
+        Returns:
+            Values returned by ``_decode_discrete_action``, in the declared order.
+        """
         tp_mode = "rr"
         risk_frac = self.risk_frac_range[0]
         rr_ratio = self.rr_ratio_range[0]
@@ -240,7 +262,15 @@ class ActionDecodingMixin(RuntimeMixinBase):
         action: int | float | np.ndarray[Any, Any],
         feat_row: FeatureRow | pd.Series | None = None,
     ) -> tuple[int, float, float, str]:
-        """Decode strategy, continuous, or discrete actions through their stable schemas."""
+        """Decode strategy, continuous, or discrete actions through their stable schemas.
+
+        Args:
+            action: Action to apply to the current state.
+            feat_row: Feature values for the current market bar.
+
+        Returns:
+            Values returned by ``_decode_action``, in the declared order.
+        """
         self._selected_sl_anchor = 0.0
         self._selected_trade_setup = None
         self._selected_tp_fraction = 0.0

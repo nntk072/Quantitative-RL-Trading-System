@@ -28,6 +28,15 @@ def append_session_features(
 
     The source clock is resolved independently of the running-session feature
     flag because previous-session context can be enabled on its own.
+
+    Args:
+        primary: Tabular data used for the primary.
+        features: Feature values supplied to the operation.
+        cfg: Run configuration used by this operation.
+        feature_config: Feature config used by the operation described above.
+
+    Returns:
+        DataFrame returned by ``append_session_features``.
     """
     if feature_config is None:
         return features

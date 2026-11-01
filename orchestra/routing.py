@@ -101,7 +101,14 @@ class RouteUpdate:
 
 
 def parse_phase_ref(value: Any) -> Phase | None:
-    """Parse a phase reference from int, step number, or phase name."""
+    """Parse a phase reference from int, step number, or phase name.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Result of parse a phase reference from int, step number, or phase name.
+    """
     if value is None:
         return None
     if isinstance(value, int):
@@ -121,6 +128,14 @@ def parse_phase_ref(value: Any) -> Phase | None:
 
 
 def _parse_skip_list(raw: Any) -> frozenset[Phase]:
+    """Parse skip list.
+
+    Args:
+        raw: Raw used by the operation described above.
+
+    Returns:
+        Result of parse skip list.
+    """
     if not isinstance(raw, list):
         return frozenset()
     phases: set[Phase] = set()
@@ -132,6 +147,12 @@ def _parse_skip_list(raw: Any) -> frozenset[Phase]:
 
 
 def _apply_route_dict(update: RouteUpdate, route: dict[str, Any]) -> None:
+    """Apply route dict.
+
+    Args:
+        update: Update used by the operation described above.
+        route: Key-value data used for the route.
+    """
     if "goto" in route:
         update.goto = parse_phase_ref(route["goto"])
     if "skip" in route:
@@ -149,7 +170,14 @@ def _apply_route_dict(update: RouteUpdate, route: dict[str, Any]) -> None:
 
 
 def parse_route_from_text(text: str) -> RouteUpdate | None:
-    """Extract the last ``route`` block from agent output."""
+    """Extract the last ``route`` block from agent output.
+
+    Args:
+        text: Text or path value identifying the text.
+
+    Returns:
+        Result of extract the last ``route`` block from agent output.
+    """
     update: RouteUpdate | None = None
     for obj in extract_json_objects(text):
         route = obj.get("route")
@@ -164,7 +192,12 @@ def parse_route_from_text(text: str) -> RouteUpdate | None:
 
 
 def merge_route(data: dict[str, Any], update: RouteUpdate | None) -> None:
-    """Merge a parsed route update into task state."""
+    """Merge a parsed route update into task state.
+
+    Args:
+        data: Input data to process.
+        update: Update used by the operation described above.
+    """
     if update is None:
         return
     route = data.setdefault("route", {})
@@ -186,6 +219,15 @@ def merge_route(data: dict[str, Any], update: RouteUpdate | None) -> None:
 
 
 def effective_planner_count(data: dict[str, Any], default: int) -> int:
+    """Read the nonnegative planner count override or use the default.
+
+    Args:
+        data: Input data to process.
+        default: Numeric value used for the default.
+
+    Returns:
+        Numeric result returned by ``effective_planner_count``.
+    """
     route = data.get("route") or {}
     if "planner_count" in route:
         return max(0, int(route["planner_count"]))
@@ -193,6 +235,15 @@ def effective_planner_count(data: dict[str, Any], default: int) -> int:
 
 
 def effective_critic_count(data: dict[str, Any], default: int) -> int:
+    """Read the nonnegative critic count override or use the default.
+
+    Args:
+        data: Input data to process.
+        default: Numeric value used for the default.
+
+    Returns:
+        Numeric result returned by ``effective_critic_count``.
+    """
     route = data.get("route") or {}
     if "critic_count" in route:
         return max(0, int(route["critic_count"]))
@@ -200,6 +251,15 @@ def effective_critic_count(data: dict[str, Any], default: int) -> int:
 
 
 def effective_reviewer_count(data: dict[str, Any], default: int) -> int:
+    """Read the nonnegative reviewer count override or use the default.
+
+    Args:
+        data: Input data to process.
+        default: Numeric value used for the default.
+
+    Returns:
+        Numeric result returned by ``effective_reviewer_count``.
+    """
     route = data.get("route") or {}
     if "reviewer_count" in route:
         return max(0, int(route["reviewer_count"]))
@@ -207,16 +267,42 @@ def effective_reviewer_count(data: dict[str, Any], default: int) -> int:
 
 
 def _explicit_skip(data: dict[str, Any]) -> frozenset[Phase]:
+    """Process skip.
+
+    Args:
+        data: Input data to process.
+
+    Returns:
+        Result of process skip.
+    """
     route = data.get("route") or {}
     return _parse_skip_list(route.get("skip"))
 
 
 def _multi_plan(data: dict[str, Any], planner_count: int) -> bool:
+    """Process plan.
+
+    Args:
+        data: Input data to process.
+        planner_count: Number specifying the planner count for this operation.
+
+    Returns:
+        Whether multi plan meets the requested condition.
+    """
     outputs = data.get("planner_outputs") or []
     return planner_count > 1 or len(outputs) > 1
 
 
 def _multi_review(data: dict[str, Any], reviewer_count: int) -> bool:
+    """Process review.
+
+    Args:
+        data: Input data to process.
+        reviewer_count: Number specifying the reviewer count for this operation.
+
+    Returns:
+        Whether multi review meets the requested condition.
+    """
     outputs = data.get("review_outputs") or []
     return reviewer_count > 1 or len(outputs) > 1
 
@@ -228,7 +314,17 @@ def should_auto_skip(
     planner_count: int,
     reviewer_count: int,
 ) -> bool:
-    """Return True when a merge-only phase has nothing to merge."""
+    """Return True when a merge-only phase has nothing to merge.
+
+    Args:
+        phase: Phase used by the operation described above.
+        data: Input data to process.
+        planner_count: Number specifying the planner count for this operation.
+        reviewer_count: Number specifying the reviewer count for this operation.
+
+    Returns:
+        Whether should auto skip meets the requested condition.
+    """
     if phase in _explicit_skip(data):
         return True
     if phase is Phase.SYNTHESIS and planner_count <= 1:
@@ -247,7 +343,17 @@ def substitute_auto_skips(
     planner_count: int,
     reviewer_count: int,
 ) -> Phase:
-    """Replace merge-only phases with their sensible successor."""
+    """Replace merge-only phases with their sensible successor.
+
+    Args:
+        target: Path or filename identifying the target.
+        data: Input data to process.
+        planner_count: Number specifying the planner count for this operation.
+        reviewer_count: Number specifying the reviewer count for this operation.
+
+    Returns:
+        Result of replace merge-only phases with their sensible successor.
+    """
     if should_auto_skip(target, data, planner_count=planner_count, reviewer_count=reviewer_count):
         if target is Phase.SYNTHESIS:
             return Phase.IMPLEMENTATION
@@ -262,11 +368,27 @@ def substitute_auto_skips(
 
 
 def is_goto_allowed(current: Phase, target: Phase) -> bool:
+    """Return whether a route update may jump directly to the target phase.
+
+    Args:
+        current: Current used by the operation described above.
+        target: Path or filename identifying the target.
+
+    Returns:
+        Whether is goto allowed meets the requested condition.
+    """
     return target in ALLOWED_NEXT.get(current, frozenset())
 
 
 def is_coding_task(data: dict[str, Any]) -> bool:
-    """Heuristic: tasks that require implementation before reporting."""
+    """Heuristic: tasks that require implementation before reporting.
+
+    Args:
+        data: Input data to process.
+
+    Returns:
+        Whether is coding task meets the requested condition.
+    """
     for obj in extract_json_objects(str(data.get("triage_output") or "")):
         domain = obj.get("domain")
         if isinstance(domain, str) and domain in ("docs", "config", "research"):
@@ -286,7 +408,17 @@ def apply_soft_guards(
     *,
     tier: str,
 ) -> Phase:
-    """Force implementation before early exit on coding tasks."""
+    """Force implementation before early exit on coding tasks.
+
+    Args:
+        current: Current used by the operation described above.
+        target: Path or filename identifying the target.
+        data: Input data to process.
+        tier: Text or path value identifying the tier.
+
+    Returns:
+        Result of force implementation before early exit on coding tasks.
+    """
     if target is not Phase.REPORTING:
         return target
     if data.get("implementation_succeeded"):
@@ -304,7 +436,13 @@ def apply_soft_guards(
 
 
 def apply_triage_bootstrap(data: dict[str, Any], *, tier: str, had_explicit_goto: bool) -> None:
-    """T0 silent default: jump to implementation (then 9→10)."""
+    """T0 silent default: jump to implementation (then 9→10).
+
+    Args:
+        data: Input data to process.
+        tier: Text or path value identifying the tier.
+        had_explicit_goto: Whether to enable or require the had explicit goto.
+    """
     if had_explicit_goto:
         return
     if tier != "T0":
@@ -322,7 +460,20 @@ def silent_default_next(
     verification_passed: bool | None = None,
     tier: str = "T2",
 ) -> Phase:
-    """Phase default when the agent omits ``route.goto``."""
+    """Phase default when the agent omits ``route.goto``.
+
+    Args:
+        current: Current used by the operation described above.
+        data: Input data to process.
+        planner_count: Number specifying the planner count for this operation.
+        critic_count: Number specifying the critic count for this operation.
+        reviewer_count: Number specifying the reviewer count for this operation.
+        verification_passed: Verification passed used by the operation described above.
+        tier: Text or path value identifying the tier.
+
+    Returns:
+        Result of phase default when the agent omits ``route.goto``.
+    """
     if current is Phase.TRIAGE:
         if tier == "T0":
             return Phase.IMPLEMENTATION
@@ -365,7 +516,15 @@ def silent_default_next(
 
 
 def check_revisit_cap(data: dict[str, Any], target: Phase) -> Phase:
-    """Limit rewinds among phases 2–9."""
+    """Limit rewinds among phases 2–9.
+
+    Args:
+        data: Input data to process.
+        target: Path or filename identifying the target.
+
+    Returns:
+        Result of limit rewinds among phases 2–9.
+    """
     if target in (Phase.TRIAGE, Phase.REPORTING, Phase.DONE, Phase.PENDING):
         return target
     visits = data.setdefault("phase_visit_counts", {})
@@ -376,6 +535,12 @@ def check_revisit_cap(data: dict[str, Any], target: Phase) -> Phase:
 
 
 def record_phase_visit(data: dict[str, Any], phase: Phase) -> None:
+    """Increment visit and hop counters for a runnable pipeline phase.
+
+    Args:
+        data: Input data to process.
+        phase: Phase used by the operation described above.
+    """
     if phase not in Phase.runnable():
         return
     visits = data.setdefault("phase_visit_counts", {})
@@ -394,7 +559,21 @@ def resolve_next_phase(
     verification_passed: bool | None = None,
     tier: str = "T2",
 ) -> tuple[Phase, str]:
-    """Choose the next phase after ``current`` completes."""
+    """Choose the next phase after ``current`` completes.
+
+    Args:
+        current: Current used by the operation described above.
+        data: Input data to process.
+        update: Update used by the operation described above.
+        planner_count: Number specifying the planner count for this operation.
+        critic_count: Number specifying the critic count for this operation.
+        reviewer_count: Number specifying the reviewer count for this operation.
+        verification_passed: Verification passed used by the operation described above.
+        tier: Text or path value identifying the tier.
+
+    Returns:
+        Values returned by ``resolve_next_phase``, in the declared order.
+    """
     eff_planners = effective_planner_count(data, planner_count)
     eff_critics = effective_critic_count(data, critic_count)
     eff_reviewers = effective_reviewer_count(data, reviewer_count)
@@ -457,6 +636,15 @@ def resolve_next_phase(
 
 
 def route_notes_for_role(data: dict[str, Any], role: str) -> str:
+    """Return prompt notes configured for a role, or empty text when absent.
+
+    Args:
+        data: Input data to process.
+        role: Text or path value identifying the role.
+
+    Returns:
+        Text returned by ``route_notes_for_role``.
+    """
     route = data.get("route") or {}
     notes = route.get("prompt_notes") or {}
     return str(notes.get(role, "") or "")

@@ -36,7 +36,14 @@ if set(ENCODER_TYPES) != set(ENCODER_ARCHITECTURE_IDS):
 
 
 def encoder_for(architecture: str) -> type[Any]:
-    """Resolve a declared encoder ID, failing closed for unknown names."""
+    """Resolve a declared encoder ID, failing closed for unknown names.
+
+    Args:
+        architecture: Text or path value identifying the architecture.
+
+    Returns:
+        Result of resolve a declared encoder ID, failing closed for unknown names.
+    """
     try:
         return ENCODER_TYPES[architecture]
     except KeyError as exc:

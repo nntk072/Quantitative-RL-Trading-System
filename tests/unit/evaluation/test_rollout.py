@@ -79,7 +79,7 @@ def _make_features(bars: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def test_evaluate_model_forwards_thesis_mode_to_the_environment(
+def test_evaluate_model_forwards_trade_setup_mode_to_the_environment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     received: dict[str, Any] = {}
@@ -99,10 +99,10 @@ def test_evaluate_model_forwards_thesis_mode_to_the_environment(
             _ScriptedModel({}),
             bars=bars,
             features=_make_features(bars),
-            thesis_actions=True,
+            trade_setup_actions=True,
         )
 
-    assert received["thesis_actions"] is True
+    assert received["trade_setup_actions"] is True
 
 
 def test_evaluate_model_produces_trades_and_valid_equity():

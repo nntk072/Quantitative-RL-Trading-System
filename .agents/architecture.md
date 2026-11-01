@@ -2,8 +2,9 @@
 
 > Agent navigation map. The authoritative narrative is [docs/architecture.md](../docs/architecture.md).
 
-The detailed path ownership ledger is maintained in
-[`architecture/repository_file_ownership_inventory.csv`](architecture/repository_file_ownership_inventory.csv).
+Package ownership is summarized below; task-specific context and ownership
+boundaries are maintained in [`.agents/domain_maps/`](domain_maps/) and the
+corresponding [architecture guide](../docs/architecture.md).
 
 ## Dependency Graph
 
@@ -55,7 +56,7 @@ qrl-experiment
 qrl-compute
 ```
 
-Use package APIs or these command surfaces. `scripts/` includes command entry points plus thesis-specific evidence builders and audits; some existing scripts hold substantial logic and are not general-purpose APIs. Put new shared behavior in its owning package, and keep new CLI wrappers thin.
+Use package APIs or these command surfaces. `scripts/` includes command entry points plus research-specific evidence builders and audits; some existing scripts hold substantial logic and are not general-purpose APIs. Put new shared behavior in its owning package, and keep new CLI wrappers thin.
 
 ## Cache Versioning
 

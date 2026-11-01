@@ -22,6 +22,15 @@ def publish_observation_memmap(
     Single-environment runs retain the existing private ``to_numpy`` path.
     The pandas frame is still passed to the bundle builder; this removes only
     the additional float32 matrix copy per worker.
+
+    Args:
+        features: Feature values supplied to the operation.
+        bars: Market bars to process.
+        cfg: Run configuration used by this operation.
+        path: Path to the input file or directory.
+
+    Returns:
+        Result of write one model-observation array so workers can mmap it read-only.
     """
     if int(cfg.env.get("n_envs", 1)) <= 1:
         return None

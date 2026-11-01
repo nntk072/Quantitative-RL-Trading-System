@@ -13,6 +13,8 @@ from .routing import (
 
 
 class PhasePlanningMixin(PipelineMixinBase):
+    """Collect planner proposals and produce the executable task plan."""
+
     def _phase_planning(self) -> None:
         """Phase 2: Parallel planning with multiple models."""
         planner_n = self._effective_planner_count()

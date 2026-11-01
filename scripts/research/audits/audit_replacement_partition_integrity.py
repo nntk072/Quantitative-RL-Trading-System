@@ -16,7 +16,8 @@ from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
 DEFAULT_REPORT = (
-    ROOT / "docs/thesis/evidence/replacement_data_20261017/data_partition_integrity_20261018.json"
+    ROOT
+    / "outputs/research_audits/replacement_data_20261017/data_partition_integrity_20261018.json"
 )
 SYMBOLS = ("US100.cash", "US500.cash")
 TRAIN_END = date(2025, 12, 31)

@@ -47,7 +47,11 @@ PAPER_TRADING = os.getenv("PAPER_TRADING", "true").strip().lower() != "false"
 
 
 def load_config() -> dict[str, Any]:
-    """Load configuration from YAML file."""
+    """Load configuration from YAML file.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     repository_root = Path(__file__).resolve().parents[3]
     config_path = repository_root / "config" / "symbols_config.yaml"
 
@@ -62,7 +66,14 @@ def load_config() -> dict[str, Any]:
 
 
 def get_symbol_candidates(config: dict[str, Any]) -> list[str]:
-    """Get symbol candidates from config."""
+    """Get symbol candidates from config.
+
+    Args:
+        config: Configuration values used by this operation.
+
+    Returns:
+        Values returned by ``get_symbol_candidates``, in the declared order.
+    """
     candidates = []
 
     if "symbol_categories" in config:
@@ -80,7 +91,15 @@ def get_symbol_candidates(config: dict[str, Any]) -> list[str]:
 
 
 def select_volatile_symbols(candidates: list[str], max_symbols: int = 3) -> list[str]:
-    """Select top volatile symbols."""
+    """Select top volatile symbols.
+
+    Args:
+        candidates: Items supplied for the candidates, in input order.
+        max_symbols: Numeric value used for the max symbols.
+
+    Returns:
+        Values returned by ``select_volatile_symbols``, in the declared order.
+    """
     logger.info(f"Analyzing volatility for {len(candidates)} symbol candidates...")
 
     try:
@@ -107,7 +126,15 @@ def select_volatile_symbols(candidates: list[str], max_symbols: int = 3) -> list
 
 
 def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    """Create strategy instance based on type."""
+    """Create strategy instance based on type.
+
+    Args:
+        data_source: Data source used by the operation described above.
+        strategy_type: Text or path value identifying the strategy type.
+
+    Returns:
+        Result of create strategy instance based on type.
+    """
     if strategy_type == "crossover":
         return CrossOverStrategy(data_source)
     elif strategy_type == "smc":
@@ -122,12 +149,15 @@ def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy
 
 
 def initialize_trading_system() -> MultiSymbolRobot:
-    """Initialize the complete trading system."""
+    """Initialize the complete trading system.
+
+    Returns:
+        Result of initialize the complete trading system.
+    """
     logger.info("=" * 80)
     logger.info("INITIALIZING LIVE TRADING SYSTEM")
     logger.info("=" * 80)
 
-    # Load configuration
     config = load_config()
 
     # Get symbol candidates
@@ -221,6 +251,7 @@ class TradingSystem:
     """Manages the trading system lifecycle."""
 
     def __init__(self) -> None:
+        """Initialize TradingSystem and its owned state."""
         self.robot_instance: MultiSymbolRobot | None = None
         self.scheduler = sched.scheduler(time.time, time.sleep)
 
@@ -264,7 +295,11 @@ class TradingSystem:
         return t  # type: ignore[return-value]
 
     def start(self, *, once: bool = False) -> None:
-        """Start the trading system."""
+        """Start the trading system.
+
+        Args:
+            once: Whether to enable or require the once.
+        """
         try:
             # Initialize trading system
             self.robot_instance = initialize_trading_system()

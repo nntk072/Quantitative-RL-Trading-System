@@ -58,6 +58,11 @@ class ZoneBand:
 
     @property
     def midpoint(self) -> float:
+        """Return the center price of this chart zone.
+
+        Returns:
+            Numeric result returned by ``midpoint``.
+        """
         return (self.low + self.high) / 2.0
 
 
@@ -94,9 +99,31 @@ def _feature_zones(
     ifvg_timeframes: tuple[str, ...],
     entry_idea_plot_config: dict[str, Any] | None = None,
 ) -> list[ZoneBand]:
-    """Plot only the live, side-matched zones linked to this trade's ideas."""
+    """Plot only the live, side-matched zones linked to this trade's ideas.
+
+    Args:
+        features: Feature values supplied to the operation.
+        window: Tabular data used for the window.
+        open_row: Tabular data used for the open row.
+        order_block_timeframes: Items supplied for the order block timeframes, in input order.
+        fvg_timeframes: Items supplied for the fvg timeframes, in input order.
+        ifvg_timeframes: Items supplied for the ifvg timeframes, in input order.
+        entry_idea_plot_config: Key-value data used for the entry idea plot config.
+
+    Returns:
+        Values returned by ``_feature_zones``, in the declared order.
+    """
 
     def parse(raw: Any, default: Any) -> Any:
+        """Parse a serialized feature value, falling back on malformed input.
+
+        Args:
+            raw: Raw used by the operation described above.
+            default: Default used by the operation described above.
+
+        Returns:
+            Result of parse a serialized feature value, falling back on malformed input.
+        """
         if isinstance(raw, str):
             try:
                 return ast.literal_eval(raw)
@@ -105,6 +132,14 @@ def _feature_zones(
         return raw if raw is not None else default
 
     def tf_values(raw: Any) -> tuple[str, ...]:
+        """Normalize a stored timeframe setting into an ordered tuple.
+
+        Args:
+            raw: Raw used by the operation described above.
+
+        Returns:
+            Values returned by ``tf_values``, in the declared order.
+        """
         value = raw
         if isinstance(raw, str):
             try:
@@ -377,6 +412,16 @@ def _feature_swing_segments(
     the line origin makes levels appear to float in space. Rebuild the small
     structure trace from the supplied M1 bars, map each pivot to the M1 wick
     inside its source timeframe candle, and omit pivots outside the chart.
+
+    Args:
+        features: Feature values supplied to the operation.
+        window: Tabular data used for the window.
+        timeframes: Items supplied for the timeframes, in input order.
+        lower_timeframe_swings: Items supplied for the lower timeframe swings, in input order.
+        bars: Market bars to process.
+
+    Returns:
+        Values returned by ``_feature_swing_segments``, in the declared order.
     """
     ladder = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
     durations = {
@@ -511,6 +556,16 @@ def _feature_swing_segments(
 
 
 def _active_swing(events: OverlayEvents, t: pd.Timestamp, side: str) -> float | None:
+    """Process swing.
+
+    Args:
+        events: Events used by the operation described above.
+        t: T used by the operation described above.
+        side: Text or path value identifying the side.
+
+    Returns:
+        Result of process swing.
+    """
     best_t: pd.Timestamp | None = None
     best_p: float | None = None
     for ray in events.swings:
@@ -524,12 +579,29 @@ def _active_swing(events: OverlayEvents, t: pd.Timestamp, side: str) -> float | 
 
 
 def _candle_bounds(window: pd.DataFrame) -> tuple[float, float]:
+    """Process bounds.
+
+    Args:
+        window: Tabular data used for the window.
+
+    Returns:
+        Values returned by ``_candle_bounds``, in the declared order.
+    """
     mask = tradable_mask(window)
     good = window.loc[mask] if mask.any() else window
     return float(good["low"].min()), float(good["high"].max())
 
 
 def _in_window(ts: pd.Timestamp | None, window: pd.DataFrame) -> bool:
+    """Process window.
+
+    Args:
+        ts: Ts used by the operation described above.
+        window: Tabular data used for the window.
+
+    Returns:
+        Whether in window meets the requested condition.
+    """
     if ts is None or window.empty:
         return False
     idx = pd.DatetimeIndex(window.index)
@@ -542,6 +614,18 @@ def _in_window(ts: pd.Timestamp | None, window: pd.DataFrame) -> bool:
 def _on_chart(
     price: float | None, when: pd.Timestamp | None, window: pd.DataFrame, lo: float, hi: float
 ) -> bool:
+    """Process chart.
+
+    Args:
+        price: Price used by the operation described above.
+        when: When used by the operation described above.
+        window: Tabular data used for the window.
+        lo: Numeric value used for the lo.
+        hi: Numeric value used for the hi.
+
+    Returns:
+        Whether on chart meets the requested condition.
+    """
     if price is None:
         return False
     if _in_window(when, window):
@@ -550,6 +634,16 @@ def _on_chart(
 
 
 def _finite_at(frame: pd.DataFrame, column: str, when: pd.Timestamp) -> float | None:
+    """Process at.
+
+    Args:
+        frame: Input data frame to process.
+        column: Text or path value identifying the column.
+        when: When used by the operation described above.
+
+    Returns:
+        Result of process at.
+    """
     if column not in frame.columns:
         return None
     if when not in frame.index:
@@ -564,7 +658,14 @@ def _finite_at(frame: pd.DataFrame, column: str, when: pd.Timestamp) -> float | 
 
 
 def _optional_text(value: Any) -> str:
-    """Return an empty string for null chart metadata without truth-testing NA."""
+    """Return an empty string for null chart metadata without truth-testing NA.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_optional_text``.
+    """
     if value is None:
         return ""
     try:
@@ -576,6 +677,15 @@ def _optional_text(value: Any) -> str:
 
 
 def _feature_position(frame: pd.DataFrame, when: object) -> int | None:
+    """Process position.
+
+    Args:
+        frame: Input data frame to process.
+        when: When used by the operation described above.
+
+    Returns:
+        Result of process position.
+    """
     if frame.empty or not isinstance(frame.index, pd.DatetimeIndex):
         return None
     stamp = pd.Timestamp(cast(Any, when))
@@ -592,6 +702,14 @@ def _feature_position(frame: pd.DataFrame, when: object) -> int | None:
 
 
 def _idea_context(open_row: pd.Series) -> tuple[set[str], Mapping[str, Any]]:
+    """Process context.
+
+    Args:
+        open_row: Tabular data used for the open row.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     raw_ideas = open_row.get("entry_ideas", ())
     if isinstance(raw_ideas, str):
         try:
@@ -609,6 +727,15 @@ def _idea_context(open_row: pd.Series) -> tuple[set[str], Mapping[str, Any]]:
 
 
 def _selected_timeframes(open_row: pd.Series, idea: str) -> tuple[str, ...]:
+    """Process timeframes.
+
+    Args:
+        open_row: Tabular data used for the open row.
+        idea: Text or path value identifying the idea.
+
+    Returns:
+        Values returned by ``_selected_timeframes``, in the declared order.
+    """
     ideas, timeframe_map = _idea_context(open_row)
     if "entry_ideas" in open_row.index and idea not in ideas:
         return ()
@@ -630,7 +757,21 @@ def _retracement_segments(
     candle_hi: float,
     entry_idea_plot_config: dict[str, Any] | None = None,
 ) -> list[LevelSeg]:
-    """Draw configured Fib-like swing levels only on attributed trades."""
+    """Draw configured Fib-like swing levels only on attributed trades.
+
+    Args:
+        features: Feature values supplied to the operation.
+        window: Tabular data used for the window.
+        open_row: Tabular data used for the open row.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+        candle_lo: Numeric value used for the candle lo.
+        candle_hi: Numeric value used for the candle hi.
+        entry_idea_plot_config: Key-value data used for the entry idea plot config.
+
+    Returns:
+        Values returned by ``_retracement_segments``, in the declared order.
+    """
     settings = (entry_idea_plot_config or {}).get("standard_deviation", {})
     timeframes = _selected_timeframes(open_row, "standard_deviation")
     swing_reference = " ".join(
@@ -714,13 +855,28 @@ def _retracement_segments(
 
 
 def _stamp(ts: object) -> pd.Timestamp:
+    """Process the requested value.
+
+    Args:
+        ts: Ts used by the operation described above.
+
+    Returns:
+        Result of process the requested value.
+    """
     if isinstance(ts, pd.Timestamp):
         return ts
     return pd.Timestamp(str(ts))
 
 
 def _as_timeframes(raw: Any) -> tuple[str, ...]:
-    """Normalize a YAML/list/scalar timeframe setting for chart filters."""
+    """Normalize a YAML/list/scalar timeframe setting for chart filters.
+
+    Args:
+        raw: Raw used by the operation described above.
+
+    Returns:
+        Values returned by ``_as_timeframes``, in the declared order.
+    """
     if isinstance(raw, str):
         raw = (raw,)
     if not isinstance(raw, (tuple, list, set)):
@@ -742,7 +898,20 @@ def _manipulation_marks(
     list[tuple[pd.Timestamp, pd.Timestamp]],
     list[LevelSeg],
 ]:
-    """Return PO3 manipulation and distribution context for attributed TFs."""
+    """Return PO3 manipulation and distribution context for attributed TFs.
+
+    Args:
+        features: Feature values supplied to the operation.
+        window: Tabular data used for the window.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        open_row: Tabular data used for the open row.
+        entry_idea_plot_config: Key-value data used for the entry idea plot config.
+
+    Returns:
+        Values returned by ``_manipulation_marks``, in the declared order.
+    """
     observed_position = _feature_position(features, t_open)
     if observed_position is None:
         return [], [], [], []
@@ -778,6 +947,12 @@ def _manipulation_marks(
             continue
 
         def spans_for(column: str, destination: list[tuple[pd.Timestamp, pd.Timestamp]]) -> None:
+            """Append contiguous active intervals for one PO3 state column.
+
+            Args:
+                column: Text or path value identifying the column.
+                destination: Items supplied for the destination, in input order.
+            """
             if column not in aligned.columns:
                 return
             values = pd.to_numeric(aligned[column], errors="coerce").fillna(0.0).to_numpy() > 0.0
@@ -857,7 +1032,28 @@ def order_levels(
     swing_timeframes: tuple[str, ...] = ("M1",),
     entry_idea_plot_config: dict[str, Any] | None = None,
 ) -> OrderLevels:
-    """Position box, segments, and notes. A far RR target does not set the axis."""
+    """Position box, segments, and notes. A far RR target does not set the axis.
+
+    Args:
+        window: Tabular data used for the window.
+        metrics: Metrics used by the operation described above.
+        events: Events used by the operation described above.
+        bars: Market bars to process.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+        open_row: Tabular data used for the open row.
+        show_mae_mfe: Whether to enable or require the show mae mfe.
+        show_sl_tp: Whether to enable or require the show sl tp.
+        features: Feature values supplied to the operation.
+        order_block_timeframes: Items supplied for the order block timeframes, in input order.
+        fvg_timeframes: Items supplied for the fvg timeframes, in input order.
+        ifvg_timeframes: Items supplied for the ifvg timeframes, in input order.
+        swing_timeframes: Items supplied for the swing timeframes, in input order.
+        entry_idea_plot_config: Key-value data used for the entry idea plot config.
+
+    Returns:
+        Result of position box, segments, and notes. A far RR target does not set the axis.
+    """
     lo, hi = _candle_bounds(window)
     span = max(hi - lo, 1e-6)
     offset = max(span * 0.015, 0.5)
@@ -1077,6 +1273,17 @@ def order_levels(
 def _clip_band(
     entry: float, other: float | None, y0: float, y1: float
 ) -> tuple[float, float] | None:
+    """Process band.
+
+    Args:
+        entry: Numeric value used for the entry.
+        other: Other used by the operation described above.
+        y0: Numeric value used for the y0.
+        y1: Numeric value used for the y1.
+
+    Returns:
+        Values returned by ``_clip_band``, in the declared order.
+    """
     if other is None:
         return None
     a, b = (entry, other) if entry <= other else (other, entry)

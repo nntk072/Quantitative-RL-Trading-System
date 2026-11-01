@@ -122,7 +122,16 @@ def compute_distribution_metrics(values: Sequence[float]) -> DistributionMetrics
 
 
 def _sample_skewness(x: NDArray[np.float64], mean: float, std: float) -> float:
-    """Return the sample skewness (g1); 0 when degenerate or too few values."""
+    """Return the sample skewness (g1); 0 when degenerate or too few values.
+
+    Args:
+        x: X used by the operation described above.
+        mean: Numeric value used for the mean.
+        std: Numeric value used for the std.
+
+    Returns:
+        Numeric result returned by ``_sample_skewness``.
+    """
     if x.size < 3 or std == 0.0:
         return 0.0
     m3 = float(((x - mean) ** 3).mean())
@@ -130,7 +139,16 @@ def _sample_skewness(x: NDArray[np.float64], mean: float, std: float) -> float:
 
 
 def _sample_kurtosis(x: NDArray[np.float64], mean: float, std: float) -> float:
-    """Return the sample excess kurtosis (g2); 0 when degenerate."""
+    """Return the sample excess kurtosis (g2); 0 when degenerate.
+
+    Args:
+        x: X used by the operation described above.
+        mean: Numeric value used for the mean.
+        std: Numeric value used for the std.
+
+    Returns:
+        Numeric result returned by ``_sample_kurtosis``.
+    """
     if x.size < 4 or std == 0.0:
         return 0.0
     m4 = float(((x - mean) ** 4).mean())

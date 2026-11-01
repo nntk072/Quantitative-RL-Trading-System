@@ -20,6 +20,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class RiskRuntimeMixin(RuntimeMixinBase):
+    """Apply account guardrails and calculate entry risk budgets and size."""
+
     position: Position | None
 
     def _check_guardrails(
@@ -43,6 +45,16 @@ class RiskRuntimeMixin(RuntimeMixinBase):
 
         When a breach occurs, any open position is force-closed and the
         breach is recorded in ``breach_log`` / ``breach_events``.
+
+        Args:
+            bar_time: Bar time used by the operation described above.
+            session_id: Numeric value used for the session id.
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            fill_time: Fill time used by the operation described above.
+
+        Returns:
+            Whether check guardrails meets the requested condition.
         """
         if self.repeated_payout_policy:
             reason = self.guardrails.breach_reason(self.account)
@@ -142,6 +154,15 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         At the ceiling, the open position is closed at the current quote.
         Its stop and target prices are left unchanged. New entries are refused
         while drawdown from the peak is still at the ceiling.
+
+        Args:
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            bar_time: Bar time used by the operation described above.
+            fill_time: Fill time used by the operation described above.
+
+        Returns:
+            Whether apply peak trailing dd meets the requested condition.
         """
         limit = self.peak_trailing_dd_limit
         if limit <= 0.0:
@@ -198,6 +219,16 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         The watermark and diagnostic are updated at every session end. When
         enabled, a configured dollar drawdown closes an open position at that
         session's quote and blocks entries until a later EOD high is made.
+
+        Args:
+            fill_bid: Numeric value used for the fill bid.
+            fill_ask: Numeric value used for the fill ask.
+            bar_time: Bar time used by the operation described above.
+            is_eod: Whether to enable or require the is eod.
+            fill_time: Fill time used by the operation described above.
+
+        Returns:
+            Whether apply peak eod trailing dd meets the requested condition.
         """
         limit = self._peak_eod_trailing_dd_limit_usd
         if not is_eod:
@@ -258,6 +289,9 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         ``fixed_risk_usd`` via :meth:`_risk_budget_usd` and is passed to
         ``compute_lots`` as an explicit amount, which is what makes 1R exactly
         ``fixed_risk_usd`` at every stop width.
+
+        Returns:
+            Numeric result returned by ``_sizing_equity``.
         """
         return float(self.account.equity)
 
@@ -267,6 +301,12 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         ``fixed``  -> ``fixed_risk_usd``, independent of equity and risk_frac.
         ``dynamic`` -> live equity times the agent's chosen fraction.
         ``dollar_band`` -> normalized action coordinate times its dollar ceiling.
+
+        Args:
+            risk_frac: Numeric value used for the risk frac.
+
+        Returns:
+            Numeric result returned by ``_risk_budget_usd``.
         """
         if uses_fixed_risk_budget(
             self.risk_mode, bool(getattr(self, "repeated_payout_policy", False))
@@ -303,7 +343,14 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         return requested
 
     def _risk_band_action_unit(self, risk_frac: float) -> float:
-        """Normalize the configured risk-action range to the dollar band [0, 1]."""
+        """Normalize the configured risk-action range to the dollar band [0, 1].
+
+        Args:
+            risk_frac: Numeric value used for the risk frac.
+
+        Returns:
+            Numeric result returned by ``_risk_band_action_unit``.
+        """
         low, high = self.risk_frac_range
         if high <= low:
             raise ValueError("dollar-band risk action requires a nonempty risk_frac_range")
@@ -315,6 +362,12 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         Entry spread is already embedded in the actual bid/ask ``entry_price``
         used by stop-risk sizing. This reserve therefore covers adverse stop
         slippage plus explicit commission on both entry and exit.
+
+        Args:
+            lots: Numeric value used for the lots.
+
+        Returns:
+            Numeric result returned by ``_modeled_execution_reserve_usd``.
         """
         return modeled_execution_reserve_usd(
             lots=lots,
@@ -329,6 +382,14 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         Every sizing mode honors the resolved per-trade policy and configured
         ceiling. Dynamic risk scales with equity; dollar-band risk is independent
         of equity and includes the modeled reserve within its dollar budget.
+
+        Args:
+            risk_frac: Numeric value used for the risk frac.
+            entry_price: Price at which the position was opened.
+            sl_price: Numeric value used for the sl price.
+
+        Returns:
+            Numeric result returned by ``_compute_lots_for``.
         """
         if bool(getattr(self, "repeated_payout_policy", False)):
             approved_total_risk = self._risk_budget_usd(risk_frac)
@@ -378,7 +439,17 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         entry_price: float,
         sl_price: float,
     ) -> float:
-        """Size stop exposure so stop loss plus modeled costs fit the budget."""
+        """Size stop exposure so stop loss plus modeled costs fit the budget.
+
+        Args:
+            total_risk_budget_usd: Numeric value used for the total risk budget usd.
+            risk_frac: Numeric value used for the risk frac.
+            entry_price: Price at which the position was opened.
+            sl_price: Numeric value used for the sl price.
+
+        Returns:
+            Numeric result returned by ``_lots_with_execution_reserve``.
+        """
         return compute_lots_with_execution_reserve(
             total_risk_budget_usd=total_risk_budget_usd,
             equity=self._sizing_equity(),
@@ -397,6 +468,12 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         Uses the broker's accepted size rather than the requested budget, so the
         logged number is what a stop would cost. Returns NaN when there is no
         open position or the stop distance is unusable.
+
+        Args:
+            stop_distance: Entry-to-stop distance in price units.
+
+        Returns:
+            Numeric result returned by ``_actual_risk_usd``.
         """
         pos = self.position
         if pos is None or not np.isfinite(stop_distance) or stop_distance <= 0.0:
@@ -412,6 +489,12 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         ``respect_planned_risk`` is on, the cutoff is the larger of the
         configured cap and ``planned_risk_mult`` times the loss the position
         would take at its structural stop.
+
+        Args:
+            pos: Pos used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``_eod_adverse_cut_usd``.
         """
         configured = float(self._eod_max_loss_usd)
         if not self._eod_respect_planned_risk:
@@ -428,6 +511,17 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         lots: float,
         has_levels: bool,
     ) -> bool:
+        """Process risk capacity allows.
+
+        Args:
+            entry_price: Price at which the position was opened.
+            sl_price: Sl price used by the operation described above.
+            lots: Numeric value used for the lots.
+            has_levels: Whether to enable or require the has levels.
+
+        Returns:
+            Whether entry risk capacity allows meets the requested condition.
+        """
         if has_levels and self.repeated_payout_policy:
             assert sl_price is not None
             approved_risk = float(self._last_approved_risk_usd)

@@ -20,14 +20,14 @@ def load_config(
 ) -> DictConfig:
     """Load config from ``config_path`` (the root config/base/default.yaml when None), then apply overrides.
 
-    Parameters
-    ----------
-    overrides : list[str], optional
-        ``key=value`` string overrides applied on top of the loaded YAML.
-    config_path : str | Path, optional
-        YAML config file to load instead of ``config/base/default.yaml``.
-        Lets ``training/train/train_rl.py`` load the Chain B variant configs
-        (``config/features_*_mtf.yaml``) just like ``scripts/train_rl.py``.
+    Args:
+        overrides (list[str], optional): ``key=value`` string overrides applied on top of the loaded YAML.
+        config_path (str | Path, optional): YAML config file to load instead of ``config/base/default.yaml``.
+            Lets ``training/train/train_rl.py`` load the Chain B variant configs
+            (``config/features_*_mtf.yaml``) just like ``scripts/train_rl.py``.
+
+    Returns:
+        Result of load config from ``config_path`` (the root config/base/default.yaml when None), then apply overrides.
     """
     cfg_path = Path(config_path) if config_path else _DEFAULT_CFG
     base = load_config_overlay(_DEFAULT_CFG)
@@ -40,7 +40,14 @@ def load_config(
 
 
 def load_config_overlay(path: str | Path) -> DictConfig:
-    """Load one YAML mapping and reject list/scalar roots before merging."""
+    """Load one YAML mapping and reject list/scalar roots before merging.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Result of load one YAML mapping and reject list/scalar roots before merging.
+    """
     overlay = OmegaConf.load(Path(path))
     if not isinstance(overlay, DictConfig):
         raise ValueError(f"configuration overlay root must be a mapping: {path}")
@@ -52,6 +59,13 @@ def merge_config_overlay(base: DictConfig, overlay: Mapping[str, Any] | DictConf
 
     All YAML overlays share this entry point so nested typos and section/type
     mismatches are rejected consistently in training and live configuration.
+
+    Args:
+        base: Base used by the operation described above.
+        overlay: Key-value data used for the overlay.
+
+    Returns:
+        Result of validate a partial config against ``base`` and merge it once.
     """
     overlay_cfg = overlay if isinstance(overlay, DictConfig) else OmegaConf.create(dict(overlay))
     base_container = OmegaConf.to_container(base, resolve=False)
@@ -73,12 +87,12 @@ def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
     which silently reverted every CLI override — that is why
     ``--overrides env.reward_mode=rr`` stopped taking effect for Idea 1/2 runs.
 
-    Parameters
-    ----------
-    cfg : DictConfig
-        Config to mutate in place; returned for convenience.
-    overrides : list[str], optional
-        ``key=value`` strings applied after the merge.
+    Args:
+        cfg (DictConfig): Config to mutate in place; returned for convenience.
+        overrides (list[str], optional): ``key=value`` strings applied after the merge.
+
+    Returns:
+        Result of apply ``key=value`` string overrides on top of an already-merged ``cfg``.
     """
     if not overrides:
         return cfg
@@ -107,7 +121,15 @@ def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
 
 
 def _leaf_paths(cfg: DictConfig, prefix: str = "") -> set[str]:
-    """Return all dot-paths to *leaf* keys (including explicit ``null`` leaves)."""
+    """Return all dot-paths to *leaf* keys (including explicit ``null`` leaves).
+
+    Args:
+        cfg: Run configuration used by this operation.
+        prefix: Text or path value identifying the prefix.
+
+    Returns:
+        Result of return all dot-paths to *leaf* keys (including explicit ``null`` leaves).
+    """
     paths: set[str] = set()
     for k in cfg.keys():
         key = str(k)

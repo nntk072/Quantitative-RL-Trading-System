@@ -32,7 +32,7 @@
 | `simulation/environment/entry_execution_runtime.py` | Entry quote resolution, opposite-position close, and entry orchestration |
 | `simulation/environment/entry_order_runtime.py` | Strategy and structural entry-level construction |
 | `simulation/environment/risk_runtime.py` | Account guardrails, sizing, reserve, and entry risk-capacity approval |
-| `simulation/environment/position_open_runtime.py` | Initialize selected thesis, protective levels, and position state |
+| `simulation/environment/position_open_runtime.py` | Initialize selected setup, protective levels, and position state |
 | `simulation/environment/trade_entry_record_runtime.py` | Persist entry fill and setup evidence into the trade ledger |
 | `simulation/environment/episode_runtime.py` | Episode reset, market progression, and transition mechanics |
 | `simulation/environment/ema_exit_runtime.py` | EMA-based protective exit decisions |

@@ -14,7 +14,14 @@ from decisioning.observation_state import (
 def immutable_setup_levels(
     values: Mapping[str, float] | tuple[tuple[str, float], ...],
 ) -> tuple[tuple[str, float], ...]:
-    """Copy finite setup geometry into a stable, immutable tuple."""
+    """Copy finite setup geometry into a stable, immutable tuple.
+
+    Args:
+        values: Values to process, in input order.
+
+    Returns:
+        Values returned by ``immutable_setup_levels``, in the declared order.
+    """
     items = values.items() if isinstance(values, Mapping) else values
     copied = []
     for key, raw_value in items:
@@ -38,6 +45,7 @@ class EntryEvidence:
     setup_levels_snapshot: tuple[tuple[str, float], ...]
 
     def __post_init__(self) -> None:
+        """Validate and initialize EntryEvidence after construction."""
         object.__setattr__(self, "bar", int(self.bar))
         object.__setattr__(self, "direction", int(self.direction))
         object.__setattr__(self, "setup_types", tuple(self.setup_types))
@@ -58,6 +66,7 @@ class EntryCandidate:
     setup_levels_snapshot: tuple[tuple[str, float], ...]
 
     def __post_init__(self) -> None:
+        """Validate and initialize EntryCandidate after construction."""
         if int(self.direction) not in (-1, 1):
             raise ValueError("candidate direction must be -1 or 1")
         object.__setattr__(self, "direction", int(self.direction))
@@ -74,6 +83,12 @@ class EntryStateMachine:
     """Manage candidate, armed, and executed entry opportunity states."""
 
     def __init__(self, candidate_max_age_bars: int, arm_requires_retest: bool = False) -> None:
+        """Initialize EntryStateMachine and its owned state.
+
+        Args:
+            candidate_max_age_bars: Market bar or price data used for initialize EntryStateMachine and its owned state.
+            arm_requires_retest: Whether to enable or require the arm requires retest.
+        """
         if int(candidate_max_age_bars) < 0:
             raise ValueError("candidate_max_age_bars must be non-negative")
         self.candidate_max_age_bars = int(candidate_max_age_bars)
@@ -112,7 +127,14 @@ class EntryStateMachine:
         self.armed_bars = 0
 
     def observe(self, evidence: EntryEvidence) -> EntryState:
-        """Apply one bar of evidence without changing executed trade state."""
+        """Apply one bar of evidence without changing executed trade state.
+
+        Args:
+            evidence: Evidence used by the operation described above.
+
+        Returns:
+            Result of apply one bar of evidence without changing executed trade state.
+        """
         if self.state == "IN_POSITION":
             return self.state
         if self.state == "FLAT":
@@ -165,7 +187,11 @@ class EntryStateMachine:
         return self.state
 
     def request_trigger(self) -> EntryCandidate | None:
-        """Return the armed candidate for an attempt without consuming it."""
+        """Return the armed candidate for an attempt without consuming it.
+
+        Returns:
+            Result of return the armed candidate for an attempt without consuming it.
+        """
         if self.state != "ARMED":
             return None
         self.trigger_requested += 1
@@ -192,19 +218,32 @@ class EntryStateMachine:
             self._clear()
 
     def is_armed(self) -> bool:
-        """Whether PPO may request an execution attempt."""
+        """Whether PPO may request an execution attempt.
+
+        Returns:
+            Whether is armed meets the requested condition.
+        """
         return self.state == "ARMED"
 
     def is_candidate(self) -> bool:
-        """Whether an unarmed candidate is waiting for confirmation."""
+        """Whether an unarmed candidate is waiting for confirmation.
+
+        Returns:
+            Whether is candidate meets the requested condition.
+        """
         return self.state == "CANDIDATE"
 
     def _clear(self) -> None:
+        """Clear EntryStateMachine."""
         self.state = "FLAT"
         self.candidate = None
 
     def _enter(self, state: EntryState) -> None:
-        """Record a state transition and count bars spent in ARMED."""
+        """Record a state transition and count bars spent in ARMED.
+
+        Args:
+            state: State object read or updated by the operation.
+        """
         if self.state == "ARMED":
             self.armed_bars += 1
         self.state = state

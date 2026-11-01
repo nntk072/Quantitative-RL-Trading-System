@@ -76,7 +76,7 @@ itself is not sufficient to prove cache compatibility.
 
 Build reusable caches before training where the workflow supports it. Record
 the cache identity and input hashes with the run. See
-[market data](../market_data/README.md), [features](../features/README.md), and
+[market data](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/market_data/README.md), [features](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/features/README.md), and
 [reproducibility](concepts/reproducibility.md).
 
 The implementation versions are useful invalidation inputs, but cache
@@ -101,3 +101,6 @@ compatibility also depends on source and resolved configuration hashes:
 Installed commands are listed in the [CLI reference](reference/cli.md). The
 [generated model catalog](model_variants.md) groups configured comparisons but
 does not contain authoritative runtime settings.
+
+For an exact, generated list of dotted keys, defaults, inferred YAML types, and
+owning domains, see the [configuration reference](reference/configuration.md).

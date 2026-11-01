@@ -62,6 +62,16 @@ class PO3IFVGStrategy(TradingStrategy):
         candidate_max_age_bars: int = 5,
         variant_id: str = "po3_ifvg_legacy",
     ):
+        """Initialize PO3IFVGStrategy and its owned state.
+
+        Args:
+            enforce_gate: Whether to enable or require the enforce gate.
+            require_asian_context: Whether to enable or require the require asian context.
+            require_price_retest: Require price retest used by the operation described above.
+            entry_mode: Text or path value identifying the entry mode.
+            candidate_max_age_bars: Market bar or price data used for initialize PO3IFVGStrategy and its owned state.
+            variant_id: Text or path value identifying the variant id.
+        """
         allowed_modes = {
             "legacy",
             "confirmed_first_eligible",
@@ -99,7 +109,11 @@ class PO3IFVGStrategy(TradingStrategy):
         self._ifvg_bear_confirmed: tuple[str, ...] | None = None
 
     def bind_columns(self, columns: Iterable[object]) -> None:
-        """Resolve sweep and swing columns once for the step loop."""
+        """Resolve sweep and swing columns once for the step loop.
+
+        Args:
+            columns: Items supplied for the columns, in input order.
+        """
         self._sweep_low = columns_matching(columns, "sweep_low")
         self._sweep_high = columns_matching(columns, "sweep_high")
         self._swing_low = columns_matching(columns, "swing_low_event")
@@ -108,7 +122,15 @@ class PO3IFVGStrategy(TradingStrategy):
         self._ifvg_bear_confirmed = columns_matching(columns, "ifvg_bear_confirmed")
 
     def validate_entry(self, *, direction: int, row: pd.Series) -> bool:
-        """Sweep or protected swing on this side when the gate is enforced."""
+        """Sweep or protected swing on this side when the gate is enforced.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Whether validate entry meets the requested condition.
+        """
         if not self.enforce_gate:
             return True
         return self.entry_setup(row, direction)
@@ -118,15 +140,38 @@ class PO3IFVGStrategy(TradingStrategy):
 
         Returns the raw reference level; the environment validates geometry
         against the entry price and rejects invalid stops.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Result of long -> manipulation low, short -> manipulation high (Agent.md §14).
         """
         col = "po3_manipulation_low" if direction == 1 else "po3_manipulation_high"
         level = float(row.get(col, np.nan))
         return level if np.isfinite(level) else None
 
     def target_candidates(self, *, direction: int, row: pd.Series) -> dict[str, float]:
-        """Named structural targets; the TP resolver validates each side."""
+        """Named structural targets; the TP resolver validates each side.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Mapping from ``str`` keys to ``float`` values.
+        """
 
         def _get(col: str) -> float:
+            """Return PO3IFVGStrategy.
+
+            Args:
+                col: Text or path value identifying the col.
+
+            Returns:
+                Numeric result returned by ``_get``.
+            """
             value = float(row.get(col, np.nan))
             return value if np.isfinite(value) else np.nan
 
@@ -141,7 +186,15 @@ class PO3IFVGStrategy(TradingStrategy):
         }
 
     def entry_liquidity(self, row: pd.Series, direction: int) -> bool:
-        """Swept, or within one ATR of the sweep or manipulation level."""
+        """Swept, or within one ATR of the sweep or manipulation level.
+
+        Args:
+            row: Row index or record being processed.
+            direction: Signed trade direction: 1 for long and -1 for short.
+
+        Returns:
+            Whether entry liquidity meets the requested condition.
+        """
         if direction == 1:
             return _flag(row, "sweep_low") or _within_atr(row, "manipulation_low_distance_atr")
         if direction == -1:
@@ -154,6 +207,13 @@ class PO3IFVGStrategy(TradingStrategy):
         When retests are configured, require their confirmation flags. With
         retests disabled, a still-live matching FVG or IFVG is sufficient.
         The PO3 path separately requires an IFVG armed by the current setup.
+
+        Args:
+            row: Row index or record being processed.
+            direction: Signed trade direction: 1 for long and -1 for short.
+
+        Returns:
+            Whether entry gap meets the requested condition.
         """
         if direction == 1:
             if self.require_price_retest:
@@ -171,6 +231,12 @@ class PO3IFVGStrategy(TradingStrategy):
         Fair-value gaps and inverse gaps stay on the row for the network.
         They do not have to be true for the side to be offered. A sweep on
         both sides, or a swing confirmation on both sides, offers nothing.
+
+        Args:
+            row: Row index or record being processed.
+
+        Returns:
+            Numeric result returned by ``context_direction``.
         """
         if self.entry_mode == "confirmed_first_eligible":
             return self._confirmed_ifvg_direction(row)
@@ -185,11 +251,26 @@ class PO3IFVGStrategy(TradingStrategy):
         return self._independent_idea_direction(row)
 
     def entry_setup(self, row: pd.Series, direction: int) -> bool:
-        """True when a qualified PO3 or independent idea matches the side."""
+        """True when a qualified PO3 or independent idea matches the side.
+
+        Args:
+            row: Row index or record being processed.
+            direction: Signed trade direction: 1 for long and -1 for short.
+
+        Returns:
+            Whether entry setup meets the requested condition.
+        """
         return self.context_direction(row) == direction and direction != 0
 
     def _independent_idea_direction(self, row: pd.Series) -> int:
-        """Resolve simultaneous, independent long/short idea contexts."""
+        """Resolve simultaneous, independent long/short idea contexts.
+
+        Args:
+            row: Row index or record being processed.
+
+        Returns:
+            Numeric result returned by ``_independent_idea_direction``.
+        """
         po3_long = self._po3_ready(row, 1)
         po3_short = self._po3_ready(row, -1)
         if self.require_price_retest:
@@ -214,7 +295,15 @@ class PO3IFVGStrategy(TradingStrategy):
 
     @staticmethod
     def _po3_ready(row: pd.Series, direction: int) -> bool:
-        """PO3 requires a same-leg post-IFVG distribution and a live IFVG."""
+        """PO3 requires a same-leg post-IFVG distribution and a live IFVG.
+
+        Args:
+            row: Row index or record being processed.
+            direction: Signed trade direction: 1 for long and -1 for short.
+
+        Returns:
+            Whether po3 ready meets the requested condition.
+        """
         if not _any(row, "po3_distribution_after_ifvg"):
             return False
         expected_sign = float(direction)
@@ -231,6 +320,14 @@ class PO3IFVGStrategy(TradingStrategy):
         return matching_distribution and _any(row, f"ifvg_{side}_active")
 
     def _confirmed_ifvg_direction(self, row: pd.Series) -> int:
+        """Process ifvg direction.
+
+        Args:
+            row: Row index or record being processed.
+
+        Returns:
+            Numeric result returned by ``_confirmed_ifvg_direction``.
+        """
         confirmed = _flag(row, "po3_ifvg_confirmed")
         direction = float(row.get("po3_distribution_direction", 0.0) or 0.0)
         if not confirmed or not np.isfinite(direction):
@@ -238,6 +335,14 @@ class PO3IFVGStrategy(TradingStrategy):
         return int(np.sign(direction))
 
     def _retest_direction(self, row: pd.Series) -> int:
+        """Process direction.
+
+        Args:
+            row: Row index or record being processed.
+
+        Returns:
+            Numeric result returned by ``_retest_direction``.
+        """
         if not _flag(row, "po3_distribution_after_ifvg"):
             return 0
         direction = float(row.get("po3_distribution_direction", 0.0) or 0.0)
@@ -249,6 +354,15 @@ class PO3IFVGStrategy(TradingStrategy):
         return retest_direction if retest_direction == int(np.sign(direction)) else 0
 
     def _candidate_age_ok(self, row: pd.Series, side: str) -> bool:
+        """Process age ok.
+
+        Args:
+            row: Row index or record being processed.
+            side: Text or path value identifying the side.
+
+        Returns:
+            Whether candidate age ok meets the requested condition.
+        """
         names = columns_matching(row.index, f"ifvg_{side}_age")
         if not names:
             return False
@@ -263,16 +377,42 @@ class PO3IFVGStrategy(TradingStrategy):
 
     @staticmethod
     def _fvg_candidate_direction(row: pd.Series) -> int:
+        """Process candidate direction.
+
+        Args:
+            row: Row index or record being processed.
+
+        Returns:
+            Numeric result returned by ``_fvg_candidate_direction``.
+        """
         bull = _any(row, "fvg_retest_bull")
         bear = _any(row, "fvg_retest_bear")
         return 0 if bull == bear else (1 if bull else -1)
 
     def _flag_any(self, row: pd.Series, bound: tuple[str, ...] | None, stem: str) -> bool:
+        """Process any.
+
+        Args:
+            row: Row index or record being processed.
+            bound: Items supplied for the bound, in input order.
+            stem: Text or path value identifying the stem.
+
+        Returns:
+            Whether flag any meets the requested condition.
+        """
         names = bound if bound is not None else columns_matching(row.index, stem)
         return any(_flag(row, name) for name in names)
 
     def sl_candidates(self, *, direction: int, row: pd.Series) -> list[tuple[str, float]]:
-        """Structural SL ladder for trader ``sl_anchor`` selection."""
+        """Structural SL ladder for trader ``sl_anchor`` selection.
+
+        Args:
+            direction: Signed trade direction: 1 for long and -1 for short.
+            row: Row index or record being processed.
+
+        Returns:
+            Values returned by ``sl_candidates``, in the declared order.
+        """
         if direction == 1:
             cols = (
                 "last_swing_low",
@@ -331,19 +471,55 @@ class PO3IFVGStrategy(TradingStrategy):
 
 
 def _flag(row: pd.Series, col: str) -> bool:
+    """Process the requested value.
+
+    Args:
+        row: Row index or record being processed.
+        col: Text or path value identifying the col.
+
+    Returns:
+        Whether flag meets the requested condition.
+    """
     return float(row.get(col, 0.0) or 0.0) > 0.0
 
 
 def _columns(row: pd.Series, stem: str) -> list[str]:
-    """``stem`` itself and the same stem on any timeframe prefix."""
+    """``stem`` itself and the same stem on any timeframe prefix.
+
+    Args:
+        row: Row index or record being processed.
+        stem: Text or path value identifying the stem.
+
+    Returns:
+        Values returned by ``_columns``, in the declared order.
+    """
     return [str(col) for col in row.index if str(col) == stem or str(col).endswith("_" + stem)]
 
 
 def _any(row: pd.Series, stem: str) -> bool:
+    """Process the requested value.
+
+    Args:
+        row: Row index or record being processed.
+        stem: Text or path value identifying the stem.
+
+    Returns:
+        Whether any meets the requested condition.
+    """
     return any(_flag(row, col) for col in _columns(row, stem))
 
 
 def _prefixed(col: str, stem: str, other: str) -> str:
+    """Process the requested value.
+
+    Args:
+        col: Text or path value identifying the col.
+        stem: Text or path value identifying the stem.
+        other: Text or path value identifying the other.
+
+    Returns:
+        Text returned by ``_prefixed``.
+    """
     if col == stem:
         return other
     return col[: -len(stem)] + other
@@ -355,6 +531,15 @@ def _gap_stops(row: pd.Series, *, active: str, area: str, origin: str) -> list[t
     Shorts use the upper edge and candle 1's high. A zone that is not active
     on that timeframe is skipped, including a filled gap whose price was
     forward-filled.
+
+    Args:
+        row: Row index or record being processed.
+        active: Text or path value identifying the active.
+        area: Text or path value identifying the area.
+        origin: Text or path value identifying the origin.
+
+    Returns:
+        Values returned by ``_gap_stops``, in the declared order.
     """
     found: list[tuple[str, float]] = []
     for col in sorted(_columns(row, area)):
@@ -371,5 +556,14 @@ def _gap_stops(row: pd.Series, *, active: str, area: str, origin: str) -> list[t
 
 
 def _within_atr(row: pd.Series, col: str) -> bool:
+    """Process atr.
+
+    Args:
+        row: Row index or record being processed.
+        col: Text or path value identifying the col.
+
+    Returns:
+        Whether within atr meets the requested condition.
+    """
     value = float(row.get(col, np.nan))
     return bool(np.isfinite(value) and abs(value) <= 1.0)

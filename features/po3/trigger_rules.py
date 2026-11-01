@@ -16,15 +16,11 @@ EntryTriggerType = Literal["retest", "ltf_fvg", "close_through"]
 class EntryConfig:
     """Configuration for entry triggers.
 
-    Attributes
-    ----------
-    retest_threshold : float
-        How close price must get to IFVG zone to count as retest
-        (as fraction of FVG size, e.g., 0.1 = within 10% of zone).
-    ltf_timeframe : str
-        Lower timeframe for LTF-FVG detection (e.g., 'M1', 'M5').
-    ltf_fvg_min_imbalance : float
-        Minimum imbalance for LTF FVG to trigger entry.
+    Attributes:
+        retest_threshold (float): How close price must get to IFVG zone to count as retest
+            (as fraction of FVG size, e.g., 0.1 = within 10% of zone).
+        ltf_timeframe (str): Lower timeframe for LTF-FVG detection (e.g., 'M1', 'M5').
+        ltf_fvg_min_imbalance (float): Minimum imbalance for LTF FVG to trigger entry.
     """
 
     retest_threshold: float = 0.1
@@ -46,24 +42,17 @@ def detect_entry_trigger(
     2. **ltf_fvg**: LTF FVG forms in direction of the trade after confirmation
     3. **close_through**: Strong close completely through the IFVG zone
 
-    Parameters
-    ----------
-    bars : pd.DataFrame
-        OHLC DataFrame with 'high', 'low', 'close' columns.
-    ifvg_df : pd.DataFrame
-        IFVG confirmation output from detect_ifvg_confirmation().
-    entry_type : EntryTriggerType
-        Type of entry trigger to detect.
-    config : EntryConfig, optional
-        Configuration for entry detection. Uses defaults if None.
+    Args:
+        bars (pd.DataFrame): OHLC DataFrame with 'high', 'low', 'close' columns.
+        ifvg_df (pd.DataFrame): IFVG confirmation output from detect_ifvg_confirmation().
+        entry_type (EntryTriggerType): Type of entry trigger to detect.
+        config (EntryConfig, optional): Configuration for entry detection. Uses defaults if None.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with same index, containing:
-        - entry_long: 1 if long entry trigger detected
-        - entry_short: 1 if short entry trigger detected
-        - entry_trigger_type: Type of trigger ('retest', 'ltf_fvg', 'close_through')
+    Returns:
+        pd.DataFrame: DataFrame with same index, containing:
+            - entry_long: 1 if long entry trigger detected
+            - entry_short: 1 if short entry trigger detected
+            - entry_trigger_type: Type of trigger ('retest', 'ltf_fvg', 'close_through')
     """
     if config is None:
         config = EntryConfig()
@@ -227,25 +216,21 @@ def detect_htf_fvg(
     is only observable from the next HTF open (the moment the bar closes)
     onward.
 
-    Parameters
-    ----------
-    m1_bars : pd.DataFrame
-        M1 OHLC DataFrame with DatetimeIndex.
-    htf : str
-        Higher timeframe label (e.g., 'M5', 'M10', 'M15', 'M30', 'H1').
-    config : FVGConfig, optional
-        Configuration for FVG detection. Uses defaults if None.
+    Args:
+        m1_bars (pd.DataFrame): M1 OHLC DataFrame with DatetimeIndex.
+        htf (str): Higher timeframe label (e.g., 'M5', 'M10', 'M15', 'M30', 'H1').
+        config (FVGConfig, optional): Configuration for FVG detection. Uses defaults if None.
+        timeframe_bars: Optional precomputed higher-timeframe bars, avoiding resampling.
+        availability_times: Optional timestamps controlling when each HTF value becomes observable.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with same index as M1 input, containing:
-        - htf_fvg_bullish: 1 if bullish FVG detected on HTF
-        - htf_fvg_bearish: 1 if bearish FVG detected on HTF
-        - htf_fvg_bullish_low: Low price of HTF FVG zone
-        - htf_fvg_bullish_high: High price of HTF FVG zone
-        - htf_fvg_bearish_low: Low price of HTF FVG zone
-        - htf_fvg_bearish_high: High price of HTF FVG zone
+    Returns:
+        pd.DataFrame: DataFrame with same index as M1 input, containing:
+            - htf_fvg_bullish: 1 if bullish FVG detected on HTF
+            - htf_fvg_bearish: 1 if bearish FVG detected on HTF
+            - htf_fvg_bullish_low: Low price of HTF FVG zone
+            - htf_fvg_bullish_high: High price of HTF FVG zone
+            - htf_fvg_bearish_low: Low price of HTF FVG zone
+            - htf_fvg_bearish_high: High price of HTF FVG zone
     """
     from market_data.transforms.resample import resample
 
@@ -312,29 +297,23 @@ def detect_ltf_ifvg(
     only observable from the next primary-TF open (the moment its bar closes)
     onward.
 
-    Parameters
-    ----------
-    m1_bars : pd.DataFrame
-        M1 OHLC DataFrame with DatetimeIndex.
-    primary_tf : str
-        Primary timeframe label (e.g., 'M5', 'M10', 'M15', 'M30').
-    ltf : str
-        Lower timeframe label (e.g., 'M1'). Default is 'M1'.
-    fvg_config : FVGConfig, optional
-        Configuration for FVG detection. Uses defaults if None.
-    ifvg_config : IFVGConfig, optional
-        Configuration for IFVG confirmation. Uses defaults if None.
+    Args:
+        m1_bars (pd.DataFrame): M1 OHLC DataFrame with DatetimeIndex.
+        primary_tf (str): Primary timeframe label (e.g., 'M5', 'M10', 'M15', 'M30').
+        ltf (str): Lower timeframe label (e.g., 'M1'). Default is 'M1'.
+        fvg_config (FVGConfig, optional): Configuration for FVG detection. Uses defaults if None.
+        ifvg_config (IFVGConfig, optional): Configuration for IFVG confirmation. Uses defaults if None.
+        timeframe_bars: Optional precomputed primary-timeframe bars.
+        availability_times: Optional timestamps controlling when each confirmation becomes observable.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with same index as M1 input, containing:
-        - ltf_ifvg_bullish_confirmed: 1 if bullish IFVG confirmed on LTF
-        - ltf_ifvg_bearish_confirmed: 1 if bearish IFVG confirmed on LTF
-        - ltf_ifvg_bullish_low: Low price of LTF IFVG zone
-        - ltf_ifvg_bullish_high: High price of LTF IFVG zone
-        - ltf_ifvg_bearish_low: Low price of LTF IFVG zone
-        - ltf_ifvg_bearish_high: High price of LTF IFVG zone
+    Returns:
+        pd.DataFrame: DataFrame with same index as M1 input, containing:
+            - ltf_ifvg_bullish_confirmed: 1 if bullish IFVG confirmed on LTF
+            - ltf_ifvg_bearish_confirmed: 1 if bearish IFVG confirmed on LTF
+            - ltf_ifvg_bullish_low: Low price of LTF IFVG zone
+            - ltf_ifvg_bullish_high: High price of LTF IFVG zone
+            - ltf_ifvg_bearish_low: Low price of LTF IFVG zone
+            - ltf_ifvg_bearish_high: High price of LTF IFVG zone
     """
     from market_data.transforms.resample import resample
 
@@ -402,32 +381,24 @@ def detect_po3_entries(
     2. Detect LTF IFVG confirmation (e.g., M5)
     3. Generate entry triggers based on specified type
 
-    Parameters
-    ----------
-    m1_bars : pd.DataFrame
-        M1 OHLC DataFrame with DatetimeIndex.
-    htf : str
-        Higher timeframe for FVG detection (default: 'M15').
-    primary_tf : str
-        Primary timeframe for IFVG confirmation (default: 'M5').
-    entry_type : EntryTriggerType
-        Type of entry trigger: 'retest', 'close_through', or 'ltf_fvg'.
-    fvg_config : FVGConfig, optional
-        Configuration for FVG detection.
-    ifvg_config : IFVGConfig, optional
-        Configuration for IFVG confirmation.
-    entry_config : EntryConfig, optional
-        Configuration for entry triggers.
+    Args:
+        m1_bars (pd.DataFrame): M1 OHLC DataFrame with DatetimeIndex.
+        htf (str): Higher timeframe for FVG detection (default: 'M15').
+        primary_tf (str): Primary timeframe for IFVG confirmation (default: 'M5').
+        entry_type (EntryTriggerType): Type of entry trigger: 'retest', 'close_through', or 'ltf_fvg'.
+        fvg_config (FVGConfig, optional): Configuration for FVG detection.
+        ifvg_config (IFVGConfig, optional): Configuration for IFVG confirmation.
+        entry_config (EntryConfig, optional): Configuration for entry triggers.
+        timeframe_bars: Optional precomputed bars keyed by timeframe.
+        availability_times: Optional per-timeframe availability timestamps for causal alignment.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with same index as M1 input, containing:
-        - All HTF FVG columns
-        - All LTF IFVG columns
-        - entry_long: 1 if long entry signal
-        - entry_short: 1 if short entry signal
-        - entry_trigger_type: Type of entry trigger that fired
+    Returns:
+        pd.DataFrame: DataFrame with same index as M1 input, containing:
+            - All HTF FVG columns
+            - All LTF IFVG columns
+            - entry_long: 1 if long entry signal
+            - entry_short: 1 if short entry signal
+            - entry_trigger_type: Type of entry trigger that fired
     """
     # Step 1: Detect HTF FVG
     htf = str(htf).upper()

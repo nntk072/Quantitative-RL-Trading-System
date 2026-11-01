@@ -5,7 +5,7 @@ ROOT="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
 RUN_DIR="$ROOT/outputs/gpu_ci_gates/p1_tick_quality_job${SLURM_JOB_ID:-manual}"
 VENV_X86="$ROOT/.venv-x86"
 VENV_MI210=/scratch/work/nguyenl37/.venv-mi210
-REPORT="$ROOT/docs/thesis/g1_tick_quality_current_recovery_2026-10-17_job${SLURM_JOB_ID:-manual}.json"
+REPORT="$ROOT/outputs/research_audits/g1_tick_quality_2026-10-17_job${SLURM_JOB_ID:-manual}.json"
 LOG="$RUN_DIR/validation.log"
 
 cd "$ROOT"
@@ -27,12 +27,11 @@ if [[ -e "$REPORT" ]]; then
   exit 2
 fi
 
-"$VENV_X86/bin/ruff" format --check docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py
-"$VENV_X86/bin/ruff" check docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py
+"$VENV_X86/bin/ruff" format --check scripts/research/audits/audit_replacement_tick_quality.py
+"$VENV_X86/bin/ruff" check scripts/research/audits/audit_replacement_tick_quality.py
 "$VENV_X86/bin/ruff" format --check .
 "$VENV_X86/bin/ruff" check .
 "$VENV_X86/bin/mypy" .
 "$VENV_MI210/bin/python" -m pytest tests/ -q
-"$VENV_MI210/bin/python" docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py \
-  --out "$REPORT"
+"$VENV_MI210/bin/python" scripts/research/audits/audit_replacement_tick_quality.py --out "$REPORT"
 echo "P1 tick-integrity/quality audit run complete: $(date --iso-8601=seconds)"

@@ -98,11 +98,11 @@ A registered encoder with no listed pair currently has no matrix variant.
 | A | `rq_mtf_control_tcn` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Single-window TCN control. Changes: None declared. | — |
 | B | `rq_mtf_treatment_mtf` | Selectable | treatment | `ppo` | `mtf` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Correlated multi-timeframe encoder treatment. Changes: encoder architecture. | — |
 
-## Core, multi-timeframe, and thesis-reasoning PPO models
+## Core and setup-conditioned multi-timeframe PPO models
 
 **Family:** `mtf_reasoning_models`
 
-**Research question:** How do the matched core TCN, multi-timeframe encoder, and thesis-conditioned reasoning policies compare?
+**Research question:** How do the matched core TCN, multi-timeframe encoder, and setup-conditioned policies compare?
 
 **Comparison type:** `matched`
 
@@ -110,7 +110,7 @@ A registered encoder with no listed pair currently has no matrix variant.
 |---|---|---|---|---|---|---|---|---|---|---|
 | A | `rq_mtf_control_tcn` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Core PPO with the single-window TCN and shared dollar-band controls. Changes: None declared. | — |
 | B | `rq_mtf_treatment_mtf` | Selectable | treatment | `ppo` | `mtf` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PPO with correlated multi-timeframe encoding. Changes: multi-timeframe encoder. | — |
-| C | `rq_mtf_treatment_reasoning` | Selectable | treatment | `ppo` | `mtf_reasoning` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PPO with multi-timeframe thesis reasoning and a thesis-aware action distribution. Changes: multi-timeframe reasoning encoder, thesis selection, thesis-aware action distribution. | — |
+| C | `rq_mtf_treatment_reasoning` | Selectable | treatment | `ppo` | `mtf_reasoning` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PPO with a multi-timeframe reasoning encoder and a trade-setup action distribution. Changes: multi-timeframe reasoning encoder, setup selection, setup-aware action distribution. | — |
 
 ## A4b strategy overlays
 

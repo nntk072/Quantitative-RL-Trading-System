@@ -59,7 +59,8 @@ def _features(bars: pd.DataFrame, seed: int = 7) -> pd.DataFrame:
 
 def test_inactive_policy_does_not_create_best_checkpoint(tmp_path: Path) -> None:
     """The callback must persist the model after the first eval and
-    expose a loadable SB3 artifact at the configured path."""
+    expose a loadable SB3 artifact at the configured path.
+    """
     pytest.importorskip("torch")
     pytest.importorskip("stable_baselines3")
     from stable_baselines3 import PPO

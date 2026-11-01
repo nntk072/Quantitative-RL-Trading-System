@@ -19,6 +19,10 @@ Mark tests by cost and dependency (`unit`, `integration`, `architecture`,
 own their meaning; never put synthetic test-only records in reader-facing
 research documentation.
 
+The path-based test layout, scoped commands, measured main-branch line and
+branch coverage baseline, and ratchet are described in
+[the testing strategy](../docs/development/testing.md).
+
 For the current commands and gate policy, see
 [CI verification](../.agents/rules/ci-verification.md) and
 [Orchestra](../orchestra/README.md).

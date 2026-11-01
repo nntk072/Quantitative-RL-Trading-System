@@ -12,12 +12,9 @@ import backtrader as bt
 class SignalFollowingStrategy(bt.Strategy):
     """Execute precomputed actions (+1 long, -1 short, 2 exit, 0 hold).
 
-    Parameters
-    ----------
-    actions : pd.Series
-        Precomputed action series aligned to the data feed bars.
-    printlog : bool
-        Enable per-bar logging.
+    Args:
+        actions (pd.Series): Precomputed action series aligned to the data feed bars.
+        printlog (bool): Enable per-bar logging.
     """
 
     params = (
@@ -26,15 +23,28 @@ class SignalFollowingStrategy(bt.Strategy):
     )
 
     def __init__(self) -> None:
+        """Initialize SignalFollowingStrategy and its owned state."""
         self.order = None
         self.bar_index = 0
 
     def log(self, txt: str, dt: object | None = None, doprint: bool = False) -> None:
+        """Write a timestamped strategy message when logging is enabled.
+
+        Args:
+            txt: Message to include in the backtest log.
+            dt: Optional date or time to display.
+            doprint: Emit the message even when normal logging is disabled.
+        """
         if self.p.printlog or doprint:
             dt = dt or self.datas[0].datetime.date(0)
             print(f"{dt.isoformat() if hasattr(dt, 'isoformat') else str(dt)} {txt}")
 
     def notify_order(self, order: bt.Order) -> None:
+        """Update strategy state and log execution or rejection details for an order.
+
+        Args:
+            order: Order used by the operation described above.
+        """
         if order.status in (order.Submitted, order.Accepted):
             return
         if order.status == order.Completed:
@@ -47,6 +57,7 @@ class SignalFollowingStrategy(bt.Strategy):
         self.order = None
 
     def next(self) -> None:
+        """Apply the precomputed action for the current absolute bar when available."""
         if self.order:
             self.bar_index += 1
             return

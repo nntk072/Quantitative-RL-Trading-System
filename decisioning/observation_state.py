@@ -11,7 +11,14 @@ ENTRY_STATE_DIM: Final[int] = len(ENTRY_STATES)
 
 
 def entry_state_one_hot(state: str) -> tuple[float, float, float, float]:
-    """Encode the entry lifecycle state using the stable observation order."""
+    """Encode the entry lifecycle state using the stable observation order.
+
+    Args:
+        state: State object read or updated by the operation.
+
+    Returns:
+        Values returned by ``entry_state_one_hot``, in the declared order.
+    """
     try:
         index = ENTRY_STATES.index(state)
     except ValueError as exc:

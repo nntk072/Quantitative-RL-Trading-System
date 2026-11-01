@@ -222,7 +222,8 @@ def test_pair_trades_includes_tp_close():
 
 def test_pair_trades_unclosed_open_is_dropped():
     """An open with no following close (e.g. still open at end of log) must
-    not be paired with a later, unrelated close."""
+    not be paired with a later, unrelated close.
+    """
     from evaluation.plotting.plots import _pair_trades
 
     idx = pd.date_range("2025-01-02 17:00", periods=2, freq="1min")
@@ -1004,20 +1005,20 @@ def test_position_export_does_not_merge_events_without_position_ids() -> None:
     ]
 
 
-def test_position_export_preserves_thesis_and_structural_provenance() -> None:
+def test_position_export_preserves_trade_setup_and_structural_provenance() -> None:
     decision_time = pd.Timestamp("2025-01-02T10:00:00Z")
     trades = pd.DataFrame(
         [
             {
                 "type": "open",
-                "position_id": "p-thesis",
+                "position_id": "p-trade_setup",
                 "direction": 1,
-                "thesis_candidate_id": 17,
-                "thesis_schema_version": "thesis-action-v1",
+                "trade_setup_candidate_id": 17,
+                "trade_setup_schema_version": "trade_setup-action-v1",
                 "primary_idea": "fvg_retest",
                 "primary_setup_timeframe": "M5",
                 "primary_direction": 1,
-                "thesis_decision_time": decision_time,
+                "trade_setup_decision_time": decision_time,
                 "time": decision_time + pd.Timedelta(minutes=1),
                 "price": 100.0,
                 "sl_price": 98.0,
@@ -1029,7 +1030,7 @@ def test_position_export_preserves_thesis_and_structural_provenance() -> None:
             },
             {
                 "type": "close",
-                "position_id": "p-thesis",
+                "position_id": "p-trade_setup",
                 "direction": 1,
                 "price": 103.0,
                 "pnl": 3.0,
@@ -1046,12 +1047,12 @@ def test_position_export_preserves_thesis_and_structural_provenance() -> None:
 
     assert len(positions) == 1
     position = positions.iloc[0]
-    assert position["thesis_candidate_id"] == 17
-    assert position["thesis_schema_version"] == "thesis-action-v1"
+    assert position["trade_setup_candidate_id"] == 17
+    assert position["trade_setup_schema_version"] == "trade_setup-action-v1"
     assert position["primary_idea"] == "fvg_retest"
     assert position["primary_setup_timeframe"] == "M5"
     assert position["primary_direction"] == 1
-    assert position["thesis_decision_time"] == decision_time
+    assert position["trade_setup_decision_time"] == decision_time
     assert position["sl_price"] == pytest.approx(98.0)
     assert position["sl_ref"] == "M5_swing_low"
     assert position["sl_timeframe"] == "M5"

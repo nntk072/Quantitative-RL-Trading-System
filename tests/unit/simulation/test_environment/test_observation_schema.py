@@ -17,7 +17,7 @@ from decisioning.observations import (
     validate_observation_schema,
 )
 from simulation.environment.env import TradingEnv
-from tests.unit.simulation.test_environment.test_account_normalization import (
+from tests.unit.simulation.test_environment._account_fixtures import (
     _make_bars,
     _make_features,
 )

@@ -17,22 +17,21 @@ decoder.
 | Resolved configuration and run/data identity | Reconstructs the execution and training assumptions. |
 
 The code validates action and observation metadata in its supported load paths.
-Historical checkpoints may contain compatibility aliases and older schema
-names. Missing metadata is acceptable only for explicitly supported legacy
-cases; it must not silently be inferred for a new schema.
+Missing metadata is accepted only by an explicitly documented loader path; it
+must not silently be inferred for a new schema.
 
 ## Safe migration
 
 1. Identify the exact serialized class path and schema metadata without
    rewriting the checkpoint.
-2. Load using the supported legacy loader or a narrowly scoped alias.
-3. Translate old metadata to the canonical in-memory contract explicitly.
+2. Load the original with the architecture and dependency versions that wrote it.
+3. Translate old metadata into the canonical in-memory contract explicitly.
 4. Compare deterministic inference outputs on a fixed observation fixture.
 5. Keep the original artifact and record migration provenance.
 
 Do not rename an import path or schema string in place if serialized runs
-depend on it. For the current setup-conditioned action, names beginning with
-`thesis` are legacy wire identifiers; see the
+depend on it. Retained setup-conditioned checkpoints use the current
+trade-setup schema; see the
 [trade-setup concept](../concepts/trade_setups.md).
 
 ## Code navigation

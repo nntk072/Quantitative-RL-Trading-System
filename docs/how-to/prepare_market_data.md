@@ -16,8 +16,7 @@ features or train a model.
 
 ## Prepare and inspect
 
-Use the canonical market-data command. The former `thesis-data` name remains a
-deprecated compatibility alias.
+Use the canonical `qrl-data` market-data command.
 
 ```bash
 uv run qrl-data prepare --help

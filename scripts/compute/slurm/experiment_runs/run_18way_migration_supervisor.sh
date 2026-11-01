@@ -50,7 +50,7 @@ old_experiment_run_active() {
     return 0
   fi
   printf '%s\n' "$queued" | awk '
-    $1 == "thesis18x2" && ($2 == "RUNNING" || $2 == "PENDING" || $2 == "CONFIGURING") { found=1 }
+    $1 == "qrl18x2" && ($2 == "RUNNING" || $2 == "PENDING" || $2 == "CONFIGURING") { found=1 }
     END { exit !found }
   '
 }
@@ -80,7 +80,7 @@ while true; do
     --partition=gpu-grace-h200-141g \
     --nodes=2 --ntasks=2 --ntasks-per-node=1 \
     --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G \
-    --time=06:00:00 --job-name=thesis18mig \
+    --time=06:00:00 --job-name=qrl18mig \
     --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC" \
     --chdir="$REPO" \
     bash scripts/compute/slurm/experiment_runs/run_18way_migration_allocation.sh

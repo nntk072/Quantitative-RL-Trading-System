@@ -3,6 +3,8 @@ name = "quantitative-rl-trading-system"
 version = "0.1.0"
 description = "A configurable reinforcement-learning system for quantitative trading research and evaluation."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
     "backtesting==0.3.3",
@@ -40,7 +42,7 @@ dependencies = [
     "win32-setctime==1.2.0; sys_platform == 'win32'",
     "xyzservices==2025.4.0",
     "yfinance>=0.2.66",
-    # thesis RL additions
+    # RL training and environment dependencies.
     "torch>=2.2",
     "gymnasium>=0.29",
     "stable-baselines3>=2.3",
@@ -59,10 +61,64 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "code-review-graph",
+    "hypothesis>=6.170",
     "mypy>=1.11",
     "pytest-timeout>=2.3",
     "ruff>=0.7",
 ]
+docs = [
+    "myst-parser>=4.0",
+    "pydata-sphinx-theme>=0.19",
+    "sphinx>=8.2",
+    "sphinx-autoapi>=3.6",
+    "sphinxcontrib-mermaid>=1.0",
+]
+mutation = ["mutmut>=3.3"]
+
+[tool.mutmut]
+source_paths = [
+    "configuration",
+    "artifacts",
+    "market_data",
+    "features",
+    "trading",
+    "simulation",
+    "models",
+    "decisioning",
+    "learning",
+    "training",
+    "evaluation",
+    "experiments",
+    "live",
+    "integrations",
+    "compute",
+    "orchestra",
+]
+only_mutate = [
+    "trading/account/limits.py",
+    "trading/policy/config.py",
+    "trading/risk/budget.py",
+    "trading/risk/contracts.py",
+    "decisioning/actions.py",
+    "market_data/splits/walkforward.py",
+    "market_data/transforms/align.py",
+]
+pytest_add_cli_args_test_selection = [
+    "-m",
+    "unit",
+    "tests/unit/trading/test_risk_properties.py",
+    "tests/unit/trading/test_risk_policy_contract.py",
+    "tests/unit/trading/test_risk.py",
+    "tests/unit/decisioning/test_trade_setup_properties.py",
+    "tests/unit/decisioning/test_trade_setup_contract.py",
+    "tests/unit/models/test_action_schema_contract.py",
+    "tests/unit/market_data/test_walkforward.py",
+    "tests/unit/market_data/test_walkforward_properties.py",
+    "tests/unit/features/test_alignment_properties.py",
+    "tests/unit/features/test_htf_alignment.py::test_align_timeframes_completed_bar",
+    "tests/unit/features/test_htf_alignment.py::test_align_timeframes_uses_explicit_close_times_for_short_final_bar",
+]
+mutate_only_covered_lines = true
 
 # Torch source: GPU by default so local training uses CUDA when available.
 # CI installs the CPU-only wheel in Dockerfile. To force CPU locally, swap
@@ -108,15 +164,45 @@ markers = [
     "research: larger research or evidence-protocol checks scheduled outside normal CI",
 ]
 
+[tool.coverage.run]
+branch = true
+source = [
+    "configuration",
+    "artifacts",
+    "market_data",
+    "features",
+    "trading",
+    "simulation",
+    "models",
+    "decisioning",
+    "learning",
+    "training",
+    "evaluation",
+    "experiments",
+    "live",
+    "integrations",
+    "compute",
+    "orchestra",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+extend-exclude = ["evidence/research/archive_2026"]
 src = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra"]
-# Date-stamped thesis audit scripts are historical research snapshots, not active source.
-extend-exclude = ["docs/thesis/*.py"]
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I", "UP"]
+select = ["E4", "E7", "E9", "F", "I", "UP", "D2", "D3", "D4"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D205"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra"]
@@ -147,7 +233,7 @@ files = [
     "live_trading_rl.py",
 ]
 strict = true
-exclude = "^outputs/|^docs/thesis/.*\\.py$"
+exclude = "^(outputs|evidence|docs/_build)/"
 show_error_codes = true
 warn_unused_ignores = true
 warn_return_any = true
@@ -225,7 +311,7 @@ module = [
 disable_error_code = ["attr-defined", "has-type"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
@@ -244,9 +330,3 @@ qrl-train = "training.cli:main"
 qrl-evaluate = "evaluation.cli:main"
 qrl-experiment = "experiments.cli:main"
 qrl-compute = "compute.cli:main"
-# Deprecated compatibility aliases retained for existing workflows and records.
-thesis-data = "market_data.cli:main"
-thesis-train = "training.cli:main"
-thesis-evaluate = "evaluation.cli:main"
-thesis-experiment-run = "experiments.cli:main"
-thesis-compute = "compute.cli:main"

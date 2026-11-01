@@ -25,28 +25,18 @@ def plot_fvg_signals_interactive(
 ) -> go.Figure:
     """Interactive Plotly chart of PO3/IFVG zone rectangles + entry markers.
 
-    Parameters
-    ----------
-    bars : pd.DataFrame
-        M1 OHLC bars (DatetimeIndex) used to compute ``signals``.
-    signals : pd.DataFrame
-        Output of :func:`~features.po3.trigger_rules.detect_po3_entries`
-        (or any of its sub-detectors).  Shares the index of ``bars``.
-    window : tuple[Timestamp, Timestamp], optional
-        Slice of the data to display (inclusive).
-    candle_tf : str
-        Pandas resample rule for the candles, e.g. ``'1min'``, ``'5min'``.
-    max_points : int
-        Cap on candle count.
-    show_entries : bool
-        Draw entry_long/entry_short markers.
-    out_path : Path | str, optional
-        If given, a self-contained HTML file is written here.
+    Args:
+        bars (pd.DataFrame): M1 OHLC bars (DatetimeIndex) used to compute ``signals``.
+        signals (pd.DataFrame): Output of :func:`~features.po3.trigger_rules.detect_po3_entries`
+            (or any of its sub-detectors).  Shares the index of ``bars``.
+        window (tuple[Timestamp, Timestamp], optional): Slice of the data to display (inclusive).
+        candle_tf (str): Pandas resample rule for the candles, e.g. ``'1min'``, ``'5min'``.
+        max_points (int): Cap on candle count.
+        show_entries (bool): Draw entry_long/entry_short markers.
+        out_path (Path | str, optional): If given, a self-contained HTML file is written here.
 
-    Returns
-    -------
-    go.Figure
-        The interactive figure.
+    Returns:
+        go.Figure: The interactive figure.
     """
     _check()
     from evaluation.plotting.po3_plots import _resample_ohlc

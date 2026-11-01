@@ -17,6 +17,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class DiagnosticsRuntimeMixin(RuntimeMixinBase):
+    """Collect rollout diagnostics and derive entry evidence from feature rows."""
+
     _debug_window: dict[str, Any] | None
 
     def enable_debug_trace(self) -> None:
@@ -25,7 +27,11 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         self._debug_window = new_debug_window()
 
     def debug_flush(self) -> dict[str, Any]:
-        """Return the counters since the last flush and start a new window."""
+        """Return the counters since the last flush and start a new window.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         if not self._debug_trace or self._debug_window is None:
             return {}
         summary = summarize_window(self._debug_window)
@@ -33,17 +39,30 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         return summary
 
     def debug_wiring(self) -> dict[str, Any]:
-        """Reward and risk settings this env was built with."""
+        """Reward and risk settings this env was built with.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         return wiring_from_env(self)
 
     def _note_session_open(self, session_id: int, feat_row: FeatureRow | pd.Series) -> None:
-        """Remember the first bar of this session and a post-open manip end."""
+        """Remember the first bar of this session and a post-open manip end.
+
+        Args:
+            session_id: Numeric value used for the session id.
+            feat_row: Feature values for the current market bar.
+        """
         self._session_open_idx.setdefault(session_id, self.step_idx)
         if float(feat_row.get("po3_manipulation_end", 0.0) or 0.0) > 0.0:
             self._ny_manip_confirmed.add(session_id)
 
     def _arm_po3_confirm(self, session_id: int) -> None:
-        """Let Idea 1 use a side only after this session's manipulation ends."""
+        """Let Idea 1 use a side only after this session's manipulation ends.
+
+        Args:
+            session_id: Numeric value used for the session id.
+        """
         if getattr(self.strategy, "name", "") != "po3_ifvg":
             return
         setattr(
@@ -53,18 +72,40 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         )
 
     def _entry_action_requested(self, discrete_action: int) -> bool:
-        """Interpret whether the decoded policy action requests entry execution."""
+        """Interpret whether the decoded policy action requests entry execution.
+
+        Args:
+            discrete_action: Numeric value used for the discrete action.
+
+        Returns:
+            Whether entry action requested meets the requested condition.
+        """
         if not self.strategy_actions:
             return discrete_action in (-1, 1)
         intensity = self._decision_action.get("intensity_u", float("nan"))
         return bool(np.isfinite(intensity) and intensity >= self.entry_intensity_threshold)
 
     def entry_evidence_context(self, feat_row: FeatureRow | pd.Series) -> EntryEvidence:
-        """Translate existing strategy predicates into one causal evidence record."""
+        """Translate existing strategy predicates into one causal evidence record.
+
+        Args:
+            feat_row: Feature values for the current market bar.
+
+        Returns:
+            Result of translate existing strategy predicates into one causal evidence record.
+        """
         context_direction = int(self.strategy.context_direction(feat_row))
         names = tuple(str(name) for name in feat_row.index)
 
         def flagged(stem: str) -> bool:
+            """Return whether a matching feature flag is finite and positive.
+
+            Args:
+                stem: Text or path value identifying the stem.
+
+            Returns:
+                Whether flagged meets the requested condition.
+            """
             columns = (name for name in names if name == stem or name.endswith("_" + stem))
             for column in columns:
                 try:
@@ -249,6 +290,15 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
 
         A direction override, or a side invented when the strategy has none,
         becomes no trade. The strategy's own sweep or swing entry stays.
+
+        Args:
+            discrete_action: Numeric value used for the discrete action.
+            feat_row: Feature values for the current market bar.
+            risk_frac: Numeric value used for the risk frac.
+            entry_candidate: Entry candidate used by the operation described above.
+
+        Returns:
+            Values returned by ``_lock_unconfirmed_side``, in the declared order.
         """
         if not self.strategy_actions or discrete_action == 0:
             return discrete_action, risk_frac
@@ -276,6 +326,9 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         The mapping lives in :data:`_REJECTION_COUNTERS`. An unregistered
         reason raises ``KeyError`` here rather than silently producing a ratio
         or trade-log entry with no backing bucket.
+
+        Args:
+            reason: Text or path value identifying the reason.
         """
         self._entry_diag[_REJECTION_COUNTERS[reason]] += 1
         # A refusal that arrives after PPO requested an ARMED trigger counts as
@@ -285,6 +338,14 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         self._entry_rejection_reason = reason
 
     def _in_open_blackout(self, session_id: int) -> bool:
+        """Process open blackout.
+
+        Args:
+            session_id: Numeric value used for the session id.
+
+        Returns:
+            Whether in open blackout meets the requested condition.
+        """
         if self.open_manipulation_bars <= 0:
             return False
         start = self._session_open_idx.get(session_id, self.step_idx)
@@ -324,6 +385,9 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         the reporting surface is owned by the object that owns the lifecycle.
         Returns an empty dict when the FSM is off (A3), so callers can merge
         unconditionally.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
         """
         machine = self.entry_state_machine
         if machine is None:

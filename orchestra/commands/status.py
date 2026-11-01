@@ -75,7 +75,11 @@ def tasks() -> None:
 @command_group.command()
 @click.argument("task_id")
 def show(task_id: str) -> None:
-    """Show details of a specific task."""
+    """Show details of a specific task.
+
+    Args:
+        task_id: Text or path value identifying the task id.
+    """
     state_dir = WORKSPACE / "outputs" / "orchestra" / "state"
     try:
         state = TaskState.load(task_id, state_dir)
@@ -134,7 +138,12 @@ def show(task_id: str) -> None:
     "--month", default=None, help="Month to report on (YYYY-MM). Defaults to current month."
 )
 def cost(date: str | None, month: str | None) -> None:
-    """Show cost and token usage report."""
+    """Show cost and token usage report.
+
+    Args:
+        date: Date used by the operation described above.
+        month: Month used by the operation described above.
+    """
     state_dir = WORKSPACE / "outputs" / "orchestra" / "state"
     from orchestra.cost import CostTracker
 
@@ -180,7 +189,11 @@ def cost(date: str | None, month: str | None) -> None:
 @command_group.command()
 @click.argument("task_id")
 def cost_task(task_id: str) -> None:
-    """Show cost breakdown for a specific task."""
+    """Show cost breakdown for a specific task.
+
+    Args:
+        task_id: Text or path value identifying the task id.
+    """
     state_dir = WORKSPACE / "outputs" / "orchestra" / "state"
     from orchestra.cost import CostTracker
 
@@ -265,7 +278,13 @@ def perf() -> None:
 )
 @click.option("--yes", is_flag=True, help="Do not prompt for confirmation.")
 def restore(task_id: str, step: str | None, yes: bool) -> None:
-    """Restore a per-step workspace snapshot for a task."""
+    """Restore a per-step workspace snapshot for a task.
+
+    Args:
+        task_id: Text or path value identifying the task id.
+        step: Step used by the operation described above.
+        yes: Whether to enable or require the yes.
+    """
     state_dir = WORKSPACE / "outputs" / "orchestra" / "state"
     root = state_dir / "backups" / task_id
     slots = list_slots(root)

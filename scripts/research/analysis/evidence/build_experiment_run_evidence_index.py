@@ -99,8 +99,8 @@ def _experiment_run_artifacts(experiment_run_dir: Path, root: Path) -> list[dict
         if directory.is_dir()
         for path in directory.rglob("*")
         if path.is_file()
-        and path.name != "thesis_evidence_index.json"
-        and not path.name.startswith("thesis_evidence_index_")
+        and path.name != "experiment_run_evidence_index.json"
+        and not path.name.startswith("experiment_run_evidence_index_")
     ]
     return [_artifact(path, root) for path in sorted(files)]
 
@@ -310,7 +310,9 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
     index = build_experiment_run_evidence_index(args.experiment_run_dir)
-    output = args.output or args.experiment_run_dir / "reports" / "thesis_evidence_index.json"
+    output = (
+        args.output or args.experiment_run_dir / "reports" / "experiment_run_evidence_index.json"
+    )
     write_index(index, output)
     print(output)
     return 0

@@ -16,6 +16,12 @@ def attach_run_log(run_dir: Path) -> Path | None:
     second call for the same directory reuses the existing handler instead of
     duplicating records or truncating the file. An unwritable directory
     returns ``None`` rather than aborting training over logging.
+
+    Args:
+        run_dir: Text or path value identifying the run dir.
+
+    Returns:
+        Path returned by ``attach_run_log``.
     """
     name = str(run_dir / RUN_LOG_FILENAME)
     for handler in logging.getLogger().handlers:

@@ -12,6 +12,15 @@ _CLIP = 1200
 
 
 def _clip(text: object, limit: int = _CLIP) -> str:
+    """Process the requested value.
+
+    Args:
+        text: Text used by the operation described above.
+        limit: Numeric value used for the limit.
+
+    Returns:
+        Text returned by ``_clip``.
+    """
     raw = text.strip() if isinstance(text, str) else str(text or "").strip()
     if not raw:
         return "_none_"
@@ -21,6 +30,16 @@ def _clip(text: object, limit: int = _CLIP) -> str:
 
 
 def _agent_block(title: str, items: list[Any], empty: str) -> list[str]:
+    """Process block.
+
+    Args:
+        title: Text or path value identifying the title.
+        items: Items supplied for the items, in input order.
+        empty: Text or path value identifying the empty.
+
+    Returns:
+        Values returned by ``_agent_block``, in the declared order.
+    """
     if not items:
         return [f"## {title}", empty, ""]
     lines = [f"## {title}", ""]
@@ -34,7 +53,14 @@ def _agent_block(title: str, items: list[Any], empty: str) -> list[str]:
 
 
 def build_final_report(state: TaskState) -> str:
-    """Render steps 1-9 plus verification into one markdown document."""
+    """Render steps 1-9 plus verification into one markdown document.
+
+    Args:
+        state: State object read or updated by the operation.
+
+    Returns:
+        Text returned by ``build_final_report``.
+    """
     d = state.data
     created = time.ctime(d.get("created_at") or 0)
     updated = time.ctime(d.get("updated_at") or 0)
@@ -106,7 +132,14 @@ def build_final_report(state: TaskState) -> str:
 
 
 def write_final_report(state: TaskState) -> Path:
-    """Write ``outputs/orchestra/state/reports/<task-id>.md`` and record the path."""
+    """Write ``outputs/orchestra/state/reports/<task-id>.md`` and record the path.
+
+    Args:
+        state: State object read or updated by the operation.
+
+    Returns:
+        Path returned by ``write_final_report``.
+    """
     dest = state.state_dir / "reports" / f"{state.task_id}.md"
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(build_final_report(state), encoding="utf-8")

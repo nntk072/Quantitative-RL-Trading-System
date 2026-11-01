@@ -16,6 +16,8 @@ from .sweep_reward import CompositeReward, SweepConfirmationReward
 
 
 class RewardInitializationMixin(RuntimeMixinBase):
+    """Initialize configured reward calculators and per-episode reward state."""
+
     def _initialize_reward_runtime(
         self,
         trader_actions: bool | None,
@@ -32,6 +34,25 @@ class RewardInitializationMixin(RuntimeMixinBase):
         equity_log_growth_scale: float,
     ) -> bool:
         # Resolve trader/strategy action flag early (needed for reward + spaces).
+        """Initialize reward runtime.
+
+        Args:
+            trader_actions: Trader actions used by the operation described above.
+            strategy_actions: Whether to enable or require the strategy actions.
+            use_sweep_reward: Whether to enable or require the use sweep reward.
+            strategy_reward: Strategy reward used by the operation described above.
+            dsr_eta: Numeric value used for the dsr eta.
+            sweep_alpha: Numeric value used for the sweep alpha.
+            sweep_beta: Numeric value used for the sweep beta.
+            sweep_hold_bars: Market bar or price data used for initialize reward runtime.
+            dsr_weight: Numeric value used for the dsr weight.
+            sweep_weight: Numeric value used for the sweep weight.
+            strategy_weight: Numeric value used for the strategy weight.
+            equity_log_growth_scale: Numeric value used for the equity log growth scale.
+
+        Returns:
+            Whether initialize reward runtime meets the requested condition.
+        """
         _strategy_actions = (
             bool(trader_actions) if trader_actions is not None else bool(strategy_actions)
         )

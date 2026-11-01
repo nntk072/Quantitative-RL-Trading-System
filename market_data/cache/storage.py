@@ -12,10 +12,27 @@ from artifacts.atomic import write_json_atomic
 
 
 def cache_metadata_path(entry: str | Path) -> Path:
+    """Return the completion-manifest path inside a cache entry.
+
+    Args:
+        entry: Cache directory or identity path.
+
+    Returns:
+        The path to the entry's ``manifest.json`` file.
+    """
     return Path(entry) / "manifest.json"
 
 
 def mark_cache_complete(entry: str | Path, metadata: dict[str, object]) -> Path:
+    """Write completion metadata after all cache files are ready.
+
+    Args:
+        entry: Cache directory or identity path.
+        metadata: JSON-compatible provenance and completeness fields.
+
+    Returns:
+        Path returned by ``mark_cache_complete``.
+    """
     root = Path(entry)
     root.mkdir(parents=True, exist_ok=True)
     write_json_atomic(cache_metadata_path(root), metadata)
@@ -23,15 +40,38 @@ def mark_cache_complete(entry: str | Path, metadata: dict[str, object]) -> Path:
 
 
 def cache_is_complete(entry: str | Path) -> bool:
+    """Return whether a cache entry has a valid completion marker.
+
+    Args:
+        entry: Entry used by the operation described above.
+
+    Returns:
+        Whether cache is complete meets the requested condition.
+    """
     return cache_metadata_path(entry).is_file()
 
 
 def parquet_cache_manifest_path(cache_path: str | Path) -> Path:
-    """Return the completion manifest path for a parquet cache file."""
+    """Return the completion manifest path for a parquet cache file.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+
+    Returns:
+        Path returned by ``parquet_cache_manifest_path``.
+    """
     return Path(f"{cache_path}.manifest.json")
 
 
 def _read_parquet_cache_manifest(cache_path: Path) -> dict[str, Any] | None:
+    """Read parquet cache manifest.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     manifest_path = parquet_cache_manifest_path(cache_path)
     if not manifest_path.is_file():
         return None
@@ -67,7 +107,14 @@ def _read_parquet_cache_manifest(cache_path: Path) -> dict[str, Any] | None:
 
 
 def parquet_cache_is_complete(cache_path: str | Path) -> bool:
-    """Check for a non-empty parquet plus a structurally valid completion manifest."""
+    """Check for a non-empty parquet plus a structurally valid completion manifest.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+
+    Returns:
+        Whether parquet cache is complete meets the requested condition.
+    """
     path = Path(cache_path)
     manifest = _read_parquet_cache_manifest(path)
     if manifest is None or not path.is_file() or path.stat().st_size == 0:
@@ -88,7 +135,17 @@ def load_parquet_cache(
     ordered_column: str | None = None,
     unique_order: bool = False,
 ) -> pd.DataFrame | None:
-    """Load a parquet cache only when identity and recorded ordering still match."""
+    """Load a parquet cache only when identity and recorded ordering still match.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+        expected_identity: Key-value data used for the expected identity.
+        ordered_column: Ordered column used by the operation described above.
+        unique_order: Whether to enable or require the unique order.
+
+    Returns:
+        DataFrame returned by ``load_parquet_cache``.
+    """
     path = Path(cache_path)
     if not path.is_file():
         return None
@@ -132,7 +189,18 @@ def write_parquet_cache(
     index: bool = True,
     ordered_column: str | None = None,
 ) -> Path:
-    """Atomically publish a parquet file and its semantic completion manifest."""
+    """Atomically publish a parquet file and its semantic completion manifest.
+
+    Args:
+        cache_path: Path or filename identifying the cache.
+        frame: Input data frame to process.
+        identity: Key-value data used for the identity.
+        index: Position or label identifying the requested item.
+        ordered_column: Ordered column used by the operation described above.
+
+    Returns:
+        Path returned by ``write_parquet_cache``.
+    """
     path = Path(cache_path)
     if ordered_column is not None and ordered_column not in frame.columns:
         raise ValueError(f"cache frame is missing ordering column {ordered_column!r}")

@@ -17,6 +17,8 @@ from .timebase import _minutes_per_step
 
 
 class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
+    """Create action/observation spaces and episode bounds from market inputs."""
+
     def _initialize_episode_spaces(
         self,
         ny_session_start_idx: int | None,
@@ -27,10 +29,17 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
         obs_window: int,
     ) -> None:
         # Per-step entry diagnostics (strategy_actions); reset each episode.
-        self._entry_diag: dict[str, int] = _empty_entry_diag(
-            self.entry_state_machine is not None,
-            legacy_thesis_contract=self.legacy_thesis_contract,
-        )
+        """Initialize episode spaces.
+
+        Args:
+            ny_session_start_idx: Ny session start idx used by the operation described above.
+            bars: Market bars to process.
+            bundle_data: Bundle data used by the operation described above.
+            use_vae: Whether to enable or require the use vae.
+            vae: Vae used by the operation described above.
+            obs_window: Numeric value used for the obs window.
+        """
+        self._entry_diag: dict[str, int] = _empty_entry_diag(self.entry_state_machine is not None)
         self._previous_constraint_ratios: dict[str, float] = {
             "daily": 0.0,
             "max_loss": 0.0,

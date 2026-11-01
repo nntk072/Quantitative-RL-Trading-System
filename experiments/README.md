@@ -19,7 +19,7 @@ their declared matched factors, split, seed, and execution assumptions.
 
 See the [experiment guide](../docs/modules/experiments.md),
 [generated catalog](../docs/model_variants.md), and
-[research validation protocol](../docs/thesis/validation_protocol.md).
+[research validation protocol](../docs/research/validation_protocol.md).
 
 ## Run lifecycle
 

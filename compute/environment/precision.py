@@ -12,6 +12,14 @@ from compute.environment.capabilities import discover_device_capabilities
 
 
 def _resolve_device(device: str | torch.device | None) -> torch.device:
+    """Resolve device.
+
+    Args:
+        device: Compute device on which to perform the operation.
+
+    Returns:
+        Result of resolve device.
+    """
     if device is None or (isinstance(device, str) and device.lower() == "auto"):
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
     try:
@@ -21,7 +29,14 @@ def _resolve_device(device: str | torch.device | None) -> torch.device:
 
 
 def get_autocast_dtype(device: str | torch.device | None = None) -> torch.dtype | None:
-    """Choose fp16 for pre-Ampere GPUs and bf16 when a newer GPU supports it."""
+    """Choose fp16 for pre-Ampere GPUs and bf16 when a newer GPU supports it.
+
+    Args:
+        device: Compute device on which to perform the operation.
+
+    Returns:
+        Result of choose fp16 for pre-Ampere GPUs and bf16 when a newer GPU supports it.
+    """
     resolved = _resolve_device(device)
     if resolved.type != "cuda" or not torch.cuda.is_available():
         return None
@@ -39,7 +54,16 @@ def get_autocast_context(
     dtype: torch.dtype | None = None,
     enabled: bool | None = None,
 ) -> AbstractContextManager[Any]:
-    """Return the selected accelerator autocast context, or a CPU no-op."""
+    """Return the selected accelerator autocast context, or a CPU no-op.
+
+    Args:
+        device: Compute device on which to perform the operation.
+        dtype: Dtype used by the operation described above.
+        enabled: Enabled used by the operation described above.
+
+    Returns:
+        Result of return the selected accelerator autocast context, or a CPU no-op.
+    """
     resolved = _resolve_device(device)
     if resolved.type != "cuda" or not torch.cuda.is_available() or enabled is False:
         return nullcontext()
@@ -52,7 +76,12 @@ def get_autocast_context(
 def configure_accelerator_for_training(
     device_hint: str | torch.device | None = None, *, cudnn_benchmark: bool = True
 ) -> None:
-    """Configure allocator and backend kernels before PPO's first GPU allocation."""
+    """Configure allocator and backend kernels before PPO's first GPU allocation.
+
+    Args:
+        device_hint: Device hint used by the operation described above.
+        cudnn_benchmark: Whether to enable or require the cudnn benchmark.
+    """
     if isinstance(device_hint, torch.device) and device_hint.type == "cpu":
         return
     if isinstance(device_hint, str) and device_hint.lower() == "cpu":
@@ -76,7 +105,12 @@ def configure_accelerator_for_training(
 def configure_cuda_for_training(
     device_hint: str | torch.device | None = None, *, cudnn_benchmark: bool = True
 ) -> None:
-    """Backward-compatible alias for accelerator-wide training setup."""
+    """Backward-compatible alias for accelerator-wide training setup.
+
+    Args:
+        device_hint: Device hint used by the operation described above.
+        cudnn_benchmark: Whether to enable or require the cudnn benchmark.
+    """
     configure_accelerator_for_training(device_hint, cudnn_benchmark=cudnn_benchmark)
 
 

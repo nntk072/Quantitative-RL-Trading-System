@@ -41,7 +41,7 @@ while true; do
     --partition=gpu-grace-h200-141g \
     --nodes=2 --ntasks=2 --ntasks-per-node=1 \
     --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G \
-    --time=06:00:00 --job-name=thesis18x2 \
+    --time=06:00:00 --job-name=qrl18x2 \
     --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC" \
     --chdir="$REPO" \
     bash scripts/compute/slurm/experiment_runs/run_18way_two_node_allocation.sh

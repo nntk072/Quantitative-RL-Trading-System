@@ -62,7 +62,17 @@ PD_CONTEXT_RAW_COLUMNS = (
 
 
 def _atr_dist(level: pd.Series, close: pd.Series, atr: pd.Series, *, side: str) -> pd.Series:
-    """ATR-normalised distance; ``side='high'`` → (level-close)/atr, else (close-level)/atr."""
+    """ATR-normalised distance; ``side='high'`` → (level-close)/atr, else (close-level)/atr.
+
+    Args:
+        level: Tabular data used for the level.
+        close: Tabular data used for the close.
+        atr: Tabular data used for the atr.
+        side: Text or path value identifying the side.
+
+    Returns:
+        Result of aTR-normalised distance; ``side='high'`` → (level-close)/atr, else (close-level)/atr.
+    """
     safe = atr.where(atr > 0)
     if side == "high":
         return (level - close) / safe
@@ -74,7 +84,15 @@ def _prior_calendar_hl(
     *,
     freq: str,
 ) -> pd.DataFrame:
-    """Previous completed calendar day/week H/L in the index timezone (causal)."""
+    """Previous completed calendar day/week H/L in the index timezone (causal).
+
+    Args:
+        bars: Market bars to process.
+        freq: Text or path value identifying the freq.
+
+    Returns:
+        DataFrame returned by ``_prior_calendar_hl``.
+    """
     idx = pd.DatetimeIndex(bars.index)
     if freq == "D":
         keys = pd.Series(idx.date, index=idx)
@@ -107,6 +125,13 @@ def _session_completed_and_running(
     London (or later) bar of D. London completed extremes become visible from
     the first NY bar of D. During London, London H/L are the running session
     extremes so far.
+
+    Args:
+        bars: Market bars to process.
+        session: Session identifier used by the operation.
+
+    Returns:
+        Values returned by ``_session_completed_and_running``, in the declared order.
     """
     idx = pd.DatetimeIndex(bars.index)
     dates = pd.Series(idx.date, index=idx)
@@ -198,16 +223,14 @@ def build_pd_context_features(
 ) -> pd.DataFrame:
     """Build fixed-width session-routed PD context columns.
 
-    Parameters
-    ----------
-    bars:
-        M1 (or any) OHLC frame with a tz-aware DatetimeIndex.
-    atr:
-        ATR series aligned to ``bars`` (zeros/NaN → distance features NaN).
-    tz:
-        Broker timezone for session labels (must match ``get_session``).
-    ny_end:
-        Inclusive NY end HH:MM forwarded to session labelling.
+    Args:
+        bars: M1 (or any) OHLC frame with a tz-aware DatetimeIndex.
+        atr: ATR series aligned to ``bars`` (zeros/NaN → distance features NaN).
+        tz: Broker timezone for session labels (must match ``get_session``).
+        ny_end: Inclusive NY end HH:MM forwarded to session labelling.
+
+    Returns:
+        DataFrame returned by ``build_pd_context_features``.
     """
     labeled = add_session_labels(
         bars[["open", "high", "low", "close"]].copy(), tz=tz, ny_end=ny_end
@@ -322,6 +345,15 @@ def build_htf_pd_distance_features(
     Distances use the HTF bar's close and the caller's M1 ATR after alignment
     is not available here — we normalise by an ATR computed on ``bars`` so the
     values are scale-free before causal ffill onto M1.
+
+    Args:
+        bars: Market bars to process.
+        atr_m1: Tabular data used for the atr m1.
+        swing_period: Numeric value used for the swing period.
+        atr_mult: Numeric value used for the atr mult.
+
+    Returns:
+        DataFrame returned by ``build_htf_pd_distance_features``.
     """
     from features.technical.indicators import atr as atr_fn
     from features.technical.structure import detect_session_levels, structure_levels
@@ -356,6 +388,12 @@ def build_trader_context_features(feat: pd.DataFrame) -> pd.DataFrame:
     Expects ``htf_day_bias`` (from PD context) and, when present, PO3
     manipulation / distribution columns. Safe to call when only PD context
     is on (manip/context columns fall back to HTF bias).
+
+    Args:
+        feat: Tabular data used for the feat.
+
+    Returns:
+        DataFrame returned by ``build_trader_context_features``.
     """
     n = len(feat)
     idx = feat.index

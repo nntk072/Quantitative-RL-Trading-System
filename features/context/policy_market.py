@@ -28,6 +28,18 @@ def build_policy_market_context(
     that date's first bar. Quote aggregates use ticks in ``[bar open, bar end)``;
     the environment exposes the feature row only after that bar, preserving
     decision-time causality.
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+        tickbook: Tickbook used by the operation described above.
+        schedule_path: Path or filename identifying the schedule.
+        session_start: Text or path value identifying the session start.
+        session_end: Text or path value identifying the session end.
+        bar_minutes: Numeric value used for the bar minutes.
+
+    Returns:
+        DataFrame returned by ``build_policy_market_context``.
     """
     if bars.empty or not bars.index.equals(features.index):
         raise ValueError("bars and features must have the same nonempty index")
@@ -124,6 +136,19 @@ def attach_policy_market_context(
     session_start: str = "16:30",
     session_end: str = "23:00",
 ) -> pd.DataFrame:
+    """Attach policy-session context derived from bars and the tick schedule.
+
+    Args:
+        bars: Market bars used to determine session dates and ranges.
+        features: Existing feature frame to extend.
+        tickbook: Optional tick data used by the context builder.
+        schedule_path: Session schedule used to resolve policy windows.
+        session_start: Local session start time in HH:MM form.
+        session_end: Local session end time in HH:MM form.
+
+    Returns:
+        Feature frame with policy-market context columns appended.
+    """
     context = build_policy_market_context(
         bars,
         features,
@@ -139,6 +164,14 @@ def attach_policy_market_context(
 
 
 def _minute_of_day(value: str) -> int:
+    """Process of day.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Numeric result returned by ``_minute_of_day``.
+    """
     parts = value.split(":")
     if len(parts) != 2:
         raise ValueError(f"invalid HH:MM time {value!r}")

@@ -3,9 +3,9 @@
 Broker-specific code belongs in `integrations/`; decision contracts and
 strategy logic remain broker-neutral.
 
-1. Read [`trading/README.md`](../../trading/README.md),
-   [`live/README.md`](../../live/README.md), and
-   [`integrations/README.md`](../../integrations/README.md).
+1. Read the [trading guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/trading/README.md),
+   [live guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/live/README.md), and
+   [integrations guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/integrations/README.md).
 2. Identify the broker's quote, instrument, order, fill, position, clock, and
    account representations. Document units, timezone, precision, and partial
    fill behavior.

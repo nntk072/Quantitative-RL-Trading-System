@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate thesis result-manifest structure, references, and artifact hashes."""
+"""Validate research result-manifest structure, references, and artifact hashes."""
 
 from __future__ import annotations
 
@@ -21,8 +21,8 @@ for _candidate in Path(__file__).resolve().parents:
 from configuration.paths import repository_root  # noqa: E402
 
 ROOT = repository_root(__file__)
-DEFAULT_SCHEMA = ROOT / "docs/thesis/result_manifest.schema.json"
-DEFAULT_TRIAL_LEDGER_SCHEMA = ROOT / "docs/thesis/trial_ledger.schema.json"
+DEFAULT_SCHEMA = ROOT / "schemas/research_result_manifest.schema.json"
+DEFAULT_TRIAL_LEDGER_SCHEMA = ROOT / "schemas/research_trial_ledger.schema.json"
 FROZEN_SUPPORTING_ROLES = {
     "protocol",
     "trial_ledger",

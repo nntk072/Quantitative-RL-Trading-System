@@ -1,3 +1,5 @@
+"""Artifact identities, manifests, layouts, and atomic storage contracts."""
+
 from .atomic import write_json_atomic, write_text_atomic
 from .config_snapshot import write_config_snapshot
 from .identity import ArtifactId, artifact_id, file_sha256

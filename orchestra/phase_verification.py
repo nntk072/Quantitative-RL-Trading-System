@@ -10,10 +10,15 @@ from .task_state_store import Phase
 
 
 class PhaseVerificationMixin(PipelineMixinBase):
+    """Run canonical repository verification and report gate outcomes."""
+
     def _phase_verification(self) -> bool:
         """Phase 9: Deterministic verification with fix loop.
 
         Returns True when the CI gate passes, False when fixes are needed.
+
+        Returns:
+            Whether phase verification meets the requested condition.
         """
         click.echo("\n[9/10] VERIFICATION")
 

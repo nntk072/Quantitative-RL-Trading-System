@@ -10,20 +10,20 @@ from evaluation.metrics.trade_setup_policy import summarize_trade_setup_decision
 from evaluation.reporting.run_artifact_writer import save_run
 
 
-def test_thesis_policy_report_counts_abstention_diversity_and_invalid_choices() -> None:
+def test_trade_setup_policy_report_counts_abstention_diversity_and_invalid_choices() -> None:
     decisions = pd.DataFrame(
         [
             {
-                "thesis_candidate_id": 0,
+                "trade_setup_candidate_id": 0,
                 "idea": "",
                 "setup_timeframe": "",
                 "selection_valid": True,
                 "eligible_candidate_ids": [0, trade_setup_candidate_id("fvg_retest", "M5", 1)],
-                "thesis_entropy_nats": 2.0,
+                "trade_setup_entropy_nats": 2.0,
                 "time": "2025-01-01T00:00:00Z",
             },
             {
-                "thesis_candidate_id": trade_setup_candidate_id("fvg_retest", "M5", 1),
+                "trade_setup_candidate_id": trade_setup_candidate_id("fvg_retest", "M5", 1),
                 "idea": "fvg_retest",
                 "setup_timeframe": "M5",
                 "selection_valid": True,
@@ -32,16 +32,16 @@ def test_thesis_policy_report_counts_abstention_diversity_and_invalid_choices() 
                     trade_setup_candidate_id("fvg_retest", "M5", 1),
                     trade_setup_candidate_id("fvg_retest", "M5", -1),
                 ],
-                "thesis_entropy_nats": 1.0,
+                "trade_setup_entropy_nats": 1.0,
                 "time": "2025-01-02T00:00:00Z",
             },
             {
-                "thesis_candidate_id": trade_setup_candidate_id("po3", "M15", -1),
+                "trade_setup_candidate_id": trade_setup_candidate_id("po3", "M15", -1),
                 "idea": "po3",
                 "setup_timeframe": "M15",
                 "selection_valid": False,
                 "eligible_candidate_ids": [0, trade_setup_candidate_id("po3", "M15", -1)],
-                "thesis_entropy_nats": 0.5,
+                "trade_setup_entropy_nats": 0.5,
                 "time": "2025-02-01T00:00:00Z",
             },
         ]
@@ -53,8 +53,8 @@ def test_thesis_policy_report_counts_abstention_diversity_and_invalid_choices() 
                 "primary_idea": "fvg_retest",
                 "primary_setup_timeframe": "M5",
                 "primary_direction": 1,
-                "thesis_candidate_id": trade_setup_candidate_id("fvg_retest", "M5", 1),
-                "thesis_schema_version": "thesis-overlay-action-v1",
+                "trade_setup_candidate_id": trade_setup_candidate_id("fvg_retest", "M5", 1),
+                "trade_setup_schema_version": "trade-setup-overlay-action-v1",
                 "price": 100.0,
                 "sl_price": 98.0,
                 "tp_price": 104.0,
@@ -76,9 +76,9 @@ def test_thesis_policy_report_counts_abstention_diversity_and_invalid_choices() 
     assert report["invalid_selection_count"] == 1
     assert report["selected_idea_count"] == 2
     assert report["selected_timeframe_count"] == 2
-    assert report["trade_thesis_eligible_steps"] == 3
-    assert report["no_trade_rate_when_trade_thesis_eligible"] == 1 / 3
-    assert report["eligible_trade_thesis_count_max"] == 2
+    assert report["trade_setup_eligible_steps"] == 3
+    assert report["no_trade_rate_when_trade_setup_eligible"] == 1 / 3
+    assert report["eligible_trade_setup_count_max"] == 2
     assert len(report["selection_by_idea"]) == 6
     assert len(report["selection_by_timeframe"]) == 9
     assert len(report["selection_matrix"]) == 54
@@ -99,18 +99,18 @@ def test_thesis_policy_report_counts_abstention_diversity_and_invalid_choices() 
     assert fvg_performance["trade_count"] == 1
     assert fvg_performance["net_pnl"] == 120.0
     assert fvg_performance["mean_realized_r"] == 0.6
-    assert len(report["thesis_entropy_by_month"]) == 2
+    assert len(report["trade_setup_entropy_by_month"]) == 2
     assert report["structural_violations"]["total"] == 0
 
 
-def test_thesis_policy_report_flags_stop_floor_and_wrong_side_targets() -> None:
+def test_trade_setup_policy_report_flags_stop_floor_and_wrong_side_targets() -> None:
     decisions = pd.DataFrame(
         columns=[
-            "thesis_candidate_id",
+            "trade_setup_candidate_id",
             "idea",
             "setup_timeframe",
             "selection_valid",
-            "thesis_entropy_nats",
+            "trade_setup_entropy_nats",
             "time",
         ]
     )
@@ -121,8 +121,10 @@ def test_thesis_policy_report_flags_stop_floor_and_wrong_side_targets() -> None:
                 "primary_idea": "standard_deviation",
                 "primary_setup_timeframe": "M15",
                 "primary_direction": 1,
-                "thesis_candidate_id": trade_setup_candidate_id("standard_deviation", "M15", 1),
-                "thesis_schema_version": "thesis-overlay-action-v1",
+                "trade_setup_candidate_id": trade_setup_candidate_id(
+                    "standard_deviation", "M15", 1
+                ),
+                "trade_setup_schema_version": "trade-setup-overlay-action-v1",
                 "price": 100.0,
                 "sl_price": 101.0,
                 "tp_price": 99.0,
@@ -151,8 +153,8 @@ def test_session_composite_stops_and_lower_timeframe_targets_are_valid() -> None
                 "primary_idea": "po3",
                 "primary_setup_timeframe": "M1",
                 "primary_direction": -1,
-                "thesis_candidate_id": trade_setup_candidate_id("po3", "M1", -1),
-                "thesis_schema_version": "thesis-overlay-action-v1",
+                "trade_setup_candidate_id": trade_setup_candidate_id("po3", "M1", -1),
+                "trade_setup_schema_version": "trade-setup-overlay-action-v1",
                 "price": 100.0,
                 "sl_price": 101.0,
                 "tp_price": 99.0,
@@ -166,8 +168,8 @@ def test_session_composite_stops_and_lower_timeframe_targets_are_valid() -> None
                 "primary_idea": "ifvg_unretested",
                 "primary_setup_timeframe": "M1",
                 "primary_direction": -1,
-                "thesis_candidate_id": trade_setup_candidate_id("ifvg_unretested", "M1", -1),
-                "thesis_schema_version": "thesis-overlay-action-v1",
+                "trade_setup_candidate_id": trade_setup_candidate_id("ifvg_unretested", "M1", -1),
+                "trade_setup_schema_version": "trade-setup-overlay-action-v1",
                 "price": 100.0,
                 "sl_price": 101.0,
                 "tp_price": 99.0,
@@ -181,8 +183,8 @@ def test_session_composite_stops_and_lower_timeframe_targets_are_valid() -> None
                 "primary_idea": "fvg_retest",
                 "primary_setup_timeframe": "M5",
                 "primary_direction": 1,
-                "thesis_candidate_id": trade_setup_candidate_id("fvg_retest", "M5", 1),
-                "thesis_schema_version": "thesis-overlay-action-v1",
+                "trade_setup_candidate_id": trade_setup_candidate_id("fvg_retest", "M5", 1),
+                "trade_setup_schema_version": "trade-setup-overlay-action-v1",
                 "price": 100.0,
                 "sl_price": 98.0,
                 "tp_price": 102.0,
@@ -213,8 +215,8 @@ def test_m1_standard_deviation_stop_uses_unprefixed_level_one_name() -> None:
                 "primary_idea": "standard_deviation",
                 "primary_setup_timeframe": "M1",
                 "primary_direction": 1,
-                "thesis_candidate_id": trade_setup_candidate_id("standard_deviation", "M1", 1),
-                "thesis_schema_version": "thesis-overlay-action-v1",
+                "trade_setup_candidate_id": trade_setup_candidate_id("standard_deviation", "M1", 1),
+                "trade_setup_schema_version": "trade-setup-overlay-action-v1",
                 "price": 100.0,
                 "sl_price": 98.0,
                 "sl_timeframe": "M1",
@@ -230,76 +232,8 @@ def test_m1_standard_deviation_stop_uses_unprefixed_level_one_name() -> None:
     )
 
 
-def test_thesis_decision_diagnostics_export_to_split_artifacts(tmp_path) -> None:
+def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) -> None:
     selected_id = trade_setup_candidate_id("fvg_retest", "M5", 1)
-    decisions = pd.DataFrame(
-        [
-            {
-                "step": 1,
-                "time": "2025-01-01T00:01:00Z",
-                "thesis_candidate_id": 0,
-                "idea": "",
-                "setup_timeframe": "",
-                "direction": 0,
-                "is_no_trade": True,
-                "selection_valid": True,
-                "eligible_thesis_count": 2,
-                "eligible_candidate_ids": [0, selected_id],
-                "thesis_entropy_nats": 0.8,
-                "action_risk": 0.1,
-            },
-            {
-                "step": 2,
-                "time": "2025-01-01T00:02:00Z",
-                "thesis_candidate_id": selected_id,
-                "idea": "fvg_retest",
-                "setup_timeframe": "M5",
-                "direction": 1,
-                "is_no_trade": False,
-                "selection_valid": True,
-                "eligible_thesis_count": 2,
-                "eligible_candidate_ids": [0, selected_id],
-                "thesis_entropy_nats": 0.7,
-                "action_risk": 0.3,
-            },
-        ]
-    )
-    equity = pd.Series(
-        [100_000.0, 100_010.0], index=pd.date_range("2025-01-01", periods=2, freq="min")
-    )
-    trades = pd.DataFrame()
-    result = {
-        "equity": equity,
-        "trades": trades,
-        "initial_balance": 100_000.0,
-        "thesis_decisions": decisions,
-        "thesis_policy_metrics": summarize_trade_setup_decisions(decisions, trades),
-    }
-    run_dir = save_run(
-        run_dir=tmp_path / "thesis-diagnostics",
-        train_result=result,
-        train_metrics=calculate_metrics(equity, trades=trades, initial_balance=100_000.0),
-        save_plots=True,
-        save_html=False,
-        save_csv=True,
-        report_profile="experiment_run_fast",
-    )
-
-    split = run_dir / "training"
-    assert len(pd.read_csv(split / "thesis_decisions.csv")) == 2
-    assert len(pd.read_csv(split / "thesis_selection_matrix.csv")) == 54
-    assert len(pd.read_csv(split / "thesis_selection_by_idea.csv")) == 6
-    assert (split / "thesis_selection_heatmap.png").is_file()
-    assert (split / "thesis_performance_heatmap.png").is_file()
-    diagnostics = json.loads((split / "thesis_policy_metrics.json").read_text())
-    assert diagnostics["no_trade_count"] == 1
-    assert diagnostics["invalid_selection_count"] == 0
-    summary = (split / "summary.txt").read_text()
-    assert "THESIS POLICY DIAGNOSTICS" in summary
-    assert "Structural violations: 0 unique trades" in summary
-
-
-def test_canonical_trade_setup_diagnostics_export_canonical_artifact_names(tmp_path) -> None:
     decisions = pd.DataFrame(
         [
             {
@@ -311,10 +245,25 @@ def test_canonical_trade_setup_diagnostics_export_canonical_artifact_names(tmp_p
                 "direction": 0,
                 "is_no_trade": True,
                 "selection_valid": True,
-                "eligible_trade_setup_count": 1,
-                "eligible_trade_setup_ids": [0],
-                "trade_setup_entropy_nats": 0.0,
-            }
+                "eligible_trade_setup_count": 2,
+                "eligible_candidate_ids": [0, selected_id],
+                "trade_setup_entropy_nats": 0.8,
+                "action_risk": 0.1,
+            },
+            {
+                "step": 2,
+                "time": "2025-01-01T00:02:00Z",
+                "trade_setup_candidate_id": selected_id,
+                "idea": "fvg_retest",
+                "setup_timeframe": "M5",
+                "direction": 1,
+                "is_no_trade": False,
+                "selection_valid": True,
+                "eligible_trade_setup_count": 2,
+                "eligible_candidate_ids": [0, selected_id],
+                "trade_setup_entropy_nats": 0.7,
+                "action_risk": 0.3,
+            },
         ]
     )
     equity = pd.Series(
@@ -328,9 +277,8 @@ def test_canonical_trade_setup_diagnostics_export_canonical_artifact_names(tmp_p
         "trade_setup_decisions": decisions,
         "trade_setup_policy_metrics": summarize_trade_setup_decisions(decisions, trades),
     }
-
     run_dir = save_run(
-        run_dir=tmp_path / "trade-setup-diagnostics",
+        run_dir=tmp_path / "trade_setup-diagnostics",
         train_result=result,
         train_metrics=calculate_metrics(equity, trades=trades, initial_balance=100_000.0),
         save_plots=True,
@@ -340,8 +288,15 @@ def test_canonical_trade_setup_diagnostics_export_canonical_artifact_names(tmp_p
     )
 
     split = run_dir / "training"
-    assert len(pd.read_csv(split / "trade_setup_decisions.csv")) == 1
+    assert len(pd.read_csv(split / "trade_setup_decisions.csv")) == 2
+    assert len(pd.read_csv(split / "trade_setup_selection_matrix.csv")) == 54
+    assert len(pd.read_csv(split / "trade_setup_selection_by_idea.csv")) == 6
     assert (split / "trade_setup_selection_heatmap.png").is_file()
-    metrics = json.loads((split / "trade_setup_policy_metrics.json").read_text())
-    assert metrics["wire_schema"] == "trade_setup"
-    assert metrics["trade_setup_entropy_mean_nats"] == 0.0
+    assert (split / "trade_setup_performance_heatmap.png").is_file()
+    diagnostics = json.loads((split / "trade_setup_policy_metrics.json").read_text())
+    assert diagnostics["no_trade_count"] == 1
+    assert diagnostics["invalid_selection_count"] == 0
+    assert diagnostics["trade_setup_entropy_mean_nats"] == 0.75
+    summary = (split / "summary.txt").read_text()
+    assert "TRADE SETUP POLICY DIAGNOSTICS" in summary
+    assert "Structural violations: 0 unique trades" in summary

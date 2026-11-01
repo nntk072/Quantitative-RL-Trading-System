@@ -119,6 +119,19 @@ def _layout_key(
     has_multi_tp: bool = False,
     has_simplex: bool = False,
 ) -> str:
+    """Process key.
+
+    Args:
+        width: Numeric value used for the width.
+        has_direction: Whether to enable or require the has direction.
+        has_sl_mode: Whether to enable or require the has sl mode.
+        has_tp_mode: Whether to enable or require the has tp mode.
+        has_multi_tp: Whether to enable or require the has multi tp.
+        has_simplex: Whether to enable or require the has simplex.
+
+    Returns:
+        Text returned by ``_layout_key``.
+    """
     flags = (has_direction, has_sl_mode, has_tp_mode, has_multi_tp, has_simplex)
     if width == 1 and flags == (False,) * 5:
         return "1"
@@ -153,7 +166,20 @@ def mode_index(
     has_multi_tp: bool = False,
     has_simplex: bool = False,
 ) -> int:
-    """Column of one prior name."""
+    """Column of one prior name.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+        width: Numeric value used for the width.
+        has_direction: Whether to enable or require the has direction.
+        has_sl_mode: Whether to enable or require the has sl mode.
+        has_tp_mode: Whether to enable or require the has tp mode.
+        has_multi_tp: Whether to enable or require the has multi tp.
+        has_simplex: Whether to enable or require the has simplex.
+
+    Returns:
+        Numeric result returned by ``mode_index``.
+    """
     key = _layout_key(
         width,
         has_direction,
@@ -178,6 +204,11 @@ def attach_mode_prior(
     The penalty is the square of each batch mean, so a state that wants -1
     and a state that wants +1 can cancel. An empty ``dims`` or a zero coef
     adds nothing.
+
+    Args:
+        mean_actions: Mean actions used by the operation described above.
+        coef: Numeric value used for the coef.
+        dims: Items supplied for the dims, in input order.
     """
     scale_coef = float(coef)
     if scale_coef == 0.0 or not dims or not mean_actions.requires_grad:
@@ -191,6 +222,14 @@ def attach_mode_prior(
     batch = float(mean_actions.shape[0])
 
     def _hook(grad: torch.Tensor | None) -> torch.Tensor | None:
+        """Process the requested value.
+
+        Args:
+            grad: Grad used by the operation described above.
+
+        Returns:
+            Result of process the requested value.
+        """
         if grad is None:
             return None
         extra = torch.zeros_like(grad)
@@ -213,10 +252,16 @@ def install_post_update_std_clip(model: Any, log_std_min: float, log_std_max: fl
     number is the one the next rollout will use.
 
     Mode-mean stats accumulated during ``train`` are recorded on the same return.
+
+    Args:
+        model: Model used for this operation.
+        log_std_min: Numeric value used for the log std min.
+        log_std_max: Numeric value used for the log std max.
     """
     orig = model.train
 
     def _train() -> None:
+        """Train the requested value."""
         policy = model.policy
         reset = getattr(policy, "reset_mode_prior_stats", None)
         if callable(reset):
@@ -236,7 +281,16 @@ def install_post_update_std_clip(model: Any, log_std_min: float, log_std_max: fl
 
 
 def clip_policy_log_std(policy: Any, log_std_min: float, log_std_max: float) -> bool:
-    """Clamp ``policy.log_std`` in-place. Returns False when the param is absent."""
+    """Clamp ``policy.log_std`` in-place. Returns False when the param is absent.
+
+    Args:
+        policy: Policy used to select or evaluate actions.
+        log_std_min: Numeric value used for the log std min.
+        log_std_max: Numeric value used for the log std max.
+
+    Returns:
+        Whether clip policy log std meets the requested condition.
+    """
     log_std = getattr(policy, "log_std", None)
     if log_std is None:
         return False
@@ -264,6 +318,15 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         mode_prior_coef: float = 1e-3,
         **kwargs: Any,
     ) -> None:
+        """Initialize ClampedStdMultiInputPolicy and its owned state.
+
+        Args:
+            *args: Parsed command-line arguments for this operation.
+            log_std_min: Numeric value used for the log std min.
+            log_std_max: Numeric value used for the log std max.
+            mode_prior_coef: Numeric value used for the mode prior coef.
+            **kwargs: Kwargs used by the operation described above.
+        """
         if not _SB3_AVAILABLE:
             raise ImportError("stable-baselines3 is required for ClampedStdMultiInputPolicy")
         self.log_std_min = float(log_std_min)
@@ -287,6 +350,14 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         self.optimizer.add_param_group(group)
 
     def _account_value(self, obs: Any) -> torch.Tensor:
+        """Process value.
+
+        Args:
+            obs: Obs used by the operation described above.
+
+        Returns:
+            Result of process value.
+        """
         account = obs["account"] if isinstance(obs, dict) else obs.account
         if not isinstance(account, torch.Tensor):
             account = torch.as_tensor(account, dtype=torch.float32, device=self.device)
@@ -297,20 +368,50 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
     def forward(
         self, obs: Any, deterministic: bool = False
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Predict actions and critic values with the clamped Box distribution.
+
+        Args:
+            obs: Obs used by the operation described above.
+            deterministic: Whether to enable or require the deterministic.
+
+        Returns:
+            Values returned by ``forward``, in the declared order.
+        """
         actions, values, log_prob = super().forward(obs, deterministic=deterministic)
         return actions, values + self._account_value(obs), log_prob
 
     def predict_values(self, obs: Any) -> torch.Tensor:
+        """Evaluate critic values and add the account-state value component.
+
+        Args:
+            obs: Obs used by the operation described above.
+
+        Returns:
+            Result of evaluate critic values and add the account-state value component.
+        """
         return super().predict_values(obs) + self._account_value(obs)
 
     def evaluate_actions(
         self, obs: Any, actions: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor | None]:
+        """Evaluate actions and add the account-state value component.
+
+        Args:
+            obs: Obs used by the operation described above.
+            actions: Actions to apply, in input order.
+
+        Returns:
+            Values returned by ``evaluate_actions``, in the declared order.
+        """
         values, log_prob, entropy = super().evaluate_actions(obs, actions)
         return values + self._account_value(obs), log_prob, entropy
 
     def set_active_prior(self, names: set[str] | frozenset[str]) -> None:
-        """Replace the names the next update will pull toward zero."""
+        """Replace the names the next update will pull toward zero.
+
+        Args:
+            names: Names used by the operation described above.
+        """
         cleaned = {str(name) for name in names}
         unknown = cleaned.difference(_PRIOR_ORDER)
         if unknown:
@@ -324,7 +425,11 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         self._mode_batches = 0
 
     def mode_prior_metrics(self) -> dict[str, float]:
-        """Prior value, 0/1 active flags, and a term for each active name."""
+        """Prior value, 0/1 active flags, and a term for each active name.
+
+        Returns:
+            Mapping from ``str`` keys to ``float`` values.
+        """
         batches = int(self._mode_batches)
         if batches <= 0:
             return {}
@@ -336,6 +441,14 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         return metrics
 
     def _prior_dims(self, width: int) -> tuple[int, ...]:
+        """Process dims.
+
+        Args:
+            width: Numeric value used for the width.
+
+        Returns:
+            Values returned by ``_prior_dims``, in the declared order.
+        """
         if not self._active_prior:
             return ()
         key = getattr(self, "_action_layout_key", "5")
@@ -347,6 +460,11 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         )
 
     def _note_mode_means(self, mean_actions: torch.Tensor) -> None:
+        """Process mode means.
+
+        Args:
+            mean_actions: Mean actions used by the operation described above.
+        """
         width = int(mean_actions.shape[1])
         if width < 1 or mean_actions.shape[0] == 0:
             return
@@ -367,6 +485,11 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         self._mode_batches += 1
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
+        """Return constructor parameters.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         data = super()._get_constructor_parameters()
         data.update(
             log_std_min=self.log_std_min,
@@ -376,6 +499,14 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         return data
 
     def _get_action_dist_from_latent(self, latent_pi: torch.Tensor) -> Any:
+        """Return action dist from latent.
+
+        Args:
+            latent_pi: Latent pi used by the operation described above.
+
+        Returns:
+            Result of return action dist from latent.
+        """
         clip_policy_log_std(self, self.log_std_min, self.log_std_max)
         dist = super()._get_action_dist_from_latent(latent_pi)
         mean = getattr(getattr(dist, "distribution", None), "loc", None)
@@ -395,6 +526,14 @@ class LegacyClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         log_std_max: float = 0.0,
         **kwargs: Any,
     ) -> None:
+        """Initialize LegacyClampedStdMultiInputPolicy and its owned state.
+
+        Args:
+            *args: Parsed command-line arguments for this operation.
+            log_std_min: Numeric value used for the log std min.
+            log_std_max: Numeric value used for the log std max.
+            **kwargs: Kwargs used by the operation described above.
+        """
         if not _SB3_AVAILABLE:
             raise ImportError("stable-baselines3 is required for legacy policy loading")
         self.log_std_min = float(log_std_min)
@@ -402,10 +541,23 @@ class LegacyClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         super().__init__(*args, **kwargs)
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
+        """Return constructor parameters.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         data = super()._get_constructor_parameters()
         data.update(log_std_min=self.log_std_min, log_std_max=self.log_std_max)
         return data
 
     def _get_action_dist_from_latent(self, latent_pi: torch.Tensor) -> Any:
+        """Return action dist from latent.
+
+        Args:
+            latent_pi: Latent pi used by the operation described above.
+
+        Returns:
+            Result of return action dist from latent.
+        """
         clip_policy_log_std(self, self.log_std_min, self.log_std_max)
         return super()._get_action_dist_from_latent(latent_pi)

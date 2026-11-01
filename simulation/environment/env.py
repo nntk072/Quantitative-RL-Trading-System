@@ -86,7 +86,6 @@ class TradingEnv(
         normalize_account: bool = True,
         strategy: TradingStrategy | None = None,
         strategy_actions: bool = False,
-        thesis_actions: bool = False,
         trade_setup_actions: bool = False,
         trader_actions: bool | None = None,
         sl_buffer_pts: float = 0.0,
@@ -149,6 +148,100 @@ class TradingEnv(
 
         The public constructor remains stable for saved configs and checkpoints while
         initialization mechanics live outside the Gymnasium facade.
+
+        Args:
+            bars: Market bars to process.
+            features: Feature values supplied to the operation.
+            obs_window: Numeric value used for the obs window.
+            initial_balance: Numeric value used for the initial balance.
+            cost_model: Cost model used by the operation described above.
+            broker_kwargs: Key-value data used for the broker kwargs.
+            guardrail_kwargs: Key-value data used for the guardrail kwargs.
+            risk_frac_range: Items supplied for the risk frac range, in input order.
+            rr_ratio_range: Items supplied for the rr ratio range, in input order.
+            swing_buffer_pts: Numeric value used for the swing buffer pts.
+            sl_mode: Text or path value identifying the sl mode.
+            min_lot: Numeric value used for the min lot.
+            max_lot: Numeric value used for the max lot.
+            contract_size: Number specifying the contract size for this operation.
+            max_loss_per_trade_usd: Numeric value used for the max loss per trade usd.
+            dsr_eta: Numeric value used for the dsr eta.
+            episodic: Whether to enable or require the episodic.
+            use_sweep_reward: Whether to enable or require the use sweep reward.
+            sweep_alpha: Numeric value used for the sweep alpha.
+            sweep_beta: Numeric value used for the sweep beta.
+            sweep_hold_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
+            dsr_weight: Numeric value used for the dsr weight.
+            sweep_weight: Numeric value used for the sweep weight.
+            continuous_actions: Whether to enable or require the continuous actions.
+            max_risk_frac: Numeric value used for the max risk frac.
+            use_vae: Whether to enable or require the use vae.
+            vae: Vae used by the operation described above.
+            pre_ny_data: Tabular data used for the pre ny data.
+            pre_ny_by_date: Key-value data used for the pre ny by date.
+            ny_session_start_idx: Ny session start idx used by the operation described above.
+            fill_latency_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
+            max_episode_steps: Number specifying the max episode steps for this operation.
+            normalize_account: Whether to enable or require the normalize account.
+            strategy: Strategy used to select or evaluate trades.
+            strategy_actions: Whether to enable or require the strategy actions.
+            trade_setup_actions: Whether to enable or require the trade setup actions.
+            trader_actions: Trader actions used by the operation described above.
+            sl_buffer_pts: Numeric value used for the sl buffer pts.
+            strategy_reward: Strategy reward used by the operation described above.
+            strategy_weight: Numeric value used for the strategy weight.
+            block_overnight: Whether to enable or require the block overnight.
+            eod_risk: Key-value data used for the eod risk.
+            min_sl_atr_mult: Numeric value used for the min sl atr mult.
+            min_sl_points: Numeric value used for the min sl points.
+            max_entries_per_session: Numeric value used for the max entries per session.
+            open_manipulation_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
+            entry_cooldown_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
+            reward_mode: Text or path value identifying the reward mode.
+            equity_log_growth_scale: Numeric value used for the equity log growth scale.
+            fixed_risk_usd: Numeric value used for the fixed risk usd.
+            risk_band_max_usd: Numeric value used for the risk band max usd.
+            risk_band_hold_below_usd: Numeric value used for the risk band hold below usd.
+            allow_ema_exit: Whether to enable or require the allow ema exit.
+            ema_runner_fraction: Numeric value used for the ema runner fraction.
+            risk_mode: Text or path value identifying the risk mode.
+            entry_intensity_threshold: Numeric value used for the entry intensity threshold.
+            obs_features_mmap: Obs features mmap used by the operation described above.
+            peak_trailing_dd_limit: Numeric value used for the peak trailing dd limit.
+            tickbook: Tickbook used by the operation described above.
+            tick_execution_required: Whether to enable or require the tick execution required.
+            fill_delay_ms: Numeric value used for the fill delay ms.
+            randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
+            max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
+            tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+            agent_direction_control: Whether to enable or require the agent direction control.
+            direction_override_threshold: Numeric value used for the direction override threshold.
+            risk_floor: Numeric value used for the risk floor.
+            allow_agent_sl_mode: Whether to enable or require the allow agent sl mode.
+            sl_mode_defer_threshold: Numeric value used for the sl mode defer threshold.
+            allow_agent_tp_mode: Whether to enable or require the allow agent tp mode.
+            tp_mode_defer_threshold: Numeric value used for the tp mode defer threshold.
+            allow_multi_tp: Whether to enable or require the allow multi tp.
+            tp_breakeven_alpha: Numeric value used for the tp breakeven alpha.
+            tp_mode: Text or path value identifying the tp mode.
+            tp_reference: Text or path value identifying the tp reference.
+            allow_simplex: Whether to enable or require the allow simplex.
+            mtf: Whether to enable or require the mtf.
+            mtf_windows: Key-value data used for the mtf windows.
+            target_timeframes: Items supplied for the target timeframes, in input order.
+            scheduled_session_closes: Key-value data used for the scheduled session closes.
+            session_start: Text or path value identifying the session start.
+            regime_observation: Whether to enable or require the regime observation.
+            entry_state_machine: Whether to enable or require the entry state machine.
+            candidate_max_age_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
+            arm_requires_retest: Whether to enable or require the arm requires retest.
+            entry_state_observation: Whether to enable or require the entry state observation.
+            observation_schema_version: Text or path value identifying the observation schema version.
+            observation_age_scale_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
+            bundle_data: Bundle data used by the operation described above.
+            strict_research_eligibility: Whether to enable or require the strict research eligibility.
+            legacy_sequence_columns: Legacy sequence columns used by the operation described above.
+            trading_policy: Key-value data used for the trading policy.
         """
         self._initialize_market_source(bars, features, bundle_data, strict_research_eligibility)
         self._initialize_account_policy(
@@ -228,16 +321,9 @@ class TradingEnv(
             strategy_weight,
             equity_log_growth_scale,
         )
-        if thesis_actions and trade_setup_actions:
-            raise ValueError(
-                "configure either legacy thesis_actions or trade_setup_actions, not both"
-            )
-        if (thesis_actions or trade_setup_actions) and not resolved_strategy_actions:
+        if trade_setup_actions and not resolved_strategy_actions:
             raise ValueError("trade setup actions require strategy_actions=true")
-        self.legacy_thesis_contract = bool(thesis_actions)
-        self.trade_setup_actions = bool(thesis_actions or trade_setup_actions)
-        # Runtime compatibility alias; persisted config key remains readable.
-        self.thesis_actions = bool(thesis_actions)
+        self.trade_setup_actions = bool(trade_setup_actions)
         self._initialize_strategy_runtime(
             strategy, resolved_strategy_actions, sl_buffer_pts, bundle_data, bars, features
         )
@@ -274,7 +360,15 @@ class TradingEnv(
 
     @classmethod
     def from_bundle(cls, bundle_path: str | Path, **kwargs: Any) -> TradingEnv:
-        """Create an environment whose persistent market arrays are read-only mmaps."""
+        """Create an environment whose persistent market arrays are read-only mmaps.
+
+        Args:
+            bundle_path: Path or filename identifying the bundle.
+            **kwargs: Kwargs used by the operation described above.
+
+        Returns:
+            Result of create an environment whose persistent market arrays are read-only mmaps.
+        """
         from datetime import date
 
         from .shared_bundle import load_bundle
@@ -301,14 +395,28 @@ class TradingEnv(
         self,
         action: int | float | np.ndarray[Any, Any],
     ) -> tuple[dict[str, np.ndarray[Any, Any]], float, bool, bool, dict[str, Any]]:
-        """Gymnasium adapter for :meth:`transition`."""
+        """Gymnasium adapter for :meth:`transition`.
+
+        Args:
+            action: Action to apply to the current state.
+
+        Returns:
+            Whether step meets the requested condition.
+        """
         return self.transition(action).as_gymnasium()
 
     def transition(
         self,
         action: int | float | np.ndarray[Any, Any],
     ) -> SimulationTransition[dict[str, np.ndarray[Any, Any]]]:
-        """Advance the simulator through its framework-neutral transition API."""
+        """Advance the simulator through its framework-neutral transition API.
+
+        Args:
+            action: Action to apply to the current state.
+
+        Returns:
+            Mapping from ``str`` keys to ``np.ndarray[Any, Any]]`` values.
+        """
         if not self._debug_trace:
             return self._step_untraced(action)
         try:

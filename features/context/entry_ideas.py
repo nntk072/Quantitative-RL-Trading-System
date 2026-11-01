@@ -23,19 +23,62 @@ _TIMEFRAME_RANK = {timeframe: rank for rank, timeframe in enumerate(_TIMEFRAMES)
 class _FeatureRowLike(Protocol):
     """Minimal row interface shared by pandas rows and the env's numpy view."""
 
-    def get(self, key: str, default: Any = ...) -> Any: ...
+    def get(self, key: str, default: Any = ...) -> Any:
+        """Read a named feature and return a fallback when it is absent.
 
-    def __getitem__(self, key: str) -> Any: ...
+        Args:
+            key: Feature name to look up.
+            default: Value returned when the feature is absent.
 
-    def __iter__(self) -> Iterator[str]: ...
+        Returns:
+            Feature value or the supplied default.
+        """
+        ...
 
-    def __contains__(self, key: object) -> bool: ...
+    def __getitem__(self, key: str) -> Any:
+        """Process _FeatureRowLike.
+
+        Args:
+            key: Text or path value identifying the key.
+
+        Returns:
+            Result of process _FeatureRowLike.
+        """
+        ...
+
+    def __iter__(self) -> Iterator[str]:
+        """Iterate over _FeatureRowLike.
+
+        Returns:
+            Each iter value, yielded in processing order.
+        """
+        ...
+
+    def __contains__(self, key: object) -> bool:
+        """Process _FeatureRowLike.
+
+        Args:
+            key: Key used by the operation described above.
+
+        Returns:
+            Whether contains meets the requested condition.
+        """
+        ...
 
 
 _EntryIdeaRow = Mapping[str, Any] | pd.Series | _FeatureRowLike
 
 
 def _matching_positions(columns: Any, suffix: str) -> list[int]:
+    """Process positions.
+
+    Args:
+        columns: Columns used by the operation described above.
+        suffix: Text or path value identifying the suffix.
+
+    Returns:
+        Values returned by ``_matching_positions``, in the declared order.
+    """
     return [
         position
         for position, column in enumerate(columns)
@@ -44,6 +87,15 @@ def _matching_positions(columns: Any, suffix: str) -> list[int]:
 
 
 def _positive_any_positions(frame: pd.DataFrame, positions: list[int]) -> pd.Series:
+    """Process any positions.
+
+    Args:
+        frame: Input data frame to process.
+        positions: Items supplied for the positions, in input order.
+
+    Returns:
+        Result of process any positions.
+    """
     if not positions:
         return pd.Series(False, index=frame.index)
     values = [
@@ -56,11 +108,29 @@ def _positive_any_positions(frame: pd.DataFrame, positions: list[int]) -> pd.Ser
 
 
 def _positive_any(frame: pd.DataFrame, suffix: str) -> pd.Series:
+    """Process any.
+
+    Args:
+        frame: Input data frame to process.
+        suffix: Text or path value identifying the suffix.
+
+    Returns:
+        Result of process any.
+    """
     return _positive_any_positions(frame, _matching_positions(frame.columns, suffix))
 
 
 def _timeframe_signal(frame: pd.DataFrame, suffix: str, timeframe: str) -> pd.Series:
-    """Read one timeframe's event without pooling it with the other windows."""
+    """Read one timeframe's event without pooling it with the other windows.
+
+    Args:
+        frame: Input data frame to process.
+        suffix: Text or path value identifying the suffix.
+        timeframe: Text or path value identifying the timeframe.
+
+    Returns:
+        Result of read one timeframe's event without pooling it with the other windows.
+    """
     prefix = "" if timeframe == "M1" else f"{timeframe}_"
     positions = [
         position
@@ -103,6 +173,14 @@ def _po3_direction(frame: pd.DataFrame, side: str, timeframe: str | None = None)
     A sweep or manipulation flag alone is context, never an entry idea. The
     PO3 IFVG state is only armed by a gap confirmation after that setup's
     sweep, and the gap must still be active on the entry bar.
+
+    Args:
+        frame: Input data frame to process.
+        side: Text or path value identifying the side.
+        timeframe: Timeframe used by the operation described above.
+
+    Returns:
+        Result of require a distribution armed by an IFVG from the active PO3 leg.
     """
     distribution_sign = 1.0 if side == "long" else -1.0
     active_distribution = _positive_any(frame, "po3_distribution_after_ifvg")
@@ -152,7 +230,14 @@ def _po3_direction(frame: pd.DataFrame, side: str, timeframe: str | None = None)
 
 
 def build_entry_idea_features(features: pd.DataFrame) -> pd.DataFrame:
-    """Add multi-hot idea flags; do not select or gate the agent's action."""
+    """Add multi-hot idea flags; do not select or gate the agent's action.
+
+    Args:
+        features: Feature values supplied to the operation.
+
+    Returns:
+        DataFrame returned by ``build_entry_idea_features``.
+    """
     columns: dict[str, pd.Series] = {
         "entry_idea_po3_long": _po3_direction(features, "long").astype("float64"),
         "entry_idea_po3_short": _po3_direction(features, "short").astype("float64"),
@@ -215,6 +300,15 @@ def build_entry_idea_features(features: pd.DataFrame) -> pd.DataFrame:
 
 
 def _row_values(row: _EntryIdeaRow, column: str) -> list[Any]:
+    """Process values.
+
+    Args:
+        row: Row index or record being processed.
+        column: Text or path value identifying the column.
+
+    Returns:
+        Values returned by ``_row_values``, in the declared order.
+    """
     if isinstance(row, pd.Series):
         return [
             row.iloc[position] for position, name in enumerate(row.index) if str(name) == column
@@ -230,12 +324,29 @@ def _row_values(row: _EntryIdeaRow, column: str) -> list[Any]:
 
 
 def _row_items(row: _EntryIdeaRow) -> list[tuple[str, Any]]:
+    """Process items.
+
+    Args:
+        row: Row index or record being processed.
+
+    Returns:
+        Values returned by ``_row_items``, in the declared order.
+    """
     if isinstance(row, pd.Series):
         return [(str(name), row.iloc[position]) for position, name in enumerate(row.index)]
     return [(str(name), row[name]) for name in row]
 
 
 def _row_first_value(row: _EntryIdeaRow, column: str) -> Any:
+    """Process first value.
+
+    Args:
+        row: Row index or record being processed.
+        column: Text or path value identifying the column.
+
+    Returns:
+        Result of process first value.
+    """
     for value in _row_values(row, column):
         try:
             if pd.isna(value):
@@ -247,6 +358,15 @@ def _row_first_value(row: _EntryIdeaRow, column: str) -> Any:
 
 
 def _row_positive(row: _EntryIdeaRow, column: str) -> bool:
+    """Process positive.
+
+    Args:
+        row: Row index or record being processed.
+        column: Text or path value identifying the column.
+
+    Returns:
+        Whether row positive meets the requested condition.
+    """
     for value in _row_values(row, column):
         try:
             number = float(value)
@@ -258,6 +378,14 @@ def _row_positive(row: _EntryIdeaRow, column: str) -> bool:
 
 
 def _timeframe_for_column(column: str) -> str:
+    """Process for column.
+
+    Args:
+        column: Text or path value identifying the column.
+
+    Returns:
+        Text returned by ``_timeframe_for_column``.
+    """
     for timeframe in _TIMEFRAMES:
         if column.startswith(f"{timeframe}_"):
             return timeframe
@@ -270,7 +398,17 @@ def _zone_contexts(
     timeframes: Mapping[str, list[str]],
     side: str,
 ) -> list[dict[str, Any]]:
-    """Save only live, direction-matched zones linked to the active idea."""
+    """Save only live, direction-matched zones linked to the active idea.
+
+    Args:
+        row: Row index or record being processed.
+        ideas: Items supplied for the ideas, in input order.
+        timeframes: Items supplied for the timeframes, in input order.
+        side: Text or path value identifying the side.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     zone_families = {
         "po3": ("fvg", "ifvg"),
         "order_block": ("ob",),
@@ -368,6 +506,15 @@ def _zone_contexts(
 
 
 def _po3_timeframes(row: _EntryIdeaRow, side: str) -> set[str]:
+    """Process timeframes.
+
+    Args:
+        row: Row index or record being processed.
+        side: Text or path value identifying the side.
+
+    Returns:
+        Result of process timeframes.
+    """
     if not any(
         (name == "po3_distribution_after_ifvg" or name.endswith("_po3_distribution_after_ifvg"))
         and _row_positive({name: value}, name)
@@ -402,7 +549,16 @@ def entry_idea_context(
     *,
     include_zones: bool = False,
 ) -> dict[str, Any]:
-    """Return idea names and source timeframes present for the chosen side."""
+    """Return idea names and source timeframes present for the chosen side.
+
+    Args:
+        row: Row index or record being processed.
+        direction: Signed trade direction: 1 for long and -1 for short.
+        include_zones: Whether to enable or require the include zones.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     side = "long" if int(direction) == 1 else "short" if int(direction) == -1 else ""
     if not side:
         return {

@@ -16,8 +16,8 @@ login-home `uv` is x86-64, run the repository helper with
 `QRL_UV=/path/to/aarch64/uv ./tools/setup-venv`; use `.venv/bin` directly
 for Ruff, Mypy, and pytest.
 
-`THESIS_UV` remains a deprecated fallback for existing node setups; new
-commands and automation must use `QRL_UV`.
+Use `QRL_UV` to select a native package-manager binary when the host default
+does not match the current architecture.
 
 ## Agent commit/push gate — blocking
 
@@ -60,7 +60,7 @@ uv run python scripts/research/benchmarks/compare_encoders.py                   
 
 ```bash
 uv run qrl-evaluate reanalyze --run outputs/<run_dir>
-uv run python scripts/research/thesis/evaluation/report_g3.py --runs-dir outputs
+uv run python scripts/research/analysis/evaluation/report_g3.py --runs-dir outputs
 ```
 
 ## Testing

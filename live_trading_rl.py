@@ -1,4 +1,4 @@
-"""RL live/paper trading entrypoint (Master Roadmap Stage 8).
+r"""RL live/paper trading entrypoint (Master Roadmap Stage 8).
 
 Loads a trained SB3 PPO/SAC checkpoint and drives ``RLRobot`` against a live
 MT5 M1 feed.
@@ -58,8 +58,11 @@ DEFAULT_CONFIG = Path("config/base/default.yaml")
 
 
 def load_model(model_path: Path) -> Any:
-    """Load an SB3 PPO/SAC checkpoint, inferring the algorithm class from the
-    accompanying training log when possible (fallback: try PPO, then SAC)."""
+    """Load an SB3 PPO/SAC checkpoint.
+
+    Infer the algorithm class from the accompanying training log when possible,
+    then try PPO and SAC as fallbacks.
+    """
     from stable_baselines3 import PPO, SAC
 
     run_dir = model_path.resolve().parent.parent
@@ -86,8 +89,10 @@ def load_model(model_path: Path) -> Any:
 
 
 def resolve_run_config(model_path: Path) -> Path:
-    """Prefer the model run's saved ``config.yaml`` (best train/live parity),
-    falling back to the repo default."""
+    """Prefer the model run's saved ``config.yaml`` for train/live parity.
+
+    Fall back to the repository default when no run snapshot exists.
+    """
     run_dir = model_path.resolve().parent.parent
     saved = run_dir / "config.yaml"
     return saved if saved.is_file() else DEFAULT_CONFIG

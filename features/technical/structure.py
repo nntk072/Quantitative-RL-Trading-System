@@ -127,33 +127,24 @@ def detect_session_levels(
     Uses rolling swing high/low detection within each session window.
     Levels are forward-filled to the NY session for use in real-time trading.
 
-    Parameters
-    ----------
-    df : pd.DataFrame
-        OHLCV DataFrame with timezone-aware DatetimeIndex.
-        Required columns: ['open', 'high', 'low', 'close', 'volume']
-    asian_start : str
-        Asian session start time (HH:MM format, UTC+3)
-    asian_end : str
-        Asian session end time (HH:MM format, UTC+3)
-    london_end : str
-        London session end time (HH:MM format, UTC+3)
-    swing_period : int
-        Rolling window for swing high/low detection
-    min_bars_per_session : int
-        Minimum bars required in a session to compute levels
+    Args:
+        df (pd.DataFrame): OHLCV DataFrame with timezone-aware DatetimeIndex.
+            Required columns: ['open', 'high', 'low', 'close', 'volume']
+        asian_start (str): Asian session start time (HH:MM format, UTC+3)
+        asian_end (str): Asian session end time (HH:MM format, UTC+3)
+        london_end (str): London session end time (HH:MM format, UTC+3)
+        swing_period (int): Rolling window for swing high/low detection
+        min_bars_per_session (int): Minimum bars required in a session to compute levels
 
-    Returns
-    -------
-    pd.DataFrame
-        Same index as input, with added columns:
-        - asian_high: Rolling swing high from Asian session
-        - asian_low: Rolling swing low from Asian session
-        - london_high: Rolling swing high from London session
-        - london_low: Rolling swing low from London session
-        - prev_day_close: Previous day's close price
-        - prev_day_high: Previous calendar day's high price
-        - prev_day_low: Previous calendar day's low price
+    Returns:
+        pd.DataFrame: Same index as input, with added columns:
+            - asian_high: Rolling swing high from Asian session
+            - asian_low: Rolling swing low from Asian session
+            - london_high: Rolling swing high from London session
+            - london_low: Rolling swing low from London session
+            - prev_day_close: Previous day's close price
+            - prev_day_high: Previous calendar day's high price
+            - prev_day_low: Previous calendar day's low price
     """
     df = df.copy()
     idx = df.index

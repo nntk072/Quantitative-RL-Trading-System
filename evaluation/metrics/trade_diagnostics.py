@@ -17,7 +17,14 @@ _TP_TYPES = {"tp_close"}
 
 
 def closed_trades_table(trades: pd.DataFrame) -> pd.DataFrame:
-    """One row per completed trade: times, PnL, side, lots, close type."""
+    """One row per completed trade: times, PnL, side, lots, close type.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+
+    Returns:
+        DataFrame returned by ``closed_trades_table``.
+    """
     if trades.empty:
         return pd.DataFrame()
     rows: list[dict[str, Any]] = []
@@ -60,7 +67,19 @@ def mae_mfe_table(
     max_loss_per_trade_usd: float | None = None,
     take_profit_per_trade_usd: float | None = None,
 ) -> pd.DataFrame:
-    """MAE/MFE in USD plus whether price reached the logged SL/TP."""
+    """MAE/MFE in USD plus whether price reached the logged SL/TP.
+
+    Args:
+        bars: Market bars to process.
+        trades: Trade records used to calculate the requested report or metric.
+        lots: Numeric value used for the lots.
+        contract_size: Number specifying the contract size for this operation.
+        max_loss_per_trade_usd: Max loss per trade usd used by the operation described above.
+        take_profit_per_trade_usd: Take profit per trade usd used by the operation described above.
+
+    Returns:
+        DataFrame returned by ``mae_mfe_table``.
+    """
     if trades.empty or bars.empty:
         return pd.DataFrame()
     rows: list[dict[str, Any]] = []
@@ -112,7 +131,15 @@ def mae_mfe_table(
 
 
 def rolling_win_rate(closed: pd.DataFrame, window: int = 20) -> pd.Series:
-    """Rolling win rate in percent, indexed by trade number (1-based)."""
+    """Rolling win rate in percent, indexed by trade number (1-based).
+
+    Args:
+        closed: Tabular data used for the closed.
+        window: Numeric value used for the window.
+
+    Returns:
+        Result of rolling win rate in percent, indexed by trade number (1-based).
+    """
     if closed.empty or "win" not in closed.columns:
         return pd.Series(dtype=float)
     wins = closed["win"].astype(float)
@@ -125,7 +152,14 @@ def rolling_win_rate(closed: pd.DataFrame, window: int = 20) -> pd.Series:
 def weekday_hour_pnl(
     closed: pd.DataFrame,
 ) -> tuple[npt.NDArray[np.float64], list[str], list[int]]:
-    """Sum PnL heatmap: rows = weekdays, columns = hours that appear in the log."""
+    """Sum PnL heatmap: rows = weekdays, columns = hours that appear in the log.
+
+    Args:
+        closed: Tabular data used for the closed.
+
+    Returns:
+        Array returned by ``weekday_hour_pnl``.
+    """
     if closed.empty:
         return np.full((7, 0), np.nan), list(_WEEKDAYS), []
     t_open = pd.DatetimeIndex(closed["t_open"])

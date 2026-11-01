@@ -10,12 +10,19 @@ from .mixin_base import RuntimeMixinBase
 
 
 class TradeAccountingRuntimeMixin(RuntimeMixinBase):
+    """Update realized-close bookkeeping and stamp exit risk outcomes."""
+
     _last_realized_close_pnl: float | None
     _last_realized_close_r: float | None
     _pending_realized_r: float | None
 
     def _note_close(self, pnl: float, realized_r: float | None = None) -> None:
-        """Record realized close PnL/R and start the post-close entry cooldown."""
+        """Record realized close PnL/R and start the post-close entry cooldown.
+
+        Args:
+            pnl: Numeric value used for the pnl.
+            realized_r: Realized r used by the operation described above.
+        """
         # The exit fill has already been counted by _stamp_exit. Retain the
         # aggregate when several TP legs execute inside the same env.step().
         if self._last_realized_close_pnl is None:
@@ -29,7 +36,12 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
             self._cooldown_until_bar = self.step_idx + self.entry_cooldown_bars
 
     def _stamp_exit(self, record: dict[str, Any], fill_price: float) -> None:
-        """Stamp one unique fill and accumulate its net realised PnL/R once."""
+        """Stamp one unique fill and accumulate its net realised PnL/R once.
+
+        Args:
+            record: Key-value data used for the record.
+            fill_price: Numeric value used for the fill price.
+        """
         pos = self.position
         if pos is None or "fill_id" in record:
             return

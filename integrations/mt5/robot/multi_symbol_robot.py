@@ -10,8 +10,8 @@ from integrations.mt5.domain.signal import Signal
 
 
 class MultiSymbolRobot:
-    """
-    Multi-Symbol Trading Robot that can trade multiple symbols simultaneously.
+    """Trade multiple symbols through configured strategies and adapters.
+
     Supports different strategies (Crossover, SMC, Trend Breakout, Combined) per symbol.
     """
 
@@ -24,8 +24,7 @@ class MultiSymbolRobot:
         stop_loss_pips: float = 50.0,
         paper_trading: bool = True,
     ):
-        """
-        Initialize Multi-Symbol Robot.
+        """Initialize Multi-Symbol Robot.
 
         Args:
             symbol_manager: MultiSymbolManager instance
@@ -50,8 +49,7 @@ class MultiSymbolRobot:
         )
 
     def calculate_position_size(self, symbol: str, volatility_multiplier: float = 1.0) -> float:
-        """
-        Calculate position size for a symbol based on risk management.
+        """Calculate position size for a symbol based on risk management.
 
         Args:
             symbol: Trading symbol
@@ -86,8 +84,7 @@ class MultiSymbolRobot:
             return 0.0
 
     def check_risk_before_trade(self, symbol: str, position_size: float) -> tuple[bool, str]:
-        """
-        Check risk limits before opening a position.
+        """Check risk limits before opening a position.
 
         Args:
             symbol: Trading symbol
@@ -99,8 +96,7 @@ class MultiSymbolRobot:
         return self.risk_manager.check_risk_limits(symbol, position_size, self.stop_loss_pips)
 
     def trade_symbol(self, symbol: str) -> None:
-        """
-        Execute trading logic for a single symbol.
+        """Execute trading logic for a single symbol.
 
         Args:
             symbol: Trading symbol to trade
@@ -249,9 +245,7 @@ class MultiSymbolRobot:
             logger.exception(f"Error trading {symbol}: {e}")
 
     def trade(self) -> None:
-        """
-        Execute trading logic for all symbols.
-        """
+        """Execute trading logic for all symbols."""
         logger.info("=" * 80)
         logger.info(f"Starting trading cycle for {len(self.strategies)} symbols")
         logger.info("=" * 80)
@@ -286,8 +280,7 @@ class MultiSymbolRobot:
         logger.info("")
 
     def get_status(self) -> dict[str, Any]:
-        """
-        Get current status of the robot.
+        """Get current status of the robot.
 
         Returns:
             Dictionary with robot status information

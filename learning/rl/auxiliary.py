@@ -48,11 +48,17 @@ def build_supervised_windows(
     strictly after the window end. Windows/targets containing NaNs (indicator
     warmup, horizon past the sample end) are dropped.
 
-    Returns
-    -------
-    (seq, y):
-        ``seq`` has shape ``(B, obs_window, F)``; ``y`` has shape
-        ``(B, horizon)`` (per-bar log returns, matching the head output).
+    Args:
+        features: Feature values supplied to the operation.
+        closes: Closes used by the operation described above.
+        obs_window: Numeric value used for the obs window.
+        horizon: Numeric value used for the horizon.
+        max_windows: Numeric value used for the max windows.
+        rng: Rng used by the operation described above.
+
+    Returns:
+        (seq, y): ``seq`` has shape ``(B, obs_window, F)``; ``y`` has shape
+            ``(B, horizon)`` (per-bar log returns, matching the head output).
     """
     if rng is None:
         rng = np.random.default_rng()
@@ -79,16 +85,11 @@ def build_supervised_windows(
 class AuxiliaryTrainerCallback(BaseCallback):
     """Co-train ``ReturnPredictionHead`` + encoder at each rollout end.
 
-    Parameters
-    ----------
-    prediction_horizon:
-        Bars ahead for the cumulative-return target (N).
-    aux_weight:
-        Weight on the auxiliary MSE term (0.0 disables training entirely).
-    lr:
-        Learning rate for the auxiliary optimizer (head + encoder params).
-    grad_steps:
-        Gradient steps taken per rollout.
+    Args:
+        prediction_horizon: Bars ahead for the cumulative-return target (N).
+        aux_weight: Weight on the auxiliary MSE term (0.0 disables training entirely).
+        lr: Learning rate for the auxiliary optimizer (head + encoder params).
+        grad_steps: Gradient steps taken per rollout.
     """
 
     def __init__(
@@ -100,6 +101,16 @@ class AuxiliaryTrainerCallback(BaseCallback):
         batch_windows: int = 256,
         verbose: int = 0,
     ) -> None:
+        """Initialize AuxiliaryTrainerCallback and its owned state.
+
+        Args:
+            prediction_horizon: Numeric value used for the prediction horizon.
+            aux_weight: Numeric value used for the aux weight.
+            lr: Numeric value used for the lr.
+            grad_steps: Number specifying the grad steps for this operation.
+            batch_windows: Numeric value used for the batch windows.
+            verbose: Numeric value used for the verbose.
+        """
         super().__init__(verbose)
         self.prediction_horizon = prediction_horizon
         self.aux_weight = aux_weight
@@ -111,12 +122,17 @@ class AuxiliaryTrainerCallback(BaseCallback):
         self.rng = np.random.default_rng()
 
     def _on_step(self) -> bool:
-        """Per-step hook — the auxiliary training happens at rollout end."""
+        """Per-step hook — the auxiliary training happens at rollout end.
+
+        Returns:
+            Whether on step meets the requested condition.
+        """
         return True
 
         # -- setup ------------------------------------------------------------
 
     def _init_callback(self) -> None:
+        """Process callback."""
         encoder = self.model.policy.features_extractor
         # Encoder output dim is features_dim (= latent_dim + ACCOUNT_DIM);
         # the head sits on the full extractor output, not latent_dim alone.
@@ -137,7 +153,11 @@ class AuxiliaryTrainerCallback(BaseCallback):
         # -- data ---------------------------------------------------------------
 
     def _env_data(self) -> tuple[NDArray[np.float64], NDArray[np.float64]] | None:
-        """Observation columns and closes from the first underlying TradingEnv."""
+        """Observation columns and closes from the first underlying TradingEnv.
+
+        Returns:
+            Array returned by ``_env_data``.
+        """
         env = self.model.get_env()
         if env is None:
             return None
@@ -158,6 +178,7 @@ class AuxiliaryTrainerCallback(BaseCallback):
         # -- training -----------------------------------------------------------
 
     def _on_rollout_end(self) -> None:
+        """Process rollout end."""
         if self.aux_weight <= 0.0 or self.aux_loss_fn is None:
             return
         data = self._env_data()

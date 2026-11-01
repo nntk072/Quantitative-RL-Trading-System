@@ -22,7 +22,11 @@ class SimulationTransition(Generic[ObservationT]):
     def as_gymnasium(
         self,
     ) -> tuple[ObservationT, float, bool, bool, dict[str, Any]]:
-        """Adapt this transition to Gymnasium's five-value step protocol."""
+        """Adapt this transition to Gymnasium's five-value step protocol.
+
+        Returns:
+            Whether as gymnasium meets the requested condition.
+        """
         return (
             self.observation,
             self.reward,

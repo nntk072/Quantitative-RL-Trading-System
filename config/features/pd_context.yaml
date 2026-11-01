@@ -1,4 +1,4 @@
-# Session-conditional PD context pack for thesis full trains.
+# Session-conditional premium/discount context for full training runs.
 # Merge over default.yaml (or 2_po3_ifvg.yaml):
 #   uv run qrl-train train --config config/features/pd_context.yaml
 features:

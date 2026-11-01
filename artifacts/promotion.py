@@ -22,12 +22,18 @@ class BaselineValidation:
     checks: tuple[str, ...]
 
     def __post_init__(self) -> None:
+        """Validate and initialize BaselineValidation after construction."""
         if not self.command.strip():
             raise ValueError("baseline validation evidence must record its command")
         if not self.checks or any(not check.strip() for check in self.checks):
             raise ValueError("baseline validation evidence must list the checks that passed")
 
     def to_dict(self) -> dict[str, object]:
+        """Return validation results as a JSON-compatible mapping.
+
+        Returns:
+            Mapping from ``str`` keys to ``object`` values.
+        """
         return {"accepted": True, "command": self.command, "checks": list(self.checks)}
 
 
@@ -35,10 +41,22 @@ Validator = Callable[[Path], BaselineValidation]
 
 
 def _payload_sha256(path: Path) -> str:
-    """Hash a staged file or directory tree, including names and symlink targets."""
+    """Hash a staged file or directory tree, including names and symlink targets.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Text returned by ``_payload_sha256``.
+    """
     digest = hashlib.sha256()
 
     def add_field(value: bytes) -> None:
+        """Hash a length-prefixed field to avoid ambiguous concatenations.
+
+        Args:
+            value: Field bytes to add to the staged-payload digest.
+        """
         digest.update(len(value).to_bytes(8, "big"))
         digest.update(value)
 
@@ -90,6 +108,15 @@ def promote_to_baseline(
     ``destination`` contains the copied source under ``payload`` and a
     completion/provenance record under ``manifest.json``. The validator checks
     the staged payload, and publication happens only after validation succeeds.
+
+    Args:
+        source: Path or filename identifying the source.
+        destination: Destination used by the operation described above.
+        manifest: Manifest used by the operation described above.
+        validate: Validate used by the operation described above.
+
+    Returns:
+        Path returned by ``promote_to_baseline``.
     """
     if manifest.retention is not RetentionClass.BASELINE_PROMOTABLE:
         raise ValueError("artifact is not baseline-promotable")

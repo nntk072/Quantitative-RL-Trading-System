@@ -1,4 +1,4 @@
-"""Paired training/testing figures for artifact-driven thesis reports."""
+"""Paired training/testing figures for artifact-driven research reports."""
 
 from __future__ import annotations
 

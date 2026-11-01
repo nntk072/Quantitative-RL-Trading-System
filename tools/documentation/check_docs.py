@@ -28,7 +28,9 @@ PACKAGES = (
 )
 SUBPACKAGE_GUIDES = (
     "scripts/research/analysis/README.md",
-    "scripts/research/thesis/README.md",
+    "compute/environment/README.md",
+    "decisioning/adapters/README.md",
+    "experiments/orchestration/README.md",
     "market_data/loading/README.md",
     "market_data/cache/README.md",
     "market_data/transforms/README.md",
@@ -39,12 +41,24 @@ SUBPACKAGE_GUIDES = (
     "features/po3/README.md",
     "compute/slurm/README.md",
     "integrations/mt5/README.md",
+    "integrations/mt5/adapters/README.md",
+    "integrations/mt5/cli/README.md",
+    "integrations/mt5/domain/README.md",
+    "integrations/mt5/robot/README.md",
+    "learning/supervised/README.md",
+    "live/runtime/README.md",
+    "market_data/commands/README.md",
+    "models/auxiliary/README.md",
+    "models/factory/README.md",
+    "models/runtime/README.md",
+    "orchestra/commands/README.md",
     "trading/orders/README.md",
     "trading/execution/README.md",
     "trading/risk/README.md",
     "simulation/environment/README.md",
     "simulation/contracts/README.md",
     "simulation/backtest/README.md",
+    "simulation/backtest/cross_validation/README.md",
     "models/encoders/README.md",
     "learning/rl/README.md",
     "training/runner/README.md",
@@ -56,6 +70,14 @@ SUBPACKAGE_GUIDES = (
     "evaluation/reanalysis/README.md",
     "experiments/variants/README.md",
     "experiments/runs/README.md",
+    "trading/account/README.md",
+    "trading/baselines/README.md",
+    "trading/policy/README.md",
+    "trading/positions/README.md",
+    "trading/strategies/README.md",
+    "training/artifacts/README.md",
+    "training/configuration/README.md",
+    "training/reporting/README.md",
 )
 LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 INLINE_CODE = re.compile(r"`([^`]+)`")
@@ -86,6 +108,10 @@ SOURCE_SUFFIXES = {".py", ".sh", ".toml", ".yaml", ".yml"}
 MAINTAINED_DOCS = (
     "README.md",
     "AGENTS.md",
+    "ARCHITECTURE.md",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "SUPPORT.md",
     "docs",
     ".agents",
     "configuration/README.md",
@@ -131,12 +157,34 @@ MAINTAINED_DOCS = (
     "integrations/mt5/README.md",
     "compute/README.md",
     "compute/slurm/README.md",
+    "compute/environment/README.md",
+    "decisioning/adapters/README.md",
+    "experiments/orchestration/README.md",
+    "integrations/mt5/adapters/README.md",
+    "integrations/mt5/cli/README.md",
+    "integrations/mt5/domain/README.md",
+    "integrations/mt5/robot/README.md",
+    "learning/supervised/README.md",
+    "live/runtime/README.md",
+    "market_data/commands/README.md",
+    "models/auxiliary/README.md",
+    "models/factory/README.md",
+    "models/runtime/README.md",
     "orchestra/README.md",
+    "orchestra/commands/README.md",
+    "simulation/backtest/cross_validation/README.md",
+    "trading/account/README.md",
+    "trading/baselines/README.md",
+    "trading/policy/README.md",
+    "trading/positions/README.md",
+    "trading/strategies/README.md",
+    "training/artifacts/README.md",
+    "training/configuration/README.md",
+    "training/reporting/README.md",
     "tests/README.md",
     "tests/unit/research/README.md",
     "scripts/README.md",
     "scripts/research/analysis/README.md",
-    "scripts/research/thesis/README.md",
 )
 
 
@@ -169,10 +217,6 @@ def broken_links(document: Path) -> list[tuple[int, str]]:
 
 def missing_source_paths(document: Path) -> list[tuple[int, str]]:
     """Find stale, explicit source/config paths in maintained prose."""
-    if document.is_relative_to(ROOT / "docs/thesis"):
-        # These records preserve paths as observed when historical evidence
-        # was produced; do not rewrite their provenance during doc cleanup.
-        return []
     failures: list[tuple[int, str]] = []
     for line_number, line in enumerate(document.read_text(encoding="utf-8").splitlines(), 1):
         for match in INLINE_CODE.finditer(line):

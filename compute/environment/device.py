@@ -31,18 +31,15 @@ _N_ENVS_RAM_TIERS: tuple[tuple[int, int], ...] = (
 def get_device(config_device: str | None = None) -> torch.device:
     """Resolve the torch device to use.
 
-    Parameters
-    ----------
-    config_device:
-        Optional device hint from config. Accepted values:
+    Args:
+        config_device: Optional device hint from config. Accepted values:
 
-        * ``None`` or ``"auto"`` — pick CUDA if available, else CPU.
-        * ``"cpu"``, ``"cuda"``, ``"cuda:0"``, ``"cuda:1"``, ... — use as-is.
-        * Any other string raises ``ValueError``.
+            * ``None`` or ``"auto"`` — pick CUDA if available, else CPU.
+            * ``"cpu"``, ``"cuda"``, ``"cuda:0"``, ``"cuda:1"``, ... — use as-is.
+            * Any other string raises ``ValueError``.
 
-    Returns
-    -------
-    torch.device
+    Returns:
+        torch.device:
     """
     if not config_device or config_device.lower() == "auto":
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -71,22 +68,16 @@ def suggest_n_envs(
     used as a hard worker cap because environment workers can safely share the
     allocated CPUs while the memory cap remains the OOM safeguard.
 
-    Parameters
-    ----------
-    requested:
-        ``cfg.env.n_envs`` before scaling.
-    total_ram_bytes:
-        Host MemTotal.
-    available_ram_bytes:
-        Host MemAvailable (leaves other processes alone).
-    cpu_count:
-        Logical CPUs.
-    vram_bytes:
-        GPU VRAM, or ``None`` on CPU (do not scale up).
+    Args:
+        requested: ``cfg.env.n_envs`` before scaling.
+        total_ram_bytes: Host MemTotal.
+        available_ram_bytes: Host MemAvailable (leaves other processes alone).
+        cpu_count: Logical CPUs.
+        vram_bytes: GPU VRAM, or ``None`` on CPU (do not scale up).
+        worker_ram_bytes: Optional measured memory estimate for each environment worker.
 
-    Returns
-    -------
-    int
+    Returns:
+        int:
     """
     if requested <= 1:
         return 1
@@ -107,7 +98,15 @@ def suggest_n_envs(
 
 
 def suggest_n_steps(*, current: int, vram_bytes: int | None) -> int:
-    """Grow the PPO rollout so A100-class cards get larger update buffers."""
+    """Grow the PPO rollout so A100-class cards get larger update buffers.
+
+    Args:
+        current: Numeric value used for the current.
+        vram_bytes: Vram bytes used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``suggest_n_steps``.
+    """
     if vram_bytes is None:
         return current
     if vram_bytes >= 35 * _GiB:
@@ -127,22 +126,15 @@ def suggest_batch_size(
 ) -> int:
     """Raise minibatch size to fill VRAM; result always divides the rollout.
 
-    Parameters
-    ----------
-    current:
-        Configured ``batch_size`` (lower bound when it still divides).
-    n_steps:
-        PPO ``n_steps`` *before* dividing by ``n_envs``.
-    n_envs:
-        Parallel env count after RAM capping.
-    vram_bytes:
-        GPU VRAM, or ``None`` to keep ``current`` (CPU).
-    arch:
-        Encoder name; ``transformer`` is treated as the heavy model.
+    Args:
+        current: Configured ``batch_size`` (lower bound when it still divides).
+        n_steps: PPO ``n_steps`` *before* dividing by ``n_envs``.
+        n_envs: Parallel env count after RAM capping.
+        vram_bytes: GPU VRAM, or ``None`` to keep ``current`` (CPU).
+        arch: Encoder name; ``transformer`` is treated as the heavy model.
 
-    Returns
-    -------
-    int
+    Returns:
+        int:
     """
     rollout = n_steps if n_envs <= 1 else max(1, n_steps // n_envs) * n_envs
     if vram_bytes is None or rollout <= 0:
@@ -165,7 +157,15 @@ def suggest_batch_size(
 
 
 def suggest_n_epochs(*, current: int, has_cuda: bool) -> int:
-    """More PPO epochs per rollout keeps the GPU busy while envs catch up."""
+    """More PPO epochs per rollout keeps the GPU busy while envs catch up.
+
+    Args:
+        current: Numeric value used for the current.
+        has_cuda: Whether to enable or require the has cuda.
+
+    Returns:
+        Numeric result returned by ``suggest_n_epochs``.
+    """
     if not has_cuda:
         return current
     return max(current, 15)
@@ -183,6 +183,12 @@ def scale_training_cfg(
     Research comparisons can preserve their declared PPO geometry. In that
     mode, reject an environment count that exceeds the estimated host-memory
     capacity rather than silently changing the comparison arm.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        device: Compute device on which to perform the operation.
+        arch: Text or path value identifying the arch.
+        preserve_ppo_geometry: Whether to enable or require the preserve ppo geometry.
     """
     total_ram, avail_ram = _read_meminfo()
     cgroup_memory = _read_cgroup_memory_limit()
@@ -252,7 +258,15 @@ def scale_training_cfg(
 
 
 def _gpu_n_envs_target(vram_bytes: int, available_ram_bytes: int) -> int:
-    """VRAM class ceiling, with host-RAM tiers on datacenter GPUs."""
+    """VRAM class ceiling, with host-RAM tiers on datacenter GPUs.
+
+    Args:
+        vram_bytes: Numeric value used for the vram bytes.
+        available_ram_bytes: Numeric value used for the available ram bytes.
+
+    Returns:
+        Numeric result returned by ``_gpu_n_envs_target``.
+    """
     if vram_bytes >= 70 * _GiB:
         for min_ram, target in _N_ENVS_RAM_TIERS:
             if available_ram_bytes >= min_ram:
@@ -266,6 +280,14 @@ def _gpu_n_envs_target(vram_bytes: int, available_ram_bytes: int) -> int:
 
 
 def _floor_power_of_two(n: int) -> int:
+    """Process power of two.
+
+    Args:
+        n: Numeric value used for the n.
+
+    Returns:
+        Numeric result returned by ``_floor_power_of_two``.
+    """
     p = 1
     while p * 2 <= n:
         p *= 2
@@ -273,6 +295,15 @@ def _floor_power_of_two(n: int) -> int:
 
 
 def _largest_divisor_pow2(rollout: int, cap: int) -> int:
+    """Process divisor pow2.
+
+    Args:
+        rollout: Numeric value used for the rollout.
+        cap: Numeric value used for the cap.
+
+    Returns:
+        Numeric result returned by ``_largest_divisor_pow2``.
+    """
     best = 1
     cand = 1
     while cand <= cap:
@@ -283,6 +314,11 @@ def _largest_divisor_pow2(rollout: int, cap: int) -> int:
 
 
 def _read_meminfo() -> tuple[int, int]:
+    """Read meminfo.
+
+    Returns:
+        Values returned by ``_read_meminfo``, in the declared order.
+    """
     total = 0
     available = 0
     try:
@@ -303,6 +339,9 @@ def _read_cgroup_memory_limit() -> tuple[int, int] | None:
     Slurm jobs are commonly constrained by cgroup v2 while ``/proc/meminfo``
     still exposes the whole node.  Prefer the cgroup limit so worker scaling
     cannot exceed the job allocation.
+
+    Returns:
+        Values returned by ``_read_cgroup_memory_limit``, in the declared order.
     """
     candidates = [
         (Path("/sys/fs/cgroup/memory.max"), Path("/sys/fs/cgroup/memory.current")),
@@ -339,7 +378,11 @@ def _read_cgroup_memory_limit() -> tuple[int, int] | None:
 
 
 def _read_cgroup_cpu_count() -> int | None:
-    """Return the CPU quota as a worker cap, when a quota is configured."""
+    """Return the CPU quota as a worker cap, when a quota is configured.
+
+    Returns:
+        Result of return the CPU quota as a worker cap, when a quota is configured.
+    """
     paths = [Path("/sys/fs/cgroup/cpu.max")]
     cgroup_dir = _current_cgroup_dir()
     if cgroup_dir is not None:
@@ -359,7 +402,11 @@ def _read_cgroup_cpu_count() -> int | None:
 
 
 def _current_cgroup_dir() -> Path | None:
-    """Resolve this process's cgroup v2 directory, if available."""
+    """Resolve this process's cgroup v2 directory, if available.
+
+    Returns:
+        Path returned by ``_current_cgroup_dir``.
+    """
     try:
         for line in Path("/proc/self/cgroup").read_text(encoding="utf-8").splitlines():
             hierarchy, _, relative = line.partition("::")
@@ -371,7 +418,11 @@ def _current_cgroup_dir() -> Path | None:
 
 
 def _read_slurm_memory_limit() -> int | None:
-    """Return a Slurm memory allocation in bytes, when exported by Slurm."""
+    """Return a Slurm memory allocation in bytes, when exported by Slurm.
+
+    Returns:
+        Result of return a Slurm memory allocation in bytes, when exported by Slurm.
+    """
     value = os.environ.get("SLURM_MEM_PER_NODE") or os.environ.get("SLURM_MEM_PER_CPU")
     if not value:
         return None
@@ -390,7 +441,11 @@ def _read_slurm_memory_limit() -> int | None:
 
 
 def _read_slurm_cpu_limit() -> int | None:
-    """Return Slurm's allocated CPU count, when exported by Slurm."""
+    """Return Slurm's allocated CPU count, when exported by Slurm.
+
+    Returns:
+        Result of return Slurm's allocated CPU count, when exported by Slurm.
+    """
     value = os.environ.get("SLURM_CPUS_PER_TASK")
     try:
         return max(1, int(value)) if value else None

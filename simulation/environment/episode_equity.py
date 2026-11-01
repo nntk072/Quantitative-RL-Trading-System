@@ -9,7 +9,14 @@ import pandas as pd
 
 
 def equity_slope(equity: pd.Series | np.ndarray[Any, Any]) -> float:
-    """Least-squares slope of equity against bar order. Flat is 0."""
+    """Least-squares slope of equity against bar order. Flat is 0.
+
+    Args:
+        equity: Current account equity in account currency.
+
+    Returns:
+        Numeric result returned by ``equity_slope``.
+    """
     y = np.asarray(equity, dtype=float)
     if y.size < 2 or not np.isfinite(y).all():
         return 0.0
@@ -29,7 +36,21 @@ def assess_equity_snapshot(
     peak_eod_trailing_dd_limit_usd: float = 0.0,
     max_peak_eod_trailing_dd_usd: float = 0.0,
 ) -> dict[str, Any]:
-    """Report policy fit and hard-risk survival separately with equity diagnostics."""
+    """Report policy fit and hard-risk survival separately with equity diagnostics.
+
+    Args:
+        end_equity: Numeric value used for the end equity.
+        initial: Numeric value used for the initial.
+        slope: Numeric value used for the slope.
+        max_peak_trailing_dd: Numeric value used for the max peak trailing dd.
+        breached: Whether to enable or require the breached.
+        peak_trailing_dd_limit: Numeric value used for the peak trailing dd limit.
+        peak_eod_trailing_dd_limit_usd: Numeric value used for the peak eod trailing dd limit usd.
+        max_peak_eod_trailing_dd_usd: Numeric value used for the max peak eod trailing dd usd.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     end = float(end_equity)
     start = float(initial)
     drawdown = float(max_peak_trailing_dd)
@@ -81,6 +102,17 @@ def assess_train_equity(
     ``peak_eod_trailing_dd_limit_usd`` activates the fixed-dollar EOD rule.
     A zero limit disables that rule. A policy miss is a diagnostic, not a
     reason to stop PPO optimization.
+
+    Args:
+        equity: Current account equity in account currency.
+        initial: Numeric value used for the initial.
+        breached: Whether to enable or require the breached.
+        peak_trailing_dd_limit: Numeric value used for the peak trailing dd limit.
+        peak_eod_trailing_dd_limit_usd: Numeric value used for the peak eod trailing dd limit usd.
+        max_peak_eod_trailing_dd_usd: Numeric value used for the max peak eod trailing dd usd.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
     """
     if equity is None or len(equity) == 0:
         return {
@@ -110,7 +142,14 @@ def assess_train_equity(
 
 
 def _max_peak_trailing_dd(equity: pd.Series | np.ndarray[Any, Any]) -> float:
-    """Largest peak-to-trough drawdown on the path, as a fraction of the peak."""
+    """Largest peak-to-trough drawdown on the path, as a fraction of the peak.
+
+    Args:
+        equity: Current account equity in account currency.
+
+    Returns:
+        Numeric result returned by ``_max_peak_trailing_dd``.
+    """
     y = np.asarray(equity, dtype=float)
     if y.size == 0:
         return 0.0

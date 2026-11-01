@@ -23,7 +23,11 @@ REGIME_NORMALIZATION_SEMANTICS = (
 
 
 def regime_observation_schema() -> dict[str, Any]:
-    """Return stable names and semantics for the compact D1 context vector."""
+    """Return stable names and semantics for the compact D1 context vector.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     payload = {
         "version": "slow-regime-observation-v1",
         "feature_version": REGIME_FEATURE_VERSION,

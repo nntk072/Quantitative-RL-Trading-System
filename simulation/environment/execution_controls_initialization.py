@@ -8,6 +8,8 @@ from .mixin_base import RuntimeMixinBase
 
 
 class ExecutionControlsInitializationMixin(RuntimeMixinBase):
+    """Initialize tick execution, fill latency, and quote-wait controls."""
+
     def _initialize_execution_controls(
         self,
         tickbook: TickBook | None,
@@ -17,6 +19,16 @@ class ExecutionControlsInitializationMixin(RuntimeMixinBase):
         max_tick_quote_wait_ms: int,
         tick_fill_slippage_points: float,
     ) -> None:
+        """Initialize execution controls.
+
+        Args:
+            tickbook: Tickbook used by the operation described above.
+            tick_execution_required: Whether to enable or require the tick execution required.
+            fill_delay_ms: Numeric value used for the fill delay ms.
+            randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
+            max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
+            tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+        """
         self._tickbook = tickbook
         self.tick_execution_required = bool(tick_execution_required)
         self.fill_delay_ms = int(fill_delay_ms)

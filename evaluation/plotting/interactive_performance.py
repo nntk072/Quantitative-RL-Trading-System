@@ -37,6 +37,22 @@ def plot_equity_curve(
     trades: pd.DataFrame | None = None,
     out_path: Path | str | None = None,
 ) -> go.Figure:
+    """Plot equity, peak balance, guardrail thresholds, and optional trade markers.
+
+    Args:
+        equity: Account equity indexed by time.
+        breaches: Optional breach labels associated with the run.
+        breach_events: Optional timestamped breach details to annotate.
+        initial_balance: Starting balance used for reference lines.
+        daily_loss_limit: Optional daily-loss threshold in account currency.
+        max_loss_limit: Optional total-loss threshold in account currency.
+        profit_target: Optional profit target in account currency.
+        trades: Optional trade log; completed trades enable trade-ordered view.
+        out_path: Optional destination for an HTML copy of the figure.
+
+    Returns:
+        Interactive equity figure with configured thresholds and annotations.
+    """
     _check()
     from evaluation.metrics.trade_pairs import pair_trades as _pair_trades
 
@@ -196,6 +212,16 @@ def plot_drawdown(
     out_path: Path | str | None = None,
     daily_loss_limit: float | None = 5_000.0,
 ) -> go.Figure:
+    """Plot peak-to-trough account drawdown and the optional daily-loss limit.
+
+    Args:
+        equity: Current account equity in account currency.
+        out_path: Path or filename identifying the out.
+        daily_loss_limit: Daily loss limit used by the operation described above.
+
+    Returns:
+        Result of plot peak-to-trough account drawdown and the optional daily-loss limit.
+    """
     _check()
     from plotly.subplots import make_subplots
 
@@ -272,6 +298,16 @@ def plot_daily_pnl(
     daily_loss_limit: float | None = None,
     out_path: Path | str | None = None,
 ) -> go.Figure:
+    """Plot daily account PnL and the configured daily-loss threshold.
+
+    Args:
+        equity: Current account equity in account currency.
+        daily_loss_limit: Daily loss limit used by the operation described above.
+        out_path: Path or filename identifying the out.
+
+    Returns:
+        Result of plot daily account PnL and the configured daily-loss threshold.
+    """
     _check()
     pnl = daily_pnl(equity)
     fig = go.Figure()
@@ -307,6 +343,15 @@ def plot_trade_pnl_hist(
     trades: pd.DataFrame,
     out_path: Path | str | None = None,
 ) -> go.Figure:
+    """Plot the distribution of completed trade PnL values.
+
+    Args:
+        trades: Trade records used to calculate the requested report or metric.
+        out_path: Path or filename identifying the out.
+
+    Returns:
+        Result of plot the distribution of completed trade PnL values.
+    """
     _check()
     if "pnl" not in trades.columns or trades["pnl"].dropna().empty:
         fig = go.Figure()
@@ -363,6 +408,15 @@ def plot_returns_dist(
     equity: pd.Series,
     out_path: Path | str | None = None,
 ) -> go.Figure:
+    """Plot the distribution of bar returns derived from an equity series.
+
+    Args:
+        equity: Current account equity in account currency.
+        out_path: Path or filename identifying the out.
+
+    Returns:
+        Result of plot the distribution of bar returns derived from an equity series.
+    """
     _check()
     rets = equity.pct_change().dropna() * 100
 
@@ -395,6 +449,15 @@ def plot_monthly_returns_heatmap(
     equity: pd.Series,
     out_path: Path | str | None = None,
 ) -> go.Figure:
+    """Plot calendar-month returns as a year-by-month heatmap.
+
+    Args:
+        equity: Current account equity in account currency.
+        out_path: Path or filename identifying the out.
+
+    Returns:
+        Result of plot calendar-month returns as a year-by-month heatmap.
+    """
     _check()
     monthly = equity.resample("ME").last().pct_change().dropna() * 100
     if monthly.empty:

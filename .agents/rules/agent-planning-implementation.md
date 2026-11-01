@@ -11,8 +11,8 @@ Use one consistent process so results do not depend on which agent receives the 
 4. For a substantial task, write a short plan outside the repository under
    `/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/`.
    Do not add agent implementation plans, working notes, or handoff plans to
-   the repository. The operational thesis queue remains
-   `docs/thesis/master_project_execution_plan.md`.
+   the repository. The operational research queue is
+   `docs/operations/research_execution_plan.md`.
 5. Name files and user-facing choices for their function. Avoid opaque
    letter-number codes, work-package numbers, generic stage numbers, and words
    such as “new” or “final” when they stand alone. Use abbreviations only when

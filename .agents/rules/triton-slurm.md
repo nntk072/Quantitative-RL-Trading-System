@@ -14,7 +14,7 @@ Helper scripts: [`scripts/compute/slurm/`](../../scripts/compute/slurm/) (`statu
 
 ## Slurm authorization, execution and preservation
 
-- The user has granted standing authorization for necessary thesis GPU work.
+- The user has granted standing authorization for necessary research GPU work.
   Reuse an existing allocation first. When none is available, inspect each
   candidate node's live GPU inventory, CPU allocation/free count, and host RAM
   allocation/free amount using `squeue`, `sinfo`, and `scontrol show node`.
@@ -30,7 +30,7 @@ Helper scripts: [`scripts/compute/slurm/`](../../scripts/compute/slurm/) (`statu
 - **Never run `scancel`.** Preserve active and pending jobs and allocations,
   including when training ends or a request waits too long. Never use
   `REPLACE=1`. Only change this rule if the user explicitly revises it later.
-- Keep the thesis aggregate cap of 2 GH200 GPUs and budget of at most 12
+- Keep the research aggregate cap of 2 GH200 GPUs and budget of at most 12
   GH200 GPU-hours per request. Do not exceed one GH200 per node for the
   two-node layout.
 - For one task, default to one GH200 allocation. If one GH200 for up to 12
@@ -50,7 +50,7 @@ For an active training, evaluation, or allocation, estimate the current stage's
 remaining duration before choosing when to check again. Use observed throughput
 or prior measured durations, then compare the estimate with the live Slurm
 time-limit and leave enough margin to verify checkpoint/output completion
-before expiry. If independent thesis work remains, continue it while compute
+before expiry. If independent research work remains, continue it while compute
 runs. If there is nothing independent to do, wait toward the estimated stage
 completion instead of polling repeatedly; use no more than 10 planned checks
 per stable stage. Add an intermediate check only when expected to catch a
@@ -175,7 +175,7 @@ automatically; inspect the trace and step topology first.
 - Using `srun` for login-node checks (`ls`, log tails, plain `grep`).
 - GPU count limits are **partition and workload specific**, not global. Follow
   the per-family caps in the table below; check Slurm availability and account
-  limits before each request. For the current thesis experiment run, the user has set
+  limits before each request. For the current research experiment run, the user has set
   a hard aggregate cap of **2 GH200 GPUs total across all active allocations**
   and **2 per allocation request**. Count GPUs across jobs and nodes, including
   pending jobs that could overlap. For example, requesting 1 GH200 on gpuarm1
@@ -242,7 +242,7 @@ requested walltime; the one-minute limit is not a runtime limit.
 
 ### User's current allocation shape and cutoff preference
 
-For this thesis work, first reuse any current user allocation. If none exists,
+For this research work, first reuse any current user allocation. If none exists,
 inspect each candidate node's allocated/free CPUs, host RAM, and GPU type/count
 before requesting. Default to **one GH200 for a task** when its workload fits
 within that allocation. If one GH200 with up to 12 hours is sufficient, run all
@@ -307,13 +307,13 @@ When the preferred GPU family is unavailable within the limit, search for a
 compatible NVIDIA GPU **no lower than A100**. Candidate families are A100,
 H100, H200, GH200, and B300 when the specific node and partition can satisfy
 the job. Compare predicted start time and measured end-to-end makespan, not
-model names alone. For current thesis work, the user has explicitly excluded
+model names alone. For current research work, the user has explicitly excluded
 MI210; historical MI210 validation and benchmark records remain evidence only
 and do not authorize future MI210 use. NVIDIA alternatives require their
 matching CUDA/PyTorch environment and representative-kernel validation. If no
 eligible candidate is available, report the resource block and continue
 independent work; do not silently drop below the GPU floor.
-Respect the current thesis cap of two GH200s across active and pending jobs; it
+Respect the current research cap of two GH200s across active and pending jobs; it
 does not apply to other families. Do not switch a live or dependency-queued job
 to another family by submitting an overlapping replacement.
 
@@ -323,7 +323,7 @@ The following is the Triton configuration observed on **2026-10-16** using
 `sinfo` and `scontrol`; node availability is transient. GPU counts are
 configured partition capacity, not a promise that those GPUs are free. Always
 query `sinfo`, `squeue`, `scontrol show node`, and account/QOS before a real
-request. The two-GH200 aggregate cap is specific to the current thesis
+request. The two-GH200 aggregate cap is specific to the current research
 experiment run; it does not limit other GPU families.
 
 | GPU family | VRAM / CUDA capability | Triton partition(s) | Partition MaxTime / MaxNodes | Project request guidance |
@@ -333,7 +333,7 @@ experiment run; it does not limit other GPU families.
 | H100 | 80 GiB / 9.0 | `gpu-h100-80g`, `gpu-h100-80g-short` | 5d or 2d / max one node | Representative node `gpu45`: 192 CPUs/990 GiB. Match runtime and environment/kernel support to the selected partition. |
 | H200 | 141 GiB / 9.0 | `gpu-h200-141g-m`, `gpu-h200-141g-short` | 8h or 2d / max one node | Representative node `gpu50`: 128 CPUs/1,980 GiB; full nodes expose up to 8 GPUs. Measure concurrency and request supported node resources. |
 | H200 partitioned | 71 GiB slice (H200 3g.71gb) / 9.0 | `gpu-h200-71g-ia` | 8h / max one node | `gpu49`: 128 CPUs/1,980 GiB and up to 8 71-GiB slices alongside 4 full H200s. Treat a slice as a partitioned GPU. Other 18/35-GiB IA partitions were not configured in this snapshot. |
-| GH200 | 141 GiB / 9.0 | `gpu-grace-h200-141g` | 5d / max two nodes | Current thesis-experiment-run user cap: **2 GH200 total across active and pending allocations**, normally one per node on two nodes. This is not the cluster's installed capacity and does not cap other GPU families. |
+| GH200 | 141 GiB / 9.0 | `gpu-grace-h200-141g` | 5d / max two nodes | Current research-run user cap: **2 GH200 total across active and pending allocations**, normally one per node on two nodes. This is not the cluster's installed capacity and does not cap other GPU families. |
 | B300 | 288 GiB / 10.3 | `gpu-b300-288g-short` | 2d / max one node | Representative node `gpu64`: 256 CPUs/3,000 GiB. Verify framework support and measured throughput before choosing it. |
 | AMD MI100 / MI210 | 32 GiB MI100 / 64 GiB MI210, ROCm (not CUDA) | `gpu-amd` | 5d / max one node | `gpuamd1`: 16 CPUs/250 GiB, 1 MI100 + 2 MI210. Requires ROCm-compatible PyTorch/runtime; CUDA environments do not apply. |
 
@@ -362,7 +362,7 @@ present the 18-trainer projection as a direct measurement.
 | One model (one TCN / GRU / Transformer, 20M) | **1** | Example GH200: `--gpus=gh200:1 --mem=512G --cpus-per-task=48 --time=12:00:00` | GH200 example only; size CPU/RAM/time for the chosen family, partition, and measured workload. |
 | Six-run matrix (overlay then baseline, three archs) | **2 GH200** | `--gpus=gh200:2 --mem=900G --cpus-per-task=128 --time=6:00:00` | Historical GH200 shape only. The GH200 experiment run cap does not set V100/A100/H100/H200/B300 caps. Check [current matrix scripts](../../scripts/compute/slurm/experiment_runs/) before use. |
 | 18-trainer full-split screen (experiment-run-specific) | **2 total, one per node** | GH200: `--nodes=2 --ntasks=2 --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G --time=6:00:00` | Current active allocation shape: 18 workers across two nodes (9/node), 5 CPUs/worker, `n_envs=64`, shared bundle. Keep this distinct from two GPUs on one node; recheck cgroup memory and controller placement before reuse. |
-| V100 throughput probe (2026-10-16 user-authorized) | **1 V100, 2 trainers** | Actual probe: `gpu35`, `--gres=gpu:v100:1 --mem=192G --cpus-per-task=16 --time=4:00:00` | One V100 shared by two matched throughput workers. Benchmark-only; not thesis evidence or a validated general V100 cap. |
+| V100 throughput probe (2026-10-16 user-authorized) | **1 V100, 2 trainers** | Actual probe: `gpu35`, `--gres=gpu:v100:1 --mem=192G --cpus-per-task=16 --time=4:00:00` | One V100 shared by two matched throughput workers. Benchmark-only; not research evidence or a validated general V100 cap. |
 
 Choose a GPU family based on availability and compatible runtime, not a global
 preference. `.venv-x86` cu130 supports H100/H200 but not V100; use the separate
@@ -428,7 +428,7 @@ Second train: a new tmux window that **`ssh`s the compute node**. That shell
 joins the same job (`SLURM_JOB_ID` is set). `srun --overlap` / `srun --jobid=`
 fails here with `Insane message length`. Do not retry overlap.
 
-For this thesis experiment run, prefer one GH200 on each of two different nodes. If
+For this research experiment run, prefer one GH200 on each of two different nodes. If
 that layout is unavailable, the user permits both GH200s on one eligible node
 within the aggregate cap. If `AllocTRES` shows the requested GH200s occupied,
 do not submit that shape or keep waiting on it. Apply the one-minute limit above, inspect per-node state
@@ -477,7 +477,7 @@ the replacement completes. A batch already in progress is never interrupted
 by this check.
 
 These points were measured on Triton on 2026-10-08. Treat them as historical
-benchmark evidence only; they do not override the current thesis allocation
+benchmark evidence only; they do not override the current research allocation
 shape or the one-minute alternative-selection rule above:
 
 - The working four-trainer shape is **one `gpu-grace-h200-141g` allocation**:
@@ -621,7 +621,7 @@ Use one reporting path for live progress and another for terminal results:
    generalization.
 
 6. When the user asks for per-variant trade detail, generate the artifact-backed
-   detail pack with `scripts/research/thesis/evaluation/report_variant_details.py`
+   detail pack with `scripts/research/analysis/evaluation/report_variant_details.py`
    from the completed experiment run directory. It writes `reports/variant_details.md`,
    `.json`, and `reports/variant_details_figures/`, with each variant's resolved setup, training parameters and
    learning-curve summaries, figure links, train/test entry setup, exits by
@@ -642,7 +642,7 @@ Use one reporting path for live progress and another for terminal results:
 
    ```bash
    PYTHONPATH=. .venv/bin/python \
-     scripts/research/thesis/evaluation/report_variant_details.py \
+     scripts/research/analysis/evaluation/report_variant_details.py \
      --experiment-run-dir outputs/experiment_runs/<experiment-run-id>
    ```
 
@@ -690,7 +690,7 @@ Login-node SSH: `ls`, `cat`, `tmux capture-pane`, `squeue`, `sinfo`, edits,
 Never `source` the wrong-arch venv on login (`.venv` is aarch64-only). Use
 `scripts/compute/slurm/activate_venv.sh` only inside the GPU bash.
 
-Use a suitable existing GPU-node allocation for thesis computation whenever the
+Use a suitable existing GPU-node allocation for research computation whenever the
 workload can use a GPU. Training, evaluation, feature construction, and similar
 memory/CPU-intensive work must never run directly on the normal x86 login host
 or in login tmux. For CPU-only work, inspect a candidate CPU node's live CPU and

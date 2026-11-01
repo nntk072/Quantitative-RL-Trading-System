@@ -18,4 +18,4 @@ guardrails.
 
 See the [reward concept](../concepts/rewards.md),
 [reward reference](../reference/rewards.md), and
-[environment guide](../../simulation/environment/README.md).
+[environment guide](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/simulation/environment/README.md).

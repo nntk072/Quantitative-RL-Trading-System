@@ -6,7 +6,11 @@ import argparse
 
 
 def build_reanalysis_parser() -> argparse.ArgumentParser:
-    """Build the checkpoint-reanalysis CLI with an explicit action mode."""
+    """Build the checkpoint-reanalysis CLI with an explicit action mode.
+
+    Returns:
+        Result of build the checkpoint-reanalysis CLI with an explicit action mode.
+    """
     parser = argparse.ArgumentParser(
         description="Reanalyse a PPO checkpoint into a separate, new output directory."
     )

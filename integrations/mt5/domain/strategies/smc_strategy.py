@@ -5,8 +5,7 @@ from integrations.mt5.domain.signal import Signal
 
 
 class SMCStrategy(TradingStrategy):
-    """
-    Smart Money Concepts (SMC) Strategy
+    """Smart Money Concepts (SMC) Strategy.
 
     This strategy identifies:
     - Order Blocks (supply/demand zones)
@@ -18,8 +17,7 @@ class SMCStrategy(TradingStrategy):
     def __init__(
         self, trading_data: TradingData, order_block_periods: int = 20, fvg_lookback: int = 3
     ) -> None:
-        """
-        Initialize SMC Strategy.
+        """Initialize SMC Strategy.
 
         Args:
             trading_data: Data source for trading
@@ -31,12 +29,14 @@ class SMCStrategy(TradingStrategy):
         self.fvg_lookback = fvg_lookback
 
     def identify_order_blocks(self, df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
-        """
-        Identify bullish and bearish order blocks.
+        """Identify bullish and bearish order blocks.
 
         Order blocks are areas where institutional traders placed large orders.
         - Bullish order block: Strong bullish candle followed by consolidation
         - Bearish order block: Strong bearish candle followed by consolidation
+
+        Args:
+            df: Input DataFrame supplying the rows used by this calculation.
 
         Returns:
             Tuple of (bullish_blocks, bearish_blocks) as boolean series
@@ -74,12 +74,14 @@ class SMCStrategy(TradingStrategy):
         return bullish_blocks, bearish_blocks
 
     def identify_fair_value_gaps(self, df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
-        """
-        Identify bullish and bearish Fair Value Gaps (FVG).
+        """Identify bullish and bearish Fair Value Gaps (FVG).
 
         FVG occurs when there's a gap between candles that gets filled later.
         - Bullish FVG: Gap between low of previous candle and high of next candle
         - Bearish FVG: Gap between high of previous candle and low of next candle
+
+        Args:
+            df: Input DataFrame supplying the rows used by this calculation.
 
         Returns:
             Tuple of (bullish_fvg, bearish_fvg) as boolean series
@@ -106,8 +108,10 @@ class SMCStrategy(TradingStrategy):
         return bullish_fvg, bearish_fvg
 
     def identify_market_structure(self, df: pd.DataFrame) -> str:
-        """
-        Identify market structure (trend direction).
+        """Identify market structure (trend direction).
+
+        Args:
+            df: Input DataFrame supplying the rows used by this calculation.
 
         Returns:
             'bullish', 'bearish', or 'neutral'
@@ -143,8 +147,7 @@ class SMCStrategy(TradingStrategy):
             return "neutral"
 
     def signal(self) -> tuple[str, Signal]:
-        """
-        Generate trading signal based on SMC concepts.
+        """Generate trading signal based on SMC concepts.
 
         Returns:
             Tuple of (symbol, signal)

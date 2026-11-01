@@ -27,6 +27,15 @@ def max_tp_distance(
     session has closed, the value is NaN and the caller must not refuse a trade
     for reach. With fewer than ``n_sessions`` closed sessions the quantile is
     expanding.
+
+    Args:
+        bars: Market bars to process.
+        atr: Tabular data used for the atr.
+        n_sessions: Numeric value used for the n sessions.
+        quantile: Numeric value used for the quantile.
+
+    Returns:
+        Result of price distance a take-profit may sit from entry at each bar.
     """
     idx = pd.DatetimeIndex(bars.index)
     atr_a = pd.to_numeric(atr.reindex(idx), errors="coerce").to_numpy(dtype=float)
@@ -77,6 +86,13 @@ def reachable_r_series(bars: pd.DataFrame, features: pd.DataFrame) -> pd.Series:
     The side is the distribution direction when it is set, otherwise the
     higher-timeframe bias. A flat bar uses the tighter of the two stops.
     The ratio is scale-free, so it can sit in the model sequence.
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+
+    Returns:
+        Result of causal reward room: max take-profit distance divided by structural stop.
     """
     idx = bars.index
     if "atr_5" not in features.columns or "close" not in bars.columns:
@@ -127,7 +143,16 @@ def attach_reachable_r(
     bars: pd.DataFrame,
     features: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Append ``reachable_r`` after raw price columns have been dropped."""
+    """Append ``reachable_r`` after raw price columns have been dropped.
+
+    Args:
+        obs: Tabular data used for the obs.
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+
+    Returns:
+        DataFrame returned by ``attach_reachable_r``.
+    """
     out = obs.copy()
     out["reachable_r"] = (
         reachable_r_series(bars, features).reindex(obs.index).fillna(0.0).astype(float)
@@ -139,6 +164,15 @@ def rr_reaches(entry: float, sl: float, rr_ratio: float, max_distance: float) ->
     """True when ``rr_ratio * |entry - sl|`` fits inside ``max_distance``.
 
     A non-finite cap means no completed session yet, so the trade is allowed.
+
+    Args:
+        entry: Numeric value used for the entry.
+        sl: Numeric value used for the sl.
+        rr_ratio: Numeric value used for the rr ratio.
+        max_distance: Numeric value used for the max distance.
+
+    Returns:
+        Whether rr reaches meets the requested condition.
     """
     if not np.isfinite(max_distance):
         return True

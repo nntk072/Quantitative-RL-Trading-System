@@ -39,9 +39,9 @@ PHASE_ONLY_MARKER = re.compile(r"(?:^|_)(?:p\d+|wp\d*|phase[-_]?\d+)(?:_|\.|$)",
 HISTORICAL_EXPERIMENT_RUN_IDENTITIES = {
     "config/experiment_runs/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1.yaml",
     "config/experiment_runs/variant_list_p6_entry_fsm.txt",
-    "docs/thesis/p1_checkpoint_full_split_budget_2026-10-16.json",
+    "evidence/research/archive_2026/records/p1_checkpoint_full_split_budget_2026-10-16.json",
 }
-HISTORICAL_OUTPUT_ROOTS = ("docs/thesis/evidence/", "docs/research/")
+HISTORICAL_OUTPUT_ROOTS = ("evidence/research/archive_2026/", "docs/research/")
 GENERIC_FILENAMES = {
     "base.py",
     "common.py",

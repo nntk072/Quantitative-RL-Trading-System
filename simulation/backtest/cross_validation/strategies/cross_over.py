@@ -2,8 +2,7 @@ import backtrader as bt
 
 
 class CrossOverStrategy(bt.Strategy):
-    """
-    A Backtrader implementation of the CrossOver strategy.
+    """A Backtrader implementation of the CrossOver strategy.
 
     This strategy generates buy signals when the 20-period moving average crosses above
     the 50-period moving average, and sell signals when the 20-period moving average
@@ -18,6 +17,7 @@ class CrossOverStrategy(bt.Strategy):
 
     def __init__(self) -> None:
         # Keep a reference to the "close" line in the data[0] dataseries
+        """Initialize CrossOverStrategy and its owned state."""
         self.dataclose = self.datas[0].close
 
         # Create the moving average indicators
@@ -44,12 +44,23 @@ class CrossOverStrategy(bt.Strategy):
         self.crossover = bt.indicators.CrossOver(self.ma_short, self.ma_long)
 
     def log(self, txt: str, dt: object | None = None, doprint: bool = False) -> None:
-        """Logging function"""
+        """Logging function.
+
+        Args:
+            txt: Text or path value identifying the txt.
+            dt: Dt used by the operation described above.
+            doprint: Whether to enable or require the doprint.
+        """
         if self.params.printlog or doprint:  # type: ignore[attr-defined]
             dt = dt or self.datas[0].datetime.date(0)
             print(f"{dt.isoformat() if hasattr(dt, 'isoformat') else str(dt)} {txt}")
 
     def notify_order(self, order) -> None:
+        """Update strategy state when a broker order changes status.
+
+        Args:
+            order: Order used by the operation described above.
+        """
         if order.status in [order.Submitted, order.Accepted]:
             # Buy/Sell order submitted/accepted to/by broker - Nothing to do
             return
@@ -79,6 +90,11 @@ class CrossOverStrategy(bt.Strategy):
         self.order = None
 
     def notify_trade(self, trade) -> None:
+        """Record the result when a broker trade closes.
+
+        Args:
+            trade: Trade used by the operation described above.
+        """
         if not trade.isclosed:
             return
 
@@ -86,6 +102,7 @@ class CrossOverStrategy(bt.Strategy):
 
     def next(self) -> None:
         # Log the closing price of the series
+        """Evaluate the latest bar and submit a crossover order when eligible."""
         self.log(f"Close: {self.dataclose[0]:.2f}")
 
         # Check if an order is pending
@@ -106,6 +123,7 @@ class CrossOverStrategy(bt.Strategy):
                 self.order = self.sell()  # Keep track of the created order
 
     def stop(self) -> None:
+        """Report final strategy state after the backtest ends."""
         self.log(
             f"MA Short Period: {self.p.ma_short_period}, MA Long Period: {self.p.ma_long_period}",
             doprint=True,

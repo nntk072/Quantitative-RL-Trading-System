@@ -1,4 +1,4 @@
-"""Experiment orchestration utilities for reproducible thesis runs."""
+"""Experiment orchestration utilities for reproducible research runs."""
 
 from .weekly import (
     BatchSpec,

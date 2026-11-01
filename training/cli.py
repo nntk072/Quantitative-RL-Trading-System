@@ -7,6 +7,12 @@ from collections.abc import Callable
 
 
 def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
+    """Process the requested value.
+
+    Args:
+        callable_main: Callable main used by the operation described above.
+        argv: Items supplied for the argv, in input order.
+    """
     original = sys.argv
     try:
         sys.argv = [original[0], *argv]
@@ -18,6 +24,7 @@ def _forward(callable_main: Callable[[], object], argv: list[str]) -> None:
 
 
 def main() -> None:
+    """Dispatch the selected training subcommand and its arguments."""
     argv = sys.argv[1:]
     commands = {"train", "backtest", "baselines", "lstm-baseline", "vae"}
     command = argv[0] if argv and argv[0] in commands else "train"

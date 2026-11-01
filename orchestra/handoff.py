@@ -17,6 +17,8 @@ _TEST_LINES = 40
 
 @dataclass
 class HandoffBundle:
+    """Bounded continuation state that can move a task between agent models."""
+
     task_id: str
     phase: str
     tier: str
@@ -32,10 +34,23 @@ class HandoffBundle:
     resume_hint: str = ""
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the bundle fields into a JSON-compatible mapping.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any`` values.
+        """
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> HandoffBundle:
+        """Restore a bundle while defaulting fields absent from older handoffs.
+
+        Args:
+            data: Input data to process.
+
+        Returns:
+            Result of restore a bundle while defaulting fields absent from older handoffs.
+        """
         return cls(
             task_id=data.get("task_id", ""),
             phase=data.get("phase", ""),
@@ -54,12 +69,29 @@ class HandoffBundle:
 
 
 def _cap(text: str, limit: int) -> str:
+    """Process the requested value.
+
+    Args:
+        text: Text or path value identifying the text.
+        limit: Numeric value used for the limit.
+
+    Returns:
+        Text returned by ``_cap``.
+    """
     if len(text) <= limit:
         return text
     return text[:limit] + "\n... [truncated]"
 
 
 def git_diff_stat(workspace: Path) -> str:
+    """Return the workspace change summary, or empty text when Git is unavailable.
+
+    Args:
+        workspace: Workspace directory used for file and process operations.
+
+    Returns:
+        Text returned by ``git_diff_stat``.
+    """
     try:
         result = subprocess.run(
             ["git", "diff", "--stat", "HEAD"],
@@ -83,6 +115,15 @@ def git_diff_stat(workspace: Path) -> str:
 
 
 def git_diff_excerpt(workspace: Path, limit: int = _DIFF_CAP) -> str:
+    """Return a bounded workspace diff excerpt for the continuation context.
+
+    Args:
+        workspace: Workspace directory used for file and process operations.
+        limit: Numeric value used for the limit.
+
+    Returns:
+        Text returned by ``git_diff_excerpt``.
+    """
     try:
         result = subprocess.run(
             ["git", "diff", "HEAD"],
@@ -113,7 +154,19 @@ def build_handoff_bundle(
     native_session_id: str | None = None,
     resume_hint: str = "",
 ) -> HandoffBundle:
-    """Build a handoff bundle from task state and workspace."""
+    """Build a handoff bundle from task state and workspace.
+
+    Args:
+        state_data: Key-value data used for the state data.
+        workspace: Workspace directory used for file and process operations.
+        source_model: Text or path value identifying the source model.
+        source_tmux: Text or path value identifying the source tmux.
+        native_session_id: Native session id used by the operation described above.
+        resume_hint: Text or path value identifying the resume hint.
+
+    Returns:
+        Result of build a handoff bundle from task state and workspace.
+    """
     verification = state_data.get("verification_result") or {}
     tests = verification.get("tests") or {}
     test_out = tests.get("output", "") or ""
@@ -137,12 +190,30 @@ def build_handoff_bundle(
 
 
 def save_handoff(bundle: HandoffBundle, state_dir: Path) -> Path:
+    """Write one task's handoff bundle to its state directory.
+
+    Args:
+        bundle: Bundle used by the operation described above.
+        state_dir: Text or path value identifying the state dir.
+
+    Returns:
+        Path returned by ``save_handoff``.
+    """
     path = state_dir / f"{bundle.task_id}-handoff.json"
     path.write_text(json.dumps(bundle.to_dict(), indent=2))
     return path
 
 
 def load_handoff(state_dir: Path, task_id: str) -> HandoffBundle | None:
+    """Load a saved handoff bundle, returning ``None`` when no file exists.
+
+    Args:
+        state_dir: Text or path value identifying the state dir.
+        task_id: Text or path value identifying the task id.
+
+    Returns:
+        Result of load a saved handoff bundle, returning ``None`` when no file exists.
+    """
     path = state_dir / f"{task_id}-handoff.json"
     if not path.exists():
         return None
@@ -150,7 +221,14 @@ def load_handoff(state_dir: Path, task_id: str) -> HandoffBundle | None:
 
 
 def render_handoff_prompt(bundle: HandoffBundle) -> str:
-    """Render continuation prompt from bundle (no full transcripts)."""
+    """Render continuation prompt from bundle (no full transcripts).
+
+    Args:
+        bundle: Bundle used by the operation described above.
+
+    Returns:
+        Text returned by ``render_handoff_prompt``.
+    """
     template = load_prompt("handoff_continuation")
     open_items = "\n".join(f"- {item}" for item in bundle.open_items) or "- (none)"
     return (

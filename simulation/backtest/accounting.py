@@ -25,7 +25,15 @@ def stamp_exit(
     record: dict[str, Any],
     fill_price: float,
 ) -> None:
-    """Attach one exactly-once fill and completed-position accounting row."""
+    """Attach one exactly-once fill and completed-position accounting row.
+
+    Args:
+        state: State object read or updated by the operation.
+        settings: Settings used by the operation described above.
+        pos: Pos used by the operation described above.
+        record: Key-value data used for the record.
+        fill_price: Numeric value used for the fill price.
+    """
     for key, value in state.current_execution_meta.items():
         record.setdefault(key, value)
     record.setdefault("order_submission_time", record.get("decision_time", pos.entry_timestamp))
@@ -61,6 +69,17 @@ def _record_close(
     record: dict[str, Any],
     session: int,
 ) -> None:
+    """Record close.
+
+    Args:
+        state: State object read or updated by the operation.
+        settings: Settings used by the operation described above.
+        broker: Broker used by the operation described above.
+        position: Position used by the operation described above.
+        quote: Items supplied for the quote, in input order.
+        record: Key-value data used for the record.
+        session: Session identifier used by the operation.
+    """
     pnl, fill_price = broker.close_position(state.account, position, quote)
     record["pnl"] = pnl
     record["price"] = fill_price

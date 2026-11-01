@@ -160,7 +160,7 @@ class TestTrainingScriptSmoke:
     def test_train_rl_cli_forwards_current_arguments(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Smoke-test the stable thesis-train command surface for PPO training."""
+        """Smoke-test the stable training command surface for PPO training."""
         import training.runner.training as training_runner
 
         captured: list[str] = []
@@ -171,7 +171,7 @@ class TestTrainingScriptSmoke:
         monkeypatch.setattr(training_runner, "main", fake_training_main)
         out_dir = tmp_path / "rl_runs"
         sys.argv = [
-            "thesis-train",
+            "qrl-train",
             "train",
             "--config",
             CONFIG,

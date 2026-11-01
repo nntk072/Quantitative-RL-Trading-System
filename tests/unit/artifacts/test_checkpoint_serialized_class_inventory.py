@@ -35,8 +35,8 @@ def test_inventory_finds_legacy_class_path_without_loading_tensor_payload(
     inventory = build_inventory(root)
 
     assert inventory["summary"]["checkpoint_archives"] == 1
-    legacy = inventory["legacy_references"]
-    assert len(legacy) == 1
-    assert legacy[0]["path"] == "run/model/ppo_final.zip"
-    assert legacy[0]["serialized_encoder_class_paths"] == ["models.encoders.core.MTFEncoder"]
-    assert legacy[0]["legacy_module_references"] == ["models.encoders.core."]
+    compatibility = inventory["legacy_references"]
+    assert len(compatibility) == 1
+    assert compatibility[0]["path"] == "run/model/ppo_final.zip"
+    assert compatibility[0]["serialized_encoder_class_paths"] == ["models.encoders.core.MTFEncoder"]
+    assert compatibility[0]["legacy_module_references"] == ["models.encoders.core."]

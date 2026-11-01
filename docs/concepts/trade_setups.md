@@ -8,11 +8,8 @@ selected setup owns the trade's primary semantics.
 ## Setup identity
 
 The current serialized categorical contract enumerates six ideas across nine
-timeframes and two directions, plus no-trade. The current implementation uses
-the historical word `thesis` in category and observation identifiers. In
-reader-facing prose, “trade setup” is the domain concept; old serialized
-identifiers must remain recognizable until migrated with an explicit
-compatibility layer.
+timeframes and two directions, plus no-trade. Its category, action, and
+observation identifiers use the `trade_setup` naming family.
 
 The six ideas are:
 
@@ -70,9 +67,9 @@ flowchart LR
 
 ## Compatibility note
 
-The category IDs and their ordered Box encoding are part of historical
-checkpoints. Renaming `thesis` to `trade_setup` in prose does not authorize
-changing the serialized action coordinate, observation key, schema version,
-or category order. See [action schemas](../reference/action_schemas.md) and
+The category IDs and their ordered Box encoding are part of checkpoints.
+Changing the serialized action coordinate, observation key, schema version,
+or category order requires a versioned migration. See
+[action schemas](../reference/action_schemas.md) and
 [observation schemas](../reference/observation_schemas.md) and the exact
 [trade-setup candidate catalog](../reference/trade_setup_catalog.md).

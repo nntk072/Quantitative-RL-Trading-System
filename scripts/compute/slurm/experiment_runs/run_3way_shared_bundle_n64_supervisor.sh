@@ -41,7 +41,7 @@ PY
     --nodes=1 --nodelist=gpuarm2 \
     --ntasks=1 --ntasks-per-node=1 \
     --cpus-per-task=128 --gpus-per-node=gh200:2 --mem=900G \
-    --time=06:00:00 --job-name=thesis3b64 \
+    --time=06:00:00 --job-name=qrl3b64 \
     --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC" \
     --chdir="$REPO" \
     bash scripts/compute/slurm/experiment_runs/run_3way_shared_bundle_n64_allocation.sh

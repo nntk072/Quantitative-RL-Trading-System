@@ -95,7 +95,7 @@ def test_allocation_cache_prebuild_uses_python_module_not_optional_console_scrip
     for wrapper in wrappers:
         content = wrapper.read_text(encoding="utf-8")
         assert "python -m market_data.commands.prebuild_experiment_run_cache" in content
-        assert "thesis-data prebuild-experiment-run-cache" not in content
+        assert "qrl-data prebuild-experiment-run-cache" not in content
 
 
 def test_worker_step_envelope_must_cover_the_cpu_mask() -> None:

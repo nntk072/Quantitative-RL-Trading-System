@@ -9,7 +9,13 @@ log = logging.getLogger(__name__)
 
 
 def _log_effective_ppo(model: Any, cfg: Any, *, algo: str = "ppo") -> None:
-    """Log the effective optimizer settings without labeling SAC as PPO."""
+    """Log the effective optimizer settings without labeling SAC as PPO.
+
+    Args:
+        model: Model used for this operation.
+        cfg: Run configuration used by this operation.
+        algo: Text or path value identifying the algo.
+    """
     if algo == "sac":
         n_envs = int(model.n_envs)
         requested_n_envs = int(cfg.env.get("n_envs", 1))
@@ -78,7 +84,17 @@ def _log_effective_ppo(model: Any, cfg: Any, *, algo: str = "ppo") -> None:
 def _training_architecture_provenance(
     model: Any, cfg: Any, arch: str, *, algo: str = "ppo"
 ) -> dict[str, Any]:
-    """Describe the actual encoder, policy heads, and vectorization used."""
+    """Describe the actual encoder, policy heads, and vectorization used.
+
+    Args:
+        model: Model used for this operation.
+        cfg: Run configuration used by this operation.
+        arch: Text or path value identifying the arch.
+        algo: Text or path value identifying the algo.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     policy = model.policy
     extractor = getattr(policy, "features_extractor", None)
     if extractor is None:

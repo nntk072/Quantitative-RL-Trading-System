@@ -82,7 +82,7 @@ while true; do
     --gpus-per-node=gh200:2 \
     --mem=1000G \
     --time=06:00:00 \
-    --job-name=thesis18x \
+    --job-name=qrl18x \
     --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC" \
     --chdir="$REPO" \
     bash scripts/compute/slurm/experiment_runs/run_allocation.sh

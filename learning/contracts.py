@@ -21,6 +21,7 @@ class FitRequest:
     requested_steps: int
 
     def __post_init__(self) -> None:
+        """Validate and initialize FitRequest after construction."""
         if not self.config_identity or not self.input_schema_version:
             raise ValueError("fit config identity and input schema version are required")
         if self.seed < 0:
@@ -31,6 +32,8 @@ class FitRequest:
 
 @dataclass(frozen=True, slots=True)
 class TrainingPoint:
+    """Metrics recorded at one completed learner step."""
+
     step: int
     metrics: Mapping[str, float]
 
@@ -54,6 +57,7 @@ class FitResult:
     validation_metrics: Mapping[str, float] | None = None
 
     def __post_init__(self) -> None:
+        """Validate and initialize FitResult after construction."""
         if self.requested_steps < 0 or self.training_steps < 0:
             raise ValueError("fit result step counts must be nonnegative")
 
@@ -61,7 +65,16 @@ class FitResult:
 class Learner(Protocol):
     """Fits model parameters from a stable request and returns artifact identity."""
 
-    def fit(self, request: FitRequest) -> FitResult: ...
+    def fit(self, request: FitRequest) -> FitResult:
+        """Fit a learner from the data and parameters in a fit request.
+
+        Args:
+            request: Training data, split boundaries, and learner configuration.
+
+        Returns:
+            Fitted model or provider together with training metadata.
+        """
+        ...
 
 
 __all__ = ["FitRequest", "FitResult", "Learner", "TrainingPoint"]

@@ -17,12 +17,29 @@ from .spec import EnvSpec
 
 
 def _block(config: dict[str, Any], name: str) -> dict[str, Any]:
+    """Process the requested value.
+
+    Args:
+        config: Configuration values used by this operation.
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     value = config.get(name, {})
     return value if isinstance(value, dict) else {}
 
 
 def _strategy(config: dict[str, Any], strategy_actions: bool) -> tuple[Any, Any, float]:
-    """Recreate the configured strategy and its optional shaping reward."""
+    """Recreate the configured strategy and its optional shaping reward.
+
+    Args:
+        config: Configuration values used by this operation.
+        strategy_actions: Whether to enable or require the strategy actions.
+
+    Returns:
+        Values returned by ``_strategy``, in the declared order.
+    """
     if not strategy_actions:
         return BaselineStrategy(), None, 0.0
     values = _block(config, "strategy")
@@ -79,6 +96,14 @@ def _strategy(config: dict[str, Any], strategy_actions: bool) -> tuple[Any, Any,
 
 
 def cost_model(config: dict[str, Any]) -> CostModel:
+    """Build broker costs from the selected market and configured cost settings.
+
+    Args:
+        config: Resolved run configuration containing ``data`` and ``costs``.
+
+    Returns:
+        Cost assumptions for spread, slippage, commission, and point size.
+    """
     costs = _block(config, "costs")
     primary = str(_block(config, "data").get("primary", "US100.cash"))
     spread_key = "spread_us500" if "US500" in primary else "spread_us100"
@@ -91,6 +116,14 @@ def cost_model(config: dict[str, Any]) -> CostModel:
 
 
 def max_episode_steps(config: dict[str, Any]) -> int | None:
+    """Read the optional episode-step limit from environment configuration.
+
+    Args:
+        config: Resolved run configuration containing an ``env`` block.
+
+    Returns:
+        A configured step limit, or ``None`` when the limit is unset.
+    """
     value = _block(config, "env").get("max_episode_steps")
     if value is None or (isinstance(value, str) and value.strip().lower() in {"", "null", "none"}):
         return None
@@ -98,7 +131,14 @@ def max_episode_steps(config: dict[str, Any]) -> int | None:
 
 
 def make_bundle_env(spec: EnvSpec) -> TradingEnv:
-    """Open the bundle and reconstruct one env using only small config values."""
+    """Open the bundle and reconstruct one env using only small config values.
+
+    Args:
+        spec: Spec used by the operation described above.
+
+    Returns:
+        Result of open the bundle and reconstruct one env using only small config values.
+    """
     if spec.use_vae:
         raise ValueError(
             "bundle workers with VAE require the separately approved latent-table phase"
@@ -207,7 +247,6 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         use_sweep_reward=spec.reward == "sweep",
         strategy=strategy,
         strategy_actions=strategy_actions,
-        thesis_actions=bool(env.get("thesis_actions", False)),
         trade_setup_actions=bool(env.get("trade_setup_actions", False)),
         entry_state_machine=bool(env.get("entry_state_machine", False)),
         candidate_max_age_bars=int(env.get("candidate_max_age_bars", 5)),

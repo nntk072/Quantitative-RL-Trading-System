@@ -26,6 +26,15 @@ def tick_execution_split_schedule(
     schedule and can reject otherwise complete NY-session tick data. Returned
     timestamps describe observed bars; they do not define provider publication
     expectations.
+
+    Args:
+        index: Position or label identifying the requested item.
+        train_mask: Boolean mask identifying rows available for fitting.
+        test_start: Text or path value identifying the test start.
+        session_labels: Tabular data used for the session labels.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, Any]`` values.
     """
     if session_labels is None:
         ny_mask = ny_session_mask(index).to_numpy(dtype=bool)
@@ -73,7 +82,20 @@ def tick_execution_split_coverage(
     max_latency_ns_exclusive: int,
     max_quote_wait_ms: int,
 ) -> dict[str, dict[str, Any]]:
-    """Preflight tick quotes at timestamps used by NY environment steps."""
+    """Preflight tick quotes at timestamps used by NY environment steps.
+
+    Args:
+        tickbook: Tickbook used by the operation described above.
+        index: Position or label identifying the requested item.
+        train_mask: Boolean mask identifying rows available for fitting.
+        test_start: Text or path value identifying the test start.
+        session_labels: Tabular data used for the session labels.
+        max_latency_ns_exclusive: Numeric value used for the max latency ns exclusive.
+        max_quote_wait_ms: Numeric value used for the max quote wait ms.
+
+    Returns:
+        Mapping from ``str`` keys to ``dict[str, Any]`` values.
+    """
     schedule = tick_execution_split_schedule(
         index, train_mask, test_start, session_labels=session_labels
     )

@@ -31,7 +31,15 @@ class PreparedOrderChart:
 
 
 def _align_ts(ts: pd.Timestamp, index: pd.DatetimeIndex) -> pd.Timestamp:
-    """Localize/convert ``ts`` to match ``index`` timezone."""
+    """Localize/convert ``ts`` to match ``index`` timezone.
+
+    Args:
+        ts: Ts used by the operation described above.
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Result of localize/convert ``ts`` to match ``index`` timezone.
+    """
     out = pd.Timestamp(ts)
     if pd.isna(out):
         raise ValueError("cannot align a missing timestamp to a bar index")
@@ -47,6 +55,13 @@ def _event_timestamp(row: pd.Series, index: pd.DatetimeIndex) -> pd.Timestamp | 
 
     Some replay ledgers preserve a valid event bar while leaving ``time``
     empty. Recovering from that bar keeps the chart anchored to observed data.
+
+    Args:
+        row: Row index or record being processed.
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Result of resolve an event time from its timestamps, then its recorded bar.
     """
     for column in ("time", "actual_tick_time", "fill_time", "effective_time"):
         value = row.get(column)
@@ -72,7 +87,16 @@ def _ny_session_positions(
     t_open: pd.Timestamp,
     t_close: pd.Timestamp,
 ) -> np.ndarray[Any, Any]:
-    """Integer positions of NY bars on calendar days spanned by the trade."""
+    """Integer positions of NY bars on calendar days spanned by the trade.
+
+    Args:
+        index: Position or label identifying the requested item.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+
+    Returns:
+        Array returned by ``_ny_session_positions``.
+    """
     from market_data.transforms.sessions import ny_session_mask
 
     t0 = _align_ts(t_open, index)
@@ -92,6 +116,13 @@ def _session_end_pos(idx: pd.DatetimeIndex, i: int) -> int:
     that counts those dead overnight candles pushes the exit marker away from
     the axis edge for no information gain. Returns ``i`` when ``i`` is not
     itself an NY bar, so callers fall back to their own bounds.
+
+    Args:
+        idx: Idx used by the operation described above.
+        i: Numeric value used for the i.
+
+    Returns:
+        Numeric result returned by ``_session_end_pos``.
     """
     from market_data.transforms.sessions import ny_session_mask
 
@@ -109,7 +140,14 @@ def _session_end_pos(idx: pd.DatetimeIndex, i: int) -> int:
 
 
 def _session_end_positions(idx: pd.DatetimeIndex) -> np.ndarray[Any, Any]:
-    """Map each NY-session bar to its session end, scanning the index once."""
+    """Map each NY-session bar to its session end, scanning the index once.
+
+    Args:
+        idx: Idx used by the operation described above.
+
+    Returns:
+        Array returned by ``_session_end_positions``.
+    """
     from market_data.transforms.sessions import ny_session_mask
 
     n = len(idx)
@@ -145,6 +183,16 @@ def _extract_window(
     the middle. The slice does not cross into the previous or next calendar
     day, and trailing context stops at the session close so an eod_close does
     not drag in the overnight gap.
+
+    Args:
+        bars: Market bars to process.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+        context: Context values required to resolve the operation.
+        session_end_positions: Session end positions used by the operation described above.
+
+    Returns:
+        DataFrame returned by ``_extract_window``.
     """
     idx = pd.DatetimeIndex(bars.index)
     i_o = int(idx.get_indexer(pd.Index([_align_ts(t_open, idx)]), method="nearest")[0])
@@ -180,7 +228,16 @@ def _structure_anchors(
     t_open: pd.Timestamp,
     t_close: pd.Timestamp,
 ) -> list[pd.Timestamp]:
-    """Pivot times of swings, sweeps, and SMT that touch the trade."""
+    """Pivot times of swings, sweeps, and SMT that touch the trade.
+
+    Args:
+        events: Events used by the operation described above.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+
+    Returns:
+        Values returned by ``_structure_anchors``, in the declared order.
+    """
     anchors: list[pd.Timestamp] = []
     for ray in events.swings:
         origin = ray.pivot_time()
@@ -200,7 +257,15 @@ def _structure_anchors(
 
 
 def _on_trade_or_previous_day(ts: pd.Timestamp, t_open: pd.Timestamp) -> bool:
-    """True when ``ts`` is on the trade's calendar day or the day before."""
+    """True when ``ts`` is on the trade's calendar day or the day before.
+
+    Args:
+        ts: Ts used by the operation described above.
+        t_open: T open used by the operation described above.
+
+    Returns:
+        Whether on trade or previous day meets the requested condition.
+    """
     ref = pd.Timestamp(t_open)
     cur = pd.Timestamp(ts)
     if ref.tzinfo is not None:
@@ -221,6 +286,16 @@ def _extend_trade_window(
 
     Same trading day from Asia 01:05 is continuous. An anchor on the previous
     calendar day is a short pad. Older pivots are left off the chart.
+
+    Args:
+        bars: Market bars to process.
+        window: Tabular data used for the window.
+        anchors: Items supplied for the anchors, in input order.
+        t_open: T open used by the operation described above.
+        pad: Numeric value used for the pad.
+
+    Returns:
+        DataFrame returned by ``_extend_trade_window``.
     """
     if window.empty or not anchors:
         return window
@@ -283,6 +358,31 @@ def prepare_order_chart(
     ``_extend_trade_window`` is left in place for that older behaviour.
 
     Returns ``None`` when fewer than three bars remain. Does not draw.
+
+    Args:
+        bars: Market bars to process.
+        open_row: Tabular data used for the open row.
+        close_row: Tabular data used for the close row.
+        overlay_events: Overlay events used by the operation described above.
+        full_overlays: Tabular data used for the full overlays.
+        context_bars: Market bar or price data used for build the window, metrics, clipped events, and position box for one trade.
+        max_loss_per_trade_usd: Max loss per trade usd used by the operation described above.
+        take_profit_per_trade_usd: Take profit per trade usd used by the operation described above.
+        lots: Numeric value used for the lots.
+        contract_size: Number specifying the contract size for this operation.
+        show_mae_mfe: Whether to enable or require the show mae mfe.
+        show_sl_tp: Whether to enable or require the show sl tp.
+        features: Feature values supplied to the operation.
+        order_block_timeframes: Items supplied for the order block timeframes, in input order.
+        fvg_timeframes: Items supplied for the fvg timeframes, in input order.
+        ifvg_timeframes: Items supplied for the ifvg timeframes, in input order.
+        swing_timeframes: Items supplied for the swing timeframes, in input order.
+        entry_idea_plot_config: Key-value data used for the entry idea plot config.
+        confirmed_events: Confirmed events used by the operation described above.
+        session_end_positions: Session end positions used by the operation described above.
+
+    Returns:
+        Result of build the window, metrics, clipped events, and position box for one trade.
     """
     entry_time = open_row.get("actual_tick_time")
     if pd.isna(entry_time) or not str(entry_time).strip():

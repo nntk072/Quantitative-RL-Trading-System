@@ -13,7 +13,14 @@ _CLOSE_TYPES = {"close", "stop_close", "tp_close", "forced_close", "eod_close"}
 
 
 def _as_records(trade_log: list[dict[str, Any]] | pd.DataFrame) -> list[dict[str, Any]]:
-    """Normalise a trade log to a list of row dicts."""
+    """Normalise a trade log to a list of row dicts.
+
+    Args:
+        trade_log: Tabular data used for the trade log.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     if isinstance(trade_log, pd.DataFrame):
         if trade_log.empty:
             return []
@@ -24,7 +31,14 @@ def _as_records(trade_log: list[dict[str, Any]] | pd.DataFrame) -> list[dict[str
 def _entry_exit_pairs(
     trade_log: list[dict[str, Any]] | pd.DataFrame,
 ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
-    """Pair each open with the next close (same state machine as plot pairing)."""
+    """Pair each open with the next close (same state machine as plot pairing).
+
+    Args:
+        trade_log: Tabular data used for the trade log.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any], dict[str, Any]]`` values.
+    """
     records = _as_records(trade_log)
     if not records:
         return []
@@ -93,7 +107,14 @@ def sweep_delay_distribution(
 def _completed_trade_records(
     trade_log: list[dict[str, Any]] | pd.DataFrame,
 ) -> list[dict[str, Any]]:
-    """Pair each close with its open, carrying PnL, direction and level."""
+    """Pair each close with its open, carrying PnL, direction and level.
+
+    Args:
+        trade_log: Tabular data used for the trade log.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]`` values.
+    """
     completed: list[dict[str, Any]] = []
     for open_row, close_row in _entry_exit_pairs(trade_log):
         if "pnl" not in close_row or close_row.get("pnl") is None:
@@ -115,7 +136,14 @@ def _completed_trade_records(
 def conditional_pnl_groups(
     trade_log: list[dict[str, Any]] | pd.DataFrame,
 ) -> dict[str, list[float]]:
-    """Return raw PnL lists grouped by regime for box plots."""
+    """Return raw PnL lists grouped by regime for box plots.
+
+    Args:
+        trade_log: Tabular data used for the trade log.
+
+    Returns:
+        Mapping from ``str`` keys to ``list[float]`` values.
+    """
     trades = _completed_trade_records(trade_log)
     return {
         "overall": [t["pnl"] for t in trades],

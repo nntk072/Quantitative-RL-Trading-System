@@ -23,7 +23,6 @@ _ARRAY_NAME = re.compile(r"^[A-Za-z0-9_]+$")
 _RELEVANT_CONFIG_PATHS = (
     "env.obs_window",
     "env.strategy_actions",
-    "env.thesis_actions",
     "env.trade_setup_actions",
     "legacy_sequence_columns",
     "strategy.raw_columns",
@@ -49,12 +48,27 @@ class BundleArrays:
     manifest: Mapping[str, Any]
 
     def __getitem__(self, name: str) -> NDArray[Any]:
-        """Return one named read-only array."""
+        """Return one named read-only array.
+
+        Args:
+            name: Name used to identify the requested file, artifact, or item.
+
+        Returns:
+            Array returned by ``__getitem__``.
+        """
         return self.arrays[name]
 
 
 def _lookup_path(config: Mapping[str, Any], dotted_path: str) -> tuple[bool, Any]:
-    """Read a nested mapping value by dot path, including DictConfig values."""
+    """Read a nested mapping value by dot path, including DictConfig values.
+
+    Args:
+        config: Configuration values used by this operation.
+        dotted_path: Path or filename identifying the dotted.
+
+    Returns:
+        Whether lookup path meets the requested condition.
+    """
     current: Any = config
     for part in dotted_path.split("."):
         if not hasattr(current, "get"):
@@ -67,7 +81,14 @@ def _lookup_path(config: Mapping[str, Any], dotted_path: str) -> tuple[bool, Any
 
 
 def _relevant_config(config: Mapping[str, Any]) -> dict[str, Any]:
-    """Keep only settings that affect the bundled environment data."""
+    """Keep only settings that affect the bundled environment data.
+
+    Args:
+        config: Configuration values used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     relevant: dict[str, Any] = {}
     for dotted_path in _RELEVANT_CONFIG_PATHS:
         exists, value = _lookup_path(config, dotted_path)
@@ -81,7 +102,14 @@ def _relevant_config(config: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _json_compatible(value: Any) -> Any:
-    """Convert config containers into stable JSON primitives."""
+    """Convert config containers into stable JSON primitives.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Result of convert config containers into stable JSON primitives.
+    """
     if hasattr(value, "items"):
         return {str(key): _json_compatible(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
@@ -96,7 +124,16 @@ def bundle_key(
     source_fingerprints: Mapping[str, Any],
     bundle_version: int = BUNDLE_VERSION,
 ) -> str:
-    """Hash relevant config, source fingerprints, and bundle format version."""
+    """Hash relevant config, source fingerprints, and bundle format version.
+
+    Args:
+        config: Configuration values used by this operation.
+        source_fingerprints: Key-value data used for the source fingerprints.
+        bundle_version: Numeric value used for the bundle version.
+
+    Returns:
+        Text returned by ``bundle_key``.
+    """
     payload = {
         "bundle_version": bundle_version,
         "config": _relevant_config(config),
@@ -109,7 +146,12 @@ def bundle_key(
 
 
 def _write_array(path: Path, array: NDArray[Any]) -> None:
-    """Write and fsync one numpy array file without pickle support."""
+    """Write and fsync one numpy array file without pickle support.
+
+    Args:
+        path: Path to the input file or directory.
+        array: Array used by the operation described above.
+    """
     with path.open("wb") as handle:
         np.save(handle, array, allow_pickle=False)
         handle.flush()
@@ -117,7 +159,12 @@ def _write_array(path: Path, array: NDArray[Any]) -> None:
 
 
 def _write_manifest(path: Path, manifest: Mapping[str, Any]) -> None:
-    """Write and fsync the bundle manifest."""
+    """Write and fsync the bundle manifest.
+
+    Args:
+        path: Path to the input file or directory.
+        manifest: Key-value data used for the manifest.
+    """
     with path.open("w", encoding="utf-8") as handle:
         json.dump(manifest, handle, sort_keys=True, indent=2, default=str)
         handle.write("\n")
@@ -126,7 +173,11 @@ def _write_manifest(path: Path, manifest: Mapping[str, Any]) -> None:
 
 
 def _fsync_directory(path: Path) -> None:
-    """Flush directory entries before and after the atomic rename."""
+    """Flush directory entries before and after the atomic rename.
+
+    Args:
+        path: Path to the input file or directory.
+    """
     descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
     try:
         os.fsync(descriptor)
@@ -135,7 +186,11 @@ def _fsync_directory(path: Path) -> None:
 
 
 def _validate_arrays(arrays: Mapping[str, NDArray[Any]]) -> None:
-    """Reject unsafe names and object arrays before creating files."""
+    """Reject unsafe names and object arrays before creating files.
+
+    Args:
+        arrays: Key-value data used for the arrays.
+    """
     if not arrays:
         raise ValueError("a bundle must contain at least one array")
     for name, array in arrays.items():
@@ -158,7 +213,18 @@ def _write_bundle_directory(
     labels: Mapping[str, Any] | None,
     bundle_version: int,
 ) -> None:
-    """Write array files followed by the manifest inside a temporary dir."""
+    """Write array files followed by the manifest inside a temporary dir.
+
+    Args:
+        temp_path: Path or filename identifying the temp.
+        arrays: Key-value data used for the arrays.
+        key: Text or path value identifying the key.
+        config: Configuration values used by this operation.
+        source_fingerprints: Key-value data used for the source fingerprints.
+        column_names: Key-value data used for the column names.
+        labels: Key-value data used for the labels.
+        bundle_version: Numeric value used for the bundle version.
+    """
     array_manifest: dict[str, dict[str, Any]] = {}
     for name in sorted(arrays):
         array = arrays[name]
@@ -200,6 +266,19 @@ def build_bundle(
     place atomically only after every file has reached disk. ``reuse_only``
     requires an existing bundle and checks its identity and arrays without
     writing or repairing the cached bundle.
+
+    Args:
+        cache_dir: Directory used to store or read cached data.
+        arrays: Key-value data used for the arrays.
+        config: Configuration values used by this operation.
+        source_fingerprints: Key-value data used for the source fingerprints.
+        column_names: Key-value data used for the column names.
+        labels: Key-value data used for the labels.
+        bundle_version: Numeric value used for the bundle version.
+        reuse_only: Whether to enable or require the reuse only.
+
+    Returns:
+        Path returned by ``build_bundle``.
     """
     _validate_arrays(arrays)
     key = bundle_key(config, source_fingerprints, bundle_version)
@@ -280,7 +359,14 @@ def build_bundle(
 
 
 def load_bundle(path: Path | str) -> BundleArrays:
-    """Load each bundle array as a read-only memory map and validate metadata."""
+    """Load each bundle array as a read-only memory map and validate metadata.
+
+    Args:
+        path: Path to the input file or directory.
+
+    Returns:
+        Array returned by ``load_bundle``.
+    """
     bundle_path = Path(path)
     manifest_path = bundle_path / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))

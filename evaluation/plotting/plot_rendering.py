@@ -43,10 +43,21 @@ _CLOSE_TYPES = {"close", "forced_close", "eod_close", "stop_close", "tp_close"}
 
 
 def _apply_style() -> None:
+    """Apply style."""
     plt.rcParams.update(STYLE)
 
 
 def _save(fig: Figure, path: Path | str, dpi: int = 150) -> Figure:
+    """Save the requested value.
+
+    Args:
+        fig: Fig used by the operation described above.
+        path: Path to the input file or directory.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of save the requested value.
+    """
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(str(path), dpi=dpi, bbox_inches="tight")
     plt.close(fig)

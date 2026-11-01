@@ -263,7 +263,7 @@ def test_worker_factory_matches_strategy_actions(tmp_path: Path) -> None:
     np.testing.assert_array_equal(frames._max_tp_dist, shared._max_tp_dist)
 
 
-def test_mtf_reasoning_worker_preserves_mtf_and_thesis_observations(tmp_path: Path) -> None:
+def test_mtf_reasoning_worker_preserves_mtf_and_trade_setup_observations(tmp_path: Path) -> None:
     import pandas as pd
 
     from configuration import load_config
@@ -289,7 +289,7 @@ def test_mtf_reasoning_worker_preserves_mtf_and_thesis_observations(tmp_path: Pa
         ],
         axis=1,
     )
-    config = load_config(config_path="config/research/thesis_mtf_reasoning.yaml")
+    config = load_config(config_path="config/research/trade_setup_mtf_reasoning.yaml")
     config.costs.use_tick_execution = False
     config.execution.randomized_fill_latency_ms = 0.0
     bundle_path = build_env_bundle(
@@ -298,7 +298,7 @@ def test_mtf_reasoning_worker_preserves_mtf_and_thesis_observations(tmp_path: Pa
         features,
         config,
         raw_columns=list(BaselineStrategy().raw_columns),
-        feature_config_hash="mtf-reasoning-thesis-worker-v1",
+        feature_config_hash="mtf-reasoning-trade_setup-worker-v1",
         tickbook=None,
         pre_ny_by_date=None,
     )
@@ -335,7 +335,7 @@ def test_mtf_reasoning_worker_preserves_mtf_and_thesis_observations(tmp_path: Pa
         "mask_h1",
         "mask_h4",
         "mask_d1",
-        "thesis_mask",
+        "trade_setup_mask",
     } <= set(observation)
 
     for arch in (

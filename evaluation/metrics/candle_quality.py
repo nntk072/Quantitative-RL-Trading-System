@@ -10,7 +10,14 @@ _SPIKE_ATR = 8.0
 
 
 def ohlc_ok_mask(bars: pd.DataFrame) -> NDArray[np.bool_]:
-    """True where open/high/low/close are finite and ordered."""
+    """True where open/high/low/close are finite and ordered.
+
+    Args:
+        bars: Market bars to process.
+
+    Returns:
+        Whether ohlc ok mask meets the requested condition.
+    """
     o = pd.to_numeric(bars["open"], errors="coerce").to_numpy(dtype=float)
     h = pd.to_numeric(bars["high"], errors="coerce").to_numpy(dtype=float)
     low = pd.to_numeric(bars["low"], errors="coerce").to_numpy(dtype=float)
@@ -27,6 +34,13 @@ def isolated_spike_mask(bars: pd.DataFrame, atr_mult: float = _SPIKE_ATR) -> NDA
 
     If the next bar stays at the new price, the move is news and the mask
     stays false.
+
+    Args:
+        bars: Market bars to process.
+        atr_mult: Numeric value used for the atr mult.
+
+    Returns:
+        Whether isolated spike mask meets the requested condition.
     """
     n = len(bars)
     spike = np.zeros(n, dtype=bool)
@@ -50,14 +64,30 @@ def isolated_spike_mask(bars: pd.DataFrame, atr_mult: float = _SPIKE_ATR) -> NDA
 
 
 def tradable_mask(bars: pd.DataFrame) -> NDArray[np.bool_]:
-    """Bars that may set MAE/MFE or the price-axis limit."""
+    """Bars that may set MAE/MFE or the price-axis limit.
+
+    Args:
+        bars: Market bars to process.
+
+    Returns:
+        Whether tradable mask meets the requested condition.
+    """
     if bars.empty:
         return np.zeros(0, dtype=bool)
     return np.asarray(ohlc_ok_mask(bars) & ~isolated_spike_mask(bars), dtype=bool)
 
 
 def wick_time(bars: pd.DataFrame, price: float, column: str) -> pd.Timestamp | None:
-    """Timestamp of the bar whose ``column`` printed ``price``, if any."""
+    """Timestamp of the bar whose ``column`` printed ``price``, if any.
+
+    Args:
+        bars: Market bars to process.
+        price: Numeric value used for the price.
+        column: Text or path value identifying the column.
+
+    Returns:
+        Result of timestamp of the bar whose ``column`` printed ``price``, if any.
+    """
     if bars.empty or column not in bars.columns or not np.isfinite(price):
         return None
     vals = pd.to_numeric(bars[column], errors="coerce").to_numpy(dtype=float)

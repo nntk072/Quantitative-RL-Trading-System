@@ -30,6 +30,15 @@ class CatalogError(ValueError):
 
 
 def _require_text(value: Any, field: str) -> str:
+    """Process text.
+
+    Args:
+        value: Value to process.
+        field: Text or path value identifying the field.
+
+    Returns:
+        Text returned by ``_require_text``.
+    """
     if not isinstance(value, str) or not value.strip():
         raise CatalogError(f"{field} must be a non-empty string")
     return value.strip()
@@ -43,7 +52,15 @@ def validate_catalog_index(
     architecture_ids: tuple[str, ...] = ENCODER_ARCHITECTURE_IDS,
     algorithms: tuple[str, ...] = ALGOS,
 ) -> None:
-    """Validate classification metadata against the current experiment matrix."""
+    """Validate classification metadata against the current experiment matrix.
+
+    Args:
+        metadata: Key-value data used for the metadata.
+        experiments: Key-value data used for the experiments.
+        root: Root directory for the operation.
+        architecture_ids: Items supplied for the architecture ids, in input order.
+        algorithms: Items supplied for the algorithms, in input order.
+    """
     if metadata.get("schema_version") != 1:
         raise CatalogError("variant catalog schema_version must be 1")
     if not isinstance(experiments.get("variants"), list):
@@ -139,6 +156,14 @@ def validate_catalog_index(
 
 
 def _validate_family(family: Any) -> tuple[str, list[dict[str, Any]]]:
+    """Validate family.
+
+    Args:
+        family: Family used by the operation described above.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any]]`` values.
+    """
     if not isinstance(family, dict):
         raise CatalogError("every catalog family must be a mapping")
     family_id = _require_text(family.get("id"), "family id")
@@ -158,6 +183,13 @@ def _validate_family(family: Any) -> tuple[str, list[dict[str, Any]]]:
 
 
 def _validate_historical_source(root: Path, source: str, family_id: str) -> None:
+    """Validate historical source.
+
+    Args:
+        root: Root directory for the operation.
+        source: Path or filename identifying the source.
+        family_id: Text or path value identifying the family id.
+    """
     relative = Path(source)
     resolved = (root / relative).resolve()
     if not resolved.is_relative_to(root.resolve()) or not resolved.is_file():
@@ -167,7 +199,11 @@ def _validate_historical_source(root: Path, source: str, family_id: str) -> None
 
 
 def build_catalog() -> dict[str, Any]:
-    """Resolve current variant settings and attach their research metadata."""
+    """Resolve current variant settings and attach their research metadata.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     try:
         metadata = yaml.safe_load(CATALOG_PATH.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as exc:
@@ -227,10 +263,26 @@ def build_catalog() -> dict[str, Any]:
 
 
 def _markdown_cell(value: str) -> str:
+    """Process cell.
+
+    Args:
+        value: Value to process.
+
+    Returns:
+        Text returned by ``_markdown_cell``.
+    """
     return value.replace("|", "\\|").replace("\n", " ").strip()
 
 
 def _risk_summary(risk: dict[str, Any]) -> str:
+    """Process summary.
+
+    Args:
+        risk: Key-value data used for the risk.
+
+    Returns:
+        Text returned by ``_risk_summary``.
+    """
     return (
         f"{risk['limit_value_mode']}; trade ${risk['risk_per_trade_limit']:,.0f}; "
         f"daily ${risk['daily_loss_limit']:,.0f}; max ${risk['max_loss_limit']:,.0f}; "
@@ -239,11 +291,26 @@ def _risk_summary(risk: dict[str, Any]) -> str:
 
 
 def _history_links(sources: list[str]) -> str:
+    """Process links.
+
+    Args:
+        sources: Items supplied for the sources, in input order.
+
+    Returns:
+        Text returned by ``_history_links``.
+    """
     return ", ".join(f"[source](../{_markdown_cell(source)})" for source in sources)
 
 
 def render_catalog(catalog: dict[str, Any]) -> str:
-    """Render a deterministic, human-readable Markdown catalog."""
+    """Render a deterministic, human-readable Markdown catalog.
+
+    Args:
+        catalog: Key-value data used for the catalog.
+
+    Returns:
+        Text returned by ``render_catalog``.
+    """
     lines = [
         "# Model and Experiment Variant Catalog",
         "",
@@ -335,7 +402,14 @@ def render_catalog(catalog: dict[str, Any]) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Write the generated page or fail if it is stale."""
+    """Write the generated page or fail if it is stale.
+
+    Args:
+        argv: Items supplied for the argv, in input order.
+
+    Returns:
+        Numeric result returned by ``main``.
+    """
     parser = argparse.ArgumentParser(description="Generate or validate the model variant catalog.")
     operation = parser.add_mutually_exclusive_group(required=True)
     operation.add_argument("--write", action="store_true", help="write the generated Markdown")

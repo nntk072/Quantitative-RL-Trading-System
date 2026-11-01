@@ -13,7 +13,7 @@ Use the maintained pages instead:
   and outputs.
 - [Configuration reference](config.md) for settings and composition.
 - [Research guide](research/README.md) for questions, results, and limits.
-- [Validation protocol](thesis/validation_protocol.md) for period roles and
+- [Validation protocol](research/validation_protocol.md) for period roles and
   evidence requirements.
 
 Historical research records may retain old paths or command strings as part

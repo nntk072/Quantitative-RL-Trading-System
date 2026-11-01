@@ -19,7 +19,14 @@ __all__ = list(_PUBLIC_EXPORTS)
 
 
 def __getattr__(name: str) -> Any:
-    """Import platform-dependent implementations on explicit use only."""
+    """Import platform-dependent implementations on explicit use only.
+
+    Args:
+        name: Name used to identify the requested file, artifact, or item.
+
+    Returns:
+        Result of import platform-dependent implementations on explicit use only.
+    """
     target = _PUBLIC_EXPORTS.get(name)
     if target is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -30,4 +37,9 @@ def __getattr__(name: str) -> Any:
 
 
 def __dir__() -> list[str]:
+    """Process the requested value.
+
+    Returns:
+        Values returned by ``__dir__``, in the declared order.
+    """
     return sorted((*globals(), *__all__))

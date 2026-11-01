@@ -108,13 +108,7 @@ def test_registry_covers_every_counter() -> None:
     from simulation.environment.entry_diagnostics import _empty_entry_diag
 
     buckets = {
-        key
-        for legacy in (False, True)
-        for key in _empty_entry_diag(
-            entry_state_machine=True,
-            legacy_thesis_contract=legacy,
-        )
-        if key.startswith("rejected_")
+        key for key in _empty_entry_diag(entry_state_machine=True) if key.startswith("rejected_")
     }
     assert set(_REJECTION_COUNTERS.values()) == buckets
 

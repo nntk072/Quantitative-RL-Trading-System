@@ -503,162 +503,165 @@
       "old_sha256": "5310cce6471b75d2294612ec93fde88d5af8c44bebf98730096d5a251b729dd1"
     },
     {
-      "new_path": "../Quantitative-RL-Trading-System-bin/superseded/docs/research/regime_attribution_20261026/r1_experiment_run_preflight.json",
       "old_path": "docs/research/regime_attribution_20261026/r1_campaign_preflight.json",
-      "old_sha256": "664b17192efb37730d711c04e433bb948cca55f7bb58a82705037739e8ab0008"
+      "old_sha256": "664b17192efb37730d711c04e433bb948cca55f7bb58a82705037739e8ab0008",
+      "superseded_archive_path": "../Quantitative-RL-Trading-System-bin/superseded/docs/research/regime_attribution_20261026/r1_experiment_run_preflight.json",
+      "new_path": null
     },
     {
-      "new_path": "../Quantitative-RL-Trading-System-bin/superseded/docs/research/regime_attribution_20261026/r1_retry_experiment_run_preflight.json",
       "old_path": "docs/research/regime_attribution_20261026/r1_retry_campaign_preflight.json",
-      "old_sha256": "c7214e95ba26702dd801233d9edbed0d7d5789847bd95823cf3f6929cdcf5500"
+      "old_sha256": "c7214e95ba26702dd801233d9edbed0d7d5789847bd95823cf3f6929cdcf5500",
+      "superseded_archive_path": "../Quantitative-RL-Trading-System-bin/superseded/docs/research/regime_attribution_20261026/r1_retry_experiment_run_preflight.json",
+      "new_path": null
     },
     {
-      "new_path": "docs/thesis/audit_experiment_run_feature_cache_resolution_current_source_2026-10-16.py",
+      "new_path": "evidence/research/archive_2026/records/audit_experiment_run_feature_cache_resolution_current_source_2026-10-16.py",
       "old_path": "docs/thesis/audit_campaign_feature_cache_resolution_current_source_2026-10-16.py",
       "old_sha256": "0a35cbdcc15ed4ce125fbcd736e6480c13e735fe1e79357c47d7b895aa975451"
     },
     {
-      "new_path": "docs/thesis/audit_checkpoint_full_split_budget_current_experiment_run_2026-10-16.py",
+      "new_path": "evidence/research/archive_2026/records/audit_checkpoint_full_split_budget_current_experiment_run_2026-10-16.py",
       "old_path": "docs/thesis/audit_checkpoint_full_split_budget_current_campaign_2026-10-16.py",
       "old_sha256": "40542e530f28b617c8e2fc58c7fe391f20297fd0749c4ed65702344e7bf75419"
     },
     {
-      "new_path": "docs/thesis/audit_tick_quality_current_experiment_run_2026-10-17.py",
+      "new_path": "evidence/research/archive_2026/records/audit_tick_quality_current_experiment_run_2026-10-17.py",
       "old_path": "docs/thesis/audit_tick_quality_current_campaign_2026-10-17.py",
       "old_sha256": "baa362db2099f4ebcc34e146520abda3bf12b5be077c2ec213800dddeb392e07"
     },
     {
-      "new_path": "../Quantitative-RL-Trading-System-bin/superseded/docs/thesis/experiment_run_reset_2026-10-16.md",
       "old_path": "docs/thesis/campaign_reset_2026-10-16.md",
-      "old_sha256": "710fb2b9b90874d494019025bb701ec7daea9b2a0bb2ccc0321c77bd40d86c3a"
+      "old_sha256": "710fb2b9b90874d494019025bb701ec7daea9b2a0bb2ccc0321c77bd40d86c3a",
+      "superseded_archive_path": "../Quantitative-RL-Trading-System-bin/superseded/docs/thesis/experiment_run_reset_2026-10-16.md",
+      "new_path": null
     },
     {
-      "new_path": "docs/thesis/evidence/p4_experiment_run_source_identity_20261018_1635.json",
+      "new_path": "evidence/research/archive_2026/evidence/p4_experiment_run_source_identity_20261018_1635.json",
       "old_path": "docs/thesis/evidence/p4_campaign_source_identity_20261018_1635.json",
       "old_sha256": "a74a22b3d2c8de8b986aa32873e4de79495c0c9ad2b32d1a76bbb78042f77abd"
     },
     {
-      "new_path": "docs/thesis/evidence/p6_current_experiment_run_pair_config_preflight_20261019.json",
+      "new_path": "evidence/research/archive_2026/evidence/p6_current_experiment_run_pair_config_preflight_20261019.json",
       "old_path": "docs/thesis/evidence/p6_current_campaign_pair_config_preflight_20261019.json",
       "old_sha256": "3321ae473c0c972348de29fbf7dca5c6a5f78fb1909bc1097460b232b973288f"
     },
     {
-      "new_path": "docs/thesis/evidence/replacement_experiment_run_20261018_failure_disposition.json",
+      "new_path": "evidence/research/archive_2026/evidence/replacement_experiment_run_20261018_failure_disposition.json",
       "old_path": "docs/thesis/evidence/replacement_campaign_20261018_failure_disposition.json",
       "old_sha256": "0f122dc0ae9dd395a8c09c0bf9bd6e116e7acdf69f75ba9a72652faf4be1df33"
     },
     {
-      "new_path": "docs/thesis/evidence/trial_ledger_seed50_experiment_runs_20261018.json",
+      "new_path": "evidence/research/archive_2026/evidence/trial_ledger_seed50_experiment_runs_20261018.json",
       "old_path": "docs/thesis/evidence/trial_ledger_seed50_campaigns_20261018.json",
       "old_sha256": "5cc9f0857bde327a68ca48735c29a758365cf84138763742fecdecc17ebf89cb"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1332.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1332.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1332.json",
       "old_sha256": "05eb275738e408b2b1c47d84c54eba2e7ded9d8eb3d94be1e6bc913f0a810c91"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1348.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1348.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1348.json",
       "old_sha256": "efdf664e4d32320d601fdc41f3ac581d19fcdb1d947b9fa01e40b9428aac17d9"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1352.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1352.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1352.json",
       "old_sha256": "fc11afa4ac1779fb1179bbac452e369fa3fbfce262a536c010483d058082f209"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1656.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1656.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1656.json",
       "old_sha256": "a5f98d2c20835caca79d58fa1398d7b90c7027f7f0f7f6ac0aa6c998446569e4"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1706.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1706.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1706.json",
       "old_sha256": "589278652a60337dabe1c5b34400d15310a3806f2dc460cd44345fb9b26a92a4"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1707.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1707.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1707.json",
       "old_sha256": "eb757f5256841f2cc85b14b6bc5775acd4d0f9c1c1d6269b99f2de4185b60500"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1709.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1709.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1709.json",
       "old_sha256": "11132512e5f0e3a5048e0b53fee94552a205794a9d3898f016a631ac99c8cfa8"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1711.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1711.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1711.json",
       "old_sha256": "50b2558b0c6e27e01107d00ab9245afae3c696f4a81b6acb809c2f8d84ee8bad"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1713.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1713.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1713.json",
       "old_sha256": "c9df47a35c5ed838f31969385c9b49b723e3bf99a623ee614ddaa48dd2a3ef12"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1715.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1715.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1715.json",
       "old_sha256": "d3d74060630193779b6302dab79f7d4388d751185e2d1fd2b8990dfa4d58eb12"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1716.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1716.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1716.json",
       "old_sha256": "036942bc069eba84fd72bce78ed2d2287f18925b27dbd00bd15692b6d98d88d2"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1719.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1719.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1719.json",
       "old_sha256": "d0a3fa93bf2382fdd3f4a8f25f5b114523112bf425feb6fb5b3ab1558db3cfee"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-14_1950.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-14_1950.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-14_1950.json",
       "old_sha256": "1f38c5eb626741a3221c96ebe879e147dc8369e1976c2b0eb34e6db3da9110af"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1119.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1119.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1119.json",
       "old_sha256": "db917fbec608289a42109d0a5152d7ffbe429290e6ddc0cb69088abd57e57d8d"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1150.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1150.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1150.json",
       "old_sha256": "762bc8a058c4f9c6bad95c3691aec5e93b5efc26bf1746f692780f4b64d7dfec"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1158.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1158.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1158.json",
       "old_sha256": "c64a3645cf1d0d4dfbdae876ebb432a5daa4a661bee84cfd74d6f840afec4853"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1245.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1245.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1245.json",
       "old_sha256": "22efeda8858c37783e2ddb95e5bab7e79f27b5460064ba01d2ba10a0640eb66a"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1300.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1300.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1300.json",
       "old_sha256": "26d9c8161a4465a4111748396bcb59af54c1922d0648d823b746fc34862b37be"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1541.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1541.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1541.json",
       "old_sha256": "1980b27bda39266ec896561f3f508f00b82d22d31cfd57a448205a4c24d0286a"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1610.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1610.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1610.json",
       "old_sha256": "de06d45289b37e69e1b2bef902428d3643c064b0f175028e96703cd2b571bd7a"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1726.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1726.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1726.json",
       "old_sha256": "33dfe6bab718ae0f99b0a3ed5f5c77f42b706dffa17bc3154dcf9ba29ce7c571"
     },
     {
-      "new_path": "docs/thesis/live_experiment_run_snapshot_2026-10-16_1750.json",
+      "new_path": "evidence/research/archive_2026/records/live_experiment_run_snapshot_2026-10-16_1750.json",
       "old_path": "docs/thesis/live_campaign_snapshot_2026-10-16_1750.json",
       "old_sha256": "7e0c09c42d5c9e9a708b4e7fa1c4bf84eb236dfbfc3e62c56e4d89f12ec94358"
     },
@@ -1003,22 +1006,22 @@
       "old_sha256": "0433da707f9d14b2d5f939ca7e8519348620f294e10d5650484090e30950f09f"
     },
     {
-      "new_path": "scripts/research/thesis/evaluation/compare_experiment_run_summaries.py",
+      "new_path": "scripts/research/analysis/evaluation/compare_experiment_run_summaries.py",
       "old_path": "scripts/research/thesis/evaluation/compare_campaign_summaries.py",
       "old_sha256": "a3ce101082b4ce00db32953edf306ec78508c164be31477605261e2a03437d0a"
     },
     {
-      "new_path": "scripts/research/thesis/evidence/build_experiment_run_evidence_index.py",
+      "new_path": "scripts/research/analysis/evidence/build_experiment_run_evidence_index.py",
       "old_path": "scripts/research/thesis/evidence/build_campaign_evidence_index.py",
       "old_sha256": "353f0c35fd6ba3899fec7a941d3ddb3cfd4b3ee1e22775d96e1df52f5ca1705e"
     },
     {
-      "new_path": "scripts/research/thesis/evidence/build_experiment_run_trial_ledger.py",
+      "new_path": "scripts/research/analysis/evidence/build_experiment_run_trial_ledger.py",
       "old_path": "scripts/research/thesis/evidence/build_campaign_trial_ledger.py",
       "old_sha256": "6f7cc7e4350476d7b45dde152b05f2046098c37d995fc6d9b2e586db1d516c43"
     },
     {
-      "new_path": "scripts/research/thesis/evidence/reconcile_experiment_run_attempts.py",
+      "new_path": "scripts/research/analysis/evidence/reconcile_experiment_run_attempts.py",
       "old_path": "scripts/research/thesis/evidence/reconcile_campaign_attempts.py",
       "old_sha256": "0d6477141bccea5d77fb1f4bef74aa1c772b66469fdb51bd5cc6644d00acf8e7"
     },

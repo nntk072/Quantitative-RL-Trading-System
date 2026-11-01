@@ -81,7 +81,7 @@ while true; do
     --gpus-per-node=gh200:2 \
     --mem=1000G \
     --time=06:00:00 \
-    --job-name=thesis3x \
+    --job-name=qrl3x \
     --export=ALL,TRITON_REPO="$REPO",EXPERIMENT_RUN_SPEC="$SPEC" \
     --chdir="$REPO" \
     bash scripts/compute/slurm/experiment_runs/run_3way_allocation.sh

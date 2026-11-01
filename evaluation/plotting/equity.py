@@ -57,6 +57,21 @@ def plot_equity_curve(
 
     When ``trades`` is given the x-axis is the trade order (each trade's close
     time) so the chart reads as equity per order; otherwise it is a date axis.
+
+    Args:
+        equity: Current account equity in account currency.
+        breaches: Items supplied for the breaches, in input order.
+        breach_events: Items supplied for the breach events, in input order.
+        initial_balance: Numeric value used for the initial balance.
+        daily_loss_limit: Daily loss limit used by the operation described above.
+        max_loss_limit: Max loss limit used by the operation described above.
+        profit_target: Profit target used by the operation described above.
+        trades: Trade records used to calculate the requested report or metric.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of equity over time with peak line, FTMO threshold lines, and breach markers.
     """
     _apply_style()
     fig, ax = plt.subplots(figsize=(14, 5))
@@ -192,6 +207,20 @@ def _draw_dd_panel(
     constraint_label: str | None = None,
     y_locator: Any | None = None,
 ) -> None:
+    """Process dd panel.
+
+    Args:
+        ax: Ax used by the operation described above.
+        series: Tabular data used for the series.
+        title: Text or path value identifying the title.
+        floor: Numeric value used for the floor.
+        color: Text or path value identifying the color.
+        ylabel: Text or path value identifying the ylabel.
+        y_formatter: Y formatter used by the operation described above.
+        constraint: Constraint used by the operation described above.
+        constraint_label: Constraint label used by the operation described above.
+        y_locator: Y locator used by the operation described above.
+    """
     ax.fill_between(series.index, series.to_numpy(), 0, color=color, alpha=0.55, label=title)
     ax.plot(series.index, series.to_numpy(), color=color, linewidth=0.8)
     if constraint is not None:
@@ -223,6 +252,15 @@ def plot_drawdown(
 
     Daily constraint is the FTMO **$5,000** cap (independent of equity).
     Trailing 7% DD is a training policy only — it is not drawn.
+
+    Args:
+        equity: Current account equity in account currency.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+        daily_loss_limit: Daily loss limit used by the operation described above.
+
+    Returns:
+        Result of two-panel chart: peak-to-trough DD (%) and daily DD (USD).
     """
     _apply_style()
     max_dd = max_drawdown_pct(equity)

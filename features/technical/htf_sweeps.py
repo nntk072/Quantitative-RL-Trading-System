@@ -36,12 +36,26 @@ class _PivotReference:
     qualifies: bool = False
 
     def __getitem__(self, key: str) -> Any:
-        """Keep the small mapping-style inspection API used by audit tests."""
+        """Keep the small mapping-style inspection API used by audit tests.
+
+        Args:
+            key: Text or path value identifying the key.
+
+        Returns:
+            Result of keep the small mapping-style inspection API used by audit tests.
+        """
         return getattr(self, key)
 
 
 def _coerce_reference(reference: _PivotReference | dict[str, object]) -> _PivotReference:
-    """Normalize test/audit mapping inputs into a typed internal record."""
+    """Normalize test/audit mapping inputs into a typed internal record.
+
+    Args:
+        reference: Key-value data used for the reference.
+
+    Returns:
+        Result of normalize test/audit mapping inputs into a typed internal record.
+    """
     if isinstance(reference, _PivotReference):
         return reference
     return _PivotReference(
@@ -56,7 +70,15 @@ def _coerce_reference(reference: _PivotReference | dict[str, object]) -> _PivotR
 
 
 def _pivot_references(bars: pd.DataFrame, timeframe: str) -> list[_PivotReference]:
-    """Return pivot references with the instant their full confirming bar ends."""
+    """Return pivot references with the instant their full confirming bar ends.
+
+    Args:
+        bars: Market bars to process.
+        timeframe: Text or path value identifying the timeframe.
+
+    Returns:
+        Values returned by ``_pivot_references``, in the declared order.
+    """
     minutes = _TF_MINUTES[timeframe]
     tf = resample(bars, timeframe)  # type: ignore[arg-type]
     if tf.empty:
@@ -142,6 +164,16 @@ def detect_confirmed_htf_sweeps(
     the wick, then the latest pivot, then the lower price as the stable tie-break.
     With ``return_audit=True``, return every crossed reference and its
     qualification/selection status as a second frame.
+
+    Args:
+        bars: Market bars to process.
+        timeframes: Items supplied for the timeframes, in input order.
+        max_sweep_distance_atr: Numeric value used for the max sweep distance atr.
+        atr_period: Numeric value used for the atr period.
+        return_audit: Whether to enable or require the return audit.
+
+    Returns:
+        DataFrame returned by ``detect_confirmed_htf_sweeps``.
     """
     invalid = set(timeframes) - set(_TF_MINUTES)
     if invalid:

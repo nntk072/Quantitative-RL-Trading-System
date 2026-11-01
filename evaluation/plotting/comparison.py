@@ -30,7 +30,16 @@ def plot_baseline_comparison(
     out_path: Path | str | None = None,
     dpi: int = 150,
 ) -> Figure:
-    """Overlay normalized equity curves for multiple strategies."""
+    """Overlay normalized equity curves for multiple strategies.
+
+    Args:
+        equity_dict: Tabular data used for the equity dict.
+        out_path: Path or filename identifying the out.
+        dpi: Resolution of generated plots, in dots per inch.
+
+    Returns:
+        Result of overlay normalized equity curves for multiple strategies.
+    """
     _apply_style()
     colors = [EQUITY_COLOR, LONG_COLOR, SHORT_COLOR, CLOSE_COLOR, "#ce93d8", "#80cbc4"]
 

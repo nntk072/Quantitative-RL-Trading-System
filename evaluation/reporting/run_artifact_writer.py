@@ -68,12 +68,15 @@ log = logging.getLogger(__name__)
 _BREACH_EVENT_COLUMNS = ("time", "session_id", "reason", "equity", "fill_time")
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
 def _extract_ftmo_limits(cfg: Any) -> tuple[float | None, float | None, float | None]:
+    """Extract ftmo limits.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Values returned by ``_extract_ftmo_limits``, in the declared order.
+    """
     daily_loss_limit = max_loss_limit = profit_target = None
     if cfg is not None:
         try:
@@ -86,7 +89,14 @@ def _extract_ftmo_limits(cfg: Any) -> tuple[float | None, float | None, float | 
 
 
 def action_schema_manifest(cfg: Any) -> dict[str, Any] | None:
-    """Serialize configured overlay coordinates for the exported run."""
+    """Serialize configured overlay coordinates for the exported run.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     if cfg is None:
         return None
     try:
@@ -95,18 +105,10 @@ def action_schema_manifest(cfg: Any) -> dict[str, Any] | None:
             return None
         schema: Any
         multi_tp = bool(env.get("allow_multi_tp", False))
-        if bool(env.get("thesis_actions", False)) or bool(env.get("trade_setup_actions", False)):
-            from decisioning.trade_setup import (
-                build_legacy_thesis_action_schema,
-                build_trade_setup_action_schema,
-            )
+        if bool(env.get("trade_setup_actions", False)):
+            from decisioning.trade_setup import build_trade_setup_action_schema
 
-            builder = (
-                build_legacy_thesis_action_schema
-                if bool(env.get("thesis_actions", False))
-                else build_trade_setup_action_schema
-            )
-            schema = builder(
+            schema = build_trade_setup_action_schema(
                 has_sl_mode=bool(env.get("allow_agent_sl_mode", True)),
                 has_tp_mode=bool(env.get("allow_agent_tp_mode", False)),
                 has_multi_tp=multi_tp,
@@ -128,7 +130,14 @@ def action_schema_manifest(cfg: Any) -> dict[str, Any] | None:
 
 
 def _extract_trade_chart_config(cfg: Any) -> dict[str, Any]:
-    """Extract trade chart configuration from OmegaConf."""
+    """Extract trade chart configuration from OmegaConf.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Mapping from ``str`` keys to ``Any`` values.
+    """
     config: dict[str, Any] = {
         "max_loss_per_trade_usd": None,
         "take_profit_per_trade_usd": None,
@@ -172,11 +181,6 @@ def _extract_trade_chart_config(cfg: Any) -> dict[str, Any]:
     return config
 
 
-# ---------------------------------------------------------------------------
-# Per-split writer (all data + charts for one split go into one subfolder)
-# ---------------------------------------------------------------------------
-
-
 def _write_split(
     split_dir: Path,
     result: dict[str, Any],
@@ -203,7 +207,34 @@ def _write_split(
     phase_prefix: str = "",
     entry_idea_plot_config: dict[str, Any] | None = None,
 ) -> None:
-    """Write all data + charts for one split into *split_dir*."""
+    """Write all data + charts for one split into *split_dir*.
+
+    Args:
+        split_dir: Text or path value identifying the split dir.
+        result: Key-value data used for the result.
+        metrics: Metrics used by the operation described above.
+        bars: Market bars to process.
+        daily_loss_limit: Daily loss limit used by the operation described above.
+        max_loss_limit: Max loss limit used by the operation described above.
+        save_plots: Whether to enable or require the save plots.
+        save_html: Whether to enable or require the save html.
+        save_csv: Whether to enable or require the save csv.
+        dpi: Resolution of generated plots, in dots per inch.
+        max_order_charts: Numeric value used for the max order charts.
+        profit_target: Profit target used by the operation described above.
+        max_loss_per_trade_usd: Max loss per trade usd used by the operation described above.
+        take_profit_per_trade_usd: Take profit per trade usd used by the operation described above.
+        lots: Numeric value used for the lots.
+        contract_size: Number specifying the contract size for this operation.
+        show_mae_mfe: Whether to enable or require the show mae mfe.
+        show_sl_tp: Whether to enable or require the show sl tp.
+        breakeven_buffer_pts: Numeric value used for the breakeven buffer pts.
+        secondary_bars: Market bar or price data used for write all data + charts for one split into *split_dir*.
+        features: Feature values supplied to the operation.
+        phase_timings: Key-value data used for the phase timings.
+        phase_prefix: Text or path value identifying the phase prefix.
+        entry_idea_plot_config: Key-value data used for the entry idea plot config.
+    """
     split_dir.mkdir(parents=True, exist_ok=True)
 
     equity: pd.Series = result.get("equity", pd.Series(dtype=float))
@@ -240,9 +271,6 @@ def _write_split(
         for source, count in sorted(fill_source_values.value_counts().items())
     }
     position_records = _position_summaries(trades)
-    # ------------------------------------------------------------------
-    # CSVs + diagnostics
-    # ------------------------------------------------------------------
     if save_csv:
         if not equity.empty:
             equity.to_csv(split_dir / "equity.csv", header=["equity"])
@@ -262,14 +290,9 @@ def _write_split(
                 save_plots=save_plots,
                 dpi=dpi,
             )
-        setup_decisions = result.get("trade_setup_decisions", result.get("thesis_decisions"))
+        setup_decisions = result.get("trade_setup_decisions")
         if isinstance(setup_decisions, pd.DataFrame):
-            decision_filename = (
-                "trade_setup_decisions.csv"
-                if "trade_setup_candidate_id" in setup_decisions.columns
-                else "thesis_decisions.csv"
-            )
-            setup_decisions.to_csv(split_dir / decision_filename, index=False)
+            setup_decisions.to_csv(split_dir / "trade_setup_decisions.csv", index=False)
         breach_frame = pd.DataFrame.from_records(breach_events, columns=_BREACH_EVENT_COLUMNS)
         breach_frame.to_csv(split_dir / "breach_events.csv", index=False)
         cycle_events = result.get("cycle_events")
@@ -297,9 +320,6 @@ def _write_split(
                 json.dumps(direction_diagnostics, indent=2)
             )
 
-    # ------------------------------------------------------------------
-    # Metrics
-    # ------------------------------------------------------------------
     final_equity = float(equity.iloc[-1]) if not equity.empty else float(initial_balance)
     save_metrics_json(
         metrics,
@@ -349,14 +369,10 @@ def _write_split(
         "cycle_successes": int(result.get("cycle_successes", 0)),
         "cycle_failures": int(result.get("cycle_failures", 0)),
     }
-    setup_policy_metrics = result.get(
-        "trade_setup_policy_metrics", result.get("thesis_policy_metrics")
-    )
+    setup_policy_metrics = result.get("trade_setup_policy_metrics")
     if isinstance(setup_policy_metrics, dict):
-        canonical_setup = setup_policy_metrics.get("wire_schema") == "trade_setup"
-        file_prefix = "trade_setup" if canonical_setup else "thesis"
-        diagnostics_key = "trade_setup_policy" if canonical_setup else "thesis_policy"
-        evaluation_diagnostics[diagnostics_key] = setup_policy_metrics
+        file_prefix = "trade_setup"
+        evaluation_diagnostics["trade_setup_policy"] = setup_policy_metrics
         (split_dir / f"{file_prefix}_policy_metrics.json").write_text(
             json.dumps(setup_policy_metrics, indent=2)
         )
@@ -364,16 +380,9 @@ def _write_split(
             ("selection_by_idea", f"{file_prefix}_selection_by_idea.csv"),
             ("selection_by_timeframe", f"{file_prefix}_selection_by_timeframe.csv"),
             ("selection_matrix", f"{file_prefix}_selection_matrix.csv"),
+            ("execution_action_by_trade_setup", f"{file_prefix}_action_by_idea_timeframe.csv"),
             (
-                "execution_action_by_trade_setup"
-                if canonical_setup
-                else "execution_action_by_thesis",
-                f"{file_prefix}_action_by_idea_timeframe.csv",
-            ),
-            (
-                "execution_by_opened_trade_setup"
-                if canonical_setup
-                else "execution_by_opened_thesis",
+                "execution_by_opened_trade_setup",
                 f"{file_prefix}_execution_by_idea_timeframe.csv",
             ),
             ("performance_by_idea_timeframe", f"{file_prefix}_performance_by_idea_timeframe.csv"),
@@ -388,28 +397,13 @@ def _write_split(
     )
     summary_text = build_summary_table(metrics)
     if isinstance(setup_policy_metrics, dict):
-        canonical_setup = setup_policy_metrics.get("wire_schema") == "trade_setup"
-        file_prefix = "trade_setup" if canonical_setup else "thesis"
-        title = "TRADE SETUP POLICY DIAGNOSTICS" if canonical_setup else "THESIS POLICY DIAGNOSTICS"
-        entropy_months = setup_policy_metrics.get(
-            "trade_setup_entropy_by_month" if canonical_setup else "thesis_entropy_by_month", []
-        )
-        mean_entropy = setup_policy_metrics.get(
-            "trade_setup_entropy_mean_nats" if canonical_setup else "thesis_entropy_mean_nats"
-        )
-        eligible_key = (
-            "trade_setup_eligible_steps" if canonical_setup else "trade_thesis_eligible_steps"
-        )
-        eligible_rate_key = (
-            "no_trade_rate_when_trade_setup_eligible"
-            if canonical_setup
-            else "no_trade_rate_when_trade_thesis_eligible"
-        )
-        conditioning_key = (
-            "setup_conditioned_execution_active"
-            if canonical_setup
-            else "variant_d_execution_conditioning_active"
-        )
+        file_prefix = "trade_setup"
+        title = "TRADE SETUP POLICY DIAGNOSTICS"
+        entropy_months = setup_policy_metrics.get("trade_setup_entropy_by_month", [])
+        mean_entropy = setup_policy_metrics.get("trade_setup_entropy_mean_nats")
+        eligible_key = "trade_setup_eligible_steps"
+        eligible_rate_key = "no_trade_rate_when_trade_setup_eligible"
+        conditioning_key = "setup_conditioned_execution_active"
         structure = setup_policy_metrics.get("structural_violations", {})
         monthly = (
             "\n".join(
@@ -451,12 +445,7 @@ def _write_split(
         from evaluation.reporting.trade_setup_plots import write_trade_setup_heatmaps
 
         write_trade_setup_heatmaps(setup_policy_metrics, split_dir, dpi)
-        entropy_months = setup_policy_metrics.get(
-            "trade_setup_entropy_by_month"
-            if setup_policy_metrics.get("wire_schema") == "trade_setup"
-            else "thesis_entropy_by_month",
-            [],
-        )
+        entropy_months = setup_policy_metrics.get("trade_setup_entropy_by_month", [])
         if entropy_months:
             import matplotlib.pyplot as plt
 
@@ -467,7 +456,7 @@ def _write_split(
                 [float(row["mean"]) for row in entropy_months],
                 marker="o",
                 color="#245c9f",
-                label="Mean masked thesis entropy",
+                label="Mean masked trade-setup entropy",
             )
             left.set_ylabel("Entropy (nats)")
             left.set_xlabel("Month")
@@ -486,7 +475,7 @@ def _write_split(
             handles_right, labels_right = right.get_legend_handles_labels()
             left.legend(handles_left + handles_right, labels_left + labels_right, loc="best")
             fig.tight_layout()
-            fig.savefig(split_dir / "thesis_policy_dynamics.png", dpi=dpi)
+            fig.savefig(split_dir / "trade_setup_policy_dynamics.png", dpi=dpi)
             plt.close(fig)
     if not trades.empty:
         opens = trades[trades.get("type", pd.Series(dtype=str)) == "open"]
@@ -511,9 +500,6 @@ def _write_split(
     if phase_timings is not None:
         phase_timings[f"{phase_prefix}numeric"] = time.perf_counter() - phase_start
     phase_start = time.perf_counter()
-    # ------------------------------------------------------------------
-    # Static PNG charts
-    # ------------------------------------------------------------------
     if save_plots and not equity.empty:
         from evaluation.plotting import plots as _plt
 
@@ -583,9 +569,6 @@ def _write_split(
     if phase_timings is not None:
         phase_timings[f"{phase_prefix}static_png_total"] = time.perf_counter() - phase_start
     phase_start = time.perf_counter()
-    # ------------------------------------------------------------------
-    # Interactive HTML charts
-    # ------------------------------------------------------------------
     if save_html and not equity.empty:
         try:
             from evaluation.plotting import plots_interactive as _pi
@@ -682,11 +665,6 @@ def _write_split(
         phase_timings[f"{phase_prefix}additional_diagnostics"] = time.perf_counter() - phase_start
 
 
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
-
-
 def save_run(
     out_dir: str | Path = "outputs",
     name: str = "run",
@@ -711,23 +689,32 @@ def save_run(
 ) -> Path:
     """Persist a complete train + test run.
 
-    Parameters
-    ----------
-    out_dir, name:
-        Base directory and run label.  Creates ``<out_dir>/<ts>_<name>/``.
-    run_dir:
-        Explicit pre-created directory (overrides *out_dir* / *name* if set).
-        Useful when the caller has already written model weights into the same
-        directory (e.g. ``train_rl.py``).
-    train_result, train_metrics, train_bars, train_secondary:
-        In-sample backtest result dict, metrics, primary bars, and optional
-        secondary-symbol bars (SMT overlays).
-    test_result, test_metrics, test_bars, test_secondary:
-        Out-of-sample equivalents.  Either split may be ``None``.
+    Args:
+        out_dir: Base directory for generated run artifacts.
+        name: Run label used when a timestamped directory is created.
+        run_dir: Explicit pre-created directory (overrides *out_dir* / *name* if set).
+            Useful when the caller has already written model weights into the same
+            directory (e.g. ``train_rl.py``).
+        train_result: In-sample backtest result mapping, if available.
+        train_metrics: In-sample performance metrics, if available.
+        train_bars: In-sample primary market bars.
+        train_secondary: Optional in-sample correlated-symbol bars for SMT overlays.
+        train_features: Optional in-sample feature frame for chart overlays.
+        test_result: Out-of-sample backtest result mapping, if available.
+        test_metrics: Out-of-sample performance metrics, if available.
+        test_bars: Out-of-sample primary market bars.
+        test_secondary: Optional out-of-sample correlated-symbol bars.
+        test_features: Optional out-of-sample feature frame for chart overlays.
+        cfg: Optional resolved configuration saved with the run.
+        save_plots: Whether to write static evaluation plots.
+        save_html: Whether to write interactive per-trade charts.
+        save_csv: Whether to write machine-readable trade and equity tables.
+        dpi: Resolution used for static plots.
+        max_order_charts: Maximum number of per-trade static charts to generate.
+        report_profile: Artifact profile controlling full or deferred chart output.
 
-    Returns
-    -------
-    Path to the run directory.
+    Returns:
+        Path to the directory containing the saved run artifacts.
     """
     if run_dir is None:
         run_dir = ArtifactLayout(Path(out_dir)).timestamped_run(name)
@@ -736,7 +723,6 @@ def save_run(
 
     daily_loss_limit, max_loss_limit, profit_target = _extract_ftmo_limits(cfg)
 
-    # Config snapshot at root only
     if cfg is not None:
         write_config_snapshot(run_dir, cfg)
 
@@ -766,7 +752,6 @@ def save_run(
         phase_timings=phase_timings,
     )
 
-    # Add trade chart configuration from config
     trade_chart_config = _extract_trade_chart_config(cfg)
     split_kwargs.update(trade_chart_config)
 
@@ -794,7 +779,6 @@ def save_run(
             **split_kwargs,
         )
 
-    # Comparison summary at root
     if train_metrics is not None:
         write_text_atomic(
             run_dir / "summary.txt", build_comparison_table(train_metrics, test_metrics)

@@ -7,13 +7,21 @@ CURRENT_CONFIG_SCHEMA_VERSION = 1
 
 
 class ConfigSchemaError(ValueError):
+    """Raised when configuration data violates the repository schema."""
+
     pass
 
 
 def reject_unknown_keys(
     values: Mapping[str, Any], schema: Mapping[str, Any], *, path: str = "config"
 ) -> None:
-    """Reject unknown keys and incompatible nested value shapes."""
+    """Reject unknown keys and incompatible nested value shapes.
+
+    Args:
+        values: Values to process, in input order.
+        schema: Key-value data used for the schema.
+        path: Path to the input file or directory.
+    """
     unknown = sorted(set(values) - set(schema))
     if unknown:
         raise ConfigSchemaError(f"unknown keys at {path}: {unknown}")

@@ -21,7 +21,15 @@ log = logging.getLogger(__name__)
 def _periodic_checkpoint_callback(
     cfg: DictConfig, model_dir: Path
 ) -> PeriodicCheckpointCallback | None:
-    """Save numbered + latest zips every ``ppo.checkpoint_freq`` env steps."""
+    """Save numbered + latest zips every ``ppo.checkpoint_freq`` env steps.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        model_dir: Text or path value identifying the model dir.
+
+    Returns:
+        Result of save numbered + latest zips every ``ppo.checkpoint_freq`` env steps.
+    """
     freq = int(cfg.ppo.get("checkpoint_freq", 1_000_000))
     if freq <= 0:
         log.info("Periodic checkpoints disabled (checkpoint_freq=%s)", freq)
@@ -31,7 +39,16 @@ def _periodic_checkpoint_callback(
 
 
 def _build_lagrangian_callback(cfg: Any, *, algo: str, mvp: bool) -> Any | None:
-    """Build the Q5 survival-objective callback only for annual PPO episodes."""
+    """Build the Q5 survival-objective callback only for annual PPO episodes.
+
+    Args:
+        cfg: Run configuration used by this operation.
+        algo: Text or path value identifying the algo.
+        mvp: Whether to enable or require the mvp.
+
+    Returns:
+        Result of build the Q5 survival-objective callback only for annual PPO episodes.
+    """
     constrained = cfg.get("constrained_rl", {})
     if not bool(constrained.get("enabled", False)):
         return None
@@ -58,7 +75,14 @@ def _build_lagrangian_callback(cfg: Any, *, algo: str, mvp: bool) -> Any | None:
 
 
 def _early_abort_callback(cfg: Any) -> EarlyAbortCallback | None:
-    """Build the mid-training stop, or ``None`` when the config disables it."""
+    """Build the mid-training stop, or ``None`` when the config disables it.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Result of build the mid-training stop, or ``None`` when the config disables it.
+    """
     training = cfg.get("training") if hasattr(cfg, "get") else None
     block: Any = {}
     if training is not None:
@@ -77,7 +101,14 @@ def _early_abort_callback(cfg: Any) -> EarlyAbortCallback | None:
 
 
 def _dashboard_block(cfg: Any) -> Any:
-    """``training.dashboard`` config, or an empty mapping when it is absent."""
+    """``training.dashboard`` config, or an empty mapping when it is absent.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        Result of ``training.dashboard`` config, or an empty mapping when it is absent.
+    """
     training = cfg.get("training") if hasattr(cfg, "get") else None
     if training is None:
         return {}

@@ -45,24 +45,46 @@ log = logging.getLogger(__name__)
 
 
 def _macd_policy(obs: np.ndarray[Any, Any]) -> int:
-    """Placeholder - will be replaced by precomputed policy in main()."""
+    """Placeholder - will be replaced by precomputed policy in main().
+
+    Args:
+        obs: Obs used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_macd_policy``.
+    """
     return 0
 
 
 def _make_indexed_policy(
     actions_series: pd.Series, obs_window: int
 ) -> Callable[[np.ndarray[Any, Any]], int]:
-    """Build a stateful policy that returns the precomputed action for the
-    current absolute bar index.
+    """Build a stateful policy for precomputed actions.
+
+    The policy returns the action for the current absolute bar index.
 
     Mirrors ``_create_macd_policy``: starts at ``obs_window`` because the
     engine drives ``policy(obs)`` with ``obs = feat_array[i - obs_window : i]``,
     so the first call corresponds to absolute bar index ``obs_window``.
-    """
 
+    Args:
+        actions_series: Tabular data used for the actions series.
+        obs_window: Numeric value used for the obs window.
+
+    Returns:
+        Array returned by ``_make_indexed_policy``.
+    """
     state = {"i": obs_window}
 
     def policy(obs: np.ndarray[Any, Any]) -> int:
+        """Return the precomputed action at the current absolute bar index.
+
+        Args:
+            obs: Obs used by the operation described above.
+
+        Returns:
+            Numeric result returned by ``policy``.
+        """
         i = state["i"]
         if i < len(actions_series):
             action = int(actions_series.iloc[i])
@@ -80,6 +102,12 @@ def _ema_policy(obs: np.ndarray[Any, Any]) -> int:
     Kept as a module-level no-op so the ``STRATEGIES`` registry below can
     import cleanly; the actual EMA crossover is wired in main() via
     :func:`ema_crossover` and :func:`_make_indexed_policy`.
+
+    Args:
+        obs: Obs used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_ema_policy``.
     """
     return 0
 
@@ -90,6 +118,12 @@ def _rsi_policy(obs: np.ndarray[Any, Any]) -> int:
     Kept as a module-level no-op so the ``STRATEGIES`` registry below can
     import cleanly; the actual RSI mean-reversion is wired in main() via
     :func:`rsi_mean_reversion` and :func:`_make_indexed_policy`.
+
+    Args:
+        obs: Obs used by the operation described above.
+
+    Returns:
+        Numeric result returned by ``_rsi_policy``.
     """
     return 0
 
@@ -102,6 +136,7 @@ STRATEGIES = {
 
 
 def main() -> None:
+    """Run the selected baseline strategy over train and test market splits."""
     parser = argparse.ArgumentParser(description="Run baseline strategy backtests.")
     parser.add_argument(
         "--strategy",
@@ -220,11 +255,26 @@ def main() -> None:
         Critical: Start at obs_window so engine bar i maps to actions_series.iloc[i],
         not to actions_series.iloc[i - obs_window]. This ensures MACD crosses align
         with the bars where they actually occur.
+
+        Args:
+            actions_series: Tabular data used for the actions series.
+            obs_window: Numeric value used for the obs window.
+
+        Returns:
+            Array returned by ``_create_macd_policy``.
         """
         state = {"i": obs_window}
         series = actions_series if actions_series is not None else pd.Series(dtype=float)
 
         def policy(obs: np.ndarray[Any, Any]) -> int:
+            """Return the precomputed MACD action aligned to the absolute bar.
+
+            Args:
+                obs: Obs used by the operation described above.
+
+            Returns:
+                Numeric result returned by ``policy``.
+            """
             action = 0
             if state["i"] < len(series):
                 action = int(series.iloc[state["i"]])
@@ -261,6 +311,18 @@ def main() -> None:
         label: str,
         indexed_policy: Callable[[np.ndarray[Any, Any]], int] | None = None,
     ) -> tuple[dict[str, Any], PerformanceMetrics]:
+        """Run the requested value.
+
+        Args:
+            bars: Market bars to process.
+            feats: Tabular data used for the feats.
+            ticks: Ticks used by the operation described above.
+            label: Text or path value identifying the label.
+            indexed_policy: Indexed policy used by the operation described above.
+
+        Returns:
+            Mapping from ``str`` keys to ``Any], PerformanceMetrics`` values.
+        """
         log.info("Running backtest [%s] strategy=%s …", label, args.strategy)
 
         # Use the precomputed policy if we built one (macd/ema/rsi), else

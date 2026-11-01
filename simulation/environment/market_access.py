@@ -9,6 +9,8 @@ from .timebase import BAR_TIME_TZ
 
 
 class MarketAccessMixin(RuntimeMixinBase):
+    """Read bars and feature rows through a uniform frame/bundle interface."""
+
     def _bar_time(self, idx: int) -> pd.Timestamp:
         """Return bar ``idx`` as a tz-aware Timestamp in the broker timezone.
 
@@ -17,6 +19,12 @@ class MarketAccessMixin(RuntimeMixinBase):
         the naive value is localised to UTC and converted to the broker
         timezone. This keeps the two data paths emitting identical (value +
         timezone) timestamps for the equity curve and trade log.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Result of return bar ``idx`` as a tz-aware Timestamp in the broker timezone.
         """
         value = self._bar_times[idx]
         ts = pd.Timestamp(value)
@@ -25,7 +33,11 @@ class MarketAccessMixin(RuntimeMixinBase):
         return ts.tz_convert(BAR_TIME_TZ)
 
     def _create_account(self) -> AccountState:
-        """Factory for fresh account state."""
+        """Factory for fresh account state.
+
+        Returns:
+            Result of factory for fresh account state.
+        """
         return AccountState(
             initial_balance=self.initial_balance, policy_mode=self.trading_policy.mode
         )
@@ -56,7 +68,14 @@ class MarketAccessMixin(RuntimeMixinBase):
             self._spread_arr = np.full(n, np.nan, dtype=np.float64)
 
     def _bar_at(self, idx: int) -> BarView:
-        """OHLC (+ spread) view for bar ``idx`` without pandas."""
+        """OHLC (+ spread) view for bar ``idx`` without pandas.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Result of oHLC (+ spread) view for bar ``idx`` without pandas.
+        """
         return BarView(
             open=float(self._open_arr[idx]),
             high=float(self._high_arr[idx]),
@@ -66,7 +85,14 @@ class MarketAccessMixin(RuntimeMixinBase):
         )
 
     def _feature_row_at(self, idx: int) -> FeatureRow:
-        """Feature-matrix row view for bar ``idx`` without ``pd.Series``."""
+        """Feature-matrix row view for bar ``idx`` without ``pd.Series``.
+
+        Args:
+            idx: Numeric value used for the idx.
+
+        Returns:
+            Result of feature-matrix row view for bar ``idx`` without ``pd.Series``.
+        """
         return FeatureRow(
             self._features_arr[idx],
             self._features_col_to_idx,
@@ -74,7 +100,11 @@ class MarketAccessMixin(RuntimeMixinBase):
         )
 
     def _current_session_id(self) -> int:
-        """Return the session_id for the current bar."""
+        """Return the session_id for the current bar.
+
+        Returns:
+            Numeric result returned by ``_current_session_id``.
+        """
         if self._session_ids_arr is not None and 0 <= self.step_idx < len(self._session_ids_arr):
             return int(self._session_ids_arr[self.step_idx])
         return 0
