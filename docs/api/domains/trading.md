@@ -6,6 +6,6 @@ Core contracts describe account state, orders, positions, risk, action schemas, 
 - [Trading and risk tutorial](../../learn/tutorials/03_trading_and_risk.ipynb)
 - [Environment tutorial](../../learn/tutorials/04_environment.ipynb)
 - [Public contracts](../../reference/public_contracts)
-- [Generated trading API](../generated/trading/index)
-- [Generated decisioning API](../generated/decisioning/index)
-- [Generated simulation API](../generated/simulation/index)
+- {doc}`Generated trading API <../generated/trading/index>`
+- {doc}`Generated decisioning API <../generated/decisioning/index>`
+- {doc}`Generated simulation API <../generated/simulation/index>`

@@ -49,8 +49,7 @@
     {
       "links": [
         "../../modules/configuration",
-        "../../reference/configuration",
-        "../generated/configuration/index"
+        "../../reference/configuration"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/configuration.md",
@@ -66,9 +65,7 @@
       "links": [
         "../../framework/market_data_and_features",
         "../../learn/tutorials/02_causal_features.ipynb",
-        "../../reference/feature_catalog",
-        "../generated/market_data/index",
-        "../generated/features/index"
+        "../../reference/feature_catalog"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/data.md",
@@ -82,9 +79,7 @@
     },
     {
       "links": [
-        "../../operations/README",
-        "../generated/compute/index",
-        "../generated/orchestra/index"
+        "../../operations/README"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/engineering.md",
@@ -100,9 +95,7 @@
       "links": [
         "../../framework/models_and_learning",
         "../../learn/tutorials/advanced/custom_encoder.ipynb",
-        "../../reference/model_architectures",
-        "../generated/models/index",
-        "../generated/learning/index"
+        "../../reference/model_architectures"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/models.md",
@@ -117,9 +110,7 @@
     {
       "links": [
         "../../framework/live_and_infrastructure",
-        "../../how-to/add_broker_adapter",
-        "../generated/live/index",
-        "../generated/integrations/index"
+        "../../how-to/add_broker_adapter"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/runtime.md",
@@ -136,10 +127,7 @@
         "../../framework/trading_and_simulation",
         "../../learn/tutorials/03_trading_and_risk.ipynb",
         "../../learn/tutorials/04_environment.ipynb",
-        "../../reference/public_contracts",
-        "../generated/trading/index",
-        "../generated/decisioning/index",
-        "../generated/simulation/index"
+        "../../reference/public_contracts"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/trading.md",
@@ -155,11 +143,7 @@
       "links": [
         "../../framework/training_and_experiments",
         "../../framework/evaluation_and_artifacts",
-        "../../learn/tutorials/05_evaluation.ipynb",
-        "../generated/training/index",
-        "../generated/evaluation/index",
-        "../generated/experiments/index",
-        "../generated/artifacts/index"
+        "../../learn/tutorials/05_evaluation.ipynb"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/workflows.md",

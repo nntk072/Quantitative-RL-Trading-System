@@ -8,10 +8,6 @@ import re
 from pathlib import Path
 from typing import Any, cast
 
-import nbformat
-from nbclient import NotebookClient
-from nbformat.notebooknode import NotebookNode
-
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
 MAX_NOTEBOOK_BYTES = 300_000
@@ -80,6 +76,9 @@ def validate_notebook(path: Path) -> list[str]:
 
 def execute_tier_a(paths: tuple[Path, ...]) -> list[str]:
     """Execute every Tier A notebook and require a generated cell output."""
+    import nbformat
+    from nbclient import NotebookClient
+
     errors: list[str] = []
     for path in paths:
         notebook: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
@@ -92,7 +91,7 @@ def execute_tier_a(paths: tuple[Path, ...]) -> list[str]:
                 cell["source"] = "".join(source)
         try:
             executed = NotebookClient(
-                cast(NotebookNode, nbformat.from_dict(notebook)),  # type: ignore[no-untyped-call]
+                cast(Any, nbformat.from_dict(notebook)),  # type: ignore[no-untyped-call]
                 timeout=120,
                 allow_errors=False,
                 resources={"metadata": {"path": str(ROOT)}},

@@ -4,5 +4,5 @@ Live strategy interfaces and broker-specific integrations are separated so the s
 
 - [Live and infrastructure guide](../../framework/live_and_infrastructure)
 - [Broker adapter guide](../../how-to/add_broker_adapter)
-- [Generated live API](../generated/live/index)
-- [Generated integrations API](../generated/integrations/index)
+- {doc}`Generated live API <../generated/live/index>`
+- {doc}`Generated integrations API <../generated/integrations/index>`

@@ -4,4 +4,4 @@ Configuration loading, merging, validation, and run-specific resolution are owne
 
 - [Configuration guide](../../modules/configuration)
 - [Configuration reference](../../reference/configuration)
-- [Generated configuration API](../generated/configuration/index)
+- {doc}`Generated configuration API <../generated/configuration/index>`

@@ -5,5 +5,5 @@ Reusable encoders, model construction, policy adapters, learning backends, and c
 - [Models and learning guide](../../framework/models_and_learning)
 - [Custom encoder tutorial](../../learn/tutorials/advanced/custom_encoder.ipynb)
 - [Model architecture reference](../../reference/model_architectures)
-- [Generated models API](../generated/models/index)
-- [Generated learning API](../generated/learning/index)
+- {doc}`Generated models API <../generated/models/index>`
+- {doc}`Generated learning API <../generated/learning/index>`
