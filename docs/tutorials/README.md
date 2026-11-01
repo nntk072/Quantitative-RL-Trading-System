@@ -1,9 +1,5 @@
 # Tutorials
 
-Tutorials provide a guided path through the repository. They should use small
-reproducible examples and link to the authoritative subsystem guide rather
-than duplicating configuration reference material.
+The guided, executable learning path is now under [Learn](../learn/index). It contains five beginner notebooks and five advanced notebooks with code, outputs, figures, interpretation, and API cross-links.
 
-- [Project tour](project_tour.md)
-- [First reproducible run](first_reproducible_run.md): bounded smoke workflow,
-  evidence review, and what the result does not prove.
+The [first reproducible run](first_reproducible_run.md) remains a bounded command-line workflow. Its smoke output demonstrates software wiring, not research performance.

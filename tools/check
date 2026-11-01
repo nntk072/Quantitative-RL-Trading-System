@@ -88,7 +88,12 @@ run_quality() {
 run_architecture() { sync_dev; run_module pytest -q tests/architecture; }
 run_docs() {
   sync_docs
-  run_module pytest -q tests/architecture/test_documentation_contracts.py
+  run_module pytest -q \
+    tests/architecture/test_documentation_contracts.py \
+    tests/unit/tooling/test_documentation_inventory.py
+  run_module tools.documentation.check_notebooks
+  run_module tools.documentation.inventory --check
+  run_module tools.documentation.evidence_audit --check
   run_module tools.documentation.check_docs
   run_module tools.documentation.public_api --check
   run_module tools.documentation.configuration_reference --check

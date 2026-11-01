@@ -15,22 +15,28 @@ release = "0.1.0"
 version = release
 
 extensions = [
-    "myst_parser",
+    "myst_nb",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "autoapi.extension",
     "sphinxcontrib.mermaid",
+    "sphinx_design",
 ]
 
 root_doc = "index"
-source_suffix = {".md": "markdown", ".rst": "restructuredtext"}
+source_suffix = {".md": "myst-nb", ".rst": "restructuredtext"}
 master_doc = root_doc
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 myst_heading_anchors = 3
 myst_fence_as_directive = ["mermaid"]
+nb_execution_mode = "off"
+nb_execution_raise_on_error = True
+nb_execution_allow_errors = False
+nb_execution_timeout = 120
+nb_output_stderr = "warn"
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 autodoc_typehints = "description"

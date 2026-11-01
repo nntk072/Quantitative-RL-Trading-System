@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -203,14 +204,35 @@ def maintained_markdown(root: Path) -> tuple[Path, ...]:
 def broken_links(document: Path) -> list[tuple[int, str]]:
     """Find missing relative targets; external and fragment-only links are skipped."""
     failures: list[tuple[int, str]] = []
-    for line_number, line in enumerate(document.read_text(encoding="utf-8").splitlines(), 1):
+    if document.suffix == ".ipynb":
+        notebook = json.loads(document.read_text(encoding="utf-8"))
+        source_lines = [
+            source_line
+            for cell in notebook.get("cells", [])
+            for source_line in (
+                "".join(cell.get("source", []))
+                if isinstance(cell.get("source", ""), list)
+                else str(cell.get("source", ""))
+            ).splitlines()
+        ]
+    else:
+        source_lines = document.read_text(encoding="utf-8").splitlines()
+    for line_number, line in enumerate(source_lines, 1):
         for match in LINK.finditer(line):
             target = match.group(1).strip().split(maxsplit=1)[0].strip("<>")
             parsed = urlsplit(target)
             if parsed.scheme or parsed.netloc or not parsed.path:
                 continue
             path = (document.parent / unquote(parsed.path)).resolve()
-            if not path.exists():
+            candidates = (
+                path,
+                path.with_suffix(".md"),
+                path.with_suffix(".ipynb"),
+                path.with_suffix(".rst"),
+                path / "index.md",
+                path / "index.rst",
+            )
+            if not any(candidate.exists() for candidate in candidates):
                 failures.append((line_number, target))
     return failures
 
@@ -252,6 +274,33 @@ def validate(root: Path) -> list[str]:
         for line_number, target in missing_source_paths(document):
             errors.append(
                 f"{document.relative_to(root)}:{line_number}: missing source path {target}"
+            )
+    index = root / "docs/index.md"
+    if index.is_file():
+        index_text = index.read_text(encoding="utf-8")
+        required_sections = (
+            "learn/index",
+            "framework/index",
+            "api/index",
+            "research/README",
+            "reproduce/index",
+            "develop/index",
+        )
+        if ":glob:" in index_text:
+            errors.append("docs/index.md: root navigation must use explicit page references")
+        for section in required_sections:
+            if section not in index_text:
+                errors.append(f"docs/index.md: missing primary destination {section}")
+        if "../operations/README" not in (root / "docs/develop/index.md").read_text(
+            encoding="utf-8"
+        ):
+            errors.append("docs/develop/index.md: operations portal is not reachable from Develop")
+    for notebook in sorted(
+        path for path in (root / "docs").rglob("*.ipynb") if "_build" not in path.parts
+    ):
+        for line_number, target in broken_links(notebook):
+            errors.append(
+                f"{notebook.relative_to(root)}:{line_number}: missing local link {target}"
             )
     return errors
 

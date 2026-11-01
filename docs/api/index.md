@@ -1,18 +1,27 @@
-# Python API reference
+# API reference
 
-The API pages are generated from the current production packages. AutoAPI reads
-the source tree without importing model, broker, or scheduler modules. The
-package guides and contract references explain which exported surfaces are
-stable and what their serialized meanings require.
+Start with the curated contract pages below. They explain the roles and stable boundaries of each public domain, then link to the complete generated AutoAPI tree for exact classes, functions, and modules.
 
-See the generated [public API inventory](../reference/public_api.md) for the
-source-level export list, support classification, and installed command names.
-
-Use the package tree below to browse module pages and their callable references.
+## Curated domains
 
 ```{toctree}
-:maxdepth: 3
-:caption: Packages and modules
+:maxdepth: 1
+:caption: Public API domains
+
+domains/configuration
+domains/data
+domains/trading
+domains/models
+domains/workflows
+domains/runtime
+domains/engineering
+```
+
+## Full generated reference
+
+```{toctree}
+:maxdepth: 2
+:caption: AutoAPI source reference
 
 generated/artifacts/index
 generated/compute/index

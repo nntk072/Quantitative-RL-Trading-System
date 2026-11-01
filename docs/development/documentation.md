@@ -36,6 +36,37 @@ diagrams for runtime chronology, and state diagrams for lifecycle rules. Use
 class diagrams only for stable object relationships. A guide does not need a
 diagram when prose or a short table communicates the subsystem more clearly.
 
-The documentation gate builds the Sphinx site with warnings as errors and
-checks maintained links and source references. See the
+## Reader paths and API reference
+
+Organize the public site by reader questions and framework subjects, then link
+to source paths and generated AutoAPI for exact details. Keep the global
+navigation shallow and assign maintained pages to a section toctree. The
+generated `docs/documentation_inventory.json` records page type, status, local
+links, and toctree/orphan status; refresh it with
+`python -m tools.documentation.inventory --write` after documentation changes.
+
+## Notebooks
+
+Each notebook declares a title, tier, expected runtime, hardware, and data
+source in metadata. Tier A notebooks use small deterministic CPU examples and
+execute in both the notebook check and Sphinx build. Tier B notebooks render
+tracked frozen evidence without training; Tier C may describe a full workflow
+but must not execute in docs CI. Never silently skip a broken Tier A cell.
+Keep outputs small and avoid machine-specific paths or secrets. Figures need a
+title, units, legend when useful, and nearby text explaining what the reader
+should see.
+
+## Research claims and reproducibility
+
+Give each prominent result a status, method, evidence source, limitations, and
+reproduction level. R1 means evidence can be inspected; R2 means tracked
+machine-readable inputs can recompute the stated tables or figures; R3 adds
+frozen checkpoint replay; R4 adds sufficient inputs to retrain. Do not infer a
+higher level from a configuration file alone. Distinguish software trace,
+reproduce, replay, and retrain.
+
+The documentation gate validates notebooks, evidence assets, page inventory,
+maintained links and source references, then builds the Sphinx site with
+warnings as errors. See the [visual index](../architecture/visual_index), the
+[documentation inventory](../documentation_inventory.json), and the
 [documentation maintenance map](../MAINTAINING.md) for page ownership.

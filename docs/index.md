@@ -1,83 +1,88 @@
 # Quantitative RL Trading System
 
-Documentation for the framework's configuration, data and feature pipelines,
-trading contracts, simulation, learning, evaluation, experiments, research
-methods, and operations.
+A research framework for studying reinforcement-learning trading policies through causal market features, explicit trading rules, controlled simulation, and traceable evaluation.
 
-This site describes software behavior and research controls. It does not promise
-profitable trading, reliable fills, or performance outside the documented
-evaluation evidence.
-
-## Start with an overview
-
-```{toctree}
-:maxdepth: 2
-:caption: Overview
-
-README
-architecture
-api/index
+```{warning}
+Historical simulation is not a broker guarantee. A smoke run is a software check,
+not evidence of trading value. See [Limitations](research/limitations.md).
 ```
 
-## Learn and use
+::::{grid} 1 2 3 3
+:gutter: 2
 
-```{toctree}
-:maxdepth: 2
-:caption: Guides
-:glob:
+:::{grid-item-card} Learn the framework
+:link: learn/index
+:link-type: doc
+Start with the guided path from market data to evaluation.
+:::
 
-tutorials/*
-how-to/*
+:::{grid-item-card} Explore framework concepts
+:link: framework/index
+:link-type: doc
+Understand data, features, trading, learning, and evaluation by subject.
+:::
+
+:::{grid-item-card} Find the API
+:link: api/index
+:link-type: doc
+Browse stable contracts first, then the full generated reference.
+:::
+
+:::{grid-item-card} Read research findings
+:link: research/README
+:link-type: doc
+See the question, evidence, status, and limitations behind each result.
+:::
+
+:::{grid-item-card} Reproduce recorded results
+:link: reproduce/index
+:link-type: doc
+Inspect reproducibility levels and run CPU-sized evidence notebooks.
+:::
+
+:::{grid-item-card} Develop and operate Quant
+:link: develop/index
+:link-type: doc
+Find extension, testing, architecture, deployment, and operations guides.
+:::
+::::
+
+## How the system fits together
+
+```{mermaid}
+flowchart LR
+    C[Configuration] --> D[Market data]
+    D --> F[Causal features]
+    F --> E[Trading environment]
+    E --> L[Learning and policy]
+    L --> V[Evaluation]
+    V --> A[Artifacts and evidence]
+    A --> R[Research and reproduction]
 ```
 
-## Understand the framework
+## Choose a path
 
-```{toctree}
-:maxdepth: 2
-:caption: Architecture and modules
-:glob:
+- **I am new:** [Quick learning path](learn/index) → [Market data tutorial](learn/tutorials/01_market_data.ipynb) → [Environment tutorial](learn/tutorials/04_environment.ipynb).
+- **I need exact behavior:** [Framework guides](framework/index) → [API reference](api/index).
+- **I want to check a finding:** [Research questions](research/README) → [Result registry](reproduce/result_registry) → [Reproduction notebooks](reproduce/index).
+- **I want to contribute:** [Developer guide](develop/index) → [Testing](development/testing) → [Documentation](development/documentation).
 
-architecture/*
-architecture/runtime/*
-architecture/migrations/*
-modules/*
-concepts/*
-decisions/*
-```
-
-## Reference and research
-
-```{toctree}
-:maxdepth: 2
-:caption: Reference and research
-:glob:
-
-reference/*
-research/*
-```
-
-## Operations and development
-
-```{toctree}
-:maxdepth: 2
-:caption: Operations and development
-:glob:
-
-operations/*
-development/*
-security/*
-```
-
-## Topic index
+## Documentation map
 
 ```{toctree}
 :maxdepth: 1
+:caption: Start here
 
-config
-distributional_methodology
-glossary
-model_variants
-reproducibility
-research_reference
-MAINTAINING
+learn/index
+framework/index
+api/index
+research/README
+reproduce/index
+develop/index
+```
+
+```{toctree}
+:hidden:
+
+internal_page_index
 ```

@@ -11,5 +11,16 @@ resources; this directory is the human-facing explanation.
 - [Command reference](RUNNING_COMMANDS.md)
 - [Paper/live deployment boundary](DEPLOYMENT.md)
 
+```{toctree}
+:maxdepth: 1
+:caption: Operations guides
+
+research_execution_plan
+triton
+RUNNING_COMMANDS
+DEPLOYMENT
+live-status
+```
+
 Check current command help and scheduler state before acting. Historical run
 records are evidence, not live scheduler status.
