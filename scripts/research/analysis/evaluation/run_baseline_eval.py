@@ -1,11 +1,11 @@
-"""Evaluate rule-based baselines on the held-out out-of-sample split.
+"""Evaluate step-indexed baselines on a configured report split.
 
-Runs each registered `BaseStrategy` through the shared evaluation pipeline
-(`run_episode` + `TradingEnv`) on the same held-out test slice used by
-`scripts/train_rl.py`, so RL agents and baselines can be compared in one
-table.  Writes one `metrics.json` per strategy, in the same report shape
-produced by `train_rl.py` (an `out_of_sample` block readable by
-`scripts/report_g3.py`).
+Runs registered `BaseStrategy` policies through the shared evaluation pipeline
+(`run_episode` + `TradingEnv`) on a configured report split. The default 2026
+interval is already exposed and is labeled report-only. This continuous-action
+evaluator does not by itself provide a matched registry for every RL action
+schema. Writes one `metrics.json` per strategy, retaining the `out_of_sample`
+report block for compatibility with `scripts/report_g3.py`.
 
 Example:
     python scripts/run_baseline_eval.py --bars-csv data/us100_2025.csv \
@@ -39,6 +39,7 @@ OBS_WINDOW = 60  # must match TradingEnv's default obs_window
 def build_strategies(bars: pd.DataFrame) -> dict[str, BaseStrategy]:
     """Instantiate every registered baseline over the evaluation bars."""
     strategies: dict[str, BaseStrategy] = {
+        "always_flat": BuyAndHoldStrategy(n_bars=len(bars), size=0.0),
         "buy_and_hold": BuyAndHoldStrategy(n_bars=len(bars)),
         "ema_macd_rsi": EMAMACDRSIStrategy(bars),
         "breakout": MultiLevelBreakoutStrategy(bars),
@@ -56,20 +57,30 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bars-csv", required=True, help="OHLCV CSV with DatetimeIndex")
     parser.add_argument("--features-csv", help="Feature CSV; defaults to numeric bars columns")
-    parser.add_argument("--train-end", default="2025-12-31", help="Last in-sample date")
-    parser.add_argument("--test-start", default="2026-01-01", help="First out-of-sample date")
+    parser.add_argument("--train-end", default="2025-12-31", help="Last development date")
+    parser.add_argument(
+        "--test-start",
+        default="2026-01-01",
+        help="First report date (the default 2026 period is already exposed)",
+    )
     parser.add_argument(
         "--strategies",
         nargs="+",
-        default=["buy_and_hold", "ema_macd_rsi", "breakout"],
-        choices=["buy_and_hold", "ema_macd_rsi", "breakout", "session_momentum"],
+        default=["always_flat", "buy_and_hold", "ema_macd_rsi", "breakout"],
+        choices=[
+            "always_flat",
+            "buy_and_hold",
+            "ema_macd_rsi",
+            "breakout",
+            "session_momentum",
+        ],
     )
     parser.add_argument("--out-dir", default="outputs/rl_runs", help="Base directory for reports")
     return parser.parse_args()
 
 
 def main() -> None:
-    """Evaluate each baseline on the held-out split and persist metrics.json."""
+    """Evaluate baselines on a configured report split and persist metrics."""
     args = parse_args()
     bars = pd.read_csv(args.bars_csv, index_col=0, parse_dates=True)
     features = (
@@ -83,18 +94,27 @@ def main() -> None:
     )
     if test_bars.empty:
         raise SystemExit(f"empty test split with --test-start {args.test_start}")
-    print(f"held-out split: {len(test_bars)} bars (≥{args.test_start})")
+    evaluation_index = test_bars.index
+    if not isinstance(evaluation_index, pd.DatetimeIndex):
+        raise TypeError("baseline evaluation requires a DatetimeIndex")
+    evaluation_dates = (
+        evaluation_index.tz_localize(None) if evaluation_index.tz is not None else evaluation_index
+    )
+    exposed_start = pd.Timestamp("2026-01-01")
+    exposed_end = pd.Timestamp("2026-10-16 23:59:59.999999")
+    exposed_overlap = bool(
+        ((evaluation_dates >= exposed_start) & (evaluation_dates <= exposed_end)).any()
+    )
+    period_role = "exposed_report_only" if exposed_overlap else "configured_period_unverified"
+    print(f"configured report split: {len(test_bars)} bars (≥{args.test_start})")
 
     strategies = build_strategies(test_bars)
     for name in args.strategies:
         strategy = strategies[name]
 
         def action_fn(obs: Any, _strategy: BaseStrategy = strategy) -> np.ndarray[Any, Any]:
-            # Baselines use the continuous action contract ([-1, 1] fraction);
-            # TradingEnv's continuous decoder expects an ndarray action.
+            # TradingEnv's continuous decoder expects a one-element ndarray.
             return np.array([_strategy.act(obs)], dtype=np.float32)
-
-            # Baselines use the continuous action contract ([-1, 1] fraction).
 
         env = TradingEnv(
             bars=test_bars,
@@ -111,6 +131,7 @@ def main() -> None:
                 "train_end": args.train_end,
                 "test_start": args.test_start,
                 "test_bars": int(len(test_bars)),
+                "period_role": period_role,
             },
             "out_of_sample": build_run_report(metrics, env.trade_log),
         }

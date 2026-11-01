@@ -19,3 +19,8 @@ commands, or the active research queue.
   structural context figures and source metadata, not trade-performance results.
 - [Directional swing cache validation](directional_swing_cache_validation.json):
   machine-readable cache validation record.
+- [Negative-result release readiness snapshot](releases/negative-evidence-readiness-2026-11-01/README.md):
+  source-pinned internal handoff with complete local data checksums; still
+  blocked by current-source quote/calendar findings and incomplete scientific
+  and software release gates. Provider/license research was excluded by user
+  direction; the snapshot includes no raw market data or rights claim.

@@ -35,7 +35,7 @@ AUDITS: dict[str, dict[str, list[str]]] = {
             f"{P6}/ladder_a4a_entry_fsm_hidden_qgrid025_paired_trades.csv",
             f"{P6}/ladder_a4b_entry_fsm_qgrid025_paired_trades.csv",
         ],
-        "Unavailable independent raw replay inputs": [
+        "Replay inputs absent from the tracked packet": [
             "not-tracked: source run manifests and per-arm environment traces",
             "not-tracked: original raw tick data and broker fill inputs",
             "not-tracked: frozen policy checkpoints for both arms",
@@ -105,7 +105,7 @@ def render_audit(root: Path = ROOT) -> str:
         [
             "## Interpretation",
             "",
-            "The exit-action notebook makes an R2 claim only for the tracked cohort CSV and summary. The P6 notebook recomputes monthly paired-trade aggregates and a seeded bootstrap decomposition, but raw ticks and checkpoints are absent. The entry-idea notebook recomputes family-level totals from tracked aggregate exports, but timestamp-level feature rows are absent. The setup-conditioned package supports an R1 evidence view; its missing ledgers prevent full plot regeneration.",
+            "The exit-action notebook makes an R2 claim only for the tracked cohort CSV and summary. The P6 notebook recomputes monthly paired-trade aggregates and a seeded bootstrap decomposition; raw ticks and checkpoints are absent from this tracked packet. This audit does not inventory ignored local scratch assets or independently validate their availability. The entry-idea notebook recomputes family-level totals from tracked aggregate exports, but timestamp-level feature rows are absent. The setup-conditioned package supports an R1 evidence view; its missing ledgers prevent full plot regeneration.",
             "",
         ]
     )

@@ -1,0 +1,19 @@
+domain,contract_area,test_path,result,scope_limit
+features,indicator prefix causality,tests/unit/features/test_causal_features.py,passed in 54-test group,selected deterministic functions; not exhaustive real-data audit
+features,HTF closed-bar alignment,tests/unit/features/test_htf_alignment.py,passed in 54-test group,synthetic/current deterministic fixtures; not every timeframe on raw feed
+trading,risk policy properties,tests/unit/trading/test_risk_properties.py,passed in 54-test group,does not cover every account scenario listed in attached plan
+simulation,deterministic environment traces,tests/unit/simulation/test_environment/test_trading_env_golden_traces.py,passed in 54-test group,selected deterministic traces
+simulation,tick fill reconciliation,tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py,passed in 54-test group,does not independently validate current raw tick source
+backtest,broker fill accounting,tests/integration/backtest/test_broker_fill_accounting.py,passed in 54-test group,selected integration contracts
+backtest,broker quote parity,tests/integration/backtest/test_broker_quote_parity.py,passed in 54-test group,selected integration contract
+data,current P6 market input audit helpers,tests/unit/research/test_current_p6_market_inputs.py,2 passed,fixture-level timestamp and quality-counter checks; not a substitute for the live data scan
+decisioning,setup catalog contract,tests/unit/decisioning/test_trade_setup_contract.py,passed in isolated 12-test run,does not validate real-feed candidate frequency
+decisioning,setup mask properties,tests/unit/decisioning/test_trade_setup_properties.py,passed in isolated 12-test run,does not establish 108-way real-data opportunity coverage
+models,observation schema,tests/unit/models/test_trade_setup_observation_schema.py,passed in isolated 22-test run,selected deterministic schema contracts
+simulation,setup observation,tests/unit/simulation/test_environment/test_trade_setup_observation.py,passed in isolated 22-test run,selected environment observation wiring
+integration,setup contract,tests/integration/test_trade_setup.py,passed in isolated 22-test run,does not establish economic performance
+baselines,always-flat report path,tests/integration/test_scripts_smoke.py::TestBaselineAndReportScripts::test_run_baseline_eval,passed 1 test,synthetic smoke only; verifies zero trades and exposed-period label, not market baseline performance
+trading,legacy versus repeated-payout daily-loss semantics,tests/unit/trading/test_repeated_payout_policy.py::test_legacy_daily_loss_is_gross_closed_loss_and_does_not_offset_wins,passed 18-test policy file,locks down compatibility behavior only; legacy counter is not net daily-equity risk
+models,hybrid actor,tests/unit/models/test_hybrid_actor.py,9 passed and 1 skipped in job 21340816,CPU masking distribution PPO update evaluate_actions and checkpoint roundtrip covered; accelerator-only roundtrip skipped because CPU node has no CUDA or ROCm
+market_data,tick book ingestion and execution timing,tests/unit/market_data/test_ticks.py,33 passed in job 21340816,synthetic fixtures cover one-sided forward-fill and equal-timestamp first-row behavior; does not establish current feed quote freshness or sub-ms order
+research,release manifest hash utility,tests/unit/research/test_release_manifest_hashes.py,2 passed in job 21340816,fixture-level relative hash refresh and path traversal checks; full manifest hash verification remains to run after final edits

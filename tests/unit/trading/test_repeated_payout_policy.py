@@ -21,6 +21,16 @@ def test_repeated_policy_config_resolves_without_changing_default() -> None:
     assert repeated.max_agent_risk_frac == pytest.approx(0.009)
 
 
+def test_legacy_daily_loss_is_gross_closed_loss_and_does_not_offset_wins() -> None:
+    acc = AccountState(policy_mode="legacy")
+    acc.close_trade(-4_000.0)
+    acc.close_trade(2_500.0)
+    acc.close_trade(-1_000.0)
+
+    assert acc.equity == pytest.approx(97_500.0)
+    assert acc.canonical_daily_loss() == pytest.approx(5_000.0)
+
+
 def test_fixed_session_equity_daily_floor_counts_unrealized_loss() -> None:
     acc = AccountState(policy_mode="repeated_payout")
     acc.balance = 108_000.0

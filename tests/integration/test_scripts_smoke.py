@@ -86,15 +86,19 @@ class TestBaselineAndReportScripts:
         run_baseline_eval_main()
 
         # Assert
-        for name in ("buy_and_hold", "ema_macd_rsi", "breakout"):
+        for name in ("always_flat", "buy_and_hold", "ema_macd_rsi", "breakout"):
             report_path = out_dir / f"baseline_{name}" / "metrics.json"
             assert report_path.exists(), f"missing {report_path}"
             report = json.loads(report_path.read_text())
             assert report["run_name"] == f"baseline_{name}"
+            assert report["split"]["period_role"] == "exposed_report_only"
             oos = report["out_of_sample"]
             assert np.isfinite(oos["sharpe"])
             assert oos["n_trades"] >= 0
             assert "sweep_delay" in oos
+            if name == "always_flat":
+                assert oos["n_trades"] == 0
+                assert oos["total_pnl"] == 0.0
 
     def test_report_g3_reads_oos_block(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]

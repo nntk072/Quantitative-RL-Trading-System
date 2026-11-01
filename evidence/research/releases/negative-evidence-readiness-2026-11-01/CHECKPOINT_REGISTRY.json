@@ -1,0 +1,31 @@
+{
+  "schema": "aalto.quant_checkpoint_registry.v1",
+  "scope": "selected seed-50 matched pair only; locations remain in restricted scratch",
+  "campaign_path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/",
+  "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+  "source_commit": "b93642a368439a7838c3107c25fd4999b32bc028",
+  "checkpoints": [
+    {
+      "arm": "A4A",
+      "path": "restricted scratch campaign final checkpoint; see per-arm manifest",
+      "sha256_verified_against_manifest": true,
+      "load_or_replay_verified_in_this_snapshot": false
+    },
+    {
+      "arm": "A4B",
+      "path": "restricted scratch campaign final checkpoint; see per-arm manifest",
+      "sha256_verified_against_manifest": true,
+      "load_or_replay_verified_in_this_snapshot": false
+    }
+  ],
+  "manifest_reconciliation": {
+    "per_arm_artifacts_matching_hash": "10/10",
+    "input_paths_present": "39/39",
+    "input_bytes_rehashed": true,
+    "input_hash_matches": "39/39",
+    "input_audit": "current_source_market_input_audit.json",
+    "checkpoint_replay_performed": false
+  },
+  "data_access_scope": "current local data used at user direction; provider/license not investigated; raw market data excluded from this release",
+  "note": "This record does not reproduce the checkpoint replay or make the private data/checkpoints distributable."
+}

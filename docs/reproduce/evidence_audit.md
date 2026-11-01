@@ -28,7 +28,7 @@ This generated audit checks files required for the stated claim scope. It does n
 - evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/ladder_a4a_entry_fsm_hidden_qgrid025_paired_trades.csv — present
 - evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/ladder_a4b_entry_fsm_qgrid025_paired_trades.csv — present
 
-**Unavailable independent raw replay inputs: missing** (0/3 tracked assets present)
+**Replay inputs absent from the tracked packet: missing** (0/3 tracked assets present)
 - source run manifests and per-arm environment traces — missing
 - original raw tick data and broker fill inputs — missing
 - frozen policy checkpoints for both arms — missing
@@ -61,4 +61,4 @@ This generated audit checks files required for the stated claim scope. It does n
 
 ## Interpretation
 
-The exit-action notebook makes an R2 claim only for the tracked cohort CSV and summary. The P6 notebook recomputes monthly paired-trade aggregates and a seeded bootstrap decomposition, but raw ticks and checkpoints are absent. The entry-idea notebook recomputes family-level totals from tracked aggregate exports, but timestamp-level feature rows are absent. The setup-conditioned package supports an R1 evidence view; its missing ledgers prevent full plot regeneration.
+The exit-action notebook makes an R2 claim only for the tracked cohort CSV and summary. The P6 notebook recomputes monthly paired-trade aggregates and a seeded bootstrap decomposition; raw ticks and checkpoints are absent from this tracked packet. This audit does not inventory ignored local scratch assets or independently validate their availability. The entry-idea notebook recomputes family-level totals from tracked aggregate exports, but timestamp-level feature rows are absent. The setup-conditioned package supports an R1 evidence view; its missing ledgers prevent full plot regeneration.
