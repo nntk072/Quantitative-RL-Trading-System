@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import re
 from pathlib import Path
@@ -76,8 +77,8 @@ def validate_notebook(path: Path) -> list[str]:
 
 def execute_tier_a(paths: tuple[Path, ...]) -> list[str]:
     """Execute every Tier A notebook and require a generated cell output."""
-    import nbformat
-    from nbclient import NotebookClient
+    nbformat = importlib.import_module("nbformat")
+    notebook_client = getattr(importlib.import_module("nbclient"), "NotebookClient")
 
     errors: list[str] = []
     for path in paths:
@@ -90,8 +91,8 @@ def execute_tier_a(paths: tuple[Path, ...]) -> list[str]:
             if isinstance(source, list):
                 cell["source"] = "".join(source)
         try:
-            executed = NotebookClient(
-                cast(Any, nbformat.from_dict(notebook)),  # type: ignore[no-untyped-call]
+            executed = notebook_client(
+                cast(Any, nbformat.from_dict(notebook)),
                 timeout=120,
                 allow_errors=False,
                 resources={"metadata": {"path": str(ROOT)}},

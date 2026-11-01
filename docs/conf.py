@@ -32,6 +32,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 myst_heading_anchors = 3
 myst_fence_as_directive = ["mermaid"]
+myst_enable_extensions = ["colon_fence"]
 nb_execution_mode = "off"
 nb_execution_raise_on_error = True
 nb_execution_allow_errors = False
