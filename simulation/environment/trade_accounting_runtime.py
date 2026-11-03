@@ -74,6 +74,8 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
         pos.filled_size += close_size
         pos.fill_count += 1
         record["position_id"] = pos.position_id
+        if pos.origin_decision_id:
+            record["origin_decision_id"] = pos.origin_decision_id
         record["fill_id"] = f"{pos.position_id}:f{pos.fill_count}"
         record["size"] = close_size
         record["position_complete"] = bool(pos.size <= 1e-9)

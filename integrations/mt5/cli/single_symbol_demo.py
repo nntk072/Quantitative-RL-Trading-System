@@ -9,6 +9,9 @@ Usage:
 
     # With custom parameters
     DEMO_SYMBOL=US100.cash DEMO_LOT_SIZE=0.5 PAPER_TRADING=true python demo_trading.py
+
+The single-symbol crossover demo has no training-equivalent account guardrails;
+``PAPER_TRADING=false`` is rejected before connecting to MT5.
 """
 
 import argparse
@@ -59,6 +62,11 @@ def get_robot() -> CrossOverRobot:
     global _cross_over_robot
 
     if _cross_over_robot is None:
+        if not paper_trading:
+            raise RuntimeError(
+                "single-symbol crossover demo is paper-only until training-equivalent "
+                "account-loss guardrails are available"
+            )
         ensure_mt5_logged_in(
             login=login,
             password=password,

@@ -16,6 +16,7 @@ from tests.unit.simulation.test_environment._tp_mode_fixtures import (
     _make_tp_env,
 )
 from trading.execution.broker import Position
+from trading.positions import target_close_size
 
 
 class TestTPExecution:
@@ -172,7 +173,6 @@ class TestTPExecution:
         assert env.trade_log[-1]["reason"] == "ema_21_exit"
 
     def test_final_runner_tp_close_reserves_configured_size(self) -> None:
-        env = _make_tp_env()
         pos = Position(
             direction=1,
             size=1.0,
@@ -185,7 +185,7 @@ class TestTPExecution:
             ema_runner_fraction=0.25,
         )
 
-        assert env._target_close_size(pos, 3, is_final=True) == pytest.approx(0.75)
+        assert target_close_size(pos, 3, is_final=True) == pytest.approx(0.75)
 
     def test_tick_ema_exit_uses_next_observed_bar_after_timestamp_gap(self) -> None:
         bars = _make_deterministic_bars()

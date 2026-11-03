@@ -10,11 +10,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Classification | Exported names |
 |---|---:|
-| stable | 626 |
+| stable | 633 |
 | experimental | 0 |
-| compatibility-only | 8 |
-| cross-package internal | 371 |
-| private implementation | 780 |
+| compatibility-only | 10 |
+| cross-package internal | 375 |
+| private implementation | 787 |
 
 ## Public package exports
 
@@ -159,45 +159,46 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
-| `CI` | class | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L22) | stable |
+| `CI` | class | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L28) | stable |
 | `CalibrationReport` | class | [evaluation.metrics.calibration](../../evaluation/metrics/calibration.py#L22) | stable |
-| `DEFAULT_PERIODS_PER_YEAR` | value | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L17) | stable |
+| `DEFAULT_PERIODS_PER_YEAR` | value | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L18) | stable |
 | `DistributionMetrics` | class | [evaluation.metrics.distributions](../../evaluation/metrics/distributions.py#L31) | stable |
-| `LEGACY_M1_PERIODS_PER_YEAR` | value | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L388) | compatibility-only |
-| `PerformanceMetrics` | class | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L21) | stable |
+| `LEGACY_M1_PERIODS_PER_YEAR` | value | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L401) | compatibility-only |
+| `PerformanceMetrics` | class | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L23) | stable |
+| `RandomEligibleSetupPolicy` | class | [evaluation.rollout.random_eligible_setup](../../evaluation/rollout/random_eligible_setup.py#L17) | stable |
 | `WFSplit` | class | [market_data.splits.walkforward](../../market_data/splits/walkforward.py#L23) | stable |
-| `aggregate_seeds` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L41) | stable |
-| `bootstrap_ci` | function | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L39) | stable |
-| `build_comparison_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L137) | stable |
-| `build_run_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L203) | stable |
-| `build_summary_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L116) | stable |
-| `calculate_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L417) | stable |
+| `aggregate_seeds` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L53) | stable |
+| `bootstrap_ci` | function | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L45) | stable |
+| `build_comparison_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L234) | stable |
+| `build_run_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L299) | stable |
+| `build_summary_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L213) | stable |
+| `calculate_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L430) | stable |
 | `calibration_report` | function | [evaluation.metrics.calibration](../../evaluation/metrics/calibration.py#L43) | stable |
 | `compute_distribution_metrics` | function | [evaluation.metrics.distributions](../../evaluation/metrics/distributions.py#L56) | stable |
-| `compute_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L308) | stable |
+| `compute_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L312) | stable |
 | `conditional_pnl_distributions` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L157) | stable |
 | `conditional_pnl_groups` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L136) | stable |
 | `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L710) | stable |
-| `evaluation_periods_per_year` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L391) | stable |
+| `evaluation_periods_per_year` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L404) | stable |
 | `holding_time_distribution` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L63) | stable |
-| `max_drawdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L209) | stable |
+| `max_drawdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L213) | stable |
 | `plot_reliability_diagram` | function | [evaluation.metrics.calibration](../../evaluation/metrics/calibration.py#L97) | stable |
-| `print_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L69) | stable |
+| `print_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L81) | stable |
 | `purged_walk_forward` | function | [market_data.splits.walkforward](../../market_data/splits/walkforward.py#L37) | stable |
 | `run_episode` | function | [evaluation.rollout.episode_rollout](../../evaluation/rollout/episode_rollout.py#L26) | stable |
-| `save_metrics_json` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L179) | stable |
-| `sharpe_stat` | function | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L148) | stable |
-| `sweep_delay_breakdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L151) | stable |
+| `save_metrics_json` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L276) | stable |
+| `sharpe_stat` | function | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L154) | stable |
+| `sweep_delay_breakdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L155) | stable |
 | `sweep_delay_distribution` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L88) | stable |
-| `DEFAULT_PERIODS_PER_YEAR` | value | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L17) | stable |
-| `LEGACY_M1_PERIODS_PER_YEAR` | value | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L388) | compatibility-only |
-| `PerformanceMetrics` | class | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L21) | stable |
-| `calculate_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L417) | stable |
-| `compute_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L308) | stable |
-| `evaluation_periods_per_year` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L391) | stable |
-| `max_drawdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L209) | stable |
-| `sweep_delay_breakdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L151) | stable |
-| `CI.as_tuple` | method | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L30) | stable |
+| `DEFAULT_PERIODS_PER_YEAR` | value | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L18) | stable |
+| `LEGACY_M1_PERIODS_PER_YEAR` | value | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L401) | compatibility-only |
+| `PerformanceMetrics` | class | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L23) | stable |
+| `calculate_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L430) | stable |
+| `compute_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L312) | stable |
+| `evaluation_periods_per_year` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L404) | stable |
+| `max_drawdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L213) | stable |
+| `sweep_delay_breakdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L155) | stable |
+| `CI.as_tuple` | method | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L36) | stable |
 | `CalibrationReport.summary` | method | [evaluation.metrics.calibration](../../evaluation/metrics/calibration.py#L31) | stable |
 | `plot_drawdown` | function | [evaluation.plotting.equity](../../evaluation/plotting/equity.py#L245) | stable |
 | `plot_equity_curve` | function | [evaluation.plotting.equity](../../evaluation/plotting/equity.py#L41) | stable |
@@ -205,19 +206,21 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `plot_per_trade_orders_html (alias for plot_per_trade_orders)` | function | [evaluation.plotting.interactive_orders](../../evaluation/plotting/interactive_orders.py#L217) | stable |
 | `plot_price_with_orders` | function | [evaluation.plotting.orders](../../evaluation/plotting/orders.py#L37) | stable |
 | `main` | function | [evaluation.reanalysis](../../evaluation/reanalysis/__init__.py#L1) | stable |
-| `aggregate_seeds` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L41) | stable |
-| `build_comparison_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L137) | stable |
+| `aggregate_seeds` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L53) | stable |
+| `build_comparison_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L234) | stable |
 | `build_evaluation_manifest` | function | [evaluation.reporting.evaluation_manifest](../../evaluation/reporting/evaluation_manifest.py#L14) | stable |
-| `build_run_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L203) | stable |
-| `build_summary_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L116) | stable |
-| `print_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L69) | stable |
-| `save_metrics_json` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L179) | stable |
+| `build_run_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L299) | stable |
+| `build_summary_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L213) | stable |
+| `print_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L81) | stable |
+| `save_metrics_json` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L276) | stable |
 | `save_run` | function | [evaluation.reporting.run_artifact_writer](../../evaluation/reporting/run_artifact_writer.py#L668) | stable |
 | `write_evaluation_manifest` | function | [evaluation.reporting.evaluation_manifest](../../evaluation/reporting/evaluation_manifest.py#L70) | stable |
+| `RandomEligibleSetupPolicy` | class | [evaluation.rollout.random_eligible_setup](../../evaluation/rollout/random_eligible_setup.py#L17) | stable |
 | `evaluate_model` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L118) | stable |
 | `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L710) | stable |
 | `make_action_fn` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L59) | stable |
 | `run_episode` | function | [evaluation.rollout.episode_rollout](../../evaluation/rollout/episode_rollout.py#L26) | stable |
+| `RandomEligibleSetupPolicy.metadata` | method | [evaluation.rollout.random_eligible_setup](../../evaluation/rollout/random_eligible_setup.py#L103) | stable |
 
 ### `experiments`
 
@@ -643,10 +646,15 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `TradingPolicyConfig.validate` | method | [trading.policy.config](../../trading/policy/config.py#L58) | stable |
 | `reorder_remaining_targets` | function | [trading.positions.multi_tp](../../trading/positions/multi_tp.py#L10) | stable |
 | `FTMOGuardrails` | class | [trading.risk.guardrails](../../trading/risk/guardrails.py#L21) | stable |
+| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L13) | compatibility-only |
+| `RISK_DAILY_PNL_BASIS_SESSION_EQUITY` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L12) | stable |
+| `RISK_DECISION_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L11) | stable |
+| `RISK_STATE_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L10) | stable |
 | `RiskBudgetDecision` | class | [trading.risk.budget](../../trading/risk/budget.py#L9) | stable |
-| `RiskDecision` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L26) | stable |
-| `RiskPolicy` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L39) | stable |
-| `RiskState` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L10) | stable |
+| `RiskDailyPnlBasis` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L9) | stable |
+| `RiskDecision` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L52) | stable |
+| `RiskPolicy` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L75) | stable |
+| `RiskState` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L17) | stable |
 | `approve_dynamic_risk` | function | [trading.risk.budget](../../trading/risk/budget.py#L36) | stable |
 | `compute_lots` | function | [trading.risk.sizing](../../trading/risk/sizing.py#L93) | stable |
 | `compute_lots_with_execution_reserve` | function | [trading.risk.sizing](../../trading/risk/sizing.py#L151) | stable |
@@ -655,7 +663,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `modeled_execution_reserve_usd` | function | [trading.risk.execution_reserve](../../trading/risk/execution_reserve.py#L6) | stable |
 | `risk_budget_from_equity` | function | [trading.risk.budget](../../trading/risk/budget.py#L23) | stable |
 | `stop_loss_risk_usd` | function | [trading.risk.sizing](../../trading/risk/sizing.py#L13) | stable |
-| `RiskPolicy.decide` | method | [trading.risk.contracts](../../trading/risk/contracts.py#L42) | stable |
+| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L13) | compatibility-only |
+| `RiskPolicy.decide` | method | [trading.risk.contracts](../../trading/risk/contracts.py#L78) | stable |
 | `FTMOGuardrails.any_breach` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L210) | stable |
 | `FTMOGuardrails.breach_reason` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L221) | stable |
 | `FTMOGuardrails.check_daily` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L128) | stable |

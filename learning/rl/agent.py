@@ -463,6 +463,7 @@ def validate_model_architecture(model: Any, expected_arch: str, *, use_vae: bool
             "tcn",
             "tcn_regime",
             "mtf",
+            "mtf_empty_stream_masked_v1",
             "mtf_reasoning",
             "mtf_shared_tcn_reasoning",
             "mtf_m1_tcn_htf_lite_reasoning",
@@ -570,6 +571,7 @@ def build_agent(
     else:
         mtf_architectures = {
             "mtf",
+            "mtf_empty_stream_masked_v1",
             "mtf_reasoning",
             "mtf_shared_tcn_reasoning",
             "mtf_m1_tcn_htf_lite_reasoning",
@@ -580,7 +582,7 @@ def build_agent(
         extractor_cls = encoder_for(arch)
 
         latent_dim = 128
-        if arch == "mtf":
+        if arch in {"mtf", "mtf_empty_stream_masked_v1"}:
             extractor_kwargs = dict(latent_dim=latent_dim, account_dim=account_dim)
         elif arch == "mtf_reasoning":
             reasoning_cfg = agent_cfg.get("mtf_reasoning", {})

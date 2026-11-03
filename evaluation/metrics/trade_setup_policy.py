@@ -15,6 +15,8 @@ from decisioning.trade_setup import (
     TRADE_SETUP_TIMEFRAMES,
     trade_setup_candidate,
 )
+from evaluation.metrics.performance import _trade_stats
+from simulation.environment.timebase import BAR_TIME_TZ
 
 _STRUCTURAL_TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H2", "H4", "D1", "W1")
 _TIMEFRAME_RANK = {name: index for index, name in enumerate(_STRUCTURAL_TIMEFRAMES)}
@@ -103,7 +105,9 @@ def summarize_trade_setup_decisions(
         ideas = decisions.loc[~no_trade, "idea"].fillna("").astype(str)
         timeframes = decisions.loc[~no_trade, "setup_timeframe"].fillna("").astype(str)
         entropy = pd.to_numeric(decisions["trade_setup_entropy_nats"], errors="coerce")
-        timestamps = pd.to_datetime(decisions["time"], errors="coerce", utc=True)
+        decision_time_column = "decision_time" if "decision_time" in decisions else "time"
+        timestamps = pd.to_datetime(decisions[decision_time_column], errors="coerce", utc=True)
+        timestamps = timestamps.dt.tz_convert(BAR_TIME_TZ)
         entropy_rows = pd.DataFrame(
             {
                 "month": timestamps.dt.strftime("%Y-%m"),
@@ -439,20 +443,24 @@ def summarize_trade_setup_decisions(
                 errors="coerce",
             ).dropna()
             if not pnl.empty:
-                winners = pnl[pnl > 0.0]
-                losers = pnl[pnl < 0.0]
+                trade_stats = _trade_stats(pnl.to_numpy(dtype=float))
+                profit_factor = trade_stats["profit_factor"]
                 performance_row.update(
                     {
                         "completed_trade_count": int(len(pnl)),
                         "net_pnl": float(pnl.sum()),
                         "mean_pnl": float(pnl.mean()),
                         "median_pnl": float(pnl.median()),
-                        "win_rate": float((pnl > 0.0).mean()),
-                        "profit_factor": (
-                            float(winners.sum() / abs(losers.sum())) if not losers.empty else None
-                        ),
+                        "win_rate": trade_stats["win_rate"],
+                        "profit_factor": (profit_factor if np.isfinite(profit_factor) else None),
                     }
                 )
+                if np.isnan(profit_factor):
+                    performance_row["profit_factor_availability"] = "undefined_no_gains_or_losses"
+                elif np.isinf(profit_factor):
+                    performance_row["profit_factor_availability"] = (
+                        "unbounded_no_losses_with_positive_gains"
+                    )
             realized_r = pd.to_numeric(
                 group.get("position_realized_r", pd.Series(index=group.index, dtype=float)),
                 errors="coerce",
@@ -474,7 +482,109 @@ def summarize_trade_setup_decisions(
     }
     decision_metrics["semantic_violations"] = dict(sorted(semantic_violations.items()))
     decision_metrics["semantic_violation_count"] = int(sum(semantic_violations.values()))
+    decision_metrics["decision_open_linkage"] = _decision_open_linkage(decisions, opens)
     return decision_metrics
+
+
+def _decision_open_linkage(decisions: pd.DataFrame, opens: pd.DataFrame) -> dict[str, Any]:
+    """Summarize exact decision-to-open linkage without inferring missing IDs.
+
+    Args:
+        decisions: Per-step setup decision records.
+        opens: Opening fill events from the same rollout.
+
+    Returns:
+        Counts and integrity status for the decision/open join.
+    """
+    unavailable = {
+        "status": "unavailable",
+        "decision_count": int(len(decisions)),
+        "open_count": int(len(opens)),
+        "decisions_without_decision_id": None,
+        "decisions_with_open": None,
+        "decisions_without_open": None,
+        "opens_without_decision_id": None,
+        "opens_with_unknown_decision_id": None,
+        "duplicate_decision_id_count": None,
+        "multiple_opens_per_decision_count": None,
+        "candidate_id_columns_available": None,
+        "candidate_id_mismatch_count": None,
+    }
+    if decisions.empty:
+        return unavailable
+    if "decision_id" not in decisions.columns or "decision_id" not in opens.columns:
+        return {**unavailable, "status": "incomplete_missing_decision_id_column"}
+
+    decision_ids = decisions["decision_id"].fillna("").astype(str).str.strip()
+    open_ids = opens["decision_id"].fillna("").astype(str).str.strip()
+    valid_decision_ids = decision_ids[decision_ids.ne("")]
+    duplicate_count = int(valid_decision_ids[valid_decision_ids.duplicated(keep=False)].nunique())
+    missing_decision_count = int(decision_ids.eq("").sum())
+    known_ids = set(valid_decision_ids)
+    valid_open_ids = open_ids[open_ids.ne("")]
+    unknown_open_count = int((valid_open_ids.map(lambda value: value not in known_ids)).sum())
+    missing_open_count = int(open_ids.eq("").sum())
+    opens_by_id = valid_open_ids.value_counts()
+    matched_ids = set(opens_by_id.index).intersection(known_ids)
+    multiple_open_count = int((opens_by_id.loc[list(matched_ids)] > 1).sum()) if matched_ids else 0
+
+    candidate_ids_available = "trade_setup_candidate_id" in decisions.columns and (
+        "trade_setup_candidate_id" in opens.columns
+    )
+    candidate_mismatch_count: int | None = None
+    if candidate_ids_available:
+        candidate_mismatch_count = 0
+        candidates_by_id = pd.DataFrame(
+            {
+                "decision_id": decision_ids,
+                "candidate_id": pd.to_numeric(
+                    decisions["trade_setup_candidate_id"], errors="coerce"
+                ),
+            }
+        ).drop_duplicates("decision_id")
+        opened_candidates = pd.DataFrame(
+            {
+                "decision_id": open_ids,
+                "candidate_id": pd.to_numeric(opens["trade_setup_candidate_id"], errors="coerce"),
+            }
+        )
+        joined = opened_candidates.merge(
+            candidates_by_id, on="decision_id", how="inner", suffixes=("_open", "_decision")
+        )
+        comparable = joined["candidate_id_open"].notna() & joined["candidate_id_decision"].notna()
+        candidate_mismatch_count = int(
+            (
+                joined.loc[comparable, "candidate_id_open"]
+                != joined.loc[comparable, "candidate_id_decision"]
+            ).sum()
+        )
+
+    status = (
+        "mismatch"
+        if missing_decision_count
+        or duplicate_count
+        or unknown_open_count
+        or missing_open_count
+        or multiple_open_count
+        or candidate_mismatch_count
+        else "incomplete_missing_candidate_id_column"
+        if not candidate_ids_available
+        else "complete"
+    )
+    return {
+        "status": status,
+        "decision_count": int(len(decisions)),
+        "open_count": int(len(opens)),
+        "decisions_without_decision_id": missing_decision_count,
+        "decisions_with_open": int(len(matched_ids)),
+        "decisions_without_open": int(len(known_ids - matched_ids)),
+        "opens_without_decision_id": missing_open_count,
+        "opens_with_unknown_decision_id": unknown_open_count,
+        "duplicate_decision_id_count": duplicate_count,
+        "multiple_opens_per_decision_count": multiple_open_count,
+        "candidate_id_columns_available": bool(candidate_ids_available),
+        "candidate_id_mismatch_count": candidate_mismatch_count,
+    }
 
 
 def _finite(value: object) -> float | None:

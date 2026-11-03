@@ -294,6 +294,7 @@ def build_eval_common(
         "risk_mode": str(cfg.env.get("risk_mode", "dynamic")),
         "observation_schema_version": observation_schema_version,
         "observation_age_scale_bars": float(cfg.env.get("observation_age_scale_bars", 60.0)),
+        "reachable_r_validity_mask": bool(cfg.env.get("reachable_r_validity_mask", False)),
         "entry_intensity_threshold": float(cfg.env.get("entry_intensity_threshold", 0.0)),
         "peak_trailing_dd_limit": float(cfg.env.get("peak_trailing_dd_limit", 0.0)),
         "agent_direction_control": bool(cfg.env.get("agent_direction_control", False)),
@@ -327,6 +328,7 @@ def build_eval_common(
         "scheduled_session_closes": scheduled_session_closes(cfg),
         "session_start": str(cfg.session.get("start", "16:30")),
         "trading_policy": policy.to_dict(),
+        "fill_latency_bars": fill_latency_bars(cfg),
     }
     return eval_common, strategy, strategy_reward, strategy_weight, strategy_actions
 
@@ -347,6 +349,30 @@ def fill_delay_ms(cfg: Any) -> int:
         return int(execution.get("fill_delay_ms", 0))
     except Exception:
         return 0
+
+
+def fill_latency_bars(cfg: Any) -> int:
+    """Whole M1 bars added after the existing next-bar entry fill.
+
+    Args:
+        cfg: Run configuration used by this operation.
+
+    Returns:
+        A non-negative whole-bar entry latency.
+    """
+    execution = cfg.get("execution") if hasattr(cfg, "get") else None
+    if execution is None:
+        return 0
+    value = execution.get("fill_latency_bars", 0)
+    if isinstance(value, bool):
+        raise ValueError("execution.fill_latency_bars must be a non-negative integer")
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("execution.fill_latency_bars must be a non-negative integer") from exc
+    if parsed < 0 or parsed != value:
+        raise ValueError("execution.fill_latency_bars must be a non-negative integer")
+    return parsed
 
 
 def randomized_fill_latency_ms(cfg: Any) -> float:
@@ -446,6 +472,7 @@ def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
             windows[str(key)] = int(value)
     mtf_architectures = {
         "mtf",
+        "mtf_empty_stream_masked_v1",
         "mtf_reasoning",
         "mtf_shared_tcn_reasoning",
         "mtf_m1_tcn_htf_lite_reasoning",
@@ -569,6 +596,7 @@ def make_env(
         entry_state_observation=bool(cfg.env.get("entry_state_observation", True)),
         observation_schema_version=observation_schema_version,
         observation_age_scale_bars=float(cfg.env.get("observation_age_scale_bars", 60.0)),
+        reachable_r_validity_mask=bool(cfg.env.get("reachable_r_validity_mask", False)),
         strict_research_eligibility=bool(cfg.env.get("strict_research_eligibility", False)),
         sl_buffer_pts=float(cfg.env.get("sl_buffer_pts", 0.0)),
         strategy_reward=strategy_reward,
@@ -619,4 +647,5 @@ def make_env(
         scheduled_session_closes=scheduled_session_closes(cfg),
         session_start=str(cfg.session.get("start", "16:30")),
         trading_policy=policy.to_dict(),
+        fill_latency_bars=fill_latency_bars(cfg),
     )

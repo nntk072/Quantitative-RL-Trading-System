@@ -75,6 +75,9 @@ def test_configured_ifvg_timeframes_align_and_merge_causally() -> None:
         zones["ifvg_bull_low"] = 99.5
         zones["ifvg_bull_high"] = 100.5
         zones["ifvg_bull_fvg_origin_bar"] = 0.0
+        zones["ifvg_bull_fvg_origin_time_ns"] = np.fromiter(
+            (timestamp.value for timestamp in tf_index), dtype=np.int64, count=len(tf_index)
+        )
         higher[tf] = (tf_bars, zones)
 
     # Two M15 confirmations create one same-side collision with M5 at minute 15.
@@ -98,6 +101,14 @@ def test_configured_ifvg_timeframes_align_and_merge_causally() -> None:
     ]
     assert merged["ifvg_bull_confirmed"].iloc[:3].sum() == 0.0
     assert merged["ifvg_bull_fvg_origin_bar"].iloc[event_rows].tolist() == [0.0] * 6
+    assert merged["ifvg_bull_fvg_origin_time_ns"].iloc[event_rows].tolist() == [
+        higher["M3"][0].index[0].value,
+        higher["M5"][0].index[0].value,
+        higher["M10"][0].index[0].value,
+        higher["M5"][0].index[2].value,
+        higher["M15"][0].index[1].value,
+        higher["H1"][0].index[0].value,
+    ]
     assert merged["ifvg_bull_low"].iloc[event_rows].tolist() == [99.5] * 6
     assert {
         "M3_ifvg_bull_active",
@@ -146,6 +157,8 @@ class TestPO3StateLong:
         assert state["po3_manipulation_active"].iloc[10] == 1
         assert state["po3_manipulation_low"].iloc[10] == pytest.approx(98.0)
         assert state["po3_manipulation_active"].iloc[:10].sum() == 0
+        assert state["po3_sweep_time_ns"].iloc[10] == bars.index[10].value
+        assert np.isnan(state["po3_reclaim_time_ns"].iloc[10])
 
     def test_manipulation_end_and_distribution(self) -> None:
         bars = make_bars(LONG_PATH)
@@ -157,6 +170,8 @@ class TestPO3StateLong:
         assert state["po3_distribution"].iloc[13] == 1
         assert state["po3_distribution_direction"].iloc[13] == 1
         assert state["po3_manipulation_active"].iloc[13] == 0
+        assert state["po3_sweep_time_ns"].iloc[13] == bars.index[10].value
+        assert state["po3_reclaim_time_ns"].iloc[13] == bars.index[13].value
 
     def test_extremes_persist_for_sl(self) -> None:
         bars = make_bars(LONG_PATH)
@@ -244,6 +259,10 @@ class TestIFVGZones:
         assert zones["ifvg_bull_confirmed"].iloc[start] == 1
         assert zones["ifvg_bull_age"].iloc[start] == 0
         assert zones["ifvg_bull_age"].iloc[start + 1] == 1
+        assert zones["ifvg_bull_confirmed_at_time_ns"].iloc[start] == bars.index[start].value
+        assert zones["ifvg_bull_confirmed_at_time_ns"].iloc[start + 1] == bars.index[start].value
+        assert zones["ifvg_bull_fvg_origin_time_ns"].iloc[start] == bars.index[3].value
+        assert zones["ifvg_bull_fvg_origin_time_ns"].iloc[start + 1] == bars.index[3].value
         zone_low = zones["ifvg_bull_low"].iloc[start]
         zone_high = zones["ifvg_bull_high"].iloc[start]
         assert zone_low == pytest.approx(100.5)
@@ -251,6 +270,24 @@ class TestIFVGZones:
         # Retest bar closes inside the zone bounds.
         assert zones["price_in_ifvg_bull"].iloc[8] == 1
         assert zones["ifvg_bull_distance_atr"].iloc[start] >= 0
+
+    def test_same_bar_confirmations_retain_selected_gap_origin_time(self) -> None:
+        bars = make_bars(
+            [
+                (100.0, 99.0, 99.5),
+                (100.5, 99.5, 100.0),
+                (101.2, 101.0, 101.1),
+                (103.0, 102.0, 102.5),
+                (103.0, 99.0, 99.5),
+                (104.5, 103.5, 104.0),
+            ]
+        )
+
+        zones = build_ifvg_zone_features(bars)
+
+        assert zones["ifvg_bull_confirmed"].iloc[5] == 1
+        assert zones["ifvg_bull_fvg_origin_bar"].iloc[5] == 3
+        assert zones["ifvg_bull_fvg_origin_time_ns"].iloc[5] == bars.index[3].value
 
     def test_zone_expires(self) -> None:
         bars = self.build_frame()
@@ -299,6 +336,28 @@ class TestIFVGZones:
         assert zones["ifvg_retest_bull"].iloc[8] == 0
         assert zones["ifvg_bull_distance_atr"].iloc[8] == 5.0
 
+    def test_overlapping_fvg_retests_project_the_newest_zone_identity_causally(self) -> None:
+        """The scalar retest view picks the newest overlap and remains prefix-causal."""
+        bars = make_bars(
+            [
+                (100.0, 99.0, 99.5),
+                (101.0, 100.0, 100.5),
+                (103.0, 102.0, 102.5),  # bullish FVG: 100.0-102.0
+                (104.0, 102.4, 103.5),  # overlapping newer FVG: 101.0-102.4
+                (103.5, 102.5, 103.0),  # price leaves both zones
+                (104.0, 99.5, 101.5),  # both zones collect a retest wick
+                (105.0, 104.5, 104.8),  # confirms both on one row
+            ]
+        )
+
+        full = build_fvg_zone_features(bars)
+        prefix = build_fvg_zone_features(bars.iloc[:6])
+
+        assert full["fvg_retest_bull"].iloc[6] == 1.0
+        assert full["fvg_bull_retest_confirmed_at_time_ns"].iloc[6] == bars.index[6].value
+        assert full["fvg_bull_retest_origin_time_ns"].iloc[6] == bars.index[3].value
+        pd.testing.assert_frame_equal(full.iloc[:6], prefix, check_freq=False)
+
     def test_holding_retest_is_not_a_close_inside_the_gap(self) -> None:
         bars = self.build_frame()
         # Bar 7 is entirely above the zone. Bar 8 tags the high and closes back above it.
@@ -315,6 +374,8 @@ class TestIFVGZones:
         assert zones["price_in_ifvg_bull"].iloc[8] == 0
         assert zones["ifvg_retest_bull"].iloc[8] == 0
         assert zones["ifvg_retest_bull"].iloc[9] == 1
+        assert zones["ifvg_bull_retest_confirmed_at_time_ns"].iloc[9] == bars.index[9].value
+        assert zones["ifvg_bull_fvg_origin_time_ns"].iloc[9] == bars.index[3].value
         assert zones["ifvg_bull_origin"].iloc[8] == pytest.approx(99.5)
 
     def test_retest_accepts_a_touch_deep_inside_the_zone(self) -> None:

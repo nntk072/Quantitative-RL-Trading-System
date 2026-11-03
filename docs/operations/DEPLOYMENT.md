@@ -11,8 +11,9 @@ call made under the pressure of "the backtest looked good."
 
 - **Entrypoint:** `live_trading_rl.py` (repo root).
 - **Default is paper:** `PAPER_TRADING` defaults to `true` — signals and
-  intended orders are logged, no orders are placed. Real orders require an
-  explicit `PAPER_TRADING=false`.
+  intended orders are logged, no orders are placed. Real-order mode requires
+  explicit `PAPER_TRADING=false` and a risk manager that enforces the training
+  account-loss guardrails; the bundled MT5 manager does not currently qualify.
 - **Checkpoint selection:** `RL_MODEL_PATH=outputs/<run>/model/ppo_final`
   (or `--model`). The run's saved `config.yaml` is loaded automatically for
   train/live feature parity; SMT/secondary-symbol data is wired iff the run
@@ -24,6 +25,11 @@ call made under the pressure of "the backtest looked good."
   (`risk_per_symbol` 1% ≈ `risk_per_trade_limit` $1000 on a $100k account).
   If you change one, keep the other aligned — silent divergence between the
   training risk budget and the live one is a behavior change, not a detail.
+- **Real-order mode is currently blocked:** the bundled MT5 `RiskManager`
+  enforces per-symbol and aggregate stop-risk exposure, but has no trusted,
+  restart-safe daily/max-loss account state. Both MT5 robots reject non-paper
+  startup unless their risk manager explicitly advertises those account
+  guardrails. Paper mode remains available.
 
 ---
 
@@ -116,6 +122,10 @@ Broker-side fixed stops and stop-based exposure caps are enforced by
 `RLRobot`/`RiskManager`, but this does not close those parity gaps. Keep
 `PAPER_TRADING=true` until a reviewed implementation maps the trained policy's
 actual exit semantics and account guardrails to MT5 and verifies them with
-broker-compatible integration tests.
+broker-compatible integration tests. The current robot also enforces this
+boundary in code by rejecting non-paper startup when the supplied risk manager
+does not advertise training-equivalent daily and maximum account-loss
+guardrails; the bundled `RiskManager` does not advertise them. It therefore
+does not provide live position management in that mode either.
 
 For provenance and command validity, see [reproducibility](../concepts/reproducibility.md).

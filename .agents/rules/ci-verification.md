@@ -23,6 +23,13 @@ which fails with `Exec format error` on an ARM node. Verify `uname -m` and the
 tool binary before starting a gate. An architecture mismatch is an invocation
 failure, not a lint, type, or test result.
 
+When a console launcher reports `bad interpreter`, inspect its shebang before
+retrying. If the active environment's Python works but a relocated wrapper has
+a stale absolute path, invoke the tool as a module with that same interpreter
+(for example, `.venv-x86/bin/python -m pytest <paths> -q`). Record this as an
+environment invocation issue, not a project test failure. Do not repair or
+replace a shared virtual environment as part of an unrelated source change.
+
 Lock/export/sync operations still require `uv`. On ARM, `tools/check` prefers
 `QRL_UV` or a `uv` executable inside the selected project environment; do not
 let it fall through to an x86 login-home binary. For a standalone native

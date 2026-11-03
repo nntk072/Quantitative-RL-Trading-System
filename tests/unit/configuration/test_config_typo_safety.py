@@ -37,6 +37,39 @@ def test_correct_override_applies() -> None:
     assert cfg.training.max_days == 10
 
 
+def test_flat_list_override_parses_and_uses_the_configured_list_type() -> None:
+    cfg = load_config(["features.ema_periods=[9,21,50,200]"])
+
+    assert cfg.features.ema_periods == [9, 21, 50, 200]
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        "features.ema_periods=[[9,21],50]",
+        "features.ema_periods=[9,'50']",
+        "features.ema_periods=[9,NaN]",
+    ],
+)
+def test_list_override_rejects_nested_or_non_finite_values(override: str) -> None:
+    with pytest.raises(ValueError):
+        load_config([override])
+
+
+@pytest.mark.parametrize(
+    ("override", "message"),
+    [
+        ("ppo.learning_rate=fast", r"expected float at config\.ppo\.learning_rate"),
+        ("env.n_envs=2.5", r"expected int at config\.env\.n_envs"),
+        ("env.strategy_actions=1", r"expected bool at config\.env\.strategy_actions"),
+    ],
+)
+def test_wrong_typed_known_override_is_rejected(override: str, message: str) -> None:
+    """Known CLI leaves still have to match the effective configuration schema."""
+    with pytest.raises(ValueError, match=message):
+        load_config([override])
+
+
 def test_variant_config_merge_is_not_flagged() -> None:
     """Chain B/F variant fragments (features.* keys) load via config_path,
     *before* overrides, so overriding their keys must not raise.

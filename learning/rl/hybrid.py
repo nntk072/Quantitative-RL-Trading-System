@@ -323,6 +323,13 @@ class HybridBoxDistribution(SB3Distribution):
             self.categorical[setup_name].entropy(),  # type: ignore[no-untyped-call]
         )
 
+    def trade_setup_probabilities(self) -> torch.Tensor:
+        """Return the masked primary setup probabilities for the current batch."""
+        distribution = self.categorical.get("trade_setup")
+        if distribution is None:
+            raise RuntimeError("distribution has no trade-setup categorical head")
+        return distribution.probs
+
     def actions_from_params(
         self,
         means: torch.Tensor,
@@ -398,6 +405,7 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         self.trade_setup_mask_key = trade_setup_mask_key or "trade_setup_mask"
         self._distribution_masks: dict[str, torch.Tensor] | None = None
         self.last_trade_setup_entropy: torch.Tensor | None = None
+        self.last_trade_setup_probabilities: torch.Tensor | None = None
         super().__init__(*args, **kwargs)
 
     def _build(self, lr_schedule: Any) -> None:
@@ -448,6 +456,11 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         )
         self.last_trade_setup_entropy = (
             distribution.trade_setup_entropy().detach()
+            if self.setup_coordinate is not None
+            else None
+        )
+        self.last_trade_setup_probabilities = (
+            distribution.trade_setup_probabilities().detach()
             if self.setup_coordinate is not None
             else None
         )
@@ -900,6 +913,12 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
             self.trade_setup.entropy(),  # type: ignore[no-untyped-call]
         )
 
+    def trade_setup_probabilities(self) -> torch.Tensor:
+        """Return the masked primary setup probabilities for the current batch."""
+        if self.trade_setup is None:
+            raise RuntimeError("call proba_distribution before reading setup probabilities")
+        return self.trade_setup.probs
+
     def entropy(self) -> torch.Tensor:
         """Exact entropy of the hierarchical policy via the chain rule.
 
@@ -1013,6 +1032,7 @@ class TradeSetupConditionedClampedStdMultiInputPolicy(HybridClampedStdMultiInput
             latent_pi, self.log_std, trade_setup_logits, masks=self._distribution_masks
         )
         self.last_trade_setup_entropy = distribution.trade_setup_entropy().detach()
+        self.last_trade_setup_probabilities = distribution.trade_setup_probabilities().detach()
         return distribution
 
     def _get_constructor_parameters(self) -> dict[str, Any]:

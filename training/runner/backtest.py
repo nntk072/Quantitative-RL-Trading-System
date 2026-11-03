@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import argparse
 import logging
 import random
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -30,6 +30,9 @@ from features import FEATURE_CACHE_VERSION, build_features
 from market_data.loading import build_tick_books, run_pipeline
 from market_data.splits.definitions import get_split_config, split_bars, split_train_test
 from simulation.backtest import run_backtest
+from simulation.environment.trading_environment_factory import eval_guardrail_kwargs
+from trading.policy import TradingPolicyConfig, resolve_trading_policy
+from trading.risk import RiskDailyPnlBasis
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -47,6 +50,14 @@ def _random_policy(obs: np.ndarray[Any, Any]) -> int:
     return random.choice([-1, 0, 1])
 
 
+def _configured_backtest_policy(cfg: Any) -> TradingPolicyConfig:
+    """Resolve and validate account lifecycle semantics for a backtest run."""
+    policy = resolve_trading_policy(cfg)
+    if policy.daily_pnl_basis is None:
+        raise ValueError("resolved trading policy must define a daily PnL basis")
+    return policy
+
+
 def main() -> None:
     """Run a configured policy backtest and write evaluation artifacts."""
     parser = argparse.ArgumentParser()
@@ -61,6 +72,8 @@ def main() -> None:
     np.random.seed(args.seed)
 
     cfg = load_config(args.overrides)
+    trading_policy = _configured_backtest_policy(cfg)
+    daily_pnl_basis = cast(RiskDailyPnlBasis, trading_policy.daily_pnl_basis)
     data = run_pipeline(cfg, force=args.force)
 
     primary_sym = cfg.data.primary
@@ -115,6 +128,14 @@ def main() -> None:
         take_profit_per_trade = cfg.backtest.validation.take_profit_per_trade_usd
     except Exception:
         pass
+    if trading_policy.repeated_payout:
+        policy_risk_cap = trading_policy.operating_balance * trading_policy.max_agent_risk_frac
+        max_loss_per_trade = (
+            policy_risk_cap
+            if max_loss_per_trade is None
+            else min(float(max_loss_per_trade), policy_risk_cap)
+        )
+        take_profit_per_trade = None
 
     def _run(
         bars: pd.DataFrame,
@@ -140,20 +161,44 @@ def main() -> None:
             policy=_random_policy,
             obs_window=cfg.env.obs_window,
             initial_balance=cfg.account.initial_balance,
+            guardrail_kwargs=eval_guardrail_kwargs(cfg),
             max_loss_per_trade_usd=max_loss_per_trade,
             take_profit_per_trade_usd=take_profit_per_trade,
+            eod_risk=dict(cfg.env.get("eod_risk", {})),
+            sl_mode=str(cfg.risk.get("sl_mode", "fixed")),
+            daily_pnl_basis=daily_pnl_basis,
+            trading_policy=trading_policy,
+            use_structure_sl_tp=trading_policy.repeated_payout,
+            risk_frac=(
+                trading_policy.max_agent_risk_frac
+                if trading_policy.repeated_payout
+                else float(cfg.risk.default_risk_frac)
+            ),
+            rr_ratio=float(cfg.risk.rr_ratio_default),
+            swing_buffer_pts=float(cfg.risk.swing_buffer_pts),
+            sl_buffer_pts=float(cfg.env.get("sl_buffer_pts", 0.0)),
+            min_lot=float(cfg.risk.min_lot),
+            max_lot=float(cfg.risk.max_lot),
+            contract_size=float(cfg.account.contract_size),
             tickbook=ticks,
             tick_execution_required=bool(cfg.costs.use_tick_execution),
+            fill_latency_bars=cfg.execution.get("fill_latency_bars", 0),
             randomized_fill_latency_ms=cfg.execution.randomized_fill_latency_ms,
             max_tick_quote_wait_ms=cfg.execution.max_tick_quote_wait_ms,
             execution_seed=args.seed,
         )
         result["initial_balance"] = cfg.account.initial_balance
+        metric_equity = (
+            result["total_economic_value_curve"]
+            if trading_policy.repeated_payout
+            else result["equity"]
+        )
         m = calculate_metrics(
-            result["equity"],
+            metric_equity,
             trades=result["trades"],
             n_sessions=result.get("n_sessions", 1),
             n_breach_sessions=result.get("n_breach_sessions", 0),
+            initial_balance=float(cfg.account.initial_balance),
         )
         log.info(
             "[%s] Sharpe=%.3f  MaxDD=%.2f%%  Trades=%d  Breaches=%d/%d  Return=%.2f%%",

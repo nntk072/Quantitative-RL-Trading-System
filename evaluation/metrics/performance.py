@@ -7,6 +7,7 @@ framework-free so they can be unit-tested against hand-computed fixtures.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -15,6 +16,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 DEFAULT_PERIODS_PER_YEAR = 252 * 24  # hourly bars fallback
+METRIC_DEFINITION_VERSION = "qrl.performance_metrics.v2"
 
 
 @dataclass(frozen=True)
@@ -40,6 +42,8 @@ class PerformanceMetrics:
     turnover: float = 0.0
     max_consec_loss: int = 0
     avg_trade: float = 0.0
+    periods_per_year: int = DEFAULT_PERIODS_PER_YEAR
+    metric_definition_version: str = METRIC_DEFINITION_VERSION
     extras: dict[str, float] = field(default_factory=dict)
 
 
@@ -152,7 +156,7 @@ def sweep_delay_breakdown(
     trade_log: Sequence[dict[str, Any]],
     delay_key: str = "sweep_delay_s",
     level_key: str = "level_type",
-) -> dict[str, float]:
+) -> dict[str, float | int | None]:
     """Summarise Sweep Delay and Asian-vs-London targeting from open trades.
 
     Args:
@@ -163,7 +167,9 @@ def sweep_delay_breakdown(
     Returns:
         Dict with ``sweep_delay_mean_s``, ``sweep_delay_median_s``,
         ``n_entries``, ``london_pct`` and ``asian_pct`` (percent of
-        entries attributed to London/Asian levels).
+        entries attributed to London/Asian levels). Delay statistics are
+        ``None`` when no finite delay was observed; level percentages are
+        ``None`` when no entry was attributed to either level family.
     """
     delays: list[float] = []
     london = 0
@@ -184,11 +190,11 @@ def sweep_delay_breakdown(
 
     total = float(london + asian)
     return {
-        "sweep_delay_mean_s": float(np.mean(delays)) if delays else 0.0,
-        "sweep_delay_median_s": float(np.median(delays)) if delays else 0.0,
-        "n_entries": float(n_entries),
-        "london_pct": london / total * 100.0 if total else 0.0,
-        "asian_pct": asian / total * 100.0 if total else 0.0,
+        "sweep_delay_mean_s": float(np.mean(delays)) if delays else None,
+        "sweep_delay_median_s": float(np.median(delays)) if delays else None,
+        "n_entries": n_entries,
+        "london_pct": london / total * 100.0 if total else None,
+        "asian_pct": asian / total * 100.0 if total else None,
     }
 
 
@@ -276,7 +282,11 @@ def _trade_stats(trade_pnls: NDArray[np.float64]) -> dict[str, float]:
     losses = trade_pnls[trade_pnls < 0]
     gross_loss = float(-losses.sum())
     if gross_loss == 0.0:
-        profit_factor = float("inf") if gains.size else 0.0
+        profit_factor = (
+            float("inf")
+            if gains.size
+            else float("nan")  # Breakevens provide neither gains nor losses.
+        )
     else:
         profit_factor = float(gains.sum() / gross_loss)
     return {
@@ -356,7 +366,14 @@ def compute_metrics(
     # end-of-bar valuations. ``returns`` always counts elapsed bar intervals,
     # so use it as the annualisation duration in both representations.
     years = returns.size / periods_per_year
-    annualised = ((curve[-1] / initial_balance) ** (1.0 / years) - 1.0) if years > 0 else 0.0
+    if years > 0:
+        annualised_log_return = (math.log(float(curve[-1])) - math.log(initial_balance)) / years
+        try:
+            annualised = math.expm1(annualised_log_return)
+        except OverflowError:
+            annualised = math.inf if annualised_log_return > 0.0 else -1.0
+    else:
+        annualised = 0.0
 
     pnls = np.asarray(trade_pnls if trade_pnls is not None else [], dtype=float)
     stats = _trade_stats(pnls)
@@ -378,6 +395,8 @@ def compute_metrics(
         turnover=float(pnls.size / curve.size) if curve.size else 0.0,
         max_consec_loss=_max_consec_loss(pnls),
         avg_trade=stats["expectancy"],
+        periods_per_year=periods_per_year,
+        metric_definition_version=METRIC_DEFINITION_VERSION,
         extras=dict(extras or {}),
     )
 

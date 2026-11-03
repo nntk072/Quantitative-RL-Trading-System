@@ -8,6 +8,7 @@ import pandas as pd
 
 from market_data.loading.ticks import (
     TickExecutionUnavailable,
+    event_keyed_execution_rng,
     resolve_tick_execution,
     resolve_tick_exit,
 )
@@ -51,6 +52,7 @@ class TickQuoteRuntimeMixin(RuntimeMixinBase):
                     if pos.entry_timestamp is None
                     else pd.Timestamp(cast(Any, pos.entry_timestamp))
                 ),
+                event_seed=int(self.np_random_seed),
             )
             if hit is None:
                 return None
@@ -94,7 +96,7 @@ class TickQuoteRuntimeMixin(RuntimeMixinBase):
         )
 
     def _resolve_randomized_tick_quote(
-        self, order_time: pd.Timestamp
+        self, order_time: pd.Timestamp, *, event_key: str | None = None
     ) -> tuple[Any, dict[str, Any]]:
         """Resolve the first eligible tick and return auditable execution fields.
 
@@ -104,16 +106,23 @@ class TickQuoteRuntimeMixin(RuntimeMixinBase):
 
         Args:
             order_time: Order time used by the operation described above.
+            event_key: Optional stable key used to make the latency draw independent
+                of unrelated random-number draws.
 
         Returns:
             Mapping from ``str`` keys to ``Any]`` values.
         """
         if self._tickbook is None:
             raise TickExecutionUnavailable("tick-only execution requires a TickBook")
+        rng = (
+            self.np_random
+            if event_key is None
+            else event_keyed_execution_rng(int(self.np_random_seed), event_key)
+        )
         quote = resolve_tick_execution(
             self._tickbook,
             pd.Timestamp(order_time),
-            self.np_random,
+            rng,
             max_latency_ns_exclusive=int(self.randomized_fill_latency_ms * 1_000_000),
             max_quote_wait_ns=self.max_tick_quote_wait_ms * 1_000_000,
         )

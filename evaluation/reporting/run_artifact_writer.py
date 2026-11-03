@@ -274,8 +274,23 @@ def _write_split(
     if save_csv:
         if not equity.empty:
             equity.to_csv(split_dir / "equity.csv", header=["equity"])
+        economic_value_curve = result.get("total_economic_value_curve")
+        if (
+            result.get("trading_policy_mode") == "repeated_payout"
+            and isinstance(economic_value_curve, pd.Series)
+            and not economic_value_curve.empty
+        ):
+            economic_value_curve.to_csv(
+                split_dir / "total_economic_value.csv", header=["total_economic_value"]
+            )
         trades_for_csv = trades if not trades.empty else pd.DataFrame(columns=_EMPTY_TRADE_COLUMNS)
         trades_for_csv.to_csv(split_dir / "trades.csv", index=False)
+        payout_events = result.get("payout_events", [])
+        if not isinstance(payout_events, pd.DataFrame) and payout_events:
+            pd.DataFrame(payout_events).to_csv(split_dir / "payout_events.csv", index=False)
+        cycle_events = result.get("cycle_events", [])
+        if not isinstance(cycle_events, pd.DataFrame) and cycle_events:
+            pd.DataFrame(cycle_events).to_csv(split_dir / "cycle_events.csv", index=False)
         fill_events.to_csv(split_dir / "fills.csv", index=False)
         position_records.to_csv(split_dir / "positions.csv", index=False)
         if not trades.empty and "sl_ref" in trades.columns:
@@ -334,6 +349,7 @@ def _write_split(
         "exposure_fraction": result.get("exposure_fraction"),
         "exposure_measure": result.get("exposure_measure"),
         "survived_full_year": result.get("survived_full_year"),
+        "daily_loss_is_session_scoped": result.get("daily_loss_is_session_scoped"),
         "completed_data_split": result.get("completed_data_split"),
         "episode_end_reason": result.get("episode_end_reason"),
         "fail_time": None if fail_time is None else str(fail_time),
@@ -364,12 +380,19 @@ def _write_split(
         "entry_state_diagnostics": result.get("entry_state_diagnostics", {}),
         "trading_policy_mode": result.get("trading_policy_mode", "legacy"),
         "cumulative_payouts": float(result.get("cumulative_payouts", 0.0)),
-        "total_economic_value": float(result.get("total_economic_value", final_equity)),
+        "total_economic_value": float(
+            result.get(
+                "total_economic_value", result.get("ending_total_economic_value", final_equity)
+            )
+        ),
         "cycle_count": int(result.get("cycle_count", 0)),
         "cycle_successes": int(result.get("cycle_successes", 0)),
         "cycle_failures": int(result.get("cycle_failures", 0)),
     }
     setup_policy_metrics = result.get("trade_setup_policy_metrics")
+    policy_metadata = result.get("policy_metadata")
+    if isinstance(policy_metadata, dict):
+        evaluation_diagnostics["policy_metadata"] = policy_metadata
     if isinstance(setup_policy_metrics, dict):
         file_prefix = "trade_setup"
         evaluation_diagnostics["trade_setup_policy"] = setup_policy_metrics

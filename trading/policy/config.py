@@ -29,6 +29,10 @@ class TradingPolicyConfig:
         profit_target_balance: Balance required to trigger payout eligibility.
         account_floor: Minimum permitted account equity.
         payout_amount: Optional configured payout amount.
+        risk_state_schema_version: Version of the account risk-state contract.
+        daily_pnl_basis: Signed daily-PnL basis consumed by risk checks.
+        daily_loss_includes_open_pnl: Whether current unrealized PnL is included.
+        daily_loss_reset_source: Dataset key that determines a daily reset.
     """
 
     mode: str = "legacy"
@@ -45,6 +49,23 @@ class TradingPolicyConfig:
     enforce_remaining_daily_capacity: bool = True
     enforce_remaining_account_capacity: bool = True
     repeated_eval: bool = True
+    risk_state_schema_version: str = "risk-state-v1"
+    daily_pnl_basis: str | None = None
+    daily_loss_includes_open_pnl: bool | None = None
+    daily_loss_reset_source: str = "supplied_session_id_transition"
+
+    def __post_init__(self) -> None:
+        """Resolve the explicit risk-state semantics from the selected policy."""
+        if self.mode == "legacy":
+            basis, includes_open_pnl = "legacy_gross_closed_losses", False
+        elif self.mode == "repeated_payout":
+            basis, includes_open_pnl = "session_net_equity", True
+        else:
+            return
+        if self.daily_pnl_basis is None:
+            object.__setattr__(self, "daily_pnl_basis", basis)
+        if self.daily_loss_includes_open_pnl is None:
+            object.__setattr__(self, "daily_loss_includes_open_pnl", includes_open_pnl)
 
     @property
     def repeated_payout(self) -> bool:
@@ -63,6 +84,19 @@ class TradingPolicyConfig:
         """
         if self.mode not in {"legacy", "repeated_payout"}:
             raise ValueError(f"unknown trading_policy.mode: {self.mode!r}")
+        expected_basis, expected_open_pnl = (
+            ("legacy_gross_closed_losses", False)
+            if self.mode == "legacy"
+            else ("session_net_equity", True)
+        )
+        if self.risk_state_schema_version != "risk-state-v1":
+            raise ValueError("unsupported trading policy risk-state schema")
+        if self.daily_pnl_basis != expected_basis:
+            raise ValueError("daily PnL basis does not match trading_policy.mode")
+        if self.daily_loss_includes_open_pnl is not expected_open_pnl:
+            raise ValueError("open-PnL inclusion does not match the daily PnL basis")
+        if self.daily_loss_reset_source != "supplied_session_id_transition":
+            raise ValueError("daily-loss reset source must use supplied session_id transitions")
         if self.repeated_payout:
             if self.profit_target_balance <= self.operating_balance:
                 raise ValueError("repeated payout target must exceed operating balance")

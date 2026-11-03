@@ -12,6 +12,7 @@ from gymnasium import spaces
 from models.encoders import (
     GRUEncoder,
     LiteTCNEncoder,
+    MTFEmptyStreamMaskedV1Encoder,
     MTFEncoder,
     MTFReasoningEncoder,
     TCNEncoder,
@@ -576,6 +577,47 @@ def test_mtf_encoder_returns_160() -> None:
     assert encoder(obs).shape == (batch, 160)
 
 
+def test_mtf_empty_stream_masked_v1_ignores_unavailable_stream_payloads() -> None:
+    torch.manual_seed(31)
+    encoder = MTFEmptyStreamMaskedV1Encoder(
+        _mtf_space(), latent_dim=16, channels=(8, 8), dropout=0.0
+    )
+    encoder.eval()
+    observations = {
+        "seq": torch.randn(2, 8, 3),
+        "seq_mask": torch.ones(2, 8),
+        "seq_m5": torch.randn(2, 6, 2),
+        "mask_m5": torch.ones(2, 6),
+        "seq_m15": torch.randn(2, 4, 1),
+        "mask_m15": torch.ones(2, 4),
+        "seq_h1": torch.randn(2, 4, 1),
+        "mask_h1": torch.zeros(2, 4),
+        "account": torch.randn(2, 6),
+    }
+    perturbed = {key: value.clone() for key, value in observations.items()}
+    perturbed["seq_h1"] = torch.randn_like(perturbed["seq_h1"]) * 100.0
+
+    with torch.no_grad():
+        actual = encoder(observations)
+        changed = encoder(perturbed)
+
+    torch.testing.assert_close(actual, changed, rtol=0.0, atol=0.0)
+
+
+def test_mtf_empty_stream_masked_v1_preserves_legacy_parameter_schema() -> None:
+    legacy = MTFEncoder(_mtf_space(), latent_dim=16, channels=(8, 8), dropout=0.0)
+    masked = MTFEmptyStreamMaskedV1Encoder(
+        _mtf_space(), latent_dim=16, channels=(8, 8), dropout=0.0
+    )
+
+    assert encoder_for("mtf") is MTFEncoder
+    assert encoder_for("mtf_empty_stream_masked_v1") is MTFEmptyStreamMaskedV1Encoder
+    assert {key: tuple(value.shape) for key, value in legacy.state_dict().items()} == {
+        key: tuple(value.shape) for key, value in masked.state_dict().items()
+    }
+    masked.load_state_dict(legacy.state_dict())
+
+
 def test_mtf_encoder_accepts_additional_timeframe_windows() -> None:
     observation_space = spaces.Dict(
         {
@@ -671,6 +713,76 @@ def test_mtf_reasoning_encoder_interacts_across_valid_timeframe_tokens() -> None
         parameter.grad is None or torch.isfinite(parameter.grad).all()
         for parameter in encoder.parameters()
     )
+
+
+def test_mtf_reasoning_encoder_ignores_payloads_for_empty_htf_windows() -> None:
+    torch.manual_seed(23)
+    encoder = MTFReasoningEncoder(
+        _mtf_space(), latent_dim=16, channels=(8, 8), dropout=0.0, attention_heads=4
+    ).eval()
+    observations = {
+        "seq": torch.randn(2, 8, 3),
+        "seq_mask": torch.ones(2, 8),
+        "seq_m5": torch.zeros(2, 6, 2),
+        "mask_m5": torch.zeros(2, 6),
+        "seq_m15": torch.zeros(2, 4, 1),
+        "mask_m15": torch.zeros(2, 4),
+        "seq_h1": torch.zeros(2, 4, 1),
+        "mask_h1": torch.zeros(2, 4),
+        "account": torch.randn(2, 6),
+    }
+    changed = {key: value.clone() for key, value in observations.items()}
+    changed["seq_m5"] = torch.randn_like(changed["seq_m5"]) * 100.0
+    changed["seq_m15"] = torch.randn_like(changed["seq_m15"]) * 100.0
+    changed["seq_h1"] = torch.randn_like(changed["seq_h1"]) * 100.0
+
+    with torch.no_grad():
+        expected = encoder(observations)
+        actual = encoder(changed)
+
+    torch.testing.assert_close(actual, expected, rtol=0.0, atol=0.0)
+
+
+def test_mtf_reasoning_encoder_uses_earlier_history_with_latest_candle_fixed() -> None:
+    """The configured encoder responds to prior path information, not only final rows."""
+    torch.manual_seed(19)
+    encoder = MTFReasoningEncoder(
+        _mtf_space(), latent_dim=16, channels=(8, 8), dropout=0.0, attention_heads=4
+    ).eval()
+    obs = {
+        "seq": torch.randn(2, 8, 3),
+        "seq_mask": torch.ones(2, 8),
+        "seq_m5": torch.randn(2, 6, 2),
+        "mask_m5": torch.ones(2, 6),
+        "seq_m15": torch.randn(2, 4, 1),
+        "mask_m15": torch.ones(2, 4),
+        "seq_h1": torch.randn(2, 4, 1),
+        "mask_h1": torch.ones(2, 4),
+        "account": torch.randn(2, 6),
+    }
+    changed = {key: value.clone() for key, value in obs.items()}
+    changed["seq_m5"][:, -2] += 3.0
+    latest_before = torch.cat(
+        [
+            obs[key][:, -1].reshape(len(obs[key]), -1)
+            for key in ("seq", "seq_m5", "seq_m15", "seq_h1")
+        ],
+        dim=1,
+    )
+    latest_after = torch.cat(
+        [
+            changed[key][:, -1].reshape(len(changed[key]), -1)
+            for key in ("seq", "seq_m5", "seq_m15", "seq_h1")
+        ],
+        dim=1,
+    )
+
+    with torch.no_grad():
+        reference = encoder(obs)
+        history_changed = encoder(changed)
+
+    torch.testing.assert_close(latest_before, latest_after, rtol=0.0, atol=0.0)
+    assert not torch.allclose(reference, history_changed)
 
 
 def test_tcn_arch_is_the_single_sequence_extractor() -> None:

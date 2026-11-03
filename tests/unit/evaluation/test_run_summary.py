@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -56,6 +57,7 @@ class TestReportTables:
         # Assert
         for label in ("Sharpe", "Max Drawdown", "Breach Rate", "Max Consec Loss", "Turnover"):
             assert label in table
+        assert "Completed Positions" in table
 
     def test_total_return_is_not_scaled_twice(self) -> None:
         # 1015.58 / 100_000 * 100 = 1.01558 percent, which prints as 1.02%.
@@ -87,6 +89,8 @@ class TestReportTables:
 
         # Assert
         assert data["n_trades"] == 2
+        assert data["periods_per_year"] == 6048
+        assert data["metric_definition_version"] == "qrl.performance_metrics.v2"
         assert "breach_rate" in data
         assert "turnover" in data
         assert data["initial_balance"] == pytest.approx(100_000.0)
@@ -98,10 +102,70 @@ class TestReportTables:
         path = tmp_path / "inactive_metrics.json"
         save_metrics_json(metrics, path)
         report = build_run_report(metrics)
+        saved_metrics = json.loads(path.read_text())
 
         assert "INACTIVE" in table
-        assert json.loads(path.read_text())["activity_status"] == "INACTIVE"
+        assert saved_metrics["activity_status"] == "INACTIVE"
         assert report["activity_status"] == "INACTIVE"
+        assert "N/A" in table
+        assert saved_metrics["metric_availability"]["win_rate"] == (
+            "not_applicable_no_completed_positions"
+        )
+        assert saved_metrics["profit_factor"] is None
+        assert saved_metrics["win_rate"] is None
+        json.dumps(report, allow_nan=False)
+
+    def test_unbounded_profit_factor_uses_json_null_and_reason(self, tmp_path: Path) -> None:
+        metrics = _metrics(100.0, 1)
+        path = tmp_path / "unbounded_profit_factor.json"
+
+        save_metrics_json(metrics, path)
+        report = build_run_report(metrics)
+        saved = json.loads(path.read_text())
+
+        assert metrics.profit_factor == float("inf")
+        assert saved["profit_factor"] is None
+        assert saved["metric_availability"]["profit_factor"] == (
+            "unbounded_no_losses_with_positive_gains"
+        )
+        assert "N/A" in build_summary_table(metrics)
+        assert "Infinity" not in path.read_text()
+        json.dumps(report, allow_nan=False)
+
+    def test_all_breakeven_profit_factor_is_na_with_zero_denominator_reason(
+        self, tmp_path: Path
+    ) -> None:
+        metrics = compute_metrics(
+            [100.0, 100.0, 100.0], initial_balance=100.0, trade_pnls=[0.0, 0.0]
+        )
+        path = tmp_path / "breakeven_metrics.json"
+
+        save_metrics_json(metrics, path)
+        saved = json.loads(path.read_text())
+
+        assert saved["profit_factor"] is None
+        assert saved["metric_availability"]["profit_factor"] == ("undefined_no_gains_or_losses")
+        assert saved["win_rate"] == 0.0
+        assert saved["expectancy"] == 0.0
+        assert "N/A" in build_summary_table(metrics)
+        json.dumps(build_run_report(metrics), allow_nan=False)
+
+    def test_overflowed_annualized_ratio_is_unavailable_in_json(self, tmp_path: Path) -> None:
+        metrics = compute_metrics(
+            [110.0, 105.0],
+            initial_balance=100.0,
+            periods_per_year=252 * 390,
+        )
+        path = tmp_path / "overflowed_annualization.json"
+
+        save_metrics_json(metrics, path)
+        saved = json.loads(path.read_text())
+
+        assert math.isinf(metrics.calmar)
+        assert saved["calmar"] is None
+        assert saved["metric_availability"]["calmar"] == "non_finite_metric_result"
+        assert "N/A" in build_summary_table(metrics)
+        json.dumps(build_run_report(metrics), allow_nan=False)
 
 
 @pytest.mark.unit
@@ -115,6 +179,7 @@ class TestBuildRunReport:
 
         # Assert
         assert report["run_name"] == "r1"
+        assert report["metric_definition_version"] == "qrl.performance_metrics.v2"
         assert report["total_pnl"] == pytest.approx(80.0)
         assert report["sweep_delay"]["sweep_delay_mean_s"] == pytest.approx(5.0)
         assert report["sweep_delay"]["n_entries"] == 1
@@ -122,3 +187,5 @@ class TestBuildRunReport:
     def test_none_trade_log_is_safe(self) -> None:
         report = build_run_report(_metrics(0.0, 0), None)
         assert report["sweep_delay"]["n_entries"] == 0
+        assert report["sweep_delay"]["sweep_delay_mean_s"] is None
+        assert report["sweep_delay"]["london_pct"] is None

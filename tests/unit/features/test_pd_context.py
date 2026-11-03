@@ -14,6 +14,7 @@ from features.context.liquidity import detect_bos, detect_mss
 from features.context.premium_discount import (
     PD_CONTEXT_FEATURE_COLUMNS,
     build_pd_context_features,
+    build_trader_context_features,
 )
 from features.technical.structure import structure_levels
 from market_data.transforms.sessions import add_session_labels
@@ -167,6 +168,32 @@ class TestMssCausal:
         for t in mss_dn_idx:
             assert bos.loc[t, "bos_down"] == 1
 
+    def test_mss_marks_only_exact_changes_in_bos_direction(self) -> None:
+        idx = pd.date_range("2025-01-06 16:30", periods=7, freq="1min", tz="Etc/GMT-3")
+        bars = pd.DataFrame({"close": np.full(len(idx), 100.0)}, index=idx)
+        structure = pd.DataFrame(index=idx)
+        bos = pd.DataFrame(
+            {
+                "bos_up": [0, 0, 0, 1, 0, 0, 0],
+                "bos_down": [0, 1, 1, 0, 0, 0, 1],
+                "bos_up_level": [np.nan, np.nan, np.nan, 101.0, np.nan, np.nan, np.nan],
+                "bos_down_level": [np.nan, 99.0, 98.0, np.nan, np.nan, np.nan, 97.0],
+            },
+            index=idx,
+        )
+
+        result = detect_mss(bars, structure, bos)
+
+        assert result["mss_up"].tolist() == [0, 0, 0, 1, 0, 0, 0]
+        assert result["mss_down"].tolist() == [0, 0, 0, 0, 0, 0, 1]
+        assert np.isnan(result["mss_up_level"].iloc[2])
+        assert result["mss_up_level"].iloc[3] == pytest.approx(101.0)
+        assert result["mss_down_level"].iloc[6] == pytest.approx(97.0)
+        pd.testing.assert_frame_equal(
+            result.iloc[:4],
+            detect_mss(bars.iloc[:4], structure.iloc[:4], bos.iloc[:4]),
+        )
+
 
 def _pd_cfg(**overrides: Any) -> DictConfig:
     base: dict[str, Any] = {
@@ -232,6 +259,45 @@ class TestBuildFeaturesPdContext:
         assert "ctx_asia_high" in OBS_RAW_PRICE_COLUMNS
         assert "mss_up_level" in OBS_RAW_PRICE_COLUMNS
         assert "asian_high" in OBS_RAW_PRICE_COLUMNS
+
+
+class TestTraderContextComposition:
+    def test_distribution_precedes_reversal_then_falls_back_to_htf_bias(self) -> None:
+        idx = pd.date_range("2025-01-06 16:30", periods=3, freq="1min", tz="Etc/GMT-3")
+        feat = pd.DataFrame(
+            {
+                "htf_day_bias": [2.0, -2.0, 0.0],
+                "po3_manipulation_active": [1.0, 1.0, 0.0],
+                "po3_manipulation_direction": [-1.0, 1.0, 0.0],
+                "po3_distribution": [0.0, 1.0, 0.0],
+                "po3_distribution_direction": [0.0, 1.0, 0.0],
+                "po3_manipulation_end": [0.0, 0.0, 1.0],
+            },
+            index=idx,
+        )
+
+        result = build_trader_context_features(feat)
+
+        assert result.index.equals(idx)
+        assert result["htf_day_bias"].tolist() == [1.0, -1.0, 0.0]
+        assert result["manip_reverses_htf"].tolist() == [1.0, 1.0, 0.0]
+        assert result["context_trade_direction"].tolist() == [-1.0, 1.0, 0.0]
+
+    def test_context_flags_supply_bias_when_htf_column_is_absent(self) -> None:
+        idx = pd.date_range("2025-01-06 16:30", periods=3, freq="1min", tz="Etc/GMT-3")
+        feat = pd.DataFrame(
+            {
+                "ctx_in_discount": [1.0, 0.0, 0.0],
+                "ctx_in_premium": [0.0, 1.0, 0.0],
+            },
+            index=idx,
+        )
+
+        result = build_trader_context_features(feat)
+
+        assert result["htf_day_bias"].tolist() == [1.0, -1.0, 0.0]
+        assert result["manip_reverses_htf"].tolist() == [0.0, 0.0, 0.0]
+        assert result["context_trade_direction"].tolist() == [1.0, -1.0, 0.0]
 
 
 class TestConfigYaml:

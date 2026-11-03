@@ -39,9 +39,9 @@ PHASE_ONLY_MARKER = re.compile(r"(?:^|_)(?:p\d+|wp\d*|phase[-_]?\d+)(?:_|\.|$)",
 HISTORICAL_EXPERIMENT_RUN_IDENTITIES = {
     "config/experiment_runs/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1.yaml",
     "config/experiment_runs/variant_list_p6_entry_fsm.txt",
-    "evidence/research/archive_2026/records/p1_checkpoint_full_split_budget_2026-10-16.json",
 }
-HISTORICAL_OUTPUT_ROOTS = ("evidence/research/archive_2026/", "docs/research/")
+HISTORICAL_OUTPUT_ROOTS = ("docs/research/",)
+GENERATED_DOCUMENTATION_ROOTS = ("docs/_build/",)
 GENERIC_FILENAMES = {
     "base.py",
     "common.py",
@@ -84,7 +84,7 @@ def test_active_repository_files_use_functional_names() -> None:
             ):
                 continue
             relative = path.relative_to(ROOT).as_posix()
-            if relative.startswith(HISTORICAL_OUTPUT_ROOTS):
+            if relative.startswith(HISTORICAL_OUTPUT_ROOTS + GENERATED_DOCUMENTATION_ROOTS):
                 continue
             if relative in HISTORICAL_EXPERIMENT_RUN_IDENTITIES:
                 continue
@@ -128,7 +128,7 @@ def test_active_repository_files_avoid_generic_placeholder_filenames() -> None:
             ):
                 continue
             relative = path.relative_to(ROOT).as_posix()
-            if relative.startswith(HISTORICAL_OUTPUT_ROOTS):
+            if relative.startswith(HISTORICAL_OUTPUT_ROOTS + GENERATED_DOCUMENTATION_ROOTS):
                 continue
             uses_generic_name = path.name in GENERIC_FILENAMES or path.stem.endswith("_common")
             if uses_generic_name and relative not in GENERIC_FILENAME_EXCEPTIONS:

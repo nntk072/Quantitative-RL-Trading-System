@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "date_local": "2026-11-03",
+  "cluster_job_id": "21367992",
+  "node": "gpuarm2",
+  "allocation_context": "reused existing one-GH200 allocation; no new job or Slurm step",
+  "command": ".venv/bin/python -m pytest -q tests/unit/trading/test_stop_management.py tests/integration/backtest/test_risk_lifecycle_characterization.py",
+  "result": {
+    "collected": 42,
+    "passed": 42,
+    "failed": 0,
+    "duration_seconds": 0.48
+  },
+  "checks": {
+    "shared_stop_helper_unit_cases": 26,
+    "paired_environment_backtest_lifecycle_cases": 16,
+    "scoped_ruff_format": "passed",
+    "scoped_ruff_check": "passed"
+  },
+  "sources": [
+    {
+      "path": "tests/integration/backtest/test_risk_lifecycle_characterization.py",
+      "sha256": "403d6be23c868967713be4be13178849b8e44808081b7924f4c0fe85bd8a761b"
+    },
+    {
+      "path": "tests/unit/trading/test_stop_management.py",
+      "sha256": "0a6b4ae35d32b68a3b7457b3569fbcdd7f77c8793102c8b6f4814c66f21a6353"
+    },
+    {
+      "path": "simulation/environment/position_runtime.py",
+      "sha256": "84fb21b03b4b602b97921c9e645b3cad7efd9b72420cc6080533d4ebb29c39c6"
+    },
+    {
+      "path": "simulation/backtest/protective_events.py",
+      "sha256": "b667ae7da675eb02ff7749265e2c665baed203302aeac602e5b26f241d5cdb93"
+    },
+    {
+      "path": "trading/risk/stop_management.py",
+      "sha256": "47cbc7903049b4cc2a34836e49c28cd11686d10ec7174068e93a479868e8791c"
+    }
+  ],
+  "scope_limit": "Controlled synthetic cases only; not historical-policy behavior, broker parity, financing treatment, checkpoint/replay determinism, or complete lifecycle/account acceptance.",
+  "stdout_file": "pytest_output.txt",
+  "quality_checks_output_file": "quality_checks_output.txt"
+}

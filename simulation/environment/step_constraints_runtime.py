@@ -15,6 +15,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
 
     _decision_action: dict[str, float]
     _pending_entry_order: dict[str, Any] | None
+    _current_decision_id: str
 
     def _enforce_step_constraints(
         self,
@@ -53,17 +54,13 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
         Returns:
             Whether enforce step constraints meets the requested condition.
         """
-        reason, session_blocked, done, truncated = self._check_guardrails(
-            bar_time, session_id, fill_bid, fill_ask, fill_time=fill_time
-        )
-
         position_has_completed_bar = True
         if self.position is not None and self.position.entry_timestamp is not None:
             bar_end = bar_time + pd.Timedelta(minutes=self._minutes_per_step)
             position_has_completed_bar = (
                 pd.Timestamp(cast(Any, self.position.entry_timestamp)) < bar_end
             )
-        if not reason and not session_blocked and position_has_completed_bar:
+        if position_has_completed_bar:
             # A bar-close entry is effective at this bar's end. Its earlier
             # high/low cannot trigger a stop/target or position guard.
             self._check_sl_tp(bar, fill_bid, fill_ask)
@@ -77,6 +74,13 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                 bar_idx=self.step_idx,
                 fill_time=fill_time,
             )
+
+        # Apply account-level breaches after protective events on this bar,
+        # matching the event-driven backtest. Otherwise a marked loss can
+        # force-close a position before an already-triggered stop or target.
+        reason, session_blocked, done, truncated = self._check_guardrails(
+            bar_time, session_id, fill_bid, fill_ask, fill_time=fill_time
+        )
 
         self._peak_dd_fired = False
         peak_dd_block = self._apply_peak_trailing_dd(
@@ -108,9 +112,14 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                 and not peak_dd_block
                 and not pending_soft_block
             ):
+                pending_decision_id = str(pending.get("decision_id", self._current_decision_id))
                 current_decision = self._decision_action
+                current_decision_id = self._current_decision_id
                 selected_names = (
                     "_selected_trade_setup",
+                    "_selected_trade_setup_event_identity",
+                    "_last_action_trade_setup_candidate_id",
+                    "_last_action_trade_setup_eligible",
                     "_selected_sl_anchor",
                     "_selected_tp_fraction",
                     "_selected_exit_mode",
@@ -123,6 +132,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                 )
                 current_selected = {name: getattr(self, name) for name in selected_names}
                 self._decision_action = dict(pending["decision_action"])
+                self._current_decision_id = pending_decision_id
                 for name, value in pending["selected"].items():
                     setattr(self, name, value)
                 self._try_enter_position(
@@ -131,7 +141,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                     float(pending["rr_ratio"]),
                     bar,
                     pending["feat_row"],
-                    pending["decision_time"],
+                    pending["decision_bar_time"],
                     session_id,
                     entry_fill_bid,
                     entry_fill_ask,
@@ -143,6 +153,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                     signal_bar_idx=int(pending["signal_bar_idx"]),
                 )
                 self._decision_action = current_decision
+                self._current_decision_id = current_decision_id
                 for name, value in current_selected.items():
                     setattr(self, name, value)
                 if entry_machine is not None and self._opened_this_step:
@@ -151,8 +162,10 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                 self.trade_log.append(
                     {
                         "type": "order_cancel",
+                        "decision_id": str(pending.get("decision_id", self._current_decision_id)),
                         "reason": "execution_blocked_before_scheduled_fill",
                         "decision_time": pending["decision_time"],
+                        "decision_bar_time": pending["decision_bar_time"],
                         "order_submission_time": pending["order_submission_time"],
                         "time": fill_time,
                         "fill_time": None,

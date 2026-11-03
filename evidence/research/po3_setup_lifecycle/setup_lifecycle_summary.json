@@ -1,0 +1,18 @@
+{
+  "accepted_setup_sequence_count": 16692,
+  "conflicting_same_bar_sweep_count": 22,
+  "setup_sequences_by_direction": {
+    "-1": 8561,
+    "1": 8131
+  },
+  "setup_sequences_by_final_phase": {
+    "distribution": 217,
+    "distribution_after_ifvg": 9034,
+    "manipulation": 2961,
+    "waiting_for_ifvg": 4480
+  },
+  "setup_sequences_by_termination": {
+    "input_end": 1,
+    "replaced_by_next_sweep": 16691
+  }
+}

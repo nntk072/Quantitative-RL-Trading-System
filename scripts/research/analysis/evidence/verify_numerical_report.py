@@ -153,6 +153,26 @@ def _is_finite_number(value: Any) -> bool:
         return False
 
 
+def _daily_loss_is_session_scoped(diagnostics: dict[str, Any]) -> bool:
+    """Resolve daily-breach scope, retaining the historical rollout default."""
+    value = diagnostics.get("daily_loss_is_session_scoped")
+    if isinstance(value, bool):
+        return value
+    # Older checkpoint reanalysis files predate the explicit field. The
+    # trained-policy replay path has always used non-episodic rollouts; only
+    # repeated-payout mode turns a daily breach into a terminal failure.
+    return str(diagnostics.get("trading_policy_mode", "legacy")) != "repeated_payout"
+
+
+def _hard_breach_events(
+    breach_events: pd.DataFrame, *, daily_loss_is_session_scoped: bool
+) -> pd.DataFrame:
+    """Return the breaches that determine split survival and ``fail_time``."""
+    if not daily_loss_is_session_scoped or breach_events.empty:
+        return breach_events
+    return breach_events.loc[breach_events["reason"].astype(str) != "daily_loss"]
+
+
 def _constraint_cost_errors(split_dir: Path, diagnostics: dict[str, Any]) -> list[str]:
     """Reconcile optional Q5 cost summaries against their per-step source rows."""
     errors: list[str] = []
@@ -372,16 +392,25 @@ def verify_split(
         event_equity = pd.to_numeric(breach_events["equity"], errors="coerce")
         if event_equity.isna().any() or not event_equity.map(math.isfinite).all():
             errors.append(f"{split_dir.name}: breach event equity is not finite")
-        expected_fail_time = str(breach_events.iloc[0]["time"])
+        scope_value = diagnostics.get("daily_loss_is_session_scoped")
+        if scope_value is not None and not isinstance(scope_value, bool):
+            errors.append("daily_loss_is_session_scoped must be a boolean when present")
+        hard_events = _hard_breach_events(
+            breach_events,
+            daily_loss_is_session_scoped=_daily_loss_is_session_scoped(diagnostics),
+        )
+        expected_fail_time = str(hard_events.iloc[0]["time"]) if not hard_events.empty else None
         if diagnostics["fail_time"] != expected_fail_time:
-            errors.append(f"{split_dir.name}: fail_time differs from first breach event")
-    expected_survival = breach_events.empty and diagnostics["completed_data_split"]
+            errors.append(f"{split_dir.name}: fail_time differs from first hard breach event")
+    else:
+        hard_events = breach_events
+    expected_survival = hard_events.empty and diagnostics["completed_data_split"]
     if diagnostics["survived_full_year"] != expected_survival:
         errors.append(
             f"{split_dir.name}: survival flag disagrees with breach events and split completion"
         )
-    if (diagnostics["fail_time"] is None) != breach_events.empty:
-        errors.append(f"{split_dir.name}: fail_time presence disagrees with breach events")
+    if (diagnostics["fail_time"] is None) != hard_events.empty:
+        errors.append(f"{split_dir.name}: fail_time presence disagrees with hard breach events")
     action_counts = diagnostics["action_counts"]
     if not isinstance(action_counts, dict) or any(
         not isinstance(key, str) or not _is_nonnegative_int(count)
@@ -433,10 +462,23 @@ def verify_split(
         ("fills.csv", fills, expected_fills),
         ("positions.csv", positions, expected_positions),
     ):
+        missing_from_reconstruction = set(exported.columns).difference(reconstructed.columns)
+        if missing_from_reconstruction:
+            errors.append(
+                f"{split_dir.name}: {name} has columns not generated from trades.csv: "
+                f"{sorted(missing_from_reconstruction)}"
+            )
+            continue
+        exported_values = exported.reset_index(drop=True).astype(object)
+        reconstructed_values = (
+            reconstructed.loc[:, exported.columns].reset_index(drop=True).astype(object)
+        )
+        exported_values = exported_values.where(exported_values.notna(), None)
+        reconstructed_values = reconstructed_values.where(reconstructed_values.notna(), None)
         try:
             pd.testing.assert_frame_equal(
-                exported.reset_index(drop=True),
-                reconstructed.reset_index(drop=True),
+                exported_values,
+                reconstructed_values,
                 check_dtype=False,
                 check_exact=False,
                 rtol=1e-10,
@@ -579,7 +621,20 @@ def verify_split(
     expected_metrics = asdict(recomputed)
     for key, expected in expected_metrics.items():
         if key not in metrics_report:
-            errors.append(f"{split_dir.name}: metrics.json missing {key}")
+            if key not in {"periods_per_year", "metric_definition_version"}:
+                errors.append(f"{split_dir.name}: metrics.json missing {key}")
+        elif (
+            key == "profit_factor"
+            and math.isinf(float(expected))
+            and metrics_report[key] is None
+            and isinstance(metrics_report.get("metric_availability"), dict)
+            and metrics_report["metric_availability"].get(key)
+            == "unbounded_no_losses_with_positive_gains"
+        ):
+            continue
+        elif key == "metric_definition_version":
+            if metrics_report[key] != expected:
+                errors.append(f"{split_dir.name}: metric definition version differs")
         elif key == "extras":
             actual_extras = metrics_report[key]
             if not isinstance(actual_extras, dict):

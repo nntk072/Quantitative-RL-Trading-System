@@ -24,14 +24,14 @@ qrl-train train --mvp   # smoke test (30 days)
 # Local (implementation): scoped checks only
 .venv/bin/ruff format --check <touched paths>  # ARM/GH200; use matching venv tools
 .venv/bin/ruff check <touched paths>
-.venv/bin/pytest <relevant test files> -q
+.venv/bin/python -m pytest <relevant test files> -q
 
 # Agent commit/push gate — REQUIRED (do not skip)
 # Format/lint/types MUST be full-tree (`.`). Never substitute path-scoped mypy/ruff.
 .venv/bin/ruff format --check . # ARM/GH200; if needed: .venv/bin/ruff format .
 .venv/bin/ruff check .
-.venv/bin/mypy .                # REQUIRED full tree — not mypy <touched paths>
-.venv/bin/pytest <relevant test paths> -q # NOT tests/ -v — keep scoped
+.venv/bin/python -m mypy .      # REQUIRED full tree — not mypy <touched paths>
+.venv/bin/python -m pytest <relevant test paths> -q # NOT tests/ -v — keep scoped
 
 # Full merge gate: GitHub CI / Orchestra phase 9 only (not agent default)
 # ./tools/check full
@@ -40,6 +40,10 @@ qrl-train train --mvp   # smoke test (30 days)
 On ARM64/GH200, use the active `.venv/bin` tools for Ruff, Mypy, and pytest.
 Do not use `uv run` for these checks on ARM. The login-host `uv` may be an
 x86-64 executable and fail with `Exec format error` inside an ARM allocation.
+For Python tools, prefer `.venv/bin/python -m <tool>` so execution uses the
+matched interpreter directly. A copied environment can leave console-script
+shebangs pointing at a different checkout; if a wrapper fails this way, do not
+switch checkouts or reinstall packages just to work around it.
 Preserve the full-tree Ruff/Mypy requirements and scoped-pytest rule.
 For lock, export, and environment setup commands that require `uv`, provide a
 native ARM64 binary through `QRL_UV` when the login-home `uv` is x86-64; the
@@ -272,7 +276,10 @@ Helpers: [`scripts/compute/slurm/`](scripts/compute/slurm/) (`status.sh`, `find_
   unchanged status checks. Use no more than 10 planned checks for one stable
   stage; add an earlier check only for a likely failure, checkpoint boundary,
   allocation transition, or explicit progress signal. Prefer an existing
-  supervisor/notification or wait-for-output mechanism where available. This
+  supervisor/notification or wait-for-output mechanism where available. When
+  no independent work remains, make one measured completion estimate and wait
+  toward that window instead of spending tokens on repeated short polls or
+  unchanged status updates. This
   does not change the separate 60-second maximum for waiting on a new allocation.
 - **Experiment run status updates:** when asked for experiment run status, or when a
   meaningful experiment run transition/blocker occurs, run

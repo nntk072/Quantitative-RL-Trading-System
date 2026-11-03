@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from math import isfinite
+
 from market_data.loading.ticks import TickBook
 
 from .mixin_base import RuntimeMixinBase
@@ -41,8 +43,8 @@ class ExecutionControlsInitializationMixin(RuntimeMixinBase):
             raise ValueError("randomized_fill_latency_ms must be at most 30ms exclusive")
         if self.max_tick_quote_wait_ms <= 0:
             raise ValueError("max_tick_quote_wait_ms must be positive")
-        if self.tick_fill_slippage_points < 0:
-            raise ValueError("tick_fill_slippage_points cannot be negative")
+        if not isfinite(self.tick_fill_slippage_points) or self.tick_fill_slippage_points < 0:
+            raise ValueError("tick_fill_slippage_points must be finite and non-negative")
         if self.tick_fill_slippage_points and not self.tick_execution_required:
             raise ValueError("tick_fill_slippage_points requires tick execution")
         if (

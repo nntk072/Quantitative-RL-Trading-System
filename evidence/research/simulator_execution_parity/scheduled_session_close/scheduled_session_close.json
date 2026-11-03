@@ -1,0 +1,307 @@
+{
+  "controlled_settings": {
+    "bar_duration_seconds": 60,
+    "commission_per_lot": 0.0,
+    "contract_size": 1.0,
+    "cost_spread_points": 0.0,
+    "initial_balance": 50000.0,
+    "point_size": 0.01,
+    "risk_fraction": 0.001,
+    "risk_per_trade_limit": 10000.0
+  },
+  "fixture": {
+    "bars": [
+      {
+        "close": 100.0,
+        "high": 100.1,
+        "low": 99.9,
+        "open": 100.0,
+        "session": "ny",
+        "time": "2025-01-06T16:30:00+03:00"
+      },
+      {
+        "close": 100.0,
+        "high": 100.1,
+        "low": 99.9,
+        "open": 100.0,
+        "session": "ny",
+        "time": "2025-01-06T16:31:00+03:00"
+      },
+      {
+        "close": 100.0,
+        "high": 100.1,
+        "low": 99.9,
+        "open": 100.0,
+        "session": "ny",
+        "time": "2025-01-06T16:32:00+03:00"
+      },
+      {
+        "close": 100.0,
+        "high": 100.1,
+        "low": 99.9,
+        "open": 100.0,
+        "session": "ny",
+        "time": "2025-01-06T16:33:00+03:00"
+      },
+      {
+        "close": 100.0,
+        "high": 100.1,
+        "low": 99.9,
+        "open": 100.0,
+        "session": "ny",
+        "time": "2025-01-06T16:34:00+03:00"
+      },
+      {
+        "close": 100.0,
+        "high": 100.1,
+        "low": 99.9,
+        "open": 100.0,
+        "session": "ny",
+        "time": "2025-01-06T16:35:00+03:00"
+      },
+      {
+        "close": 100.0,
+        "high": 100.1,
+        "low": 99.9,
+        "open": 100.0,
+        "session": "asia",
+        "time": "2025-01-06T16:36:00+03:00"
+      },
+      {
+        "close": 100.0,
+        "high": 100.1,
+        "low": 99.9,
+        "open": 100.0,
+        "session": "asia",
+        "time": "2025-01-06T16:37:00+03:00"
+      }
+    ],
+    "features": {
+      "last_swing_high": 120.0,
+      "last_swing_low": 90.0
+    },
+    "ticks": [
+      {
+        "ask": 100.2,
+        "bid": 100.0,
+        "time": "2025-01-06T16:30:00+03:00"
+      },
+      {
+        "ask": 100.2,
+        "bid": 100.0,
+        "time": "2025-01-06T16:31:00+03:00"
+      },
+      {
+        "ask": 100.2,
+        "bid": 100.0,
+        "time": "2025-01-06T16:32:00+03:00"
+      },
+      {
+        "ask": 100.2,
+        "bid": 100.0,
+        "time": "2025-01-06T16:33:00+03:00"
+      },
+      {
+        "ask": 100.2,
+        "bid": 100.0,
+        "time": "2025-01-06T16:34:00+03:00"
+      },
+      {
+        "ask": 101.2,
+        "bid": 101.0,
+        "time": "2025-01-06T16:35:00+03:00"
+      },
+      {
+        "ask": 101.3,
+        "bid": 101.1,
+        "time": "2025-01-06T16:35:00.005000+03:00"
+      },
+      {
+        "ask": 101.4,
+        "bid": 101.2,
+        "time": "2025-01-06T16:35:00.010000+03:00"
+      },
+      {
+        "ask": 101.5,
+        "bid": 101.3,
+        "time": "2025-01-06T16:35:00.020000+03:00"
+      },
+      {
+        "ask": 101.60000000000001,
+        "bid": 101.4,
+        "time": "2025-01-06T16:35:00.025000+03:00"
+      },
+      {
+        "ask": 102.2,
+        "bid": 102.0,
+        "time": "2025-01-06T16:36:00+03:00"
+      },
+      {
+        "ask": 103.2,
+        "bid": 103.0,
+        "time": "2025-01-06T16:37:00+03:00"
+      },
+      {
+        "ask": 104.2,
+        "bid": 104.0,
+        "time": "2025-01-06T16:38:00+03:00"
+      }
+    ],
+    "timezone": "Etc/GMT-3"
+  },
+  "fixture_sha256": "f5cf20e73970c95e914ac975eeea01d9ac5179ee4130c2ffaacc25f8092bf45b",
+  "interpretation": "Synthetic execution-contract regression; not a local-feed sample, policy replay, or economic estimate.",
+  "limitations": [
+    "The fixture uses one-minute quote spacing; equal selected quotes do not establish common randomized arrivals on sub-minute quote sequences.",
+    "The environment and backtest RNG streams select different arrival instants with 30 ms latency in this fixture.",
+    "One controlled session close does not complete Stage E lifecycle, account, live-risk, or feed-chronology acceptance."
+  ],
+  "scenario": "scheduled_session_close",
+  "scenarios": [
+    {
+      "backtest_close_latency_valid": true,
+      "backtest_events": [
+        {
+          "actual_tick_time": "2025-01-06T13:32:00+00:00",
+          "direction": 1.0,
+          "execution_arrival_time": "2025-01-06T16:32:00+03:00",
+          "execution_latency_ns": 0,
+          "fill_quote_source": "tick",
+          "fill_time": "2025-01-06T13:32:00+00:00",
+          "order_submission_time": "2025-01-06T16:32:00+03:00",
+          "pnl": null,
+          "price": 100.2,
+          "reason": null,
+          "time": "2025-01-06T13:32:00+00:00",
+          "type": "open"
+        },
+        {
+          "actual_tick_time": "2025-01-06T13:35:00+00:00",
+          "direction": null,
+          "execution_arrival_time": "2025-01-06T16:35:00+03:00",
+          "execution_latency_ns": 0,
+          "fill_quote_source": "tick",
+          "fill_time": "2025-01-06T13:35:00+00:00",
+          "order_submission_time": "2025-01-06T16:35:00+03:00",
+          "pnl": 0.7999999999999972,
+          "price": 101.0,
+          "reason": "session_end",
+          "time": "2025-01-06T16:35:00+03:00",
+          "type": "eod_close"
+        }
+      ],
+      "backtest_final_equity": 50000.8,
+      "close_fields_match": true,
+      "environment_close_latency_valid": true,
+      "environment_events": [
+        {
+          "actual_tick_time": "2025-01-06T13:32:00+00:00",
+          "direction": 1,
+          "execution_arrival_time": "2025-01-06T16:32:00+03:00",
+          "execution_latency_ns": 0,
+          "fill_quote_source": "tick",
+          "fill_time": "2025-01-06T13:32:00+00:00",
+          "order_submission_time": "2025-01-06T16:32:00+03:00",
+          "price": 100.2,
+          "time": "2025-01-06T13:32:00+00:00",
+          "type": "open"
+        },
+        {
+          "actual_tick_time": "2025-01-06T13:35:00+00:00",
+          "execution_arrival_time": "2025-01-06T16:35:00+03:00",
+          "execution_latency_ns": 0,
+          "fill_quote_source": "tick",
+          "fill_time": "2025-01-06T13:35:00+00:00",
+          "order_submission_time": "2025-01-06T16:35:00+03:00",
+          "pnl": 0.7999999999999972,
+          "price": 101.0,
+          "reason": "session_end",
+          "time": "2025-01-06T16:35:00+03:00",
+          "type": "eod_close"
+        }
+      ],
+      "environment_final_equity": 50000.8,
+      "final_equity_matches": true,
+      "randomized_arrival_instants_match": true,
+      "randomized_fill_latency_ms": 0.0
+    },
+    {
+      "backtest_close_latency_valid": true,
+      "backtest_events": [
+        {
+          "actual_tick_time": "2025-01-06T13:33:00+00:00",
+          "direction": 1.0,
+          "execution_arrival_time": "2025-01-06T16:32:00.021038533+03:00",
+          "execution_latency_ns": 21038533,
+          "fill_quote_source": "tick",
+          "fill_time": "2025-01-06T13:33:00+00:00",
+          "order_submission_time": "2025-01-06T16:32:00+03:00",
+          "pnl": null,
+          "price": 100.2,
+          "reason": null,
+          "time": "2025-01-06T13:33:00+00:00",
+          "type": "open"
+        },
+        {
+          "actual_tick_time": "2025-01-06T13:35:00.025000+00:00",
+          "direction": null,
+          "execution_arrival_time": "2025-01-06T16:35:00.020595775+03:00",
+          "execution_latency_ns": 20595775,
+          "fill_quote_source": "tick",
+          "fill_time": "2025-01-06T13:35:00.025000+00:00",
+          "order_submission_time": "2025-01-06T16:35:00+03:00",
+          "pnl": 1.2000000000000028,
+          "price": 101.4,
+          "reason": "session_end",
+          "time": "2025-01-06T16:35:00+03:00",
+          "type": "eod_close"
+        }
+      ],
+      "backtest_final_equity": 50001.2,
+      "close_fields_match": true,
+      "environment_close_latency_valid": true,
+      "environment_events": [
+        {
+          "actual_tick_time": "2025-01-06T13:33:00+00:00",
+          "direction": 1,
+          "execution_arrival_time": "2025-01-06T16:32:00.021038533+03:00",
+          "execution_latency_ns": 21038533,
+          "fill_quote_source": "tick",
+          "fill_time": "2025-01-06T13:33:00+00:00",
+          "order_submission_time": "2025-01-06T16:32:00+03:00",
+          "price": 100.2,
+          "time": "2025-01-06T13:33:00+00:00",
+          "type": "open"
+        },
+        {
+          "actual_tick_time": "2025-01-06T13:35:00.025000+00:00",
+          "execution_arrival_time": "2025-01-06T16:35:00.020595775+03:00",
+          "execution_latency_ns": 20595775,
+          "fill_quote_source": "tick",
+          "fill_time": "2025-01-06T13:35:00.025000+00:00",
+          "order_submission_time": "2025-01-06T16:35:00+03:00",
+          "pnl": 1.2000000000000028,
+          "price": 101.4,
+          "reason": "session_end",
+          "time": "2025-01-06T16:35:00+03:00",
+          "type": "eod_close"
+        }
+      ],
+      "environment_final_equity": 50001.2,
+      "final_equity_matches": true,
+      "randomized_arrival_instants_match": true,
+      "randomized_fill_latency_ms": 30.0
+    }
+  ],
+  "schema_version": 1,
+  "source_sha256": {
+    "market_data/loading/ticks.py": "5aefa10efa67f267c752c53a9d2832fe54c743cf4deda1dd1bb83b268df71a95",
+    "scripts/research/analysis/evaluation/compare_scheduled_session_close.py": "ab2d6b865346fa2c4dac76dc074891bb2854f668928b93877f04ac43c06c9ae5",
+    "simulation/backtest/event_driven_backtest.py": "7cb506ad492762f3103439e9038e2bbd4f3c47eee6a6f5bb15b8f55c38074aa9",
+    "simulation/backtest/protective_events.py": "b667ae7da675eb02ff7749265e2c665baed203302aeac602e5b26f241d5cdb93",
+    "simulation/backtest/runtime.py": "4892617135fe77a2f49174fba9811672fa64c5f90b4b5f9506f761ba556e8545",
+    "simulation/environment/episode_runtime.py": "b6a0fd9a05b472dcd1138105470716eead352e59b7445930f6a93293a93093a0",
+    "tests/integration/backtest/test_risk_lifecycle_characterization.py": "1f174370c0c31efa7bc01bfa02d2837933158b0ace2f1e28da9d16ec1efc5c1b"
+  },
+  "trace_passed": true
+}

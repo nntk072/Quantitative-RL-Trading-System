@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "date_local": "2026-11-03",
+  "cluster_job_id": "21367992",
+  "node": "gpuarm2",
+  "allocation_context": "reused existing one-GH200 allocation; no new job or Slurm step",
+  "command": ".venv/bin/python -m pytest -q tests/integration/backtest/test_account_transition_parity.py",
+  "result": {
+    "collected": 23,
+    "passed": 23,
+    "failed": 0,
+    "duration_seconds": 0.51
+  },
+  "source": {
+    "path": "tests/integration/backtest/test_account_transition_parity.py",
+    "sha256": "a9fbb1f54d3fbae3e73c28da82752eb55bc3201ce1b1afa99a126f9643b208c1"
+  },
+  "scope_limit": "Controlled current-source tests; not policy replay, external-feed chronology, limit-order parity, checkpoint determinism, or complete lifecycle acceptance.",
+  "stdout_file": "pytest_output.txt"
+}

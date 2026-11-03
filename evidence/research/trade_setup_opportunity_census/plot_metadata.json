@@ -1,0 +1,17 @@
+{
+  "included_regimes": [
+    "low",
+    "middle",
+    "high"
+  ],
+  "input_csv": "evidence/research/trade_setup_opportunity_census/candidate_month_regime.csv",
+  "input_csv_sha256": "f7beb94f13ffe44bc0ac4c9f472c0cab03c745a950d2abfbb58fdad5714bb467",
+  "omitted_regime": "warmup_unknown; its counts remain in the CSV tables",
+  "outputs": [
+    "candidate_month_regime_heatmap.png",
+    "candidate_month_regime_heatmap.pdf"
+  ],
+  "plot_script_sha256": "c2e5016984efe4994ab8d01e16f51bd20ccec9f199384c8a369863aa08faeff0",
+  "status": "descriptive_training_context_only",
+  "unit": "sum of active candidate M1 rows; timeframe/direction contexts can overlap"
+}

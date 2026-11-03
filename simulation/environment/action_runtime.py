@@ -13,6 +13,10 @@ from decisioning.trade_setup import (
     trade_setup_candidate,
     trade_setup_id_from_box,
 )
+from features.context.trade_setup_candidates import (
+    TradeSetupEventIdentity,
+    trade_setup_candidate_event_identities,
+)
 from trading.orders import decode_tp_mode
 
 from .action_diagnostics import _decision_from_action, _empty_decision
@@ -24,6 +28,9 @@ class ActionDecodingMixin(RuntimeMixinBase):
     """Decode policy outputs into trade intent and stop/target controls."""
 
     _selected_trade_setup: TradeSetupCandidate | None
+    _selected_trade_setup_event_identity: TradeSetupEventIdentity | None
+    _last_action_trade_setup_candidate_id: int | None
+    _last_action_trade_setup_eligible: bool | None
 
     def _decode_strategy_action(
         self,
@@ -58,6 +65,9 @@ class ActionDecodingMixin(RuntimeMixinBase):
         trade_setup_mode = isinstance(self.action_schema, TradeSetupActionSchema)
         raw = np.clip(arr, -1.0, 1.0)
         u = 0.5 * (raw + 1.0)
+        self._selected_trade_setup_event_identity = None
+        self._last_action_trade_setup_candidate_id = None
+        self._last_action_trade_setup_eligible = None
         indices = self.action_schema.indices
         if trade_setup_mode:
             candidate_index = indices.get("trade_setup")
@@ -66,16 +76,27 @@ class ActionDecodingMixin(RuntimeMixinBase):
             candidate_id = trade_setup_id_from_box(float(raw[candidate_index]))
             candidate = trade_setup_candidate(candidate_id)
             self._selected_trade_setup = candidate
+            candidate_mask = self._trade_setup_mask_for_step()
+            candidate_eligible = candidate_id == NO_TRADE_ID or (
+                feat_row is not None and bool(candidate_mask[candidate_id] > 0.0)
+            )
+            self._last_action_trade_setup_candidate_id = candidate_id
+            self._last_action_trade_setup_eligible = candidate_eligible
             if candidate_id == NO_TRADE_ID:
                 discrete_action = 0
                 risk_frac = 0.0
-            elif feat_row is None or self._trade_setup_mask_for_step()[candidate_id] <= 0.0:
+            elif feat_row is None or not candidate_eligible:
                 discrete_action = 0
                 risk_frac = 0.0
                 self._selected_trade_setup = None
                 self._reject("trade_setup_inactive")
             else:
                 discrete_action = candidate.direction
+                identities = trade_setup_candidate_event_identities(
+                    feat_row,
+                    candidate_ids=(candidate_id,),
+                )
+                self._selected_trade_setup_event_identity = identities[0] if identities else None
         else:
             self._selected_trade_setup = None
             assert isinstance(self.action_schema, ActionSchema)
@@ -277,6 +298,7 @@ class ActionDecodingMixin(RuntimeMixinBase):
         self._selected_exit_mode = "structural"
         self._decision_action = _empty_decision()
         self._entry_rejection_reason = ""
+        self._entry_rejection_decision_id = self._current_decision_id
         if self.strategy_actions:
             discrete_action, risk_frac, rr_ratio, tp_mode = (
                 ActionDecodingMixin._decode_strategy_action(self, action, feat_row)

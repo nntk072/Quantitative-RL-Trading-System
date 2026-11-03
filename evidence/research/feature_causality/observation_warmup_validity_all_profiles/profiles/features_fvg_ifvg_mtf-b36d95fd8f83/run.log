@@ -1,0 +1,8 @@
+{
+  "group_key": "b36d95fd8f8398bfc586f2218b1b5c618073cbbebcf935883fad2d2c2c1d9f9e",
+  "profile_ids": [
+    "features/fvg_ifvg_mtf"
+  ],
+  "representative_profile": "features/fvg_ifvg_mtf",
+  "status": "measured_training_split"
+}

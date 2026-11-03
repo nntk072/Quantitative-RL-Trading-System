@@ -1,0 +1,5 @@
+# Candidate price-geometry support
+
+This training-only feature audit measures whether active setup candidates have finite, ordered source-zone or standard-deviation retracement-band bounds. It does not produce candidate entry, stop, target, order lifetime, or execution geometry and is not policy or economic evidence.
+
+`candidate_price_geometry_support.csv` reports active rows, configured support, geometry kind, valid coverage, invalid bounds, and widths in instrument price units. Standard-deviation candidates use their timeframe-specific retracement band. A family with no applicable geometry fields is marked explicitly instead of being counted as missing data. PO3 uses its direct zone projection when available and otherwise mirrors the existing timeframe-specific FVG/IFVG context fallback. See `geometry_support.json` for training period, source hashes, and output hash. Rebuild with `.venv/bin/python -m scripts.research.analysis.features.candidate_geometry_support` from the repository root.

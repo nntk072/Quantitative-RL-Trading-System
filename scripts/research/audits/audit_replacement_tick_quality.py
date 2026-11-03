@@ -5,11 +5,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import platform
 import subprocess
-import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,19 +16,20 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
+from scripts.research.analysis.market_data.quote_quality_scans import (
+    load_m1_minutes,
+    scan_tick_file,
+)
 
 from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
 CONFIG_PATH = ROOT / "config/base/default.yaml"
 COVERAGE_REPORT = (
-    ROOT / "evidence/research/archive_2026/evidence/replacement_data_20261017/"
-    "tick_execution_coverage_schedule_freeze_final.json"
-)
-TICK_AUDIT_HELPER = (
     ROOT
-    / "evidence/research/archive_2026/records/audit_tick_quality_current_experiment_run_2026-10-17.py"
+    / "evidence/research/market_data_input_integrity/schedule_frozen_tick_execution_coverage.json"
 )
+TICK_AUDIT_HELPER = ROOT / "scripts/research/analysis/market_data/quote_quality_scans.py"
 TICKS_SOURCE = ROOT / "market_data/loading/ticks.py"
 DEFAULT_REPORT = (
     ROOT
@@ -46,18 +45,6 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _load_helper() -> Any:
-    spec = importlib.util.spec_from_file_location(
-        "replacement_tick_quality_helper", TICK_AUDIT_HELPER
-    )
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load tick audit helper: {TICK_AUDIT_HELPER}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
 def build_report() -> dict[str, Any]:
     started = time.perf_counter()
     cfg = OmegaConf.load(CONFIG_PATH)
@@ -69,7 +56,6 @@ def build_report() -> dict[str, Any]:
         "train_end_inclusive": str(cfg.data.split.train_end),
     }:
         raise RuntimeError("schedule coverage report split differs from current configuration")
-    helper = _load_helper()
     symbols: dict[str, Any] = {}
     data_dir = (ROOT / str(cfg.data.raw_dir)).resolve()
 
@@ -98,9 +84,9 @@ def build_report() -> dict[str, Any]:
         if not isinstance(expected_tick_hash, str) or not isinstance(expected_m1_hash, str):
             raise ValueError(f"coverage report has malformed source hashes for {symbol}")
 
-        tick_result = helper.scan_tick_file(tick_path, expected_tick_hash)
+        tick_result = scan_tick_file(tick_path, expected_tick_hash)
         observed_quote_minutes = tick_result.pop("_observed_m1_minutes")
-        m1_minutes = helper.load_m1_minutes(m1_path)
+        m1_minutes = load_m1_minutes(m1_path)
         actual_m1_hash = sha256(m1_path)
         if actual_m1_hash != expected_m1_hash:
             raise RuntimeError(f"M1 source hash changed since coverage audit: {symbol}")

@@ -42,6 +42,7 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         session_start: str,
         regime_observation: bool,
         trade_setup_actions: bool,
+        reachable_r_validity_mask: bool,
     ) -> None:
         # Model-facing observation frame: the strategy's raw price-level
         # columns stay in ``features`` for execution/risk but must not enter
@@ -67,7 +68,9 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
             session_start: Text or path value identifying the session start.
             regime_observation: Whether to enable or require the regime observation.
             trade_setup_actions: Whether to enable or require the trade setup actions.
+            reachable_r_validity_mask: Whether to append the reachability-validity sequence feature.
         """
+        self._reachable_r_validity_mask = bool(reachable_r_validity_mask)
         if self._bundle_arrays is None:
             assert bars is not None and features is not None
             self._legacy_sequence_columns = bool(legacy_sequence_columns)
@@ -78,6 +81,7 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                 select_columns(features, self.strategy.raw_columns),
                 bars,
                 features,
+                include_validity_mask=self._reachable_r_validity_mask,
             )
             self._obs_columns = list(self._obs_features.columns)
         else:
@@ -87,11 +91,20 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
             saved_legacy_columns = bool(
                 bundle_data.manifest.get("config", {}).get("legacy_sequence_columns", False)
             )
+            saved_reachable_r_validity_mask = bool(
+                bundle_data.manifest.get("config", {})
+                .get("env", {})
+                .get("reachable_r_validity_mask", False)
+            )
             if legacy_sequence_columns is not None and bool(legacy_sequence_columns) != (
                 saved_legacy_columns
             ):
                 raise ValueError(
                     "requested legacy sequence-column mode differs from the saved env bundle"
+                )
+            if self._reachable_r_validity_mask != saved_reachable_r_validity_mask:
+                raise ValueError(
+                    "requested reachable-r validity-mask mode differs from the saved env bundle"
                 )
             self._legacy_sequence_columns = saved_legacy_columns
         if self._legacy_sequence_columns and episodic:

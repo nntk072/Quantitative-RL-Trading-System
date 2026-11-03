@@ -1,0 +1,16 @@
+2 files already formatted
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 1 item
+
+tests/unit/features/test_synthetic_entry_timing_examples.py .            [100%]
+
+============================== 1 passed in 0.20s ===============================
+evidence/research/feature_causality/synthetic_event_timing_examples/confirmed_po3_ifvg_entry_timing.svg
+evidence/research/feature_causality/synthetic_event_timing_examples/incorrect_same_bar_ifvg_entry.svg
+evidence/research/feature_causality/synthetic_event_timing_examples/previous_session_premium_gate.svg
+evidence/research/feature_causality/synthetic_event_timing_examples/confirmed_ifvg_retest_timing.svg

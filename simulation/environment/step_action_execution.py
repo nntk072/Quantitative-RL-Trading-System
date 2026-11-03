@@ -78,11 +78,21 @@ class StepActionExecutionMixin(RuntimeMixinBase):
             if not self.strategy_actions and action == 19:  # exit action
                 if self.position is not None:
                     execution_meta = {}
-                    action_fill_bid, action_fill_ask = fill_bid, fill_ask
-                    action_fill_time = fill_time
-                    if getattr(self, "tick_execution_required", False):
+                    # An action selected on this bar submits for the next
+                    # market bar. ``fill_time`` is the following valuation
+                    # boundary used by the step accounting path, one bar
+                    # later than the executable action quote.
+                    action_fill_bid, action_fill_ask = entry_fill_bid, entry_fill_ask
+                    action_fill_time = entry_fill_time
+                    active_execution = getattr(self, "_active_step_execution", None)
+                    if active_execution is not None:
+                        quote = active_execution["quote"]
+                        execution_meta = dict(active_execution["metadata"])
+                        action_fill_bid, action_fill_ask = quote.bid, quote.ask
+                        action_fill_time = quote.tick_time
+                    elif getattr(self, "tick_execution_required", False):
                         quote, execution_meta = self._resolve_randomized_tick_quote(
-                            pd.Timestamp(fill_time)
+                            pd.Timestamp(entry_fill_time)
                         )
                         action_fill_bid, action_fill_ask = quote.bid, quote.ask
                         action_fill_time = quote.tick_time
@@ -98,8 +108,10 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                         "fill_quote_source": "tick" if execution_meta else "bar_open",
                         "bar": self.step_idx,
                         "time": action_fill_time,
-                        "decision_time": bar_time,
-                        "order_submission_time": bar_time,
+                        "decision_time": bar_time + pd.Timedelta(minutes=self._minutes_per_step),
+                        "decision_bar_time": bar_time,
+                        "order_submission_time": bar_time
+                        + pd.Timedelta(minutes=self._minutes_per_step),
                         "fill_time": action_fill_time,
                         "equity": self.account.equity,
                         **execution_meta,
@@ -129,6 +141,9 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             stored_feat_row = feat_row.copy()
                         selected_names = (
                             "_selected_trade_setup",
+                            "_selected_trade_setup_event_identity",
+                            "_last_action_trade_setup_candidate_id",
+                            "_last_action_trade_setup_eligible",
                             "_selected_sl_anchor",
                             "_selected_tp_fraction",
                             "_selected_exit_mode",
@@ -140,12 +155,15 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             "_selected_tp_z",
                         )
                         self._pending_entry_order = {
+                            "decision_id": self._current_decision_id,
                             "fill_idx": fill_idx,
                             "direction": discrete_action,
                             "risk_frac": risk_frac,
                             "rr_ratio": rr_ratio,
                             "feat_row": stored_feat_row,
-                            "decision_time": bar_time,
+                            "decision_time": bar_time
+                            + pd.Timedelta(minutes=self._minutes_per_step),
+                            "decision_bar_time": bar_time,
                             "decision_bar_idx": self.step_idx,
                             "signal_bar_idx": self.step_idx,
                             "signal_time": bar_time + pd.Timedelta(minutes=self._minutes_per_step),
@@ -165,11 +183,21 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                                 "trade_setup_candidate_id": int(selected_setup.candidate_id),
                                 "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
                             }
+                            from features.context.trade_setup_candidates import (
+                                trade_setup_event_identity_record,
+                            )
+
+                            setup_identity.update(
+                                trade_setup_event_identity_record(
+                                    self._selected_trade_setup_event_identity
+                                )
+                            )
                         else:
                             setup_identity = {}
                         self.trade_log.append(
                             {
                                 "type": "order_submit",
+                                "decision_id": self._current_decision_id,
                                 "direction": discrete_action,
                                 **setup_identity,
                                 "primary_idea": (
@@ -184,7 +212,9 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                                     selected_setup.direction if selected_setup is not None else 0
                                 ),
                                 "time": bar_time,
-                                "decision_time": bar_time,
+                                "decision_time": bar_time
+                                + pd.Timedelta(minutes=self._minutes_per_step),
+                                "decision_bar_time": bar_time,
                                 "signal_bar": self.step_idx,
                                 "signal_time": bar_time
                                 + pd.Timedelta(minutes=self._minutes_per_step),

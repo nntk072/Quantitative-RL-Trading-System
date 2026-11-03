@@ -258,6 +258,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
             else str(env.get("observation_schema_version", "account-state-v1"))
         ),
         observation_age_scale_bars=float(env.get("observation_age_scale_bars", 60.0)),
+        reachable_r_validity_mask=bool(env.get("reachable_r_validity_mask", False)),
         strict_research_eligibility=bool(env.get("strict_research_eligibility", False)),
         sl_buffer_pts=float(env.get("sl_buffer_pts", 0.0)),
         strategy_reward=strategy_reward,
@@ -291,11 +292,13 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         risk_floor=float(env.get("risk_floor", 0.0005)),
         tick_execution_required=bool(costs.get("use_tick_execution", False)),
         fill_delay_ms=int(execution.get("fill_delay_ms", 0)),
+        fill_latency_bars=execution.get("fill_latency_bars", 0),
         randomized_fill_latency_ms=float(execution.get("randomized_fill_latency_ms", 0.0)),
         max_tick_quote_wait_ms=int(execution.get("max_tick_quote_wait_ms", 60_000)),
         mtf=spec.arch
         in {
             "mtf",
+            "mtf_empty_stream_masked_v1",
             "mtf_reasoning",
             "mtf_shared_tcn_reasoning",
             "mtf_m1_tcn_htf_lite_reasoning",

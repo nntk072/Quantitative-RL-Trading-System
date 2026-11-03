@@ -9,6 +9,10 @@ retracements, premium/discount, SMT, order blocks, and trade-setup candidates.
 `trade_setup_candidates.py` retains exact idea/timeframe/direction semantics
 instead of combining unrelated evidence into pooled eligibility flags. The
 canonical module is `trade_setup_candidates.py`.
+It can also resolve versioned source-event identities from family-specific
+timestamps. Missing or conflicting timestamps remain explicitly unresolved;
+the 109-category eligibility mask does not depend on this metadata, and
+absolute event times are excluded from model observations.
 
 Feature definitions must be causal, expose validity/invalidation separately
 from numeric levels where appropriate, and preserve source timeframe and

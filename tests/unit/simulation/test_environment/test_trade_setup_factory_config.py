@@ -54,6 +54,7 @@ def test_trade_setup_observation_mode_defaults_off() -> None:
 @pytest.mark.parametrize(
     "arch",
     [
+        "mtf_empty_stream_masked_v1",
         "mtf_shared_tcn_reasoning",
         "mtf_m1_tcn_htf_lite_reasoning",
         "mtf_m1_tcn_htf_snapshot_reasoning",
@@ -240,7 +241,7 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: b
             for key in reference[0]:
                 np.testing.assert_array_equal(reference[0][key], transition[0][key])
             assert reference[1:4] == transition[1:4]
-            assert reference[4] == transition[4]
+            np.testing.assert_equal(reference[4], transition[4])
         assert all(transition[4]["position"] for transition in transitions), [
             {
                 "entry_rejection_reason": transition[4]["entry_rejection_reason"],
@@ -424,6 +425,7 @@ def test_mtf_reasoning_overlay_builds_real_env_and_agent(
     model.learn(total_timesteps=2)
     action, _ = model.predict(observation, deterministic=False)
     assert trade_setup_id_from_box(float(action[0])) == 0
+    deterministic_action, _ = model.predict(observation, deterministic=True)
 
     checkpoint = tmp_path / "mtf_trade_setup_factory_smoke.zip"
     model.save(checkpoint)
@@ -432,4 +434,5 @@ def test_mtf_reasoning_overlay_builds_real_env_and_agent(
     assert type(loaded.policy) is expected_policy
     assert getattr(loaded, "_trade_setup_observation_schema") == env.trade_setup_observation_schema
     loaded_action, _ = loaded.predict(observation, deterministic=True)
+    np.testing.assert_array_equal(loaded_action, deterministic_action)
     assert trade_setup_id_from_box(float(loaded_action[0])) == 0

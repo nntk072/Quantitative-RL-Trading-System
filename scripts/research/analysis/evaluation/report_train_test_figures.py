@@ -208,7 +208,7 @@ def generate_train_test_figures(
             ("sharpe", "Sharpe ratio", "Ratio", 1.0),
             ("profit_factor", "Profit factor", "Ratio", 1.0),
             ("win_rate", "Win rate", "%", 100.0),
-            ("n_trades", "Completed trades", "Trade count", 1.0),
+            ("n_trades", "Completed positions", "Position count", 1.0),
         )
         fig, axes = plt.subplots(2, 3, figsize=(15, 8.2))
         for ax, (metric, title, unit, scale) in zip(axes.flat, metric_specs):
@@ -223,7 +223,7 @@ def generate_train_test_figures(
                     bar_colors.append(colors[split])
             if values:
                 bars = ax.bar(labels, values, color=bar_colors)
-                fmt = "%.0f" if unit == "Trade count" else "%.2f"
+                fmt = "%.0f" if unit == "Position count" else "%.2f"
                 ax.bar_label(bars, fmt=fmt, padding=3)
                 ax.axhline(0.0, color="#333333", linewidth=0.7)
             else:

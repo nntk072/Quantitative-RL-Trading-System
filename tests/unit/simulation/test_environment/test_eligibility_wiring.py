@@ -41,6 +41,29 @@ def test_legacy_default_remains_permissive() -> None:
     assert load_config().env.strict_research_eligibility is False
 
 
+def test_whole_bar_entry_latency_reaches_train_and_eval_environments(monkeypatch) -> None:
+    cfg = load_config(["execution.fill_latency_bars=2"])
+    assert environment_factory.fill_delay_ms(cfg) == 0
+    captured = {}
+
+    def fake_env(**kwargs):
+        captured.update(kwargs)
+        return kwargs
+
+    monkeypatch.setattr(environment_factory, "TradingEnv", fake_env)
+    empty = pd.DataFrame()
+    training_environments.make_env(empty, empty, cfg, algo="ppo", reward="dsr")
+
+    assert captured["fill_latency_bars"] == 2
+    assert training_environments.build_eval_common(cfg)[0]["fill_latency_bars"] == 2
+
+
+@pytest.mark.parametrize("value", [True, -1, 1.5, "2"])
+def test_whole_bar_entry_latency_rejects_invalid_config_values(value) -> None:
+    with pytest.raises(ValueError, match="execution.fill_latency_bars"):
+        environment_factory.fill_latency_bars({"execution": {"fill_latency_bars": value}})
+
+
 def test_evaluation_tick_fill_slippage_override_does_not_change_cost_model() -> None:
     cfg = load_config()
     eval_kwargs = training_environments.build_eval_common(cfg, tick_fill_slippage_points=10.0)[0]
@@ -197,6 +220,7 @@ def test_management_settings_match_training_and_evaluation_environment_kwargs(mo
             "env.allow_ema_exit=false",
             "env.eod_risk.breakeven_trigger_r=1.3",
             "env.eod_risk.breakeven_buffer_pts=1.7",
+            "env.reachable_r_validity_mask=true",
             "execution.randomized_fill_latency_ms=30",
             "execution.max_tick_quote_wait_ms=45000",
         ]
@@ -217,6 +241,7 @@ def test_management_settings_match_training_and_evaluation_environment_kwargs(mo
         "randomized_fill_latency_ms": 30.0,
         "max_tick_quote_wait_ms": 45_000,
         "tick_execution_required": True,
+        "reachable_r_validity_mask": True,
     }.items():
         assert captured[key] == expected
         assert evaluation_kwargs[key] == expected

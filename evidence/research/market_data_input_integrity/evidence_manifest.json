@@ -1,0 +1,47 @@
+{
+  "schema": "aalto.market_data_input_integrity.v1",
+  "packet": "market_data_input_integrity",
+  "claim_scope": "historical replacement-data integrity inputs, not current market-data evidence",
+  "assets": [
+    {
+      "path": "evidence/research/market_data_input_integrity/frozen_tick_execution_coverage.json",
+      "sha256": "24a60b60371e376a35e875d71ba9dd5addefb8eba8c5c275886eb8440d31f16f",
+      "historical_source_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_execution_coverage.json",
+      "historical_source_sha256": "24a60b60371e376a35e875d71ba9dd5addefb8eba8c5c275886eb8440d31f16f",
+      "bytes": 9073,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/market_data_input_integrity/schedule_frozen_tick_execution_coverage.json",
+      "sha256": "0354cab7951a1b8f8d626e8b6381c0332a1fc0990379b652f530bb5b908762c4",
+      "historical_source_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_execution_coverage_schedule_freeze_final.json",
+      "historical_source_sha256": "0354cab7951a1b8f8d626e8b6381c0332a1fc0990379b652f530bb5b908762c4",
+      "bytes": 9115,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/market_data_input_integrity/historical_tick_timestamp_ties.json",
+      "sha256": "462cd3e25b90b7c5f6203c1553681148a0d11ff0ee4523846ec227e172c9e81c",
+      "historical_source_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_timestamp_ties.json",
+      "historical_source_sha256": "462cd3e25b90b7c5f6203c1553681148a0d11ff0ee4523846ec227e172c9e81c",
+      "bytes": 8669,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/market_data_input_integrity/clock_corrected_feature_cache_rebuild.json",
+      "sha256": "01ddd3212fe365c70fca872eff2919b1888753b509037d644692127a58ea0d67",
+      "historical_source_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/named_feature_cache_rebuild_18variant_20261018_job21020179_clockfix.json",
+      "historical_source_sha256": "01ddd3212fe365c70fca872eff2919b1888753b509037d644692127a58ea0d67",
+      "bytes": 89535,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/market_data_input_integrity/full_period_cache_rebuild.json",
+      "sha256": "f0c5faba69b19c4277f4a302c7ccaf04cdc15802b3f743cd87aa56fe5824b91e",
+      "historical_source_path": "evidence/research/archive_2026/evidence/replacement_data_20261017/full_period_data_cache_rebuild_20261017_job21020179_rerun1.json",
+      "historical_source_sha256": "f0c5faba69b19c4277f4a302c7ccaf04cdc15802b3f743cd87aa56fe5824b91e",
+      "bytes": 7319,
+      "copied_into_packet": true
+    }
+  ]
+}

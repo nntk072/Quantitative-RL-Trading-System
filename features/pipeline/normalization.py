@@ -5,7 +5,6 @@ The scaler is fit only on training bars (mask=True) and applied to all bars.
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 
@@ -53,5 +52,8 @@ def rolling_zscore(
         mu = df.rolling(window, min_periods=1).mean()
         sigma = df.rolling(window, min_periods=2).std(ddof=0)
 
-    sigma = sigma.replace(0.0, np.nan)
+    # A constant fitted window has a defined centered value: finite inputs map
+    # to zero. Keep NaN standard deviations missing; they indicate unavailable
+    # fit statistics rather than a zero-variance window.
+    sigma = sigma.mask(sigma.eq(0.0), 1.0)
     return (df - mu) / sigma

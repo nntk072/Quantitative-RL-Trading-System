@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 from trading.execution import (
+    adverse_tick_fill_quote,
     bar_stop_fill_quote,
     protective_level_fill_quote,
     quote_from_bar_price,
@@ -30,18 +31,12 @@ class FillQuoteRuntimeMixin(RuntimeMixinBase):
         Returns:
             Values returned by ``_adverse_tick_fill_quote``, in the declared order.
         """
-        bid, ask = map(float, quote)
-        slippage = float(getattr(self, "tick_fill_slippage_points", 0.0))
-        if opening:
-            if direction == 1:
-                ask += slippage
-            else:
-                bid -= slippage
-        elif direction == 1:
-            bid -= slippage
-        else:
-            ask += slippage
-        return bid, ask
+        return adverse_tick_fill_quote(
+            quote,
+            direction,
+            float(getattr(self, "tick_fill_slippage_points", 0.0)),
+            opening=opening,
+        )
 
     def _close_at_quote(
         self,

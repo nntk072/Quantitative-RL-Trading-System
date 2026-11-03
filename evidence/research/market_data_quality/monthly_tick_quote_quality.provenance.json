@@ -1,0 +1,13 @@
+{
+  "csv_path": "evidence/research/market_data_quality/monthly_tick_quote_quality.csv",
+  "csv_sha256": "91cb7702304a49cf633dedca71d4e604881c4d4f87e1c282085819be974911e9",
+  "figure_path": "evidence/research/market_data_quality/monthly_tick_quote_quality.png",
+  "figure_sha256": "f2ad27a194c803109fed8c3095ad9fcfad7afdb6b2030c5bdb7fee5ec37899ff",
+  "generator_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/scripts/research/analysis/market_data/plot_market_data_quality_profile.py",
+  "generator_sha256": "d9320174c5442b989d1f3c225eb7484ae2b9b84de15cf3b9fc13dfaa9eb5e869",
+  "monthly_records": 46,
+  "period_basis": "parsed source wall-clock month; no timezone/session conversion",
+  "profile_path": "evidence/research/market_data_quality/local_market_data_quality.json",
+  "profile_sha256": "ece6f87483318a41ea91ddb4b84f4f378775321229691c5812008f8116b1c97e",
+  "schema": "qrl.monthly_tick_quote_quality_figure.v2"
+}

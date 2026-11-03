@@ -1,0 +1,14 @@
+{
+  "group_key": "391e8a78b14d2fe32a5a71c74efd0543385484e44629c7022282040fc04b1d76",
+  "profile_ids": [
+    "legacy_variant/ablation_distribution",
+    "legacy_variant/ladder_a0_flat_dist",
+    "legacy_variant/ladder_a1_sl_dist",
+    "legacy_variant/ladder_a2_tp_dist",
+    "legacy_variant/ladder_a3_multi_tp_dist",
+    "legacy_variant/ladder_a4a_entry_fsm_hidden_dist",
+    "legacy_variant/ladder_a4b_distribution"
+  ],
+  "representative_profile": "legacy_variant/ladder_a4b_distribution",
+  "status": "measured_training_split"
+}

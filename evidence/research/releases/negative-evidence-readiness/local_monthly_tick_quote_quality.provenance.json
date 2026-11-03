@@ -1,0 +1,11 @@
+{
+  "csv_path": "evidence/research/releases/negative-evidence-readiness/local_monthly_tick_quote_quality.csv",
+  "csv_sha256": "5a49ff06f6e7e84bea46e80a5cfc6897fcd1bc8f37884c0848e9dcc773bf3f6a",
+  "figure_path": "evidence/research/releases/negative-evidence-readiness/local_monthly_tick_quote_quality.png",
+  "figure_sha256": "1fc3dce613a1fc4fceb9b742896a3816dc0a6c66663a3c753daabf77686cb829",
+  "monthly_records": 46,
+  "period_basis": "parsed source wall-clock month; no timezone/session conversion",
+  "profile_path": "evidence/research/releases/negative-evidence-readiness/local_market_data_quality.json",
+  "profile_sha256": "591746df3966fd6f5ec980f4b826958c5abd63f4ca650ad0d5a1dd55cbb4ddf3",
+  "schema": "qrl.monthly_tick_quote_quality_figure.v1"
+}

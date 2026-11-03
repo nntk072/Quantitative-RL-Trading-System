@@ -1,15 +1,14 @@
 """Train the LSTM sweep-direction classifier (supervised baseline).
 
-Training samples come from the in-sample slice (≤ --train-end) and both the
-validation accuracy and the trading evaluation use the held-out slice
-(≥ --test-start).  Because the sweep dataset is built independently per
-slice, the boundary carries an implicit purge gap of at least
-``window + horizon`` bars — no window/label straddle.
+Training samples come from the development slice (≤ --train-end). The later
+evaluation slice (≥ --test-start) is already exposed report-only data; it is
+scored once after the fixed training schedule and must not guide epoch,
+hyperparameter, or policy selection.
 
 After training, the classifier is wrapped in ``LSTMStrategy`` and scored
 through the shared evaluation pipeline (``run_episode`` + ``TradingEnv``)
-on the held-out slice, so its Sharpe/drawdown/PnL are directly comparable
-to the RL agent and rule-based baselines.
+on the exposed report-only slice. This is descriptive only and does not create
+an untouched out-of-sample result or a matched comparison.
 
 Example:
     qrl-train lstm-baseline \
@@ -88,7 +87,7 @@ def _load_csv(path: str, index_col: str | None) -> pd.DataFrame:
 
 
 def main() -> None:
-    """Train on the in-sample slice, then report accuracy + trading metrics."""
+    """Train on development data, then produce one exposed-period report."""
     args = parse_args()
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -117,10 +116,7 @@ def main() -> None:
     x_train, y_train = build_sweep_dataset(
         train_bars, train_features, window=args.window, horizon=args.horizon
     )
-    x_val, y_val = build_sweep_dataset(
-        test_bars, test_features, window=args.window, horizon=args.horizon
-    )
-    print(f"sweep samples: train={len(x_train)} held-out={len(x_val)}")
+    print(f"sweep samples: train={len(x_train)}")
 
     model = LSTMSweepClassifier(x_train.shape[-1], hidden_size=args.hidden_size).to(device)
     optimiser = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -142,21 +138,25 @@ def main() -> None:
             optimiser.step()
             total += loss.item() * len(batch)
 
-        with torch.no_grad():
-            x_val_t = torch.as_tensor(x_val, device=device)
-            val_preds = model(x_val_t).argmax(dim=-1).cpu() - 1
-            val_acc = float((val_preds == torch.as_tensor(y_val)).float().mean())
-        print(
-            f"epoch {epoch + 1}/{args.epochs} loss={total / len(x_train):.4f} val_acc={val_acc:.3f}"
-        )
+        print(f"epoch {epoch + 1}/{args.epochs} loss={total / len(x_train):.4f}")
 
-        # Trading evaluation of the trained classifier on the held-out slice,
-        # through the same pipeline as the RL agent and rule-based baselines.
+    # Do not build, score, or otherwise inspect the exposed period until the
+    # fixed training schedule has completed.
+    x_report, y_report = build_sweep_dataset(
+        test_bars, test_features, window=args.window, horizon=args.horizon
+    )
+    print(f"exposed_report_only sweep samples: {len(x_report)}")
+    model.eval()
+    with torch.no_grad():
+        report_logits = model(torch.as_tensor(x_report, device=device))
+        report_preds = report_logits.argmax(dim=-1).cpu() - 1
+        exposed_accuracy = float((report_preds == torch.as_tensor(y_report)).float().mean())
+
     strategy = LSTMStrategy(model, test_features, window=args.window)
-    strategy.fast_forward(args.obs_window)
     env = TradingEnv(
         bars=test_bars,
         features=test_features,
+        obs_window=args.obs_window,
         continuous_actions=True,
         # Eval mode: a breach blocks trading for the rest of the session
         # instead of truncating the episode (mirrors run_backtest).
@@ -166,18 +166,19 @@ def main() -> None:
         env,
         # LSTMStrategy emits floats on the continuous [-1, 1] contract;
         # TradingEnv's continuous decoder expects an ndarray action.
-        action_fn=lambda obs: np.array([strategy.act(obs)], dtype=np.float32),
+        action_fn=lambda _obs: np.array([strategy.act_at(env.step_idx)], dtype=np.float32),
     )
     report = {
         "run_name": "lstm_sweep_baseline",
-        "val_acc": val_acc,
+        "evaluation_role": "exposed_report_only",
+        "sweep_direction_accuracy": exposed_accuracy,
         "split": {
             "train_end": args.train_end,
             "test_start": args.test_start,
             "train_bars": int(len(train_bars)),
             "test_bars": int(len(test_bars)),
         },
-        "out_of_sample": build_run_report(metrics, env.trade_log),
+        "exposed_report_only": build_run_report(metrics, env.trade_log),
     }
 
     out_path = Path(args.out)

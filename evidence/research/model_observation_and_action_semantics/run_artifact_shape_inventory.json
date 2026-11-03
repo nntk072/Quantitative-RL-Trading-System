@@ -1,0 +1,1344 @@
+{
+  "action_schema_evidence_status": "found",
+  "artifact_count": 24,
+  "artifacts": [
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [],
+      "kind": "reanalysis_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/reanalysis_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "4a6f40cc6230742870147f998a95879da01a11555f8d5bd02d3d01a1b75165be",
+      "size_bytes": 132830,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              6
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "bccbcc2d22c8bef13056ae799cfe3a67959675a763ea6dee1a58c9226729f719",
+      "size_bytes": 45821,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [],
+      "kind": "reanalysis_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/reanalysis_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "9f8a20e36ee26746855f6b842ea1fc113e33cb431859ead71fd04785e2a7db2f",
+      "size_bytes": 132919,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              10
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "be1111a3549e478983ad7b3502493683b7eaf8039134a499e74173a55961ab96",
+      "size_bytes": 45943,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [],
+      "action_space_widths": [],
+      "checkpoint_references": [],
+      "kind": "campaign_results_summary.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/campaign_results_summary.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "197f0b6254e958d5e5b31beddaaa8858c592ff0d7302efb96da3c4ed9246aed8",
+      "size_bytes": 13350,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.project_context.run_evidence[0].model.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        },
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.project_context.run_evidence[1].model.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        },
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.variants[0].training.agent_parameters.resolved_variant.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        },
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.variants[0].training.run_summary.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        },
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.variants[1].training.agent_parameters.resolved_variant.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        },
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.variants[1].training.run_summary.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.variants[0].training.run_summary.action_space_width",
+          "width": 12
+        },
+        {
+          "json_path": "$.variants[1].training.run_summary.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [
+        {
+          "json_path": "$.project_context.run_evidence[0].checkpoint",
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256_recorded": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703"
+        },
+        {
+          "json_path": "$.project_context.run_evidence[1].checkpoint",
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256_recorded": "f2d07676fc5e1019dda9cbd1714874fd6997238ba70dc69a5f16be7c19a36fdf"
+        }
+      ],
+      "kind": "project_results_report.json",
+      "observation_shapes": [
+        {
+          "json_path": "$.variants[0].training.run_summary",
+          "shapes": {
+            "account": [
+              6
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        },
+        {
+          "json_path": "$.variants[1].training.run_summary",
+          "shapes": {
+            "account": [
+              10
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/project_results_report.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "1f2bd900ae69b357d12b543ee733f69ddced0b27018bdfecf886da7b674d7019",
+      "size_bytes": 1324355,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [],
+      "kind": "reanalysis_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1001/reanalysis_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "720b26c9be603f3d8be71765f4387c615fc12e02b8b8b64bfde4bffade316e75",
+      "size_bytes": 132935,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              6
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1001/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "5d9432f52080619a16fa2e0962f24a0aeae45402536bac7bd2abbd431e058927",
+      "size_bytes": 45827,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [],
+      "kind": "reanalysis_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1002/reanalysis_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "d77cccd1e826c01aeed22eec0c57d014c5056c6c792cf0f231c18d32a0b500fb",
+      "size_bytes": 132935,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              6
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1002/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "514ddce7f6a25e8b09ba52e5ae241b499fc8da328c3f49c05334692b030ffe9a",
+      "size_bytes": 45825,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [],
+      "kind": "reanalysis_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1001/reanalysis_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "bbfed4279f452321d6c5339b52e4cbfcb3e19f93c2bcaf9051e85aa6b363b5c9",
+      "size_bytes": 133022,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              10
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1001/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "ea65e633bc193370cc28b971f9a30d33a7d85aa22250c2a0043ecad882a0b2dd",
+      "size_bytes": 45947,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [],
+      "kind": "reanalysis_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1002/reanalysis_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "49c2f96c3e958822fc42b7cfaf9ca6386c1a638006c4fa07f81a2f2673aa0882",
+      "size_bytes": 133022,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              10
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1002/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "2abbf9b9515701fa1988d709635cf03f77e7eb85cbcacbd83b9bb20ec074cfa5",
+      "size_bytes": 45945,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [
+        {
+          "json_path": "$.checkpoint",
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256_recorded": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703"
+        }
+      ],
+      "kind": "run_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+      "size_bytes": 84315,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              6
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "f8da8a9804c8dce22cbb5d2bfb5572da297912a6fcaccf42fbfa44b85b905a7b",
+      "size_bytes": 45527,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [
+        {
+          "json_path": "$.checkpoint",
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256_recorded": "f2d07676fc5e1019dda9cbd1714874fd6997238ba70dc69a5f16be7c19a36fdf"
+        }
+      ],
+      "kind": "run_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+      "size_bytes": 84403,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              10
+            ],
+            "seq": [
+              60,
+              746
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "dcaa0ba5015e42b86a0b3ab301b75dbede0d8faae17ffd13ef2264c66c842463",
+      "size_bytes": 45649,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [
+        {
+          "json_path": "$.checkpoint",
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_control_tcn__seed42/attempt1/rq_mtf_control_tcn__seed42/20261031_114644_496557_rl_train_seed42_tcn/model/ppo_final.zip",
+          "sha256_recorded": "0348122284e24f47f33c2dcbac2139b4aeb36206e7f318c2713d786c358cde29"
+        }
+      ],
+      "kind": "run_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_control_tcn__seed42/attempt1/rq_mtf_control_tcn__seed42/20261031_114644_496557_rl_train_seed42_tcn/run_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "9b10f0e0c62c9820c771b4f6700e40333d26271032088d05a3472bd6e4a34eb7",
+      "size_bytes": 92188,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              6
+            ],
+            "seq": [
+              60,
+              728
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_control_tcn__seed42/attempt1/rq_mtf_control_tcn__seed42/20261031_114644_496557_rl_train_seed42_tcn/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "70d694c44a02098e5288ecb29ad3f7c3e02172f5243fce95cd1792de3b2df03a",
+      "size_bytes": 46594,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [
+        {
+          "json_path": "$.checkpoint",
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_mtf__seed42/attempt2/rq_mtf_treatment_mtf__seed42/20261031_160614_710500_rl_train_seed42_mtf/model/ppo_final.zip",
+          "sha256_recorded": "ecf8e6fd58c1ca1f30764578c4c2d6ec00cca66a04522d4eea324fdc93c3e6fc"
+        }
+      ],
+      "kind": "run_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_mtf__seed42/attempt2/rq_mtf_treatment_mtf__seed42/20261031_160614_710500_rl_train_seed42_mtf/run_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "48c4ed5f3e5391d66885b012f1dc1394a0673b686270201ee9479aaf2aeaef24",
+      "size_bytes": 124547,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "direction",
+            "intensity",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "overlay-action-v2",
+          "width": 12
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 12
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              6
+            ],
+            "mask_d1": [
+              5
+            ],
+            "mask_h1": [
+              12
+            ],
+            "mask_h4": [
+              6
+            ],
+            "mask_m10": [
+              12
+            ],
+            "mask_m15": [
+              16
+            ],
+            "mask_m3": [
+              20
+            ],
+            "mask_m30": [
+              8
+            ],
+            "mask_m5": [
+              24
+            ],
+            "seq": [
+              60,
+              160
+            ],
+            "seq_d1": [
+              5,
+              71
+            ],
+            "seq_h1": [
+              12,
+              71
+            ],
+            "seq_h4": [
+              6,
+              71
+            ],
+            "seq_m10": [
+              12,
+              71
+            ],
+            "seq_m15": [
+              16,
+              71
+            ],
+            "seq_m3": [
+              20,
+              71
+            ],
+            "seq_m30": [
+              8,
+              71
+            ],
+            "seq_m5": [
+              24,
+              71
+            ],
+            "seq_mask": [
+              60
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_mtf__seed42/attempt2/rq_mtf_treatment_mtf__seed42/20261031_160614_710500_rl_train_seed42_mtf/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "246d82724d5e704326e4e9fa127bb1e5481d92c05c2cf00f7ff0c05aad763fe8",
+      "size_bytes": 47196,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "thesis",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "thesis-overlay-action-v1",
+          "width": 11
+        }
+      ],
+      "action_space_widths": [],
+      "checkpoint_references": [
+        {
+          "json_path": "$.checkpoint",
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt2/rq_mtf_treatment_reasoning__seed42/20261031_160620_717429_rl_train_seed42_mtf_reasoning/model/ppo_final.zip",
+          "sha256_recorded": "8b96423a7b3e868e76b21f45ab4aa269874af897d2651f85c8f94bb75f4c3e7e"
+        }
+      ],
+      "kind": "run_manifest.json",
+      "observation_shapes": [],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt2/rq_mtf_treatment_reasoning__seed42/20261031_160620_717429_rl_train_seed42_mtf_reasoning/run_manifest.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "1ab78caf2d3bdbcea8a77bd07927b71f2d45ba0d0a73c3440ea7239a816d849f",
+      "size_bytes": 189029,
+      "trace_record_paths": []
+    },
+    {
+      "action_schemas": [
+        {
+          "coordinates": [
+            "thesis",
+            "stop",
+            "risk",
+            "tp1_sel",
+            "tp2_sel",
+            "tp3_sel",
+            "sl_mode",
+            "tp_mode",
+            "z1",
+            "z2",
+            "exit"
+          ],
+          "json_path": "$.action_schema",
+          "version": "thesis-overlay-action-v1",
+          "width": 11
+        }
+      ],
+      "action_space_widths": [
+        {
+          "json_path": "$.action_space_width",
+          "width": 11
+        }
+      ],
+      "checkpoint_references": [],
+      "kind": "training_log.json",
+      "observation_shapes": [
+        {
+          "json_path": "$",
+          "shapes": {
+            "account": [
+              6
+            ],
+            "mask_d1": [
+              5
+            ],
+            "mask_h1": [
+              12
+            ],
+            "mask_h4": [
+              6
+            ],
+            "mask_m10": [
+              12
+            ],
+            "mask_m15": [
+              16
+            ],
+            "mask_m3": [
+              20
+            ],
+            "mask_m30": [
+              8
+            ],
+            "mask_m5": [
+              24
+            ],
+            "seq": [
+              60,
+              322
+            ],
+            "seq_d1": [
+              5,
+              91
+            ],
+            "seq_h1": [
+              12,
+              91
+            ],
+            "seq_h4": [
+              6,
+              91
+            ],
+            "seq_m10": [
+              12,
+              91
+            ],
+            "seq_m15": [
+              16,
+              91
+            ],
+            "seq_m3": [
+              20,
+              91
+            ],
+            "seq_m30": [
+              8,
+              91
+            ],
+            "seq_m5": [
+              24,
+              91
+            ],
+            "seq_mask": [
+              60
+            ],
+            "thesis_mask": [
+              109
+            ]
+          }
+        }
+      ],
+      "parse_status": "parsed",
+      "path": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/runs/attempts/rq_mtf_treatment_reasoning__seed42/attempt2/rq_mtf_treatment_reasoning__seed42/20261031_160620_717429_rl_train_seed42_mtf_reasoning/training_log.json",
+      "per_decision_price_geometry_trace": false,
+      "per_decision_setup_trace": false,
+      "sha256": "4d28b8cb0bb460707af624c5f786063b51cc8b1d800a7fb09323c112a852c763",
+      "size_bytes": 84431,
+      "trace_record_paths": []
+    }
+  ],
+  "evidence_id": "model_observation_action_artifact_inventory",
+  "generator": {
+    "path": "scripts/research/analysis/models/inspect_observation_action_artifacts.py",
+    "sha256": "1036d38d2b1831c7d6830fe74bf7e88e8c27371636a867b7caefe4912dfa3a84"
+  },
+  "limitations": [
+    "This scanner recognizes documented JSON artifact names and explicitly named CSV/JSONL trace files; it does not infer policy decisions from trade-level summaries or aggregate setup counts.",
+    "Checkpoint paths and recorded digests are copied from surrounding manifests; checkpoint existence and bytes are not verified, and opaque weights are not loaded or parsed.",
+    "not_found_in_scanned_artifacts means no qualifying trace was found under the supplied roots; it is not proof that no trace exists elsewhere.",
+    "Observation shapes and action schemas are reported from recorded artifacts. Configured windows or source code are not substituted for missing run-specific tensor shapes."
+  ],
+  "per_decision_price_geometry_trace_paths": [],
+  "per_decision_price_geometry_trace_status": "not_found_in_scanned_artifacts",
+  "per_decision_setup_trace_paths": [],
+  "per_decision_setup_trace_status": "not_found_in_scanned_artifacts",
+  "roots": [
+    "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1",
+    "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031"
+  ],
+  "schema_version": 1,
+  "scope": "read-only inventory of recognized run manifests, training logs, result reports, reanalysis manifests, and explicitly named decision/action/setup/candidate trace files",
+  "shape_evidence_status": "found"
+}

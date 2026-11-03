@@ -18,8 +18,12 @@ from tests.unit.simulation.test_environment.test_trading_env_golden_traces impor
 
 @pytest.mark.parametrize("strategy_actions", [False, True])
 @pytest.mark.parametrize("action_pattern", ["hold", "mixed"])
+@pytest.mark.parametrize("reachable_r_validity_mask", [False, True])
 def test_bundle_env_step_trace_matches_frames(
-    tmp_path: Path, strategy_actions: bool, action_pattern: str
+    tmp_path: Path,
+    strategy_actions: bool,
+    action_pattern: str,
+    reachable_r_validity_mask: bool,
 ) -> None:
     """The same seeded actions produce exactly the same observations and trace."""
     from simulation.environment.bundles import build_env_bundle
@@ -40,6 +44,7 @@ def test_bundle_env_step_trace_matches_frames(
         "obs_window": 10,
         "strategy_actions": strategy_actions,
         "strategy": BaselineStrategy(),
+        "reachable_r_validity_mask": reachable_r_validity_mask,
     }
     frames = TradingEnv(bars=bars, features=features, **common)
     bundle_path = build_env_bundle(
@@ -48,7 +53,11 @@ def test_bundle_env_step_trace_matches_frames(
         features,
         OmegaConf.create(
             {
-                "env": {"strategy_actions": strategy_actions, "obs_window": 10},
+                "env": {
+                    "strategy_actions": strategy_actions,
+                    "obs_window": 10,
+                    "reachable_r_validity_mask": reachable_r_validity_mask,
+                },
                 "data": {"raw_dir": str(tmp_path), "m1_files": {}, "tick_files": {}},
             }
         ),
@@ -58,10 +67,19 @@ def test_bundle_env_step_trace_matches_frames(
         pre_ny_by_date=None,
     )
     shared = TradingEnv.from_bundle(bundle_path, **common)
+    with pytest.raises(ValueError, match="reachable-r validity-mask mode"):
+        TradingEnv.from_bundle(
+            bundle_path,
+            **{
+                **common,
+                "reachable_r_validity_mask": not reachable_r_validity_mask,
+            },
+        )
     assert "po3_ifvg_time_ns" not in frames._obs_columns
     assert "M5_sweep_high_pivot_time_ns" not in frames._obs_columns
     assert "po3_ifvg_age" in frames._obs_columns
     assert shared._obs_columns == frames._obs_columns
+    assert ("reachable_r_valid" in frames._obs_columns) is reachable_r_validity_mask
     obs_frames, _ = frames.reset(seed=41)
     obs_shared, _ = shared.reset(seed=41)
     ended = False

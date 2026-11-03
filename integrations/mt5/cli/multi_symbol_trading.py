@@ -154,6 +154,12 @@ def initialize_trading_system() -> MultiSymbolRobot:
     Returns:
         Result of initialize the complete trading system.
     """
+    if not PAPER_TRADING:
+        raise RuntimeError(
+            "multi-symbol trading is paper-only until training-equivalent "
+            "account-loss guardrails are available"
+        )
+
     logger.info("=" * 80)
     logger.info("INITIALIZING LIVE TRADING SYSTEM")
     logger.info("=" * 80)

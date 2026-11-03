@@ -37,7 +37,12 @@ def publish_observation_memmap(
     strategy, _, _ = strategy_from_cfg(cfg)
     from simulation.environment.bundles import observation_features
 
-    array, _ = observation_features(bars, features, strategy.raw_columns)
+    array, _ = observation_features(
+        bars,
+        features,
+        strategy.raw_columns,
+        reachable_r_validity_mask=bool(cfg.env.get("reachable_r_validity_mask", False)),
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     np.save(path, array)
     return str(path)

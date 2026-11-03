@@ -27,6 +27,9 @@ architectures:
   - id: mtf
     title: Multi-timeframe encoder
     description: Encodes correlated observations from multiple timeframes.
+  - id: mtf_empty_stream_masked_v1
+    title: Empty-stream-masked multi-timeframe encoder v1
+    description: Preserves MTF weights while excluding timeframes with no valid rows.
   - id: mtf_reasoning
     title: Multi-timeframe reasoning encoder
     description: Multi-timeframe encoder with cross-timeframe reasoning.

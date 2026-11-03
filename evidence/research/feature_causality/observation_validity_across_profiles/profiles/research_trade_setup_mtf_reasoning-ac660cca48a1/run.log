@@ -1,0 +1,11 @@
+{
+  "group_key": "ac660cca48a11729d8cdd26a3d645fe67bb8da0a4911f700637262bdc96f53cf",
+  "profile_ids": [
+    "research/trade_setup_mtf_reasoning",
+    "research/trade_setup_mtf_reasoning_2m",
+    "research/trade_setup_mtf_reasoning_conditioned",
+    "research/trade_setup_mtf_reasoning_conditioned_2m"
+  ],
+  "representative_profile": "research/trade_setup_mtf_reasoning",
+  "status": "measured_training_split"
+}

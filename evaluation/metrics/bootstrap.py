@@ -15,7 +15,33 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from .performance import DEFAULT_PERIODS_PER_YEAR
+from .performance import (
+    DEFAULT_PERIODS_PER_YEAR,
+    _sharpe,
+    _sortino,
+    _trade_stats,
+    max_drawdown,
+)
+
+
+def _validate_bootstrap_parameters(n_boot: int, level: float, block_len: int) -> None:
+    """Reject invalid interval settings before handling empty or short samples."""
+    if isinstance(n_boot, bool) or not isinstance(n_boot, (int, np.integer)) or n_boot < 0:
+        raise ValueError("n_boot must be a nonnegative integer")
+    if not np.isfinite(level) or not 0.0 < level < 1.0:
+        raise ValueError("level must be finite and between 0 and 1")
+    if isinstance(block_len, bool) or not isinstance(block_len, (int, np.integer)) or block_len < 1:
+        raise ValueError("block_len must be a positive integer")
+
+
+def _finite_vector(values: NDArray[np.float64], name: str) -> NDArray[np.float64]:
+    """Return a finite one-dimensional float vector or raise a clear error."""
+    result = np.asarray(values, dtype=np.float64)
+    if result.ndim != 1:
+        raise ValueError(f"{name} must be one-dimensional")
+    if not np.isfinite(result).all():
+        raise ValueError(f"{name} must contain only finite values")
+    return result
 
 
 @dataclass(frozen=True)
@@ -61,17 +87,18 @@ def bootstrap_ci(
     Returns:
         Result of percentile bootstrap CI for ``stat_fn(values)``.
     """
-    arr = np.asarray(values, dtype=np.float64)
+    _validate_bootstrap_parameters(n_boot, level, block_len)
+    arr = _finite_vector(values, "values")
     n = arr.size
     if n == 0:
         return CI(float("nan"), float("nan"), float("nan"), level)
     estimate = float(stat_fn(arr))
-    if n == 1 or n_boot <= 0:
+    if n == 1 or n_boot == 0:
         return CI(estimate, estimate, estimate, level)
 
-        # Moving-block starts require ``n - block_len + 1 > 0``; shrink the block
-        # (down to i.i.d. resampling) when the sample is shorter than ``block_len``.
-    block_len = max(1, min(int(block_len), n))
+    # Moving-block starts require ``n - block_len + 1 > 0``; shrink the block
+    # when the sample is shorter than the requested block.
+    block_len = min(int(block_len), n)
     rng = np.random.default_rng(rng_seed)
     n_blocks = int(np.ceil(n / block_len))
     starts = rng.integers(0, n - block_len + 1, size=(n_boot, n_blocks))
@@ -116,20 +143,19 @@ def paired_metric_difference_ci(
     Returns:
         Result of moving-block CI for treatment minus control on aligned returns.
     """
-    treatment = np.asarray(treatment_returns, dtype=np.float64)
-    control = np.asarray(control_returns, dtype=np.float64)
+    _validate_bootstrap_parameters(n_boot, level, block_len)
+    treatment = _finite_vector(treatment_returns, "treatment_returns")
+    control = _finite_vector(control_returns, "control_returns")
     if treatment.ndim != 1 or control.ndim != 1 or treatment.size != control.size:
         raise ValueError("Paired return series must be one-dimensional and have the same length")
-    if not np.isfinite(treatment).all() or not np.isfinite(control).all():
-        raise ValueError("Paired return series must contain only finite returns")
     n = treatment.size
     if n == 0:
         return CI(float("nan"), float("nan"), float("nan"), level)
     estimate = float(stat_fn(treatment) - stat_fn(control))
-    if n == 1 or n_boot <= 0:
+    if n == 1 or n_boot == 0:
         return CI(estimate, estimate, estimate, level)
 
-    block_len = max(1, min(int(block_len), n))
+    block_len = min(int(block_len), n)
     rng = np.random.default_rng(rng_seed)
     n_blocks = int(np.ceil(n / block_len))
     starts = rng.integers(0, n - block_len + 1, size=(n_boot, n_blocks))
@@ -157,13 +183,10 @@ def sharpe_stat(
     Returns:
         Numeric result returned by ``sharpe_stat``.
     """
-    r = np.asarray(returns, dtype=np.float64)
-    if r.size < 2:
-        return 0.0
-    std = r.std(ddof=1)
-    if std == 0 or not np.isfinite(std):
-        return 0.0
-    return float(r.mean() / std * np.sqrt(periods_per_year))
+    r = _finite_vector(returns, "returns")
+    if periods_per_year <= 0:
+        raise ValueError("periods_per_year must be positive")
+    return _sharpe(r, periods_per_year)
 
 
 def sortino_stat(
@@ -178,14 +201,10 @@ def sortino_stat(
     Returns:
         Numeric result returned by ``sortino_stat``.
     """
-    r = np.asarray(returns, dtype=np.float64)
-    if r.size < 2:
-        return 0.0
-    downside = np.minimum(r, 0.0)
-    dd = np.sqrt((downside**2).mean())
-    if dd == 0.0:
-        return 0.0
-    return float(r.mean() / dd * np.sqrt(periods_per_year))
+    r = _finite_vector(returns, "returns")
+    if periods_per_year <= 0:
+        raise ValueError("periods_per_year must be positive")
+    return _sortino(r, periods_per_year)
 
 
 def max_drawdown_stat(equity: NDArray[np.float64]) -> float:
@@ -200,9 +219,7 @@ def max_drawdown_stat(equity: NDArray[np.float64]) -> float:
     eq = np.asarray(equity, dtype=np.float64)
     if eq.size == 0:
         return float("nan")
-    peaks = np.maximum.accumulate(eq)
-    dd = 1.0 - eq / np.where(peaks == 0, np.nan, peaks)
-    return float(np.nanmax(dd))
+    return max_drawdown(eq)
 
 
 def win_rate_stat(trade_pnls: NDArray[np.float64]) -> float:
@@ -214,10 +231,10 @@ def win_rate_stat(trade_pnls: NDArray[np.float64]) -> float:
     Returns:
         Numeric result returned by ``win_rate_stat``.
     """
-    p = np.asarray(trade_pnls, dtype=np.float64)
-    if p.size == 0:
+    pnls = np.asarray(trade_pnls, dtype=np.float64)
+    if pnls.size == 0:
         return float("nan")
-    return float((p > 0).sum() / p.size)
+    return _trade_stats(pnls)["win_rate"]
 
 
 def metrics_with_ci(
@@ -247,7 +264,13 @@ def metrics_with_ci(
     Returns:
         Mapping from ``str`` keys to ``CI`` values.
     """
-    eq = np.asarray(equity_curve, dtype=np.float64)
+    if periods_per_year <= 0:
+        raise ValueError("periods_per_year must be positive")
+    _validate_bootstrap_parameters(n_boot, level, 1)
+    eq = _finite_vector(equity_curve, "equity_curve")
+    pnls = _finite_vector(trade_pnls, "trade_pnls")
+    if np.any(eq <= 0.0):
+        raise ValueError("equity_curve values must be positive")
     if initial_balance is not None:
         if not np.isfinite(initial_balance) or initial_balance <= 0:
             raise ValueError("initial_balance must be finite and positive")
@@ -283,7 +306,5 @@ def metrics_with_ci(
             rets, lambda r: sortino_stat(r, periods_per_year), n_boot, level, rng_seed
         ),
         "max_drawdown": mdd_ci,
-        "win_rate": bootstrap_ci(
-            np.asarray(trade_pnls, dtype=np.float64), win_rate_stat, n_boot, level, rng_seed
-        ),
+        "win_rate": bootstrap_ci(pnls, win_rate_stat, n_boot, level, rng_seed),
     }

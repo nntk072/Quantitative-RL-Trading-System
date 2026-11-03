@@ -1,15 +1,15 @@
 """Baseline strategy interface.
 
-Strategies are step-indexed: the environment calls ``act()`` exactly once
-per bar in order, so a strategy can pre-compute a signal array from the
-bars DataFrame at construction time and emit ``signals[idx]`` on each call.
-This keeps strategies independent of the observation layout and trivially
-testable with synthetic data.
+Strategies can be advanced with ``act()`` when every bar is visited, or queried
+by absolute bar index with ``act_at()`` when an environment skips rows. This
+keeps precomputed signals aligned to market data without depending on the
+observation layout.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from operator import index as integer_index
 from typing import Any
 
 
@@ -61,6 +61,25 @@ class BaseStrategy(ABC):
         signal = float(self._signal(min(self._idx, self._n_bars - 1)))
         self._idx += 1
         return signal
+
+    def act_at(self, bar_index: int) -> float:
+        """Return the action for an absolute bar without advancing strategy state.
+
+        Args:
+            bar_index: Absolute row index in the bars used to build the strategy.
+
+        Returns:
+            The signal at ``bar_index``.
+        """
+        if isinstance(bar_index, bool):
+            raise TypeError("bar_index must be an integer row index")
+        try:
+            idx = integer_index(bar_index)
+        except TypeError as exc:
+            raise TypeError("bar_index must be an integer row index") from exc
+        if not 0 <= idx < self._n_bars:
+            raise IndexError(f"bar_index {idx} is outside [0, {self._n_bars})")
+        return float(self._signal(idx))
 
     @abstractmethod
     def _signal(self, idx: int) -> float:

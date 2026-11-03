@@ -22,8 +22,7 @@ OLD_M1_CACHES = (
 SEARCH_ROOTS = (ROOT / "outputs", ROOT / "cache", ROOT / "data/prebuilt_feature_cache")
 REPORT = ROOT / "outputs/data_refresh_20261017/candidate_holdout_exposure.json"
 EVIDENCE = (
-    ROOT
-    / "evidence/research/archive_2026/evidence/replacement_data_20261017/candidate_holdout_exposure.json"
+    ROOT / "evidence/research/candidate_holdout_exposure/candidate_holdout_repository_exposure.json"
 )
 
 _TAIL_DATE = re.compile(

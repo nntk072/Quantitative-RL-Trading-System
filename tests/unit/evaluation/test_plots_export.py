@@ -911,6 +911,56 @@ def test_q5_constraint_cost_evidence_is_exported_as_rows_and_summary(tmp_path):
     assert diagnostics["constraint_cost_summary"] == summary
 
 
+def test_repeated_payout_exports_economic_value_and_cycle_ledgers(tmp_path: Any) -> None:
+    index = pd.date_range("2025-01-02", periods=2, freq="1min")
+    equity = pd.Series([100.0, 100.0], index=index)
+    economic_value = pd.Series([100.0, 101.8], index=index)
+    payout_events = [
+        {
+            "type": "payout_reset",
+            "cycle": 1,
+            "payout": 1.8,
+            "balance_before_reset": 101.8,
+            "operating_balance": 100.0,
+        }
+    ]
+    cycle_events = [{"cycle": 1, "outcome": "success", "payout": 1.8}]
+    result = {
+        "equity": equity,
+        "total_economic_value_curve": economic_value,
+        "total_economic_value": 101.8,
+        "ending_total_economic_value": 101.8,
+        "trading_policy_mode": "repeated_payout",
+        "payout_events": payout_events,
+        "cycle_events": cycle_events,
+        "cumulative_payouts": 1.8,
+        "cycle_count": 2,
+        "cycle_successes": 1,
+        "cycle_failures": 0,
+        "initial_balance": 100.0,
+        "trades": pd.DataFrame(payout_events),
+    }
+    metrics = calculate_metrics(economic_value, initial_balance=100.0)
+    run_dir = save_run(
+        run_dir=tmp_path / "repeated-payout",
+        train_result=result,
+        train_metrics=metrics,
+        save_plots=False,
+        save_html=False,
+        save_csv=True,
+    )
+
+    split_dir = run_dir / "training"
+    saved_value = pd.read_csv(split_dir / "total_economic_value.csv", index_col=0)
+    assert saved_value["total_economic_value"].tolist() == [100.0, 101.8]
+    assert pd.read_csv(split_dir / "payout_events.csv").loc[0, "payout"] == 1.8
+    assert pd.read_csv(split_dir / "cycle_events.csv").loc[0, "outcome"] == "success"
+    diagnostics = json.loads((split_dir / "evaluation_diagnostics.json").read_text())
+    assert diagnostics["total_economic_value"] == 101.8
+    assert diagnostics["cumulative_payouts"] == 1.8
+    assert diagnostics["cycle_count"] == 2
+
+
 def test_fill_and_position_records_reconstruct_partial_closes() -> None:
     trades = pd.DataFrame(
         [
@@ -1005,7 +1055,9 @@ def test_position_export_does_not_merge_events_without_position_ids() -> None:
     ]
 
 
-def test_position_export_preserves_trade_setup_and_structural_provenance() -> None:
+def test_position_export_preserves_trade_setup_and_structural_provenance(
+    tmp_path: Any, synthetic_result: dict[str, Any]
+) -> None:
     decision_time = pd.Timestamp("2025-01-02T10:00:00Z")
     trades = pd.DataFrame(
         [
@@ -1015,6 +1067,13 @@ def test_position_export_preserves_trade_setup_and_structural_provenance() -> No
                 "direction": 1,
                 "trade_setup_candidate_id": 17,
                 "trade_setup_schema_version": "trade_setup-action-v1",
+                "decision_id": "episode-0-step-10",
+                "trade_setup_event_identity_version": "trade-setup-event-identity-v3",
+                "trade_setup_source_event_id": "fvg_retest:M5:1:1735812000000000000",
+                "trade_setup_source_event_identity_status": "identified",
+                "trade_setup_source_event_times_ns": [
+                    {"field": "source_time_0_ns", "time_ns": 1735812000000000000}
+                ],
                 "primary_idea": "fvg_retest",
                 "primary_setup_timeframe": "M5",
                 "primary_direction": 1,
@@ -1032,6 +1091,8 @@ def test_position_export_preserves_trade_setup_and_structural_provenance() -> No
                 "type": "close",
                 "position_id": "p-trade_setup",
                 "direction": 1,
+                "decision_id": "episode-0-step-13",
+                "trade_setup_source_event_id": "exit-context-must-not-replace-entry",
                 "price": 103.0,
                 "pnl": 3.0,
                 "net_pnl": 2.5,
@@ -1049,6 +1110,13 @@ def test_position_export_preserves_trade_setup_and_structural_provenance() -> No
     position = positions.iloc[0]
     assert position["trade_setup_candidate_id"] == 17
     assert position["trade_setup_schema_version"] == "trade_setup-action-v1"
+    assert position["decision_id"] == "episode-0-step-10"
+    assert position["trade_setup_event_identity_version"] == "trade-setup-event-identity-v3"
+    assert position["trade_setup_source_event_id"] == "fvg_retest:M5:1:1735812000000000000"
+    assert position["trade_setup_source_event_identity_status"] == "identified"
+    assert position["trade_setup_source_event_times_ns"] == [
+        {"field": "source_time_0_ns", "time_ns": 1735812000000000000}
+    ]
     assert position["primary_idea"] == "fvg_retest"
     assert position["primary_setup_timeframe"] == "M5"
     assert position["primary_direction"] == 1
@@ -1059,6 +1127,48 @@ def test_position_export_preserves_trade_setup_and_structural_provenance() -> No
     assert position["tp_price"] == pytest.approx(104.0)
     assert position["tp_ref"] == "H1_swing_high"
     assert position["tp_timeframe"] == "H1"
+
+    result = {**synthetic_result, "trades": trades}
+    metrics = calculate_metrics(result["equity"], trades=trades)
+    run_dir = save_run(
+        run_dir=tmp_path / "decision-linked-position",
+        train_result=result,
+        train_metrics=metrics,
+        save_plots=False,
+        save_html=False,
+        save_csv=True,
+    )
+    saved_position = pd.read_csv(run_dir / "training" / "positions.csv").iloc[0]
+    assert saved_position["decision_id"] == "episode-0-step-10"
+    assert saved_position["trade_setup_source_event_id"] == ("fvg_retest:M5:1:1735812000000000000")
+    assert saved_position["trade_setup_source_event_identity_status"] == "identified"
+    assert "1735812000000000000" in saved_position["trade_setup_source_event_times_ns"]
+
+
+def test_position_export_does_not_attribute_close_only_rows_to_entry_decision() -> None:
+    trades = pd.DataFrame(
+        [
+            {
+                "type": "close",
+                "position_id": "position-without-open",
+                "direction": 1,
+                "decision_id": "close-decision",
+                "trade_setup_source_event_id": "unrelated-close-context",
+                "trade_setup_source_event_identity_status": "identified",
+                "time": pd.Timestamp("2025-01-02T10:05:00Z"),
+                "price": 101.0,
+                "pnl": 1.0,
+                "position_complete": True,
+            }
+        ]
+    )
+
+    position = _position_summaries(trades).iloc[0]
+
+    assert position["reconstruction_status"] == "identified_by_position_id"
+    assert position["decision_id"] is None
+    assert position["trade_setup_source_event_id"] is None
+    assert position["trade_setup_source_event_identity_status"] is None
 
 
 def test_export_records_declared_action_coordinate_schema(tmp_path, synthetic_result) -> None:

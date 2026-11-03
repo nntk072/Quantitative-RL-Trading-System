@@ -63,15 +63,13 @@ def main() -> int:
         "--coverage-report",
         type=Path,
         default=Path(
-            "evidence/research/archive_2026/evidence/replacement_data_20261017/tick_execution_coverage.json"
+            "evidence/research/market_data_input_integrity/frozen_tick_execution_coverage.json"
         ),
     )
     parser.add_argument(
         "--schedule-shape-report",
         type=Path,
-        default=Path(
-            "evidence/research/archive_2026/evidence/replacement_data_20261017/replacement_schedule_shape.json"
-        ),
+        default=Path("outputs/data_refresh_20261017/replacement_schedule_shape.json"),
     )
     args = parser.parse_args()
 

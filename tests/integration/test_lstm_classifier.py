@@ -127,10 +127,12 @@ class TestBuildSweepDataset:
 
         # Assert
         assert x.dtype == torch.float32 and y.dtype == torch.int64
-        assert set(y.unique().tolist()).issubset({-1, 0, 1})  # type: ignore[no-untyped-call]
+        labels = y.tolist()
+        assert set(labels).issubset({-1, 0, 1})
+        assert 0 in labels
         assert len(x) == len(y) > 0
 
-    def test_no_samples_raises(self) -> None:
+    def test_no_sweeps_are_retained_as_neutral_samples(self) -> None:
         # Arrange — flat bars never sweep any level
         index = pd.date_range("2025-01-02 01:05", periods=30, freq="15min")
         flat = np.full(30, 20_000.0)
@@ -146,9 +148,38 @@ class TestBuildSweepDataset:
         )
         features = pd.DataFrame({"a": np.zeros(30)}, index=index)
 
-        # Act / Assert
-        with pytest.raises(ValueError, match="no labelled sweep samples"):
-            build_sweep_dataset(bars, features, window=10, horizon=2)
+        # Act
+        x, y = build_sweep_dataset(bars, features, window=10, horizon=2)
+
+        # Assert
+        assert len(x) == len(y) > 0
+        assert y.tolist() == [0] * len(y)
+
+    def test_label_uses_last_observed_level_and_first_future_crossing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        bars = pd.DataFrame(
+            {"close": [8.0, 9.0, 11.0, -1.0, 9.0, 9.0]},
+            index=pd.date_range("2025-01-06 01:05", periods=6, freq="1min"),
+        )
+        features = pd.DataFrame({"x": np.arange(len(bars), dtype=float)}, index=bars.index)
+        levels = pd.DataFrame(
+            {
+                "asian_high": [10.0, 10.0, 1_000.0, 1_000.0, 1_000.0, 1_000.0],
+                "asian_low": [0.0, 0.0, -1_000.0, -1_000.0, -1_000.0, -1_000.0],
+                "london_high": np.full(len(bars), np.nan),
+                "london_low": np.full(len(bars), np.nan),
+            },
+            index=bars.index,
+        )
+        monkeypatch.setattr(
+            "trading.baselines.lstm_classifier.detect_session_levels",
+            lambda _bars: levels,
+        )
+
+        _x, y = build_sweep_dataset(bars, features, window=2, horizon=3)
+
+        assert y.tolist() == [1, 0]
 
 
 @pytest.mark.integration

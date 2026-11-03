@@ -10,6 +10,7 @@ from .rule_based import (
     macd_ema50_baseline,
     rsi_mean_reversion,
 )
+from .signal_series import SignalSeriesStrategy
 from .step_indexed_strategy import BaseStrategy
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "LSTMSweepClassifier",
     "LSTMStrategy",
     "MultiLevelBreakoutStrategy",
+    "SignalSeriesStrategy",
     "fit_hold_lots",
     "simulate_hold",
     "swap_usd_per_lot",

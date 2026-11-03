@@ -26,6 +26,7 @@ from typing import Any, cast
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from evaluation.metrics import max_drawdown
 from evaluation.metrics.reward_attribution import RewardAttribution
@@ -54,6 +55,54 @@ def _finite_constraint_cost(constraints: dict[str, Any], key: str) -> float:
     if not np.isfinite(numeric):
         raise ValueError(f"evaluation constraint cost {key!r} must be finite")
     return max(0.0, numeric)
+
+
+def _setup_choice_probability_summary(
+    raw_probabilities: Any, eligibility_mask: NDArray[np.float32], selected_id: int
+) -> dict[str, float | int | None]:
+    """Summarize one masked setup distribution without retaining its full vector."""
+    names = (
+        "trade_setup_selected_probability",
+        "trade_setup_no_trade_probability",
+        "trade_setup_max_trade_probability",
+        "trade_setup_max_trade_candidate_id",
+    )
+    if raw_probabilities is None:
+        return {name: None for name in names}
+
+    values = raw_probabilities
+    if hasattr(values, "detach"):
+        values = values.detach().cpu().numpy()
+    probabilities = np.asarray(values, dtype=np.float64)
+    if probabilities.ndim == 2 and probabilities.shape[0] == 1:
+        probabilities = probabilities[0]
+    mask = np.asarray(eligibility_mask, dtype=np.float32).reshape(-1)
+    if probabilities.shape != mask.shape:
+        raise RuntimeError("setup probabilities must match the current eligibility mask")
+    if not np.isfinite(probabilities).all() or np.any(probabilities < 0.0):
+        raise RuntimeError("setup probabilities must be finite and non-negative")
+    if not np.isclose(float(probabilities.sum()), 1.0, atol=1e-5, rtol=1e-5):
+        raise RuntimeError("setup probabilities must sum to one")
+
+    from decisioning.trade_setup import NO_TRADE_ID
+
+    if not 0 <= selected_id < len(probabilities):
+        raise RuntimeError("selected setup ID is outside the probability vector")
+    eligible_trade_ids = np.flatnonzero(mask > 0.0)
+    eligible_trade_ids = eligible_trade_ids[eligible_trade_ids != NO_TRADE_ID]
+    if eligible_trade_ids.size:
+        max_offset = int(np.argmax(probabilities[eligible_trade_ids]))
+        max_candidate_id: int | None = int(eligible_trade_ids[max_offset])
+        max_probability: float | None = float(probabilities[max_candidate_id])
+    else:
+        max_candidate_id = None
+        max_probability = None
+    return {
+        "trade_setup_selected_probability": float(probabilities[selected_id]),
+        "trade_setup_no_trade_probability": float(probabilities[NO_TRADE_ID]),
+        "trade_setup_max_trade_probability": max_probability,
+        "trade_setup_max_trade_candidate_id": max_candidate_id,
+    }
 
 
 def make_action_fn(
@@ -478,7 +527,14 @@ def evaluate_model(
         coordinates = tuple(getattr(policy, "hybrid_action_coordinates", ()))
         setup_coordinate = "trade_setup" if "trade_setup" in coordinates else None
         if strategy_actions and setup_coordinate is not None and isinstance(obs, dict):
-            from decisioning.trade_setup import TRADE_SETUP_CANDIDATES, trade_setup_id_from_box
+            from decisioning.trade_setup import (
+                TRADE_SETUP_ACTION_VERSION,
+                TRADE_SETUP_CANDIDATES,
+                trade_setup_id_from_box,
+            )
+            from features.context.trade_setup_candidates import (
+                TRADE_SETUP_EVENT_IDENTITY_VERSION,
+            )
 
             values = np.asarray(action, dtype=np.float32).reshape(-1)
             setup_index = coordinates.index(setup_coordinate)
@@ -495,6 +551,17 @@ def evaluate_model(
             trade_setup_record = {
                 "step": n_steps + 1,
                 "trade_setup_candidate_id": selected_id,
+                "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
+                "trade_setup_event_identity_version": TRADE_SETUP_EVENT_IDENTITY_VERSION,
+                "trade_setup_source_event_id": None,
+                "trade_setup_source_event_identity_status": (
+                    "not_applicable"
+                    if candidate.is_no_trade
+                    else "candidate_ineligible"
+                    if not is_valid
+                    else "identity_not_emitted"
+                ),
+                "trade_setup_source_event_times_ns": [],
                 "idea": candidate.idea or "",
                 "setup_timeframe": candidate.setup_timeframe or "",
                 "direction": int(candidate.direction),
@@ -505,20 +572,73 @@ def evaluate_model(
                 "trade_setup_entropy_nats": entropy_value,
             }
             trade_setup_record.update(
-                {
-                    f"action_{name}": float(values[index])
-                    for index, name in enumerate(coordinates)
-                    if name != setup_coordinate
-                }
+                _setup_choice_probability_summary(
+                    getattr(policy, "last_trade_setup_probabilities", None), mask, selected_id
+                )
+            )
+            trade_setup_record.update(
+                {f"action_{name}": float(values[index]) for index, name in enumerate(coordinates)}
             )
         if strategy_actions:
             action_key = str(tuple(np.round(np.asarray(action).reshape(-1), 4)))
         else:
             action_key = str(action)
         action_counts[action_key] += 1
+        trade_event_start_index = len(env.trade_log)
+        if trade_setup_record is not None:
+            decision_bar_index = int(env.step_idx)
         obs, reward, done, truncated, info = env.step(action)
         if trade_setup_record is not None:
-            trade_setup_record["time"] = str(env.equity_times[-1]) if env.equity_times else ""
+            recorded_candidate_id = info.get("trade_setup_candidate_id")
+            recorded_eligible = info.get("trade_setup_eligible")
+            if recorded_candidate_id != trade_setup_record["trade_setup_candidate_id"]:
+                raise RuntimeError(
+                    "environment decision trace candidate ID disagrees with the policy action"
+                )
+            if recorded_eligible is not trade_setup_record["selection_valid"]:
+                raise RuntimeError(
+                    "environment decision trace eligibility disagrees with the observation mask"
+                )
+            trade_setup_record["trade_setup_action_schema_version"] = str(
+                info.get("trade_setup_action_schema_version", "")
+            )
+            trade_setup_record["trade_setup_eligible"] = bool(recorded_eligible)
+            trade_setup_record["selected_idea"] = str(info.get("trade_setup_selected_idea", ""))
+            trade_setup_record["selected_timeframe"] = str(
+                info.get("trade_setup_selected_timeframe", "")
+            )
+            trade_setup_record["selected_direction"] = int(
+                info.get("trade_setup_selected_direction", 0)
+            )
+            decision_time = info.get("decision_time", "")
+            valuation_time = info.get(
+                "valuation_time", env.equity_times[-1] if env.equity_times else ""
+            )
+            # Keep `time` as a compatibility alias, but define it as the policy
+            # decision time. Valuation/fill timing is recorded separately.
+            trade_setup_record["time"] = str(decision_time)
+            trade_setup_record["decision_time"] = str(decision_time)
+            trade_setup_record["valuation_time"] = str(valuation_time)
+            trade_setup_record["decision_id"] = str(info.get("decision_id", ""))
+            for key in (
+                "trade_setup_event_identity_version",
+                "trade_setup_source_event_id",
+                "trade_setup_source_event_identity_status",
+                "trade_setup_source_event_times_ns",
+            ):
+                if key in info:
+                    trade_setup_record[key] = info[key]
+            trade_setup_record["decision_bar_index"] = decision_bar_index
+            trade_setup_record["entry_rejection_reason"] = str(
+                info.get("entry_rejection_reason", "")
+            )
+            trade_setup_record["entry_state"] = str(info.get("entry_state", ""))
+            trade_setup_record["position_open_after_step"] = bool(info.get("position", False))
+            # These half-open indices address raw rows in result["trades"] and
+            # the matching trades.csv. They retain rejects and management events
+            # as well as fills, so every setup decision has an auditable outcome.
+            trade_setup_record["trade_event_start_index"] = trade_event_start_index
+            trade_setup_record["trade_event_end_index_exclusive"] = len(env.trade_log)
             trade_setup_decision_rows.append(trade_setup_record)
         final_info = info
         reward_sum += float(reward)
@@ -653,6 +773,7 @@ def evaluate_model(
         "n_sessions_skipped": n_sessions - days_traded,
         "days_traded": days_traded,
         "survived_full_year": survived_full_year,
+        "daily_loss_is_session_scoped": daily_loss_is_session_scoped,
         "completed_data_split": completed_data_split,
         "episode_end_reason": episode_end_reason,
         "reward_sum": reward_sum,
@@ -677,6 +798,11 @@ def evaluate_model(
                 "trade_setup_policy_metrics": trade_setup_metrics,
             }
             if trade_setup_metrics is not None
+            else {}
+        ),
+        **(
+            {"policy_metadata": model.policy_metadata}
+            if isinstance(getattr(model, "policy_metadata", None), dict)
             else {}
         ),
         "entry_diag": dict(env._entry_diag),

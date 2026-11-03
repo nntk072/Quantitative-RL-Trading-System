@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -15,6 +16,12 @@ from evaluation.metrics import (
     evaluation_periods_per_year,
     max_drawdown,
     sweep_delay_breakdown,
+)
+from evaluation.metrics.bootstrap import (
+    max_drawdown_stat,
+    sharpe_stat,
+    sortino_stat,
+    win_rate_stat,
 )
 
 
@@ -40,13 +47,27 @@ class TestSweepDelayBreakdown:
         assert stats["london_pct"] == pytest.approx(100.0 / 3.0)
         assert stats["asian_pct"] == pytest.approx(200.0 / 3.0)
 
-    def test_empty_log_gives_zeros(self) -> None:
+    def test_empty_log_marks_unobserved_statistics_unavailable(self) -> None:
         # Act
         stats = sweep_delay_breakdown([])
 
         # Assert
         assert stats["n_entries"] == 0
-        assert stats["sweep_delay_mean_s"] == 0.0
+        assert stats["sweep_delay_mean_s"] is None
+        assert stats["sweep_delay_median_s"] is None
+        assert stats["london_pct"] is None
+        assert stats["asian_pct"] is None
+
+    def test_entries_without_observed_delays_keep_count_but_mark_delay_na(self) -> None:
+        stats = sweep_delay_breakdown(
+            [{"type": "open", "level_type": "london_high"}, {"type": "open"}]
+        )
+
+        assert stats["n_entries"] == 2
+        assert stats["sweep_delay_mean_s"] is None
+        assert stats["sweep_delay_median_s"] is None
+        assert stats["london_pct"] == 100.0
+        assert stats["asian_pct"] == 0.0
 
 
 @pytest.mark.unit
@@ -86,6 +107,42 @@ class TestComputeMetrics:
         assert metrics.total_pnl == 0.0
         assert metrics.max_drawdown == 0.0
         assert metrics.n_trades == 0
+
+    def test_all_breakeven_positions_have_undefined_profit_factor(self) -> None:
+        metrics = compute_metrics(
+            [100.0, 100.0, 100.0], initial_balance=100.0, trade_pnls=[0.0, 0.0]
+        )
+
+        assert math.isnan(metrics.profit_factor)
+        assert metrics.win_rate == 0.0
+        assert metrics.expectancy == 0.0
+        assert metrics.n_trades == 2
+
+    def test_bootstrap_statistics_match_canonical_metric_definitions(self) -> None:
+        equity = np.asarray([100.0, 102.0, 98.0, 104.0, 103.0])
+        trade_pnls = [20.0, -10.0, 0.0, 5.0]
+        returns = equity[1:] / equity[:-1] - 1.0
+        canonical = compute_metrics(
+            equity,
+            initial_balance=100.0,
+            trade_pnls=trade_pnls,
+            periods_per_year=12,
+        )
+
+        assert sharpe_stat(returns, periods_per_year=12) == pytest.approx(canonical.sharpe)
+        assert sortino_stat(returns, periods_per_year=12) == pytest.approx(canonical.sortino)
+        assert max_drawdown_stat(equity) == pytest.approx(canonical.max_drawdown)
+        assert win_rate_stat(np.asarray(trade_pnls, dtype=np.float64)) == pytest.approx(
+            canonical.win_rate
+        )
+
+    def test_bootstrap_statistics_keep_empty_sample_conventions(self) -> None:
+        empty = np.asarray([], dtype=np.float64)
+
+        assert sharpe_stat(empty) == 0.0
+        assert sortino_stat(empty) == 0.0
+        assert math.isnan(max_drawdown_stat(empty))
+        assert math.isnan(win_rate_stat(empty))
 
     def test_total_pnl_and_return(self) -> None:
         # Arrange

@@ -1,0 +1,14 @@
+{
+  "group_key": "143b93716c139b9d58953c28ac2ee8d4eaaded132e49efc66ff22655ffd8bae0",
+  "profile_ids": [
+    "legacy_variant/ablation_po3_ifvg",
+    "legacy_variant/ladder_a0_flat_po3",
+    "legacy_variant/ladder_a1_sl_po3",
+    "legacy_variant/ladder_a2_tp_po3",
+    "legacy_variant/ladder_a3_multi_tp_po3",
+    "legacy_variant/ladder_a4a_entry_fsm_hidden_po3",
+    "legacy_variant/ladder_a4b_po3_ifvg"
+  ],
+  "representative_profile": "legacy_variant/ladder_a4b_po3_ifvg",
+  "status": "measured_training_split"
+}

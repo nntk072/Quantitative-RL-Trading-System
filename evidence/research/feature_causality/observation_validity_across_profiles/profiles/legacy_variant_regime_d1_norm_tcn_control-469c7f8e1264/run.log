@@ -1,0 +1,9 @@
+{
+  "group_key": "469c7f8e126402882947f2bc858b2af281095543efbe01e180abce397a6fd08c",
+  "profile_ids": [
+    "legacy_variant/regime_d1_norm_tcn_control",
+    "legacy_variant/regime_d1_norm_tcn_regime"
+  ],
+  "representative_profile": "legacy_variant/regime_d1_norm_tcn_control",
+  "status": "measured_training_split"
+}

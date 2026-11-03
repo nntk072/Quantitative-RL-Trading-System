@@ -7,6 +7,9 @@ from integrations.mt5.adapters import Trader, TradingStrategy
 class CrossOverRobot:
     """Execute crossover strategy signals through a MetaTrader trader adapter.
 
+    This demo has no training-equivalent account guardrail provider, so it is
+    available only in paper mode.
+
     Args:
         volume: Requested position size.
         trader: Adapter that reads and changes broker positions.
@@ -25,6 +28,11 @@ class CrossOverRobot:
             strategy: Strategy used to select or evaluate trades.
             paper_trading: Whether to enable or require the paper trading.
         """
+        if not paper_trading:
+            raise ValueError(
+                "crossover demo requires paper trading until training-equivalent "
+                "account-loss guardrails are available"
+            )
         self.volume = volume
         self.trader = trader
         self.strategy = strategy

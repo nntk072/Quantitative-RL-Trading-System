@@ -110,6 +110,73 @@ def test_levels_collapse_at_configured_instrument_precision() -> None:
     ) == [("first|same_tick", 100.0), ("next_tick", 100.006)]
 
 
+@pytest.mark.parametrize(
+    ("direction", "reference", "expected_stop"),
+    [(1, 95.12, 95.0), (-1, 104.88, 105.0)],
+)
+def test_structural_stop_buffer_rounds_away_from_entry_to_price_grid(
+    direction: int, reference: float, expected_stop: float
+) -> None:
+    menu, audit = stop_menu(
+        _Menu([("custom_stop", reference)]),
+        direction=direction,
+        entry_price=100.0,
+        row=_row(),
+        min_dist=1.0,
+        buffer=0.1,
+        manipulation="none",
+        htf=(),
+        price_increment=0.25,
+    )
+
+    assert len(menu) == 1
+    assert menu[0][:2] == ("custom_stop", expected_stop)
+    assert menu[0][2] == pytest.approx(abs(100.0 - expected_stop))
+    assert audit[0]["stop_price"] == pytest.approx(expected_stop)
+
+
+@pytest.mark.parametrize("price_increment", [0.0, -0.25, float("nan")])
+def test_structural_stop_menu_rejects_invalid_price_increment(price_increment: float) -> None:
+    with pytest.raises(ValueError, match="price_increment must be finite and positive"):
+        stop_menu(
+            _Menu([("custom_stop", 95.0)]),
+            direction=1,
+            entry_price=100.0,
+            row=_row(),
+            min_dist=1.0,
+            buffer=0.0,
+            manipulation="none",
+            htf=(),
+            price_increment=price_increment,
+        )
+
+
+@pytest.mark.parametrize("direction", [0, 2, -2])
+def test_structural_menus_reject_invalid_trade_direction(direction: int) -> None:
+    strategy = _Menu([("custom_stop", 95.0)])
+    with pytest.raises(ValueError, match="direction must be -1 or 1"):
+        stop_menu(
+            strategy,
+            direction=direction,
+            entry_price=100.0,
+            row=_row(),
+            min_dist=1.0,
+            buffer=0.0,
+            manipulation="none",
+            htf=(),
+        )
+
+    with pytest.raises(ValueError, match="direction must be -1 or 1"):
+        target_menu(
+            direction=direction,
+            entry_price=100.0,
+            row=_row(),
+            stop_dist=1.0,
+            max_tp_distance=float("nan"),
+            htf=(),
+        )
+
+
 def test_latest_only_stop_menu_keeps_legacy_deduplication_without_candidate_schema() -> None:
     order = _place(
         _row(),

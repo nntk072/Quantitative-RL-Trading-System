@@ -9,6 +9,7 @@ stubbed in conftest so the ``integrations.mt5.domain.signal`` import works.
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from types import ModuleType
 from typing import Any
 
@@ -16,10 +17,14 @@ import numpy as np
 import pandas as pd
 import pytest
 from gymnasium import spaces
+from omegaconf import OmegaConf
 
 from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
-from decisioning.observations import OBSERVATION_SCHEMA_V1, build_observation_schema
+from decisioning.observations import (
+    OBSERVATION_SCHEMA_V1,
+    build_observation_schema,
+)
 from integrations.mt5.adapters.data import TradingData
 
 # --- headless MetaTrader5 stub (Windows-only package, absent on Linux) -----
@@ -220,6 +225,28 @@ def test_rl_bridge_maps_actions_to_signals(trending_bars):
     symbol, sig = strategy.signal()
     assert symbol == "US100.cash"
     assert sig.value == "buy"
+
+
+def test_account_state_v2_live_policy_fails_closed_without_snapshot(
+    trending_bars: pd.DataFrame, tmp_path: Path
+) -> None:
+    """The live strategy must not infer from account-state-v2 defaults."""
+    from live.runtime.strategy import RLStrategyAdapter
+
+    cfg = OmegaConf.load("config/base/default.yaml")
+    cfg.env.observation_schema_version = "account-state-v2"
+    config_path = tmp_path / "account_state_v2.yaml"
+    OmegaConf.save(cfg, config_path)
+
+    model = _StubModel()
+    model._observation_schema = build_observation_schema("account-state-v2").to_dict()
+    adapter = RLStrategyAdapter(model=model, config_path=config_path)
+    strategy = adapter.as_strategy(_StubData(trending_bars))
+
+    symbol, signal = strategy.signal()
+
+    assert symbol == "US100.cash"
+    assert signal.value == "none"
 
 
 def test_rl_bridge_too_few_bars_no_signal(trending_bars):

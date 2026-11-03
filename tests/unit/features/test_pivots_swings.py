@@ -16,6 +16,7 @@ from features.technical.swings import (
     classify_structure,
     recent_unswept_swing_candidates,
     retained_swing_levels,
+    swing_history,
 )
 
 
@@ -25,6 +26,47 @@ def _pivot_bars() -> pd.DataFrame:
     lows = [100.5, 100.3, 100.1, 99.9, 99.5, 100.0, 100.5, 100.8, 101.0, 101.2]
     closes = [100.8, 100.7, 100.6, 100.5, 101.0, 100.8, 100.6, 100.4, 100.2, 100.0]
     return pd.DataFrame({"open": closes, "high": highs, "low": lows, "close": closes}, index=idx)
+
+
+def _accepted_swings() -> pd.DataFrame:
+    """Return a compact accepted high/low event sequence for structure tests."""
+    idx = pd.date_range("2025-01-06 16:30", periods=7, freq="1min", tz="Etc/GMT-3")
+    return pd.DataFrame(
+        {
+            "swing_high_event": [False, True, False, True, False, True, False],
+            "swing_low_event": [False, False, True, False, True, False, True],
+            "swing_high_extreme": [np.nan, 10.0, np.nan, 12.0, np.nan, 11.0, np.nan],
+            "swing_low_extreme": [np.nan, np.nan, 5.0, np.nan, 6.0, np.nan, 4.0],
+            "swing_high_price": [np.nan, 10.0, np.nan, 12.0, np.nan, 11.0, np.nan],
+            "swing_low_price": [np.nan, np.nan, 5.0, np.nan, 6.0, np.nan, 4.0],
+        },
+        index=idx,
+    )
+
+
+def test_classify_structure_labels_new_highs_and_lows_against_prior_events() -> None:
+    result = classify_structure(_accepted_swings())
+
+    assert result["structure"].tolist() == ["", "", "", "HH", "HL", "LH", "LL"]
+    assert result["hh"].tolist() == [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+    assert result["hl"].tolist() == [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+    assert result["lh"].tolist() == [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+    assert result["ll"].tolist() == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+
+
+def test_swing_history_is_current_first_and_does_not_backfill() -> None:
+    result = swing_history(_accepted_swings(), n=2)
+
+    assert result.iloc[0].isna().all()
+    assert result.loc[result.index[1], "swing_high_1"] == pytest.approx(10.0)
+    assert np.isnan(result.loc[result.index[1], "swing_high_2"])
+    assert result.loc[result.index[2], "swing_low_1"] == pytest.approx(5.0)
+    assert result.loc[result.index[3], "swing_high_1"] == pytest.approx(12.0)
+    assert result.loc[result.index[3], "swing_high_2"] == pytest.approx(10.0)
+    assert result.loc[result.index[4], "swing_low_1"] == pytest.approx(6.0)
+    assert result.loc[result.index[4], "swing_low_2"] == pytest.approx(5.0)
+    assert result.loc[result.index[5], "swing_high_1"] == pytest.approx(11.0)
+    assert result.loc[result.index[5], "swing_high_2"] == pytest.approx(12.0)
 
 
 def test_pivot_confirmation_has_no_lookahead() -> None:

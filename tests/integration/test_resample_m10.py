@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from market_data.transforms.align import align_timeframes, timeframe_close_times
 from market_data.transforms.resample import build_all_timeframes, resample
 
 
@@ -44,3 +45,27 @@ def test_build_all_timeframes_includes_m10() -> None:
 
     assert "M10" in frames
     assert len(frames["M10"]) == 2
+
+
+def test_partial_resampled_bar_is_visible_only_at_close_and_first_later_m1() -> None:
+    """Sparse source minutes remain partial and cannot leak into earlier M1 rows."""
+    timezone = "Etc/GMT-3"
+    index = pd.DatetimeIndex(
+        [
+            "2025-01-02 09:00",
+            "2025-01-02 09:01",
+            "2025-01-02 09:04",
+            "2025-01-02 09:06",
+            "2025-01-02 09:10",
+        ],
+        tz=timezone,
+    )
+    m1 = pd.DataFrame({"open": range(5), "close": [10, 11, 14, 16, 20]}, index=index)
+    m5 = resample(m1, "M5")
+    close_times = timeframe_close_times(m5, "M5")
+    aligned = align_timeframes(m1, {"M5": m5}, availability_times={"M5": close_times})
+
+    assert m5.loc[index[0], "close"] == 14
+    assert pd.isna(aligned.loc[index[2], "M5_close"])
+    assert aligned.loc[index[3], "M5_close"] == 14
+    assert aligned.loc[index[4], "M5_close"] == 16

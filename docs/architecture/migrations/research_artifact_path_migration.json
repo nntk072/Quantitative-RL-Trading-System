@@ -1,0 +1,58 @@
+{
+  "schema": "qrl.research_artifact_path_migration.v1",
+  "purpose": "Preserve research lineage while relocating evidence and reusable analysis tools to subject-based paths.",
+  "entries": [
+    {
+      "old_path": "evidence/research/seed50_screen_recoverability/report_pack_recoverability.json",
+      "new_path": "evidence/research/historical_variant_screen_recoverability/screen_report_pack_recoverability.json",
+      "disposition": "moved_byte_for_byte",
+      "sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c",
+      "bytes": 20327
+    },
+    {
+      "old_path": "scripts/research/audits/audit_seed50_screen_report_recoverability.py",
+      "new_path": "scripts/research/audits/audit_historical_variant_screen_recoverability.py",
+      "disposition": "renamed_and_updated_semantic_report_identity"
+    },
+    {
+      "old_path": "scripts/research/analysis/evidence/build_seed50_screen_finding_cards.py",
+      "new_path": "scripts/research/analysis/evidence/build_historical_variant_screen_finding_cards.py",
+      "disposition": "renamed_and_updated_default_output_and_card_heading"
+    },
+    {
+      "old_path": "tests/research/test_seed50_screen_report_recoverability.py",
+      "new_path": "tests/research/test_historical_variant_screen_recoverability.py",
+      "disposition": "renamed_and_imports_updated"
+    },
+    {
+      "old_path": "scripts/research/count_entry_idea_opportunities.py",
+      "new_path": "scripts/research/analysis/features/count_entry_idea_opportunities.py",
+      "disposition": "moved_to_reusable_feature_analysis",
+      "source_before_move_sha256": "25a18c6ecb4378c3d120ee40a95065d3f709fb14c527038f0d36066a9c64d1ad",
+      "source_after_move_sha256": "25a18c6ecb4378c3d120ee40a95065d3f709fb14c527038f0d36066a9c64d1ad",
+      "bytes": 16781
+    },
+    {
+      "old_path": "scripts/research/plot_swing_order_block_preview.py",
+      "new_path": "scripts/research/analysis/features/plot_swing_order_block_preview.py",
+      "disposition": "moved_to_reusable_feature_analysis",
+      "source_before_move_sha256": "9c72697214f5a438be9bc603e667ff1b5ab7f057e8ed996e925864b3e9d29f92",
+      "source_after_move_sha256": "129ba29956b7a9dc9384faa65a311b123e7810b86facc6524ab2841ba057909e",
+      "bytes": 14392
+    },
+    {
+      "old_path": "scripts/research/audits/render_idea12_synthetic_figures.py",
+      "new_path": "scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py",
+      "disposition": "moved_to_feature_analysis_and_renamed_outputs",
+      "source_before_move_sha256": "2babd27c21aa98e36223839940fb0c5b5a6a17f7814d57455d7b8b34064790e8",
+      "source_after_move_sha256": "1c93fd4b1ed04552d99c309e6f9ba537ca7823ce3d6507ae779c5acfecffdeb3",
+      "bytes": 6927,
+      "source_after_move_bytes": 7557
+    }
+  ],
+  "retained_historical_identifiers": [
+    "Historical experiment and run IDs remain unchanged inside the copied report and finding-card provenance.",
+    "The copied report retains its original schema and source paths; the card builder accepts that legacy schema and the semantic schema emitted by the current audit script.",
+    "The generator consumes the checked-in synthetic fixture and writes concept-named SVGs under outputs/research/feature_examples/entry_timing; prior generated SVGs are not present in the current checkout."
+  ]
+}

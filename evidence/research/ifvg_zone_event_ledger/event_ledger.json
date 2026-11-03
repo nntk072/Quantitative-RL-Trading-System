@@ -1,0 +1,61 @@
+{
+  "collision_definition": "A collision is a same-row, same-direction group with more than one independently confirmed source FVG; the scalar feature selects the newest gap and exposes one pulse.",
+  "collision_group_count": 13136,
+  "collision_group_size_distribution": {
+    "2": 10606,
+    "3": 2070,
+    "4": 387,
+    "5": 60,
+    "6": 13
+  },
+  "collision_groups_by_side": {
+    "bearish": 6217,
+    "bullish": 6919
+  },
+  "config_path": "config/research/trade_setup_mtf_reasoning_2m.yaml",
+  "ifvg_config": {
+    "close_through_buffer_enabled": true,
+    "close_through_threshold": 0.1,
+    "inverse_opposing_fvg": false
+  },
+  "interpretation": "Per-zone IFVG detector confirmations versus the newest-zone scalar projection; not policy proposals, trades, or returns.",
+  "local_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
+  "local_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
+  "output_files": [
+    "ifvg_zone_event_ledger.csv",
+    "ifvg_confirmation_collisions.csv",
+    "monthly_collision_summary.csv",
+    "README.md",
+    "event_ledger.json",
+    "resolved_config.yaml",
+    "OUTPUT_SHA256SUMS"
+  ],
+  "per_zone_confirmation_count": 72561,
+  "primary_symbol": "US100.cash",
+  "resolved_config_sha256": "94e2de5bcea020327f5fbbdbc6045b1ff92474ad75dd22f87c80f40ea9caa3ca",
+  "scalar_confirmation_pulse_count": 56349,
+  "source_commit": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "source_hashes": {
+    "features/pipeline/po3_stage.py": "cc52cd3abb6b05eb0ab28e0709334d8a89d1a8ddc5841af5cb8795e4fe361267",
+    "features/po3/fvg_detection.py": "39309e91ff551fa45b6eff76589d492f8bdfc50b8a23a409232a928c2f93a0ae",
+    "features/po3/ifvg_detection.py": "ece55b2c6121cc6f7eb916010b24b47ce841a86f745a91a52894ece29a298144",
+    "features/po3/po3_phase_state.py": "141af5ab6ef13dcd687a1afcab789d1fba046a38a982556a9b295527b811fa7b",
+    "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
+    "scripts/research/analysis/features/ifvg_zone_event_ledger.py": "659228462dc37d1f63bd43f154c19e9ab60aab9ad8ffbcbe5558ee969f07146e"
+  },
+  "source_timeframe": "M1",
+  "status": "descriptive_training_zone_events_only",
+  "suppressed_per_zone_confirmation_count": 16212,
+  "suppressed_per_zone_confirmations_by_side": {
+    "bearish": 7641,
+    "bullish": 8571
+  },
+  "training_input_sha256": {
+    "data/training/US100.cash_M1_202412300105_202610162349.csv": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0"
+  },
+  "training_m1_rows": 351432,
+  "training_period": {
+    "end_inclusive": "2025-12-31",
+    "start": "2024-12-30"
+  }
+}

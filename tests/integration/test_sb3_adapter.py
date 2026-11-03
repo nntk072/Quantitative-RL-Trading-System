@@ -55,6 +55,24 @@ def test_discrete_provider_names_action_and_preserves_determinism() -> None:
     assert provider.metadata.action_schema.coordinates == names
 
 
+@pytest.mark.parametrize("action", [1.5, float("nan"), float("inf")])
+def test_discrete_provider_rejects_fractional_or_nonfinite_action(action: float) -> None:
+    model = _Policy(
+        spaces.Discrete(3),
+        {
+            "kind": "discrete",
+            "version": "discrete-v1",
+            "key": "d3",
+            "coordinates": ("hold", "long", "exit"),
+        },
+        np.asarray([action]),
+    )
+    provider = SB3DecisionProvider(model, input_schema_version="observation-v1")
+
+    with pytest.raises(ValueError, match="finite integer"):
+        provider.predict(_input())
+
+
 def test_box_provider_returns_named_structured_coordinates_in_schema_order() -> None:
     coordinates = ("direction", "risk", "target")
     model = _Policy(
@@ -68,6 +86,19 @@ def test_box_provider_returns_named_structured_coordinates_in_schema_order() -> 
 
     assert decision.action == StructuredAction({"direction": 0.25, "risk": -0.5, "target": 1.0})
     np.testing.assert_array_equal(to_policy_action(decision), [0.25, -0.5, 1.0])
+
+
+@pytest.mark.parametrize("action", [[0.1, float("nan"), 0.3], [0.1, 0.2, float("inf")]])
+def test_box_provider_rejects_nonfinite_actions(action: list[float]) -> None:
+    model = _Policy(
+        spaces.Box(-1.0, 1.0, shape=(3,), dtype=np.float32),
+        {"version": "overlay-v2", "key": "3", "coordinates": ("direction", "risk", "target")},
+        np.asarray(action, dtype=np.float32),
+    )
+    provider = SB3DecisionProvider(model, input_schema_version="observation-v1")
+
+    with pytest.raises(ValueError, match="only finite values"):
+        provider.predict(_input())
 
 
 def test_scalar_box_provider_uses_continuous_action_contract() -> None:
@@ -135,3 +166,33 @@ def test_structured_conversion_requires_exact_coordinate_set() -> None:
     )
     with pytest.raises(ValueError, match="coordinates disagree"):
         to_policy_action(inconsistent)
+
+
+@pytest.mark.parametrize(
+    "decision",
+    [
+        Decision(
+            action=DiscreteAction(index=1, name="wrong"),
+            action_schema=ActionSchemaRef(
+                version="discrete-v1", key="d2", coordinates=("hold", "exit"), kind="discrete"
+            ),
+        ),
+        Decision(
+            action=ContinuousAction(value=float("nan")),
+            action_schema=ActionSchemaRef(
+                version="continuous-v1", key="scalar", coordinates=("position",), kind="continuous"
+            ),
+        ),
+        Decision(
+            action=StructuredAction({"risk": 0.1, "target": float("inf")}),
+            action_schema=ActionSchemaRef(
+                version="overlay-v2", key="2", coordinates=("risk", "target"), kind="continuous"
+            ),
+        ),
+    ],
+)
+def test_policy_action_conversion_rejects_actions_that_disagree_with_schema(
+    decision: Decision,
+) -> None:
+    with pytest.raises(ValueError):
+        to_policy_action(decision)

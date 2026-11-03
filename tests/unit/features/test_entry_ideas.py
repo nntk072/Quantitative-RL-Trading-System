@@ -7,6 +7,11 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from decisioning.trade_setup import (
+    TRADE_SETUP_DIRECTIONS,
+    TRADE_SETUP_IDEAS,
+    TRADE_SETUP_TIMEFRAMES,
+)
 from features.context.entry_ideas import build_entry_idea_features, entry_idea_context
 from features.context.swing_retracement import (
     SWING_LEVELS,
@@ -15,6 +20,7 @@ from features.context.swing_retracement import (
 )
 from features.pipeline.schema import select_obs_columns
 from features.technical.structure import structure_levels
+from simulation.environment.market_view import FeatureRow
 
 
 def _bars(closes: list[float]) -> pd.DataFrame:
@@ -61,6 +67,60 @@ def test_entry_ideas_are_multi_hot_and_keep_source_timeframes() -> None:
     assert context["gap_reactions"] == {"FVG": ["M15"]}
 
 
+@pytest.mark.parametrize("timeframe", TRADE_SETUP_TIMEFRAMES)
+@pytest.mark.parametrize("direction", TRADE_SETUP_DIRECTIONS)
+def test_standard_deviation_projection_covers_timeframe_and_direction(
+    timeframe: str, direction: int
+) -> None:
+    side = "long" if direction == 1 else "short"
+    prefix = "" if timeframe == "M1" else f"{timeframe}_"
+    source = pd.DataFrame({f"{prefix}standard_deviation_entry_{side}": [1.0]})
+
+    ideas = build_entry_idea_features(source)
+
+    target = f"entry_idea_standard_deviation_{timeframe}_{side}"
+    assert ideas.loc[0, target] == 1.0
+    for candidate_timeframe in TRADE_SETUP_TIMEFRAMES:
+        for candidate_side in ("long", "short"):
+            column = f"entry_idea_standard_deviation_{candidate_timeframe}_{candidate_side}"
+            assert ideas.loc[0, column] == float(column == target)
+
+
+@pytest.mark.parametrize("idea", ("po3", "ifvg_retest", "ifvg_unretested"))
+@pytest.mark.parametrize("direction", TRADE_SETUP_DIRECTIONS)
+def test_selected_m1_setup_projections_keep_exact_family_and_direction(
+    idea: str, direction: int
+) -> None:
+    side = "long" if direction == 1 else "short"
+    source_side = "bull" if side == "long" else "bear"
+    if idea == "po3":
+        source = pd.DataFrame(
+            {
+                "po3_distribution": [1.0],
+                "po3_distribution_direction": [float(direction)],
+                "po3_distribution_after_ifvg": [1.0],
+                "ifvg_bull_active": [float(side == "long")],
+                "ifvg_bear_active": [float(side == "short")],
+            }
+        )
+    elif idea == "ifvg_retest":
+        source = pd.DataFrame({f"ifvg_retest_{source_side}": [1.0]})
+    else:
+        source = pd.DataFrame({f"ifvg_{source_side}_confirmed": [1.0]})
+
+    ideas = build_entry_idea_features(source)
+
+    target = f"entry_idea_{idea}_M1_{side}"
+    candidate_columns = [
+        f"entry_idea_{candidate_idea}_M1_{candidate_side}"
+        for candidate_idea in TRADE_SETUP_IDEAS
+        for candidate_side in ("long", "short")
+    ]
+    assert ideas.loc[0, target] == 1.0
+    candidate_values = ideas[candidate_columns].to_numpy(dtype=np.float64)[0]
+    assert np.count_nonzero(candidate_values) == 1
+
+
 def test_gap_reaction_context_keeps_fvg_and_ifvg_distinct() -> None:
     row = pd.Series(
         {
@@ -105,6 +165,30 @@ def test_entry_ideas_handle_duplicate_input_columns_and_keep_overlapping_context
         "order_block": ["M5"],
         "fvg_retest": ["M15"],
     }
+
+
+def test_entry_idea_context_matches_zero_copy_feature_row() -> None:
+    values = {
+        "entry_idea_fvg_retest_long": 1.0,
+        "M5_fvg_retest_bull": 1.0,
+        "M5_fvg_bull_active": 1.0,
+        "M5_fvg_bull_low": 100.0,
+        "M5_fvg_bull_high": 101.0,
+        "M15_ifvg_retest_bull": 1.0,
+        "M15_ifvg_bull_active": 1.0,
+        "M15_ifvg_bull_low": 102.0,
+        "M15_ifvg_bull_high": 103.0,
+    }
+    columns = list(values)
+    feature_row = FeatureRow(
+        np.asarray(list(values.values()), dtype=np.float64),
+        {name: position for position, name in enumerate(columns)},
+    )
+
+    expected = entry_idea_context(pd.Series(values), 1, include_zones=True)
+    actual = entry_idea_context(feature_row, 1, include_zones=True)
+
+    assert actual == expected
 
 
 def test_po3_context_records_only_the_ifvg_used_for_distribution() -> None:
@@ -252,4 +336,13 @@ def test_swing_retracement_rejects_invalid_band(low: float, high: float) -> None
     with pytest.raises(ValueError, match="retracement bounds"):
         build_swing_retracement_features(
             _bars([1, 2, 1]), retracement_low=low, retracement_high=high
+        )
+
+
+def test_swing_retracement_rejects_levels_with_colliding_column_tokens() -> None:
+    with pytest.raises(ValueError, match="duplicate feature column tokens"):
+        build_swing_retracement_features(
+            _bars([1, 2, 1]),
+            swing_period=1,
+            level_values=(0.12345671, 0.12345672),
         )

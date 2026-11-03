@@ -136,7 +136,7 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
                     else fill_session
                 )
                 has_same_session_followup = fill_session == next_session
-            if not has_ny_fill or not has_same_session_followup:
+            if not has_ny_fill or not has_same_session_followup or fill_session != session_id:
                 discrete_action = 0
                 risk_frac = 0.0
                 if self.strategy_actions:

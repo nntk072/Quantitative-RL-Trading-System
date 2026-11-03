@@ -1,0 +1,127 @@
+{
+  "collision_definition": "Multiple per-zone confirmations of the same direction map to one M1 availability row; the merged feature exposes the first configured source timeframe's scalar-selected event.",
+  "config_path": "config/2_po3_ifvg.yaml",
+  "derived_timeframes": [
+    "D1"
+  ],
+  "ifvg_config": {
+    "close_through_buffer_enabled": true,
+    "close_through_threshold": 0.1,
+    "inverse_opposing_fvg": true
+  },
+  "interpretation": "Per-zone IFVG confirmations by source timeframe, projected to the first M1 availability row and compared with current first-source-wins scalar merging.",
+  "limitations": [
+    "Detector events are not logical setups, policy proposals, orders, or trades.",
+    "Source timestamps inherit the supplied local bar index; provider publication time and authoritative calendar are not established.",
+    "The merged scalar feature records one source per side and availability row; this packet measures the source events hidden by that projection."
+  ],
+  "local_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
+  "local_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
+  "merged_scalar_event_count": 78709,
+  "output_files": [
+    "ifvg_timeframe_event_ledger.csv",
+    "ifvg_timeframe_collisions.csv",
+    "README.md",
+    "event_ledger.json",
+    "resolved_config.yaml",
+    "OUTPUT_SHA256SUMS"
+  ],
+  "per_timeframe_counts": {
+    "D1": {
+      "merged_scalar_events": 19,
+      "source_scalar_events": 34,
+      "zone_events": 42
+    },
+    "H1": {
+      "merged_scalar_events": 321,
+      "source_scalar_events": 763,
+      "zone_events": 1006
+    },
+    "H4": {
+      "merged_scalar_events": 142,
+      "source_scalar_events": 225,
+      "zone_events": 282
+    },
+    "M1": {
+      "merged_scalar_events": 51371,
+      "source_scalar_events": 51371,
+      "zone_events": 62478
+    },
+    "M10": {
+      "merged_scalar_events": 2560,
+      "source_scalar_events": 4516,
+      "zone_events": 5525
+    },
+    "M15": {
+      "merged_scalar_events": 1587,
+      "source_scalar_events": 2965,
+      "zone_events": 3694
+    },
+    "M3": {
+      "merged_scalar_events": 14541,
+      "source_scalar_events": 15977,
+      "zone_events": 19222
+    },
+    "M30": {
+      "merged_scalar_events": 729,
+      "source_scalar_events": 1507,
+      "zone_events": 1923
+    },
+    "M5": {
+      "merged_scalar_events": 7439,
+      "source_scalar_events": 9271,
+      "zone_events": 11279
+    }
+  },
+  "per_zone_event_count": 105451,
+  "primary_symbol": "US100.cash",
+  "resolved_config_sha256": "f118b0d239df500f290b9f62b4a32df1835810839675c874b95716279b118271",
+  "same_availability_row_side_collision_count": 18734,
+  "session_schedule_identity": {
+    "path": "config/ny_session_schedule.csv",
+    "sha256": "7e9f5def3385185905f7265f946a0835ccb43c53f1351c057aa23f00480e6cbc"
+  },
+  "source_commit": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "source_hashes": {
+    "features/pipeline/feature_build_inputs.py": "4bd7235a31bd677ef0de209298fb85b34d0b9d3fb32763da993a5e7eb7917461",
+    "features/pipeline/po3_stage.py": "cc52cd3abb6b05eb0ab28e0709334d8a89d1a8ddc5841af5cb8795e4fe361267",
+    "features/po3/fvg_detection.py": "39309e91ff551fa45b6eff76589d492f8bdfc50b8a23a409232a928c2f93a0ae",
+    "features/po3/ifvg_detection.py": "ece55b2c6121cc6f7eb916010b24b47ce841a86f745a91a52894ece29a298144",
+    "features/po3/po3_phase_state.py": "141af5ab6ef13dcd687a1afcab789d1fba046a38a982556a9b295527b811fa7b",
+    "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
+    "market_data/transforms/align.py": "0835dfb2f84ba67cd182a619e06c559cae2774bf37b98a9700921cf4aa8ef37d",
+    "market_data/transforms/resample.py": "95d2a9ca6e326cd35ae0a331d1b616fed5abd8dda6b93b753a6917c180e3e605",
+    "market_data/transforms/session_schedule.py": "0e58df6134f2e258334f38d0b696d3142b6adcf81b3f705fce89c59a352ecf5c",
+    "scripts/research/analysis/features/ifvg_timeframe_collision_ledger.py": "be96fb6709cbf719f6546680af79f3bb91b64394f12679056732d1855917aaf2"
+  },
+  "source_scalar_event_count": 86629,
+  "source_timeframes_in_merge_order": [
+    "M1",
+    "M3",
+    "M5",
+    "M10",
+    "M15",
+    "M30",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "status": "descriptive_training_ifvg_detector_events_only",
+  "suppressed_visible_zone_event_count": 26740,
+  "training_input_sha256": {
+    "data/training/US100.cash_H1_202412300100_202610162300.csv": "693e9b3df53e522b16c63f1d9ab9c7e29f0c29555f066b3a90554b34a9dd7c0b",
+    "data/training/US100.cash_H4_202412300000_202610162000.csv": "83855aed1db0517f43b76ef2e3484908e43d9744d955abb8c828aad699a1e2af",
+    "data/training/US100.cash_M10_202412300100_202610162340.csv": "a13bdee2606d3bed19e301196fc29e426d97fdf05373fee83a734181004ade53",
+    "data/training/US100.cash_M15_202412300100_202610162345.csv": "1eb96fafbdbcfa140e50d6430e7fdfbd891dcad22eae597771678c0ed607c6cd",
+    "data/training/US100.cash_M1_202412300105_202610162349.csv": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+    "data/training/US100.cash_M30_202412300100_202610162330.csv": "256a8fb8c959a61f2fada196163ba8da0edf94de67146d175fbdab9eba75c5d7",
+    "data/training/US100.cash_M3_202412300103_202610162348.csv": "217c2f8bfdd1ff30938868f81d3fb682f8919bc703171cb29f88ddc6a6bab461",
+    "data/training/US100.cash_M5_202412300105_202610162345.csv": "07e162ade037e3da909bce02041e0f4ce6e2e85d417c5e3fab9bfeaacc94a7ec"
+  },
+  "training_m1_rows": 351432,
+  "training_period": {
+    "end_inclusive": "2025-12-31",
+    "start": "2024-12-30"
+  },
+  "visible_per_zone_event_count": 105449
+}

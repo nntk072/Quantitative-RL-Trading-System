@@ -237,7 +237,7 @@ def format_dashboard(snapshot: dict[str, Any]) -> str:
         pnl_currency = str(ev.get("account_currency", "account currency"))
         if int(ev.get("n_trades", 0)) == 0:
             lines.append(
-                "TRAIN-PREFIX MONITOR (not final evaluation)  NO TRADES  "
+                "TRAIN-PREFIX MONITOR (not final evaluation)  NO COMPLETED POSITIONS  "
                 "metrics unavailable; not worker status"
             )
         else:
@@ -249,7 +249,7 @@ def format_dashboard(snapshot: dict[str, Any]) -> str:
                 f"net PnL {pnl_text} {pnl_currency}  "
                 f"pf {ev['profit_factor']:.2f}  "
                 f"win {100.0 * ev['win_rate']:.1f}%  "
-                f"avg {ev['avg_trade']:+.2f}  trades {int(ev['n_trades'])}  "
+                f"avg {ev['avg_trade']:+.2f}  completed positions {int(ev['n_trades'])}  "
                 f"turn {ev['turnover']:.4f}  rew {ev['reward_mean']:+.4f}"
             )
     if ev:
@@ -340,7 +340,7 @@ def format_dashboard_table(snapshot: dict[str, Any]) -> str:
             ("breach_events", str(int(ev.get("breach_events", 0)))),
         ]
         if int(ev.get("n_trades", 0)) == 0:
-            eval_rows.append(("status", "NO TRADES (not worker status)"))
+            eval_rows.append(("status", "NO COMPLETED POSITIONS (not worker status)"))
         else:
             eval_rows.extend(
                 [
@@ -355,7 +355,7 @@ def format_dashboard_table(snapshot: dict[str, Any]) -> str:
                     ("profit_factor", f"{ev['profit_factor']:.2f}"),
                     ("win_rate", f"{100.0 * ev['win_rate']:.1f}%"),
                     ("avg_trade", f"{ev['avg_trade']:+.2f}"),
-                    ("n_trades", str(int(ev["n_trades"]))),
+                    ("completed_positions", str(int(ev["n_trades"]))),
                     ("turnover", f"{ev['turnover']:.4f}"),
                     ("reward_mean", f"{ev['reward_mean']:+.4f}"),
                 ]

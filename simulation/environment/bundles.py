@@ -27,6 +27,7 @@ def observation_features(
     raw_columns: list[str] | tuple[str, ...],
     *,
     legacy_sequence_columns: bool = False,
+    reachable_r_validity_mask: bool = False,
 ) -> tuple[NDArray[np.float32], list[str]]:
     """Build the same contiguous float32 observation matrix used by training.
 
@@ -35,12 +36,18 @@ def observation_features(
         features: Feature values supplied to the operation.
         raw_columns: Items supplied for the raw columns, in input order.
         legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
+        reachable_r_validity_mask: Whether to append the reachability-validity sequence feature.
 
     Returns:
         Array returned by ``observation_features``.
     """
     selector = select_legacy_obs_columns if legacy_sequence_columns else select_obs_columns
-    frame = attach_reachable_r(selector(features, raw_columns), bars, features)
+    frame = attach_reachable_r(
+        selector(features, raw_columns),
+        bars,
+        features,
+        include_validity_mask=reachable_r_validity_mask,
+    )
     array = np.ascontiguousarray(frame.to_numpy(dtype=np.float32))
     return array, [str(column) for column in frame.columns]
 
@@ -258,7 +265,11 @@ def build_env_bundle(
         Path returned by ``build_env_bundle``.
     """
     obs_features, obs_columns = observation_features(
-        bars, features, raw_columns, legacy_sequence_columns=legacy_sequence_columns
+        bars,
+        features,
+        raw_columns,
+        legacy_sequence_columns=legacy_sequence_columns,
+        reachable_r_validity_mask=bool(cfg.env.get("reachable_r_validity_mask", False)),
     )
     feature_values, feature_columns = _numeric_feature_array(features)
     session_codes, session_labels = _session_codes(bars)

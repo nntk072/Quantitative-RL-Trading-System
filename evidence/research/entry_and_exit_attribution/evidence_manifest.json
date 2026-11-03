@@ -1,0 +1,68 @@
+{
+  "analysis_window": {
+    "end_exclusive_utc": "2025-12-31T21:00:00+00:00",
+    "partition": "training only; 2026 is not opened or used",
+    "start_utc": "2024-12-29T21:00:00+00:00"
+  },
+  "assets": [
+    {
+      "copied_into_packet": true,
+      "historical_source_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.json",
+      "path": "evidence/research/entry_and_exit_attribution/monthly_entry_exit_summary.json",
+      "role": "summary",
+      "sha256": "c8974b1ed236e1c33176c2c001811f1a80547b86d158fb786784f89e17148a17"
+    },
+    {
+      "copied_into_packet": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
+      "path": null,
+      "role": "historical_report",
+      "sha256": "ab796284d32e12e579648f08966cfb533df18bac5ce5e0dc46bb8d249f7bafa5",
+      "external_archive_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_20261031/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
+      "external_archive_source_path": "evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
+      "external_archive_manifest": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_manifest_20261031.json",
+      "external_archive_sha256": "ab796284d32e12e579648f08966cfb533df18bac5ce5e0dc46bb8d249f7bafa5"
+    },
+    {
+      "copied_into_packet": true,
+      "historical_source_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/ladder_a4a_entry_fsm_hidden_qgrid025_paired_trades.csv",
+      "path": "evidence/research/entry_and_exit_attribution/treatment_paired_trades.csv",
+      "role": "treatment_paired_trades",
+      "sha256": "6dfa98daa914065acdd74a23ad3516bb01972cefa3b60f303f4d4c9ef6ffbdae"
+    },
+    {
+      "copied_into_packet": true,
+      "historical_source_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/ladder_a4b_entry_fsm_qgrid025_paired_trades.csv",
+      "path": "evidence/research/entry_and_exit_attribution/control_paired_trades.csv",
+      "role": "control_paired_trades",
+      "sha256": "45df9ffac7404869fd8f2701716f9e45ff887e8ad7d96226cd005734a319fbe5"
+    },
+    {
+      "path": "evidence/research/entry_and_exit_attribution/training_dynamics_control.json",
+      "role": "historical_training_dynamics_control",
+      "sha256": "9721154a97da238ae48661e6efbbdede8834854da3d376e50bd2694fd751c09f",
+      "historical_source_path": "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_training_dynamics_control.json",
+      "historical_source_sha256": "9721154a97da238ae48661e6efbbdede8834854da3d376e50bd2694fd751c09f",
+      "copied_into_packet": true
+    }
+  ],
+  "bootstrap": {
+    "resamples": 10000,
+    "seed": 20261025
+  },
+  "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+  "claim_scope": "R2 paired-trade aggregate recomputation; not policy replay or causal entry/exit intervention",
+  "evidence_id": "entry_and_exit_attribution",
+  "reproduction_notebook": "docs/reproduce/entry_and_exit_attribution.ipynb",
+  "schema_version": 1,
+  "reproduction_notebook_sha256": "52627b4bc9ead5468ecab2d81a664b6fdf0ca4d94d912dce3e15bc4d60701da7",
+  "generated_outputs": [
+    {
+      "role": "monthly_entry_exit_attribution_figure",
+      "path": "evidence/research/entry_and_exit_attribution/monthly_entry_exit_attribution.png",
+      "sha256": "aacc43e24bc69fc87bd56386011ced96069d1777b774ed50ea3fa50372931b55",
+      "generator_path": "docs/reproduce/entry_and_exit_attribution.ipynb",
+      "generator_sha256": "52627b4bc9ead5468ecab2d81a664b6fdf0ca4d94d912dce3e15bc4d60701da7"
+    }
+  ]
+}

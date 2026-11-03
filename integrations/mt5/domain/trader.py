@@ -96,7 +96,7 @@ class MT5Trader(Trader):
                     logger.error("Cannot close position {}: quote unavailable", position)
                     continue
 
-                if type_position == 1:
+                if type_position == mt5.ORDER_TYPE_SELL:
                     # A short position is closed by buying at the ask.
                     price_close = tick.ask
                     close_request = {
@@ -111,7 +111,7 @@ class MT5Trader(Trader):
                     }
                     mt5.order_send(close_request)
 
-                if type_position == 0:
+                if type_position == mt5.ORDER_TYPE_BUY:
                     # A long position is closed by selling at the bid.
                     price_close = tick.bid
                     close_request = {

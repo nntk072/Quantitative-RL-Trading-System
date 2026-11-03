@@ -1,0 +1,64 @@
+{
+  "schema": "aalto.setup_conditioned_policy_variant_comparison.v1",
+  "topic": "setup_conditioned_replay",
+  "historical_run_date": "2026-10-28",
+  "claim_scope": "Four canonical historical testing artifacts, retained for traceability; not selected-pair evidence and not a regenerated result.",
+  "arms": {
+    "C": "Execution conditioning inactive.",
+    "D": "Execution conditioning active."
+  },
+  "assets": [
+    {
+      "path": "evidence/research/setup_conditioned_reasoning_replay/policy_variant_comparison/arm_c/testing/equity.png",
+      "sha256": "6e5025dff9c275f3da061c231ccf13db24de7ec3e9c3e9be15de9d2a6b93128c",
+      "bytes": 148632,
+      "arm_id": "C",
+      "arm_description": "Execution conditioning is inactive.",
+      "partition": "testing",
+      "artifact_role": "equity_curve",
+      "historical_source_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/equity.png",
+      "historical_source_sha256": "6e5025dff9c275f3da061c231ccf13db24de7ec3e9c3e9be15de9d2a6b93128c",
+      "external_archive_path": "historical_research_archive/setup_conditioned_replay/benchmark_outputs/C/testing/equity.png",
+      "migration_manifest_sha256": "6e5025dff9c275f3da061c231ccf13db24de7ec3e9c3e9be15de9d2a6b93128c"
+    },
+    {
+      "path": "evidence/research/setup_conditioned_reasoning_replay/policy_variant_comparison/arm_c/testing/policy_metrics.json",
+      "sha256": "8720ae91be2238b55f6a5c9fe8f98318ee519b221fb2712eed033e01c0feeed4",
+      "bytes": 58013,
+      "arm_id": "C",
+      "arm_description": "Execution conditioning is inactive.",
+      "partition": "testing",
+      "artifact_role": "policy_metrics",
+      "historical_source_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/C/testing/thesis_policy_metrics.json",
+      "historical_source_sha256": "8720ae91be2238b55f6a5c9fe8f98318ee519b221fb2712eed033e01c0feeed4",
+      "external_archive_path": "historical_research_archive/setup_conditioned_replay/benchmark_outputs/C/testing/thesis_policy_metrics.json",
+      "migration_manifest_sha256": "8720ae91be2238b55f6a5c9fe8f98318ee519b221fb2712eed033e01c0feeed4"
+    },
+    {
+      "path": "evidence/research/setup_conditioned_reasoning_replay/policy_variant_comparison/arm_d/testing/equity.png",
+      "sha256": "86567065dad9a6eb305cf1b000d4f7decb7701ecee6c800b46948392c3e03fd2",
+      "bytes": 153532,
+      "arm_id": "D",
+      "arm_description": "Execution conditioning is active.",
+      "partition": "testing",
+      "artifact_role": "equity_curve",
+      "historical_source_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/equity.png",
+      "historical_source_sha256": "86567065dad9a6eb305cf1b000d4f7decb7701ecee6c800b46948392c3e03fd2",
+      "external_archive_path": "historical_research_archive/setup_conditioned_replay/benchmark_outputs/D/testing/equity.png",
+      "migration_manifest_sha256": "86567065dad9a6eb305cf1b000d4f7decb7701ecee6c800b46948392c3e03fd2"
+    },
+    {
+      "path": "evidence/research/setup_conditioned_reasoning_replay/policy_variant_comparison/arm_d/testing/policy_metrics.json",
+      "sha256": "dcb03a2f622e1c16389302be4d5e482092e16845c87ee15afaa5323a0b1de118",
+      "bytes": 60234,
+      "arm_id": "D",
+      "arm_description": "Execution conditioning is active.",
+      "partition": "testing",
+      "artifact_role": "policy_metrics",
+      "historical_source_path": "evidence/research/setup_conditioned_reasoning_replay/benchmark_output_20261028/D/testing/thesis_policy_metrics.json",
+      "historical_source_sha256": "dcb03a2f622e1c16389302be4d5e482092e16845c87ee15afaa5323a0b1de118",
+      "external_archive_path": "historical_research_archive/setup_conditioned_replay/benchmark_outputs/D/testing/thesis_policy_metrics.json",
+      "migration_manifest_sha256": "dcb03a2f622e1c16389302be4d5e482092e16845c87ee15afaa5323a0b1de118"
+    }
+  ]
+}

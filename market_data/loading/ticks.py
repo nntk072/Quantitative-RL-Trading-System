@@ -19,6 +19,7 @@ Typical use
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -72,6 +73,34 @@ class TickExitExecution:
 
 class TickExecutionUnavailable(RuntimeError):
     """Raised when an order cannot be matched to an admissible later tick."""
+
+
+@dataclass(slots=True)
+class TickBookBuildDiagnostics:
+    """Optional counts for raw quote validity and TickBook carry-forward."""
+
+    source_rows_read: int = 0
+    rows_after_session_filter: int = 0
+    raw_valid_two_sided_quotes: int = 0
+    raw_rows_with_missing_or_nonpositive_side: int = 0
+    raw_rows_with_crossed_sides: int = 0
+    rows_with_bid_carried_into_valid_quote: int = 0
+    rows_with_ask_carried_into_valid_quote: int = 0
+    rows_with_any_side_carried_into_valid_quote: int = 0
+    rows_retained_after_carry: int = 0
+    rows_dropped_for_unavailable_side_after_carry: int = 0
+    rows_dropped_for_crossed_pair_after_carry: int = 0
+
+
+def event_keyed_execution_rng(execution_seed: int, event_key: str) -> np.random.Generator:
+    """Create a stable latency RNG for the same logical event across engines.
+
+    Separate execution paths can consume different numbers of draws while
+    advancing bars. Keying scheduled events prevents unrelated quote lookups
+    from changing the sampled latency for that event.
+    """
+    digest = hashlib.sha256(f"{int(execution_seed)}:{event_key}".encode()).digest()
+    return np.random.default_rng(int.from_bytes(digest[:16], byteorder="big"))
 
 
 def resolve_tick_execution(
@@ -203,6 +232,7 @@ def resolve_tick_exit(
     earliest_time: pd.Timestamp | None = None,
     max_latency_ns_exclusive: int = 30_000_000,
     max_quote_wait_ns: int | None = 60_000_000_000,
+    event_seed: int | None = None,
 ) -> TickExitExecution | None:
     """Resolve the first tick-triggered SL/TP after randomized execution latency.
 
@@ -222,6 +252,8 @@ def resolve_tick_exit(
         earliest_time: Earliest time used by the operation described above.
         max_latency_ns_exclusive: Numeric value used for the max latency ns exclusive.
         max_quote_wait_ns: Max quote wait ns used by the operation described above.
+        event_seed: Optional stable seed for trigger-keyed latency independent of
+            unrelated execution RNG draws.
 
     Returns:
         Result of resolve the first tick-triggered SL/TP after randomized execution latency.
@@ -251,10 +283,17 @@ def resolve_tick_exit(
             continue
         kind = "sl" if sl_cross else "tp"
         trigger_time = pd.Timestamp(int(book._ts[i]), unit="ns", tz="UTC")
+        event_rng = (
+            rng
+            if event_seed is None
+            else event_keyed_execution_rng(
+                int(event_seed), f"protective_exit:{direction}:{kind}:{trigger_time.value}"
+            )
+        )
         quote = resolve_tick_execution(
             book,
             trigger_time,
-            rng,
+            event_rng,
             max_latency_ns_exclusive=max_latency_ns_exclusive,
             max_quote_wait_ns=max_quote_wait_ns,
         )
@@ -389,6 +428,23 @@ class TickBook:
             Numeric result returned by ``__len__``.
         """
         return len(self._ts)
+
+    def content_sha256(self) -> str:
+        """Fingerprint the ordered timestamp and quote arrays used for execution.
+
+        Equal-timestamp source order affects quote selection, so the digest
+        includes array order, dtype, and shape for all three owned arrays.
+        """
+        digest = hashlib.sha256(b"qrl.tickbook.content.v1\0")
+        for name, values in ((b"timestamp_ns", self._ts), (b"bid", self._bid), (b"ask", self._ask)):
+            contiguous = np.ascontiguousarray(values)
+            digest.update(name)
+            digest.update(b"\0")
+            digest.update(str(contiguous.dtype).encode("ascii"))
+            digest.update(b"\0")
+            digest.update(np.asarray(contiguous.shape, dtype="<i8").tobytes())
+            digest.update(contiguous.tobytes())
+        return digest.hexdigest()
 
     def has_ticks_between(self, start: pd.Timestamp, end: pd.Timestamp) -> bool:
         """Return whether any quote falls in the half-open interval [start, end).
@@ -650,6 +706,7 @@ def build_tick_book(
     force: bool = False,
     chunksize: int = 2_000_000,
     price_grid_increment: float | None = None,
+    diagnostics: TickBookBuildDiagnostics | None = None,
 ) -> TickBook:
     """Load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
 
@@ -669,6 +726,12 @@ def build_tick_book(
     * Forward-fill state (the last valid bid/ask) is carried across chunk
       boundaries so results are identical to a whole-file ffill.
 
+    When ``diagnostics`` is supplied, this same streaming pass also records
+    raw quote validity, side-carry restorations, and post-carry exclusions.
+    These counters are intended for audit use and are not written to cache.
+    Pass ``cache_path=None`` when collecting them so a cache hit cannot bypass
+    source-row inspection.
+
     Peak memory is therefore roughly one chunk's worth of raw CSV data plus
     the final (already session-filtered, much smaller) tick arrays — not the
     full file size multiplied by pandas' usual 3-5x parsing overhead.
@@ -682,6 +745,7 @@ def build_tick_book(
         force: Whether to enable or require the force.
         chunksize: Numeric value used for the chunksize.
         price_grid_increment: Price grid increment used by the operation described above.
+        diagnostics: Optional mutable counter record populated during a raw-source build.
 
     Returns:
         Result of load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
@@ -689,6 +753,8 @@ def build_tick_book(
     path = Path(path)
     cache_identity: dict[str, Any] | None = None
     if cache_path:
+        if diagnostics is not None:
+            raise ValueError("pass cache_path=None when collecting TickBook build diagnostics")
         cache_path = Path(cache_path)
         cache_identity = build_tick_cache_identity(
             source_path=path,
@@ -726,6 +792,8 @@ def build_tick_book(
 
     for raw_chunk in iter_ticks_chunks(path, chunksize=chunksize):
         n_rows_total += len(raw_chunk)
+        if diagnostics is not None:
+            diagnostics.source_rows_read += len(raw_chunk)
 
         # Chunk-local datetime parse (bounded memory) — Etc/GMT-3 etc. are
         # fixed-offset zones (no DST), so tz_localize here is unambiguous
@@ -745,9 +813,26 @@ def build_tick_book(
         else:
             mask = np.ones(len(dt), dtype=bool)
 
+        if diagnostics is not None:
+            diagnostics.rows_after_session_filter += int(mask.sum())
+
         bid = raw_chunk["bid"].to_numpy(dtype=np.float32, copy=True)[mask]
         ask = raw_chunk["ask"].to_numpy(dtype=np.float32, copy=True)[mask]
         ts_ns = dt.values.astype("int64")[mask]
+
+        raw_bid_valid = np.isfinite(bid) & (bid > 0.0)
+        raw_ask_valid = np.isfinite(ask) & (ask > 0.0)
+        raw_valid_pair = raw_bid_valid & raw_ask_valid & (ask >= bid)
+        bid_needs_carry = ~raw_bid_valid
+        ask_needs_carry = ~raw_ask_valid
+        if diagnostics is not None:
+            diagnostics.raw_valid_two_sided_quotes += int(np.count_nonzero(raw_valid_pair))
+            diagnostics.raw_rows_with_missing_or_nonpositive_side += int(
+                np.count_nonzero(~raw_bid_valid | ~raw_ask_valid)
+            )
+            diagnostics.raw_rows_with_crossed_sides += int(
+                np.count_nonzero(raw_bid_valid & raw_ask_valid & (ask < bid))
+            )
 
         # Treat non-finite and non-positive sides as missing before carrying
         # the last usable side forward. Infinity is not handled by
@@ -769,7 +854,25 @@ def build_tick_book(
         # A side can update independently, so temporarily crossed pairs are
         # possible while the other side catches up. Keep those side values as
         # ffill state, but do not expose an invalid pair to execution.
-        valid = np.isfinite(bid) & np.isfinite(ask) & (bid > 0.0) & (ask >= bid)
+        bid_available = np.isfinite(bid) & (bid > 0.0)
+        ask_available = np.isfinite(ask) & (ask > 0.0)
+        crossed_after_carry = bid_available & ask_available & (ask < bid)
+        valid = bid_available & ask_available & (ask >= bid)
+        if diagnostics is not None:
+            carried_bid = valid & bid_needs_carry
+            carried_ask = valid & ask_needs_carry
+            diagnostics.rows_with_bid_carried_into_valid_quote += int(np.count_nonzero(carried_bid))
+            diagnostics.rows_with_ask_carried_into_valid_quote += int(np.count_nonzero(carried_ask))
+            diagnostics.rows_with_any_side_carried_into_valid_quote += int(
+                np.count_nonzero(carried_bid | carried_ask)
+            )
+            diagnostics.rows_retained_after_carry += int(np.count_nonzero(valid))
+            diagnostics.rows_dropped_for_unavailable_side_after_carry += int(
+                np.count_nonzero(~bid_available | ~ask_available)
+            )
+            diagnostics.rows_dropped_for_crossed_pair_after_carry += int(
+                np.count_nonzero(crossed_after_carry)
+            )
         if len(bid):
             last_bid, last_ask = float(bid[-1]), float(ask[-1])
         if price_grid_increment is not None:

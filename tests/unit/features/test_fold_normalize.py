@@ -31,3 +31,15 @@ def test_frozen_fold_validation_poisoning_preserves_train_values() -> None:
     pd.testing.assert_frame_equal(a.iloc[:4], b.iloc[:4])
     assert a.loc[4, "feature"] == pytest.approx(3.0)
     assert b.loc[4, "feature"] == pytest.approx((1_000_000.0 - 35.0) / 5.0)
+
+
+@pytest.mark.parametrize("mode", ["legacy_masked_window", "frozen_fold"])
+def test_zero_variance_window_maps_finite_values_to_zero(mode: str) -> None:
+    frame = pd.DataFrame({"feature": [2.0, 2.0, 2.0, 3.0]})
+    mask = pd.Series([True, True, True, False])
+
+    normalized = rolling_zscore(frame, window=2, train_mask=mask, mode=mode)
+
+    assert normalized.loc[1, "feature"] == pytest.approx(0.0)
+    assert normalized.loc[2, "feature"] == pytest.approx(0.0)
+    assert normalized.loc[3, "feature"] == pytest.approx(1.0)

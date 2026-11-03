@@ -3,6 +3,7 @@
     "bars": [
       {
         "bar": 19,
+        "timestamp": "2025-01-06T14:49:00Z",
         "close": 104,
         "event": "confirmed M5 sell-side pivot at 100 was already available",
         "high": 110,
@@ -11,6 +12,7 @@
       },
       {
         "bar": 20,
+        "timestamp": "2025-01-06T14:50:00Z",
         "close": 101,
         "event": "sweep and same-candle reclaim of 100",
         "high": 105,
@@ -19,6 +21,7 @@
       },
       {
         "bar": 21,
+        "timestamp": "2025-01-06T14:51:00Z",
         "close": 117,
         "event": "close above bearish FVG [112,116]; IFVG confirmed",
         "high": 118,
@@ -27,6 +30,7 @@
       },
       {
         "bar": 22,
+        "timestamp": "2025-01-06T14:52:00Z",
         "close": 120,
         "event": "earliest illustrative fill at bar open after confirmation close",
         "high": 121,
@@ -41,6 +45,10 @@
       "submission after bar 21 close",
       "fill at bar 22 open"
     ],
+    "pivot_confirmed_at": "2025-01-06T14:48:59.999Z",
+    "sweep_reclaim_confirmed_at": "2025-01-06T14:50:59.999Z",
+    "ifvg_confirmed_at": "2025-01-06T14:51:59.999Z",
+    "earliest_fill_at": "2025-01-06T14:52:00Z",
     "entry": 118,
     "fvg": {
       "high": 116,

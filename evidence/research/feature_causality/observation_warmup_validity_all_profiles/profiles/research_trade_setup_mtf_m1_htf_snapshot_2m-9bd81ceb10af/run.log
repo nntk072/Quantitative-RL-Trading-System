@@ -1,0 +1,8 @@
+{
+  "group_key": "9bd81ceb10af521c457dc30e77276e1d1b59bab66ffa7b2f62474e7a06e99f65",
+  "profile_ids": [
+    "research/trade_setup_mtf_m1_htf_snapshot_2m"
+  ],
+  "representative_profile": "research/trade_setup_mtf_m1_htf_snapshot_2m",
+  "status": "measured_training_split"
+}

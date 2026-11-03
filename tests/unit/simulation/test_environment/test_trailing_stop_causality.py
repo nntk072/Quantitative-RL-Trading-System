@@ -26,7 +26,9 @@ def test_trailing_stop_ignores_invalid_or_wrong_side_references(
 ) -> None:
     env: Any = SimpleNamespace(
         sl_buffer_pts=0.1,
-        _finite=lambda row, key: row.get(key),
+        _finite=lambda row, key: (
+            float(row[key]) if key in row and np.isfinite(float(row[key])) else None
+        ),
     )
     pos: Any = SimpleNamespace(
         sl_mode="trailing",

@@ -6,7 +6,7 @@ active on the same bar and the policy remains free to trade or stay flat.
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Any, Protocol
 
 import numpy as np
@@ -299,7 +299,25 @@ def build_entry_idea_features(features: pd.DataFrame) -> pd.DataFrame:
     return ideas
 
 
-def _row_values(row: _EntryIdeaRow, column: str) -> list[Any]:
+def _expand_row_value(value: Any) -> tuple[Any, ...]:
+    """Normalize a scalar or vector-valued mapping entry to a tuple.
+
+    Args:
+        value: Scalar, pandas Series, list, tuple, NumPy array, or ``None``.
+
+    Returns:
+        Values in the original order, or an empty tuple for ``None``.
+    """
+    if value is None:
+        return ()
+    if isinstance(value, pd.Series):
+        return tuple(value.tolist())
+    if isinstance(value, (list, tuple, np.ndarray)):
+        return tuple(value)
+    return (value,)
+
+
+def _row_values(row: _EntryIdeaRow | _EntryIdeaRowSnapshot, column: str) -> Sequence[Any]:
     """Process values.
 
     Args:
@@ -309,21 +327,18 @@ def _row_values(row: _EntryIdeaRow, column: str) -> list[Any]:
     Returns:
         Values returned by ``_row_values``, in the declared order.
     """
+    if isinstance(row, _EntryIdeaRowSnapshot):
+        return row.values_by_name.get(column, ())
     if isinstance(row, pd.Series):
         return [
             row.iloc[position] for position, name in enumerate(row.index) if str(name) == column
         ]
-    value = row.get(column)
-    if value is None:
-        return []
-    if isinstance(value, pd.Series):
-        return value.tolist()
-    if isinstance(value, (list, tuple, np.ndarray)):
-        return list(value)
-    return [value]
+    return _expand_row_value(row.get(column))
 
 
-def _row_items(row: _EntryIdeaRow) -> list[tuple[str, Any]]:
+def _row_items(
+    row: _EntryIdeaRow | _EntryIdeaRowSnapshot,
+) -> Sequence[tuple[str, Any]]:
     """Process items.
 
     Args:
@@ -332,12 +347,36 @@ def _row_items(row: _EntryIdeaRow) -> list[tuple[str, Any]]:
     Returns:
         Values returned by ``_row_items``, in the declared order.
     """
+    if isinstance(row, _EntryIdeaRowSnapshot):
+        return row.items
     if isinstance(row, pd.Series):
-        return [(str(name), row.iloc[position]) for position, name in enumerate(row.index)]
-    return [(str(name), row[name]) for name in row]
+        return tuple((str(name), row.iloc[position]) for position, name in enumerate(row.index))
+    return tuple((str(name), row[name]) for name in row)
 
 
-def _row_first_value(row: _EntryIdeaRow, column: str) -> Any:
+class _EntryIdeaRowSnapshot:
+    """One-call index of row values that preserves duplicate Series columns."""
+
+    __slots__ = ("items", "values_by_name")
+
+    def __init__(self, row: _EntryIdeaRow) -> None:
+        """Cache row items and values while preserving duplicate Series columns.
+
+        Args:
+            row: Mapping or pandas Series whose values will be queried.
+        """
+        self.items = tuple(_row_items(row))
+        grouped: dict[str, list[Any]] = {}
+        if isinstance(row, pd.Series):
+            for name, value in self.items:
+                grouped.setdefault(name, []).append(value)
+        else:
+            for name in dict.fromkeys(name for name, _value in self.items):
+                grouped[name] = list(_row_values(row, name))
+        self.values_by_name = {name: tuple(values) for name, values in grouped.items()}
+
+
+def _row_first_value(row: _EntryIdeaRow | _EntryIdeaRowSnapshot, column: str) -> Any:
     """Process first value.
 
     Args:
@@ -357,7 +396,7 @@ def _row_first_value(row: _EntryIdeaRow, column: str) -> Any:
     return None
 
 
-def _row_positive(row: _EntryIdeaRow, column: str) -> bool:
+def _row_positive(row: _EntryIdeaRow | _EntryIdeaRowSnapshot, column: str) -> bool:
     """Process positive.
 
     Args:
@@ -393,7 +432,7 @@ def _timeframe_for_column(column: str) -> str:
 
 
 def _zone_contexts(
-    row: _EntryIdeaRow,
+    row: _EntryIdeaRow | _EntryIdeaRowSnapshot,
     ideas: list[str],
     timeframes: Mapping[str, list[str]],
     side: str,
@@ -505,7 +544,7 @@ def _zone_contexts(
     return contexts
 
 
-def _po3_timeframes(row: _EntryIdeaRow, side: str) -> set[str]:
+def _po3_timeframes(row: _EntryIdeaRow | _EntryIdeaRowSnapshot, side: str) -> set[str]:
     """Process timeframes.
 
     Args:
@@ -570,6 +609,7 @@ def entry_idea_context(
             "zones": [],
         }
 
+    row_lookup = _EntryIdeaRowSnapshot(row)
     source_side = "bull" if side == "long" else "bear"
     source_suffixes = {
         "order_block": (f"ob_{source_side}_retest",),
@@ -581,23 +621,25 @@ def entry_idea_context(
     ideas: list[str] = []
     timeframes: dict[str, list[str]] = {}
     for idea in ENTRY_IDEA_NAMES:
-        if not _row_positive(row, f"entry_idea_{idea}_{side}"):
+        if not _row_positive(row_lookup, f"entry_idea_{idea}_{side}"):
             continue
         ideas.append(idea)
         active_tfs = (
-            _po3_timeframes(row, side)
+            _po3_timeframes(row_lookup, side)
             if idea == "po3"
             else {
                 _timeframe_for_column(str(column))
                 for suffix in source_suffixes[idea]
-                for column, value in _row_items(row)
+                for column, value in _row_items(row_lookup)
                 if (column == suffix or column.endswith(f"_{suffix}"))
                 and _row_positive({column: value}, column)
             }
         )
-        if idea == "ifvg_unretested" and _row_positive(row, f"ifvg_{source_side}_confirmed"):
+        if idea == "ifvg_unretested" and _row_positive(row_lookup, f"ifvg_{source_side}_confirmed"):
             try:
-                code = int(float(_row_first_value(row, f"ifvg_{source_side}_confirmation_tf_code")))
+                code = int(
+                    float(_row_first_value(row_lookup, f"ifvg_{source_side}_confirmation_tf_code"))
+                )
             except (TypeError, ValueError):
                 code = 0
             if code in _TIMEFRAME_CODES:
@@ -613,13 +655,15 @@ def entry_idea_context(
         active_tfs = {
             _timeframe_for_column(str(column))
             for suffix in suffixes
-            for column, value in _row_items(row)
+            for column, value in _row_items(row_lookup)
             if (column == suffix or column.endswith(f"_{suffix}"))
             and _row_positive({column: value}, column)
         }
-        if label == "IFVG" and _row_positive(row, f"ifvg_{source_side}_confirmed"):
+        if label == "IFVG" and _row_positive(row_lookup, f"ifvg_{source_side}_confirmed"):
             try:
-                code = int(float(_row_first_value(row, f"ifvg_{source_side}_confirmation_tf_code")))
+                code = int(
+                    float(_row_first_value(row_lookup, f"ifvg_{source_side}_confirmation_tf_code"))
+                )
             except (TypeError, ValueError):
                 code = 0
             if code in _TIMEFRAME_CODES:
@@ -646,7 +690,7 @@ def entry_idea_context(
         "stop_timeframe_floor": stop_timeframe_floor,
         "standard_deviation_timeframes": standard_deviation_timeframes,
         "gap_reactions": gap_reactions,
-        "zones": _zone_contexts(row, ideas, timeframes, side) if include_zones else [],
+        "zones": _zone_contexts(row_lookup, ideas, timeframes, side) if include_zones else [],
     }
 
 

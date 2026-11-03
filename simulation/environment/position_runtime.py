@@ -7,6 +7,10 @@ import pandas as pd
 
 from trading.execution import Position
 from trading.positions import reorder_remaining_targets
+from trading.risk.stop_management import (
+    breakeven_stop_price,
+    confirmed_swing_trailing_stop_price,
+)
 
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase
@@ -26,6 +30,7 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         reference: str,
         reference_price: float | None,
         reason: str,
+        buffer_points: float | None = None,
         event_time: Any = None,
         bar_idx: int | None = None,
     ) -> None:
@@ -37,6 +42,7 @@ class PositionRuntimeMixin(RuntimeMixinBase):
             reference: Text or path value identifying the reference.
             reference_price: Reference price used by the operation described above.
             reason: Text or path value identifying the reason.
+            buffer_points: Stop buffer used by the operation described above.
             event_time: Event time used by the operation described above.
             bar_idx: Bar idx used by the operation described above.
         """
@@ -56,7 +62,9 @@ class PositionRuntimeMixin(RuntimeMixinBase):
                 "price": pos.sl_price,
                 "reference": reference,
                 "reference_price": reference_price,
-                "buffer_points": getattr(self, "sl_buffer_pts", None),
+                "buffer_points": (
+                    getattr(self, "sl_buffer_pts", None) if buffer_points is None else buffer_points
+                ),
                 "reason": reason,
             }
         )
@@ -83,32 +91,29 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         """
         if self._breakeven_trigger_r <= 0.0 or pos.breakeven_done:
             return
-        sl0 = pos.sl_initial_price if pos.sl_initial_price is not None else pos.sl_price
-        if sl0 is None:
-            return
-        risk_pts = abs(pos.entry_price - float(sl0))
-        if risk_pts <= 0.0:
-            return
-        if favorable < self._breakeven_trigger_r * risk_pts:
-            return
-        buffer = self._breakeven_buffer_pts
         previous = pos.sl_price
-        if pos.direction == 1:
-            new_sl = pos.entry_price + buffer
-            if pos.sl_price is None or new_sl > float(pos.sl_price):
-                pos.sl_price = new_sl
-                pos.breakeven_done = True
-        else:
-            new_sl = pos.entry_price - buffer
-            if pos.sl_price is None or new_sl < float(pos.sl_price):
-                pos.sl_price = new_sl
-                pos.breakeven_done = True
+        new_sl = breakeven_stop_price(
+            direction=pos.direction,
+            entry_price=pos.entry_price,
+            initial_stop_price=(
+                pos.sl_initial_price if pos.sl_initial_price is not None else pos.sl_price
+            ),
+            current_stop_price=pos.sl_price,
+            best_favorable_points=favorable,
+            trigger_r=self._breakeven_trigger_r,
+            buffer_points=self._breakeven_buffer_pts,
+        )
+        if new_sl is None:
+            return
+        pos.sl_price = new_sl
+        pos.breakeven_done = True
         self._record_stop_update(
             pos,
             previous,
             reference="entry",
             reference_price=pos.entry_price,
             reason="breakeven_trigger",
+            buffer_points=self._breakeven_buffer_pts,
             event_time=event_time,
             bar_idx=bar_idx,
         )
@@ -141,22 +146,30 @@ class PositionRuntimeMixin(RuntimeMixinBase):
         if pos.direction == 1:
             swing = self._finite(feat_row, "last_swing_low")
             if swing is not None:
-                new_sl = float(swing) - buf
                 current = self._finite(feat_row, "close")
-                if (current is None or new_sl < current) and (
-                    pos.sl_price is None or new_sl > float(pos.sl_price)
-                ):
+                new_sl = confirmed_swing_trailing_stop_price(
+                    direction=pos.direction,
+                    swing_price=swing,
+                    current_close=current,
+                    current_stop_price=pos.sl_price,
+                    buffer_points=buf,
+                )
+                if new_sl is not None:
                     pos.sl_price = new_sl
                     reference_name = "last_swing_low"
                     reference_price = float(swing)
         elif pos.direction == -1:
             swing = self._finite(feat_row, "last_swing_high")
             if swing is not None:
-                new_sl = float(swing) + buf
                 current = self._finite(feat_row, "close")
-                if (current is None or new_sl > current) and (
-                    pos.sl_price is None or new_sl < float(pos.sl_price)
-                ):
+                new_sl = confirmed_swing_trailing_stop_price(
+                    direction=pos.direction,
+                    swing_price=swing,
+                    current_close=current,
+                    current_stop_price=pos.sl_price,
+                    buffer_points=buf,
+                )
+                if new_sl is not None:
                     pos.sl_price = new_sl
                     reference_name = "last_swing_high"
                     reference_price = float(swing)

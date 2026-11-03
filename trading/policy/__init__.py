@@ -6,12 +6,13 @@ from .config import (
     resolve_trading_policy_mapping,
 )
 from .legacy import LEGACY_POLICY_MODE, uses_fixed_risk_budget
-from .repeated_payout import PayoutDecision, evaluate_payout
+from .repeated_payout import PayoutDecision, build_payout_reset_event, evaluate_payout
 
 __all__ = [
     "LEGACY_POLICY_MODE",
     "PayoutDecision",
     "TradingPolicyConfig",
+    "build_payout_reset_event",
     "evaluate_payout",
     "resolve_trading_policy",
     "resolve_trading_policy_mapping",

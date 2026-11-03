@@ -30,6 +30,12 @@ from .reporting.run_summary import (
     save_metrics_json,
 )
 from .rollout.episode_rollout import run_episode
+from .rollout.random_eligible_setup import (
+    AlwaysNoTradePolicy,
+    AlwaysNoTradeRolloutModel,
+    RandomEligibleSetupPolicy,
+    RandomEligibleSetupRolloutModel,
+)
 from .rollout.trained_policy_rollout import evaluate_provider
 
 __all__ = [
@@ -61,6 +67,10 @@ __all__ = [
     "build_summary_table",
     "print_report",
     "save_metrics_json",
+    "RandomEligibleSetupPolicy",
+    "RandomEligibleSetupRolloutModel",
+    "AlwaysNoTradePolicy",
+    "AlwaysNoTradeRolloutModel",
     "run_episode",
     "evaluate_provider",
 ]

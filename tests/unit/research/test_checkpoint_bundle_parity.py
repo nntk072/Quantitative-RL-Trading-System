@@ -136,6 +136,37 @@ def test_select_split_keeps_in_sample_and_report_only_roles_distinct() -> None:
     assert selected_test[2] == "previously_inspected_selection_acknowledged_test"
 
 
+def test_resolve_audit_targets_creates_distinct_train_and_test_paths(tmp_path) -> None:
+    targets = parity._resolve_audit_targets(
+        "both", tmp_path / "reports", tmp_path / "bundles", cwd=tmp_path
+    )
+
+    assert targets == [
+        ("train", tmp_path / "reports" / "train.json", tmp_path / "bundles" / "train"),
+        ("test", tmp_path / "reports" / "test.json", tmp_path / "bundles" / "test"),
+    ]
+
+
+def test_resolve_audit_targets_preserves_single_split_paths(tmp_path) -> None:
+    targets = parity._resolve_audit_targets(
+        "test", tmp_path / "report.json", tmp_path / "bundle", cwd=tmp_path
+    )
+
+    assert targets == [("test", tmp_path / "report.json", tmp_path / "bundle")]
+
+
+def test_resolve_audit_targets_rejects_existing_or_nested_outputs(tmp_path) -> None:
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    with pytest.raises(FileExistsError):
+        parity._resolve_audit_targets("both", reports, tmp_path / "bundles", cwd=tmp_path)
+
+    with pytest.raises(ValueError, match="must be separate"):
+        parity._resolve_audit_targets(
+            "both", tmp_path / "outputs", tmp_path / "outputs" / "bundles", cwd=tmp_path
+        )
+
+
 def test_bundle_replay_preserves_overlay_action_vector(monkeypatch) -> None:
     captured = {}
 

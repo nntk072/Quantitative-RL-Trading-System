@@ -38,7 +38,19 @@ def reject_unknown_keys(
             continue
         if schema_value is None or value is None:
             continue
-        if isinstance(schema_value, bool):
+        if isinstance(schema_value, list):
+            matches = isinstance(value, list)
+            if matches and schema_value:
+                expected_types = {type(item) for item in schema_value}
+                for item in value:
+                    if expected_types == {float}:
+                        item_matches = isinstance(item, (int, float)) and not isinstance(item, bool)
+                    else:
+                        item_matches = type(item) in expected_types
+                    if not item_matches:
+                        matches = False
+                        break
+        elif isinstance(schema_value, bool):
             matches = isinstance(value, bool)
         elif isinstance(schema_value, int):
             matches = isinstance(value, int) and not isinstance(value, bool)
@@ -47,7 +59,11 @@ def reject_unknown_keys(
         else:
             matches = type(value) is type(schema_value)
         if not matches:
+            expected_type = (
+                f"list[{','.join(sorted(item.__name__ for item in {type(x) for x in schema_value}))}]"
+                if isinstance(schema_value, list) and schema_value
+                else type(schema_value).__name__
+            )
             raise ConfigSchemaError(
-                f"expected {type(schema_value).__name__} at {path}.{key}, "
-                f"received {type(value).__name__}"
+                f"expected {expected_type} at {path}.{key}, received {type(value).__name__}"
             )

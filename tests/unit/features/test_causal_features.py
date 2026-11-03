@@ -2,10 +2,43 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pandas as pd
 import torch
 
-from features.technical.indicators import ema_features, macd, returns, rsi
+from features.technical.indicators import (
+    ema_features,
+    macd,
+    returns,
+    rsi,
+    sweep_velocity,
+    time_features,
+    volume_spike,
+    wick_ratio,
+)
+
+
+def test_time_features_use_the_supplied_index_and_are_prefix_invariant() -> None:
+    index = pd.DatetimeIndex(
+        [
+            "2025-01-06 00:00",
+            "2025-01-06 06:30",
+            "2025-01-06 12:00",
+            "2025-01-06 18:00",
+        ],
+        tz="Etc/GMT-3",
+    )
+
+    full = time_features(index)
+    prefix = time_features(index[:3])
+
+    pd.testing.assert_frame_equal(full.iloc[:3], prefix)
+    assert full.index.equals(index)
+    assert full.iloc[0]["tod_sin"] == 0.0
+    assert full.iloc[0]["tod_cos"] == 1.0
+    assert full.iloc[0]["dow_sin"] == 0.0
+    assert full.iloc[0]["dow_cos"] == 1.0
 
 
 def test_rsi_causal(m1_bars):
@@ -55,6 +88,76 @@ def test_returns_causal(m1_bars):
         r_trunc.iloc[:99].dropna(),
         rtol=1e-9,
     )
+
+
+def test_volume_spike_is_prefix_invariant(m1_bars):
+    activity = m1_bars["tickvol"]
+    full = volume_spike(activity, window=20)
+    prefix = volume_spike(activity.iloc[:250], window=20)
+
+    pd.testing.assert_series_equal(full.iloc[:250], prefix, check_names=False)
+
+
+def test_volume_spike_uses_current_activity_over_trailing_median() -> None:
+    activity = pd.Series([0.0, 10.0, 20.0, 30.0, float("nan")])
+
+    result = volume_spike(activity, window=3)
+
+    assert pd.isna(result.iloc[0])
+    assert result.iloc[1] == 2.0
+    assert result.iloc[2] == 2.0
+    assert result.iloc[3] == 1.5
+    assert pd.isna(result.iloc[4])
+
+
+def test_sweep_velocity_is_prefix_invariant(m1_bars):
+    bars = m1_bars.iloc[:300]
+
+    def levels(
+        frame: pd.DataFrame,
+    ) -> tuple[pd.Series[Any], pd.Series[Any], pd.Series[Any], pd.Series[Any]]:
+        return (
+            frame["high"].cummax(),
+            frame["low"].cummin(),
+            frame["high"].cummax() + 1.0,
+            frame["low"].cummin() - 1.0,
+        )
+
+    full_levels = levels(bars)
+    full = sweep_velocity(
+        bars,
+        london_high=full_levels[0],
+        london_low=full_levels[1],
+        asian_high=full_levels[2],
+        asian_low=full_levels[3],
+    )
+    prefix_bars = bars.iloc[:200]
+    prefix_levels = levels(prefix_bars)
+    prefix = sweep_velocity(
+        prefix_bars,
+        london_high=prefix_levels[0],
+        london_low=prefix_levels[1],
+        asian_high=prefix_levels[2],
+        asian_low=prefix_levels[3],
+    )
+
+    pd.testing.assert_frame_equal(full.iloc[:200], prefix, check_names=False)
+
+
+def test_wick_ratio_measures_upper_wick_only() -> None:
+    bars = pd.DataFrame(
+        {
+            "open": [10.0, 10.0],
+            "high": [12.0, 12.0],
+            "low": [8.0, 8.0],
+            "close": [11.0, 9.0],
+        }
+    )
+
+    result = wick_ratio(bars)
+
+    assert result.iloc[0] == 0.25
+    assert result.iloc[1] == 0.5
 
 
 # ---------------------------------------------------------------------------

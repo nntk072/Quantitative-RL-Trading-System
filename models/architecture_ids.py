@@ -11,6 +11,7 @@ ENCODER_ARCHITECTURE_IDS: tuple[str, ...] = (
     "gru",
     "transformer",
     "mtf",
+    "mtf_empty_stream_masked_v1",
     "mtf_reasoning",
     "mtf_shared_tcn_reasoning",
     "mtf_m1_tcn_htf_lite_reasoning",

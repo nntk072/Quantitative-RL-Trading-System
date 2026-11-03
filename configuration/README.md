@@ -38,6 +38,11 @@ Layering is an input to resolution, not permission for each consumer to invent
 its own merge order. The resolved configuration is the effective contract for
 one run; an individual YAML file is only one contribution to it.
 
+Run-spec and CLI overrides can use scalar values or flat primitive lists, such
+as `features.ema_periods=[9,21,50,200]`. Lists cross the worker boundary as
+JSON and are checked against the resolved config schema, including element
+types. Nested lists and mapping values are rejected.
+
 ## Adding or changing a setting
 
 Find every reader before changing a key. State whether it changes data,

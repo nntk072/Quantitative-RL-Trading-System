@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from scripts.research.analysis.evaluation.report_variant_details import (
     _annotate_trade_outcome,
+    _display,
     _flatten_markdown_rows,
     _markdown_config_results,
     _report_value,
@@ -30,6 +31,11 @@ def test_report_value_formats_percentages_with_units(
     value: float, field: str, expected: str
 ) -> None:
     assert _report_value(value, field) == expected
+
+
+@pytest.mark.parametrize("value", [float("inf"), float("-inf"), float("nan")])
+def test_nonfinite_report_metrics_render_as_not_available(value: float) -> None:
+    assert _display(value) == "N/A"
 
 
 def test_nested_parameters_render_as_readable_rows_without_raw_objects() -> None:
@@ -229,6 +235,7 @@ def test_config_results_report_is_concise_and_uses_absolute_figure_links(tmp_pat
     assert "# 2M matched-run report: configuration and results" in markdown
     assert "| Entry state visible | No | Not recorded" in markdown
     assert "COMPLETED" in markdown
+    assert "Completed positions" in markdown
     assert "MISS (0.1000 percentage points over)" in markdown
     assert "Hard risk" in markdown
     assert "year-survival gate" not in markdown

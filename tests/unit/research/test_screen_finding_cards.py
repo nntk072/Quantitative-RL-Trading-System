@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from scripts.research.analysis.evidence import build_seed50_screen_finding_cards as cards
+from scripts.research.analysis.evidence import (
+    build_historical_variant_screen_finding_cards as cards,
+)
 
 
 def _fixture_inputs(tmp_path: Path) -> tuple[Path, Path]:
@@ -116,7 +118,7 @@ def test_build_package_writes_18_limited_cards_and_refuses_overwrite(
         created_at_utc="2026-10-18T00:00:00+00:00",
     )
 
-    assert manifest["schema"] == "aalto.seed50_screen_finding_cards.v1"
+    assert manifest["schema"] == "qrl.historical_variant_screen_finding_cards.v1"
     assert len(manifest["cards"]) == 18
     assert manifest["status_counts"] == {
         "engineering-only": 3,

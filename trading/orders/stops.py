@@ -140,6 +140,10 @@ def stop_menu(
     Returns:
         Mapping from ``str`` keys to ``Any]]`` values.
     """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or 1")
+    if price_increment is not None and (not np.isfinite(price_increment) or price_increment <= 0.0):
+        raise ValueError("price_increment must be finite and positive")
     early_audit: list[dict[str, Any]] = []
     candidate_meta: dict[str, dict[str, Any]] = {}
     candidate_schema_active = False
@@ -396,6 +400,12 @@ def stop_menu(
     )
     for name, level in collapsed:
         stop = level - buffer if direction == 1 else level + buffer
+        if price_increment is not None:
+            units = stop / price_increment
+            if direction == 1:
+                stop = float(np.floor(units + 1e-10) * price_increment)
+            else:
+                stop = float(np.ceil(units - 1e-10) * price_increment)
         if (direction == 1 and stop >= entry_price) or (direction == -1 and stop <= entry_price):
             reason = "wrong_side"
         elif abs(entry_price - stop) + 1e-12 < min_dist:

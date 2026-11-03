@@ -1,0 +1,8 @@
+{
+  "group_key": "bee4cfea5606bf85e8eb3a54a4baaf643bae007dc46d5cc15da2e62601eaaa60",
+  "profile_ids": [
+    "research/trade_setup_mtf_m1_htf_lite_2m"
+  ],
+  "representative_profile": "research/trade_setup_mtf_m1_htf_lite_2m",
+  "status": "measured_training_split"
+}

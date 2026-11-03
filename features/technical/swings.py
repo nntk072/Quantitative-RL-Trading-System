@@ -629,7 +629,6 @@ def swing_history(swings: pd.DataFrame, n: int = 3) -> pd.DataFrame:
             hist_l.append(float(px_l[t]))
             hist_l = hist_l[-n:]
         for i in range(1, n + 1):
-            idx = i - 1
-            out[f"swing_high_{i}"][t] = hist_h[idx] if idx < len(hist_h) else np.nan
-            out[f"swing_low_{i}"][t] = hist_l[idx] if idx < len(hist_l) else np.nan
+            out[f"swing_high_{i}"][t] = hist_h[-i] if i <= len(hist_h) else np.nan
+            out[f"swing_low_{i}"][t] = hist_l[-i] if i <= len(hist_l) else np.nan
     return pd.DataFrame(out, index=swings.index)

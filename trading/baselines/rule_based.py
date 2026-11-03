@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from features.technical.indicators import atr, ema
+from features.technical.indicators import ema
 from features.technical.indicators import macd as _macd
 from features.technical.indicators import rsi as _rsi
 
@@ -32,31 +32,28 @@ def ema_crossover(
     atr_period: int = 14,
     atr_stop_mult: float = 2.0,
 ) -> pd.Series:
-    """EMA crossover with ATR-based stop logic (positional, bar-by-bar).
+    """Return the directional EMA trend signal aligned to ``bars.index``.
 
-    Returns a signal Series aligned to bars.index.
+    The ATR arguments remain for call compatibility; they do not change this
+    signal. Stop and risk exits are owned by the selected execution engine.
 
     Args:
         bars: Market bars to process.
         fast: Numeric value used for the fast.
         slow: Numeric value used for the slow.
-        atr_period: Numeric value used for the atr period.
-        atr_stop_mult: Numeric value used for the atr stop mult.
+        atr_period: Legacy compatibility argument; unused by the signal.
+        atr_stop_mult: Legacy compatibility argument; unused by the signal.
 
     Returns:
-        Result of eMA crossover with ATR-based stop logic (positional, bar-by-bar).
+        ``+1`` for a bullish EMA trend, ``-1`` for a bearish trend, or ``0``
+        when the averages are equal.
     """
     close = bars["close"]
     fast_e = ema(close, fast)
     slow_e = ema(close, slow)
-    atr(bars, atr_period)
-
     signal = pd.Series(0, index=bars.index, dtype=int)
     signal[fast_e > slow_e] = 1
     signal[fast_e < slow_e] = -1
-
-    # ATR stop: exit if adverse move > mult * ATR from entry
-    # (simplified: just mask signal transitions within 1 ATR of close-to-close)
     return signal
 
 
@@ -183,23 +180,35 @@ def rsi_mean_reversion(
     overbought: float = 70.0,
     atr_period: int = 14,
 ) -> pd.Series:
-    """RSI mean-reversion: buy oversold, sell overbought, exit at 50.
+    """Return an RSI mean-reversion signal with a neutral-zone exit.
+
+    The ATR argument remains for call compatibility; it does not change this
+    signal. Stop and risk exits are owned by the selected execution engine.
 
     Args:
         bars: Market bars to process.
         period: Numeric value used for the period.
         oversold: Numeric value used for the oversold.
         overbought: Numeric value used for the overbought.
-        atr_period: Numeric value used for the atr period.
+        atr_period: Legacy compatibility argument; unused by the signal.
 
     Returns:
-        Result of rSI mean-reversion: buy oversold, sell overbought, exit at 50.
+        A stateful position signal: enter long below ``oversold`` or short
+        above ``overbought``; hold that side until RSI enters the 45–55 neutral
+        zone, then return to flat. Opposite entries require first becoming flat.
     """
     rsi_s = _rsi(bars["close"], period)
-    signal = pd.Series(0, index=bars.index, dtype=int)
-    signal[rsi_s < oversold] = 1
-    signal[rsi_s > overbought] = -1
-    # exit at neutral zone
-    signal[(rsi_s >= 45) & (rsi_s <= 55)] = 0
-    signal = signal.ffill()
-    return signal.fillna(0).astype(int)
+    signals: list[int] = []
+    position = 0
+    for value in rsi_s:
+        if pd.notna(value):
+            current_rsi = float(value)
+            if position == 0:
+                if current_rsi < oversold:
+                    position = 1
+                elif current_rsi > overbought:
+                    position = -1
+            elif 45.0 <= current_rsi <= 55.0:
+                position = 0
+        signals.append(position)
+    return pd.Series(signals, index=bars.index, dtype=int)

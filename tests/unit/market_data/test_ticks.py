@@ -14,6 +14,7 @@ from market_data.loading import build_tick_books
 from market_data.loading.ticks import (
     TICK_CACHE_VERSION,
     TickBook,
+    TickBookBuildDiagnostics,
     TickExecutionUnavailable,
     _ffill_inplace,
     build_tick_book,
@@ -48,6 +49,15 @@ def test_quote_at_exact_tick():
     bid, ask = quote
     assert bid == pytest.approx(100.5)
     assert ask == pytest.approx(101.1)
+
+
+def test_tickbook_content_hash_includes_stable_quote_order() -> None:
+    book = _make_book()
+    identical = TickBook(book._ts.copy(), book._bid.copy(), book._ask.copy())
+    reordered = TickBook(book._ts[::-1].copy(), book._bid[::-1].copy(), book._ask[::-1].copy())
+
+    assert book.content_sha256() == identical.content_sha256()
+    assert book.content_sha256() != reordered.content_sha256()
 
 
 def test_equal_timestamp_quote_uses_first_source_row_across_chunks(tmp_path: Path):
@@ -721,6 +731,41 @@ def test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes(tmp_pa
     assert all(np.isfinite(bid) and np.isfinite(ask) and 0 < bid <= ask for _, bid, ask in quotes)
     assert quotes[1][1:] == pytest.approx((100.0, 101.2))
     assert quotes[-1][1:] == pytest.approx((104.0, 104.5))
+
+
+def test_build_tick_book_diagnostics_count_raw_carried_and_dropped_rows(tmp_path: Path):
+    csv_path = tmp_path / "carry_diagnostics.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.01.06", "16:30:00.000", 10.0, 10.5),
+            ("2025.01.06", "16:30:01.000", np.nan, 10.6),
+            ("2025.01.06", "16:30:02.000", 10.2, np.nan),
+            ("2025.01.06", "16:30:03.000", np.nan, np.nan),
+            ("2025.01.06", "16:30:04.000", 12.0, 11.0),
+            ("2025.01.06", "16:30:05.000", np.nan, 12.5),
+        ],
+    )
+    diagnostics = TickBookBuildDiagnostics()
+
+    book = build_tick_book(
+        csv_path,
+        cache_path=None,
+        chunksize=2,
+        diagnostics=diagnostics,
+    )
+
+    assert len(book) == diagnostics.rows_retained_after_carry == 5
+    assert diagnostics.source_rows_read == 6
+    assert diagnostics.rows_after_session_filter == 6
+    assert diagnostics.raw_valid_two_sided_quotes == 1
+    assert diagnostics.raw_rows_with_missing_or_nonpositive_side == 4
+    assert diagnostics.raw_rows_with_crossed_sides == 1
+    assert diagnostics.rows_with_bid_carried_into_valid_quote == 3
+    assert diagnostics.rows_with_ask_carried_into_valid_quote == 2
+    assert diagnostics.rows_with_any_side_carried_into_valid_quote == 4
+    assert diagnostics.rows_dropped_for_unavailable_side_after_carry == 0
+    assert diagnostics.rows_dropped_for_crossed_pair_after_carry == 1
 
 
 def test_ticks_available_outside_ny(tmp_path: Path):

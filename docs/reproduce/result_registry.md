@@ -4,9 +4,9 @@
 
 
 This registry covers the meaningful findings linked by the
-[research index](../research/README.md), the P6 monthly analysis, and the
-tracked entry-idea count report. It records the strongest claim supported by
-the repository's tracked artifacts. A reproduction level applies only to the
+[research index](../research/README.md), the monthly entry and exit
+attribution, and the tracked entry-idea count report. It records the strongest
+claim supported by the repository's tracked artifacts. A reproduction level applies only to the
 scope stated for that result; it does not silently upgrade the whole campaign.
 
 ## Reproducibility levels
@@ -24,9 +24,9 @@ software trace is reported separately from a research finding.
 ## Current counts
 
 These counts are per finding, not per model arm, metric, or generated figure.
-The P6 pair is one finding; the three distinct R2 research scopes are
-exit-action cohort recomputation, P6 monthly decomposition, and entry-idea
-aggregate recomputation.
+The matched policy pair is one finding; the three distinct R2 research scopes
+are exit-action cohort recomputation, monthly entry and exit attribution, and
+entry-idea aggregate recomputation.
 
 | Result type | R1 | R2 | R3 | R4 | Total |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -44,13 +44,13 @@ closed-loop replay: per-arm full ledgers, raw ticks, and checkpoint files are
 not tracked. See [finding](../research/exit_action_semantics.md) and
 [notebook](exit_action_semantics.ipynb).
 
-**P6 matched pair — monthly entry/exit decomposition.** The notebook
+**Matched policy pair — monthly entry and exit attribution.** The notebook
 recomputes monthly counts, means, medians, PnL sums, seeded bootstrap intervals,
 the March-to-April decomposition, and its plot from the two tracked paired
 trade CSVs. It does not independently replay fills from raw ticks or reload
 the policies. Both arms failed the account-survival gate. See
-[finding](../research/p6_monthly_entry_exit.md) and
-[notebook](p6_monthly_exit_decomposition.ipynb).
+[finding](../research/entry_and_exit_attribution.md) and
+[notebook](entry_and_exit_attribution.ipynb).
 
 **Entry-idea opportunity counts — family-level aggregates.** The notebook
 recomputes annual episode totals and timeframe aggregates from the tracked
@@ -88,8 +88,8 @@ No research finding in this registry meets R3 or R4. R3 is unavailable because
 the relevant frozen checkpoints and complete replay inputs are not tracked for
 these claim scopes. R4 is unavailable because full training data, artifacts,
 and execution identities are not all bundled. The current research execution
-plan also records a failed P6 viability gate and explicitly bars an expensive
-training run for documentation work. Do not infer that missing levels were
+plan also records a failed matched-pair viability gate and explicitly bars an
+expensive training run for documentation work. Do not infer that missing levels were
 attempted and passed.
 
 The generated [evidence sufficiency audit](evidence_audit.md) lists the exact

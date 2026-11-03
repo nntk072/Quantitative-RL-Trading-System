@@ -106,6 +106,10 @@ def test_trade_setup_hybrid_distribution_samples_only_each_rows_valid_candidates
     distribution.proba_distribution(
         means, torch.zeros(len(actor.continuous_indices)), logits, masks={"trade_setup": masks}
     )
+    probabilities = distribution.trade_setup_probabilities()
+    assert probabilities.shape == masks.shape
+    assert torch.all(probabilities[~masks.bool()] == 0.0)
+    assert torch.allclose(probabilities.sum(dim=1), torch.ones(len(masks)))
 
     for deterministic in (False, True):
         actions = distribution.get_actions(deterministic=deterministic)
@@ -137,6 +141,10 @@ def test_trade_setup_conditioned_distribution_masks_and_conditions_execution() -
 
     assert distribution.trade_setup is not None
     assert torch.all(distribution.trade_setup.probs[~masks.bool()] == 0.0)
+    probabilities = distribution.trade_setup_probabilities()
+    assert probabilities.shape == masks.shape
+    assert torch.all(probabilities[~masks.bool()] == 0.0)
+    assert torch.allclose(probabilities.sum(dim=1), torch.ones(len(masks)))
     first, _ = actor.execution(latent[:1], torch.tensor([5]))
     second, _ = actor.execution(latent[:1], torch.tensor([31]))
     assert not torch.allclose(first, second)
@@ -238,6 +246,11 @@ def test_trade_setup_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -
     observation, _ = env.reset()
     predicted, _ = model.predict(observation, deterministic=True)
     assert trade_setup_id_from_box(float(predicted[0])) in {0, 12, 51}
+    probabilities = model.policy.last_trade_setup_probabilities
+    assert isinstance(probabilities, torch.Tensor)
+    assert probabilities.shape == (1, TRADE_SETUP_CATEGORY_COUNT)
+    probability_sums = torch.sum(probabilities, dim=1)
+    assert torch.allclose(probability_sums, torch.ones_like(probability_sums))
     observation_tensor, _ = model.policy.obs_to_tensor(observation)
     _, log_prob, entropy = model.policy.evaluate_actions(
         observation_tensor, torch.as_tensor(predicted, device=model.device).reshape(1, -1)
@@ -325,6 +338,11 @@ def test_trade_setup_hybrid_ppo_update_and_checkpoint_roundtrip(tmp_path) -> Non
     for deterministic in (False, True):
         action, _ = model.predict(observation, deterministic=deterministic)
         assert trade_setup_id_from_box(float(action[0])) in {0, 12, 51}
+        probabilities = model.policy.last_trade_setup_probabilities
+        assert isinstance(probabilities, torch.Tensor)
+        assert probabilities.shape == (1, TRADE_SETUP_CATEGORY_COUNT)
+        probability_sums = torch.sum(probabilities, dim=1)
+        assert torch.allclose(probability_sums, torch.ones_like(probability_sums))
     checkpoint = tmp_path / "trade_setup_hybrid_policy.zip"
     model.save(checkpoint)
     loaded = PPO.load(checkpoint, device="cpu")

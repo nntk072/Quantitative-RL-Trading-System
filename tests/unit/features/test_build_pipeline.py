@@ -25,6 +25,7 @@ from features import (
     select_legacy_obs_columns,
     select_obs_columns,
 )
+from features.technical.indicators import volume_spike
 
 
 @pytest.fixture
@@ -190,6 +191,14 @@ class TestBuildFeaturesPipeline:
         assert "standard_deviation_band_low" not in observation
         assert "M5_standard_deviation_band_low" not in observation
         assert "M5_standard_deviation_level_0_786_price" not in observation
+        for column in (
+            "M5_ob_bull_retest_confirmed_at_time_ns",
+            "M5_fvg_bull_retest_confirmed_at_time_ns",
+            "M5_fvg_bull_retest_origin_time_ns",
+            "M5_standard_deviation_leg_start_time_ns",
+        ):
+            assert column in features.columns
+            assert column not in observation.columns
 
     def test_replot_feature_config_rebuilds_recorded_swing_retracement(self) -> None:
         from evaluation.reporting.order_chart_regeneration import (
@@ -283,6 +292,22 @@ class TestBuildFeaturesPipeline:
         assert any(c.startswith("M5_") for c in cols)
         assert any(c.startswith("M15_") for c in cols)
         assert any(c.startswith("H1_") for c in cols)
+
+    def test_volume_spike_uses_canonical_tick_activity_when_volume_is_zero(
+        self, deterministic_bars: pd.DataFrame
+    ) -> None:
+        bars = deterministic_bars.iloc[:100].copy()
+        bars["volume"] = 0.0
+        bars["vol"] = 0.0
+        bars["tickvol"] = np.arange(1, len(bars) + 1, dtype=float)
+        cfg = OmegaConf.create(_default_cfg())
+        cfg.features.htf_timeframes = []
+        cfg.features.structure = {"enabled": False, "timeframes": []}
+
+        features = build_features(bars, cfg=cfg)
+        expected = volume_spike(bars["tickvol"], window=20).reindex(features.index)
+
+        pd.testing.assert_series_equal(features["volume_spike"], expected, check_names=False)
 
     def test_no_unexpected_nan_in_body(self, deterministic_bars: pd.DataFrame) -> None:
         """After the warm-up window, features should not be all-NaN."""
@@ -448,4 +473,4 @@ class TestBuildFeaturesPipeline:
 
 
 # Structural targets and the PO3 event columns changed the feature matrix.
-_GOLDEN_HASH = "5713f00b9cf22a2dd9b577ae4b3d84f1e09229e567ece5a4ccbd0e4f781ceb63"
+_GOLDEN_HASH = "9e883114e69214a99061d174647749c5f2ee5465cafc16f172517810a0452818"

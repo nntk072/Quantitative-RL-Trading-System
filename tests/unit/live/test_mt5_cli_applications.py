@@ -67,6 +67,41 @@ def test_demo_once_option_runs_one_cycle_without_starting_scheduler(
     assert calls == ["cycle"]
 
 
+def test_single_symbol_demo_rejects_real_mode_before_mt5_login(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    login_calls: list[bool] = []
+    monkeypatch.setattr(single_symbol_demo, "_cross_over_robot", None)
+    monkeypatch.setattr(single_symbol_demo, "paper_trading", False)
+    monkeypatch.setattr(
+        single_symbol_demo,
+        "ensure_mt5_logged_in",
+        lambda **_kwargs: login_calls.append(True),
+    )
+
+    with pytest.raises(RuntimeError, match="paper-only"):
+        single_symbol_demo.get_robot()
+
+    assert login_calls == []
+
+
+def test_multi_symbol_app_rejects_real_mode_before_loading_or_mt5_setup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config_calls: list[bool] = []
+    monkeypatch.setattr(multi_symbol_trading, "PAPER_TRADING", False)
+    monkeypatch.setattr(
+        multi_symbol_trading,
+        "load_config",
+        lambda: config_calls.append(True),
+    )
+
+    with pytest.raises(RuntimeError, match="paper-only"):
+        multi_symbol_trading.initialize_trading_system()
+
+    assert config_calls == []
+
+
 def test_multi_symbol_once_option_is_forwarded_to_lifecycle(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -1,0 +1,119 @@
+{
+  "checks": {
+    "daily_loss_comparison_scope_is_declared": true,
+    "each_engine_closes_once_per_selected_session": true,
+    "input_bars_current_bytes_match": true,
+    "input_ticks_current_bytes_match": true,
+    "lifecycle_event_count_is_complete": true,
+    "lifecycle_event_counts_match": true,
+    "observed_session_resets_match_recomputed_expectation": true,
+    "reported_account_deltas_recompute": true,
+    "reported_close_comparison_count_matches": true,
+    "reported_close_comparisons_match_recomputation": true,
+    "reported_cross_engine_account_flag_matches_recomputation": true,
+    "reported_daily_loss_delta_recomputes": true,
+    "reported_final_balances_reconcile_to_close_pnl": true,
+    "reported_final_equity_matches_balance": true,
+    "reported_first_session_pnl_matches_events": true,
+    "reported_internal_reset_flags_match_recomputation": true,
+    "reported_lifecycle_comparison_count_matches": true,
+    "reported_lifecycle_flags_match_recomputation": true,
+    "reported_risk_transition_flags_match_recomputation": true,
+    "reported_second_session_reset_expectation_matches": true,
+    "reported_trace_status_matches_recomputed_parity": true,
+    "reported_trace_verdict_matches_recomputed_parity": true,
+    "risk_transition_matches_recomputed_events": true,
+    "schema_version_supported": true,
+    "source_hash_generator": true,
+    "source_hash_market_data/transforms/sessions.py": true,
+    "source_hash_simulation/backtest/event_driven_backtest.py": true,
+    "source_hash_simulation/backtest/protective_events.py": true,
+    "source_hash_simulation/environment/env.py": true,
+    "source_hash_simulation/environment/risk_runtime.py": true,
+    "two_selected_sessions_recorded": true
+  },
+  "details": {
+    "backtest_close_pnl_sum": -0.18268404026078988,
+    "code_hash_checks": {
+      "generator": true,
+      "market_data/transforms/sessions.py": true,
+      "simulation/backtest/event_driven_backtest.py": true,
+      "simulation/backtest/protective_events.py": true,
+      "simulation/environment/env.py": true,
+      "simulation/environment/risk_runtime.py": true
+    },
+    "environment_close_pnl_sum": -0.18268404026078988,
+    "execution_mode": "tick_required",
+    "expected_backtest_balance": 49999.81731595974,
+    "expected_environment_balance": 49999.81731595974,
+    "independently_recomputed_account_equal": true,
+    "independently_recomputed_simulator_parity": true,
+    "input_hashes": {
+      "input_bars_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+      "input_ticks_sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23"
+    },
+    "lifecycle_comparisons": [
+      {
+        "direction_matches": true,
+        "pnl_matches": true,
+        "price_delta": 0.0,
+        "price_matches": true,
+        "session_matches": true,
+        "size_matches": true,
+        "time_matches": true,
+        "type_matches": true
+      },
+      {
+        "direction_matches": true,
+        "pnl_matches": true,
+        "price_delta": 0.0,
+        "price_matches": true,
+        "session_matches": true,
+        "size_matches": true,
+        "time_matches": true,
+        "type_matches": true
+      },
+      {
+        "direction_matches": true,
+        "pnl_matches": true,
+        "price_delta": 0.0,
+        "price_matches": true,
+        "session_matches": true,
+        "size_matches": true,
+        "time_matches": true,
+        "type_matches": true
+      },
+      {
+        "direction_matches": true,
+        "pnl_matches": true,
+        "price_delta": 0.0,
+        "price_matches": true,
+        "session_matches": true,
+        "size_matches": true,
+        "time_matches": true,
+        "type_matches": true
+      }
+    ],
+    "lifecycle_fields_match_across_engines": true,
+    "report_trace_passed": true,
+    "risk_transition": {
+      "backtest_expected_breach_count": 1,
+      "backtest_next_session_opens": 1,
+      "backtest_same_session_post_breach_opens": 0,
+      "breach_events_match": true,
+      "controlled_next_session_entry_attempt": true,
+      "controlled_reentry_attempt_after_close": true,
+      "environment_expected_breach_count": 1,
+      "environment_next_session_opens": 1,
+      "environment_same_session_post_breach_opens": 0,
+      "environment_terminal_contract_matches": true,
+      "expected_breach_reason": "daily_loss"
+    }
+  },
+  "independent_verification_passed": true,
+  "independent_verifier": "scripts/research/analysis/evaluation/verify_simulator_local_session_account_trace.py",
+  "independent_verifier_sha256": "bf5a2a0ef6282a50105437e8bb2ef7950aefa9e411b2bf77c4bb1a94a4b3c799",
+  "schema_version": 1,
+  "simulator_parity_passed": true,
+  "source_report": "evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_daily_loss_reset.json"
+}

@@ -10,6 +10,8 @@ from market_data.loading.ticks import (
     TickExecutionUnavailable,
 )
 from trading.execution import Position
+from trading.positions import target_close_size
+from trading.risk.stop_management import tightened_breakeven_stop_price
 
 from .market_view import BarView
 from .mixin_base import RuntimeMixinBase
@@ -18,43 +20,33 @@ from .mixin_base import RuntimeMixinBase
 class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
     """Resolve protective levels and partial exits while preserving runners."""
 
-    @staticmethod
-    def _target_close_size(pos: Any, slot_num: int, *, is_final: bool) -> float:
-        """Return this leg's initial-size allocation, retaining an EMA runner.
-
-        Args:
-            pos: Pos used by the operation described above.
-            slot_num: Numeric value used for the slot num.
-            is_final: Whether to enable or require the is final.
-
-        Returns:
-            Numeric result returned by ``_target_close_size``.
-        """
-        init_size = float(pos.tp_initial_size or pos.initial_size or pos.size)
-        fractions = tuple(float(value) for value in pos.tp_lot_fractions)
-        active_slots = [
-            slot
-            for slot in (1, 2, 3)
-            if (pos.tp_hit_mask & (1 << (slot - 1))) or getattr(pos, f"tp{slot}_price") is not None
-        ]
-        if is_final and float(getattr(pos, "ema_runner_fraction", 0.0)) <= 0.0:
-            return float(pos.size)
-        try:
-            fraction_index = active_slots.index(slot_num)
-        except ValueError:
-            return float(pos.size)
-        fraction = (
-            fractions[fraction_index]
-            if fraction_index < len(fractions)
-            else 1.0 / max(1, len(active_slots))
-        )
-        close_size = min(round(fraction * init_size, 2), float(pos.size))
-        if is_final and float(getattr(pos, "ema_runner_fraction", 0.0)) > 0.0:
-            minimum_runner = round(init_size * float(pos.ema_runner_fraction), 2)
-            close_size = min(close_size, max(0.0, float(pos.size) - minimum_runner))
-        return close_size if close_size > 0.0 else float(pos.size)
-
     position: Position | None
+
+    def _assert_tick_protective_events_observed(self, bar: BarView) -> None:
+        """Reject OHLC protective crossings that have no matching executable tick."""
+        position = self.position
+        if position is None:
+            return
+        stop_touched = position.sl_price is not None and (
+            (position.direction == 1 and float(bar.low) <= position.sl_price)
+            or (position.direction == -1 and float(bar.high) >= position.sl_price)
+        )
+        target_levels = [getattr(position, f"tp{slot}_price") for slot in (1, 2, 3)]
+        if not any(target is not None for target in target_levels):
+            target_levels = [position.tp_price]
+        target_touched = any(
+            target is not None
+            and (
+                (position.direction == 1 and float(bar.high) >= target)
+                or (position.direction == -1 and float(bar.low) <= target)
+            )
+            for target in target_levels
+        )
+        if stop_touched or target_touched:
+            raise TickExecutionUnavailable(
+                "OHLC indicates a protective level was reached, but no matching "
+                "tick trigger was found; candle fallback is disabled"
+            )
 
     def _check_sl_tp(
         self,
@@ -100,6 +92,11 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
         )
         if has_tick_slots and self._tickbook is not None:
             if self._check_multi_tp_ticks(log_time, idx):
+                if (
+                    getattr(self, "tick_execution_required", False)
+                    or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
+                ):
+                    self._assert_tick_protective_events_observed(bar)
                 return
 
         tick_hit = None if has_tick_slots else self._tick_exit_quote(log_time)
@@ -128,35 +125,9 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             getattr(self, "tick_execution_required", False)
             or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
         ):
-            position = self.position
-            assert position is not None
-            stop_touched = position.sl_price is not None and (
-                (position.direction == 1 and float(bar.low) <= position.sl_price)
-                or (position.direction == -1 and float(bar.high) >= position.sl_price)
-            )
-            target_levels = [getattr(position, f"tp{slot}_price") for slot in (1, 2, 3)]
-            if not any(target is not None for target in target_levels):
-                target_levels = [position.tp_price]
-            target_touched = any(
-                target is not None
-                and (
-                    (position.direction == 1 and float(bar.high) >= target)
-                    or (position.direction == -1 and float(bar.low) <= target)
-                )
-                for target in target_levels
-            )
-            if stop_touched or target_touched:
-                bar_end = log_time + pd.Timedelta(minutes=getattr(self, "_minutes_per_step", 1))
-                if self._tickbook is None or not self._tickbook.has_ticks_between(
-                    log_time, bar_end
-                ):
-                    raise TickExecutionUnavailable(
-                        "OHLC indicates a protective level was reached, but the bar "
-                        "has no tick observations; candle fallback is disabled"
-                    )
-                    # Intrabar OHLC extrema are not executable bid/ask evidence.
-                    # When quotes exist but none crosses the position's executable
-                    # level, keep the position open instead of inventing a fill.
+            self._assert_tick_protective_events_observed(bar)
+            # Intrabar OHLC extrema are not executable bid/ask evidence. Keep
+            # the position open when no matching executable tick was observed.
             self._maybe_ema_exit(bar, idx, log_time)
             return
 
@@ -228,7 +199,7 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                         if s > slot_num and getattr(pos, f"tp{s}_price") is not None
                     ]
                     is_final = len(remaining_slots) == 0
-                    close_size = self._target_close_size(pos, slot_num, is_final=is_final)
+                    close_size = target_close_size(pos, slot_num, is_final=is_final)
 
                     quote = self._sl_tp_fill_quote(int(pos.direction), float(slot_px))
                     pnl, fill_price = self._close_at_quote(pos, quote, size=close_size)
@@ -266,26 +237,26 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                         )
                         if self._breakeven_trigger_r > 0.0:
                             buffer = self._breakeven_buffer_pts
-                            previous_sl = pos.sl_price
-                            if pos.direction == 1:
-                                new_sl = pos.entry_price + buffer
-                                if pos.sl_price is None or new_sl > float(pos.sl_price):
-                                    pos.sl_price = new_sl
-                                    pos.breakeven_done = True
-                            else:
-                                new_sl = pos.entry_price - buffer
-                                if pos.sl_price is None or new_sl < float(pos.sl_price):
-                                    pos.sl_price = new_sl
-                                    pos.breakeven_done = True
-                            self._record_stop_update(
-                                pos,
-                                previous_sl,
-                                reference="entry",
-                                reference_price=pos.entry_price,
-                                reason="post_partial_breakeven",
-                                event_time=log_time,
-                                bar_idx=idx,
+                            new_sl = tightened_breakeven_stop_price(
+                                direction=pos.direction,
+                                entry_price=pos.entry_price,
+                                current_stop_price=pos.sl_price,
+                                buffer_points=buffer,
                             )
+                            if new_sl is not None:
+                                previous_sl = pos.sl_price
+                                pos.sl_price = new_sl
+                                pos.breakeven_done = True
+                                self._record_stop_update(
+                                    pos,
+                                    previous_sl,
+                                    reference="entry",
+                                    reference_price=pos.entry_price,
+                                    reason="post_partial_breakeven",
+                                    buffer_points=buffer,
+                                    event_time=log_time,
+                                    bar_idx=idx,
+                                )
             if self.position is None:
                 return
         elif self.position.tp_price is not None:
@@ -370,7 +341,10 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 ):
                     cached = randomized_by_trigger.get(tick_time.value)
                     if cached is None:
-                        quote, execution_meta = self._resolve_randomized_tick_quote(tick_time)
+                        quote, execution_meta = self._resolve_randomized_tick_quote(
+                            tick_time,
+                            event_key=(f"protective_exit:{pos.direction}:sl:{tick_time.value}"),
+                        )
                         execution_meta["order_submission_time"] = tick_time
                         cached = (quote, execution_meta)
                         randomized_by_trigger[tick_time.value] = cached
@@ -434,7 +408,10 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 ):
                     cached = randomized_by_trigger.get(tick_time.value)
                     if cached is None:
-                        quote, execution_meta = self._resolve_randomized_tick_quote(tick_time)
+                        quote, execution_meta = self._resolve_randomized_tick_quote(
+                            tick_time,
+                            event_key=(f"protective_exit:{pos.direction}:tp:{tick_time.value}"),
+                        )
                         execution_meta["order_submission_time"] = tick_time
                         cached = (quote, execution_meta)
                         randomized_by_trigger[tick_time.value] = cached
@@ -466,7 +443,7 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                     and getattr(pos, f"tp{slot}_price") is not None
                     and not (pos.tp_hit_mask & (1 << (slot - 1)))
                 ]
-                close_size = self._target_close_size(pos, slot_num, is_final=not remaining_slots)
+                close_size = target_close_size(pos, slot_num, is_final=not remaining_slots)
 
                 pnl, fill_price = self._close_at_quote(
                     pos, (bid, ask), size=close_size, tick_fill=True
@@ -505,24 +482,24 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 )
                 if self._breakeven_trigger_r > 0.0:
                     buffer = self._breakeven_buffer_pts
-                    previous_sl = pos.sl_price
-                    if pos.direction == 1:
-                        new_sl = pos.entry_price + buffer
-                        if pos.sl_price is None or new_sl > pos.sl_price:
-                            pos.sl_price = new_sl
-                            pos.breakeven_done = True
-                    else:
-                        new_sl = pos.entry_price - buffer
-                        if pos.sl_price is None or new_sl < pos.sl_price:
-                            pos.sl_price = new_sl
-                            pos.breakeven_done = True
-                    self._record_stop_update(
-                        pos,
-                        previous_sl,
-                        reference="entry",
-                        reference_price=pos.entry_price,
-                        reason="post_partial_breakeven",
-                        event_time=tick_time,
-                        bar_idx=idx,
+                    new_sl = tightened_breakeven_stop_price(
+                        direction=pos.direction,
+                        entry_price=pos.entry_price,
+                        current_stop_price=pos.sl_price,
+                        buffer_points=buffer,
                     )
+                    if new_sl is not None:
+                        previous_sl = pos.sl_price
+                        pos.sl_price = new_sl
+                        pos.breakeven_done = True
+                        self._record_stop_update(
+                            pos,
+                            previous_sl,
+                            reference="entry",
+                            reference_price=pos.entry_price,
+                            reason="post_partial_breakeven",
+                            buffer_points=buffer,
+                            event_time=tick_time,
+                            bar_idx=idx,
+                        )
         return had_fill

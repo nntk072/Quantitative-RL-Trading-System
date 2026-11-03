@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import pytest
 from gymnasium import spaces
@@ -20,7 +21,12 @@ from gymnasium import spaces
 from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.observations import OBSERVATION_SCHEMA_V1
-from evaluation.rollout.trained_policy_rollout import evaluate_model, evaluate_provider
+from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CATEGORY_COUNT
+from evaluation.rollout.trained_policy_rollout import (
+    _setup_choice_probability_summary,
+    evaluate_model,
+    evaluate_provider,
+)
 
 
 class _ScriptedModel:
@@ -60,6 +66,46 @@ def _make_bars(n: int, session_split: int | None = None) -> pd.DataFrame:
         },
         index=idx,
     )
+
+
+def test_setup_probability_summary_records_compact_choice_context() -> None:
+    mask = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
+    mask[[NO_TRADE_ID, 5, 37]] = 1.0
+    probabilities = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
+    probabilities[[NO_TRADE_ID, 5, 37]] = [0.2, 0.3, 0.5]
+
+    summary = _setup_choice_probability_summary(probabilities, mask, NO_TRADE_ID)
+
+    assert summary == {
+        "trade_setup_selected_probability": pytest.approx(0.2),
+        "trade_setup_no_trade_probability": pytest.approx(0.2),
+        "trade_setup_max_trade_probability": pytest.approx(0.5),
+        "trade_setup_max_trade_candidate_id": 37,
+    }
+    assert _setup_choice_probability_summary(None, mask, NO_TRADE_ID) == {
+        "trade_setup_selected_probability": None,
+        "trade_setup_no_trade_probability": None,
+        "trade_setup_max_trade_probability": None,
+        "trade_setup_max_trade_candidate_id": None,
+    }
+
+
+@pytest.mark.parametrize(
+    ("probabilities", "message"),
+    [
+        (np.zeros(TRADE_SETUP_CATEGORY_COUNT - 1), "match the current eligibility mask"),
+        (np.full(TRADE_SETUP_CATEGORY_COUNT, np.nan), "finite and non-negative"),
+        (np.zeros(TRADE_SETUP_CATEGORY_COUNT), "sum to one"),
+    ],
+)
+def test_setup_probability_summary_rejects_invalid_distribution(
+    probabilities: npt.NDArray[np.float64], message: str
+) -> None:
+    mask = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
+    mask[[NO_TRADE_ID, 5]] = 1.0
+
+    with pytest.raises(RuntimeError, match=message):
+        _setup_choice_probability_summary(probabilities, mask, NO_TRADE_ID)
 
 
 def _make_features(bars: pd.DataFrame) -> pd.DataFrame:

@@ -24,6 +24,7 @@ A registered encoder with no listed pair currently has no matrix variant.
 | `gru` | Gated Recurrent Unit | Recurrent encoder for ordered market observations. | ppo, sac | 3 |
 | `transformer` | Transformer encoder | Attention-based encoder for ordered market observations. | ppo | 1 |
 | `mtf` | Multi-timeframe encoder | Encodes correlated observations from multiple timeframes. | ppo | 1 |
+| `mtf_empty_stream_masked_v1` | Empty-stream-masked multi-timeframe encoder v1 | Preserves MTF weights while excluding timeframes with no valid rows. | — | 0 |
 | `mtf_reasoning` | Multi-timeframe reasoning encoder | Multi-timeframe encoder with cross-timeframe reasoning. | ppo | 1 |
 | `mtf_shared_tcn_reasoning` | Shared-TCN multi-timeframe reasoning | Shares temporal convolutional processing across timeframes. | — | 0 |
 | `mtf_m1_tcn_htf_lite_reasoning` | M1 TCN with lightweight higher-timeframe reasoning | Uses a dedicated M1 TCN and a compact higher-timeframe path. | — | 0 |

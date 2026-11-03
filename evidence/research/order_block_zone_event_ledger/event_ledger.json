@@ -1,0 +1,57 @@
+{
+  "collision_group_count": 33810,
+  "collision_suppressed_per_zone_event_count": 79967,
+  "config_path": "config/research/trade_setup_mtf_reasoning_2m.yaml",
+  "detector_enabled_in_config": false,
+  "interpretation": "Independent per-zone retest confirmations versus the scalar latest-zone view; not policy proposals, trades, or returns.",
+  "local_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
+  "not_selected_by_scalar_retest_event_count": 113073,
+  "order_block_parameters": {
+    "impulse_atr": 0.5,
+    "max_age_bars": 240,
+    "search_bars": 10,
+    "swing_period": 5
+  },
+  "per_zone_retest_event_count": 134227,
+  "primary_symbol": "US100.cash",
+  "resolved_config_sha256": "dcbbd796251f277a632b34a28816994d2e84c9d96bca2c67f50fd66c78a35e41",
+  "scalar_retest_pulse_count": 21154,
+  "scalar_retest_pulse_count_by_timeframe": {
+    "D1": 10,
+    "H1": 235,
+    "H4": 40,
+    "M1": 11359,
+    "M10": 1383,
+    "M15": 1018,
+    "M3": 4090,
+    "M30": 452,
+    "M5": 2567
+  },
+  "source_commit": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "source_hashes": {
+    "features/context/order_blocks.py": "e0e620c80fa7c3859f7abfc5c2a29aab9b0f444e506dba129d134f024858dbcd",
+    "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
+    "market_data/transforms/resample.py": "95d2a9ca6e326cd35ae0a331d1b616fed5abd8dda6b93b753a6917c180e3e605",
+    "scripts/research/analysis/features/order_block_zone_event_ledger.py": "ab9e33d36245d4dd5029916512db1a20f3a772a9f38472c62b1d20caf3bdd1dd"
+  },
+  "status": "descriptive_training_order_block_events_only",
+  "timeframes": [
+    "M1",
+    "M3",
+    "M5",
+    "M10",
+    "M15",
+    "M30",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "training_input_sha256": {
+    "data/training/US100.cash_M1_202412300105_202610162349.csv": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0"
+  },
+  "training_m1_rows": 351432,
+  "training_period": {
+    "end_inclusive": "2025-12-31",
+    "start": "2024-12-30"
+  }
+}

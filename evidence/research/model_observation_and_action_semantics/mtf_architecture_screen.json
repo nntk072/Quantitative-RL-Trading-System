@@ -1,0 +1,61 @@
+{
+  "schema": "qrl.mtf_architecture_screen_summary.v1",
+  "classification": "descriptive negative architecture screen; not a model ranking",
+  "source_report": {
+    "path": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/reports/experiment_run_results_summary.md",
+    "sha256": "29d1c85044561564525aec7c95924e8462a637c3ac87c06b4eb347f12fd1a05d"
+  },
+  "experiment_run": {
+    "path": "outputs/gpu_experiment_runs/core_mtf_reasoning_seed42_train2025_2m_n8_20261031/experiment_run.json",
+    "sha256": "a91078ab589a748f6be70d4de65249c773d064f64884c34a8c3bcbe59222f073",
+    "seed": 42,
+    "steps_per_variant": 2000000,
+    "environments": 8,
+    "evaluation_role": "final_report_only (previously_inspected_holdout)",
+    "action_contract": "thesis-overlay-action-v1 with thesis_mask; not the configured C/D trade_setup_mask contract",
+    "mask_key": "thesis_mask",
+    "mask_width": 109,
+    "action_coordinate_count": 11
+  },
+  "variants": [
+    {
+      "name": "rq_mtf_control_tcn",
+      "controller_status": "failed",
+      "training_survival": false,
+      "training_return_pct": -10.75,
+      "training_trades": 620,
+      "test_survival": false,
+      "test_return_pct": -9.83,
+      "test_max_drawdown_pct": 11.93,
+      "test_trades": 231
+    },
+    {
+      "name": "rq_mtf_treatment_mtf",
+      "controller_status": "failed",
+      "training_survival": false,
+      "training_return_pct": -9.90,
+      "training_trades": 1091,
+      "test_survival": false,
+      "test_return_pct": -12.08,
+      "test_max_drawdown_pct": 14.00,
+      "test_trades": 124
+    },
+    {
+      "name": "rq_mtf_treatment_reasoning",
+      "controller_status": "failed",
+      "training_survival": false,
+      "training_return_pct": -9.98,
+      "training_trades": 500,
+      "test_survival": false,
+      "test_return_pct": -10.28,
+      "test_max_drawdown_pct": 17.62,
+      "test_trades": 1761
+    }
+  ],
+  "limitations": [
+    "One training seed; variants are not a basis for statistical ranking.",
+    "Test period was previously inspected and is report-only, not fresh holdout evidence.",
+    "This architecture screen is distinct from the selected setup-conditioned policy comparison.",
+    "Metrics do not establish a viable policy or a causal explanation for losses."
+  ]
+}

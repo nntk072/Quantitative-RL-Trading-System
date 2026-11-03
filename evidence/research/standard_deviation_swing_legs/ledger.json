@@ -1,0 +1,161 @@
+{
+  "active_source_timeframes": [
+    "M1",
+    "M3",
+    "M5",
+    "M10",
+    "M15",
+    "M30",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "availability_definition": "First/last M1 feature row where the timeframe-prefixed leg-valid flag and matching direction expose the same source pivot pair. This is pipeline availability, not external feed publication time.",
+  "config_path": "config/research/trade_setup_mtf_reasoning_2m.yaml",
+  "counts": {
+    "by_timeframe": {
+      "D1": {
+        "eligible_episodes": 7,
+        "eligible_legs": 6,
+        "eligible_rows": 19110,
+        "legs_without_retracement": 7,
+        "long_source_legs": 9,
+        "short_source_legs": 4,
+        "source_valid_rows": 75761
+      },
+      "H1": {
+        "eligible_episodes": 296,
+        "eligible_legs": 247,
+        "eligible_rows": 42292,
+        "legs_without_retracement": 224,
+        "long_source_legs": 251,
+        "short_source_legs": 220,
+        "source_valid_rows": 153600
+      },
+      "H4": {
+        "eligible_episodes": 53,
+        "eligible_legs": 46,
+        "eligible_rows": 31309,
+        "legs_without_retracement": 60,
+        "long_source_legs": 59,
+        "short_source_legs": 47,
+        "source_valid_rows": 107796
+      },
+      "M1": {
+        "eligible_episodes": 24378,
+        "eligible_legs": 20555,
+        "eligible_rows": 50082,
+        "legs_without_retracement": 12502,
+        "long_source_legs": 16596,
+        "short_source_legs": 16461,
+        "source_valid_rows": 142039
+      },
+      "M10": {
+        "eligible_episodes": 2499,
+        "eligible_legs": 2142,
+        "eligible_rows": 51605,
+        "legs_without_retracement": 1575,
+        "long_source_legs": 1915,
+        "short_source_legs": 1802,
+        "source_valid_rows": 151142
+      },
+      "M15": {
+        "eligible_episodes": 1319,
+        "eligible_legs": 1113,
+        "eligible_rows": 44722,
+        "legs_without_retracement": 848,
+        "long_source_legs": 1007,
+        "short_source_legs": 954,
+        "source_valid_rows": 141187
+      },
+      "M3": {
+        "eligible_episodes": 8298,
+        "eligible_legs": 7040,
+        "eligible_rows": 51243,
+        "legs_without_retracement": 4556,
+        "long_source_legs": 5909,
+        "short_source_legs": 5687,
+        "source_valid_rows": 148136
+      },
+      "M30": {
+        "eligible_episodes": 618,
+        "eligible_legs": 527,
+        "eligible_rows": 42104,
+        "legs_without_retracement": 425,
+        "long_source_legs": 502,
+        "short_source_legs": 450,
+        "source_valid_rows": 143984
+      },
+      "M5": {
+        "eligible_episodes": 5012,
+        "eligible_legs": 4332,
+        "eligible_rows": 52324,
+        "legs_without_retracement": 2852,
+        "long_source_legs": 3716,
+        "short_source_legs": 3468,
+        "source_valid_rows": 151581
+      }
+    },
+    "totals": {
+      "eligible_source_legs": 36008,
+      "source_leg_projection_rows": 59057,
+      "source_legs_without_retracement": 23049,
+      "source_tuple_groups_across_timeframes": 57634,
+      "tuple_groups_on_multiple_timeframes": 1346
+    }
+  },
+  "cross_timeframe_definition": "Exact equality of serialized direction and source pivot-time keys across timeframe projections. It is a linkage relation, not proof of one shared logical event.",
+  "eligibility_definition": "Contiguous eligible M1 rows for the exact source leg and configured candidate side; a renewed eligible span after a gap is counted as another episode.",
+  "feature_rows": 351432,
+  "git_head": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "interpretation": "Rows count the selected feature producer's latest confirmed swing-leg projections and retracement eligibility episodes. They are not ground-truth market-event counts, policy choices, orders, fills, or economic results.",
+  "limitations": [
+    "The upstream structure producer exposes the latest confirmed pivot pair, not every latent or overlapping swing pattern.",
+    "Float-backed epoch-nanosecond feature fields can lose subsecond precision; source keys are not exact publication instants.",
+    "Eligibility episodes do not establish separate policy decisions, executable opportunities, or fills.",
+    "No report-period rows, checkpoints, policy actions, environment steps, or economic outcomes are used."
+  ],
+  "m1_rows": 351432,
+  "primary_symbol": "US100.cash",
+  "raw_data_manifest_path": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
+  "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
+  "resolved_config_sha256": "d992f23ac38889ed04da5b56c6db91c3b3d64f203764d746f10a1591983260cf",
+  "schema": "qrl.standard_deviation_swing_leg_projection.v1",
+  "secondary_symbol": "US500.cash",
+  "source_event_key": [
+    "direction",
+    "leg_start_time_ns",
+    "leg_end_time_ns"
+  ],
+  "source_hashes": {
+    "features/context/entry_ideas.py": "afed23247516a0c73ff6ba8b9969e003fab84f5a4da755cd9835dfd660d8ec34",
+    "features/context/swing_retracement.py": "053aa0ab45d52eb8ab4ccfc67a37ad55a3043fe7439bba827c9d0ba7033a5b5c",
+    "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
+    "features/technical/structure.py": "c6e355f55cdf2f5e8ed3580def333d64c11e3e84e98ce8780eaeb1a7871d61d9",
+    "scripts/research/analysis/features/standard_deviation_swing_ledger.py": "6cb001d376f367e9084414b21057a2cffde375a1286365f3335ef0a597c6b8f7"
+  },
+  "status": "descriptive_training_feature_projection_only",
+  "training_input_sha256": {
+    "data/training/US100.cash_H1_202412300100_202610162300.csv": "693e9b3df53e522b16c63f1d9ab9c7e29f0c29555f066b3a90554b34a9dd7c0b",
+    "data/training/US100.cash_H4_202412300000_202610162000.csv": "83855aed1db0517f43b76ef2e3484908e43d9744d955abb8c828aad699a1e2af",
+    "data/training/US100.cash_M10_202412300100_202610162340.csv": "a13bdee2606d3bed19e301196fc29e426d97fdf05373fee83a734181004ade53",
+    "data/training/US100.cash_M15_202412300100_202610162345.csv": "1eb96fafbdbcfa140e50d6430e7fdfbd891dcad22eae597771678c0ed607c6cd",
+    "data/training/US100.cash_M1_202412300105_202610162349.csv": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+    "data/training/US100.cash_M30_202412300100_202610162330.csv": "256a8fb8c959a61f2fada196163ba8da0edf94de67146d175fbdab9eba75c5d7",
+    "data/training/US100.cash_M3_202412300103_202610162348.csv": "217c2f8bfdd1ff30938868f81d3fb682f8919bc703171cb29f88ddc6a6bab461",
+    "data/training/US100.cash_M5_202412300105_202610162345.csv": "07e162ade037e3da909bce02041e0f4ce6e2e85d417c5e3fab9bfeaacc94a7ec",
+    "data/training/US500.cash_D1_202412300000_202610160000.csv": "8eccb7d28f99e403df36adbd76097df388187f110e0c19544487dde7b8ceb990",
+    "data/training/US500.cash_H1_202412300100_202610162300.csv": "bb19f7ef3f8fdf3729b34b91379a3ccef0822d83e73e30b22b9cddbbe785051e",
+    "data/training/US500.cash_H4_202412300000_202610162000.csv": "d34786fb2fd9f5514298d66756f51b08ac7d3a77b846f133c7e278f4f046235c",
+    "data/training/US500.cash_M10_202412300100_202610162340.csv": "3326e4e0063ca941d90bf7041b8a53cddcc2e971f47d0cdadb7f8e117ca8ce0a",
+    "data/training/US500.cash_M15_202412300100_202610162345.csv": "a7785b7005bf7dd8dc1e68c202cd7c10a5a0b2eeebc87fa18021b111a42a4b04",
+    "data/training/US500.cash_M1_202412300105_202610162349.csv": "8ee4ef65d952974dadb3ba0f5e39536060a1563665dd5ad509404355b888d41e",
+    "data/training/US500.cash_M30_202412300100_202610162330.csv": "afcf8b1928c3a6a740f6cb15de21a50430a8ef114c157789bfd5fed245649e65",
+    "data/training/US500.cash_M3_202412300103_202610162348.csv": "076fbc56d648817308174cd1e5c0487fb6da96a9ea4c727dcb2e4565fa0ac684",
+    "data/training/US500.cash_M5_202412300105_202610162345.csv": "7940ffbc5b3041061a51c6267ab969f5bc2559a782d4aa1eba7bdc5dbeda7397"
+  },
+  "training_period": {
+    "end_inclusive": "2025-12-31",
+    "start": "2024-12-30"
+  }
+}

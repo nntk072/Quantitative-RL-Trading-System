@@ -7,6 +7,42 @@ import math
 from trading.execution.costs import CostModel
 
 
+def adverse_tick_fill_quote(
+    quote: tuple[float, float],
+    direction: int,
+    slippage_points: float,
+    *,
+    opening: bool,
+) -> tuple[float, float]:
+    """Worsen only the transacted quote side by configured tick slippage.
+
+    Args:
+        quote: Executable bid/ask pair.
+        direction: Position side, +1 for long or -1 for short.
+        slippage_points: Adverse price adjustment applied to the transacted side.
+        opening: Whether the quote is used to open or close the position.
+
+    Returns:
+        Adjusted bid/ask pair with the untouched side preserved.
+    """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or +1")
+    slippage = float(slippage_points)
+    if not math.isfinite(slippage) or slippage < 0.0:
+        raise ValueError("tick slippage must be finite and non-negative")
+    bid, ask = map(float, quote)
+    if opening:
+        if direction == 1:
+            ask += slippage
+        else:
+            bid -= slippage
+    elif direction == 1:
+        bid -= slippage
+    else:
+        ask += slippage
+    return bid, ask
+
+
 def raw_spread_to_price(raw_spread_points: float | None, point_size: float) -> float | None:
     """Convert a broker-reported spread to price units, preserving missing values.
 

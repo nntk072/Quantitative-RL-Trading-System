@@ -1,0 +1,8 @@
+{
+  "group_key": "7911a50b99fff1fd62b310de5605e80da229bb48b93b7d6a3c12388f540748b7",
+  "profile_ids": [
+    "strategy_overlay/3_distribution"
+  ],
+  "representative_profile": "strategy_overlay/3_distribution",
+  "status": "measured_training_split"
+}

@@ -23,6 +23,14 @@ import numpy as np
 import pandas as pd
 
 from evaluation import build_run_report, run_episode  # noqa: E402
+from evaluation.rollout.baseline_features import (  # noqa: E402
+    STOP_FEATURES,
+    ensure_baseline_stop_features,
+)
+from evaluation.rollout.baseline_signal_actions import (  # noqa: E402
+    discrete_actions_for_position_targets,
+)
+from features.technical.swings import TIMEFRAME_CONFIG  # noqa: E402
 from market_data.splits.definitions import split_train_test  # noqa: E402
 from simulation.environment.env import TradingEnv  # noqa: E402
 from trading.baselines import (  # noqa: E402
@@ -31,25 +39,40 @@ from trading.baselines import (  # noqa: E402
     EMAMACDRSIStrategy,
     MultiLevelBreakoutStrategy,
     SessionMomentumStrategy,
+    SignalSeriesStrategy,
+    macd_baseline,
+    rsi_mean_reversion,
 )
-
-OBS_WINDOW = 60  # must match TradingEnv's default obs_window
 
 
 def build_strategies(bars: pd.DataFrame) -> dict[str, BaseStrategy]:
-    """Instantiate every registered baseline over the evaluation bars."""
-    strategies: dict[str, BaseStrategy] = {
+    """Instantiate each precomputed baseline over the evaluation bars."""
+    return {
         "always_flat": BuyAndHoldStrategy(n_bars=len(bars), size=0.0),
         "buy_and_hold": BuyAndHoldStrategy(n_bars=len(bars)),
         "ema_macd_rsi": EMAMACDRSIStrategy(bars),
         "breakout": MultiLevelBreakoutStrategy(bars),
         "session_momentum": SessionMomentumStrategy(bars),
+        "macd_histogram": SignalSeriesStrategy(macd_baseline(bars)),
+        "rsi_mean_reversion": SignalSeriesStrategy(rsi_mean_reversion(bars)),
     }
-    # The env starts stepping at bar `obs_window`; skip the first
-    # pre-computed signals so signal k lines up with the traded bar.
-    for strategy in strategies.values():
-        strategy.fast_forward(OBS_WINDOW)
-    return strategies
+
+
+def _discrete_signal_actions(
+    name: str, bars: pd.DataFrame, *, start_index: int
+) -> pd.Series | None:
+    """Build exit-capable actions for the precomputed signal-series arms."""
+    if name == "macd_histogram":
+        targets = macd_baseline(bars)
+    elif name == "rsi_mean_reversion":
+        targets = rsi_mean_reversion(bars)
+    else:
+        return None
+    if not 0 <= start_index <= len(bars):
+        raise ValueError("start_index must be within the bar series")
+    actions = pd.Series(0, index=bars.index, dtype=int)
+    actions.iloc[start_index:] = discrete_actions_for_position_targets(targets.iloc[start_index:])
+    return actions
 
 
 def parse_args() -> argparse.Namespace:
@@ -73,6 +96,8 @@ def parse_args() -> argparse.Namespace:
             "ema_macd_rsi",
             "breakout",
             "session_momentum",
+            "macd_histogram",
+            "rsi_mean_reversion",
         ],
     )
     parser.add_argument("--out-dir", default="outputs/rl_runs", help="Base directory for reports")
@@ -87,6 +112,12 @@ def main() -> None:
         pd.read_csv(args.features_csv, index_col=0, parse_dates=True)
         if args.features_csv
         else bars.select_dtypes(include=["number"])
+    )
+    swing_period = int(TIMEFRAME_CONFIG["M1"]["left"])
+    features, generated_stop_features = ensure_baseline_stop_features(
+        bars,
+        features,
+        swing_period=swing_period,
     )
 
     _, test_bars, _, test_features = split_train_test(
@@ -111,19 +142,34 @@ def main() -> None:
     strategies = build_strategies(test_bars)
     for name in args.strategies:
         strategy = strategies[name]
-
-        def action_fn(obs: Any, _strategy: BaseStrategy = strategy) -> np.ndarray[Any, Any]:
-            # TradingEnv's continuous decoder expects a one-element ndarray.
-            return np.array([_strategy.act(obs)], dtype=np.float32)
+        observation_window = 60
+        discrete_actions = _discrete_signal_actions(name, test_bars, start_index=observation_window)
 
         env = TradingEnv(
             bars=test_bars,
             features=test_features,
-            continuous_actions=True,
+            obs_window=observation_window,
+            continuous_actions=discrete_actions is None,
+            max_risk_frac=0.01,
+            risk_frac_range=(0.005, 0.01),
+            rr_ratio_range=(1.0, 3.0),
             # Eval mode: a breach blocks trading for the rest of the session
             # instead of truncating the episode (mirrors run_backtest).
             episodic=False,
         )
+
+        def action_fn(
+            obs: Any,
+            _strategy: BaseStrategy = strategy,
+            _discrete_actions: pd.Series | None = discrete_actions,
+        ) -> Any:
+            del obs
+            if _discrete_actions is not None:
+                return int(_discrete_actions.iloc[env.step_idx])
+            # Environment stepping skips overnight rows; use its actual data
+            # index instead of advancing once per action.
+            return np.array([_strategy.act_at(env.step_idx)], dtype=np.float32)
+
         metrics = run_episode(env, action_fn=action_fn)
         report: dict[str, Any] = {
             "run_name": f"baseline_{name}",
@@ -132,6 +178,20 @@ def main() -> None:
                 "test_start": args.test_start,
                 "test_bars": int(len(test_bars)),
                 "period_role": period_role,
+            },
+            "evaluation_contract": {
+                "scope": "baseline arms share TradingEnv; not matched to an RL campaign action schema",
+                "action_schema": "discrete-trading-v1" if discrete_actions is not None else None,
+                "action_mode": "discrete_exit_capable"
+                if discrete_actions is not None
+                else "continuous_signal",
+                "risk_frac_range": [0.005, 0.01],
+                "max_risk_frac": 0.01,
+                "rr_ratio_range": [1.0, 3.0],
+                "stop_features": list(STOP_FEATURES),
+                "generated_stop_features": list(generated_stop_features),
+                "swing_period": swing_period,
+                "structure_atr_reversal_multiplier": 0.0,
             },
             "out_of_sample": build_run_report(metrics, env.trade_log),
         }
@@ -143,7 +203,7 @@ def main() -> None:
         oos = report["out_of_sample"]
         print(
             f"{name:16} sharpe={oos['sharpe']:7.3f}  mdd={oos['max_drawdown']:7.4f}  "
-            f"pnl={oos['total_pnl']:10.2f}  trades={oos['n_trades']}  -> {out_dir / 'metrics.json'}"
+            f"pnl={oos['total_pnl']:10.2f}  completed_positions={oos['n_trades']}  -> {out_dir / 'metrics.json'}"
         )
 
 

@@ -5,7 +5,7 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
-from scripts.research.analysis.exit_shadow_fixed_entry import (
+from scripts.research.analysis.evaluation.fixed_entry_exit_shadow import (
     PairedLatency,
     _menu_pairs,
     _monthly_cohort_summary,

@@ -87,6 +87,26 @@ def test_partial_tp_and_modes_are_observable() -> None:
     assert state[V2_COORDINATES.index("exit_mode_ema")] == 1.0
 
 
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("equity", float("nan"), "equity must be finite"),
+        ("position_direction", 0.5, "position_direction must be -1, 0, or 1"),
+        ("position_age_scale_bars", 0.0, "position_age_scale_bars must be positive"),
+        ("position_age_bars", -1.0, "position_age_bars must be non-negative"),
+        ("remaining_size", -0.1, "position sizes must be non-negative"),
+        ("tp_hit_mask", 8, "tp_hit_mask must contain only three target bits"),
+        ("sl_mode", "unknown", "unsupported account-state-v2 sl_mode"),
+        ("tp_mode", "unknown", "unsupported account-state-v2 tp_mode"),
+        ("exit_mode", "unknown", "unsupported account-state-v2 exit_mode"),
+        ("tp_prices", (104.0, 106.0), "exactly three take-profit prices"),
+    ],
+)
+def test_v2_rejects_malformed_account_state(field: str, value: object, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        _state(**{field: value})
+
+
 def test_short_target_distances_are_positive_toward_target() -> None:
     state = _state(
         position_direction=-1.0,

@@ -57,7 +57,9 @@ per stable stage. Add an intermediate check only when expected to catch a
 failure, checkpoint boundary, allocation transition, or explicit progress
 signal. Prefer a persistent supervisor's completion notification or another
 wait-for-output mechanism when available. Report meaningful transitions and
-blockers, not unchanged polling results. Never cancel or replace active or
+blockers, not unchanged polling results. When no independent work remains,
+make one measured completion estimate and wait toward that window instead of
+spending tokens on repeated short polls or unchanged status updates. Never cancel or replace active or
 pending jobs to simplify monitoring. This cadence applies after an allocation
 starts; the separate 60-second limit for waiting on a new allocation request
 still applies.

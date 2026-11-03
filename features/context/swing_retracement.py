@@ -95,6 +95,9 @@ def build_swing_retracement_features(
         raise ValueError("swing levels must be a nonempty sequence of finite values")
     if len(set(level_values)) != len(level_values):
         raise ValueError("swing levels must not contain duplicates")
+    level_tokens = [level_token(float(value)) for value in level_values]
+    if len(set(level_tokens)) != len(level_tokens):
+        raise ValueError("swing levels produce duplicate feature column tokens")
     span = swing_high - swing_low
     leg_start_time = high_time.where(high_time.lt(low_time), low_time)
     leg_end_time = high_time.where(high_time.gt(low_time), low_time)
@@ -147,8 +150,7 @@ def build_swing_retracement_features(
     # schema.
     level_prices: dict[str, NDArray[np.float64]] = {}
     level_distances: dict[str, NDArray[np.float64]] = {}
-    for level in level_values:
-        token = level_token(float(level))
+    for level, token in zip(level_values, level_tokens, strict=True):
         price = np.where(
             up_leg,
             swing_high - float(level) * span,

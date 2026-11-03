@@ -7,11 +7,16 @@ import numpy as np
 import pandas as pd
 
 from decisioning.trade_setup import TradeSetupCandidate
-from market_data.loading.ticks import TickExecutionUnavailable, resolve_tick_execution_by_deadline
+from features.context.trade_setup_candidates import TradeSetupEventIdentity
+from market_data.loading.ticks import (
+    TickExecutionUnavailable,
+    event_keyed_execution_rng,
+    resolve_tick_execution_by_deadline,
+)
 from market_data.transforms.sessions import ny_session_mask
 from simulation.contracts import SimulationTransition
 from trading.execution import Position
-from trading.policy import evaluate_payout
+from trading.policy import build_payout_reset_event
 
 from .action_diagnostics import _empty_decision
 from .entry_diagnostics import _empty_entry_diag
@@ -26,6 +31,9 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
     prev_session: int | None
     position: Position | None
     _selected_trade_setup: TradeSetupCandidate | None
+    _selected_trade_setup_event_identity: TradeSetupEventIdentity | None
+    _last_action_trade_setup_candidate_id: int | None
+    _last_action_trade_setup_eligible: bool | None
     _session_entry_counts: dict[int, int]
     _last_realized_close_pnl: float | None
     _last_realized_close_r: float | None
@@ -65,6 +73,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._active_step_execution: dict[str, Any] | None = None
         self._position_sequence = 0
         self._episode_identity = getattr(self, "_episode_identity", 0) + 1
+        self._current_decision_id = ""
         # Step counter within the current episode (0 at reset). Distinct
         # from ``step_idx`` (the absolute bar index); used to enforce
         # ``max_episode_steps`` truncation.
@@ -94,6 +103,9 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._opened_this_step = False
         self._selected_sl_anchor = 0.0
         self._selected_trade_setup = None
+        self._selected_trade_setup_event_identity = None
+        self._last_action_trade_setup_candidate_id = None
+        self._last_action_trade_setup_eligible = None
         self._selected_tp_fraction = 0.0
         self._selected_exit_mode = "structural"
         self._selected_sl_mode = "fixed"
@@ -104,6 +116,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._selected_tp_z = (0.0, 0.0)
         self._decision_action = _empty_decision()
         self._entry_rejection_reason = ""
+        self._entry_rejection_decision_id = ""
         self._ep_start_equity = float(self.initial_balance)
         self._ep_reward_sum = 0.0
         self._entry_diag = _empty_entry_diag(self.entry_state_machine is not None)
@@ -140,6 +153,10 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         if self.step_idx >= self._n_bars or self._ny_pos >= len(self._ny_indices):
             return SimulationTransition(self._get_observation(), 0.0, False, True, {})
 
+        # Episode-scoped and deterministic: one ID per action boundary, including
+        # abstentions and rejected actions. It does not affect action decoding.
+        self._current_decision_id = f"e{self._episode_identity}:d{self.episode_step_count + 1}"
+
         bar = self._bar_at(self.step_idx)
         feat_row = self._feature_row_at(self.step_idx)
         bar_time = self._bar_time(self.step_idx)
@@ -171,14 +188,17 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             else bar_time + pd.Timedelta(minutes=self._minutes_per_step)
         )
         fill_time = (
-            self._bar_time(next_market_idx) + pd.Timedelta(minutes=self._minutes_per_step)
-            if next_market_idx < self._n_bars
+            self._bar_time(market_fill_idx)
+            if market_fill_idx < self._n_bars
             else bar_time + pd.Timedelta(minutes=self._minutes_per_step)
         )
         self._active_step_execution = None
         if self.randomized_fill_latency_ms > 0:
             execution_order_time = pd.Timestamp(entry_fill_time)
-            quote, execution_meta = self._resolve_randomized_tick_quote(execution_order_time)
+            quote, execution_meta = self._resolve_randomized_tick_quote(
+                execution_order_time,
+                event_key=f"bar_fill:{execution_order_time.value}",
+            )
             self._active_step_execution = {"quote": quote, "metadata": execution_meta}
             entry_fill_bid, entry_fill_ask = quote.bid, quote.ask
             entry_fill_time = quote.tick_time
@@ -361,7 +381,10 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
                     self._tickbook,
                     bar_time,
                     eod_deadline,
-                    self.np_random,
+                    event_keyed_execution_rng(
+                        int(self.np_random_seed),
+                        f"scheduled_session_close:{pd.Timestamp(bar_time).value}",
+                    ),
                     max_latency_ns_exclusive=int(self.randomized_fill_latency_ms * 1_000_000),
                     max_quote_wait_ns=self.max_tick_quote_wait_ms * 1_000_000,
                 )
@@ -420,22 +443,15 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         """
         if not self.repeated_payout_policy or self.position is not None:
             return False
-        decision = evaluate_payout(
-            self.account.balance,
-            self.trading_policy.operating_balance,
-            self.trading_policy.profit_target_balance,
+        event = build_payout_reset_event(
+            balance=self.account.balance,
+            policy=self.trading_policy,
+            cycle=self.cycle_count,
+            event_time=event_time,
         )
-        if not decision.due:
+        if event is None:
             return False
-        payout = decision.amount
-        event = {
-            "type": "payout_reset",
-            "time": event_time,
-            "cycle": int(self.cycle_count),
-            "payout": payout,
-            "balance_before_reset": float(self.account.balance),
-            "operating_balance": float(self.trading_policy.operating_balance),
-        }
+        payout = float(event["payout"])
         self.cumulative_payouts += payout
         self.cycle_successes += 1
         self.payout_events.append(dict(event))

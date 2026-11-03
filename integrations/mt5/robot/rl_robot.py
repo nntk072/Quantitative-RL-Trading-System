@@ -6,7 +6,7 @@ Mirrors the MT5 robot contract established by ``CrossOverRobot`` and
 optional ``RiskManager``, and exposes a single ``trade()`` method that:
 
 1. asks the strategy for a signal ``(symbol, Signal)``,
-2. sizes the position via ``RiskManager`` (falling back to a default lot),
+2. sizes the position via ``RiskManager`` (refusing the entry when sizing fails),
 3. checks risk limits, and
 4. opens/closes positions through the ``Trader`` — or only logs the intended
    order when ``paper_trading=True`` (dry run, the Stage 8 default).
@@ -43,7 +43,9 @@ class RLRobot:
         stop_loss_pips: Stop-loss distance used by ``RiskManager`` sizing.
         magic_number: MT5 magic number tagging orders opened by this robot.
         paper_trading: When True (the safe default), every signal and intended
-            order is logged but no orders are placed with the broker.
+            order is logged but no orders are placed with the broker. In live
+            mode, startup requires a risk manager that enforces the training
+            daily and maximum account-loss limits.
     """
 
     def __init__(
@@ -74,6 +76,13 @@ class RLRobot:
         self.strategy = adapter.as_strategy(data_source, secondary_data_source)
         self.trader = trader
         self.risk_manager = risk_manager if risk_manager is not None else RiskManager()
+        if not paper_trading and not bool(
+            getattr(self.risk_manager, "supports_training_account_loss_guardrails", False)
+        ):
+            raise ValueError(
+                "real-order mode requires a risk manager with training-equivalent daily and "
+                "maximum account-loss guardrails"
+            )
         self.secondary_data_source = secondary_data_source
         self.stop_loss_pips = stop_loss_pips
         self.magic_number = magic_number
@@ -122,6 +131,16 @@ class RLRobot:
             symbol: Text or path value identifying the symbol.
             position_type: Numeric value used for the position type.
         """
+        if not self.paper_trading and not bool(
+            getattr(self.risk_manager, "supports_training_account_loss_guardrails", False)
+        ):
+            logger.error(
+                "Refusing live entry for {}: risk manager does not enforce training daily and "
+                "maximum account-loss guardrails",
+                symbol,
+            )
+            return
+
         position_size = self.calculate_position_size(symbol)
         if position_size <= 0.0:
             logger.warning(

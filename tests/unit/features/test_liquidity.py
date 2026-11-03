@@ -6,7 +6,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from features.context.liquidity import detect_bos, detect_liquidity_sweeps
+from features.context.liquidity import (
+    detect_bos,
+    detect_liquidity_sweeps,
+    detect_liquidity_sweeps_retained,
+)
 from features.technical.structure import structure_levels
 
 
@@ -107,6 +111,62 @@ class TestSweepHigh:
         assert feats["sweep_high_age"].iloc[13] == 1
         assert feats["sweep_high_level"].iloc[13] == pytest.approx(102.2)
         assert feats["sweep_high_reclaimed"].iloc[13] == 1
+
+
+@pytest.mark.parametrize("atr_value", [0.0, float("nan"), float("inf")])
+def test_retained_sweep_requires_finite_positive_atr(
+    monkeypatch: pytest.MonkeyPatch, atr_value: float
+) -> None:
+    bars = make_bars([(9.0, 8.0, 8.5), (9.5, 8.2, 9.0), (12.0, 8.5, 11.5)])
+    levels = pd.DataFrame(
+        {
+            "retained_high_1": [np.nan, 10.0, 10.0],
+            "retained_high_1_loc": [np.nan, 0.0, 0.0],
+            "retained_low_1": [np.nan, np.nan, np.nan],
+            "retained_low_1_loc": [np.nan, np.nan, np.nan],
+        },
+        index=bars.index,
+    )
+    monkeypatch.setattr(
+        "features.context.liquidity.structure_levels", lambda *args, **kwargs: levels
+    )
+    monkeypatch.setattr(
+        "features.context.liquidity.atr",
+        lambda frame, period: pd.Series([1.0, 1.0, atr_value], index=frame.index),
+    )
+
+    result = detect_liquidity_sweeps_retained(bars, max_sweep_distance_atr=1.0, max_levels=1)
+
+    assert result["sweep_high"].iloc[2] == 0.0
+    assert result["n_swept_high"].iloc[2] == 0
+
+
+@pytest.mark.parametrize(("bar_high", "expected"), [(10.25, 1.0), (10.75, 0.0)])
+def test_retained_sweep_uses_atr_overshoot_limit(
+    monkeypatch: pytest.MonkeyPatch, bar_high: float, expected: float
+) -> None:
+    bars = make_bars([(9.0, 8.0, 8.5), (9.5, 8.2, 9.0), (bar_high, 8.5, bar_high - 0.3)])
+    levels = pd.DataFrame(
+        {
+            "retained_high_1": [np.nan, 10.0, 10.0],
+            "retained_high_1_loc": [np.nan, 0.0, 0.0],
+            "retained_low_1": [np.nan, np.nan, np.nan],
+            "retained_low_1_loc": [np.nan, np.nan, np.nan],
+        },
+        index=bars.index,
+    )
+    monkeypatch.setattr(
+        "features.context.liquidity.structure_levels", lambda *args, **kwargs: levels
+    )
+    monkeypatch.setattr(
+        "features.context.liquidity.atr",
+        lambda frame, period: pd.Series(0.5, index=frame.index),
+    )
+
+    result = detect_liquidity_sweeps_retained(bars, max_sweep_distance_atr=1.0, max_levels=1)
+
+    assert result["sweep_high"].iloc[2] == expected
+    assert result["n_swept_high"].iloc[2] == expected
 
 
 class TestBos:

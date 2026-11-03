@@ -1,0 +1,42 @@
+{
+  "checks": {
+    "all_scenarios_independently_reconciled": true,
+    "both_latency_scenarios_present": true,
+    "fixture_hash_matches": true,
+    "schema_and_scenario_supported": true,
+    "source_hashes_match_current_bytes": true
+  },
+  "independent_verification_passed": true,
+  "report": "evidence/research/simulator_execution_parity/scheduled_session_close/scheduled_session_close.json",
+  "report_sha256": "1cd81c8fda6f21a3a82be6b866709085d4bc31f6ab5847048f1133061e0e3db2",
+  "scenario_checks": [
+    {
+      "backtest_close_obeys_deadline": true,
+      "environment_close_obeys_deadline": true,
+      "final_equity_reconciles_from_close_pnl": true,
+      "one_open_and_one_scheduled_close_per_engine": true,
+      "open_fill_matches": true,
+      "scenario_passed": true,
+      "scheduled_close_fields_match": true
+    },
+    {
+      "backtest_close_obeys_deadline": true,
+      "environment_close_obeys_deadline": true,
+      "final_equity_reconciles_from_close_pnl": true,
+      "one_open_and_one_scheduled_close_per_engine": true,
+      "open_fill_matches": true,
+      "scenario_passed": true,
+      "scheduled_close_fields_match": true
+    }
+  ],
+  "schema_version": 1,
+  "source_hash_checks": {
+    "market_data/loading/ticks.py": true,
+    "scripts/research/analysis/evaluation/compare_scheduled_session_close.py": true,
+    "simulation/backtest/event_driven_backtest.py": true,
+    "simulation/backtest/protective_events.py": true,
+    "simulation/backtest/runtime.py": true,
+    "simulation/environment/episode_runtime.py": true,
+    "tests/integration/backtest/test_risk_lifecycle_characterization.py": true
+  }
+}

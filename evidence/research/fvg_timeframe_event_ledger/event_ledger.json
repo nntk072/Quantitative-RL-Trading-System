@@ -1,0 +1,133 @@
+{
+  "collision_definition": "More than one source FVG zone confirms a retest for the same source timeframe, source row, and direction; the source-timeframe scalar feature selects one zone.",
+  "collision_group_count": 3262,
+  "config_path": "config/features/fvg_ifvg_mtf.yaml",
+  "derived_timeframes": [
+    "D1"
+  ],
+  "fvg_config": {
+    "reaction_buffer_enabled": true,
+    "reaction_buffer_fraction": 0.1
+  },
+  "interpretation": "Per-zone FVG retest confirmations by configured source timeframe; per-timeframe scalar selection suppresses older overlapping zones.",
+  "limitations": [
+    "Per-timeframe blocks remain separate in the feature matrix; this ledger does not imply cross-timeframe scalar merging.",
+    "Detector events are not logical setups, policy proposals, orders, or trades.",
+    "Source timestamps inherit local bar indices; external feed publication time and authoritative calendar are not established."
+  ],
+  "local_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
+  "local_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
+  "output_files": [
+    "fvg_timeframe_event_ledger.csv",
+    "fvg_timeframe_collisions.csv",
+    "README.md",
+    "event_ledger.json",
+    "resolved_config.yaml",
+    "OUTPUT_SHA256SUMS"
+  ],
+  "per_timeframe_counts": {
+    "D1": {
+      "collision_groups": 0,
+      "per_zone_retests": 15,
+      "scalar_retests": 15,
+      "suppressed_zone_retests": 0
+    },
+    "H1": {
+      "collision_groups": 43,
+      "per_zone_retests": 490,
+      "scalar_retests": 439,
+      "suppressed_zone_retests": 51
+    },
+    "H4": {
+      "collision_groups": 15,
+      "per_zone_retests": 153,
+      "scalar_retests": 136,
+      "suppressed_zone_retests": 17
+    },
+    "M1": {
+      "collision_groups": 1950,
+      "per_zone_retests": 29327,
+      "scalar_retests": 27266,
+      "suppressed_zone_retests": 2061
+    },
+    "M10": {
+      "collision_groups": 176,
+      "per_zone_retests": 2698,
+      "scalar_retests": 2506,
+      "suppressed_zone_retests": 192
+    },
+    "M15": {
+      "collision_groups": 141,
+      "per_zone_retests": 1846,
+      "scalar_retests": 1684,
+      "suppressed_zone_retests": 162
+    },
+    "M3": {
+      "collision_groups": 523,
+      "per_zone_retests": 8978,
+      "scalar_retests": 8418,
+      "suppressed_zone_retests": 560
+    },
+    "M30": {
+      "collision_groups": 88,
+      "per_zone_retests": 956,
+      "scalar_retests": 851,
+      "suppressed_zone_retests": 105
+    },
+    "M5": {
+      "collision_groups": 326,
+      "per_zone_retests": 5317,
+      "scalar_retests": 4970,
+      "suppressed_zone_retests": 347
+    }
+  },
+  "per_zone_retest_count": 49780,
+  "primary_symbol": "US100.cash",
+  "resolved_config_sha256": "9e73b1932655642f515542c831988279ab9733e94aa2ee7719758ba6d3df87d1",
+  "scalar_retest_count": 46285,
+  "session_schedule_identity": {
+    "path": "config/ny_session_schedule.csv",
+    "sha256": "7e9f5def3385185905f7265f946a0835ccb43c53f1351c057aa23f00480e6cbc"
+  },
+  "source_commit": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "source_hashes": {
+    "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
+    "features/po3/fvg.py": "8be5a6965eea735ffd606d494f5a9d430a8c5b3638eb5321767e631dd4e17cca",
+    "features/po3/fvg_detection.py": "39309e91ff551fa45b6eff76589d492f8bdfc50b8a23a409232a928c2f93a0ae",
+    "features/po3/zones.py": "d7a890ddb64088161a207c57cc6229d03d0c173f09e5be30deab1f012fe6e676",
+    "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
+    "market_data/transforms/align.py": "0835dfb2f84ba67cd182a619e06c559cae2774bf37b98a9700921cf4aa8ef37d",
+    "market_data/transforms/resample.py": "95d2a9ca6e326cd35ae0a331d1b616fed5abd8dda6b93b753a6917c180e3e605",
+    "market_data/transforms/session_schedule.py": "0e58df6134f2e258334f38d0b696d3142b6adcf81b3f705fce89c59a352ecf5c",
+    "scripts/research/analysis/features/fvg_timeframe_event_ledger.py": "babdf83211c21d23080cbd7cac6ba120da5d6dff3a426606d9a4dbcce4723aed"
+  },
+  "source_timeframes": [
+    "M1",
+    "M3",
+    "M5",
+    "M10",
+    "M15",
+    "M30",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "status": "descriptive_training_fvg_detector_events_only",
+  "suppressed_visible_per_zone_retest_count": 3495,
+  "training_input_sha256": {
+    "data/training/US100.cash_H1_202412300100_202610162300.csv": "693e9b3df53e522b16c63f1d9ab9c7e29f0c29555f066b3a90554b34a9dd7c0b",
+    "data/training/US100.cash_H4_202412300000_202610162000.csv": "83855aed1db0517f43b76ef2e3484908e43d9744d955abb8c828aad699a1e2af",
+    "data/training/US100.cash_M10_202412300100_202610162340.csv": "a13bdee2606d3bed19e301196fc29e426d97fdf05373fee83a734181004ade53",
+    "data/training/US100.cash_M15_202412300100_202610162345.csv": "1eb96fafbdbcfa140e50d6430e7fdfbd891dcad22eae597771678c0ed607c6cd",
+    "data/training/US100.cash_M1_202412300105_202610162349.csv": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+    "data/training/US100.cash_M30_202412300100_202610162330.csv": "256a8fb8c959a61f2fada196163ba8da0edf94de67146d175fbdab9eba75c5d7",
+    "data/training/US100.cash_M3_202412300103_202610162348.csv": "217c2f8bfdd1ff30938868f81d3fb682f8919bc703171cb29f88ddc6a6bab461",
+    "data/training/US100.cash_M5_202412300105_202610162345.csv": "07e162ade037e3da909bce02041e0f4ce6e2e85d417c5e3fab9bfeaacc94a7ec"
+  },
+  "training_m1_rows": 351432,
+  "training_period": {
+    "end_inclusive": "2025-12-31",
+    "start": "2024-12-30"
+  },
+  "visible_per_zone_retest_count": 49780
+}

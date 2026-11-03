@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "date_local": "2026-11-03",
+  "cluster_job_id": "21367992",
+  "node": "gpuarm2",
+  "allocation_context": "reused existing one-GH200 allocation; no new job or Slurm step",
+  "command": ".venv/bin/python -m pytest -q tests/unit/features/test_po3_setup_lifecycle.py tests/unit/features/test_po3_state.py",
+  "result": {
+    "collected": 29,
+    "passed": 29,
+    "failed": 0,
+    "duration_seconds": 0.77
+  },
+  "sources": [
+    {
+      "path": "tests/unit/features/test_po3_setup_lifecycle.py",
+      "sha256": "40196ca8d3a2e7bd243f46e1471ec8ee917609eb617aadbe8ee57fada4cd85a5"
+    },
+    {
+      "path": "tests/unit/features/test_po3_state.py",
+      "sha256": "777dbec451d2918d851e9e1bdb45f165d866740ff869f8e15711170280a4d442"
+    },
+    {
+      "path": "features/po3/ifvg_state.py",
+      "sha256": "4752d0f172d3f7a229cd24c6269d58bb69c19815c4e3751db80353f2bbfd74ef"
+    },
+    {
+      "path": "features/po3/setup_lifecycle.py",
+      "sha256": "07abc7c5a6a5a762920311568d5b610ecfef688219ca79ed803b4187d8e95dd0"
+    },
+    {
+      "path": "features/po3/po3_phase_state.py",
+      "sha256": "141af5ab6ef13dcd687a1afcab789d1fba046a38a982556a9b295527b811fa7b"
+    }
+  ],
+  "scope_limit": "Synthetic producer-state semantics only; no cross-family logical-event ontology, policy linkage, economic result, provider publication clock, or untouched holdout claim.",
+  "stdout_file": "pytest_output.txt"
+}

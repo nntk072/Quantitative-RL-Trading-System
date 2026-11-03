@@ -22,6 +22,7 @@ from learning.rl.agent import build_agent, validate_model_architecture
 from models.encoders import (
     M1TCNHTFLiteReasoningEncoder,
     M1TCNHTFSnapshotReasoningEncoder,
+    MTFEmptyStreamMaskedV1Encoder,
     SharedTCNMTFReasoningEncoder,
 )
 from models.factory import encoder_for
@@ -40,6 +41,7 @@ _STREAMS = (
 )
 
 _VARIANTS: tuple[tuple[str, type[torch.nn.Module]], ...] = (
+    ("mtf_empty_stream_masked_v1", MTFEmptyStreamMaskedV1Encoder),
     ("mtf_shared_tcn_reasoning", SharedTCNMTFReasoningEncoder),
     ("mtf_m1_tcn_htf_lite_reasoning", M1TCNHTFLiteReasoningEncoder),
     ("mtf_m1_tcn_htf_snapshot_reasoning", M1TCNHTFSnapshotReasoningEncoder),

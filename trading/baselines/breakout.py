@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import numpy as np
@@ -39,6 +40,23 @@ class MultiLevelBreakoutStrategy(BaseStrategy):
             atr_stop_mult: Stop distance in ATR multiples.
             size: Fraction of capital allocated per entry.
         """
+        if isinstance(atr_period, bool) or not isinstance(atr_period, int) or atr_period < 1:
+            raise ValueError("atr_period must be a positive integer")
+        numeric_parameters = {
+            "volume_spike_threshold": volume_spike_threshold,
+            "atr_stop_mult": atr_stop_mult,
+            "size": size,
+        }
+        for name, value in numeric_parameters.items():
+            if isinstance(value, bool) or not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite")
+        if volume_spike_threshold < 0.0:
+            raise ValueError("volume_spike_threshold must be non-negative")
+        if atr_stop_mult <= 0.0:
+            raise ValueError("atr_stop_mult must be positive")
+        if not 0.0 <= size <= 1.0:
+            raise ValueError("size must be in [0, 1]")
+
         levels = detect_session_levels(bars)
         atr_vals = atr(bars, period=atr_period).ffill().fillna(0.0)
         if "volume" in bars.columns:

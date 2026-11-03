@@ -336,6 +336,7 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         if self._trigger_requested_this_step and self.entry_state_machine is not None:
             self.entry_state_machine.trigger_refused += 1
         self._entry_rejection_reason = reason
+        self._entry_rejection_decision_id = self._current_decision_id
 
     def _in_open_blackout(self, session_id: int) -> bool:
         """Process open blackout.

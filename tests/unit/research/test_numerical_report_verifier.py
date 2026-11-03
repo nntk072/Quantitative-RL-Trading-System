@@ -11,9 +11,11 @@ import pytest
 from scripts.research.analysis.evidence.verify_numerical_report import (
     _PARITY_COMPARISONS,
     _backend_parity_audit_errors,
+    _daily_loss_is_session_scoped,
     _deleted_dirty_source_record,
     _deleted_source_records,
     _evaluation_provenance_errors,
+    _hard_breach_events,
     _policy_action_mode_errors,
     _same_resolved_config,
     _source_manifest_errors,
@@ -30,6 +32,22 @@ def test_numerical_report_verifier_accepts_seeded_stochastic_actions() -> None:
         "stochastic policy actions are missing a reproducible RNG seed"
     ]
     assert _policy_action_mode_errors({"policy_action_mode": "deterministic"}) == []
+
+
+def test_hard_breach_filter_respects_session_scoped_daily_loss() -> None:
+    events = pd.DataFrame(
+        [
+            {"time": "2025-03-06T20:32:00+03:00", "reason": "daily_loss"},
+            {"time": "2025-10-28T19:31:00+03:00", "reason": "max_drawdown"},
+        ]
+    )
+
+    assert _daily_loss_is_session_scoped({"trading_policy_mode": "legacy"})
+    assert not _daily_loss_is_session_scoped({"trading_policy_mode": "repeated_payout"})
+    hard = _hard_breach_events(events, daily_loss_is_session_scoped=True)
+    assert hard["reason"].tolist() == ["max_drawdown"]
+    assert hard.iloc[0]["time"] == "2025-10-28T19:31:00+03:00"
+    assert _hard_breach_events(events, daily_loss_is_session_scoped=False).equals(events)
 
 
 def test_deleted_dirty_source_provenance_uses_the_recorded_git_blob(

@@ -13,6 +13,7 @@ from typing import Any, cast
 
 import numpy as np
 import pandas as pd
+import pytest
 from gymnasium import spaces
 
 from decisioning.actions import build_discrete_trading_action_schema
@@ -71,6 +72,40 @@ if not hasattr(_mt5_stub, "order_send"):
     setattr(_mt5_stub, "order_send", lambda *a, **k: None)
 if not hasattr(_mt5_stub, "copy_rates_from_pos"):
     setattr(_mt5_stub, "copy_rates_from_pos", lambda *a, **k: None)
+
+from integrations.mt5.domain.risk_manager import RiskManager  # noqa: E402
+
+
+class _TestRiskManager(RiskManager):
+    @property
+    def supports_training_account_loss_guardrails(self) -> bool:
+        """The robot execution tests isolate order flow from broker risk state."""
+        return True
+
+    def calculate_position_size(
+        self,
+        symbol: str,
+        stop_loss_pips: float,
+        risk_amount: float | None = None,
+        volatility_multiplier: float = 1.0,
+    ) -> float:
+        """Use a deterministic lot size so these tests isolate robot order flow."""
+        del symbol, stop_loss_pips, risk_amount, volatility_multiplier
+        return 0.1
+
+    def calculate_stop_loss_price(
+        self, symbol: str, position_type: int, stop_loss_pips: float
+    ) -> float:
+        """Keep the order-flow fixture independent of broker quote state."""
+        del symbol, position_type, stop_loss_pips
+        return 50.1
+
+    def check_risk_limits(
+        self, symbol: str, proposed_position_size: float, stop_loss_pips: float
+    ) -> tuple[bool, str]:
+        """Accept the deterministic test order; risk contracts are tested separately."""
+        del symbol, proposed_position_size, stop_loss_pips
+        return True, "test risk manager accepts fixture order"
 
 
 def _make_bars(n: int = 300, seed: int = 7) -> pd.DataFrame:
@@ -168,17 +203,27 @@ def _make_robot(
     robot = RLRobot(
         adapter=adapter,
         data_source=_StubData(bars),
-        trader=cast(Trader, trader or RecordingTrader()),
+        trader=cast(Trader, trader if trader is not None else RecordingTrader()),
+        risk_manager=_TestRiskManager() if not paper_trading else RiskManager(),
         secondary_data_source=secondary_data,
         paper_trading=paper_trading,
     )
     return robot, adapter
 
 
-def test_live_mode_places_buy_and_closes_opposite_sell() -> None:
+def test_live_mode_places_buy_and_closes_opposite_sell(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """BUY signal with an open sell → open the long and close the short."""
+    from integrations.mt5.domain import risk_manager as risk_manager_module
+    from integrations.mt5.robot import rl_robot as rl_robot_module
+
+    current_mt5_stub = sys.modules["MetaTrader5"]
+    monkeypatch.setattr(risk_manager_module, "mt5", current_mt5_stub)
+    monkeypatch.setattr(rl_robot_module, "mt5", current_mt5_stub)
     trader = RecordingTrader(sells_open=True)
     robot, _ = _make_robot(trader, paper_trading=False)
+    assert robot.trader is trader
 
     robot.trade()
 
@@ -188,6 +233,23 @@ def test_live_mode_places_buy_and_closes_opposite_sell() -> None:
     assert trader.opened[0][2] == mt5.ORDER_TYPE_BUY
     assert trader.opened_stops[0] == 50.1
     assert trader.closed == [("US100.cash", mt5.ORDER_TYPE_SELL)]
+
+
+def test_live_robot_rejects_real_order_mode_without_account_loss_guardrails() -> None:
+    """The bundled MT5 risk manager is not sufficient for real-order mode."""
+    from integrations.mt5.robot.rl_robot import RLRobot
+    from live.runtime.strategy import RLStrategyAdapter
+
+    trader = RecordingTrader()
+    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    with pytest.raises(ValueError, match="training-equivalent daily and maximum account-loss"):
+        RLRobot(
+            adapter=adapter,
+            data_source=_StubData(_make_bars()),
+            trader=cast(Trader, trader),
+            risk_manager=RiskManager(),
+            paper_trading=False,
+        )
 
 
 def test_paper_mode_never_places_orders() -> None:
@@ -278,6 +340,7 @@ def test_too_few_bars_yields_no_signal() -> None:
         adapter=adapter,
         data_source=_StubData(tiny),
         trader=cast(Trader, trader),
+        risk_manager=_TestRiskManager(),
         paper_trading=False,
     )
     robot.trade()
@@ -294,10 +357,11 @@ def _load_entrypoint_helpers():
     return live_trading_rl
 
 
-def test_live_risk_overrides_align_with_ftmo_block() -> None:
-    """Stage 8 Task 8.2: the live (percentage) risk model is explicitly
-    configured, and its $100k-equivalent per-trade risk matches the training
-    ftmo.risk_per_trade_limit — no silent divergence.
+def test_live_sizing_limit_matches_nominal_ftmo_single_trade_scale() -> None:
+    """Verify the default live per-symbol sizing against configured capital.
+
+    This checks only the nominal single-trade scale; MT5 does not implement
+    training-equivalent daily or maximum-loss account guardrails.
     """
     import live_trading_rl  # noqa: PLC0415
     from omegaconf import OmegaConf
@@ -307,8 +371,8 @@ def test_live_risk_overrides_align_with_ftmo_block() -> None:
 
     assert risk["risk_per_symbol"] == 0.01
     assert risk["max_total_risk"] == 0.02
-    # $100k balance * 1% == ftmo.risk_per_trade_limit ($1000)
-    assert abs(100_000.0 * risk["risk_per_symbol"] - cfg.ftmo.risk_per_trade_limit) < 1e-6
+    nominal_risk_usd = float(cfg.account.initial_balance) * risk["risk_per_symbol"]
+    assert abs(nominal_risk_usd - cfg.ftmo.risk_per_trade_limit) < 1e-6
 
 
 def test_use_secondary_symbol_decision() -> None:

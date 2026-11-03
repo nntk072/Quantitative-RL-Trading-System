@@ -7,11 +7,12 @@ that extend beyond the recorded evidence.
 
 ## Data and timing
 
-Data provenance and redistribution rights must be established for each source;
-user-provided or demo-account data do not establish permission to redistribute
-raw records. Missing quotes, timestamp ties, session-calendar differences, and
-feed gaps can change feature values or executable fills. Row counts alone do
-not identify whether a short session was scheduled or whether data are missing.
+The current research scope uses only files already present in the checkout.
+Provider identity, license terms, and redistribution rights are not assessed;
+no rights claim is made and raw data are not included in the evidence release.
+Missing quotes, timestamp ties, session-calendar differences, and feed gaps can
+change feature values or executable fills. Row counts alone do not identify
+whether a short session was scheduled or whether data are missing.
 
 The current research program has prior exposure to its 2026 reporting interval.
 Its outcomes are exploratory/report-only, as recorded in the

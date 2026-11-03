@@ -58,6 +58,7 @@ class PositionOpenRuntimeMixin(RuntimeMixinBase):
         self._entry_diag["opened"] += 1
         self._position_sequence += 1
         self.position.position_id = f"e{self._episode_identity}:p{self._position_sequence}"
+        self.position.origin_decision_id = self._current_decision_id
         self.position.initial_size = float(self.position.size)
         selected_setup = self._selected_trade_setup if self.trade_setup_actions else None
         if selected_setup is not None:
@@ -65,7 +66,9 @@ class PositionOpenRuntimeMixin(RuntimeMixinBase):
 
             self.position.trade_setup_candidate_id = int(selected_setup.candidate_id)
             self.position.trade_setup_schema_version = TRADE_SETUP_ACTION_VERSION
-            self.position.trade_setup_decision_time = bar_time
+            self.position.trade_setup_decision_time = pd.Timestamp(
+                cast(Any, bar_time)
+            ) + pd.Timedelta(minutes=self._minutes_per_step)
             self.position.primary_idea = str(selected_setup.idea or "")
             self.position.primary_setup_timeframe = str(selected_setup.setup_timeframe or "")
         self.position.sl_price = sl_price

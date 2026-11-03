@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "date_local": "2026-11-03",
+  "cluster_job_id": "21367992",
+  "node": "gpuarm2",
+  "allocation_context": "reused existing one-GH200 allocation; no new job or Slurm step",
+  "test_command": ".venv/bin/python -m pytest -q tests/unit/features/test_synthetic_entry_timing_examples.py",
+  "generation_command": ".venv/bin/python scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py --fixture tests/fixtures/research/idea12/synthetic_examples.json --output-dir evidence/research/feature_causality/synthetic_event_timing_examples",
+  "test_result": {
+    "collected": 1,
+    "passed": 1,
+    "failed": 0,
+    "duration_seconds": 0.2
+  },
+  "outputs": [
+    "confirmed_po3_ifvg_entry_timing.svg",
+    "incorrect_same_bar_ifvg_entry.svg",
+    "previous_session_premium_gate.svg",
+    "confirmed_ifvg_retest_timing.svg"
+  ],
+  "sources": [
+    {
+      "path": "scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py",
+      "sha256": "a7b49113f527ba12ff7919635ac7b8e87abba403eded1b52ea5db76e1cf889fa"
+    },
+    {
+      "path": "tests/fixtures/research/idea12/synthetic_examples.json",
+      "sha256": "878718c56461410dd1574fead58a1c289916f527436a2b8546bb0d9295e5e4b3"
+    },
+    {
+      "path": "tests/unit/features/test_synthetic_entry_timing_examples.py",
+      "sha256": "4686eddef82741741cd8813797910508af608c62114eea8a722f625a4aceff87"
+    }
+  ],
+  "claim_limit": "Synthetic event-time examples only; no historical market, policy, feed-publication, external-calendar, or economic claim.",
+  "run_output_file": "run_output.txt"
+}

@@ -1,0 +1,8 @@
+{
+  "group_key": "775e1010293e610888e7e3e353a490f8b9c4616c483517362207bf3cf7b5628e",
+  "profile_ids": [
+    "features/pd_context_mtf_swing_candidates"
+  ],
+  "representative_profile": "features/pd_context_mtf_swing_candidates",
+  "status": "measured_training_split"
+}

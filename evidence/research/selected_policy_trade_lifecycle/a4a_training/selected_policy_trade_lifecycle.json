@@ -1,0 +1,143 @@
+{
+  "account_equity_reconciliation": {
+    "basis": "initial balance + completed position net PnL = final equity; no payout rows recorded",
+    "difference": 5.820766091346741e-11,
+    "final_equity": 97845.68511833169,
+    "initial_balance": 100000.0,
+    "payout_event_rows": 0,
+    "position_net_pnl_sum": -2154.3148816682547,
+    "status": "matched"
+  },
+  "aggregate_pnl_reconciliation": {
+    "difference": 5.502442945726216e-11,
+    "position_net_pnl_sum": -2154.3148816682547,
+    "reported_total_pnl": -2154.3148816683097,
+    "status": "matched"
+  },
+  "counts": {
+    "completed_positions": 987,
+    "decision_event_types": {
+      "close": 83,
+      "eod_close": 151,
+      "open": 987,
+      "reject": 46719,
+      "sl_update": 148,
+      "stop_close": 585,
+      "tp_close": 168,
+      "tp_partial_close": 46,
+      "tp_update": 384
+    },
+    "decision_rows": 49271,
+    "entry_rejection_reasons": {
+      "entry_cooldown": 3513,
+      "entry_state_not_armed": 42126,
+      "no_valid_sl": 864,
+      "no_valid_tp": 187,
+      "overnight_boundary": 29
+    },
+    "fill_event_rows": 2020,
+    "fill_event_types": {
+      "close": 83,
+      "eod_close": 151,
+      "open": 987,
+      "stop_close": 585,
+      "tp_close": 168,
+      "tp_partial_close": 46
+    },
+    "positions": 987,
+    "positions_with_holding_seconds": 987,
+    "positions_with_linked_fill_events": 987,
+    "unlinked_fill_position_ids": 0
+  },
+  "decision_order_checks": {
+    "decision_le_submission_le_fill": 987
+  },
+  "decision_to_submission_seconds": {
+    "count": 987,
+    "maximum": 60.0,
+    "median": 60.0,
+    "minimum": 60.0
+  },
+  "exit_reasons": {
+    "ema_21_exit": 83,
+    "session_end": 151,
+    "structure_sl": 585,
+    "structure_tp3": 168
+  },
+  "holding_seconds": {
+    "mean": 3095.773954407295,
+    "median": 670.655
+  },
+  "inputs": {
+    "fills.csv": {
+      "bytes": 3589884,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/fills.csv",
+      "sha256": "4917bc67eb7c38db16af8b69fa164f3e10cb07c3609d8288357cae39e6244357"
+    },
+    "metrics.json": {
+      "bytes": 709,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/metrics.json",
+      "sha256": "4b8f2764b3ac14d8d9f534fecefc907b47346b74cef1c0c507740a0065e0aed1"
+    },
+    "payouts.csv": {
+      "bytes": 1,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/payouts.csv",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "positions.csv": {
+      "bytes": 200870,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/positions.csv",
+      "sha256": "bd01012fcaba7ca1959e68f7839a75ad0bea1e9b4c2ec53f449b3f28a9aa2c33"
+    },
+    "reanalysis_manifest.json": {
+      "bytes": 132830,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/reanalysis_manifest.json",
+      "sha256": "4a6f40cc6230742870147f998a95879da01a11555f8d5bd02d3d01a1b75165be"
+    },
+    "trades.csv": {
+      "bytes": 28449523,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/trades.csv",
+      "sha256": "c0f40c147d5e2f1204592bb2854a52265b4947b79ea87ddcc26ed3662c92fbd9"
+    }
+  },
+  "lifecycle_checks": {
+    "fill_count_matches_event_rows": 987,
+    "last_close_event_time_matches_position_exit_time": 987,
+    "one_open_and_at_least_one_close": 987,
+    "open_fill_matches_position_entry_time": 987,
+    "position_marked_complete": 987
+  },
+  "limitations": [
+    "Recorded decision/order/fill timestamps reconcile logged events but do not establish authoritative feed chronology or executable quote availability.",
+    "Decision-to-submission gaps are descriptive; they may reflect bar-label versus completed-bar availability semantics rather than agent or network latency.",
+    "Candidate detection and eligibility before recorded policy decisions are not fully linked by these CSVs.",
+    "Per-position MFE and MAE are not present in the required source columns and are not derived by this report.",
+    "Aggregate equity reconciliation is only attempted when metrics, complete position net PnL, and a no-payout ledger are available; other cash-flow and reset semantics remain outside this check.",
+    "This report is descriptive and does not identify causal loss mechanisms or economic superiority."
+  ],
+  "mfe_mae_columns": {
+    "fills.csv": [],
+    "positions.csv": [],
+    "trades.csv": []
+  },
+  "pnl_reconciliation_checks": {
+    "close_fill_net_pnl_matches_position": 987,
+    "initial_plus_position_net_pnl_matches_final_equity": 1,
+    "position_net_pnl_matches_reported_total": 1
+  },
+  "scope": {
+    "causal_attribution": false,
+    "checkpoint_sha256": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703",
+    "evidence_role": "descriptive reconciliation of recorded events",
+    "historical_holdout_inspected": true,
+    "partition_name": "training",
+    "position_time_range_utc": {
+      "end": "2025-12-31T19:56:34.425000+00:00",
+      "start": "2024-12-30T13:50:00.071000+00:00"
+    },
+    "run_directory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training",
+    "seed": 50,
+    "source_config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+    "source_run": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn"
+  }
+}

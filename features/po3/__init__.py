@@ -3,6 +3,7 @@
 from .fvg_detection import FVGConfig, detect_fvg
 from .ifvg_detection import IFVGConfig, detect_ifvg_confirmation
 from .ifvg_state import build_po3_ifvg_state
+from .setup_lifecycle import build_po3_setup_lifecycle_ledger
 from .trigger_rules import (
     EntryConfig,
     EntryTriggerType,
@@ -22,6 +23,7 @@ __all__ = [
     "build_fvg_zones",
     "build_fvg_zones_for_plot",
     "build_po3_ifvg_state",
+    "build_po3_setup_lifecycle_ledger",
     "detect_entry_trigger",
     "detect_fvg",
     "detect_htf_fvg",

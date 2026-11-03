@@ -25,6 +25,9 @@ Current migration evidence:
 - `entry_idea_opportunity_count_evidence.json` and
   `research_evidence_moves.json` record machine-evidence path migrations with
   source-to-destination checksums.
+- `research_artifact_path_migration.json` maps historical screen and reusable
+  feature-analysis paths to their subject-based locations, preserving original
+  source hashes and archived figure identity.
 
 See [cross-cutting architecture concerns](../cross_cutting_concerns.md) and
 [checkpoint compatibility](../../reference/checkpoint_compatibility.md).

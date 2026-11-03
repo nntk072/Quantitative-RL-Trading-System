@@ -121,3 +121,43 @@ def test_empty_runs_dir_raises(tmp_path: Path, capsys: pytest.CaptureFixture[str
     ]
     with pytest.raises(SystemExit, match="training_log.json"):
         report_g3_main()
+
+
+def test_missing_required_metrics_render_as_na_and_fail_gate(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    runs_dir = _write(
+        tmp_path,
+        "ppo_gru_vae1_seed42",
+        {"run_name": "ppo_gru_vae1_seed42", "out_of_sample": {"sharpe": 1.5}},
+        "metrics",
+    )
+
+    out = _run_report_g3(runs_dir, capsys, threshold=1.0)
+
+    assert "1.500" in out
+    assert "N/A" in out
+    assert "Gate G3 (NOT PASSED, out-of-sample)" in out
+
+
+def test_non_finite_metric_is_rendered_as_na(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    runs_dir = _write(
+        tmp_path,
+        "ppo_gru_vae1_seed42",
+        {
+            "run_name": "ppo_gru_vae1_seed42",
+            "out_of_sample": {
+                "sharpe": float("inf"),
+                "max_drawdown": 0.1,
+                "breach_count": 0,
+            },
+        },
+        "metrics",
+    )
+
+    out = _run_report_g3(runs_dir, capsys, threshold=1.0)
+
+    assert "N/A" in out
+    assert "Gate G3 (NOT PASSED, out-of-sample)" in out

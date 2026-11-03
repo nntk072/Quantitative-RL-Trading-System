@@ -6,6 +6,7 @@ from configuration import load_config
 from simulation.environment.env import TradingEnv
 from trading.account.account_state import AccountState
 from trading.execution.broker import Position
+from trading.policy import build_payout_reset_event
 from trading.policy.config import TradingPolicyConfig, resolve_trading_policy
 from trading.risk.guardrails import FTMOGuardrails
 from training.setup.environments import _training_episodic, build_eval_common
@@ -14,11 +15,53 @@ from training.setup.environments import _training_episodic, build_eval_common
 def test_repeated_policy_config_resolves_without_changing_default() -> None:
     legacy = resolve_trading_policy(load_config())
     assert legacy.mode == "legacy"
+    assert legacy.risk_state_schema_version == "risk-state-v1"
+    assert legacy.daily_pnl_basis == "legacy_gross_closed_losses"
+    assert legacy.daily_loss_includes_open_pnl is False
+    assert legacy.daily_loss_reset_source == "supplied_session_id_transition"
+    assert TradingPolicyConfig(**legacy.to_dict()).validate() == legacy
     repeated = resolve_trading_policy(load_config(["trading_policy.mode=repeated_payout"]))
+    assert repeated.daily_pnl_basis == "session_net_equity"
+    assert repeated.daily_loss_includes_open_pnl is True
+    assert TradingPolicyConfig(**repeated.to_dict()).validate() == repeated
     assert repeated.operating_balance == 100_000.0
     assert repeated.profit_target_balance == 110_000.0
     assert repeated.account_floor == 90_000.0
     assert repeated.max_agent_risk_frac == pytest.approx(0.009)
+
+
+def test_shared_payout_event_uses_realized_balance_and_preserves_overshoot() -> None:
+    policy = resolve_trading_policy(load_config(["trading_policy.mode=repeated_payout"]))
+
+    assert (
+        build_payout_reset_event(
+            balance=109_999.99,
+            policy=policy,
+            cycle=2,
+            event_time="synthetic-time",
+        )
+        is None
+    )
+    assert build_payout_reset_event(
+        balance=110_250.0,
+        policy=policy,
+        cycle=2,
+        event_time="synthetic-time",
+    ) == {
+        "type": "payout_reset",
+        "time": "synthetic-time",
+        "cycle": 2,
+        "payout": 10_250.0,
+        "balance_before_reset": 110_250.0,
+        "operating_balance": 100_000.0,
+    }
+
+
+def test_trading_policy_rejects_risk_contract_mismatch() -> None:
+    with pytest.raises(ValueError, match="daily PnL basis"):
+        TradingPolicyConfig(daily_pnl_basis="session_net_equity").validate()
+    with pytest.raises(ValueError, match="reset source"):
+        TradingPolicyConfig(daily_loss_reset_source="midnight_timezone").validate()
 
 
 def test_legacy_daily_loss_is_gross_closed_loss_and_does_not_offset_wins() -> None:

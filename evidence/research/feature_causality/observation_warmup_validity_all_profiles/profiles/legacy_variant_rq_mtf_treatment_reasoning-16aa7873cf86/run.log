@@ -1,0 +1,8 @@
+{
+  "group_key": "16aa7873cf865ce588b4813a0fad5e8480ff042957f8b8c1d4de37bd6fd34929",
+  "profile_ids": [
+    "legacy_variant/rq_mtf_treatment_reasoning"
+  ],
+  "representative_profile": "legacy_variant/rq_mtf_treatment_reasoning",
+  "status": "measured_training_split"
+}

@@ -1,0 +1,170 @@
+{
+  "configuration_path": "config/base/default.yaml",
+  "configuration_sha256": "a9ab42e1bcdcfcb04606ae77415672fcfeb703a6ac6d5e14bdf548dba035134f",
+  "generated_from_repository_head": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "generator_path": "scripts/research/analysis/market_data/audit_tickbook_carry_forward.py",
+  "generator_sha256": "ebba7c71563b612854147e5215c49c786301dff283ab989619d8d3300b3dc5cb",
+  "inputs": [
+    {
+      "configuration": {
+        "path": "config/base/default.yaml",
+        "price_grid_increment": null,
+        "session_end": null,
+        "session_start": null,
+        "timezone_carrier": "Etc/GMT-3"
+      },
+      "counts": {
+        "raw_rows_with_crossed_sides": 0,
+        "raw_rows_with_missing_or_nonpositive_side": 73415,
+        "raw_valid_two_sided_quotes": 78725090,
+        "rows_after_session_filter": 78798505,
+        "rows_dropped_for_crossed_pair_after_carry": 0,
+        "rows_dropped_for_unavailable_side_after_carry": 0,
+        "rows_retained_after_carry": 78798505,
+        "rows_with_any_side_carried_into_valid_quote": 73415,
+        "rows_with_ask_carried_into_valid_quote": 36687,
+        "rows_with_bid_carried_into_valid_quote": 36728,
+        "source_rows_read": 78798505
+      },
+      "instrument": "US100.cash",
+      "path": "data/testing/US100.cash_202412300105_202610162349.csv",
+      "reconciliation": {
+        "post_carry_partition_rows_reconcile": true,
+        "raw_partition_rows_reconcile": true,
+        "reported_tickbook_rows_equal_retained_count": true
+      },
+      "role": "testing",
+      "source_hash_matches_quality_profile": true,
+      "source_identity_stable_during_scan": true,
+      "source_sha256": "01730f3c2adb2087468964267fdfec4bbb1186db10f82ea4157f7939092d687e"
+    },
+    {
+      "configuration": {
+        "path": "config/base/default.yaml",
+        "price_grid_increment": null,
+        "session_end": null,
+        "session_start": null,
+        "timezone_carrier": "Etc/GMT-3"
+      },
+      "counts": {
+        "raw_rows_with_crossed_sides": 0,
+        "raw_rows_with_missing_or_nonpositive_side": 7254,
+        "raw_valid_two_sided_quotes": 20455254,
+        "rows_after_session_filter": 20462508,
+        "rows_dropped_for_crossed_pair_after_carry": 0,
+        "rows_dropped_for_unavailable_side_after_carry": 0,
+        "rows_retained_after_carry": 20462508,
+        "rows_with_any_side_carried_into_valid_quote": 7254,
+        "rows_with_ask_carried_into_valid_quote": 3731,
+        "rows_with_bid_carried_into_valid_quote": 3523,
+        "source_rows_read": 20462508
+      },
+      "instrument": "US500.cash",
+      "path": "data/testing/US500.cash_202412300105_202610162349.csv",
+      "reconciliation": {
+        "post_carry_partition_rows_reconcile": true,
+        "raw_partition_rows_reconcile": true,
+        "reported_tickbook_rows_equal_retained_count": true
+      },
+      "role": "testing",
+      "source_hash_matches_quality_profile": true,
+      "source_identity_stable_during_scan": true,
+      "source_sha256": "da1c930e200e4776778a3ff4d1b9b4f970a01681a41aa3ca34150747e3936b01"
+    },
+    {
+      "configuration": {
+        "path": "config/base/default.yaml",
+        "price_grid_increment": null,
+        "session_end": null,
+        "session_start": null,
+        "timezone_carrier": "Etc/GMT-3"
+      },
+      "counts": {
+        "raw_rows_with_crossed_sides": 0,
+        "raw_rows_with_missing_or_nonpositive_side": 161302,
+        "raw_valid_two_sided_quotes": 56083744,
+        "rows_after_session_filter": 56245046,
+        "rows_dropped_for_crossed_pair_after_carry": 0,
+        "rows_dropped_for_unavailable_side_after_carry": 0,
+        "rows_retained_after_carry": 56245046,
+        "rows_with_any_side_carried_into_valid_quote": 161302,
+        "rows_with_ask_carried_into_valid_quote": 99960,
+        "rows_with_bid_carried_into_valid_quote": 61342,
+        "source_rows_read": 56245046
+      },
+      "instrument": "US100.cash",
+      "path": "data/training/US100.cash_202412300105_202610162349.csv",
+      "reconciliation": {
+        "post_carry_partition_rows_reconcile": true,
+        "raw_partition_rows_reconcile": true,
+        "reported_tickbook_rows_equal_retained_count": true
+      },
+      "role": "training",
+      "source_hash_matches_quality_profile": true,
+      "source_identity_stable_during_scan": true,
+      "source_sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23"
+    },
+    {
+      "configuration": {
+        "path": "config/base/default.yaml",
+        "price_grid_increment": null,
+        "session_end": null,
+        "session_start": null,
+        "timezone_carrier": "Etc/GMT-3"
+      },
+      "counts": {
+        "raw_rows_with_crossed_sides": 0,
+        "raw_rows_with_missing_or_nonpositive_side": 129419,
+        "raw_valid_two_sided_quotes": 16654905,
+        "rows_after_session_filter": 16784324,
+        "rows_dropped_for_crossed_pair_after_carry": 0,
+        "rows_dropped_for_unavailable_side_after_carry": 0,
+        "rows_retained_after_carry": 16784324,
+        "rows_with_any_side_carried_into_valid_quote": 129419,
+        "rows_with_ask_carried_into_valid_quote": 94465,
+        "rows_with_bid_carried_into_valid_quote": 34954,
+        "source_rows_read": 16784324
+      },
+      "instrument": "US500.cash",
+      "path": "data/training/US500.cash_202412300105_202610162349.csv",
+      "reconciliation": {
+        "post_carry_partition_rows_reconcile": true,
+        "raw_partition_rows_reconcile": true,
+        "reported_tickbook_rows_equal_retained_count": true
+      },
+      "role": "training",
+      "source_hash_matches_quality_profile": true,
+      "source_identity_stable_during_scan": true,
+      "source_sha256": "36e59a0d20c06bf008c81d5d3126c48b5cc2dd06f7fdd92428e068760415e1b3"
+    }
+  ],
+  "interpretation": {
+    "carried_side_counts_are_rows_retained_after_at_least_one_required_side_was_missing_or_nonpositive_in_the_raw_row": true,
+    "does_not_establish_simultaneous_quote_availability_or_within_tie_chronology": true,
+    "drop_reasons_after_carry_are_mutually_exclusive": true,
+    "raw_observations_are_not_modified": true,
+    "side_carry_forward_is_a_transform": true,
+    "side_counts_may_overlap": true,
+    "source_order_is_preserved_for_equal_timestamps": true
+  },
+  "method": "Each current source file is hash-checked before and after a sequential raw build. Counters are emitted by build_tick_book itself with no session-hour filter and no cache read.",
+  "profile_path": "evidence/research/market_data_quality/local_market_data_quality.json",
+  "profile_sha256": "ece6f87483318a41ea91ddb4b84f4f378775321229691c5812008f8116b1c97e",
+  "schema": "qrl.tickbook_carry_forward_audit.v1",
+  "status": "complete_source_hash_verified_production_path_counts",
+  "tick_builder_path": "market_data/loading/ticks.py",
+  "tick_builder_sha256": "50250798b0db1a8a20e5b006705bff40b40861860e538493c407ae28d6d41f83",
+  "totals": {
+    "raw_rows_with_crossed_sides": 0,
+    "raw_rows_with_missing_or_nonpositive_side": 371390,
+    "raw_valid_two_sided_quotes": 171918993,
+    "rows_after_session_filter": 172290383,
+    "rows_dropped_for_crossed_pair_after_carry": 0,
+    "rows_dropped_for_unavailable_side_after_carry": 0,
+    "rows_retained_after_carry": 172290383,
+    "rows_with_any_side_carried_into_valid_quote": 371390,
+    "rows_with_ask_carried_into_valid_quote": 234843,
+    "rows_with_bid_carried_into_valid_quote": 136547,
+    "source_rows_read": 172290383
+  }
+}

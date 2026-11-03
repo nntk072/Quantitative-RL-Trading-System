@@ -1,0 +1,306 @@
+{
+  "arms": {
+    "control": {
+      "candidates": [
+        {
+          "bytes": 33264027,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_best.zip",
+          "sha256": "1fae9a60637584e98209118b6064983a03d28805b1502fc2d4926c94533e0a61"
+        },
+        {
+          "bytes": 33272727,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_10000000_steps.zip",
+          "sha256": "ffb68460ed086b10818a96ce2d814c5c431a68f1c76654346d85b27cebe1cb88"
+        },
+        {
+          "bytes": 33264904,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_1000000_steps.zip",
+          "sha256": "3d8602c94fad1f283fcbad74f98a057cfbdc9678e77ccaefcfe86524bb1d78d8"
+        },
+        {
+          "bytes": 33272088,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_11000000_steps.zip",
+          "sha256": "3b98ea83fd033eeeb4628f6731f6755615ec478d11b5e11231dbd433bd2fc729"
+        },
+        {
+          "bytes": 33272728,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_12000000_steps.zip",
+          "sha256": "c81ff9309fd9bcd5c038f607b400f789a2eb5de6cecf87842d5809675c9ca4c6"
+        },
+        {
+          "bytes": 33264014,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_13000000_steps.zip",
+          "sha256": "41e8c093b648cb7a52fd2dbe8d47a6b30822a1269a2655116982cdc44d048a00"
+        },
+        {
+          "bytes": 33263942,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_14000000_steps.zip",
+          "sha256": "17bf7129102f0838116f9a8f2ee477c15fc9fe9feac726c0b000177ef65338ce"
+        },
+        {
+          "bytes": 33272078,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_15000000_steps.zip",
+          "sha256": "860a63bb7f6fe2683b6efca5f583d03cb495b786c16d50cd4a42a9ce120e1712"
+        },
+        {
+          "bytes": 33272088,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_16000000_steps.zip",
+          "sha256": "0cc7e100d9a16d2877ef726ec416bf393afa5d29b323ffc5c2176f7b76ab9ac3"
+        },
+        {
+          "bytes": 33273652,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_17000000_steps.zip",
+          "sha256": "f7de827a17769e94885e86bdb14e1b6e219bb77613798c13d6d11d893ffd7f03"
+        },
+        {
+          "bytes": 33272718,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_18000000_steps.zip",
+          "sha256": "9bceb67b9c747427419d1cd8d956147b5589c614fce18f651698fca1832f96b6"
+        },
+        {
+          "bytes": 33272729,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_19000000_steps.zip",
+          "sha256": "680a371715ffa9dc243d35adf174adb193df20d221947d88f57c1d44856d0905"
+        },
+        {
+          "bytes": 33264027,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_20000000_steps.zip",
+          "sha256": "49526d313e92bec7e5804423d604ef09875596dfaa48056b20b9248cd6517cc5"
+        },
+        {
+          "bytes": 33264012,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_2000000_steps.zip",
+          "sha256": "b069434161572bb65a2c685f4cc05eb720e3b05c9533962ed105f765be9cb7fb"
+        },
+        {
+          "bytes": 33272716,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_3000000_steps.zip",
+          "sha256": "c063c4a0c79505ef4b9bc9b7d1b419247f0336b9c778a608e3a9594cd74a3572"
+        },
+        {
+          "bytes": 33272716,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_4000000_steps.zip",
+          "sha256": "59c616f41d3b001f0bfe8da665af21ca53c0b3e21c2a8b07a4ac35f558825e53"
+        },
+        {
+          "bytes": 33272715,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_5000000_steps.zip",
+          "sha256": "5c8dcdccd85a5dc8e4a5540a8c1b81d504a220f7076b5cefa0b8b9fad3993692"
+        },
+        {
+          "bytes": 33272717,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_6000000_steps.zip",
+          "sha256": "72b5c0ce089ec4ba15e2a3672c8198c0589649b0126e050763c7eb77bd4778c0"
+        },
+        {
+          "bytes": 33264022,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_7000000_steps.zip",
+          "sha256": "3078c2d63cc93dce5bcab96f9787f5735e8d807c5ce1c7dea0b0a123aecd08e6"
+        },
+        {
+          "bytes": 33264949,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_8000000_steps.zip",
+          "sha256": "ba86d2fc5183986ba7ec2cf9b17f6d3a6fb146419fc3245f8dd62e7d9b7ce279"
+        },
+        {
+          "bytes": 33269959,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_ckpt_9000000_steps.zip",
+          "sha256": "5a170c95ac6a2d76240ace969454eb5ed9e3fd016c2a89a9669f5c36478e04f6"
+        },
+        {
+          "bytes": 33264025,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256": "0e9e50efd2e6414e132eb5dd983af6ea9b947376e58af92dbad721f722b1af37"
+        },
+        {
+          "bytes": 33264027,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261021_075648_446787_rl_train_seed50_tcn/model/ppo_latest.zip",
+          "sha256": "c19c44f784f77cc1a0d67aa8f5a434eab327d7d16cb62c4ac4aeb34a41c0f796"
+        },
+        {
+          "bytes": 33269970,
+          "path": "gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_dd10pilot2m_v1/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261024_011207_525368_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256": "1cffa50569573064e9753f203bc9165c367c5d6f3b73e600c7f1baaa2a220ab7"
+        },
+        {
+          "bytes": 33269970,
+          "path": "gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_entry_levels_pilot2m_v3/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt1/ladder_a4b_entry_fsm__seed50/20261024_000403_816554_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256": "b42e4e30797ec5e92e69f736a629cb974b302da709596df693276a358e59f099"
+        }
+      ],
+      "exact_match_count": 0,
+      "exact_match_paths": [],
+      "expected_checkpoint_sha256": "f5863aaf6a4a161b577fbaa8743649416c8cb4e38a247ee0ad596898c70f6592",
+      "seed": 50,
+      "source_run_directory_exists": false,
+      "source_run_path": "outputs/gpu_campaigns/replacement18_seed50_train2025_test2026_current_mtf_20261019/runs/attempts/ladder_a4b_entry_fsm__seed50/attempt3/ladder_a4b_entry_fsm__seed50/20261019_153204_610795_rl_train_seed50_tcn",
+      "targeted_candidate_bytes_hashed": 831723520,
+      "targeted_candidate_count": 25,
+      "variant": "ladder_a4b_entry_fsm"
+    },
+    "treatment": {
+      "candidates": [
+        {
+          "bytes": 33260160,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_best.zip",
+          "sha256": "e6e1a1954243870a723d77012bb6eaa01738bf28218061913a8eb0746c437173"
+        },
+        {
+          "bytes": 33265340,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_10000000_steps.zip",
+          "sha256": "18a28f7706e4245e54414f0512d239151f30fc9ce50d17deeb66b3106cfbac98"
+        },
+        {
+          "bytes": 33261041,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_1000000_steps.zip",
+          "sha256": "87f4b09a92d13280de78ca9d3463290a97ab4980ffb84d63ebde9185950a9069"
+        },
+        {
+          "bytes": 33263613,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_11000000_steps.zip",
+          "sha256": "7f318c9173a91b19f7865266e2112ed8302106979c9080c57e0b2121432d9151"
+        },
+        {
+          "bytes": 33263613,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_12000000_steps.zip",
+          "sha256": "20f82b7caaf0ec236864b48a4423a4b40899b9daceb5fd7e45e348a35e88a277"
+        },
+        {
+          "bytes": 33260147,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_13000000_steps.zip",
+          "sha256": "8e24f105f9006ced657b7427c75d1e54e3285a24d355a958b91481acc34dd28a"
+        },
+        {
+          "bytes": 33260075,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_14000000_steps.zip",
+          "sha256": "740faa621b1e3a316c3247396a35e3057253e0e5dd403a6a365b217c03343316"
+        },
+        {
+          "bytes": 33264947,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_15000000_steps.zip",
+          "sha256": "4dbc50e1f35f6045d77aac58b58e5b7462350c665ac14f1b4097946f93a54ee8"
+        },
+        {
+          "bytes": 33265341,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_16000000_steps.zip",
+          "sha256": "de5b1dc76b1800528a2839995e3beb8b17bb4dc64d6d7a43936b93bdb232b864"
+        },
+        {
+          "bytes": 33265881,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_17000000_steps.zip",
+          "sha256": "8c96d196267410c2365bfdbf9ffbedd26b5bddd800d8ba082a3d6d4d0e61734e"
+        },
+        {
+          "bytes": 33263603,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_18000000_steps.zip",
+          "sha256": "62d209b0bbca1ae4768e815b16773f5b10b155e903de93fe5cc84a345ecb6653"
+        },
+        {
+          "bytes": 33263614,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_19000000_steps.zip",
+          "sha256": "ec6d58b5461505f685eadb300d9fa21316413709af756dcc6f3a1d64bfaa4432"
+        },
+        {
+          "bytes": 33260160,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_20000000_steps.zip",
+          "sha256": "425114ff25d0bb54e6d39eee3ffe4a89ddf6482ffb3f5e3d96a3725f3f9e68bc"
+        },
+        {
+          "bytes": 33260145,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_2000000_steps.zip",
+          "sha256": "27d389b50872f9928669ca86905f4e11724092061c40c96c7e7d10440bc8eb15"
+        },
+        {
+          "bytes": 33265329,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_3000000_steps.zip",
+          "sha256": "30d110e9288acfd762b28693517e80488f8a26f539dd78f984bb728aa5f6f2bb"
+        },
+        {
+          "bytes": 33265329,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_4000000_steps.zip",
+          "sha256": "48e5b71601fcffe1870e172df791c8a63ecf1e6b8309f7232845c5c4f0864e26"
+        },
+        {
+          "bytes": 33265328,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_5000000_steps.zip",
+          "sha256": "5ba6b4640b95e232d54b09dbaa5c860265a5ed051ed097f4eaa9fa3827e4b949"
+        },
+        {
+          "bytes": 33265330,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_6000000_steps.zip",
+          "sha256": "3a26e24c0cd918bdadcf6e005057a985ae5ca3b379f71424479601ae886a84d8"
+        },
+        {
+          "bytes": 33260155,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_7000000_steps.zip",
+          "sha256": "615948f3bef131dd1b2bcf7870e533015a1345389fddcc66e6682449f091121a"
+        },
+        {
+          "bytes": 33261082,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_8000000_steps.zip",
+          "sha256": "c46b198b2f46f6eed211907586bc5c070f923d72e0e49412626ba6e61c70a939"
+        },
+        {
+          "bytes": 33264946,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_ckpt_9000000_steps.zip",
+          "sha256": "b7a814249ff6674e5160713cded36e4ce5965611f76f55ca6eee175eaf751062"
+        },
+        {
+          "bytes": 33260158,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256": "326c477a6af3d1b7d8a31982a1b9803068342eb668a86d469b58fbf8b0eda1db"
+        },
+        {
+          "bytes": 33260160,
+          "path": "gpu_campaigns/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261021_075711_936628_rl_train_seed50_tcn/model/ppo_latest.zip",
+          "sha256": "425114ff25d0bb54e6d39eee3ffe4a89ddf6482ffb3f5e3d96a3725f3f9e68bc"
+        },
+        {
+          "bytes": 33263614,
+          "path": "gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_dd10pilot2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261024_011220_419882_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256": "68f58e6b1c6cfaef160a15b252a552314a25a50842cf23d3a8e694ca250cf8af"
+        },
+        {
+          "bytes": 33263614,
+          "path": "gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_entry_levels_pilot2m_v3/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt1/ladder_a4a_entry_fsm_hidden__seed50/20261024_000407_563894_rl_train_seed50_tcn/model/ppo_final.zip",
+          "sha256": "a0dd1b68c5b8a1a2267c06d3c753fa1b9266b203dd780cd7c27cfdf0e58c5bfc"
+        }
+      ],
+      "exact_match_count": 0,
+      "exact_match_paths": [],
+      "expected_checkpoint_sha256": "e29795e11390bf55edf6f0a03f60a34b4388b46cbe4f787b6572fd81b39f422c",
+      "seed": 50,
+      "source_run_directory_exists": false,
+      "source_run_path": "outputs/gpu_campaigns/replacement18_seed50_train2025_test2026_current_mtf_20261019/runs/attempts/ladder_a4a_entry_fsm_hidden__seed50/attempt3/ladder_a4a_entry_fsm_hidden__seed50/20261019_153152_862268_rl_train_seed50_tcn",
+      "targeted_candidate_bytes_hashed": 831572725,
+      "targeted_candidate_count": 25,
+      "variant": "ladder_a4a_entry_fsm_hidden"
+    }
+  },
+  "campaign_id": "replacement18_seed50_train2025_test2026_current_mtf_20261019",
+  "claim_scope": "Exact SHA-256 recovery check for the two frozen seed-specific checkpoints, limited to archive ZIP paths whose names include the frozen variant and seed.",
+  "created_at_utc": "2026-11-03T09:52:07.518352+00:00",
+  "disposition": "one or more frozen checkpoints have no exact match in the targeted archive paths",
+  "elapsed_seconds": 7.081347739993362,
+  "inputs": {
+    "archive_root": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs",
+    "audit_script_path": "scripts/research/analysis/evidence/audit_selected_checkpoint_recoverability.py",
+    "audit_script_sha256": "c800089ba09251a8162d67141408ce659069474d560492b14520efbe4efab9d4",
+    "freeze_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/docs/thesis/evidence/p6_selected_pair_freeze_20261019.json",
+    "freeze_sha256": "c0ef55d073090e8b171a2651d8075e6d8132a2294ad9c04840431d6e37d55366"
+  },
+  "limitations": [
+    "No global absence claim is made for differently named archives, other roots, or external backups.",
+    "A filename match identifies a search candidate, not a lineage-valid replacement for the frozen run.",
+    "This audit performs no model loading, evaluation, training, deletion, or archive modification."
+  ],
+  "schema": "qrl.selected_checkpoint_recoverability.v1",
+  "scope": {
+    "archive_candidate_glob": "**/*.zip",
+    "archive_paths_inspected": 50,
+    "archive_wide_content_hashing": false,
+    "checkpoint_bytes_hashed": 1663296245,
+    "full_scratch_search": false,
+    "name_filter": "frozen variant token and seed token must both occur in path"
+  }
+}

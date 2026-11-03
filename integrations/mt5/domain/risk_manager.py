@@ -14,6 +14,16 @@ class RiskManager:
     Ensures total exposure doesn't exceed risk limits.
     """
 
+    @property
+    def supports_training_account_loss_guardrails(self) -> bool:
+        """Whether this manager enforces the training daily and max-loss limits.
+
+        The MT5 implementation currently checks per-symbol and aggregate
+        position stop risk only. A future implementation must provide a
+        trusted, restart-safe account/session state before advertising parity.
+        """
+        return False
+
     def __init__(
         self,
         risk_per_symbol: float = DEFAULT_RISK_PER_SYMBOL,

@@ -23,6 +23,8 @@ The short side mirrors all of the above.
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -86,6 +88,10 @@ def build_po3_state(
     dist = np.zeros(n)
     direction = np.zeros(n)
     manip_direction = np.zeros(n)
+    sweep_time_ns = np.full(n, np.nan)
+    reclaim_time_ns = np.full(n, np.nan)
+    current_sweep_time_ns = np.nan
+    current_reclaim_time_ns = np.nan
 
     state = _IDLE
     run_h = np.nan
@@ -98,27 +104,41 @@ def build_po3_state(
         if state in (_IDLE, _DIST_LONG, _DIST_SHORT):
             if new_low:
                 state, run_h, run_l = _MANIP_LONG, high[t], low[t]
+                current_sweep_time_ns = pd.Timestamp(bars.index[t]).value
+                current_reclaim_time_ns = np.nan
             elif new_high:
                 state, run_h, run_l = _MANIP_SHORT, high[t], low[t]
+                current_sweep_time_ns = pd.Timestamp(bars.index[t]).value
+                current_reclaim_time_ns = np.nan
         elif state == _MANIP_LONG:
             if new_high:  # opposite sweep re-arms the mirror setup
                 state, run_h, run_l = _MANIP_SHORT, high[t], low[t]
+                current_sweep_time_ns = pd.Timestamp(bars.index[t]).value
+                current_reclaim_time_ns = np.nan
             elif new_low:  # fresh sell-side sweep re-arms with new extremes
                 run_h, run_l = high[t], low[t]
+                current_sweep_time_ns = pd.Timestamp(bars.index[t]).value
+                current_reclaim_time_ns = np.nan
             elif close[t] > run_h:  # reclaim of the manipulation-leg high
                 end[t] = 1.0
                 state = _DIST_LONG
+                current_reclaim_time_ns = pd.Timestamp(bars.index[t]).value
             else:
                 run_h = max(run_h, high[t])
                 run_l = min(run_l, low[t])
         elif state == _MANIP_SHORT:
             if new_low:
                 state, run_h, run_l = _MANIP_LONG, high[t], low[t]
+                current_sweep_time_ns = pd.Timestamp(bars.index[t]).value
+                current_reclaim_time_ns = np.nan
             elif new_high:
                 run_h, run_l = high[t], low[t]
+                current_sweep_time_ns = pd.Timestamp(bars.index[t]).value
+                current_reclaim_time_ns = np.nan
             elif close[t] < run_l:  # reclaim of the manipulation-leg low
                 end[t] = 1.0
                 state = _DIST_SHORT
+                current_reclaim_time_ns = pd.Timestamp(bars.index[t]).value
             else:
                 run_h = max(run_h, high[t])
                 run_l = min(run_l, low[t])
@@ -142,6 +162,10 @@ def build_po3_state(
             direction[t] = -1.0
             manip_direction[t] = 1.0
 
+        if state != _IDLE:
+            sweep_time_ns[t] = current_sweep_time_ns
+            reclaim_time_ns[t] = current_reclaim_time_ns
+
     return pd.DataFrame(
         {
             "po3_manipulation_active": manip_active,
@@ -151,6 +175,8 @@ def build_po3_state(
             "po3_manipulation_direction": manip_direction,
             "po3_distribution": dist,
             "po3_distribution_direction": direction,
+            "po3_sweep_time_ns": sweep_time_ns,
+            "po3_reclaim_time_ns": reclaim_time_ns,
         },
         index=bars.index,
     )
@@ -274,6 +300,12 @@ def build_ifvg_zone_features(
             "ifvg_bear_fvg_origin_bar",
             "ifvg_bull_confirmed",
             "ifvg_bear_confirmed",
+            "ifvg_bull_confirmed_at_time_ns",
+            "ifvg_bear_confirmed_at_time_ns",
+            "ifvg_bull_retest_confirmed_at_time_ns",
+            "ifvg_bear_retest_confirmed_at_time_ns",
+            "ifvg_bull_fvg_origin_time_ns",
+            "ifvg_bear_fvg_origin_time_ns",
         ],
     )
     out["ifvg_bull_distance_atr"] = 5.0
@@ -284,6 +316,12 @@ def build_ifvg_zone_features(
     out["ifvg_bear_age"] = -1.0
     out["ifvg_bull_fvg_origin_bar"] = np.nan
     out["ifvg_bear_fvg_origin_bar"] = np.nan
+    out["ifvg_bull_confirmed_at_time_ns"] = np.nan
+    out["ifvg_bear_confirmed_at_time_ns"] = np.nan
+    out["ifvg_bull_retest_confirmed_at_time_ns"] = np.nan
+    out["ifvg_bear_retest_confirmed_at_time_ns"] = np.nan
+    out["ifvg_bull_fvg_origin_time_ns"] = np.nan
+    out["ifvg_bear_fvg_origin_time_ns"] = np.nan
     if n == 0:
         return out
 
@@ -357,6 +395,14 @@ def build_ifvg_zone_features(
     bear_pending_retest: tuple[int, float] | None = None
     bull_origin = bear_origin = float("nan")
     bull_origin_bar = bear_origin_bar = float("nan")
+    bull_origin_time_ns = bear_origin_time_ns = np.nan
+    bull_confirmed_at = bear_confirmed_at = np.nan
+    bull_confirmation_time_col = cast(int, out.columns.get_loc("ifvg_bull_confirmed_at_time_ns"))
+    bear_confirmation_time_col = cast(int, out.columns.get_loc("ifvg_bear_confirmed_at_time_ns"))
+    bull_retest_time_col = cast(int, out.columns.get_loc("ifvg_bull_retest_confirmed_at_time_ns"))
+    bear_retest_time_col = cast(int, out.columns.get_loc("ifvg_bear_retest_confirmed_at_time_ns"))
+    bull_origin_time_col = cast(int, out.columns.get_loc("ifvg_bull_fvg_origin_time_ns"))
+    bear_origin_time_col = cast(int, out.columns.get_loc("ifvg_bear_fvg_origin_time_ns"))
     for i in range(n):
         if conf_bull[i] == 1:
             bull_start, bull_zl, bull_zh = i, bull_low[i], bull_high[i]
@@ -364,6 +410,12 @@ def build_ifvg_zone_features(
             bull_pending_retest = None
             bull_origin = _candle1(i, bull_zl, bull_zh, bull=not inverse_opposing)
             bull_origin_bar = bull_fvg_origin[i]
+            bull_origin_time_ns = (
+                pd.Timestamp(idx[int(bull_origin_bar)]).value
+                if np.isfinite(bull_origin_bar) and 0 <= int(bull_origin_bar) < n
+                else np.nan
+            )
+            bull_confirmed_at = pd.Timestamp(idx[i]).value
             values[i, 18] = 1.0
         if conf_bear[i] == 1:
             bear_start, bear_zl, bear_zh = i, bear_low[i], bear_high[i]
@@ -371,6 +423,12 @@ def build_ifvg_zone_features(
             bear_pending_retest = None
             bear_origin = _candle1(i, bear_zl, bear_zh, bull=inverse_opposing)
             bear_origin_bar = bear_fvg_origin[i]
+            bear_origin_time_ns = (
+                pd.Timestamp(idx[int(bear_origin_bar)]).value
+                if np.isfinite(bear_origin_bar) and 0 <= int(bear_origin_bar) < n
+                else np.nan
+            )
+            bear_confirmed_at = pd.Timestamp(idx[i]).value
             values[i, 19] = 1.0
 
         a = atr_arr[i] if not np.isnan(atr_arr[i]) and atr_arr[i] > 0 else 1.0
@@ -381,6 +439,8 @@ def build_ifvg_zone_features(
             values[i, 0] = 1.0
             values[i, 14] = float(i - bull_start)
             values[i, 16] = bull_origin_bar
+            values[i, bull_confirmation_time_col] = bull_confirmed_at
+            values[i, bull_origin_time_col] = bull_origin_time_ns
             values[i, 1] = bull_zl
             values[i, 2] = bull_zh
             if bull_zl <= close[i] <= bull_zh:
@@ -396,6 +456,7 @@ def build_ifvg_zone_features(
                 )
             ):
                 values[i, 5] = 1.0
+                values[i, bull_retest_time_col] = pd.Timestamp(idx[i]).value
                 bull_pending_retest = None
             if bull_left and low[i] <= bull_zh and high[i] >= bull_zl:
                 bull_pending_retest = (
@@ -414,6 +475,8 @@ def build_ifvg_zone_features(
             values[i, 6] = 1.0
             values[i, 15] = float(i - bear_start)
             values[i, 17] = bear_origin_bar
+            values[i, bear_confirmation_time_col] = bear_confirmed_at
+            values[i, bear_origin_time_col] = bear_origin_time_ns
             values[i, 7] = bear_zl
             values[i, 8] = bear_zh
             if bear_zl <= close[i] <= bear_zh:
@@ -429,6 +492,7 @@ def build_ifvg_zone_features(
                 )
             ):
                 values[i, 11] = 1.0
+                values[i, bear_retest_time_col] = pd.Timestamp(idx[i]).value
                 bear_pending_retest = None
             if bear_left and low[i] <= bear_zh and high[i] >= bear_zl:
                 bear_pending_retest = (
@@ -548,6 +612,11 @@ def align_ifvg_zone_timeframes(
                 aligned_col = f"{tf}_ifvg_{side}_{edge}"
                 merged.loc[use, f"ifvg_{side}_{edge}"] = aligned.loc[use, aligned_col]
             origin_col = f"{tf}_ifvg_{side}_fvg_origin_bar"
+            confirmed_time_col = f"{tf}_ifvg_{side}_confirmed_at_time_ns"
+            if confirmed_time_col in aligned.columns:
+                merged.loc[use, f"ifvg_{side}_confirmed_at_time_ns"] = aligned.loc[
+                    use, confirmed_time_col
+                ].to_numpy(dtype=float)
             native_origin = aligned.loc[use, origin_col].to_numpy(dtype=float)
             mapped_origin = np.full(len(native_origin), np.nan)
             for j, value in enumerate(native_origin):
@@ -561,6 +630,11 @@ def align_ifvg_zone_timeframes(
                 if m1_i < len(primary_bars) and primary_bars.index[m1_i] == origin_time:
                     mapped_origin[j] = float(m1_i)
             merged.loc[use, f"ifvg_{side}_fvg_origin_bar"] = mapped_origin
+            origin_time_col = f"{tf}_ifvg_{side}_fvg_origin_time_ns"
+            if origin_time_col in aligned.columns:
+                merged.loc[use, f"ifvg_{side}_fvg_origin_time_ns"] = aligned.loc[
+                    use, origin_time_col
+                ].to_numpy(dtype=float)
     return merged, pd.concat(visible_blocks.values(), axis=1) if visible_blocks else pd.DataFrame(
         index=primary_bars.index
     )

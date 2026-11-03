@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -144,3 +146,33 @@ class TestMultiLevelBreakout:
 
         # Assert
         assert first_pass == second_pass
+
+    @pytest.mark.parametrize(
+        ("parameter", "value"),
+        [
+            ("atr_period", 0),
+            ("atr_period", 2.5),
+            ("volume_spike_threshold", -0.1),
+            ("volume_spike_threshold", float("inf")),
+            ("atr_stop_mult", 0.0),
+            ("atr_stop_mult", float("nan")),
+            ("size", -0.1),
+            ("size", 1.1),
+            ("size", float("inf")),
+        ],
+    )
+    def test_rejects_invalid_parameters(self, parameter: str, value: float) -> None:
+        kwargs: dict[str, Any] = {parameter: value}
+        with pytest.raises(ValueError, match=parameter):
+            MultiLevelBreakoutStrategy(self._bars_with_levels(), **kwargs)
+
+    def test_rejects_boolean_size(self) -> None:
+        with pytest.raises(ValueError, match="size"):
+            MultiLevelBreakoutStrategy(self._bars_with_levels(), size=True)
+
+    def test_size_boundaries_keep_actions_valid(self) -> None:
+        bars = self._bars_with_levels()
+        for size in (0.0, 1.0):
+            strategy = MultiLevelBreakoutStrategy(bars, size=size)
+            actions = [strategy.act({}) for _ in range(len(bars))]
+            assert all(np.isfinite(action) and -1.0 <= action <= 1.0 for action in actions)

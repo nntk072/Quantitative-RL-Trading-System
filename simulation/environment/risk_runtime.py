@@ -8,9 +8,11 @@ import pandas as pd
 from trading.execution import Position
 from trading.policy import uses_fixed_risk_budget
 from trading.risk import (
+    adverse_position_loss_limit_usd,
     approve_dynamic_risk,
     compute_lots,
     compute_lots_with_execution_reserve,
+    guardrail_breach_scope,
     modeled_execution_reserve_usd,
     risk_budget_from_equity,
     stop_loss_risk_usd,
@@ -71,16 +73,28 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             if reason:
                 self.breached_sessions.add(session_id)
                 session_blocked = True
-                if reason in ("trailing_dd", "max_drawdown"):
+                if guardrail_breach_scope(reason) == "rollout":
                     self._year_failed = True
 
         if reason:
+            breach_equity = float(self.account.equity)
+            breach_daily_loss = float(self.account.daily_loss)
             if self.position is not None:
                 execution_meta: dict[str, Any] = {}
                 if getattr(self, "tick_execution_required", False):
-                    quote, execution_meta = self._resolve_randomized_tick_quote(
-                        pd.Timestamp(fill_time if fill_time is not None else bar_time)
-                    )
+                    active_execution = getattr(self, "_active_step_execution", None)
+                    if active_execution is not None:
+                        # The current step already resolved the executable tick
+                        # used to value the position and detect this breach.
+                        # Reuse that quote, as the event backtest does through
+                        # its per-bar execution cache, instead of sampling a
+                        # second latency and pushing liquidation forward again.
+                        quote = active_execution["quote"]
+                        execution_meta = dict(active_execution["metadata"])
+                    else:
+                        quote, execution_meta = self._resolve_randomized_tick_quote(
+                            pd.Timestamp(fill_time if fill_time is not None else bar_time)
+                        )
                     fill_bid, fill_ask = quote.bid, quote.ask
                     fill_time = quote.tick_time
                 pnl, fill_price = self._close_at_quote(
@@ -98,6 +112,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                     "decision_time": bar_time,
                     "fill_time": fill_time if fill_time is not None else bar_time,
                     "equity": self.account.equity,
+                    "daily_loss": self.account.daily_loss,
                     **execution_meta,
                 }
                 self._stamp_exit(record, fill_price)
@@ -111,7 +126,8 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                     "time": bar_time,
                     "session_id": session_id,
                     "reason": reason,
-                    "equity": self.account.equity,
+                    "equity": breach_equity,
+                    "daily_loss": breach_daily_loss,
                     "fill_time": fill_time if fill_time is not None else bar_time,
                 }
             )
@@ -496,13 +512,12 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         Returns:
             Numeric result returned by ``_eod_adverse_cut_usd``.
         """
-        configured = float(self._eod_max_loss_usd)
-        if not self._eod_respect_planned_risk:
-            return configured
-        planned = float(pos.planned_risk_usd or 0.0)
-        if planned <= 0.0:
-            return configured
-        return float(max(configured, float(self._eod_planned_risk_mult) * planned))
+        return adverse_position_loss_limit_usd(
+            self._eod_max_loss_usd,
+            float(pos.planned_risk_usd or 0.0),
+            respect_planned_risk=self._eod_respect_planned_risk,
+            planned_risk_multiplier=self._eod_planned_risk_mult,
+        )
 
     def _entry_risk_capacity_allows(
         self,

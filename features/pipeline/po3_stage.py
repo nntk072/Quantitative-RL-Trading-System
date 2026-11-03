@@ -28,6 +28,35 @@ _MTF_STATE_TFS = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
 AlignBlocks = Callable[[pd.DataFrame, dict[str, pd.DataFrame]], pd.DataFrame]
 
 
+def _build_po3_timeframe_state(
+    bars: pd.DataFrame,
+    sweeps: pd.DataFrame,
+    levels: pd.DataFrame,
+    ifvg_zones: pd.DataFrame,
+    *,
+    phase_mode: str,
+    max_ifvg_age_bars: int,
+) -> pd.DataFrame:
+    """Build one source-timeframe PO3 state with its IFVG-qualified flag."""
+    if phase_mode == "reclaim_then_ifvg":
+        return build_po3_ifvg_state(
+            bars,
+            sweeps,
+            ifvg_zones,
+            max_ifvg_age_bars=max_ifvg_age_bars,
+        )
+
+    state = build_po3_state(bars, sweeps, levels)
+    state["po3_distribution_after_ifvg"] = build_distribution_after_ifvg(
+        state["po3_distribution_direction"].to_numpy(dtype=float),
+        state["po3_manipulation_active"].to_numpy(dtype=float),
+        state["po3_manipulation_direction"].to_numpy(dtype=float),
+        ifvg_zones["ifvg_bull_confirmed"].to_numpy(dtype=float),
+        ifvg_zones["ifvg_bear_confirmed"].to_numpy(dtype=float),
+    )
+    return state
+
+
 def append_po3_state_features(
     primary: pd.DataFrame,
     features: pd.DataFrame,
@@ -197,9 +226,9 @@ def append_po3_state_features(
     state_ifvg_zones["_ifvg_bear_confirmation_tf_code"] = np.where(
         state_ifvg_zones["ifvg_bear_confirmed"] > 0.0, 1.0, 0.0
     )
+    higher_ifvg: dict[str, tuple[pd.DataFrame, pd.DataFrame]] = {}
     ifvg_mtf_blocks = pd.DataFrame(index=primary.index)
     if enabled("ifvg_mtf", False):
-        higher_ifvg: dict[str, tuple[pd.DataFrame, pd.DataFrame]] = {}
         for timeframe in htf_list("ifvg_mtf", _MTF_STATE_TFS):
             if timeframe == "M1":
                 continue
@@ -264,6 +293,9 @@ def append_po3_state_features(
 
     if enabled("po3_state_mtf", False):
         po3_mtf_blocks: dict[str, pd.DataFrame] = {}
+        max_ifvg_age_bars = int(
+            (OmegaConf.select(cfg, "strategy.ifvg.max_age_bars") if cfg else None) or 50
+        )
         for timeframe in htf_list("po3_state_mtf", _MTF_STATE_TFS):
             if timeframe == "M1":
                 continue
@@ -277,8 +309,18 @@ def append_po3_state_features(
                 if cached_levels is not None and len(cached_levels) == len(timeframe_bars)
                 else detect_session_levels(timeframe_bars)
             )
-            po3_mtf_blocks[timeframe] = build_po3_state(
-                timeframe_bars, timeframe_sweeps, po3_levels
+            timeframe_ifvg_zones = (
+                higher_ifvg[timeframe][1]
+                if timeframe in higher_ifvg
+                else build_ifvg_zone_features(timeframe_bars, ifvg_config=ifvg_config)
+            )
+            po3_mtf_blocks[timeframe] = _build_po3_timeframe_state(
+                timeframe_bars,
+                timeframe_sweeps,
+                po3_levels,
+                timeframe_ifvg_zones,
+                phase_mode=phase_mode,
+                max_ifvg_age_bars=max_ifvg_age_bars,
             )
         if po3_mtf_blocks:
             features = align_blocks(features, po3_mtf_blocks)

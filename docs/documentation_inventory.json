@@ -1,5 +1,5 @@
 {
-  "page_count": 349,
+  "page_count": 356,
   "pages": [
     {
       "links": [
@@ -28,6 +28,7 @@
         "glossary.md",
         "config.md",
         "research/README.md",
+        "thesis/research_evidence_report.md",
         "concepts/reproducibility.md",
         "operations/triton.md",
         "development/testing.md",
@@ -4840,6 +4841,7 @@
         "research/README",
         "reproduce/result_registry",
         "reproduce/index",
+        "thesis/research_evidence_report",
         "develop/index",
         "development/testing",
         "development/documentation"
@@ -5437,9 +5439,11 @@
     },
     {
       "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/README.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_training_dynamics_control.md",
+        "../research/selected_policy_trade_lifecycle.md",
+        "../research/entry_and_exit_attribution.md",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/entry_and_exit_attribution/README.md",
+        "../../evidence/research/releases/negative-evidence-readiness/RELEASE_MANIFEST.json",
+        "../../evidence/research/model_observation_and_action_semantics/decision_trace_availability_inventory.json",
         "triton.md"
       ],
       "orphan_status": "in toctree",
@@ -5669,7 +5673,8 @@
     },
     {
       "links": [
-        "../modules/evaluation.md"
+        "../modules/evaluation.md",
+        "../research/validation_protocol.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/reference/metrics.md",
@@ -5678,7 +5683,7 @@
       ],
       "section": "reference",
       "status": "current",
-      "title": "Evaluation metrics",
+      "title": "Evaluation metric definitions",
       "type": "reference"
     },
     {
@@ -5832,45 +5837,46 @@
         "../../decisioning/trade_setup.py#L85",
         "../../decisioning/trade_setup.py#L56",
         "../../decisioning/trade_setup.py#L35",
-        "../../evaluation/metrics/bootstrap.py#L22",
+        "../../evaluation/metrics/bootstrap.py#L28",
         "../../evaluation/metrics/calibration.py#L22",
-        "../../evaluation/metrics/performance.py#L17",
+        "../../evaluation/metrics/performance.py#L18",
         "../../evaluation/metrics/distributions.py#L31",
-        "../../evaluation/metrics/performance.py#L388",
-        "../../evaluation/metrics/performance.py#L21",
+        "../../evaluation/metrics/performance.py#L401",
+        "../../evaluation/metrics/performance.py#L23",
+        "../../evaluation/rollout/random_eligible_setup.py#L17",
         "../../market_data/splits/walkforward.py#L23",
-        "../../evaluation/reporting/run_summary.py#L41",
-        "../../evaluation/metrics/bootstrap.py#L39",
-        "../../evaluation/reporting/run_summary.py#L137",
-        "../../evaluation/reporting/run_summary.py#L203",
-        "../../evaluation/reporting/run_summary.py#L116",
-        "../../evaluation/metrics/performance.py#L417",
+        "../../evaluation/reporting/run_summary.py#L53",
+        "../../evaluation/metrics/bootstrap.py#L45",
+        "../../evaluation/reporting/run_summary.py#L234",
+        "../../evaluation/reporting/run_summary.py#L299",
+        "../../evaluation/reporting/run_summary.py#L213",
+        "../../evaluation/metrics/performance.py#L430",
         "../../evaluation/metrics/calibration.py#L43",
         "../../evaluation/metrics/distributions.py#L56",
-        "../../evaluation/metrics/performance.py#L308",
+        "../../evaluation/metrics/performance.py#L312",
         "../../evaluation/metrics/temporal.py#L157",
         "../../evaluation/metrics/temporal.py#L136",
         "../../evaluation/rollout/trained_policy_rollout.py#L710",
-        "../../evaluation/metrics/performance.py#L391",
+        "../../evaluation/metrics/performance.py#L404",
         "../../evaluation/metrics/temporal.py#L63",
-        "../../evaluation/metrics/performance.py#L209",
+        "../../evaluation/metrics/performance.py#L213",
         "../../evaluation/metrics/calibration.py#L97",
-        "../../evaluation/reporting/run_summary.py#L69",
+        "../../evaluation/reporting/run_summary.py#L81",
         "../../market_data/splits/walkforward.py#L37",
         "../../evaluation/rollout/episode_rollout.py#L26",
-        "../../evaluation/reporting/run_summary.py#L179",
-        "../../evaluation/metrics/bootstrap.py#L148",
-        "../../evaluation/metrics/performance.py#L151",
+        "../../evaluation/reporting/run_summary.py#L276",
+        "../../evaluation/metrics/bootstrap.py#L154",
+        "../../evaluation/metrics/performance.py#L155",
         "../../evaluation/metrics/temporal.py#L88",
-        "../../evaluation/metrics/performance.py#L17",
-        "../../evaluation/metrics/performance.py#L388",
-        "../../evaluation/metrics/performance.py#L21",
-        "../../evaluation/metrics/performance.py#L417",
-        "../../evaluation/metrics/performance.py#L308",
-        "../../evaluation/metrics/performance.py#L391",
-        "../../evaluation/metrics/performance.py#L209",
-        "../../evaluation/metrics/performance.py#L151",
-        "../../evaluation/metrics/bootstrap.py#L30",
+        "../../evaluation/metrics/performance.py#L18",
+        "../../evaluation/metrics/performance.py#L401",
+        "../../evaluation/metrics/performance.py#L23",
+        "../../evaluation/metrics/performance.py#L430",
+        "../../evaluation/metrics/performance.py#L312",
+        "../../evaluation/metrics/performance.py#L404",
+        "../../evaluation/metrics/performance.py#L213",
+        "../../evaluation/metrics/performance.py#L155",
+        "../../evaluation/metrics/bootstrap.py#L36",
         "../../evaluation/metrics/calibration.py#L31",
         "../../evaluation/plotting/equity.py#L245",
         "../../evaluation/plotting/equity.py#L41",
@@ -5878,19 +5884,21 @@
         "../../evaluation/plotting/interactive_orders.py#L217",
         "../../evaluation/plotting/orders.py#L37",
         "../../evaluation/reanalysis/__init__.py#L1",
-        "../../evaluation/reporting/run_summary.py#L41",
-        "../../evaluation/reporting/run_summary.py#L137",
+        "../../evaluation/reporting/run_summary.py#L53",
+        "../../evaluation/reporting/run_summary.py#L234",
         "../../evaluation/reporting/evaluation_manifest.py#L14",
-        "../../evaluation/reporting/run_summary.py#L203",
-        "../../evaluation/reporting/run_summary.py#L116",
-        "../../evaluation/reporting/run_summary.py#L69",
-        "../../evaluation/reporting/run_summary.py#L179",
+        "../../evaluation/reporting/run_summary.py#L299",
+        "../../evaluation/reporting/run_summary.py#L213",
+        "../../evaluation/reporting/run_summary.py#L81",
+        "../../evaluation/reporting/run_summary.py#L276",
         "../../evaluation/reporting/run_artifact_writer.py#L668",
         "../../evaluation/reporting/evaluation_manifest.py#L70",
+        "../../evaluation/rollout/random_eligible_setup.py#L17",
         "../../evaluation/rollout/trained_policy_rollout.py#L118",
         "../../evaluation/rollout/trained_policy_rollout.py#L710",
         "../../evaluation/rollout/trained_policy_rollout.py#L59",
         "../../evaluation/rollout/episode_rollout.py#L26",
+        "../../evaluation/rollout/random_eligible_setup.py#L103",
         "../../experiments/orchestration/weekly.py#L21",
         "../../experiments/orchestration/weekly.py#L36",
         "../../experiments/orchestration/weekly.py#L167",
@@ -6271,10 +6279,15 @@
         "../../trading/policy/config.py#L58",
         "../../trading/positions/multi_tp.py#L10",
         "../../trading/risk/guardrails.py#L21",
-        "../../trading/risk/budget.py#L9",
-        "../../trading/risk/contracts.py#L26",
-        "../../trading/risk/contracts.py#L39",
+        "../../trading/risk/contracts.py#L13",
+        "../../trading/risk/contracts.py#L12",
+        "../../trading/risk/contracts.py#L11",
         "../../trading/risk/contracts.py#L10",
+        "../../trading/risk/budget.py#L9",
+        "../../trading/risk/contracts.py#L9",
+        "../../trading/risk/contracts.py#L52",
+        "../../trading/risk/contracts.py#L75",
+        "../../trading/risk/contracts.py#L17",
         "../../trading/risk/budget.py#L36",
         "../../trading/risk/sizing.py#L93",
         "../../trading/risk/sizing.py#L151",
@@ -6283,7 +6296,8 @@
         "../../trading/risk/execution_reserve.py#L6",
         "../../trading/risk/budget.py#L23",
         "../../trading/risk/sizing.py#L13",
-        "../../trading/risk/contracts.py#L42",
+        "../../trading/risk/contracts.py#L13",
+        "../../trading/risk/contracts.py#L78",
         "../../trading/risk/guardrails.py#L210",
         "../../trading/risk/guardrails.py#L221",
         "../../trading/risk/guardrails.py#L128",
@@ -6399,6 +6413,7 @@
     },
     {
       "links": [
+        "../api/generated/trading/risk/index",
         "../architecture/runtime/environment_step.md",
         "../concepts/execution_and_costs.md",
         "../concepts/risk_and_account_limits.md",
@@ -6429,6 +6444,22 @@
       "status": "current",
       "title": "Trade-setup candidate catalog",
       "type": "reference"
+    },
+    {
+      "links": [
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/entry_and_exit_attribution",
+        "result_registry.md",
+        "../operations/research_execution_plan.md"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/reproduce/entry_and_exit_attribution.ipynb",
+      "primary_navigation_owner": [
+        "Reproduce"
+      ],
+      "section": "reproduce",
+      "status": "current",
+      "title": "Monthly entry and exit attribution",
+      "type": "reproduction"
     },
     {
       "links": [
@@ -6477,7 +6508,7 @@
     },
     {
       "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_semantics_findings.md",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/exit_action_semantics/decoder_behavior_comparison.md",
         "result_registry",
         "../research/evaluation_methodology"
       ],
@@ -6526,28 +6557,12 @@
     },
     {
       "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
-        "result_registry.md",
-        "../operations/research_execution_plan.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/reproduce/p6_monthly_exit_decomposition.ipynb",
-      "primary_navigation_owner": [
-        "Reproduce"
-      ],
-      "section": "reproduce",
-      "status": "current",
-      "title": "P6 monthly entry and exit decomposition",
-      "type": "reproduction"
-    },
-    {
-      "links": [
         "../_static/figures/evidence-lineage.svg",
         "../research/README.md",
         "../research/exit_action_semantics.md",
         "exit_action_semantics.ipynb",
-        "../research/p6_monthly_entry_exit.md",
-        "p6_monthly_exit_decomposition.ipynb",
+        "../research/entry_and_exit_attribution.md",
+        "entry_and_exit_attribution.ipynb",
         "../research/entry_idea_opportunity_counts.md",
         "entry_idea_opportunity_counts.ipynb",
         "../research/setup_conditioned_policy_replay.md",
@@ -6602,6 +6617,7 @@
     },
     {
       "links": [
+        "../thesis/research_evidence_report.md",
         "setup_conditioned_policy_replay",
         "setup_conditioned_reasoning_benchmark_protocol",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/setup_conditioned_reasoning_replay/README.md",
@@ -6610,14 +6626,22 @@
         "encoder_architecture_comparison",
         "evaluation_methodology",
         "limitations",
+        "../../evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json",
+        "model_observation_and_action_semantics",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/model_observation_and_action_semantics",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/releases/negative-evidence-readiness/MODEL_AND_BASELINE_CATALOG.md",
         "sustainable_equity_growth",
         "validation_protocol",
         "limitations",
-        "p6_monthly_entry_exit",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
-        "../reproduce/p6_monthly_exit_decomposition.ipynb",
+        "entry_and_exit_attribution",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/entry_and_exit_attribution",
+        "../reproduce/entry_and_exit_attribution.ipynb",
+        "selected_policy_trade_lifecycle",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/selected_policy_trade_lifecycle",
+        "fill_quote_availability",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/fill_quote_source_alignment",
         "exit_action_semantics",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_semantics_findings.md",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/exit_action_semantics",
         "../reproduce/exit_action_semantics.ipynb",
         "../concepts/execution_and_costs",
         "evaluation_methodology",
@@ -6627,15 +6651,17 @@
         "regime_attribution",
         "regime_context_comparison",
         "order_block_and_multitimeframe_context",
+        "multitimeframe_data_alignment",
+        "feature_causality_and_availability",
         "gh200_throughput_audit",
+        "result_identity_and_evidence",
         "evaluation_methodology",
         "validation_protocol",
         "limitations",
         "finding_card_template",
         "references",
         "negative_results",
-        "../operations/research_execution_plan.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research"
+        "../operations/research_execution_plan.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/research/README.md",
@@ -6655,6 +6681,22 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Multi-timeframe encoder comparison",
+      "type": "research"
+    },
+    {
+      "links": [
+        "../reproduce/entry_and_exit_attribution.ipynb",
+        "../../evidence/research/entry_and_exit_attribution/monthly_entry_exit_attribution.png",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/entry_and_exit_attribution",
+        "../reproduce/result_registry.md",
+        "../operations/research_execution_plan.md"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/entry_and_exit_attribution.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Monthly entry and exit attribution",
       "type": "research"
     },
     {
@@ -6687,8 +6729,9 @@
     },
     {
       "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_semantics_findings.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/exit_action_semantics_20261024/README.md",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/exit_action_semantics/decoder_behavior_comparison.md",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/exit_action_semantics/README.md",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/exit_action_semantics/evidence_manifest.json",
         "../reproduce/exit_action_semantics.ipynb",
         "../reproduce/result_registry"
       ],
@@ -6698,6 +6741,33 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Exit-action semantics",
+      "type": "research"
+    },
+    {
+      "links": [
+        "../../evidence/research/feature_causality/real_market_feature_prefix_invariance_all_profiles.json",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/feature_causality",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/trade_setup_opportunity_census",
+        "multitimeframe_data_alignment.md"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/feature_causality_and_availability.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Feature causality and availability",
+      "type": "research"
+    },
+    {
+      "links": [
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/fill_quote_source_alignment"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/fill_quote_availability.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Fill quote availability in local tick exports",
       "type": "research"
     },
     {
@@ -6730,6 +6800,38 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Research limitations",
+      "type": "research"
+    },
+    {
+      "links": [
+        "../../decisioning/trade_setup.py",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/trade_setup_opportunity_census",
+        "feature_causality_and_availability.md",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/model_observation_and_action_semantics"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/model_observation_and_action_semantics.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Model observation and action semantics",
+      "type": "research"
+    },
+    {
+      "links": [
+        "../../evidence/research/releases/negative-evidence-readiness/configured_timeframe_parity.json",
+        "../../evidence/research/releases/negative-evidence-readiness/local_monthly_tick_quote_quality.csv",
+        "../../evidence/research/releases/negative-evidence-readiness/local_monthly_tick_quote_quality.png",
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/releases/negative-evidence-readiness/DATA_PROVENANCE_AND_ACCESS.md",
+        "../concepts/data_time_and_validation.md",
+        "validation_protocol.md"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/multitimeframe_data_alignment.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Configured multi-timeframe data alignment",
       "type": "research"
     },
     {
@@ -6769,21 +6871,6 @@
     },
     {
       "links": [
-        "../reproduce/p6_monthly_exit_decomposition.ipynb",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.md",
-        "../reproduce/result_registry.md",
-        "../operations/research_execution_plan.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/research/p6_monthly_entry_exit.md",
-      "primary_navigation_owner": [],
-      "section": "research",
-      "status": "research status is stated on page",
-      "title": "P6 monthly entry and exit decomposition",
-      "type": "research"
-    },
-    {
-      "links": [
         "http://incompleteideas.net/book/the-book-2nd.html",
         "https://arxiv.org/abs/1707.06347",
         "https://proceedings.mlr.press/v80/haarnoja18b.html",
@@ -6819,6 +6906,30 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Daily regime feature normalization: comparison result",
+      "type": "research"
+    },
+    {
+      "links": [
+        "../../schemas/research_result_manifest_v2.schema.json"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/result_identity_and_evidence.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Research result identity and evidence",
+      "type": "research"
+    },
+    {
+      "links": [
+        "../../scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/selected_policy_trade_lifecycle.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Selected policy trade lifecycle",
       "type": "research"
     },
     {
@@ -6896,6 +7007,44 @@
       "section": "security",
       "status": "current",
       "title": "Security hardening status",
+      "type": "developer"
+    },
+    {
+      "links": [
+        "../research/references.md",
+        "../research/validation_protocol.md",
+        "../research/multitimeframe_data_alignment.md",
+        "../research/fill_quote_availability.md",
+        "../research/selected_policy_trade_lifecycle.md",
+        "../research/model_observation_and_action_semantics.md",
+        "../research/entry_and_exit_attribution.md",
+        "../reproduce/entry_and_exit_attribution.ipynb",
+        "../research/setup_conditioned_policy_replay.md",
+        "../../evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json",
+        "../../evidence/research/feature_causality/real_market_feature_prefix_invariance_all_profiles.json",
+        "../research/feature_causality_and_availability.md",
+        "../research/limitations.md",
+        "../reproduce/entry_and_exit_attribution.ipynb",
+        "../research/README.md",
+        "../research/multitimeframe_data_alignment.md",
+        "../research/feature_causality_and_availability.md",
+        "../research/model_observation_and_action_semantics.md",
+        "../research/model_observation_and_action_semantics.md",
+        "../research/entry_and_exit_attribution.md",
+        "../concepts/risk_and_account_limits.md",
+        "../research/fill_quote_availability.md",
+        "../reproduce/result_registry.md",
+        "../research/README.md",
+        "../research/references.md"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/thesis/research_evidence_report.md",
+      "primary_navigation_owner": [
+        "Thesis"
+      ],
+      "section": "thesis",
+      "status": "current",
+      "title": "Multi-timeframe context and setup-conditioned trading policies: an evidence report",
       "type": "developer"
     },
     {

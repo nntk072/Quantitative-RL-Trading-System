@@ -167,6 +167,9 @@ execution:
   # Fill on the tick that crosses SL or TP. 0 = that tick, not a later one.
   # A prop-firm stop fills at the level or worse; a later tick can bounce back.
   fill_delay_ms: 0
+  # Extra whole M1 bars between an entry decision and its next-bar fill.
+  # Zero preserves the existing next-bar entry path.
+  fill_latency_bars: 0
   # Zero added latency: use the first available real quote at or after the
   # decision time. A run may set another value explicitly in its YAML config.
   randomized_fill_latency_ms: 0.0
@@ -327,6 +330,7 @@ env:
   regime_observation: false             # separate completed-D1 context branch for tcn_regime
   observation_schema_version: account-state-v1 # account-state-v2 is an opt-in new lineage
   observation_age_scale_bars: 60       # v2 position-age normalization scale
+  reachable_r_validity_mask: false     # opt-in sequence column distinguishes unknown reachable_r from zero
   data_source: frames                   # frames remains default until bundle gates pass
   n_envs: 8                           # train_rl RAM-caps this (powers of two); 1 = DummyVecEnv
   vector_backend: subproc             # subproc, serial, or sharded_bundle
@@ -351,10 +355,10 @@ env:
   # Only meaningful with `fixed_risk_usd`: under fractional sizing the same edge
   # yields different dollar PnL as equity drifts, so the reward would partly pay
   # for position size rather than for decisions.
-  fixed_risk_usd: 0                   # >0 = every trade risks exactly this many
+  fixed_risk_usd: 0.0                 # >0 = every trade risks exactly this many
                                       # dollars, so 1R is a fixed known amount
-  risk_band_max_usd: 0                # dollar_band action ceiling; budget includes modeled reserve
-  risk_band_hold_below_usd: 0         # dollar_band requests below this amount become holds
+  risk_band_max_usd: 0.0              # dollar_band action ceiling; budget includes modeled reserve
+  risk_band_hold_below_usd: 0.0       # dollar_band requests below this amount become holds
   # How the per-trade dollar risk is chosen.
   #   fixed   -> always `fixed_risk_usd`, independent of equity and of the
   #              agent's risk_frac. Makes 1R a constant and the cumulative-R
@@ -500,6 +504,11 @@ agent:
     adapter_dim: 64
     attention_heads: 4
     feedforward_dim: 256
+  mtf_empty_stream_masked_v1:
+    latent_dim: 128
+    channels: [128, 128, 256, 256]
+    kernel_size: 3
+    dropout: 0.1
   mtf_m1_tcn_htf_lite_reasoning:
     latent_dim: 128
     channels: [128, 128, 256, 256]
@@ -522,6 +531,7 @@ agent:
     gru: [256, 128]
     transformer: [256, 128]
     mtf: [256, 128]
+    mtf_empty_stream_masked_v1: [256, 128]
     mtf_reasoning: [256, 128]
     mtf_shared_tcn_reasoning: [256, 128]
     mtf_m1_tcn_htf_lite_reasoning: [256, 128]

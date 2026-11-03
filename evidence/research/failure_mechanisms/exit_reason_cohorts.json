@@ -1,0 +1,37 @@
+{
+  "analysis_tool_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/scripts/research/analysis/evaluation/summarize_trade_exit_cohorts.py",
+  "analysis_tool_sha256": "f6be57b36a8af9f92eb51b3e367a6cbb6fc4272af3de84ad91039f8586f339b0",
+  "arms": {
+    "a4a": {
+      "exit_reasons": [
+        "ema_21_exit",
+        "session_end",
+        "structure_sl",
+        "structure_tp3"
+      ],
+      "position_count": 987,
+      "source_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/selected_policy_trade_lifecycle/trade_excursions/a4a_trade_excursions.csv",
+      "source_sha256": "0da67488141d4f00caffd1729c3f0fd36857cce8415fa9182f285b3ce5fb5ff2"
+    },
+    "a4b": {
+      "exit_reasons": [
+        "ema_21_exit",
+        "session_end",
+        "structure_sl",
+        "structure_tp3"
+      ],
+      "position_count": 825,
+      "source_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/selected_policy_trade_lifecycle/trade_excursions/a4b_trade_excursions.csv",
+      "source_sha256": "c3856449ab73a635093911a40b439cca6af6ee6125bdd87f9b58624e913c7cd0"
+    }
+  },
+  "causal_attribution": false,
+  "cohorts_are_paired": false,
+  "cost_r_available": false,
+  "evidence_class": "descriptive_exit_reason_cohorts",
+  "excursion_basis": "lower timestamp-bound price excursion divided by initial stop distance",
+  "interpretation_limit": "Separate historical cohorts; descriptive outcomes do not estimate feasible alternative exits. Realized net R and price-only MFE/MAE use different numerators.",
+  "policy_replay_performed": false,
+  "realized_r_basis": "position net PnL divided by initial modeled stop risk",
+  "schema_version": 1
+}

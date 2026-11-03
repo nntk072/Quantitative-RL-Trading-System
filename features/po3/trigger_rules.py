@@ -59,10 +59,12 @@ def detect_entry_trigger(
 
     df = bars.copy()
     n = len(df)
+    if not df.index.equals(ifvg_df.index):
+        raise ValueError("bars and IFVG signals must have identical indexes")
 
     # Track confirmed IFVG zones
-    confirmed_bullish_ifvg = []  # List of (idx, fvg_low, fvg_high)
-    confirmed_bearish_ifvg = []
+    confirmed_bullish_ifvg: list[tuple[int, float, float]] = []
+    confirmed_bearish_ifvg: list[tuple[int, float, float]] = []
 
     # Pre-extract numpy arrays once: scalar access inside the loop via
     # pandas .iloc is ~10x slower than ndarray indexing over 100k+ bars.
@@ -110,21 +112,9 @@ def detect_entry_trigger(
     out_trigger_type[:] = ""
 
     for i in range(n):
-        # Record new IFVG confirmations
-        if i < len(ifvg_df):
-            if bull_confirm[i] == 1:
-                fvg_low = bull_zone_low[i] if i < len(bull_zone_low) else float("nan")
-                fvg_high = bull_zone_high[i] if i < len(bull_zone_high) else float("nan")
-                if not (pd.isna(fvg_low) or pd.isna(fvg_high)):
-                    confirmed_bullish_ifvg.append((i, fvg_low, fvg_high))
-
-            if bear_confirm[i] == 1:
-                fvg_low = bear_zone_low[i] if i < len(bear_zone_low) else float("nan")
-                fvg_high = bear_zone_high[i] if i < len(bear_zone_high) else float("nan")
-                if not (pd.isna(fvg_low) or pd.isna(fvg_high)):
-                    confirmed_bearish_ifvg.append((i, fvg_low, fvg_high))
-
-                    # Detect entry triggers based on type
+        # Trigger only against zones confirmed on earlier rows. A signal
+        # aligned from a higher timeframe becomes available at this row, but
+        # a retest must still occur on a later observation.
         close_price = close_arr[i]
 
         if entry_type == "retest":
@@ -180,7 +170,23 @@ def detect_entry_trigger(
                     out_trigger_type[i] = "ltf_fvg"
                     break
 
-                    # Clean up old IFVGs
+        # Confirmation columns may be forward-filled across the whole next
+        # timeframe. Register only the leading edge, after this row's trigger
+        # check, so one confirmation remains one event and cannot retest itself.
+        if i < len(ifvg_df):
+            if bull_confirm[i] == 1 and (i == 0 or bull_confirm[i - 1] != 1):
+                fvg_low = bull_zone_low[i]
+                fvg_high = bull_zone_high[i]
+                if not (pd.isna(fvg_low) or pd.isna(fvg_high)):
+                    confirmed_bullish_ifvg.append((i, fvg_low, fvg_high))
+
+            if bear_confirm[i] == 1 and (i == 0 or bear_confirm[i - 1] != 1):
+                fvg_low = bear_zone_low[i]
+                fvg_high = bear_zone_high[i]
+                if not (pd.isna(fvg_low) or pd.isna(fvg_high)):
+                    confirmed_bearish_ifvg.append((i, fvg_low, fvg_high))
+
+        # Clean up old IFVGs after current-row eligibility has been evaluated.
         max_age = 50
         confirmed_bullish_ifvg = [
             (idx, lo, h) for idx, lo, h in confirmed_bullish_ifvg if i - idx < max_age

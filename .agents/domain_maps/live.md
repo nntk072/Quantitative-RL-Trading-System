@@ -66,8 +66,8 @@
 
 ## Critical Invariants
 
-1. **Live risk ≈ training risk** — `live_risk_overrides` must stay aligned with `ftmo` dollar limits
-2. **Silent divergence is the failure mode** — training under $1000 cap, live under $5000 is a bug
+1. **Sizing scale is not guardrail parity** — MT5 `live_risk_overrides` uses balance percentages and does not enforce the training `ftmo` daily-loss / maximum-loss dollar limits; the default 1% per-symbol sizing is numerically comparable to the $1,000 training per-trade cap only at a $100,000 account scale
+2. **State the runtime boundary** — do not claim daily-loss or maximum-loss parity until the live adapter enforces and tests those account limits
 3. **Action semantics must match** — discrete (PPO), continuous (SAC), or
    flag-derived strategy-overlay `Box` coordinates from
   `decisioning/actions.py`; checkpoint schema metadata must match the live

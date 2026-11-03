@@ -139,6 +139,7 @@ class TradingEnv(
         entry_state_observation: bool = True,
         observation_schema_version: str = OBSERVATION_SCHEMA_V1,
         observation_age_scale_bars: float = 60.0,
+        reachable_r_validity_mask: bool = False,
         bundle_data: Any | None = None,
         strict_research_eligibility: bool = False,
         legacy_sequence_columns: bool | None = None,
@@ -180,7 +181,7 @@ class TradingEnv(
             pre_ny_data: Tabular data used for the pre ny data.
             pre_ny_by_date: Key-value data used for the pre ny by date.
             ny_session_start_idx: Ny session start idx used by the operation described above.
-            fill_latency_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
+            fill_latency_bars: Whole-M1-bar delay for entry orders after the initial next-bar fill.
             max_episode_steps: Number specifying the max episode steps for this operation.
             normalize_account: Whether to enable or require the normalize account.
             strategy: Strategy used to select or evaluate trades.
@@ -238,6 +239,7 @@ class TradingEnv(
             entry_state_observation: Whether to enable or require the entry state observation.
             observation_schema_version: Text or path value identifying the observation schema version.
             observation_age_scale_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
+            reachable_r_validity_mask: Whether to append the reachability-validity sequence feature.
             bundle_data: Bundle data used by the operation described above.
             strict_research_eligibility: Whether to enable or require the strict research eligibility.
             legacy_sequence_columns: Legacy sequence columns used by the operation described above.
@@ -341,6 +343,7 @@ class TradingEnv(
             session_start,
             regime_observation,
             self.trade_setup_actions,
+            reachable_r_validity_mask,
         )
         self._initialize_action_and_episode_contracts(
             continuous_actions,

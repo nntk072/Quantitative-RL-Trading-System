@@ -1,0 +1,59 @@
+{
+  "historical_report_path": "evidence/research/historical_variant_screen_recoverability/screen_report_pack_recoverability.json",
+  "interpretation": "The historical report records that the expected attempt-3 report directories and matching checkpoints were absent in its 2026-10-18 outputs scan. The original Aalto_MS_Thesis checkout and its recorded main-plan/source/recovery directories are absent at these known paths now. The current project archive still contains other checkpoint files, but this path-only check did not hash them against the historical expected digests.",
+  "known_paths": {
+    "cpu_buffer_probe": {
+      "exists": true,
+      "is_directory": true,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016"
+    },
+    "mainplan": {
+      "exists": false,
+      "is_directory": false,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/ladder18_seed50_20m_full_split_n64_mainplan_20261016"
+    },
+    "recovery": {
+      "exists": false,
+      "is_directory": false,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_recovery_20261016"
+    },
+    "source": {
+      "exists": false,
+      "is_directory": false,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_experiment_runs/ladder18_seed50_20m_full_split_n64_cpumask_v3_20261016"
+    },
+    "thesis_checkout": {
+      "exists": false,
+      "is_directory": false,
+      "path": "/scratch/work/nguyenl37/Aalto_MS_Thesis"
+    }
+  },
+  "observed_at_utc": "2026-11-02T17:34:39.507977+00:00",
+  "retained_cpu_buffer_probe": {
+    "checkpoint_archive_count": 1,
+    "file_count": 49,
+    "files": [
+      {
+        "bytes": 73149,
+        "path": "campaign.json"
+      },
+      {
+        "bytes": 50219,
+        "path": "reports/campaign_results_summary.json"
+      },
+      {
+        "bytes": 756273,
+        "path": "source_snapshot.zip"
+      }
+    ]
+  },
+  "schema": "qrl.historical_variant_screen_workspace_availability.v1",
+  "scope": {
+    "archive_checkpoint_archive_bytes": 14340050686,
+    "archive_checkpoint_archive_count": 461,
+    "archive_contents_hashed": false,
+    "archive_root": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs",
+    "full_scratch_search_performed": false,
+    "type": "path_and_filename_inventory"
+  }
+}

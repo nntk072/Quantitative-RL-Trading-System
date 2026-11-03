@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
-from .bootstrap import CI, paired_metric_difference_ci
+from .bootstrap import (
+    CI,
+    max_drawdown_stat,
+    paired_metric_difference_ci,
+    sharpe_stat,
+    sortino_stat,
+)
 
 MATCH_FIELDS = (
     "dataset_sha256",
@@ -126,3 +133,100 @@ def compare_matched_returns(
         level=level,
         rng_seed=rng_seed,
     )
+
+
+def paired_equity_metric_differences(
+    treatment: pd.Series,
+    control: pd.Series,
+    *,
+    initial_balance: float,
+    periods_per_year: int,
+    n_boot: int = 2000,
+    level: float = 0.95,
+    rng_seed: int = 42,
+    block_len: int = 8,
+) -> dict[str, CI]:
+    """Estimate paired time-series metric differences for timestamp-matched equity.
+
+    The same moving-block indices are applied to both arms. Results describe
+    within-path uncertainty conditional on this evaluation and the supplied
+    policy action seeds; they do not estimate between-seed variation.
+    """
+    if periods_per_year <= 0:
+        raise ValueError("periods_per_year must be positive")
+    left_path, right_path = _paired_equity_paths(treatment, control, initial_balance)
+    if left_path.size < 3:
+        raise ValueError("Paired bootstrap requires at least two aligned bar returns")
+    left_returns = np.diff(left_path) / left_path[:-1]
+    right_returns = np.diff(right_path) / right_path[:-1]
+
+    def drawdown_from_returns(returns: NDArray[np.float64]) -> float:
+        path = np.concatenate(([initial_balance], initial_balance * np.cumprod(1.0 + returns)))
+        return max_drawdown_stat(path)
+
+    metrics: dict[str, Callable[[NDArray[np.float64]], float]] = {
+        "mean_bar_return": lambda returns: float(np.mean(returns)),
+        "sharpe": lambda returns: sharpe_stat(returns, periods_per_year),
+        "sortino": lambda returns: sortino_stat(returns, periods_per_year),
+        "max_drawdown": drawdown_from_returns,
+    }
+    return {
+        name: paired_metric_difference_ci(
+            left_returns,
+            right_returns,
+            statistic,
+            n_boot=n_boot,
+            level=level,
+            rng_seed=rng_seed,
+            block_len=block_len,
+        )
+        for name, statistic in metrics.items()
+    }
+
+
+def _paired_equity_return_observation_count(
+    treatment: pd.Series,
+    control: pd.Series,
+    *,
+    initial_balance: float,
+) -> int:
+    """Validate matched equity paths and count their aligned bar returns."""
+    left_path, _ = _paired_equity_paths(treatment, control, initial_balance)
+    return left_path.size - 1
+
+
+def _paired_equity_paths(
+    treatment: pd.Series,
+    control: pd.Series,
+    initial_balance: float,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Validate timestamp-matched equity and prepend common starting capital."""
+    for name, series in (("treatment", treatment), ("control", control)):
+        if not isinstance(series, pd.Series):
+            raise TypeError(f"{name} equity must be a pandas Series")
+        if not isinstance(series.index, pd.DatetimeIndex):
+            raise ValueError("Paired equity requires timestamp indexes")
+        if series.index.hasnans or not series.index.is_monotonic_increasing:
+            raise ValueError("Paired equity timestamps must be present and chronological")
+        if not series.index.is_unique:
+            raise ValueError("Paired equity timestamps must be unique")
+    if not treatment.index.equals(control.index):
+        raise ValueError("Paired equity indexes must match exactly")
+    if not np.isfinite(initial_balance) or initial_balance <= 0:
+        raise ValueError("initial_balance must be finite and positive")
+    if treatment.empty:
+        raise ValueError("Paired equity requires at least one observation")
+    left = treatment.to_numpy(dtype=np.float64)
+    right = control.to_numpy(dtype=np.float64)
+    if not np.isfinite(left).all() or not np.isfinite(right).all():
+        raise ValueError("Paired equity values must be finite")
+    if np.any(left <= 0) or np.any(right <= 0):
+        raise ValueError("Paired equity values must be positive")
+    if (left[0] == initial_balance) != (right[0] == initial_balance):
+        raise ValueError("Paired equity paths must use the same initial-capital convention")
+
+    left_path = left if left[0] == initial_balance else np.concatenate(([initial_balance], left))
+    right_path = (
+        right if right[0] == initial_balance else np.concatenate(([initial_balance], right))
+    )
+    return left_path, right_path

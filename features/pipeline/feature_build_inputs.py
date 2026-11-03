@@ -21,6 +21,8 @@ RAW_FVG_FEATURE_SUFFIXES = (
     "fvg_bear_high",
     "fvg_bull_origin",
     "fvg_bear_origin",
+    "fvg_bull_retest_origin_time_ns",
+    "fvg_bear_retest_origin_time_ns",
 )
 
 

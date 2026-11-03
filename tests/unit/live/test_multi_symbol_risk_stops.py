@@ -27,6 +27,7 @@ for _name, _value in {
 
 import MetaTrader5 as mt5  # noqa: E402
 
+from integrations.mt5.domain.risk_manager import RiskManager  # noqa: E402
 from integrations.mt5.domain.signal import Signal  # noqa: E402
 from integrations.mt5.robot.multi_symbol_robot import MultiSymbolRobot  # noqa: E402
 
@@ -58,6 +59,8 @@ class _Strategy:
 
 
 class _Risk:
+    supports_training_account_loss_guardrails = True
+
     def calculate_position_size(self, *_args: Any, **_kwargs: Any) -> float:
         return 0.1
 
@@ -133,3 +136,16 @@ def test_multi_symbol_robot_refuses_entry_when_risk_sizing_raises() -> None:
     robot.trade_symbol(symbol)
 
     assert trader.open_calls == []
+
+
+def test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails() -> None:
+    trader = _Trader()
+    symbol = "US100.cash"
+    with pytest.raises(ValueError, match="training-equivalent daily and maximum account-loss"):
+        MultiSymbolRobot(
+            symbol_manager=cast(Any, _Symbols()),
+            trader=trader,  # type: ignore[arg-type]
+            strategies=cast(Any, {symbol: _Strategy(symbol, Signal.BUY)}),
+            risk_manager=RiskManager(),
+            paper_trading=False,
+        )

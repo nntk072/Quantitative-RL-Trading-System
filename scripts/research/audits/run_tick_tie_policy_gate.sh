@@ -15,8 +15,8 @@ python -m pytest tests/unit/market_data/test_ticks.py tests/unit/simulation/test
 focused_pytest_rc=$?
 
 python scripts/research/audits/audit_tick_tie_policy.py \
-    --coverage-report evidence/research/archive_2026/evidence/replacement_data_20261017/tick_execution_coverage_schedule_freeze_final.json \
-    --prior-tie-report evidence/research/archive_2026/evidence/replacement_data_20261017/tick_timestamp_ties.json \
+    --coverage-report evidence/research/market_data_input_integrity/schedule_frozen_tick_execution_coverage.json \
+    --prior-tie-report evidence/research/market_data_input_integrity/historical_tick_timestamp_ties.json \
     --out outputs/research_audits/replacement_data_20261017/tick_timestamp_tie_policy_20261017.json
 tie_audit_rc=$?
 

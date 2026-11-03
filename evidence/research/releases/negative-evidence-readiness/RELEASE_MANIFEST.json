@@ -1,0 +1,789 @@
+{
+  "configured_timeframe_parity": {
+    "audit_script": "scripts/research/analysis/market_data/compare_configured_timeframe_bars.py",
+    "audit_script_sha256": "b4f781e069b5820f1582cd7374f0f84183eb88b622aa2a71a4e17553f59037e0",
+    "derived_only_series": 2,
+    "periods": {
+      "development_training": {
+        "first_m1_at_close": 527449,
+        "first_m1_later": 4886,
+        "native_rows": 532350,
+        "native_series": 15,
+        "no_later_m1": 15,
+        "spread_differs_from_m1_last_rows": 87638,
+        "spread_differs_from_m1_mean_rows": 171819,
+        "timestamp_ohlcv_exact": true
+      },
+      "exposed_report_only": {
+        "first_m1_at_close": 419706,
+        "first_m1_later": 3297,
+        "native_rows": 423018,
+        "native_series": 15,
+        "no_later_m1": 15,
+        "spread_differs_from_m1_last_rows": 48782,
+        "spread_differs_from_m1_mean_rows": 98918,
+        "timestamp_ohlcv_exact": true
+      }
+    },
+    "report": "configured_timeframe_parity.json",
+    "report_sha256": "78363b9946c005efc6dcb661bfbb02ce51761f782e6fda042b308d273cbc35b8",
+    "schedule_authority_established": false,
+    "slurm_elapsed": "00:06:04",
+    "slurm_job_id": "21345323",
+    "slurm_node": "csl8",
+    "slurm_peak_rss_kib": 6395532,
+    "slurm_requested_cpus": 4,
+    "slurm_requested_memory": "16G"
+  },
+  "content_hashes_sha256": {
+    "CHECKPOINT_REGISTRY.json": "016132c457c36b53ad6528466e0bfab7f56dcc7383ba5c786e223fda0ad51d72",
+    "CONSOLIDATED_RESEARCH_RESULTS.md": "e5c800a325bb809c7736551a54f5df802b70ee2c07a977c615d966d95451f93f",
+    "DATA_PROVENANCE_AND_ACCESS.md": "27383b504c03ee5bff504a584aaa8a4839c1b23a2655edfb130cd35e07c0d57b",
+    "ENVIRONMENT_AND_COMPUTE_PROFILE.md": "bd2db60588112a4356a548c47d18487dbe3b80acaaf32d6899adca38cfd8d4c6",
+    "EXPERIMENT_AND_ATTEMPT_LEDGER.jsonl": "a447c0ce355bb665e2d80f9e59c514abcb4edf179915a2b7f050873a596a971a",
+    "EXPERIMENT_PROVENANCE_DAG.json": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c",
+    "FINAL_READINESS_REPORT.md": "57a8b71151b1f484a90ae96f7f53e92ae70dce4eb2b699f97b6a64b3fec18eb3",
+    "FUNCTION_TEST_EVIDENCE_INDEX.csv": "dcccc1226668c1a125f8534a549717696dca40a67b696aefb3e12dba3c197d35",
+    "KNOWN_LIMITATIONS.md": "4a7c47930b8d4fb4cac2ab962f269ef73d5772113968577b5dd4fbfcf28167a7",
+    "MODEL_AND_BASELINE_CATALOG.md": "7b44d44bc68bdfe688c7d22a09ef0ab8f39ab68e350c882f5e0993d93fee4ccc",
+    "RAW_DATA_SHA256_MANIFEST.json": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
+    "README.md": "6c1a67e1cca56cb0e29c51d38e69c1c2bb18a53840d1b0b0419e836ec9c634a2",
+    "REGENERATION_COMMANDS.md": "8bb2eb5e33c7c62d1e7ed36747cfc886d3931bcc2f193287e7bdc71788314a2e",
+    "RESEARCH_QUESTIONS_AND_METHODS.md": "2ce3e872274d72bb874e2d9ebb760f37146a327c3fd79f225b7b4fb1bc126780",
+    "RESULTS_REPRODUCIBILITY_MATRIX.csv": "cd90b398c99b3c7ffe7248f02da64f82a2d262204caf917a0f8e5275a82d11fe",
+    "THESIS_FIGURE_TABLE_INDEX.md": "eb608c32ce2d04312889898d6b54dc82b9b6e0ee90523b673fb4beede4c52f36",
+    "configured_timeframe_parity.json": "78363b9946c005efc6dcb661bfbb02ce51761f782e6fda042b308d273cbc35b8",
+    "current_market_input_diagnostic.json": "bd5142c7a0e7cc83588a60170063cfe6fc42c0aa0bfe2e3137b8e8445f1079cc",
+    "legacy_daily_loss_counter_breach_trace.md": "efb5bc3eba17a0251914c9448c8aa98a0722806c81de48c7167f519277bc06cb",
+    "local_market_data_quality.json": "591746df3966fd6f5ec980f4b826958c5abd63f4ca650ad0d5a1dd55cbb4ddf3",
+    "local_monthly_tick_quote_quality.csv": "5a49ff06f6e7e84bea46e80a5cfc6897fcd1bc8f37884c0848e9dcc773bf3f6a",
+    "local_monthly_tick_quote_quality.png": "1fc3dce613a1fc4fceb9b742896a3816dc0a6c66663a3c753daabf77686cb829",
+    "local_monthly_tick_quote_quality.provenance.json": "5c7d68e5de1a0210e61ee8d50626a55176a8e144da80730b12bc1b2968fbb03c",
+    "selected_pair_viability_manifest.json": "be4c61507da767523101806b7098f2c68522239974d3acab7134e525413cba2c",
+    "tick_quote_side_flag_cross_tab.json": "944e97a73c9801d0c1790a4a16cfd66bdfbe827274c54b3932113674edc9b392"
+  },
+  "cpu_audit_jobs": [
+    {
+      "allocated_cpus": 8,
+      "disposition": "superseded preliminary metric; all input hashes matched, but optional blank LAST/VOLUME tick fields were incorrectly counted as required",
+      "elapsed": "00:13:01",
+      "job_id": "21339889",
+      "peak_rss_kib": 4660972,
+      "requested_memory": "12G",
+      "state": "COMPLETED"
+    },
+    {
+      "allocated_cpus": 8,
+      "disposition": "corrected current-source input audit; all 39 manifest hashes matched",
+      "elapsed": "00:13:20",
+      "job_id": "21339947",
+      "peak_rss_kib": 1175924,
+      "requested_memory": "12G",
+      "state": "COMPLETED"
+    },
+    {
+      "allocated_cpus": 8,
+      "disposition": "detailed current-source tick diagnostic; all 39 input hashes matched; classified per-column bid/ask missingness and tied-timestamp quote changes",
+      "elapsed": "00:13:46",
+      "job_id": "21340127",
+      "peak_rss_kib": 2046444,
+      "reported_disk_reads_mib": 15511.98,
+      "requested_memory": "12G",
+      "state": "COMPLETED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "configured native-versus-M1 bar parity audit and expanded release-quality verification; no training",
+      "elapsed": "00:06:04",
+      "job_id": "21345323",
+      "peak_rss_kib": 6395532,
+      "requested_memory": "16G",
+      "state": "COMPLETED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "release gate stopped at non-executable script invocation; no code quality checks ran",
+      "elapsed": "00:00:49",
+      "job_id": "21347546",
+      "peak_rss_kib": 148020,
+      "requested_memory": "16G",
+      "state": "FAILED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "release gate stopped because the exclusive plotter refused an existing verified output bundle",
+      "elapsed": "00:00:39",
+      "job_id": "21347556",
+      "peak_rss_kib": 51744,
+      "requested_memory": "16G",
+      "state": "FAILED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "release gate stopped at full-tree Ruff format check; five listed files were formatted before continuation",
+      "elapsed": "00:00:44",
+      "job_id": "21347571",
+      "peak_rss_kib": 56444,
+      "requested_memory": "16G",
+      "state": "FAILED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "release gate stopped at full-tree Ruff lint; stale source inventory path and import ordering were corrected",
+      "elapsed": "00:00:43",
+      "job_id": "21347579",
+      "peak_rss_kib": 28908,
+      "requested_memory": "16G",
+      "state": "FAILED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "full-tree Ruff passed; Mypy found three test annotation issues, corrected before continuation",
+      "elapsed": "00:00:55",
+      "job_id": "21347586",
+      "peak_rss_kib": 439952,
+      "requested_memory": "16G",
+      "state": "FAILED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "full-tree Ruff/Mypy and expanded pytest passed; strict Sphinx identified three external README links, fixed in docs-only follow-up",
+      "elapsed": "00:05:27",
+      "job_id": "21347604",
+      "peak_rss_kib": 2877604,
+      "requested_memory": "16G",
+      "state": "FAILED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "documentation inventory/evidence refresh, strict Sphinx, and manifest verification passed",
+      "elapsed": "00:03:30",
+      "job_id": "21347623",
+      "peak_rss_kib": 1571304,
+      "requested_memory": "16G",
+      "state": "COMPLETED"
+    },
+    {
+      "allocated_cpus": 4,
+      "disposition": "forced full strict Sphinx rebuild after final feature-timing documentation update; documentation inventory, evidence audit, and release hash verification passed",
+      "elapsed": "00:03:25",
+      "job_id": "21347682",
+      "peak_rss_kib": 1628920,
+      "requested_memory": "16G",
+      "state": "COMPLETED"
+    }
+  ],
+  "created_at": "2026-11-03",
+  "current_source_input_audit": {
+    "all_input_hashes_match": true,
+    "all_inputs_present": true,
+    "allocated_cpus": 8,
+    "checkpoint_replay_performed": false,
+    "elapsed_seconds": 798.819,
+    "input_bytes_scanned": 8162529858,
+    "input_count": 39,
+    "peak_rss_kib": 1175924,
+    "preliminary_disposition": "superseded: optional blank tick LAST and VOLUME were initially counted as required numeric fields",
+    "report": "local_market_data_quality.json",
+    "requested_memory": "12G",
+    "sha256": "ae818bcfe13b109b594abf99c2487f5e6cf7bf0fa475f70d6217971fcc1ad5ba",
+    "slurm_elapsed": "00:13:20",
+    "slurm_job_id": "21339947",
+    "slurm_state": "COMPLETED"
+  },
+  "current_source_input_diagnostic": {
+    "adjacent_timestamp_ties": 329471,
+    "all_input_hashes_match": true,
+    "allocated_cpus": 8,
+    "checkpoint_replay_performed": false,
+    "input_bytes_scanned": 8162529858,
+    "input_count": 39,
+    "peak_rss_kib": 2046444,
+    "report": "current_market_input_diagnostic.json",
+    "reported_disk_reads_mib": 15511.98,
+    "requested_memory": "12G",
+    "same_timestamp_changed_quote_pairs": 328918,
+    "same_timestamp_identical_quote_pairs": 0,
+    "same_timestamp_pairs_with_missing_quote": 553,
+    "sha256": "bd5142c7a0e7cc83588a60170063cfe6fc42c0aa0bfe2e3137b8e8445f1079cc",
+    "slurm_elapsed": "00:13:46",
+    "slurm_job_id": "21340127",
+    "slurm_state": "COMPLETED",
+    "tick_rows_with_both_bid_and_ask_missing": 0,
+    "tick_rows_with_one_required_quote_side_missing_or_nonfinite": 371390,
+    "training_m1_minutes_without_ticks_per_symbol": 23
+  },
+  "current_tick_quote_processing": {
+    "campaign_source_file": "market_data/loading/ticks.py",
+    "campaign_source_sha256": "205a9eef9cd8f80df0aa08b8bd59874b5d71bf395d807fef693619077ef24b77",
+    "current_source_sha256": "518beb9255b3dd48e0e4fe9c54051dcb596505a9b9aba9cd5a33b25d35843ff2",
+    "missing_side_processing_block_matches_campaign": true,
+    "semantics": "bid and ask sides are independently forward-filled, then finite positive non-crossed pairs are retained; this does not prove simultaneous quote availability"
+  },
+  "data_access": {
+    "external_provider_license_retrieval": "not performed at user direction; not a gate for local analysis",
+    "raw_market_data_in_release": false,
+    "redistribution_or_publication_claim": "none; raw market data excluded from this release",
+    "user_attested_source": "FTMO Demo server"
+  },
+  "disposition": "blocked",
+  "external_archives": {
+    "audit_source_at_full_scan": {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/source_snapshots/audit_current_market_inputs_at_scan.py",
+      "sha256": "1bcb98c37aaaee479547f78f148e39b22805f180ed3b6289873962a320022e36"
+    },
+    "audit_source_before_flag_cross_tab": {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/source_snapshots/audit_current_market_inputs_before_flag_cross_tab.py",
+      "sha256": "fef6f9a5d15883837b989039e3a05a38681741a790df4f75729d2c26b4d87749"
+    },
+    "corrected_byte_audit_source_snapshot": {
+      "source_sha256_recorded_in_report": "059b91735d4e78db0453d742b4d3c81491c55a1e6844da802e90a78b565f485e",
+      "status": "not_recovered"
+    },
+    "ignored_outputs": {
+      "checkout_access_path": "outputs (symlink)",
+      "content_deleted": false,
+      "inventory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs_inventory.tsv",
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs",
+      "regular_file_bytes": 30409233705,
+      "regular_file_count": 27800,
+      "symlink_inventory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs_symlinks.tsv"
+    },
+    "research_evidence_migrations": {
+      "archive_cleanup_phase2_report": {
+        "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/archive_cleanup_phase2_completion_20261101.md",
+        "sha256": "9b318ea9ef882ab221dec4e8299aa84a379d8d1eb4680e94b5211d03098732ee"
+      },
+      "benchmark_output_cleanup_phase3_report": {
+        "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/benchmark_output_cleanup_phase3_20261101.md",
+        "sha256": "3002e090ae8887b3aa27b5cb7fb7f3317e119c5649534e2d8c6fb48fee3f7734"
+      },
+      "external_benchmark_output_manifest": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/historical_research_archive/setup_conditioned_replay/benchmark_outputs/checksum_manifest.json",
+        "sha256": "2ad46356c302d37c59e8082edb5e56f63735caf37f0afea68ef4bddda85895c6",
+        "verified_file_count": 40
+      },
+      "external_historical_archive_manifest": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/historical_research_archive/checksum_manifest.json",
+        "sha256": "c4d4a8a37c52637f1b0c031d98dd1b4f36bc7adf6d71baf0e687d8198f0deff6",
+        "verified_file_count": 255
+      },
+      "repository_migration_ledger": {
+        "path": "docs/architecture/migrations/research_evidence_moves.json",
+        "sha256": "80301b655e2a4658e2c0063e72d18c1dced18d3ccecd810a3f9f12b04a087377"
+      }
+    },
+    "superseded_preliminary_evidence": {
+      "content_deleted": false,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/superseded_evidence",
+      "sha256_manifest": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/superseded_evidence/superseded_release_file_hashes.sha256"
+    }
+  },
+  "external_reconciliation_report": {
+    "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/p6_recovered_artifact_hash_reconciliation_20261101.json",
+    "sha256": "d4c17fb19824088bd3e59bc4d8dc178ee9e5c0a44ea0086de506f61e74040ce4"
+  },
+  "inventory": {
+    "experiment_run_manifests": 49,
+    "inventory_report_location": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/final_research_release_inventory_20261101.json",
+    "output_file_metadata_entries": 89,
+    "provenance_dag_manifest_count": 49,
+    "provenance_dag_path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+    "python_symbols": 5957,
+    "raw_data_file_metadata_entries": 140,
+    "scope": "Bounded source/research inventory; all 140 local data inventory entries and 64 distinct resolved targets are SHA-256 hashed; nested outputs and all caches are not fully enumerated.",
+    "tracked_files": 1992,
+    "yaml_configs": 154
+  },
+  "new_training_or_evaluation_jobs": 0,
+  "notes": [
+    "The separate 20M-step scratch campaign is not the selected pair.",
+    "2026 remains exposed report-only.",
+    "A readiness snapshot is not a thesis or release approval.",
+    "All local data inventory entries are hashed; 140 paths resolve to 64 distinct files, with 38 selected-campaign data-input matches.",
+    "Configured native-versus-M1 timeframe parity is exact for timestamps and OHLCV; spread differs from the tested M1 aggregations and schedule authority remains unresolved.",
+    "Final code gate job 21348506 passed full-tree Ruff (952 files), Mypy (938 source files), and the expanded suite (615 passed, one accelerator-only skip, two warnings); strict Sphinx passed. Forced strict docs job 21348463 produced the 2,615-file rendered manifest; all release hashes verify.",
+    "The successful full-tree and strict docs gate in job 21348598 is a preserved prior snapshot. Stage M/O schema, documentation, and reporting edits followed; the latest full-tree and strict docs gates must be rerun before release.",
+    "Latest full strict Sphinx build: job 21348897, 2,620 rendered files, manifest SHA-256 3411894a01b6c27348bf7d4aee20fa3d3fd17927ccbc80c3e99538ddae50a43a."
+  ],
+  "release_id": "negative-evidence-readiness",
+  "release_ready": false,
+  "repository": {
+    "baseline_branch": "main",
+    "baseline_sha": "3c30030ace717974d32a697395de4e0a32ac943b",
+    "execution_branch": "codex/final-research-evidence-release",
+    "name": "Quantitative-RL-Trading-System",
+    "release_commit": null,
+    "tag": null,
+    "working_tree_has_task_changes": true
+  },
+  "research_periods": {
+    "exposed_report_only": {
+      "end_inclusive": "2026-10-16",
+      "fresh_holdout": false,
+      "start": "2026-01-01"
+    },
+    "training_development": {
+      "end_inclusive": "2025-12-31",
+      "start": "2024-12-30"
+    }
+  },
+  "schema": "aalto.quant_release_readiness.v1",
+  "scientific_verdict": "The tested policies did not establish viability or a robust economic edge; the selected matched pair was negative on the 2025 development interval, and 2026 results are exposed report-only.",
+  "selected_pair": {
+    "arms": {
+      "A4A": {
+        "aggregate_end_equity": 97845.69,
+        "aggregate_end_equity_above_hard_floor": true,
+        "breach_events": 1,
+        "breach_types": [
+          "daily_loss"
+        ],
+        "completed_data_split": true,
+        "episode_end_reason": "data_end",
+        "first_breach_time": "2025-03-06 20:16:00+03:00",
+        "historical_gate_result": "failed: max_loss_stopped_trading",
+        "net_return_pct": -2.154,
+        "positions": 987,
+        "survived_full_year_gate": false
+      },
+      "A4B": {
+        "aggregate_end_equity": 89943.95,
+        "aggregate_end_equity_above_hard_floor": false,
+        "breach_events": 2,
+        "breach_types": [
+          "daily_loss",
+          "max_drawdown"
+        ],
+        "completed_data_split": true,
+        "episode_end_reason": "data_end",
+        "first_breach_time": "2025-03-06 20:32:00+03:00",
+        "historical_gate_result": "failed: max_loss_stopped_trading",
+        "net_return_pct": -10.056,
+        "positions": 825,
+        "survived_full_year_gate": false
+      }
+    },
+    "artifact_hash_matches": "10/10 listed per-arm artifacts",
+    "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+    "checkpoint_replay_performed": false,
+    "gate_semantics": "historical strict zero-breach gate used trading_policy.mode=legacy; daily_loss summed gross negative closed-trade PnL without offsetting winners or including unrealized PnL; March events are not net FTMO-style daily-equity breaches; both evaluations reached data_end",
+    "input_bytes_rehashed": true,
+    "input_bytes_scanned": 8162529858,
+    "input_hash_matches": "39/39",
+    "input_paths_present": "39/39",
+    "risk_gate_diagnosis": {
+      "A4A": {
+        "equity_at_breach_usd": 120356.7,
+        "gross_negative_closes_usd": 5017.66,
+        "net_realized_close_pnl_usd": -3004.28,
+        "positive_closes_excluded_usd": 2013.38
+      },
+      "A4B": {
+        "equity_at_breach_usd": 115413.67,
+        "gross_negative_closes_usd": 5399.25,
+        "net_realized_close_pnl_usd": -3389.32,
+        "positive_closes_excluded_usd": 2009.92
+      },
+      "daily_loss_limit_usd": 5000.0,
+      "dossier": "legacy_daily_loss_counter_breach_trace.md",
+      "interpretation": "configured legacy counter breached; not evidence of a net daily-equity breach",
+      "policy_mode": "legacy",
+      "semantics": "sum absolute negative closed-trade PnL; positive closes do not offset; unrealized PnL excluded"
+    },
+    "run_path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/"
+  },
+  "source_and_tracked_evidence_hashes_sha256": {
+    "CHANGELOG.md": "197a7da0e800cd8616364aa00c66c009c7d9987e6bf0b40a2b9d9d3d4eaf425c",
+    "config/base/default.yaml": "9397e5a55dd1e4445efda6ab22940ba8f419d31370df8d972d2111b079074e84",
+    "decisioning/trade_setup.py": "80d2ccf2c25288a0d15d4d1a88936c75d1f0c4ec931eab1fe7c4c7e7ee74e6d4",
+    "docs/documentation_inventory.json": "0d5f8f75903317b023354c967793e5c7ebf5c7164e028785511d4d49087debbc",
+    "docs/operations/research_execution_plan.md": "4a9e4df139b1df0086930997cceb1ff6b010c1b08ea57f712ba096155253bdfb",
+    "docs/reference/metrics.md": "74f124d6338399fbac4924da62222f3b0ddd9df669b7b17bc88f16cc4b39673b",
+    "docs/reproduce/evidence_audit.md": "b8ddda748aff49c55b68603caffeed5b59aee7182186384d021f492fa85b0947",
+    "docs/reproduce/result_registry.md": "e7b9a8622c7b6dec34bade59e829367208999dd5516384854c366e6ef0f7bbea",
+    "docs/research/README.md": "4848d93f5e430a09fcbd2069f27140530801077053084abafa864cf29ee3b407",
+    "docs/research/entry_and_exit_attribution.md": "58a36cc31b2ee55b49d5239700293bb884e83d7310ace51d09a7e53ddd380db0",
+    "docs/research/feature_causality_and_availability.md": "a513d165d95c96300323038805088ef3fd17b8cada8798a09e929892b4c26e4e",
+    "docs/research/fill_quote_availability.md": "3585f347e59a71ee0ee746d9eb7648342352c59c08a5f488bf80b14bc3ac8480",
+    "docs/research/model_observation_and_action_semantics.md": "eeefb6b51d270664436fdb25e7085b173f84f4a4443da5c330e87d13ffadafcf",
+    "docs/research/multitimeframe_data_alignment.md": "2b36d1fd439fd55b29b237936be5b191972c4c814e54e8c07e3a3df04a502c19",
+    "docs/research/result_identity_and_evidence.md": "1f2a97996f70f5e95a2f2e9f2500cb0ecc2f83b1d7e8aa5c7bb41b1dd39bdfb3",
+    "docs/research/selected_policy_trade_lifecycle.md": "434de99cf6a2930e9347175b799d28397c0ba2a73a12a96f7dbcae7ec75f48a8",
+    "docs/research/setup_conditioned_policy_replay.md": "a91309e75c688c92407cea13361ded491d4e177f0b0700c9d7754af5422525c1",
+    "docs/thesis/research_evidence_report.md": "aede1bca090ca187bd0a2fcd64d6328c85a69564c5600d834890cd181c02cf00",
+    "evaluation/__init__.py": "62a5d0b8fdfaa07d748427fd14f93cf4a36ad1a59f1bcb228b71a82a3d8eca8b",
+    "evaluation/metrics/bootstrap.py": "d06ba8fe4a407a7f8eecdf0dfeb4b3d66ac4172317181274a953a3a3eab2efe2",
+    "evaluation/metrics/performance.py": "aa58a1ae0e7541a84a80c837e3afde4613f860a7f82bee30c9e6aac2d89a0a2b",
+    "evaluation/reporting/run_summary.py": "2508143479e46489427418ce675c50531aaf81709fb1c568b9d62843794b7c0e",
+    "evaluation/rollout/__init__.py": "236cdca4bd6ebd9a56ffef6c3fd955b224b4438c170a0fb554ea734aae1553bf",
+    "evaluation/rollout/random_eligible_setup.py": "d71adc2b3d5072ff5bea402ae33fca0253e0370068780180cc81722254358fd0",
+    "evidence/research/README.md": "dddc81b4c49e46885a5fb072f1f18f1c25224e84b22170d5066e36f2449bb447",
+    "evidence/research/candidate_event_cardinality/OUTPUT_SHA256SUMS": "8895f68a3de072d64ee473c53a2af342847cbd44a99a686f4e8ac7b300e250e9",
+    "evidence/research/candidate_event_cardinality/candidate_identity_contract.csv": "a41bdb0734b1fe36179176784b7d630ae5f63ef08d2746e1de83ed24d36ce64e",
+    "evidence/research/candidate_event_cardinality/cardinality_register.csv": "4eb684680ac3d2e3da394f5fde9ce2f03c8c3e97151e42b103889d64900739bf",
+    "evidence/research/feature_causality/README.md": "a516e51910e823ef0814b5fc68e1f909c423604899f05a286f2ba5f95434bfab",
+    "evidence/research/feature_causality/feature_configuration_inventory.json": "fe0fd290834c31831d7486a0f26b0e6a04a4922d377b02a4458f56b2e4fdf84d",
+    "evidence/research/feature_causality/observation_validity_priorities/SHA256SUMS": "7385a2dac067c0d4d6aa8887a85a0f81d70ce899f93e58cd0c7eb29eba621747",
+    "evidence/research/feature_causality/observation_validity_priorities/feature_validity_priorities.csv": "29e161813ad559c8d01aa88de99bd8bf03955ffeac8e221bd07e9cfbe4c2398a",
+    "evidence/research/feature_causality/real_market_feature_prefix_invariance_all_profiles.json": "6fbe9f7209786d7ed8d94f891e3fde361deca3605cf5bce7768f31a74249c102",
+    "evidence/research/function_test_coverage/README.md": "86898a7af82db81d7a77f3edd477c69861e61133483c3b7507388e79839c7dca",
+    "evidence/research/function_test_coverage/SHA256SUMS": "078cc88e174c5b78bcce455fd1e95107e02f1e42f3f0b8906e5b80746197b4ef",
+    "evidence/research/function_test_coverage/critical_symbol_review.md": "f33e9b0a9b4e34266cd4e89a97e3ef57a5f833acc9d6035f15f49d321b1c019e",
+    "evidence/research/function_test_coverage/function_test_reference_map.csv": "31fb8ea0dde051681da60e52da25ec67a588d5dfdfb6ec2f571e2387d31cf174",
+    "evidence/research/function_test_coverage/package_dependency_edges.csv": "b6698022edeb762214683f91a8f5f3f4ffb3f537b2f4ea28fe5231d9ce9a8248",
+    "evidence/research/function_test_coverage/package_reference_summary.csv": "2068eb8776acdb1ffc65aee17e751d03bbe320edc85df1c014507badc8fa347d",
+    "evidence/research/function_test_coverage/priority_symbols_without_direct_test_references.csv": "e7ec89fc1d7ba070ec0e10840d0e0f5e58f23ebee1e31634f1a6f7d1edf19402",
+    "evidence/research/market_data_quality/SHA256SUMS": "10f8dea6612b3719b848d8c64e6a8272bca6ce2e79d81e469a93e602ecf2b65d",
+    "evidence/research/market_data_quality/configured_timeframe_coverage.csv": "e14ff116e5fdf4abf09f576dcf38ddaa1e38e11516634d322db70b059d6fe4bd",
+    "evidence/research/market_data_quality/monthly_tick_quote_quality.csv": "e0d07e75264c23842d6b60a83f9ecd0ef178850e2139705f24494e0917640015",
+    "evidence/research/market_data_quality/period_quality_counts.csv": "fa245ecbc28ab4b208319a7b4a42d7c18d1797c61c522e318ad96c23a6c04bce",
+    "evidence/research/market_data_quality/quality_table_provenance.json": "27e8fc473ae6347bc23de63295828ab8b12cfc9c5889b6ca8b02a1a9dec17d2f",
+    "evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json": "a7ba919fc3ff471415b36e8d430e639c98dfa5df5f4ac664dce1d1cdc37d5f5a",
+    "evidence/research/pipeline_denominators/SHA256SUMS": "4d5fd1e49972c5448298b058d16ca98a1f33ddc84b36396a0f2c849bff503002",
+    "evidence/research/pipeline_denominators/pipeline_stage_counts.csv": "3e962de5343a26ec0c0a6e53067461fd1a012dafe6093ad82b18e339def4a3db",
+    "evidence/research/releases/negative-evidence-readiness/FINAL_READINESS_REPORT.md": "57a8b71151b1f484a90ae96f7f53e92ae70dce4eb2b699f97b6a64b3fec18eb3",
+    "evidence/research/releases/negative-evidence-readiness/FUNCTION_TEST_EVIDENCE_INDEX.csv": "dcccc1226668c1a125f8534a549717696dca40a67b696aefb3e12dba3c197d35",
+    "evidence/research/releases/negative-evidence-readiness/KNOWN_LIMITATIONS.md": "4a7c47930b8d4fb4cac2ab962f269ef73d5772113968577b5dd4fbfcf28167a7",
+    "evidence/research/releases/negative-evidence-readiness/README.md": "6c1a67e1cca56cb0e29c51d38e69c1c2bb18a53840d1b0b0419e836ec9c634a2",
+    "evidence/research/releases/negative-evidence-readiness/REGENERATION_COMMANDS.md": "8bb2eb5e33c7c62d1e7ed36747cfc886d3931bcc2f193287e7bdc71788314a2e",
+    "evidence/research/releases/negative-evidence-readiness/THESIS_FIGURE_TABLE_INDEX.md": "eb608c32ce2d04312889898d6b54dc82b9b6e0ee90523b673fb4beede4c52f36",
+    "evidence/research/releases/negative-evidence-readiness/local_monthly_tick_quote_quality.csv": "5a49ff06f6e7e84bea46e80a5cfc6897fcd1bc8f37884c0848e9dcc773bf3f6a",
+    "evidence/research/releases/negative-evidence-readiness/local_monthly_tick_quote_quality.provenance.json": "5c7d68e5de1a0210e61ee8d50626a55176a8e144da80730b12bc1b2968fbb03c",
+    "evidence/research/trade_setup_opportunity_census/OUTPUT_SHA256SUMS": "a9e32385cf0ee357597fd7b07fa7f1cd9a869a405170a8f5a7271cfe7b9c14f2",
+    "evidence/research/trade_setup_opportunity_census/README.md": "6fd447d74a1d85651349853b398dd779a22a14851fdef9f6a3f59fe336a9f3ac",
+    "evidence/research/trade_setup_opportunity_census/candidate_horizon_coverage.csv": "5f560192e9d26872843afa8439d3965fbf4ad9be6f619753c3b1ad540b514e8d",
+    "evidence/research/trade_setup_opportunity_census/candidate_horizon_support_review.csv": "d777451c9102b8add870ad48f30d31b25f2e6ed91303e6572096e7c54e7b9ca5",
+    "evidence/research/trade_setup_opportunity_census/candidate_month_regime.csv": "f7beb94f13ffe44bc0ac4c9f472c0cab03c745a950d2abfbb58fdad5714bb467",
+    "evidence/research/trade_setup_opportunity_census/candidate_month_regime_heatmap.pdf": "0b3d10feb8457514c5b3f6cdaed3495a04de4feeab2740a1376b5420f6a44734",
+    "evidence/research/trade_setup_opportunity_census/candidate_month_regime_heatmap.png": "24d446171b7ec9befa5add0b46850463de3b392f7cb1fdbfd41839741ac9a284",
+    "evidence/research/trade_setup_opportunity_census/candidate_month_regime_support_review.csv": "d5a19b3cb705674d56bd53fd682fe16b6142dee8d05cada4203363b49b06a4fc",
+    "evidence/research/trade_setup_opportunity_census/candidate_summary.csv": "94732376645a897c686bc8143dbb6c79652b6e76eea724f1155d596e533d217b",
+    "evidence/research/trade_setup_opportunity_census/candidate_support_review.csv": "4cf09cfaa23a8a12a775831ad1a30c6aa050d6a1ead4acf593c6af08b1b0c84f",
+    "evidence/research/trade_setup_opportunity_census/candidate_support_review_provenance.json": "e38a2dc7809d242da6c58395782c55a2faef7108a4afcbabd5b5e5f1152fcfbe",
+    "evidence/research/trade_setup_opportunity_census/census.json": "dd0671fb7ef593816014e4cd1b9a6abc1aa40ff37f699296ee1faf85653ffa12",
+    "evidence/research/trade_setup_opportunity_census/plot_metadata.json": "0066ce711d678d0a552f6f5fb0b96d74e863334fd2a54bf069cab43cc3515063",
+    "evidence/research/trade_setup_opportunity_census/resolved_config.yaml": "d992f23ac38889ed04da5b56c6db91c3b3d64f203764d746f10a1591983260cf",
+    "features/context/trade_setup_candidates.py": "1b6d799e7ddd687fa1a4484400fecddc06451356e0fa8bf10fd75aceed401ebf",
+    "learning/rl/hybrid.py": "33110c8a326ba6e26a17f2790e6745a39a9e6d2381bf95b1e4c39e2fdb62a25d",
+    "market_data/loading/ticks.py": "5aefa10efa67f267c752c53a9d2832fe54c743cf4deda1dd1bb83b268df71a95",
+    "schemas/research_result_manifest_v2.schema.json": "eeb40e3ceca16b58072fe4522a014223d025952ca87eaaba3e066598aa61da00",
+    "scripts/research/analysis/README.md": "c8667afb0d7ea5c0c2d3a0a942a59fd68f26284903fd7b4ac71e7de24af600b8",
+    "scripts/research/analysis/evaluation/compare_experiment_run_summaries.py": "76bfc17c5bd3a0dfa603e3492e8944d70d936b96a9fcefc4f02bddc1f9bb0909",
+    "scripts/research/analysis/evaluation/report_g3.py": "74cd4dd24363d49d68b7c22e047c8ffa0a0c62fb329d478eadac82b39a45a7bd",
+    "scripts/research/analysis/evaluation/report_train_test_figures.py": "eb85d3b8ac14c463aa20e06ae8ef8db75e60dec9e341e7b6f01c2c276afcc3fa",
+    "scripts/research/analysis/evaluation/report_variant_details.py": "65a9948a1a1b1b3e2cb5fbd0209f9efc45b3e8be786ae1c26a4efe529fe7be7a",
+    "scripts/research/analysis/evaluation/run_baseline_eval.py": "9a852c3927bb672a01356ecfd3a7b86a642c1b580d600835b0a715fefa0c598c",
+    "scripts/research/analysis/evidence/build_candidate_event_cardinality_register.py": "f12ebfaae865af600858044e3073f6fae03f9f444fb208fd816546ccff4e62bf",
+    "scripts/research/analysis/evidence/build_function_test_reference_map.py": "2b3a1d1c7f7d58e9c626bc260912d20dd8b3e105ab0fca07bb49820b9ccd0162",
+    "scripts/research/analysis/evidence/build_research_provenance_dag.py": "0a576ff5c5a75c7fa9e8fd7b24e203702c930b94c370a474f179f53f7f3fcf38",
+    "scripts/research/analysis/evidence/verify_result_manifest.py": "1ae221070c31bc8f6360a93614964b4405b96f53da94af1fba8c32d60289c8f0",
+    "scripts/research/analysis/features/entry_idea_opportunity_census.py": "642ec5bcb5592150cabea290685e81ae9289c77bf425ce9372cc53fc10db643f",
+    "scripts/research/analysis/features/merge_real_market_feature_prefix_shards.py": "f06cb4d36dee8761da8da3b14a427c2d79fb77cbff2bd13c16ec8d692879461d",
+    "scripts/research/analysis/features/plot_entry_idea_opportunity_census.py": "c2e5016984efe4994ab8d01e16f51bd20ccec9f199384c8a369863aa08faeff0",
+    "scripts/research/analysis/features/review_candidate_coverage_support.py": "49b739f9fb912e5d9af2c879c10b9e894b71d4cd6daa114038ee5642a4daaba9",
+    "scripts/research/analysis/features/summarize_observation_validity.py": "fbf9cb96c25877063a05f45165334e252b323d67db845c0894cc298c113e8d51",
+    "scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py": "e0b3c038e6673a3bf0cfa147eb39b7761bfb99de754e1cb3f29e7fbc477b7566",
+    "scripts/research/analysis/market_data/build_pipeline_denominator_register.py": "0b09834037848348babf74f800c3f6587360c713627366fde7a8d6ec9f7795d2",
+    "scripts/research/analysis/market_data/compare_configured_timeframe_bars.py": "d7f9a20ebaa0e2e878b38ae69ecbecc7bf956c0bffc55bf93fd794f95d1ed2c7",
+    "scripts/research/analysis/market_data/export_market_data_quality_tables.py": "17e03a6d23c6977b8776fcbe8097464fc74d2e1ce3fa5cbe1a25e3b359596347",
+    "scripts/research/analysis/market_data/hash_local_data_inventory.py": "74bd51211a1c66fc769c38eb1fc22b69fae2ce497048527301c0a09a25941228",
+    "scripts/research/analysis/market_data/plot_market_data_quality_profile.py": "d9320174c5442b989d1f3c225eb7484ae2b9b84de15cf3b9fc13dfaa9eb5e869",
+    "scripts/research/analysis/market_data/scan_local_market_data_quality.py": "652153af4e6cd29a7054e3c3a4e498ed8a86aa5882dcf3cefeb93d91fb1be22b",
+    "scripts/research/audits/audit_replacement_tick_quality.py": "a49dc460c0da34d5a8a386374762d77aff821a3803688637216a05984a91a770",
+    "scripts/research/audits/update_release_manifest_hashes.py": "9177580691e9b756d8b3195053166432fc9bb0459906e7581b11d9d528a96d56",
+    "scripts/research/audits/verify_release_quality.sh": "007fabf415b20a68d29c7417cdb45934e421c6904a407604be13cbcab82de70e",
+    "tests/integration/backtest/test_account_transition_parity.py": "a9fbb1f54d3fbae3e73c28da82752eb55bc3201ce1b1afa99a126f9643b208c1",
+    "tests/integration/backtest/test_broker_fill_accounting.py": "25421723d4de019773294c58b0dbbad8a4e824028e47060c046952ecaf97753d",
+    "tests/integration/backtest/test_broker_quote_parity.py": "532f74d83da6f498d2a9ed2ad73584287875f2c1d810eba08532e7b9c2981164",
+    "tests/integration/backtest/test_risk_lifecycle_characterization.py": "1f174370c0c31efa7bc01bfa02d2837933158b0ace2f1e28da9d16ec1efc5c1b",
+    "tests/integration/test_scripts_smoke.py": "9988be30c0ae7fba09ade04174443daf90412f00982327de7eaeb778249d0a9b",
+    "tests/integration/test_trade_setup.py": "b26821f293eec9ed01c5def4a3326d34daa2455731692daa2f53f7d24da0da53",
+    "tests/research/test_configured_timeframe_parity.py": "0d09536171ebda41b2bbac20a304916ab972de68ccc8830dc2012ef14de8a56a",
+    "tests/research/test_entry_and_exit_attribution_evidence.py": "cc312fe4dffde01e8a134a1c62164ec9032f1b9e905b583dcdaaa470a5bfc80c",
+    "tests/research/test_experiment_run_summary_comparison.py": "acb0b423aa5c0be7b5dcfb315f5471b194963e3756e42002f1f460217f1812fc",
+    "tests/research/test_feature_causality_matrix.py": "7d3ba7abdaa7e2556488a185aaad0c1bdfb8880b81278035f25758d294bd496a",
+    "tests/research/test_feature_prefix_invariance.py": "aeaf97cbd7c75f33ec6496b239a25ae10ad1529c02dbe682c5128b5fcdf51161",
+    "tests/research/test_fill_quote_source_alignment.py": "8772994a65cbff285ed50e492af59407bde0c2ab83a717ed63d1db9b9d2d967a",
+    "tests/research/test_function_test_reference_map.py": "161252c3a1f82d4840f7f63f56957b8a448bf9fbf899535e77645ef82cce1ffa",
+    "tests/research/test_historical_source_mappings.py": "06b3fc8471dc5391eee69d1df6871c6f3ad7ffc050287c0e394eb324bb54d2a7",
+    "tests/research/test_market_data_inventory_hashing.py": "1883cb630b70b3472464dc601e2f0a6e0373155e2e37571cf0f87f552b7be38f",
+    "tests/research/test_market_data_quality_plot.py": "64eb51e9929b038c9f7a7f28bc36b36cfc5f07e425bc8b770acb494fefc7438d",
+    "tests/research/test_plot_trade_setup_opportunity_census.py": "7e8455d750f3d9d33b850db65bddb18ee15980e1f10222a183380a3ccd6f70d3",
+    "tests/research/test_real_market_feature_prefix_shards.py": "12fe280e931e1f150537b976e1ccd89e031d5c8a32c6b091943832ad022f03fc",
+    "tests/research/test_research_provenance_dag.py": "da0c5a5ddbc777483b957844275439a8fc65b617f68606487535adda4e3de626",
+    "tests/research/test_trade_setup_opportunity_census.py": "d31bdb532b247d2cbdbac65fd90fc01acc3687b401a2f449cbe060d401f69448",
+    "tests/unit/decisioning/test_trade_setup_contract.py": "050ebd04dbfb195006dc553c3d46b7c551fc74a8bc82a02af9f3625a90f355d2",
+    "tests/unit/decisioning/test_trade_setup_properties.py": "0cf04178fd1129da1cbcbf8c52011a55617fcea3804c36c6b42f8b5007ad4adc",
+    "tests/unit/evaluation/test_metrics.py": "acfc8820f1328cdf3aa8a49e8823646d142c7f36f0c73ea7cc9ee474309a252d",
+    "tests/unit/evaluation/test_random_eligible_setup.py": "b6aeac9ecd34d60e0970b5c0781525120c5cb478ef493f9b8358f6855a5705f4",
+    "tests/unit/evaluation/test_run_summary.py": "5e832c2a168ba56d4e2fca1e6640773db823ebfa191742eee6257dd531a21c28",
+    "tests/unit/features/test_causal_features.py": "789f3352545e223ca1d914427001d8bc955ecbece24e6e7ae48b7535751723e7",
+    "tests/unit/features/test_htf_alignment.py": "8a6cd7efd0fabe7b05a99a370309280083c1731493b04df0fb7e67de49071274",
+    "tests/unit/market_data/test_ticks.py": "9d8fbea889241459baad9924de39e371c49d15104b07b181fdb806a508859e8f",
+    "tests/unit/models/test_trade_setup_observation_schema.py": "c2b29ecfb0685fe7cf4a762565da4ad068d147034320b2a59fcb75ed21e9d9ff",
+    "tests/unit/research/test_current_market_inputs.py": "8c07e3e859defe0d3c6a39dd228acd3362ab8aba9096a479565f821f6746556e",
+    "tests/unit/research/test_legacy_run_report.py": "b5ac7e72010bd7729040d6dde8d61b36111df9d6e3f3db6338436fcd2ef74cc1",
+    "tests/unit/research/test_release_manifest_hashes.py": "1227ee4e5270c02e5efc33e360426372990ba2fd0896db32af081fc78c3ee197",
+    "tests/unit/research/test_result_manifest_v2.py": "5e060d76f6ae952c7860a089eebd50af573c6715f244e831b833d1690dd65c8b",
+    "tests/unit/research/test_variant_details_report.py": "a5d7cc3428939649addc49db95da5082c132d27fd1946c584376bfd90aeb5530",
+    "tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py": "05ed5fe6d6e2ea133227382e7df8390bd0847c3acff0abf770c19e168db8af75",
+    "tests/unit/simulation/test_environment/test_trade_setup_observation.py": "cf3cc710b8e23d0d086be7ad92f2c6e75fafe97f930a0125b5d9a3c9650b3b77",
+    "tests/unit/simulation/test_environment/test_trading_env_golden_traces.py": "9cd183ad4be886cd4e9db119fe3c52af4305c186422a5f3d9e8a2b714992c815",
+    "tests/unit/trading/test_repeated_payout_policy.py": "48186705afb966edf40fbf7257cfb80422ca00db425aa0136f8f226e1891a06f",
+    "tests/unit/trading/test_risk_properties.py": "7701d2f29cff54c11e01035d058a87bdc0515f148251b8013efe72b8c3d77ac0",
+    "tests/unit/training/test_dashboard.py": "97b26de66a265b2f92d5a329d834c22be965e1fb1b20d420b2d284c52e8e2449",
+    "tools/documentation/evidence_audit.py": "77e2f1550f4bb85b1414abc65efe1aa812ad4edd7b639f98c3dbd71a9c618953",
+    "trading/account/README.md": "94c91ea555aae4bced8f567a68892d4b7612e80929816692c53b844eeddf66db",
+    "trading/policy/README.md": "e6627ddf0cb7c39c00a2c08be9bf05382725b80b4e61cfc7f748cb2de22c9b08",
+    "training/callbacks/dashboard.py": "72c227351f106cc336a838e9b7f51080ddafac4870776a474c201dbe13627b94",
+    "training/reporting/training_curves.py": "c3df92a10e16abcb61a9659c4a7fe7cfc81d5686a334763913bb0c5b8624d940"
+  },
+  "tick_flag_cross_tab_job": {
+    "all_input_hashes_match": true,
+    "all_inputs_present": true,
+    "allocated_cpus": 2,
+    "elapsed": "00:13:58",
+    "flag_pattern": {
+      "2": "ask_missing_bid_present",
+      "4": "bid_missing_ask_present",
+      "6": "both_present"
+    },
+    "flag_rows_accounted": 172290383,
+    "input_bytes_scanned": 8162529858,
+    "input_count": 39,
+    "interpretation_limit": "observed local association; not authoritative provider flag semantics",
+    "job_id": "21343231",
+    "node": "csl23",
+    "report": "tick_quote_side_flag_cross_tab.json",
+    "requested_memory": "8G",
+    "state": "COMPLETED"
+  },
+  "verification": {
+    "configured_timeframe_parity": {
+      "derived_only_series": 2,
+      "native_series": 30,
+      "report": "configured_timeframe_parity.json",
+      "slurm_job_id": "21345323",
+      "status": "completed"
+    },
+    "current_scoped_evidence": {
+      "metric_report_tests": {
+        "passed": 77,
+        "status": "passed",
+        "test_paths": [
+          "tests/unit/evaluation/test_run_summary.py",
+          "tests/unit/evaluation/test_metrics.py",
+          "tests/unit/research/test_legacy_run_report.py",
+          "tests/unit/research/test_variant_details_report.py",
+          "tests/research/test_experiment_run_summary_comparison.py",
+          "tests/unit/training/test_dashboard.py"
+        ]
+      },
+      "result_manifest_cli": {
+        "path": "evidence/research/releases/negative-evidence-readiness/selected_pair_viability_manifest.json",
+        "status": "passed"
+      },
+      "result_manifest_tests": {
+        "passed": 14,
+        "status": "passed",
+        "test_paths": [
+          "tests/unit/research/test_result_manifest_verifier.py",
+          "tests/unit/research/test_result_manifest_v2.py"
+        ]
+      }
+    },
+    "docs_build": {
+      "durable_archive": {
+        "file_count": 2654,
+        "manifest_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run-21376798/rendered-docs-html-final-clean.manifest.json",
+        "manifest_sha256": "6b8cb348b9289ef300f3bcee7b80f6c0d039f4525148cb4736c729793f510f58",
+        "slurm_job_id": "21376798",
+        "status": "passed"
+      },
+      "html_output": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run-21376798/rendered-docs-html-final-clean",
+      "slurm_job_id": "21376798",
+      "stale_after_current_documentation_edits": false,
+      "status": "passed",
+      "strict_warnings_as_errors": true
+    },
+    "documentation_inventory": {
+      "orphan_count": 0,
+      "page_count": 356,
+      "slurm_job_id": "21376798",
+      "status": "passed"
+    },
+    "evidence_sufficiency_audit": {
+      "slurm_job_id": "21376798",
+      "status": "passed"
+    },
+    "final_release_quality": {
+      "command": "bash scripts/research/audits/verify_release_quality.sh",
+      "node": "gpuarm2",
+      "slurm_job_id": "21376798",
+      "status": "passed",
+      "strict_sphinx_warnings_as_errors": true
+    },
+    "final_scoped_pytest": {
+      "command": "bash scripts/research/audits/verify_release_quality.sh",
+      "passed": 931,
+      "skipped": 0,
+      "slurm_job_id": "21376798",
+      "status": "passed",
+      "warnings": 2
+    },
+    "focused_pytest": {
+      "command": ".venv-x86/bin/python -m pytest tests/unit/features/test_causal_features.py tests/unit/features/test_htf_alignment.py tests/unit/trading/test_risk_properties.py tests/unit/simulation/test_environment/test_trading_env_golden_traces.py tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py tests/integration/backtest/test_broker_fill_accounting.py tests/integration/backtest/test_broker_quote_parity.py -q",
+      "passed": 54,
+      "status": "passed",
+      "warnings": 2
+    },
+    "full_ci": "not run; repository delegates this merge gate to GitHub CI or Orchestra phase 9",
+    "full_tree_ruff_mypy": {
+      "mypy_source_file_count": 1028,
+      "ruff_format_and_lint_file_count": 1042,
+      "slurm_job_id": "21376798",
+      "status": "passed"
+    },
+    "isolated_setup_runs": [
+      {
+        "command": ".venv-x86/bin/python -m pytest tests/unit/decisioning/test_trade_setup_contract.py tests/unit/decisioning/test_trade_setup_properties.py -q",
+        "passed": 12,
+        "status": "passed"
+      },
+      {
+        "command": ".venv-x86/bin/python -m pytest tests/unit/models/test_trade_setup_observation_schema.py tests/unit/simulation/test_environment/test_trade_setup_observation.py tests/integration/test_trade_setup.py -q",
+        "passed": 22,
+        "status": "passed"
+      },
+      {
+        "collected": 10,
+        "command": ".venv-x86/bin/python -m pytest tests/unit/models/test_hybrid_actor.py -q",
+        "elapsed_before_stop_seconds": 201,
+        "progress_markers": 6,
+        "status": "incomplete",
+        "stop_reason": "Stopped after about two login CPUs were used for over three minutes; no completion summary."
+      }
+    ],
+    "local_data_sha256_inventory": {
+      "command": ".venv-x86/bin/python scripts/research/analysis/market_data/hash_local_data_inventory.py --check",
+      "distinct_resolved_file_count": 64,
+      "distinct_resolved_total_bytes": 16325449095,
+      "inventory_file_count": 140,
+      "inventory_total_bytes": 32650507987,
+      "manifest": "RAW_DATA_SHA256_MANIFEST.json",
+      "preliminary_manifest_external_archive": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/superseded_evidence/raw_data_sha256_manifest_preliminary.json",
+      "selected_campaign_unique_data_file_matches": 38,
+      "slurm_job_id": "21347604",
+      "status": "verified"
+    },
+    "provenance_dag": {
+      "command": ".venv-x86/bin/python -m scripts.research.analysis.evidence.build_research_provenance_dag",
+      "edges": 30391,
+      "manifest_count": 49,
+      "manifest_issues": 0,
+      "nodes": 2848,
+      "scope_limit": "declared hashes only; large inputs and artifacts are not rehashed",
+      "status": "passed"
+    },
+    "risk_policy_semantics": {
+      "command": ".venv-x86/bin/python -m pytest tests/unit/trading/test_repeated_payout_policy.py -q",
+      "passed": 18,
+      "scoped_mypy": "passed for scripts/research/audits/build_research_provenance_dag.py and tests/unit/trading/test_repeated_payout_policy.py",
+      "scoped_ruff": "passed for scripts/research/audits/build_research_provenance_dag.py and tests/unit/trading/test_repeated_payout_policy.py",
+      "status": "passed"
+    },
+    "sequential_release_quality_attempts": [
+      {
+        "elapsed": "00:00:49",
+        "job_id": "21347546",
+        "reason": "Completed inventory/profile/index/hash stages; stopped because verify_release_quality.sh is not executable and the first launcher invoked it directly.",
+        "status": "failed"
+      },
+      {
+        "elapsed": "00:00:39",
+        "job_id": "21347556",
+        "reason": "Inventory check passed; plotter correctly refused to overwrite the chart bundle produced by the prior attempt.",
+        "status": "failed"
+      },
+      {
+        "elapsed": "00:00:44",
+        "job_id": "21347571",
+        "reason": "Inventory, verified chart, docs indexes, and hash refresh passed; full-tree format check found five unformatted files, subsequently formatted.",
+        "status": "failed"
+      },
+      {
+        "elapsed": "00:00:43",
+        "job_id": "21347579",
+        "reason": "Full-tree format check passed; Ruff lint found import ordering and a stale helper path in the migrated tick audit; fixed and scoped-checked.",
+        "status": "failed"
+      },
+      {
+        "elapsed": "00:00:55",
+        "job_id": "21347586",
+        "reason": "Full-tree Ruff passed; Mypy found three test annotation issues; fixed before the next gate.",
+        "status": "failed"
+      },
+      {
+        "elapsed": "00:05:27",
+        "job_id": "21347604",
+        "reason": "Full-tree Ruff and Mypy passed; expanded suite passed 613 tests with one accelerator-only skip; strict Sphinx found three external README links.",
+        "status": "failed_after_tests"
+      },
+      {
+        "elapsed": "00:03:30",
+        "job_id": "21347623",
+        "reason": "Refreshed docs inventory/evidence audit and hashes; strict Sphinx build succeeded; release hashes verified.",
+        "status": "passed"
+      },
+      {
+        "elapsed": "00:03:25",
+        "job_id": "21347682",
+        "reason": "Forced full strict Sphinx rebuild after final feature-timing documentation update; docs inventory/evidence audit refreshed and release hashes verified.",
+        "status": "passed"
+      },
+      {
+        "elapsed": "00:03:49",
+        "job_id": "21348278",
+        "reason": "Strict Sphinx completed with warnings-as-errors on two new links to README files outside the docs source tree; links were changed to repository-path text.",
+        "status": "failed_after_render"
+      },
+      {
+        "elapsed": "00:00:10",
+        "job_id": "21348402",
+        "reason": "Full-tree Ruff passed; full-tree Mypy found three missing Counter[str] annotations in the new trade-lifecycle evaluator. Added annotations and verified all six touched Python files with scoped Mypy before the successful full gate.",
+        "status": "failed_at_mypy"
+      },
+      {
+        "elapsed": "00:04:59",
+        "job_id": "21348411",
+        "reason": "Full-tree Ruff format/check passed on 952 files; full-tree Mypy passed on 938 source files; expanded scoped suite passed 615 with one accelerator-only skip and two warnings; inventory/evidence checks and strict Sphinx passed.",
+        "status": "passed"
+      },
+      {
+        "elapsed": "00:02:45",
+        "job_id": "21348506",
+        "reason": "Final source state passed full-tree Ruff format/check (952 files), full-tree Mypy (938 files), expanded scoped tests (615 passed, one accelerator-only skip, two warnings), current inventory/evidence checks, and strict Sphinx.",
+        "status": "passed"
+      },
+      {
+        "elapsed": "05:42",
+        "job_id": "21348598",
+        "reason": "Current source/docs passed full-tree Ruff (952 files), Mypy (938 source files), scoped pytest (650 passed, 1 skipped, 3 warnings), inventory/evidence checks, and strict Sphinx. Wrapper metadata parsing was repaired from preserved successful output; no verification stages rerun.",
+        "status": "passed"
+      },
+      {
+        "elapsed": "05:04",
+        "job_id": "21348897",
+        "reason": "Current source/docs state passed full-tree Ruff (953 files), Mypy (939 source files), scoped pytest (650 passed, 1 skipped, 2 warnings), inventory/evidence checks, and strict Sphinx.",
+        "status": "passed"
+      }
+    ],
+    "setup_contract_suite": {
+      "collected": 44,
+      "note": "Combined command stalled; isolated setup catalog/property and observation/integration runs completed separately.",
+      "status": "incomplete",
+      "summary": null
+    }
+  }
+}

@@ -50,7 +50,7 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
             vae: Vae used by the operation described above.
             pre_ny_by_date: Key-value data used for the pre ny by date.
             pre_ny_data: Tabular data used for the pre ny data.
-            fill_latency_bars: Market bar or price data used for initialize action and episode contracts.
+            fill_latency_bars: Whole-M1-bar delay for entry orders after the initial next-bar fill.
             max_episode_steps: Number specifying the max episode steps for this operation.
             normalize_account: Whether to enable or require the normalize account.
         """
@@ -74,9 +74,17 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
             dict(pre_ny_by_date) if pre_ny_by_date is not None else {}
         )
         self.pre_ny_data = pre_ny_data  # legacy; prefer pre_ny_by_date
-        # Chain C: decision-to-fill latency, expressed in whole M1 bars.
-        # 0 = idealised next-bar fill (previous behaviour); 1 = 1-bar delay, etc.
-        self.fill_latency_bars = max(0, int(fill_latency_bars))
+        # Entry-order decision-to-fill latency, expressed in whole M1 bars.
+        # 0 = existing next-bar fill; 1 = one additional bar of delay.
+        if isinstance(fill_latency_bars, bool):
+            raise ValueError("fill_latency_bars must be a non-negative integer")
+        try:
+            latency_bars = int(fill_latency_bars)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("fill_latency_bars must be a non-negative integer") from exc
+        if latency_bars < 0 or latency_bars != fill_latency_bars:
+            raise ValueError("fill_latency_bars must be a non-negative integer")
+        self.fill_latency_bars = latency_bars
 
         # Hard cap on episode length. None → run to data end; int → truncate
         # at that step count (Gymnasium standard: truncated=True).

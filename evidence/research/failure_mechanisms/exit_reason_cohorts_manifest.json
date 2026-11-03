@@ -1,0 +1,39 @@
+{
+  "artifacts": [
+    {
+      "bytes": 1704,
+      "path": "evidence/research/failure_mechanisms/exit_reason_cohorts.json",
+      "sha256": "69c03969dd3b9780dcebea86d55a06049cfeb3f8b48166e7ec8175fca3bb4d7b"
+    },
+    {
+      "bytes": 2209,
+      "path": "evidence/research/failure_mechanisms/exit_reason_cohorts.csv",
+      "sha256": "b6870368ce9932f86f9f1a1677afd90c7e4f974a010d9a3b6f2713a96d9729e9"
+    },
+    {
+      "bytes": 6405,
+      "path": "scripts/research/analysis/evaluation/summarize_trade_exit_cohorts.py",
+      "sha256": "f6be57b36a8af9f92eb51b3e367a6cbb6fc4272af3de84ad91039f8586f339b0"
+    },
+    {
+      "bytes": 1867,
+      "path": "tests/unit/research/test_trade_exit_cohorts.py",
+      "sha256": "bb1d9c3b6e0e920f0dd84572e86bcc0433384dc2965170178850d4164a32540e"
+    },
+    {
+      "bytes": 299175,
+      "path": "evidence/research/selected_policy_trade_lifecycle/trade_excursions/a4a_trade_excursions.csv",
+      "sha256": "0da67488141d4f00caffd1729c3f0fd36857cce8415fa9182f285b3ce5fb5ff2"
+    },
+    {
+      "bytes": 250209,
+      "path": "evidence/research/selected_policy_trade_lifecycle/trade_excursions/a4b_trade_excursions.csv",
+      "sha256": "c3856449ab73a635093911a40b439cca6af6ee6125bdd87f9b58624e913c7cd0"
+    }
+  ],
+  "causal_attribution": false,
+  "evidence_class": "descriptive_exit_reason_cohorts",
+  "generated_at_utc": "2026-11-02T17:40:37Z",
+  "policy_replay_performed": false,
+  "schema_version": 1
+}

@@ -1,6 +1,6 @@
 """End-to-end bounded checks for structural exits in the backtest engine."""
 
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -42,6 +42,24 @@ def test_protective_fill_quote_uses_price_unit_spread_and_adverse_slippage() -> 
 
     assert (long_bid, long_ask) == (95.0, 95.6)
     assert (short_bid, short_ask) == (104.4, 105.0)
+
+
+def test_backtest_rejects_schema_vector_policy_without_adapter() -> None:
+    index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
+    bars = _bars(index)
+    features = pd.DataFrame(index=index)
+
+    with pytest.raises(
+        TypeError, match="schema-versioned action vectors require an explicit adapter"
+    ):
+        run_backtest(
+            bars,
+            features,
+            lambda _obs: cast(int, np.asarray([0.0])),
+            obs_window=1,
+            cost_model=CostModel(spread_points=0.0, point_size=0.01),
+            block_overnight=False,
+        )
 
 
 def test_trading_quote_contract_owns_protective_and_bar_stop_fills() -> None:
@@ -98,6 +116,33 @@ def test_structural_stop_executes_without_optional_max_loss_cap() -> None:
     assert stop["event_time_start"] >= opened["fill_time"]
     assert stop["event_time_start"] <= stop["time"] < stop["event_time_end"]
     assert stop["position_net_pnl"] == result["account"].balance - 100_000.0
+
+
+def test_backtest_resets_daily_loss_on_date_session_change_outside_ny() -> None:
+    index = pd.date_range("2026-01-05 23:56", periods=5, freq="1min", tz="UTC")
+    bars = _bars(index)
+    bars["session_id"] = [0, 0, 0, 0, 1]
+    bars["session"] = ["ny", "ny", "ny", "ny", "asia"]
+    features = pd.DataFrame({"last_swing_low": [99.0] * len(index)}, index=index)
+    actions = iter([1, 0, 0, 0])
+
+    result = run_backtest(
+        bars,
+        features,
+        lambda _obs: next(actions),
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.01),
+        use_structure_sl_tp=True,
+        swing_buffer_pts=1.0,
+        risk_frac=0.01,
+        min_lot=0.01,
+        max_lot=1.0,
+        hold_on_zero=True,
+        block_overnight=False,
+    )
+
+    assert result["account"].balance < result["account"].initial_balance
+    assert result["account"].daily_loss == pytest.approx(0.0)
 
 
 def test_delayed_tick_exit_records_the_actual_fill_timestamp() -> None:
@@ -257,7 +302,7 @@ def test_randomized_tick_fills_are_seeded_and_record_order_and_fill_times() -> N
         np.asarray([100.5, 100.6, 100.7, 100.8]),
     )
 
-    def run(seed: int) -> pd.DataFrame:
+    def run(seed: int) -> dict[str, Any]:
         actions = iter([1, 0, 0, 0])
         result = run_backtest(
             _bars(index),
@@ -271,12 +316,23 @@ def test_randomized_tick_fills_are_seeded_and_record_order_and_fill_times() -> N
             hold_on_zero=True,
             block_overnight=False,
         )
-        return cast(pd.DataFrame, result["trades"])
+        return result
 
-    first = run(19)
-    repeated = run(19)
+    first_result = run(19)
+    repeated_result = run(19)
+    first = cast(pd.DataFrame, first_result["trades"])
+    repeated = cast(pd.DataFrame, repeated_result["trades"])
     assert first["type"].tolist() == ["open", "eod_close"]
     pd.testing.assert_frame_equal(first, repeated)
+    pd.testing.assert_series_equal(first_result["equity"], repeated_result["equity"])
+    pd.testing.assert_series_equal(
+        first_result["total_economic_value_curve"],
+        repeated_result["total_economic_value_curve"],
+    )
+    assert first_result["breaches"] == repeated_result["breaches"]
+    assert first_result["breach_events"] == repeated_result["breach_events"]
+    for field in ("balance", "equity", "daily_loss", "max_drawdown", "open_pnl"):
+        assert getattr(first_result["account"], field) == getattr(repeated_result["account"], field)
     assert first["fill_quote_source"].eq("tick").all()
     assert first["execution_latency_ns"].between(0, 29_999_999).all()
     assert first["order_submission_time"].equals(first["execution_order_time"])
@@ -285,7 +341,10 @@ def test_randomized_tick_fills_are_seeded_and_record_order_and_fill_times() -> N
     assert first["actual_tick_time"].equals(first["fill_time"])
 
 
-def test_zero_latency_required_tick_fills_use_observed_ask_and_bid() -> None:
+@pytest.mark.parametrize("tick_slippage", [0.0, 0.1])
+def test_zero_latency_required_tick_fills_use_observed_ask_and_bid(
+    tick_slippage: float,
+) -> None:
     index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
     tick_times = pd.DatetimeIndex([*index[2:], index[-1] + pd.Timedelta(minutes=1)])
     tickbook = TickBook(
@@ -304,6 +363,7 @@ def test_zero_latency_required_tick_fills_use_observed_ask_and_bid() -> None:
         tickbook=tickbook,
         tick_execution_required=True,
         randomized_fill_latency_ms=0.0,
+        tick_fill_slippage_points=tick_slippage,
         hold_on_zero=True,
         block_overnight=False,
     )
@@ -312,13 +372,16 @@ def test_zero_latency_required_tick_fills_use_observed_ask_and_bid() -> None:
     opened = trades.loc[trades["type"] == "open"].iloc[0]
     closed = trades.loc[trades["type"] == "eod_close"].iloc[-1]
     assert opened["fill_quote_source"] == "tick"
-    assert opened["price"] == pytest.approx(100.2)  # Long buys at ask.
+    assert opened["price"] == pytest.approx(100.2 + tick_slippage)  # Long buys at ask.
     assert closed["fill_quote_source"] == "tick"
-    assert closed["price"] == pytest.approx(99.9)  # Long sells at bid.
+    assert closed["price"] == pytest.approx(99.9 - tick_slippage)  # Long sells at bid.
     assert trades["actual_tick_time"].notna().all()
 
 
-def test_zero_latency_required_protective_exit_uses_crossing_tick_bid() -> None:
+@pytest.mark.parametrize("tick_slippage", [0.0, 0.1])
+def test_zero_latency_required_protective_exit_uses_crossing_tick_bid(
+    tick_slippage: float,
+) -> None:
     index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
     tick_times = pd.DatetimeIndex(
         [index[2], index[2] + pd.Timedelta(seconds=5), index[-1] + pd.Timedelta(minutes=1)]
@@ -340,6 +403,7 @@ def test_zero_latency_required_protective_exit_uses_crossing_tick_bid() -> None:
         tickbook=tickbook,
         tick_execution_required=True,
         randomized_fill_latency_ms=0.0,
+        tick_fill_slippage_points=tick_slippage,
         use_structure_sl_tp=True,
         swing_buffer_pts=0.0,
         min_lot=0.01,
@@ -351,8 +415,8 @@ def test_zero_latency_required_protective_exit_uses_crossing_tick_bid() -> None:
     trades = cast(pd.DataFrame, result["trades"])
     opened = trades.loc[trades["type"] == "open"].iloc[0]
     stopped = trades.loc[trades["type"] == "stop_close"].iloc[0]
-    assert opened["price"] == pytest.approx(100.5)  # Long buys at ask.
-    assert stopped["price"] == pytest.approx(98.8)  # Long stop sells at crossing bid.
+    assert opened["price"] == pytest.approx(100.5 + tick_slippage)  # Long buys at ask.
+    assert stopped["price"] == pytest.approx(98.8 - tick_slippage)  # Long stop sells at bid.
     assert stopped["fill_time"] == tick_times[1]
     assert stopped["fill_quote_source"] == "tick"
     assert stopped["actual_tick_time"] == tick_times[1]
@@ -434,4 +498,17 @@ def test_randomized_backtest_fails_closed_without_tick_after_order_arrival() -> 
             max_tick_quote_wait_ms=1,
             hold_on_zero=True,
             block_overnight=False,
+        )
+
+
+@pytest.mark.parametrize("tick_slippage", [-0.1, float("nan"), float("inf")])
+def test_backtest_rejects_invalid_tick_fill_slippage(tick_slippage: float) -> None:
+    index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
+    with pytest.raises(ValueError, match="tick_fill_slippage_points"):
+        run_backtest(
+            _bars(index),
+            pd.DataFrame(index=index),
+            lambda _obs: 0,
+            obs_window=1,
+            tick_fill_slippage_points=tick_slippage,
         )

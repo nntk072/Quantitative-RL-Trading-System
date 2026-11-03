@@ -1,0 +1,194 @@
+{
+  "account_equity_reconciliation": {
+    "basis": "initial balance + completed position net PnL = final account equity + recorded payouts",
+    "difference": -2.9103830456733704e-11,
+    "final_equity": 89998.38242865316,
+    "initial_balance": 100000.0,
+    "payout_event_rows": 0,
+    "payout_sum": 0,
+    "position_net_pnl_sum": -10001.617571346873,
+    "status": "matched"
+  },
+  "aggregate_pnl_reconciliation": {
+    "difference": -3.2741809263825417e-11,
+    "position_net_pnl_sum": -10001.617571346873,
+    "reported_total_pnl": -10001.61757134684,
+    "status": "matched"
+  },
+  "counts": {
+    "completed_positions": 203,
+    "decision_event_types": {
+      "close": 14,
+      "eod_close": 32,
+      "forced_close": 1,
+      "open": 203,
+      "reject": 53896,
+      "sl_update": 20,
+      "stop_close": 118,
+      "tp_close": 38,
+      "tp_partial_close": 5,
+      "tp_update": 89
+    },
+    "decision_rows": 54416,
+    "entry_rejection_reasons": {
+      "entry_cooldown": 787,
+      "entry_state_not_armed": 52815,
+      "no_valid_sl": 170,
+      "no_valid_tp": 44,
+      "overnight_boundary": 80
+    },
+    "fill_event_rows": 411,
+    "fill_event_types": {
+      "close": 14,
+      "eod_close": 32,
+      "forced_close": 1,
+      "open": 203,
+      "stop_close": 118,
+      "tp_close": 38,
+      "tp_partial_close": 5
+    },
+    "positions": 203,
+    "positions_with_holding_seconds": 203,
+    "positions_with_linked_fill_events": 203,
+    "unlinked_fill_position_ids": 0
+  },
+  "cycle_reconciliation": {
+    "checks": {},
+    "event_rows": 0,
+    "failure_count": 0,
+    "failure_rows": 0,
+    "failures": {},
+    "missing_columns": [],
+    "missing_failure_link_columns": {},
+    "reported_cycle_count": 1.0,
+    "status": "not_applicable",
+    "success_rows": 0
+  },
+  "decision_order_checks": {
+    "decision_le_submission_le_fill": 203
+  },
+  "decision_to_submission_seconds": {
+    "count": 203,
+    "maximum": 60.0,
+    "median": 60.0,
+    "minimum": 60.0
+  },
+  "exit_reasons": {
+    "ema_21_exit": 14,
+    "max_drawdown": 1,
+    "session_end": 32,
+    "structure_sl": 118,
+    "structure_tp3": 38
+  },
+  "holding_seconds": {
+    "mean": 3158.14239408867,
+    "median": 490.997
+  },
+  "inputs": {
+    "breach_events.csv": {
+      "bytes": 133,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/breach_events.csv",
+      "sha256": "8f0bdd57cc5e9cf0cf9d57ae4044be3710211e363fd472d3c3dba659f0b9da98"
+    },
+    "cycle_events.csv": {
+      "bytes": 1,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/cycle_events.csv",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "evaluation_diagnostics.json": {
+      "bytes": 19337780,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/evaluation_diagnostics.json",
+      "sha256": "7d2f0db6f4ca8c7e52f1ccf080f516915720fe7b4b1e30651eb14c188b1b763b"
+    },
+    "fills.csv": {
+      "bytes": 732796,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/fills.csv",
+      "sha256": "f6b33f9ba9d19cd1770a40143eeed741148db34c46eeae30f2f33ef849083d08"
+    },
+    "metrics.json": {
+      "bytes": 701,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/metrics.json",
+      "sha256": "1db4588cc6fabe6249ef90bb15cd7fbb3de9f9c9570db0de31f44662cca7aba1"
+    },
+    "payouts.csv": {
+      "bytes": 1,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/payouts.csv",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "positions.csv": {
+      "bytes": 41482,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/positions.csv",
+      "sha256": "a5c0a5541c26157f344d19bae02b963b3980e1410573b3bab82d7fefc83c16f0"
+    },
+    "reanalysis_manifest.json": {
+      "bytes": 132830,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/reanalysis_manifest.json",
+      "sha256": "4a6f40cc6230742870147f998a95879da01a11555f8d5bd02d3d01a1b75165be"
+    },
+    "trades.csv": {
+      "bytes": 29354974,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/trades.csv",
+      "sha256": "2fa7155e9aaf4fd2aa937d3cdd625a72b37317ae1b4566d947edbc86f0e2814e"
+    }
+  },
+  "integrity_failure_count": 0,
+  "integrity_status": "matched",
+  "lifecycle_check_failures": {},
+  "lifecycle_checks": {
+    "fill_count_matches_event_rows": 203,
+    "last_close_event_time_matches_position_exit_time": 203,
+    "one_open_and_at_least_one_close": 203,
+    "open_fill_matches_position_entry_time": 203,
+    "position_marked_complete": 203
+  },
+  "limitations": [
+    "Recorded decision/order/fill timestamps reconcile logged events but do not establish authoritative feed chronology or executable quote availability.",
+    "Decision-to-submission gaps are descriptive; they may reflect bar-label versus completed-bar availability semantics rather than agent or network latency.",
+    "Candidate detection and eligibility before recorded policy decisions are not fully linked by these CSVs.",
+    "Per-position MFE and MAE are not present in the required source columns and are not derived by this report.",
+    "Payout and total-economic-value reconciliation requires the recorded payout ledger and evaluation diagnostics; missing source fields are reported as incomplete.",
+    "Repeated-payout cycle outcomes reconcile against payout, breach, and diagnostic ledgers when the corresponding events occur; missing linkage fields remain incomplete.",
+    "This report is descriptive and does not identify causal loss mechanisms or economic superiority."
+  ],
+  "mfe_mae_columns": {
+    "fills.csv": [],
+    "positions.csv": [],
+    "trades.csv": []
+  },
+  "payout_reconciliation": {
+    "checks": {
+      "payout_rows_match_cycle_successes": 1,
+      "payout_sum_matches_reported_cumulative": 1
+    },
+    "ending_total_economic_value_curve": null,
+    "event_rows": 0,
+    "failure_count": 0,
+    "failures": {},
+    "missing_columns": [],
+    "payout_sum": 0,
+    "reported_cumulative_payouts": 0.0,
+    "reported_cycle_successes": 0.0,
+    "reported_total_economic_value": 89998.38242865316,
+    "status": "not_applicable"
+  },
+  "pnl_reconciliation_checks": {
+    "close_fill_net_pnl_matches_position": 203,
+    "initial_plus_position_net_pnl_matches_final_equity": 1,
+    "position_net_pnl_matches_reported_total": 1
+  },
+  "scope": {
+    "causal_attribution": false,
+    "checkpoint_sha256": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703",
+    "evidence_role": "descriptive reconciliation of recorded events",
+    "historical_holdout_inspected": true,
+    "partition_name": "testing",
+    "position_time_range_utc": {
+      "end": "2026-03-30T14:43:00+00:00",
+      "start": "2026-01-02T14:05:00.028000+00:00"
+    },
+    "run_directory": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing",
+    "seed": 50,
+    "source_config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+    "source_run": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn"
+  }
+}

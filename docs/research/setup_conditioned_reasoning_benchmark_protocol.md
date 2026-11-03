@@ -45,9 +45,12 @@ Keep rollout-time learning diagnostics separate from train/test replay
 diagnostics and keep training and testing in their existing output folders.
 
 The decision trace records the selected category, eligible category IDs,
-mask validity, setup entropy, and execution coordinates. Trade-level checks
-preserve the primary setup, selected timeframe, structural references, and
-schema version.
+mask validity, setup entropy, and execution coordinates. It stores
+`decision_time` separately from `valuation_time`; the compatibility `time`
+column aliases `decision_time`. Monthly decision diagnostics group by the
+decision timestamp in the market bar timezone, even when fill or valuation
+crosses a month boundary. Trade-level checks preserve the primary setup,
+selected timeframe, structural references, and schema version.
 
 ## Gates
 

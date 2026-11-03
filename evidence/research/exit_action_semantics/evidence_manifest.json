@@ -1,0 +1,241 @@
+{
+  "assets": [
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/action_histograms.csv",
+      "historical_source_sha256": "28f8eeda942a757f335a607b721d0aaec4b766c8e288e086db3599683e660c64",
+      "path": "action_histograms.csv",
+      "role": "Distribution of decoder action coordinates.",
+      "sha256": "28f8eeda942a757f335a607b721d0aaec4b766c8e288e086db3599683e660c64",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/build_exit_semantics_report.py.txt",
+      "historical_source_sha256": "c0aa4f00551ecda93dafe4d07553da17ff5d6511270182462a0e2062058a7d78",
+      "path": "decoder_comparison_analysis.source.txt",
+      "role": "Historical source snapshot for the decoder-comparison report.",
+      "sha256": "c0aa4f00551ecda93dafe4d07553da17ff5d6511270182462a0e2062058a7d78",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/config.yaml",
+      "historical_source_sha256": "ea2361cb70bfde81e3b95a177f44783fbbaffffc4bd29fbe72805d277cf742b0",
+      "path": "evaluation_configuration.yaml",
+      "role": "Resolved historical evaluation configuration.",
+      "sha256": "ea2361cb70bfde81e3b95a177f44783fbbaffffc4bd29fbe72805d277cf742b0",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/counterfactual_patch.diff",
+      "historical_source_sha256": "7c77a75683795adf2a082d0373e605be0ddb83b6147df876374ac4cdf941ba60",
+      "path": "counterfactual_decoder_patch.diff",
+      "role": "Exact historical decoder counterfactual patch.",
+      "sha256": "7c77a75683795adf2a082d0373e605be0ddb83b6147df876374ac4cdf941ba60",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/decision_gates.json",
+      "historical_source_sha256": "e1f704540e900a1b190760838b0b39f3adc5d890b32308e2351943f25b84c936",
+      "path": "decision_gates.json",
+      "role": "Recorded evaluation gates and disposition.",
+      "sha256": "e1f704540e900a1b190760838b0b39f3adc5d890b32308e2351943f25b84c936",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_breakdown.csv",
+      "historical_source_sha256": "195d4271b166d82d59ec673a5d8dbf23702e681686770ead10df0255995fd281",
+      "path": "exit_breakdown.csv",
+      "role": "Exit-reason breakdown by decoder.",
+      "sha256": "195d4271b166d82d59ec673a5d8dbf23702e681686770ead10df0255995fd281",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_semantics_equity_v2_vs_v3_train2025.png",
+      "historical_source_sha256": "2230f4f477aa5b0e5989c1db82fde4323a87f99d7be330f209f2effe50b82fe2",
+      "path": "decoder_equity_and_drawdown.png",
+      "role": "Historical training-partition equity and drawdown figure.",
+      "sha256": "2230f4f477aa5b0e5989c1db82fde4323a87f99d7be330f209f2effe50b82fe2",
+      "transformation": null
+    },
+    {
+      "content_transformed": true,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/exit_semantics_findings.md",
+      "historical_source_sha256": "f150693db5b06561e1ed514ec55a47f725f7dcfd77730898799b3bb4ef3d2bcc",
+      "path": "decoder_behavior_comparison.md",
+      "role": "Human interpretation of the frozen decoder comparison.",
+      "sha256": "caf5e65bd23c5f1eba8cac5f06b10d33d948d46d999426cbd2fc37a74be5e579",
+      "transformation": "Rewrote the embedded figure target to its semantic packet filename; narrative and measurements unchanged."
+    },
+    {
+      "content_transformed": true,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/fixed_entry_shadow_report.md",
+      "historical_source_sha256": "65c7ed35d5dac6e4303cb48f1eb4b47986d00943772428f328cb98e1bf3c84e0",
+      "path": "fixed_entry_shadow_findings.md",
+      "role": "Fixed-entry shadow interpretation and scope.",
+      "sha256": "f88e1e6dbd8e3a93cb94a66718ec7d5e488e148948c1b60693ef6e1a88505a0c",
+      "transformation": "Updated packet-local filenames; narrative and measurements unchanged."
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/paired_delta_r.png",
+      "historical_source_sha256": "196e8798d2e4414aa9a68e880de271040713a7d768902f6f3a66a849c4bf8d43",
+      "path": "fixed_entry_shadow_delta_r.png",
+      "role": "Paired exit-only return comparison figure.",
+      "sha256": "196e8798d2e4414aa9a68e880de271040713a7d768902f6f3a66a849c4bf8d43",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/provenance.json",
+      "historical_source_sha256": "f162c111668a7ed4467993955aa6edb4ca493961d5845d77acf47927a4718d3b",
+      "path": "fixed_entry_shadow_provenance.json",
+      "role": "Fixed-entry shadow identity and output hashes.",
+      "sha256": "f162c111668a7ed4467993955aa6edb4ca493961d5845d77acf47927a4718d3b",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/paired_trades.csv",
+      "historical_source_sha256": "3673cf2a77832ba14623a51b940d0821c29a01c507f2d9615e4143f0f7e8a395",
+      "path": "fixed_entry_shadow_trades.csv",
+      "role": "Frozen-entry paired trade ledger.",
+      "sha256": "3673cf2a77832ba14623a51b940d0821c29a01c507f2d9615e4143f0f7e8a395",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/fixed_entry_shadow/shadow_events.jsonl",
+      "historical_source_sha256": "c7fea235575d9f05d0bc9962c559d23c94b513ee108483630cd26ae350d17c54",
+      "path": "fixed_entry_shadow_events.jsonl",
+      "role": "Frozen-entry fill and management event trace.",
+      "sha256": "c7fea235575d9f05d0bc9962c559d23c94b513ee108483630cd26ae350d17c54",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase1_comparison.json",
+      "historical_source_sha256": "852767c245f4e34b2ce4abe75389d0b818ae7947cec895631e78da1823e69976",
+      "path": "first_pass_decoder_comparison.json",
+      "role": "Full decoder comparison summary.",
+      "sha256": "852767c245f4e34b2ce4abe75389d0b818ae7947cec895631e78da1823e69976",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_cohort_summary.json",
+      "historical_source_sha256": "050fc201cc3bd346b62a895c1dbd612ab764a4c155f15f03543d8200f9b20f92",
+      "path": "common_entry_cohort_summary.json",
+      "role": "Summary for selected exact-common-entry cohort.",
+      "sha256": "050fc201cc3bd346b62a895c1dbd612ab764a4c155f15f03543d8200f9b20f92",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_common_entry_cohort.csv",
+      "historical_source_sha256": "26dd074b5dda0219f0edb0e73b724fc00a500f0b5fe2bc6a644a10b50fe10aa7",
+      "path": "common_entry_cohort.csv",
+      "role": "Selected exact-common-entry observations.",
+      "sha256": "26dd074b5dda0219f0edb0e73b724fc00a500f0b5fe2bc6a644a10b50fe10aa7",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_common_entry_monthly.csv",
+      "historical_source_sha256": "e25276b3371afe226b5f7155d15fe1c1183becc021e3f6aaa5cfe8e8d86078bd",
+      "path": "monthly_common_entry_summary.csv",
+      "role": "Monthly summary of selected common-entry cohort.",
+      "sha256": "e25276b3371afe226b5f7155d15fe1c1183becc021e3f6aaa5cfe8e8d86078bd",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_entry_cohort.py.txt",
+      "historical_source_sha256": "ce5645b74b1a31c3d037f5732239c73c5edb3cf77bf63e6cd6a742ecd35144cd",
+      "path": "common_entry_cohort_analysis.source.txt",
+      "role": "Historical source snapshot for common-entry cohort analysis.",
+      "sha256": "ce5645b74b1a31c3d037f5732239c73c5edb3cf77bf63e6cd6a742ecd35144cd",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort.csv",
+      "historical_source_sha256": "ad8e725c51b7a4ee8168c0c0af1f2a4c92fa22fa9332577bf131ec42158f414b",
+      "path": "frozen_v2_entry_cohort.csv",
+      "role": "Frozen v2 entry cohort used for shadow analysis.",
+      "sha256": "ad8e725c51b7a4ee8168c0c0af1f2a4c92fa22fa9332577bf131ec42158f414b",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort.py.txt",
+      "historical_source_sha256": "38dc9c9df1839d0881c85a5978b444d4a79806b3e8b57c0b5c8494ed5224a0de",
+      "path": "frozen_v2_entry_cohort_analysis.source.txt",
+      "role": "Historical source snapshot for frozen-v2 cohort analysis.",
+      "sha256": "38dc9c9df1839d0881c85a5978b444d4a79806b3e8b57c0b5c8494ed5224a0de",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_fixed_v2_entry_cohort_summary.json",
+      "historical_source_sha256": "e283694e046e9148076254e44b543d238448afab1677c6f667c7d567d0b8b23e",
+      "path": "frozen_v2_entry_cohort_summary.json",
+      "role": "Summary of frozen v2 entry cohort.",
+      "sha256": "e283694e046e9148076254e44b543d238448afab1677c6f667c7d567d0b8b23e",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/phase2_unmatched_entry_cohort.csv",
+      "historical_source_sha256": "e92bb2697d431a51049cd3e56c4ee9d24fe44609f1cd3659a9fb631065f1d058",
+      "path": "unmatched_entry_cohort.csv",
+      "role": "Entries without an exact common-entry match.",
+      "sha256": "e92bb2697d431a51049cd3e56c4ee9d24fe44609f1cd3659a9fb631065f1d058",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/provenance.json",
+      "historical_source_sha256": "9f7f616d10b18896d079e62ff9ba9cd1304bfe15799d613a4f73c869398f38b9",
+      "path": "run_identity.json",
+      "role": "Historical run, source, checkpoint, and data identity.",
+      "sha256": "9f7f616d10b18896d079e62ff9ba9cd1304bfe15799d613a4f73c869398f38b9",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/time_slice_comparison.csv",
+      "historical_source_sha256": "811f5c61c083cd9e44998288c44894c98be4ca1f18cfed0763149629e4ab061e",
+      "path": "time_slice_comparison.csv",
+      "role": "Time-slice decoder comparison.",
+      "sha256": "811f5c61c083cd9e44998288c44894c98be4ca1f18cfed0763149629e4ab061e",
+      "transformation": null
+    },
+    {
+      "content_transformed": false,
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/train_only_screen.json",
+      "historical_source_sha256": "62be92be33c01334f6c08eab6ce00a954155288c5d4485180982005399c6c21c",
+      "path": "train_partition_screen.json",
+      "role": "Training-partition screen record.",
+      "sha256": "62be92be33c01334f6c08eab6ce00a954155288c5d4485180982005399c6c21c",
+      "transformation": null
+    }
+  ],
+  "claim_scope": "Frozen-checkpoint decoder comparison and selected common-entry/fixed-entry shadow evidence on the declared training partition.",
+  "evidence_grade": "R2 for the tracked common-entry cohort recomputation; the full closed-loop comparison is not reproduced by the tracked packet.",
+  "historical_packet_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024",
+  "historical_source_tree": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_20261031",
+  "packet": "exit_action_semantics",
+  "retained_outside_current_packet": [
+    {
+      "historical_source_path": "evidence/research/archive_2026/evidence/exit_action_semantics_20261024/original_exit_action_semantics_proposal.md",
+      "reason": "Original proposal is archival planning input, not evidence needed to reproduce the recorded claim.",
+      "sha256": "862c3ef67f0e705ee6901b09603363e96a242769461ae945f1bf1de85255ad06"
+    }
+  ]
+}

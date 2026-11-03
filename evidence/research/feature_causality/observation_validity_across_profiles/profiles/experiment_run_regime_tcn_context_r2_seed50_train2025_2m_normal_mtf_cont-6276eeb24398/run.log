@@ -1,0 +1,8 @@
+{
+  "group_key": "6276eeb24398417e7c58022fa0ceb58d51a0d0d70d233e64d229d688ae6f0b11",
+  "profile_ids": [
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_mtf_context_20261026"
+  ],
+  "representative_profile": "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_mtf_context_20261026",
+  "status": "measured_training_split"
+}

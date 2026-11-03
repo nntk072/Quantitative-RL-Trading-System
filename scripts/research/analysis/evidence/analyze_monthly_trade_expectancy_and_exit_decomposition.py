@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Monthly actual-fill R accounting and paired exit decomposition for P6.
+"""Monthly actual-fill R accounting and paired exit attribution.
 
-The analysis uses only the 2025 training ledger for the selected 2M P6 runs.
+The analysis uses only the 2025 training ledger for the selected 2M policy pair.
 It reports actual bid/ask net R and mid-quote gross R, then replays each frozen
 entry with a fixed EMA21 exit as a conditional reference. It never loads or
 queries the policy and never enters the 2026 split.
@@ -19,7 +19,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from omegaconf import OmegaConf
-from scripts.research.analysis import exit_shadow_fixed_entry as shadow
+from scripts.research.analysis.evaluation import fixed_entry_exit_shadow as shadow
 
 from market_data.loading.ticks import TickBook
 from simulation.environment import make_env
@@ -446,9 +446,9 @@ def run(root: Path, out: Path) -> dict[str, Any]:
 
 def _report(results: dict[str, Any]) -> str:
     lines = [
-        "# P6 2M Actual-Fill Monthly R and March–April Decomposition",
+        "# Monthly Entry and Exit Attribution from Actual Fills",
         "",
-        "This is a training-split-only replay analysis for the two completed 2M P6 arms, covering the configured 2024-12-30 through 2025-12-31 training interval. The tables show entry months and include the initial partial December 2024 month. It uses actual tick fills to report mid-quote gross R and raw bid/ask historical net R, with no stress and zero commission. The paired exit analysis freezes each actual entry and compares its actual outcome to an EMA21-exit replay with the same position size, stop, and paired latency. It does not use PPO inference, does not compound a counterfactual account, and does not read 2026 data.",
+        "This is a training-split-only replay analysis for the two selected 2M policy arms, covering the configured 2024-12-30 through 2025-12-31 training interval. The tables show entry months and include the initial partial December 2024 month. It uses actual tick fills to report mid-quote gross R and raw bid/ask historical net R, with no stress and zero commission. The paired exit analysis freezes each actual entry and compares its actual outcome to an EMA21-exit replay with the same position size, stop, and paired latency. It does not use PPO inference, does not compound a counterfactual account, and does not read 2026 data.",
         "",
         "## Execution manifest and fill audit",
         "",
@@ -502,7 +502,7 @@ def _report(results: dict[str, Any]) -> str:
         f"- Analysis script SHA-256: `{results['analysis_script_sha256']}`.",
         f"- Bootstrap: {results['bootstrap']['resamples']:,} resamples, seed {results['bootstrap']['seed']}.",
         "- Per-entry matched data: `ladder_*_paired_trades.csv`.",
-        "- Complete input, manifest and source hashes: `p6_monthly_entry_exit_decomposition.json`.",
+        "- Complete input, manifest and source hashes: `entry_and_exit_attribution.json`.",
         "- Script: [`analyze_monthly_trade_expectancy_and_exit_decomposition.py`](../../../scripts/research/analysis/evidence/analyze_monthly_trade_expectancy_and_exit_decomposition.py).",
         "",
     ]
@@ -515,20 +515,20 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("outputs/research_audits/p6_monthly_entry_exit_20261025"),
+        default=Path("outputs/research_audits/entry_and_exit_attribution"),
     )
     args = parser.parse_args()
     root = args.repo_root.resolve()
     output = args.output_dir if args.output_dir.is_absolute() else root / args.output_dir
     results = run(root, output)
     results["report_sha256_before_provenance"] = None
-    (output / "p6_monthly_entry_exit_decomposition.json").write_text(
+    (output / "entry_and_exit_attribution.json").write_text(
         json.dumps(results, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    report_path = output / "p6_monthly_entry_exit_decomposition.md"
+    report_path = output / "entry_and_exit_attribution.md"
     report_path.write_text(_report(results), encoding="utf-8")
     results["report_sha256_before_provenance"] = _sha256(report_path)
-    (output / "p6_monthly_entry_exit_decomposition.json").write_text(
+    (output / "entry_and_exit_attribution.json").write_text(
         json.dumps(results, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     print(json.dumps({"report": str(report_path), "summary": results["arms"]}, indent=2))

@@ -35,6 +35,13 @@ class MultiSymbolRobot:
             paper_trading: When True (the safe default), every signal and intended
                 order is logged but no orders are placed with the broker.
         """
+        if not paper_trading and not bool(
+            getattr(risk_manager, "supports_training_account_loss_guardrails", False)
+        ):
+            raise ValueError(
+                "real-order mode requires a risk manager with training-equivalent daily and "
+                "maximum account-loss guardrails"
+            )
         self.symbol_manager = symbol_manager
         self.trader = trader
         self.strategies = strategies
@@ -120,6 +127,20 @@ class MultiSymbolRobot:
                 total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
 
                 if total_buy == 0:
+                    if not self.paper_trading and not bool(
+                        getattr(
+                            self.risk_manager,
+                            "supports_training_account_loss_guardrails",
+                            False,
+                        )
+                    ):
+                        logger.error(
+                            "Refusing live entry for {}: risk manager does not enforce training "
+                            "daily and maximum account-loss guardrails",
+                            symbol,
+                        )
+                        return
+
                     # Calculate position size
                     position_size = self.calculate_position_size(symbol)
                     if position_size <= 0.0:
@@ -181,6 +202,20 @@ class MultiSymbolRobot:
                 total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
 
                 if total_sell == 0:
+                    if not self.paper_trading and not bool(
+                        getattr(
+                            self.risk_manager,
+                            "supports_training_account_loss_guardrails",
+                            False,
+                        )
+                    ):
+                        logger.error(
+                            "Refusing live entry for {}: risk manager does not enforce training "
+                            "daily and maximum account-loss guardrails",
+                            symbol,
+                        )
+                        return
+
                     # Calculate position size
                     position_size = self.calculate_position_size(symbol)
                     if position_size <= 0.0:

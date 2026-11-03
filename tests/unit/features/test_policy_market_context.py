@@ -2,8 +2,12 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from features.context.policy_market import build_policy_market_context
+from features.context.policy_market import (
+    attach_policy_market_context,
+    build_policy_market_context,
+)
 from market_data.loading.ticks import TickBook
 
 
@@ -70,3 +74,44 @@ def test_future_ticks_do_not_change_completed_bar_context(tmp_path) -> None:
     )
 
     pd.testing.assert_series_equal(full.iloc[0], prefix.iloc[0])
+
+
+def test_attach_policy_market_context_preserves_features_and_appends_context(tmp_path) -> None:
+    index = pd.date_range("2025-11-28 16:30", periods=2, freq="min", tz="Etc/GMT-3")
+    bars = pd.DataFrame({"close": [100.0, 101.0]}, index=index)
+    features = pd.DataFrame({"atr_5": [2.0, 2.0], "ret_1": [0.01, -0.01]}, index=index)
+    schedule = tmp_path / "schedule.csv"
+    schedule.write_text(
+        "session_date,scheduled_ny_close_broker_time,scheduled_short\n",
+        encoding="utf-8",
+    )
+
+    result = attach_policy_market_context(
+        bars,
+        features,
+        _book(index, [5, 30, 60, 90]),
+        schedule_path=schedule,
+    )
+
+    assert result.index.equals(features.index)
+    pd.testing.assert_frame_equal(result.loc[:, features.columns], features)
+    assert result["tick_quote_available"].eq(1.0).all()
+
+
+def test_attach_policy_market_context_rejects_duplicate_context_columns(tmp_path) -> None:
+    index = pd.date_range("2025-11-28 16:30", periods=1, freq="min", tz="Etc/GMT-3")
+    bars = pd.DataFrame({"close": [100.0]}, index=index)
+    features = pd.DataFrame({"atr_5": [2.0], "tick_quote_available": [1.0]}, index=index)
+    schedule = tmp_path / "schedule.csv"
+    schedule.write_text(
+        "session_date,scheduled_ny_close_broker_time,scheduled_short\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="columns already exist"):
+        attach_policy_market_context(
+            bars,
+            features,
+            _book(index, [5]),
+            schedule_path=schedule,
+        )

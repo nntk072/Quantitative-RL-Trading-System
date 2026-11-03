@@ -1,0 +1,33 @@
+{
+  "generator_path": "scripts/research/analysis/market_data/export_market_data_quality_tables.py",
+  "generator_sha256": "3b71d60a9f5373189547c6602d965fefe50a71a93f2cb919c22f5f852522f85b",
+  "input_hashes": {
+    "config/base/default.yaml": "a9ab42e1bcdcfcb04606ae77415672fcfeb703a6ac6d5e14bdf548dba035134f",
+    "config/ny_session_schedule.csv": "7e9f5def3385185905f7265f946a0835ccb43c53f1351c057aa23f00480e6cbc",
+    "evidence/research/market_data_quality/configured_timeframe_parity.json": "5526f13a37b48a7cdcd5111a3b057d3d77996c3126283d7f319349b2bbdc92a0",
+    "evidence/research/market_data_quality/local_market_data_quality.json": "ece6f87483318a41ea91ddb4b84f4f378775321229691c5812008f8116b1c97e",
+    "market_data/loading/bars.py": "47d90773b0db0948bf301759cf877f92ff09f77ca8831c5a104f925177c4b7a6",
+    "market_data/loading/ticks.py": "50250798b0db1a8a20e5b006705bff40b40861860e538493c407ae28d6d41f83"
+  },
+  "outputs": {
+    "configured_bar_source_coverage.png": {
+      "plot_type": "descriptive nominal-grid occupancy",
+      "sha256": "629747a80eeaea5139f445e329ec5ac123eb284290c8395e22ef551854c0a175"
+    },
+    "configured_timeframe_coverage.csv": {
+      "rows": 32,
+      "sha256": "e14ff116e5fdf4abf09f576dcf38ddaa1e38e11516634d322db70b059d6fe4bd"
+    },
+    "local_data_dictionary.md": {
+      "contains_raw_rows": false,
+      "sha256": "397ff57e9e35281327f686ed38dc60733bf9f12c684ff1106d09367de78f588c"
+    },
+    "period_quality_counts.csv": {
+      "rows": 138992,
+      "sha256": "fa245ecbc28ab4b208319a7b4a42d7c18d1797c61c522e318ad96c23a6c04bce"
+    }
+  },
+  "period_basis": "parsed source wall-clock labels in the input quality report; no timezone/session reinterpretation",
+  "raw_data_reread": false,
+  "schema": "qrl.market_data_quality_tables.v1"
+}

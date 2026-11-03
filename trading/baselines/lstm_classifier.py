@@ -30,10 +30,11 @@ def build_sweep_dataset(
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Build labelled (features-window, direction) pairs for training.
 
-    A bar is labelled +1 (-1) when any future close within ``horizon``
-    bars rises above the current asian/london high (falls below the
-    corresponding low). Bars with no sweep in either direction within the
-    horizon are labelled 0.
+    Samples use the session levels known at the final observed row
+    ``i - 1`` and inspect closes from row ``i`` onward. The label is +1 (-1)
+    when the first future close crossing is above a high (below a low); no
+    crossing, or no available level, is labelled 0. Including neutral rows is
+    required for the declared three-class head to learn abstention.
 
     Args:
         bars: OHLCV DataFrame with DatetimeIndex.
@@ -78,17 +79,24 @@ def build_sweep_dataset(
     samples: list[NDArray[np.float32]] = []
     labels: list[int] = []
 
-    for i in range(window, n - horizon):
+    for i in range(window, n - horizon + 1):
         future = close[i : i + horizon]
-        valid_high = np.isfinite(highs[i])
-        valid_low = np.isfinite(lows[i])
+        decision_index = i - 1
+        valid_high = np.isfinite(highs[decision_index])
+        valid_low = np.isfinite(lows[decision_index])
         label = 0
-        if valid_high and float((future > highs[i]).any()):
+        high_crossings: list[int] = (
+            np.flatnonzero(future > highs[decision_index]).tolist() if valid_high else []
+        )
+        low_crossings: list[int] = (
+            np.flatnonzero(future < lows[decision_index]).tolist() if valid_low else []
+        )
+        first_high = high_crossings[0] if high_crossings else None
+        first_low = low_crossings[0] if low_crossings else None
+        if first_high is not None and (first_low is None or first_high < first_low):
             label = 1
-        elif valid_low and float((future < lows[i]).any()):
+        elif first_low is not None and (first_high is None or first_low < first_high):
             label = -1
-        if label == 0:
-            continue
 
         seq = feat_values[i - window : i]
         seq = np.nan_to_num(seq, nan=0.0)

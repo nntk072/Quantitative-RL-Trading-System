@@ -117,14 +117,39 @@ def to_policy_action(decision: Decision) -> int | np.ndarray[Any, Any]:
         Array returned by ``to_policy_action``.
     """
     action = decision.action
+    schema = decision.action_schema
+    if not schema.version or not schema.key or not schema.coordinates:
+        raise ValueError("decision action schema must have a version, key, and coordinates")
+    if len(set(schema.coordinates)) != len(schema.coordinates):
+        raise ValueError("decision action schema coordinates must be unique")
     if isinstance(action, DiscreteAction):
+        if schema.kind != "discrete":
+            raise ValueError("discrete decision requires a discrete action schema")
+        if not isinstance(action.index, (int, np.integer)) or isinstance(action.index, bool):
+            raise ValueError("discrete decision index must be an integer")
+        if action.index < 0 or action.index >= len(schema.coordinates):
+            raise ValueError("discrete decision index is outside its action schema")
+        if action.name != schema.coordinates[action.index]:
+            raise ValueError("discrete decision name disagrees with its action schema")
         return action.index
     if isinstance(action, ContinuousAction):
-        return np.asarray([action.value], dtype=np.float32)
-    ordered = decision.action_schema.coordinates
+        if schema.kind != "continuous" or len(schema.coordinates) != 1:
+            raise ValueError(
+                "scalar continuous decision requires a one-coordinate continuous schema"
+            )
+        values = np.asarray([action.value], dtype=np.float32)
+        if not np.isfinite(values).all():
+            raise ValueError("continuous decision must contain only finite values")
+        return values
+    if schema.kind != "continuous":
+        raise ValueError("structured decision requires a continuous action schema")
+    ordered = schema.coordinates
     if set(action.coordinates) != set(ordered):
         raise ValueError("structured decision coordinates disagree with its action schema")
-    return np.asarray([action.coordinates[name] for name in ordered], dtype=np.float32)
+    values = np.asarray([action.coordinates[name] for name in ordered], dtype=np.float32)
+    if not np.isfinite(values).all():
+        raise ValueError("structured decision must contain only finite values")
+    return values
 
 
 __all__ = [

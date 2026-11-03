@@ -1,0 +1,19 @@
+{
+  "group_key": "3c768c8b070e2e5508ec60c0bef3909ce9f645a1b52348b7bd6c759e7403a0fd",
+  "profile_ids": [
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_20261026_v1",
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1",
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_v30_20261027_v2",
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_entry_ideas_20261026",
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_entry_ideas_20261026_fix1",
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_entry_ideas_20261026_fix2",
+    "experiment_run/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1",
+    "experiment_run/sustainable_growth_remaining3_seed50_train2025_2m_v30_20261027_v1",
+    "experiment_run/sustainable_growth_sac_recovery2_seed50_train2025_2m_v30_20261027_v1",
+    "experiment_run/sustainable_growth_sac_recovery3_seed50_train2025_2m_v30_20261027_v1",
+    "experiment_run/sustainable_growth_sac_recovery4_seed50_train2025_2m_v30_20261027_v1",
+    "experiment_run/sustainable_growth_sac_recovery_seed50_train2025_2m_v30_20261027_v1"
+  ],
+  "representative_profile": "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_20261026_v1",
+  "status": "measured_training_split"
+}

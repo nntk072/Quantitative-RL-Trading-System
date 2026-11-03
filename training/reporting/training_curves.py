@@ -586,9 +586,9 @@ _EVALUATION_CHARTS: tuple[tuple[str, tuple[tuple[str, str], ...], str, str, floa
     ),
     (
         "dashboard_trade_count",
-        (("n_trades", "Completed trades"),),
-        "Training-prefix monitor: completed trades",
-        "Trades",
+        (("n_trades", "Completed positions"),),
+        "Training-prefix monitor: completed positions",
+        "Positions",
         None,
     ),
     (

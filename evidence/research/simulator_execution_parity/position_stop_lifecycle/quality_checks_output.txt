@@ -1,0 +1,5 @@
+Command: .venv/bin/ruff format --check trading/risk/stop_management.py simulation/environment/position_runtime.py simulation/backtest/protective_events.py tests/unit/trading/test_stop_management.py
+Output: 4 files already formatted
+
+Command: .venv/bin/ruff check trading/risk/stop_management.py simulation/environment/position_runtime.py simulation/backtest/protective_events.py tests/unit/trading/test_stop_management.py
+Output: All checks passed!

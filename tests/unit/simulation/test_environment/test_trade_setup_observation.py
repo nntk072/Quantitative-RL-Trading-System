@@ -182,6 +182,9 @@ def test_delayed_entry_keeps_the_selected_primary_trade_setup(
     assert env.trade_log[-1]["type"] == "order_submit"
     assert env.trade_log[-1]["trade_setup_candidate_id"] == primary.candidate_id
     assert env.trade_log[-1]["primary_setup_timeframe"] == "M5"
+    assert env.trade_log[-1]["decision_bar_time"] == when
+    assert env.trade_log[-1]["decision_time"] == env.trade_log[-1]["signal_time"]
+    assert env.trade_log[-1]["decision_time"] == env.trade_log[-1]["order_submission_time"]
 
     entered_trade_setups: list[int | None] = []
 

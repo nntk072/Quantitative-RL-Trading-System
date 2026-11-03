@@ -224,7 +224,7 @@ def detect_liquidity_sweeps_retained(
             if np.isnan(lv):
                 continue
             dist = high[t] - lv
-            if dist > 0.0 and (a <= 0.0 or dist <= max_sweep_distance_atr * a):
+            if dist > 0.0 and np.isfinite(a) and a > 0.0 and dist <= max_sweep_distance_atr * a:
                 sweep_h[t] = 1.0
                 swept_h_level[t] = lv
                 swept_h_loc[t] = levels[f"retained_high_{i + 1}_loc"].iloc[t]
@@ -235,7 +235,7 @@ def detect_liquidity_sweeps_retained(
             if np.isnan(lv):
                 continue
             dist = lv - low[t]
-            if dist > 0.0 and (a <= 0.0 or dist <= max_sweep_distance_atr * a):
+            if dist > 0.0 and np.isfinite(a) and a > 0.0 and dist <= max_sweep_distance_atr * a:
                 sweep_l[t] = 1.0
                 swept_l_level[t] = lv
                 swept_l_loc[t] = levels[f"retained_low_{i + 1}_loc"].iloc[t]

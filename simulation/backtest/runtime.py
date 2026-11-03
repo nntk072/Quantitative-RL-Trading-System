@@ -13,6 +13,7 @@ from trading.execution import (
     CostModel,
     Position,
 )
+from trading.policy.config import TradingPolicyConfig
 
 if TYPE_CHECKING:
     from market_data.loading.ticks import TickBook
@@ -44,6 +45,13 @@ class BacktestSettings:
     hold_on_zero: bool
     exit_action: int | None
     block_overnight: bool
+    fill_latency_bars: int = 0
+    eod_risk: dict[str, Any] | None = None
+    execution_seed: int = 0
+    sl_mode: str = "fixed"
+    sl_buffer_pts: float = 0.0
+    tick_fill_slippage_points: float = 0.0
+    trading_policy: TradingPolicyConfig | None = None
 
 
 @dataclass
@@ -55,11 +63,21 @@ class BacktestState:
     prev_session: int | None = None
     position_sequence: int = 0
     current_execution_meta: dict[str, Any] = field(default_factory=dict)
+    pending_entry_order: dict[str, Any] | None = None
+    pending_order_sequence: int = 0
     equity_curve: list[float] = field(default_factory=list)
     equity_times: list[pd.Timestamp] = field(default_factory=list)
     trade_log: list[dict[str, Any]] = field(default_factory=list)
     breach_log: list[str] = field(default_factory=list)
     breach_events: list[dict[str, Any]] = field(default_factory=list)
     breached_sessions: set[int] = field(default_factory=set)
+    year_failed: bool = False
     session_set: set[int] = field(default_factory=set)
     sessions_with_trades: set[int] = field(default_factory=set)
+    cumulative_payouts: float = 0.0
+    cycle_count: int = 1
+    cycle_successes: int = 0
+    cycle_failures: int = 0
+    payout_events: list[dict[str, Any]] = field(default_factory=list)
+    cycle_events: list[dict[str, Any]] = field(default_factory=list)
+    total_economic_value_curve: list[float] = field(default_factory=list)

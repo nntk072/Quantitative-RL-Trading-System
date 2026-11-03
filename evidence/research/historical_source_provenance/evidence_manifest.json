@@ -1,0 +1,67 @@
+{
+  "schema": "aalto.historical_source_provenance.v1",
+  "packet": "historical_source_provenance",
+  "historical_mapping_source_path": "evidence/research/archive_2026/evidence/source_snapshots/manifest.json",
+  "historical_mapping_source_sha256": "a313adf4bd7e468ee6a41b2c64583d3e552175f2ba9cd76bb088119ad4ff8b61",
+  "assets": [
+    {
+      "path": "evidence/research/historical_source_provenance/snapshots/monthly_trade_expectancy_and_exit_decomposition.py.historical_source",
+      "sha256": "7d3d0b8a0cc9f4d061c474b03220df3478b94cdf99ee4f246aa0a492104c37cc",
+      "historical_source_path": "evidence/research/archive_2026/evidence/source_snapshots/analyze_monthly_trade_expectancy_and_exit_decomposition_20261025.source",
+      "historical_source_sha256": "7d3d0b8a0cc9f4d061c474b03220df3478b94cdf99ee4f246aa0a492104c37cc",
+      "bytes": 28292,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/historical_source_provenance/snapshots/training_policy_dynamics_and_rule_control.py.historical_source",
+      "sha256": "785010eebf429351edcbfa07088d37cd832269423d69f3b4d6a0b76bd4e550bb",
+      "historical_source_path": "evidence/research/archive_2026/evidence/source_snapshots/analyze_training_policy_dynamics_and_rule_control_20261025.source",
+      "historical_source_sha256": "785010eebf429351edcbfa07088d37cd832269423d69f3b4d6a0b76bd4e550bb",
+      "bytes": 23440,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/historical_source_provenance/snapshots/paired_seed_payload_builder.py.historical_source",
+      "sha256": "bf2bdc48e3af49b36259cbe59a72294daca7ac918746f6eaf8b631ac52ca69ce",
+      "historical_source_path": "evidence/research/archive_2026/evidence/source_snapshots/build_paired_seed_payload_20261022.source",
+      "historical_source_sha256": "bf2bdc48e3af49b36259cbe59a72294daca7ac918746f6eaf8b631ac52ca69ce",
+      "bytes": 16367,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/historical_source_provenance/snapshots/tick_cost_stress_report_builder.py.historical_source",
+      "sha256": "b16096f8931a1e7cf9adf139913f48204c3c740aa1204941756269851dcd1113",
+      "historical_source_path": "evidence/research/archive_2026/evidence/source_snapshots/build_tick_cost_stress_reports_20261022.source",
+      "historical_source_sha256": "b16096f8931a1e7cf9adf139913f48204c3c740aa1204941756269851dcd1113",
+      "bytes": 12156,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/historical_source_provenance/snapshots/tick_cost_stress_replay_runner.py.historical_source",
+      "sha256": "28a3969ee7cdf5acbca2c8c519d4bec466e5dccc18be8ffde99499c951341ec3",
+      "historical_source_path": "evidence/research/archive_2026/evidence/source_snapshots/replay_tick_cost_stress_20261022.source",
+      "historical_source_sha256": "28a3969ee7cdf5acbca2c8c519d4bec466e5dccc18be8ffde99499c951341ec3",
+      "bytes": 12545,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/historical_source_provenance/snapshots/checkpoint_recovery_smoke_runner.sh.historical_source",
+      "sha256": "33f035ef32454c2834bb0b128a120bec9e156996da787a83e82ef769038362f9",
+      "historical_source_path": "evidence/research/archive_2026/evidence/source_snapshots/smoke_test_checkpoint_recovery_20261031.source",
+      "historical_source_sha256": "33f035ef32454c2834bb0b128a120bec9e156996da787a83e82ef769038362f9",
+      "bytes": 12705,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/historical_source_provenance/snapshots/replacement_tick_quality_audit.py.historical_source",
+      "sha256": "ce3295627039c171512bc85abb7d8dc04e6c83d6f9a2faa19bc3b39889262604",
+      "historical_source_path": "evidence/research/archive_2026/records/audit_tick_quality_current_experiment_run_2026-10-17.py",
+      "historical_source_sha256": "ce3295627039c171512bc85abb7d8dc04e6c83d6f9a2faa19bc3b39889262604",
+      "bytes": 16608,
+      "copied_into_packet": true
+    }
+  ],
+  "source_mapping_sha256": "a5eb880ea78ad29322a7cd2fa37f2c8b15bbdead803a3d7b88fe09a3c82d1330",
+  "external_source_manifest_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_20261031/evidence/source_snapshots/manifest.json",
+  "external_source_manifest_sha256": "a313adf4bd7e468ee6a41b2c64583d3e552175f2ba9cd76bb088119ad4ff8b61"
+}

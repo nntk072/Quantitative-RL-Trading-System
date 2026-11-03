@@ -16,7 +16,9 @@ from configuration.paths import repository_root
 ROOT = repository_root(__file__)
 
 from configuration import load_config  # noqa: E402
+from evaluation.rollout.baseline_features import ensure_baseline_stop_features  # noqa: E402
 from evaluation.rollout.episode_rollout import run_episode  # noqa: E402
+from features.technical.swings import TIMEFRAME_CONFIG  # noqa: E402
 from market_data.loading import run_pipeline  # noqa: E402
 from market_data.splits.definitions import get_split_config, split_bars  # noqa: E402
 from simulation.environment.env import TradingEnv  # noqa: E402
@@ -41,15 +43,14 @@ def _strategy(name: str, bars: pd.DataFrame):
         strategy = SessionMomentumStrategy(bars)
     else:
         raise ValueError(name)
-    strategy.fast_forward(60)
     return strategy
 
 
-def _index_return_pct(bars: pd.DataFrame) -> float:
+def _index_return_pct(bars: pd.DataFrame, start_index: int | None) -> float:
     """Unlevered move from the first traded bar to the last close."""
-    if len(bars) <= 60:
+    if start_index is None or not 0 <= start_index < len(bars):
         return 0.0
-    start = float(bars["close"].iloc[60])
+    start = float(bars["close"].iloc[start_index])
     end = float(bars["close"].iloc[-1])
     if start == 0.0:
         return 0.0
@@ -58,14 +59,13 @@ def _index_return_pct(bars: pd.DataFrame) -> float:
 
 def _score(name: str, bars: pd.DataFrame) -> dict:
     strategy = _strategy(name, bars)
+    first_step_index: int | None = None
     features = bars.select_dtypes(include="number").copy()
-    features["last_swing_low"] = bars["low"].astype(float).rolling(5, min_periods=1).min().shift(1)
-    features["last_swing_high"] = (
-        bars["high"].astype(float).rolling(5, min_periods=1).max().shift(1)
+    features, _ = ensure_baseline_stop_features(
+        bars,
+        features,
+        swing_period=int(TIMEFRAME_CONFIG["M1"]["left"]),
     )
-
-    def action_fn(obs, _strategy=strategy):
-        return np.array([_strategy.act(obs)], dtype=np.float32)
 
     env = TradingEnv(
         bars=bars,
@@ -77,6 +77,14 @@ def _score(name: str, bars: pd.DataFrame) -> dict:
         block_overnight=True,
         rr_ratio_range=(1.0, 3.0),
     )
+
+    def action_fn(_obs, _strategy=strategy):
+        nonlocal first_step_index
+        bar_index = env.step_idx
+        if first_step_index is None:
+            first_step_index = bar_index
+        return np.array([_strategy.act_at(bar_index)], dtype=np.float32)
+
     metrics = run_episode(env, action_fn=action_fn, max_steps=len(bars) + 5)
     closes = [t for t in env.trade_log if "close" in str(t.get("type", ""))]
     return {
@@ -87,7 +95,7 @@ def _score(name: str, bars: pd.DataFrame) -> dict:
         "n_trades": int(metrics.n_trades),
         "n_closes": len(closes),
         "breach_count": int(metrics.breach_count),
-        "index_return_pct": _index_return_pct(bars),
+        "index_return_pct": _index_return_pct(bars, first_step_index),
     }
 
 

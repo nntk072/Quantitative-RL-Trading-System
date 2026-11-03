@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import pytest
+
 from trading.account.account_state import AccountState
-from trading.risk.guardrails import FTMOGuardrails
+from trading.risk.guardrails import (
+    FTMOGuardrails,
+    adverse_position_loss_limit_usd,
+    guardrail_breach_scope,
+)
 
 
 def _make(daily_loss: float = 0.0, max_dd: float = 0.0) -> AccountState:
@@ -18,6 +24,63 @@ def test_no_breach():
     acc = _make(daily_loss=1000.0, max_dd=500.0)
     assert not g.any_breach(acc)
     assert g.breach_reason(acc) is None
+
+
+@pytest.mark.parametrize(
+    ("reason", "expected_scope"),
+    [
+        (None, None),
+        ("daily_loss", "session"),
+        ("max_drawdown", "rollout"),
+        ("trailing_dd", "rollout"),
+    ],
+)
+def test_guardrail_breach_scope_is_shared_and_explicit(
+    reason: str | None,
+    expected_scope: str | None,
+) -> None:
+    assert guardrail_breach_scope(reason) == expected_scope
+
+
+def test_guardrail_breach_scope_rejects_unknown_reason() -> None:
+    with pytest.raises(ValueError, match="unsupported hard guardrail"):
+        guardrail_breach_scope("unknown")
+
+
+@pytest.mark.parametrize(
+    ("configured", "planned", "respect", "multiplier", "expected"),
+    [
+        (500.0, 1_000.0, True, 1.1, 1_100.0),
+        (500.0, 1_000.0, False, 1.1, 500.0),
+        (500.0, 0.0, True, 1.1, 500.0),
+    ],
+)
+def test_shared_adverse_position_loss_limit(
+    configured: float,
+    planned: float,
+    respect: bool,
+    multiplier: float,
+    expected: float,
+) -> None:
+    assert (
+        adverse_position_loss_limit_usd(
+            configured,
+            planned,
+            respect_planned_risk=respect,
+            planned_risk_multiplier=multiplier,
+        )
+        == expected
+    )
+
+
+def test_adverse_position_loss_limit_rejects_non_finite_values() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        adverse_position_loss_limit_usd(
+            float("inf"),
+            0.0,
+            respect_planned_risk=True,
+            planned_risk_multiplier=1.0,
+        )
 
 
 def test_daily_loss_breach():

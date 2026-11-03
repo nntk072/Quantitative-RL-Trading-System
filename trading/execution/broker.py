@@ -109,6 +109,7 @@ class Position:
     trade_setup_candidate_id: int | None = None
     trade_setup_schema_version: str = ""
     trade_setup_decision_time: object | None = None
+    origin_decision_id: str = ""
     tp1_price: float | None = None
     tp2_price: float | None = None
     tp3_price: float | None = None

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -75,11 +76,28 @@ def _oos(report: dict[str, Any], *, is_flat_log: bool) -> dict[str, Any]:
         oos = report.get("out_of_sample")
         return oos if isinstance(oos, dict) else report
     return {
-        "sharpe": report.get("test_sharpe", 0.0),
-        "max_drawdown": report.get("test_max_dd", 0.0),
-        "breach_count": report.get("test_breaches", 0),
-        "n_trades": report.get("test_trades", 0),
+        "sharpe": report.get("test_sharpe"),
+        "max_drawdown": report.get("test_max_dd"),
+        "breach_count": report.get("test_breaches"),
+        "n_trades": report.get("test_trades"),
     }
+
+
+def _finite_metric(metrics: dict[str, Any], name: str) -> float | None:
+    """Return one finite recorded metric, preserving missing values as N/A."""
+    value = metrics.get(name)
+    if value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _display(value: float | None, precision: int) -> str:
+    """Format a recorded metric or render unavailable/non-finite data as N/A."""
+    return "N/A" if value is None else f"{value:.{precision}f}"
 
 
 def main() -> None:
@@ -111,25 +129,47 @@ def main() -> None:
     print(header)
     print("-" * len(header))
     conditional_passes: list[bool] = []
+    required_metrics_present = True
+    observed_sharpes: list[float] = []
     for r in rows:
         name, oos = str(r["name"]), r["oos"]
-        sharpe = float(oos.get("sharpe", 0.0))
-        mdd = float(oos.get("max_drawdown", 0.0))
-        breach = int(oos.get("breach_count", 0))
+        sharpe = _finite_metric(oos, "sharpe")
+        mdd = _finite_metric(oos, "max_drawdown")
+        breach_value = _finite_metric(oos, "breach_count")
+        breach = None if breach_value is None else int(breach_value)
+        required_metrics_present &= sharpe is not None and mdd is not None and breach is not None
+        if sharpe is not None:
+            observed_sharpes.append(sharpe)
         print(
             f"{name:32} {r['algo']:5} {r['arch']:12} "
-            f"{'yes' if r['vae'] else 'no':4} {sharpe:8.3f} {mdd:8.4f} {breach:5d}"
+            f"{'yes' if r['vae'] else 'no':4} {_display(sharpe, 3):>8} "
+            f"{_display(mdd, 4):>8} {'N/A' if breach is None else f'{breach:d}':>5}"
         )
         if r["vae"]:
-            conditional_passes.append(sharpe > args.sharpe_threshold and breach == 0)
+            conditional_passes.append(
+                sharpe is not None
+                and breach is not None
+                and sharpe > args.sharpe_threshold
+                and breach == 0
+            )
 
-    best_sharpe = max(float(r["oos"].get("sharpe", 0.0)) for r in rows)
-    any_breach = any(int(r["oos"].get("breach_count", 0)) > 0 for r in rows)
-    g3 = bool(conditional_passes) and not any_breach and best_sharpe > args.sharpe_threshold
+    best_sharpe = max(observed_sharpes) if observed_sharpes else None
+    any_breach = any(
+        (breach_count_value := _finite_metric(r["oos"], "breach_count")) is not None
+        and breach_count_value > 0
+        for r in rows
+    )
+    g3 = (
+        bool(conditional_passes)
+        and required_metrics_present
+        and not any_breach
+        and best_sharpe is not None
+        and best_sharpe > args.sharpe_threshold
+    )
     print("-" * len(header))
     verdict = "PASS" if g3 else "NOT PASSED"
     print(
-        f"Gate G3 ({verdict}, out-of-sample): best Sharpe {best_sharpe:.3f} "
+        f"Gate G3 ({verdict}, out-of-sample): best Sharpe {_display(best_sharpe, 3)} "
         f"(threshold {args.sharpe_threshold}), breaches={'yes' if any_breach else 'no'}"
     )
 

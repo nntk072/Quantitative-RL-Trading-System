@@ -1,0 +1,120 @@
+{
+  "active_candidate_profile": {
+    "active_candidate_row_occurrences": 488008,
+    "candidate_scoped_source_time_ids_summed": 109391,
+    "missing_source_time_rows": 0,
+    "supported_candidate_tuples": 24,
+    "supported_families": {
+      "ifvg_retest": {
+        "adjacent_identity_changes": 600,
+        "candidate_rows": 8187,
+        "candidate_scoped_ids": 8187,
+        "candidate_tuples": 2,
+        "identity_episode_starts": 8187,
+        "missing_source_times": 0
+      },
+      "ifvg_unretested": {
+        "adjacent_identity_changes": 10107,
+        "candidate_rows": 56349,
+        "candidate_scoped_ids": 56349,
+        "candidate_tuples": 2,
+        "identity_episode_starts": 56349,
+        "missing_source_times": 0
+      },
+      "po3": {
+        "adjacent_identity_changes": 3051,
+        "candidate_rows": 38681,
+        "candidate_scoped_ids": 8847,
+        "candidate_tuples": 2,
+        "identity_episode_starts": 8847,
+        "missing_source_times": 0
+      },
+      "standard_deviation": {
+        "adjacent_identity_changes": 0,
+        "candidate_rows": 384791,
+        "candidate_scoped_ids": 36008,
+        "candidate_tuples": 18,
+        "identity_episode_starts": 42480,
+        "missing_source_times": 0
+      }
+    },
+    "unsupported_candidate_tuples": 84
+  },
+  "candidate_identity_contract": {
+    "candidate_categories": 108,
+    "global_source_object_deduplication": false,
+    "path": "evidence/research/candidate_event_cardinality/candidate_identity_contract.csv",
+    "semantics": "candidate-scoped ordered source-time keys from the production identity function",
+    "sha256": "bfc9a5daa4797bd781462ebe25881a9ad0fe18d8fdf377ec3def30e733718897",
+    "version": "trade-setup-event-identity-v3"
+  },
+  "generator": "scripts/research/analysis/evidence/build_candidate_event_cardinality_register.py",
+  "generator_sha256": "d3c27294aaf05dfea173e2b922323b668c86793ca1573e28c1bfb8ad1d7730cd",
+  "historical_candidate_to_action_linkage": "not_found_in_scanned_artifacts",
+  "historical_price_geometry_trace": "not_found_in_scanned_artifacts",
+  "input_sha256": {
+    "decisioning/trade_setup.py": "80d2ccf2c25288a0d15d4d1a88936c75d1f0c4ec931eab1fe7c4c7e7ee74e6d4",
+    "evidence/research/ifvg_zone_event_ledger/event_ledger.json": "ee189498755f9e102af11c5f3e37fd02a21cafe23e67b4a5cbda07225c51a490",
+    "evidence/research/ifvg_zone_event_ledger/ifvg_zone_event_ledger.csv": "95311e8c7bd16a6c31f9be35163db702d1c374155476b6a095c1a4b3aa118dab",
+    "evidence/research/model_observation_and_action_semantics/decision_trace_availability_inventory.json": "c60b625fad1738f71de53db721dfe51d3db58684cc0f8e059cf516df8669e369",
+    "evidence/research/po3_setup_lifecycle/event_ledger.json": "06b569ea22bfd0fd33c258a8c9c4ec841a15d8fac11d0d8ca42437e299fd974d",
+    "evidence/research/po3_setup_lifecycle/setup_lifecycle_ledger.csv": "b2033e75178eb1eee11307e18cd73f93ea5f94fe67745b772c038afd149e4380",
+    "evidence/research/po3_setup_lifecycle/setup_lifecycle_summary.json": "6800c585f61fc40c312951c3e7c45c1b2ea0559f2ac84a636fc39f7496de32d3",
+    "evidence/research/standard_deviation_swing_legs/cross_timeframe_swing_leg_key_groups.csv": "361c850dc34c175ed8a5ce7ebc44be524cea7bda310ac116c3e5e6bb304a1598",
+    "evidence/research/standard_deviation_swing_legs/ledger.json": "8bf07a8650591355fa19baa4d60b24a5d8dc1a9e4e0138ebd322c2768163d2ae",
+    "evidence/research/standard_deviation_swing_legs/swing_leg_eligibility_ledger.csv": "a7543793fe776c288b77fdae238ef86e501f9c79b2c5153faa848c3ebc21f270",
+    "evidence/research/trade_setup_opportunity_census/candidate_event_identity_summary.csv": "e8d8b095f07a296541d1689305f1eaab295fffd912f2d7ac34273a88385cc3ab",
+    "evidence/research/trade_setup_opportunity_census/candidate_source_time_tuple_clusters.csv": "d7efd5e6461433e5795d16c7a7b5f039dc4658a3d5a455df564d60cbb8fc7463",
+    "features/context/trade_setup_candidates.py": "1b6d799e7ddd687fa1a4484400fecddc06451356e0fa8bf10fd75aceed401ebf"
+  },
+  "limitations": [
+    "Producer event counts, feature scalar pulses, candidate identities, and eligibility contexts use different units and are not summed into one event count.",
+    "The generated v3 identity contract records exact source-time fields and scales for each candidate category; it does not assert that candidate-scoped IDs equal globally unique market source objects.",
+    "Candidate-scoped IDs can refer to the same source-time tuple across candidates or timeframes.",
+    "The inventory found no qualifying historical per-decision setup or price-geometry traces in its scanned roots; absence is scoped to those roots and recognized filenames.",
+    "The broad inventory does not follow directory symlinks; artifacts reachable only through symlink directories outside the supplied physical roots are not included.",
+    "Historical trades and fills are not linked back to candidate proposals by this register.",
+    "All counts are descriptive local training-profile evidence, not economic performance or holdout evidence."
+  ],
+  "logical_event_count": "not_established; no ground-truth event ontology is available",
+  "schema_version": 1,
+  "scope": "Configured local training profile; current evidence packets only.",
+  "verified_packet_files": [
+    "evidence/research/ifvg_zone_event_ledger/README.md",
+    "evidence/research/ifvg_zone_event_ledger/event_ledger.json",
+    "evidence/research/ifvg_zone_event_ledger/ifvg_confirmation_collisions.csv",
+    "evidence/research/ifvg_zone_event_ledger/ifvg_zone_event_ledger.csv",
+    "evidence/research/ifvg_zone_event_ledger/monthly_collision_summary.csv",
+    "evidence/research/ifvg_zone_event_ledger/resolved_config.yaml",
+    "evidence/research/po3_setup_lifecycle/README.md",
+    "evidence/research/po3_setup_lifecycle/event_ledger.json",
+    "evidence/research/po3_setup_lifecycle/resolved_config.yaml",
+    "evidence/research/po3_setup_lifecycle/setup_lifecycle_ledger.csv",
+    "evidence/research/po3_setup_lifecycle/setup_lifecycle_summary.json",
+    "evidence/research/standard_deviation_swing_legs/README.md",
+    "evidence/research/standard_deviation_swing_legs/cross_timeframe_swing_leg_key_groups.csv",
+    "evidence/research/standard_deviation_swing_legs/ledger.json",
+    "evidence/research/standard_deviation_swing_legs/resolved_config.yaml",
+    "evidence/research/standard_deviation_swing_legs/swing_leg_eligibility_ledger.csv",
+    "evidence/research/trade_setup_opportunity_census/README.md",
+    "evidence/research/trade_setup_opportunity_census/candidate_event_cross_timeframe_alignment.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_event_identity_month_regime.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_event_identity_summary.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_horizon_coverage.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_horizon_support_review.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_month_regime.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_month_regime_heatmap.pdf",
+    "evidence/research/trade_setup_opportunity_census/candidate_month_regime_heatmap.png",
+    "evidence/research/trade_setup_opportunity_census/candidate_month_regime_support_review.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_source_time_tuple_clusters.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_summary.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_support_review.csv",
+    "evidence/research/trade_setup_opportunity_census/candidate_support_review_provenance.json",
+    "evidence/research/trade_setup_opportunity_census/census.json",
+    "evidence/research/trade_setup_opportunity_census/fvg_retest_collisions.csv",
+    "evidence/research/trade_setup_opportunity_census/fvg_retest_monthly_collision_summary.csv",
+    "evidence/research/trade_setup_opportunity_census/fvg_retest_zone_event_ledger.csv",
+    "evidence/research/trade_setup_opportunity_census/plot_metadata.json",
+    "evidence/research/trade_setup_opportunity_census/resolved_config.yaml"
+  ]
+}

@@ -15,7 +15,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 HISTORICAL_SOURCE_BASENAMES = (
     "p6_monthly_entry_exit_decomposition.py",
     "p6_training_dynamics_control.py",
-    "build_paired_seed_payload.py",
+    "build_p7_paired_seed_payload.py",
     "build_p7_tick_cost_stress_reports.py",
     "run_p7_tick_cost_stress_replay.py",
     "run_p1_schedule_freeze_gate.sh",
@@ -31,7 +31,7 @@ def _source_snapshot_manifest() -> dict[str, object]:
         json.loads(
             (
                 REPOSITORY_ROOT
-                / "evidence/research/archive_2026/evidence/source_snapshots/manifest.json"
+                / "evidence/research/historical_source_provenance/source_mapping.json"
             ).read_text(encoding="utf-8")
         ),
     )
@@ -99,12 +99,12 @@ def test_retired_phase_path_keeps_functional_source_and_historical_hash(
     (
         (
             "p6_monthly_entry_exit_decomposition.py",
-            "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_monthly_entry_exit_decomposition.json",
+            "evidence/research/entry_and_exit_attribution/monthly_entry_exit_summary.json",
             "analysis_script_sha256",
         ),
         (
             "p6_training_dynamics_control.py",
-            "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025/p6_training_dynamics_control.json",
+            "evidence/research/entry_and_exit_attribution/training_dynamics_control.json",
             "analysis_script_sha256",
         ),
     ),
@@ -130,7 +130,7 @@ def test_frozen_paired_seed_source_hash_is_still_verifiable() -> None:
     )
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     provenance = manifest["evaluation_provenance"]["source"]
-    historical_relative_path = _historical_source_record("build_paired_seed_payload.py")[
+    historical_relative_path = _historical_source_record("build_p7_paired_seed_payload.py")[
         "historical_path"
     ]
     matching_records = [

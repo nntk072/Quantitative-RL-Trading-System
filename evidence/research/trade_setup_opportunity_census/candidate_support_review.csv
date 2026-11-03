@@ -1,0 +1,109 @@
+candidate_id,idea,timeframe,direction,feature_column,feature_column_present,family_enabled_by_audit_config,support_status,active_m1_rows,episode_starts,active_rows_in_configured_ny_session,support_review_status,support_review_basis
+1,po3,M1,long,entry_idea_po3_M1_long,True,True,supported,19562,2982,4900,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+2,po3,M3,long,entry_idea_po3_M3_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+3,po3,M5,long,entry_idea_po3_M5_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+4,po3,M10,long,entry_idea_po3_M10_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+5,po3,M15,long,entry_idea_po3_M15_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+6,po3,M30,long,entry_idea_po3_M30_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+7,po3,H1,long,entry_idea_po3_H1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+8,po3,H4,long,entry_idea_po3_H4_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+9,po3,D1,long,entry_idea_po3_D1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+10,order_block,M1,long,entry_idea_order_block_M1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+11,order_block,M3,long,entry_idea_order_block_M3_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+12,order_block,M5,long,entry_idea_order_block_M5_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+13,order_block,M10,long,entry_idea_order_block_M10_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+14,order_block,M15,long,entry_idea_order_block_M15_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+15,order_block,M30,long,entry_idea_order_block_M30_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+16,order_block,H1,long,entry_idea_order_block_H1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+17,order_block,H4,long,entry_idea_order_block_H4_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+18,order_block,D1,long,entry_idea_order_block_D1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+19,standard_deviation,M1,long,entry_idea_standard_deviation_M1_long,True,True,supported,23567,11746,6808,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+20,standard_deviation,M3,long,entry_idea_standard_deviation_M3_long,True,True,supported,23696,3943,6722,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+21,standard_deviation,M5,long,entry_idea_standard_deviation_M5_long,True,True,supported,23647,2423,6472,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+22,standard_deviation,M10,long,entry_idea_standard_deviation_M10_long,True,True,supported,22401,1151,6146,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+23,standard_deviation,M15,long,entry_idea_standard_deviation_M15_long,True,True,supported,17990,588,4367,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+24,standard_deviation,M30,long,entry_idea_standard_deviation_M30_long,True,True,supported,17065,275,3399,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+25,standard_deviation,H1,long,entry_idea_standard_deviation_H1_long,True,True,supported,15150,121,3369,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+26,standard_deviation,H4,long,entry_idea_standard_deviation_H4_long,True,True,supported,10615,21,2918,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+27,standard_deviation,D1,long,entry_idea_standard_deviation_D1_long,True,True,supported,6825,3,1955,low_episode_support,fewer than 10 contiguous active-mask identity episodes; not a logical-event count
+28,fvg_retest,M1,long,entry_idea_fvg_retest_M1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+29,fvg_retest,M3,long,entry_idea_fvg_retest_M3_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+30,fvg_retest,M5,long,entry_idea_fvg_retest_M5_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+31,fvg_retest,M10,long,entry_idea_fvg_retest_M10_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+32,fvg_retest,M15,long,entry_idea_fvg_retest_M15_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+33,fvg_retest,M30,long,entry_idea_fvg_retest_M30_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+34,fvg_retest,H1,long,entry_idea_fvg_retest_H1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+35,fvg_retest,H4,long,entry_idea_fvg_retest_H4_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+36,fvg_retest,D1,long,entry_idea_fvg_retest_D1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+37,ifvg_retest,M1,long,entry_idea_ifvg_retest_M1_long,True,True,supported,4205,3916,1208,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+38,ifvg_retest,M3,long,entry_idea_ifvg_retest_M3_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+39,ifvg_retest,M5,long,entry_idea_ifvg_retest_M5_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+40,ifvg_retest,M10,long,entry_idea_ifvg_retest_M10_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+41,ifvg_retest,M15,long,entry_idea_ifvg_retest_M15_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+42,ifvg_retest,M30,long,entry_idea_ifvg_retest_M30_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+43,ifvg_retest,H1,long,entry_idea_ifvg_retest_H1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+44,ifvg_retest,H4,long,entry_idea_ifvg_retest_H4_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+45,ifvg_retest,D1,long,entry_idea_ifvg_retest_D1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+46,ifvg_unretested,M1,long,entry_idea_ifvg_unretested_M1_long,True,True,supported,29853,24413,8225,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+47,ifvg_unretested,M3,long,entry_idea_ifvg_unretested_M3_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+48,ifvg_unretested,M5,long,entry_idea_ifvg_unretested_M5_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+49,ifvg_unretested,M10,long,entry_idea_ifvg_unretested_M10_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+50,ifvg_unretested,M15,long,entry_idea_ifvg_unretested_M15_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+51,ifvg_unretested,M30,long,entry_idea_ifvg_unretested_M30_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+52,ifvg_unretested,H1,long,entry_idea_ifvg_unretested_H1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+53,ifvg_unretested,H4,long,entry_idea_ifvg_unretested_H4_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+54,ifvg_unretested,D1,long,entry_idea_ifvg_unretested_D1_long,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+55,po3,M1,short,entry_idea_po3_M1_short,True,True,supported,19119,2814,5212,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+56,po3,M3,short,entry_idea_po3_M3_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+57,po3,M5,short,entry_idea_po3_M5_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+58,po3,M10,short,entry_idea_po3_M10_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+59,po3,M15,short,entry_idea_po3_M15_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+60,po3,M30,short,entry_idea_po3_M30_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+61,po3,H1,short,entry_idea_po3_H1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+62,po3,H4,short,entry_idea_po3_H4_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+63,po3,D1,short,entry_idea_po3_D1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+64,order_block,M1,short,entry_idea_order_block_M1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+65,order_block,M3,short,entry_idea_order_block_M3_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+66,order_block,M5,short,entry_idea_order_block_M5_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+67,order_block,M10,short,entry_idea_order_block_M10_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+68,order_block,M15,short,entry_idea_order_block_M15_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+69,order_block,M30,short,entry_idea_order_block_M30_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+70,order_block,H1,short,entry_idea_order_block_H1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+71,order_block,H4,short,entry_idea_order_block_H4_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+72,order_block,D1,short,entry_idea_order_block_D1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+73,standard_deviation,M1,short,entry_idea_standard_deviation_M1_short,True,True,supported,26515,12632,7945,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+74,standard_deviation,M3,short,entry_idea_standard_deviation_M3_short,True,True,supported,27547,4355,8257,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+75,standard_deviation,M5,short,entry_idea_standard_deviation_M5_short,True,True,supported,28677,2589,8096,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+76,standard_deviation,M10,short,entry_idea_standard_deviation_M10_short,True,True,supported,29204,1348,7606,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+77,standard_deviation,M15,short,entry_idea_standard_deviation_M15_short,True,True,supported,26732,731,7274,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+78,standard_deviation,M30,short,entry_idea_standard_deviation_M30_short,True,True,supported,25039,343,6166,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+79,standard_deviation,H1,short,entry_idea_standard_deviation_H1_short,True,True,supported,27142,175,5201,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+80,standard_deviation,H4,short,entry_idea_standard_deviation_H4_short,True,True,supported,20694,32,7277,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+81,standard_deviation,D1,short,entry_idea_standard_deviation_D1_short,True,True,supported,12285,4,3519,low_episode_support,fewer than 10 contiguous active-mask identity episodes; not a logical-event count
+82,fvg_retest,M1,short,entry_idea_fvg_retest_M1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+83,fvg_retest,M3,short,entry_idea_fvg_retest_M3_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+84,fvg_retest,M5,short,entry_idea_fvg_retest_M5_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+85,fvg_retest,M10,short,entry_idea_fvg_retest_M10_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+86,fvg_retest,M15,short,entry_idea_fvg_retest_M15_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+87,fvg_retest,M30,short,entry_idea_fvg_retest_M30_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+88,fvg_retest,H1,short,entry_idea_fvg_retest_H1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+89,fvg_retest,H4,short,entry_idea_fvg_retest_H4_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+90,fvg_retest,D1,short,entry_idea_fvg_retest_D1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+91,ifvg_retest,M1,short,entry_idea_ifvg_retest_M1_short,True,True,supported,3982,3671,1102,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+92,ifvg_retest,M3,short,entry_idea_ifvg_retest_M3_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+93,ifvg_retest,M5,short,entry_idea_ifvg_retest_M5_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+94,ifvg_retest,M10,short,entry_idea_ifvg_retest_M10_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+95,ifvg_retest,M15,short,entry_idea_ifvg_retest_M15_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+96,ifvg_retest,M30,short,entry_idea_ifvg_retest_M30_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+97,ifvg_retest,H1,short,entry_idea_ifvg_retest_H1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+98,ifvg_retest,H4,short,entry_idea_ifvg_retest_H4_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+99,ifvg_retest,D1,short,entry_idea_ifvg_retest_D1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+100,ifvg_unretested,M1,short,entry_idea_ifvg_unretested_M1_short,True,True,supported,26496,21829,7272,supported_episode_coverage,at least 10 contiguous active-mask identity episodes; not a logical-event count
+101,ifvg_unretested,M3,short,entry_idea_ifvg_unretested_M3_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+102,ifvg_unretested,M5,short,entry_idea_ifvg_unretested_M5_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+103,ifvg_unretested,M10,short,entry_idea_ifvg_unretested_M10_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+104,ifvg_unretested,M15,short,entry_idea_ifvg_unretested_M15_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+105,ifvg_unretested,M30,short,entry_idea_ifvg_unretested_M30_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+106,ifvg_unretested,H1,short,entry_idea_ifvg_unretested_H1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+107,ifvg_unretested,H4,short,entry_idea_ifvg_unretested_H4_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config
+108,ifvg_unretested,D1,short,entry_idea_ifvg_unretested_D1_short,True,False,unsupported_by_config,0,0,0,unsupported_by_config,unsupported by selected profile config

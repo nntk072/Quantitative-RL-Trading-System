@@ -80,23 +80,22 @@ def max_tp_distance(
     return out
 
 
-def reachable_r_series(bars: pd.DataFrame, features: pd.DataFrame) -> pd.Series:
-    """Causal reward room: max take-profit distance divided by structural stop.
-
-    The side is the distribution direction when it is set, otherwise the
-    higher-timeframe bias. A flat bar uses the tighter of the two stops.
-    The ratio is scale-free, so it can sit in the model sequence.
+def _reachable_r_values(bars: pd.DataFrame, features: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+    """Return causal reachable reward room and whether its value is known.
 
     Args:
         bars: Market bars to process.
         features: Feature values supplied to the operation.
 
     Returns:
-        Result of causal reward room: max take-profit distance divided by structural stop.
+        Reachable reward-room values and a boolean validity series.
     """
     idx = bars.index
     if "atr_5" not in features.columns or "close" not in bars.columns:
-        return pd.Series(0.0, index=idx, name="reachable_r")
+        return (
+            pd.Series(0.0, index=idx, name="reachable_r"),
+            pd.Series(False, index=idx, name="reachable_r_valid"),
+        )
     dist = max_tp_distance(bars, features["atr_5"]).reindex(idx)
     close = pd.to_numeric(bars["close"], errors="coerce")
     atr = pd.to_numeric(features["atr_5"].reindex(idx), errors="coerce")
@@ -133,15 +132,38 @@ def reachable_r_series(bars: pd.DataFrame, features: pd.DataFrame) -> pd.Series:
     missing = ~np.isfinite(risk) | (risk <= 0.0)
     risk = np.where(missing, atr_a, risk)
     room = dist.to_numpy(dtype=float)
-    ratio = room / np.where(risk > 1e-8, risk, np.nan)
-    ratio = np.clip(np.nan_to_num(ratio, nan=0.0, posinf=0.0, neginf=0.0), 0.0, 20.0)
-    return pd.Series(ratio, index=idx, name="reachable_r")
+    raw_ratio = room / np.where(risk > 1e-8, risk, np.nan)
+    valid = np.isfinite(room) & np.isfinite(risk) & (risk > 1e-8) & np.isfinite(raw_ratio)
+    ratio = np.clip(np.nan_to_num(raw_ratio, nan=0.0, posinf=0.0, neginf=0.0), 0.0, 20.0)
+    return (
+        pd.Series(ratio, index=idx, name="reachable_r"),
+        pd.Series(valid, index=idx, name="reachable_r_valid"),
+    )
+
+
+def reachable_r_series(bars: pd.DataFrame, features: pd.DataFrame) -> pd.Series:
+    """Causal reward room: max take-profit distance divided by structural stop.
+
+    The side is the distribution direction when it is set, otherwise the
+    higher-timeframe bias. A flat bar uses the tighter of the two stops.
+    The ratio is scale-free, so it can sit in the model sequence.
+
+    Args:
+        bars: Market bars to process.
+        features: Feature values supplied to the operation.
+
+    Returns:
+        Result of causal reward room: max take-profit distance divided by structural stop.
+    """
+    return _reachable_r_values(bars, features)[0]
 
 
 def attach_reachable_r(
     obs: pd.DataFrame,
     bars: pd.DataFrame,
     features: pd.DataFrame,
+    *,
+    include_validity_mask: bool = False,
 ) -> pd.DataFrame:
     """Append ``reachable_r`` after raw price columns have been dropped.
 
@@ -149,14 +171,16 @@ def attach_reachable_r(
         obs: Tabular data used for the obs.
         bars: Market bars to process.
         features: Feature values supplied to the operation.
+        include_validity_mask: Append a sequence feature marking known reachability values.
 
     Returns:
         DataFrame returned by ``attach_reachable_r``.
     """
     out = obs.copy()
-    out["reachable_r"] = (
-        reachable_r_series(bars, features).reindex(obs.index).fillna(0.0).astype(float)
-    )
+    reachable, valid = _reachable_r_values(bars, features)
+    out["reachable_r"] = reachable.reindex(obs.index).fillna(0.0).astype(float)
+    if include_validity_mask:
+        out["reachable_r_valid"] = valid.reindex(obs.index).fillna(False).astype(float)
     return out
 
 

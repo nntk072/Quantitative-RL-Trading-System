@@ -1,0 +1,45 @@
+{
+  "schema": "qrl.historical_variant_screen_recoverability.v1",
+  "packet": "historical_variant_screen_recoverability",
+  "claim_scope": "historical report-pack and selected-pair checkpoint recoverability with bounded current archive searches",
+  "assets": [
+    {
+      "path": "evidence/research/historical_variant_screen_recoverability/screen_report_pack_recoverability.json",
+      "sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c",
+      "historical_source_path": "evidence/research/archive_2026/evidence/p3_seed50_report_pack_recoverability_20261018.json",
+      "historical_source_sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c",
+      "bytes": 20327,
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/historical_variant_screen_recoverability/current_workspace_availability.json",
+      "sha256": "b96fe34abad4aae33d8995bd7110f37a6c21daf24597c8a734645fd0b1cbd125",
+      "bytes": 2556,
+      "claim_scope": "current known-path availability; filename inventory only",
+      "copied_into_packet": true
+    },
+    {
+      "path": "evidence/research/historical_variant_screen_recoverability/archive_trace_member_search.json",
+      "sha256": "aea0afc1361da4376b3a6c1ae900c7693df9ea5eea814ab6c6c04d2acd85b6ee",
+      "bytes": 246564,
+      "claim_scope": "2026-11-03 ZIP member-name search under /scratch/work/nguyenl37; no archive content hashes",
+      "scanner_path": "scripts/research/analysis/evidence/search_archive_trace_members.py",
+      "scanner_sha256": "ca62b82ba9999fd78dd4107b3a30c4e92957755bbf7826c30c68a41ecfeaf2e4",
+      "archive_count": 577,
+      "readable_member_count": 42934,
+      "matching_member_count": 0,
+      "unreadable_archive_count": 16
+    },
+    {
+      "path": "evidence/research/historical_variant_screen_recoverability/selected_checkpoint_recoverability.json",
+      "sha256": "7e3b1a823803471c3b97588d5db86157879d2ee444da28943d25dbccd34f2d96",
+      "bytes": 22724,
+      "claim_scope": "frozen selected-pair exact checkpoint digest search; targeted variant-and-seed ZIP paths only",
+      "scanner_path": "scripts/research/analysis/evidence/audit_selected_checkpoint_recoverability.py",
+      "scanner_sha256": "c800089ba09251a8162d67141408ce659069474d560492b14520efbe4efab9d4",
+      "archive_paths_inspected": 50,
+      "checkpoint_bytes_hashed": 1663296245,
+      "exact_match_count": 0
+    }
+  ]
+}

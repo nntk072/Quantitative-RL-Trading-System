@@ -1,0 +1,384 @@
+{
+  "claims": [
+    {
+      "allowed_interpretation": "Bounded negative historical evidence for this selected pair under its recorded legacy risk semantics.",
+      "claim_id": "selected_pair_failed_declared_viability_gate",
+      "comparison_ids": [
+        "selected_seed50_training_pair"
+      ],
+      "forbidden_overclaims": [
+        "A net daily-equity or FTMO-style daily-loss breach was demonstrated.",
+        "Either arm was shown to be superior.",
+        "An untouched confirmation result exists.",
+        "The policies are universally nonviable."
+      ],
+      "limitations": [
+        "Both evaluations reached data_end; the failure does not mean that the data split was incomplete.",
+        "The legacy daily_loss counter is gross negative closed-trade PnL without offsetting winning closes.",
+        "The exposed 2026 report-period cannot be used as confirmation.",
+        "The pair is one seed; its 6-vs-10 account widths are the declared entry-state visibility treatment, and preserved resolved configs differ only at env.entry_state_observation."
+      ],
+      "statement": "The selected seed-50 treatment and control both failed the configured strict zero-breach training risk-survival gate."
+    }
+  ],
+  "comparisons": [
+    {
+      "comparison_id": "selected_seed50_training_pair",
+      "evidence_role": "historical selected-pair descriptive comparison",
+      "metrics": [
+        {
+          "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4A/seed50",
+          "completed_positions": 987,
+          "net_return_pct": -2.154,
+          "aggregate_end_equity": 97845.69,
+          "breach_events": 1,
+          "survival_gate": "failed"
+        },
+        {
+          "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4B/seed50",
+          "completed_positions": 825,
+          "net_return_pct": -10.056,
+          "aggregate_end_equity": 89943.95,
+          "breach_events": 2,
+          "survival_gate": "failed"
+        }
+      ],
+      "limitations": [
+        "One seed and one previously inspected selection pair.",
+        "The two policy arms have 6-versus-10 account-observation widths because env.entry_state_observation is the declared single-factor treatment; the inputs are not identical, and the single seed does not establish a robust benefit.",
+        "The legacy daily-loss counter is not net daily-equity semantics."
+      ],
+      "question": "Did either arm pass the predeclared strict zero-breach training survival gate on the configured 2025 training interval?",
+      "result": "Both arms reached data_end and completed the configured split; both failed the declared risk-survival gate. The A4A/A4B outcome difference is descriptive, not causal.",
+      "run_ids": [
+        "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4A/seed50",
+        "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4B/seed50"
+      ],
+      "status": "complete"
+    }
+  ],
+  "created_at_utc": "2026-11-01T23:22:06Z",
+  "evidence_grade": "R2 with unresolved scientific gates; not confirmatory",
+  "finding_id": "selected_seed50_pair_did_not_establish_risk_viability",
+  "finding_status": "negative_exploratory_historical",
+  "frozen_at_utc": null,
+  "hypothesis": "The selected treatment would complete the configured full training split without a risk-gate breach.",
+  "limitations": [
+    "Draft result identity: unavailable historical fields remain explicit unknowns with reasons.",
+    "No raw tick/bar files are copied into this packet.",
+    "No new model training, checkpoint replay, or independent evaluation was performed.",
+    "Provider/license lookup remains excluded by user direction; no rights claim is made."
+  ],
+  "manifest_status": "draft",
+  "protocol_path": "docs/operations/research_execution_plan.md",
+  "research_question": "Did the selected seed-50 entry-state treatment and control establish the declared full-split risk-survival gate under the historical execution/account contract?",
+  "runs": [
+    {
+      "artifacts": [
+        {
+          "notes": "Historical per-run identity and protocol record.",
+          "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+          "role": "run_manifest",
+          "sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+          "storage_scope": "project_research_archive"
+        },
+        {
+          "notes": "Run-recorded configuration file.",
+          "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml",
+          "role": "resolved_run_config",
+          "sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+          "storage_scope": "project_research_archive"
+        },
+        {
+          "notes": "Shared interpretation of the legacy daily-loss breach semantics.",
+          "path": "evidence/research/releases/negative-evidence-readiness/legacy_daily_loss_counter_breach_trace.md",
+          "role": "risk_gate_trace",
+          "sha256": "efb5bc3eba17a0251914c9448c8aa98a0722806c81de48c7167f519277bc06cb"
+        }
+      ],
+      "identity": {
+        "action_mode": "clamped_diagonal_gaussian",
+        "broker_cost_risk_assumptions": [
+          "trading_policy.mode=legacy",
+          "operating_balance=100000.0",
+          "account_floor=90000.0",
+          "daily_loss_limit=5000.0",
+          "use_tick_execution=True",
+          "commission_per_lot=0.0",
+          "slippage_points=5.0",
+          "fill_latency_ms=30.0",
+          "legacy daily-loss counter sums gross negative closed PnL; not net daily equity"
+        ],
+        "checkpoint_hash": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703",
+        "claimed_reproduction_level": "R2: selected report and linked run identities/artifact hashes are retained; no independent full rerun is claimed.",
+        "config_file_hash": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "cuda_version": "cu130 (from recorded torch build)",
+        "dataset_file_hashes": [
+          "primary_ticks:63bfcbb29f6f424d8b5aac695177888b7f4f17473b441a8b30b61d9e9d796dab",
+          "test_bars:2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+          "test_features:ea02b0f1e90c8c5164e219d53d004cd22a848e7318d51bcad8f76dc99789ee06",
+          "test_secondary:3e562ba2c9d90334343dbcc4008a995ec07e01b4ea57e2e1215b4be2194d5664",
+          "train_bars:6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+          "train_features:696cff0bef5ecea1b3d872d645752a28bc40fb8a862ee641084b903e89419717",
+          "train_secondary:dbcc925829f0ba48f1b4e74b8ed18d2548e85e7a802fe2bfb4213755ce4a6171"
+        ],
+        "environment_lock_hash": {
+          "reason": "No environment lockfile digest was pinned into the historical run manifest.",
+          "status": "unknown"
+        },
+        "execution_seed": 50,
+        "exposure_roles": [
+          "training-period selection evidence",
+          "2026 report-period was previously inspected and is report-only"
+        ],
+        "feature_cache_content_hash": "4a97305f1d4b21c3eca61fab78ad76ea8ec09f586c058094d81877ec8b82aeca",
+        "feature_cache_version": "v24-native-source-timeframes",
+        "limitations": [
+          "One selected seed only.",
+          "Training-period evidence is development/selection evidence, not untouched confirmation.",
+          "Exposed 2026 report-period is not confirmation.",
+          "Configured legacy daily-loss gate is not net daily-equity semantics.",
+          "No independent review is claimed.",
+          "The two arms differ in account observation width and entry-state visibility; their outcome difference is descriptive, not causal."
+        ],
+        "metric_calculator_revision": {
+          "reason": "Historical metric implementation hash was not pinned as a named calculator revision in the selected run manifest.",
+          "status": "unknown"
+        },
+        "missing_assets": {
+          "reason": "This manifest inventories result artifacts; it does not establish complete availability of all raw/external source assets.",
+          "status": "unknown"
+        },
+        "n_envs": 32,
+        "python_version": "3.12.15",
+        "regeneration_command": "See evidence/research/selected_policy_trade_lifecycle/evidence_manifest.json for the canonical artifact-derived report command; this manifest does not retrain or replay checkpoints.",
+        "resolved_config_hash": {
+          "reason": "The historical artifact does not distinguish a source config digest from a separately serialized resolved-config digest.",
+          "status": "unknown"
+        },
+        "reviewer_check_status": "Automated artifact hashes are verified; independent review was waived and is not claimed.",
+        "rollout_geometry": [
+          "n_steps_per_env=256",
+          "aggregate_rollout_steps=8192",
+          "updates_per_rollout=30",
+          "minibatches_per_epoch=2",
+          "epochs=15",
+          "effective_n_envs=32",
+          "action_distribution=clamped_diagonal_gaussian",
+          "seed=50",
+          "reward=dsr",
+          "architecture=tcn",
+          "observation_width=6",
+          "entry_state_visible=False",
+          "variant=A4A"
+        ],
+        "sample_denominators": [
+          "completed_positions=987",
+          "breach_events=1",
+          "completed_training_steps=2007040",
+          "episode_end=data_end",
+          "full configured split evaluated"
+        ],
+        "schema_versions": [
+          "overlay-action-v2",
+          "account-state-v1",
+          6
+        ],
+        "source_commit": "0d056dcd3ab42165eec183a2f44cfe7e441edd39",
+        "source_tree_hash": {
+          "reason": "A complete canonical source-tree hash for the historical dirty run is not available; the campaign fingerprint and per-file source inventory are recorded separately.",
+          "status": "unknown"
+        },
+        "split_fold_ids": [
+          "training:2024-12-30/2025-12-31",
+          "report-period:2026-01-01/2026-10-16 (previously inspected; exposed)"
+        ],
+        "stochastic_eval_seed": {
+          "reason": "A separate stochastic evaluation seed was not recorded for the selected training result.",
+          "status": "unknown"
+        },
+        "symbols": [
+          "US100.cash"
+        ],
+        "timeframes": {
+          "reason": "The run manifest records feature columns but not a normalized timeframe inventory for this finding.",
+          "status": "unknown"
+        },
+        "timezone_session_schedule": {
+          "reason": "Broker timestamps and configured session schedule are recorded, but authoritative timezone, calendar, and reset semantics remain unresolved.",
+          "status": "unknown"
+        },
+        "torch_version": "2.14.0+cu130",
+        "training_effective_steps": 2007040,
+        "training_seed": 50,
+        "training_total_steps": 2000000
+      },
+      "role": "treatment",
+      "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4A/seed50",
+      "seed": 50,
+      "status": "completed_failed_viability",
+      "variant_id": "A4A"
+    },
+    {
+      "artifacts": [
+        {
+          "notes": "Historical per-run identity and protocol record.",
+          "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+          "role": "run_manifest",
+          "sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+          "storage_scope": "project_research_archive"
+        },
+        {
+          "notes": "Run-recorded configuration file.",
+          "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml",
+          "role": "resolved_run_config",
+          "sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+          "storage_scope": "project_research_archive"
+        },
+        {
+          "notes": "Shared interpretation of the legacy daily-loss breach semantics.",
+          "path": "evidence/research/releases/negative-evidence-readiness/legacy_daily_loss_counter_breach_trace.md",
+          "role": "risk_gate_trace",
+          "sha256": "efb5bc3eba17a0251914c9448c8aa98a0722806c81de48c7167f519277bc06cb"
+        }
+      ],
+      "identity": {
+        "action_mode": "clamped_diagonal_gaussian",
+        "broker_cost_risk_assumptions": [
+          "trading_policy.mode=legacy",
+          "operating_balance=100000.0",
+          "account_floor=90000.0",
+          "daily_loss_limit=5000.0",
+          "use_tick_execution=True",
+          "commission_per_lot=0.0",
+          "slippage_points=5.0",
+          "fill_latency_ms=30.0",
+          "legacy daily-loss counter sums gross negative closed PnL; not net daily equity"
+        ],
+        "checkpoint_hash": "f2d07676fc5e1019dda9cbd1714874fd6997238ba70dc69a5f16be7c19a36fdf",
+        "claimed_reproduction_level": "R2: selected report and linked run identities/artifact hashes are retained; no independent full rerun is claimed.",
+        "config_file_hash": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "cuda_version": "cu130 (from recorded torch build)",
+        "dataset_file_hashes": [
+          "primary_ticks:63bfcbb29f6f424d8b5aac695177888b7f4f17473b441a8b30b61d9e9d796dab",
+          "test_bars:2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+          "test_features:ea02b0f1e90c8c5164e219d53d004cd22a848e7318d51bcad8f76dc99789ee06",
+          "test_secondary:3e562ba2c9d90334343dbcc4008a995ec07e01b4ea57e2e1215b4be2194d5664",
+          "train_bars:6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+          "train_features:696cff0bef5ecea1b3d872d645752a28bc40fb8a862ee641084b903e89419717",
+          "train_secondary:dbcc925829f0ba48f1b4e74b8ed18d2548e85e7a802fe2bfb4213755ce4a6171"
+        ],
+        "environment_lock_hash": {
+          "reason": "No environment lockfile digest was pinned into the historical run manifest.",
+          "status": "unknown"
+        },
+        "execution_seed": 50,
+        "exposure_roles": [
+          "training-period selection evidence",
+          "2026 report-period was previously inspected and is report-only"
+        ],
+        "feature_cache_content_hash": "4a97305f1d4b21c3eca61fab78ad76ea8ec09f586c058094d81877ec8b82aeca",
+        "feature_cache_version": "v24-native-source-timeframes",
+        "limitations": [
+          "One selected seed only.",
+          "Training-period evidence is development/selection evidence, not untouched confirmation.",
+          "Exposed 2026 report-period is not confirmation.",
+          "Configured legacy daily-loss gate is not net daily-equity semantics.",
+          "No independent review is claimed.",
+          "The two arms differ in account observation width and entry-state visibility; their outcome difference is descriptive, not causal."
+        ],
+        "metric_calculator_revision": {
+          "reason": "Historical metric implementation hash was not pinned as a named calculator revision in the selected run manifest.",
+          "status": "unknown"
+        },
+        "missing_assets": {
+          "reason": "This manifest inventories result artifacts; it does not establish complete availability of all raw/external source assets.",
+          "status": "unknown"
+        },
+        "n_envs": 32,
+        "python_version": "3.12.15",
+        "regeneration_command": "See evidence/research/selected_policy_trade_lifecycle/evidence_manifest.json for the canonical artifact-derived report command; this manifest does not retrain or replay checkpoints.",
+        "resolved_config_hash": {
+          "reason": "The historical artifact does not distinguish a source config digest from a separately serialized resolved-config digest.",
+          "status": "unknown"
+        },
+        "reviewer_check_status": "Automated artifact hashes are verified; independent review was waived and is not claimed.",
+        "rollout_geometry": [
+          "n_steps_per_env=256",
+          "aggregate_rollout_steps=8192",
+          "updates_per_rollout=30",
+          "minibatches_per_epoch=2",
+          "epochs=15",
+          "effective_n_envs=32",
+          "action_distribution=clamped_diagonal_gaussian",
+          "seed=50",
+          "reward=dsr",
+          "architecture=tcn",
+          "observation_width=10",
+          "entry_state_visible=True",
+          "variant=A4B"
+        ],
+        "sample_denominators": [
+          "completed_positions=825",
+          "breach_events=2",
+          "completed_training_steps=2007040",
+          "episode_end=data_end",
+          "full configured split evaluated"
+        ],
+        "schema_versions": [
+          "overlay-action-v2",
+          "account-state-v1",
+          6
+        ],
+        "source_commit": "0d056dcd3ab42165eec183a2f44cfe7e441edd39",
+        "source_tree_hash": {
+          "reason": "A complete canonical source-tree hash for the historical dirty run is not available; the campaign fingerprint and per-file source inventory are recorded separately.",
+          "status": "unknown"
+        },
+        "split_fold_ids": [
+          "training:2024-12-30/2025-12-31",
+          "report-period:2026-01-01/2026-10-16 (previously inspected; exposed)"
+        ],
+        "stochastic_eval_seed": {
+          "reason": "A separate stochastic evaluation seed was not recorded for the selected training result.",
+          "status": "unknown"
+        },
+        "symbols": [
+          "US100.cash"
+        ],
+        "timeframes": {
+          "reason": "The run manifest records feature columns but not a normalized timeframe inventory for this finding.",
+          "status": "unknown"
+        },
+        "timezone_session_schedule": {
+          "reason": "Broker timestamps and configured session schedule are recorded, but authoritative timezone, calendar, and reset semantics remain unresolved.",
+          "status": "unknown"
+        },
+        "torch_version": "2.14.0+cu130",
+        "training_effective_steps": 2007040,
+        "training_seed": 50,
+        "training_total_steps": 2000000
+      },
+      "role": "control",
+      "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4B/seed50",
+      "seed": 50,
+      "status": "completed_failed_viability",
+      "variant_id": "A4B"
+    }
+  ],
+  "schema": "qrl.research_result_manifest.v2",
+  "supporting_artifacts": [
+    {
+      "notes": "Canonical bounded negative-result narrative.",
+      "path": "evidence/research/releases/negative-evidence-readiness/CONSOLIDATED_RESEARCH_RESULTS.md",
+      "role": "results_summary",
+      "sha256": "e5c800a325bb809c7736551a54f5df802b70ee2c07a977c615d966d95451f93f"
+    },
+    {
+      "notes": "Legacy counter trace and interpretation.",
+      "path": "evidence/research/releases/negative-evidence-readiness/legacy_daily_loss_counter_breach_trace.md",
+      "role": "risk_gate_semantics",
+      "sha256": "efb5bc3eba17a0251914c9448c8aa98a0722806c81de48c7167f519277bc06cb"
+    }
+  ]
+}

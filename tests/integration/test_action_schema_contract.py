@@ -41,7 +41,11 @@ def test_decision_log_uses_action_schema_indices(flags: dict[str, bool]) -> None
 
 def test_decoder_rejects_action_shape_that_disagrees_with_flags() -> None:
     schema = build_action_schema(has_sl_mode=True, has_tp_mode=True, has_multi_tp=True)
-    env: Any = SimpleNamespace(strategy_actions=True, action_schema=schema)
+    env: Any = SimpleNamespace(
+        strategy_actions=True,
+        action_schema=schema,
+        _current_decision_id="episode-0-decision-0",
+    )
     with pytest.raises(ValueError, match="action width"):
         TradingEnv._decode_action(env, np.zeros(schema.width - 1, dtype=np.float32))
 

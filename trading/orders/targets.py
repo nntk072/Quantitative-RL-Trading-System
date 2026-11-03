@@ -87,6 +87,8 @@ def target_menu(
     Returns:
         Ordered target candidates that pass direction and distance checks.
     """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or 1")
     if not np.isfinite(front_run_pts) or front_run_pts < 0.0:
         raise ValueError("front_run_pts must be finite and nonnegative")
     if price_increment is not None and (not np.isfinite(price_increment) or price_increment <= 0.0):

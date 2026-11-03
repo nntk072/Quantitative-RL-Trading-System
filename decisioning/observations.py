@@ -28,11 +28,15 @@ def pad_observation_window(
         Array returned by ``pad_observation_window``.
     """
     values = np.asarray(seq, dtype=np.float32)
+    if not isinstance(window, (int, np.integer)) or isinstance(window, bool) or window <= 0:
+        raise ValueError("observation window must be a positive integer")
     if values.ndim == 1:
         width = 1
         values = values.reshape(-1, 1)
+    elif values.ndim == 2:
+        width = int(values.shape[1])
     else:
-        width = int(values.shape[1]) if values.shape[1:] else 1
+        raise ValueError(f"observation sequence must be 1D or 2D, got {values.ndim}D")
     n_real = int(values.shape[0])
     mask = np.zeros(window, dtype=np.float32)
     if n_real >= window:
@@ -70,6 +74,23 @@ def normalized_account_vector(
     Returns:
         Array returned by ``normalized_account_vector``.
     """
+    scalar_inputs = {
+        "equity": equity,
+        "initial_balance": initial_balance,
+        "pos_dir": pos_dir,
+        "open_pnl": open_pnl,
+        "dist_to_sl": dist_to_sl,
+        "trailing_dd": trailing_dd,
+        "close": close,
+    }
+    for name, value in scalar_inputs.items():
+        if not np.isfinite(float(value)):
+            raise ValueError(f"account-state-v1 input {name} must be finite")
+    if initial_balance > 0.0 and equity <= 0.0:
+        raise ValueError(
+            "account-state-v1 equity must be positive when initial_balance is positive"
+        )
+
     norm_equity = float(np.log(equity / initial_balance)) if initial_balance > 0 else 0.0
     norm_pnl = open_pnl / initial_balance if initial_balance > 0 else 0.0
     unrealised_r = (open_pnl / equity * 100.0) if equity > 0 else 0.0
@@ -77,7 +98,11 @@ def normalized_account_vector(
     values = [norm_equity, pos_dir, norm_pnl, unrealised_r, norm_dist, float(trailing_dd)]
     if entry_state is not None:
         values.extend(entry_state_one_hot(entry_state))
-    return np.asarray(values, dtype=np.float32)
+    with np.errstate(over="ignore", invalid="ignore"):
+        result = np.asarray(values, dtype=np.float32)
+    if not np.isfinite(result).all():
+        raise ValueError("account-state-v1 output coordinates must be finite")
+    return result
 
 
 OBSERVATION_SCHEMA_V1 = "account-state-v1"
@@ -295,6 +320,56 @@ def account_state_v2(
     Returns:
         Array returned by ``account_state_v2``.
     """
+    scalar_inputs = {
+        "equity": equity,
+        "initial_balance": initial_balance,
+        "position_direction": position_direction,
+        "open_pnl": open_pnl,
+        "planned_risk_usd": planned_risk_usd,
+        "trailing_drawdown_pct": trailing_drawdown_pct,
+        "trailing_drawdown_limit": trailing_drawdown_limit,
+        "daily_loss": daily_loss,
+        "daily_loss_limit": daily_loss_limit,
+        "loss_from_initial": loss_from_initial,
+        "max_loss_limit": max_loss_limit,
+        "risk_per_trade_limit": risk_per_trade_limit,
+        "current_price": current_price,
+        "entry_price": entry_price,
+        "remaining_size": remaining_size,
+        "initial_size": initial_size,
+        "position_age_bars": position_age_bars,
+        "position_age_scale_bars": position_age_scale_bars,
+    }
+    for name, value in scalar_inputs.items():
+        if not np.isfinite(float(value)):
+            raise ValueError(f"account-state-v2 input {name} must be finite")
+    if initial_sl_price is not None and not np.isfinite(float(initial_sl_price)):
+        raise ValueError("account-state-v2 input initial_sl_price must be finite")
+    if active_sl_price is not None and not np.isfinite(float(active_sl_price)):
+        raise ValueError("account-state-v2 input active_sl_price must be finite")
+    if any(target is not None and not np.isfinite(float(target)) for target in tp_prices):
+        raise ValueError("account-state-v2 input tp_prices must be finite when provided")
+    if len(tp_prices) != 3:
+        raise ValueError("account-state-v2 requires exactly three take-profit prices")
+    if float(position_direction) not in (-1.0, 0.0, 1.0):
+        raise ValueError("account-state-v2 position_direction must be -1, 0, or 1")
+    if float(position_age_scale_bars) <= 0.0:
+        raise ValueError("account-state-v2 position_age_scale_bars must be positive")
+    if float(position_age_bars) < 0.0:
+        raise ValueError("account-state-v2 position_age_bars must be non-negative")
+    if float(remaining_size) < 0.0 or float(initial_size) < 0.0:
+        raise ValueError("account-state-v2 position sizes must be non-negative")
+    if not isinstance(tp_hit_mask, (int, np.integer)) or isinstance(tp_hit_mask, bool):
+        raise ValueError("account-state-v2 tp_hit_mask must be an integer bitmask")
+    if tp_hit_mask < 0 or tp_hit_mask > 0b111:
+        raise ValueError("account-state-v2 tp_hit_mask must contain only three target bits")
+    if sl_mode not in {"fixed", "breakeven", "trailing"}:
+        raise ValueError(f"unsupported account-state-v2 sl_mode: {sl_mode!r}")
+    if tp_mode not in {"fixed", "breakeven", "trailing"}:
+        raise ValueError(f"unsupported account-state-v2 tp_mode: {tp_mode!r}")
+    if exit_mode not in {"structural", "ema_21"}:
+        raise ValueError(f"unsupported account-state-v2 exit_mode: {exit_mode!r}")
+
     has_position = float(position_direction) != 0.0
     initial_risk = (
         abs(float(entry_price) - float(initial_sl_price))

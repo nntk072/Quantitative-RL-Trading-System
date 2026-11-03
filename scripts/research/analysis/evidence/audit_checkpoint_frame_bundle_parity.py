@@ -199,13 +199,44 @@ def select_split(
     raise ValueError(f"unsupported evaluation split: {split}")
 
 
+def _resolve_audit_targets(
+    split: str, output: Path, bundle_dir: Path, *, cwd: Path
+) -> list[tuple[str, Path, Path]]:
+    """Resolve one or both split outputs without allowing overwrites."""
+    cwd = cwd.resolve()
+    output = output.resolve()
+    bundle_dir = bundle_dir.resolve()
+    output.relative_to(cwd)
+    bundle_dir.relative_to(cwd)
+    if output == bundle_dir or output in bundle_dir.parents or bundle_dir in output.parents:
+        raise ValueError("parity report output and bundle directory must be separate")
+
+    if split == "both":
+        if output.exists() or bundle_dir.exists():
+            raise FileExistsError("refusing to overwrite an existing parity output directory")
+        return [(name, output / f"{name}.json", bundle_dir / name) for name in ("train", "test")]
+    if split not in {"train", "test"}:
+        raise ValueError(f"unsupported evaluation split: {split}")
+    if output.exists() or bundle_dir.exists():
+        raise FileExistsError("refusing to overwrite an existing parity report or bundle")
+    return [(split, output, bundle_dir)]
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", type=Path, required=True, help="Saved source run directory")
     parser.add_argument("--checkpoint", type=Path, required=True, help="Checkpoint path")
-    parser.add_argument("--output", type=Path, required=True, help="New JSON report path")
     parser.add_argument(
-        "--bundle-dir", type=Path, required=True, help="New directory for the selected split bundle"
+        "--output",
+        type=Path,
+        required=True,
+        help="New JSON report path; for --split both, a new output directory",
+    )
+    parser.add_argument(
+        "--bundle-dir",
+        type=Path,
+        required=True,
+        help="New selected-split bundle directory; for --split both, a new bundle root",
     )
     parser.add_argument(
         "--allow-historical",
@@ -233,7 +264,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--split",
-        choices=("train", "test"),
+        choices=("train", "test", "both"),
         default="test",
         help="Compare the complete saved training split or report-only test split (default: test)",
     )
@@ -243,20 +274,16 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = _build_parser().parse_args()
     run_dir = args.run.resolve()
-    output = args.output.resolve()
-    bundle_dir = args.bundle_dir.resolve()
+    targets = _resolve_audit_targets(args.split, args.output, args.bundle_dir, cwd=Path.cwd())
+    output_root = args.output.resolve()
     checkpoint = (
         args.checkpoint.resolve()
         if args.checkpoint.is_absolute()
         else (run_dir / args.checkpoint).resolve()
     )
     getattr(eval_run, "_validate_reanalysis_request")(
-        run_dir, output, allow_historical=args.allow_historical
+        run_dir, output_root, allow_historical=args.allow_historical
     )
-    if output.exists() or bundle_dir.exists():
-        raise FileExistsError("refusing to overwrite an existing parity report or bundle")
-    output.relative_to(Path.cwd().resolve())
-    bundle_dir.relative_to(Path.cwd().resolve())
     if not checkpoint.is_file():
         raise FileNotFoundError(checkpoint)
 
@@ -392,10 +419,6 @@ def main() -> int:
         evaluated_datasets,
         allow_legacy=False,
     )
-    eval_bars, eval_features, split_role = select_split(
-        args.split, train_bars, test_bars, train_features, test_features
-    )
-    eval_tickbook = ticks_covering(primary_ticks, eval_bars)
     eval_common, _, _, _, _ = build_eval_common(cfg, args=None, env_vae=None, pre_ny_by_date=None)
     execution_seed = eval_run.resolve_execution_seed(None, manifest)
     if eval_common["randomized_fill_latency_ms"] > 0 and execution_seed is None:
@@ -417,138 +440,144 @@ def main() -> int:
         allow_legacy=use_legacy_sequence_columns,
     )
     eval_run.validate_sequence_input_width(model, sequence_schema["width"])
-    frame_result = evaluate_model(
-        model,
-        bars=eval_bars,
-        features=eval_features,
-        tickbook=eval_tickbook,
-        deterministic=True,
-        legacy_sequence_columns=use_legacy_sequence_columns,
-        **eval_common,
-    )
-
-    bundle_dir.parent.mkdir(parents=True, exist_ok=True)
-    bundle_path = build_env_bundle(
-        bundle_dir,
-        eval_bars,
-        eval_features,
-        cfg,
-        raw_columns=list(strategy.raw_columns),
-        feature_config_hash=feature_cache.stem,
-        tickbook=eval_tickbook,
-        pre_ny_by_date=None,
-        legacy_sequence_columns=use_legacy_sequence_columns,
-    )
     arch = "mtf" if bool(eval_common.get("mtf", False)) else "tcn"
-    spec = EnvSpec.from_cfg(
-        cfg,
-        algo="ppo",
-        reward="sweep" if bool(eval_common.get("use_sweep_reward", False)) else "dsr",
-        arch=arch,
-        bundle_dir=str(bundle_path),
-        episodic=False,
-        evaluation=True,
-    )
-    bundle_env = make_bundle_env(spec)
-    bundle_result = _evaluate_bundle_result(
-        model,
-        bundle_env,
-        continuous_actions=bool(eval_common["continuous_actions"]),
-        strategy_actions=bool(eval_common["strategy_actions"]),
-        execution_seed=execution_seed,
-    )
-    comparisons = compare_results(frame_result, bundle_result)
-    frame_metrics = _metrics(frame_result, cfg)
-    bundle_metrics = _metrics(bundle_result, cfg)
-    metric_equal = _equal(frame_metrics, bundle_metrics)
-    matches = all(comparisons.values()) and metric_equal
     current_head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     working_tree_dirty = bool(
         subprocess.check_output(["git", "status", "--porcelain"], text=True).strip()
     )
-    report: dict[str, Any] = {
-        "schema_version": 1,
-        "status": "passed" if matches else "failed",
-        "artifact_role": "historical_reanalysis_backend_parity",
-        "historical_holdout_inspected": True,
-        "experiment_run_id": provenance.get("experiment_run_id"),
-        "experiment_run_fingerprint": provenance.get("experiment_run_fingerprint"),
-        "source_attempt": provenance.get("attempt"),
-        "repository": {
-            "head": current_head,
-            "working_tree_dirty": working_tree_dirty,
-            "branch": subprocess.check_output(
-                ["git", "branch", "--show-current"], text=True
-            ).strip(),
-        },
-        "audit_script_sha256": _sha256(Path(__file__).resolve()),
-        "source_run": str(run_dir),
-        "checkpoint": str(checkpoint),
-        "checkpoint_sha256": _sha256(checkpoint),
-        "checkpoint_manifest_hash_disposition": checkpoint_hash_disposition,
-        "stop_schema_disposition": stop_schema_disposition,
-        "checkpoint_timesteps": int(model.num_timesteps),
-        "attempt_provenance": str(provenance_path),
-        "attempt_provenance_sha256": _sha256(provenance_path),
-        "config_sha256": _sha256(run_dir / "config.yaml"),
-        "execution_seed": execution_seed,
-        "training_data_source": manifest.get("training_protocol", {}).get("data_source"),
-        "sequence_feature_schema": sequence_schema,
-        "sequence_feature_schema_disposition": sequence_schema_disposition,
-        "legacy_sequence_columns_used": use_legacy_sequence_columns,
-        "dataset_parity_disposition": dataset_disposition,
-        "source_datasets": source_datasets,
-        "evaluated_datasets": evaluated_datasets,
-        "source_feature_cache_replay": args.source_feature_cache is not None,
-        "feature_cache": str(feature_cache),
-        "feature_cache_sha256": _sha256(feature_cache),
-        "split": {
-            "name": args.split,
-            "role": split_role,
-            "train_end": train_end,
-            "test_start": test_start,
-            "bars": int(len(eval_bars)),
-        },
-        "policy_action_mode": "deterministic_saved_checkpoint",
-        "metrics_protocol": {
-            "annualization": {
-                "periods_per_year": evaluation_periods_per_year(cfg),
-                "convention": _annualization_convention(cfg),
-            },
-            "initial_balance": float(cfg.account.initial_balance),
-            "frequency": "bar_close_equity",
-            "exposure_measure": BAR_CLOSE_EXPOSURE_MEASURE,
-        },
-        "backends": ["frames", "shared_bundle"],
-        "bundle_path": str(bundle_path),
-        "comparisons": {**comparisons, "aggregate_metrics": metric_equal},
-        "frame_metrics": frame_metrics,
-        "bundle_metrics": bundle_metrics,
-        "frame_trade_rows": int(len(frame_result["trades"])),
-        "bundle_trade_rows": int(len(bundle_result["trades"])),
-        "frame_steps": int(frame_result["n_steps"]),
-        "bundle_steps": int(bundle_result["n_steps"]),
-        "limitations": [
-            "Backend parity does not establish training completion, strategy validity, or confirmatory evidence.",
-            "The test split was previously inspected and selection-acknowledged; the training split is in-sample. Neither is pristine confirmatory OOS evidence.",
-            "Repository HEAD, working-tree state, and audit-script hash identify the parity implementation used.",
-        ],
-    }
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2, sort_keys=True, default=str) + "\n")
-    print(
-        json.dumps(
-            {
-                "status": report["status"],
-                "output": str(output),
-                "comparisons": report["comparisons"],
-                "frame_trades": report["frame_metrics"].get("n_trades"),
-                "bundle_trades": report["bundle_metrics"].get("n_trades"),
-            },
-            sort_keys=True,
+    reports: list[dict[str, Any]] = []
+    for split_name, output, bundle_dir in targets:
+        eval_bars, eval_features, split_role = select_split(
+            split_name, train_bars, test_bars, train_features, test_features
         )
-    )
-    return 0 if matches else 1
+        eval_tickbook = ticks_covering(primary_ticks, eval_bars)
+        frame_result = evaluate_model(
+            model,
+            bars=eval_bars,
+            features=eval_features,
+            tickbook=eval_tickbook,
+            deterministic=True,
+            legacy_sequence_columns=use_legacy_sequence_columns,
+            **eval_common,
+        )
+        bundle_dir.parent.mkdir(parents=True, exist_ok=True)
+        bundle_path = build_env_bundle(
+            bundle_dir,
+            eval_bars,
+            eval_features,
+            cfg,
+            raw_columns=list(strategy.raw_columns),
+            feature_config_hash=feature_cache.stem,
+            tickbook=eval_tickbook,
+            pre_ny_by_date=None,
+            legacy_sequence_columns=use_legacy_sequence_columns,
+        )
+        spec = EnvSpec.from_cfg(
+            cfg,
+            algo="ppo",
+            reward="sweep" if bool(eval_common.get("use_sweep_reward", False)) else "dsr",
+            arch=arch,
+            bundle_dir=str(bundle_path),
+            episodic=False,
+            evaluation=True,
+        )
+        bundle_env = make_bundle_env(spec)
+        bundle_result = _evaluate_bundle_result(
+            model,
+            bundle_env,
+            continuous_actions=bool(eval_common["continuous_actions"]),
+            strategy_actions=bool(eval_common["strategy_actions"]),
+            execution_seed=execution_seed,
+        )
+        comparisons = compare_results(frame_result, bundle_result)
+        frame_metrics = _metrics(frame_result, cfg)
+        bundle_metrics = _metrics(bundle_result, cfg)
+        metric_equal = _equal(frame_metrics, bundle_metrics)
+        matches = all(comparisons.values()) and metric_equal
+        report: dict[str, Any] = {
+            "schema_version": 1,
+            "status": "passed" if matches else "failed",
+            "artifact_role": "historical_reanalysis_backend_parity",
+            "historical_holdout_inspected": True,
+            "experiment_run_id": provenance.get("experiment_run_id"),
+            "experiment_run_fingerprint": provenance.get("experiment_run_fingerprint"),
+            "source_attempt": provenance.get("attempt"),
+            "repository": {
+                "head": current_head,
+                "working_tree_dirty": working_tree_dirty,
+                "branch": subprocess.check_output(
+                    ["git", "branch", "--show-current"], text=True
+                ).strip(),
+            },
+            "audit_script_sha256": _sha256(Path(__file__).resolve()),
+            "source_run": str(run_dir),
+            "checkpoint": str(checkpoint),
+            "checkpoint_sha256": _sha256(checkpoint),
+            "checkpoint_manifest_hash_disposition": checkpoint_hash_disposition,
+            "stop_schema_disposition": stop_schema_disposition,
+            "checkpoint_timesteps": int(model.num_timesteps),
+            "attempt_provenance": str(provenance_path),
+            "attempt_provenance_sha256": _sha256(provenance_path),
+            "config_sha256": _sha256(run_dir / "config.yaml"),
+            "execution_seed": execution_seed,
+            "training_data_source": manifest.get("training_protocol", {}).get("data_source"),
+            "sequence_feature_schema": sequence_schema,
+            "sequence_feature_schema_disposition": sequence_schema_disposition,
+            "legacy_sequence_columns_used": use_legacy_sequence_columns,
+            "dataset_parity_disposition": dataset_disposition,
+            "source_datasets": source_datasets,
+            "evaluated_datasets": evaluated_datasets,
+            "source_feature_cache_replay": args.source_feature_cache is not None,
+            "feature_cache": str(feature_cache),
+            "feature_cache_sha256": _sha256(feature_cache),
+            "split": {
+                "name": split_name,
+                "role": split_role,
+                "train_end": train_end,
+                "test_start": test_start,
+                "bars": int(len(eval_bars)),
+            },
+            "policy_action_mode": "deterministic_saved_checkpoint",
+            "metrics_protocol": {
+                "annualization": {
+                    "periods_per_year": evaluation_periods_per_year(cfg),
+                    "convention": _annualization_convention(cfg),
+                },
+                "initial_balance": float(cfg.account.initial_balance),
+                "frequency": "bar_close_equity",
+                "exposure_measure": BAR_CLOSE_EXPOSURE_MEASURE,
+            },
+            "backends": ["frames", "shared_bundle"],
+            "bundle_path": str(bundle_path),
+            "comparisons": {**comparisons, "aggregate_metrics": metric_equal},
+            "frame_metrics": frame_metrics,
+            "bundle_metrics": bundle_metrics,
+            "frame_trade_rows": int(len(frame_result["trades"])),
+            "bundle_trade_rows": int(len(bundle_result["trades"])),
+            "frame_steps": int(frame_result["n_steps"]),
+            "bundle_steps": int(bundle_result["n_steps"]),
+            "limitations": [
+                "Backend parity does not establish training completion, strategy validity, or confirmatory evidence.",
+                "The test split was previously inspected and selection-acknowledged; the training split is in-sample. Neither is pristine confirmatory OOS evidence.",
+                "Repository HEAD, working-tree state, and audit-script hash identify the parity implementation used.",
+            ],
+        }
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(report, indent=2, sort_keys=True, default=str) + "\n")
+        reports.append(report)
+        print(
+            json.dumps(
+                {
+                    "status": report["status"],
+                    "output": str(output),
+                    "comparisons": report["comparisons"],
+                    "frame_trades": report["frame_metrics"].get("n_trades"),
+                    "bundle_trades": report["bundle_metrics"].get("n_trades"),
+                },
+                sort_keys=True,
+            )
+        )
+    return 0 if all(report["status"] == "passed" for report in reports) else 1
 
 
 if __name__ == "__main__":

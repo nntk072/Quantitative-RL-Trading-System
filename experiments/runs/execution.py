@@ -180,10 +180,11 @@ __all__ = [
 
 STOP = False
 _CACHE_FILE_HASHES: dict[tuple[str, int, int, int], str] = {}
+ExperimentRunOverride = bool | int | float | str | list[bool | int | float | str]
 
 
-def normalize_experiment_run_config_overrides(value: Any) -> dict[str, bool | int | float | str]:
-    """Validate simple scalar config overrides declared by an experiment run spec.
+def normalize_experiment_run_config_overrides(value: Any) -> dict[str, ExperimentRunOverride]:
+    """Validate scalar or flat primitive-list config overrides in a run spec.
 
     Args:
         value: Value to process.
@@ -195,7 +196,7 @@ def normalize_experiment_run_config_overrides(value: Any) -> dict[str, bool | in
         return {}
     if not isinstance(value, dict):
         raise ValueError("experiment run config_overrides must be a mapping")
-    normalized: dict[str, bool | int | float | str] = {}
+    normalized: dict[str, ExperimentRunOverride] = {}
     for raw_key, raw_value in value.items():
         key = str(raw_key).strip()
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", key):
@@ -206,6 +207,11 @@ def normalize_experiment_run_config_overrides(value: Any) -> dict[str, bool | in
             normalized[key] = raw_value
         elif isinstance(raw_value, float) and math.isfinite(raw_value):
             normalized[key] = raw_value
+        elif isinstance(raw_value, list) and all(
+            isinstance(item, (bool, int, str)) or (isinstance(item, float) and math.isfinite(item))
+            for item in raw_value
+        ):
+            normalized[key] = list(raw_value)
         elif isinstance(raw_value, str) and key in {
             "data.cache_dir",
             "data.datasets.training.raw_dir",
@@ -226,12 +232,12 @@ def normalize_experiment_run_config_overrides(value: Any) -> dict[str, bool | in
         else:
             raise ValueError(
                 f"experiment run config override {key!r} must be a finite number, boolean, "
-                "or supported relative data path/string"
+                "a flat list of primitive values, or supported relative data path/string"
             )
     return dict(sorted(normalized.items()))
 
 
-def load_experiment_run_data_profile(profile: Any) -> dict[str, bool | int | float | str]:
+def load_experiment_run_data_profile(profile: Any) -> dict[str, ExperimentRunOverride]:
     """Load an explicit reusable data mode from ``config/data_modes``.
 
     Args:
@@ -297,8 +303,8 @@ def load_experiment_run_data_profile(profile: Any) -> dict[str, bool | int | flo
     return normalize_experiment_run_config_overrides(flattened)
 
 
-def experiment_run_config_override_lines(values: dict[str, bool | int | float | str]) -> str:
-    """Serialize validated scalar overrides for the isolated trainer process.
+def experiment_run_config_override_lines(values: dict[str, ExperimentRunOverride]) -> str:
+    """Serialize validated overrides for the isolated trainer process.
 
     Args:
         values: Values to process, in input order.
@@ -308,7 +314,12 @@ def experiment_run_config_override_lines(values: dict[str, bool | int | float | 
     """
     lines = []
     for key, value in values.items():
-        rendered = str(value).lower() if isinstance(value, bool) else str(value)
+        if isinstance(value, bool):
+            rendered = str(value).lower()
+        elif isinstance(value, list):
+            rendered = json.dumps(value, allow_nan=False, separators=(",", ":"))
+        else:
+            rendered = str(value)
         lines.append(f"{key}={rendered}")
     return "\n".join(lines)
 
@@ -424,7 +435,7 @@ def main() -> int:
     import yaml
 
     evaluation: dict[str, Any] = {"locked_oos_role": "unspecified", "deterministic": False}
-    config_overrides: dict[str, bool | int | float | str] = {}
+    config_overrides: dict[str, ExperimentRunOverride] = {}
     if args.experiment_run_spec:
         if any(
             value is not None

@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quantitative-rl-trading-system/schemas/research_result_manifest_v2.schema.json",
+  "title": "Research result identity and evidence manifest v2",
+  "description": "A concept-level result record. Unknown identity values require an explicit reason; frozen results may not contain unknown values.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "recordedValue": {
+      "oneOf": [
+        { "type": ["string", "integer", "number", "boolean", "array"] },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": { "const": "unknown" },
+            "reason": { "type": "string", "minLength": 1 }
+          },
+          "required": ["status", "reason"]
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "role": { "type": "string", "minLength": 1 },
+        "storage_scope": { "enum": ["repository", "project_research_archive"] },
+        "media_type": { "type": ["string", "null"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["path", "sha256", "role"]
+    },
+    "confidenceInterval": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "estimate": { "type": ["number", "null"] },
+        "lower": { "type": ["number", "null"] },
+        "upper": { "type": ["number", "null"] },
+        "level": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 }
+      },
+      "required": ["estimate", "lower", "upper", "level"]
+    },
+    "withinTrajectoryConfidenceIntervals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": { "const": "within_trajectory_bootstrap_ci_v1" },
+        "method": { "const": "moving_block_bar_returns_and_trade_pnl_resampling" },
+        "n_boot": { "type": "integer", "minimum": 1 },
+        "level": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "seed": { "type": "integer", "minimum": 0 },
+        "block_length_bars": { "type": "integer", "minimum": 1 },
+        "scope": { "type": "string", "minLength": 1 },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sharpe": { "$ref": "#/$defs/confidenceInterval" },
+            "sortino": { "$ref": "#/$defs/confidenceInterval" },
+            "max_drawdown": { "$ref": "#/$defs/confidenceInterval" },
+            "win_rate": { "$ref": "#/$defs/confidenceInterval" }
+          },
+          "required": ["sharpe", "sortino", "max_drawdown", "win_rate"]
+        }
+      },
+      "required": ["schema", "method", "n_boot", "level", "seed", "block_length_bars", "scope", "metrics"]
+    },
+    "pairedTimeSeriesConfidenceIntervals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": { "const": "paired_matched_bar_metric_ci_v2" },
+        "method": { "const": "paired_moving_block_bar_return_bootstrap" },
+        "treatment": { "type": "string", "minLength": 1 },
+        "control": { "type": "string", "minLength": 1 },
+        "paired_return_observations": { "type": "integer", "minimum": 0 },
+        "n_boot": { "type": "integer", "minimum": 1 },
+        "level": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+        "seed": { "type": "integer", "minimum": 0 },
+        "block_length_bars": { "type": "integer", "minimum": 1 },
+        "scope": { "type": "string", "minLength": 1 },
+        "difference_direction": { "const": "treatment_minus_control" },
+        "status": { "enum": ["estimated", "not_estimable"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mean_bar_return": { "$ref": "#/$defs/confidenceInterval" },
+            "sharpe": { "$ref": "#/$defs/confidenceInterval" },
+            "sortino": { "$ref": "#/$defs/confidenceInterval" },
+            "max_drawdown": { "$ref": "#/$defs/confidenceInterval" }
+          },
+          "minProperties": 0
+        }
+      },
+      "required": ["schema", "method", "treatment", "control", "paired_return_observations", "n_boot", "level", "seed", "block_length_bars", "scope", "difference_direction", "status", "metrics"],
+      "oneOf": [
+        {
+          "properties": {
+            "status": { "const": "estimated" },
+            "paired_return_observations": { "type": "integer", "minimum": 2 },
+            "metrics": {
+              "type": "object",
+              "required": ["mean_bar_return", "sharpe", "sortino", "max_drawdown"],
+              "minProperties": 4
+            }
+          },
+          "not": { "required": ["reason"] }
+        },
+        {
+          "properties": {
+            "status": { "const": "not_estimable" },
+            "paired_return_observations": { "type": "integer", "maximum": 1 },
+            "metrics": { "type": "object", "maxProperties": 0 }
+          },
+          "required": ["reason"]
+        }
+      ]
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_commit": { "$ref": "#/$defs/recordedValue" },
+        "source_tree_hash": { "$ref": "#/$defs/recordedValue" },
+        "config_file_hash": { "$ref": "#/$defs/recordedValue" },
+        "resolved_config_hash": { "$ref": "#/$defs/recordedValue" },
+        "environment_lock_hash": { "$ref": "#/$defs/recordedValue" },
+        "python_version": { "$ref": "#/$defs/recordedValue" },
+        "cuda_version": { "$ref": "#/$defs/recordedValue" },
+        "torch_version": { "$ref": "#/$defs/recordedValue" },
+        "dataset_file_hashes": { "$ref": "#/$defs/recordedValue" },
+        "feature_cache_version": { "$ref": "#/$defs/recordedValue" },
+        "feature_cache_content_hash": { "$ref": "#/$defs/recordedValue" },
+        "split_fold_ids": { "$ref": "#/$defs/recordedValue" },
+        "exposure_roles": { "$ref": "#/$defs/recordedValue" },
+        "schema_versions": { "$ref": "#/$defs/recordedValue" },
+        "checkpoint_hash": { "$ref": "#/$defs/recordedValue" },
+        "training_seed": { "$ref": "#/$defs/recordedValue" },
+        "stochastic_eval_seed": { "$ref": "#/$defs/recordedValue" },
+        "execution_seed": { "$ref": "#/$defs/recordedValue" },
+        "training_total_steps": { "$ref": "#/$defs/recordedValue" },
+        "training_effective_steps": { "$ref": "#/$defs/recordedValue" },
+        "n_envs": { "$ref": "#/$defs/recordedValue" },
+        "rollout_geometry": { "$ref": "#/$defs/recordedValue" },
+        "action_mode": { "$ref": "#/$defs/recordedValue" },
+        "symbols": { "$ref": "#/$defs/recordedValue" },
+        "timeframes": { "$ref": "#/$defs/recordedValue" },
+        "timezone_session_schedule": { "$ref": "#/$defs/recordedValue" },
+        "broker_cost_risk_assumptions": { "$ref": "#/$defs/recordedValue" },
+        "metric_calculator_revision": { "$ref": "#/$defs/recordedValue" },
+        "sample_denominators": { "$ref": "#/$defs/recordedValue" },
+        "missing_assets": { "$ref": "#/$defs/recordedValue" },
+        "limitations": { "$ref": "#/$defs/recordedValue" },
+        "claimed_reproduction_level": { "$ref": "#/$defs/recordedValue" },
+        "regeneration_command": { "$ref": "#/$defs/recordedValue" },
+        "reviewer_check_status": { "$ref": "#/$defs/recordedValue" }
+      },
+      "required": [
+        "source_commit", "source_tree_hash", "config_file_hash", "resolved_config_hash",
+        "environment_lock_hash", "python_version", "cuda_version", "torch_version",
+        "dataset_file_hashes", "feature_cache_version", "feature_cache_content_hash",
+        "split_fold_ids", "exposure_roles", "schema_versions", "checkpoint_hash",
+        "training_seed", "stochastic_eval_seed", "execution_seed", "training_total_steps",
+        "training_effective_steps", "n_envs", "rollout_geometry", "action_mode", "symbols",
+        "timeframes", "timezone_session_schedule", "broker_cost_risk_assumptions",
+        "metric_calculator_revision", "sample_denominators", "missing_assets", "limitations",
+        "claimed_reproduction_level", "regeneration_command", "reviewer_check_status"
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run_id": { "type": "string", "minLength": 1 },
+        "variant_id": { "type": "string", "minLength": 1 },
+        "seed": { "type": "integer" },
+        "role": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "identity": { "$ref": "#/$defs/identity" },
+        "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } }
+      },
+      "required": ["run_id", "variant_id", "seed", "role", "status", "identity", "artifacts"]
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "comparison_id": { "type": "string", "minLength": 1 },
+        "question": { "type": "string", "minLength": 1 },
+        "run_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+        "evidence_role": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "result": { "type": "string", "minLength": 1 },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "run_id": { "type": "string", "minLength": 1 },
+              "completed_positions": { "type": "integer", "minimum": 0 },
+              "net_return_pct": { "type": "number" },
+              "aggregate_end_equity": { "type": "number", "minimum": 0 },
+              "breach_events": { "type": "integer", "minimum": 0 },
+              "survival_gate": { "type": "string", "minLength": 1 },
+              "confidence_intervals": { "$ref": "#/$defs/withinTrajectoryConfidenceIntervals" }
+            },
+            "required": ["run_id", "completed_positions", "net_return_pct", "aggregate_end_equity", "breach_events", "survival_gate"]
+          }
+        },
+        "paired_time_series_intervals": { "$ref": "#/$defs/pairedTimeSeriesConfidenceIntervals" },
+        "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
+      "required": ["comparison_id", "question", "run_ids", "evidence_role", "status", "result", "limitations"]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claim_id": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "comparison_ids": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1, "uniqueItems": true },
+        "allowed_interpretation": { "type": "string", "minLength": 1 },
+        "forbidden_overclaims": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+        "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }
+      },
+      "required": ["claim_id", "statement", "comparison_ids", "allowed_interpretation", "forbidden_overclaims", "limitations"]
+    }
+  },
+  "properties": {
+    "schema": { "const": "qrl.research_result_manifest.v2" },
+    "manifest_status": { "enum": ["draft", "frozen"] },
+    "created_at_utc": { "type": "string", "format": "date-time" },
+    "frozen_at_utc": { "type": ["string", "null"], "format": "date-time" },
+    "finding_id": { "type": "string", "minLength": 1 },
+    "research_question": { "type": "string", "minLength": 1 },
+    "hypothesis": { "type": "string", "minLength": 1 },
+    "finding_status": { "type": "string", "minLength": 1 },
+    "evidence_grade": { "type": "string", "minLength": 1 },
+    "protocol_path": { "type": "string", "minLength": 1 },
+    "runs": { "type": "array", "items": { "$ref": "#/$defs/run" } },
+    "comparisons": { "type": "array", "items": { "$ref": "#/$defs/comparison" } },
+    "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "supporting_artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+    "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "required": [
+    "schema", "manifest_status", "created_at_utc", "finding_id", "research_question",
+    "hypothesis", "finding_status", "evidence_grade", "protocol_path", "runs",
+    "comparisons", "claims", "supporting_artifacts", "limitations"
+  ]
+}

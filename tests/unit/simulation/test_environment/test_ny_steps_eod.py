@@ -11,6 +11,7 @@ import pytest
 from market_data.loading.ticks import TickBook, TickExecutionUnavailable
 from market_data.transforms.sessions import add_session_id, add_session_labels
 from simulation.environment.env import TradingEnv
+from trading.baselines.step_indexed_strategy import BaseStrategy
 
 
 def _ohlc_index(idx: pd.DatetimeIndex, close: np.ndarray[Any, Any]) -> pd.DataFrame:
@@ -65,6 +66,11 @@ def _make_env(**kwargs: Any) -> TradingEnv:
     return TradingEnv(bars=bars, features=features, obs_window=10, **kwargs)
 
 
+class _BarIndexStrategy(BaseStrategy):
+    def _signal(self, idx: int) -> float:
+        return idx / self._n_bars
+
+
 @pytest.mark.unit
 def test_explicit_peak_dd_policy_remains_active_with_repeated_payout() -> None:
     env = _make_env(
@@ -88,6 +94,26 @@ def test_env_steps_only_ny_bars() -> None:
         t = pd.Timestamp(ts).tz_convert("Etc/GMT-3").time()
         assert t >= pd.Timestamp("2000-01-01 16:30").time()
         assert t <= pd.Timestamp("2000-01-01 23:00").time()
+
+
+@pytest.mark.unit
+def test_baseline_signal_uses_absolute_bar_after_overnight_gap() -> None:
+    env = _make_env()
+    env.reset()
+    last_first_session = max(
+        index for index in env._ny_indices if pd.Timestamp(env.bars.index[index]).day == 6
+    )
+    env.step_idx = int(last_first_session)
+    env._ny_pos = int(np.flatnonzero(env._ny_indices == last_first_session)[0])
+    strategy = _BarIndexStrategy(len(env.bars))
+
+    previous_index = env.step_idx
+    env.step(0)
+
+    assert env.step_idx > previous_index + 1
+    assert strategy.act_at(env.step_idx) == pytest.approx(env.step_idx / len(env.bars))
+    # Absolute lookup leaves the legacy sequential cursor at its initial row.
+    assert strategy.act({}) == 0.0
 
 
 @pytest.mark.unit

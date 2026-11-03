@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, cast
@@ -107,15 +108,45 @@ def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
         _, _, val = ov.partition("=")
         # Try to coerce to int/float/bool before storing
         coerced: object = val
-        try:
-            coerced = int(val)
-        except ValueError:
+        if val.lstrip().startswith("["):
             try:
-                coerced = float(val)
+                parsed = OmegaConf.to_container(
+                    OmegaConf.from_dotlist([f"value={val}"]), resolve=False
+                )
+                coerced = parsed["value"] if isinstance(parsed, dict) else None
+            except Exception as exc:
+                raise ValueError(f"invalid list override for {key.strip()!r}: {val!r}") from exc
+            if not isinstance(coerced, list) or any(
+                not isinstance(item, (str, int, float, bool))
+                or (isinstance(item, float) and not math.isfinite(item))
+                for item in coerced
+            ):
+                raise ValueError(
+                    f"override for {key.strip()!r} must be a flat list of finite scalar values"
+                )
+        else:
+            try:
+                coerced = int(val)
             except ValueError:
-                if val.lower() in ("true", "false"):
-                    coerced = val.lower() == "true"
+                try:
+                    coerced = float(val)
+                except ValueError:
+                    if val.lower() in ("true", "false"):
+                        coerced = val.lower() == "true"
         OmegaConf.update(cfg, key.strip(), coerced, merge=True)
+    # Key-name validation above prevents accidental new leaves, but a known
+    # leaf can still receive the wrong CLI type (for example,
+    # ``ppo.learning_rate=fast``). Validate the completed effective config
+    # against the same defaults schema used for YAML overlays before callers
+    # use it to construct an environment or launch a run.
+    schema_container = OmegaConf.to_container(load_config_overlay(_DEFAULT_CFG), resolve=False)
+    config_container = OmegaConf.to_container(cfg, resolve=False)
+    if not isinstance(schema_container, Mapping) or not isinstance(config_container, Mapping):
+        raise ValueError("configuration schema and effective config roots must be mappings")
+    reject_unknown_keys(
+        cast(Mapping[str, Any], config_container),
+        cast(Mapping[str, Any], schema_container),
+    )
     return cfg
 
 

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "date_local": "2026-11-03",
+  "cluster_job_id": "21367992",
+  "node": "gpuarm2",
+  "allocation_context": "reused existing one-GH200 allocation; no new job or step",
+  "command": ".venv/bin/python -m pytest -q tests/unit/models/test_encoders.py::test_mtf_reasoning_encoder_uses_earlier_history_with_latest_candle_fixed tests/unit/models/test_hybrid_actor.py::test_trade_setup_hybrid_distribution_samples_only_each_rows_valid_candidates tests/unit/models/test_hybrid_actor.py::test_trade_setup_conditioned_distribution_masks_and_conditions_execution",
+  "result": {
+    "passed": 3,
+    "failed": 0,
+    "duration_seconds": 19.82,
+    "warning_count": 1,
+    "warning": "PyTorch Transformer nested-tensor optimization disabled because norm_first=True"
+  },
+  "test_sources": [
+    {
+      "path": "tests/unit/models/test_encoders.py",
+      "sha256": "2cb2192f4b8f87fe06d1321682667f65f27df01fce1fd25c49f59619aa945a64"
+    },
+    {
+      "path": "tests/unit/models/test_hybrid_actor.py",
+      "sha256": "0df1f585629fad22fa248eea22f7277716d617bff4890a985a052fc3ee5d2b60"
+    }
+  ],
+  "scope_limit": "Synthetic current-source behavior only; not historical checkpoint replay, price-geometry evaluation, training quality, or economic evidence.",
+  "stdout_file": "pytest_output.txt"
+}

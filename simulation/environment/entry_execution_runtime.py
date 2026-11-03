@@ -106,7 +106,12 @@ class EntryExecutionRuntimeMixin(
                 "fill_quote_source": "tick" if execution_meta else "bar_open",
                 "bar": self.step_idx,
                 "time": fill_time,
-                "decision_time": bar_time,
+                "decision_time": (
+                    pd.Timestamp(order_submission_time)
+                    if order_submission_time is not None
+                    else pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step)
+                ),
+                "decision_bar_time": bar_time,
                 "order_submission_time": (
                     bar_time if order_submission_time is None else order_submission_time
                 ),

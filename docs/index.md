@@ -34,6 +34,12 @@ Browse stable contracts first, then the full generated reference.
 See the question, evidence, status, and limitations behind each result.
 :::
 
+:::{grid-item-card} Read the evidence-bounded thesis report
+:link: thesis/research_evidence_report
+:link-type: doc
+Review the current evidence synthesis, negative findings, and unresolved gates.
+:::
+
 :::{grid-item-card} Reproduce recorded results
 :link: reproduce/index
 :link-type: doc
@@ -65,6 +71,7 @@ flowchart LR
 - **I am new:** [Quick learning path](learn/index) → [Market data tutorial](learn/tutorials/01_market_data.ipynb) → [Environment tutorial](learn/tutorials/04_environment.ipynb).
 - **I need exact behavior:** [Framework guides](framework/index) → [API reference](api/index).
 - **I want to check a finding:** [Research questions](research/README) → [Result registry](reproduce/result_registry) → [Reproduction notebooks](reproduce/index).
+- **I want the thesis synthesis:** [Evidence-bounded report](thesis/research_evidence_report), with the current evidence limits and reproduction routes.
 - **I want to contribute:** [Developer guide](develop/index) → [Testing](development/testing) → [Documentation](development/documentation).
 
 ## Documentation map
@@ -77,6 +84,7 @@ learn/index
 framework/index
 api/index
 research/README
+thesis/research_evidence_report
 reproduce/index
 develop/index
 ```

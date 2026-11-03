@@ -85,6 +85,8 @@ def _display(value: Any, digits: int = 3) -> str:
     if isinstance(value, bool):
         return "Yes" if value else "No"
     if isinstance(value, float):
+        if not math.isfinite(value):
+            return "N/A"
         if value != 0.0 and abs(value) < 10.0 ** (-digits):
             return f"{value:.{digits}g}"
         return f"{value:.{digits}f}"
@@ -1055,7 +1057,7 @@ def _markdown_config_results(
             "",
             "## Training results",
             "",
-            "| Variant | Optimizer | Return | Net PnL | Max drawdown / limit | Trades | Win rate | Profit factor | Average trade | Peak-DD fit | Hard risk | Last entry | Peak-DD close |",
+            "| Variant | Optimizer | Return | Net PnL | Max drawdown / limit | Completed positions | Win rate | Profit factor | Average trade | Peak-DD fit | Hard risk | Last entry | Peak-DD close |",
             "|---|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|---|",
         ]
     )
@@ -1137,7 +1139,7 @@ def _markdown_config_results(
             "",
             "## Testing results",
             "",
-            "| Variant | Return | Net PnL | Max drawdown | Trades | Win rate | Profit factor | Average trade |",
+            "| Variant | Return | Net PnL | Max drawdown | Completed positions | Win rate | Profit factor | Average trade |",
             "|---|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )

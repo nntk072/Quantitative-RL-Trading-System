@@ -3,19 +3,33 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
 
-from market_data.loading.ticks import TickExecutionUnavailable, resolve_tick_exit
+from market_data.loading.ticks import (
+    TickExecutionUnavailable,
+    event_keyed_execution_rng,
+    resolve_tick_execution_by_deadline,
+    resolve_tick_exit,
+)
 from trading.execution import (
     Broker,
     CostModel,
+    Position,
+    adverse_tick_fill_quote,
     bar_stop_trigger_price,
 )
+from trading.positions import target_close_size
 from trading.risk import (
     FTMOGuardrails,
+    adverse_position_loss_limit_usd,
+    guardrail_breach_scope,
+)
+from trading.risk.stop_management import (
+    breakeven_stop_price,
+    confirmed_swing_trailing_stop_price,
 )
 
 from .accounting import _record_close, stamp_exit
@@ -23,6 +37,67 @@ from .runtime import BacktestSettings, BacktestState
 
 ExecutionEvent = tuple[tuple[float, float], pd.Timestamp, str, dict[str, Any]]
 ResolveExecution = Callable[[], ExecutionEvent]
+
+
+def _active_target_slots(position: Any) -> list[int]:
+    return [
+        slot
+        for slot in (1, 2, 3)
+        if getattr(position, f"tp{slot}_price") is not None
+        and not (position.tp_hit_mask & (1 << (slot - 1)))
+    ]
+
+
+def _record_target_slot(
+    state: BacktestState,
+    settings: BacktestSettings,
+    broker: Broker,
+    position: Position,
+    *,
+    bar_index: int,
+    slot: int,
+    quote: tuple[float, float],
+    fill_time: pd.Timestamp,
+    session: int,
+    metadata: dict[str, Any] | None = None,
+    bar_duration: pd.Timedelta | None = None,
+) -> None:
+    remaining_slots = [
+        candidate for candidate in _active_target_slots(position) if candidate > slot
+    ]
+    close_size = target_close_size(position, slot, is_final=not remaining_slots)
+    record: dict[str, Any] = {
+        "type": "tp_close" if close_size >= position.size - 1e-9 else "tp_partial_close",
+        "reason": f"structure_tp{slot}",
+        "bar": bar_index,
+        "time": fill_time,
+        "tp_slot": slot,
+        **(metadata or {}),
+    }
+    if bar_duration is not None:
+        record.update(
+            {
+                "event_time_start": fill_time,
+                "event_time_end": fill_time + bar_duration,
+                "time_precision": "bar_interval",
+            }
+        )
+    state.current_execution_meta = dict(metadata or {})
+    _record_close(
+        state,
+        settings,
+        broker,
+        position,
+        quote,
+        record,
+        session,
+        size=close_size,
+    )
+    position.tp_hit_mask |= 1 << (slot - 1)
+    setattr(position, f"tp{slot}_price", None)
+    if state.position is position:
+        next_slots = _active_target_slots(position)
+        position.tp_price = getattr(position, f"tp{next_slots[0]}_price") if next_slots else None
 
 
 def process_protective_and_account_events(
@@ -33,6 +108,7 @@ def process_protective_and_account_events(
     bars: pd.DataFrame,
     row: pd.Series,
     *,
+    feature_row: pd.Series | None = None,
     i: int,
     bar_time: pd.Timestamp,
     bar_duration: pd.Timedelta,
@@ -48,6 +124,7 @@ def process_protective_and_account_events(
     sl_tp_fill_quote: Callable[[int, float, CostModel], tuple[float, float]],
     bar_spread_price_units: Callable[[pd.Series, CostModel], float | None],
     is_last_ny_bar: Callable[[pd.DataFrame, int, bool], bool],
+    eod_guard_due: bool,
 ) -> bool:
     """Apply protective exits, guardrail liquidation, and session-end close.
 
@@ -58,6 +135,7 @@ def process_protective_and_account_events(
         guardrails: Guardrails used by the operation described above.
         bars: Market bars to process.
         row: Row index or record being processed.
+        feature_row: Causal feature values for the completed decision bar.
         i: Numeric value used for the i.
         bar_time: Bar time used by the operation described above.
         bar_duration: Bar duration used by the operation described above.
@@ -73,16 +151,123 @@ def process_protective_and_account_events(
         sl_tp_fill_quote: Items supplied for the sl tp fill quote, in input order.
         bar_spread_price_units: Tabular data used for the bar spread price units.
         is_last_ny_bar: Tabular data used for the is last ny bar.
+        eod_guard_due: Whether this NY bar is followed by skipped bars before the next NY bar.
 
     Returns:
         Whether process protective and account events meets the requested condition.
     """
+    effective_stop_time = pd.Timestamp(bars.index[i + 1]) if i + 1 < len(bars) else None
     position = state.position
     tick_hit: tuple[str, pd.Timestamp, float, float, dict[str, Any]] | None = None
+    multi_target_position = position is not None and any(
+        getattr(position, f"tp{slot}_price") is not None for slot in (1, 2, 3)
+    )
+    multi_target_tick_fill = False
+    if (
+        multi_target_position
+        and position is not None
+        and position_active_in_bar
+        and settings.tickbook is not None
+    ):
+        active_slots = _active_target_slots(position)
+        position.tp_price = (
+            getattr(position, f"tp{active_slots[0]}_price") if active_slots else None
+        )
+        cursor_time = entry_time
+        while state.position is position and position.size > 0.0:
+            if settings.tick_execution_required or settings.randomized_fill_latency_ms > 0:
+                resolved_exit = resolve_tick_exit(
+                    settings.tickbook,
+                    bar_time,
+                    int(position.direction),
+                    None if position.sl_price is None else float(position.sl_price),
+                    None if position.tp_price is None else float(position.tp_price),
+                    execution_rng,
+                    bar_minutes=max(1, int(round(bar_duration.total_seconds() / 60.0))),
+                    max_latency_ns_exclusive=int(settings.randomized_fill_latency_ms * 1_000_000),
+                    max_quote_wait_ns=settings.max_tick_quote_wait_ms * 1_000_000,
+                    earliest_time=cursor_time,
+                    event_seed=settings.execution_seed,
+                )
+                if resolved_exit is None:
+                    break
+                target_quote = (resolved_exit.quote.bid, resolved_exit.quote.ask)
+                fill_time = resolved_exit.quote.tick_time
+                metadata = {
+                    "order_submission_time": resolved_exit.trigger_time,
+                    "execution_order_time": resolved_exit.quote.order_time,
+                    "execution_arrival_time": resolved_exit.quote.arrival_time,
+                    "execution_latency_ns": resolved_exit.quote.latency_ns,
+                    "actual_tick_time": resolved_exit.quote.tick_time,
+                    "fill_quote_source": "tick",
+                }
+                kind = resolved_exit.kind
+            else:
+                legacy_hit = settings.tickbook.delayed_exit_event(
+                    bar_time,
+                    int(position.direction),
+                    None if position.sl_price is None else float(position.sl_price),
+                    None if position.tp_price is None else float(position.tp_price),
+                    pd.Timedelta(milliseconds=settings.fill_delay_ms),
+                    earliest_time=cursor_time,
+                )
+                if legacy_hit is None:
+                    break
+                kind, fill_time, bid, ask = legacy_hit
+                target_quote = (bid, ask)
+                metadata = {
+                    "order_submission_time": fill_time
+                    - pd.Timedelta(milliseconds=settings.fill_delay_ms),
+                    "execution_order_time": fill_time
+                    - pd.Timedelta(milliseconds=settings.fill_delay_ms),
+                    "execution_arrival_time": fill_time,
+                    "execution_latency_ns": int(
+                        pd.Timedelta(milliseconds=settings.fill_delay_ms).value
+                    ),
+                    "actual_tick_time": fill_time,
+                    "fill_quote_source": "tick",
+                }
+            multi_target_tick_fill = True
+            if kind == "sl":
+                _record_close(
+                    state,
+                    settings,
+                    broker,
+                    position,
+                    target_quote,
+                    {
+                        "type": "stop_close",
+                        "reason": "structure_sl",
+                        "bar": i,
+                        "time": fill_time,
+                        **metadata,
+                    },
+                    session,
+                )
+                break
+            active_slots = _active_target_slots(position)
+            if not active_slots:
+                break
+            target_slot = active_slots[0]
+            _record_target_slot(
+                state,
+                settings,
+                broker,
+                position,
+                bar_index=i,
+                slot=target_slot,
+                quote=target_quote,
+                fill_time=fill_time,
+                session=session,
+                metadata=metadata,
+            )
+            cursor_time = fill_time
+
     if (
         position is not None
         and position_active_in_bar
         and settings.tickbook is not None
+        and not multi_target_position
         and (position.sl_price is not None or position.tp_price is not None)
     ):
         if settings.tick_execution_required or settings.randomized_fill_latency_ms > 0:
@@ -97,6 +282,7 @@ def process_protective_and_account_events(
                 max_latency_ns_exclusive=int(settings.randomized_fill_latency_ms * 1_000_000),
                 max_quote_wait_ns=settings.max_tick_quote_wait_ms * 1_000_000,
                 earliest_time=entry_time,
+                event_seed=settings.execution_seed,
             )
             if resolved_exit is not None:
                 quote = resolved_exit.quote
@@ -126,7 +312,7 @@ def process_protective_and_account_events(
             if legacy_hit is not None:
                 tick_hit = (*legacy_hit, {"fill_quote_source": "tick"})
 
-    if tick_hit is not None and state.position is not None:
+    if tick_hit is not None and state.position is not None and not multi_target_position:
         kind, fill_time, bid, ask, tick_execution_meta = tick_hit
         state.current_execution_meta = tick_execution_meta
         _record_close(
@@ -149,15 +335,24 @@ def process_protective_and_account_events(
     if (
         (settings.tick_execution_required or settings.randomized_fill_latency_ms > 0)
         and position is not None
-        and tick_hit is None
+        and (tick_hit is None or multi_target_tick_fill)
     ):
         sl_touched = position.sl_price is not None and (
             (position.direction == 1 and float(row["low"]) <= position.sl_price)
             or (position.direction == -1 and float(row["high"]) >= position.sl_price)
         )
-        tp_touched = position.tp_price is not None and (
-            (position.direction == 1 and float(row["high"]) >= position.tp_price)
-            or (position.direction == -1 and float(row["low"]) <= position.tp_price)
+        active_targets = (
+            [getattr(position, f"tp{slot}_price") for slot in _active_target_slots(position)]
+            if multi_target_position
+            else [position.tp_price]
+        )
+        tp_touched = any(
+            target is not None
+            and (
+                (position.direction == 1 and float(row["high"]) >= target)
+                or (position.direction == -1 and float(row["low"]) <= target)
+            )
+            for target in active_targets
         )
         if sl_touched or tp_touched:
             raise TickExecutionUnavailable(
@@ -171,6 +366,7 @@ def process_protective_and_account_events(
         and position_active_in_bar
         and full_bar_available_after_entry
         and tick_hit is None
+        and not multi_target_tick_fill
     ):
         sl_hit = False
         if position.sl_price is not None:
@@ -207,35 +403,45 @@ def process_protective_and_account_events(
                 },
                 session,
             )
-        elif settings.max_loss_per_trade_usd is not None and state.account.open_pnl <= -abs(
-            settings.max_loss_per_trade_usd
-        ):
-            fq, execution_time, fill_source, _ = resolve_bar_execution()
-            _record_close(
-                state,
-                settings,
-                broker,
-                position,
-                fq,
-                {
-                    "type": "stop_close",
-                    "reason": "max_loss_cap",
-                    "bar": i,
-                    "time": execution_time,
-                    "decision_time": bar_time,
-                    "fill_time": execution_time,
-                    "fill_quote_source": fill_source,
-                },
-                session,
-            )
 
     position = state.position
     tp_hit = False
+    if (
+        multi_target_position
+        and position is not None
+        and position_active_in_bar
+        and full_bar_available_after_entry
+        and not multi_target_tick_fill
+    ):
+        for slot in _active_target_slots(position):
+            if state.position is not position:
+                break
+            target_price = float(getattr(position, f"tp{slot}_price"))
+            target_hit = (position.direction == 1 and float(row["high"]) >= target_price) or (
+                position.direction == -1 and float(row["low"]) <= target_price
+            )
+            if target_hit:
+                _record_target_slot(
+                    state,
+                    settings,
+                    broker,
+                    position,
+                    bar_index=i,
+                    slot=slot,
+                    quote=sl_tp_fill_quote(
+                        int(position.direction), target_price, settings.cost_model
+                    ),
+                    fill_time=bar_time,
+                    session=session,
+                    bar_duration=bar_duration,
+                )
+
     if (
         position is not None
         and position_active_in_bar
         and full_bar_available_after_entry
         and tick_hit is None
+        and not multi_target_position
         and position.tp_price is not None
     ):
         if position.direction == 1 and float(row["high"]) >= position.tp_price:
@@ -288,9 +494,206 @@ def process_protective_and_account_events(
             session,
         )
 
-    reason = guardrails.breach_reason(state.account)
+    position = state.position
+    if (
+        position is not None
+        and settings.eod_risk is not None
+        and position_active_in_bar
+        and entry_time is not None
+    ):
+        age_hours = (bar_time - entry_time).total_seconds() / 3600.0
+        max_age_hours = float(settings.eod_risk.get("max_age_hours", 8.0))
+        if age_hours > max_age_hours:
+            fq, execution_time, fill_source, _ = resolve_bar_execution()
+            _record_close(
+                state,
+                settings,
+                broker,
+                position,
+                fq,
+                {
+                    "type": "eod_close",
+                    "reason": "max_age",
+                    "bar": i,
+                    "time": bar_time,
+                    "decision_time": bar_time,
+                    "fill_time": execution_time,
+                    "fill_quote_source": fill_source,
+                },
+                session,
+            )
+
+    position = state.position
+    if position is not None and position_active_in_bar and settings.eod_risk is not None:
+        favorable = (
+            float(row["high"]) - position.entry_price
+            if position.direction == 1
+            else position.entry_price - float(row["low"])
+        )
+        progress_threshold = float(settings.eod_risk.get("progress_threshold_atr", 0.25)) * float(
+            position.entry_atr or 0.0
+        )
+        if (
+            progress_threshold > 0.0
+            and favorable - position.last_progress_favorable >= progress_threshold
+        ):
+            position.last_progress_favorable = favorable
+            position.stale_counter = 0
+        else:
+            position.stale_counter += 1
+
+    if (
+        position is not None
+        and settings.sl_mode in {"breakeven", "trailing"}
+        and position_active_in_bar
+        and full_bar_available_after_entry
+    ):
+        if position.direction == 1:
+            favorable = max(0.0, float(row["high"]) - position.entry_price)
+        else:
+            favorable = max(0.0, position.entry_price - float(row["low"]))
+        position.best_favorable = max(position.best_favorable, favorable)
+        position.mfe = max(position.mfe, favorable)
+        eod = settings.eod_risk or {}
+        new_stop = breakeven_stop_price(
+            direction=position.direction,
+            entry_price=position.entry_price,
+            initial_stop_price=position.sl_initial_price,
+            current_stop_price=position.sl_price,
+            best_favorable_points=position.best_favorable,
+            trigger_r=float(eod.get("breakeven_trigger_r", 0.0)),
+            buffer_points=float(eod.get("breakeven_buffer_pts", 2.0)),
+        )
+        if new_stop is not None:
+            previous_stop = position.sl_price
+            position.sl_price = new_stop
+            position.breakeven_done = True
+            state.trade_log.append(
+                {
+                    "type": "sl_update",
+                    "position_id": position.position_id,
+                    "time": bar_time,
+                    "effective_time": effective_stop_time,
+                    "direction": position.direction,
+                    "previous_price": previous_stop,
+                    "price": new_stop,
+                    "reference": "entry",
+                    "reference_price": position.entry_price,
+                    "bar": i,
+                    "buffer_points": float(eod.get("breakeven_buffer_pts", 2.0)),
+                    "reason": "breakeven_trigger",
+                }
+            )
+
+    position = state.position
+    if (
+        position is not None
+        and settings.sl_mode == "trailing"
+        and position_active_in_bar
+        and full_bar_available_after_entry
+    ):
+        reference = "last_swing_low" if position.direction == 1 else "last_swing_high"
+        raw_swing = None if feature_row is None else feature_row.get(reference)
+        try:
+            swing = float(cast(Any, raw_swing))
+        except (TypeError, ValueError):
+            swing = float("nan")
+        if np.isfinite(swing):
+            previous_stop = position.sl_price
+            candidate_stop = confirmed_swing_trailing_stop_price(
+                direction=position.direction,
+                swing_price=swing,
+                current_close=float(row["close"]),
+                current_stop_price=position.sl_price,
+                buffer_points=settings.sl_buffer_pts,
+            )
+            if candidate_stop is not None:
+                position.sl_price = candidate_stop
+                state.trade_log.append(
+                    {
+                        "type": "sl_update",
+                        "position_id": position.position_id,
+                        "time": bar_time,
+                        "effective_time": effective_stop_time,
+                        "direction": position.direction,
+                        "previous_price": previous_stop,
+                        "price": candidate_stop,
+                        "reference": reference,
+                        "reference_price": swing,
+                        "bar": i,
+                        "buffer_points": settings.sl_buffer_pts,
+                        "reason": "confirmed_swing",
+                    }
+                )
+
+    position = state.position
+    if (
+        position is not None
+        and position_active_in_bar
+        and full_bar_available_after_entry
+        and tick_hit is None
+        and not multi_target_tick_fill
+    ):
+        if settings.eod_risk is not None:
+            guard = settings.eod_risk
+            adverse = (
+                position.entry_price - float(row["low"])
+                if position.direction == 1
+                else float(row["high"]) - position.entry_price
+            )
+            adverse_usd = max(0.0, adverse) * position.size * settings.contract_size
+            cutoff = adverse_position_loss_limit_usd(
+                float(guard.get("max_loss_usd", 500.0)),
+                float(position.planned_risk_usd or 0.0),
+                respect_planned_risk=bool(guard.get("respect_planned_risk", True)),
+                planned_risk_multiplier=float(guard.get("planned_risk_mult", 1.1)),
+            )
+            if adverse_usd >= cutoff:
+                fq, execution_time, fill_source, _ = resolve_bar_execution()
+                _record_close(
+                    state,
+                    settings,
+                    broker,
+                    position,
+                    fq,
+                    {
+                        "type": "eod_close",
+                        "reason": "eod_max_loss",
+                        "bar": i,
+                        "time": execution_time,
+                        "decision_time": bar_time,
+                        "fill_time": execution_time,
+                        "fill_quote_source": fill_source,
+                    },
+                    session,
+                )
+        elif settings.max_loss_per_trade_usd is not None and state.account.open_pnl <= -abs(
+            settings.max_loss_per_trade_usd
+        ):
+            fq, execution_time, fill_source, _ = resolve_bar_execution()
+            _record_close(
+                state,
+                settings,
+                broker,
+                position,
+                fq,
+                {
+                    "type": "stop_close",
+                    "reason": "max_loss_cap",
+                    "bar": i,
+                    "time": execution_time,
+                    "decision_time": bar_time,
+                    "fill_time": execution_time,
+                    "fill_quote_source": fill_source,
+                },
+                session,
+            )
+
+    reason = None if state.year_failed else guardrails.breach_reason(state.account)
     if reason and session not in state.breached_sessions:
         state.breached_sessions.add(session)
+        if guardrail_breach_scope(reason) == "rollout":
+            state.year_failed = True
         state.breach_log.append(reason)
         state.breach_events.append(
             {
@@ -298,6 +701,7 @@ def process_protective_and_account_events(
                 "session_id": session,
                 "reason": reason,
                 "equity": state.account.equity,
+                "daily_loss": state.account.daily_loss,
             }
         )
         if state.position is not None:
@@ -320,22 +724,88 @@ def process_protective_and_account_events(
                 session,
             )
 
+    position = state.position
+    if (
+        position is not None
+        and eod_guard_due
+        and not settings.block_overnight
+        and settings.eod_risk is not None
+    ):
+        # TradingEnv runs the same final-bar guard once more before replaying
+        # skipped overnight bars, so preserve that second progress update.
+        favorable = (
+            float(row["high"]) - position.entry_price
+            if position.direction == 1
+            else position.entry_price - float(row["low"])
+        )
+        progress_threshold = float(settings.eod_risk.get("progress_threshold_atr", 0.25)) * float(
+            position.entry_atr or 0.0
+        )
+        if (
+            progress_threshold > 0.0
+            and favorable - position.last_progress_favorable >= progress_threshold
+        ):
+            position.last_progress_favorable = favorable
+            position.stale_counter = 0
+        else:
+            position.stale_counter += 1
+        if position.stale_counter >= int(settings.eod_risk.get("stale_bars", 60)):
+            fq, execution_time, fill_source, _ = resolve_bar_execution()
+            _record_close(
+                state,
+                settings,
+                broker,
+                position,
+                fq,
+                {
+                    "type": "eod_close",
+                    "reason": "stale",
+                    "bar": i,
+                    "time": bar_time,
+                    "decision_time": bar_time,
+                    "fill_time": execution_time,
+                    "fill_quote_source": fill_source,
+                },
+                session,
+            )
+
     last_ny = is_last_ny_bar(bars, i, is_ny)
     if settings.block_overnight and last_ny and state.position is not None:
         session_close_time = bar_time + bar_duration
         if settings.tick_execution_required or settings.randomized_fill_latency_ms > 0:
-            session_quote, session_fill_time, session_source, session_execution_meta = (
-                fill_quote_event(
-                    session_close_time,
-                    row,
-                    settings.cost_model,
-                    settings.tickbook,
-                    rng=execution_rng,
-                    randomized_fill_latency_ms=settings.randomized_fill_latency_ms,
-                    max_tick_quote_wait_ms=settings.max_tick_quote_wait_ms,
-                    tick_execution_required=settings.tick_execution_required,
-                )
+            if not 0.0 <= settings.randomized_fill_latency_ms <= 30.0:
+                raise ValueError("randomized_fill_latency_ms must be in [0, 30]")
+            if settings.max_tick_quote_wait_ms <= 0:
+                raise ValueError("max_tick_quote_wait_ms must be positive")
+            if settings.tickbook is None:
+                raise TickExecutionUnavailable("tick-only fills require a TickBook")
+            execution = resolve_tick_execution_by_deadline(
+                settings.tickbook,
+                bar_time,
+                session_close_time,
+                event_keyed_execution_rng(
+                    settings.execution_seed,
+                    f"scheduled_session_close:{pd.Timestamp(bar_time).value}",
+                ),
+                max_latency_ns_exclusive=int(settings.randomized_fill_latency_ms * 1_000_000),
+                max_quote_wait_ns=settings.max_tick_quote_wait_ms * 1_000_000,
             )
+            if execution is None:
+                raise TickExecutionUnavailable(
+                    "no executable tick between order submission and scheduled session close "
+                    f"{session_close_time} within {settings.max_tick_quote_wait_ms}ms"
+                )
+            session_quote = (execution.bid, execution.ask)
+            session_fill_time = execution.tick_time
+            session_source = "tick"
+            session_execution_meta = {
+                "order_submission_time": execution.order_time,
+                "execution_order_time": execution.order_time,
+                "execution_arrival_time": execution.arrival_time,
+                "execution_latency_ns": execution.latency_ns,
+                "actual_tick_time": execution.tick_time,
+                "fill_quote_source": "tick",
+            }
             state.current_execution_meta = session_execution_meta
         else:
             session_quote = bar_quote
@@ -352,7 +822,7 @@ def process_protective_and_account_events(
                 "type": "eod_close",
                 "reason": "session_end",
                 "bar": i,
-                "time": session_fill_time,
+                "time": bar_time if session_execution_meta else session_fill_time,
                 "fill_time": session_fill_time,
                 "fill_quote_source": session_source,
                 **session_execution_meta,
@@ -411,6 +881,13 @@ def liquidate_terminal_position(
         terminal_execution_meta = {}
 
     position = state.position
+    if terminal_source == "tick":
+        last_fq = adverse_tick_fill_quote(
+            last_fq,
+            int(position.direction),
+            settings.tick_fill_slippage_points,
+            opening=False,
+        )
     pnl, fill_price = broker.close_position(state.account, position, last_fq)
     record = {
         "type": "eod_close",

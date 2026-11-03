@@ -8,15 +8,27 @@ were unified (W9 eval-metrics plan, §1).
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
 from artifacts.atomic import write_text_atomic
-from evaluation.metrics.performance import PerformanceMetrics, sweep_delay_breakdown
+from evaluation.metrics.performance import (
+    METRIC_DEFINITION_VERSION,
+    PerformanceMetrics,
+    sweep_delay_breakdown,
+)
+
+_TRADE_METRICS_REQUIRING_COMPLETED_POSITIONS = {
+    "profit_factor",
+    "win_rate",
+    "expectancy",
+    "avg_trade",
+}
 
 # Metric rows shown in the summary / comparison tables, in display order.
 _TABLE_ROWS: tuple[tuple[str, str], ...] = (
@@ -28,7 +40,7 @@ _TABLE_ROWS: tuple[tuple[str, str], ...] = (
     ("Profit Factor", "profit_factor"),
     ("Expectancy", "expectancy"),
     ("Win Rate", "win_rate"),
-    ("Total Trades", "n_trades"),
+    ("Completed Positions", "n_trades"),
     ("Total PnL", "total_pnl"),
     ("Avg Trade PnL", "avg_trade"),
     ("Max Consec Loss", "max_consec_loss"),
@@ -87,7 +99,7 @@ def _format_value(label: str, value: float) -> str:
     Returns:
         Text returned by ``_format_value``.
     """
-    if label in ("Total Trades", "Max Consec Loss", "Breach Count"):
+    if label in ("Completed Positions", "Max Consec Loss", "Breach Count"):
         return str(int(value))
     if label == "Total Return":
         # total_return_pct is already percent (pnl / balance * 100).
@@ -113,6 +125,93 @@ def activity_status(metrics: PerformanceMetrics) -> str:
     return "INACTIVE" if metrics.n_trades == 0 else "ACTIVE"
 
 
+def _metric_availability(metrics: PerformanceMetrics) -> dict[str, str]:
+    """Explain trade metrics that cannot be estimated without completed positions.
+
+    Args:
+        metrics: Performance summary whose completed-position count is checked.
+
+    Returns:
+        Metric names mapped to an unavailable reason, or an empty mapping when
+        at least one position completed.
+    """
+    availability = (
+        {
+            name: "not_applicable_no_completed_positions"
+            for name in sorted(_TRADE_METRICS_REQUIRING_COMPLETED_POSITIONS)
+        }
+        if metrics.n_trades == 0
+        else {}
+    )
+    if math.isnan(metrics.profit_factor):
+        availability.setdefault("profit_factor", "undefined_no_gains_or_losses")
+    elif math.isinf(metrics.profit_factor):
+        availability.setdefault("profit_factor", "unbounded_no_losses_with_positive_gains")
+    for name, value in asdict(metrics).items():
+        if isinstance(value, float) and not math.isfinite(value):
+            availability.setdefault(name, "non_finite_metric_result")
+    return availability
+
+
+def _json_safe(value: Any) -> Any:
+    """Replace non-finite floats recursively so reports use standard JSON.
+
+    Args:
+        value: JSON-like value to sanitize.
+
+    Returns:
+        A structure with non-finite floating-point values replaced by ``None``.
+    """
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, tuple):
+        return [_json_safe(item) for item in value]
+    return value
+
+
+def _metrics_payload(metrics: PerformanceMetrics) -> dict[str, Any]:
+    """Build a JSON-safe metric record with explicit unavailable-value reasons.
+
+    Args:
+        metrics: Canonical aggregate metrics to serialize.
+
+    Returns:
+        Metric values, activity state, and reasons for unavailable statistics.
+    """
+    payload = asdict(metrics)
+    availability = _metric_availability(metrics)
+    for name in availability:
+        if name in payload:
+            payload[name] = None
+    payload = cast(dict[str, Any], _json_safe(payload))
+    payload["activity_status"] = activity_status(metrics)
+    payload["metric_availability"] = availability
+    payload["metric_definition_version"] = METRIC_DEFINITION_VERSION
+    return payload
+
+
+def _format_metric(metrics: PerformanceMetrics, label: str, attr: str) -> str:
+    """Format a metric without turning an empty trade sample into numeric zero.
+
+    Args:
+        metrics: Performance summary containing the metric value.
+        label: Human-readable metric label used by the value formatter.
+        attr: Attribute name on ``metrics`` containing the numeric value.
+
+    Returns:
+        ``N/A`` for unavailable trade-only statistics, otherwise formatted text.
+    """
+    if metrics.n_trades == 0 and attr in _TRADE_METRICS_REQUIRING_COMPLETED_POSITIONS:
+        return "N/A"
+    if not math.isfinite(float(getattr(metrics, attr))):
+        return "N/A"
+    return _format_value(label, float(getattr(metrics, attr)))
+
+
 def build_summary_table(m: PerformanceMetrics) -> str:
     """Return a human-readable text table of a single PerformanceMetrics.
 
@@ -129,7 +228,7 @@ def build_summary_table(m: PerformanceMetrics) -> str:
         f"  {'Activity Status':<22} {activity_status(m):>12}",
     ]
     for label, attr in _TABLE_ROWS:
-        lines.append(f"  {label:<22} {_format_value(label, float(getattr(m, attr))):>12}")
+        lines.append(f"  {label:<22} {_format_metric(m, label, attr):>12}")
     lines.append("=" * 42)
     return "\n".join(lines)
 
@@ -169,8 +268,8 @@ def build_comparison_table(
 
     lines = [sep, header, mid]
     for label, attr in _TABLE_ROWS:
-        train_val = _format_value(label, float(getattr(train_m, attr)))
-        test_val = _format_value(label, float(getattr(test_m, attr))) if test_m else ""
+        train_val = _format_metric(train_m, label, attr)
+        test_val = _format_metric(test_m, label, attr) if test_m else ""
         lines.append(row(label, train_val, test_val))
     lines.append(sep)
     return "\n".join(lines)
@@ -191,13 +290,12 @@ def save_metrics_json(
         initial_balance: Initial balance used by the operation described above.
         final_equity: Final equity used by the operation described above.
     """
-    payload = asdict(m)
-    payload["activity_status"] = activity_status(m)
+    payload = _metrics_payload(m)
     if initial_balance is not None:
         payload["initial_balance"] = float(initial_balance)
     if final_equity is not None:
         payload["final_equity"] = float(final_equity)
-    write_text_atomic(Path(path), json.dumps(payload, indent=2))
+    write_text_atomic(Path(path), json.dumps(payload, indent=2, allow_nan=False))
 
 
 def build_run_report(
@@ -221,8 +319,7 @@ def build_run_report(
     Returns:
         A dict safe to pass to ``json.dumps``.
     """
-    report: dict[str, Any] = asdict(metrics)
-    report["activity_status"] = activity_status(metrics)
+    report = _metrics_payload(metrics)
     report["sweep_delay"] = sweep_delay_breakdown(trade_log or [])
     report.update(context)
     return report

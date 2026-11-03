@@ -24,6 +24,7 @@ _RELEVANT_CONFIG_PATHS = (
     "env.obs_window",
     "env.strategy_actions",
     "env.trade_setup_actions",
+    "env.reachable_r_validity_mask",
     "legacy_sequence_columns",
     "strategy.raw_columns",
     "features",

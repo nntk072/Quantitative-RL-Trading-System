@@ -59,6 +59,8 @@ def build_fvg_zones(
     bars: pd.DataFrame,
     signals: pd.DataFrame,
     max_zone_bars: int = 50,
+    *,
+    signals_are_events: bool = False,
 ) -> list[FVGZone]:
     """Build drawable zone rectangles from PO3 signal columns.
 
@@ -68,14 +70,21 @@ def build_fvg_zones(
 
     Args:
         bars (pd.DataFrame): M1 OHLC bars (DatetimeIndex, 'high'/'low' columns) that produced the signals.
-        signals (pd.DataFrame): Output of :func:`detect_htf_fvg`, :func:`detect_ltf_ifvg`, or the
-            combined output of :func:`detect_po3_entries`.  Must share the index of
-            ``bars`` and contain a subset of the well-known column names.
+        signals (pd.DataFrame): Output of a PO3 FVG/IFVG detector. Must share
+            the index of ``bars`` and contain a subset of the well-known names.
         max_zone_bars (int): Maximum number of bars a zone stays active before it is considered expired.
+        signals_are_events: Treat every positive row as a separate formation
+            event. Use this for sparse detector output where adjacent events
+            may both have a value of one. Leave false for forward-filled state
+            signals, where each contiguous positive run represents one event.
 
     Returns:
         list[FVGZone]: One zone per formation event, ordered by start timestamp.
     """
+    if max_zone_bars < 0:
+        raise ValueError("max_zone_bars must be nonnegative")
+    if not bars.index.equals(signals.index):
+        raise ValueError("bars and signals must have identical indexes")
     zones: list[FVGZone] = []
 
     if signals.empty or len(bars) == 0:
@@ -86,8 +95,11 @@ def build_fvg_zones(
             continue
 
         sig = signals[sig_col]
-        # Only start a zone on the 0 -> 1 edge (handles forward-filled runs).
-        starts = (sig == 1) & (sig.shift(1, fill_value=0) == 0)
+        if signals_are_events:
+            starts = sig == 1
+        else:
+            # Only start a zone on the 0 -> 1 edge (handles forward-filled runs).
+            starts = (sig == 1) & (sig.shift(1, fill_value=0) == 0)
         if low_col not in signals.columns or high_col not in signals.columns:
             continue
 

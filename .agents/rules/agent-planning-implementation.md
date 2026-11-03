@@ -42,6 +42,15 @@ Use one consistent process so results do not depend on which agent receives the 
 - Preserve user changes, experiment fingerprints, running workers, allocations,
   checkpoints, and result evidence. Follow `.agents/rules/triton-slurm.md` for
   all compute and scheduler actions.
+- Shorten wall time with a dependency-aware queue: keep long evidence runs
+  active while implementing independent code or evidence work, but do not edit
+  files that the running report fingerprints. Reuse verified packets only
+  after checking their source and input hashes. Batch substantive validation
+  inside the current allocation; do not fan tests, variants, or checks out into
+  separate short Slurm steps.
+- Defer full documentation rendering and Sphinx until research stages and
+  evidence outputs have stabilized. Run the complete documentation build once
+  at the end, after regenerating its inventories and evidence indexes.
 - Keep comments focused on non-obvious behavior, invariants, and rationale.
   Remove stale comments when the code changes; do not narrate obvious syntax.
 - Do not change historical result records to improve presentation. Label

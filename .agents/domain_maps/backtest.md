@@ -66,7 +66,7 @@
 
 1. **MT5 spread is in broker points** — must convert via `point_size` (e.g., 0.01 for US100)
 2. **Mark-to-market uses bar-close quote** — long @ bid, short @ ask
-3. **Guardrail breach blocks new trading** — for the rest of the session (episodic=False)
+3. **Guardrail breach blocks new trading** — daily-loss for the supplied session ID; max-loss and trailing-drawdown for the rest of the non-episodic rollout
 ## Change Map
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |

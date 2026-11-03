@@ -228,6 +228,7 @@ is read by every listed package.
 | `evaluation.trade_idea_plots.standard_deviation.max_chart_range_fraction` | `number` | `0.15` | `evaluation` |
 | `evaluation.trade_idea_plots.standard_deviation.timeframes` | `array` | `["M1","M3","M5","M10","M15","M30","H1","H4","D1"]` | `evaluation` |
 | `execution.fill_delay_ms` | `integer` | `0` | `trading/execution and simulation` |
+| `execution.fill_latency_bars` | `integer` | `0` | `trading/execution and simulation` |
 | `execution.max_tick_quote_wait_ms` | `integer` | `60000` | `trading/execution and simulation` |
 | `execution.randomized_fill_latency_ms` | `number` | `0.0` | `trading/execution and simulation` |
 | `features.adx_period` | `integer` | `14` | `features` |

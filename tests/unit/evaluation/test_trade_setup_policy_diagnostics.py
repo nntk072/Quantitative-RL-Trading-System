@@ -15,6 +15,10 @@ def test_trade_setup_policy_report_counts_abstention_diversity_and_invalid_choic
         [
             {
                 "trade_setup_candidate_id": 0,
+                "trade_setup_event_identity_version": "trade-setup-event-identity-v3",
+                "trade_setup_source_event_id": None,
+                "trade_setup_source_event_identity_status": "not_applicable",
+                "trade_setup_source_event_times_ns": [],
                 "idea": "",
                 "setup_timeframe": "",
                 "selection_valid": True,
@@ -99,8 +103,121 @@ def test_trade_setup_policy_report_counts_abstention_diversity_and_invalid_choic
     assert fvg_performance["trade_count"] == 1
     assert fvg_performance["net_pnl"] == 120.0
     assert fvg_performance["mean_realized_r"] == 0.6
+    assert fvg_performance["profit_factor"] is None
+    assert fvg_performance["profit_factor_availability"] == (
+        "unbounded_no_losses_with_positive_gains"
+    )
+    breakeven_trades = trades.copy()
+    breakeven_trades["position_net_pnl"] = 0.0
+    breakeven_report = summarize_trade_setup_decisions(decisions, breakeven_trades)
+    breakeven_performance = next(
+        row
+        for row in breakeven_report["performance_by_idea_timeframe"]
+        if row["idea"] == "fvg_retest"
+    )
+    assert breakeven_performance["profit_factor"] is None
+    assert breakeven_performance["profit_factor_availability"] == ("undefined_no_gains_or_losses")
     assert len(report["trade_setup_entropy_by_month"]) == 2
     assert report["structural_violations"]["total"] == 0
+
+
+def test_trade_setup_entropy_is_grouped_by_decision_month_not_valuation_month() -> None:
+    decisions = pd.DataFrame(
+        [
+            {
+                "trade_setup_candidate_id": 0,
+                "idea": "",
+                "setup_timeframe": "",
+                "selection_valid": True,
+                "eligible_candidate_ids": [0],
+                "trade_setup_entropy_nats": 0.5,
+                "decision_time": "2025-01-31T23:59:00+03:00",
+                "valuation_time": "2025-02-01T00:00:00+03:00",
+                "time": "2025-01-31T23:59:00+03:00",
+            }
+        ]
+    )
+
+    report = summarize_trade_setup_decisions(decisions, pd.DataFrame())
+
+    assert report["trade_setup_entropy_by_month"] == [
+        {"month": "2025-01", "count": 1, "mean": 0.5, "median": 0.5, "no_trade_rate": 1.0}
+    ]
+
+
+def test_decision_open_linkage_uses_ids_and_fails_closed_on_mismatches() -> None:
+    candidate_id = trade_setup_candidate_id("fvg_retest", "M5", 1)
+    decisions = pd.DataFrame(
+        [
+            {
+                "decision_id": "episode:d1",
+                "trade_setup_candidate_id": candidate_id,
+                "idea": "fvg_retest",
+                "setup_timeframe": "M5",
+                "selection_valid": True,
+                "eligible_candidate_ids": [0, candidate_id],
+                "trade_setup_entropy_nats": 0.4,
+                "decision_time": "2025-01-01T00:00:00Z",
+            },
+            {
+                "decision_id": "episode:d2",
+                "trade_setup_candidate_id": 0,
+                "idea": "",
+                "setup_timeframe": "",
+                "selection_valid": True,
+                "eligible_candidate_ids": [0],
+                "trade_setup_entropy_nats": 0.0,
+                "decision_time": "2025-01-01T00:01:00Z",
+            },
+        ]
+    )
+    opens = pd.DataFrame(
+        [{"type": "open", "decision_id": "episode:d1", "trade_setup_candidate_id": candidate_id}]
+    )
+
+    report = summarize_trade_setup_decisions(decisions, opens)["decision_open_linkage"]
+
+    assert report == {
+        "status": "complete",
+        "decision_count": 2,
+        "open_count": 1,
+        "decisions_without_decision_id": 0,
+        "decisions_with_open": 1,
+        "decisions_without_open": 1,
+        "opens_without_decision_id": 0,
+        "opens_with_unknown_decision_id": 0,
+        "duplicate_decision_id_count": 0,
+        "multiple_opens_per_decision_count": 0,
+        "candidate_id_columns_available": True,
+        "candidate_id_mismatch_count": 0,
+    }
+
+    broken_opens = pd.concat(
+        [
+            opens,
+            pd.DataFrame(
+                [
+                    {
+                        "type": "open",
+                        "decision_id": "legacy:unknown",
+                        "trade_setup_candidate_id": candidate_id,
+                    }
+                ]
+            ),
+        ],
+        ignore_index=True,
+    )
+    broken = summarize_trade_setup_decisions(decisions, broken_opens)["decision_open_linkage"]
+
+    assert broken["status"] == "mismatch"
+    assert broken["opens_with_unknown_decision_id"] == 1
+
+    missing_candidate = summarize_trade_setup_decisions(
+        decisions,
+        opens.drop(columns="trade_setup_candidate_id"),
+    )["decision_open_linkage"]
+    assert missing_candidate["status"] == "incomplete_missing_candidate_id_column"
+    assert missing_candidate["candidate_id_columns_available"] is False
 
 
 def test_trade_setup_policy_report_flags_stop_floor_and_wrong_side_targets() -> None:
@@ -240,6 +357,10 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
                 "step": 1,
                 "time": "2025-01-01T00:01:00Z",
                 "trade_setup_candidate_id": 0,
+                "trade_setup_event_identity_version": "trade-setup-event-identity-v3",
+                "trade_setup_source_event_id": None,
+                "trade_setup_source_event_identity_status": "not_applicable",
+                "trade_setup_source_event_times_ns": [],
                 "idea": "",
                 "setup_timeframe": "",
                 "direction": 0,
@@ -249,11 +370,33 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
                 "eligible_candidate_ids": [0, selected_id],
                 "trade_setup_entropy_nats": 0.8,
                 "action_risk": 0.1,
+                "entry_rejection_reason": "",
+                "entry_state": "FLAT",
+                "position_open_after_step": False,
+                "trade_event_start_index": 0,
+                "trade_event_end_index_exclusive": 0,
             },
             {
                 "step": 2,
                 "time": "2025-01-01T00:02:00Z",
                 "trade_setup_candidate_id": selected_id,
+                "trade_setup_event_identity_version": "trade-setup-event-identity-v3",
+                "trade_setup_source_event_id": (
+                    "trade-setup-event-identity-v3:fvg_retest:M5:1:"
+                    "M5_fvg_bull_retest_confirmed_at_time_ns=1735689660000000000:"
+                    "M5_fvg_bull_retest_origin_time_ns=1735689360000000000"
+                ),
+                "trade_setup_source_event_identity_status": "identified",
+                "trade_setup_source_event_times_ns": [
+                    {
+                        "field": "M5_fvg_bull_retest_confirmed_at_time_ns",
+                        "time_ns": 1735689660000000000,
+                    },
+                    {
+                        "field": "M5_fvg_bull_retest_origin_time_ns",
+                        "time_ns": 1735689360000000000,
+                    },
+                ],
                 "idea": "fvg_retest",
                 "setup_timeframe": "M5",
                 "direction": 1,
@@ -263,6 +406,11 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
                 "eligible_candidate_ids": [0, selected_id],
                 "trade_setup_entropy_nats": 0.7,
                 "action_risk": 0.3,
+                "entry_rejection_reason": "",
+                "entry_state": "FLAT",
+                "position_open_after_step": False,
+                "trade_event_start_index": 0,
+                "trade_event_end_index_exclusive": 0,
             },
         ]
     )
@@ -276,6 +424,11 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
         "initial_balance": 100_000.0,
         "trade_setup_decisions": decisions,
         "trade_setup_policy_metrics": summarize_trade_setup_decisions(decisions, trades),
+        "policy_metadata": {
+            "policy_id": "random_eligible_trade_setup_v1",
+            "seed": 42,
+            "trade_probability": 1.0,
+        },
     }
     run_dir = save_run(
         run_dir=tmp_path / "trade_setup-diagnostics",
@@ -288,12 +441,23 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
     )
 
     split = run_dir / "training"
-    assert len(pd.read_csv(split / "trade_setup_decisions.csv")) == 2
+    saved_decisions = pd.read_csv(split / "trade_setup_decisions.csv")
+    assert len(saved_decisions) == 2
+    assert saved_decisions["trade_event_start_index"].tolist() == [0, 0]
+    assert saved_decisions["trade_event_end_index_exclusive"].tolist() == [0, 0]
+    assert saved_decisions["trade_setup_source_event_identity_status"].tolist() == [
+        "not_applicable",
+        "identified",
+    ]
+    assert "fvg_retest:M5:1:" in saved_decisions["trade_setup_source_event_id"].iloc[1]
+    assert "1735689660000000000" in saved_decisions["trade_setup_source_event_times_ns"].iloc[1]
     assert len(pd.read_csv(split / "trade_setup_selection_matrix.csv")) == 54
     assert len(pd.read_csv(split / "trade_setup_selection_by_idea.csv")) == 6
     assert (split / "trade_setup_selection_heatmap.png").is_file()
     assert (split / "trade_setup_performance_heatmap.png").is_file()
     diagnostics = json.loads((split / "trade_setup_policy_metrics.json").read_text())
+    evaluation_diagnostics = json.loads((split / "evaluation_diagnostics.json").read_text())
+    assert evaluation_diagnostics["policy_metadata"]["seed"] == 42
     assert diagnostics["no_trade_count"] == 1
     assert diagnostics["invalid_selection_count"] == 0
     assert diagnostics["trade_setup_entropy_mean_nats"] == 0.75

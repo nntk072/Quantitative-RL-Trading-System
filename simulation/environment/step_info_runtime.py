@@ -7,6 +7,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from features.context.trade_setup_candidates import (
+    TradeSetupEventIdentity,
+    trade_setup_event_identity_record,
+)
+
 from .entry_diagnostics import _previous_session_audit
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase
@@ -17,6 +22,11 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
 
     _decision_action: dict[str, float]
     _previous_constraint_ratios: dict[str, float]
+    _selected_trade_setup_event_identity: TradeSetupEventIdentity | None
+    _last_action_trade_setup_candidate_id: int | None
+    _last_action_trade_setup_eligible: bool | None
+    trade_setup_actions: bool
+    action_schema: Any
 
     def _build_step_info(
         self,
@@ -60,6 +70,7 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
             self.trade_log.append(
                 {
                     "type": "reject",
+                    "decision_id": self._entry_rejection_decision_id or self._current_decision_id,
                     "entry_rejection_reason": self._entry_rejection_reason,
                     "bar": self.step_idx,
                     "time": bar_time,
@@ -73,6 +84,8 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
                 }
             )
         info: dict[str, Any] = {
+            "decision_id": self._current_decision_id,
+            "decision_time": bar_time,
             "equity": self.account.equity,
             "valuation_time": valuation_time,
             "position": self.position is not None,
@@ -87,6 +100,37 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
             ),
             "entry_funnel": entry_funnel,
         }
+        event_identity = self._selected_trade_setup_event_identity
+        info.update(trade_setup_event_identity_record(event_identity))
+        if self.trade_setup_actions:
+            info.update(
+                {
+                    "trade_setup_action_schema_version": str(self.action_schema.version),
+                    "trade_setup_candidate_id": self._last_action_trade_setup_candidate_id,
+                    "trade_setup_eligible": self._last_action_trade_setup_eligible,
+                    "trade_setup_selected_idea": (
+                        "no_trade"
+                        if self._last_action_trade_setup_candidate_id == 0
+                        else (
+                            ""
+                            if self._selected_trade_setup is None
+                            else str(self._selected_trade_setup.idea)
+                        )
+                    ),
+                    "trade_setup_selected_timeframe": (
+                        ""
+                        if self._selected_trade_setup is None
+                        or self._selected_trade_setup.setup_timeframe is None
+                        else str(self._selected_trade_setup.setup_timeframe)
+                    ),
+                    "trade_setup_selected_direction": (
+                        0
+                        if self._selected_trade_setup is None
+                        else int(self._selected_trade_setup.direction)
+                    ),
+                }
+            )
+            info.update(self._decision_action)
         if self.repeated_payout_policy:
             info.update(
                 {

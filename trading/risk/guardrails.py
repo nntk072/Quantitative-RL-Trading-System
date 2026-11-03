@@ -13,8 +13,71 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Literal
 
 from trading.account import AccountState
+
+GuardrailBreachScope = Literal["session", "rollout"]
+
+
+def guardrail_breach_scope(reason: str | None) -> GuardrailBreachScope | None:
+    """Return the lifecycle scope for a hard account-guardrail breach.
+
+    Daily loss blocks the supplied session and may recover at the next session
+    boundary. Maximum-loss and trailing-drawdown breaches remain latched for
+    the rest of a non-episodic rollout. Episodic and repeated-payout runtimes
+    retain their own termination/cycle behavior around this shared scope.
+
+    Args:
+        reason: Stable reason returned by ``FTMOGuardrails.breach_reason``.
+
+    Returns:
+        ``"session"`` for daily loss, ``"rollout"`` for max/trailing loss,
+        or ``None`` when no breach occurred.
+
+    Raises:
+        ValueError: If a non-null reason is not a recognized hard breach.
+    """
+    if reason is None:
+        return None
+    if reason == "daily_loss":
+        return "session"
+    if reason in {"max_drawdown", "trailing_dd"}:
+        return "rollout"
+    raise ValueError(f"unsupported hard guardrail breach reason: {reason!r}")
+
+
+def adverse_position_loss_limit_usd(
+    configured_limit_usd: float,
+    planned_risk_usd: float,
+    *,
+    respect_planned_risk: bool,
+    planned_risk_multiplier: float,
+) -> float:
+    """Resolve the adverse-excursion cutoff without placing it inside planned risk.
+
+    Args:
+        configured_limit_usd: Configured dollar floor for adverse excursion.
+        planned_risk_usd: Entry risk at the structural stop, if known.
+        respect_planned_risk: Whether the cutoff must include planned risk.
+        planned_risk_multiplier: Multiplier applied to planned risk.
+
+    Returns:
+        The adverse-excursion cutoff in account currency.
+
+    Raises:
+        ValueError: If a limit or multiplier is non-finite or negative.
+    """
+    configured = float(configured_limit_usd)
+    planned = float(planned_risk_usd)
+    multiplier = float(planned_risk_multiplier)
+    if not all(math.isfinite(value) for value in (configured, planned, multiplier)):
+        raise ValueError("adverse-loss limits must be finite")
+    if configured < 0.0 or planned < 0.0 or multiplier < 0.0:
+        raise ValueError("adverse-loss limits and planned-risk multiplier must be nonnegative")
+    if not respect_planned_risk or planned <= 0.0:
+        return configured
+    return max(configured, multiplier * planned)
 
 
 @dataclass(frozen=True)
@@ -134,7 +197,8 @@ class FTMOGuardrails:
         Returns:
             Whether check daily meets the requested condition.
         """
-        return acc.canonical_daily_loss() >= self.daily_limit_for(acc)
+        risk_state = acc.to_risk_state(daily_loss_limit=self.daily_limit_for(acc))
+        return risk_state.daily_pnl <= -risk_state.daily_loss_limit
 
     def check_soft_daily(self, acc: AccountState) -> bool:
         """Return True when the soft brick is active (no new entries).
@@ -148,7 +212,8 @@ class FTMOGuardrails:
         soft = self.soft_daily_limit_for(acc)
         if soft <= 0.0:
             return False
-        return acc.canonical_daily_loss() >= soft
+        risk_state = acc.to_risk_state(daily_loss_limit=soft)
+        return risk_state.daily_pnl <= -risk_state.daily_loss_limit
 
     def check_max_drawdown(self, acc: AccountState) -> bool:
         """Return True if absolute loss from *initial* balance ≥ ``max_loss_limit``.

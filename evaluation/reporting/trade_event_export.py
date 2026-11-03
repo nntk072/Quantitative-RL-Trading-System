@@ -30,6 +30,11 @@ _POSITION_COLUMNS = (
     "direction",
     "trade_setup_candidate_id",
     "trade_setup_schema_version",
+    "decision_id",
+    "trade_setup_event_identity_version",
+    "trade_setup_source_event_id",
+    "trade_setup_source_event_identity_status",
+    "trade_setup_source_event_times_ns",
     "primary_idea",
     "primary_setup_timeframe",
     "primary_direction",
@@ -66,6 +71,13 @@ _POSITION_ENTRY_METADATA = (
     "tp_price",
     "tp_ref",
     "tp_timeframe",
+)
+_POSITION_DECISION_METADATA = (
+    "decision_id",
+    "trade_setup_event_identity_version",
+    "trade_setup_source_event_id",
+    "trade_setup_source_event_identity_status",
+    "trade_setup_source_event_times_ns",
 )
 
 
@@ -111,6 +123,7 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
                 "position_id": None,
                 "direction": event.get("direction"),
                 **{key: event.get(key) for key in _POSITION_ENTRY_METADATA},
+                **{key: event.get(key) if is_open else None for key in _POSITION_DECISION_METADATA},
                 "entry_time": event.get("time") if is_open else None,
                 "exit_time": event.get("time") if is_close else None,
                 "entry_price": event.get("price") if is_open else None,
@@ -143,6 +156,7 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
                 net_values = pnl_values
             completed_values = (
                 closes.get("position_complete", pd.Series(False, index=closes.index))
+                .astype("boolean")
                 .fillna(False)
                 .astype(bool)
             )
@@ -175,6 +189,10 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
                         else events.iloc[0].get("direction")
                     ),
                     **{key: entry_metadata.get(key) for key in _POSITION_ENTRY_METADATA},
+                    **{
+                        key: None if entry is None else entry.get(key)
+                        for key in _POSITION_DECISION_METADATA
+                    },
                     "entry_time": entry_time,
                     "exit_time": exit_time,
                     "entry_price": None if entry is None else entry.get("price"),

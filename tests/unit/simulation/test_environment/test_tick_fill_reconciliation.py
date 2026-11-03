@@ -36,6 +36,13 @@ def test_adverse_tick_slippage_changes_only_executed_side(
     assert env._adverse_tick_fill_quote((99.0, 101.0), direction, opening=opening) == expected
 
 
+@pytest.mark.parametrize("slippage", [-0.1, float("nan"), float("inf")])
+def test_environment_rejects_invalid_tick_fill_slippage(slippage: float) -> None:
+    env = TradingEnv.__new__(TradingEnv)
+    with pytest.raises(ValueError, match="tick_fill_slippage_points"):
+        env._initialize_execution_controls(None, False, 0, 0.0, 60_000, slippage)
+
+
 @pytest.mark.parametrize(("direction", "slippage"), [(1, 5.0), (-1, 5.0), (1, 10.0), (-1, 10.0)])
 def test_tick_fill_slippage_worsens_entry_and_exit_exactly_once(
     direction: int, slippage: float
@@ -132,7 +139,6 @@ def test_tick_tp_partial_then_stop_reconciles_commissions_and_reward(direction: 
     )
     env._stamp_exit = MethodType(TradingEnv._stamp_exit, env)
     env._note_close = MethodType(TradingEnv._note_close, env)
-    env._target_close_size = TradingEnv._target_close_size
     env._adverse_tick_fill_quote = MethodType(TradingEnv._adverse_tick_fill_quote, env)
     env._close_at_quote = MethodType(TradingEnv._close_at_quote, env)
 
@@ -183,7 +189,6 @@ def test_tick_crosses_three_tp_slots_once_with_exact_remaining_quantity() -> Non
     )
     env._stamp_exit = MethodType(TradingEnv._stamp_exit, env)
     env._note_close = MethodType(TradingEnv._note_close, env)
-    env._target_close_size = TradingEnv._target_close_size
     env._adverse_tick_fill_quote = MethodType(TradingEnv._adverse_tick_fill_quote, env)
     env._close_at_quote = MethodType(TradingEnv._close_at_quote, env)
 
@@ -214,7 +219,8 @@ def test_tick_and_bar_match_for_identical_unambiguous_target_crossings() -> None
         assert pos is not None
         pos.position_id = "trace:parity"
         pos.entry_timestamp = start
-        pos.sl_price = 95.0
+        pos.sl_initial_price = 95.0
+        pos.sl_price = 100.5
         pos.tp1_price, pos.tp2_price = 105.0, 110.0
         pos.tp_initial_size = 1.0
         pos.tp_lot_fractions = (0.4, 0.6)
@@ -223,7 +229,8 @@ def test_tick_and_bar_match_for_identical_unambiguous_target_crossings() -> None
             position=pos,
             _tickbook=book if with_ticks else None,
             fill_delay_ms=0,
-            _breakeven_trigger_r=0.0,
+            _breakeven_trigger_r=1.0,
+            _breakeven_buffer_pts=0.2,
             _last_realized_close_pnl=None,
             _last_realized_close_r=None,
             _pending_realized_r=None,
@@ -248,15 +255,16 @@ def test_tick_and_bar_match_for_identical_unambiguous_target_crossings() -> None
             "_close_at_quote",
         ):
             setattr(env, method, MethodType(getattr(TradingEnv, method), env))
-        env._target_close_size = TradingEnv._target_close_size
         return env
 
     tick_env = make_env(True)
     bar_env = make_env(False)
-    bar: Any = SimpleNamespace(low=100.0, high=110.0, close=110.0)
+    bar: Any = SimpleNamespace(low=101.0, high=110.0, close=110.0)
     TradingEnv._check_sl_tp(tick_env, bar, 110.0, 110.5, bar_idx=0)
     TradingEnv._check_sl_tp(bar_env, bar, 110.0, 110.5, bar_idx=0)
     assert tick_env.position is None and bar_env.position is None
+    assert not any(row.get("type") == "sl_update" for row in tick_env.trade_log)
+    assert not any(row.get("type") == "sl_update" for row in bar_env.trade_log)
     assert {row["fill_quote_source"] for row in tick_env.trade_log[1:]} == {"tick"}
     assert {row["fill_quote_source"] for row in bar_env.trade_log[1:]} == {"bar_range_level"}
     for key in ("tp_slot", "size", "net_pnl", "position_complete"):
@@ -427,7 +435,7 @@ def test_tick_mode_uses_correct_ask_and_records_actual_entry_quote(latency_ms: f
 
 @pytest.mark.parametrize("latency_ms", [0.0, 30.0])
 @pytest.mark.parametrize("tick_in_bar", [False, True])
-def test_tick_only_mode_uses_quotes_for_candle_only_stop_fill(
+def test_tick_only_mode_rejects_ohlc_stop_without_matching_tick(
     latency_ms: float, tick_in_bar: bool
 ) -> None:
     index = pd.date_range("2026-01-05T14:30:00Z", periods=4, freq="min")
@@ -464,13 +472,10 @@ def test_tick_only_mode_uses_quotes_for_candle_only_stop_fill(
     env.position = pos
     bar = BarView(open=100.0, low=99.0, high=100.5, close=100.0)
 
-    if tick_in_bar:
+    with pytest.raises(TickExecutionUnavailable, match="no matching tick trigger"):
         env._check_sl_tp(bar, 100.0, 100.2, env.step_idx)
-        assert env.position is pos
-        assert not any(row.get("type") == "stop_close" for row in env.trade_log)
-    else:
-        with pytest.raises(TickExecutionUnavailable, match="no tick observations"):
-            env._check_sl_tp(bar, 100.0, 100.2, env.step_idx)
+    assert env.position is pos
+    assert not any(row.get("type") == "stop_close" for row in env.trade_log)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -52,14 +53,35 @@ def _check_match(control: dict[str, Any], treatment: dict[str, Any]) -> None:
         raise ValueError("experiment runs are not matched for: " + ", ".join(mismatches))
 
 
-def _fmt(value: Any, *, kind: str) -> str:
-    if kind == "percent":
-        return f"{float(value):.2f}%"
-    if kind == "money":
+def _finite_number(value: Any) -> float | None:
+    """Return a finite numeric value, or ``None`` for unavailable input.
+
+    Args:
+        value: Input value from a stored run summary.
+
+    Returns:
+        A finite float when coercion succeeds, otherwise ``None``.
+    """
+    try:
         number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _fmt(value: Any, *, kind: str) -> str:
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return "N/A"
+    if not math.isfinite(number):
+        return "N/A"
+    if kind == "percent":
+        return f"{number:.2f}%"
+    if kind == "money":
         return f"-${abs(number):,.2f}" if number < 0 else f"${number:,.2f}"
     if kind == "ratio":
-        return f"{float(value):.3f}"
+        return f"{number:.3f}"
     if kind == "count":
         return f"{int(value):,}"
     return str(value)
@@ -124,8 +146,8 @@ def render_comparison(control_path: Path, treatment_path: Path) -> str:
         ("sharpe", "Sharpe", "ratio"),
         ("profit_factor", "Profit factor", "ratio"),
         ("win_rate", "Win rate", "percent", 100.0),
-        ("expectancy", "Expectancy per trade", "money"),
-        ("n_trades", "Trades", "count"),
+        ("expectancy", "Expectancy per completed position", "money"),
+        ("n_trades", "Completed positions", "count"),
     )
     for split in ("train", "test"):
         control_job = control["jobs"][0]
@@ -135,8 +157,18 @@ def render_comparison(control_path: Path, treatment_path: Path) -> str:
         for spec in specs:
             key, label, kind, *scale = spec
             factor = scale[0] if scale else 1.0
-            left = float(control_metrics[key]) * factor
-            right = float(treatment_metrics[key]) * factor
+            left_raw = control_metrics.get(key)
+            right_raw = treatment_metrics.get(key)
+            left_number = _finite_number(left_raw)
+            right_number = _finite_number(right_raw)
+            if left_number is None or right_number is None:
+                lines.append(
+                    f"| {split.capitalize()} | {label} | {_fmt(left_raw, kind=kind)} | "
+                    f"{_fmt(right_raw, kind=kind)} | N/A |"
+                )
+                continue
+            left = left_number * factor
+            right = right_number * factor
             lines.append(
                 f"| {split.capitalize()} | {label} | {_fmt(left, kind=kind)} | "
                 f"{_fmt(right, kind=kind)} | {_fmt_delta(right - left, kind=kind)} |"

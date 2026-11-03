@@ -22,6 +22,7 @@ from configuration.paths import repository_root  # noqa: E402
 
 ROOT = repository_root(__file__)
 DEFAULT_SCHEMA = ROOT / "schemas/research_result_manifest.schema.json"
+DEFAULT_SCHEMA_V2 = ROOT / "schemas/research_result_manifest_v2.schema.json"
 DEFAULT_TRIAL_LEDGER_SCHEMA = ROOT / "schemas/research_trial_ledger.schema.json"
 FROZEN_SUPPORTING_ROLES = {
     "protocol",
@@ -65,7 +66,12 @@ def _experiment_run_id(record: dict[str, Any]) -> str | None:
     return value if isinstance(value, str) else None
 
 
-def _contained_path(path_value: str, repo_root: Path) -> Path | None:
+def _contained_path(
+    path_value: str,
+    repo_root: Path,
+    *,
+    research_archive_root: Path | None = None,
+) -> Path | None:
     relative = Path(path_value)
     if relative.is_absolute():
         return None
@@ -74,8 +80,27 @@ def _contained_path(path_value: str, repo_root: Path) -> Path | None:
     try:
         path.relative_to(root)
     except ValueError:
-        return None
+        if research_archive_root is None:
+            return None
+        archive_root = research_archive_root.resolve()
+        try:
+            path.relative_to(archive_root)
+        except ValueError:
+            return None
     return path
+
+
+def _unknown_identity_values(value: Any, prefix: str = "identity") -> Iterator[str]:
+    """Yield paths for explicit unknown values in a v2 identity record."""
+    if isinstance(value, dict):
+        if value.get("status") == "unknown":
+            yield prefix
+            return
+        for key, child in value.items():
+            yield from _unknown_identity_values(child, f"{prefix}.{key}")
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from _unknown_identity_values(child, f"{prefix}[{index}]")
 
 
 def validate_result_manifest(
@@ -127,7 +152,19 @@ def validate_result_manifest(
                     f"claim {claim['claim_id']} references unknown comparison {comparison_id}"
                 )
 
-    if manifest["manifest_status"] == "frozen":
+    is_v2 = manifest["schema"] == "qrl.research_result_manifest.v2"
+    if manifest["manifest_status"] == "frozen" and is_v2:
+        if not claims or not comparisons or not runs:
+            errors.append("frozen manifest must contain claims, comparisons, and runs")
+        if not manifest.get("frozen_at_utc"):
+            errors.append("frozen manifest lacks frozen_at_utc")
+        for run in runs:
+            unknown_paths = list(_unknown_identity_values(run["identity"]))
+            errors.extend(
+                f"frozen run {run['run_id']} has unknown identity value: {path}"
+                for path in unknown_paths
+            )
+    elif manifest["manifest_status"] == "frozen":
         if not claims or not comparisons or not runs:
             errors.append("frozen manifest must contain claims, comparisons, and runs")
         present_roles = {item["role"] for item in manifest["supporting_artifacts"]}
@@ -167,9 +204,15 @@ def validate_result_manifest(
 
     if verify_artifact_hashes:
         root = repo_root.resolve()
+        research_archive_root = root.parent / f"{root.name}-research-archive" if is_v2 else None
         for artifact in _artifact_records(manifest):
             relative = artifact["path"]
-            path = _contained_path(relative, root)
+            allow_archive = is_v2 and artifact.get("storage_scope") == "project_research_archive"
+            path = _contained_path(
+                relative,
+                root,
+                research_archive_root=research_archive_root if allow_archive else None,
+            )
             if path is None:
                 errors.append(f"artifact path is absolute or escapes repository root: {relative}")
                 continue
@@ -228,14 +271,20 @@ def validate_result_manifest(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
-    parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA)
+    parser.add_argument("--schema", type=Path)
     parser.add_argument("--repo-root", type=Path, default=ROOT)
     parser.add_argument("--skip-artifact-hashes", action="store_true")
     args = parser.parse_args()
 
+    manifest = _load_json(args.manifest)
+    schema_path = args.schema or (
+        DEFAULT_SCHEMA_V2
+        if manifest.get("schema") == "qrl.research_result_manifest.v2"
+        else DEFAULT_SCHEMA
+    )
     errors = validate_result_manifest(
-        _load_json(args.manifest),
-        _load_json(args.schema),
+        manifest,
+        _load_json(schema_path),
         repo_root=args.repo_root,
         verify_artifact_hashes=not args.skip_artifact_hashes,
     )

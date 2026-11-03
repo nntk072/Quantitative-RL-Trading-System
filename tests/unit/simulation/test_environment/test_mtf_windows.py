@@ -36,6 +36,20 @@ def test_closed_window_column_selection_matches_materialized_branch() -> None:
         np.testing.assert_array_equal(actual_mask, expected_mask)
 
 
+def test_closed_window_without_available_candles_marks_every_row_invalid() -> None:
+    block = np.zeros((3, 2), dtype=np.float32)
+
+    window, mask = closed_window(
+        block,
+        np.zeros(0, dtype=np.int64),
+        end=2,
+        length=4,
+    )
+
+    np.testing.assert_array_equal(window, np.zeros((4, 2), dtype=np.float32))
+    np.testing.assert_array_equal(mask, np.zeros(4, dtype=np.float32))
+
+
 def test_timeframe_starts_preserve_equal_consecutive_candles() -> None:
     """Candle windows count source bars even when every feature value repeats."""
     index = pd.date_range("2020-01-02 09:00", "2020-01-02 11:00", freq="1min")
@@ -44,7 +58,7 @@ def test_timeframe_starts_preserve_equal_consecutive_candles() -> None:
     repeated_features = np.zeros((len(index), 1), dtype=np.float32)
     window, mask = closed_window(repeated_features, starts, decision, 4)
 
-    assert int(mask.sum()) == 4
+    np.testing.assert_array_equal(mask, np.ones(4, dtype=np.float32))
     np.testing.assert_array_equal(window[:, 0], np.zeros(4, dtype=np.float32))
     assert int(np.count_nonzero(starts <= decision)) == 32
 

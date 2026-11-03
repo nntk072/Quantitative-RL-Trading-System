@@ -61,6 +61,40 @@ def test_bootstrap_ci_empty():
     assert np.isnan(ci.estimate) and np.isnan(ci.lower) and np.isnan(ci.upper)
 
 
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"n_boot": -1}, "n_boot"),
+        ({"level": 0.0}, "level"),
+        ({"level": 1.0}, "level"),
+        ({"level": float("nan")}, "level"),
+        ({"block_len": 0}, "block_len"),
+    ],
+)
+def test_bootstrap_ci_rejects_invalid_parameters(kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        bootstrap_ci(np.array([0.01]), np.mean, **kwargs)
+
+
+def test_bootstrap_ci_rejects_nonfinite_or_multidimensional_samples():
+    with pytest.raises(ValueError, match="finite"):
+        bootstrap_ci(np.array([0.01, np.nan]), np.mean)
+    with pytest.raises(ValueError, match="one-dimensional"):
+        bootstrap_ci(np.ones((2, 2)), np.mean)
+
+
+def test_paired_bootstrap_validates_parameters_even_for_one_period():
+    with pytest.raises(ValueError, match="level"):
+        paired_metric_difference_ci(np.array([0.1]), np.array([0.0]), np.mean, level=1.0)
+
+
+def test_metrics_with_ci_rejects_nonpositive_equity_and_periods():
+    with pytest.raises(ValueError, match="positive"):
+        metrics_with_ci(np.array([100.0, 0.0]), np.array([]))
+    with pytest.raises(ValueError, match="periods_per_year"):
+        metrics_with_ci(np.array([100.0, 101.0]), np.array([]), periods_per_year=0)
+
+
 def test_calibration_perfectly_calibrated():
     rng = np.random.default_rng(11)
     # 2000 draws: p uniform, outcome ~ Bernoulli(p) → well calibrated

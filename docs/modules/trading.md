@@ -58,36 +58,41 @@ can differ between historical simulation and a live venue.
 
 ## UML
 
-This UML shows the broker-neutral trading domain from an intent through risk,
-order geometry, execution, and account change.
+The current trading package owns account, guardrail, sizing, order, and broker
+contracts. `RiskState`/`RiskDecision`/`RiskPolicy` are a separate reusable v1
+interface; the simulator and broker adapters do not yet call that protocol.
+The diagram below describes the implemented account/execution relationships,
+not a claim that the v1 risk protocol is already integrated.
 
 ```mermaid
 classDiagram
-    class TradingIntent {
-      +direction
-      +entry_reference
-      +stop_reference
-      +target_references
-    }
-    class RiskPolicy {
-      +assess(AccountState, TradingIntent) RiskDecision
-    }
-    class RiskDecision {
-      +accepted
-      +approved_size
-      +reason
-    }
     class AccountState {
       +balance
       +equity
-      +positions
-      +risk_capacity
+      +daily_loss
+      +session_start_equity
     }
-    class OrderGeometry {
-      +entry
-      +stop
-      +targets
-      +validate()
+    class FTMOGuardrails {
+      +breach_reason(AccountState)
+      +check_trade_risk(risk, AccountState)
+    }
+    class RiskState {
+      +schema_version
+      +daily_pnl_basis
+      +equity
+      +daily_pnl
+      +open_risk
+      +daily_loss_limit
+    }
+    class RiskPolicy {
+      <<Protocol>>
+      +decide(state, requested_risk) RiskDecision
+    }
+    class RiskDecision {
+      +schema_version
+      +allowed
+      +risk_amount
+      +reason
     }
     class Position {
       +side
@@ -109,15 +114,14 @@ classDiagram
       +time
       +costs
     }
-    TradingIntent --> RiskPolicy : assessed by
-    RiskPolicy --> RiskDecision
-    AccountState --> RiskPolicy : current limits
-    RiskDecision --> OrderGeometry : authorizes
-    OrderGeometry --> Broker : submitted to
+    AccountState --> FTMOGuardrails : state checked
+    Broker --> AccountState : mutates
     Broker --> Fill : returns
     Fill --> Position : opens or changes
     Position --> AccountState : updates
     CostModel --> Fill : prices execution
+    RiskPolicy ..> RiskState : reads
+    RiskPolicy ..> RiskDecision : returns
 ```
 
 ## Implementation reference

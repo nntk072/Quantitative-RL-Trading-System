@@ -9,7 +9,11 @@ import pandas as pd
 import pytest
 
 from features.po3.fvg_detection import FVGConfig, detect_fvg
-from features.po3.ifvg_detection import IFVGConfig, detect_ifvg_confirmation
+from features.po3.ifvg_detection import (
+    IFVGConfig,
+    detect_ifvg_confirmation,
+    detect_ifvg_confirmation_events,
+)
 from features.po3.trigger_rules import (
     EntryConfig,
     detect_entry_trigger,
@@ -206,6 +210,56 @@ class TestDetectEntryTrigger:
         config = EntryConfig(retest_threshold=0.05)
         entry_result = detect_entry_trigger(sample_bars, ifvg_result, config=config)
         assert isinstance(entry_result, pd.DataFrame)
+
+    def test_retest_requires_a_bar_after_confirmation(self) -> None:
+        idx = pd.date_range("2025-01-01", periods=2, freq="1min")
+        close = np.array([12.3, 12.3])
+        bars = pd.DataFrame(
+            {"open": close, "high": close + 0.1, "low": close - 0.1, "close": close},
+            index=idx,
+        )
+        # Confirmation is forward-filled across this next timeframe period.
+        ifvg = pd.DataFrame(
+            {
+                "ifvg_bullish_confirmed": [1, 1],
+                "ifvg_bullish_low": [10.0, 10.0],
+                "ifvg_bullish_high": [12.0, 12.0],
+            },
+            index=idx,
+        )
+
+        entry = detect_entry_trigger(bars, ifvg, config=EntryConfig(retest_threshold=0.2))
+
+        assert entry["entry_long"].tolist() == [0, 1]
+
+    def test_forward_filled_confirmation_is_one_expiring_event(self) -> None:
+        idx = pd.date_range("2025-01-01", periods=56, freq="1min")
+        close = np.full(len(idx), 15.0)
+        close[-1] = 12.0
+        bars = pd.DataFrame(
+            {"open": close, "high": close + 0.1, "low": close - 0.1, "close": close},
+            index=idx,
+        )
+        ifvg = pd.DataFrame(
+            {
+                "ifvg_bullish_confirmed": np.ones(len(idx), dtype=int),
+                "ifvg_bullish_low": np.full(len(idx), 10.0),
+                "ifvg_bullish_high": np.full(len(idx), 12.0),
+            },
+            index=idx,
+        )
+
+        entry = detect_entry_trigger(bars, ifvg, config=EntryConfig(retest_threshold=0.2))
+
+        assert entry["entry_long"].sum() == 0
+
+    def test_entry_trigger_rejects_misaligned_ifvg_index(self) -> None:
+        idx = pd.date_range("2025-01-01", periods=2, freq="1min")
+        bars = pd.DataFrame({"open": 1.0, "high": 2.0, "low": 0.0, "close": 1.0}, index=idx)
+        ifvg = pd.DataFrame(index=idx + pd.Timedelta(minutes=1))
+
+        with pytest.raises(ValueError, match="identical indexes"):
+            detect_entry_trigger(bars, ifvg)
 
     def test_entry_trigger_ltf_fvg_fires_on_zone_reentry(
         self, bullish_close_through_bars: pd.DataFrame
@@ -404,6 +458,58 @@ class TestIFVGConfirmationBehavior:
         confirmed = ifvg[ifvg["ifvg_bullish_confirmed"] == 1].iloc[0]
         assert confirmed["ifvg_bullish_low"] == 10.0
         assert confirmed["ifvg_bullish_high"] == 12.1
+
+    def test_same_bar_confirmations_keep_the_newest_matching_gap_identity(self) -> None:
+        bars = pd.DataFrame(
+            {
+                "high": [100.0, 100.5, 101.2, 103.0, 103.0, 104.5],
+                "low": [99.0, 99.5, 101.0, 100.8, 99.0, 103.5],
+                "close": [99.5, 100.0, 101.1, 100.9, 99.5, 104.0],
+            },
+            index=pd.date_range("2025-01-01", periods=6, freq="1min"),
+        )
+        fvg = detect_fvg(bars)
+        ifvg = detect_ifvg_confirmation(bars, fvg)
+        ledger = detect_ifvg_confirmation_events(bars, fvg)
+        collision = ledger.loc[ledger["confirmation_bar"].eq(5) & ledger["side"].eq("bullish")]
+
+        assert fvg["fvg_bullish"].iloc[2:4].tolist() == [1, 1]
+        assert ifvg["ifvg_bullish_confirmed"].iloc[5] == 1
+        assert ifvg["ifvg_bullish_low"].iloc[5] == pytest.approx(100.5)
+        assert ifvg["ifvg_bullish_high"].iloc[5] == pytest.approx(100.8)
+        assert ifvg["ifvg_bullish_origin_bar"].iloc[5] == 3
+        assert collision["source_origin_bar"].tolist() == [2, 3]
+        assert collision["selected_by_scalar"].tolist() == [False, True]
+        assert collision["confirmation_time_ns"].nunique() == 1
+        assert collision["source_origin_time_ns"].tolist() == [
+            bars.index[2].value,
+            bars.index[3].value,
+        ]
+
+    def test_ifvg_confirmation_event_ledger_is_prefix_causal(self) -> None:
+        bars = pd.DataFrame(
+            {
+                "high": [100.0, 100.5, 101.2, 103.0, 103.0, 104.5, 104.8],
+                "low": [99.0, 99.5, 101.0, 100.8, 99.0, 103.5, 104.0],
+                "close": [99.5, 100.0, 101.1, 100.9, 99.5, 104.0, 104.4],
+            },
+            index=pd.date_range("2025-01-01", periods=7, freq="1min"),
+        )
+        cutoff = 6
+        full_fvg = detect_fvg(bars)
+        prefix_bars = bars.iloc[:cutoff]
+        prefix_fvg = detect_fvg(prefix_bars)
+
+        full_scalar = detect_ifvg_confirmation(bars, full_fvg)
+        prefix_scalar = detect_ifvg_confirmation(prefix_bars, prefix_fvg)
+        full_events = detect_ifvg_confirmation_events(bars, full_fvg)
+        prefix_events = detect_ifvg_confirmation_events(prefix_bars, prefix_fvg)
+
+        pd.testing.assert_frame_equal(full_scalar.iloc[:cutoff], prefix_scalar)
+        pd.testing.assert_frame_equal(
+            full_events.loc[full_events["confirmation_bar"].lt(cutoff)].reset_index(drop=True),
+            prefix_events.reset_index(drop=True),
+        )
 
     def test_bearish_ifvg_fires_on_close_through(self) -> None:
         """A bearish FVG with closes below it must confirm."""
@@ -609,6 +715,32 @@ class TestBuildFVGZones:
         # The M5 H4 bar where FVG fires is one contiguous run -> 1 start.
         assert len(starts) <= 3
 
+    def test_adjacent_overlapping_fvg_events_keep_distinct_zone_records(self) -> None:
+        """Sparse adjacent FVG events retain separate overlapping zones."""
+        idx = pd.date_range("2025-01-01", periods=6, freq="1min")
+        bars = pd.DataFrame(
+            {
+                "high": [100.0, 101.0, 103.0, 104.0, 103.5, 104.0],
+                "low": [99.0, 100.0, 102.0, 102.4, 102.5, 99.5],
+                "close": [99.5, 100.5, 102.5, 103.5, 103.0, 101.5],
+            },
+            index=idx,
+        )
+        signals = pd.DataFrame(
+            {
+                "htf_fvg_bullish": [0, 0, 1, 1, 0, 0],
+                "htf_fvg_bullish_low": [np.nan, np.nan, 100.0, 101.0, np.nan, np.nan],
+                "htf_fvg_bullish_high": [np.nan, np.nan, 102.0, 102.4, np.nan, np.nan],
+            },
+            index=idx,
+        )
+
+        zones = build_fvg_zones(bars, signals, signals_are_events=True)
+
+        assert len(zones) == 2
+        assert [zone.start_ts for zone in zones] == [idx[2], idx[3]]
+        assert zones[0].zone_low < zones[1].zone_low < zones[0].zone_high
+
     def test_zone_invalidation_on_fill(self) -> None:
         """A zone is invalidated only after its candle body closes through it."""
         idx = pd.date_range("2025-01-01", periods=10, freq="1min")
@@ -674,6 +806,16 @@ class TestBuildFVGZones:
         """Missing signal columns return an empty zone list."""
         zones = build_fvg_zones(fvg_bars, pd.DataFrame(index=fvg_bars.index))
         assert zones == []
+
+    def test_zone_builder_rejects_misaligned_signal_rows(self, fvg_bars: pd.DataFrame) -> None:
+        signals = pd.DataFrame(index=fvg_bars.index + pd.Timedelta(minutes=1))
+        with pytest.raises(ValueError, match="identical indexes"):
+            build_fvg_zones(fvg_bars, signals)
+
+    def test_zone_builder_rejects_negative_horizon(self, fvg_bars: pd.DataFrame) -> None:
+        signals = pd.DataFrame(index=fvg_bars.index)
+        with pytest.raises(ValueError, match="max_zone_bars must be nonnegative"):
+            build_fvg_zones(fvg_bars, signals, max_zone_bars=-1)
 
 
 class TestMTFCausality:

@@ -1,0 +1,160 @@
+{
+  "claim_scope": "Controlled one-entry/one-exit action replay using current local US100 M1 bars and TickBook quotes matched to unique, complete source timestamp groups in the recorded local quote-alignment scan. This is not a historical policy replay or provider-clock validation.",
+  "generator": {
+    "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/scripts/research/analysis/evaluation/compare_simulator_local_tick_trace.py",
+    "sha256": "05b552d23bb5c1364e388b9f67c76915c2488c40cf778db5916370d04d453dcb"
+  },
+  "historical_quote_evidence": {
+    "alignment_tool_sha256": "9ecf9a60531d88ed3b25808978afbadf025e9565bc9c8abf6fdcc3f2cd601c00",
+    "entry": {
+      "ask": 21108.75,
+      "ask_carried": false,
+      "bid": 21107.25,
+      "bid_carried": false,
+      "changed_quote_within_timestamp": false,
+      "direction": 1,
+      "event_id": "0",
+      "event_type": "open",
+      "raw_rows_at_timestamp": 1,
+      "reported_order_submission_time_utc": "2024-12-30T13:50:00+00:00",
+      "reported_tick_time_utc": "2024-12-30T13:50:00.071000+00:00",
+      "required_quote_side": "ask"
+    },
+    "exit": {
+      "ask": 21126.5,
+      "ask_carried": false,
+      "bid": 21125.0,
+      "bid_carried": false,
+      "changed_quote_within_timestamp": false,
+      "direction": -1,
+      "event_id": "2",
+      "event_type": "open",
+      "raw_rows_at_timestamp": 1,
+      "reported_order_submission_time_utc": "2024-12-30T14:42:00+00:00",
+      "reported_tick_time_utc": "2024-12-30T14:42:00.078000+00:00",
+      "required_quote_side": "bid"
+    },
+    "price_grid_increment": 0.25
+  },
+  "inputs": {
+    "m1_bars_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+    "m1_bars_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+    "quote_alignment_report_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/fill_quote_source_alignment/selected_campaign_fill_quote_alignment.json",
+    "quote_alignment_report_sha256": "848956724b9383c124862da998a708638c55a3fce5b809505ad2accd93a8641d",
+    "tick_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_202412300105_202610162349.csv",
+    "tick_sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23"
+  },
+  "limitations": [
+    "The action sequence is controlled and does not reproduce a campaign policy.",
+    "The quote scan preserves the configured parser's per-side carry and price-grid rules.",
+    "The data's timestamp ties do not establish within-tie source chronology.",
+    "Market impact and broker-specific effects are not modeled."
+  ],
+  "replay": {
+    "backtest_close_pnl": 2.471107055961076,
+    "backtest_ending_balance": 50002.471107055964,
+    "close_pnl_match": true,
+    "cost_model": {
+      "commission_per_lot": 0.0,
+      "point_size": 0.01,
+      "price_value_per_point": 1.0,
+      "spread_points": 0.6
+    },
+    "direction": 1,
+    "ending_balance_match": true,
+    "entry": {
+      "backtest": {
+        "actual_tick_time": "2024-12-30T13:50:00.071000+00:00",
+        "decision_time": "2024-12-30T16:49:00+03:00",
+        "direction": 1.0,
+        "execution_arrival_time": "2024-12-30T16:50:00+03:00",
+        "fill_quote_source": "tick",
+        "fill_time": "2024-12-30T13:50:00.071000+00:00",
+        "lots": 0.1520681265206816,
+        "net_pnl": null,
+        "order_submission_time": "2024-12-30T16:50:00+03:00",
+        "pnl": null,
+        "price": 21108.75,
+        "size": null,
+        "type": "open"
+      },
+      "environment": {
+        "actual_tick_time": "2024-12-30T13:50:00.071000+00:00",
+        "decision_bar_time": "2024-12-30T16:49:00+03:00",
+        "decision_time": "2024-12-30T16:50:00+03:00",
+        "direction": 1,
+        "execution_arrival_time": "2024-12-30T16:50:00+03:00",
+        "fill_quote_source": "tick",
+        "fill_time": "2024-12-30T13:50:00.071000+00:00",
+        "lots": 0.1520681265206816,
+        "order_submission_time": "2024-12-30T16:50:00+03:00",
+        "price": 21108.75,
+        "type": "open"
+      }
+    },
+    "entry_and_exit_comparisons": [
+      {
+        "same_fill_timestamp": true,
+        "same_price": true,
+        "same_source_decision_bar": true,
+        "same_tick_source": true
+      },
+      {
+        "same_fill_timestamp": true,
+        "same_price": true,
+        "same_source_decision_bar": true,
+        "same_tick_source": true
+      }
+    ],
+    "entry_order_time": "2024-12-30T16:50:00+03:00",
+    "environment_close_pnl": 2.471107055961076,
+    "environment_ending_balance": 50002.471107055964,
+    "execution_settings": {
+      "execution_seed": 7,
+      "exit_action": 19,
+      "hold_on_zero": true,
+      "max_tick_quote_wait_ms": 60000,
+      "randomized_fill_latency_ms": 0.0,
+      "tick_execution_required": true
+    },
+    "exit": {
+      "backtest": {
+        "actual_tick_time": "2024-12-30T14:42:00.078000+00:00",
+        "decision_time": "2024-12-30T17:41:00+03:00",
+        "direction": null,
+        "execution_arrival_time": "2024-12-30T17:42:00+03:00",
+        "fill_quote_source": "tick",
+        "fill_time": "2024-12-30T14:42:00.078000+00:00",
+        "lots": null,
+        "net_pnl": 2.471107055961076,
+        "order_submission_time": "2024-12-30T17:42:00+03:00",
+        "pnl": 2.471107055961076,
+        "price": 21125.0,
+        "size": 0.1520681265206816,
+        "type": "close"
+      },
+      "environment": {
+        "actual_tick_time": "2024-12-30T14:42:00.078000+00:00",
+        "decision_bar_time": "2024-12-30T17:41:00+03:00",
+        "decision_time": "2024-12-30T17:42:00+03:00",
+        "execution_arrival_time": "2024-12-30T17:42:00+03:00",
+        "fill_quote_source": "tick",
+        "fill_time": "2024-12-30T14:42:00.078000+00:00",
+        "net_pnl": 2.471107055961076,
+        "order_submission_time": "2024-12-30T17:42:00+03:00",
+        "pnl": 2.471107055961076,
+        "price": 21125.0,
+        "size": 0.1520681265206816,
+        "type": "close"
+      }
+    },
+    "exit_order_time": "2024-12-30T17:42:00+03:00",
+    "hold_minutes": 52.0,
+    "starting_balance": 50000.0,
+    "trace_passed": true
+  },
+  "schema_version": "simulator-local-tick-action-trace-v1",
+  "timezone_label": "Etc/GMT-3",
+  "timezone_limitation": "Configured local timestamp interpretation; no external clock authority assessed.",
+  "trace_passed": true
+}

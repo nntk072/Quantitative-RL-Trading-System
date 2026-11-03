@@ -19,6 +19,12 @@ values and the `RiskPolicy` protocol:
 This protocol does not calculate order size, select prices, or guarantee that a
 broker can fill an approved trade. Domain-specific constraints are implemented
 by `trading/risk/`, `trading/account/`, and the configured account policy.
+The current training environment and event-driven backtest do not yet consume
+this protocol: both use `AccountState`, `FTMOGuardrails`, and the existing
+sizing helpers. The live path has its MT5 risk adapter. Contract unit tests
+verify the v1 value shape only, not runtime integration or parity; see the
+[risk package API](../api/generated/trading/risk/index) and
+`trading/risk/README.md`.
 
 ## Sizing and risk limits
 
@@ -33,11 +39,20 @@ resolved config and sizing result.
 
 Training/simulation risk is configured under `ftmo`, `risk`, and
 `quality_execution`; live overrides are declared under
-`live_risk_overrides`. Keep live dollar limits aligned with the training
-account policy. Risk guardrails run as part of environment execution, and
-schema/contract tests cover this boundary in `tests/unit/trading/`,
-`tests/unit/simulation/test_environment/`, and
-`tests/integration/backtest/`.
+`live_risk_overrides`. The current MT5 adapter uses percentage-of-balance
+sizing and does not enforce the training environment's FTMO daily-loss or
+maximum-loss dollar limits. On the default $100,000 account, the configured
+1% per-symbol sizing is numerically comparable to the $1,000 training
+per-trade sizing cap; this scale relationship is not runtime risk parity.
+`FTMOGuardrails` runs in the current environment and backtest paths. In
+non-episodic chronological evaluation, daily-loss breaches block the supplied
+session ID, while maximum-loss and trailing-drawdown breaches latch for the
+remainder of the rollout. Same-bar protective-exit versus account-guardrail
+precedence remains different between the environment and backtest pending a
+shared contract. Risk-contract unit tests verify the v1 value shapes only;
+separate guardrail, environment, and backtest tests cover their respective
+paths. These tests do not establish live parity or equivalence to an external
+account's reset clock.
 
 ## Quote and fill semantics
 

@@ -164,3 +164,31 @@ def test_reachable_r_is_room_over_the_structural_stop() -> None:
     # and the prior session range is 10, so the room is 10 / 2.
     assert float(series.iloc[0]) == 0.0
     assert float(series.iloc[-1]) == 5.0
+
+
+def test_reachable_r_validity_separates_unknown_from_valid_zero() -> None:
+    idx = pd.date_range("2024-01-02 16:30", periods=4, freq="1min").append(
+        pd.date_range("2024-01-03 16:30", periods=4, freq="1min")
+    )
+    close = pd.Series(100.0, index=idx)
+    bars = pd.DataFrame({"open": close, "high": close, "low": close, "close": close}, index=idx)
+    features = pd.DataFrame(
+        {
+            "atr_5": 1.0,
+            "po3_manipulation_low": 98.0,
+            "po3_manipulation_high": 102.0,
+            "po3_distribution_direction": 1.0,
+        },
+        index=idx,
+    )
+    obs = pd.DataFrame({"ema_9": 0.0}, index=idx)
+
+    legacy = attach_reachable_r(obs, bars, features)
+    with_validity = attach_reachable_r(obs, bars, features, include_validity_mask=True)
+
+    assert list(legacy.columns) == ["ema_9", "reachable_r"]
+    assert list(with_validity.columns) == ["ema_9", "reachable_r", "reachable_r_valid"]
+    np.testing.assert_array_equal(with_validity["reachable_r"], legacy["reachable_r"])
+    assert with_validity["reachable_r"].eq(0.0).all()
+    assert with_validity["reachable_r_valid"].iloc[:4].eq(0.0).all()
+    assert with_validity["reachable_r_valid"].iloc[4:].eq(1.0).all()

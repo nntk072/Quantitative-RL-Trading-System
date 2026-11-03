@@ -92,7 +92,13 @@ class SB3DecisionProvider:
             values = np.asarray(action).reshape(-1)
             if values.size != 1:
                 raise ValueError("SB3 discrete action must contain exactly one category")
-            index = int(values[0])
+            try:
+                value = float(values[0])
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("SB3 discrete action must be a finite integer") from exc
+            if not np.isfinite(value) or not value.is_integer():
+                raise ValueError("SB3 discrete action must be a finite integer")
+            index = int(value)
             if index < 0 or index >= len(self._action_schema.coordinates):
                 raise ValueError(f"SB3 discrete action {index} is outside the action schema")
             return DiscreteAction(index=index, name=self._action_schema.coordinates[index])
@@ -103,6 +109,8 @@ class SB3DecisionProvider:
             raise ValueError(
                 f"SB3 action width {values.size} differs from schema width {len(names)}"
             )
+        if not np.isfinite(values).all():
+            raise ValueError("SB3 continuous action must contain only finite values")
         if len(names) == 1:
             return ContinuousAction(value=float(values[0]))
         return StructuredAction(

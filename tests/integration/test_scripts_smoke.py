@@ -92,6 +92,10 @@ class TestBaselineAndReportScripts:
             report = json.loads(report_path.read_text())
             assert report["run_name"] == f"baseline_{name}"
             assert report["split"]["period_role"] == "exposed_report_only"
+            assert report["evaluation_contract"]["generated_stop_features"] == [
+                "last_swing_low",
+                "last_swing_high",
+            ]
             oos = report["out_of_sample"]
             assert np.isfinite(oos["sharpe"])
             assert oos["n_trades"] >= 0
@@ -99,6 +103,8 @@ class TestBaselineAndReportScripts:
             if name == "always_flat":
                 assert oos["n_trades"] == 0
                 assert oos["total_pnl"] == 0.0
+            elif name == "buy_and_hold":
+                assert oos["n_trades"] > 0, "stop-geometry failure must not pass as a flat baseline"
 
     def test_report_g3_reads_oos_block(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -158,8 +164,9 @@ class TestTrainingScriptSmoke:
         metrics_path = tmp_path / "lstm_sweep_metrics.json"
         assert metrics_path.exists()
         report = json.loads(metrics_path.read_text())
-        assert 0.0 <= report["val_acc"] <= 1.0
-        assert np.isfinite(report["out_of_sample"]["sharpe"])
+        assert report["evaluation_role"] == "exposed_report_only"
+        assert 0.0 <= report["sweep_direction_accuracy"] <= 1.0
+        assert np.isfinite(report["exposed_report_only"]["sharpe"])
 
     def test_train_rl_cli_forwards_current_arguments(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch

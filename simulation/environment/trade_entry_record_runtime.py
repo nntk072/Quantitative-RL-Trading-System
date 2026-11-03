@@ -4,7 +4,10 @@ from typing import Any
 
 import pandas as pd
 
-from features.context.trade_setup_candidates import active_trade_setup_candidates
+from features.context.trade_setup_candidates import (
+    active_trade_setup_candidates,
+    trade_setup_event_identity_record,
+)
 
 from .entry_diagnostics import _previous_session_audit
 from .entry_state import EntryCandidate
@@ -81,12 +84,16 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
                 "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
                 "trade_setup_decision_time": self.position.trade_setup_decision_time,
             }
+            setup_identity.update(
+                trade_setup_event_identity_record(self._selected_trade_setup_event_identity)
+            )
         else:
             setup_identity = {}
 
         self.trade_log.append(
             {
                 "type": "open",
+                "decision_id": self._current_decision_id,
                 "position_id": self.position.position_id,
                 "requested_risk_usd": float(self._last_requested_risk_usd),
                 "approved_risk_usd": float(self._last_approved_risk_usd),
@@ -112,7 +119,8 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
                 "fill_quote_source": "tick" if execution_meta else "bar_open",
                 "entry_mode": str(getattr(self.strategy, "entry_mode", "legacy")),
                 "time": fill_time,
-                "decision_time": bar_time,
+                "decision_time": signal_time,
+                "decision_bar_time": bar_time,
                 "order_submission_time": (
                     signal_time if order_submission_time is None else order_submission_time
                 ),

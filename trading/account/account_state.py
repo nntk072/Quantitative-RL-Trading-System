@@ -6,11 +6,10 @@ Tracks equity, balance, daily P&L, and absolute loss from initial balance.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-from trading.account.limits import (
-    canonical_daily_loss as compute_canonical_daily_loss,
-)
 from trading.account.limits import (
     daily_floor as compute_daily_floor,
 )
@@ -21,6 +20,9 @@ from trading.account.limits import (
     remaining_daily_capacity as compute_remaining_daily_capacity,
 )
 
+if TYPE_CHECKING:
+    from trading.risk.contracts import RiskDailyPnlBasis, RiskState
+
 
 @dataclass
 class AccountState:
@@ -28,6 +30,7 @@ class AccountState:
 
     initial_balance: float = 100_000.0
     policy_mode: str = "legacy"
+    daily_pnl_basis_override: RiskDailyPnlBasis | None = None
     balance: float = field(init=False)
     equity: float = field(init=False)
     peak_equity: float = field(init=False)  # informational HWM only
@@ -41,6 +44,18 @@ class AccountState:
 
     def __post_init__(self) -> None:
         """Validate and initialize AccountState after construction."""
+        initial_balance = self._validated_amount(self.initial_balance, "initial_balance")
+        if initial_balance <= 0.0:
+            raise ValueError("initial_balance must be finite and positive")
+        self.initial_balance = initial_balance
+        if self.daily_pnl_basis_override not in {
+            None,
+            "session_net_equity",
+            "legacy_gross_closed_losses",
+        }:
+            raise ValueError(
+                f"unsupported daily PnL basis override: {self.daily_pnl_basis_override!r}"
+            )
         self.balance = self.initial_balance
         self.equity = self.initial_balance
         self.peak_equity = self.initial_balance
@@ -66,8 +81,12 @@ class AccountState:
         Args:
             open_pnl: Numeric value used for the open pnl.
         """
-        self.open_pnl = open_pnl
-        self.equity = self.balance + open_pnl
+        pnl = self._validated_amount(open_pnl, "open_pnl")
+        equity = self.balance + pnl
+        if not math.isfinite(equity):
+            raise ValueError("equity must remain finite")
+        self.open_pnl = pnl
+        self.equity = equity
         self._update_loss_from_initial()
 
     def close_trade(self, pnl: float) -> None:
@@ -76,13 +95,21 @@ class AccountState:
         Args:
             pnl: Numeric value used for the pnl.
         """
-        self.balance += pnl
+        realized_pnl = self._validated_amount(pnl, "pnl")
+        balance = self.balance + realized_pnl
+        if not math.isfinite(balance):
+            raise ValueError("balance must remain finite")
+        daily_loss = self.daily_loss
+        if realized_pnl < 0:
+            daily_loss += abs(realized_pnl)
+            if not math.isfinite(daily_loss):
+                raise ValueError("daily_loss must remain finite")
+        self.balance = balance
         self.open_pnl = 0.0
         self.equity = self.balance
         self._update_loss_from_initial()
         # Daily loss: only accumulates when it is a loss
-        if pnl < 0:
-            self.daily_loss += abs(pnl)
+        self.daily_loss = daily_loss
 
     def reset_daily(self) -> None:
         """Anchor a new session without changing legacy accounting semantics."""
@@ -96,9 +123,61 @@ class AccountState:
         Returns:
             Numeric result returned by ``canonical_daily_loss``.
         """
+        state = self.to_risk_state(daily_loss_limit=0.0)
+        return max(0.0, -state.daily_pnl)
+
+    @property
+    def daily_pnl_basis(self) -> RiskDailyPnlBasis:
+        """Return the versioned daily-PnL basis selected by ``policy_mode``.
+
+        Returns:
+            The session-equity or legacy gross-closed-loss basis.
+        """
+        from trading.risk.contracts import (
+            RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES,
+            RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
+        )
+
+        if self.daily_pnl_basis_override is not None:
+            return self.daily_pnl_basis_override
         if self.policy_mode == "repeated_payout":
-            return compute_canonical_daily_loss(self.session_start_equity, self.equity)
-        return float(self.daily_loss)
+            return RISK_DAILY_PNL_BASIS_SESSION_EQUITY
+        if self.policy_mode == "legacy":
+            return RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES
+        raise ValueError(f"unknown account policy mode: {self.policy_mode!r}")
+
+    def to_risk_state(self, *, daily_loss_limit: float, open_risk: float = 0.0) -> RiskState:
+        """Build the versioned risk-policy view of the current account.
+
+        ``RiskState.daily_pnl`` is signed: positive for session gains and
+        negative for session losses. Legacy mode retains its historical
+        gross-negative-close counter and does not offset winning closes.
+
+        Args:
+            daily_loss_limit: Current hard or soft daily-loss threshold.
+            open_risk: Risk already committed to open positions.
+
+        Returns:
+            A validated ``risk-state-v1`` account snapshot.
+        """
+        from trading.risk.contracts import (
+            RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
+            RiskState,
+        )
+
+        basis = self.daily_pnl_basis
+        daily_pnl = (
+            float(self.equity) - float(self.session_start_equity)
+            if basis == RISK_DAILY_PNL_BASIS_SESSION_EQUITY
+            else -float(self.daily_loss)
+        )
+        return RiskState(
+            equity=float(self.equity),
+            daily_pnl=daily_pnl,
+            open_risk=float(open_risk),
+            daily_loss_limit=float(daily_loss_limit),
+            daily_pnl_basis=basis,
+        )
 
     def daily_floor(self, daily_loss_limit: float) -> float:
         """Fixed session floor for repeated-payout mode.
@@ -141,13 +220,29 @@ class AccountState:
         Args:
             operating_balance: Numeric value used for the operating balance.
         """
-        self.balance = float(operating_balance)
-        self.equity = float(operating_balance)
+        balance = self._validated_amount(operating_balance, "operating_balance")
+        if balance < 0.0:
+            raise ValueError("operating_balance must be non-negative")
+        self.balance = balance
+        self.equity = balance
         self.open_pnl = 0.0
         self.peak_equity = max(self.peak_equity, self.equity)
         self.session_start_balance = self.balance
         self.session_start_equity = self.equity
         self.daily_loss = 0.0
+
+    @staticmethod
+    def _validated_amount(value: float, name: str) -> float:
+        """Return a finite monetary input or fail before mutating account state."""
+        if isinstance(value, bool):
+            raise ValueError(f"{name} must be finite")
+        try:
+            amount = float(value)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError(f"{name} must be finite") from exc
+        if not math.isfinite(amount):
+            raise ValueError(f"{name} must be finite")
+        return amount
 
     def loss_from_initial(self) -> float:
         """Current absolute loss vs initial balance (0 if equity ≥ initial).

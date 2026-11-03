@@ -84,8 +84,10 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
             self.trade_log.append(
                 {
                     "type": "order_cancel",
+                    "decision_id": str(pending.get("decision_id", "")),
                     "reason": "episode_ended_before_scheduled_fill",
                     "decision_time": pending["decision_time"],
+                    "decision_bar_time": pending["decision_bar_time"],
                     "order_submission_time": pending["order_submission_time"],
                     "time": valuation_time,
                     "fill_time": None,

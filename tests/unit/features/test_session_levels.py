@@ -40,6 +40,35 @@ def full_day_bars() -> pd.DataFrame:
 
 
 class TestDetectSessionLevels:
+    def test_session_levels_are_prefix_invariant(self, full_day_bars: pd.DataFrame) -> None:
+        full = detect_session_levels(full_day_bars)
+        prefix_bars = full_day_bars.iloc[:200]
+        prefix = detect_session_levels(prefix_bars)
+
+        pd.testing.assert_frame_equal(full.iloc[:180], prefix.iloc[:180])
+
+    def test_asian_rolling_window_can_carry_a_prior_date_extreme(self) -> None:
+        index = pd.date_range("2025-01-01 01:05", periods=2 * 288, freq="5min")
+        close = np.full(len(index), 100.0)
+        high = close + 1.0
+        low = close - 1.0
+        prior_asian_last_bar = index.get_loc(pd.Timestamp("2025-01-01 08:55"))
+        next_asian_first_bar_time = pd.Timestamp("2025-01-02 01:05")
+        next_asian_first_bar = index.get_loc(next_asian_first_bar_time)
+        high[prior_asian_last_bar] = 500.0
+        high[next_asian_first_bar] = 101.0
+        bars = pd.DataFrame(
+            {"open": close, "high": high, "low": low, "close": close, "volume": 1.0},
+            index=index,
+        )
+
+        levels = detect_session_levels(bars, swing_period=50)
+        cutoff = index.get_loc(pd.Timestamp("2025-01-02 04:00"))
+        prefix_levels = detect_session_levels(bars.iloc[:cutoff], swing_period=50)
+
+        assert levels.loc[next_asian_first_bar_time, "asian_high"] == 500.0
+        pd.testing.assert_frame_equal(levels.iloc[:cutoff], prefix_levels)
+
     def test_asian_levels_detected(self, asian_session_bars: pd.DataFrame) -> None:
         levels = detect_session_levels(asian_session_bars)
         assert "asian_high" in levels.columns

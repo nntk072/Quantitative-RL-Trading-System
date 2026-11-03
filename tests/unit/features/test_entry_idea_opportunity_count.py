@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import pandas as pd
-from scripts.research.count_entry_idea_opportunities import count_opportunities
+from scripts.research.analysis.features.count_entry_idea_opportunities import (
+    count_opportunities,
+)
 
 
 def test_po3_opportunity_count_uses_confirmed_entry_flags(tmp_path) -> None:

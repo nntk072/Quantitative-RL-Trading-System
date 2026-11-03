@@ -130,12 +130,12 @@ def _policy_monthly(arm: str, root: Path) -> tuple[pd.DataFrame, dict[str, Any]]
 
 def _p6_net_expectancy(root: Path) -> dict[str, Any]:
     summaries: dict[str, Any] = {}
+    packet_trade_files = {
+        ARMS[0]: "treatment_paired_trades.csv",
+        ARMS[1]: "control_paired_trades.csv",
+    }
     for arm in ARMS:
-        path = (
-            root
-            / "evidence/research/archive_2026/evidence/p6_monthly_entry_exit_20261025"
-            / f"{arm}_paired_trades.csv"
-        )
+        path = root / "evidence/research/entry_and_exit_attribution" / packet_trade_files[arm]
         trades = pd.read_csv(path)
         trades["entry_month"] = (
             pd.to_datetime(trades["decision_time"], utc=True)
@@ -220,7 +220,6 @@ def _run_rule_control(
     if not isinstance(env.action_schema, ActionSchema):
         raise ValueError("the P6 PPO training config must use a continuous overlay schema")
     strategy = SessionMomentumStrategy(bars)
-    strategy.fast_forward(int(env.obs_window))
     observation, _ = env.reset(seed=50)
     actions: list[dict[str, Any]] = []
     done = truncated = False
@@ -228,7 +227,7 @@ def _run_rule_control(
     max_steps = len(bars) + 5
     while not (done or truncated) and steps < max_steps:
         timestamp = env._bar_time(env.step_idx)
-        action = float(strategy.act(observation))
+        action = float(strategy.act_at(env.step_idx))
         actions.append({"time": pd.Timestamp(timestamp).isoformat(), "action": action})
         action_vector = np.zeros(env.action_schema.width, dtype=np.float32)
         direction_index = env.action_schema.indices.get("direction")

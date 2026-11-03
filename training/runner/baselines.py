@@ -15,7 +15,7 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -38,7 +38,10 @@ from market_data.splits.definitions import (
     split_train_test,
 )
 from simulation.backtest import run_backtest
+from simulation.environment.trading_environment_factory import eval_guardrail_kwargs
 from trading.baselines import ema_crossover, macd_ema50_baseline, rsi_mean_reversion
+from trading.policy import resolve_trading_policy
+from trading.risk import RiskDailyPnlBasis
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -159,6 +162,10 @@ def main() -> None:
     np.random.seed(args.seed)
 
     cfg = load_config(args.overrides)
+    daily_pnl_basis_value = resolve_trading_policy(cfg).daily_pnl_basis
+    if daily_pnl_basis_value is None:
+        raise ValueError("resolved trading policy must define a daily PnL basis")
+    daily_pnl_basis = cast(RiskDailyPnlBasis, daily_pnl_basis_value)
     data = run_pipeline(cfg, force=args.force)
 
     primary_sym = cfg.data.primary
@@ -339,15 +346,21 @@ def main() -> None:
             policy=run_policy,
             obs_window=cfg.env.obs_window,
             initial_balance=cfg.account.initial_balance,
+            guardrail_kwargs=eval_guardrail_kwargs(cfg),
             max_loss_per_trade_usd=max_loss_per_trade,
+            eod_risk=dict(cfg.env.get("eod_risk", {})),
+            daily_pnl_basis=daily_pnl_basis,
             tickbook=ticks,
             tick_execution_required=bool(cfg.costs.use_tick_execution),
+            fill_latency_bars=cfg.execution.get("fill_latency_bars", 0),
             randomized_fill_latency_ms=float(cfg.execution.get("randomized_fill_latency_ms", 0.0)),
             max_tick_quote_wait_ms=int(cfg.execution.get("max_tick_quote_wait_ms", 60_000)),
             use_structure_sl_tp=False,
             risk_frac=risk_frac,
             rr_ratio=rr_ratio,
             swing_buffer_pts=swing_buffer,
+            sl_mode=str(cfg.risk.get("sl_mode", "fixed")),
+            sl_buffer_pts=float(cfg.env.get("sl_buffer_pts", 0.0)),
             contract_size=cfg.account.contract_size,
             hold_on_zero=(args.strategy == "macd"),
             exit_action=2 if args.strategy == "macd" else None,

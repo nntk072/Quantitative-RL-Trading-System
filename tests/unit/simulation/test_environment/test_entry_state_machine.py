@@ -227,14 +227,20 @@ def test_baseline_fsm_uses_causal_sweep_candidate_through_entry(
     action[1] = 1.0  # Request entry with the intensity dimension.
     action[-1] = -1.0  # Use structural exits; the fixture has no EMA-21 data.
 
-    env.step(action)  # bar 10: the low sweep creates a long candidate
+    _, _, _, _, flat_info = env.step(action)  # bar 10: create candidate after decision
+    assert flat_info["entry_rejection_reason"] == "entry_state_not_armed"
+    assert flat_info["entry_state_action"] == "FLAT"
+    flat_rejection = next(event for event in env.trade_log if event["type"] == "reject")
+    assert flat_rejection["intensity_u"] == 1.0
     assert env.entry_state_machine is not None
     assert env.entry_state_machine.state == "CANDIDATE"
     assert env.entry_state_machine.candidate is not None
     assert env.entry_state_machine.candidate.direction == candidate_direction
     assert env.entry_state_machine.candidate.setup_types == ("sweep",)
 
-    env.step(action)  # bar 11: the stored setup advances to ARMED
+    _, _, _, _, candidate_info = env.step(action)  # bar 11: advance stored setup to ARMED
+    assert candidate_info["entry_rejection_reason"] == "entry_state_not_armed"
+    assert candidate_info["entry_state_action"] == "CANDIDATE"
     assert str(env.entry_state_machine.state) == "ARMED"
 
     _, _, _, _, entry_info = env.step(action)  # bar 12: trigger the stored long candidate
@@ -327,7 +333,10 @@ def test_env_uses_armed_candidate_after_per_bar_setup_disappears(
     open_trade = next(row for row in env.trade_log if row.get("type") == "open")
     assert open_trade["direction"] == 1
     assert open_trade["entry_origin_bar"] == 10
-    assert open_trade["decision_time"] < open_trade["fill_time"]
+    # Bar labels can coincide at the decision/submission boundary when the
+    # first admissible zero-latency quote is the opening quote of the next bar.
+    assert open_trade["decision_time"] <= open_trade["fill_time"]
+    assert open_trade["order_submission_time"] <= open_trade["fill_time"]
     assert open_trade["signal_bar"] == open_trade["bar"]
     assert open_trade["signal_time"] == open_trade["order_submission_time"]
     assert open_trade["fill_bar"] == open_trade["signal_bar"] + 1
@@ -400,6 +409,10 @@ def test_a3_shape_and_action_space_are_unchanged() -> None:
     assert raw_obs["account"].shape == (10,)
     assert tuple(raw_obs["account"][6:]) == entry_state_one_hot("FLAT")
     assert legacy.action_space.shape == stateful.action_space.shape
+    assert hidden.action_space.shape == stateful.action_space.shape
+    assert hidden.action_schema == stateful.action_schema
+    assert hidden.observation_space.spaces["account"].shape == (6,)
+    assert stateful.observation_space.spaces["account"].shape == (10,)
     obs, _, _, _, info = legacy.step(np.zeros(5, dtype=np.float32))
     assert obs["account"].shape == (6,)
     assert "entry_state" not in info

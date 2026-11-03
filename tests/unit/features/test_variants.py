@@ -19,6 +19,7 @@ from features import (
     build_fvg_zone_features,
     build_po3_phase_features,
 )
+from features.po3.fvg import build_fvg_zone_features_with_event_ledger
 
 
 @pytest.fixture
@@ -75,6 +76,21 @@ def test_po3_phase_outside_session_nan():
     assert (feats["session_progress"] == 0.0).all()
 
 
+def test_po3_phase_turns_unknown_after_session_end():
+    idx = pd.date_range("2025-01-06 22:59", periods=3, freq="1min", tz="Etc/GMT-3")
+    feats = build_po3_phase_features(idx, session_start="16:30", session_end="23:00")
+
+    assert feats.loc[idx[0], "po3_phase"] == 2
+    assert feats.loc[idx[1], "session_progress"] == pytest.approx(1.0)
+    assert pd.isna(feats.loc[idx[2], "po3_phase"])
+
+
+def test_po3_phase_rejects_nonpositive_session_duration():
+    idx = pd.date_range("2025-01-06", periods=1, freq="1min", tz="Etc/GMT-3")
+    with pytest.raises(ValueError, match="session_end must be later"):
+        build_po3_phase_features(idx, session_start="23:00", session_end="16:30")
+
+
 def test_fvg_zone_features_in_zone(fvg_bars):
     feats = build_fvg_zone_features(fvg_bars)
     # a bullish zone must exist (up-leg leaves a 3-bar imbalance)
@@ -85,6 +101,23 @@ def test_fvg_zone_features_in_zone(fvg_bars):
     assert (feats.iloc[:2][["fvg_bull_dist", "fvg_bear_dist"]] == 5.0).all().all()
     # distances never exceed the cap
     assert feats["fvg_bull_dist"].max() <= 5.0 and feats["fvg_bear_dist"].max() <= 5.0
+
+
+def test_fvg_distance_uses_cap_when_atr_is_unavailable(fvg_bars, monkeypatch):
+    monkeypatch.setattr(
+        "features.po3.fvg.atr",
+        lambda bars, period: pd.Series(np.nan, index=bars.index),
+    )
+    feats = build_fvg_zone_features(fvg_bars)
+    active_bull = feats["fvg_bull_active"] == 1.0
+
+    assert active_bull.any()
+    assert (feats.loc[active_bull, "fvg_bull_dist"] == 5.0).all()
+
+
+def test_fvg_zone_features_reject_negative_horizon(fvg_bars):
+    with pytest.raises(ValueError, match="max_zone_bars must be nonnegative"):
+        build_fvg_zone_features(fvg_bars, max_zone_bars=-1)
 
 
 def test_fvg_retest_holds_and_a_fill_ends_the_zone():
@@ -116,18 +149,66 @@ def test_fvg_retest_holds_and_a_fill_ends_the_zone():
     assert feats["fvg_in_bull"].iloc[5] == 0.0
     assert feats["fvg_bull_low"].iloc[6] == pytest.approx(100.0)
     assert feats["fvg_bull_origin"].iloc[6] == pytest.approx(99.0)
+    assert feats["fvg_bull_retest_confirmed_at_time_ns"].iloc[6] == idx[6].value
+    assert feats["fvg_bull_retest_origin_time_ns"].iloc[6] == idx[3].value
     assert feats["fvg_bull_active"].iloc[6] == 1.0
     assert feats["fvg_retest_bull"].iloc[7] == 0.0
-    assert feats["fvg_bull_active"].iloc[7] == 0.0
-    assert feats["fvg_retest_bull"].iloc[7] == 0.0
 
 
-def test_fvg_zone_features_causal(fvg_bars):
-    """Feature values before the gap formation must not depend on later bars."""
-    full = build_fvg_zone_features(fvg_bars)
-    trunc = build_fvg_zone_features(fvg_bars.iloc[:25])
+def test_same_bar_fvg_retests_identify_the_last_selected_zone() -> None:
+    idx = pd.date_range("2025-01-06 17:00", periods=7, freq="1min", tz="Etc/GMT-3")
+    bars = pd.DataFrame(
+        {
+            "open": [99.0, 99.5, 100.0, 101.0, 102.5, 103.0, 100.5],
+            "high": [100.0, 100.5, 101.2, 103.0, 104.0, 104.0, 106.0],
+            "low": [99.0, 99.5, 101.0, 102.0, 102.5, 99.9, 103.0],
+            "close": [99.5, 100.0, 101.1, 102.5, 103.0, 100.5, 105.0],
+        },
+        index=idx,
+    )
+
+    features = build_fvg_zone_features(bars)
+
+    assert features["fvg_retest_bull"].iloc[6] == 1.0
+    assert features["fvg_bull_retest_confirmed_at_time_ns"].iloc[6] == idx[6].value
+    # The latest source zone is the deterministic last write in start-time order.
+    assert features["fvg_bull_retest_origin_time_ns"].iloc[6] == idx[3].value
+
+
+def test_fvg_zone_event_ledger_preserves_collisions_without_changing_features() -> None:
+    idx = pd.date_range("2025-01-06 17:00", periods=7, freq="1min", tz="Etc/GMT-3")
+    bars = pd.DataFrame(
+        {
+            "open": [100.0, 100.5, 101.5, 102.5, 103.0, 101.0, 104.0],
+            "high": [100.0, 101.0, 102.0, 103.0, 104.0, 104.0, 106.0],
+            "low": [99.0, 100.0, 101.0, 102.0, 102.5, 99.9, 103.0],
+            "close": [99.5, 100.5, 101.5, 102.5, 103.0, 101.1, 105.0],
+        },
+        index=idx,
+    )
+
+    scalar = build_fvg_zone_features(bars)
+    with_ledger, ledger = build_fvg_zone_features_with_event_ledger(bars)
+
+    pd.testing.assert_frame_equal(with_ledger, scalar)
+    collision = ledger.loc[ledger["confirmation_bar"].eq(6) & ledger["side"].eq("bullish")]
+    assert len(collision) == 2
+    assert collision["selected_by_scalar"].sum() == 1
+    selected = collision.loc[collision["selected_by_scalar"]].iloc[0]
+    assert selected["zone_start_time_ns"] == idx[3].value
+    assert collision["confirmation_time_ns"].eq(idx[6].value).all()
+
+
+def test_fvg_zone_features_and_event_ledger_are_causal(fvg_bars):
+    """Scalar features and confirmed events do not depend on later bars."""
+    full, full_events = build_fvg_zone_features_with_event_ledger(fvg_bars)
+    trunc, trunc_events = build_fvg_zone_features_with_event_ledger(fvg_bars.iloc[:25])
     overlap = trunc.index[:20]
     pd.testing.assert_frame_equal(full.loc[overlap], trunc.loc[overlap])
+    pd.testing.assert_frame_equal(
+        full_events.loc[full_events["confirmation_bar"].lt(20)].reset_index(drop=True),
+        trunc_events.loc[trunc_events["confirmation_bar"].lt(20)].reset_index(drop=True),
+    )
 
 
 def _base_cfg() -> dict[str, Any]:
@@ -280,14 +361,18 @@ def test_po3_state_mtf_behind_flag(m1_bars):
     mtf = build_features(m1_bars, cfg=cfg_on)
     assert "M5_po3_manipulation_active" in set(map(str, mtf.columns))
     assert "M10_po3_manipulation_active" in set(map(str, mtf.columns))
+    assert "M5_po3_distribution_after_ifvg" in set(map(str, mtf.columns))
+    assert "M10_po3_distribution_after_ifvg" in set(map(str, mtf.columns))
 
     trunc = build_features(m1_bars.iloc[:400], cfg=cfg_on)
     overlap = trunc.index[:300]
     check = [
         "M5_po3_manipulation_active",
         "M5_po3_distribution",
+        "M5_po3_distribution_after_ifvg",
         "M10_po3_manipulation_active",
         "M10_po3_distribution",
+        "M10_po3_distribution_after_ifvg",
     ]
     pd.testing.assert_frame_equal(mtf.loc[overlap, check], trunc.loc[overlap, check], rtol=1e-9)
 

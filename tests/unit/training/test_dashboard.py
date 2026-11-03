@@ -129,7 +129,7 @@ def test_zero_trade_prefix_monitor_is_not_labeled_as_a_worker_failure() -> None:
     rendered = (format_dashboard(snapshot), format_dashboard_table(snapshot))
 
     for text in rendered:
-        assert "NO TRADES" in text
+        assert "NO COMPLETED POSITIONS" in text
         assert "not worker status" in text
         assert "FAILED" not in text
     assert "metrics unavailable" in rendered[0]

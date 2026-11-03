@@ -2,6 +2,7 @@
 from .broker import Broker, Position
 from .costs import COST_US100, CostModel
 from .quotes import (
+    adverse_tick_fill_quote,
     bar_stop_fill_quote,
     bar_stop_trigger_price,
     protective_level_fill_quote,
@@ -14,6 +15,7 @@ __all__ = [
     "Position",
     "COST_US100",
     "CostModel",
+    "adverse_tick_fill_quote",
     "bar_stop_fill_quote",
     "bar_stop_trigger_price",
     "protective_level_fill_quote",

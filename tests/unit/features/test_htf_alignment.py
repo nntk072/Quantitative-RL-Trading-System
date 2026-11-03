@@ -100,6 +100,76 @@ def test_order_blocks_are_built_for_primary_and_configured_timeframes(m1_bars, f
     assert "po3_distribution" not in features.columns
 
 
+def test_order_block_mtf_signal_is_visible_at_source_close(feat_cfg) -> None:
+    """An M5 order-block event reaches M1 only at the source bar close."""
+    start = pd.Timestamp("2025-01-06 16:30", tz="Etc/GMT-3")
+    source_index = pd.date_range(start, periods=50, freq="5min")
+    close = np.full(len(source_index), 100.0)
+    open_price = close.copy()
+    high = close + 0.5
+    low = close - 0.5
+
+    # The confirmed high at 12 is broken at 20; bar 19 is the opposing
+    # candle selected as the bullish block's origin.
+    high[12], low[12] = 105.0, 99.0
+    open_price[19], close[19], high[19], low[19] = 104.5, 104.0, 105.0, 103.5
+    open_price[20], close[20], high[20], low[20] = 104.0, 108.0, 109.0, 103.8
+    source_bars = pd.DataFrame(
+        {"open": open_price, "high": high, "low": low, "close": close},
+        index=source_index,
+    )
+
+    m1_index = pd.date_range(start, periods=250, freq="1min")
+    m1_bars = pd.DataFrame(
+        {
+            "open": np.full(len(m1_index), 100.0),
+            "high": np.full(len(m1_index), 100.5),
+            "low": np.full(len(m1_index), 99.5),
+            "close": np.full(len(m1_index), 100.0),
+            "tickvol": np.ones(len(m1_index)),
+            "volume": np.ones(len(m1_index)),
+        },
+        index=m1_index,
+    )
+    feature_values = cast(dict[str, Any], OmegaConf.to_container(feat_cfg, resolve=True))
+    config = OmegaConf.create(
+        {
+            "features": {
+                **feature_values,
+                "htf_timeframes": ["M5"],
+                "order_blocks": {
+                    "enabled": True,
+                    "timeframes": ["M5"],
+                    "swing_period": 3,
+                    "impulse_atr": 0.0,
+                },
+            }
+        }
+    )
+
+    full = build_features(m1_bars, cfg=config, timeframe_bars={"M5": source_bars})
+    source_close = source_index[20] + pd.Timedelta(minutes=5)
+    before_close = source_close - pd.Timedelta(minutes=1)
+
+    assert full.loc[before_close, "M5_ob_bull_new"] == 0.0
+    assert full.loc[before_close, "M5_ob_bull_active"] == 0.0
+    assert full.loc[source_close, "M5_ob_bull_new"] == 1.0
+    assert full.loc[source_close, "M5_ob_bull_active"] == 1.0
+    assert full.loc[source_close + pd.Timedelta(minutes=5), "M5_ob_bull_new"] == 0.0
+
+    prefix_end = source_close + pd.Timedelta(minutes=2)
+    prefix = build_features(
+        m1_bars.loc[:prefix_end],
+        cfg=config,
+        timeframe_bars={"M5": source_bars.loc[: source_index[20]]},
+    )
+    pd.testing.assert_series_equal(
+        full.loc[:prefix_end, "M5_ob_bull_new"],
+        prefix["M5_ob_bull_new"],
+        check_names=True,
+    )
+
+
 def test_build_features_uses_supplied_native_timeframe_bars(m1_bars, feat_cfg) -> None:
     feature_config = cast(dict[str, Any], OmegaConf.to_container(feat_cfg, resolve=True))
     cfg = OmegaConf.create({"features": {**feature_config, "htf_timeframes": ["M3"]}})

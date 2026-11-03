@@ -12,7 +12,7 @@ from typing import Any
 from artifacts.atomic import write_json_atomic
 
 ROOT = Path(__file__).resolve().parents[3]
-RELEASE_DIR = ROOT / "evidence/research/releases/negative-evidence-readiness-2026-11-01"
+RELEASE_DIR = ROOT / "evidence/research/releases/negative-evidence-readiness"
 MANIFEST_PATH = RELEASE_DIR / "RELEASE_MANIFEST.json"
 
 

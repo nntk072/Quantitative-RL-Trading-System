@@ -24,7 +24,8 @@ Usage
     PAPER_TRADING=true RL_MODEL_PATH=outputs/.../model/ppo_final \\
         python live_trading_rl.py
 
-    # REAL orders (only once the Stage-10 paper trial period has passed)
+    # Non-paper startup is rejected until broker-compatible account loss
+    # guardrails and trained exit semantics are implemented and verified.
     PAPER_TRADING=false RL_MODEL_PATH=outputs/.../model/ppo_final \\
         python live_trading_rl.py
 

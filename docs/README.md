@@ -32,6 +32,9 @@ settings must use GitHub Actions as the deployment source.
 - [Configuration](config.md): source settings, composition, and cache identity.
 - [Research](research/README.md): questions, findings, methodology, and
   validity limits.
+- [Evidence-bounded thesis report](thesis/research_evidence_report.md): a
+  manuscript-style synthesis of the current negative research evidence and
+  open scientific gates.
 - [Reproducibility](concepts/reproducibility.md): source, configuration, data, run, and
   evaluation identity expected for a result.
 - [Operations](operations/triton.md): environments, storage, and Triton

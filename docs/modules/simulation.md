@@ -32,9 +32,12 @@ sequenceDiagram
 
 The environment’s transition includes the account update and any configured
 costs. The reward is a training signal calculated from that transition; it is
-not a substitute for realized equity or trade results. Hard daily and account
-loss limits belong to the environment/account guardrail, even when the policy
-also receives a learned risk penalty.
+not a substitute for realized equity or trade results. Current environment and
+backtest code use `AccountState` plus `FTMOGuardrails`; the separate
+`RiskState`/`RiskPolicy` v1 protocol is not yet wired into either runtime. Do not
+interpret its unit-test coverage as evidence of simulator, backtest, or live
+parity. Hard account limits remain enforced by the existing environment/account
+guardrail.
 
 ## Environment and backtest are not interchangeable
 
@@ -78,21 +81,22 @@ classDiagram
     class ExecutionModel {
       +fill(order, quote) Fill
     }
-    class RiskPolicy {
-      +assess(account, intent) RiskDecision
+    class FTMOGuardrails {
+      +breach_reason(AccountState)
+      +check_trade_risk(risk, AccountState)
     }
     class RewardCalculator {
       +compute(previous, current) float
     }
     class EvaluationLedger
     TradingEnvironment --> MarketData : observes
-    TradingEnvironment --> RiskPolicy : checks
+    TradingEnvironment --> FTMOGuardrails : checks
     TradingEnvironment --> ExecutionModel : fills through
     TradingEnvironment --> AccountState : updates
     TradingEnvironment --> RewardCalculator : computes
     TradingEnvironment --> SimulationTransition : returns
     BacktestEngine --> MarketData
-    BacktestEngine --> RiskPolicy
+    BacktestEngine --> FTMOGuardrails
     BacktestEngine --> ExecutionModel
     BacktestEngine --> AccountState
     BacktestEngine --> EvaluationLedger : records
