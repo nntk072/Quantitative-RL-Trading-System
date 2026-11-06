@@ -31,7 +31,7 @@
     "two_selected_sessions_recorded": true
   },
   "details": {
-    "backtest_close_pnl_sum": -1.9330539758555338,
+    "backtest_close_pnl_sum": -1.55,
     "code_hash_checks": {
       "generator": true,
       "market_data/transforms/sessions.py": true,
@@ -40,10 +40,10 @@
       "simulation/environment/env.py": true,
       "simulation/environment/risk_runtime.py": true
     },
-    "environment_close_pnl_sum": -1.9330539758555338,
+    "environment_close_pnl_sum": -1.55,
     "execution_mode": "tick_required",
-    "expected_backtest_balance": 49998.06694602415,
-    "expected_environment_balance": 49998.06694602415,
+    "expected_backtest_balance": 49998.45,
+    "expected_environment_balance": 49998.45,
     "independently_recomputed_account_equal": true,
     "independently_recomputed_simulator_parity": true,
     "input_hashes": {
@@ -90,7 +90,7 @@
   },
   "independent_verification_passed": true,
   "independent_verifier": "scripts/research/analysis/evaluation/verify_simulator_local_session_account_trace.py",
-  "independent_verifier_sha256": "bf5a2a0ef6282a50105437e8bb2ef7950aefa9e411b2bf77c4bb1a94a4b3c799",
+  "independent_verifier_sha256": "50b2e5ca0fa3545dd9baa2da994bbd8d07e002a1ab6a012719f5dbe2e6e0b82c",
   "schema_version": 1,
   "simulator_parity_passed": true,
   "source_report": "evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_max_loss_terminal.json"

@@ -32,7 +32,6 @@ from torch import nn
 from compute.environment.device import get_device
 from configuration.paths import repository_root
 from evaluation import build_run_report, run_episode
-from features import build_features
 from market_data.splits.definitions import split_train_test
 from simulation.environment.env import TradingEnv
 from trading.baselines import (
@@ -40,6 +39,8 @@ from trading.baselines import (
     LSTMSweepClassifier,
     build_sweep_dataset,
 )
+from training.runner.feature_csv_validation import validate_feature_csv_against_canonical
+from training.runner.feature_preparation import build_split_scoped_features
 
 OBS_WINDOW = 60  # must match TradingEnv's default obs_window
 DEFAULT_CONFIG = str(repository_root(__file__) / "config" / "base" / "default.yaml")
@@ -64,6 +65,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out", default="outputs/lstm_sweep.pt")
+    parser.add_argument("--train-start", help="Optional first in-sample date")
     parser.add_argument("--train-end", default="2025-12-31", help="Last in-sample date")
     parser.add_argument("--test-start", default="2026-01-01", help="First held-out date")
     parser.add_argument("--obs-window", type=int, default=OBS_WINDOW, help="Env observation window")
@@ -96,16 +98,29 @@ def main() -> None:
     print(f"Using device: {device}")
 
     bars = _load_csv(args.bars_csv, getattr(args, "index_col", None))
+    cfg = cast(DictConfig, OmegaConf.load(args.config))
+    configured_train_start = OmegaConf.select(cfg, "data.split.train_start")
+    train_start = args.train_start or (
+        str(configured_train_start) if configured_train_start is not None else None
+    )
+    canonical_features = build_split_scoped_features(
+        bars,
+        cfg=cfg,
+        train_start=train_start,
+        train_end=args.train_end,
+    )
     if args.features_csv:
         features = _load_csv(args.features_csv, getattr(args, "index_col", None))
+        try:
+            validate_feature_csv_against_canonical(features, canonical_features)
+        except ValueError as exc:
+            raise SystemExit(f"invalid --features-csv: {exc}") from exc
     else:
-        # Build features from bars using the config
-        cfg = cast(DictConfig, OmegaConf.load(args.config))
-        features = build_features(bars, secondary=None, cfg=cfg)
+        features = canonical_features
         print(f"Built features: {features.shape[1]} columns")
 
     train_bars, test_bars, train_features, test_features = split_train_test(
-        bars, features, args.train_end, args.test_start
+        bars, features, args.train_end, args.test_start, train_start
     )
     if train_bars.empty or test_bars.empty:
         raise SystemExit(
@@ -174,6 +189,7 @@ def main() -> None:
         "sweep_direction_accuracy": exposed_accuracy,
         "split": {
             "train_end": args.train_end,
+            "train_start": train_start,
             "test_start": args.test_start,
             "train_bars": int(len(train_bars)),
             "test_bars": int(len(test_bars)),

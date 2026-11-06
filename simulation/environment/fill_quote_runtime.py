@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 from trading.execution import (
+    FILL_COST_PROVENANCE_SCHEMA_VERSION,
     adverse_tick_fill_quote,
     bar_stop_fill_quote,
     protective_level_fill_quote,
@@ -17,6 +18,8 @@ from .mixin_base import RuntimeMixinBase
 
 class FillQuoteRuntimeMixin(RuntimeMixinBase):
     """Select fill quotes and apply configured bid/ask-side slippage."""
+
+    _pending_fill_cost_provenance: dict[str, Any] | None
 
     def _adverse_tick_fill_quote(
         self, quote: tuple[float, float], direction: int, *, opening: bool
@@ -46,19 +49,34 @@ class FillQuoteRuntimeMixin(RuntimeMixinBase):
         size: float | None = None,
         tick_fill: bool = False,
     ) -> tuple[float, float]:
-        """Close at a selected quote, applying evaluation stress once at execution.
+        """Close at a selected quote, applying configured market slippage once.
 
         Args:
             position: Position used by the operation described above.
             quote: Items supplied for the quote, in input order.
             size: Size used by the operation described above.
-            tick_fill: Whether to enable or require the tick fill.
+            tick_fill: Whether this execution should receive adverse market slippage.
 
         Returns:
             Values returned by ``_close_at_quote``, in the declared order.
         """
+        incoming_quote = tuple(map(float, quote))
+        slippage_points = float(getattr(self, "tick_fill_slippage_points", 0.0))
         if tick_fill:
             quote = self._adverse_tick_fill_quote(quote, int(position.direction), opening=False)
+        broker_quote = tuple(map(float, quote))
+        self._pending_fill_cost_provenance = {
+            "fill_cost_provenance_schema_version": FILL_COST_PROVENANCE_SCHEMA_VERSION,
+            "pre_execution_quote_bid": incoming_quote[0],
+            "pre_execution_quote_ask": incoming_quote[1],
+            "broker_execution_quote_bid": broker_quote[0],
+            "broker_execution_quote_ask": broker_quote[1],
+            "slippage_points_applied_here": slippage_points if tick_fill else 0.0,
+            "slippage_applied_here": bool(tick_fill and slippage_points > 0.0),
+            "slippage_application_mode": (
+                "transacted_side" if tick_fill and slippage_points > 0.0 else "none"
+            ),
+        }
         return cast(
             tuple[float, float],
             self.broker.close_position(self.account, position, quote, size=size),

@@ -1,0 +1,15 @@
+{
+  "run_name": "sequence_feature_validity_channels",
+  "run_date": "2026-11-04",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "architecture": "aarch64 GH200",
+  "test_command": ".venv/bin/python -m pytest tests/unit/simulation/test_environment/test_mtf_windows.py tests/unit/simulation/test_environment/test_trade_setup_factory_config.py tests/unit/evaluation/test_run_manifest.py tests/unit/training/test_train_rl_decomposition.py -q",
+  "tests_passed": 83,
+  "mtf_encoder_inference_checks": 4,
+  "ruff": "scoped format and check passed",
+  "diff_check": "passed",
+  "research_claim": "bounded observation-schema implementation coverage only",
+  "policy_trained_with_validity_channels": false,
+  "vae_input_schema_changed": false
+}

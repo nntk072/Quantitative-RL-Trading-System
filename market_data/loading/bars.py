@@ -110,7 +110,8 @@ def iter_ticks_chunks(path: str | Path, chunksize: int = 2_000_000) -> Iterator[
 
     Only the ``date``, ``time``, ``bid``, ``ask`` columns are parsed —
     ``last``/``volume``/``flags`` are skipped entirely via ``usecols`` — and
-    ``bid``/``ask`` are read directly as ``float32``.  This keeps peak memory
+    ``bid``/``ask`` are read directly as ``float64``. This preserves the source
+    quote precision used by executable stop and target comparisons. Chunking keeps peak memory
     to roughly one chunk's worth of data instead of the whole file, which
     matters for multi-GB MT5 tick exports (a naive full-file load can OOM a
     memory-constrained VM such as WSL2).
@@ -131,7 +132,7 @@ def iter_ticks_chunks(path: str | Path, chunksize: int = 2_000_000) -> Iterator[
         header=0,
         names=_TICK_COLS,
         usecols=["date", "time", "bid", "ask"],
-        dtype={"bid": "float32", "ask": "float32"},
+        dtype={"bid": "float64", "ask": "float64"},
         na_values=[""],
         chunksize=chunksize,
         engine="c",

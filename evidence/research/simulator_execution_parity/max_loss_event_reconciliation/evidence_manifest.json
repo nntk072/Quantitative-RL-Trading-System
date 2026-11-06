@@ -1,0 +1,52 @@
+{
+  "assets": [
+    {
+      "bytes": 2822,
+      "path": "README.md",
+      "sha256": "f32eca04d89e7f6dc234639f7f2f9dbc4518266561cdd9334c0ec49a7c7b656f"
+    },
+    {
+      "bytes": 3909,
+      "path": "SOURCE_SHA256SUMS",
+      "sha256": "d88123feb637236da9a4bc58f710c82fecace29eb95ed6e7c2d2aaa7ee1dc918"
+    },
+    {
+      "bytes": 211403,
+      "path": "a4a_testing.json",
+      "sha256": "2e782ebfe4e2086dce36c0d387e39ebce390813becec57ead0271d0e39425b65"
+    },
+    {
+      "bytes": 270667,
+      "path": "a4a_training.json",
+      "sha256": "280cde34dd3d8d5d0123b5b25b012dfaa523b7eadef1854f141fbd96ec95137f"
+    },
+    {
+      "bytes": 211303,
+      "path": "a4b_testing.json",
+      "sha256": "9fb6788ad3869bcbeee3ea6dc76c9fa4a5c42ebfbf327b8fbc655678be4522e2"
+    },
+    {
+      "bytes": 269584,
+      "path": "a4b_training.json",
+      "sha256": "c3eb9996109abdc39adb01ab935d6371be982cfaccd9dee70321bffb649fbd47"
+    },
+    {
+      "bytes": 497,
+      "path": "focused_tests.log",
+      "sha256": "fee6fea5f799e53e30fc9c0db2e035e417c3da850c060c5dd1062b5534f1ef9a"
+    },
+    {
+      "bytes": 11114,
+      "path": "run_metadata.json",
+      "sha256": "9cd4e25a87885eb19ea892183a31ee6d5a0d739228b8efb76cedccdfb3a7f760"
+    },
+    {
+      "bytes": 4061,
+      "path": "summary.json",
+      "sha256": "c7724b4c3608d86e2fe31d82f870444feb0a5307506961c668a726a336e0b12d"
+    }
+  ],
+  "claim_scope": "selected A4 recorded hard maximum-loss event reconciliation to the pinned initial-equity floor",
+  "packet": "selected_run_max_loss_event_reconciliation",
+  "schema": "qrl.evidence_packet.v1"
+}

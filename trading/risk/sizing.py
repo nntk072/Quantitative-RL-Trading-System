@@ -159,6 +159,8 @@ def compute_lots_with_execution_reserve(
     execution_reserve_per_lot: float,
     min_lot: float = 0.01,
     max_lot: float = 100.0,
+    point_value: float = 1.0,
+    lot_step: float = 0.01,
 ) -> float:
     """Size the stop exposure so stop risk plus per-lot costs fit the budget.
 
@@ -172,11 +174,17 @@ def compute_lots_with_execution_reserve(
         execution_reserve_per_lot: Numeric value used for the execution reserve per lot.
         min_lot: Numeric value used for the min lot.
         max_lot: Numeric value used for the max lot.
+        point_value: Account-currency value of one price unit per contract.
+        lot_step: Broker volume increment. The result is rounded down to this step.
 
     Returns:
         Numeric result returned by ``compute_lots_with_execution_reserve``.
     """
-    stop_risk_per_lot = stop_loss_risk_usd(float(entry_price) - float(sl_price), 1.0, contract_size)
+    stop_risk_per_lot = stop_loss_risk_usd(
+        float(entry_price) - float(sl_price), 1.0, contract_size, point_value
+    )
+    if not np.isfinite(lot_step) or lot_step <= 0.0:
+        raise ValueError("lot_step must be finite and positive")
     if total_risk_budget_usd <= 0.0 or stop_risk_per_lot <= 0.0:
         return 0.0
 
@@ -195,11 +203,18 @@ def compute_lots_with_execution_reserve(
         max_lot=max_lot,
         max_loss_cap=None,
         risk_usd=stop_risk_budget,
+        point_value=point_value,
     )
     lots_at_budget = total_risk_budget_usd / all_in_risk_per_lot
     if lots_at_budget < min_lot:
         return 0.0
-    return float(min(lots, lots_at_budget))
+    affordable_lots = min(lots, lots_at_budget, max_lot)
+    # Never add an epsilon before floor here: at a budget such as 0.8999999999,
+    # doing so can incorrectly round 0.89 lots up to 0.90 and exceed the cap.
+    stepped_lots = np.floor(affordable_lots / lot_step) * lot_step
+    if stepped_lots < min_lot:
+        return 0.0
+    return float(stepped_lots)
 
 
 def compute_sl_tp_from_structure(

@@ -18,7 +18,7 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Encoder ID | Architecture | Description | Configured algorithms | Selectable variant count |
 |---|---|---|---|---|
-| `tcn` | Temporal Convolutional Network | Convolutional encoder for a single ordered market sequence. | ppo, sac | 36 |
+| `tcn` | Temporal Convolutional Network | Convolutional encoder for a single ordered market sequence. | ppo, sac | 38 |
 | `tcn_regime` | Regime-conditioned TCN | TCN encoder with explicit market-regime context. | ppo | 1 |
 | `lite_tcn` | Lightweight TCN | Compact temporal convolutional encoder. | — | 0 |
 | `gru` | Gated Recurrent Unit | Recurrent encoder for ordered market observations. | ppo, sac | 3 |
@@ -30,6 +30,19 @@ A registered encoder with no listed pair currently has no matrix variant.
 | `mtf_m1_tcn_htf_lite_reasoning` | M1 TCN with lightweight higher-timeframe reasoning | Uses a dedicated M1 TCN and a compact higher-timeframe path. | — | 0 |
 | `mtf_m1_tcn_htf_snapshot_reasoning` | M1 TCN with higher-timeframe snapshots | Combines M1 temporal features with higher-timeframe snapshots. | — | 0 |
 
+## Policy-selected entry execution
+
+**Family:** `entry_execution_choice`
+
+**Research question:** Does allowing the policy to choose resting limits change outcomes versus market entries?
+
+**Comparison type:** `matched`
+
+| Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
+|---|---|---|---|---|---|---|---|---|---|---|
+| A | `entry_execution_market_control` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Selects eligible setups and uses market entry execution. Changes: None declared. | — |
+| B | `entry_execution_policy_market_limit` | Selectable | treatment | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Selects eligible setups and learns market versus bounded limit entry. Changes: entry execution choice. | — |
+
 ## Core policy capability ladder
 
 **Family:** `policy_ladder`
@@ -40,12 +53,12 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A0 | `ladder_a0_flat` | Selectable | reference | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Baseline action behavior without learned stop selection. Changes: None declared. | — |
-| A1 | `ladder_a1_sl` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Adds agent-selected stop-loss behavior. Changes: agent stop selection. | — |
-| A2 | `ladder_a2_tp` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Adds agent-selected take-profit behavior. Changes: agent take-profit selection. | — |
-| A3 | `ladder_a3_multi_tp` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Adds multiple partial take-profit levels. Changes: multiple take-profit levels. | — |
-| A4b | `ladder_a4b_entry_fsm` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Adds an observed entry-state machine. Changes: entry-state machine, observed entry state. | — |
-| A4a | `ladder_a4a_entry_fsm_hidden` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Adds an entry-state machine with latent state. Changes: entry-state machine, hidden entry state. | — |
+| A0 | `ladder_a0_flat` | Selectable | reference | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Baseline action behavior without learned stop selection. Changes: None declared. | — |
+| A1 | `ladder_a1_sl` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Adds agent-selected stop-loss behavior. Changes: agent stop selection. | — |
+| A2 | `ladder_a2_tp` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Adds agent-selected take-profit behavior. Changes: agent take-profit selection. | — |
+| A3 | `ladder_a3_multi_tp` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Adds multiple partial take-profit levels. Changes: multiple take-profit levels. | — |
+| A4b | `ladder_a4b_entry_fsm` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Adds an observed entry-state machine. Changes: entry-state machine, observed entry state. | — |
+| A4a | `ladder_a4a_entry_fsm_hidden` | Selectable | rung | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Adds an entry-state machine with latent state. Changes: entry-state machine, hidden entry state. | — |
 
 ## Quarter-point price grid with observed entry state
 
@@ -57,8 +70,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `ladder_a4b_entry_fsm` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Continuous-price A4b reference. Changes: None declared. | — |
-| B | `ladder_a4b_entry_fsm_qgrid025` | Selectable | treatment | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | A4b with quarter-point price discretization. Changes: quarter-point price grid. | — |
+| A | `ladder_a4b_entry_fsm` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Continuous-price A4b reference. Changes: None declared. | — |
+| B | `ladder_a4b_entry_fsm_qgrid025` | Selectable | treatment | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | A4b with quarter-point price discretization. Changes: quarter-point price grid. | — |
 
 ## Quarter-point price grid with hidden entry state
 
@@ -70,8 +83,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `ladder_a4a_entry_fsm_hidden` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Continuous-price A4a reference. Changes: None declared. | — |
-| B | `ladder_a4a_entry_fsm_hidden_qgrid025` | Selectable | treatment | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | A4a with quarter-point price discretization. Changes: quarter-point price grid. | — |
+| A | `ladder_a4a_entry_fsm_hidden` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Continuous-price A4a reference. Changes: None declared. | — |
+| B | `ladder_a4a_entry_fsm_hidden_qgrid025` | Selectable | treatment | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | A4a with quarter-point price discretization. Changes: quarter-point price grid. | — |
 
 ## Dollar-band risk constraint
 
@@ -83,8 +96,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `ladder_a4a_dollar_band_q5_off` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Dollar-band sizing with Q5 disabled. Changes: None declared. | — |
-| B | `ladder_a4a_dollar_band_q5_on` | Selectable | treatment | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Same dollar-band sizing with Q5 enabled. Changes: Q5 constrained learning. | — |
+| A | `ladder_a4a_dollar_band_q5_off` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Dollar-band sizing with Q5 disabled. Changes: None declared. | — |
+| B | `ladder_a4a_dollar_band_q5_on` | Selectable | treatment | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Same dollar-band sizing with Q5 enabled. Changes: Q5 constrained learning. | — |
 
 ## Single-timeframe versus multi-timeframe encoder
 
@@ -96,8 +109,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `rq_mtf_control_tcn` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Single-window TCN control. Changes: None declared. | — |
-| B | `rq_mtf_treatment_mtf` | Selectable | treatment | `ppo` | `mtf` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Correlated multi-timeframe encoder treatment. Changes: encoder architecture. | — |
+| A | `rq_mtf_control_tcn` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Single-window TCN control. Changes: None declared. | — |
+| B | `rq_mtf_treatment_mtf` | Selectable | treatment | `ppo` | `mtf` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Correlated multi-timeframe encoder treatment. Changes: encoder architecture. | — |
 
 ## Core and setup-conditioned multi-timeframe PPO models
 
@@ -109,9 +122,9 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `rq_mtf_control_tcn` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Core PPO with the single-window TCN and shared dollar-band controls. Changes: None declared. | — |
-| B | `rq_mtf_treatment_mtf` | Selectable | treatment | `ppo` | `mtf` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PPO with correlated multi-timeframe encoding. Changes: multi-timeframe encoder. | — |
-| C | `rq_mtf_treatment_reasoning` | Selectable | treatment | `ppo` | `mtf_reasoning` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PPO with a multi-timeframe reasoning encoder and a trade-setup action distribution. Changes: multi-timeframe reasoning encoder, setup selection, setup-aware action distribution. | — |
+| A | `rq_mtf_control_tcn` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Core PPO with the single-window TCN and shared dollar-band controls. Changes: None declared. | — |
+| B | `rq_mtf_treatment_mtf` | Selectable | treatment | `ppo` | `mtf` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PPO with correlated multi-timeframe encoding. Changes: multi-timeframe encoder. | — |
+| C | `rq_mtf_treatment_reasoning` | Selectable | treatment | `ppo` | `mtf_reasoning` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PPO with a multi-timeframe reasoning encoder and a trade-setup action distribution. Changes: multi-timeframe reasoning encoder, setup selection, setup-aware action distribution. | — |
 
 ## A4b strategy overlays
 
@@ -123,8 +136,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `ladder_a4b_po3_ifvg` | Selectable | candidate | `ppo` | `tcn` | `pnl` | `po3_ifvg` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | A4b with the PO3 and IFVG strategy overlay. Changes: PO3 and IFVG strategy. | — |
-| B | `ladder_a4b_distribution` | Selectable | candidate | `ppo` | `tcn` | `pnl` | `distribution` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | A4b with the distribution strategy overlay. Changes: distribution strategy. | — |
+| A | `ladder_a4b_po3_ifvg` | Selectable | candidate | `ppo` | `tcn` | `pnl` | `po3_ifvg` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | A4b with the PO3 and IFVG strategy overlay. Changes: PO3 and IFVG strategy. | — |
+| B | `ladder_a4b_distribution` | Selectable | candidate | `ppo` | `tcn` | `pnl` | `distribution` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | A4b with the distribution strategy overlay. Changes: distribution strategy. | — |
 
 ## PO3 strategy capability ladder
 
@@ -136,11 +149,11 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A0 | `ladder_a0_flat_po3` | Selectable | reference | `ppo` | `tcn` | `pnl` | `po3_ifvg` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PO3 strategy with the baseline action capability. Changes: PO3 strategy. | — |
-| A1 | `ladder_a1_sl_po3` | Selectable | rung | `ppo` | `tcn` | `pnl` | `po3_ifvg` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PO3 strategy with agent-selected stops. Changes: agent stop selection. | — |
-| A2 | `ladder_a2_tp_po3` | Selectable | rung | `ppo` | `tcn` | `pnl` | `po3_ifvg` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PO3 strategy with agent-selected stops and targets. Changes: agent take-profit selection. | — |
-| A3 | `ladder_a3_multi_tp_po3` | Selectable | rung | `ppo` | `tcn` | `pnl` | `po3_ifvg` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PO3 strategy with multiple take-profit levels. Changes: multiple take-profit levels. | — |
-| A4a | `ladder_a4a_entry_fsm_hidden_po3` | Selectable | rung | `ppo` | `tcn` | `pnl` | `po3_ifvg` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PO3 strategy with hidden entry-state-machine state. Changes: entry-state machine. | — |
+| A0 | `ladder_a0_flat_po3` | Selectable | reference | `ppo` | `tcn` | `pnl` | `po3_ifvg` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PO3 strategy with the baseline action capability. Changes: PO3 strategy. | — |
+| A1 | `ladder_a1_sl_po3` | Selectable | rung | `ppo` | `tcn` | `pnl` | `po3_ifvg` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PO3 strategy with agent-selected stops. Changes: agent stop selection. | — |
+| A2 | `ladder_a2_tp_po3` | Selectable | rung | `ppo` | `tcn` | `pnl` | `po3_ifvg` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PO3 strategy with agent-selected stops and targets. Changes: agent take-profit selection. | — |
+| A3 | `ladder_a3_multi_tp_po3` | Selectable | rung | `ppo` | `tcn` | `pnl` | `po3_ifvg` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PO3 strategy with multiple take-profit levels. Changes: multiple take-profit levels. | — |
+| A4a | `ladder_a4a_entry_fsm_hidden_po3` | Selectable | rung | `ppo` | `tcn` | `pnl` | `po3_ifvg` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PO3 strategy with hidden entry-state-machine state. Changes: entry-state machine. | — |
 
 ## Distribution strategy capability ladder
 
@@ -152,11 +165,11 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A0 | `ladder_a0_flat_dist` | Selectable | reference | `ppo` | `tcn` | `pnl` | `distribution` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Distribution strategy with the baseline action capability. Changes: distribution strategy. | — |
-| A1 | `ladder_a1_sl_dist` | Selectable | rung | `ppo` | `tcn` | `pnl` | `distribution` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Distribution strategy with agent-selected stops. Changes: agent stop selection. | — |
-| A2 | `ladder_a2_tp_dist` | Selectable | rung | `ppo` | `tcn` | `pnl` | `distribution` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Distribution strategy with agent-selected stops and targets. Changes: agent take-profit selection. | — |
-| A3 | `ladder_a3_multi_tp_dist` | Selectable | rung | `ppo` | `tcn` | `pnl` | `distribution` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Distribution strategy with multiple take-profit levels. Changes: multiple take-profit levels. | — |
-| A4a | `ladder_a4a_entry_fsm_hidden_dist` | Selectable | rung | `ppo` | `tcn` | `pnl` | `distribution` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Distribution strategy with hidden entry-state-machine state. Changes: entry-state machine. | — |
+| A0 | `ladder_a0_flat_dist` | Selectable | reference | `ppo` | `tcn` | `pnl` | `distribution` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Distribution strategy with the baseline action capability. Changes: distribution strategy. | — |
+| A1 | `ladder_a1_sl_dist` | Selectable | rung | `ppo` | `tcn` | `pnl` | `distribution` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Distribution strategy with agent-selected stops. Changes: agent stop selection. | — |
+| A2 | `ladder_a2_tp_dist` | Selectable | rung | `ppo` | `tcn` | `pnl` | `distribution` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Distribution strategy with agent-selected stops and targets. Changes: agent take-profit selection. | — |
+| A3 | `ladder_a3_multi_tp_dist` | Selectable | rung | `ppo` | `tcn` | `pnl` | `distribution` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Distribution strategy with multiple take-profit levels. Changes: multiple take-profit levels. | — |
+| A4a | `ladder_a4a_entry_fsm_hidden_dist` | Selectable | rung | `ppo` | `tcn` | `pnl` | `distribution` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Distribution strategy with hidden entry-state-machine state. Changes: entry-state machine. | — |
 
 ## Entry retest setting
 
@@ -168,7 +181,7 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| B | `knob_retest_true` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Enables the entry retest requirement. Changes: entry retest. | — |
+| B | `knob_retest_true` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Enables the entry retest requirement. Changes: entry retest. | — |
 
 ## Entry candidate lifetime
 
@@ -180,8 +193,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `knob_age_20` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Uses a 20-bar candidate lifetime. Changes: candidate maximum age. | — |
-| B | `knob_age_60` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Uses a 60-bar candidate lifetime. Changes: candidate maximum age. | — |
+| A | `knob_age_20` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Uses a 20-bar candidate lifetime. Changes: candidate maximum age. | — |
+| B | `knob_age_60` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Uses a 60-bar candidate lifetime. Changes: candidate maximum age. | — |
 
 ## Existing model and policy ablations
 
@@ -193,14 +206,14 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `ablation_baseline_unconditional` | Selectable | reference | `ppo` | `gru` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Unconditional baseline reference. Changes: None declared. | — |
-| B | `ablation_conditional_narrative` | Selectable | candidate | `ppo` | `gru` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Conditional narrative input variant. Changes: conditional narrative input. | — |
-| C | `ablation_transformer_encoder` | Selectable | candidate | `ppo` | `transformer` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Transformer encoder variant. Changes: encoder architecture. | — |
-| D | `ablation_sac_agent` | Selectable | candidate | `sac` | `gru` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | SAC algorithm variant. Changes: policy algorithm. | — |
-| E | `ablation_discrete_actions` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Discrete action representation variant. Changes: action representation. | — |
-| F | `ablation_pd_context` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Premium/discount context variant. Changes: premium/discount context. | — |
-| G | `ablation_po3_ifvg` | Selectable | candidate | `ppo` | `tcn` | `pnl` | `po3_ifvg` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PO3 and IFVG strategy variant. Changes: PO3 and IFVG strategy. | — |
-| H | `ablation_distribution` | Selectable | candidate | `ppo` | `tcn` | `pnl` | `distribution` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Distribution strategy variant. Changes: distribution strategy. | — |
+| A | `ablation_baseline_unconditional` | Selectable | reference | `ppo` | `gru` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Unconditional baseline reference. Changes: None declared. | — |
+| B | `ablation_conditional_narrative` | Selectable | candidate | `ppo` | `gru` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Conditional narrative input variant. Changes: conditional narrative input. | — |
+| C | `ablation_transformer_encoder` | Selectable | candidate | `ppo` | `transformer` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Transformer encoder variant. Changes: encoder architecture. | — |
+| D | `ablation_sac_agent` | Selectable | candidate | `sac` | `gru` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | SAC algorithm variant. Changes: policy algorithm. | — |
+| E | `ablation_discrete_actions` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Discrete action representation variant. Changes: action representation. | — |
+| F | `ablation_pd_context` | Selectable | candidate | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Premium/discount context variant. Changes: premium/discount context. | — |
+| G | `ablation_po3_ifvg` | Selectable | candidate | `ppo` | `tcn` | `pnl` | `po3_ifvg` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PO3 and IFVG strategy variant. Changes: PO3 and IFVG strategy. | — |
+| H | `ablation_distribution` | Selectable | candidate | `ppo` | `tcn` | `pnl` | `distribution` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Distribution strategy variant. Changes: distribution strategy. | — |
 
 ## Sustainable growth reward objective
 
@@ -212,8 +225,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `sustainable_growth_ppo_dsr` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PPO with the DSR objective. Changes: None declared. | — |
-| B | `sustainable_growth_ppo_log` | Selectable | treatment | `ppo` | `tcn` | `equity_log_growth` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PPO with the log-equity-growth objective. Changes: reward objective. | — |
+| A | `sustainable_growth_ppo_dsr` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PPO with the DSR objective. Changes: None declared. | — |
+| B | `sustainable_growth_ppo_log` | Selectable | treatment | `ppo` | `tcn` | `equity_log_growth` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PPO with the log-equity-growth objective. Changes: reward objective. | — |
 
 ## Regime context
 
@@ -225,8 +238,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `regime_d1_norm_tcn_control` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | TCN control without the regime treatment. Changes: None declared. | — |
-| B | `regime_d1_norm_tcn_regime` | Selectable | treatment | `ppo` | `tcn_regime` | `dsr` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | TCN with daily-normalized regime context. Changes: regime context. | — |
+| A | `regime_d1_norm_tcn_control` | Selectable | control | `ppo` | `tcn` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | TCN control without the regime treatment. Changes: None declared. | — |
+| B | `regime_d1_norm_tcn_regime` | Selectable | treatment | `ppo` | `tcn_regime` | `dsr` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | TCN with daily-normalized regime context. Changes: regime context. | — |
 
 ## EOD drawdown policy
 
@@ -238,8 +251,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `sustainable_growth_ppo_log` | Selectable | control | `ppo` | `tcn` | `equity_log_growth` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Log-growth PPO with peak trailing drawdown disabled. Changes: None declared. | — |
-| B | `sustainable_growth_ppo_log_eod_dd10k` | Selectable | treatment | `ppo` | `tcn` | `equity_log_growth` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Log-growth PPO with the 10,000 EOD drawdown policy. Changes: EOD trailing drawdown policy. | — |
+| A | `sustainable_growth_ppo_log` | Selectable | control | `ppo` | `tcn` | `equity_log_growth` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Log-growth PPO with peak trailing drawdown disabled. Changes: None declared. | — |
+| B | `sustainable_growth_ppo_log_eod_dd10k` | Selectable | treatment | `ppo` | `tcn` | `equity_log_growth` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Log-growth PPO with the 10,000 EOD drawdown policy. Changes: EOD trailing drawdown policy. | — |
 
 ## Log-growth Q5 constraint
 
@@ -251,8 +264,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `sustainable_growth_ppo_log` | Selectable | control | `ppo` | `tcn` | `equity_log_growth` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Log-growth PPO with Q5 disabled. Changes: None declared. | — |
-| B | `sustainable_growth_ppo_log_q5` | Selectable | treatment | `ppo` | `tcn` | `equity_log_growth` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | Log-growth PPO with Q5 enabled. Changes: Q5 constrained learning. | — |
+| A | `sustainable_growth_ppo_log` | Selectable | control | `ppo` | `tcn` | `equity_log_growth` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Log-growth PPO with Q5 disabled. Changes: None declared. | — |
+| B | `sustainable_growth_ppo_log_q5` | Selectable | treatment | `ppo` | `tcn` | `equity_log_growth` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | Log-growth PPO with Q5 enabled. Changes: Q5 constrained learning. | — |
 
 ## Log-growth policy algorithm
 
@@ -264,8 +277,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 | Arm | Variant | Status | Role | Algorithm | Encoder | Reward | Strategy | Risk policy | Description / changed factors | Sources |
 |---|---|---|---|---|---|---|---|---|---|---|
-| A | `sustainable_growth_ppo_log` | Selectable | control | `ppo` | `tcn` | `equity_log_growth` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | PPO with log-equity-growth reward. Changes: None declared. | — |
-| B | `sustainable_growth_sac_log` | Selectable | treatment | `sac` | `tcn` | `equity_log_growth` | `baseline` | fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900 | SAC with log-equity-growth reward. Changes: policy algorithm. | — |
+| A | `sustainable_growth_ppo_log` | Selectable | control | `ppo` | `tcn` | `equity_log_growth` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | PPO with log-equity-growth reward. Changes: None declared. | — |
+| B | `sustainable_growth_sac_log` | Selectable | treatment | `sac` | `tcn` | `equity_log_growth` | `baseline` | percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; max 10.0% of initial balance (static); size cap $900 | SAC with log-equity-growth reward. Changes: policy algorithm. | — |
 
 No retired variant IDs were found in the preserved frozen run configurations.
 Retired rows require a non-selectable variant and a verifiable source record.

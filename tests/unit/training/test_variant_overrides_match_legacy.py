@@ -49,6 +49,12 @@ CONSTRAINT_DIFFS = {
     "constrained_rl.episode_cost_budget",
 }
 EXPECTED_DIFFS_BY_VARIANT = {
+    "entry_execution_market_control": {"env.trade_setup_actions", "ppo.policy_distribution"},
+    "entry_execution_policy_market_limit": {
+        "env.agent_entry_execution",
+        "env.trade_setup_actions",
+        "ppo.policy_distribution",
+    },
     "ladder_a4a_dollar_band_q5_off": RISK_BAND_DIFFS
     | {"data.cache_dir", "data.price_discretization.enabled"},
     "ladder_a4a_dollar_band_q5_on": RISK_BAND_DIFFS

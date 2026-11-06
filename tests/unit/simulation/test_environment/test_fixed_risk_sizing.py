@@ -52,6 +52,7 @@ def _env_stub(risk_mode: str, fixed_risk_usd: float, equity: float, **kw: object
     stub.contract_size = kw.get("contract_size", 1.0)
     stub.min_lot = kw.get("min_lot", 0.01)
     stub.max_lot = kw.get("max_lot", 100.0)
+    stub.lot_step = kw.get("lot_step", 0.000001)
     stub.max_loss_per_trade_usd = kw.get("max_loss_per_trade_usd", 900.0)
     stub.guardrails = kw.get("guardrails", FTMOGuardrails())
     stub.cost_model = kw.get("cost_model", CostModel())
@@ -152,7 +153,12 @@ def test_fixed_mode_ignores_equity_drift() -> None:
     entry, stop = 25_000.0, 80.0
     sizes = set()
     for equity in (25_000.0, 100_000.0, 500_000.0):
-        env = _env_stub("fixed", 500.0, equity=equity)
+        env = _env_stub(
+            "fixed",
+            500.0,
+            equity=equity,
+            guardrails=FTMOGuardrails(limit_value_mode="fixed_usd"),
+        )
         lots = env._compute_lots_for(0.0, entry, entry - stop)
         sizes.add(round(lots * stop, 6))
     assert sizes == {500.0}
@@ -383,6 +389,7 @@ def test_end_to_end_fixed_risk_trade_realizes_minus_one_r_and_500() -> None:
         risk_mode="fixed",
         fixed_risk_usd=500.0,
         max_loss_per_trade_usd=900.0,
+        lot_step=0.000001,
     )
     env.reset()
 

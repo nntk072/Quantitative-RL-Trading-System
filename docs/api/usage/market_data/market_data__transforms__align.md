@@ -34,7 +34,26 @@ This page contains 2 public callable records owned by `market_data.transforms.al
 
 **Observed usage:**
 
-1. [test fixture: `test_higher_timeframe_value_appears_only_at_its_close`](../../../../tests/unit/features/test_alignment_properties.py#L30)
+1. [test fixture: `test_partial_resampled_bar_is_visible_only_at_close_and_first_later_m1`](../../../../tests/integration/test_resample_m10.py#L66)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        tz=timezone,
+    )
+    m1 = pd.DataFrame({"open": range(5), "close": [10, 11, 14, 16, 20]}, index=index)
+    m5 = resample(m1, "M5")
+    close_times = timeframe_close_times(m5, "M5")
+    aligned = align_timeframes(m1, {"M5": m5}, availability_times={"M5": close_times})
+
+    assert m5.loc[index[0], "close"] == 14
+    assert pd.isna(aligned.loc[index[2], "M5_close"])
+    assert aligned.loc[index[3], "M5_close"] == 14
+    assert aligned.loc[index[4], "M5_close"] == 16
+```
+
+2. [test fixture: `test_higher_timeframe_value_appears_only_at_its_close`](../../../../tests/unit/features/test_alignment_properties.py#L30)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -52,21 +71,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         observed = aligned.loc[timestamp, f"M{minutes_per_bar}_signal"]
         if completed_count == 0:
 # … caller assertions omitted …
-```
-
-2. [test fixture: `test_empty_higher_timeframe_does_not_add_empty_columns`](../../../../tests/unit/features/test_alignment_properties.py#L71)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_empty_higher_timeframe_does_not_add_empty_columns() -> None:
-    index = pd.date_range("2025-01-06 00:00", periods=2, freq="min", tz="UTC")
-    m1 = pd.DataFrame({"close": [10.0, 11.0]}, index=index)
-    empty = pd.DataFrame({"signal": pd.Series(dtype=float)})
-
-    aligned = align_timeframes(m1, {"M5": empty})
-
-    pd.testing.assert_frame_equal(aligned, m1)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -103,7 +107,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_timeframe_close_times_clip_a_short_session_final_bar`](../../../../tests/unit/features/test_alignment_properties.py#L80)
+1. [test fixture: `test_partial_resampled_bar_is_visible_only_at_close_and_first_later_m1`](../../../../tests/integration/test_resample_m10.py#L65)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        ],
+        tz=timezone,
+    )
+    m1 = pd.DataFrame({"open": range(5), "close": [10, 11, 14, 16, 20]}, index=index)
+    m5 = resample(m1, "M5")
+    close_times = timeframe_close_times(m5, "M5")
+    aligned = align_timeframes(m1, {"M5": m5}, availability_times={"M5": close_times})
+
+    assert m5.loc[index[0], "close"] == 14
+    assert pd.isna(aligned.loc[index[2], "M5_close"])
+    assert aligned.loc[index[3], "M5_close"] == 14
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_timeframe_close_times_clip_a_short_session_final_bar`](../../../../tests/unit/features/test_alignment_properties.py#L80)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -119,18 +143,6 @@ def test_timeframe_close_times_clip_a_short_session_final_bar() -> None:
     )
 
     assert closes.iloc[0] == pd.Timestamp("2025-01-06 17:00", tz="UTC")
-```
-
-2. [test fixture: `test_timeframe_close_times_reject_unsupported_timeframes`](../../../../tests/unit/features/test_alignment_properties.py#L93)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_timeframe_close_times_reject_unsupported_timeframes() -> None:
-    bars = pd.DataFrame(index=pd.DatetimeIndex([], tz="UTC"))
-
-    with pytest.raises(ValueError, match="unsupported timeframe"):
-        timeframe_close_times(bars, "M2")
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

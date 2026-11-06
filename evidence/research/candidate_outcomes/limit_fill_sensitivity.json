@@ -1,0 +1,42 @@
+{
+  "both_resolved_count": 104607,
+  "comparator_source": {
+    "path": "scripts/research/analysis/evaluation/compare_candidate_limit_fill_packets.py",
+    "sha256": "afb1d86bc8def5896741869346bccf8fe43f1dc4a24e48e2e98fb425a3ff6fc8"
+  },
+  "exact_touch_status_counts": {
+    "filled_resolved": 104642,
+    "unfilled_expired": 29701,
+    "unresolved_data": 378798
+  },
+  "interpretation": "Conditional fixed-entry execution sensitivity only; these paired rows do not include policy redecision, account risk, payouts, or selection inference.",
+  "packet_provenance": {
+    "exact_touch_manifest_sha256": "75efb78339c4214a0c970cce240475e9d74770ad8afc8149532c63f18a7d6afb",
+    "execution_parameters_match_except_limit_fill_rule": true,
+    "other_run_provenance_verified": true,
+    "proposal_manifest_sha256": "80ca5e249ad302fe7f325d61f13d4b9d587e88ac187ef80b07f47f09f76e1662",
+    "trade_through_manifest_sha256": "682f5d50d21b2f75364dfae09b63362379c318f0f8b99b27e13df44af2845cea"
+  },
+  "paired_limit_outcome_count": 513141,
+  "policy_value_claim": false,
+  "schema_version": "candidate-limit-fill-sensitivity.v1",
+  "status": "paired_outcomes_compared",
+  "status_transitions": {
+    "filled_resolved -> filled_resolved": 104607,
+    "filled_resolved -> unfilled_expired": 35,
+    "unfilled_expired -> unfilled_expired": 29701,
+    "unresolved_data -> unresolved_data": 378798
+  },
+  "strict_minus_exact_net_r": {
+    "maximum": 0.5520833333349322,
+    "mean": -0.00014708207298246077,
+    "median": 0.0,
+    "minimum": -3.20754716981253
+  },
+  "trade_through_status_counts": {
+    "filled_resolved": 104607,
+    "unfilled_expired": 29736,
+    "unresolved_data": 378798
+  },
+  "uncertainty_claim": "not_estimated"
+}

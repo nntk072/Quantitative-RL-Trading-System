@@ -55,6 +55,7 @@ class Position:
     size: float  # lots
     entry_price: float
     margin_used: float
+    mark_price: float | None = None
     # Identifiers and quantities describe the original position and its fills.
     # They remain stable as size shrinks through partial target execution.
     position_id: str = ""
@@ -194,6 +195,7 @@ class Broker:
             size=lots,
             entry_price=fill,
             margin_used=margin,
+            mark_price=fill,
             initial_size=lots,
         )
 
@@ -261,6 +263,7 @@ class Broker:
         """
         bid, ask = _validate_quote(quote)
         mtm_price = bid if position.direction == 1 else ask
+        position.mark_price = float(mtm_price)
         unrealised = (
             (mtm_price - position.entry_price)
             * position.direction

@@ -1,0 +1,19 @@
+{
+  "group_key": "d8f9796f9679721085dc26f4b3f75ebc2f8f5c27436877a443d0afff83a0bab5",
+  "profile_ids": [
+    "experiment_run/all_selectable_seed42_train2025_1m_n8_20261030",
+    "experiment_run/all_selectable_seed42_train2025_1m_n8_adaptive_20261031",
+    "experiment_run/core_mtf_reasoning_seed42_train2025_2m_n8_20261031",
+    "experiment_run/dollar_band_q5_a4a_seed50_train2025_2m_normal_zero_latency_v1",
+    "experiment_run/rq_mtf_tcn_a4a_q5off_seed50_train2025_2m_normal_zero_latency_alltf_swings_v1",
+    "experiment_run/rq_mtf_tcn_a4a_q5off_seed50_train2025_2m_normal_zero_latency_log1k_v3",
+    "experiment_run/rq_mtf_tcn_a4a_q5off_seed50_train2025_2m_normal_zero_latency_v1",
+    "experiment_run/rq_mtf_tcn_a4a_q5off_seed50_train2025_2m_normal_zero_latency_v2",
+    "experiment_run/rq_tcn_a4a_seed50_train2025_2m_normal_fullspan_n8_v1",
+    "experiment_run/sustainable_growth_dsr_peak_eod_dd10k_seed50_train2025_20261026_2m_normal_v1",
+    "experiment_run/sustainable_growth_seed50_train2025_2m_eod_dd10k_v1",
+    "experiment_run/sustainable_growth_seed50_train2025_2m_normal_v1"
+  ],
+  "representative_profile": "experiment_run/all_selectable_seed42_train2025_1m_n8_20261030",
+  "status": "measured_training_split"
+}

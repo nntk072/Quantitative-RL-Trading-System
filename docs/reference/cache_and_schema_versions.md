@@ -7,7 +7,7 @@ serialized schema checks; they do not replace them.
 ## Feature cache
 
 `features.pipeline.feature_cache_identity.FEATURE_CACHE_VERSION` currently
-uses `v37-zero-variance-neutral`. The feature cache identity also hashes the
+uses `v43-heldout-fit-state`. The feature cache identity also hashes the
 resolved feature configuration, market input indexes and values, optional
 training mask, and other settings that affect feature output.
 

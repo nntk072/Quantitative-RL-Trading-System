@@ -106,6 +106,14 @@ def trade_excursion_bounds(
     )
 
     def excursions(path: NDArray[np.float64]) -> tuple[float, float]:
+        """Return favorable and adverse point excursions for a price path.
+
+        Args:
+            path: Entry-to-exit price sequence including liquidation bounds.
+
+        Returns:
+            Maximum favorable and adverse movement in instrument points.
+        """
         signed_move = direction * (path - entry_price)
         return (
             max(0.0, float(np.max(signed_move))),

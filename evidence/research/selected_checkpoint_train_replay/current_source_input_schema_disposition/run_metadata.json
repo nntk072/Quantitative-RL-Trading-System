@@ -1,0 +1,36 @@
+{
+  "artifact_role": "current_source_checkpoint_replay_no_go",
+  "current_source_replay_status": "stopped_before_policy_inference",
+  "attempted_arm": "a4a",
+  "not_attempted_arm": "a4b",
+  "policy_action_mode": "stochastic",
+  "action_rng_seed": 50,
+  "current_source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "source_tree_was_dirty": true,
+  "source_run_manifest_sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+  "source_run_config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+  "checkpoint_sha256": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703",
+  "train_feature_snapshot_sha256": "e9e68584b2360d368c46f15432b82e1acb33913ce36fac660000ead65179ef0b",
+  "train_feature_frame_digest": "696cff0bef5ecea1b3d872d645752a28bc40fb8a862ee641084b903e89419717",
+  "sequence_schema": {
+    "saved_manifest_width": 746,
+    "checkpoint_observation_width": 746,
+    "current_source_width": 724,
+    "same_ordered_coordinates": false,
+    "first_order_difference": {
+      "index": 429,
+      "saved": "last_swing_high",
+      "current": "dist_to_last_high_atr"
+    },
+    "saved_only_coordinate_count": 23,
+    "current_only_coordinate_count": 1,
+    "current_only_coordinate": "datetime"
+  },
+  "policy_metrics_produced": false,
+  "full_ledger_repeatability_claimed": false,
+  "limitations": [
+    "The original full feature-cache bytes are unavailable.",
+    "The train-only snapshot does not establish testing-feature identity or complete raw-tick identity.",
+    "Current-source checkpoint inference was blocked because the saved and current sequence schemas differ."
+  ]
+}

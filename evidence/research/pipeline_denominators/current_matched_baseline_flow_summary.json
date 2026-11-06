@@ -1,0 +1,146 @@
+{
+  "arms": {
+    "always_no_trade": {
+      "decision_trace": {
+        "accepted_order_count": null,
+        "accepted_order_count_state": "not_recorded_in_decision_trace_or_fill_ledger",
+        "decision_rows": 99492,
+        "entry_rejection_rows_by_reason": {},
+        "order_attempt_count": null,
+        "order_attempt_count_state": "not_recorded_in_decision_trace",
+        "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/decisions.csv",
+        "rows_selecting_a_trade_candidate": 0,
+        "rows_selecting_no_trade": 99492,
+        "rows_with_at_least_one_eligible_candidate": 99492,
+        "sha256": "59cb1170776121552cba096961a0c4fadf02831197f92c4d7debaf86a27f22df",
+        "unique_decision_ids": 99492
+      },
+      "fill_ledger": {
+        "closed_position_ids_without_open_fill": [],
+        "decision_ids_with_open_fill": 0,
+        "empty_ledger_reason": "This always-no-trade arm produced no fill events; the writer emitted an empty CSV header.",
+        "execution_event_rows": 0,
+        "execution_event_rows_by_type": {},
+        "open_fill_decision_ids_present_in_decision_trace": 0,
+        "open_fill_events": 0,
+        "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/trade_fill_event_ledger.csv",
+        "sha256": "bd85bcdb8d4e613a79cb62d0903946ad10c83e63dc75f67614c159c0dbf4d184",
+        "unique_opened_positions": 0,
+        "unique_positions_with_terminal_close": 0
+      },
+      "interpretation": "Current matched-baseline development-split trace only; not a historical PPO policy flow."
+    },
+    "random_eligible_setup": {
+      "decision_trace": {
+        "accepted_order_count": null,
+        "accepted_order_count_state": "not_recorded_in_decision_trace_or_fill_ledger",
+        "decision_rows": 99492,
+        "entry_rejection_rows_by_reason": {
+          "no_valid_sl": 180,
+          "open_blackout": 1830,
+          "overnight_boundary": 359
+        },
+        "order_attempt_count": null,
+        "order_attempt_count_state": "not_recorded_in_decision_trace",
+        "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/decisions.csv",
+        "rows_selecting_a_trade_candidate": 70716,
+        "rows_selecting_no_trade": 28776,
+        "rows_with_at_least_one_eligible_candidate": 99492,
+        "sha256": "1498a1a9e48557442be19d4a59df696a472935e260c041a7303b4362387b7053",
+        "unique_decision_ids": 99492
+      },
+      "fill_ledger": {
+        "closed_position_ids_without_open_fill": [],
+        "decision_ids_with_open_fill": 1854,
+        "execution_event_rows": 6249,
+        "execution_event_rows_by_type": {
+          "close": 1509,
+          "eod_close": 11,
+          "forced_close": 7,
+          "open": 1854,
+          "reject": 2369,
+          "sl_update": 131,
+          "stop_close": 327,
+          "tp_partial_close": 41
+        },
+        "open_fill_decision_ids_present_in_decision_trace": 1854,
+        "open_fill_events": 1854,
+        "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/trade_fill_event_ledger.csv",
+        "sha256": "5484477d5072e1ff0d51fcbdffa18d81fe74f21bccaf30111f319c2dd898e6b2",
+        "unique_opened_positions": 1854,
+        "unique_positions_with_terminal_close": 1854
+      },
+      "interpretation": "Current matched-baseline development-split trace only; not a historical PPO policy flow."
+    },
+    "structure_priority": {
+      "decision_trace": {
+        "accepted_order_count": null,
+        "accepted_order_count_state": "not_recorded_in_decision_trace_or_fill_ledger",
+        "decision_rows": 99492,
+        "entry_rejection_rows_by_reason": {
+          "no_valid_sl": 220,
+          "open_blackout": 1830,
+          "overnight_boundary": 359
+        },
+        "order_attempt_count": null,
+        "order_attempt_count_state": "not_recorded_in_decision_trace",
+        "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/decisions.csv",
+        "rows_selecting_a_trade_candidate": 70716,
+        "rows_selecting_no_trade": 28776,
+        "rows_with_at_least_one_eligible_candidate": 99492,
+        "sha256": "03641827d20c0b06e138f381c58ca977f3620b72f78f71c3cf5cf35cbbb5569a",
+        "unique_decision_ids": 99492
+      },
+      "fill_ledger": {
+        "closed_position_ids_without_open_fill": [],
+        "decision_ids_with_open_fill": 1169,
+        "execution_event_rows": 4897,
+        "execution_event_rows_by_type": {
+          "close": 773,
+          "eod_close": 8,
+          "forced_close": 4,
+          "open": 1169,
+          "reject": 2409,
+          "sl_update": 110,
+          "stop_close": 384,
+          "tp_partial_close": 40
+        },
+        "open_fill_decision_ids_present_in_decision_trace": 1169,
+        "open_fill_events": 1169,
+        "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/trade_fill_event_ledger.csv",
+        "sha256": "9d6b2ba68fe373cac9915ed6c1fc6846d6d78040a3b3b0d11741c783f8ba5407",
+        "unique_opened_positions": 1169,
+        "unique_positions_with_terminal_close": 1169
+      },
+      "interpretation": "Current matched-baseline development-split trace only; not a historical PPO policy flow."
+    }
+  },
+  "bundle_manifest_sha256": "de1b93148181220c8e71b09ca61256fb00e19302b5586b4e128caa25048176e8",
+  "bundle_path": "evidence/research/matched_setup_baselines/matched_setup_baselines_19770241b07b5b5e",
+  "claim_scope": "Three current matched-baseline arms on the local 2025 development split; arms remain separate and are not joined to historical policy or raw-input denominators.",
+  "generator_path": "scripts/research/analysis/evaluation/build_matched_baseline_flow_summary.py",
+  "generator_sha256": "fae66deb44ff1715803102fea28c8c78a013a193bf554942e70c90f8eddc579e",
+  "limitations": [
+    "Do not infer attempted or accepted orders from selected actions, entry rejections, or open fills.",
+    "Do not combine these arm-level traces with historical A4A/A4B marginals or the raw-market and candidate-census counts as one funnel.",
+    "The matched-baseline outcomes are descriptive development evidence, not policy selection or confirmatory OOS evidence."
+  ],
+  "schema": "qrl.current_matched_baseline_flow_summary.v1",
+  "source_hashes_sha256": {
+    "evidence/research/matched_setup_baselines/matched_setup_baselines_19770241b07b5b5e/result_manifest.json": "de1b93148181220c8e71b09ca61256fb00e19302b5586b4e128caa25048176e8",
+    "matched_setup_baselines_19770241b07b5b5e/always_no_trade/decisions.csv": "59cb1170776121552cba096961a0c4fadf02831197f92c4d7debaf86a27f22df",
+    "matched_setup_baselines_19770241b07b5b5e/always_no_trade/trade_fill_event_ledger.csv": "bd85bcdb8d4e613a79cb62d0903946ad10c83e63dc75f67614c159c0dbf4d184",
+    "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/decisions.csv": "1498a1a9e48557442be19d4a59df696a472935e260c041a7303b4362387b7053",
+    "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/trade_fill_event_ledger.csv": "5484477d5072e1ff0d51fcbdffa18d81fe74f21bccaf30111f319c2dd898e6b2",
+    "matched_setup_baselines_19770241b07b5b5e/structure_priority/decisions.csv": "03641827d20c0b06e138f381c58ca977f3620b72f78f71c3cf5cf35cbbb5569a",
+    "matched_setup_baselines_19770241b07b5b5e/structure_priority/trade_fill_event_ledger.csv": "9d6b2ba68fe373cac9915ed6c1fc6846d6d78040a3b3b0d11741c783f8ba5407",
+    "scripts/research/analysis/evaluation/build_matched_baseline_flow_summary.py": "fae66deb44ff1715803102fea28c8c78a013a193bf554942e70c90f8eddc579e"
+  },
+  "status": "verified_current_baseline_marginals_with_decision_to_open_links",
+  "unavailable_counts": {
+    "broker_order_acceptances": null,
+    "broker_order_attempts": null,
+    "missing_is_zero": false,
+    "reason": "The decision traces and fill ledgers contain no order-attempt or accepted-order identity/status fields."
+  }
+}

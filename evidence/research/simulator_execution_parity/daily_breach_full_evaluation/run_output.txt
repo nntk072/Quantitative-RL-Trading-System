@@ -1,0 +1,14 @@
+Command:
+.venv/bin/ruff format --check tests/integration/backtest/test_risk_lifecycle_characterization.py && .venv/bin/ruff check tests/integration/backtest/test_risk_lifecycle_characterization.py && .venv/bin/python -m pytest tests/integration/backtest/test_risk_lifecycle_characterization.py::test_daily_loss_breach_fails_full_evaluation -q
+
+Observed output:
+1 file already formatted
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+collected 1 item
+
+tests/integration/backtest/test_risk_lifecycle_characterization.py .     [100%]
+
+============================== 1 passed in 1.41s ===============================
+DAILY_FULL_EVAL_TEST_EXIT=0

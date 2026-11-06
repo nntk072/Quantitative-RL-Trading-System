@@ -1,0 +1,18 @@
+{
+  "run_date": "2026-11-04",
+  "git_head": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "runtime": "ARM64 project .venv",
+  "checks": [
+    ".venv/bin/ruff format --check trading/risk/guardrails.py tests/unit/trading/test_guardrails.py tests/unit/trading/test_repeated_payout_policy.py",
+    ".venv/bin/ruff check trading/risk/guardrails.py tests/unit/trading/test_guardrails.py tests/unit/trading/test_repeated_payout_policy.py",
+    ".venv/bin/python -m pytest tests/unit/trading/test_guardrails.py tests/unit/trading/test_repeated_payout_policy.py tests/integration/backtest/test_risk_lifecycle_characterization.py::test_daily_loss_breach_fails_full_evaluation -q",
+    "git diff --check"
+  ],
+  "pytest_collected": 54,
+  "pytest_passed": 54,
+  "pytest_failed": 0,
+  "behavior": "Daily and static hard floors allow equality and breach only below; any daily breach still fails the full evaluation; payouts are limited to realized balance above initial operating balance.",
+  "claim_limit": "Does not establish all execution/backtest/live parity or close the full Stage E lifecycle/accounting gate."
+}

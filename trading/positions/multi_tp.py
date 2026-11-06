@@ -8,7 +8,16 @@ from trading.execution import Position
 
 
 def target_close_size(pos: Position, slot_num: int, *, is_final: bool) -> float:
-    """Return a target leg's close size while preserving a configured runner."""
+    """Return a target leg's close size while preserving a configured runner.
+
+    Args:
+        pos: Position containing initial size and target allocation settings.
+        slot_num: Take-profit slot being closed.
+        is_final: Whether this is the last active target slot.
+
+    Returns:
+        Lot size to close while retaining the configured runner when applicable.
+    """
     init_size = float(pos.tp_initial_size or pos.initial_size or pos.size)
     fractions = tuple(float(value) for value in pos.tp_lot_fractions)
     active_slots = [

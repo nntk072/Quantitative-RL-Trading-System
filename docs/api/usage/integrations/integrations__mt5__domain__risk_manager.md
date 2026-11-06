@@ -1,6 +1,6 @@
 # Integrations · `mt5.domain.risk_manager`
 
-This page contains 9 public callable records owned by `integrations.mt5.domain.risk_manager`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 10 public callable records owned by `integrations.mt5.domain.risk_manager`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `RiskManager`
 
@@ -12,7 +12,25 @@ This page contains 9 public callable records owned by `integrations.mt5.domain.r
 
 **Observed usage:**
 
-1. [test fixture: `test_sizing_rounds_down_and_stop_price_uses_same_distance`](../../../../tests/unit/live/test_risk_manager.py#L58)
+1. [test fixture: `test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails`](../../../../tests/unit/live/test_multi_symbol_risk_stops.py#L149)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails() -> None:
+    trader = _Trader()
+    symbol = "US100.cash"
+    with pytest.raises(ValueError, match="training-equivalent daily and maximum account-loss"):
+        MultiSymbolRobot(
+            symbol_manager=cast(Any, _Symbols()),
+            trader=trader,  # type: ignore[arg-type]
+            strategies=cast(Any, {symbol: _Strategy(symbol, Signal.BUY)}),
+            risk_manager=RiskManager(),
+            paper_trading=False,
+        )
+```
+
+2. [test fixture: `test_sizing_rounds_down_and_stop_price_uses_same_distance`](../../../../tests/unit/live/test_risk_manager.py#L58)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -27,18 +45,6 @@ def test_sizing_rounds_down_and_stop_price_uses_same_distance(
     sell_stop = manager.calculate_stop_loss_price("US100.cash", mt5.ORDER_TYPE_SELL, 50.0)
 
 # … caller assertions omitted …
-```
-
-2. [test fixture: `test_risk_manager_constructor_defaults_match_live_config`](../../../../tests/unit/live/test_risk_manager.py#L73)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_risk_manager_constructor_defaults_match_live_config() -> None:
-    manager = RiskManager()
-
-    assert manager.risk_per_symbol == pytest.approx(0.01)
-    assert manager.max_total_risk == pytest.approx(0.02)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -58,7 +64,25 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_sizing_rounds_down_and_stop_price_uses_same_distance`](../../../../tests/unit/live/test_risk_manager.py#L58)
+1. [test fixture: `test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails`](../../../../tests/unit/live/test_multi_symbol_risk_stops.py#L149)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails() -> None:
+    trader = _Trader()
+    symbol = "US100.cash"
+    with pytest.raises(ValueError, match="training-equivalent daily and maximum account-loss"):
+        MultiSymbolRobot(
+            symbol_manager=cast(Any, _Symbols()),
+            trader=trader,  # type: ignore[arg-type]
+            strategies=cast(Any, {symbol: _Strategy(symbol, Signal.BUY)}),
+            risk_manager=RiskManager(),
+            paper_trading=False,
+        )
+```
+
+2. [test fixture: `test_sizing_rounds_down_and_stop_price_uses_same_distance`](../../../../tests/unit/live/test_risk_manager.py#L58)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -73,18 +97,6 @@ def test_sizing_rounds_down_and_stop_price_uses_same_distance(
     sell_stop = manager.calculate_stop_loss_price("US100.cash", mt5.ORDER_TYPE_SELL, 50.0)
 
 # … caller assertions omitted …
-```
-
-2. [test fixture: `test_risk_manager_constructor_defaults_match_live_config`](../../../../tests/unit/live/test_risk_manager.py#L73)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_risk_manager_constructor_defaults_match_live_config() -> None:
-    manager = RiskManager()
-
-    assert manager.risk_per_symbol == pytest.approx(0.01)
-    assert manager.max_total_risk == pytest.approx(0.02)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -100,7 +112,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Calculate position size based on stop loss and risk amount.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_position_size` · **Source:** [integrations/mt5/domain/risk_manager.py:151](../../../../integrations/mt5/domain/risk_manager.py#L151)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_position_size` · **Source:** [integrations/mt5/domain/risk_manager.py:267](../../../../integrations/mt5/domain/risk_manager.py#L267)
 
 **Inputs and outputs:**
 
@@ -110,7 +122,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   symbol: Trading symbol
   stop_loss_pips: Stop loss in pips (or points for non-forex)
   risk_amount: Amount to risk (if None, uses risk_per_symbol * balance)
-  volatility_multiplier: Multiplier to adjust for volatility (higher volatility = smaller position)
+  volatility_multiplier: Multiplier to adjust for volatility; higher values reduce size.
   ```
 
 - **Returns:**
@@ -140,23 +152,23 @@ def test_sizing_rounds_down_and_stop_price_uses_same_distance(
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_volume_step_rounding_never_exceeds_cash_risk_budget`](../../../../tests/unit/live/test_risk_manager.py#L84)
+2. [test fixture: `test_absolute_per_symbol_cap_limits_sizing_and_risk_acceptance`](../../../../tests/unit/live/test_risk_manager.py#L91)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_volume_step_rounding_never_exceeds_cash_risk_budget(
-    mt5_risk_api: dict[str, Any],
-) -> None:
-    manager = RiskManager(risk_per_symbol=0.01, max_total_risk=0.02)
+# … caller setup omitted …
+        risk_per_symbol=0.01,
+        max_total_risk=0.02,
+        risk_per_symbol_usd_cap=900.0,
+    )
 
-    size = manager.calculate_position_size("US100.cash", stop_loss_pips=50.0, risk_amount=999.9)
-    distance = 50.0 * mt5_risk_api["info"].trade_tick_size
-    planned_risk = (
-        distance
-        / mt5_risk_api["info"].trade_tick_size
-        * mt5_risk_api["info"].trade_tick_value
-# … caller assertions omitted …
+    size = manager.calculate_position_size("US100.cash", stop_loss_pips=50.0)
+    allowed, message = manager.check_risk_limits("US100.cash", 18.01, 50.0)
+
+    assert size == pytest.approx(18.0)
+    assert allowed is False
+    assert "per-symbol limit ($900.00" in message
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -172,7 +184,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build the broker-side SL using the same distance used for sizing.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_stop_loss_price` · **Source:** [integrations/mt5/domain/risk_manager.py:241](../../../../integrations/mt5/domain/risk_manager.py#L241)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_stop_loss_price` · **Source:** [integrations/mt5/domain/risk_manager.py:394](../../../../integrations/mt5/domain/risk_manager.py#L394)
 
 **Inputs and outputs:**
 
@@ -212,6 +224,26 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
+2. [test fixture: `test_boolean_quote_cannot_create_a_stop_price`](../../../../tests/unit/live/test_risk_manager.py#L344)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_boolean_quote_cannot_create_a_stop_price(
+    mt5_risk_api: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info_tick",
+        lambda _symbol: SimpleNamespace(bid=100.0, ask=True),
+        raising=False,
+    )
+    manager = RiskManager()
+
+    with pytest.raises(ValueError, match="Invalid ask quote"):
+        manager.calculate_stop_loss_price("US100.cash", mt5.ORDER_TYPE_BUY, 50.0)
+```
+
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
@@ -225,7 +257,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Check if proposed position would exceed risk limits.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.check_risk_limits` · **Source:** [integrations/mt5/domain/risk_manager.py:357](../../../../integrations/mt5/domain/risk_manager.py#L357)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.check_risk_limits` · **Source:** [integrations/mt5/domain/risk_manager.py:546](../../../../integrations/mt5/domain/risk_manager.py#L546)
 
 **Inputs and outputs:**
 
@@ -258,26 +290,25 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert sell_stop == pytest.approx(100.5)
     allowed, message = manager.check_risk_limits("US100.cash", size, 50.0)
     assert allowed is True
-    assert "total stop risk: 1.00%" in message
+    assert "total stop risk plus reserve: 1.00%" in message
 ```
 
-2. [test fixture: `test_aggregate_limit_uses_open_stop_risk_not_floating_profit`](../../../../tests/unit/live/test_risk_manager.py#L111)
+2. [test fixture: `test_absolute_per_symbol_cap_limits_sizing_and_risk_acceptance`](../../../../tests/unit/live/test_risk_manager.py#L92)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+        max_total_risk=0.02,
+        risk_per_symbol_usd_cap=900.0,
     )
-    monkeypatch.setattr(mt5, "positions_get", lambda: [position], raising=False)
-    manager = RiskManager(risk_per_symbol=0.01, max_total_risk=0.02)
 
-    exposure = manager.get_total_exposure()
-    allowed, message = manager.check_risk_limits("US100.cash", 20.0, 50.0)
+    size = manager.calculate_position_size("US100.cash", stop_loss_pips=50.0)
+    allowed, message = manager.check_risk_limits("US100.cash", 18.01, 50.0)
 
-    assert exposure["total_open_risk"] == pytest.approx(1500.0)
-    assert exposure["risk_unknown_positions"] == 0
+    assert size == pytest.approx(18.0)
     assert allowed is False
-    assert "2.50%" in message
+    assert "per-symbol limit ($900.00" in message
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -293,7 +324,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Get current account balance.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_balance` · **Source:** [integrations/mt5/domain/risk_manager.py:31](../../../../integrations/mt5/domain/risk_manager.py#L31)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_balance` · **Source:** [integrations/mt5/domain/risk_manager.py:129](../../../../integrations/mt5/domain/risk_manager.py#L129)
 
 **Inputs and outputs:**
 
@@ -305,7 +336,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `calculate_position_size`](../../../../integrations/mt5/domain/risk_manager.py#L189)
+1. [production caller: `calculate_position_size`](../../../../integrations/mt5/domain/risk_manager.py#L322)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -318,14 +349,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
             if risk_amount is None:
                 balance = self.get_account_balance()
                 risk_amount = balance * self.risk_per_symbol
-            if (
-                risk_amount is None
-                or not math.isfinite(float(risk_amount))
-                or float(risk_amount) <= 0.0
+            if self.risk_per_symbol_usd_cap is not None:
+                if self._is_boolean_number(self.risk_per_symbol_usd_cap):
+                    logger.warning("Invalid absolute per-symbol risk cap for %s", symbol)
+                    return 0.0
 # … caller assertions omitted …
 ```
 
-2. [production caller: `check_risk_limits`](../../../../integrations/mt5/domain/risk_manager.py#L371)
+2. [production caller: `check_risk_limits`](../../../../integrations/mt5/domain/risk_manager.py#L560)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -334,9 +365,9 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
             balance = self.get_account_balance()
             if not math.isfinite(balance) or balance <= 0.0:
                 return False, "Account balance is unavailable or nonpositive"
-            if not math.isfinite(proposed_position_size) or proposed_position_size <= 0.0:
-                return False, "Proposed position size is unavailable or nonpositive"
             if (
+                self._is_boolean_number(proposed_position_size)
+                or self._is_boolean_number(stop_loss_pips)
 # … caller assertions omitted …
 ```
 
@@ -351,7 +382,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Get current account equity (balance + floating P/L).
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_equity` · **Source:** [integrations/mt5/domain/risk_manager.py:47](../../../../integrations/mt5/domain/risk_manager.py#L47)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_equity` · **Source:** [integrations/mt5/domain/risk_manager.py:149](../../../../integrations/mt5/domain/risk_manager.py#L149)
 
 **Inputs and outputs:**
 
@@ -372,7 +403,7 @@ instance = RiskManager(...)
 result = instance.get_account_equity()
 ```
 
-**Lifecycle context:** This callable participates in `RiskManager`: Manage risk across multiple trading positions. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_balance`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_equity`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_position_size`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_stop_loss_price`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_total_exposure`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.check_risk_limits`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_volatility_multiplier`
+**Lifecycle context:** This callable participates in `RiskManager`: Manage risk across multiple trading positions. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.supports_training_account_loss_guardrails`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_balance`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_equity`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_position_size`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_stop_loss_price`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_total_exposure`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.check_risk_limits`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_volatility_multiplier`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
@@ -385,9 +416,9 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Kind:** method · **Status:** stable · **Owner:** `integrations.mt5.domain.risk_manager`
 
-**Purpose:** Get total exposure across all open positions.
+**Purpose:** Get stop risk and modeled execution reserve across open positions.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_total_exposure` · **Source:** [integrations/mt5/domain/risk_manager.py:274](../../../../integrations/mt5/domain/risk_manager.py#L274)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_total_exposure` · **Source:** [integrations/mt5/domain/risk_manager.py:435](../../../../integrations/mt5/domain/risk_manager.py#L435)
 
 **Inputs and outputs:**
 
@@ -400,12 +431,32 @@ The input, output, and error contract above is the safe boundary for a caller. F
 - **Returns:**
 
   ```text
-  Dictionary with exposure metrics
+  Exposure metrics keep broker-stop risk separate from execution reserve.
   ```
 
 **Observed usage:**
 
-1. [test fixture: `test_aggregate_limit_uses_open_stop_risk_not_floating_profit`](../../../../tests/unit/live/test_risk_manager.py#L110)
+1. [test fixture: `test_aggregate_limit_reserves_only_remaining_costs_for_existing_positions`](../../../../tests/unit/live/test_risk_manager.py#L152)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        max_total_risk=0.06,
+        execution_slippage_points=5.0,
+        commission_per_lot=2.5,
+    )
+
+    exposure = manager.get_total_exposure()
+    allowed, message = manager.check_risk_limits("US100.cash", 1.0, 50.0)
+
+    assert exposure["total_open_risk"] == pytest.approx(500.0)
+    assert exposure["total_open_execution_reserve"] == pytest.approx(5025.0)
+    assert exposure["total_open_risk_with_reserve"] == pytest.approx(5525.0)
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_aggregate_limit_uses_open_stop_risk_not_floating_profit`](../../../../tests/unit/live/test_risk_manager.py#L193)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -425,25 +476,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `check_risk_limits`](../../../../integrations/mt5/domain/risk_manager.py#L401)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-                    False,
-                    f"Position risk ({position_risk_percent:.2%}) exceeds per-symbol limit ({self.risk_per_symbol:.2%})",
-                )
-
-                # Check total risk across all positions
-            exposure = self.get_total_exposure()
-            if exposure.get("query_failed") or exposure.get("risk_unknown_positions", 0):
-                return False, "Existing position stop risk is unknown; refusing additional exposure"
-            new_total_risk = float(exposure["total_open_risk"]) + position_risk
-            new_total_risk_percent = new_total_risk / balance
-
-# … caller assertions omitted …
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -456,7 +489,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Calculate the volatility multiplier for position sizing.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_volatility_multiplier` · **Source:** [integrations/mt5/domain/risk_manager.py:422](../../../../integrations/mt5/domain/risk_manager.py#L422)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_volatility_multiplier` · **Source:** [integrations/mt5/domain/risk_manager.py:639](../../../../integrations/mt5/domain/risk_manager.py#L639)
 
 **Inputs and outputs:**
 
@@ -473,6 +506,52 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   Multiplier (typically 0.5 to 2.0)
   ```
 
+**Observed usage:**
+
+1. [test fixture: `test_invalid_atr_cannot_increase_or_preserve_position_size`](../../../../tests/unit/live/test_risk_manager.py#L363)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_invalid_atr_cannot_increase_or_preserve_position_size(
+    mt5_risk_api: dict[str, Any], atr_percentage: float, base_atr: float
+) -> None:
+    manager = RiskManager()
+
+    multiplier = manager.get_volatility_multiplier(atr_percentage, base_atr)
+
+    assert multiplier == 0.0
+    assert (
+        manager.calculate_position_size(
+            "US100.cash", stop_loss_pips=50.0, volatility_multiplier=multiplier
+        )
+        == 0.0
+    )
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/runtime`
+- Generated package reference: {doc}`../../generated/integrations/index`
+
+## `RiskManager.supports_training_account_loss_guardrails`
+
+**Kind:** method · **Status:** stable · **Owner:** `integrations.mt5.domain.risk_manager`
+
+**Purpose:** Whether this manager enforces the training daily and max-loss limits.
+
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.supports_training_account_loss_guardrails` · **Source:** [integrations/mt5/domain/risk_manager.py:18](../../../../integrations/mt5/domain/risk_manager.py#L18)
+
+**Inputs and outputs:**
+
+- **Returns:**
+
+  ```text
+  ``False`` because this manager lacks restart-safe training account state.
+  ```
+
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
 
 **Invocation shape (placeholders):**
@@ -481,10 +560,10 @@ Replace `...` with values that satisfy the input contract. This syntax guide is 
 
 ```python
 instance = RiskManager(...)
-result = instance.get_volatility_multiplier(atr_percentage=..., base_atr=...)
+value = instance.supports_training_account_loss_guardrails
 ```
 
-**Lifecycle context:** This callable participates in `RiskManager`: Manage risk across multiple trading positions. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_balance`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_equity`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_position_size`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_stop_loss_price`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_total_exposure`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.check_risk_limits`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_volatility_multiplier`
+**Lifecycle context:** This callable participates in `RiskManager`: Manage risk across multiple trading positions. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.supports_training_account_loss_guardrails`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_balance`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_equity`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_position_size`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_stop_loss_price`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_total_exposure`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.check_risk_limits`, {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_volatility_multiplier`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 

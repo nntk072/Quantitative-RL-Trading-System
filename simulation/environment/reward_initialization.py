@@ -11,6 +11,7 @@ from .rewards import (
     EquityLogGrowthReward,
     PnLReward,
     RMultipleReward,
+    SurvivalReward,
 )
 from .sweep_reward import CompositeReward, SweepConfirmationReward
 
@@ -67,8 +68,9 @@ class RewardInitializationMixin(RuntimeMixinBase):
                 "sweep reward."
             )
 
-            # A hard risk breach receives the same terminal penalty in training and
-            # evaluation. The guardrail also ends the episodic training trajectory.
+        # Existing portfolio reward modes use the same finite breach penalty in
+        # training and evaluation. Survival mode replaces it at the resolved
+        # episode boundary with a binary path outcome.
         self.reward_fn: (
             DSRReward
             | CompositeReward
@@ -76,8 +78,15 @@ class RewardInitializationMixin(RuntimeMixinBase):
             | RMultipleReward
             | EquityDeltaReward
             | EquityLogGrowthReward
+            | SurvivalReward
         )
         breach_penalty = -10.0
+        if self.reward_mode == "survival":
+            # Survival is a path-feasibility objective. Do not initialize
+            # portfolio or strategy shaping rewards that this mode must ignore.
+            self.reward_fn = SurvivalReward()
+            return _strategy_actions
+
         if self.reward_mode in ("equity_delta_r", "equity_log_growth"):
             if use_sweep_reward or strategy_reward is not None:
                 raise ValueError(

@@ -18,25 +18,113 @@ class RiskManager:
     def supports_training_account_loss_guardrails(self) -> bool:
         """Whether this manager enforces the training daily and max-loss limits.
 
-        The MT5 implementation currently checks per-symbol and aggregate
-        position stop risk only. A future implementation must provide a
-        trusted, restart-safe account/session state before advertising parity.
+        The MT5 implementation checks broker-stop risk plus modeled execution
+        reserve, but lacks a trusted, restart-safe account/session state for the
+        training daily and maximum-loss guardrails.
+
+        Returns:
+            ``False`` because this manager lacks restart-safe training account state.
         """
         return False
+
+    @staticmethod
+    def _is_boolean_number(value: Any) -> bool:
+        """Reject bool values where Python's numeric type hierarchy accepts them.
+
+        Args:
+            value: Candidate numeric value.
+
+        Returns:
+            Whether the value is a Python or NumPy boolean scalar.
+        """
+        return isinstance(value, bool) or type(value).__name__ == "bool_"
 
     def __init__(
         self,
         risk_per_symbol: float = DEFAULT_RISK_PER_SYMBOL,
         max_total_risk: float = DEFAULT_MAX_TOTAL_RISK,
+        risk_per_symbol_usd_cap: float | None = None,
+        execution_slippage_points: float = 0.0,
+        commission_per_lot: float = 0.0,
     ):
         """Initialize the risk manager.
 
         Args:
             risk_per_symbol: Maximum risk per symbol as percentage of account balance (default: 1%)
-            max_total_risk: Maximum total stop risk across positions (default: 2%)
+            max_total_risk: Maximum stop risk plus reserve across positions (default: 2%)
+            risk_per_symbol_usd_cap: Optional per-symbol ceiling for stop risk plus reserve.
+            execution_slippage_points: Adverse stop-slippage reserve in price points.
+            commission_per_lot: Commission in account currency per lot per side.
         """
         self.risk_per_symbol = risk_per_symbol
         self.max_total_risk = max_total_risk
+        self.risk_per_symbol_usd_cap = risk_per_symbol_usd_cap
+        self.execution_slippage_points = execution_slippage_points
+        self.commission_per_lot = commission_per_lot
+
+    def _execution_reserve_per_lot(
+        self, symbol_info: Any, *, include_entry_costs: bool = False
+    ) -> float:
+        """Convert remaining modeled execution costs to account currency.
+
+        New market orders reserve both the unknown entry fill and the future
+        protective-stop fill, plus entry and exit commissions. Existing positions
+        reserve only the remaining protective-stop slippage and exit commission;
+        the entry commission is already reflected in the account balance.
+
+        Args:
+            symbol_info: Broker symbol metadata containing tick size and value.
+            include_entry_costs: Whether entry slippage and commission remain unpaid.
+
+        Returns:
+            Remaining modeled execution costs per lot in account currency.
+        """
+        tick_size = float(getattr(symbol_info, "trade_tick_size", 0.0))
+        tick_value = float(getattr(symbol_info, "trade_tick_value", 0.0))
+        slippage = float(self.execution_slippage_points)
+        commission = float(self.commission_per_lot)
+        if (
+            self._is_boolean_number(getattr(symbol_info, "trade_tick_size", 0.0))
+            or self._is_boolean_number(getattr(symbol_info, "trade_tick_value", 0.0))
+            or self._is_boolean_number(self.execution_slippage_points)
+            or self._is_boolean_number(self.commission_per_lot)
+            or not all(
+                math.isfinite(value) for value in (tick_size, tick_value, slippage, commission)
+            )
+            or tick_size <= 0.0
+            or tick_value <= 0.0
+            or slippage < 0.0
+            or commission < 0.0
+        ):
+            raise ValueError("invalid execution-cost or symbol tick data")
+        remaining_fills = 2.0 if include_entry_costs else 1.0
+        per_fill_reserve = slippage / tick_size * tick_value + commission
+        return remaining_fills * per_fill_reserve
+
+    def _position_execution_reserve(self, position: Any) -> float | None:
+        """Estimate stop-slippage and exit-fee reserves for an open position.
+
+        Args:
+            position: Broker position with symbol and volume fields.
+
+        Returns:
+            Remaining execution reserve in account currency, or ``None`` if unavailable.
+        """
+        symbol = self._position_value(position, "symbol")
+        volume = self._position_value(position, "volume")
+        if not symbol or volume is None or self._is_boolean_number(volume):
+            return None
+        info = mt5.symbol_info(str(symbol))
+        if info is None:
+            return None
+        try:
+            lots = float(volume)
+            reserve = self._execution_reserve_per_lot(info) * lots
+        except (AttributeError, TypeError, ValueError, ZeroDivisionError):
+            return None
+        if not math.isfinite(lots) or lots <= 0.0 or not math.isfinite(reserve) or reserve < 0.0:
+            return None
+        return reserve
 
     def get_account_balance(self) -> float:
         """Get current account balance.
@@ -49,7 +137,11 @@ class RiskManager:
             if account_info is None:
                 logger.error("Failed to get account info")
                 return 0.0
-            return float(account_info.balance)
+            balance = account_info.balance
+            if self._is_boolean_number(balance):
+                logger.error("Account balance is not numeric account data")
+                return 0.0
+            return float(balance)
         except Exception as e:
             logger.error(f"Error getting account balance: {e}")
             return 0.0
@@ -65,7 +157,11 @@ class RiskManager:
             if account_info is None:
                 logger.error("Failed to get account info")
                 return 0.0
-            return float(account_info.equity)
+            equity = account_info.equity
+            if self._is_boolean_number(equity):
+                logger.error("Account equity is not numeric account data")
+                return 0.0
+            return float(equity)
         except Exception as e:
             logger.error(f"Error getting account equity: {e}")
             return 0.0
@@ -105,7 +201,11 @@ class RiskManager:
         digits = int(getattr(symbol_info, "digits", -1))
         pips = float(stop_loss_pips)
         if (
-            not math.isfinite(tick_size)
+            RiskManager._is_boolean_number(getattr(symbol_info, "trade_tick_size", 0.0))
+            or RiskManager._is_boolean_number(getattr(symbol_info, "trade_tick_value", 0.0))
+            or RiskManager._is_boolean_number(getattr(symbol_info, "digits", -1))
+            or RiskManager._is_boolean_number(stop_loss_pips)
+            or not math.isfinite(tick_size)
             or not math.isfinite(tick_value)
             or not math.isfinite(pips)
             or tick_size <= 0.0
@@ -136,6 +236,8 @@ class RiskManager:
         stop_price = RiskManager._position_value(position, "sl")
         if not symbol or volume is None or open_price is None or stop_price in (None, 0):
             return None
+        if any(RiskManager._is_boolean_number(value) for value in (volume, open_price, stop_price)):
+            return None
         info = mt5.symbol_info(str(symbol))
         if info is None:
             return None
@@ -144,6 +246,10 @@ class RiskManager:
             tick_value = float(info.trade_tick_value)
             size = float(volume)
             distance = abs(float(open_price) - float(stop_price))
+            if RiskManager._is_boolean_number(
+                info.trade_tick_size
+            ) or RiskManager._is_boolean_number(info.trade_tick_value):
+                return None
             risk = distance / tick_size * tick_value * size
         except (AttributeError, TypeError, ValueError, ZeroDivisionError):
             return None
@@ -171,12 +277,29 @@ class RiskManager:
             symbol: Trading symbol
             stop_loss_pips: Stop loss in pips (or points for non-forex)
             risk_amount: Amount to risk (if None, uses risk_per_symbol * balance)
-            volatility_multiplier: Multiplier to adjust for volatility (higher volatility = smaller position)
+            volatility_multiplier: Multiplier to adjust for volatility; higher values reduce size.
 
         Returns:
             Position size in lots
         """
         try:
+            if (
+                self._is_boolean_number(stop_loss_pips)
+                or self._is_boolean_number(volatility_multiplier)
+                or (risk_amount is not None and self._is_boolean_number(risk_amount))
+                or self._is_boolean_number(self.risk_per_symbol)
+                or self._is_boolean_number(self.max_total_risk)
+            ):
+                logger.warning("Boolean value supplied to numeric sizing input for %s", symbol)
+                return 0.0
+            if (
+                not math.isfinite(self.risk_per_symbol)
+                or self.risk_per_symbol <= 0.0
+                or not math.isfinite(self.max_total_risk)
+                or self.max_total_risk <= 0.0
+            ):
+                logger.warning("Invalid configured risk limits for %s", symbol)
+                return 0.0
             # Select symbol
             if not mt5.symbol_select(symbol, True):
                 logger.error(f"Symbol {symbol} not available")
@@ -198,6 +321,14 @@ class RiskManager:
             if risk_amount is None:
                 balance = self.get_account_balance()
                 risk_amount = balance * self.risk_per_symbol
+            if self.risk_per_symbol_usd_cap is not None:
+                if self._is_boolean_number(self.risk_per_symbol_usd_cap):
+                    logger.warning("Invalid absolute per-symbol risk cap for %s", symbol)
+                    return 0.0
+                cap = float(self.risk_per_symbol_usd_cap)
+                if not math.isfinite(cap) or cap <= 0.0:
+                    logger.warning("Invalid absolute per-symbol risk cap for %s", symbol)
+                    return 0.0
             if (
                 risk_amount is None
                 or not math.isfinite(float(risk_amount))
@@ -211,15 +342,27 @@ class RiskManager:
                 # Adjust risk amount by volatility multiplier and use the same
                 # stop-distance conversion as order placement and risk checking.
             adjusted_risk = float(risk_amount) / float(volatility_multiplier)
+            if self.risk_per_symbol_usd_cap is not None:
+                adjusted_risk = min(adjusted_risk, float(self.risk_per_symbol_usd_cap))
             price_diff, tick_size, tick_value = self._symbol_risk_units(symbol_info, stop_loss_pips)
 
             # Calculate position size
-            risk_per_lot = (price_diff / tick_size) * tick_value
+            stop_risk_per_lot = (price_diff / tick_size) * tick_value
+            reserve_per_lot = self._execution_reserve_per_lot(symbol_info, include_entry_costs=True)
+            risk_per_lot = stop_risk_per_lot + reserve_per_lot
             raw_size = adjusted_risk / risk_per_lot
 
-            min_lot = float(symbol_info.volume_min)
-            max_lot = float(symbol_info.volume_max)
-            lot_step = float(symbol_info.volume_step)
+            volume_min = symbol_info.volume_min
+            volume_max = symbol_info.volume_max
+            volume_step = symbol_info.volume_step
+            if any(
+                self._is_boolean_number(value) for value in (volume_min, volume_max, volume_step)
+            ):
+                logger.warning("Invalid boolean volume metadata for %s", symbol)
+                return 0.0
+            min_lot = float(volume_min)
+            max_lot = float(volume_max)
+            lot_step = float(volume_step)
             if (
                 not all(math.isfinite(value) for value in (min_lot, max_lot, lot_step, raw_size))
                 or min_lot <= 0.0
@@ -267,12 +410,20 @@ class RiskManager:
         tick = mt5.symbol_info_tick(symbol)
         if info is None or tick is None:
             raise ValueError(f"Missing symbol or quote data for {symbol}")
+        if self._is_boolean_number(position_type) or self._is_boolean_number(info.digits):
+            raise ValueError(f"Invalid boolean order or precision metadata for {symbol}")
         distance, _, _ = self._symbol_risk_units(info, stop_loss_pips)
         if position_type == mt5.ORDER_TYPE_BUY:
-            entry_price = float(tick.ask)
+            raw_entry_price = tick.ask
+            if self._is_boolean_number(raw_entry_price):
+                raise ValueError(f"Invalid ask quote for {symbol}")
+            entry_price = float(raw_entry_price)
             stop_price = entry_price - distance
         elif position_type == mt5.ORDER_TYPE_SELL:
-            entry_price = float(tick.bid)
+            raw_entry_price = tick.bid
+            if self._is_boolean_number(raw_entry_price):
+                raise ValueError(f"Invalid bid quote for {symbol}")
+            entry_price = float(raw_entry_price)
             stop_price = entry_price + distance
         else:
             raise ValueError(f"Unsupported order type for stop calculation: {position_type}")
@@ -282,13 +433,13 @@ class RiskManager:
         return float(round(stop_price, digits))
 
     def get_total_exposure(self, symbols: list[str] | None = None) -> dict[str, Any]:
-        """Get total exposure across all open positions.
+        """Get stop risk and modeled execution reserve across open positions.
 
         Args:
             symbols: Optional list of symbols to filter by
 
         Returns:
-            Dictionary with exposure metrics
+            Exposure metrics keep broker-stop risk separate from execution reserve.
         """
         try:
             positions = mt5.positions_get()
@@ -299,6 +450,8 @@ class RiskManager:
                     "total_volume": 0.0,
                     "total_profit": 0.0,
                     "total_open_risk": 0.0,
+                    "total_open_execution_reserve": 0.0,
+                    "total_open_risk_with_reserve": 0.0,
                     "risk_unknown_positions": 1,
                     "query_failed": True,
                     "symbols": {},
@@ -309,6 +462,8 @@ class RiskManager:
                     "total_volume": 0.0,
                     "total_profit": 0.0,
                     "total_open_risk": 0.0,
+                    "total_open_execution_reserve": 0.0,
+                    "total_open_risk_with_reserve": 0.0,
                     "risk_unknown_positions": 0,
                     "query_failed": False,
                     "symbols": {},
@@ -321,33 +476,55 @@ class RiskManager:
             ]
             symbol_exposure: dict[str, dict[str, float | int]] = {}
             total_volume = total_profit = total_open_risk = 0.0
+            total_open_execution_reserve = 0.0
             unknown = 0
             for position in selected:
                 symbol = str(self._position_value(position, "symbol", ""))
-                volume = float(self._position_value(position, "volume", 0.0) or 0.0)
-                profit = float(self._position_value(position, "profit", 0.0) or 0.0)
+                raw_volume = self._position_value(position, "volume", 0.0)
+                raw_profit = self._position_value(position, "profit", 0.0)
+                if self._is_boolean_number(raw_volume) or self._is_boolean_number(raw_profit):
+                    raise ValueError("boolean position volume or PnL metadata")
+                volume = float(raw_volume or 0.0)
+                profit = float(raw_profit or 0.0)
                 position_risk = self._position_stop_risk(position)
+                execution_reserve = self._position_execution_reserve(position)
                 total_volume += volume
                 total_profit += profit
-                if position_risk is None:
+                if position_risk is None or execution_reserve is None:
                     unknown += 1
                 else:
                     total_open_risk += position_risk
+                    total_open_execution_reserve += execution_reserve
                 row = symbol_exposure.setdefault(
                     symbol,
-                    {"positions": 0, "volume": 0.0, "profit": 0.0, "open_risk": 0.0},
+                    {
+                        "positions": 0,
+                        "volume": 0.0,
+                        "profit": 0.0,
+                        "open_risk": 0.0,
+                        "execution_reserve": 0.0,
+                        "risk_with_reserve": 0.0,
+                    },
                 )
                 row["positions"] = int(row["positions"]) + 1
                 row["volume"] = float(row["volume"]) + volume
                 row["profit"] = float(row["profit"]) + profit
                 if position_risk is not None:
                     row["open_risk"] = float(row["open_risk"]) + position_risk
+                if execution_reserve is not None:
+                    row["execution_reserve"] = float(row["execution_reserve"]) + execution_reserve
+                if position_risk is not None and execution_reserve is not None:
+                    row["risk_with_reserve"] = (
+                        float(row["risk_with_reserve"]) + position_risk + execution_reserve
+                    )
 
             return {
                 "total_positions": len(selected),
                 "total_volume": total_volume,
                 "total_profit": total_profit,
                 "total_open_risk": total_open_risk,
+                "total_open_execution_reserve": total_open_execution_reserve,
+                "total_open_risk_with_reserve": total_open_risk + total_open_execution_reserve,
                 "risk_unknown_positions": unknown,
                 "query_failed": False,
                 "symbols": symbol_exposure,
@@ -359,6 +536,8 @@ class RiskManager:
                 "total_volume": 0.0,
                 "total_profit": 0.0,
                 "total_open_risk": 0.0,
+                "total_open_execution_reserve": 0.0,
+                "total_open_risk_with_reserve": 0.0,
                 "risk_unknown_positions": 1,
                 "query_failed": True,
                 "symbols": {},
@@ -381,6 +560,13 @@ class RiskManager:
             balance = self.get_account_balance()
             if not math.isfinite(balance) or balance <= 0.0:
                 return False, "Account balance is unavailable or nonpositive"
+            if (
+                self._is_boolean_number(proposed_position_size)
+                or self._is_boolean_number(stop_loss_pips)
+                or self._is_boolean_number(self.risk_per_symbol)
+                or self._is_boolean_number(self.max_total_risk)
+            ):
+                return False, "Boolean value supplied to numeric risk input"
             if not math.isfinite(proposed_position_size) or proposed_position_size <= 0.0:
                 return False, "Proposed position size is unavailable or nonpositive"
             if (
@@ -390,6 +576,12 @@ class RiskManager:
                 or self.max_total_risk <= 0.0
             ):
                 return False, "Configured per-symbol or aggregate risk limit is invalid"
+            if self.risk_per_symbol_usd_cap is not None and (
+                self._is_boolean_number(self.risk_per_symbol_usd_cap)
+                or not math.isfinite(float(self.risk_per_symbol_usd_cap))
+                or float(self.risk_per_symbol_usd_cap) <= 0.0
+            ):
+                return False, "Configured absolute per-symbol risk cap is invalid"
 
                 # Calculate risk for this position
             symbol_info = mt5.symbol_info(symbol)
@@ -398,31 +590,46 @@ class RiskManager:
 
             price_diff, tick_size, tick_value = self._symbol_risk_units(symbol_info, stop_loss_pips)
             position_risk = (price_diff / tick_size) * tick_value * proposed_position_size
-            position_risk_percent = position_risk / balance
+            position_reserve = (
+                self._execution_reserve_per_lot(symbol_info, include_entry_costs=True)
+                * proposed_position_size
+            )
+            position_risk_with_reserve = position_risk + position_reserve
+            position_risk_percent = position_risk_with_reserve / balance
+            position_limit_usd = balance * self.risk_per_symbol
+            if self.risk_per_symbol_usd_cap is not None:
+                position_limit_usd = min(position_limit_usd, float(self.risk_per_symbol_usd_cap))
 
             # Check per-symbol risk limit
-            if position_risk_percent > self.risk_per_symbol:
+            if position_risk_with_reserve > position_limit_usd:
                 return (
                     False,
-                    f"Position risk ({position_risk_percent:.2%}) exceeds per-symbol limit ({self.risk_per_symbol:.2%})",
+                    f"Position risk including execution reserve "
+                    f"(${position_risk_with_reserve:.2f}) "
+                    f"exceeds per-symbol limit "
+                    f"(${position_limit_usd:.2f}; {position_risk_percent:.2%} of balance)",
                 )
 
                 # Check total risk across all positions
             exposure = self.get_total_exposure()
             if exposure.get("query_failed") or exposure.get("risk_unknown_positions", 0):
                 return False, "Existing position stop risk is unknown; refusing additional exposure"
-            new_total_risk = float(exposure["total_open_risk"]) + position_risk
+            new_total_risk = (
+                float(exposure["total_open_risk_with_reserve"]) + position_risk_with_reserve
+            )
             new_total_risk_percent = new_total_risk / balance
 
             if new_total_risk_percent > self.max_total_risk:
                 return (
                     False,
-                    f"Total stop risk ({new_total_risk_percent:.2%}) would exceed maximum limit ({self.max_total_risk:.2%})",
+                    f"Total stop risk plus execution reserve ({new_total_risk_percent:.2%}) "
+                    f"would exceed maximum limit ({self.max_total_risk:.2%})",
                 )
 
             return (
                 True,
-                f"Risk check passed (position risk: {position_risk_percent:.2%}, total stop risk: {new_total_risk_percent:.2%})",
+                f"Risk check passed (position risk plus reserve: {position_risk_percent:.2%}, "
+                f"total stop risk plus reserve: {new_total_risk_percent:.2%})",
             )
 
         except Exception as e:
@@ -441,12 +648,29 @@ class RiskManager:
         Returns:
             Multiplier (typically 0.5 to 2.0)
         """
-        if base_atr == 0:
-            base_atr = 1.0
+        if self._is_boolean_number(atr_percentage) or self._is_boolean_number(base_atr):
+            logger.warning("Boolean ATR input cannot determine a safe position-size multiplier")
+            return 0.0
+        try:
+            atr_value = float(atr_percentage)
+            base_value = float(base_atr)
+        except (TypeError, ValueError):
+            logger.warning("Invalid ATR input cannot determine a safe position-size multiplier")
+            return 0.0
+        if (
+            not math.isfinite(atr_value)
+            or not math.isfinite(base_value)
+            or atr_value < 0.0
+            or base_value < 0.0
+        ):
+            logger.warning("Nonfinite or negative ATR input cannot size a position")
+            return 0.0
+        if base_value == 0.0:
+            base_value = 1.0
 
             # If ATR is higher than base, reduce position size
             # If ATR is lower than base, increase position size (up to 2x)
-        multiplier = base_atr / max(atr_percentage, 0.1)
+        multiplier = base_value / max(atr_value, 0.1)
 
         # Clamp between 0.5 and 2.0
         multiplier = max(0.5, min(2.0, multiplier))

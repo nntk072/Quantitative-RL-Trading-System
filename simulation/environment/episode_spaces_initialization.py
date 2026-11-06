@@ -75,6 +75,8 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
         n_features = len(self._obs_columns) if self._obs_columns else 1
         if self.mtf:
             n_features = max(int(self._m1_idx.size), 1)
+        if self.feature_validity_channels:
+            n_features *= 2
         vae_latent_dim = vae.encoder.latent_dim if use_vae and vae is not None else 0
 
         account_dim = self.observation_schema.width
@@ -103,6 +105,8 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
         if self.mtf:
             for key, _, seq_key in HTF_BRANCHES:
                 width = max(int(self._htf_idx[key].size), 1)
+                if self.feature_validity_channels:
+                    width *= 2
                 length = int(self._mtf_windows.get(key, DEFAULT_HTF_WINDOWS[key]))
                 observation_space.spaces[seq_key] = spaces.Box(
                     low=-np.inf,

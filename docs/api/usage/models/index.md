@@ -1,6 +1,6 @@
 # Models function usage
 
-This guide contains 35 public callable records across 13 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+This guide contains 37 public callable records across 14 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
 
 ```{toctree}
 :maxdepth: 1
@@ -10,6 +10,7 @@ models__auxiliary__vae
 models__encoders__gru
 models__encoders__lite_tcn
 models__encoders__mtf
+models__encoders__mtf_empty_stream_masked
 models__encoders__mtf_m1_htf_lite_reasoning
 models__encoders__mtf_m1_htf_snapshot_reasoning
 models__encoders__mtf_reasoning

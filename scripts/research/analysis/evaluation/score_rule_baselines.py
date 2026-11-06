@@ -35,6 +35,29 @@ RULES = (
     "session_momentum",
 )
 
+EXPOSED_REPORT_START = pd.Timestamp("2026-01-01").date()
+EXPOSED_REPORT_END = pd.Timestamp("2026-10-16").date()
+
+
+def _period_scope(index: pd.Index) -> dict[str, object]:
+    """Classify an interval against the project's exposed report period.
+
+    Overlap with the previously inspected 2026 interval is report-only. Other
+    intervals remain unclassified rather than being called a fresh holdout.
+    """
+    if index.empty:
+        return {"role": "empty", "confirmatory": False, "start": None, "end": None}
+
+    start = pd.Timestamp(index.min()).date()
+    end = pd.Timestamp(index.max()).date()
+    exposed = start <= EXPOSED_REPORT_END and end >= EXPOSED_REPORT_START
+    return {
+        "role": "exposed_report_only" if exposed else "unclassified_non_confirmatory",
+        "confirmatory": False,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+    }
+
 
 def _strategy(name: str, bars: pd.DataFrame):
     if name == "ema_macd_rsi":
@@ -105,6 +128,8 @@ def main() -> None:
     bars = data[cfg.data.primary]["M1"]
     train_end, test_start = get_split_config(cfg)
     train_bars, test_bars = split_bars(bars, train_end, test_start)
+    report_scope = _period_scope(test_bars.index)
+    report_period_key = str(report_scope["role"])
     out = ROOT / "outputs" / "rule_baselines"
     out.mkdir(parents=True, exist_ok=True)
     fitted = fit_hold_lots(train_bars)
@@ -113,17 +138,17 @@ def main() -> None:
         "buy_and_hold": {
             "lots": fitted,
             "train": simulate_hold(train_bars, fitted["lots"]),
-            "test": simulate_hold(test_bars, fitted["lots"]),
+            report_period_key: simulate_hold(test_bars, fitted["lots"]),
         }
     }
-    print("buy_and_hold", report["buy_and_hold"]["test"], flush=True)
+    print("buy_and_hold", report["buy_and_hold"][report_period_key], flush=True)
     for name in ("ema_macd_rsi", "session_momentum"):
         print(f"scoring {name}", flush=True)
         report[name] = {
             "train": _score(name, train_bars),
-            "test": _score(name, test_bars),
+            report_period_key: _score(name, test_bars),
         }
-        print(name, report[name]["test"], flush=True)
+        print(name, report[name][report_period_key], flush=True)
     flat = {
         "sharpe": 0.0,
         "total_pnl": 0.0,
@@ -134,7 +159,15 @@ def main() -> None:
         "breach_count": 0,
         "index_return_pct": 0.0,
     }
-    report["flat"] = {"train": flat, "test": dict(flat)}
+    report["flat"] = {"train": flat, report_period_key: dict(flat)}
+    report["scope"] = {
+        "evaluation_period": report_scope,
+        "selection_use": "prohibited",
+        "reason": (
+            "The inspected 2026 interval is exposed exploratory data; other "
+            "intervals are unclassified and are not declared holdouts."
+        ),
+    }
     (out / "summary.json").write_text(json.dumps(report, indent=2) + "\n")
     print("wrote", out / "summary.json")
 

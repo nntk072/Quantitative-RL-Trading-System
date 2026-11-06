@@ -1,0 +1,17 @@
+{
+  "run_date": "2026-11-04",
+  "feature_version": "v40-ifvg-missing-atr-distance",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "runtime": "ARM64 project .venv",
+  "selected_feature_groups": [
+    "strategy_overlay/2_po3_ifvg",
+    "legacy_variant/ladder_a4b_po3_ifvg",
+    "features/fvg_ifvg_mtf",
+    "features/full_po3_mtf",
+    "legacy_variant/ladder_a4b_distribution"
+  ],
+  "cutoffs_per_group": 3,
+  "expected_comparisons": 15,
+  "claim_limit": "Selected profile groups only; not a complete 130-profile prefix acceptance run."
+}

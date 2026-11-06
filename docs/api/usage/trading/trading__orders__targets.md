@@ -72,7 +72,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Use extensions of already-created swing legs as TP levels.
 
-**Exact API:** {py:obj}`trading.orders.targets.deviation_candidates` · **Source:** [trading/orders/targets.py:208](../../../../trading/orders/targets.py#L208)
+**Exact API:** {py:obj}`trading.orders.targets.deviation_candidates` · **Source:** [trading/orders/targets.py:212](../../../../trading/orders/targets.py#L212)
 
 **Inputs and outputs:**
 
@@ -91,7 +91,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_extreme_swing_extensions_are_tp_references_for_all_exit_modes`](../../../../tests/integration/backtest/test_entry_levels.py#L616)
+1. [test fixture: `test_extreme_swing_extensions_are_tp_references_for_all_exit_modes`](../../../../tests/integration/backtest/test_entry_levels.py#L706)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -105,7 +105,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert deviation_candidates(row) == [("standard_deviation_level_neg_4_price", 106.0)]
 ```
 
-2. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L249)
+2. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L255)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -164,52 +164,46 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_session_extremes_are_structural_order_candidates`](../../../../tests/integration/backtest/test_entry_levels.py#L149)
+1. [test fixture: `test_structural_menus_reject_invalid_trade_direction`](../../../../tests/integration/backtest/test_entry_levels.py#L169)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        htf=(),
-    )
-
-    stop_names = {part for name, _stop, _distance in menu for part in name.split("|")}
-    assert expected_stops <= stop_names
-    targets = target_menu(
-        direction=direction,
-        entry_price=100.0,
-        row=row,
-        stop_dist=1.0,
-        max_tp_distance=float("nan"),
-        htf=(),
-    )
-    target_levels = {part for name, _target, _distance in targets for part in name.split("|")}
-    assert expected_targets <= target_levels
+            buffer=0.0,
+            manipulation="none",
+            htf=(),
+        )
+    with pytest.raises(ValueError, match="direction must be -1 or 1"):
+        target_menu(
+            direction=direction,
+            entry_price=100.0,
+            row=_row(),
+            stop_dist=1.0,
+            max_tp_distance=float("nan"),
+            htf=(),
+        )
 ```
 
-2. [test fixture: `test_target_menu_uses_every_configured_timeframe_swing_level`](../../../../tests/integration/backtest/test_entry_levels.py#L172)
+2. [test fixture: `test_structural_menus_reject_unknown_source_timeframe`](../../../../tests/integration/backtest/test_entry_levels.py#L193)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            for offset, timeframe in enumerate(timeframes)
-        }
-    )
-    row = _row(**values)
+            manipulation="none",
+            htf=("M99",),
+        )
 
-    targets = target_menu(
-        direction=1,
-        entry_price=100.0,
-        row=row,
-        stop_dist=1.0,
-        max_tp_distance=float("nan"),
-        htf=timeframes,
-    )
-
-    names = {name for name, _price, _distance in targets}
-    assert "last_swing_high" in names
-    assert {f"{timeframe}_last_swing_high" for timeframe in timeframes} <= names
+    with pytest.raises(ValueError):
+        target_menu(
+            direction=1,
+            entry_price=100.0,
+            row=_row(M99_last_swing_high=110.0),
+            stop_dist=1.0,
+            max_tp_distance=float("nan"),
+            htf=("M99",),
+        )
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

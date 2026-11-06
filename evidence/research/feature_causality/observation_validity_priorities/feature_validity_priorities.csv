@@ -21,7 +21,6 @@ M30,M30_sweep_high_age,6,36,71106,17476,53630,0.7542260849998593,396,53234,2717,
 H4,H4_ob_bear_age,2,13,3102,866,2236,0.7208252740167633,100,2136,160,0,2,2,2,interior_missing_values_present;missing_collides_with_finite_zero
 H4,H4_ob_bear_distance_atr,2,13,3102,866,2236,0.7208252740167633,100,2136,138,0,2,2,2,interior_missing_values_present;missing_collides_with_finite_zero
 H1,H1_sweep_high_age,6,36,35568,10053,25515,0.7173582995951417,516,24999,1417,0,6,6,6,interior_missing_values_present;missing_collides_with_finite_zero
-M1,po3_phase,8,38,2811456,795928,2015528,0.7168982904231829,7408,2008120,269280,0,8,8,8,interior_missing_values_present;missing_collides_with_finite_zero
 H1,H1_ob_bear_age,2,13,11856,3602,8254,0.6961875843454791,80,8174,658,0,2,2,2,interior_missing_values_present;missing_collides_with_finite_zero
 H1,H1_ob_bear_distance_atr,2,13,11856,3602,8254,0.6961875843454791,80,8174,930,0,2,2,2,interior_missing_values_present;missing_collides_with_finite_zero
 M30,M30_ob_bear_age,2,13,23702,7204,16498,0.6960594042696819,54,16444,1470,0,2,2,2,interior_missing_values_present;missing_collides_with_finite_zero
@@ -75,8 +74,7 @@ M3,M3_standard_deviation_retracement_fraction,8,22,939384,928248,11136,0.0118545
 M1,standard_deviation_retracement_fraction,8,22,2811456,2779152,32304,0.01149013180359216,168,32136,4040,0,8,8,8,interior_missing_values_present;missing_collides_with_finite_zero
 M5,M5_standard_deviation_retracement_fraction,8,22,562456,556032,6424,0.011421337846871578,184,6240,280,0,8,8,8,interior_missing_values_present;missing_collides_with_finite_zero
 M10,M10_standard_deviation_retracement_fraction,8,22,282328,279344,2984,0.010569266951914087,104,2880,80,0,8,8,8,interior_missing_values_present;missing_collides_with_finite_zero
-M1,tick_bid_offset_atr,23,130,8082936,8082407,529,6.54465159689499e-05,0,529,1788071,0,23,23,23,interior_missing_values_present;missing_collides_with_finite_zero
-M1,wick_ratio,23,130,8082936,8082609,327,4.045559682768737e-05,0,327,970507,0,23,23,23,interior_missing_values_present;missing_collides_with_finite_zero
+M1,tick_bid_offset_atr,23,130,8082936,8082407,529,6.54465159689499e-05,0,529,8082271,0,23,23,23,interior_missing_values_present;missing_collides_with_finite_zero
 M1,mss_down_dist_atr,16,61,5622912,82240,5540672,0.9853741264312869,1968,5538704,0,0,16,0,16,interior_missing_values_present
 M1,mss_up_dist_atr,16,61,5622912,82240,5540672,0.9853741264312869,662,5540010,0,0,16,0,16,interior_missing_values_present
 M1,bos_down_dist_atr,16,61,5622912,1083123,4539789,0.8073732969678344,416,4539373,0,0,16,0,16,interior_missing_values_present
@@ -349,9 +347,10 @@ M1,macd,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,23,0,0,23,23,missi
 M1,macd_hist,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,23,0,0,23,23,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
 M1,macd_signal,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,23,0,0,23,23,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
 M1,plus_di,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,23,0,0,23,23,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
+M1,po3_phase,8,38,2811456,2811448,8,2.8455006943021696e-06,8,0,1497056,0,0,8,8,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
 M1,session_progress,8,38,2811456,2811448,8,2.8455006943021696e-06,8,0,1401920,0,0,8,8,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
-M1,smt_bearish,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,2955026,0,0,23,23,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
-M1,smt_bullish,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,2970966,0,0,23,23,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
+M1,smt_bearish,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,2951454,0,0,23,23,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
+M1,smt_bullish,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,2961732,0,0,23,23,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
 M1,smt_spread,23,130,8082936,8082913,23,2.8455006943021696e-06,23,0,23,0,0,23,23,missing_values_only_at_leading_edge;missing_collides_with_finite_zero
 D1,D1_ret_30,23,130,5957,5244,713,0.11969111969111969,713,0,0,0,0,0,23,missing_values_only_at_leading_edge
 D1,D1_pd_swing_high_dist_atr,6,19,1554,1428,126,0.08108108108108109,126,0,0,0,0,0,6,missing_values_only_at_leading_edge
@@ -1049,6 +1048,7 @@ M1,tick_quote_activity,23,130,8082936,8082936,0,0.0,0,0,529,0,0,0,0,no_nonfinite
 M1,tick_quote_available,23,130,8082936,8082936,0,0.0,0,0,529,0,0,0,0,no_nonfinite_values
 M1,volume_spike,23,130,8082936,8082936,0,0.0,0,0,0,0,0,0,0,no_nonfinite_values
 M1,vwap,6,36,2108592,2108592,0,0.0,0,0,0,0,0,0,0,no_nonfinite_values
+M1,wick_ratio,23,130,8082936,8082936,0,0.0,0,0,970834,0,0,0,0,no_nonfinite_values
 M10,M10_bos_down,23,130,811693,811693,0,0.0,0,0,667194,0,0,0,0,no_nonfinite_values
 M10,M10_bos_up,23,130,811693,811693,0,0.0,0,0,616002,0,0,0,0,no_nonfinite_values
 M10,M10_fvg_bear_active,10,51,352910,352910,0,0.0,0,0,123901,0,0,0,0,no_nonfinite_values

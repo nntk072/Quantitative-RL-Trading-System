@@ -184,4 +184,6 @@ class TestRiskFallback:
 
         # Phase A fix: no swing levels → entry rejected (treated as hold)
         assert env.position is None
-        assert env.trade_log == []
+        assert any(event.get("type") == "order_submit" for event in env.trade_log)
+        assert any(event.get("type") == "order_cancel" for event in env.trade_log)
+        assert not any(event.get("type") == "open" for event in env.trade_log)

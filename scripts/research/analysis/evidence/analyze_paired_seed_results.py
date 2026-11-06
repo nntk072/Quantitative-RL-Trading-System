@@ -5,6 +5,11 @@ The percentile interval resamples paired seeds. It is separate from the
 moving-block within-path interval in ``evaluation.metrics.bootstrap``.
 The exact sign-flip test tests a zero-centered paired mean under sign symmetry;
 it is not a substitute for validity, selection, or holdout gates.
+
+The v1 schema remains available for historical/descriptive analysis with its
+five-pair floor. The v2 primary-selection schema requires an always-no-trade
+control, at least six prospectively fixed pairs, complete risk-passing paths,
+and a net-return metric reconciled to ending equity plus cumulative payouts.
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ BOOTSTRAP_DRAWS = 10_000
 EXACT_SIGN_FLIP_MAX_PAIRS = 15
 MONTE_CARLO_SIGN_FLIP_DRAWS = 100_000
 MIN_PAIRED_SEEDS = 5
+MIN_PRIMARY_SELECTION_SEEDS = 6
 EVIDENCE_ROLES = frozenset({"matched_confirmation", "matched_exploratory", "robustness"})
 
 
@@ -128,8 +134,12 @@ def _validate_pair_input(
     dict[str, NDArray[np.float64]],
     dict[str, NDArray[np.float64]],
 ]:
-    if not isinstance(payload, dict) or payload.get("schema") != "aalto.paired_seed_metrics.v1":
-        raise ValueError("input schema must be aalto.paired_seed_metrics.v1")
+    if not isinstance(payload, dict):
+        raise ValueError("input must be an object")
+    schema = payload.get("schema")
+    if schema not in {"aalto.paired_seed_metrics.v1", "aalto.paired_seed_metrics.v2"}:
+        raise ValueError("input schema must be aalto.paired_seed_metrics.v1 or v2")
+    is_primary_schema = schema == "aalto.paired_seed_metrics.v2"
     comparison_id = payload.get("comparison_id")
     if not isinstance(comparison_id, str) or not comparison_id.strip():
         raise ValueError("comparison_id must be a non-empty string")
@@ -160,8 +170,106 @@ def _validate_pair_input(
     ):
         raise ValueError("metrics must be a non-empty list of unique names")
     pairs = payload.get("pairs")
-    if not isinstance(pairs, list) or len(pairs) < MIN_PAIRED_SEEDS:
-        raise ValueError(f"at least {MIN_PAIRED_SEEDS} completed matched seed pairs are required")
+    minimum_pairs = MIN_PRIMARY_SELECTION_SEEDS if is_primary_schema else MIN_PAIRED_SEEDS
+    if not isinstance(pairs, list) or len(pairs) < minimum_pairs:
+        raise ValueError(f"at least {minimum_pairs} completed matched seed pairs are required")
+    if evidence_role == "matched_confirmation" and not is_primary_schema:
+        raise ValueError("matched confirmation requires aalto.paired_seed_metrics.v2")
+    primary_selection = payload.get("primary_selection")
+    if not is_primary_schema and primary_selection is not None:
+        raise ValueError("primary_selection requires aalto.paired_seed_metrics.v2")
+    if is_primary_schema and primary_selection is None:
+        raise ValueError("aalto.paired_seed_metrics.v2 requires primary_selection")
+    if is_primary_schema:
+        if expected_seeds is None:
+            raise ValueError("primary selection requires the prospectively fixed expected_seeds")
+        if not isinstance(primary_selection, dict):
+            raise ValueError("primary_selection must be an object")
+        if primary_selection.get("contrast") != "treatment_vs_always_no_trade":
+            raise ValueError("primary selection contrast must be treatment_vs_always_no_trade")
+        if primary_selection.get("metric") != "net_return_initial_equity_pct":
+            raise ValueError("primary selection metric must be net_return_initial_equity_pct")
+        if primary_selection.get("alternative") != "greater":
+            raise ValueError("primary selection alternative must be greater")
+        if primary_selection.get("control_policy_id") != "always_no_trade_v1":
+            raise ValueError("primary selection control must be always_no_trade_v1")
+        if intervention != "policy_sha256":
+            raise ValueError("primary selection must declare policy_sha256 as its intervention")
+        if metrics != ["net_return_initial_equity_pct"]:
+            raise ValueError(
+                "primary selection payload must contain only the "
+                "net_return_initial_equity_pct metric"
+            )
+        exposure = payload.get("evaluation_exposure")
+        if exposure != "development":
+            raise ValueError("primary selection requires development-only evaluation exposure")
+        if evidence_role != "matched_exploratory":
+            raise ValueError("primary selection results must remain matched_exploratory")
+        initial_equities: set[float] = set()
+        for index, pair in enumerate(pairs):
+            if not isinstance(pair, dict):
+                raise ValueError(f"pairs[{index}] must be an object")
+            control = pair.get("control")
+            treatment = pair.get("treatment")
+            if not isinstance(control, dict) or not isinstance(treatment, dict):
+                raise ValueError(f"pairs[{index}] is missing a control or treatment arm")
+            if control.get("policy_id") != "always_no_trade_v1":
+                raise ValueError(f"pairs[{index}] control is not always_no_trade_v1")
+            for arm_name, arm in (("control", control), ("treatment", treatment)):
+                if arm.get("evaluation_complete") is not True:
+                    raise ValueError(f"pairs[{index}] {arm_name} path is incomplete")
+                if arm.get("hard_risk_gate_passed") is not True:
+                    raise ValueError(f"pairs[{index}] {arm_name} path failed the hard-risk gate")
+                provenance = arm.get("provenance")
+                if not isinstance(provenance, dict):
+                    raise ValueError(f"pairs[{index}] {arm_name} is missing provenance")
+                initial = _finite_number(
+                    arm.get("initial_operating_equity"),
+                    field=f"pairs[{index}].{arm_name}.initial_operating_equity",
+                )
+                provenance_initial = _finite_number(
+                    provenance.get("initial_capital"),
+                    field=f"pairs[{index}].{arm_name}.provenance.initial_capital",
+                )
+                if not math.isclose(initial, provenance_initial, rel_tol=1e-12, abs_tol=1e-9):
+                    raise ValueError(
+                        f"pairs[{index}] {arm_name} starting equity does not match provenance"
+                    )
+                initial_equities.add(initial)
+                retained = _finite_number(
+                    arm.get("ending_retained_equity"),
+                    field=f"pairs[{index}].{arm_name}.ending_retained_equity",
+                )
+                payouts = _finite_number(
+                    arm.get("cumulative_payouts"),
+                    field=f"pairs[{index}].{arm_name}.cumulative_payouts",
+                )
+                if initial <= 0.0 or payouts < 0.0:
+                    raise ValueError(f"pairs[{index}] {arm_name} account summary is invalid")
+                if arm_name == "control":
+                    trade_count = arm.get("trade_count")
+                    if isinstance(trade_count, bool) or trade_count != 0:
+                        raise ValueError(f"pairs[{index}] no-trade control has trades")
+                    if not math.isclose(retained, initial, rel_tol=1e-12, abs_tol=1e-9):
+                        raise ValueError(
+                            f"pairs[{index}] no-trade control did not retain initial equity"
+                        )
+                    if payouts != 0.0:
+                        raise ValueError(f"pairs[{index}] no-trade control recorded a payout")
+                expected_return = 100.0 * (retained + payouts - initial) / initial
+                arm_metrics = arm.get("metrics")
+                if not isinstance(arm_metrics, dict):
+                    raise ValueError(f"pairs[{index}] {arm_name} metrics must be an object")
+                recorded_return = _finite_number(
+                    arm_metrics.get("net_return_initial_equity_pct"),
+                    field=f"pairs[{index}].{arm_name}.net_return_initial_equity_pct",
+                )
+                if not math.isclose(expected_return, recorded_return, rel_tol=1e-9, abs_tol=1e-9):
+                    raise ValueError(
+                        f"pairs[{index}] {arm_name} full-path net return does not reconcile"
+                    )
+        if len(initial_equities) != 1:
+            raise ValueError("primary selection paths must share one initial operating equity")
 
     seen_seeds: set[int] = set()
     seen_run_ids: set[str] = set()
@@ -179,25 +287,27 @@ def _validate_pair_input(
         seeds.append(seed)
         arms: dict[str, dict[str, Any]] = {}
         for arm_name in ("control", "treatment"):
-            arm = pair.get(arm_name)
-            if not isinstance(arm, dict):
+            arm_record = pair.get(arm_name)
+            if not isinstance(arm_record, dict):
                 raise ValueError(f"pairs[{index}].{arm_name} must be an object")
-            run_id = arm.get("run_id")
+            run_id = arm_record.get("run_id")
             if not isinstance(run_id, str) or not run_id.strip() or run_id in seen_run_ids:
                 raise ValueError(f"pairs[{index}].{arm_name}.run_id must be unique and non-empty")
             seen_run_ids.add(run_id)
-            if arm.get("status") != "succeeded":
+            if arm_record.get("status") != "succeeded":
                 raise ValueError(f"run {run_id} is not succeeded")
-            arm_role = arm.get("evidence_role")
+            arm_role = arm_record.get("evidence_role")
             if arm_role not in EVIDENCE_ROLES:
                 raise ValueError(f"run {run_id} has an unsupported evidence role")
             seen_roles.add(arm_role)
             if evidence_role is not None and arm_role != evidence_role:
                 raise ValueError(f"run {run_id} evidence role does not match the comparison")
-            provenance = arm.get("provenance")
+            provenance = arm_record.get("provenance")
             if not isinstance(provenance, dict):
                 raise ValueError(f"run {run_id} is missing provenance")
             missing = [field for field in MATCH_FIELDS if field not in provenance]
+            if intervention not in MATCH_FIELDS and intervention not in provenance:
+                missing.append(intervention)
             if missing:
                 raise ValueError(f"run {run_id} is missing match provenance: {missing}")
             if provenance["seed"] != seed:
@@ -206,13 +316,13 @@ def _validate_pair_input(
                 raise ValueError(f"run {run_id} provenance identity mismatch")
             if (
                 "evidence_role" in provenance
-                and provenance["evidence_role"] != arm["evidence_role"]
+                and provenance["evidence_role"] != arm_record["evidence_role"]
             ):
                 raise ValueError(f"run {run_id} evidence role mismatch")
             arms[arm_name] = {
                 "run_id": run_id,
                 "provenance": provenance,
-                "metrics": arm.get("metrics"),
+                "metrics": arm_record.get("metrics"),
             }
 
         left = arms["control"]["provenance"]
@@ -228,6 +338,11 @@ def _validate_pair_input(
                     raise ValueError(f"declared intervention must differ: {field}")
             elif left_value != right_value or left_value in (None, ""):
                 raise ValueError(f"paired runs have missing or mismatched provenance: {field}")
+        if intervention not in MATCH_FIELDS:
+            left_value = left.get(intervention)
+            right_value = right.get(intervention)
+            if left_value in (None, "") or right_value in (None, "") or left_value == right_value:
+                raise ValueError(f"declared intervention must differ: {intervention}")
 
         for arm_name, destination in (("control", control_values), ("treatment", treatment_values)):
             arm_metrics = arms[arm_name]["metrics"]
@@ -253,22 +368,52 @@ def _validate_pair_input(
     return comparison_id, intervention, seeds, controls, treatments
 
 
-def _sign_flip_p_value(differences: NDArray[np.float64], *, rng_seed: int) -> tuple[float, str]:
-    observed = abs(float(differences.mean()))
+def _sign_flip_p_value(
+    differences: NDArray[np.float64], *, rng_seed: int, alternative: str = "two-sided"
+) -> tuple[float, str]:
+    if alternative not in {"two-sided", "greater", "less"}:
+        raise ValueError("alternative must be two-sided, greater, or less")
+    observed_mean = float(differences.mean())
+    observed = abs(observed_mean) if alternative == "two-sided" else observed_mean
     n = len(differences)
+    if alternative == "greater" and observed_mean <= 0.0:
+        return 1.0, "one-sided paired sign-flip (greater)"
+    if alternative == "less" and observed_mean >= 0.0:
+        return 1.0, "one-sided paired sign-flip (less)"
+
+    def is_extreme(mean: float) -> bool:
+        if alternative == "greater":
+            return mean >= observed - 1e-12
+        if alternative == "less":
+            return mean <= observed + 1e-12
+        return abs(mean) >= observed - 1e-12
+
     if n <= EXACT_SIGN_FLIP_MAX_PAIRS:
         extreme = sum(
-            abs(float(np.mean(differences * signs))) >= observed - 1e-12
+            is_extreme(float(np.mean(differences * signs)))
             for signs in itertools.product((-1.0, 1.0), repeat=n)
         )
-        return extreme / (2**n), "exact two-sided paired sign-flip"
+        label = (
+            "exact two-sided paired sign-flip"
+            if alternative == "two-sided"
+            else f"exact one-sided paired sign-flip ({alternative})"
+        )
+        return extreme / (2**n), label
     rng = np.random.default_rng(rng_seed)
     signs = rng.choice(np.array([-1.0, 1.0]), size=(MONTE_CARLO_SIGN_FLIP_DRAWS, n))
-    means = np.abs((signs * differences).mean(axis=1))
-    extreme = int(np.count_nonzero(means >= observed - 1e-12))
-    return (extreme + 1) / (
-        MONTE_CARLO_SIGN_FLIP_DRAWS + 1
-    ), "Monte Carlo two-sided paired sign-flip"
+    means = (signs * differences).mean(axis=1)
+    if alternative == "greater":
+        extreme = int(np.count_nonzero(means >= observed - 1e-12))
+    elif alternative == "less":
+        extreme = int(np.count_nonzero(means <= observed + 1e-12))
+    else:
+        extreme = int(np.count_nonzero(np.abs(means) >= observed - 1e-12))
+    label = (
+        "Monte Carlo two-sided paired sign-flip"
+        if alternative == "two-sided"
+        else f"Monte Carlo one-sided paired sign-flip ({alternative})"
+    )
+    return (extreme + 1) / (MONTE_CARLO_SIGN_FLIP_DRAWS + 1), label
 
 
 def _holm_adjust(p_values: dict[str, float]) -> dict[str, float]:
@@ -288,6 +433,9 @@ def analyze_paired_seed_metrics(
     if bootstrap_draws <= 0:
         raise ValueError("bootstrap_draws must be positive")
     comparison_id, intervention, seeds, controls, treatments = _validate_pair_input(payload)
+    primary_selection = payload.get("primary_selection")
+    if primary_selection is not None and (rng_seed != 42 or bootstrap_draws != BOOTSTRAP_DRAWS):
+        raise ValueError("primary selection requires 10,000 bootstrap draws with RNG seed 42")
     rng = np.random.default_rng(rng_seed)
     raw_p: dict[str, float] = {}
     rows: dict[str, dict[str, Any]] = {}
@@ -301,7 +449,10 @@ def analyze_paired_seed_metrics(
         mean_difference = float(values.mean())
         sample_indices = rng.integers(0, len(values), size=(bootstrap_draws, len(values)))
         bootstrap_means = values[sample_indices].mean(axis=1)
-        p_value, p_method = _sign_flip_p_value(values, rng_seed=rng_seed)
+        alternative = (
+            str(primary_selection["alternative"]) if primary_selection is not None else "two-sided"
+        )
+        p_value, p_method = _sign_flip_p_value(values, rng_seed=rng_seed, alternative=alternative)
         raw_p[metric] = p_value
         rows[metric] = {
             "paired_seed_count": len(values),
@@ -335,9 +486,15 @@ def analyze_paired_seed_metrics(
             "sign_flip_p_value": p_value,
             "sign_flip_method": p_method,
         }
-    adjusted_p = _holm_adjust(raw_p)
-    for metric, row in rows.items():
-        row["holm_adjusted_p_value"] = adjusted_p[metric]
+    if primary_selection is None:
+        adjusted_p = _holm_adjust(raw_p)
+        for metric, row in rows.items():
+            row["holm_adjusted_p_value"] = adjusted_p[metric]
+        multiple_testing = {"method": "Holm", "metric_count": len(rows)}
+    else:
+        for row in rows.values():
+            row["holm_adjusted_p_value"] = None
+        multiple_testing = {"method": "none_single_primary_contrast", "metric_count": 1}
     pair_lineage = [
         {
             "seed": pair["seed"],
@@ -353,8 +510,12 @@ def analyze_paired_seed_metrics(
         }
         for pair in payload["pairs"]
     ]
-    return {
-        "schema": "aalto.paired_seed_statistics.v1",
+    report = {
+        "schema": (
+            "aalto.paired_seed_statistics.v2"
+            if primary_selection is not None
+            else "aalto.paired_seed_statistics.v1"
+        ),
         "comparison_id": comparison_id,
         "intervention_field": intervention,
         "evidence_role": payload.get("evidence_role")
@@ -365,7 +526,7 @@ def analyze_paired_seed_metrics(
         "n_pairs": len(seeds),
         "pair_lineage": pair_lineage,
         "bootstrap": {"unit": "paired_seed", "draws": bootstrap_draws, "rng_seed": rng_seed},
-        "multiple_testing": {"method": "Holm", "metric_count": len(rows)},
+        "multiple_testing": multiple_testing,
         "metrics": rows,
         "interpretation_limits": [
             "The interval resamples paired seeds; it does not represent within-path temporal uncertainty.",
@@ -375,6 +536,9 @@ def analyze_paired_seed_metrics(
             "A sign-flip test assumes symmetry of paired differences under its null and does not establish causality by itself.",
         ],
     }
+    if primary_selection is not None:
+        report["primary_selection"] = primary_selection
+    return report
 
 
 def main() -> int:

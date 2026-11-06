@@ -6,11 +6,11 @@ a passing synthetic example does not establish when a value becomes
 observable. The evidence matrix records source event time separately from the
 time at which the policy may use the value.
 
-The current generated inventory lists 95 public top-level function candidates
+The current generated inventory lists 96 public top-level function candidates
 under `features/`, 11 upstream time/session transformation candidates, and all
 108 setup-entry idea flags. Twenty-four flags are supported by the registered
 opportunity-census configuration. The matrix now has explicit source-contract
-metadata for all 106 function candidates. These records distinguish reviewed
+metadata for all 107 function candidates. These records distinguish reviewed
 source behavior from remaining fixture, prefix, configuration, and timing
 gaps; metadata presence does not mean every function has a passing direct
 test. Selected component fixtures and real-market prefix checks establish
@@ -74,27 +74,49 @@ and publication time remain open. The source-backed mapping is in
 
 Indicator contracts use current/past rolling or recursive state; their exact
 warm-up and units are recorded in the matrix. `sweep_velocity` currently
-accepts Asian level arguments but only uses London levels, and `wick_ratio`
-measures the upper wick only. Those semantic/API naming questions are recorded
-without changing feature columns that existing checkpoints may consume.
-
-The current-source real-market prefix audit resolves 130 configurations into
-19 feature-builder groups and passes all 57 comparisons across three cutoffs.
-The current runner and profile inventory hashes match; 78 feature-source and
-four local-input hashes are recorded. This establishes prefix invariance for
-that resolved inventory and those cutoffs only. It does not prove source-event
-time, publication latency, authoritative session boundaries, logical-event
-cardinality, or every execution and label path. The latest full-tree software
-gate passed 931 scoped release tests with two existing transformer warnings;
-full-tree Ruff and Mypy also passed. The final documentation inventory,
-evidence audit, and strict Sphinx build are deferred until evidence packets
-stabilize.
+accepts Asian level arguments but only uses London levels. `wick_ratio`
+measures the upper wick only; a valid zero-range candle now maps to a finite
+zero ratio. PO3 phase uses `-1` outside the configured session, while active
+phases are 0/1/2; this sentinel distinguishes clipped `session_progress` from
+active boundaries without changing observation shape. The latest completed
+feature audit used cache identity `v40-ifvg-missing-atr-distance`. IFVG distance
+now preserves its 5.0 sentinel when ATR is unavailable instead of using a
+unit-price fallback;
+the focused evidence is in
+`evidence/research/feature_causality/ifvg_distance_atr_availability/`. The
+focused PO3-state test module passes 23 tests. The v40 selected-group prefix
+packet at `evidence/research/feature_causality/ifvg_profile_prefix_current_source/`
+passes 15/15 cutoffs across five IFVG/PO3 groups, with zero maximum delta. The
+final full v40 audit resolves 130 configurations into 19
+feature-builder groups and passes all 57 comparisons across three cutoffs,
+covering 21,741,766,365 values with zero maximum absolute delta. The fail-closed
+merge and independent post-run verification matched 78 feature-source hashes,
+the inventory hash, and four local-input hashes to current files. The
+[`current-source prefix packet`](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/README.md)
+records that run. The percentage-only risk-config migration is included in the
+verified snapshot. This establishes prefix invariance for that resolved inventory,
+source snapshot, and those cutoffs only. It does not prove source-event time,
+publication latency, authoritative session boundaries, logical-event
+cardinality, or every execution and label path. The v40 evidence above is a
+historical source snapshot. The current code has since advanced through
+`v41-pd-distance-availability`, which preserves unknown active-session PD
+distances as nonfinite, to `v42-htf-bias-availability`, which adds a finite
+availability channel for a neutral versus unavailable HTF bias. Focused
+regressions are registered but unrun; the full-profile feature matrix,
+missingness report, prefix audit, and release gate must be refreshed before
+treating the v41/v42 changes as accepted. The latest full-tree software gate
+recorded for the prior snapshot passed 931 scoped release tests with two
+existing transformer warnings; full-tree Ruff and Mypy also passed. The final
+documentation inventory, evidence audit, and strict Sphinx build are deferred
+until evidence packets stabilize.
 
 The reusable analysis and fail-closed shard merger are
 `scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py`
 and `scripts/research/analysis/features/merge_real_market_feature_prefix_shards.py`.
-The current report is
-[`real_market_feature_prefix_invariance_all_profiles.json`](../../evidence/research/feature_causality/real_market_feature_prefix_invariance_all_profiles.json).
+The current report is in the
+[`current-source packet`](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/README.md);
+the v39 snapshot remains in
+[`real_market_feature_prefix_invariance_v39.json`](../../evidence/research/feature_causality/real_market_feature_prefix_invariance_v39.json).
 
 See the [generated causality matrix](https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/feature_causality),
 the [setup opportunity census](https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/trade_setup_opportunity_census),

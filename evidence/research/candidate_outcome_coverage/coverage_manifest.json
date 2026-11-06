@@ -1,0 +1,32 @@
+{
+  "by_entry_type": {
+    "limit": {
+      "incomplete_or_missing_quote_intervals": 20308,
+      "proposal_count": 25851,
+      "quote_complete_through_order_disposition": 5543,
+      "total_expected_quote_minutes": 1426256,
+      "total_incomplete_quote_minutes": 240671,
+      "total_missing_quote_minutes": 137
+    },
+    "market": {
+      "incomplete_or_missing_quote_intervals": 4723,
+      "proposal_count": 28787,
+      "quote_complete_through_order_disposition": 24064,
+      "total_expected_quote_minutes": 28787,
+      "total_incomplete_quote_minutes": 4723,
+      "total_missing_quote_minutes": 0
+    }
+  },
+  "coverage_packet_manifest_sha256": "48e03b4e07166e3baa12de92e1ee35a9c0aaf30f5b9c7932c36fcdd2b41ddb3b",
+  "coverage_rule": "For market proposals, the eligible action-fill minute must be present and quote-complete. For pending limits, every minute from eligible fill through the earlier of expiry, session close, and training cutoff must be present and quote-complete before a no-touch expiry can be labeled. This is a conservative local-source consistency rule, not proof of exchange-tape completeness.",
+  "interval_csv_sha256": "1b7784f8959dedaa06948614436004d25eef0a7eb074faa949ec44bc9c7565e9",
+  "proposal_count": 54638,
+  "proposal_packet_sha256": "0dd4a94288ffe714fa87b6e72b0c15112805d5eb0267f67d4a1a154b1609c1da",
+  "schema_version": "candidate-proposal-quote-coverage-v1",
+  "source_sha256": {
+    "config/research/trade_setup_mtf_reasoning_2m.yaml": "cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+    "scripts/research/analysis/evaluation/audit_candidate_quote_coverage.py": "6fc520a1262e4b9185fd73ba2f950f3f831d18eb448206ea7705fac4e56eee2b"
+  },
+  "status": "proposal_interval_coverage_audited",
+  "timezone_conversion": "proposal UTC timestamps converted to configured fixed-offset Etc/GMT-3 to match raw source wall-clock"
+}

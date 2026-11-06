@@ -1,0 +1,37 @@
+{
+  "exact_rows_matched": 12,
+  "method": "deterministic replay sample through the versioned production execution function",
+  "mismatches": [],
+  "outcome_manifest_sha256": "682f5d50d21b2f75364dfae09b63362379c318f0f8b99b27e13df44af2845cea",
+  "outcome_parquet_sha256": "274e23970adf8ed4eae619e7fd06d2eeca06839e0a557195da52725b1af79bcd",
+  "per_stratum_limit": 1,
+  "proposal_manifest_sha256": "80ca5e249ad302fe7f325d61f13d4b9d587e88ac187ef80b07f47f09f76e1662",
+  "sampled_rows": 12,
+  "schema_version": "candidate-outcome-replay-sample-verification-v1",
+  "script_sha256": "7144b92a7f53eb20f2175c9dfeb5f24d40fa4359fc9eb08d2f287cff315dc8eb",
+  "source_sha256": {
+    "evaluation/candidate_execution.py": "f1e3e5f2ba84e8416a0ed02393d3de14f48e4ccabebcbc36a5d43cd5e05cfc0b",
+    "evaluation/candidate_outcomes.py": "77d097c3d7cc279d7d969ef50bcd46e9295b47c9396381ad91a5886aea33f3d1",
+    "evaluation/candidate_proposals.py": "07d480dadb9f21c4318328a76c2425828f372ba278781313530ca0bb63cc5bb6",
+    "evaluation/candidate_quote_coverage.py": "d568fbf6533e1643b823b2c9793e316ea9dcfaf48f49244d946d9410c26bcc17",
+    "market_data/loading/ticks.py": "b64d7827dd30cef40c1687d9c02ec71feea0aaecd0e7d7d100a5c603fcdcc7a9",
+    "scripts/research/analysis/evaluation/replay_candidate_proposal_outcomes.py": "1ea7d1b9e6e1489e91cbaa5996a9d509d226e6d90e37e66f5de6c21ea12d5bcf",
+    "trading/execution/quotes.py": "acc7e20404bbbb8287237e98c8212dcbe4ba1414b89d7c9f0116e66405bfddc9"
+  },
+  "status": "verified_stratified_replay_sample",
+  "strata_counts": {
+    "limit|filled_resolved|None": 1,
+    "limit|unfilled_expired|None": 1,
+    "limit|unresolved_data|entry fill occurred at or after the configured session close": 1,
+    "limit|unresolved_data|local two-sided quote coverage is incomplete before exit resolution": 1,
+    "limit|unresolved_data|local two-sided quote coverage is incomplete before order expiry": 1,
+    "limit|unresolved_data|selected stop is not protective relative to the realized entry fill": 1,
+    "limit|unresolved_data|session-close execution quote predates the entry fill": 1,
+    "market|filled_resolved|None": 1,
+    "market|unresolved_data|local two-sided quote coverage is incomplete before exit resolution": 1,
+    "market|unresolved_data|market-entry quote unavailable within the configured quote-wait limit": 1,
+    "market|unresolved_data|selected stop is not protective relative to the realized entry fill": 1,
+    "market|unresolved_data|selected target is not beyond the realized entry fill": 1
+  },
+  "tickbook_sha256": "2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc"
+}

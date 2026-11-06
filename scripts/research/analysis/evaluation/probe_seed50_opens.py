@@ -6,15 +6,15 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 from omegaconf import OmegaConf
 from stable_baselines3 import PPO
 
 from configuration import load_config
-from features import build_features, feature_cache_path
 from market_data.loading import run_pipeline
+from market_data.splits.definitions import get_split_config, get_train_start_config
 from simulation.environment.env import TradingEnv
 from training.configuration.strategy_overlays import merge_strategy_config
+from training.runner.feature_preparation import build_split_scoped_features
 from training.setup.environments import (
     guardrail_kwargs,
     max_loss_per_trade,
@@ -116,21 +116,16 @@ def main():
     # secondary
     sec = cfg.data.get("secondary")
     secondary_m1 = frames[sec]["M1"] if sec else None
-    train_end = pd.Timestamp(cfg.data.split.train_end)
-    if primary_m1.index.tz is not None and train_end.tzinfo is None:
-        train_end = train_end.tz_localize(primary_m1.index.tz)
-    train_mask = primary_m1.index <= train_end
-    cache_dir = Path(cfg.data.cache_dir)
-    feat_cache = feature_cache_path(
-        cache_dir,
-        primary_sym,
-        cfg,
+    train_end, _ = get_split_config(cfg)
+    train_start = get_train_start_config(cfg)
+    features = build_split_scoped_features(
         primary_m1,
-        train_mask=train_mask,
+        cfg=cfg,
+        train_end=train_end,
+        train_start=train_start,
         secondary=secondary_m1,
-    )
-    features = build_features(
-        primary_m1, secondary=secondary_m1, cfg=cfg, cache_path=feat_cache, train_mask=train_mask
+        cache_dir=Path(cfg.data.cache_dir),
+        symbol=str(primary_sym),
     )
     # short NY slice from train
     bars = primary_m1.iloc[:5000]

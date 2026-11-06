@@ -1,0 +1,22 @@
+{
+  "family_results": {
+    "fvg_zones": "covered",
+    "higher_timeframe_visibility": "covered",
+    "ifvg": "covered",
+    "liquidity_sweeps_and_bos": "covered",
+    "order_blocks": "covered",
+    "po3_setup_state": "covered",
+    "smt_secondary_timing": "covered",
+    "swings_and_retained_structure": "covered"
+  },
+  "limitations": [
+    "Synthetic fixture behavior only; no market prevalence or policy effect.",
+    "Validity and left-padding semantics for every model tensor remain open.",
+    "Training-only fit scope and cache parity remain separate gates.",
+    "Historical PPO decision-to-candidate linkage remains unavailable."
+  ],
+  "schema": "qrl.active_event_family_semantics.v1",
+  "status": "passed",
+  "test_count": 157,
+  "test_file_count": 9
+}

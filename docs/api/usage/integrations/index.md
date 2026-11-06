@@ -1,6 +1,6 @@
 # Integrations function usage
 
-This guide contains 70 public callable records across 13 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+This guide contains 71 public callable records across 13 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
 
 ```{toctree}
 :maxdepth: 1

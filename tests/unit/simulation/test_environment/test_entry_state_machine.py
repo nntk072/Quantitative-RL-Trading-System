@@ -59,6 +59,22 @@ def test_fsm_transitions_keep_trigger_intent_separate_from_entry() -> None:
     assert machine.candidate is None
 
 
+def test_actual_position_open_is_tracked_for_fsm_and_external_action_paths() -> None:
+    machine = EntryStateMachine(candidate_max_age_bars=4)
+    machine.observe(_evidence(100, detected=True, arm=True, direction=1))
+    machine.observe(_evidence(101, arm=True))
+    machine.mark_position_opened()
+    assert machine.state == "IN_POSITION"
+    assert machine.entered == 1
+    machine.mark_closed()
+
+    machine.mark_position_opened()
+    assert machine.state == "IN_POSITION"
+    assert machine.entered == 2
+    machine.mark_closed()
+    assert machine.closed == 2
+
+
 def test_fsm_requires_matching_retest_when_configured() -> None:
     machine = EntryStateMachine(candidate_max_age_bars=4, arm_requires_retest=True)
     machine.observe(_evidence(100, detected=True, direction=1))

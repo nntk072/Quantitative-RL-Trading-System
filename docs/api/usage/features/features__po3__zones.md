@@ -14,7 +14,7 @@ This page contains 3 public callable records owned by `features.po3.zones`. Stat
 
 **Observed usage:**
 
-1. [production caller: `build_fvg_zones`](../../../../features/po3/zones.py#L118)
+1. [production caller: `build_fvg_zones`](../../../../features/po3/zones.py#L130)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -41,7 +41,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     return zones
 ```
 
-2. [production caller: `build_fvg_zones_for_plot`](../../../../features/po3/zones.py#L227)
+2. [production caller: `build_fvg_zones_for_plot`](../../../../features/po3/zones.py#L239)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -89,10 +89,13 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
   ```text
   bars (pd.DataFrame): M1 OHLC bars (DatetimeIndex, 'high'/'low' columns) that produced the signals.
-  signals (pd.DataFrame): Output of :func:`detect_htf_fvg`, :func:`detect_ltf_ifvg`, or the
-      combined output of :func:`detect_po3_entries`.  Must share the index of
-      ``bars`` and contain a subset of the well-known column names.
+  signals (pd.DataFrame): Output of a PO3 FVG/IFVG detector. Must share
+      the index of ``bars`` and contain a subset of the well-known names.
   max_zone_bars (int): Maximum number of bars a zone stays active before it is considered expired.
+  signals_are_events: Treat every positive row as a separate formation
+      event. Use this for sparse detector output where adjacent events
+      may both have a value of one. Leave false for forward-filled state
+      signals, where each contiguous positive run represents one event.
   ```
 
 - **Returns:**
@@ -103,7 +106,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_zone_from_htf_fvg`](../../../../tests/unit/features/test_po3_config.py#L594)
+1. [test fixture: `test_zone_from_htf_fvg`](../../../../tests/unit/features/test_po3_config.py#L700)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -121,7 +124,7 @@ def test_zone_from_htf_fvg(self, fvg_bars: pd.DataFrame) -> None:
     assert z.start_ts < z.end_ts
 ```
 
-2. [test fixture: `test_zone_edge_dedup`](../../../../tests/unit/features/test_po3_config.py#L607)
+2. [test fixture: `test_zone_edge_dedup`](../../../../tests/unit/features/test_po3_config.py#L713)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -147,7 +150,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build drawable FVG/IFVG zones from native HTF/LTF candles (plot-only).
 
-**Exact API:** {py:obj}`features.po3.zones.build_fvg_zones_for_plot` · **Source:** [features/po3/zones.py:165](../../../../features/po3/zones.py#L165)
+**Exact API:** {py:obj}`features.po3.zones.build_fvg_zones_for_plot` · **Source:** [features/po3/zones.py:177](../../../../features/po3/zones.py#L177)
 
 **Inputs and outputs:**
 
@@ -169,7 +172,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_ltf_plot_zone_starts_two_candles_before_confirmation`](../../../../tests/unit/features/test_po3_config.py#L930)
+1. [test fixture: `test_ltf_plot_zone_starts_two_candles_before_confirmation`](../../../../tests/unit/features/test_po3_config.py#L1072)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -186,7 +189,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         assert bull[0].start_ts == pd.Timestamp("2025-01-02 10:05", tz="Etc/GMT-3")
 ```
 
-2. [test fixture: `test_plot_zone_starts_at_bar2_open`](../../../../tests/unit/features/test_po3_config.py#L937)
+2. [test fixture: `test_plot_zone_starts_at_bar2_open`](../../../../tests/unit/features/test_po3_config.py#L1079)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

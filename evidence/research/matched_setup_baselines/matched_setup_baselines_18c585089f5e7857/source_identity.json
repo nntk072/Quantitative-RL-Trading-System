@@ -1,0 +1,146 @@
+{
+  "python_executable": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+  "runtime": {
+    "cuda_available": "True",
+    "cuda_device": "NVIDIA GH200 144G HBM3e",
+    "cuda_visible_devices": "0",
+    "gymnasium": "1.3.0",
+    "numpy": "2.2.6",
+    "pandas": "2.3.2",
+    "platform": "Linux-5.14.0-687.64.1.el9_8.aarch64-aarch64-with-glibc2.34",
+    "python": "3.12.15",
+    "python_hash_seed_env": null,
+    "stable-baselines3": "2.9.0",
+    "torch": "2.14.0+cu130"
+  },
+  "source": {
+    "available": true,
+    "dirty_files": [
+      {
+        "path": "docs/README.md",
+        "sha256": "e6961e7b3a896d5b73210e508ae19754ad44409c4516849a673a135e010a9ae7"
+      },
+      {
+        "path": "docs/architecture/migrations/experiment_run_name_migration.json",
+        "sha256": "054a3c0eec7bea7b8900e1db2762edf57c4b122fcdd232e3d48362cac2222a47"
+      },
+      {
+        "path": "docs/architecture/migrations/research_directory_classification_20261031.json",
+        "sha256": "f1e95c71868ca1915ea1e106c76851f414b0ba65612b8933f1e7dbf4bfd52f25"
+      },
+      {
+        "path": "docs/index.md",
+        "sha256": "c301d33562164ed459cc330b4169a98b91eff1bc6729d96e386e4eb6014d7981"
+      },
+      {
+        "path": "docs/operations/research_execution_plan.md",
+        "sha256": "0df1d63bb367ce3d4372c9b8ef190e86d9aae3364164c78a554d7a2ce70efbb4"
+      },
+      {
+        "path": "docs/reference/public_api.json",
+        "sha256": "a9d2c2a54806e17ffd4966b2921153e4333df7e8629f03f18acdbb188f5d5d3e"
+      },
+      {
+        "path": "docs/reference/public_api.md",
+        "sha256": "123994a5db944d91d1580a66c54659adde18a71a38dd823c1cd0fcf8ff530d34"
+      },
+      {
+        "path": "docs/research/README.md",
+        "sha256": "a5cbaf363282ddf229a453f39150e2e0c4e19545f0f325ca475899406acc22c1"
+      },
+      {
+        "path": "docs/research/model_observation_and_action_semantics.md",
+        "sha256": "385d94fb182ae74c041e8f5c789f671b85c653c911d37dbb46569a5d2d693e9e"
+      },
+      {
+        "path": "docs/research/research_evidence_report.md",
+        "sha256": "61a75afd4b5d79ff5de284d41d5db49266b9fa994a105f262fbc42513d990161"
+      },
+      {
+        "path": "docs/thesis/research_evidence_report.md"
+      },
+      {
+        "path": "evaluation/metrics/matched_comparison.py",
+        "sha256": "373fdde16371db2c9dea2f2cf44f3fc47ee6891789e3d99a129d6e56aefa660b"
+      },
+      {
+        "path": "evaluation/metrics/trade_excursions.py",
+        "sha256": "12c756e7a78325436a9f5b4b5fea28a022a36096b381dcd10da139d5fed54c30"
+      },
+      {
+        "path": "evaluation/reporting/matched_setup_baseline_bundle.py",
+        "sha256": "277f1dfc66f3fc0a5cbde446824c92146a1085570e36c2d179466914f971daa6"
+      },
+      {
+        "path": "evaluation/rollout/matched_setup_baselines.py",
+        "sha256": "8f46d9a69971ee82954b626aa73489d4609ad69f6b645229774c304df797dc92"
+      },
+      {
+        "path": "evaluation/rollout/structure_priority_setup.py",
+        "sha256": "d0690b1707c023d23fbeb056f29e07bdceff29c38f09bf79dbd984496ebc8c7a"
+      },
+      {
+        "path": "evaluation/rollout/trained_policy_rollout.py",
+        "sha256": "ab454e71741c4b3e6652a22b71509be182ababc905628c8000ad0190d7c24e37"
+      },
+      {
+        "path": "features/po3/setup_lifecycle.py",
+        "sha256": "c1ed3324772ab4f0fc1ebbf2df884d15c4bc7d2aedeb84068391bb447d01460f"
+      },
+      {
+        "path": "scripts/research/analysis/evaluation/run_matched_setup_baselines.py",
+        "sha256": "2577b67c3292cca9fe04356bb2aa388a4d23ba6b1999b910759345e88112de4f"
+      },
+      {
+        "path": "scripts/research/analysis/evidence/audit_selected_checkpoint_recoverability.py",
+        "sha256": "b954c02dbe6c4e90ca29a7bc5e0d35e6161d02f794886cf83e0406720368766c"
+      },
+      {
+        "path": "scripts/research/analysis/features/build_po3_setup_lifecycle_ledger.py",
+        "sha256": "c42e9156b47a88563a8cc6e2036c89fa6444aeb5a76ec27085f4924191d182cb"
+      },
+      {
+        "path": "simulation/backtest/event_driven_backtest.py",
+        "sha256": "b58c11ff1c98c2a5cfe0b451228d558a5f9b9177d986b9a87596230bf445e58a"
+      },
+      {
+        "path": "simulation/backtest/protective_events.py",
+        "sha256": "bed4d3142c5c4cb18cac71c3eb1042ae1e24bd950caa1b18d8add01c497d684f"
+      },
+      {
+        "path": "simulation/backtest/runtime.py",
+        "sha256": "3bf1664540cb449b30f9eb8996a28516c22c6c416cddee6447eee49c31e90476"
+      },
+      {
+        "path": "simulation/environment/position_runtime.py",
+        "sha256": "b3c3baff1063c423f5f5023dc0dea11bf120d69f06c3804f72652823e28a46de"
+      },
+      {
+        "path": "simulation/environment/protective_level_runtime.py",
+        "sha256": "5ce2554d38e46e4c8d405a784b058b670b00ab2bd76bf2ec47cc178b5b7b43d7"
+      },
+      {
+        "path": "simulation/environment/step_end_runtime.py",
+        "sha256": "e10a2591bf69b91bbf78c09d5fdc9f50d923223a04486de20aacef150c567476"
+      },
+      {
+        "path": "tests/architecture/test_repository_path_migration.py",
+        "sha256": "d6d5a07c6ea099291860c0b6c4e77f9d36faca2a0a031b5262a02139b833c0b6"
+      },
+      {
+        "path": "tests/integration/evaluation/test_matched_setup_baselines.py",
+        "sha256": "1f66621a8df470dfbd1e7f8502a30eddbb923a5185e36f95248ef94d08a7439b"
+      },
+      {
+        "path": "tests/unit/simulation/test_environment/test_trade_setup_observation.py",
+        "sha256": "7879c000ab9b594a95fa16e22e767a31f04b511af3a8b56a0c66fe8dbe218318"
+      },
+      {
+        "path": "trading/risk/__init__.py",
+        "sha256": "05d89f17e6e89cdedcc8e558ef50715b6b5dff9d2aa58619d7637d11bddf6072"
+      }
+    ],
+    "head": "367561a7717a3367fbb280084ffcf0781f57119c"
+  },
+  "source_tree_hash": "12332118ff34bbe16ecda482840e58b87fc5512889315b96b0f1f12ca9e129b1"
+}

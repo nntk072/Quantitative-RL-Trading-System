@@ -61,6 +61,11 @@ def _build_lagrangian_callback(cfg: Any, *, algo: str, mvp: bool) -> Any | None:
         raise ValueError(
             "constrained_rl requires the complete chronological train split; MVP is invalid"
         )
+    ftmo = cfg.get("ftmo", {})
+    account = cfg.get("account", {})
+    initial_balance = float(account.get("initial_balance", 100_000.0))
+    daily_loss_limit_usd = initial_balance * float(ftmo.get("daily_loss_limit_pct", 0.05))
+    max_loss_limit_usd = initial_balance * float(ftmo.get("max_loss_limit_initial_pct", 0.10))
     return LagrangianRiskCallback(
         episode_cost_budget=float(constrained.get("episode_cost_budget", 1.0)),
         dual_learning_rate=float(constrained.get("dual_learning_rate", 0.1)),
@@ -68,9 +73,9 @@ def _build_lagrangian_callback(cfg: Any, *, algo: str, mvp: bool) -> Any | None:
         lambda_max=float(constrained.get("lambda_max", 100.0)),
         gamma=float(cfg.ppo.gamma),
         cost_discount_gamma=float(constrained.get("cost_discount_gamma", 1.0)),
-        daily_loss_limit_usd=float(cfg.ftmo.daily_loss_limit),
-        max_loss_limit_usd=float(cfg.ftmo.max_loss_limit),
-        trailing_dd_limit_usd=float(cfg.ftmo.trailing_dd_limit),
+        daily_loss_limit_usd=daily_loss_limit_usd,
+        max_loss_limit_usd=max_loss_limit_usd,
+        trailing_dd_limit_usd=float(ftmo.get("trailing_dd_limit", 0.0)),
     )
 
 
@@ -91,12 +96,18 @@ def _early_abort_callback(cfg: Any) -> EarlyAbortCallback | None:
             block = raw
     if not bool(block.get("enabled", True)):
         return None
+    env = cfg.get("env", {}) if hasattr(cfg, "get") else {}
+    survival_objective = str(env.get("reward_mode", "dsr")).strip().lower() == "survival"
     return EarlyAbortCallback(
         min_timesteps=int(block.get("min_timesteps", 5_000_000)),
         window=int(block.get("window", 4)),
         stop_on_nonfinite=bool(block.get("stop_on_nonfinite", True)),
-        stop_on_no_trades=bool(block.get("stop_on_no_trades", False)),
-        stop_on_equity_gate=bool(block.get("stop_on_equity_gate", False)),
+        stop_on_no_trades=(
+            False if survival_objective else bool(block.get("stop_on_no_trades", False))
+        ),
+        stop_on_equity_gate=(
+            False if survival_objective else bool(block.get("stop_on_equity_gate", False))
+        ),
     )
 
 

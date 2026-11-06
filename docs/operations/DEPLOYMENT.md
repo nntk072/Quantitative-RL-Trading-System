@@ -15,16 +15,25 @@ call made under the pressure of "the backtest looked good."
   explicit `PAPER_TRADING=false` and a risk manager that enforces the training
   account-loss guardrails; the bundled MT5 manager does not currently qualify.
 - **Checkpoint selection:** `RL_MODEL_PATH=outputs/<run>/model/ppo_final`
-  (or `--model`). The run's saved `config.yaml` is loaded automatically for
-  train/live feature parity; SMT/secondary-symbol data is wired iff the run
-  was trained with it.
-- **Live risk sizing** comes from `live_risk_overrides:` in
-  `config/base/default.yaml`. These are intentionally a
-  percentage-of-balance model (MT5 sizing), aligned with the `ftmo:` dollar
-  kill-switches enforced by `FTMOGuardrails` during training/eval
-  (`risk_per_symbol` 1% ≈ `risk_per_trade_limit` $1000 on a $100k account).
-  If you change one, keep the other aligned — silent divergence between the
-  training risk budget and the live one is a behavior change, not a detail.
+  (or `--model`). The run's saved `config.yaml` supplies the feature and
+  observation configuration; SMT/secondary-symbol data is wired iff the run
+  was trained with it. The entrypoint requires the run's hash-linked
+  `feature_normalization_state.json` and applies its source-timeframe and final
+  matrix fits. Checkpoints without that artifact fail closed. This establishes
+  the normalization contract only; feed, account-state, and execution parity
+  still require separate evidence, and paper signals are not evidence for a
+  promoted policy.
+- Direct `RLStrategyAdapter` construction also requires a train-fitted
+  normalization artifact. Diagnostic utilities may explicitly opt into
+  runtime rolling normalization; that fallback is not a production parity
+  path.
+- **Live risk sizing** uses `live_risk_overrides:` for percentage sizing and
+  caps per-symbol broker-stop risk at `ftmo.risk_sizing_limit_usd` from the
+  saved run configuration (currently $900). It reserves configured entry and
+  stop slippage plus round-trip commission for new trades, and the remaining
+  stop slippage plus exit commission for existing positions. This does not provide restart-safe
+  daily or maximum account-loss guardrails; real-order mode stays blocked until
+  account-level parity exists.
 - **Real-order mode is currently blocked:** the bundled MT5 `RiskManager`
   enforces per-symbol and aggregate stop-risk exposure, but has no trusted,
   restart-safe daily/max-loss account state. Both MT5 robots reject non-paper

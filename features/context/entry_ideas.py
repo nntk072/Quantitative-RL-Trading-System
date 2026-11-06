@@ -1,7 +1,9 @@
 """Named, overlapping entry-idea signals for the shared trading policy.
 
-These are independent context flags, not entry gates. Multiple ideas may be
-active on the same bar and the policy remains free to trade or stay flat.
+Multiple ideas may be active on one bar. Direct directional policies may use
+the signals as context; categorical setup-action policies also use the exact
+per-idea, per-timeframe flags to mask ineligible setup choices. ``NO_TRADE``
+remains available in either case.
 """
 
 from __future__ import annotations
@@ -230,7 +232,7 @@ def _po3_direction(frame: pd.DataFrame, side: str, timeframe: str | None = None)
 
 
 def build_entry_idea_features(features: pd.DataFrame) -> pd.DataFrame:
-    """Add multi-hot idea flags; do not select or gate the agent's action.
+    """Add overlapping multi-hot idea flags used as context and setup eligibility.
 
     Args:
         features: Feature values supplied to the operation.

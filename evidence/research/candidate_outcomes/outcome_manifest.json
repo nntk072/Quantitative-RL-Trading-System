@@ -1,0 +1,48 @@
+{
+  "account_state_evaluated": false,
+  "conditional_outcome_rows": 1067731,
+  "config": "config/research/trade_setup_mtf_reasoning_2m.yaml",
+  "config_relationship": "same_resolved_config",
+  "estimand": "conditional_fixed_entry",
+  "execution_parameters": {
+    "commission_per_lot": 0.0,
+    "contract_size": 1.0,
+    "execution_seed": 0,
+    "limit_fill_assumption": "exact_touch",
+    "limit_require_trade_through": false,
+    "max_quote_wait_ms": 60000,
+    "randomized_fill_latency_ms": 0.0,
+    "tick_fill_slippage_points": 5.0
+  },
+  "local_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
+  "outcome_status_counts": {
+    "filled_resolved": 273350,
+    "unfilled_expired": 29701,
+    "unresolved_data": 764680
+  },
+  "output_sha256": {
+    "conditional_outcomes.parquet": "4e346203c08da5a3602a2c94c285462b9c75001da4b0c0bed0ff7f2be7795b96"
+  },
+  "policy_value_claim": false,
+  "proposal_manifest_sha256": "80ca5e249ad302fe7f325d61f13d4b9d587e88ac187ef80b07f47f09f76e1662",
+  "proposal_parquet_sha256": "0dd4a94288ffe714fa87b6e72b0c15112805d5eb0267f67d4a1a154b1609c1da",
+  "proposal_resolved_config_sha256": "a5ce47e60a76a52d42d65dcfeb63358b0c7eaa8b9a7853282de95f29665f58c2",
+  "proposal_rows_replayed": 54638,
+  "quote_coverage_manifest_sha256": "48e03b4e07166e3baa12de92e1ee35a9c0aaf30f5b9c7932c36fcdd2b41ddb3b",
+  "quote_coverage_rule": "A minute is quote_complete only if raw tick row count equals M1 tickvol, the count is positive, and every raw row has a finite positive non-crossed bid/ask. This is a local-source consistency rule, not proof of exchange-tape completeness.",
+  "resolved_config_sha256": "a5ce47e60a76a52d42d65dcfeb63358b0c7eaa8b9a7853282de95f29665f58c2",
+  "schema_version": "training-candidate-conditional-outcomes-v1",
+  "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "source_sha256": {
+    "evaluation/candidate_execution.py": "f1e3e5f2ba84e8416a0ed02393d3de14f48e4ccabebcbc36a5d43cd5e05cfc0b",
+    "evaluation/candidate_outcomes.py": "77d097c3d7cc279d7d969ef50bcd46e9295b47c9396381ad91a5886aea33f3d1",
+    "evaluation/candidate_proposals.py": "07d480dadb9f21c4318328a76c2425828f372ba278781313530ca0bb63cc5bb6",
+    "evaluation/candidate_quote_coverage.py": "d568fbf6533e1643b823b2c9793e316ea9dcfaf48f49244d946d9410c26bcc17",
+    "market_data/loading/ticks.py": "b64d7827dd30cef40c1687d9c02ec71feea0aaecd0e7d7d100a5c603fcdcc7a9",
+    "scripts/research/analysis/evaluation/replay_candidate_proposal_outcomes.py": "1ea7d1b9e6e1489e91cbaa5996a9d509d226e6d90e37e66f5de6c21ea12d5bcf",
+    "trading/execution/quotes.py": "acc7e20404bbbb8287237e98c8212dcbe4ba1414b89d7c9f0116e66405bfddc9"
+  },
+  "status": "training_conditional_outcomes_with_coverage_dispositions",
+  "tickbook_sha256": "2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc",
+  "training_cutoff_utc_exclusive": "2025-12-31T21:00:00+00:00"
+}

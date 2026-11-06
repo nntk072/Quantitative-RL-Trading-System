@@ -1,0 +1,43 @@
+{
+  "allocation": {
+    "job_id": "21405414",
+    "node": "gpuarm1",
+    "gpu_family": "GH200",
+    "new_job_or_step_created": false
+  },
+  "command": ".venv/bin/python -m pytest tests/unit/simulation/test_environment/test_decision_correlation.py tests/integration/backtest/test_engine_execution_contract.py tests/integration/backtest/test_entry_levels.py -q",
+  "evidence_scope": "Current-source test evidence for bounded environment decision provenance and structural entry/execution behavior; no historical policy replay or economic claim",
+  "format_check": ".venv/bin/ruff format --check tests/unit/simulation/test_environment/test_decision_correlation.py",
+  "lint_check": ".venv/bin/ruff check tests/unit/simulation/test_environment/test_decision_correlation.py",
+  "fixture_correction": {
+    "initial_result": "75 passed, 1 failed",
+    "cause": "The delayed-fill test reached max_episode_steps on the fill step, so correct terminal liquidation cleared env.position before the assertion.",
+    "change": "Increase the test-only episode horizon by one nonterminal step; production behavior is unchanged."
+  },
+  "result": {
+    "failed": 0,
+    "passed": 76,
+    "status": "passed"
+  },
+  "schema": "qrl.stage_e_structural_action_contract.v1",
+  "source_files": [
+    "simulation/environment/action_runtime.py",
+    "simulation/environment/entry_execution_runtime.py",
+    "trading/orders/targets.py",
+    "trading/orders/timeframes.py"
+  ],
+  "test_files": [
+    "tests/unit/simulation/test_environment/test_decision_correlation.py",
+    "tests/integration/backtest/test_engine_execution_contract.py",
+    "tests/integration/backtest/test_entry_levels.py"
+  ],
+  "validation_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/stage_e_structural_action_contract_current.log",
+  "limitations": [
+    "The suite does not characterize an empty setup mask across both engines.",
+    "Limit-price/TTL order behavior has no current action contract and remains unsupported.",
+    "Stable TickBook source order does not identify true sub-millisecond chronology.",
+    "No historical PPO action-to-order/fill linkage, checkpoint replay, or economic result is established."
+  ],
+  "policy_replay_performed": false,
+  "training_performed": false
+}

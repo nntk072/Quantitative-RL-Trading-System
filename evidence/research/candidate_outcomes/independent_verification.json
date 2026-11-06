@@ -1,0 +1,83 @@
+{
+  "account_state_evaluated": false,
+  "coverage_manifest_sha256": "48e03b4e07166e3baa12de92e1ee35a9c0aaf30f5b9c7932c36fcdd2b41ddb3b",
+  "disposition_artifacts_sha256": {},
+  "estimand": "conditional_fixed_entry",
+  "expected_bracket_rows": 1067731,
+  "limit_fill_price_bound_audit": {
+    "examples": [],
+    "known_limit_fills_checked": 192828,
+    "price_bound_violations": 0
+  },
+  "numerical_verification_scope": {
+    "full_replay_comparison_sha256": "b020efbade22d3247799d16ade7e1d8e3b0371dcde616dacf8eb9bd29bc1aca9",
+    "full_row_independent_recalculation": true,
+    "independent_full_row_replay": {
+      "expected_status_counts": {
+        "filled_resolved": 273350,
+        "unfilled_expired": 29701,
+        "unresolved_data": 764680
+      },
+      "first_mismatch_examples": [],
+      "mismatch_fields": {},
+      "mismatch_rows": 0,
+      "rows_checked": 1067731,
+      "scope": "all status, time, fill, exit, reason, and return fields independently recomputed from ordered TickBook arrays; zero randomized latency",
+      "status": "verified"
+    },
+    "independent_resolved_arithmetic": {
+      "exit_source_quote_matches": 273350,
+      "exit_source_quote_mismatches": 0,
+      "fill_event_not_found_rows": 0,
+      "fill_price_mismatch_rows": 0,
+      "fill_source_quote_matches": 273350,
+      "fill_source_quote_mismatches": 0,
+      "first_fill_mismatch_examples": [],
+      "first_mismatch_outcome_ids": [],
+      "mismatch_rows": 0,
+      "net_r_recalculation_mismatches": 0,
+      "net_r_recalculations_match": 273350,
+      "rows_checked": 273350,
+      "scope": "reported resolved event times; source quote prices and net R only",
+      "status": "verified",
+      "tickbook_sha256": "2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc"
+    },
+    "same_implementation_full_replay_exact_match_rows": 1067731,
+    "same_production_replay_function_used_for_sample": true,
+    "stratified_sample_method": "deterministic replay sample through the versioned production execution function",
+    "stratified_sample_rows": 12
+  },
+  "order_coverage_dispositions_by_proposal": {
+    "order_life_quote_complete": 11699,
+    "order_life_quote_incomplete": 42939
+  },
+  "outcome_manifest_sha256": "75efb78339c4214a0c970cce240475e9d74770ad8afc8149532c63f18a7d6afb",
+  "outcome_parquet_sha256": "4e346203c08da5a3602a2c94c285462b9c75001da4b0c0bed0ff7f2be7795b96",
+  "outcome_rows": 1067731,
+  "outcome_status_counts": {
+    "filled_resolved": 273350,
+    "unfilled_expired": 29701,
+    "unresolved_data": 764680
+  },
+  "policy_value_claim": false,
+  "proposal_manifest_sha256": "80ca5e249ad302fe7f325d61f13d4b9d587e88ac187ef80b07f47f09f76e1662",
+  "proposal_rows": 54638,
+  "schema_version": "candidate-conditional-outcome-verification-v2",
+  "source_sha256": {
+    "scripts/research/analysis/evaluation/candidate_outcome_reference.py": "d593d095faee9fdda60e41252df665640c371370c3d8229fdb4806dcd6b9dda2",
+    "scripts/research/analysis/evaluation/verify_candidate_proposal_outcomes.py": "99cb428cc378348ef4ed9a04636df86aa4d518ac302a91ee37c149b41d9e9302"
+  },
+  "status": "verified_training_conditional_outcome_packet",
+  "stratified_replay_sample_sha256": "bae23de666d44f062f603d9a9201750b12597dfdf733c6ba3ca2860c0883199e",
+  "unique_outcome_ids": 1067731,
+  "unresolved_reason_counts": {
+    "entry fill occurred at or after the configured session close": 2106,
+    "local two-sided quote coverage is incomplete before exit resolution": 380939,
+    "local two-sided quote coverage is incomplete before order expiry": 290612,
+    "market-entry quote unavailable within the configured quote-wait limit": 89609,
+    "selected stop is not protective relative to the realized entry fill": 82,
+    "selected target is not beyond the realized entry fill": 544,
+    "session-close execution quote predates the entry fill": 788
+  },
+  "verified_session_close_exit_rows": 45386
+}

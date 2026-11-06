@@ -23,14 +23,17 @@ This page contains 1 public callable records owned by `integrations.mt5.domain.m
 
 **Observed usage:**
 
-1. [production caller: `get_robot`](../../../../integrations/mt5/cli/single_symbol_demo.py#L62)
+1. [production caller: `get_robot`](../../../../integrations/mt5/cli/single_symbol_demo.py#L70)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-    global _cross_over_robot
-
-    if _cross_over_robot is None:
+# … caller setup omitted …
+        if not paper_trading:
+            raise RuntimeError(
+                "single-symbol crossover demo is paper-only until training-equivalent "
+                "account-loss guardrails are available"
+            )
         ensure_mt5_logged_in(
             login=login,
             password=password,

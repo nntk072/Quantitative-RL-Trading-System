@@ -22,8 +22,9 @@ import numpy as np
 import pandas as pd
 
 from configuration import load_config
-from features import build_features
+from market_data.splits.definitions import get_split_config, get_train_start_config
 from market_data.transforms.cleaning import clean
+from training.runner.feature_preparation import build_split_scoped_features
 
 STRATEGY_COLUMNS = [
     "asian_high",
@@ -103,7 +104,13 @@ def main() -> int:
     )
 
     bars = _load_bars(args.bars_csv)
-    features = build_features(bars, cfg=cfg)
+    train_end, _ = get_split_config(cfg)
+    features = build_split_scoped_features(
+        bars,
+        cfg=cfg,
+        train_start=get_train_start_config(cfg),
+        train_end=train_end,
+    )
 
     print("FEATURE VERIFICATION")
     print("-" * 40)

@@ -152,7 +152,12 @@ class TestAdaptiveRiskSizing:
         reserve = env._modeled_execution_reserve_usd(lots)
 
         assert env._last_approved_risk_usd == pytest.approx(900.0)
-        assert stop_risk + reserve == pytest.approx(900.0)
+        assert stop_risk + reserve <= 900.0
+        per_step_budget = env.lot_step * (
+            10.0 * env.contract_size * env.cost_model.point_value
+            + env._modeled_execution_reserve_usd(1.0)
+        )
+        assert 900.0 - stop_risk - reserve < per_step_budget
 
 
 class TestPO3EntryModes:

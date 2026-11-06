@@ -19,11 +19,11 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags() -> None:
     flag_rows = [row for row in rows if row["record_type"] == "setup_entry_idea_flag"]
 
     assert summary["schema_version"] == 2
-    assert summary["public_feature_function_count"] == 96
+    assert summary["public_feature_function_count"] == 97
     assert summary["upstream_time_session_function_count"] == 11
     assert summary["setup_entry_idea_flag_count"] == 108
     assert summary["supported_setup_entry_idea_flag_count"] == 24
-    assert len(function_rows) == 96
+    assert len(function_rows) == 97
     assert len(upstream_rows) == 11
     assert len(flag_rows) == 108
     assert len({row["feature_or_flag"] for row in flag_rows}) == 108
@@ -103,6 +103,7 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags() -> None:
         ("features/context/reachability.py", "max_tp_distance"),
         ("features/context/reachability.py", "reachable_r_series"),
         ("features/context/reachability.py", "attach_reachable_r"),
+        ("features/context/trade_setup_candidates.py", "trade_setup_event_is_current"),
         ("features/context/reachability.py", "rr_reaches"),
         ("features/context/policy_market.py", "build_policy_market_context"),
         ("features/context/policy_market.py", "attach_policy_market_context"),
@@ -151,7 +152,7 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags() -> None:
         ("market_data/transforms/resample.py", "resample"),
         ("market_data/transforms/resample.py", "build_all_timeframes"),
     }
-    assert summary["reviewed_function_metadata_count"] == 107
+    assert summary["reviewed_function_metadata_count"] == 108
     assert summary["unassessed_function_metadata_count"] == 0
     reachability_adapter = reviewed[("features/context/reachability.py", "attach_reachable_r")]
     assert "optional reachable_r_valid" in reachability_adapter["output_features"]
@@ -218,7 +219,7 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags() -> None:
     )
     assert (
         indicator_contracts["wick_ratio"]["evidence_status"]
-        == "source_and_formula_fixture_tested; selected_real_market_profiles_passed; legacy_upper_wick_name_retained"
+        == "source_and_zero_range_formula_fixture_tested; selected_real_market_profiles_passed; legacy_upper_wick_name_retained"
     )
     assert summary["reviewed_setup_flag_output_availability_count"] == 108
     assert summary["unassessed_setup_flag_source_event_count"] == 0

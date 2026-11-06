@@ -1,0 +1,46 @@
+6 files left unchanged
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 79 items
+
+tests/unit/simulation/test_environment/test_mtf_windows.py ............. [ 16%]
+                                                                         [ 16%]
+tests/unit/simulation/test_environment/test_trade_setup_factory_config.py . [ 17%]
+..................                                                       [ 40%]
+tests/unit/evaluation/test_run_manifest.py ....................          [ 65%]
+tests/unit/training/test_train_rl_decomposition.py ..................... [ 92%]
+......                                                                   [100%]
+
+=============================== warnings summary ===============================
+tests/unit/simulation/test_environment/test_trade_setup_factory_config.py::test_mtf_reasoning_overlay_builds_real_env_and_agent[trade_setup_mtf_reasoning.yaml-HybridClampedStdMultiInputPolicy]
+tests/unit/simulation/test_environment/test_trade_setup_factory_config.py::test_mtf_reasoning_overlay_builds_real_env_and_agent[trade_setup_mtf_reasoning.yaml-HybridClampedStdMultiInputPolicy]
+tests/unit/simulation/test_environment/test_trade_setup_factory_config.py::test_mtf_reasoning_overlay_builds_real_env_and_agent[trade_setup_mtf_reasoning_conditioned.yaml-TradeSetupConditionedClampedStdMultiInputPolicy]
+  /scratch/work/nguyenl37/Quantitative-RL-Trading-System/models/encoders/mtf_reasoning.py:72: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    self.cross_timeframe = nn.TransformerEncoder(layer, num_layers=1)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 79 passed, 3 warnings in 16.07s ========================
+1 file left unchanged
+All checks passed!
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 9 items / 5 deselected / 4 selected
+
+tests/unit/models/test_mtf_encoder_registration.py ....                  [100%]
+
+=============================== warnings summary ===============================
+tests/unit/models/test_mtf_encoder_registration.py::test_mtf_encoders_accept_versioned_feature_validity_widths[mtf_shared_tcn_reasoning-SharedTCNMTFReasoningEncoder]
+tests/unit/models/test_mtf_encoder_registration.py::test_mtf_encoders_accept_versioned_feature_validity_widths[mtf_m1_tcn_htf_lite_reasoning-M1TCNHTFLiteReasoningEncoder]
+tests/unit/models/test_mtf_encoder_registration.py::test_mtf_encoders_accept_versioned_feature_validity_widths[mtf_m1_tcn_htf_snapshot_reasoning-M1TCNHTFSnapshotReasoningEncoder]
+  /scratch/work/nguyenl37/Quantitative-RL-Trading-System/models/encoders/mtf_efficiency_components.py:152: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    self.cross_timeframe = nn.TransformerEncoder(layer, num_layers=1)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 4 passed, 5 deselected, 3 warnings in 4.07s ==================

@@ -75,7 +75,7 @@ def select_obs_columns(
 
 **Observed usage:**
 
-1. [test fixture: `test_entry_ideas_are_multi_hot_and_keep_source_timeframes`](../../../../tests/unit/features/test_entry_ideas.py#L49)
+1. [test fixture: `test_entry_ideas_are_multi_hot_and_keep_source_timeframes`](../../../../tests/unit/features/test_entry_ideas.py#L55)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -93,6 +93,25 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert set(ideas.columns).issubset(model_features.columns)
     assert context["ideas"] == ["po3", "order_block", "standard_deviation", "fvg_retest"]
 # … caller assertions omitted …
+```
+
+2. [test fixture: `test_source_times_do_not_change_candidate_mask_or_model_observation`](../../../../tests/unit/features/test_trade_setup_candidate_events.py#L411)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    assert mask.shape == (TRADE_SETUP_CATEGORY_COUNT,)
+    assert TRADE_SETUP_CATEGORY_COUNT == 109
+    assert mask[NO_TRADE_ID] == 1.0
+    assert mask[trade_setup_candidate_id("po3", "M5", 1)] == 1.0
+
+    observed = select_obs_columns(pd.DataFrame([first, second]))
+    assert "entry_idea_po3_M5_long" in observed
+    assert "M5_po3_sweep_time_ns" not in observed
+    assert "M5_po3_reclaim_time_ns" not in observed
+    assert "M5_ifvg_bull_confirmed_at_time_ns" not in observed
+    assert "M5_po3_ifvg_fvg_origin_time_ns" not in observed
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -175,7 +194,7 @@ def select_obs_columns(
 
 **Observed usage:**
 
-1. [test fixture: `test_entry_ideas_are_multi_hot_and_keep_source_timeframes`](../../../../tests/unit/features/test_entry_ideas.py#L49)
+1. [test fixture: `test_entry_ideas_are_multi_hot_and_keep_source_timeframes`](../../../../tests/unit/features/test_entry_ideas.py#L55)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -193,6 +212,25 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert set(ideas.columns).issubset(model_features.columns)
     assert context["ideas"] == ["po3", "order_block", "standard_deviation", "fvg_retest"]
 # … caller assertions omitted …
+```
+
+2. [test fixture: `test_source_times_do_not_change_candidate_mask_or_model_observation`](../../../../tests/unit/features/test_trade_setup_candidate_events.py#L411)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    assert mask.shape == (TRADE_SETUP_CATEGORY_COUNT,)
+    assert TRADE_SETUP_CATEGORY_COUNT == 109
+    assert mask[NO_TRADE_ID] == 1.0
+    assert mask[trade_setup_candidate_id("po3", "M5", 1)] == 1.0
+
+    observed = select_obs_columns(pd.DataFrame([first, second]))
+    assert "entry_idea_po3_M5_long" in observed
+    assert "M5_po3_sweep_time_ns" not in observed
+    assert "M5_po3_reclaim_time_ns" not in observed
+    assert "M5_ifvg_bull_confirmed_at_time_ns" not in observed
+    assert "M5_po3_ifvg_fvg_origin_time_ns" not in observed
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

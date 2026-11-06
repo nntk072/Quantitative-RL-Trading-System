@@ -1,0 +1,67 @@
+{
+  "arms": {
+    "control": {
+      "exact_frozen_digest_match": false,
+      "frozen_checkpoint_sha256": "f5863aaf6a4a161b577fbaa8743649416c8cb4e38a247ee0ad596898c70f6592",
+      "frozen_source_run": "replacement18_seed50_train2025_test2026_current_mtf_20261019 attempt 3",
+      "p6_attempt": 1,
+      "p6_candidate_zip_count_in_frozen_hash_report": 23,
+      "p6_ppo_best": {
+        "bytes": 33264027,
+        "contains_policy_pth_member": true,
+        "sha256": "1fae9a60637584e98209118b6064983a03d28805b1502fc2d4926c94533e0a61"
+      },
+      "p6_ppo_final": {
+        "bytes": 33264025,
+        "contains_policy_pth_member": true,
+        "sha256": "0e9e50efd2e6414e132eb5dd983af6ea9b947376e58af92dbad721f722b1af37"
+      },
+      "variant": "ladder_a4b_entry_fsm"
+    },
+    "treatment": {
+      "exact_frozen_digest_match": false,
+      "frozen_checkpoint_sha256": "e29795e11390bf55edf6f0a03f60a34b4388b46cbe4f787b6572fd81b39f422c",
+      "frozen_source_run": "replacement18_seed50_train2025_test2026_current_mtf_20261019 attempt 3",
+      "p6_attempt": 1,
+      "p6_candidate_zip_count_in_frozen_hash_report": 23,
+      "p6_ppo_best": {
+        "bytes": 33260160,
+        "contains_policy_pth_member": true,
+        "sha256": "e6e1a1954243870a723d77012bb6eaa01738bf28218061913a8eb0746c437173"
+      },
+      "p6_ppo_final": {
+        "bytes": 33260158,
+        "contains_policy_pth_member": true,
+        "sha256": "326c477a6af3d1b7d8a31982a1b9803068342eb668a86d469b58fbf8b0eda1db"
+      },
+      "variant": "ladder_a4a_entry_fsm_hidden"
+    }
+  },
+  "claim_scope": "classify P6 model-ZIP leads surfaced by a bounded nested-container inventory against the frozen selected-pair checkpoint identities",
+  "disposition": "These are lineage-distinct P6 attempt-1 checkpoint archives, not recoveries of the frozen replacement18 attempt-3 policies. They cannot support selected-policy replay or historical action attribution.",
+  "frozen_pair_report": "evidence/research/historical_variant_screen_recoverability/selected_checkpoint_recoverability.json",
+  "inventory": {
+    "archive_count": 577,
+    "container_member_count": 1436,
+    "name_hint_member_count": 1164,
+    "outer_archive_error_count": 16,
+    "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run-21376798/archived_pth_member_inventory_v2.json",
+    "scanner_path": "scripts/research/analysis/evidence/inventory_archive_containers.py",
+    "scanner_sha256": "18101749a894b2ec3e5432921ca3562133aa0e7e53316a2f211212e2f5c41c23",
+    "sha256": "a34dcd6671c060e739bfb8dc294b9081176aa8862ddbd71443fc96a22f9283e6"
+  },
+  "limitations": [
+    "The ZIP inventory is bounded to files discovered by the recorded scan under /scratch/work/nguyenl37.",
+    "The full frozen-pair hash report covers only variant-and-seed candidate ZIP paths; no global absence claim is made.",
+    "The nested-container inventory records member names and sizes; it does not extract checkpoint tensors or infer policy behavior."
+  ],
+  "prior_external_inventory": {
+    "archive_count": 577,
+    "container_member_count": 1436,
+    "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run-21376798/archived_pth_member_inventory.json",
+    "scanner_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run-21376798/inventory_archived_pth_members.py",
+    "scanner_sha256": "b39f0e4c1f6cd28460a48695225200f0490b19cbbe5a152afc4189ba79bd8b7f",
+    "sha256": "54b5838ccbe822fff251ddbebfabd2d85d3cfb5984054e4e619794cb345727f9"
+  },
+  "schema": "qrl.archived_checkpoint_container_reconciliation.v1"
+}

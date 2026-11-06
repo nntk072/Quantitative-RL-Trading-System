@@ -43,6 +43,62 @@ def adverse_tick_fill_quote(
     return bid, ask
 
 
+def undo_adverse_tick_slippage_quote(
+    quote: tuple[float, float], direction: int, slippage_points: float, *, opening: bool
+) -> tuple[float, float]:
+    """Recover the executable quote before an already-applied adverse adjustment.
+
+    Args:
+        quote: Bid and ask after tick-side slippage was applied.
+        direction: Position direction, ``1`` for long or ``-1`` for short.
+        slippage_points: Adverse adjustment in instrument points.
+        opening: Whether the fill opened the position.
+
+    Returns:
+        Bid and ask before the modeled slippage adjustment.
+    """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or +1")
+    slippage = float(slippage_points)
+    if not math.isfinite(slippage) or slippage < 0.0:
+        raise ValueError("slippage_points must be finite and non-negative")
+    bid, ask = map(float, quote)
+    if opening:
+        if direction == 1:
+            ask -= slippage
+        else:
+            bid += slippage
+    elif direction == 1:
+        bid += slippage
+    else:
+        ask -= slippage
+    return bid, ask
+
+
+def undo_adverse_quote_level_slippage(
+    quote: tuple[float, float], direction: int, slippage_points: float, *, opening: bool
+) -> tuple[float, float]:
+    """Undo a modeled protective-level adjustment applied to the whole quote.
+
+    Args:
+        quote: Bid and ask after a whole-quote adjustment.
+        direction: Position direction, ``1`` for long or ``-1`` for short.
+        slippage_points: Quote shift in instrument points.
+        opening: Whether the fill opened the position.
+
+    Returns:
+        Bid and ask before the modeled quote-level shift.
+    """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or +1")
+    slippage = float(slippage_points)
+    if not math.isfinite(slippage) or slippage < 0.0:
+        raise ValueError("slippage_points must be finite and non-negative")
+    bid, ask = map(float, quote)
+    shift = slippage if (direction == -1 if opening else direction == 1) else -slippage
+    return bid + shift, ask + shift
+
+
 def raw_spread_to_price(raw_spread_points: float | None, point_size: float) -> float | None:
     """Convert a broker-reported spread to price units, preserving missing values.
 
@@ -74,6 +130,38 @@ def quote_from_bar_price(
     """
     spread = raw_spread_to_price(spread_points, cost_model.point_size)
     return cost_model.bar_quote(float(price), bar_spread=spread)
+
+
+def exit_side_bar_range(
+    direction: int,
+    bid_low: float,
+    bid_high: float,
+    spread_price_units: float | None,
+    cost_model: CostModel,
+) -> tuple[float, float]:
+    """Return low/high OHLC bounds on the position's executable exit side.
+
+    MT5 bar OHLC is bid based. Long exits transact on bid; short exits
+    transact on ask, derived from the bar's recorded spread. This is a
+    bar-spread estimate, not a reconstruction of intrabar spread changes.
+
+    Args:
+        direction: Position direction, ``1`` for long or ``-1`` for short.
+        bid_low: Low bid price from the bar.
+        bid_high: High bid price from the bar.
+        spread_price_units: Recorded spread converted to price units, or
+            ``None`` to use the configured default spread.
+        cost_model: Cost model providing the default spread when needed.
+
+    Returns:
+        The low and high prices for the position's executable exit side.
+    """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or +1")
+    spread = cost_model.spread_points if spread_price_units is None else spread_price_units
+    if direction == 1:
+        return float(bid_low), float(bid_high)
+    return float(bid_low) + float(spread), float(bid_high) + float(spread)
 
 
 def protective_level_fill_quote(

@@ -85,7 +85,13 @@ def test_cli_requires_an_explicit_period_role() -> None:
 
 
 def test_cli_opts_into_fixed_structure_priority_rule() -> None:
-    cfg = load_config([])
+    cfg = load_config(
+        [
+            "env.strategy_actions=true",
+            "env.trade_setup_actions=true",
+            "ppo.policy_distribution=trade_setup_hybrid_v1",
+        ]
+    )
 
     assert (
         _additional_policies(
@@ -112,6 +118,27 @@ def test_cli_opts_into_fixed_structure_priority_rule() -> None:
     assert metadata["normalized_risk"] == 0.25
     assert metadata["training_performed"] is False
     assert metadata["selection_or_tuning_performed"] is False
+
+
+def test_structure_priority_baseline_uses_configured_entry_execution_schema() -> None:
+    cfg = load_config(
+        [
+            "env.strategy_actions=true",
+            "env.trade_setup_actions=true",
+            "env.agent_entry_execution=true",
+            "ppo.policy_distribution=trade_setup_hybrid_v1",
+        ]
+    )
+
+    policies = _additional_policies(
+        cfg,
+        include_structure_priority=True,
+        normalized_risk=0.5,
+    )
+
+    arm = policies["structure_priority"]
+    assert "entry_execution" in arm.model.hybrid_action_coordinates
+    assert arm.model.policy_metadata["entry_execution"] == "market"
 
 
 def test_structure_priority_cli_flag_is_opt_in() -> None:

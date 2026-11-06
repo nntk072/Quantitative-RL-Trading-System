@@ -162,6 +162,38 @@ def test_root_inventory_detects_canonical_trade_setup_decisions_export(tmp_path:
     assert report["per_decision_price_geometry_trace_status"] == ("not_found_in_scanned_artifacts")
 
 
+def test_root_inventory_detects_matched_baseline_decisions_schema(tmp_path: Path) -> None:
+    """Recognize the matched-baseline writer's selected-setup decision export."""
+    trace = tmp_path / "decisions.csv"
+    trace.write_text(
+        ",step,trade_setup_candidate_id,trade_setup_eligible,decision_id,decision_time\n"
+        "0,1,4,True,run-1:d1,2025-01-01T00:00:00Z\n",
+        encoding="utf-8",
+    )
+
+    report = build_report([tmp_path])
+
+    assert report["per_decision_setup_trace_status"] == "found"
+    assert report["per_decision_setup_trace_paths"] == [f"{tmp_path / 'decisions.csv'}::file_rows"]
+    assert report["per_decision_price_geometry_trace_status"] == "not_found_in_scanned_artifacts"
+
+
+def test_generic_decisions_csv_without_candidate_fields_is_not_a_setup_trace(
+    tmp_path: Path,
+) -> None:
+    """Exact-name discovery still requires a selected candidate in a decision row."""
+    trace = tmp_path / "decisions.csv"
+    trace.write_text(
+        "decision_id,decision_time,action\nrun-1:d1,2025-01-01T00:00:00Z,hold\n",
+        encoding="utf-8",
+    )
+
+    report = build_report([tmp_path])
+
+    assert report["artifact_count"] == 1
+    assert report["per_decision_setup_trace_status"] == "not_found_in_scanned_artifacts"
+
+
 def test_header_only_trade_setup_export_is_not_a_decision_trace(tmp_path: Path) -> None:
     """An empty evaluation export must not count as observed policy decisions."""
     trace = tmp_path / "trade_setup_decisions.csv"

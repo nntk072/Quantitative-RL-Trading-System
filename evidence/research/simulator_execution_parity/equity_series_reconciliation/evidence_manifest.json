@@ -1,0 +1,187 @@
+{
+  "all_four_metric_reports_matched": true,
+  "claim_scope": "Independent recalculation of serialized equity-series endpoint return and maximum drawdown, exact-row checks for recorded daily_loss events, bounded historical gross-realized-loss arithmetic, a source-date-mapped observed equity screen, and M1 bar/fill-derived cash and mark-to-market reconstruction for selected A4 outputs",
+  "gross_realized_loss_counter_reports": [
+    {
+      "calendar_date_crossings_without_recorded_event": [],
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4a_training_gross_realized_loss_counter.json",
+      "recorded_event_count": 1,
+      "sha256": "d1d4df2a4bc6584614e4ddb0cf71cc68d3e5eef0704dc9eea4242d8aae436418",
+      "status": "verified_session_reconciliation"
+    },
+    {
+      "calendar_date_crossings_without_recorded_event": [],
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4b_training_gross_realized_loss_counter.json",
+      "recorded_event_count": 1,
+      "sha256": "af0759a275bd84935e17427ce5b7da72ee27ae38b3dc7cf0f512510897f0da92",
+      "status": "verified_session_reconciliation"
+    }
+  ],
+  "limitations": [
+    "Reconstructs serialized M1 close-based mark-to-market equity; does not reconstruct every intrabar tick-level value.",
+    "Historical close-event exports omit numeric session_id; the current runs recover it from the hash-verified source M1 date-to-session map. External session-calendar parity is not assessed.",
+    "Does not validate simulator behavior, policy behavior, or economic merit.",
+    "The historical daily-loss screen observes saved account-equity samples; the current-rule counterfactual remains unrun.",
+    "Historical runs used the gross realized-loss counter, which blocked later entries after its threshold. The counterfactual path under the current session-net rule is not simulated.",
+    "2026 report-period observations are exploratory and are not a fresh holdout.",
+    "Session IDs derive from supplied local date labels; no external calendar is asserted.",
+    "Parquet-deserialized frame hashes differ from the saved in-memory frame hashes; exact raw-source reconstruction matches all four saved frames and is used for the fill/equity audit."
+  ],
+  "observed_session_equity_risk_screen": {
+    "basis": "current 5% initial-equity threshold applied to serialized equity samples grouped by verified configured source-local session labels; a breach occurs strictly below the session floor and equality is allowed",
+    "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/session_equity_daily_loss_screen.json",
+    "session_count_by_partition": {
+      "testing": 205,
+      "training": 259
+    },
+    "sessions_breaching_daily_limit_by_arm_partition": {
+      "a4a_testing": 0,
+      "a4a_training": 0,
+      "a4b_testing": 0,
+      "a4b_training": 0
+    },
+    "sha256": "ba063a0c5d0e15832b7947cfe31800e8403651ecb2c7dd9cd8126cf6f4cdf211",
+    "status": "verified_observed_path"
+  },
+  "reports": [
+    {
+      "bytes": 211400,
+      "chronology_failure_count": 0,
+      "daily_loss_event_count": 0,
+      "daily_loss_event_status": "no_events",
+      "input_hashes": {
+        "equity.csv": "b2576bbc3cff024dbeb2a5f8db633f79a2a42484d9056b71fdaff61c28c66a0b",
+        "metrics.json": "1db4588cc6fabe6249ef90bb15cd7fbb3de9f9c9570db0de31f44662cca7aba1"
+      },
+      "matched_daily_loss_event_count": 0,
+      "observation_count": 79070,
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4a_testing.json",
+      "run_directory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing",
+      "sampled_day_count": 205,
+      "sampled_days_with_drawdown_at_or_above_limit": 0,
+      "session_breach_count": 0,
+      "session_count": 205,
+      "session_date_unmatched_count": 0,
+      "session_screen_status": "verified_observed_path",
+      "sha256": "de07968a5774adf77144e95d4a6273785806c47d7158159a6135cccac4e9f88e",
+      "status": "matched",
+      "unmatched_first_sample_crossing_dates": [],
+      "valid_observation_count": 79070,
+      "sampled_days_strictly_above_limit": 0
+    },
+    {
+      "bytes": 270664,
+      "chronology_failure_count": 0,
+      "daily_loss_event_count": 1,
+      "daily_loss_event_status": "matched",
+      "input_hashes": {
+        "equity.csv": "811672680ac1d0fe4eaf7f4d74912018a127ce9dd7d932aa15d207dc6afe7e37",
+        "metrics.json": "4b8f2764b3ac14d8d9f534fecefc907b47346b74cef1c0c507740a0065e0aed1"
+      },
+      "matched_daily_loss_event_count": 1,
+      "observation_count": 99493,
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4a_training.json",
+      "run_directory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training",
+      "sampled_day_count": 259,
+      "sampled_days_with_drawdown_at_or_above_limit": 0,
+      "session_breach_count": 0,
+      "session_count": 259,
+      "session_date_unmatched_count": 0,
+      "session_screen_status": "verified_observed_path",
+      "sha256": "712d90d4ca5b30eabf666d02ff7fc5f5e6bcc4d5db81488226750afe6311f841",
+      "status": "matched",
+      "unmatched_first_sample_crossing_dates": [],
+      "valid_observation_count": 99493,
+      "sampled_days_strictly_above_limit": 0
+    },
+    {
+      "bytes": 211300,
+      "chronology_failure_count": 0,
+      "daily_loss_event_count": 0,
+      "daily_loss_event_status": "no_events",
+      "input_hashes": {
+        "equity.csv": "c9830c462e8a09a2be58b7991466040cdb5bf877dde1945463fab5679569c94a",
+        "metrics.json": "f7cadb8ae54d663b98da6cab3e55526606d970d2f09a184f5b150daea2d007b4"
+      },
+      "matched_daily_loss_event_count": 0,
+      "observation_count": 79070,
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4b_testing.json",
+      "run_directory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing",
+      "sampled_day_count": 205,
+      "sampled_days_with_drawdown_at_or_above_limit": 0,
+      "session_breach_count": 0,
+      "session_count": 205,
+      "session_date_unmatched_count": 0,
+      "session_screen_status": "verified_observed_path",
+      "sha256": "7538621c62a7c28709e232ec06fb9744089b0c3abab6ebe91ae419b80b478816",
+      "status": "matched",
+      "unmatched_first_sample_crossing_dates": [],
+      "valid_observation_count": 79070,
+      "sampled_days_strictly_above_limit": 0
+    },
+    {
+      "bytes": 269581,
+      "chronology_failure_count": 0,
+      "daily_loss_event_count": 1,
+      "daily_loss_event_status": "matched",
+      "input_hashes": {
+        "equity.csv": "cc67ca871755fd03deea790347d7acfe54aa798b396204b3adc569037a46a970",
+        "metrics.json": "224879b8c36639d197174d48f7d8a33109423af246ffa22fcda010a4f32fd0e7"
+      },
+      "matched_daily_loss_event_count": 1,
+      "observation_count": 99493,
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4b_training.json",
+      "run_directory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training",
+      "sampled_day_count": 259,
+      "sampled_days_with_drawdown_at_or_above_limit": 0,
+      "session_breach_count": 0,
+      "session_count": 259,
+      "session_date_unmatched_count": 0,
+      "session_screen_status": "verified_observed_path",
+      "sha256": "87e170a8d864d43dd1e6b8e19e9916c29d55cba6dcf342ff09788238dd330350",
+      "status": "matched",
+      "unmatched_first_sample_crossing_dates": [],
+      "valid_observation_count": 99493,
+      "sampled_days_strictly_above_limit": 0
+    }
+  ],
+  "sampled_daily_limit_crossings": 0,
+  "saved_equity_bar_identity_preflight": {
+    "cache_only_result": {
+      "exact_match_count": 0,
+      "input_identity_mismatch_count": 4,
+      "status": "input_identity_mismatch"
+    },
+    "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/saved_equity_bar_identity.json",
+    "sha256": "c911c347b34181289e6ceab34b0a5be231ffe57629dd2b51572420843a21d7ec",
+    "source_reconstruction": {
+      "exact_match_count": 4,
+      "input_identity_mismatch_count": 0,
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/source_reconstructed_bar_identity.json",
+      "sha256": "0ea02327cfdde8c50489dc6926c3f429c5316a4de61caa3de5218aad6e1dcd12",
+      "status": "exact_source_rebuild_match"
+    },
+    "status": "superseded_cache_only_mismatch_raw_rebuild_verified"
+  },
+  "saved_equity_to_fill_reconstruction": {
+    "bar_mapping_failures": 0,
+    "calculation_errors": 0,
+    "maximum_absolute_equity_difference_usd": 2.3283064365386963E-10,
+    "maximum_close_fill_pnl_arithmetic_difference_usd": 9.094947017729282E-13,
+    "observation_count": 357126,
+    "partition_count": 4,
+    "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/equity_fill_reconciliation.json",
+    "sha256": "74d13e67f2a9248a578ed88c4d87663349782c7cedcdb1fc162070cc86d5559c",
+    "status": "exact_reconstruction",
+    "terminal_open_positions": 0,
+    "unconsumed_fill_events": 0
+  },
+  "schema": "qrl.saved_equity_series_reconciliation.v1",
+  "training_daily_loss_events_matched": true,
+  "unmatched_first_sample_crossing_dates": [],
+  "equality_boundary_regression": {
+    "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/sampled_daily_loss_equality_boundary.json",
+    "sha256": "d7d5d38e9ecfed265ea4638360e4fea365c74790e48fb689966856d0139bcab4",
+    "status": "verified"
+  }
+}

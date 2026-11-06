@@ -22,6 +22,7 @@ from configuration.configuration_loader import load_config
 from configuration.paths import repository_root
 from features import build_features
 from market_data.loading.market_data_ingestion import run_pipeline
+from market_data.splits.definitions import make_train_mask
 
 ROOT = repository_root(__file__)
 DEFAULT_CONFIG = ROOT / "config/research/trade_setup_mtf_reasoning_2m.yaml"
@@ -258,16 +259,7 @@ def _training_slice(
     result: dict[str, pd.DataFrame] = {}
     for timeframe, frame in frames.items():
         index = pd.DatetimeIndex(frame.index)
-        lower, upper = pd.Timestamp(start), pd.Timestamp(end)
-        if index.tz is not None:
-            lower = (
-                lower.tz_localize(index.tz) if lower.tzinfo is None else lower.tz_convert(index.tz)
-            )
-            upper = (
-                upper.tz_localize(index.tz) if upper.tzinfo is None else upper.tz_convert(index.tz)
-            )
-        upper += pd.Timedelta(days=1) - pd.Timedelta(nanoseconds=1)
-        result[timeframe] = frame.loc[(index >= lower) & (index <= upper)]
+        result[timeframe] = frame.loc[make_train_mask(index, end, start)]
     return result
 
 

@@ -1,0 +1,40 @@
+{
+  "allocation": {
+    "job_id": "21410051",
+    "node": "gpuarm1",
+    "gpu_family": "GH200",
+    "gpus": 1,
+    "cpus": 48,
+    "memory_gib": 512,
+    "time_limit": "12:00:00",
+    "new_job_or_step_created": false
+  },
+  "command": ".venv/bin/python -m pytest tests/integration/backtest/test_setup_mask_backtest_boundary.py -q",
+  "evidence_scope": "Current-source characterization of the all-candidates-empty environment mask and scalar event-backtest action boundary; identifies a parity no-go, not policy quality",
+  "format_check": ".venv/bin/ruff format --check tests/integration/backtest/test_setup_mask_backtest_boundary.py",
+  "lint_check": ".venv/bin/ruff check tests/integration/backtest/test_setup_mask_backtest_boundary.py",
+  "result": {
+    "failed": 0,
+    "passed": 1,
+    "status": "passed",
+    "duration_seconds": 0.34
+  },
+  "schema": "qrl.stage_e_setup_mask_engine_boundary.v1",
+  "source_files": [
+    "simulation/environment/action_runtime.py",
+    "simulation/environment/observation_runtime.py",
+    "simulation/backtest/event_driven_backtest.py",
+    "simulation/backtest/policy_actions.py",
+    "decisioning/trade_setup.py"
+  ],
+  "test_files": [
+    "tests/integration/backtest/test_setup_mask_backtest_boundary.py"
+  ],
+  "validation_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/stage_e_setup_mask_scalar_backtest_boundary.log",
+  "observed_contract": {
+    "environment_empty_candidate_mask": "only no_trade remains eligible; selected M1 FVG-retest setup is rejected without an order",
+    "event_backtest": "scalar action +1 opens a long because the API has no candidate mask"
+  },
+  "training_performed": false,
+  "policy_replay_performed": false
+}

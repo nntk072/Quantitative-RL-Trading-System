@@ -9,9 +9,9 @@ New layout (v2)
         summary.txt          — Train vs Test comparison table
         training/            — in-sample  (≤ train_end)
             equity.csv, trades.csv, metrics.json
-            fills.csv, positions.csv
+            fills.csv, positions.csv, account_state_trace.csv
             breach_events.csv, session_activity.json
-            evaluation_diagnostics.json
+            evaluation_diagnostics.json, cost_decomposition.json
             equity.png/html, drawdown.png/html, daily_pnl.png/html
             pnl_hist.png/html, returns_dist.png, monthly_heatmap.png/html
             hold_time_pnl, rolling_winrate, tod_heatmap, mae_mfe (.png/.html)
@@ -51,8 +51,14 @@ import pandas as pd
 from artifacts.atomic import write_json_atomic, write_text_atomic
 from artifacts.config_snapshot import write_config_snapshot
 from artifacts.layout import ArtifactLayout
+from decisioning.actions import build_action_schema_from_config
 from evaluation import PerformanceMetrics
+from evaluation.reporting.account_state_trace_reconciliation import (
+    reconcile_account_state_trace,
+)
+from evaluation.reporting.cost_decomposition import decompose_fill_costs
 from evaluation.reporting.evaluation_manifest import write_evaluation_manifest
+from evaluation.reporting.policy_decision_reconciliation import reconcile_policy_decisions
 from evaluation.reporting.run_summary import (
     build_comparison_table,
     build_summary_table,
@@ -65,7 +71,30 @@ from evaluation.reporting.trade_event_export import (
 )
 
 log = logging.getLogger(__name__)
-_BREACH_EVENT_COLUMNS = ("time", "session_id", "reason", "equity", "fill_time")
+_BREACH_EVENT_COLUMNS = (
+    "schema_version",
+    "time",
+    "detection_time",
+    "trade_event_count",
+    "session_id",
+    "reason",
+    "equity",
+    "fill_time",
+)
+
+
+def _strict_nonnegative_count(value: Any) -> int | None:
+    """Keep a breach count only when it is a nonnegative, non-boolean integer.
+
+    Args:
+        value: Raw count from an evaluation result.
+
+    Returns:
+        Valid nonnegative integer, or ``None`` for unsupported values.
+    """
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
 
 
 def _extract_ftmo_limits(cfg: Any) -> tuple[float | None, float | None, float | None]:
@@ -80,9 +109,13 @@ def _extract_ftmo_limits(cfg: Any) -> tuple[float | None, float | None, float | 
     daily_loss_limit = max_loss_limit = profit_target = None
     if cfg is not None:
         try:
-            daily_loss_limit = cfg.ftmo.daily_loss_limit
-            max_loss_limit = cfg.ftmo.max_loss_limit
-            profit_target = cfg.ftmo.profit_target
+            ftmo = cfg.ftmo
+            initial = float(cfg.account.get("initial_balance", 100_000.0))
+            daily_loss_limit = initial * float(ftmo.get("daily_loss_limit_pct", 0.05))
+            max_loss_limit = initial * float(ftmo.get("max_loss_limit_initial_pct", 0.10))
+            profit_target = ftmo.get("profit_target")
+            daily_loss_limit = None if daily_loss_limit is None else float(daily_loss_limit)
+            max_loss_limit = None if max_loss_limit is None else float(max_loss_limit)
         except Exception:
             pass
     return daily_loss_limit, max_loss_limit, profit_target
@@ -103,27 +136,7 @@ def action_schema_manifest(cfg: Any) -> dict[str, Any] | None:
         env = cfg.env
         if not bool(env.get("strategy_actions", False)):
             return None
-        schema: Any
-        multi_tp = bool(env.get("allow_multi_tp", False))
-        if bool(env.get("trade_setup_actions", False)):
-            from decisioning.trade_setup import build_trade_setup_action_schema
-
-            schema = build_trade_setup_action_schema(
-                has_sl_mode=bool(env.get("allow_agent_sl_mode", True)),
-                has_tp_mode=bool(env.get("allow_agent_tp_mode", False)),
-                has_multi_tp=multi_tp,
-                has_simplex=multi_tp and bool(env.get("allow_simplex", True)),
-            )
-        else:
-            from decisioning.actions import build_action_schema
-
-            schema = build_action_schema(
-                has_direction=bool(env.get("agent_direction_control", False)),
-                has_sl_mode=bool(env.get("allow_agent_sl_mode", True)),
-                has_tp_mode=bool(env.get("allow_agent_tp_mode", False)),
-                has_multi_tp=multi_tp,
-                has_simplex=multi_tp and bool(env.get("allow_simplex", True)),
-            )
+        schema = build_action_schema_from_config(env)
         return cast(dict[str, Any], schema.to_dict())
     except (AttributeError, KeyError, TypeError, ValueError):
         return None
@@ -239,9 +252,15 @@ def _write_split(
 
     equity: pd.Series = result.get("equity", pd.Series(dtype=float))
     trades: pd.DataFrame = result.get("trades", pd.DataFrame())
-    breach_events: list[dict[str, Any]] = result.get("breach_events", [])
+    raw_breach_events = result.get("breach_events")
+    breach_events: list[dict[str, Any]] = (
+        raw_breach_events if isinstance(raw_breach_events, list) else []
+    )
+    breach_events_for_reconciliation = (
+        raw_breach_events if isinstance(raw_breach_events, list) else None
+    )
     n_sessions = int(result.get("n_sessions") or 0)
-    n_breach_sessions = int(result.get("n_breach_sessions") or 0)
+    n_breach_sessions = _strict_nonnegative_count(result.get("n_breach_sessions"))
     n_sessions_with_trades = int(result.get("n_sessions_with_trades") or 0)
     n_sessions_skipped_value = result.get("n_sessions_skipped")
     n_sessions_skipped = (
@@ -271,9 +290,62 @@ def _write_split(
         for source, count in sorted(fill_source_values.value_counts().items())
     }
     position_records = _position_summaries(trades)
+    cost_decomposition = decompose_fill_costs(trades)
+    account_state_trace = result.get("account_state_trace")
+    account_state_reconciliation = (
+        reconcile_account_state_trace(
+            account_state_trace, trades, breach_events=breach_events_for_reconciliation
+        )
+        if isinstance(account_state_trace, pd.DataFrame)
+        else {
+            "schema_version": "account_state_reconciliation.v2",
+            "status": "unavailable",
+            "trace_rows": 0,
+            "trade_event_rows": int(len(trades)),
+            "checks": {},
+            "failure_count": 0,
+            "failures": [],
+            "incomplete_reasons": ["account_state_trace_is_absent"],
+        }
+    )
+    policy_decisions = result.get("policy_decisions")
+    policy_decision_incomplete_reasons = ["policy_decisions_are_absent"]
+    if breach_events_for_reconciliation is None:
+        policy_decision_incomplete_reasons.append("breach_event_ledger_not_supplied")
+    policy_decision_reconciliation = (
+        reconcile_policy_decisions(policy_decisions, trades, breach_events_for_reconciliation)
+        if isinstance(policy_decisions, pd.DataFrame)
+        else {
+            "schema_version": "policy_decision_reconciliation.v1",
+            "status": "incomplete",
+            "decision_rows": 0,
+            "trade_event_rows": int(len(trades)),
+            "breach_event_rows": int(len(breach_events)),
+            "checks": {},
+            "failure_count": 0,
+            "failures": [],
+            "incomplete_reasons": policy_decision_incomplete_reasons,
+            "unclosed_position_ids": [],
+        }
+    )
+    write_text_atomic(
+        split_dir / "cost_decomposition.json",
+        json.dumps(cost_decomposition, indent=2),
+    )
     if save_csv:
         if not equity.empty:
             equity.to_csv(split_dir / "equity.csv", header=["equity"])
+        account_state_trace = result.get("account_state_trace")
+        if isinstance(account_state_trace, pd.DataFrame) and not account_state_trace.empty:
+            account_state_trace.to_csv(split_dir / "account_state_trace.csv", index=False)
+        write_text_atomic(
+            split_dir / "account_state_reconciliation.json",
+            json.dumps(account_state_reconciliation, indent=2),
+        )
+        write_text_atomic(
+            split_dir / "policy_decision_reconciliation.json",
+            json.dumps(policy_decision_reconciliation, indent=2),
+        )
         economic_value_curve = result.get("total_economic_value_curve")
         if (
             result.get("trading_policy_mode") == "repeated_payout"
@@ -308,6 +380,9 @@ def _write_split(
         setup_decisions = result.get("trade_setup_decisions")
         if isinstance(setup_decisions, pd.DataFrame):
             setup_decisions.to_csv(split_dir / "trade_setup_decisions.csv", index=False)
+        policy_decisions = result.get("policy_decisions")
+        if isinstance(policy_decisions, pd.DataFrame):
+            policy_decisions.to_csv(split_dir / "policy_decisions.csv", index=False)
         breach_frame = pd.DataFrame.from_records(breach_events, columns=_BREACH_EVENT_COLUMNS)
         breach_frame.to_csv(split_dir / "breach_events.csv", index=False)
         cycle_events = result.get("cycle_events")
@@ -343,22 +418,104 @@ def _write_split(
         final_equity=final_equity,
     )
     fail_time = result.get("fail_time")
+    policy_decision_schema_versions_value = policy_decision_reconciliation.get(
+        "decision_schema_versions", []
+    )
+    if not isinstance(policy_decision_schema_versions_value, list):
+        raise TypeError("policy decision schema versions must be a list")
+    policy_decision_schema_versions = list(policy_decision_schema_versions_value)
+    account_reconciliation_checks = account_state_reconciliation.get("checks", {})
+    policy_reconciliation_checks = policy_decision_reconciliation.get("checks", {})
+    if not isinstance(account_reconciliation_checks, dict):
+        raise TypeError("account state reconciliation checks must be an object")
+    if not isinstance(policy_reconciliation_checks, dict):
+        raise TypeError("policy decision reconciliation checks must be an object")
+    account_reconciliation_failures = account_state_reconciliation.get("failure_count", 0)
+    policy_reconciliation_failures = policy_decision_reconciliation.get("failure_count", 0)
+    policy_reconciliation_breach_rows = policy_decision_reconciliation.get("breach_event_rows", 0)
+    if any(
+        isinstance(value, bool) or not isinstance(value, int)
+        for value in (
+            account_reconciliation_failures,
+            policy_reconciliation_failures,
+            policy_reconciliation_breach_rows,
+        )
+    ):
+        raise TypeError("reconciliation counts must be integers")
     evaluation_diagnostics = {
         "n_steps": result.get("n_steps"),
         "exposure_bars": result.get("exposure_bars"),
         "exposure_fraction": result.get("exposure_fraction"),
         "exposure_measure": result.get("exposure_measure"),
-        "survived_full_year": result.get("survived_full_year"),
+        "survived_full_year": result.get("survived_full_year") is True,
         "daily_loss_is_session_scoped": result.get("daily_loss_is_session_scoped"),
-        "completed_data_split": result.get("completed_data_split"),
+        "completed_data_split": result.get("completed_data_split") is True,
         "episode_end_reason": result.get("episode_end_reason"),
         "fail_time": None if fail_time is None else str(fail_time),
         "n_sessions": n_sessions,
         "n_breach_sessions": n_breach_sessions,
+        "breach_event_ledger_supplied": breach_events_for_reconciliation is not None,
+        "breach_event_rows": len(breach_events),
         "n_sessions_with_trades": n_sessions_with_trades,
         "n_sessions_skipped": n_sessions_skipped,
         "action_counts": result.get("action_counts", {}),
         "execution_event_count": int(len(fill_events)),
+        "account_state_trace_rows": (
+            int(len(result["account_state_trace"]))
+            if isinstance(result.get("account_state_trace"), pd.DataFrame)
+            else 0
+        ),
+        "account_state_trace_complete": result.get("account_state_trace_complete") is True,
+        "account_state_trace_phases": (
+            sorted(result["account_state_trace"]["state_phase"].dropna().astype(str).unique())
+            if isinstance(result.get("account_state_trace"), pd.DataFrame)
+            and not result["account_state_trace"].empty
+            and "state_phase" in result["account_state_trace"].columns
+            else []
+        ),
+        "account_state_trace_schema": (
+            str(result["account_state_trace"]["schema_version"].iloc[0])
+            if isinstance(result.get("account_state_trace"), pd.DataFrame)
+            and not result["account_state_trace"].empty
+            and "schema_version" in result["account_state_trace"].columns
+            else None
+        ),
+        "account_state_reconciliation_status": account_state_reconciliation["status"],
+        "account_state_reconciliation_checks": int(sum(account_reconciliation_checks.values())),
+        "account_state_reconciliation_failures": account_reconciliation_failures,
+        "fill_cost_provenance": account_state_reconciliation.get(
+            "fill_cost_provenance",
+            {
+                "status": "unavailable",
+                "fill_rows": 0,
+                "verified_rows": 0,
+                "missing_rows": 0,
+            },
+        ),
+        "cost_decomposition_status": cost_decomposition["status"],
+        "cost_decomposition_completed_positions": cost_decomposition["completed_position_count"],
+        "policy_decisions_rows": (
+            int(len(result["policy_decisions"]))
+            if isinstance(result.get("policy_decisions"), pd.DataFrame)
+            else 0
+        ),
+        "policy_decisions_complete": bool(result.get("policy_decisions_complete", False)),
+        "policy_decisions_schema_versions": policy_decision_schema_versions,
+        "policy_decisions_schema": (
+            policy_decision_schema_versions[0]
+            if len(policy_decision_schema_versions) == 1
+            else "mixed"
+            if policy_decision_schema_versions
+            else None
+        ),
+        "policy_decision_reconciliation_status": policy_decision_reconciliation["status"],
+        "policy_decision_reconciliation_breach_events": policy_reconciliation_breach_rows,
+        "policy_decision_reconciliation_checks": int(sum(policy_reconciliation_checks.values())),
+        "policy_decision_reconciliation_failures": policy_reconciliation_failures,
+        "observation_schema": result.get("observation_schema"),
+        "observation_inputs": result.get("observation_inputs"),
+        "execution_contract": result.get("execution_contract"),
+        "entry_state_config": result.get("entry_state_config"),
         "fill_quote_source_event_count": int(sum(fill_quote_source_counts.values())),
         "fill_quote_source_counts": fill_quote_source_counts,
         "position_record_count": int(len(position_records)),

@@ -1,0 +1,364 @@
+{
+  "focus_top_level_names": [
+    "Aalto_MS_Thesis",
+    "Quantitative-RL-Trading-System",
+    "Quantitative-RL-Trading-System-research-archive"
+  ],
+  "focused_directory_symlink_count": 21,
+  "focused_missing_target_count": 3,
+  "focused_symlink_count": 41,
+  "focused_symlinks": [
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib64",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/lib",
+      "target": "lib",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/.tools/python/cpython-3.12.15-linux-aarch64-gnu/bin/python3.12",
+      "target": "/scratch/work/nguyenl37/.tools/python/cpython-3.12-linux-aarch64-gnu/bin/python3.12",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python3",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/.tools/python/cpython-3.12.15-linux-aarch64-gnu/bin/python3.12",
+      "target": "python",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python3.12",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/.tools/python/cpython-3.12.15-linux-aarch64-gnu/bin/python3.12",
+      "target": "python",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-v100/lib64",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-v100/lib",
+      "target": "lib",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-v100/bin/python",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/home/nguyenl37/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/bin/python3.12",
+      "target": "/home/nguyenl37/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin/python3.12",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-v100/bin/python3",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/home/nguyenl37/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/bin/python3.12",
+      "target": "python",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-v100/bin/python3.12",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/home/nguyenl37/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/bin/python3.12",
+      "target": "python",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/lib64",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/lib",
+      "target": "lib",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/bin/python3.12",
+      "target": "/scratch/work/nguyenl37/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin/python3.12",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python3",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/bin/python3.12",
+      "target": "python",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python3.12",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/.local/share/uv/python/cpython-3.12.14-linux-x86_64-gnu/bin/python3.12",
+      "target": "python",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/discretion/testing",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing",
+      "target": "../testing",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/discretion/training",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training",
+      "target": "../training",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/normal/testing",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing",
+      "target": "../testing",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/normal/training",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training",
+      "target": "../training",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/cache",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/outputs",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/data/data",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/data/testing",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/data/training",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/data/discretion/testing",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing",
+      "target": "../testing",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/data/discretion/training",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training",
+      "target": "../training",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/data/normal/testing",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing",
+      "target": "../testing",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/agent_state/architecture_refactor_baseline_source_3fbbb74/data/normal/training",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training",
+      "target": "../training",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_v30_20261027_v2/logs/controller.log",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v2/logs/controller.log",
+      "target": "../../regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v2/logs/controller.log",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_v30_20261027_v2/logs/worker_manager_gpuarm1_21223441.log",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v2/logs/worker_manager_gpuarm1_21223441.log",
+      "target": "../../regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v2/logs/worker_manager_gpuarm1_21223441.log",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1001",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1005/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1001",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1005/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1001",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1002",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1005/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1002",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1005/replays/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/seed_1002",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1001",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1005/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1001",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1005/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1001",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1002_matched_frame_v1/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1002",
+      "path_is_directory_symlink": true,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1005/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1002",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reports/stochastic_equity_ensemble_seed1001_1005/replays/ladder_a4b_entry_fsm_qgrid025__seed50/seed_1002",
+      "target_exists": true,
+      "target_is_directory": true
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/reports/trade_plot_review_100/source_subsets/sustainable_growth_ppo_dsr__seed50/config.yaml",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261027_134841_389906_rl_train_seed50_tcn/config.yaml",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261027_134841_389906_rl_train_seed50_tcn/config.yaml",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/reports/trade_plot_review_100/source_subsets/sustainable_growth_ppo_log__seed50/config.yaml",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/runs/attempts/sustainable_growth_ppo_log__seed50/attempt1/sustainable_growth_ppo_log__seed50/20261027_134841_716371_rl_train_seed50_tcn/config.yaml",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/runs/attempts/sustainable_growth_ppo_log__seed50/attempt1/sustainable_growth_ppo_log__seed50/20261027_134841_716371_rl_train_seed50_tcn/config.yaml",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/reports/trade_plot_review_100/source_subsets/sustainable_growth_ppo_log_q5__seed50/config.yaml",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/runs/attempts/sustainable_growth_ppo_log_q5__seed50/attempt1/sustainable_growth_ppo_log_q5__seed50/20261027_134841_740114_rl_train_seed50_tcn/config.yaml",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/sustainable_growth_ppo_three_policy_seed50_train2025_2m_v31_20261027_v1/runs/attempts/sustainable_growth_ppo_log_q5__seed50/attempt1/sustainable_growth_ppo_log_q5__seed50/20261027_134841_740114_rl_train_seed50_tcn/config.yaml",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/sustainable_growth_seed50_train2025_20261025_2m_eod_dd10k_v1/reports/full_data_replay_no_environment_eod_20261025/shim_bin/python",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/usr/bin/python3.9",
+      "target": "/usr/bin/python3",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/reports/r1_all_trade_images_20261026/testing/trades.csv",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_retry1_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261026_043407_308830_rl_train_seed50_tcn/testing/trades.csv",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_retry1_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261026_043407_308830_rl_train_seed50_tcn/testing/trades.csv",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/reports/r1_all_trade_images_20261026/training/trades.csv",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_retry1_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261026_043407_308830_rl_train_seed50_tcn/training/trades.csv",
+      "target": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/regime_d1_norm_r1_seed50_train2025_20261026_2m_normal_retry1_v1/runs/attempts/sustainable_growth_ppo_dsr__seed50/attempt1/sustainable_growth_ppo_dsr__seed50/20261026_043407_308830_rl_train_seed50_tcn/training/trades.csv",
+      "target_exists": true,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/thesis_engineering_reanalysis/p2_seed42_a0_postfix_hashseed_20261018/staging/data",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Aalto_MS_Thesis/data",
+      "target": "/scratch/work/nguyenl37/Aalto_MS_Thesis/data",
+      "target_exists": false,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/thesis_engineering_reanalysis/p2_seed42_a0_postfix_hashseed_20261018/staging/source_cache/baseline.parquet",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Aalto_MS_Thesis/cache/US100.cash_features_v19-causal-mtf-ifvg_656b50e064710408.parquet",
+      "target": "/scratch/work/nguyenl37/Aalto_MS_Thesis/cache/US100.cash_features_v19-causal-mtf-ifvg_656b50e064710408.parquet",
+      "target_exists": false,
+      "target_is_directory": false
+    },
+    {
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/thesis_engineering_reanalysis/p2_seed42_a0_postfix_hashseed_20261018/staging/source_cache/baseline.parquet.hash",
+      "path_is_directory_symlink": false,
+      "resolved_target": "/scratch/work/nguyenl37/Aalto_MS_Thesis/cache/US100.cash_features_v19-causal-mtf-ifvg_656b50e064710408.parquet.hash",
+      "target": "/scratch/work/nguyenl37/Aalto_MS_Thesis/cache/US100.cash_features_v19-causal-mtf-ifvg_656b50e064710408.parquet.hash",
+      "target_exists": false,
+      "target_is_directory": false
+    }
+  ],
+  "followed_symlink_directories": false,
+  "limitations": [
+    "Targets were resolved for inventory only; target directories were not traversed by this command.",
+    "Only symlinks under the supplied root were enumerated.",
+    "A target outside the scan root may require a separate evidence search."
+  ],
+  "nonfocused_symlink_counts_by_top_level": {
+    ".cache": 158,
+    ".config": 2,
+    ".cursor-server": 4,
+    ".local": 3156,
+    ".tmp": 332,
+    ".tmp_venv": 4,
+    ".tools": 1050,
+    ".uv-cache": 37,
+    ".venv-mi210": 4,
+    ".venv-v100": 4,
+    "home-data": 201,
+    "uv_cache": 824
+  },
+  "observed_at_utc": "2026-11-04T00:37:20.518414+00:00",
+  "schema_version": "qrl.scratch_symlink_inventory.v1",
+  "search_root": "/scratch/work/nguyenl37",
+  "total_symlink_count": 5817
+}

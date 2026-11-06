@@ -1,0 +1,22 @@
+{
+  "group_key": "09f573d5fdbae3dab6066bbe8e72e7c76a2405018518cc9c46e5738e3c689825",
+  "profile_ids": [
+    "legacy_variant/knob_age_20",
+    "legacy_variant/knob_age_60",
+    "legacy_variant/knob_retest_true",
+    "legacy_variant/ladder_a1_sl",
+    "legacy_variant/ladder_a2_tp",
+    "legacy_variant/ladder_a3_multi_tp",
+    "legacy_variant/ladder_a4a_entry_fsm_hidden",
+    "legacy_variant/ladder_a4b_entry_fsm",
+    "legacy_variant/rq_mtf_control_tcn",
+    "legacy_variant/rq_mtf_treatment_mtf",
+    "legacy_variant/sustainable_growth_ppo_dsr",
+    "legacy_variant/sustainable_growth_ppo_log",
+    "legacy_variant/sustainable_growth_ppo_log_eod_dd10k",
+    "legacy_variant/sustainable_growth_ppo_log_q5",
+    "legacy_variant/sustainable_growth_sac_log"
+  ],
+  "representative_profile": "legacy_variant/ladder_a1_sl",
+  "status": "measured_training_split"
+}

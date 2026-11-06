@@ -1,0 +1,20 @@
+{
+  "run_date": "2026-11-04",
+  "git_head": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "runtime": "ARM64 project .venv",
+  "checks": [
+    ".venv/bin/ruff format --check simulation/environment/observations.py simulation/environment/observation_runtime.py tests/unit/simulation/test_environment/test_mtf_windows.py",
+    ".venv/bin/ruff check simulation/environment/observations.py simulation/environment/observation_runtime.py tests/unit/simulation/test_environment/test_mtf_windows.py",
+    ".venv/bin/python -m pytest tests/unit/simulation/test_environment/test_mtf_windows.py tests/unit/simulation/test_environment/test_observation_schema.py -q",
+    "git diff --check"
+  ],
+  "exit_code": 0,
+  "pytest_collected": 32,
+  "pytest_passed": 32,
+  "pytest_failed": 0,
+  "pytest_duration_seconds": 2.20,
+  "behavior": "NaN, positive infinity, and negative infinity in M1, higher-timeframe window, and VAE input values become zero before model inference.",
+  "claim_limit": "Does not add per-feature availability channels, change temporal masks, validate economic outcomes, or close historical action linkage."
+}

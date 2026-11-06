@@ -37,7 +37,19 @@ def _build_po3_timeframe_state(
     phase_mode: str,
     max_ifvg_age_bars: int,
 ) -> pd.DataFrame:
-    """Build one source-timeframe PO3 state with its IFVG-qualified flag."""
+    """Build one source-timeframe PO3 state with its IFVG-qualified flag.
+
+    Args:
+        bars: OHLC bars for one source timeframe.
+        sweeps: Confirmed liquidity-sweep events aligned to the bars.
+        levels: Structural price levels for standard PO3 phase detection.
+        ifvg_zones: IFVG zone state used to qualify distribution.
+        phase_mode: PO3 lifecycle variant to construct.
+        max_ifvg_age_bars: Maximum age of an IFVG zone eligible for qualification.
+
+    Returns:
+        PO3 state frame with IFVG-qualified distribution fields.
+    """
     if phase_mode == "reclaim_then_ifvg":
         return build_po3_ifvg_state(
             bars,

@@ -159,13 +159,16 @@ def test_training_protocol_records_growth_scale() -> None:
     manifest = training_protocol_manifest(
         model=model,
         cfg=cfg,
-        args=SimpleNamespace(),
+        args=SimpleNamespace(reward="sweep", mvp=True, allow_locked_oos_for_selection=True),
         seed=50,
         requested_steps=8,
     )
     assert manifest["reward"]["mode"] == "equity_log_growth"
+    assert manifest["reward"]["selector"] == "sweep"
     assert manifest["reward"]["equity_log_growth_scale"] == 25.0
     assert manifest["risk"]["eod_peak_trailing_dd_limit_usd"] == 10_000.0
+    assert manifest["mvp_mode"] is True
+    assert manifest["locked_oos_selection_allowed"] is True
 
 
 def test_sac_training_protocol_uses_sac_fields_without_ppo_geometry() -> None:
@@ -192,7 +195,7 @@ def test_sac_training_protocol_uses_sac_fields_without_ppo_geometry() -> None:
     manifest = training_protocol_manifest(
         model=model,
         cfg=cfg,
-        args=SimpleNamespace(),
+        args=SimpleNamespace(reward="dsr"),
         seed=50,
         requested_steps=8,
         algo="sac",

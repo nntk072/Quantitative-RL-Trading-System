@@ -183,12 +183,9 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         sizing_limit = float(ftmo.get("risk_sizing_limit_usd", hard_limit))
         max_loss = min(hard_limit, sizing_limit)
     guardrail_kwargs: dict[str, Any] = {
+        "max_drawdown_mode": str(ftmo.get("max_drawdown_mode", "static")),
         "limit_value_mode": str(ftmo.get("limit_value_mode", "fixed_usd")),
-        "daily_loss_limit": float(ftmo.get("daily_loss_limit", 5000.0)),
-        "max_loss_limit": float(ftmo.get("max_loss_limit", 10000.0)),
         "risk_per_trade_limit": float(ftmo.get("risk_per_trade_limit", 1000.0)),
-        "soft_daily_loss_limit": float(ftmo.get("soft_daily_loss_limit", 5000.0)),
-        "soft_max_loss_limit": float(ftmo.get("soft_max_loss_limit", 10000.0)),
         "trailing_dd_limit": float(ftmo.get("trailing_dd_limit", 0.0)),
         "soft_trailing_dd_limit": float(ftmo.get("soft_trailing_dd_limit", 0.0)),
         "risk_per_trade_limit_pct": float(ftmo.get("risk_per_trade_limit_pct", 0.01)),
@@ -198,19 +195,17 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         "soft_max_loss_limit_initial_pct": float(ftmo.get("soft_max_loss_limit_initial_pct", 0.10)),
     }
     if policy.repeated_payout:
+        if policy.max_loss_limit_initial_pct is None:
+            raise ValueError("maximum-loss percentage is required for repeated payouts")
         guardrail_kwargs.update(
-            daily_loss_limit=policy.daily_loss_limit,
-            max_loss_limit=policy.operating_balance - policy.account_floor,
             risk_per_trade_limit=policy.operating_balance * policy.max_agent_risk_frac,
-            soft_daily_loss_limit=0.0,
-            soft_max_loss_limit=0.0,
             trailing_dd_limit=0.0,
             soft_trailing_dd_limit=0.0,
-            limit_value_mode="fixed_usd",
-            risk_per_trade_limit_pct=0.0,
-            daily_loss_limit_pct=0.0,
+            limit_value_mode="percent_equity",
+            risk_per_trade_limit_pct=policy.max_agent_risk_frac,
+            daily_loss_limit_pct=policy.daily_loss_limit_pct,
             soft_daily_loss_limit_pct=0.0,
-            max_loss_limit_initial_pct=0.0,
+            max_loss_limit_initial_pct=float(policy.max_loss_limit_initial_pct),
             soft_max_loss_limit_initial_pct=0.0,
         )
     if spec.evaluation:
@@ -240,6 +235,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         tp_reference=str(risk.get("tp_reference", "structural")),
         contract_size=float(account.get("contract_size", 1.0)),
         max_loss_per_trade_usd=max_loss,
+        lot_step=float(risk.get("lot_step", 0.01)),
         dsr_eta=float(env.get("reward_dsr_eta", 0.01)),
         max_episode_steps=max_episode_steps(cfg),
         episodic=spec.episodic,
@@ -248,6 +244,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         strategy=strategy,
         strategy_actions=strategy_actions,
         trade_setup_actions=bool(env.get("trade_setup_actions", False)),
+        agent_entry_execution=bool(env.get("agent_entry_execution", False)),
         entry_state_machine=bool(env.get("entry_state_machine", False)),
         candidate_max_age_bars=int(env.get("candidate_max_age_bars", 5)),
         arm_requires_retest=bool(env.get("arm_requires_retest", False)),
@@ -259,6 +256,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         ),
         observation_age_scale_bars=float(env.get("observation_age_scale_bars", 60.0)),
         reachable_r_validity_mask=bool(env.get("reachable_r_validity_mask", False)),
+        feature_validity_channels=bool(env.get("feature_validity_channels", False)),
         strict_research_eligibility=bool(env.get("strict_research_eligibility", False)),
         sl_buffer_pts=float(env.get("sl_buffer_pts", 0.0)),
         strategy_reward=strategy_reward,
@@ -293,6 +291,11 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         tick_execution_required=bool(costs.get("use_tick_execution", False)),
         fill_delay_ms=int(execution.get("fill_delay_ms", 0)),
         fill_latency_bars=execution.get("fill_latency_bars", 0),
+        limit_order_max_offset_atr=float(execution.get("limit_order_max_offset_atr", 1.0)),
+        limit_order_max_ttl_bars=int(execution.get("limit_order_max_ttl_bars", 60)),
+        limit_order_require_trade_through=bool(
+            execution.get("limit_order_require_trade_through", False)
+        ),
         randomized_fill_latency_ms=float(execution.get("randomized_fill_latency_ms", 0.0)),
         max_tick_quote_wait_ms=int(execution.get("max_tick_quote_wait_ms", 60_000)),
         mtf=spec.arch

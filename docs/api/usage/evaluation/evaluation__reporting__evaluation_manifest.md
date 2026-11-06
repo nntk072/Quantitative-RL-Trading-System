@@ -44,7 +44,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     }
 ```
 
-2. [production caller: `write_evaluation_manifest`](../../../../evaluation/reporting/evaluation_manifest.py#L85)
+2. [production caller: `write_evaluation_manifest`](../../../../evaluation/reporting/evaluation_manifest.py#L88)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -70,7 +70,7 @@ def write_evaluation_manifest(
 
 **Purpose:** Atomically refresh the canonical evaluation provenance manifest.
 
-**Exact API:** {py:obj}`evaluation.reporting.evaluation_manifest.write_evaluation_manifest` · **Source:** [evaluation/reporting/evaluation_manifest.py:70](../../../../evaluation/reporting/evaluation_manifest.py#L70)
+**Exact API:** {py:obj}`evaluation.reporting.evaluation_manifest.write_evaluation_manifest` · **Source:** [evaluation/reporting/evaluation_manifest.py:73](../../../../evaluation/reporting/evaluation_manifest.py#L73)
 
 **Inputs and outputs:**
 
@@ -112,7 +112,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `main`](../../../../evaluation/reanalysis/checkpoint_reanalysis.py#L775)
+2. [production caller: `main`](../../../../evaluation/reanalysis/checkpoint_reanalysis.py#L1073)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

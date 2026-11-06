@@ -24,23 +24,23 @@
     "producer setup sequences are not a ground-truth event ontology",
     "the packet does not count policy proposals or actions",
     "only the configured M1 state path is included",
-    "no economic performance or thesis holdout claim is made"
+    "no economic performance or confirmation-period claim is made"
   ],
   "local_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
   "local_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
   "primary_symbol": "US100.cash",
   "profile_scope": "configured M1 reclaim_then_ifvg PO3 producer state",
-  "resolved_config_sha256": "7292a63c8c158c006f06304aa98c7ef0c8ff438609db69dda41027b24f2f7407",
+  "resolved_config_sha256": "c61655c98a50011f35282aefb0062ff788b4a5b17bcaad85a635f621a3727a26",
   "schema_version": 1,
   "secondary_symbol": "US500.cash",
-  "source_commit": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
   "source_sha256": {
     "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
     "features/pipeline/po3_stage.py": "cc52cd3abb6b05eb0ab28e0709334d8a89d1a8ddc5841af5cb8795e4fe361267",
     "features/po3/ifvg_state.py": "4752d0f172d3f7a229cd24c6269d58bb69c19815c4e3751db80353f2bbfd74ef",
-    "features/po3/setup_lifecycle.py": "07abc7c5a6a5a762920311568d5b610ecfef688219ca79ed803b4187d8e95dd0",
+    "features/po3/setup_lifecycle.py": "c1ed3324772ab4f0fc1ebbf2df884d15c4bc7d2aedeb84068391bb447d01460f",
     "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
-    "scripts/research/analysis/features/build_po3_setup_lifecycle_ledger.py": "21d3fe7af0bd12f0c17a1d2e6f37c19b4603e306aae3d272dc3fa1fd4ffae8f1"
+    "scripts/research/analysis/features/build_po3_setup_lifecycle_ledger.py": "c42e9156b47a88563a8cc6e2036c89fa6444aeb5a76ec27085f4924191d182cb"
   },
   "training_end": "2025-12-31",
   "training_input_sha256": {

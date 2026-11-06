@@ -93,6 +93,8 @@ def target_menu(
         raise ValueError("front_run_pts must be finite and nonnegative")
     if price_increment is not None and (not np.isfinite(price_increment) or price_increment <= 0.0):
         raise ValueError("price_increment must be finite and positive")
+    for timeframe in htf:
+        timeframe_index(str(timeframe))
     if direction == 1:
         names = [
             "last_swing_high",

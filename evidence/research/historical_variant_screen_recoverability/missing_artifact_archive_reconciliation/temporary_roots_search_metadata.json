@@ -1,0 +1,66 @@
+{
+  "claim_scope": "Same-basename exact SHA-256 search for the 132 currently missing run artifacts under /tmp and /var/tmp; no differently named ordinary files searched",
+  "directory_symlinks_followed": false,
+  "exact_matches": 0,
+  "inputs": {
+    "provenance_byte_report": {
+      "path": "evidence/research/releases/negative-evidence-readiness/PROVENANCE_BYTE_VERIFICATION.json",
+      "sha256": "afacb529c0430cc371683af5148308dbdd614c883bbe63aba4047568a6c58c62"
+    },
+    "provenance_dag": {
+      "path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+      "sha256": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c"
+    }
+  },
+  "reproduction_commands": [
+    ".venv/bin/python scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py --search-root /tmp --output evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/tmp_directory_search.json",
+    ".venv/bin/python scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py --search-root /var/tmp --output evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/var_tmp_directory_search.json"
+  ],
+  "schema_version": 1,
+  "searches": [
+    {
+      "bytes": 7379,
+      "candidate_bytes_hashed": 10740,
+      "candidate_file_count": 6,
+      "exact_matches": 0,
+      "hashed_file_count": 6,
+      "path": "tmp_directory_search.json",
+      "read_errors": 0,
+      "search_root": "/tmp",
+      "sha256": "8a55a87db6ebb6dcc0d75d52e872de66ff1cfbed7d2e62fcf5e32635d0010223",
+      "status": "complete",
+      "unmatched_targets": 132,
+      "walk_errors": 0,
+      "walked_directory_count": 62
+    },
+    {
+      "bytes": 5772,
+      "candidate_bytes_hashed": 0,
+      "candidate_file_count": 0,
+      "exact_matches": 0,
+      "hashed_file_count": 0,
+      "path": "var_tmp_directory_search.json",
+      "read_errors": 0,
+      "search_root": "/var/tmp",
+      "sha256": "d95f4489455261df747634c517890f942e28a3f799502c142fd1919b944b376c",
+      "status": "complete",
+      "unmatched_targets": 132,
+      "walk_errors": 0,
+      "walked_directory_count": 1
+    }
+  ],
+  "source_hashes": {
+    "scanner": {
+      "path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py",
+      "sha256": "d4fdce32059cc668388daf0c93416edde0114690d12ddf7c5df1e63a8882f069"
+    }
+  },
+  "status": "complete",
+  "target_count": 132,
+  "unmatched_targets": 132,
+  "validation": {
+    "read_error_count": 0,
+    "training_or_evaluation_run": false,
+    "walk_error_count": 0
+  }
+}

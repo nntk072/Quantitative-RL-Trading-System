@@ -44,6 +44,22 @@ architectures:
     description: Combines M1 temporal features with higher-timeframe snapshots.
 
 families:
+  - id: entry_execution_choice
+    title: Policy-selected entry execution
+    question: Does allowing the policy to choose resting limits change outcomes versus market entries?
+    comparison_type: matched
+    entries:
+      - variant: entry_execution_market_control
+        label: A
+        role: control
+        description: Selects eligible setups and uses market entry execution.
+        changed_factors: []
+      - variant: entry_execution_policy_market_limit
+        label: B
+        role: treatment
+        description: Selects eligible setups and learns market versus bounded limit entry.
+        changed_factors: [entry execution choice]
+
   - id: policy_ladder
     title: Core policy capability ladder
     question: What does each added trading-control capability change from the baseline?

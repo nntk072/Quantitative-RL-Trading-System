@@ -8,6 +8,7 @@ order execution remain in the integration layer.
 
 from __future__ import annotations
 
+import json
 import threading
 from pathlib import Path
 from typing import Any
@@ -72,6 +73,10 @@ class RLStrategyAdapter:
     Not a ``TradingStrategy`` subclass itself — use :meth:`as_strategy`
     to obtain the duck-typed ``signal()`` callable the MT5 robot loop
     expects, or call :meth:`predict_signal` directly.
+
+    Construction requires a run's train-fitted feature normalization artifact.
+    Runtime rolling normalization is available only through an explicit
+    diagnostics-only opt-in.
     """
 
     def __init__(
@@ -83,6 +88,8 @@ class RLStrategyAdapter:
         allow_legacy_observation_schema: bool = False,
         *,
         provider: DecisionProvider | None = None,
+        normalization_state_path: str | Path | None = None,
+        allow_runtime_normalization_fallback: bool = False,
     ) -> None:
         """Initialize RLStrategyAdapter and its owned state.
 
@@ -93,6 +100,9 @@ class RLStrategyAdapter:
             obs_window: Numeric value used for the obs window.
             allow_legacy_observation_schema: Whether to enable or require the allow legacy observation schema.
             provider: Provider used by the operation described above.
+            normalization_state_path: Run artifact containing the train-fitted feature statistics.
+            allow_runtime_normalization_fallback: Explicit diagnostic-only opt-in for callers
+                without a run's train-fitted normalization artifact.
         """
         if (model is None) == (provider is None):
             raise ValueError("provide exactly one of model or provider")
@@ -126,9 +136,27 @@ class RLStrategyAdapter:
         self._last_close = 1.0
         self._feature_lock = threading.Lock()
         self._secondary_bars: pd.DataFrame | None = None
+        self._normalization_state: dict[str, Any] | None = None
+        if normalization_state_path is None and not allow_runtime_normalization_fallback:
+            raise ValueError(
+                "train-fitted feature normalization state is required; set "
+                "allow_runtime_normalization_fallback=True only for diagnostics"
+            )
+        if normalization_state_path is not None:
+            state_path = Path(normalization_state_path).expanduser()
+            if not state_path.is_file():
+                raise FileNotFoundError(f"feature normalization state not found: {state_path}")
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            if not isinstance(state, dict) or state.get("schema") != "feature-normalization-v1":
+                raise ValueError("run artifact has an unsupported feature normalization state")
+            self._normalization_state = state
 
     def _rebuild_features(self, bars: pd.DataFrame) -> pd.DataFrame:
-        """Rebuild the feature matrix from raw M1 bars (train-parity path).
+        """Rebuild features from the bars currently available to live inference.
+
+        Live inference applies the two-stage fit captured from the training
+        feature matrix. The rolling fallback is available only when the
+        constructor's explicit diagnostic opt-in is set.
 
         Args:
             bars: Market bars to process.
@@ -155,6 +183,7 @@ class RLStrategyAdapter:
                 secondary=secondary,
                 cfg=self.cfg,
                 force=True,  # never read a stale cache in live mode
+                fitted_normalization_state=self._normalization_state,
             )
         return self._features
 

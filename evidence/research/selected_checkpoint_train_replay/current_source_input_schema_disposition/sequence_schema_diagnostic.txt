@@ -1,0 +1,9 @@
+recorded_width 746 current_width 724
+checkpoint_width 746
+recorded_version sequence-feature-columns-v1 current_version sequence-feature-columns-v1
+recorded_hash 076e4565f63d4d4a96d00c69511109c6b2a7c312f0e606d588bbd502920765a8 current_hash a3d31b4cd4e6430202235b1197ab15d291951b27f23c5026716841f488cb7546
+recorded_only ['last_swing_high', 'last_swing_low', 'asian_high', 'asian_low', 'london_high', 'london_low', 'prev_day_close', 'prev_day_high', 'prev_day_low', 'sweep_high_level', 'sweep_low_level', 'bos_up_level', 'bos_down_level', 'po3_manipulation_high', 'po3_manipulation_low', 'ifvg_bull_low', 'ifvg_bull_high', 'ifvg_bear_low', 'ifvg_bear_high', 'ifvg_bull_origin', 'ifvg_bear_origin', 'mss_up_level', 'mss_down_level']
+current_only ['datetime']
+same_set False
+same_order False
+first_order_difference 429 last_swing_high dist_to_last_high_atr

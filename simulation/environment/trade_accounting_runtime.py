@@ -6,12 +6,18 @@ from typing import Any
 
 import numpy as np
 
+from trading.execution import (
+    TRADE_CASHFLOW_SCHEMA_VERSION,
+    undo_adverse_quote_level_slippage,
+)
+
 from .mixin_base import RuntimeMixinBase
 
 
 class TradeAccountingRuntimeMixin(RuntimeMixinBase):
     """Update realized-close bookkeeping and stamp exit risk outcomes."""
 
+    _pending_fill_cost_provenance: dict[str, Any] | None
     _last_realized_close_pnl: float | None
     _last_realized_close_r: float | None
     _pending_realized_r: float | None
@@ -45,6 +51,35 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
         pos = self.position
         if pos is None or "fill_id" in record:
             return
+        cost_provenance = getattr(self, "_pending_fill_cost_provenance", None)
+        if isinstance(cost_provenance, dict):
+            if record.get("type") in {"stop_close", "tp_close", "tp_partial_close"} and (
+                record.get("fill_quote_source") == "bar_range_level"
+                or record.get("time_precision") == "bar_interval"
+            ):
+                slippage = float(self.cost_model.slippage_points)
+                raw_bid, raw_ask = undo_adverse_quote_level_slippage(
+                    (
+                        float(cost_provenance["broker_execution_quote_bid"]),
+                        float(cost_provenance["broker_execution_quote_ask"]),
+                    ),
+                    int(pos.direction),
+                    slippage,
+                    opening=False,
+                )
+                cost_provenance.update(
+                    {
+                        "pre_execution_quote_bid": raw_bid,
+                        "pre_execution_quote_ask": raw_ask,
+                        "slippage_points_applied_here": slippage,
+                        "slippage_applied_here": slippage > 0.0,
+                        "slippage_application_mode": (
+                            "quote_level_shift" if slippage > 0.0 else "none"
+                        ),
+                    }
+                )
+            record.update(cost_provenance)
+            self._pending_fill_cost_provenance = None
         active_execution = getattr(self, "_active_step_execution", None)
         if active_execution is not None:
             for key, value in active_execution["metadata"].items():
@@ -82,6 +117,26 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
         # Broker pnl already includes exit commission. Entry commission was
         # debited on open; allocate it exactly once, pro rata across fills.
         entry_cost = float(self.broker.cost_model.total_cost(close_size))
+        contract_size = float(self.broker.contract_size)
+        commission_per_lot = float(self.broker.cost_model.commission_per_lot)
+        exit_commission = float(self.broker.cost_model.total_cost(close_size))
+        gross_price_pnl = (
+            (float(fill_price) - float(pos.entry_price))
+            * int(pos.direction)
+            * close_size
+            * contract_size
+        )
+        record.update(
+            {
+                "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
+                "direction": int(pos.direction),
+                "entry_price": float(pos.entry_price),
+                "contract_size": contract_size,
+                "commission_per_lot": commission_per_lot,
+                "gross_price_pnl": gross_price_pnl,
+                "exit_commission": exit_commission,
+            }
+        )
         net_pnl = float(record.get("pnl", 0.0)) - entry_cost
         record["entry_commission_allocated"] = entry_cost
         record["net_pnl"] = net_pnl

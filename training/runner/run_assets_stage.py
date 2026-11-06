@@ -54,8 +54,8 @@ def _prepare_run_assets(
     pre_ny_by_date = data_stage.pre_ny_by_date
     # Setup output directory for model
     seeds = list(args.seeds) if args.seeds else [args.seed]
-    if args.resume_checkpoint and (args.algo != "ppo" or len(seeds) != 1):
-        raise SystemExit("--resume-checkpoint currently supports one PPO seed per run")
+    if args.resume_checkpoint and (args.algo not in {"ppo", "sac"} or len(seeds) != 1):
+        raise SystemExit("--resume-checkpoint supports one PPO or SAC seed per run")
     is_multi_seed = len(seeds) > 1
     quality_variant = str(cfg.get("quality_variant_id", ""))
     if quality_variant:

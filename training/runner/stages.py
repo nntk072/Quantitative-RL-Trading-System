@@ -30,6 +30,7 @@ class TrainingDataStage:
     schedule_path: Path
     feature_columns: list[str]
     feat_cache: Path
+    feature_normalization_state_path: Path
     train_bars: Any
     train_feat: Any
     test_bars: Any

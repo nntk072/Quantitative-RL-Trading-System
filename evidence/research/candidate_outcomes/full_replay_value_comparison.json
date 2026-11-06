@@ -1,0 +1,18 @@
+{
+  "batch_size": 16384,
+  "batches_compared": 66,
+  "elapsed_seconds": 0.221,
+  "first_mismatch": null,
+  "method": "Arrow batch-by-batch exact schema/value comparison; this is replay reproducibility evidence, not an independent execution implementation",
+  "reference_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/current_source_candidate_evidence_20261105/candidate_outcomes_exact_touch/conditional_outcomes.parquet",
+  "reference_rows": 1067731,
+  "reference_sha256": "4e346203c08da5a3602a2c94c285462b9c75001da4b0c0bed0ff7f2be7795b96",
+  "replay_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/current_source_candidate_evidence_20261105/candidate_outcomes_exact_touch_replay_2/conditional_outcomes.parquet",
+  "replay_rows": 1067731,
+  "replay_sha256": "4e346203c08da5a3602a2c94c285462b9c75001da4b0c0bed0ff7f2be7795b96",
+  "rows_compared": 1067731,
+  "schema_version": "candidate-outcome-full-replay-value-comparison-v1",
+  "script_path": "scripts/research/analysis/evaluation/compare_candidate_outcome_replays.py",
+  "script_sha256": "41602b08472f02cbd38a551d299cf827efb899cb24351dbcaa4be3c80723a5c9",
+  "status": "all_rows_exactly_equal"
+}

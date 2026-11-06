@@ -1,31 +1,70 @@
 {
-  "schema": "aalto.quant_checkpoint_registry.v1",
-  "scope": "selected seed-50 matched pair only; locations remain in restricted scratch",
-  "campaign_path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/",
+  "artifact_integrity_report": {
+    "created_at_utc": "2026-11-04T03:27:23.782237+00:00",
+    "path": "selected_campaign_artifact_integrity.json",
+    "sha256": "13ad80a7714210651bc1825e83b3070ff199c7e8d21924c3ef0ffb6b02b1e661",
+    "status": "passed_with_scoped_limits"
+  },
   "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
-  "source_commit": "b93642a368439a7838c3107c25fd4999b32bc028",
+  "campaign_path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/",
   "checkpoints": [
     {
       "arm": "A4A",
-      "path": "restricted scratch campaign final checkpoint; see per-arm manifest",
-      "sha256_verified_against_manifest": true,
-      "load_or_replay_verified_in_this_snapshot": false
+      "current_byte_verified_at_utc": "2026-11-04T03:27:23.782237+00:00",
+      "load_or_replay_verified_in_this_snapshot": false,
+      "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/model/ppo_final.zip",
+      "resolved_config_path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml",
+      "resolved_config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+      "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4A/seed50",
+      "run_manifest_path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+      "run_manifest_sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+      "run_source_commit": "0d056dcd3ab42165eec183a2f44cfe7e441edd39",
+      "sha256": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703",
+      "sha256_verified_against_current_bytes": true,
+      "sha256_verified_against_manifest": true
     },
     {
       "arm": "A4B",
-      "path": "restricted scratch campaign final checkpoint; see per-arm manifest",
-      "sha256_verified_against_manifest": true,
-      "load_or_replay_verified_in_this_snapshot": false
+      "current_byte_verified_at_utc": "2026-11-04T03:27:23.782237+00:00",
+      "load_or_replay_verified_in_this_snapshot": false,
+      "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/model/ppo_final.zip",
+      "resolved_config_path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml",
+      "resolved_config_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+      "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4B/seed50",
+      "run_manifest_path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+      "run_manifest_sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+      "run_source_commit": "0d056dcd3ab42165eec183a2f44cfe7e441edd39",
+      "sha256": "f2d07676fc5e1019dda9cbd1714874fd6997238ba70dc69a5f16be7c19a36fdf",
+      "sha256_verified_against_current_bytes": true,
+      "sha256_verified_against_manifest": true
     }
   ],
+  "data_access_scope": "current local data used at user direction; provider/license not investigated; raw market data excluded from this release",
   "manifest_reconciliation": {
-    "per_arm_artifacts_matching_hash": "10/10",
-    "input_paths_present": "39/39",
+    "campaign_json_sha256": "486c5a450019ce215f99e998fd306224bee4239cc5f9dec59233839955fc0497",
+    "checkpoint_replay_performed": false,
+    "feature_cache_available_at_recorded_paths": false,
+    "final_checkpoints_current_bytes_hashed": "2/2",
+    "input_audit": "local_market_data_quality.json",
     "input_bytes_rehashed": true,
     "input_hash_matches": "39/39",
-    "input_audit": "local_market_data_quality.json",
-    "checkpoint_replay_performed": false
+    "input_paths_present": "39/39",
+    "per_arm_artifacts_matching_hash": "10/10",
+    "resolved_configs_current_bytes_hashed": "2/2",
+    "run_manifests_current_bytes_hashed": "2/2",
+    "run_source_commit_ancestry_verified": true,
+    "source_snapshot_manifest_files_hashed": "590/590"
   },
-  "data_access_scope": "current local data used at user direction; provider/license not investigated; raw market data excluded from this release",
-  "note": "This record does not reproduce the checkpoint replay or make the private data/checkpoints distributable."
+  "note": "Campaign and run commits are distinct: the campaign snapshot records b93642a368439a7838c3107c25fd4999b32bc028, while both run manifests record 0d056dcd3ab42165eec183a2f44cfe7e441edd39; ancestry is verified. The run manifests record a dirty source file and the complete run source-tree hash remains unknown. Final checkpoint and config bytes match their run manifests. No checkpoint was loaded or replayed. The separate replacement18 recovery freeze is a different campaign and is not evidence for this P6 pair.",
+  "schema": "aalto.quant_checkpoint_registry.v1",
+  "scope": "selected seed-50 matched pair only; locations remain in restricted scratch",
+  "source_commit": "b93642a368439a7838c3107c25fd4999b32bc028",
+  "source_snapshot_reconciliation": {
+    "embedded_manifest_sha256": "aa76f464a6569e1dc0f7ea4b3d0814fb285f679ba3c087bb4f2d359e07ead016",
+    "git_sha": "b93642a368439a7838c3107c25fd4999b32bc028",
+    "manifested_file_hashes_matched": 590,
+    "manifested_files": 590,
+    "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/source_snapshot.zip",
+    "sha256": "9f8b3459820b7220b50e8d9145a15fb608f352438f90b388962c2ece48c62b99"
+  }
 }

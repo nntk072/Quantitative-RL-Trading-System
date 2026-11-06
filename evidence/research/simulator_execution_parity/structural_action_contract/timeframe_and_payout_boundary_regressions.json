@@ -1,0 +1,54 @@
+{
+  "allocation": {
+    "job_id": "21410051",
+    "node": "gpuarm1",
+    "gpu_family": "GH200",
+    "gpus": 1,
+    "cpus": 48,
+    "memory_gib": 512,
+    "time_limit": "12:00:00",
+    "new_job_or_step_created": true,
+    "launched_from_persistent_tmux": "qrl-live-guardrail-validation:research-plan-gh200"
+  },
+  "command": ".venv/bin/python -m pytest tests/unit/simulation/test_environment/test_decision_correlation.py tests/integration/backtest/test_engine_execution_contract.py tests/integration/backtest/test_entry_levels.py tests/unit/trading/test_repeated_payout_policy.py -q",
+  "evidence_scope": "Current-source regression evidence for environment decision provenance, structural stop and target contracts, unknown timeframe rejection, and payout principal/loss boundaries; no historical-policy replay or economic claim",
+  "format_check": ".venv/bin/ruff format --check trading/orders/stops.py trading/orders/targets.py tests/integration/backtest/test_entry_levels.py tests/unit/trading/test_repeated_payout_policy.py",
+  "lint_check": ".venv/bin/ruff check trading/orders/stops.py trading/orders/targets.py tests/integration/backtest/test_entry_levels.py tests/unit/trading/test_repeated_payout_policy.py",
+  "result": {
+    "failed": 0,
+    "passed": 98,
+    "status": "passed",
+    "duration_seconds": 12.83
+  },
+  "schema": "qrl.stage_e_structural_action_contract.current_source_regressions.v1",
+  "source_files": [
+    "simulation/environment/action_runtime.py",
+    "simulation/environment/entry_execution_runtime.py",
+    "trading/orders/stops.py",
+    "trading/orders/targets.py",
+    "trading/orders/timeframes.py",
+    "trading/account/accounting.py",
+    "trading/policy/repeated_payout.py",
+    "trading/policy/config.py"
+  ],
+  "test_files": [
+    "tests/unit/simulation/test_environment/test_decision_correlation.py",
+    "tests/integration/backtest/test_engine_execution_contract.py",
+    "tests/integration/backtest/test_entry_levels.py",
+    "tests/unit/trading/test_repeated_payout_policy.py"
+  ],
+  "validation_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/stage_e_structural_payout_boundaries_current.log",
+  "regressions": [
+    "stop_menu and target_menu reject configured source timeframe M99",
+    "payout event is absent at balances 90000, 95000, and 100000",
+    "balance 110250 produces a positive payout of 10250"
+  ],
+  "limitations": [
+    "The suite does not characterize an empty setup mask across both engines.",
+    "Limit-price/TTL order behavior has no current action contract and remains unsupported.",
+    "Stable TickBook source order does not identify true sub-millisecond chronology.",
+    "No historical PPO action-to-order/fill linkage, checkpoint replay, or economic result is established."
+  ],
+  "policy_replay_performed": false,
+  "training_performed": false
+}

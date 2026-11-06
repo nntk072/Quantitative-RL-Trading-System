@@ -21,8 +21,20 @@ fill-to-position links, per-position and aggregate PnL reconciliation, holding
 duration, and exit reasons. When every position is complete and no payout rows
 exist, the report also checks that initial balance plus position net PnL equals
 final equity; cases with payouts are explicitly left incomparable by that
-identity. The selected training ledger matches all three aggregate values
-within floating-point tolerance. The report also shows the gap between logged `decision_time` and
+identity. A chronological cashflow check applies every partial and final close
+fill's net PnL, applies payout withdrawals at their event times, and compares
+recorded equity with reconstructed cash only after a position closes while the
+account is flat. It also checks that each fill's `net_pnl` equals recorded
+exit `pnl` minus allocated entry commission. All four preserved A4 partitions
+pass these checks: 2,218 of 2,218 completed closes match and 2,304 of 2,304
+close fills satisfy the recorded net-PnL arithmetic. No payout rows are present,
+and all four ending
+balances match their recorded metrics. This checks realized cash transitions;
+it does not reconstruct open-position mark-to-market or daily risk state. The
+packet aggregator verifies child report and input hashes before writing the
+combined report and manifest. Regenerate each partition with the summarizer,
+then run `python scripts/research/analysis/evaluation/build_policy_trade_lifecycle_packet.py`.
+The report also shows the gap between logged `decision_time` and
 `order_submission_time`. For all 825 selected A4B training opens, this gap is
 60 seconds; the resolved configuration declares open-stamped bars, while the
 environment records `signal_time` at the current bar end. This is consistent

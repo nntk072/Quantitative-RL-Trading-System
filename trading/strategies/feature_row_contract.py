@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any, Protocol
 
 
@@ -33,5 +34,24 @@ class FeatureRow(Protocol):
 
         Returns:
             Numeric result returned by ``__getitem__``.
+        """
+        ...
+
+    def __iter__(self) -> Iterator[str]:
+        """Iterate over feature names available on the row.
+
+        Returns:
+            Feature names in the row's source-column order.
+        """
+        ...
+
+    def __contains__(self, key: object) -> bool:
+        """Check whether a feature name is available on the row.
+
+        Args:
+            key: Value checked against the row's feature names.
+
+        Returns:
+            Whether the row contains the requested feature name.
         """
         ...

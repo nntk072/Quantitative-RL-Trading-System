@@ -1,0 +1,8 @@
+{
+  "group_key": "5c390985b21b7662e7421753f228ac9f100757b6eb2a147ef1306166642ca380",
+  "profile_ids": [
+    "research/trade_setup_mtf_shared_tcn_2m"
+  ],
+  "representative_profile": "research/trade_setup_mtf_shared_tcn_2m",
+  "status": "measured_training_split"
+}

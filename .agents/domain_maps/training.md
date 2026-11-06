@@ -6,6 +6,7 @@
 |------|------|
 | `training/runner/training.py` | Full RL training pipeline |
 | `training/configuration/strategy_overlays.py` | Strategy overlay path lookup and validated merge |
+| `training/configuration/survival_gate.py` | Cross-domain survival admission and evidence provenance before portfolio learning |
 | `training/runner/backtest.py` | Backtest runner entry point |
 | `training/runner/setup_runtime.py` | Composition root for configuration, dataset, and run-asset preparation |
 | `training/runner/stages.py` | Typed configuration, data, run-assets, and preparation stage results |
@@ -46,7 +47,7 @@
 | `--force` | Rebuild data/feature caches |
 | `--algo ppo\|sac` | RL algorithm |
 | `--arch tcn\|gru\|transformer` | Encoder architecture |
-| `--reward dsr\|sweep` | Reward function |
+| `--reward dsr\|sweep` | Reward selector/shaping inputs; portfolio objectives are configured by `env.reward_mode` |
 | `--strategy baseline\|po3_ifvg\|distribution` | Strategy overlay |
 | `--config PATH` | Base or feature variant YAML |
 | `--walk-forward` | Purged walk-forward validation |
@@ -64,7 +65,7 @@
 ## Consumers (Callers)
 
 - `qrl-train` console entry point (`training/cli.py`)
-- `scripts/research/benchmarks/compare_encoders.py` (encoder comparison)
+- `experiments/runs/` canonical experiment workflow
 
 ## Tests
 
@@ -78,20 +79,19 @@
 | `tests/unit/training/test_auxiliary_training.py` | Auxiliary training |
 | `tests/unit/training/test_seed_reproducibility.py` | Seed reproducibility |
 
-## Training Pipeline
+## Survival-First Training Pipeline
 
 ```
-1. load_config() → cfg
-2. run_pipeline(cfg) → bars
-3. build_features(bars, cfg, train_mask) → features (fit scope enters the cache identity)
-4. split_train_test(bars, features, cfg) → train/test
-5. make_env(train_bars, train_feat, cfg) → env
-6. build_agent(env, cfg, arch, algo) → model
-7. model.learn(total_timesteps=...) → trained model
-8. evaluate_model(model, test_bars, test_feat) → results
-9. calculate_metrics(equity, trades) → metrics
-10. save_run(run_dir, results, metrics) → artifacts
+1. `qrl-train` resolves config and validates survival or gated portfolio admission before data loading.
+2. Survival qualification trains with `env.reward_mode=survival`, using a complete uncapped train split and the registered multi-seed setup.
+3. Every qualification seed is evaluated on its full training path and each purged walk-forward fold; a hard breach makes qualification infeasible.
+4. The canonical runner writes a provenance-linked passing or failing survival gate. Portfolio-reward training is rejected unless it resumes one exact qualified checkpoint under a passing gate.
+5. Portfolio optimization, if admitted, starts only after survival qualification and cannot select using the exposed locked-report period.
 ```
+
+`build_agent()` only constructs a learner. Fitting is owned by the canonical
+runner after phase and provenance checks. New callers must not add direct
+`.learn()` loops that bypass the survival gate.
 
 Walk-forward folds rebuild features through `build_walkforward_fold_features`:
 causal bars through the fold validation end provide indicator context, while
@@ -141,7 +141,10 @@ uv run qrl-train train --walk-forward --wf-splits 5 --purge-bars 60
 - `training/runner/stages.py`
 - `training/runner/seed_stages.py`
 - `training/runner/configuration_stage.py`
+- `training/configuration/vae_admission.py`
 - `training/runner/data_stage.py`
+- `training/runner/feature_preparation.py`
+- `training/runner/feature_csv_validation.py`
 - `training/runner/run_assets_stage.py`
 - `training/runner/walk_forward_validation.py`
 - `training/setup/learner.py`

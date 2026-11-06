@@ -25,7 +25,13 @@ from .performance import (
 
 
 def _validate_bootstrap_parameters(n_boot: int, level: float, block_len: int) -> None:
-    """Reject invalid interval settings before handling empty or short samples."""
+    """Reject invalid interval settings before handling empty or short samples.
+
+    Args:
+        n_boot: Requested number of bootstrap resamples.
+        level: Confidence level in the open interval ``(0, 1)``.
+        block_len: Positive number of observations per time-series block.
+    """
     if isinstance(n_boot, bool) or not isinstance(n_boot, (int, np.integer)) or n_boot < 0:
         raise ValueError("n_boot must be a nonnegative integer")
     if not np.isfinite(level) or not 0.0 < level < 1.0:
@@ -35,7 +41,15 @@ def _validate_bootstrap_parameters(n_boot: int, level: float, block_len: int) ->
 
 
 def _finite_vector(values: NDArray[np.float64], name: str) -> NDArray[np.float64]:
-    """Return a finite one-dimensional float vector or raise a clear error."""
+    """Return a finite one-dimensional float vector or raise a clear error.
+
+    Args:
+        values: Input observations to validate.
+        name: Variable name used in validation errors.
+
+    Returns:
+        Validated one-dimensional float64 array.
+    """
     result = np.asarray(values, dtype=np.float64)
     if result.ndim != 1:
         raise ValueError(f"{name} must be one-dimensional")

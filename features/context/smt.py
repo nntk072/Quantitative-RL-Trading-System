@@ -19,7 +19,9 @@ def smt_divergence(
 
     Args:
         primary: US100 bar DataFrame (reference instrument).
-        secondary: US500 bar DataFrame aligned to primary index.
+        secondary: US500 bars on their observed source timestamps. Missing
+            rows are skipped for pivot detection; close values are forward-filled
+            only for aligned spread and correlation features.
         swing_period: Bars on each side to detect a confirmed fractal pivot.
         corr_window: Rolling correlation window between closes.
 
@@ -27,10 +29,16 @@ def smt_divergence(
         DataFrame with smt_bearish, smt_bullish, smt_corr, smt_spread.
     """
     sec_close = secondary["close"].reindex(primary.index, method="ffill")
-    sec_aligned = secondary.reindex(primary.index, method="ffill")
 
     pr_piv = detect_pivots(primary, left=swing_period, right=swing_period)
-    sec_piv = detect_pivots(sec_aligned, left=swing_period, right=swing_period)
+    # Detect pivots only on observed secondary bars. Forward-filled OHLC rows
+    # are useful for a synchronized close/spread, but they are not new bars and
+    # must not count toward a fractal's left/right confirmation window.
+    sec_piv = detect_pivots(secondary, left=swing_period, right=swing_period)
+    primary_times_ns = pd.DatetimeIndex(primary.index).to_numpy(dtype="datetime64[ns]").view("i8")
+    secondary_times_ns = (
+        pd.DatetimeIndex(secondary.index).to_numpy(dtype="datetime64[ns]").view("i8")
+    )
 
     def _paired_divergences(
         primary_event: pd.Series,
@@ -53,22 +61,48 @@ def smt_divergence(
             Array returned by ``_paired_divergences``.
         """
         p_events = np.flatnonzero(primary_event.to_numpy(dtype=bool))
-        s_events = np.flatnonzero(secondary_event.to_numpy(dtype=bool))
+        source_s_events = np.flatnonzero(secondary_event.to_numpy(dtype=bool))
         p_prices = primary_price.to_numpy(dtype=float)
         s_prices = secondary_price.to_numpy(dtype=float)
+        projected_s_events: list[tuple[int, int, float]] = []
+        for source_i in source_s_events:
+            # An event is visible at the first primary row at or after its
+            # source confirmation timestamp. Never assign it to an earlier
+            # primary row when the two symbols have different row coverage.
+            primary_i = int(
+                np.searchsorted(primary_times_ns, secondary_times_ns[source_i], side="left")
+            )
+            if primary_i < len(primary_times_ns):
+                projected_s_events.append((primary_i, int(source_i), float(s_prices[source_i])))
+        projected_s_events.sort(key=lambda event: (event[0], event[1]))
+        s_event_positions = np.asarray([event[0] for event in projected_s_events], dtype=np.int64)
+        s_source_positions = np.asarray([event[1] for event in projected_s_events], dtype=np.int64)
+        s_event_prices = np.asarray([event[2] for event in projected_s_events], dtype=float)
         tolerance = max(1, swing_period)
         pairs: list[tuple[int, float, float]] = []
         used_secondary: set[int] = set()
         for p_i in p_events:
-            lo = int(np.searchsorted(s_events, p_i - tolerance, side="left"))
-            hi = int(np.searchsorted(s_events, p_i + tolerance, side="right"))
-            candidates = [int(s_i) for s_i in s_events[lo:hi] if int(s_i) not in used_secondary]
+            lo = int(np.searchsorted(s_event_positions, p_i - tolerance, side="left"))
+            hi = int(np.searchsorted(s_event_positions, p_i + tolerance, side="right"))
+            candidates = [
+                event_idx
+                for event_idx in range(lo, hi)
+                if int(s_source_positions[event_idx]) not in used_secondary
+            ]
             if not candidates:
                 continue
-            s_i = min(candidates, key=lambda i: (abs(i - int(p_i)), i))
-            used_secondary.add(s_i)
-            event_i = max(int(p_i), s_i)
-            pairs.append((event_i, float(p_prices[p_i]), float(s_prices[s_i])))
+            chosen = min(
+                candidates,
+                key=lambda i: (
+                    abs(int(s_event_positions[i]) - int(p_i)),
+                    int(s_event_positions[i]),
+                    i,
+                ),
+            )
+            secondary_i = int(s_event_positions[chosen])
+            used_secondary.add(int(s_source_positions[chosen]))
+            event_i = max(int(p_i), secondary_i)
+            pairs.append((event_i, float(p_prices[p_i]), float(s_event_prices[chosen])))
         result = np.zeros(len(primary_event), dtype=float)
         previous: tuple[float, float] | None = None
         for event_i, p_price, s_price in sorted(pairs):

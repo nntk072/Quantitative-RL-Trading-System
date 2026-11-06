@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `features.po3.entries`. St
 
 **Purpose:** PO3 (Power of 3) daily-cycle phase tag, causally time-derived.
 
-**Exact API:** {py:obj}`features.po3.entries.build_po3_phase_features` · **Source:** [features/po3/entries.py:9](../../../../features/po3/entries.py#L9)
+**Exact API:** {py:obj}`features.po3.entries.build_po3_phase_features` · **Source:** [features/po3/entries.py:11](../../../../features/po3/entries.py#L11)
 
 **Inputs and outputs:**
 
@@ -28,7 +28,7 @@ This page contains 1 public callable records owned by `features.po3.entries`. St
 
 **Observed usage:**
 
-1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L276)
+1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L444)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

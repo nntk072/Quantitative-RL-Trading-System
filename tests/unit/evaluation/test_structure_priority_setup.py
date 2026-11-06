@@ -9,6 +9,7 @@ from decisioning.trade_setup import (
     NO_TRADE_ID,
     TRADE_SETUP_CATEGORY_COUNT,
     build_trade_setup_action_schema,
+    decode_trade_setup_execution_choice,
     trade_setup_candidate_id,
     trade_setup_id_from_box,
 )
@@ -99,6 +100,29 @@ def test_structure_priority_rollout_model_exposes_schema_and_rule_provenance() -
     assert metadata["training_performed"] is False
     assert metadata["selection_or_tuning_performed"] is False
     assert metadata["risk_coordinate_is_constant"] is True
+
+
+def test_structure_priority_stays_market_only_with_execution_coordinates() -> None:
+    schema = build_trade_setup_action_schema(has_entry_execution=True)
+    policy = StructurePrioritySetupPolicy(
+        schema,
+        idea_priority=("po3",),
+        timeframe_priority=("M5",),
+    )
+    candidate_id = trade_setup_candidate_id("po3", "M5", 1)
+
+    action = policy(_observation(candidate_id))
+    choice = decode_trade_setup_execution_choice(
+        action.tolist(),
+        schema,
+        max_limit_offset_atr=1.0,
+        max_limit_ttl_bars=60,
+    )
+
+    assert choice.order_type == "market"
+    assert choice.limit_offset_atr == 0.0
+    assert choice.ttl_bars == 1
+    assert policy.metadata()["entry_execution"] == "market"
 
 
 @pytest.mark.parametrize(

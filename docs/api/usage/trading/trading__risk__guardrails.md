@@ -1,6 +1,6 @@
 # Trading · `risk.guardrails`
 
-This page contains 14 public callable records owned by `trading.risk.guardrails`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 18 public callable records owned by `trading.risk.guardrails`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `FTMOGuardrails`
 
@@ -8,22 +8,22 @@ This page contains 14 public callable records owned by `trading.risk.guardrails`
 
 **Purpose:** Training-compatible account guardrails for daily and total loss limits.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails` · **Source:** [trading/risk/guardrails.py:21](../../../../trading/risk/guardrails.py#L21)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails` · **Source:** [trading/risk/guardrails.py:83](../../../../trading/risk/guardrails.py#L83)
 
 **Inputs and outputs:**
 
 **Observed usage:**
 
-1. [test fixture: `_env_stub`](../../../../tests/unit/simulation/test_environment/test_fixed_risk_sizing.py#L56)
+1. [test fixture: `_env_stub`](../../../../tests/unit/simulation/test_environment/test_fixed_risk_sizing.py#L57)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    stub.account = _Account(equity, float(initial_balance))
     stub.contract_size = kw.get("contract_size", 1.0)
     stub.min_lot = kw.get("min_lot", 0.01)
     stub.max_lot = kw.get("max_lot", 100.0)
+    stub.lot_step = kw.get("lot_step", 0.000001)
     stub.max_loss_per_trade_usd = kw.get("max_loss_per_trade_usd", 900.0)
     stub.guardrails = kw.get("guardrails", FTMOGuardrails())
     stub.cost_model = kw.get("cost_model", CostModel())
@@ -34,22 +34,160 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_dynamic_percentage_limit_uses_current_equity_and_the_900_ceiling`](../../../../tests/unit/simulation/test_environment/test_fixed_risk_sizing.py#L172)
+2. [test fixture: `test_fixed_mode_ignores_equity_drift`](../../../../tests/unit/simulation/test_environment/test_fixed_risk_sizing.py#L160)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_dynamic_percentage_limit_uses_current_equity_and_the_900_ceiling() -> None:
-    percent_policy = FTMOGuardrails(
-        limit_value_mode="percent_equity",
-        risk_per_trade_limit_pct=0.01,
+def test_fixed_mode_ignores_equity_drift() -> None:
+    entry, stop = 25_000.0, 80.0
+    sizes = set()
+    for equity in (25_000.0, 100_000.0, 500_000.0):
+        env = _env_stub(
+            "fixed",
+            500.0,
+            equity=equity,
+            guardrails=FTMOGuardrails(limit_value_mode="fixed_usd"),
+        )
+        lots = env._compute_lots_for(0.0, entry, entry - stop)
+        sizes.add(round(lots * stop, 6))
+    assert sizes == {500.0}
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`
+
+## `adverse_position_loss_limit_usd`
+
+**Kind:** function · **Status:** stable · **Owner:** `trading.risk.guardrails`
+
+**Purpose:** Resolve the adverse-excursion cutoff without placing it inside planned risk.
+
+**Exact API:** {py:obj}`trading.risk.guardrails.adverse_position_loss_limit_usd` · **Source:** [trading/risk/guardrails.py:49](../../../../trading/risk/guardrails.py#L49)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  configured_limit_usd: Configured dollar floor for adverse excursion.
+  planned_risk_usd: Entry risk at the structural stop, if known.
+  respect_planned_risk: Whether the cutoff must include planned risk.
+  planned_risk_multiplier: Multiplier applied to planned risk.
+  ```
+
+- **Returns:**
+
+  ```text
+  The adverse-excursion cutoff in account currency.
+  ```
+
+- **Raises:**
+
+  ```text
+  ValueError: If a limit or multiplier is non-finite or negative.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_shared_adverse_position_loss_limit`](../../../../tests/unit/trading/test_guardrails.py#L68)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    respect: bool,
+    multiplier: float,
+    expected: float,
+) -> None:
+    assert (
+        adverse_position_loss_limit_usd(
+            configured,
+            planned,
+            respect_planned_risk=respect,
+            planned_risk_multiplier=multiplier,
+        )
+        == expected
     )
-    env = _env_stub(
-        "dynamic",
-        0.0,
-        equity=40_000.0,
-        initial_balance=100_000.0,
-# … caller assertions omitted …
+```
+
+2. [test fixture: `test_adverse_position_loss_limit_rejects_non_finite_values`](../../../../tests/unit/trading/test_guardrails.py#L80)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_adverse_position_loss_limit_rejects_non_finite_values() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        adverse_position_loss_limit_usd(
+            float("inf"),
+            0.0,
+            respect_planned_risk=True,
+            planned_risk_multiplier=1.0,
+        )
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`
+
+## `guardrail_breach_scope`
+
+**Kind:** function · **Status:** stable · **Owner:** `trading.risk.guardrails`
+
+**Purpose:** Return the lifecycle scope for a hard account-guardrail breach.
+
+**Exact API:** {py:obj}`trading.risk.guardrails.guardrail_breach_scope` · **Source:** [trading/risk/guardrails.py:25](../../../../trading/risk/guardrails.py#L25)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  reason: Stable reason returned by ``FTMOGuardrails.breach_reason``.
+  ```
+
+- **Returns:**
+
+  ```text
+  ``"rollout"`` for a hard loss breach, or ``None`` when no breach
+  occurred.
+  ```
+
+- **Raises:**
+
+  ```text
+  ValueError: If a non-null reason is not a recognized hard breach.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_guardrail_breach_scope_is_shared_and_explicit`](../../../../tests/unit/trading/test_guardrails.py#L44)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_guardrail_breach_scope_is_shared_and_explicit(
+    reason: str | None,
+    expected_scope: str | None,
+) -> None:
+    assert guardrail_breach_scope(reason) == expected_scope
+```
+
+2. [test fixture: `test_guardrail_breach_scope_rejects_unknown_reason`](../../../../tests/unit/trading/test_guardrails.py#L49)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_guardrail_breach_scope_rejects_unknown_reason() -> None:
+    with pytest.raises(ValueError, match="unsupported hard guardrail"):
+        guardrail_breach_scope("unknown")
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -65,7 +203,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return whether any configured account guardrail is breached.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.any_breach` · **Source:** [trading/risk/guardrails.py:210](../../../../trading/risk/guardrails.py#L210)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.any_breach` · **Source:** [trading/risk/guardrails.py:316](../../../../trading/risk/guardrails.py#L316)
 
 **Inputs and outputs:**
 
@@ -83,7 +221,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_no_breach`](../../../../tests/unit/trading/test_guardrails.py#L19)
+1. [test fixture: `test_no_breach`](../../../../tests/unit/trading/test_guardrails.py#L27)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -95,14 +233,18 @@ def test_no_breach():
     assert g.breach_reason(acc) is None
 ```
 
-2. [test fixture: `test_daily_loss_breach`](../../../../tests/unit/trading/test_guardrails.py#L27)
+2. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L96)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_daily_loss_breach():
-    g = FTMOGuardrails(daily_loss_limit=5000.0)
+def test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor():
+    g = FTMOGuardrails()
     acc = _make(daily_loss=5000.0)
+    assert not g.check_daily(acc)
+    acc.daily_loss = 5_000.01
+    acc.equity = acc.session_start_equity - 5_000.01
+    acc.balance = acc.equity
     assert g.check_daily(acc)
     assert g.any_breach(acc)
     assert g.breach_reason(acc) == "daily_loss"
@@ -121,7 +263,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the first breached guardrail name, or None when all pass.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.breach_reason` · **Source:** [trading/risk/guardrails.py:221](../../../../trading/risk/guardrails.py#L221)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.breach_reason` · **Source:** [trading/risk/guardrails.py:327](../../../../trading/risk/guardrails.py#L327)
 
 **Inputs and outputs:**
 
@@ -139,7 +281,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_no_breach`](../../../../tests/unit/trading/test_guardrails.py#L20)
+1. [test fixture: `test_no_breach`](../../../../tests/unit/trading/test_guardrails.py#L28)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -151,14 +293,18 @@ def test_no_breach():
     assert g.breach_reason(acc) is None
 ```
 
-2. [test fixture: `test_daily_loss_breach`](../../../../tests/unit/trading/test_guardrails.py#L28)
+2. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L97)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_daily_loss_breach():
-    g = FTMOGuardrails(daily_loss_limit=5000.0)
+def test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor():
+    g = FTMOGuardrails()
     acc = _make(daily_loss=5000.0)
+    assert not g.check_daily(acc)
+    acc.daily_loss = 5_000.01
+    acc.equity = acc.session_start_equity - 5_000.01
+    acc.balance = acc.equity
     assert g.check_daily(acc)
     assert g.any_breach(acc)
     assert g.breach_reason(acc) == "daily_loss"
@@ -177,7 +323,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return True (breached) if daily loss exceeds the hard limit.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_daily` · **Source:** [trading/risk/guardrails.py:128](../../../../trading/risk/guardrails.py#L128)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_daily` · **Source:** [trading/risk/guardrails.py:229](../../../../trading/risk/guardrails.py#L229)
 
 **Inputs and outputs:**
 
@@ -195,37 +341,41 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_daily_loss_breach`](../../../../tests/unit/trading/test_guardrails.py#L26)
+1. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L91)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_daily_loss_breach():
-    g = FTMOGuardrails(daily_loss_limit=5000.0)
+def test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor():
+    g = FTMOGuardrails()
     acc = _make(daily_loss=5000.0)
+    assert not g.check_daily(acc)
+    acc.daily_loss = 5_000.01
+    acc.equity = acc.session_start_equity - 5_000.01
+    acc.balance = acc.equity
     assert g.check_daily(acc)
     assert g.any_breach(acc)
     assert g.breach_reason(acc) == "daily_loss"
 ```
 
-2. [test fixture: `test_percentage_daily_breach_moves_with_current_equity_but_max_loss_does_not`](../../../../tests/unit/trading/test_guardrails.py#L89)
+2. [test fixture: `test_daily_percentage_allowance_stays_fixed_for_all_max_drawdown_modes`](../../../../tests/unit/trading/test_guardrails.py#L221)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_percentage_daily_breach_moves_with_current_equity_but_max_loss_does_not() -> None:
-    g = FTMOGuardrails(limit_value_mode="percent_equity")
+# … caller setup omitted …
+    g = FTMOGuardrails(limit_value_mode="percent_equity", max_drawdown_mode=mode)  # type: ignore[arg-type]
     acc = AccountState(initial_balance=100_000.0)
-    acc.equity = 80_000.0
-    acc.daily_loss = 4_000.0
-    assert g.check_daily(acc)
-    acc.daily_loss = 3_999.0
+    acc.equity = 95_000.0
+    acc.balance = acc.equity
+    acc.daily_loss = 5_000.0
     assert not g.check_daily(acc)
-
-    acc.equity = 91_000.0
-    assert not g.check_max_drawdown(acc)
-    acc.equity = 90_000.0
-    assert g.check_max_drawdown(acc)
+    acc.balance = acc.equity = 94_999.99
+    acc.daily_loss = 5_000.01
+    assert g.check_daily(acc)
+    acc.balance = acc.equity = 95_001.0
+    acc.daily_loss = 4_999.0
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -239,9 +389,9 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Kind:** method · **Status:** stable · **Owner:** `trading.risk.guardrails`
 
-**Purpose:** Return True if absolute loss from *initial* balance ≥ ``max_loss_limit``.
+**Purpose:** Return True when equity breaches the configured maximum-loss floor.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_max_drawdown` · **Source:** [trading/risk/guardrails.py:153](../../../../trading/risk/guardrails.py#L153)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_max_drawdown` · **Source:** [trading/risk/guardrails.py:256](../../../../trading/risk/guardrails.py#L256)
 
 **Inputs and outputs:**
 
@@ -259,7 +409,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_max_drawdown_breach`](../../../../tests/unit/trading/test_guardrails.py#L35)
+1. [test fixture: `test_max_drawdown_breach`](../../../../tests/unit/trading/test_guardrails.py#L104)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -267,12 +417,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_max_drawdown_breach():
     g = FTMOGuardrails(max_loss_limit=10_000.0, trailing_dd_limit=0.0)
     acc = _make()
-    acc.equity = 90_000.0  # $10k below initial — absolute max loss, not trailing
+    acc.equity = 90_000.0  # Equality at the static floor remains allowed.
+    assert not g.check_max_drawdown(acc)
+    acc.equity = 89_999.99  # Static max loss fails only below its floor.
     assert g.check_max_drawdown(acc)
     assert g.breach_reason(acc) == "max_drawdown"
 ```
 
-2. [test fixture: `test_max_loss_not_trailing_hwm`](../../../../tests/unit/trading/test_guardrails.py#L46)
+2. [test fixture: `test_max_loss_not_trailing_hwm`](../../../../tests/unit/trading/test_guardrails.py#L117)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -286,6 +438,9 @@ def test_max_loss_not_trailing_hwm():
     assert not g.check_max_drawdown(acc)
     acc.balance = 100_000.0
     acc.update_equity(-10_000.0)  # equity 90k
+    assert not g.check_max_drawdown(acc)
+    acc.balance = 100_000.0
+    acc.update_equity(-10_000.01)
     assert g.check_max_drawdown(acc)
 ```
 
@@ -302,7 +457,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return True when the soft brick is active (no new entries).
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_soft_daily` · **Source:** [trading/risk/guardrails.py:139](../../../../trading/risk/guardrails.py#L139)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_soft_daily` · **Source:** [trading/risk/guardrails.py:241](../../../../trading/risk/guardrails.py#L241)
 
 **Inputs and outputs:**
 
@@ -320,13 +475,17 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_soft_daily_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L118)
+1. [test fixture: `test_soft_daily_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L352)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 def test_soft_daily_does_not_hard_breach():
-    g = FTMOGuardrails(daily_loss_limit=5000.0, soft_daily_loss_limit=2000.0)
+    g = FTMOGuardrails(
+        limit_value_mode="fixed_usd",
+        daily_loss_limit_pct=0.05,
+        soft_daily_loss_limit_pct=0.02,
+    )
     acc = _make(daily_loss=2500.0)
     assert g.check_soft_daily(acc)
     assert not g.check_daily(acc)
@@ -347,7 +506,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return True when the trailing-DD soft brick is active.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_soft_trailing_dd` · **Source:** [trading/risk/guardrails.py:182](../../../../trading/risk/guardrails.py#L182)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_soft_trailing_dd` · **Source:** [trading/risk/guardrails.py:286](../../../../trading/risk/guardrails.py#L286)
 
 **Inputs and outputs:**
 
@@ -365,7 +524,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_soft_trailing_dd_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L147)
+1. [test fixture: `test_soft_trailing_dd_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L381)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -394,7 +553,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return True (breached) if *risk* $ per trade exceeds the limit.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_trade_risk` · **Source:** [trading/risk/guardrails.py:197](../../../../trading/risk/guardrails.py#L197)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_trade_risk` · **Source:** [trading/risk/guardrails.py:301](../../../../trading/risk/guardrails.py#L301)
 
 **Inputs and outputs:**
 
@@ -413,7 +572,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_trade_risk_check`](../../../../tests/unit/trading/test_guardrails.py#L54)
+1. [test fixture: `test_trade_risk_check`](../../../../tests/unit/trading/test_guardrails.py#L164)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -421,18 +580,19 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_trade_risk_check():
     g = FTMOGuardrails(risk_per_trade_limit=1000.0)
     assert g.check_trade_risk(999.0) is False
+    assert g.check_trade_risk(1_000.0 + 5e-10) is False
     assert g.check_trade_risk(1001.0) is True
 ```
 
-2. [test fixture: `test_percentage_limits_use_current_equity_and_initial_equity_as_selected`](../../../../tests/unit/trading/test_guardrails.py#L75)
+2. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L186)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
     assert g.risk_per_trade_limit_for(acc) == 1_200.0
-    assert g.daily_limit_for(acc) == 6_000.0
-    assert g.soft_daily_limit_for(acc) == 6_000.0
+    assert g.daily_limit_for(acc) == 5_000.0
+    assert g.soft_daily_limit_for(acc) == 5_000.0
     assert g.max_loss_limit_for(acc) == 10_000.0
     assert g.soft_max_loss_limit_for(acc) == 10_000.0
     assert not g.check_trade_risk(1_200.0, acc)
@@ -440,7 +600,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
     acc.equity = 80_000.0
     assert g.risk_per_trade_limit_for(acc) == 800.0
-    assert g.daily_limit_for(acc) == 4_000.0
+    assert g.daily_limit_for(acc) == 5_000.0
 # … caller assertions omitted …
 ```
 
@@ -457,7 +617,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return True if enabled peak-to-trough DD reaches its initial-balance cap.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_trailing_dd` · **Source:** [trading/risk/guardrails.py:167](../../../../trading/risk/guardrails.py#L167)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_trailing_dd` · **Source:** [trading/risk/guardrails.py:271](../../../../trading/risk/guardrails.py#L271)
 
 **Inputs and outputs:**
 
@@ -475,7 +635,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_trailing_dd_is_dollar_from_peak_not_pct_of_peak`](../../../../tests/unit/trading/test_guardrails.py#L131)
+1. [test fixture: `test_trailing_dd_is_dollar_from_peak_not_pct_of_peak`](../../../../tests/unit/trading/test_guardrails.py#L365)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -496,7 +656,7 @@ def test_trailing_dd_is_dollar_from_peak_not_pct_of_peak():
     assert not g.check_max_drawdown(acc)
 ```
 
-2. [test fixture: `test_soft_trailing_dd_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L148)
+2. [test fixture: `test_soft_trailing_dd_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L382)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -523,9 +683,9 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Kind:** method · **Status:** stable · **Owner:** `trading.risk.guardrails`
 
-**Purpose:** Resolve the hard daily-loss threshold from the selected value mode.
+**Purpose:** Derive the hard daily-loss threshold from initial equity only.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.daily_limit_for` · **Source:** [trading/risk/guardrails.py:61](../../../../trading/risk/guardrails.py#L61)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.daily_limit_for` · **Source:** [trading/risk/guardrails.py:130](../../../../trading/risk/guardrails.py#L130)
 
 **Inputs and outputs:**
 
@@ -543,7 +703,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_current_equity_and_initial_equity_as_selected`](../../../../tests/unit/trading/test_guardrails.py#L71)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L182)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -554,8 +714,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     acc.equity = 120_000.0
 
     assert g.risk_per_trade_limit_for(acc) == 1_200.0
-    assert g.daily_limit_for(acc) == 6_000.0
-    assert g.soft_daily_limit_for(acc) == 6_000.0
+    assert g.daily_limit_for(acc) == 5_000.0
+    assert g.soft_daily_limit_for(acc) == 5_000.0
     assert g.max_loss_limit_for(acc) == 10_000.0
     assert g.soft_max_loss_limit_for(acc) == 10_000.0
     assert not g.check_trade_risk(1_200.0, acc)
@@ -563,13 +723,126 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `check_daily`](../../../../trading/risk/guardrails.py#L137)
+2. [test fixture: `test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode`](../../../../tests/unit/trading/test_guardrails.py#L207)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def check_daily(self, acc: AccountState) -> bool:
-    return acc.canonical_daily_loss() >= self.daily_limit_for(acc)
+# … caller setup omitted …
+    )
+    account = AccountState(initial_balance=100_000.0, policy_mode="repeated_payout")
+    account.balance = account.equity = 102_000.0
+    account.session_start_balance = account.session_start_equity = 102_000.0
+
+    assert guardrails.daily_limit_for(account) == pytest.approx(5_000.0)
+    assert guardrails.soft_daily_limit_for(account) == pytest.approx(2_000.0)
+    assert account.daily_floor(guardrails.daily_limit_for(account)) == pytest.approx(97_000.0)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`
+
+## `FTMOGuardrails.max_drawdown_from_reference`
+
+**Kind:** method · **Status:** stable · **Owner:** `trading.risk.guardrails`
+
+**Purpose:** Return current loss from the reference equity for the selected mode.
+
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.max_drawdown_from_reference` · **Source:** [trading/risk/guardrails.py:188](../../../../trading/risk/guardrails.py#L188)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  acc: Account state containing current and reference equity values.
+  ```
+
+- **Returns:**
+
+  ```text
+  Nonnegative drawdown amount from the mode-specific reference.
+  ```
+
+**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+
+**Invocation shape (placeholders):**
+
+Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+
+```python
+instance = FTMOGuardrails(...)
+result = instance.max_drawdown_from_reference(acc=...)
+```
+
+**Lifecycle context:** This callable participates in `FTMOGuardrails`: Training-compatible account guardrails for daily and total loss limits. Related public lifecycle methods: {py:obj}`trading.risk.guardrails.FTMOGuardrails.daily_limit_for`, {py:obj}`trading.risk.guardrails.FTMOGuardrails.soft_daily_limit_for`, {py:obj}`trading.risk.guardrails.FTMOGuardrails.max_loss_limit_for`, {py:obj}`trading.risk.guardrails.FTMOGuardrails.max_loss_floor_for`, {py:obj}`trading.risk.guardrails.FTMOGuardrails.max_drawdown_from_reference`, {py:obj}`trading.risk.guardrails.FTMOGuardrails.soft_max_loss_limit_for`, {py:obj}`trading.risk.guardrails.FTMOGuardrails.risk_per_trade_limit_for`, {py:obj}`trading.risk.guardrails.FTMOGuardrails.check_daily`
+
+The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`
+
+## `FTMOGuardrails.max_loss_floor_for`
+
+**Kind:** method · **Status:** stable · **Owner:** `trading.risk.guardrails`
+
+**Purpose:** Return the active maximum-loss floor, capped at initial equity.
+
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.max_loss_floor_for` · **Source:** [trading/risk/guardrails.py:163](../../../../trading/risk/guardrails.py#L163)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  acc: Account state containing initial and reference equity values.
+  ```
+
+- **Returns:**
+
+  ```text
+  Active maximum-loss equity floor, capped at initial balance.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_max_loss_floor_modes_share_initial_allowance_and_cap_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L158)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    account = AccountState(initial_balance=100_000.0)
+    account.peak_equity = peak
+    account.peak_eod_equity = peak
+    account.equity = equity
+
+    assert guardrails.max_loss_floor_for(account) == expected_floor
+    assert guardrails.check_max_drawdown(account) is breached
+```
+
+2. [test fixture: `test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L304)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        assert guardrails.check_max_drawdown(account)
+    account.update_equity(-5_000.0)
+    assert not guardrails.check_daily(account)
+    account.update_equity(-5_000.01)
+    assert guardrails.check_daily(account)
+    assert guardrails.max_loss_floor_for(account) == expected_max_floor
+    account.equity = expected_max_floor
+    assert not guardrails.check_max_drawdown(account)
+    account.equity = expected_max_floor - 0.01
+    assert guardrails.check_max_drawdown(account)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -583,9 +856,9 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Kind:** method · **Status:** stable · **Owner:** `trading.risk.guardrails`
 
-**Purpose:** Resolve the maximum-loss threshold; percentage mode uses initial equity.
+**Purpose:** Derive the maximum-loss allowance from initial equity only.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.max_loss_limit_for` · **Source:** [trading/risk/guardrails.py:87](../../../../trading/risk/guardrails.py#L87)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.max_loss_limit_for` · **Source:** [trading/risk/guardrails.py:152](../../../../trading/risk/guardrails.py#L152)
 
 **Inputs and outputs:**
 
@@ -603,7 +876,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_current_equity_and_initial_equity_as_selected`](../../../../tests/unit/trading/test_guardrails.py#L73)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L184)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -612,8 +885,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     acc.equity = 120_000.0
 
     assert g.risk_per_trade_limit_for(acc) == 1_200.0
-    assert g.daily_limit_for(acc) == 6_000.0
-    assert g.soft_daily_limit_for(acc) == 6_000.0
+    assert g.daily_limit_for(acc) == 5_000.0
+    assert g.soft_daily_limit_for(acc) == 5_000.0
     assert g.max_loss_limit_for(acc) == 10_000.0
     assert g.soft_max_loss_limit_for(acc) == 10_000.0
     assert not g.check_trade_risk(1_200.0, acc)
@@ -623,13 +896,22 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `check_max_drawdown`](../../../../trading/risk/guardrails.py#L165)
+2. [production caller: `max_loss_floor_for`](../../../../trading/risk/guardrails.py#L178)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def check_max_drawdown(self, acc: AccountState) -> bool:
-    return acc.loss_from_initial() >= self.max_loss_limit_for(acc)
+def max_loss_floor_for(self, acc: AccountState) -> float:
+    initial = float(acc.initial_balance)
+    allowance = self.max_loss_limit_for(acc)
+    floor = initial - allowance
+    if self.max_drawdown_mode == "eod":
+        floor = max(floor, float(acc.peak_eod_equity) - allowance)
+    elif self.max_drawdown_mode == "intraday_trailing":
+        floor = max(floor, float(acc.peak_equity) - allowance)
+    if self.max_drawdown_mode != "static" and acc.payout_drawdown_floor is not None:
+        floor = max(floor, float(acc.payout_drawdown_floor))
+    return min(initial, floor)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -645,7 +927,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve the hard per-trade threshold from current equity if selected.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.risk_per_trade_limit_for` · **Source:** [trading/risk/guardrails.py:115](../../../../trading/risk/guardrails.py#L115)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.risk_per_trade_limit_for` · **Source:** [trading/risk/guardrails.py:216](../../../../trading/risk/guardrails.py#L216)
 
 **Inputs and outputs:**
 
@@ -663,7 +945,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_current_equity_and_initial_equity_as_selected`](../../../../tests/unit/trading/test_guardrails.py#L70)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L181)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -675,22 +957,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     acc.equity = 120_000.0
 
     assert g.risk_per_trade_limit_for(acc) == 1_200.0
-    assert g.daily_limit_for(acc) == 6_000.0
-    assert g.soft_daily_limit_for(acc) == 6_000.0
+    assert g.daily_limit_for(acc) == 5_000.0
+    assert g.soft_daily_limit_for(acc) == 5_000.0
     assert g.max_loss_limit_for(acc) == 10_000.0
     assert g.soft_max_loss_limit_for(acc) == 10_000.0
     assert not g.check_trade_risk(1_200.0, acc)
 # … caller assertions omitted …
 ```
 
-2. [production caller: `check_trade_risk`](../../../../trading/risk/guardrails.py#L207)
+2. [production caller: `check_trade_risk`](../../../../trading/risk/guardrails.py#L311)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 def check_trade_risk(self, risk: float, acc: AccountState | None = None) -> bool:
     limit = self.risk_per_trade_limit if acc is None else self.risk_per_trade_limit_for(acc)
-    return risk > limit
+    # Allow equality, including the final floating-point ulp introduced by
+    # converting an affordable stepped lot count back into dollar risk.
+    return float(risk) > float(limit) + 1e-9
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -704,9 +988,9 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Kind:** method · **Status:** stable · **Owner:** `trading.risk.guardrails`
 
-**Purpose:** Resolve the soft daily threshold from current equity when requested.
+**Purpose:** Derive the soft daily threshold from initial equity only.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.soft_daily_limit_for` · **Source:** [trading/risk/guardrails.py:74](../../../../trading/risk/guardrails.py#L74)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.soft_daily_limit_for` · **Source:** [trading/risk/guardrails.py:141](../../../../trading/risk/guardrails.py#L141)
 
 **Inputs and outputs:**
 
@@ -724,7 +1008,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_current_equity_and_initial_equity_as_selected`](../../../../tests/unit/trading/test_guardrails.py#L72)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L183)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -734,8 +1018,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     acc.equity = 120_000.0
 
     assert g.risk_per_trade_limit_for(acc) == 1_200.0
-    assert g.daily_limit_for(acc) == 6_000.0
-    assert g.soft_daily_limit_for(acc) == 6_000.0
+    assert g.daily_limit_for(acc) == 5_000.0
+    assert g.soft_daily_limit_for(acc) == 5_000.0
     assert g.max_loss_limit_for(acc) == 10_000.0
     assert g.soft_max_loss_limit_for(acc) == 10_000.0
     assert not g.check_trade_risk(1_200.0, acc)
@@ -744,17 +1028,22 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `check_soft_daily`](../../../../trading/risk/guardrails.py#L148)
+2. [test fixture: `test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode`](../../../../tests/unit/trading/test_guardrails.py#L208)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def check_soft_daily(self, acc: AccountState) -> bool:
-    soft = self.soft_daily_limit_for(acc)
-    if soft <= 0.0:
-        return False
-    return acc.canonical_daily_loss() >= soft
+# … caller setup omitted …
+    account = AccountState(initial_balance=100_000.0, policy_mode="repeated_payout")
+    account.balance = account.equity = 102_000.0
+    account.session_start_balance = account.session_start_equity = 102_000.0
+
+    assert guardrails.daily_limit_for(account) == pytest.approx(5_000.0)
+    assert guardrails.soft_daily_limit_for(account) == pytest.approx(2_000.0)
+    assert account.daily_floor(guardrails.daily_limit_for(account)) == pytest.approx(97_000.0)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -765,9 +1054,9 @@ def check_soft_daily(self, acc: AccountState) -> bool:
 
 **Kind:** method · **Status:** stable · **Owner:** `trading.risk.guardrails`
 
-**Purpose:** Resolve the soft maximum-loss threshold from initial equity.
+**Purpose:** Derive the soft maximum-loss threshold from initial equity only.
 
-**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.soft_max_loss_limit_for` · **Source:** [trading/risk/guardrails.py:100](../../../../trading/risk/guardrails.py#L100)
+**Exact API:** {py:obj}`trading.risk.guardrails.FTMOGuardrails.soft_max_loss_limit_for` · **Source:** [trading/risk/guardrails.py:205](../../../../trading/risk/guardrails.py#L205)
 
 **Inputs and outputs:**
 
@@ -785,7 +1074,7 @@ def check_soft_daily(self, acc: AccountState) -> bool:
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_current_equity_and_initial_equity_as_selected`](../../../../tests/unit/trading/test_guardrails.py#L74)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L185)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -793,8 +1082,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller setup omitted …
 
     assert g.risk_per_trade_limit_for(acc) == 1_200.0
-    assert g.daily_limit_for(acc) == 6_000.0
-    assert g.soft_daily_limit_for(acc) == 6_000.0
+    assert g.daily_limit_for(acc) == 5_000.0
+    assert g.soft_daily_limit_for(acc) == 5_000.0
     assert g.max_loss_limit_for(acc) == 10_000.0
     assert g.soft_max_loss_limit_for(acc) == 10_000.0
     assert not g.check_trade_risk(1_200.0, acc)

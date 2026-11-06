@@ -1,0 +1,211 @@
+{
+  "breach_events": [
+    {
+      "daily_loss": 5006.745869739392,
+      "equity": 97005.49869551351,
+      "fill_time": "2024-12-30T19:00:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 0,
+      "time": "2024-12-30T18:59:00+03:00"
+    },
+    {
+      "daily_loss": 5066.073459355078,
+      "equity": 99374.48194142242,
+      "fill_time": "2024-12-31T18:09:00.195000+00:00",
+      "reason": "daily_loss",
+      "session_id": 1,
+      "time": "2024-12-31T21:08:00+03:00"
+    },
+    {
+      "daily_loss": 5348.7418835006265,
+      "equity": 100902.39382576614,
+      "fill_time": "2025-01-02T21:49:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 2,
+      "time": "2025-01-02T21:48:00+03:00"
+    },
+    {
+      "daily_loss": 5057.806234172748,
+      "equity": 102955.56666758102,
+      "fill_time": "2025-01-03T19:26:00.086000+00:00",
+      "reason": "daily_loss",
+      "session_id": 3,
+      "time": "2025-01-03T22:25:00+03:00"
+    },
+    {
+      "daily_loss": 5208.403426552093,
+      "equity": 101086.90317145162,
+      "fill_time": "2025-01-06T22:53:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 4,
+      "time": "2025-01-06T22:52:00+03:00"
+    },
+    {
+      "daily_loss": 5022.840820963869,
+      "equity": 99867.52419509094,
+      "fill_time": "2025-01-07T22:05:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 5,
+      "time": "2025-01-07T22:04:00+03:00"
+    },
+    {
+      "daily_loss": 5082.512606344105,
+      "equity": 98140.97851087931,
+      "fill_time": "2025-01-10T21:38:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 8,
+      "time": "2025-01-10T21:37:00+03:00"
+    },
+    {
+      "daily_loss": 5150.0676854612175,
+      "equity": 99676.52129913935,
+      "fill_time": "2025-01-13T20:19:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 9,
+      "time": "2025-01-13T20:18:00+03:00"
+    },
+    {
+      "daily_loss": 5367.91190086074,
+      "equity": 102057.26471785316,
+      "fill_time": "2025-01-15T22:44:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 11,
+      "time": "2025-01-15T22:43:00+03:00"
+    },
+    {
+      "daily_loss": 5027.39880057129,
+      "equity": 106414.45169159197,
+      "fill_time": "2025-01-17T22:01:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 13,
+      "time": "2025-01-17T22:00:00+03:00"
+    },
+    {
+      "daily_loss": 5212.372927017822,
+      "equity": 110351.2672444202,
+      "fill_time": "2025-01-23T19:32:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 17,
+      "time": "2025-01-23T19:31:00+03:00"
+    },
+    {
+      "daily_loss": 5299.655373599942,
+      "equity": 110868.914177081,
+      "fill_time": "2025-01-24T22:30:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 18,
+      "time": "2025-01-24T22:29:00+03:00"
+    },
+    {
+      "daily_loss": 5010.5004632906375,
+      "equity": 111868.10069818067,
+      "fill_time": "2025-01-27T22:09:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 19,
+      "time": "2025-01-27T22:08:00+03:00"
+    },
+    {
+      "daily_loss": 5282.206730279138,
+      "equity": 112230.62499773722,
+      "fill_time": "2025-01-29T22:23:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 21,
+      "time": "2025-01-29T22:22:00+03:00"
+    },
+    {
+      "daily_loss": 5186.227885992757,
+      "equity": 109737.04297409042,
+      "fill_time": "2025-01-30T21:43:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 22,
+      "time": "2025-01-30T21:42:00+03:00"
+    },
+    {
+      "daily_loss": 5031.800482460102,
+      "equity": 107940.73945084501,
+      "fill_time": "2025-01-31T20:45:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 23,
+      "time": "2025-01-31T20:44:00+03:00"
+    },
+    {
+      "daily_loss": 5163.396585814205,
+      "equity": 107288.50156085774,
+      "fill_time": "2025-02-03T19:29:00.319000+00:00",
+      "reason": "daily_loss",
+      "session_id": 24,
+      "time": "2025-02-03T22:28:00+03:00"
+    },
+    {
+      "daily_loss": 5009.5352531770695,
+      "equity": 104985.20507504418,
+      "fill_time": "2025-02-04T23:01:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 25,
+      "time": "2025-02-04T23:00:00+03:00"
+    },
+    {
+      "daily_loss": 5017.399953783671,
+      "equity": 101664.49397341572,
+      "fill_time": "2025-02-05T21:46:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 26,
+      "time": "2025-02-05T21:45:00+03:00"
+    },
+    {
+      "daily_loss": 5075.268744966612,
+      "equity": 101312.83892304928,
+      "fill_time": "2025-02-06T22:17:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 27,
+      "time": "2025-02-06T22:16:00+03:00"
+    },
+    {
+      "daily_loss": 5114.018559103202,
+      "equity": 96198.82036394607,
+      "fill_time": "2025-02-07T18:19:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 28,
+      "time": "2025-02-07T18:18:00+03:00"
+    },
+    {
+      "daily_loss": 5037.643157271775,
+      "equity": 96200.49997493428,
+      "fill_time": "2025-02-10T21:57:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 29,
+      "time": "2025-02-10T21:56:00+03:00"
+    },
+    {
+      "daily_loss": 5037.859974502636,
+      "equity": 90949.99637385746,
+      "fill_time": "2025-02-12T17:09:00.057000+00:00",
+      "reason": "daily_loss",
+      "session_id": 31,
+      "time": "2025-02-12T20:08:00+03:00"
+    },
+    {
+      "daily_loss": 5007.553420060675,
+      "equity": 90370.14033843034,
+      "fill_time": "2025-02-13T20:01:00+03:00",
+      "reason": "daily_loss",
+      "session_id": 32,
+      "time": "2025-02-13T20:00:00+03:00"
+    },
+    {
+      "daily_loss": 405.0367103653106,
+      "equity": 89965.10362806503,
+      "fill_time": "2025-02-14T17:04:00+03:00",
+      "reason": "max_drawdown",
+      "session_id": 33,
+      "time": "2025-02-14T17:03:00+03:00"
+    }
+  ],
+  "completed_data_split": true,
+  "episode_end_reason": "data_end",
+  "exposure_bars": 9118,
+  "exposure_fraction": 0.09164555944196519,
+  "n_breach_sessions": 25,
+  "n_sessions": 259,
+  "n_steps": 99492
+}

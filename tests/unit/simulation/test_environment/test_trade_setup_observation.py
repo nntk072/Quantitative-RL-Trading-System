@@ -77,6 +77,34 @@ def test_trade_setup_observation_mask_is_exact_and_optional() -> None:
     assert env_without_trade_setup.trade_setup_observation_schema is None
 
 
+def test_step_returns_candidate_mask_for_next_decision_row() -> None:
+    bars, features = _features_with_trade_setup_columns()
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=10,
+        strategy_actions=True,
+        trade_setup_actions=True,
+    )
+    env.reset(seed=3)
+    env.step_idx = 49
+    env._ny_pos = int(np.searchsorted(env._ny_indices, env.step_idx))
+    candidate_id = trade_setup_candidate_id("fvg_retest", "M5", 1)
+    assert isinstance(env.action_schema, TradeSetupActionSchema)
+    action = np.zeros(env.action_schema.width, dtype=np.float32)
+    action[env.action_schema.indices["trade_setup"]] = trade_setup_center(NO_TRADE_ID)
+
+    next_observation, _, terminated, truncated, _ = env.step(action)
+
+    assert not terminated
+    assert not truncated
+    assert env.step_idx == 50
+    assert next_observation["trade_setup_mask"][candidate_id] == 1.0
+    np.testing.assert_array_equal(
+        next_observation["trade_setup_mask"], env._trade_setup_mask_for_step()
+    )
+
+
 def test_trade_setup_observation_requires_strategy_overlay_and_idea_features() -> None:
     bars, features = _features_with_trade_setup_columns()
     with pytest.raises(ValueError, match="trade setup actions require strategy_actions=true"):
@@ -170,7 +198,6 @@ def test_delayed_entry_keeps_the_selected_primary_trade_setup(
         entry_fill_time=when,
         market_fill_idx=51,
         entry_candidate=None,
-        entry_machine=None,
         done=False,
         pending_due=False,
         session_blocked=False,
@@ -207,7 +234,6 @@ def test_delayed_entry_keeps_the_selected_primary_trade_setup(
         entry_fill_ask=float(bars.iloc[51]["open"] + 0.6),
         entry_fill_time=env._bar_time(51),
         market_fill_idx=51,
-        entry_machine=None,
     )
 
     assert entered_trade_setups == [primary.candidate_id]

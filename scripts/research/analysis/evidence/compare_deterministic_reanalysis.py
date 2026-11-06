@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import csv
 import hashlib
 import json
 import os
@@ -64,6 +65,35 @@ NUMERICAL_ARTIFACTS = (
     "metrics.json",
     "evaluation_diagnostics.json",
 )
+TRAIN_ONLY_IDENTITY_FIELDS = (
+    "evaluation_provenance",
+    "source_run",
+    "source_run_manifest_sha256",
+    "source_config_sha256",
+    "checkpoint",
+    "checkpoint_sha256",
+    "checkpoint_manifest_hash_disposition",
+    "training_split",
+    "training_input_identity",
+    "dataset_parity_disposition",
+    "tick_identity_scope",
+    "feature_cache",
+    "source_feature_cache",
+    "train_feature_snapshot",
+    "evaluation_protocol",
+)
+TRAIN_ONLY_REQUIRED_LEDGER_ARTIFACTS = frozenset(
+    {
+        "equity",
+        "trades",
+        "policy_decisions",
+        "account_state_trace",
+        "breaches",
+        "breach_events",
+        "cycle_events",
+        "payout_events",
+    }
+)
 
 
 def _sha256(path: Path) -> str:
@@ -72,6 +102,19 @@ def _sha256(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _reconciliation_is_clean(report: Any) -> bool:
+    """Accept only a matched report with an explicit integer zero failure count."""
+    if not isinstance(report, dict):
+        return False
+    failure_count = report.get("failure_count")
+    return (
+        report.get("status") == "matched"
+        and isinstance(failure_count, int)
+        and not isinstance(failure_count, bool)
+        and failure_count == 0
+    )
 
 
 def _read_manifest(run_dir: Path) -> dict[str, Any]:
@@ -405,6 +448,303 @@ def compare_reanalyses(first_dir: Path, second_dir: Path) -> dict[str, Any]:
     }
 
 
+def _read_train_only_screen(directory: Path) -> dict[str, Any]:
+    path = directory / "train_only_screen.json"
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"train-only screen must be an object: {path}")
+    ledger = value.get("replay_ledger")
+    if not isinstance(ledger, dict) or ledger.get("complete") is not True:
+        raise ValueError(f"train-only replay ledger is not complete: {path}")
+    if (
+        value.get("test_split_evaluated") is not False
+        or ledger.get("test_split_evaluated") is not False
+    ):
+        raise ValueError(f"train-only screen evaluated the test split: {path}")
+    protocol = value.get("evaluation_protocol")
+    if not isinstance(protocol, dict) or protocol.get("policy_action_mode") != "deterministic":
+        raise ValueError(f"train-only screen is not a deterministic policy replay: {path}")
+    execution_seed = protocol.get("execution_seed")
+    if isinstance(execution_seed, bool) or not isinstance(execution_seed, int):
+        raise ValueError(f"train-only screen lacks an explicit integer execution seed: {path}")
+    training_split = value.get("training_split")
+    if (
+        not isinstance(training_split, dict)
+        or training_split.get("completed_data_split") is not True
+        or isinstance(training_split.get("bar_count"), bool)
+        or not isinstance(training_split.get("bar_count"), int)
+        or training_split.get("bar_count", 0) <= 0
+    ):
+        raise ValueError(f"train-only screen did not complete a nonempty training split: {path}")
+    for key in ("account_state_reconciliation", "policy_decision_reconciliation"):
+        report = ledger.get(key)
+        if not _reconciliation_is_clean(report):
+            raise ValueError(f"train-only screen has no passing {key}: {path}")
+    missing = [field for field in TRAIN_ONLY_IDENTITY_FIELDS if field not in value]
+    if missing:
+        raise ValueError(f"train-only screen lacks identity fields {missing}: {path}")
+    artifacts = ledger.get("artifacts")
+    if not isinstance(artifacts, dict) or not TRAIN_ONLY_REQUIRED_LEDGER_ARTIFACTS.issubset(
+        artifacts
+    ):
+        raise ValueError(f"train-only screen lacks required replay ledgers: {path}")
+    action_schema = value.get("action_schema")
+    if (
+        isinstance(action_schema, dict)
+        and action_schema.get("has_trade_setup") is True
+        and "trade_setup_decisions" not in artifacts
+    ):
+        raise ValueError(f"setup-aware train-only screen lacks trade setup decision ledger: {path}")
+    n_steps = ledger.get("n_steps")
+    if isinstance(n_steps, bool) or not isinstance(n_steps, int) or n_steps < 0:
+        raise ValueError(f"train-only screen has an invalid rollout step count: {path}")
+    for name in ("policy_decisions", "account_state_trace"):
+        metadata = artifacts.get(name)
+        row_count = metadata.get("row_count") if isinstance(metadata, dict) else None
+        if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count != n_steps:
+            raise ValueError(f"train-only screen {name} rows do not match rollout steps: {path}")
+    return value
+
+
+def _verify_train_only_artifact(directory: Path, metadata: Any) -> tuple[bool, dict[str, Any]]:
+    if not isinstance(metadata, dict):
+        return False, {"valid": False, "reason": "artifact metadata is not an object"}
+    relative_path = metadata.get("path")
+    if not isinstance(relative_path, str) or Path(relative_path).is_absolute():
+        return False, {"valid": False, "reason": "artifact path is not relative"}
+    path = (directory / relative_path).resolve()
+    if directory.resolve() not in path.parents:
+        return False, {"valid": False, "reason": "artifact path escapes replay directory"}
+    if not path.is_file():
+        return False, {"valid": False, "reason": "artifact file is missing"}
+    actual_hash = _sha256(path)
+    with path.open(encoding="utf-8", newline="") as stream:
+        actual_rows = max(0, sum(1 for _ in csv.reader(stream)) - 1)
+    expected_hash = metadata.get("sha256")
+    expected_rows = metadata.get("row_count")
+    valid = (
+        isinstance(expected_hash, str)
+        and isinstance(expected_rows, int)
+        and not isinstance(expected_rows, bool)
+        and expected_rows >= 0
+        and actual_hash == expected_hash
+        and actual_rows == expected_rows
+    )
+    return valid, {
+        "valid": valid,
+        "path": relative_path,
+        "expected_sha256": metadata.get("sha256"),
+        "actual_sha256": actual_hash,
+        "expected_rows": metadata.get("row_count"),
+        "actual_rows": actual_rows,
+    }
+
+
+def _cached_sha256(path: Path, cache: dict[Path, str]) -> str:
+    resolved = path.resolve()
+    if resolved not in cache:
+        cache[resolved] = _sha256(resolved)
+    return cache[resolved]
+
+
+def _train_only_source_errors(
+    label: str, report: dict[str, Any], digest_cache: dict[Path, str]
+) -> list[str]:
+    """Verify checkpoint/config/data identities against their current source bytes."""
+    errors: list[str] = []
+    source_value = report.get("source_run")
+    if not isinstance(source_value, str):
+        return [f"{label} train-only replay source run path is missing"]
+    source_run = Path(source_value)
+    manifest_path = source_run / "run_manifest.json"
+    config_path = source_run / "config.yaml"
+    if not manifest_path.is_file():
+        return [f"{label} source run manifest is missing"]
+    try:
+        source_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"{label} source run manifest cannot be read: {type(exc).__name__}"]
+    if not isinstance(source_manifest, dict):
+        return [f"{label} source run manifest is not an object"]
+    if _cached_sha256(manifest_path, digest_cache) != report.get("source_run_manifest_sha256"):
+        errors.append(f"{label} source run manifest bytes differ from replay report")
+    if not config_path.is_file() or _cached_sha256(config_path, digest_cache) != report.get(
+        "source_config_sha256"
+    ):
+        errors.append(f"{label} source config bytes differ from replay report")
+    config_record = source_manifest.get("config")
+    if not isinstance(config_record, dict) or config_record.get("sha256") != report.get(
+        "source_config_sha256"
+    ):
+        errors.append(f"{label} source config hash differs from original run manifest")
+
+    checkpoint_value = report.get("checkpoint")
+    if not isinstance(checkpoint_value, str):
+        errors.append(f"{label} checkpoint path is missing")
+    else:
+        checkpoint = Path(checkpoint_value)
+        checkpoint_record = source_manifest.get("checkpoint")
+        if not checkpoint.is_file() or _cached_sha256(checkpoint, digest_cache) != report.get(
+            "checkpoint_sha256"
+        ):
+            errors.append(f"{label} checkpoint bytes differ from replay report")
+        if not isinstance(checkpoint_record, dict) or checkpoint_record.get("sha256") != report.get(
+            "checkpoint_sha256"
+        ):
+            errors.append(f"{label} checkpoint hash differs from original run manifest")
+    if report.get("checkpoint_manifest_hash_disposition") != "verified":
+        errors.append(f"{label} checkpoint manifest hash was not verified")
+
+    feature_cache = report.get("feature_cache")
+    if not isinstance(feature_cache, dict):
+        errors.append(f"{label} evaluated feature-cache identity is missing")
+    elif feature_cache.get("identity_scope") == "train_features_frame_only":
+        source_cache = source_manifest.get("feature_cache")
+        reported_source_cache = report.get("source_feature_cache")
+        if not isinstance(source_cache, dict) or reported_source_cache != source_cache:
+            errors.append(
+                f"{label} source feature-cache metadata differs from original run manifest"
+            )
+
+        snapshot = report.get("train_feature_snapshot")
+        if not isinstance(snapshot, dict):
+            errors.append(f"{label} train-feature snapshot identity is missing")
+        else:
+            snapshot_path_value = snapshot.get("path")
+            snapshot_hash = snapshot.get("file_sha256")
+            if not isinstance(snapshot_path_value, str) or not isinstance(snapshot_hash, str):
+                errors.append(f"{label} train-feature snapshot file identity is incomplete")
+            else:
+                snapshot_path = Path(snapshot_path_value)
+                if (
+                    not snapshot_path.is_file()
+                    or _cached_sha256(snapshot_path, digest_cache) != snapshot_hash
+                ):
+                    errors.append(f"{label} train-feature snapshot bytes differ from replay report")
+
+            source_datasets = source_manifest.get("datasets")
+            training_identity = report.get("training_input_identity")
+            source_features = (
+                source_datasets.get("train_features") if isinstance(source_datasets, dict) else None
+            )
+            replay_features = (
+                training_identity.get("train_features")
+                if isinstance(training_identity, dict)
+                else None
+            )
+            source_feature_hash = (
+                source_features.get("sha256") if isinstance(source_features, dict) else None
+            )
+            if (
+                snapshot.get("scope")
+                != "training_split_only; original_full_cache_bytes_not_claimed"
+                or snapshot.get("dataset_identity_verified") is not True
+                or not isinstance(source_feature_hash, str)
+                or replay_features != source_features
+                or snapshot.get("train_features_sha256") != source_feature_hash
+                or snapshot.get("source_run_train_features_sha256") != source_feature_hash
+                or feature_cache.get("content_hash") != source_feature_hash
+                or feature_cache.get("file_sha256") != snapshot.get("file_sha256")
+            ):
+                errors.append(
+                    f"{label} train-feature snapshot does not match source dataset identity"
+                )
+    else:
+        cache_path_value = feature_cache.get("path")
+        cache_hash = feature_cache.get("file_sha256")
+        content_hash = feature_cache.get("content_hash")
+        if not isinstance(cache_path_value, str) or not isinstance(cache_hash, str):
+            errors.append(f"{label} evaluated feature-cache file identity is incomplete")
+        else:
+            cache_path = Path(cache_path_value)
+            sidecar_path = Path(f"{cache_path}.hash")
+            if not cache_path.is_file() or _cached_sha256(cache_path, digest_cache) != cache_hash:
+                errors.append(f"{label} evaluated feature-cache bytes differ from replay report")
+            if (
+                not isinstance(content_hash, str)
+                or not sidecar_path.is_file()
+                or sidecar_path.read_text(encoding="utf-8").strip() != content_hash
+            ):
+                errors.append(f"{label} evaluated feature-cache content identity differs")
+
+    identity = report.get("training_input_identity")
+    source_datasets = source_manifest.get("datasets")
+    if not isinstance(identity, dict) or not isinstance(source_datasets, dict):
+        errors.append(f"{label} training dataset identity is missing")
+    else:
+        for name, record in identity.items():
+            if name == "primary_ticks":
+                # The report fingerprints the training partition; the source
+                # manifest records a broader tick extent.
+                continue
+            if source_datasets.get(name) != record:
+                errors.append(f"{label} training dataset identity differs: {name}")
+    tick_scope = report.get("tick_identity_scope")
+    if (
+        not isinstance(tick_scope, dict)
+        or tick_scope.get("disposition") != "training_partition_only"
+        or tick_scope.get("full_tick_identity_reloaded") is not False
+    ):
+        errors.append(f"{label} tick identity scope is not explicitly bounded to training")
+    return errors
+
+
+def compare_train_only_replays(first_dir: Path, second_dir: Path) -> dict[str, Any]:
+    """Compare immutable train-only replay ledgers without evaluating test data."""
+    first, second = first_dir.resolve(), second_dir.resolve()
+    if first == second:
+        raise ValueError("train-only replay directories must be distinct")
+    left = _read_train_only_screen(first)
+    right = _read_train_only_screen(second)
+    errors = [
+        f"train-only replay identity differs: {field}"
+        for field in TRAIN_ONLY_IDENTITY_FIELDS
+        if left.get(field) != right.get(field)
+    ]
+    digest_cache: dict[Path, str] = {}
+    errors.extend(_train_only_source_errors("first", left, digest_cache))
+    errors.extend(_train_only_source_errors("second", right, digest_cache))
+    left_ledger, right_ledger = left["replay_ledger"], right["replay_ledger"]
+    for key in ("account_state_reconciliation", "policy_decision_reconciliation"):
+        if left_ledger.get(key) != right_ledger.get(key):
+            errors.append(f"train-only replay reconciliation differs: {key}")
+    left_artifacts, right_artifacts = left_ledger["artifacts"], right_ledger["artifacts"]
+    artifacts: list[dict[str, Any]] = []
+    for name in sorted(set(left_artifacts) | set(right_artifacts)):
+        left_valid, left_record = _verify_train_only_artifact(first, left_artifacts.get(name))
+        right_valid, right_record = _verify_train_only_artifact(second, right_artifacts.get(name))
+        equal = (
+            left_valid
+            and right_valid
+            and left_record.get("actual_sha256") == right_record.get("actual_sha256")
+            and left_record.get("actual_rows") == right_record.get("actual_rows")
+        )
+        artifacts.append(
+            {"name": name, "identical": equal, "first": left_record, "second": right_record}
+        )
+        if not equal:
+            errors.append(f"train-only replay ledger differs or failed verification: {name}")
+    return {
+        "schema_version": 1,
+        "status": "passed" if not errors else "failed",
+        "artifact_role": "train_only_checkpoint_replay_repeatability",
+        "first_replay": str(first),
+        "second_replay": str(second),
+        "test_split_evaluated": False,
+        "identity": {field: left.get(field) for field in TRAIN_ONLY_IDENTITY_FIELDS},
+        "reconciliations": {
+            "account_state": left_ledger["account_state_reconciliation"],
+            "policy_decisions": left_ledger["policy_decision_reconciliation"],
+        },
+        "ledgers": artifacts,
+        "errors": errors,
+        "interpretation_limit": (
+            "Train-only deterministic repeatability and simulator reconciliation do not establish "
+            "strategy validity, out-of-sample generalization, or confirmatory evidence."
+        ),
+    }
+
+
 def write_report(report: dict[str, Any], output: Path) -> None:
     """Create a new immutable JSON report without overwriting prior evidence."""
     output = output.resolve()
@@ -421,10 +761,22 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("first", type=Path, help="First deterministic reanalysis directory")
     parser.add_argument("second", type=Path, help="Second deterministic reanalysis directory")
+    parser.add_argument(
+        "--train-only-screen",
+        action="store_true",
+        help=(
+            "Compare complete train-only screen ledgers instead of full historical "
+            "reanalysis packages"
+        ),
+    )
     parser.add_argument("--output", type=Path, required=True, help="New comparison JSON report")
     args = parser.parse_args()
     try:
-        report = compare_reanalyses(args.first, args.second)
+        report = (
+            compare_train_only_replays(args.first, args.second)
+            if args.train_only_screen
+            else compare_reanalyses(args.first, args.second)
+        )
         write_report(report, args.output)
     except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError) as exc:
         report = {

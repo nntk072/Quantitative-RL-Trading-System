@@ -20,7 +20,6 @@ from omegaconf import DictConfig, OmegaConf
 from scripts.research.analysis.features.training_context import (
     DEFAULT_CONFIG,
     TIMEFRAMES,
-    _timestamp,
 )
 from scripts.research.analysis.features.training_context import (
     candidate_supported as _candidate_supported,
@@ -41,6 +40,7 @@ from features.context.trade_setup_candidates import (
 from features.po3.fvg import build_fvg_zone_features_with_event_ledger
 from features.po3.fvg_detection import FVGConfig
 from market_data.loading.market_data_ingestion import run_pipeline
+from market_data.splits.definitions import make_train_mask
 
 ROOT = repository_root(__file__)
 DEFAULT_OUTPUT = ROOT / "evidence/research/trade_setup_opportunity_census"
@@ -480,9 +480,7 @@ def build_census(
     secondary = secondary_frames["M1"]
     if primary.empty or secondary.empty:
         raise ValueError("configured training-only M1 input is empty")
-    if primary.index.max() > _timestamp(train_end, pd.DatetimeIndex(primary.index)) + pd.Timedelta(
-        days=1
-    ):
+    if not bool(make_train_mask(pd.DatetimeIndex(primary.index), train_end, train_start).all()):
         raise AssertionError("training M1 slice includes rows after train_end")
 
     train_mask = pd.Series(True, index=primary.index, dtype=bool)

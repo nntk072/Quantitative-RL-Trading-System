@@ -1,0 +1,16 @@
+{
+  "run_date": "2026-11-04",
+  "checkout": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System",
+  "git_head": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "python": "ARM64 .venv/bin/python",
+  "command": ".venv/bin/python -m pytest tests/unit/features/test_causal_features.py tests/unit/features/test_pivots_swings.py tests/unit/features/test_order_blocks.py tests/unit/features/test_structure.py tests/unit/features/test_po3_state.py tests/unit/features/test_po3_ifvg_state.py tests/unit/features/test_po3_setup_lifecycle.py tests/unit/features/test_smt.py tests/unit/simulation/test_environment/test_mtf_windows.py tests/unit/features/test_assembled_causality.py tests/unit/features/test_trade_setup_candidate_events.py tests/research/test_feature_causality_matrix.py tests/research/test_feature_prefix_invariance.py tests/research/test_observation_validity_semantics.py -q",
+  "exit_code": 0,
+  "collected": 137,
+  "passed": 137,
+  "failed": 0,
+  "duration_seconds": 24.49,
+  "warnings": ["2 existing PyTorch transformer nested-tensor warnings"],
+  "claim_limit": "Source-contract and regression evidence for the listed feature families. It does not establish all-profile economic effects, feature-level availability masks in policy tensors, external event chronology, or historical policy linkage."
+}

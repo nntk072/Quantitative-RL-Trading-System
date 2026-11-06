@@ -25,18 +25,19 @@ This page contains 4 public callable records owned by `trading.account.limits`. 
   Nonnegative realized daily loss.
   ```
 
-**Observed usage:**
+**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
 
-1. [production caller: `canonical_daily_loss`](../../../../trading/account/account_state.py#L100)
+**Invocation shape (placeholders):**
 
-Source excerpt (not standalone); follow the linked caller for imports and setup.
+Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-def canonical_daily_loss(self) -> float:
-    if self.policy_mode == "repeated_payout":
-        return compute_canonical_daily_loss(self.session_start_equity, self.equity)
-    return float(self.daily_loss)
+result = canonical_daily_loss(session_start_equity=..., equity=...)
 ```
+
+**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+
+The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
 **Workflow context:**
 
@@ -68,7 +69,7 @@ def canonical_daily_loss(self) -> float:
 
 **Observed usage:**
 
-1. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L112)
+1. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L190)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -118,7 +119,7 @@ def remaining_daily_capacity(
 
 **Observed usage:**
 
-1. [production caller: `remaining_account_capacity`](../../../../trading/account/account_state.py#L136)
+1. [production caller: `remaining_account_capacity`](../../../../trading/account/account_state.py#L214)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -158,7 +159,7 @@ def remaining_account_capacity(self, account_floor: float) -> float:
 
 **Observed usage:**
 
-1. [production caller: `remaining_daily_capacity`](../../../../trading/account/account_state.py#L123)
+1. [production caller: `remaining_daily_capacity`](../../../../trading/account/account_state.py#L201)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

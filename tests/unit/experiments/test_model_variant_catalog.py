@@ -204,10 +204,11 @@ def test_retired_variant_renders_as_historical_with_its_source(tmp_path: Path, m
         catalog,
         "load_variant_ftmo_config",
         lambda _name: {
-            "limit_value_mode": "fixed_usd",
+            "limit_value_mode": "percent_equity",
+            "max_drawdown_mode": "static",
             "risk_per_trade_limit": 1000.0,
-            "daily_loss_limit": 5000.0,
-            "max_loss_limit": 10000.0,
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.1,
             "risk_sizing_limit_usd": 900.0,
         },
     )
@@ -244,7 +245,10 @@ def test_rendered_catalog_is_stable_and_explains_family_local_labels() -> None:
     assert "A/B labels are local to each family" in rendered
     assert "`rq_mtf_control_tcn`" in rendered
     assert "`rq_mtf_treatment_mtf`" in rendered
-    assert "fixed_usd; trade $1,000; daily $5,000; max $10,000; size cap $900" in rendered
+    assert (
+        "percent_equity; trade $1,000; daily 5.0% of initial balance from session-open equity; "
+        "max 10.0% of initial balance (static); size cap $900"
+    ) in rendered
 
 
 def test_catalog_check_reports_a_stale_generated_page(tmp_path: Path, monkeypatch) -> None:

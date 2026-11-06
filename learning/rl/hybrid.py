@@ -14,7 +14,7 @@ from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT, trade_setup_cent
 from learning.rl.ppo import ClampedStdMultiInputPolicy, clip_policy_log_std
 
 _SETUP_COORDINATES = {"trade_setup"}
-_CATEGORICAL_COORDINATES = {*_SETUP_COORDINATES, "sl_mode", "tp_mode", "exit"}
+_CATEGORICAL_COORDINATES = {*_SETUP_COORDINATES, "entry_execution", "sl_mode", "tp_mode", "exit"}
 
 
 def _normal_distribution(means: torch.Tensor, scales: torch.Tensor) -> Normal:
@@ -60,6 +60,8 @@ def _encoded_centers(name: str, threshold: float) -> tuple[float, ...]:
         )
     if name == "exit":
         return (-0.5, 0.5)  # structural, EMA-21
+    if name == "entry_execution":
+        return (-0.5, 0.5)  # market, resting limit
     if name in {"sl_mode", "tp_mode"}:
         if not 0.0 <= threshold < (1.0 / 6.0 - 1e-3):
             raise ValueError(f"hybrid {name} requires a defer threshold below 1/6, got {threshold}")
@@ -93,7 +95,7 @@ class HybridActorHeads(nn.Module):
             if name in _CATEGORICAL_COORDINATES
         }
         if not self.categorical_indices:
-            raise ValueError("hybrid distribution requires sl_mode, tp_mode, or exit coordinates")
+            raise ValueError("hybrid distribution requires at least one categorical coordinate")
         self.continuous_indices = tuple(
             index
             for index, name in enumerate(self.coordinates)
@@ -323,8 +325,26 @@ class HybridBoxDistribution(SB3Distribution):
             self.categorical[setup_name].entropy(),  # type: ignore[no-untyped-call]
         )
 
+    def categorical_coordinate_entropy(self, name: str) -> torch.Tensor | None:
+        """Return the categorical entropy for one encoded action coordinate.
+
+        Args:
+            name: Categorical action-coordinate name.
+
+        Returns:
+            Per-batch entropy tensor, or ``None`` when the coordinate is continuous.
+        """
+        distribution = self.categorical.get(name)
+        if distribution is None:
+            return None
+        return cast(torch.Tensor, distribution.entropy())  # type: ignore[no-untyped-call]
+
     def trade_setup_probabilities(self) -> torch.Tensor:
-        """Return the masked primary setup probabilities for the current batch."""
+        """Return the masked primary setup probabilities for the current batch.
+
+        Returns:
+            Probability tensor over eligible setup categories.
+        """
         distribution = self.categorical.get("trade_setup")
         if distribution is None:
             raise RuntimeError("distribution has no trade-setup categorical head")
@@ -744,6 +764,7 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
         means, logits = self.actor.execution(self.market_latent, trade_setup_ids)
         normal = _normal_distribution(means, self.log_std.exp().expand_as(means))
         categorical = {name: _categorical_distribution(values) for name, values in logits.items()}
+        self.categorical = categorical
         return normal, categorical
 
     def _class_ids(self, actions: torch.Tensor) -> dict[str, torch.Tensor]:
@@ -914,10 +935,28 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
         )
 
     def trade_setup_probabilities(self) -> torch.Tensor:
-        """Return the masked primary setup probabilities for the current batch."""
+        """Return the masked primary setup probabilities for the current batch.
+
+        Returns:
+            Probability tensor over eligible setup categories.
+        """
         if self.trade_setup is None:
             raise RuntimeError("call proba_distribution before reading setup probabilities")
         return self.trade_setup.probs
+
+    def categorical_coordinate_entropy(self, name: str) -> torch.Tensor | None:
+        """Return entropy for a sampled setup's conditional categorical control.
+
+        Args:
+            name: Conditional categorical action-coordinate name.
+
+        Returns:
+            Per-batch entropy, or ``None`` if the coordinate is not categorical.
+        """
+        distribution = self.categorical.get(name)
+        if distribution is None:
+            return None
+        return cast(torch.Tensor, distribution.entropy())  # type: ignore[no-untyped-call]
 
     def entropy(self) -> torch.Tensor:
         """Exact entropy of the hierarchical policy via the chain rule.

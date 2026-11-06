@@ -17,6 +17,7 @@ from configuration.configuration_loader import load_config
 from configuration.paths import repository_root
 from features.context.order_blocks import build_order_block_features_with_event_ledger
 from market_data.loading.market_data_ingestion import run_pipeline
+from market_data.splits.definitions import make_train_mask
 from market_data.transforms.resample import TF, resample
 
 ROOT = repository_root(__file__)
@@ -43,12 +44,7 @@ LEDGER_COLUMNS = [
 def _training_slice(frame: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
     """Keep rows in the configured inclusive training interval."""
     index = pd.DatetimeIndex(frame.index)
-    lower = pd.Timestamp(start)
-    upper = pd.Timestamp(end) + pd.Timedelta(days=1) - pd.Timedelta(nanoseconds=1)
-    if index.tz is not None:
-        lower = lower.tz_localize(index.tz) if lower.tzinfo is None else lower.tz_convert(index.tz)
-        upper = upper.tz_localize(index.tz) if upper.tzinfo is None else upper.tz_convert(index.tz)
-    return frame.loc[(index >= lower) & (index <= upper)]
+    return frame.loc[make_train_mask(index, end, start)]
 
 
 def _validate_scalar_projection(ledger: pd.DataFrame, scalar: pd.DataFrame) -> None:

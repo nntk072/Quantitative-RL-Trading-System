@@ -67,7 +67,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Compute all indicators and return a wide feature DataFrame.
 
-**Exact API:** {py:obj}`features.technical.indicators.build_indicators` · **Source:** [features/technical/indicators.py:428](../../../../features/technical/indicators.py#L428)
+**Exact API:** {py:obj}`features.technical.indicators.build_indicators` · **Source:** [features/technical/indicators.py:431](../../../../features/technical/indicators.py#L431)
 
 **Inputs and outputs:**
 
@@ -101,7 +101,7 @@ def _expected_htf_value(
     return float(eligible[col].iloc[-1])
 ```
 
-2. [test fixture: `test_htf_alignment_causal_open_time`](../../../../tests/unit/features/test_htf_alignment.py#L181)
+2. [test fixture: `test_htf_alignment_causal_open_time`](../../../../tests/unit/features/test_htf_alignment.py#L251)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

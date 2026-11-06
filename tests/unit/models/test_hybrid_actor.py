@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import gymnasium as gym
 import numpy as np
 import numpy.typing as npt
@@ -12,7 +14,12 @@ from gymnasium import spaces
 from stable_baselines3 import PPO
 
 from decisioning.actions import build_action_schema
-from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT, trade_setup_id_from_box
+from decisioning.trade_setup import (
+    TRADE_SETUP_CATEGORY_COUNT,
+    build_trade_setup_action_schema,
+    decode_trade_setup_execution_choice,
+    trade_setup_id_from_box,
+)
 from learning.rl.callbacks import LearningDiagnosticsCallback
 from learning.rl.hybrid import (
     HybridActorHeads,
@@ -27,6 +34,19 @@ from models.encoders import TCNEncoder
 from trading.orders.selection import decode_tp_mode
 
 
+def _prefer_non_no_trade_setup(policy: Any) -> None:
+    actor = getattr(policy, "conditioned_actor", None)
+    logits = (
+        actor.trade_setup_logits
+        if actor is not None
+        else policy.action_net.categorical_logits["trade_setup"]
+    )
+    with torch.no_grad():
+        logits.weight.zero_()
+        logits.bias.fill_(-10.0)
+        logits.bias[12] = 10.0
+
+
 def test_hybrid_mode_centers_match_existing_box_decoders() -> None:
     sl_tp = _encoded_centers("sl_mode", 0.1)
     units = tuple((value + 1.0) / 2.0 for value in sl_tp)
@@ -35,6 +55,7 @@ def test_hybrid_mode_centers_match_existing_box_decoders() -> None:
     assert abs(units[2] - 0.5) < 0.1
     assert int(units[3] * 3) == 2
     assert _encoded_centers("exit", 0.0) == (-0.5, 0.5)
+    assert _encoded_centers("entry_execution", 0.0) == (-0.5, 0.5)
 
     tp_centers = _encoded_centers("tp_mode", 0.1)
     decoded = [
@@ -118,13 +139,64 @@ def test_trade_setup_hybrid_distribution_samples_only_each_rows_valid_candidates
         assert selected[0] == 0
         assert selected[1] in {0, 5, 37}
         assert selected[2] == 2
+
+
+def test_trade_setup_entry_execution_is_a_categorical_policy_choice() -> None:
+    schema = build_trade_setup_action_schema(has_entry_execution=True)
+    actor = HybridActorHeads(8, schema.names, {})
+    distribution = HybridBoxDistribution(actor, schema.width)
+    latent = torch.randn(12, 8)
+    means, logits = actor(latent)
+    execution_bias = torch.zeros_like(logits["entry_execution"])
+    execution_bias[::2, 0] = 20.0
+    execution_bias[1::2, 1] = 20.0
+    logits["entry_execution"] = logits["entry_execution"] + execution_bias
+    masks = torch.zeros((len(latent), TRADE_SETUP_CATEGORY_COUNT), dtype=torch.float32)
+    masks[:, 0] = 1.0
+    masks[1::2, 5] = 1.0
+    distribution.proba_distribution(
+        means,
+        torch.zeros(len(actor.continuous_indices)),
+        logits,
+        masks={"trade_setup": masks},
+    )
+
+    actions = distribution.sample()
+    execution_index = schema.indices["entry_execution"]
+    centers = actions.new_tensor(_encoded_centers("entry_execution", 0.0))
+    assert "entry_execution" in actor.categorical_indices
+    assert torch.allclose(
+        (actions[:, execution_index : execution_index + 1] - centers[None, :])
+        .abs()
+        .min(dim=1)
+        .values,
+        torch.zeros(len(actions)),
+    )
+    decoded = [
+        decode_trade_setup_execution_choice(
+            action.clamp(-1.0, 1.0).tolist(),
+            schema,
+            max_limit_offset_atr=1.0,
+            max_limit_ttl_bars=60,
+        )
+        for action in actions
+    ]
+    assert {choice.order_type for choice in decoded} == {"market", "limit"}
+    assert torch.isfinite(distribution.log_prob(actions)).all()
+
+    loss = -distribution.log_prob(actions).mean()
+    cast(Any, loss).backward()
+    assert actor.categorical_logits["entry_execution"].weight.grad is not None
+    logits = cast(torch.nn.Linear, actor.categorical_logits["entry_execution"])
+    assert logits.weight.grad is not None
+    assert torch.isfinite(logits.weight.grad).all()
     assert torch.isfinite(distribution.log_prob(actions)).all()
     assert torch.isfinite(distribution.entropy()).all()
 
 
 def test_trade_setup_conditioned_distribution_masks_and_conditions_execution() -> None:
     torch.manual_seed(91)
-    coordinates = ("trade_setup", "risk", "sl_mode", "exit")
+    coordinates = ("trade_setup", "risk", "sl_mode", "entry_execution", "exit")
     actor = TradeSetupConditionedActorHeads(8, coordinates, {"sl_mode": 0.1})
     distribution = TradeSetupConditionedHybridBoxDistribution(actor, len(coordinates))
     latent = torch.randn(2, 8)
@@ -155,6 +227,15 @@ def test_trade_setup_conditioned_distribution_masks_and_conditions_execution() -
     for deterministic in (False, True):
         actions = distribution.get_actions(deterministic=deterministic)
         selected = [trade_setup_id_from_box(float(value.detach())) for value in actions[:, 0]]
+        execution_index = actor.categorical_indices["entry_execution"]
+        execution_centers = actions.new_tensor(actor.centers["entry_execution"])
+        assert torch.allclose(
+            (actions[:, execution_index : execution_index + 1] - execution_centers[None, :])
+            .abs()
+            .min(dim=1)
+            .values,
+            torch.zeros(len(actions)),
+        )
         assert selected[0] in {0, 5, 31}
         assert selected[1] in {0, 12}
         assert torch.isfinite(distribution.log_prob(actions)).all()
@@ -167,6 +248,7 @@ def test_trade_setup_conditioned_distribution_masks_and_conditions_execution() -
     assert actor.execution_body[0].weight.grad is not None
     assert actor.continuous_mean.weight.grad is not None
     assert actor.execution_categorical_logits["sl_mode"].weight.grad is not None
+    assert actor.execution_categorical_logits["entry_execution"].weight.grad is not None
     assert actor.execution_categorical_logits["exit"].weight.grad is not None
     assert torch.isfinite(actor.trade_setup_embedding.weight.grad).all()
 
@@ -211,14 +293,22 @@ def test_trade_setup_conditioned_entropy_matches_full_category_reference() -> No
 
 
 def test_trade_setup_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
-    env = _TradeSetupOverlayEnv()
+    env = _TradeSetupOverlayEnv(has_entry_execution=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     diagnostics_path = tmp_path / "learning_diagnostics.csv"
+    coordinates = (
+        "trade_setup",
+        "risk",
+        "exit",
+        "entry_execution",
+        "limit_offset_atr",
+        "limit_ttl_bars",
+    )
     model = PPO(
         TradeSetupConditionedClampedStdMultiInputPolicy,
         env,
         policy_kwargs={
-            "hybrid_action_coordinates": ("trade_setup", "risk", "exit"),
+            "hybrid_action_coordinates": coordinates,
             "trade_setup_mask_key": "trade_setup_mask",
             "trade_setup_embedding_dim": 16,
             "trade_setup_execution_hidden_dim": 32,
@@ -235,6 +325,7 @@ def test_trade_setup_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -
         n_epochs=1,
         device=device,
     )
+    _prefer_non_no_trade_setup(model.policy)
     model.learn(
         total_timesteps=4,
         callback=LearningDiagnosticsCallback(diagnostics_path),
@@ -242,6 +333,12 @@ def test_trade_setup_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -
     training_diagnostics = pd.read_csv(diagnostics_path)
     assert len(training_diagnostics) == 2
     assert training_diagnostics["trade_setup/entropy_mean_nats"].notna().all()
+    assert training_diagnostics["entry_execution/entropy_mean_nats"].notna().all()
+    assert np.allclose(
+        training_diagnostics["entry_execution/market_selection_rate"]
+        + training_diagnostics["entry_execution/limit_selection_rate"],
+        1.0,
+    )
     assert (training_diagnostics["trade_setup/invalid_selection_count"] == 0).all()
     observation, _ = env.reset()
     predicted, _ = model.predict(observation, deterministic=True)
@@ -274,7 +371,8 @@ def test_trade_setup_conditioned_ppo_update_and_checkpoint_roundtrip(tmp_path) -
 
 
 class _TradeSetupOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):
-    def __init__(self) -> None:
+    def __init__(self, *, has_entry_execution: bool = False) -> None:
+        self.has_entry_execution = has_entry_execution
         self.observation_space = spaces.Dict(
             {
                 "seq": spaces.Box(-1.0, 1.0, (8, 3), dtype=np.float32),
@@ -285,7 +383,9 @@ class _TradeSetupOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDAr
                 ),
             }
         )
-        self.action_space = spaces.Box(-1.0, 1.0, (3,), dtype=np.float32)
+        self.action_space = spaces.Box(
+            -1.0, 1.0, (6 if has_entry_execution else 3,), dtype=np.float32
+        )
 
     def reset(
         self,
@@ -313,12 +413,20 @@ class _TradeSetupOverlayEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDAr
 
 
 def test_trade_setup_hybrid_ppo_update_and_checkpoint_roundtrip(tmp_path) -> None:
-    env = _TradeSetupOverlayEnv()
+    env = _TradeSetupOverlayEnv(has_entry_execution=True)
+    diagnostics_path = tmp_path / "hybrid_learning_diagnostics.csv"
     model = PPO(
         HybridClampedStdMultiInputPolicy,
         env,
         policy_kwargs={
-            "hybrid_action_coordinates": ("trade_setup", "risk", "exit"),
+            "hybrid_action_coordinates": (
+                "trade_setup",
+                "risk",
+                "exit",
+                "entry_execution",
+                "limit_offset_atr",
+                "limit_ttl_bars",
+            ),
             "trade_setup_mask_key": "trade_setup_mask",
             "net_arch": {"pi": [32], "vf": [32]},
             "features_extractor_class": TCNEncoder,
@@ -333,7 +441,18 @@ def test_trade_setup_hybrid_ppo_update_and_checkpoint_roundtrip(tmp_path) -> Non
         n_epochs=1,
         device="cpu",
     )
-    model.learn(total_timesteps=4)
+    _prefer_non_no_trade_setup(model.policy)
+    model.learn(
+        total_timesteps=4,
+        callback=LearningDiagnosticsCallback(diagnostics_path),
+    )
+    diagnostics = pd.read_csv(diagnostics_path)
+    assert diagnostics["entry_execution/entropy_mean_nats"].notna().all()
+    assert np.allclose(
+        diagnostics["entry_execution/market_selection_rate"]
+        + diagnostics["entry_execution/limit_selection_rate"],
+        1.0,
+    )
     observation, _ = env.reset()
     for deterministic in (False, True):
         action, _ = model.predict(observation, deterministic=deterministic)

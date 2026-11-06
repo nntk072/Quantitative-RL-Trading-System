@@ -7,9 +7,16 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from features.context.trade_setup_candidates import trade_setup_event_is_current
+from market_data.loading.ticks import (
+    TickExecutionUnavailable,
+    limit_entry_execution_rng,
+    resolve_tick_limit_execution,
+)
+from simulation.entry_state import EntryCandidate
 from trading.execution import Position
+from trading.orders import limit_order_expiry, limit_price_from_atr_offset
 
-from .entry_state import EntryCandidate
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase
 
@@ -19,6 +26,166 @@ class StepActionExecutionMixin(RuntimeMixinBase):
 
     position: Position | None
     _pending_entry_order: dict[str, Any] | None
+
+    def _submit_limit_entry_order(
+        self,
+        *,
+        direction: int,
+        risk_frac: float,
+        rr_ratio: float,
+        bar: BarView,
+        feat_row: FeatureRow | pd.Series,
+        bar_time: Any,
+        session_id: int,
+        entry_candidate: EntryCandidate | None,
+    ) -> bool:
+        """Submit a policy-priced limit and retain its first eligible tick fill.
+
+        Args:
+            direction: Trade direction, ``1`` for long or ``-1`` for short.
+            risk_frac: Policy-selected risk fraction for the position.
+            rr_ratio: Requested reward-to-risk ratio.
+            bar: Current OHLC bar used as the causal limit-price reference.
+            feat_row: Current feature row used for setup and volatility checks.
+            bar_time: Timestamp of the current decision bar.
+            session_id: Active trading session identifier.
+            entry_candidate: Selected candidate whose source validity is checked.
+
+        Returns:
+            Whether a valid pending limit order was submitted.
+        """
+        if self._selected_trade_setup is not None:
+            identity = self._selected_trade_setup_event_identity
+            if identity is None or identity.status != "identified":
+                self._reject("limit_entry_source_identity_unavailable")
+                return False
+            source_is_current, _ = trade_setup_event_is_current(identity, feat_row)
+            if not source_is_current:
+                self._reject("limit_entry_source_setup_unavailable")
+                return False
+        atr_value = feat_row.get("atr_5", feat_row.get("atr", np.nan))
+        try:
+            atr = float(atr_value)
+        except (TypeError, ValueError):
+            atr = float("nan")
+        if not np.isfinite(atr) or atr <= 0.0:
+            self._reject("limit_entry_missing_atr")
+            return False
+        submission_time = pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step)
+        expiry_time = limit_order_expiry(
+            submission_time,
+            self._selected_limit_ttl_bars,
+            pd.Timedelta(minutes=self._minutes_per_step),
+        )
+        limit_price = limit_price_from_atr_offset(
+            direction=direction,
+            reference_price=float(bar.close),
+            atr=atr,
+            offset_atr=float(self._selected_limit_offset_atr),
+            point_size=float(self.cost_model.point_size),
+        )
+        if self._tickbook is None:
+            raise TickExecutionUnavailable(
+                "policy-selected limit entries require TickBook quote chronology"
+            )
+        order_id = f"{self._current_decision_id}:limit"
+        max_latency_ns = int(float(self.randomized_fill_latency_ms) * 1_000_000)
+        fill_quote = resolve_tick_limit_execution(
+            self._tickbook,
+            direction,
+            limit_price,
+            submission_time,
+            expiry_time,
+            limit_entry_execution_rng(
+                int(self.np_random_seed),
+                submission_time,
+                direction,
+                limit_price,
+                (
+                    None
+                    if self._selected_trade_setup is None
+                    else self._selected_trade_setup.candidate_id
+                ),
+            ),
+            max_latency_ns_exclusive=max_latency_ns,
+            require_trade_through=self.limit_order_require_trade_through,
+        )
+        stored_feat_row: FeatureRow | pd.Series = feat_row
+        if isinstance(feat_row, pd.Series):
+            stored_feat_row = feat_row.copy()
+        selected_names = (
+            "_selected_trade_setup",
+            "_selected_trade_setup_event_identity",
+            "_last_action_trade_setup_candidate_id",
+            "_last_action_trade_setup_eligible",
+            "_selected_sl_anchor",
+            "_selected_tp_fraction",
+            "_selected_exit_mode",
+            "_selected_sl_mode",
+            "_sl_mode_explicit",
+            "_selected_tp_mode",
+            "_tp_mode_explicit",
+            "_selected_tp_selections",
+            "_selected_tp_z",
+            "_selected_entry_execution",
+            "_selected_limit_offset_atr",
+            "_selected_limit_ttl_bars",
+        )
+        self._pending_entry_order = {
+            "order_id": order_id,
+            "order_type": "limit",
+            "decision_id": self._current_decision_id,
+            "direction": direction,
+            "risk_frac": risk_frac,
+            "rr_ratio": rr_ratio,
+            "feat_row": stored_feat_row,
+            "decision_time": submission_time,
+            "decision_bar_time": bar_time,
+            "decision_bar_idx": self.step_idx,
+            "signal_bar_idx": self.step_idx,
+            "signal_time": submission_time,
+            "order_submission_time": submission_time,
+            "expiry_time": expiry_time,
+            "limit_price": limit_price,
+            "entry_candidate": entry_candidate,
+            "decision_action": dict(self._decision_action),
+            "selected": {name: getattr(self, name) for name in selected_names},
+            "fill_quote": fill_quote,
+            "session_id": session_id,
+        }
+        selected_setup = self._selected_trade_setup if self.trade_setup_actions else None
+        setup_identity: dict[str, Any] = {}
+        if selected_setup is not None:
+            from features.context.trade_setup_candidates import trade_setup_event_identity_record
+
+            setup_identity = {
+                "trade_setup_candidate_id": int(selected_setup.candidate_id),
+                "trade_setup_schema_version": self.action_schema.version,
+                "primary_idea": str(selected_setup.idea or ""),
+                "primary_setup_timeframe": str(selected_setup.setup_timeframe or ""),
+                "primary_direction": int(selected_setup.direction),
+                **trade_setup_event_identity_record(self._selected_trade_setup_event_identity),
+            }
+        self.trade_log.append(
+            {
+                "type": "order_submit",
+                "order_id": order_id,
+                "order_type": "limit",
+                "direction": direction,
+                "decision_id": self._current_decision_id,
+                "decision_bar_time": bar_time,
+                "decision_time": submission_time,
+                "order_submission_time": submission_time,
+                "limit_price": limit_price,
+                "limit_offset_atr": float(self._selected_limit_offset_atr),
+                "ttl_bars": int(self._selected_limit_ttl_bars),
+                "expiry_time": expiry_time,
+                "time": submission_time,
+                "bar": self.step_idx,
+                **setup_identity,
+            }
+        )
+        return True
 
     def _execute_step_action(
         self,
@@ -40,7 +207,6 @@ class StepActionExecutionMixin(RuntimeMixinBase):
         entry_fill_time: Any,
         market_fill_idx: int,
         entry_candidate: EntryCandidate | None,
-        entry_machine: Any,
         done: bool,
         pending_due: bool,
         session_blocked: bool,
@@ -68,7 +234,6 @@ class StepActionExecutionMixin(RuntimeMixinBase):
             entry_fill_time: Entry fill time used by the operation described above.
             market_fill_idx: Numeric value used for the market fill idx.
             entry_candidate: Entry candidate used by the operation described above.
-            entry_machine: Entry machine used by the operation described above.
             done: Whether to enable or require the done.
             pending_due: Whether to enable or require the pending due.
             session_blocked: Whether to enable or require the session blocked.
@@ -99,7 +264,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                     pnl, fill_price = self._close_at_quote(
                         self.position,
                         (action_fill_bid, action_fill_ask),
-                        tick_fill=bool(execution_meta),
+                        tick_fill=True,
                     )
                     record = {
                         "type": "close",
@@ -124,9 +289,19 @@ class StepActionExecutionMixin(RuntimeMixinBase):
             elif discrete_action != 0 and fill_idx >= self._n_bars:
                 self._reject("terminal_no_fill_bar")
             elif discrete_action != 0 and not session_blocked and not peak_dd_block:
+                # A live resting limit owns the account's single pending-entry
+                # slot. Ignore subsequent entry requests until it fills or
+                # expires; replacing it implicitly could leave two executable
+                # orders on the same policy decision stream.
+                if (
+                    self.agent_entry_execution
+                    and self._pending_entry_order is not None
+                    and self._pending_entry_order.get("order_type") == "limit"
+                ):
+                    self._reject("entry_pending")
                 # Soft brick: stop new entries on daily-loss or trailing-DD
                 # soft limits; hard breaches still use session_blocked.
-                if self.guardrails.check_soft_daily(
+                elif self.guardrails.check_soft_daily(
                     self.account
                 ) or self.guardrails.check_soft_trailing_dd(self.account):
                     # Soft brick on daily loss or trailing DD. Renamed from
@@ -135,7 +310,23 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                     # was invisible in both the buckets and the trade log.
                     self._reject("soft_brick")
                 else:
+                    if self.agent_entry_execution and self._selected_entry_execution == "limit":
+                        if self.position is not None:
+                            self._reject("limit_entry_requires_flat_account")
+                            return
+                        self._submit_limit_entry_order(
+                            direction=discrete_action,
+                            risk_frac=risk_frac,
+                            rr_ratio=rr_ratio,
+                            bar=bar,
+                            feat_row=feat_row,
+                            bar_time=bar_time,
+                            session_id=session_id,
+                            entry_candidate=entry_candidate,
+                        )
+                        return
                     if self.fill_latency_bars > 0:
+                        order_id = f"{self._current_decision_id}:market"
                         stored_feat_row: FeatureRow | pd.Series = feat_row
                         if isinstance(feat_row, pd.Series):
                             stored_feat_row = feat_row.copy()
@@ -153,8 +344,13 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             "_tp_mode_explicit",
                             "_selected_tp_selections",
                             "_selected_tp_z",
+                            "_selected_entry_execution",
+                            "_selected_limit_offset_atr",
+                            "_selected_limit_ttl_bars",
                         )
                         self._pending_entry_order = {
+                            "order_id": order_id,
+                            "order_type": "market",
                             "decision_id": self._current_decision_id,
                             "fill_idx": fill_idx,
                             "direction": discrete_action,
@@ -177,11 +373,9 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             self._selected_trade_setup if self.trade_setup_actions else None
                         )
                         if selected_setup is not None:
-                            from decisioning.trade_setup import TRADE_SETUP_ACTION_VERSION
-
                             setup_identity = {
                                 "trade_setup_candidate_id": int(selected_setup.candidate_id),
-                                "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
+                                "trade_setup_schema_version": self.action_schema.version,
                             }
                             from features.context.trade_setup_candidates import (
                                 trade_setup_event_identity_record,
@@ -197,6 +391,8 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                         self.trade_log.append(
                             {
                                 "type": "order_submit",
+                                "order_id": order_id,
+                                "order_type": "market",
                                 "decision_id": self._current_decision_id,
                                 "direction": discrete_action,
                                 **setup_identity,
@@ -227,6 +423,42 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             }
                         )
                     else:
+                        order_id = f"{self._current_decision_id}:market"
+                        order_submission_time = bar_time + pd.Timedelta(
+                            minutes=self._minutes_per_step
+                        )
+                        selected_setup = (
+                            self._selected_trade_setup if self.trade_setup_actions else None
+                        )
+                        market_setup_identity: dict[str, Any] = {}
+                        if selected_setup is not None:
+                            from features.context.trade_setup_candidates import (
+                                trade_setup_event_identity_record,
+                            )
+
+                            market_setup_identity = {
+                                "trade_setup_candidate_id": int(selected_setup.candidate_id),
+                                "trade_setup_schema_version": self.action_schema.version,
+                                **trade_setup_event_identity_record(
+                                    self._selected_trade_setup_event_identity
+                                ),
+                            }
+                        self.trade_log.append(
+                            {
+                                "type": "order_submit",
+                                "order_id": order_id,
+                                "order_type": "market",
+                                "decision_id": self._current_decision_id,
+                                "direction": discrete_action,
+                                **market_setup_identity,
+                                "time": bar_time,
+                                "decision_time": bar_time,
+                                "decision_bar_time": bar_time,
+                                "order_submission_time": order_submission_time,
+                                "expected_fill_time": entry_fill_time,
+                                "bar": self.step_idx,
+                            }
+                        )
                         self._try_enter_position(
                             discrete_action,
                             risk_frac,
@@ -240,13 +472,58 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             entry_fill_time,
                             entry_candidate=entry_candidate,
                             fill_bar_idx=market_fill_idx,
-                            order_submission_time=bar_time
-                            + pd.Timedelta(minutes=self._minutes_per_step),
+                            order_submission_time=order_submission_time,
                             decision_bar_idx=self.step_idx,
                             signal_bar_idx=self.step_idx,
+                            order_id=order_id,
                         )
-                        if entry_machine is not None and self._opened_this_step:
-                            entry_machine.mark_entered()
+                        open_index = next(
+                            (
+                                index
+                                for index, event in enumerate(self.trade_log)
+                                if event.get("type") == "open" and event.get("order_id") == order_id
+                            ),
+                            None,
+                        )
+                        if open_index is None:
+                            self.trade_log.append(
+                                {
+                                    "type": "order_cancel",
+                                    "order_id": order_id,
+                                    "order_type": "market",
+                                    "decision_id": self._current_decision_id,
+                                    "reason": "entry_rejected_at_market_fill",
+                                    **market_setup_identity,
+                                    "order_submission_time": order_submission_time,
+                                    "trigger_quote_time": pd.Timestamp(entry_fill_time),
+                                    "trigger_quote_bid": float(entry_fill_bid),
+                                    "trigger_quote_ask": float(entry_fill_ask),
+                                    "trigger_quote_price": float(
+                                        entry_fill_ask if discrete_action > 0 else entry_fill_bid
+                                    ),
+                                    "time": pd.Timestamp(entry_fill_time),
+                                }
+                            )
+                        else:
+                            opened = self.trade_log[open_index]
+                            actual_fill_time = opened.get(
+                                "fill_time", opened.get("time", entry_fill_time)
+                            )
+                            self.trade_log.insert(
+                                open_index,
+                                {
+                                    "type": "order_fill",
+                                    "order_id": order_id,
+                                    "order_type": "market",
+                                    "decision_id": self._current_decision_id,
+                                    "direction": discrete_action,
+                                    "price": float(opened["price"]),
+                                    "bid": float(entry_fill_bid),
+                                    "ask": float(entry_fill_ask),
+                                    "time": pd.Timestamp(actual_fill_time),
+                                    **market_setup_identity,
+                                },
+                            )
 
 
 __all__ = ["StepActionExecutionMixin"]

@@ -220,6 +220,116 @@ def test_testing_dataset_resolves_its_separate_local_m1_export() -> None:
     assert source.is_file()
 
 
+def test_preprocessed_market_bars_are_reused_without_sharing_mutable_frames(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    cfg = OmegaConf.create(
+        {
+            "data": {"tz": "UTC"},
+            "session": {"end": "23:00"},
+        }
+    )
+    source = tmp_path / "bars.csv"
+    index = pd.date_range("2026-01-05T10:00:00Z", periods=3, freq="1min")
+    raw = pd.DataFrame(
+        {
+            "open": [100.0, 101.0, 102.0],
+            "high": [101.0, 102.0, 103.0],
+            "low": [99.0, 100.0, 101.0],
+            "close": [100.5, 101.5, 102.5],
+        },
+        index=index,
+    )
+    load_calls = 0
+
+    def load(_path: Path) -> pd.DataFrame:
+        nonlocal load_calls
+        load_calls += 1
+        return raw.copy()
+
+    monkeypatch.setattr(AUDIT, "configured_m1_path", lambda *_args: source)
+    monkeypatch.setattr(AUDIT, "configured_price_grid_increment", lambda _cfg: None)
+    monkeypatch.setattr(AUDIT, "load_bars", load)
+    raw_cache: dict[Path, pd.DataFrame] = {}
+    preprocessed_cache: dict[tuple[Path, str, str, float | None], pd.DataFrame] = {}
+    cache_metrics: dict[str, float | int] = {
+        "raw_loads": 0,
+        "raw_load_seconds": 0.0,
+        "preprocessed_builds": 0,
+        "preprocessed_cache_hits": 0,
+        "preprocessing_seconds": 0.0,
+    }
+
+    first, _ = AUDIT.load_market_bars(
+        cfg,
+        "US100",
+        raw_cache=raw_cache,
+        preprocessed_cache=preprocessed_cache,
+        cache_metrics=cache_metrics,
+    )
+    first.loc[index[0], "open"] = -1.0
+    second, _ = AUDIT.load_market_bars(
+        cfg,
+        "US100",
+        raw_cache=raw_cache,
+        preprocessed_cache=preprocessed_cache,
+        cache_metrics=cache_metrics,
+    )
+
+    assert load_calls == 1
+    assert cache_metrics["raw_loads"] == 1
+    assert cache_metrics["preprocessed_builds"] == 1
+    assert cache_metrics["preprocessed_cache_hits"] == 1
+    assert second.loc[index[0], "open"] == 100.0
+    assert {"gap_flag", "session", "session_id"}.issubset(second.columns)
+
+
+@pytest.mark.parametrize(
+    ("config_path", "changed_value"),
+    [
+        ("data.tz", "Etc/GMT-3"),
+        ("session.end", "22:00"),
+        ("data.price_increment", 0.25),
+    ],
+)
+def test_preprocessed_market_cache_key_tracks_transform_semantics(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    config_path: str,
+    changed_value: str | float,
+) -> None:
+    cfg = OmegaConf.create(
+        {
+            "data": {"tz": "UTC", "price_increment": None},
+            "session": {"end": "23:00"},
+        }
+    )
+    source = tmp_path / "bars.csv"
+    index = pd.date_range("2026-01-05T10:00:00Z", periods=3, freq="1min")
+    raw = pd.DataFrame(
+        {
+            "open": [100.0, 101.0, 102.0],
+            "high": [101.0, 102.0, 103.0],
+            "low": [99.0, 100.0, 101.0],
+            "close": [100.5, 101.5, 102.5],
+        },
+        index=index,
+    )
+    monkeypatch.setattr(AUDIT, "configured_m1_path", lambda *_args: source)
+    monkeypatch.setattr(
+        AUDIT, "configured_price_grid_increment", lambda value: value.data.price_increment
+    )
+    monkeypatch.setattr(AUDIT, "load_bars", lambda _path: raw.copy())
+    raw_cache: dict[Path, pd.DataFrame] = {}
+    preprocessed_cache: dict[tuple[Path, str, str, float | None], pd.DataFrame] = {}
+
+    AUDIT.load_market_bars(cfg, "US100", raw_cache=raw_cache, preprocessed_cache=preprocessed_cache)
+    OmegaConf.update(cfg, config_path, changed_value)
+    AUDIT.load_market_bars(cfg, "US100", raw_cache=raw_cache, preprocessed_cache=preprocessed_cache)
+
+    assert len(preprocessed_cache) == 2
+
+
 def test_cutoffs_must_leave_later_rows_for_comparison() -> None:
     index = pd.date_range("2025-12-30", periods=3, freq="D", tz="Etc/GMT-3")
 

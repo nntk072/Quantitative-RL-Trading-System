@@ -8,11 +8,11 @@ This page contains 4 public callable records owned by `trading.execution.costs`.
 
 **Purpose:** Holds cost parameters and computes fill costs.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel` · **Source:** [trading/execution/costs.py:9](../../../../trading/execution/costs.py#L9)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel` · **Source:** [trading/execution/costs.py:12](../../../../trading/execution/costs.py#L12)
 
 **Observed usage:**
 
-1. [test fixture: `setUp`](../../../../tests/integration/backtest/test_broker_fill_accounting.py#L13)
+1. [test fixture: `setUp`](../../../../tests/integration/backtest/test_broker_fill_accounting.py#L14)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -54,7 +54,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Derive bid/ask from close price using spread.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel.bar_quote` · **Source:** [trading/execution/costs.py:53](../../../../trading/execution/costs.py#L53)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel.bar_quote` · **Source:** [trading/execution/costs.py:56](../../../../trading/execution/costs.py#L56)
 
 **Inputs and outputs:**
 
@@ -85,7 +85,7 @@ def test_bar_quote_derives_ask_from_close():
     assert ask == pytest.approx(20000.6)
 ```
 
-2. [production caller: `quote_from_bar_price`](../../../../trading/execution/quotes.py#L40)
+2. [production caller: `quote_from_bar_price`](../../../../trading/execution/quotes.py#L132)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -108,7 +108,7 @@ def quote_from_bar_price(
 
 **Purpose:** Return the fill price for a market order.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel.fill_price` · **Source:** [trading/execution/costs.py:33](../../../../trading/execution/costs.py#L33)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel.fill_price` · **Source:** [trading/execution/costs.py:36](../../../../trading/execution/costs.py#L36)
 
 **Inputs and outputs:**
 
@@ -163,7 +163,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the explicit transaction cost for one side of a trade.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel.total_cost` · **Source:** [trading/execution/costs.py:18](../../../../trading/execution/costs.py#L18)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel.total_cost` · **Source:** [trading/execution/costs.py:21](../../../../trading/execution/costs.py#L21)
 
 **Inputs and outputs:**
 

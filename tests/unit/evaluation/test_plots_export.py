@@ -138,7 +138,7 @@ def test_build_summary_table(metrics):
     table = build_summary_table(metrics)
     assert "Sharpe" in table
     assert "Max Drawdown" in table
-    assert "Breach Rate" in table
+    assert "Breached Session Rate" in table
 
 
 def test_build_comparison_table(metrics):
@@ -773,6 +773,7 @@ def test_report_profiles_preserve_numerical_exports(tmp_path, synthetic_result):
         "metrics.json",
         "summary.txt",
         "session_activity.json",
+        "policy_decision_reconciliation.json",
         "evaluation_diagnostics.json",
         "direction_summary.json",
     ):
@@ -804,6 +805,20 @@ def test_evaluation_diagnostics_are_exported_from_result(tmp_path, synthetic_res
         "reward_attribution": {"pnl": 0.5, "risk": -0.1},
         "entry_diag": {"opened": 1, "rejected_no_setup": 2},
         "entry_state_diagnostics": {"state_armed": 1},
+        "observation_schema": {
+            "version": "account-state-v1",
+            "entry_state_visibility": True,
+        },
+        "observation_inputs": {"feature_validity_channels": False},
+        "execution_contract": {
+            "schema_version": "backtest_execution_contract.v1",
+            "limit_order": {"fill_rule": "strict_executable_quote_trade_through"},
+        },
+        "entry_state_config": {
+            "candidate_max_age_bars": 5,
+            "arm_requires_retest": False,
+            "entry_state_visibility": True,
+        },
     }
     metrics = calculate_metrics(
         result["equity"],
@@ -826,9 +841,24 @@ def test_evaluation_diagnostics_are_exported_from_result(tmp_path, synthetic_res
     assert report["exposure_fraction"] == pytest.approx(2 / 3)
     assert report["survived_full_year"] is False
     assert report["fail_time"] == "2025-06-01 12:00:00+00:00"
+    assert report["breach_event_ledger_supplied"] is True
+    assert report["breach_event_rows"] == 1
     assert report["action_counts"] == {"hold": 2, "enter": 1}
     assert report["reward_attribution"] == {"pnl": 0.5, "risk": -0.1}
     assert report["entry_funnel"]["opened"] == 1
+    assert report["observation_schema"]["entry_state_visibility"] is True
+    assert report["observation_inputs"]["feature_validity_channels"] is False
+    assert report["execution_contract"]["limit_order"]["fill_rule"] == (
+        "strict_executable_quote_trade_through"
+    )
+    assert report["entry_state_config"]["candidate_max_age_bars"] == 5
+    assert report["policy_decision_reconciliation_status"] == "incomplete"
+    assert (run_dir / "training" / "policy_decision_reconciliation.json").is_file()
+    policy_reconciliation = json.loads(
+        (run_dir / "training" / "policy_decision_reconciliation.json").read_text()
+    )
+    assert "policy_decisions_are_absent" in policy_reconciliation["incomplete_reasons"]
+    assert "breach_event_ledger_not_supplied" not in policy_reconciliation["incomplete_reasons"]
     assert report["position_record_count"] == len(_position_summaries(result["trades"]))
     assert report["identified_position_count"] == 0
     assert report["unidentified_position_event_count"] == len(_fill_events(result["trades"]))
@@ -839,6 +869,38 @@ def test_evaluation_diagnostics_are_exported_from_result(tmp_path, synthetic_res
     assert metrics_report["final_equity"] - metrics_report["initial_balance"] == pytest.approx(
         metrics_report["total_pnl"]
     )
+
+
+@pytest.mark.parametrize("breach_count", [False, "0", 0.0, -1, None])
+def test_evaluation_diagnostics_fail_closed_on_malformed_survival_evidence(
+    tmp_path, synthetic_result, breach_count
+):
+    result = {
+        **synthetic_result,
+        "survived_full_year": "false",
+        "completed_data_split": "true",
+    }
+    if breach_count is None:
+        result.pop("n_breach_sessions", None)
+    else:
+        result["n_breach_sessions"] = breach_count
+    metrics = calculate_metrics(
+        result["equity"], trades=result["trades"], initial_balance=float(result["initial_balance"])
+    )
+
+    run_dir = save_run(
+        run_dir=tmp_path / "malformed-survival-evidence",
+        train_result=result,
+        train_metrics=metrics,
+        save_plots=False,
+        save_html=False,
+        save_csv=True,
+    )
+
+    report = json.loads((run_dir / "training" / "evaluation_diagnostics.json").read_text())
+    assert report["survived_full_year"] is False
+    assert report["completed_data_split"] is False
+    assert report["n_breach_sessions"] is None
 
 
 def test_q5_constraint_cost_evidence_is_exported_as_rows_and_summary(tmp_path):
@@ -1053,6 +1115,51 @@ def test_position_export_does_not_merge_events_without_position_ids() -> None:
         "unidentified_event_0",
         "unidentified_event_1",
     ]
+    assert positions["completed"].isna().all()
+
+
+def test_unidentified_position_export_parses_completion_without_truthiness() -> None:
+    trades = pd.DataFrame(
+        [
+            {
+                "type": "close",
+                "direction": 1,
+                "price": 101.0,
+                "pnl": 1.0,
+                "position_complete": "false",
+            }
+        ]
+    )
+
+    positions = _position_summaries(trades)
+
+    assert not positions.loc[0, "completed"]
+
+
+@pytest.mark.parametrize(("completion", "expected"), [("false", False), ("invalid", None)])
+def test_identified_position_export_fails_closed_on_completion_strings(
+    completion: str, expected: bool | None
+) -> None:
+    trades = pd.DataFrame(
+        [
+            {
+                "type": "close",
+                "position_id": "p1",
+                "direction": 1,
+                "price": 101.0,
+                "pnl": 1.0,
+                "position_complete": completion,
+            }
+        ]
+    )
+
+    positions = _position_summaries(trades)
+
+    actual = positions.loc[0, "completed"]
+    if expected is None:
+        assert pd.isna(actual)
+    else:
+        assert bool(actual) is expected
 
 
 def test_position_export_preserves_trade_setup_and_structural_provenance(

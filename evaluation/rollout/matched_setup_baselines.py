@@ -7,7 +7,7 @@ import inspect
 import json
 import random
 import re
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib import import_module
@@ -18,7 +18,11 @@ import numpy as np
 import pandas as pd
 
 from decisioning.trade_setup import TradeSetupActionSchema
-from evaluation.metrics import calculate_metrics, evaluation_periods_per_year
+from evaluation.metrics import (
+    account_path_metric_inputs,
+    calculate_metrics,
+    evaluation_periods_per_year,
+)
 from evaluation.metrics.bootstrap import metrics_with_ci
 from evaluation.metrics.trade_pairs import pair_trades
 from evaluation.reporting.run_manifest import dataframe_sha256
@@ -30,7 +34,7 @@ from evaluation.rollout.random_eligible_setup import (
 )
 from evaluation.rollout.trained_policy_rollout import evaluate_model
 from simulation.environment.env import TradingEnv
-from simulation.environment.trading_environment_factory import build_eval_common
+from simulation.environment.trading_environment_factory import build_eval_common, cost_model
 
 BASELINE_NAMES = ("always_no_trade", "random_eligible_setup")
 
@@ -51,10 +55,27 @@ class RuleSetupBaselineArm:
 
 
 def _valid_sha256(value: Any) -> bool:
+    """Return whether a value is a lowercase SHA-256 hexadecimal digest.
+
+    Args:
+        value: Candidate digest value to validate.
+
+    Returns:
+        Whether ``value`` has 64 lowercase hexadecimal characters.
+    """
     return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
 
 
 def _validate_existing_policy(name: str, arm: ExistingPolicyArm) -> dict[str, Any]:
+    """Validate checkpoint metadata required for a reproducible policy arm.
+
+    Args:
+        name: Stable identifier assigned to the additional policy arm.
+        arm: Trained model and saved checkpoint metadata.
+
+    Returns:
+        Validated metadata with checkpoint and action-protocol fields.
+    """
     if not re.fullmatch(r"[a-z][a-z0-9_]*", name) or name in BASELINE_NAMES:
         raise ValueError("additional policy names must be unique lowercase identifiers")
     metadata = dict(arm.metadata)
@@ -94,6 +115,15 @@ def _validate_existing_policy(name: str, arm: ExistingPolicyArm) -> dict[str, An
 
 
 def _validate_rule_setup_baseline(name: str, arm: RuleSetupBaselineArm) -> dict[str, Any]:
+    """Validate the provenance contract for a deterministic setup rule.
+
+    Args:
+        name: Stable identifier assigned to the additional baseline arm.
+        arm: Deterministic rule model exposing policy metadata.
+
+    Returns:
+        Validated rule metadata labeled as a deterministic policy source.
+    """
     if not re.fullmatch(r"[a-z][a-z0-9_]*", name) or name in BASELINE_NAMES:
         raise ValueError("additional policy names must be unique lowercase identifiers")
     if not callable(getattr(arm.model, "predict", None)):
@@ -132,6 +162,15 @@ def _validate_rule_setup_baseline(name: str, arm: RuleSetupBaselineArm) -> dict[
 def _validate_additional_policy(
     name: str, arm: ExistingPolicyArm | RuleSetupBaselineArm
 ) -> dict[str, Any]:
+    """Validate an additional trained or deterministic policy arm.
+
+    Args:
+        name: Stable identifier assigned to the policy arm.
+        arm: Existing trained checkpoint or deterministic setup-rule model.
+
+    Returns:
+        Validated policy provenance metadata.
+    """
     if isinstance(arm, RuleSetupBaselineArm):
         return _validate_rule_setup_baseline(name, arm)
     if isinstance(arm, ExistingPolicyArm):
@@ -143,7 +182,15 @@ def _validate_additional_policy(
 
 @contextmanager
 def _seeded_action_rng(seed: int) -> Iterator[None]:
-    """Isolate common global RNGs for a seeded stochastic model rollout."""
+    """Isolate common global RNGs for a seeded stochastic model rollout.
+
+    Args:
+        seed: Common action seed applied to NumPy, Python, and Torch RNGs.
+
+    Yields:
+        Control while the seeded RNG state is active; prior states are restored
+        when the context exits.
+    """
     numpy_state = np.random.get_state()
     python_state = random.getstate()
     torch_module: Any = None
@@ -171,6 +218,15 @@ def _seeded_action_rng(seed: int) -> Iterator[None]:
 
 
 def _config_flag(cfg: Any, key: str) -> bool:
+    """Read one environment flag from a mapping or attribute-based config.
+
+    Args:
+        cfg: Resolved run configuration.
+        key: Environment flag name to read.
+
+    Returns:
+        The configured flag value as a boolean.
+    """
     env_cfg = cfg.get("env", {}) if isinstance(cfg, Mapping) else getattr(cfg, "env", {})
     value = (
         env_cfg.get(key, False) if isinstance(env_cfg, Mapping) else getattr(env_cfg, key, False)
@@ -190,10 +246,11 @@ def evaluate_tier0_setup_baselines(
     trade_probability: float = 1.0,
     normalized_risk: float = 0.5,
     absolute_risk_budget_usd: float | None = None,
-    tick_fill_slippage_points: float = 0.0,
+    tick_fill_slippage_points: float | None = None,
     bootstrap_samples: int = 2000,
     bootstrap_level: float = 0.95,
     bootstrap_seed: int = 42,
+    baseline_names: Sequence[str] | None = None,
     additional_policies: Mapping[str, ExistingPolicyArm | RuleSetupBaselineArm] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Evaluate Tier 0 controls and optional Tier 1 rules or trained policies.
@@ -211,9 +268,34 @@ def evaluate_tier0_setup_baselines(
     is a maximum requested budget, not a claim of equal realized-risk
     distributions.
 
+    ``baseline_names`` can select a subset so one failed arm does not discard
+    completed results from an independent arm.
+
     Each policy also receives same-trajectory moving-block confidence
     intervals. These describe within-path sampling uncertainty and do not
     replace paired policy or between-seed inference.
+
+    Args:
+        cfg: Resolved configuration with setup actions enabled.
+        bars: Shared chronological market bars for every policy arm.
+        features: Feature matrix aligned with the supplied bars.
+        tickbook: Optional tick data shared by all executions.
+        policy_models: Mapping of existing policy names to model and metadata.
+        execution_seed: Seed used for execution randomness across arms.
+        random_policy_seed: Seed controlling the random eligible-setup baseline.
+        period_role: Declared role of the evaluated date range.
+        trade_probability: Entry probability used by applicable setup baselines.
+        normalized_risk: Default normalized risk coordinate for policy arms.
+        absolute_risk_budget_usd: Optional shared dollar risk-band ceiling.
+        tick_fill_slippage_points: Optional override for configured tick slippage.
+        bootstrap_samples: Number of moving-block samples for within-path intervals.
+        bootstrap_level: Confidence level for those intervals.
+        bootstrap_seed: Seed for interval resampling.
+        baseline_names: Optional subset of standard baselines to evaluate.
+        additional_policies: Optional trained or deterministic policy arms.
+
+    Returns:
+        Completed per-policy outputs, including equity, trade events, and provenance.
     """
     if (
         isinstance(bootstrap_samples, bool)
@@ -279,7 +361,11 @@ def evaluate_tier0_setup_baselines(
     if len(bars) != len(features) or not bars.index.equals(features.index):
         raise ValueError("bars and features must have identical rows and ordered timestamps")
     try:
-        resolved_tick_slippage = float(tick_fill_slippage_points)
+        resolved_tick_slippage = (
+            float(cost_model(effective_cfg).slippage_points)
+            if tick_fill_slippage_points is None
+            else float(tick_fill_slippage_points)
+        )
     except (TypeError, ValueError) as exc:
         raise ValueError("tick_fill_slippage_points must be finite and non-negative") from exc
     if (
@@ -314,7 +400,15 @@ def evaluate_tier0_setup_baselines(
         raise ValueError("additional policies require an explicit absolute_risk_budget_usd")
 
     outputs: dict[str, dict[str, Any]] = {}
-    policy_names = (*BASELINE_NAMES, *validated_additional)
+    available_policy_names = (*BASELINE_NAMES, *validated_additional)
+    policy_names = tuple(available_policy_names if baseline_names is None else baseline_names)
+    if len(policy_names) != len(set(policy_names)):
+        raise ValueError("baseline_names must not contain duplicates")
+    unknown_policy_names = sorted(set(policy_names) - set(available_policy_names))
+    if unknown_policy_names:
+        raise ValueError(f"unknown baseline_names: {unknown_policy_names}")
+    if not policy_names:
+        raise ValueError("baseline_names must select at least one policy")
     for baseline_name in policy_names:
         # Resolve anew to give every baseline fresh stateful strategy adapters.
         eval_common, _, _, _, _ = build_eval_common(
@@ -393,6 +487,7 @@ def evaluate_tier0_setup_baselines(
             n_breach_sessions=int(raw["n_breach_sessions"]),
             periods_per_year=_periods_per_year(cfg),
             initial_balance=float(eval_common["initial_balance"]),
+            **account_path_metric_inputs(raw),
         )
         closed_trade_pnls = np.asarray(
             [
@@ -500,7 +595,15 @@ def evaluate_tier0_setup_baselines(
 
 
 def _with_absolute_risk_budget(cfg: Any, *, risk_band_max_usd: float) -> Any:
-    """Clone the resolved config with a dollar-band risk coordinate."""
+    """Clone the resolved config with a dollar-band risk coordinate.
+
+    Args:
+        cfg: Mapping or OmegaConf configuration to copy.
+        risk_band_max_usd: Maximum dollar budget represented by the action.
+
+    Returns:
+        Independent OmegaConf config using the requested dollar-band ceiling.
+    """
     from omegaconf import OmegaConf
 
     if OmegaConf.is_config(cfg):
@@ -523,7 +626,14 @@ def _with_absolute_risk_budget(cfg: Any, *, risk_band_max_usd: float) -> Any:
 
 
 def _resolved_config_sha256(cfg: Any) -> str:
-    """Hash the fully resolved source configuration deterministically."""
+    """Hash the fully resolved source configuration deterministically.
+
+    Args:
+        cfg: Mapping or OmegaConf configuration to resolve and hash.
+
+    Returns:
+        SHA-256 hex digest of canonical JSON configuration content.
+    """
     resolved = _resolved_config_payload(cfg)
     encoded = json.dumps(
         resolved,
@@ -536,7 +646,14 @@ def _resolved_config_sha256(cfg: Any) -> str:
 
 
 def _resolved_config_payload(cfg: Any) -> dict[str, Any]:
-    """Return the plain resolved mapping that actually configured evaluation."""
+    """Return the plain resolved mapping that actually configured evaluation.
+
+    Args:
+        cfg: Mapping or OmegaConf configuration used for evaluation.
+
+    Returns:
+        Resolved plain dictionary with interpolations evaluated.
+    """
     from omegaconf import OmegaConf
 
     if OmegaConf.is_config(cfg):
@@ -551,7 +668,14 @@ def _resolved_config_payload(cfg: Any) -> dict[str, Any]:
 
 
 def _risk_sizing_metadata(cfg: Any) -> dict[str, Any]:
-    """Record the resolved controls that turn risk actions into dollar budgets."""
+    """Record the resolved controls that turn risk actions into dollar budgets.
+
+    Args:
+        cfg: Resolved configuration containing environment, account, and risk settings.
+
+    Returns:
+        Normalized risk-mode settings and effective per-trade sizing limits.
+    """
     from omegaconf import OmegaConf
 
     resolved = (
@@ -589,13 +713,14 @@ def _risk_sizing_metadata(cfg: Any) -> dict[str, Any]:
     mode = str(env.get("risk_mode", "dynamic"))
     semantics = {
         "fixed": (
-            "fixed_risk_usd requested as nominal stop-distance risk per trade; action risk "
-            "coordinate does not change the sizing request and modeled execution reserve is "
-            "not deducted by this sizing path"
+            "fixed_risk_usd is the total stop-risk plus modeled execution-cost budget; action "
+            "risk coordinate does not change the request, and volume is rounded down to the "
+            "configured broker step"
         ),
         "dynamic": (
             "current equity multiplied by decoded action risk fraction, subject to configured "
-            "capacity approvals and per-trade guardrails"
+            "capacity approvals and per-trade guardrails; modeled execution costs are reserved "
+            "before assigning stop exposure and volume is rounded down to broker step"
         ),
         "dollar_band": (
             "normalized action coordinate maps to a requested total budget under "
@@ -627,11 +752,20 @@ def _risk_sizing_metadata(cfg: Any) -> dict[str, Any]:
         ),
         "min_lot": float(risk_config.get("min_lot", 0.0)),
         "max_lot": float(risk_config.get("max_lot", 0.0)),
+        "lot_step": float(risk_config.get("lot_step", 0.01)),
         "contract_size": float(account.get("contract_size", 0.0)),
     }
 
 
 def _periods_per_year(cfg: Any) -> int:
+    """Resolve annualization periods from a mapping or OmegaConf object.
+
+    Args:
+        cfg: Configuration containing the evaluation annualization settings.
+
+    Returns:
+        Number of observations per evaluation year.
+    """
     if isinstance(cfg, Mapping):
         mapping = cfg
     else:

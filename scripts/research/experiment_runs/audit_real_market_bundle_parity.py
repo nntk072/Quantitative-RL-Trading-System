@@ -23,7 +23,12 @@ from configuration import load_config
 from configuration.paths import repository_root
 from features import build_features, feature_cache_path
 from market_data.loading import build_tick_books, run_pipeline
-from market_data.splits.definitions import get_split_config, make_train_mask, split_train_test
+from market_data.splits.definitions import (
+    get_split_config,
+    get_train_start_config,
+    make_train_mask,
+    split_train_test,
+)
 from simulation.environment.bundles import build_env_bundle
 from simulation.environment.spec import EnvSpec
 from simulation.environment.worker import make_bundle_env
@@ -320,7 +325,8 @@ def main() -> int:
     bars = market[primary_symbol]["M1"]
     secondary = market.get(secondary_symbol, {}).get("M1")
     train_end, test_start = get_split_config(base_cfg)
-    train_mask = make_train_mask(cast(pd.DatetimeIndex, bars.index), train_end)
+    train_start = get_train_start_config(base_cfg)
+    train_mask = make_train_mask(cast(pd.DatetimeIndex, bars.index), train_end, train_start)
     _, test_bars_full, _, _ = split_train_test(bars, bars, train_end, test_start)
     tickbook = build_tick_books(base_cfg).get(primary_symbol)
     source_paths = _audit_source_paths()

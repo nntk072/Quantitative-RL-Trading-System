@@ -35,6 +35,7 @@ See docs/operations/DEPLOYMENT.md for the paper->live promotion protocol and mod
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import time
@@ -49,13 +50,12 @@ from loguru import logger
 
 from integrations.mt5.risk_configuration import (
     LiveRiskConfiguration,
+    LiveRiskOverrides,
     load_live_risk_configuration,
 )
 
 load_dotenv()
 from integrations.mt5.logging_config import configure_logging  # noqa: E402
-
-DEFAULT_CONFIG = Path("config/base/default.yaml")
 
 
 def load_model(model_path: Path) -> Any:
@@ -90,13 +90,51 @@ def load_model(model_path: Path) -> Any:
 
 
 def resolve_run_config(model_path: Path) -> Path:
-    """Prefer the model run's saved ``config.yaml`` for train/live parity.
-
-    Fall back to the repository default when no run snapshot exists.
-    """
+    """Resolve the checkpoint's saved configuration or fail closed."""
     run_dir = model_path.resolve().parent.parent
     saved = run_dir / "config.yaml"
-    return saved if saved.is_file() else DEFAULT_CONFIG
+    if not saved.is_file():
+        raise FileNotFoundError(f"checkpoint run has no saved config.yaml: {saved}")
+    return saved
+
+
+def resolve_feature_normalization_state(run_config: Path) -> Path:
+    """Require the hash-linked train-fitted normalization artifact for a run."""
+    manifest_path = run_config.parent / "run_manifest.json"
+    state_path = run_config.parent / "feature_normalization_state.json"
+    if not manifest_path.is_file() or not state_path.is_file():
+        raise FileNotFoundError(
+            "live inference requires a run manifest and train-fitted feature normalization state"
+        )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict) or not isinstance(state, dict):
+        raise ValueError("run manifest and feature normalization state must be JSON objects")
+    config_record = manifest.get("config")
+    normalization = manifest.get("feature_normalization")
+    feature_cache = manifest.get("feature_cache")
+    if (
+        not isinstance(config_record, dict)
+        or not isinstance(normalization, dict)
+        or not isinstance(feature_cache, dict)
+    ):
+        raise ValueError("run manifest lacks config or feature normalization provenance")
+    if (
+        not run_config.is_file()
+        or config_record.get("sha256") != hashlib.sha256(run_config.read_bytes()).hexdigest()
+    ):
+        raise ValueError("saved run config differs from its manifest identity")
+    state_sha256 = hashlib.sha256(state_path.read_bytes()).hexdigest()
+    if (
+        state.get("schema") != "feature-normalization-v1"
+        or normalization.get("schema") != "feature-normalization-v1"
+        or normalization.get("path") != state_path.name
+        or normalization.get("sha256") != state_sha256
+        or normalization.get("feature_cache_hash") != feature_cache.get("sha256")
+        or state.get("feature_cache_hash") != feature_cache.get("sha256")
+    ):
+        raise ValueError("run manifest feature normalization state is missing or mismatched")
+    return state_path
 
 
 def _use_secondary_symbol(cfg: Any) -> bool:
@@ -114,15 +152,14 @@ def _use_secondary_symbol(cfg: Any) -> bool:
 _LIVE_RISK_DEFAULTS = LiveRiskConfiguration().as_dict()
 
 
-def load_risk_overrides(cfg: Any) -> dict[str, float]:
+def load_risk_overrides(cfg: Any) -> LiveRiskOverrides:
     """Extract the ``live_risk_overrides`` block for ``RiskManager``/cadence.
 
-    These are the *live sizing* parameters (percentage-of-balance model), not
-    the FTMO dollar kill-switches used in training/eval — see the comment on
-    ``live_risk_overrides:`` in ``config/base/default.yaml`` for why the
-    two models differ and how they are kept aligned. Any key missing from the
-    run's config falls back to the repo default *with an explicit warning*, so
-    a config that silently drops the block can't quietly change live risk.
+    Percentage sizing parameters use the live overrides; the absolute
+    per-symbol stop-risk cap comes from ``ftmo.risk_sizing_limit_usd`` so the
+    live sizing ceiling tracks the run's training budget. This does not supply
+    training-equivalent account-level daily or maximum-loss guardrails. Any
+    missing live override falls back to the repository default with a warning.
     """
     return load_live_risk_configuration(cfg).as_dict()
 
@@ -139,8 +176,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         default=os.environ.get("RL_CONFIG_PATH"),
-        help="Run config.yaml to drive features/risk (default: the run's saved config.yaml, "
-        "falling back to config/base/default.yaml).",
+        help="Run config.yaml to drive features/risk (default: the checkpoint run's saved config).",
     )
     parser.add_argument(
         "--symbol",
@@ -190,6 +226,7 @@ def build_robot(model_path: Path, run_config: Path, args: argparse.Namespace) ->
 
     model = load_model(model_path)
     cfg = OmegaConf.load(run_config)
+    normalization_state_path = resolve_feature_normalization_state(run_config)
     observation_schema = build_live_observation_schema(cfg)
     provider = SB3DecisionProvider(
         model,
@@ -219,13 +256,21 @@ def build_robot(model_path: Path, run_config: Path, args: argparse.Namespace) ->
             "(no SMT features to feed live)"
         )
 
-    adapter = RLStrategyAdapter(provider=provider, config_path=str(run_config))
+    adapter = RLStrategyAdapter(
+        provider=provider,
+        config_path=str(run_config),
+        normalization_state_path=normalization_state_path,
+    )
     return RLRobot(
         adapter=adapter,
         data_source=data_source,
         trader=MT5Trader(),
         risk_manager=RiskManager(
-            risk_per_symbol=risk["risk_per_symbol"], max_total_risk=risk["max_total_risk"]
+            risk_per_symbol=risk["risk_per_symbol"],
+            max_total_risk=risk["max_total_risk"],
+            risk_per_symbol_usd_cap=risk["risk_per_symbol_usd_cap"],
+            execution_slippage_points=risk["execution_slippage_points"],
+            commission_per_lot=risk["commission_per_lot"],
         ),
         secondary_data_source=secondary_data_source,
         stop_loss_pips=risk["stop_loss_pips"],

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
+<title>Swing pivot becomes visible after right-bar confirmation</title><rect width="1000" height="560" fill="#fbfcfe"/>
+<style>text{font:14px sans-serif;fill:#152536} .small{font-size:12px} .axis{stroke:#8091a0;stroke-width:1} .bull{stroke:#18794e;fill:#18794e} .bear{stroke:#b42318;fill:#b42318} .ref{stroke:#7a5af8;stroke-dasharray:6 5} .zone{fill:#fdb022;fill-opacity:.19;stroke:#dc6803} .gate{stroke:#175cd3;stroke-dasharray:7 5}</style>
+<text x="44" y="34" font-size="20" font-weight="bold">Swing pivot becomes visible after right-bar confirmation</text>
+<text x="44" y="54" class="small">SYNTHETIC EXPLANATORY EXAMPLE — not historical data or a strategy result</text>
+<line class="axis" x1="110" y1="390" x2="890" y2="390"/>
+<line class="ref" x1="135" y1="130" x2="880" y2="130"/>
+<text x="140" y="114">candidate pivot high 105</text>
+<line class="axis" x1="190" y1="220.0" x2="190" y2="390"/>
+<circle cx="190" cy="220.0" r="5" fill="#175cd3"/>
+<text x="138" y="420" class="small">2025-01-06T15:00:00Z</text>
+<line class="axis" x1="345" y1="160.0" x2="345" y2="390"/>
+<circle cx="345" cy="160.0" r="5" fill="#175cd3"/>
+<text x="293" y="420" class="small">2025-01-06T15:01:00Z</text>
+<line class="axis" x1="500" y1="130.0" x2="500" y2="390"/>
+<circle cx="500" cy="130.0" r="5" fill="#175cd3"/>
+<text x="448" y="420" class="small">2025-01-06T15:02:00Z</text>
+<line class="axis" x1="655" y1="190.0" x2="655" y2="390"/>
+<circle cx="655" cy="190.0" r="5" fill="#175cd3"/>
+<text x="603" y="420" class="small">2025-01-06T15:03:00Z</text>
+<line class="axis" x1="810" y1="250.0" x2="810" y2="390"/>
+<circle cx="810" cy="250.0" r="5" fill="#175cd3"/>
+<text x="758" y="420" class="small">2025-01-06T15:04:00Z</text>
+<line x1="500" y1="112" x2="500" y2="395" stroke="#b42318" stroke-dasharray="6 5"/>
+<text x="365" y="92" fill="#b42318" font-weight="bold">INVALID: pivot candle is not yet confirmed</text>
+<line class="gate" x1="810" y1="112" x2="810" y2="395"/>
+<text x="610" y="92" fill="#175cd3" font-weight="bold">VALID: two right bars complete</text>
+<text x="130" y="475">Pivot bar 2025-01-06T15:02:00Z; confirmed at its right-window close 2025-01-06T15:04:59.999Z.</text>
+<text x="130" y="505" class="small">A decision at 2025-01-06T15:02:00Z is premature; earliest next-bar time is 2025-01-06T15:05:00Z.</text></svg>

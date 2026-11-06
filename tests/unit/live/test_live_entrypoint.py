@@ -9,6 +9,8 @@ MetaTrader5 (Windows-only) is stubbed the same additive way as
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -73,8 +75,11 @@ def test_load_risk_overrides_reads_repo_default_yaml() -> None:
     block = cfg.live_risk_overrides
     assert risk["risk_per_symbol"] == float(block.risk_per_symbol)
     assert risk["max_total_risk"] == float(block.max_total_risk)
+    assert risk["risk_per_symbol_usd_cap"] == float(cfg.ftmo.risk_sizing_limit_usd)
     assert risk["stop_loss_pips"] == float(block.stop_loss_pips)
     assert risk["interval_minutes"] == float(block.interval_minutes)
+    assert risk["execution_slippage_points"] == float(cfg.costs.slippage_points)
+    assert risk["commission_per_lot"] == float(cfg.costs.commission_per_lot)
     assert "default_lot_size" not in risk
 
 
@@ -84,6 +89,23 @@ def test_load_risk_overrides_missing_block_falls_back_with_defaults() -> None:
 
     risk = live_trading_rl.load_risk_overrides(NoBlock())
     assert risk == live_trading_rl._LIVE_RISK_DEFAULTS
+
+
+def test_load_risk_overrides_keeps_training_cap_when_live_block_is_missing() -> None:
+    cfg = OmegaConf.create({"ftmo": {"risk_sizing_limit_usd": 900.0}})
+
+    risk = live_trading_rl.load_risk_overrides(cfg)
+
+    assert risk["risk_per_symbol"] == live_trading_rl._LIVE_RISK_DEFAULTS["risk_per_symbol"]
+    assert risk["risk_per_symbol_usd_cap"] == 900.0
+
+
+@pytest.mark.parametrize("invalid", [0.0, -1.0, float("nan"), float("inf"), True, "bad"])
+def test_load_risk_overrides_rejects_invalid_training_sizing_cap(invalid: object) -> None:
+    cfg = OmegaConf.create({"ftmo": {"risk_sizing_limit_usd": invalid}})
+
+    with pytest.raises(ValueError, match="ftmo.risk_sizing_limit_usd"):
+        live_trading_rl.load_risk_overrides(cfg)
 
 
 def test_load_risk_overrides_partial_block_warns_and_fills(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -98,7 +120,7 @@ def test_load_risk_overrides_partial_block_warns_and_fills(monkeypatch: pytest.M
     risk = live_trading_rl.load_risk_overrides(cfg)
     assert risk["risk_per_symbol"] == 0.005
     assert risk["max_total_risk"] == live_trading_rl._LIVE_RISK_DEFAULTS["max_total_risk"]
-    assert len(warnings) == len(live_trading_rl._LIVE_RISK_DEFAULTS) - 1
+    assert len(warnings) == len(live_trading_rl._LIVE_RISK_DEFAULTS) - 2
 
 
 @pytest.mark.parametrize("invalid", [0.0, -0.1, float("nan"), float("inf"), True, "bad"])
@@ -106,6 +128,23 @@ def test_load_risk_overrides_rejects_invalid_values(invalid: object) -> None:
     cfg = OmegaConf.create({"live_risk_overrides": {"risk_per_symbol": invalid}})
 
     with pytest.raises(ValueError, match="risk_per_symbol must be a finite positive number"):
+        live_trading_rl.load_risk_overrides(cfg)
+
+
+@pytest.mark.parametrize(
+    "key, invalid",
+    [
+        ("slippage_points", -0.1),
+        ("slippage_points", float("nan")),
+        ("commission_per_lot", -0.1),
+        ("commission_per_lot", float("inf")),
+        ("commission_per_lot", True),
+    ],
+)
+def test_load_risk_overrides_rejects_invalid_execution_costs(key: str, invalid: object) -> None:
+    cfg = OmegaConf.create({"costs": {key: invalid}})
+
+    with pytest.raises(ValueError, match=f"costs.{key}"):
         live_trading_rl.load_risk_overrides(cfg)
 
 
@@ -119,12 +158,54 @@ def test_resolve_run_config_prefers_saved_run_config(tmp_path: Path) -> None:
     assert live_trading_rl.resolve_run_config(model_path) == run_dir / "config.yaml"
 
 
-def test_resolve_run_config_falls_back_to_repo_default(tmp_path: Path) -> None:
+def test_resolve_run_config_rejects_checkpoint_without_saved_config(tmp_path: Path) -> None:
     run_dir = tmp_path / "run"
     (run_dir / "model").mkdir(parents=True)
     model_path = run_dir / "model" / "ppo_final.zip"
     model_path.write_bytes(b"x")
-    assert live_trading_rl.resolve_run_config(model_path) == live_trading_rl.DEFAULT_CONFIG
+    with pytest.raises(FileNotFoundError, match="no saved config.yaml"):
+        live_trading_rl.resolve_run_config(model_path)
+
+
+def test_live_normalization_state_requires_manifest_hash_link(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    config_path = run_dir / "config.yaml"
+    config_path.write_text("features: {}\n", encoding="utf-8")
+    state_path = run_dir / "feature_normalization_state.json"
+    state = {
+        "schema": "feature-normalization-v1",
+        "feature_cache_hash": "feature-cache-identity",
+    }
+    state_path.write_text(json.dumps(state), encoding="utf-8")
+    manifest = {
+        "feature_cache": {"sha256": "feature-cache-identity"},
+        "feature_normalization": {
+            "schema": "feature-normalization-v1",
+            "path": state_path.name,
+            "sha256": hashlib.sha256(state_path.read_bytes()).hexdigest(),
+            "feature_cache_hash": "feature-cache-identity",
+        },
+    }
+    (run_dir / "run_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    manifest["config"] = {
+        "sha256": hashlib.sha256(config_path.read_bytes()).hexdigest(),
+    }
+    (run_dir / "run_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    assert live_trading_rl.resolve_feature_normalization_state(config_path) == state_path
+
+    state["feature_cache_hash"] = "different-cache-identity"
+    state_path.write_text(json.dumps(state), encoding="utf-8")
+    with pytest.raises(ValueError, match="missing or mismatched"):
+        live_trading_rl.resolve_feature_normalization_state(config_path)
+
+    state["feature_cache_hash"] = "feature-cache-identity"
+    state_path.write_text(json.dumps(state), encoding="utf-8")
+    config_path.write_text("features: {window: 3}\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="config differs from its manifest identity"):
+        live_trading_rl.resolve_feature_normalization_state(config_path)
 
 
 # --- parse_args: CLI/env contract ------------------------------------------

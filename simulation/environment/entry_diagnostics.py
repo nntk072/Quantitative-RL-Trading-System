@@ -34,6 +34,7 @@ def _empty_entry_diag(
         "rejected_soft_brick": 0,
         "rejected_terminal": 0,
         "rejected_entry_pending": 0,
+        "rejected_entry_execution": 0,
         "rejected_trade_setup_inactive": 0,
         "rejected_sl": 0,
         "rejected_rr": 0,
@@ -64,6 +65,9 @@ _REJECTION_COUNTERS: dict[str, str] = {
     "sl_already_hit": "rejected_sl_already_hit",
     "terminal_no_fill_bar": "rejected_terminal",
     "entry_pending": "rejected_entry_pending",
+    "insufficient_margin": "rejected_entry_execution",
+    "limit_entry_source_identity_unavailable": "rejected_entry_execution",
+    "limit_entry_source_setup_unavailable": "rejected_entry_execution",
     "trade_setup_inactive": "rejected_trade_setup_inactive",
 }
 

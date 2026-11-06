@@ -163,6 +163,58 @@ def test_select_event_pairs_cover_each_available_month_direction_once() -> None:
     assert len(set(selected_ids)) == len(selected_ids)
 
 
+def test_select_event_pairs_can_sample_multiple_pairs_per_stratum_without_reuse() -> None:
+    index = pd.date_range("2025-01-06 16:48", periods=20, freq="1min", tz="Etc/GMT-3")
+    bars = pd.DataFrame(index=index)
+    fill_indices = (2, 4, 6, 8, 11, 13, 15, 17)
+    fill_times = [
+        (index[position] + pd.Timedelta(milliseconds=100)).tz_convert("UTC")
+        for position in fill_indices
+    ]
+    bids = np.asarray([100.0, 100.5, 101.0, 100.75, 99.0, 98.5, 98.0, 98.25])
+    asks = bids + 0.25
+    book = TickBook(np.asarray([timestamp.value for timestamp in fill_times]), bids, asks)
+    events = [
+        _source_event(
+            event_id=event_id,
+            event_type=event_type,
+            direction=direction,
+            order_time=index[position],
+            fill_time=fill_time,
+            bid=float(bid),
+            ask=float(ask),
+        )
+        for event_id, event_type, direction, position, fill_time, bid, ask in (
+            ("long_open_1", "open", 1, 2, fill_times[0], bids[0], asks[0]),
+            ("long_close_1", "close", 1, 4, fill_times[1], bids[1], asks[1]),
+            ("long_open_2", "open", 1, 6, fill_times[2], bids[2], asks[2]),
+            ("long_close_2", "close", 1, 8, fill_times[3], bids[3], asks[3]),
+            ("short_open_1", "open", -1, 11, fill_times[4], bids[4], asks[4]),
+            ("short_close_1", "close", -1, 13, fill_times[5], bids[5], asks[5]),
+            ("short_open_2", "open", -1, 15, fill_times[6], bids[6], asks[6]),
+            ("short_close_2", "close", -1, 17, fill_times[7], bids[7], asks[7]),
+        )
+    ]
+    for event in events:
+        if event["event_type"] == "close":
+            event["required_quote_side"] = "bid" if event["direction"] == 1 else "ask"
+
+    pairs = _select_event_pairs(
+        {"price_grid_application": {"increment": 0.25}, "events": events},
+        bars,
+        book,
+        timezone="Etc/GMT-3",
+        max_hold_minutes=60,
+        max_pairs=8,
+        max_pairs_per_stratum=2,
+    )
+
+    assert len(pairs) == 4
+    assert [int(entry["_direction"]) for entry, _ in pairs] == [1, 1, -1, -1]
+    selected_ids = [event["event_id"] for pair in pairs for event in pair]
+    assert len(set(selected_ids)) == len(selected_ids)
+
+
 @pytest.mark.parametrize("direction", [1, -1])
 def test_shared_local_tick_trace_reconciles_account_and_fill_events(direction: int) -> None:
     index = pd.date_range("2025-01-06 16:48", periods=8, freq="1min", tz="Etc/GMT-3")

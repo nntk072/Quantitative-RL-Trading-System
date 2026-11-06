@@ -39,6 +39,10 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
         fill_latency_bars: int,
         max_episode_steps: int | None,
         normalize_account: bool,
+        agent_entry_execution: bool,
+        limit_order_max_offset_atr: float,
+        limit_order_max_ttl_bars: int,
+        limit_order_require_trade_through: bool,
     ) -> None:
         # Action space: strategy actions, continuous, or discrete
         """Initialize action and episode contracts.
@@ -53,6 +57,10 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
             fill_latency_bars: Whole-M1-bar delay for entry orders after the initial next-bar fill.
             max_episode_steps: Number specifying the max episode steps for this operation.
             normalize_account: Whether to enable or require the normalize account.
+            agent_entry_execution: Whether the action schema includes market-versus-limit entry.
+            limit_order_max_offset_atr: Maximum policy-selected limit distance in ATR units.
+            limit_order_max_ttl_bars: Maximum lifetime of a policy-selected limit order in bars.
+            limit_order_require_trade_through: Require quotes to trade through the limit to fill.
         """
         self.continuous_actions = continuous_actions
         self.max_risk_frac = (
@@ -111,12 +119,36 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
             for param in vae.parameters():
                 param.requires_grad = False
 
+        self.agent_entry_execution = bool(agent_entry_execution)
+        self.limit_order_max_offset_atr = float(limit_order_max_offset_atr)
+        if (
+            not np.isfinite(self.limit_order_max_offset_atr)
+            or self.limit_order_max_offset_atr <= 0.0
+        ):
+            raise ValueError("execution.limit_order_max_offset_atr must be finite and positive")
+        if isinstance(limit_order_max_ttl_bars, bool):
+            raise ValueError("execution.limit_order_max_ttl_bars must be a positive integer")
+        try:
+            ttl_bars = int(limit_order_max_ttl_bars)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "execution.limit_order_max_ttl_bars must be a positive integer"
+            ) from exc
+        if ttl_bars < 1 or ttl_bars != limit_order_max_ttl_bars:
+            raise ValueError("execution.limit_order_max_ttl_bars must be a positive integer")
+        self.limit_order_max_ttl_bars = ttl_bars
+        self.limit_order_require_trade_through = bool(limit_order_require_trade_through)
+        if self.agent_entry_execution:
+            if not self.trade_setup_actions:
+                raise ValueError("env.agent_entry_execution requires env.trade_setup_actions=true")
+
         if self.trade_setup_actions:
             self.action_schema = build_trade_setup_action_schema(
                 has_sl_mode=self.allow_agent_sl_mode,
                 has_tp_mode=self.allow_agent_tp_mode,
                 has_multi_tp=self.allow_multi_tp,
                 has_simplex=self.allow_multi_tp and self.allow_simplex,
+                has_entry_execution=self.agent_entry_execution,
             )
             self.action_space = spaces.Box(
                 low=np.full(self.action_schema.width, -1.0, dtype=np.float32),

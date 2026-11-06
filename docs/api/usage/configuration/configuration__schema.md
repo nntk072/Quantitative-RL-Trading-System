@@ -12,19 +12,20 @@ This page contains 1 public callable records owned by `configuration.schema`. St
 
 **Observed usage:**
 
-1. [production caller: `reject_unknown_keys`](../../../../configuration/schema.py#L27)
+1. [production caller: `reject_unknown_keys`](../../../../configuration/schema.py#L60)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
+    schema_root = schema if _schema_root is None else _schema_root
     unknown = sorted(set(values) - set(schema))
     if unknown:
         raise ConfigSchemaError(f"unknown keys at {path}: {unknown}")
     for key, value in values.items():
         schema_value = schema[key]
-        value_is_mapping = isinstance(value, Mapping)
-        schema_is_mapping = isinstance(schema_value, Mapping)
-        if value_is_mapping and not schema_is_mapping:
+        if (
+            isinstance(schema_value, str)
+            and schema_value.startswith("${")
 # … caller assertions omitted …
 ```
 

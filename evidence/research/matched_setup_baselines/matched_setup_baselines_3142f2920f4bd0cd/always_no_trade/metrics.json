@@ -1,0 +1,24 @@
+{
+  "avg_trade": 0.0,
+  "breach_count": 0,
+  "breach_rate": 0.0,
+  "calmar": 0.0,
+  "expectancy": 0.0,
+  "extras": {
+    "entry_active": 0.0,
+    "fill_count": 0.0,
+    "incomplete_positions": 0.0
+  },
+  "max_consec_loss": 0,
+  "max_drawdown": 0.0,
+  "metric_definition_version": "qrl.performance_metrics.v2",
+  "n_trades": 0,
+  "periods_per_year": 98280,
+  "profit_factor": 0.0,
+  "sharpe": 0.0,
+  "sortino": 0.0,
+  "total_pnl": 0.0,
+  "total_return_pct": 0.0,
+  "turnover": 0.0,
+  "win_rate": 0.0
+}

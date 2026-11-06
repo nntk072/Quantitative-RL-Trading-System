@@ -124,8 +124,10 @@ def detect_session_levels(
 ) -> pd.DataFrame:
     """Detect Asian High/Low and London High/Low from pre-NY data.
 
-    Uses rolling swing high/low detection within each session window.
-    Levels are forward-filled to the NY session for use in real-time trading.
+    Selects all rows whose clock time falls in each configured window, then
+    applies a rolling high/low over that pooled sequence across the supplied
+    history. The result is forward-filled onto the full index. This is a
+    time-of-day rolling contract, not a per-calendar-session running range.
 
     Args:
         df (pd.DataFrame): OHLCV DataFrame with timezone-aware DatetimeIndex.
@@ -133,16 +135,18 @@ def detect_session_levels(
         asian_start (str): Asian session start time (HH:MM format, UTC+3)
         asian_end (str): Asian session end time (HH:MM format, UTC+3)
         london_end (str): London session end time (HH:MM format, UTC+3)
-        swing_period (int): Rolling window for swing high/low detection
-        min_bars_per_session (int): Minimum bars required in a session to compute levels
+        swing_period: Number of selected time-of-day observations in the rolling
+            high/low window.
+        min_bars_per_session: Minimum number of matching observations across the
+            supplied history before the corresponding level series is emitted.
 
     Returns:
         pd.DataFrame: Same index as input, with added columns:
-            - asian_high: Rolling swing high from Asian session
-            - asian_low: Rolling swing low from Asian session
-            - london_high: Rolling swing high from London session
-            - london_low: Rolling swing low from London session
-            - prev_day_close: Previous day's close price
+            - asian_high: Rolling high over selected Asian-time observations
+            - asian_low: Rolling low over selected Asian-time observations
+            - london_high: Rolling high over selected London-time observations
+            - london_low: Rolling low over selected London-time observations
+            - prev_day_close: Previous input row's close price
             - prev_day_high: Previous calendar day's high price
             - prev_day_low: Previous calendar day's low price
     """

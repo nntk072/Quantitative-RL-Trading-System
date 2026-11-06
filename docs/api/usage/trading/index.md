@@ -1,6 +1,6 @@
 # Trading function usage
 
-This guide contains 148 public callable records across 31 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+This guide contains 170 public callable records across 35 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
 
 ```{toctree}
 :maxdepth: 1
@@ -9,16 +9,19 @@ This guide contains 148 public callable records across 31 source modules. Choose
 trading__account__account_state
 trading__account__accounting
 trading__account__limits
+trading__account__snapshots
 trading__baselines__breakout
 trading__baselines__cash_hold
 trading__baselines__classical
 trading__baselines__lstm_classifier
 trading__baselines__rule_based
+trading__baselines__signal_series
 trading__baselines__step_indexed_strategy
 trading__execution__broker
 trading__execution__costs
 trading__execution__quotes
 trading__orders__entries
+trading__orders__entry_execution
 trading__orders__levels
 trading__orders__selection
 trading__orders__stops
@@ -33,6 +36,7 @@ trading__risk__contracts
 trading__risk__execution_reserve
 trading__risk__guardrails
 trading__risk__sizing
+trading__risk__stop_management
 trading__strategies__baseline
 trading__strategies__distribution
 trading__strategies__po3_ifvg

@@ -25,6 +25,18 @@ are not current research results or an active work queue.
   rows by position ID. Its [trade excursion packet](selected_policy_trade_lifecycle/trade_excursions/README.md)
   adds descriptive, timestamp-bounded MFE/MAE without establishing feasible
   exits or causal attribution.
+- [Daily-breach full-evaluation failure](simulator_execution_parity/daily_breach_full_evaluation_failure/README.md)
+  verifies that a daily-floor breach blocks later-session entries in both the
+  training environment and event backtest; the historical recovery trace is
+  retained separately and marked superseded.
+- [Saved A4 equity reconciliation](simulator_execution_parity/equity_series_reconciliation/README.md)
+  reproduces all four preserved training/report equity series from verified
+  raw M1 bars and fill-derived cash; the report period remains exploratory and
+  the packet does not claim tick-level or policy-counterfactual parity.
+- [Selected checkpoint training replay](selected_checkpoint_train_replay/README.md)
+  records seeded, train-only reproductions of both selected A4 stochastic
+  training metrics. Both arms still fail full-evaluation survival; this is
+  diagnostic replay evidence and does not authorize a new training campaign.
 - [Exit-action semantics](exit_action_semantics/README.md)
   preserves the frozen decoder comparison, selected cohort, and conditional
   fixed-entry shadow under a semantic packet with source checksums.
@@ -47,6 +59,22 @@ are not current research results or an active work queue.
 - [Model observation and action evidence](model_observation_and_action_semantics/README.md):
   source/configuration account of historical streams, candidate masks, and
   policy action conditioning; it makes no economic performance claim.
+- [Training candidate proposals](candidate_proposals/README.md) and their
+  [local quote coverage](candidate_outcome_coverage/README.md) preserve the
+  static proposal denominator and interval-level fill/exit data limitations.
+  They do not establish account eligibility or realized policy outcomes.
+- [Candidate signal validity semantics](candidate_validity_semantics/README.md)
+  records the selected-profile PO3, IFVG, and standard-deviation lifetimes and
+  explains why the common proposal TTL cannot be read as policy execution.
+- [Candidate conditional outcomes](candidate_outcomes/README.md) records the
+  complete training-only proposal/bracket replay, unresolved-data reasons, and
+  verified disposition table/figure. The rows are conditional bracket
+  combinations, not independent trades or policy outcomes; quote coverage and
+  account-state limitations remain explicit.
+- [Candidate action linkage](candidate_action_linkage/README.md) records exact
+  event and proposal-window overlap in the matched development baseline traces.
+  It does not link historical PPO actions or identify a selected market/limit
+  proposal, bracket, fill, or policy value.
 - [Negative-result release readiness snapshot](releases/negative-evidence-readiness/README.md):
   source-pinned internal handoff with complete local data checksums; still
   blocked by current-source quote/calendar findings and incomplete scientific

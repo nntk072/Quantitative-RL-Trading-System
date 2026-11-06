@@ -160,6 +160,23 @@ def test_wick_ratio_measures_upper_wick_only() -> None:
     assert result.iloc[1] == 0.5
 
 
+def test_wick_ratio_defines_zero_range_as_no_wick_and_preserves_invalid_rows() -> None:
+    bars = pd.DataFrame(
+        {
+            "open": [10.0, 10.0, 10.0],
+            "high": [10.0, 12.0, float("nan")],
+            "low": [10.0, 8.0, 8.0],
+            "close": [10.0, 11.0, 10.0],
+        }
+    )
+
+    result = wick_ratio(bars)
+
+    assert result.iloc[0] == 0.0
+    assert result.iloc[1] == 0.25
+    assert pd.isna(result.iloc[2])
+
+
 # ---------------------------------------------------------------------------
 # Encoder shape tests
 # ---------------------------------------------------------------------------

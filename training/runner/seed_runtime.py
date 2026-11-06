@@ -13,10 +13,10 @@ from typing import Any, cast
 import pandas as pd
 from omegaconf import OmegaConf
 
-from artifacts.atomic import write_text_atomic
+from artifacts.atomic import write_bytes_atomic, write_text_atomic
 from configuration.paths import repository_root
 from decisioning.contracts import DecisionProvider
-from evaluation import calculate_metrics, evaluation_periods_per_year
+from evaluation import account_path_metric_inputs, calculate_metrics, evaluation_periods_per_year
 from evaluation.reporting.run_artifact_writer import save_run
 from evaluation.reporting.run_manifest import (
     build_stop_candidate_schema,
@@ -60,6 +60,7 @@ from training.artifacts import (
 from training.artifacts import (
     action_space_width as get_action_space_width,
 )
+from training.artifacts.flags import strict_nonnegative_int
 from training.callbacks.activity import assess_train_activity
 from training.callbacks.dashboard import TrainingDashboardCallback, ppo_log_interval
 from training.callbacks.debug_trace import install_flight_recorder
@@ -96,6 +97,70 @@ from training.setup.policy_diagnostics import (
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
+
+
+def _log_train_survival_status(
+    *,
+    survival_objective: bool,
+    train_result: dict[str, Any],
+    train_gate: dict[str, Any],
+    train_activity_gate: dict[str, Any],
+    n_trades: int,
+) -> None:
+    """Log full-split survival and portfolio diagnostics under their own meanings.
+
+    Args:
+        survival_objective: Whether this run is in the survival-qualification phase.
+        train_result: Full-split replay outcome and breach counts.
+        train_gate: Hard-risk and auxiliary equity/policy-fit assessment.
+        train_activity_gate: Activity diagnostic for the training replay.
+        n_trades: Number of closed trades in the training replay.
+    """
+    if survival_objective:
+        breach_count = train_result.get("n_breach_sessions")
+        survival_ok = (
+            train_gate.get("hard_risk_ok") is True
+            and train_result.get("survived_full_year") is True
+            and train_result.get("completed_data_split") is True
+            and isinstance(breach_count, int)
+            and not isinstance(breach_count, bool)
+            and breach_count == 0
+        )
+        if survival_ok:
+            log.info("TRAIN_FULL_SPLIT_SURVIVAL PASS")
+        else:
+            log.error(
+                "TRAIN_FULL_SPLIT_SURVIVAL FAIL survived=%s completed=%s "
+                "breach_sessions=%s hard_risk_ok=%s",
+                train_result.get("survived_full_year"),
+                train_result.get("completed_data_split"),
+                breach_count,
+                train_gate.get("hard_risk_ok"),
+            )
+        log.info(
+            "TRAIN_PORTFOLIO_FIT_DIAGNOSTIC %s reason=%s",
+            "PASS" if train_gate.get("ok") else "MISS",
+            train_gate.get("reason", ""),
+        )
+        log.info(
+            "TRAIN_ACTIVITY_DIAGNOSTIC status=%s trades=%d",
+            train_activity_gate.get("status", "unknown"),
+            n_trades,
+        )
+        return
+
+    if not train_gate["ok"]:
+        log.error("TRAIN_SURVIVAL_GATE FAIL %s", train_gate)
+    else:
+        log.info("TRAIN_SURVIVAL_GATE PASS")
+    if not train_activity_gate["ok"]:
+        log.error("TRAIN_ACTIVITY_GATE FAIL %s", train_activity_gate)
+    else:
+        log.info(
+            "TRAIN_ACTIVITY_GATE PASS trades=%d status=%s",
+            n_trades,
+            train_activity_gate["status"],
+        )
 
 
 @dataclass(slots=True)
@@ -222,7 +287,12 @@ class SeedRunner:
             if not resume_path.is_file():
                 raise FileNotFoundError(f"resume checkpoint not found: {resume_path}")
             resume_env = build_vector_env(train_env, cfg, env_factory)
-            model = load_sb3_training_checkpoint(resume_path, env=resume_env, device=device)
+            model = load_sb3_training_checkpoint(
+                resume_path,
+                env=resume_env,
+                device=device,
+                algo=str(args.algo),
+            )
             validate_model_architecture(model, args.arch, use_vae=args.use_vae)
             from learning.rl.agent import (
                 validate_model_observation_schema,
@@ -244,7 +314,8 @@ class SeedRunner:
                 )
             learning_timesteps = int(timesteps) - int(model.num_timesteps)
             log.info(
-                "Resuming PPO from %s at %d/%d steps; %d remain",
+                "Resuming %s from %s at %d/%d steps; %d remain",
+                str(args.algo).upper(),
                 resume_path,
                 model.num_timesteps,
                 timesteps,
@@ -458,6 +529,9 @@ class SeedRunner:
             best_model_path=seed_model_dir / "ppo_best",
             viability_eval_env_factory=viability_eval_factory,
             viability_eval_freq=5_000_000,
+            survival_objective=(
+                str(cfg.env.get("reward_mode", "dsr")).strip().lower() == "survival"
+            ),
         )
         self.best_checkpoint_callback = best_cb
         callbacks.append(best_cb)
@@ -508,6 +582,7 @@ class SeedRunner:
                     n_sessions=result.get("n_sessions", 1),
                     n_breach_sessions=result.get("n_breach_sessions", 0),
                     periods_per_year=evaluation_periods_per_year(cfg),
+                    **account_path_metric_inputs(result),
                 )
                 n_steps = max(1, int(result.get("n_steps", 1)))
                 from evaluation.metrics.decision_diversity import (
@@ -717,6 +792,7 @@ class SeedRunner:
             n_sessions=test_result.get("n_sessions", 1),
             n_breach_sessions=test_result.get("n_breach_sessions", 0),
             periods_per_year=evaluation_periods_per_year(cfg),
+            **account_path_metric_inputs(test_result),
         )
         test_dir_sum = _direction_summary(test_result["trades"])
         log.info(
@@ -808,32 +884,47 @@ class SeedRunner:
             n_sessions=train_result.get("n_sessions", 1),
             n_breach_sessions=train_result.get("n_breach_sessions", 0),
             periods_per_year=evaluation_periods_per_year(cfg),
+            **account_path_metric_inputs(train_result),
         )
         train_dir_sum = _direction_summary(train_result["trades"])
         train_gate = assess_train_equity(
             train_result["equity"],
             initial=float(cfg.account.initial_balance),
-            breached=not bool(train_result.get("survived_full_year", False)),
+            breached=train_result.get("survived_full_year") is not True,
             peak_trailing_dd_limit=float(cfg.env.get("peak_trailing_dd_limit", 0.0)),
         )
         train_activity_gate = assess_train_activity(int(train_m.n_trades))
         write_text_atomic(seed_dir / "train_equity_gate.json", json.dumps(train_gate, indent=2))
         write_text_atomic(
+            seed_dir / "train_path_outcome.json",
+            json.dumps(
+                {
+                    "survived_full_split": train_result.get("survived_full_year") is True,
+                    "completed_data_split": train_result.get("completed_data_split") is True,
+                    "n_breach_sessions": strict_nonnegative_int(
+                        train_result.get("n_breach_sessions")
+                    ),
+                    "episode_end_reason": str(train_result.get("episode_end_reason", "")),
+                    "fail_time": train_result.get("fail_time"),
+                    "n_sessions": int(train_result.get("n_sessions", 0)),
+                    "days_traded": int(train_result.get("days_traded", 0)),
+                },
+                indent=2,
+            ),
+        )
+        write_text_atomic(
             seed_dir / "train_activity_gate.json",
             json.dumps(train_activity_gate, indent=2),
         )
-        if not train_gate["ok"]:
-            log.error("TRAIN_SURVIVAL_GATE FAIL %s", train_gate)
-        else:
-            log.info("TRAIN_SURVIVAL_GATE PASS")
-        if not train_activity_gate["ok"]:
-            log.error("TRAIN_ACTIVITY_GATE FAIL %s", train_activity_gate)
-        else:
-            log.info(
-                "TRAIN_ACTIVITY_GATE PASS trades=%d status=%s",
-                train_m.n_trades,
-                train_activity_gate["status"],
-            )
+        _log_train_survival_status(
+            survival_objective=(
+                str(cfg.env.get("reward_mode", "dsr")).strip().lower() == "survival"
+            ),
+            train_result=train_result,
+            train_gate=train_gate,
+            train_activity_gate=train_activity_gate,
+            n_trades=int(train_m.n_trades),
+        )
         log.info(
             "[train/in-sample] NetPnL=%.2f %s  Return=%.2f%%  "
             "MaxDD=%.2f%%  Sharpe=%.3f  ProfitFactor=%.3f  WinRate=%.1f%%  Trades=%d  "
@@ -870,6 +961,9 @@ class SeedRunner:
             train_gate=train_gate,
             train_activity_gate=train_activity_gate,
             account_currency=str(cfg.account.currency),
+            survival_objective=(
+                str(cfg.env.get("reward_mode", "dsr")).strip().lower() == "survival"
+            ),
         )
         log.info(
             "Final evaluation report written: %s",
@@ -965,6 +1059,14 @@ class SeedRunner:
         write_run_config_snapshot(seed_dir, cfg)
         per_run_cache_hash = Path(str(feat_cache) + ".hash")
         cache_hash = per_run_cache_hash.read_text(encoding="utf-8").strip()
+        normalization_state_source = ctx.preparation.data.feature_normalization_state_path
+        if not normalization_state_source.is_file():
+            raise FileNotFoundError(
+                "training feature cache has no train-fitted normalization state: "
+                f"{normalization_state_source}"
+            )
+        normalization_state_path = seed_dir / "feature_normalization_state.json"
+        write_bytes_atomic(normalization_state_path, normalization_state_source.read_bytes())
         checkpoint_path = Path(f"{model_path}.zip")
         if not checkpoint_path.is_file():
             checkpoint_path = model_path
@@ -973,6 +1075,42 @@ class SeedRunner:
         if fit_result.training_steps != int(model.num_timesteps):
             raise ValueError("learner fit-step count differs from the final model checkpoint")
         sequence_feature_schema = sequence_feature_schema_manifest(train_env)
+        training_protocol = training_protocol_manifest(
+            model=model,
+            cfg=cfg,
+            args=args,
+            seed=int(seed),
+            requested_steps=int(timesteps),
+            algo=args.algo,
+        )
+        if str(cfg.env.get("reward_mode", "dsr")).strip().lower() == "survival":
+            training_protocol["training_phase"] = "survival_qualification"
+        elif args.resume_checkpoint:
+            gate_path = (
+                Path(str(cfg.training.survival_gate_manifest)).expanduser().resolve(strict=True)
+            )
+            resume_path = Path(str(args.resume_checkpoint)).expanduser().resolve(strict=True)
+            training_protocol["training_phase"] = "portfolio_after_survival"
+            training_protocol["survival_gate"] = {
+                "path": str(gate_path),
+                "sha256": file_sha256(gate_path),
+            }
+            training_protocol["resume_checkpoint"] = {
+                "path": str(resume_path),
+                "sha256": file_sha256(resume_path),
+                "algorithm": str(args.algo),
+                "transfer_semantics": (
+                    "SB3 model and optimizer state resumed; SAC replay buffer starts empty"
+                    if str(args.algo) == "sac"
+                    else "SB3 model and optimizer state resumed"
+                ),
+            }
+        else:
+            training_protocol["training_phase"] = "unqualified_portfolio_blocked"
+            raise RuntimeError(
+                "non-survival training reached artifact writing without a gated resume checkpoint"
+            )
+
         manifest = build_training_run_manifest(
             repository=repository_root(__file__),
             config_path=seed_dir / "config.yaml",
@@ -1025,14 +1163,8 @@ class SeedRunner:
             training_architecture=_training_architecture_provenance(
                 model, cfg, args.arch, algo=args.algo
             ),
-            training_protocol=training_protocol_manifest(
-                model=model,
-                cfg=cfg,
-                args=args,
-                seed=int(seed),
-                requested_steps=int(timesteps),
-                algo=args.algo,
-            ),
+            training_protocol=training_protocol,
+            feature_normalization_state_path=normalization_state_path,
             metrics_protocol={
                 "annualization": {
                     "periods_per_year": evaluation_periods_per_year(cfg),
@@ -1048,6 +1180,7 @@ class SeedRunner:
                 "checkpoint": str(checkpoint_path.relative_to(seed_dir)),
                 "training_log": str((seed_dir / "training_log.csv").relative_to(seed_dir)),
                 "trade_log": str((seed_dir / "trade_log.json").relative_to(seed_dir)),
+                "feature_normalization_state": str(normalization_state_path.relative_to(seed_dir)),
             },
         )
         if not manifest["source"]["available"] or not manifest["source"]["head"]:
@@ -1124,6 +1257,7 @@ class SeedRunner:
             for key in (
                 "strategy_actions",
                 "trade_setup_actions",
+                "agent_entry_execution",
                 "allow_agent_sl_mode",
                 "allow_agent_tp_mode",
                 "allow_multi_tp",
@@ -1132,6 +1266,7 @@ class SeedRunner:
                 "entry_state_observation",
                 "arm_requires_retest",
                 "regime_observation",
+                "feature_validity_channels",
             )
         }
         oos_role = (

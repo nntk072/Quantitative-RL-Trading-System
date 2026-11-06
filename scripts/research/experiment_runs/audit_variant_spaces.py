@@ -17,7 +17,7 @@ from configuration import load_config
 from configuration.paths import repository_root
 from features import build_features, feature_cache_path
 from market_data.loading import run_pipeline
-from market_data.splits.definitions import make_train_mask
+from market_data.splits.definitions import get_train_start_config, make_train_mask
 from training.configuration.cli import load_merged_config
 from training.configuration.variant_resolution import resolve_variant
 from training.setup.environments import make_env
@@ -55,7 +55,8 @@ def main() -> int:
     bars = market[primary_symbol]["M1"]
     secondary = market.get(secondary_symbol, {}).get("M1")
     train_end = str(base_cfg.data.split.train_end)
-    train_mask = make_train_mask(cast(pd.DatetimeIndex, bars.index), train_end)
+    train_start = get_train_start_config(base_cfg)
+    train_mask = make_train_mask(cast(pd.DatetimeIndex, bars.index), train_end, train_start)
 
     results: list[dict[str, Any]] = []
     feature_sets: dict[str, Any] = {}

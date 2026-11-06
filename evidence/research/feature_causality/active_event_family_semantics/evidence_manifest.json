@@ -1,0 +1,32 @@
+{
+  "assets": [
+    {
+      "bytes": 2950,
+      "path": "README.md",
+      "sha256": "bd9eac3b3bd01793beb7071ce5cd30c6aaad6d6418c93c8dee353d5b2ff2a1bc"
+    },
+    {
+      "bytes": 3188,
+      "path": "SOURCE_SHA256SUMS",
+      "sha256": "88076c0936f4826b556a752a8374ecfec97fd4a133044dfc4b3ae09f6e2b2dea"
+    },
+    {
+      "bytes": 1218,
+      "path": "focused_tests.log",
+      "sha256": "2dbd683e4a81fdb921d30ea2ae328ca0e97a2c03e4dc93510ff99ff79c4cd242"
+    },
+    {
+      "bytes": 6377,
+      "path": "run_metadata.json",
+      "sha256": "e7fb46964e475de6b2e23770d94415cf2a828b175142fb5b1ae97c430d1ce2fb"
+    },
+    {
+      "bytes": 765,
+      "path": "summary.json",
+      "sha256": "f2308412c6ab85addb194bcc9710aa166d11d509813fb72cc7ad5241e6519c2a"
+    }
+  ],
+  "claim_scope": "current-source synthetic event semantics for swing, order-block, FVG/IFVG, PO3, higher-timeframe, liquidity, and SMT feature families",
+  "packet": "active_event_family_semantics",
+  "schema": "qrl.evidence_packet.v1"
+}

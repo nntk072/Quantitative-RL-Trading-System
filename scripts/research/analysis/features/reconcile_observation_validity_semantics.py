@@ -176,11 +176,53 @@ FEATURE_RULES: tuple[tuple[str, str, str | None, str, str], ...] = (
         "Finite one-hot structure flags represent emitted classes.",
     ),
     (
-        r"^(standard_deviation_|bars_since_last_swing|last_swing_|dist_to_)",
+        r"^dist_to_swing_(high|low)_atr$",
+        "build_features",
+        "features/pipeline/feature_matrix_builder.py",
+        "MTF distance to the latest confirmed swing level requires that level and a positive primary ATR; unavailable source levels or ATR remain nonfinite.",
+        "The per-feature validity channel marks unavailable values before zero sanitization; no named swing-distance companion is emitted.",
+    ),
+    (
+        r"^dist_to_(last_high|last_low|nearest_swing)_atr$",
+        "swing_features",
+        "features/technical/swings.py",
+        "Distances to the latest confirmed swing require a populated level and positive ATR; unavailable values remain nonfinite.",
+        "Per-feature validity channels distinguish unavailable distances from finite zero distances.",
+    ),
+    (
+        r"^standard_deviation_",
         "build_swing_retracement_features",
         "features/context/swing_retracement.py",
-        "Retracement distances are masked without a valid confirmed swing leg; swing distances require an accepted swing and valid ATR.",
-        "standard_deviation_leg_valid accompanies retracement distances; it does not mask every generic swing-distance column.",
+        "Retracement levels and distances are unavailable without a valid confirmed swing leg and remain nonfinite when that leg is invalidated.",
+        "standard_deviation_leg_valid and direction accompany retracement distances; sequence validity channels preserve unavailable values.",
+    ),
+    (
+        r"^bars_since_last_swing$",
+        "swing_features",
+        "features/technical/swings.py",
+        "The age is capped and normalized; the earliest rows remain finite even before the first confirmed swing.",
+        "The finite age code does not indicate whether a swing event has yet occurred.",
+    ),
+    (
+        r"^last_swing_(high|low)$",
+        "append_structure_features",
+        "features/pipeline/structure_stage.py",
+        "The latest confirmed swing level is forward-carried after its confirmation; it remains missing until that side has a confirmed level.",
+        "Per-feature validity channels distinguish unavailable leading values from finite level values; raw price levels are excluded from policy input.",
+    ),
+    (
+        r"^last_swing_(side|size_atr)$",
+        "swing_features",
+        "features/technical/swings.py",
+        "The side is unavailable until a confirmed swing event; normalized size requires both swing sides and positive ATR.",
+        "Finite side and size values are model features; unavailable states are carried by per-feature validity channels.",
+    ),
+    (
+        r"^swing_(high|low)_candidate_\d+",
+        "append_structure_features",
+        "features/pipeline/structure_stage.py",
+        "Candidate levels are available only after a confirmed unswept swing is retained in the configured structure window.",
+        "Finite candidate slots identify populated levels; per-feature validity channels preserve empty slots.",
     ),
     (
         r"^swing_",
@@ -207,8 +249,8 @@ FEATURE_RULES: tuple[tuple[str, str, str | None, str, str], ...] = (
         r"^po3_phase$",
         "build_po3_phase_features",
         "features/po3/entries.py",
-        "Phase is missing outside the configured session; phase zero is a valid accumulation value.",
-        "No explicit session-validity feature distinguishes outside-session NaN from accumulation zero.",
+        "Raw phase uses -1 outside the configured session and 0/1/2 for active accumulation, manipulation, and distribution; downstream rolling normalization can leave the first training observation missing until variance is available.",
+        "The explicit -1 phase sentinel distinguishes source-level outside-session rows from valid phase zero; the measured single leading nonfinite per affected group is consistent with the normalizer's two-observation standard-deviation warmup.",
     ),
     (
         r"^po3_",
@@ -281,11 +323,18 @@ FEATURE_RULES: tuple[tuple[str, str, str | None, str, str], ...] = (
         "No separate validity mask for all reference-distance columns.",
     ),
     (
+        r"^htf_day_bias_available$",
+        "build_pd_context_features",
+        "features/context/premium_discount.py",
+        "Availability is one when the selected composite premium/discount midpoint exists and zero when that context is unavailable.",
+        "This explicit finite companion distinguishes a valid neutral htf_day_bias from an unavailable composite range.",
+    ),
+    (
         r"^(htf_day_bias|manip_reverses_htf|context_trade_direction)$",
         "build_trader_context_features",
         "features/context/premium_discount.py",
-        "Optional or unavailable context defaults to a neutral code.",
-        "The neutral code does not distinguish unavailable optional context from valid neutrality.",
+        "The bias and trade direction use zero for valid neutrality; source availability is exposed separately when the composite range is unavailable.",
+        "htf_day_bias_available distinguishes unavailable composite context from a valid neutral bias.",
     ),
     (
         r"^reachable_r$",
@@ -305,8 +354,8 @@ FEATURE_RULES: tuple[tuple[str, str, str | None, str, str], ...] = (
         r"^session_progress$",
         "build_po3_phase_features",
         "features/po3/entries.py",
-        "Progress clips to zero before session start and to one after session end.",
-        "No explicit session-validity distinction between pre-session zero and the first accumulation row.",
+        "Raw progress clips to zero before session start and to one after session end; paired po3_phase uses -1 outside the session. Downstream rolling normalization can leave the first training observation missing until variance is available.",
+        "The paired po3_phase sentinel distinguishes clipped out-of-session values from active session boundaries; the measured single leading nonfinite per affected group is consistent with the normalizer's two-observation standard-deviation warmup.",
     ),
     (
         r"^ny_(session_sin|session_cos|minutes_to_close)$",
@@ -347,8 +396,8 @@ FEATURE_RULES: tuple[tuple[str, str, str | None, str, str], ...] = (
         r"^wick_ratio$",
         "wick_ratio",
         "features/technical/indicators.py",
-        "The ratio is undefined for zero-range candles.",
-        "No explicit zero-range validity feature; the observation layer maps missing values to zero.",
+        "Zero-range candles have a defined zero upper-wick ratio; invalid OHLC rows remain nonfinite.",
+        "The zero-range convention needs no validity mask; invalid OHLC rows remain nonfinite and could be zero-filled by observation conversion.",
     ),
     (
         r"^volume_spike$",
@@ -484,7 +533,7 @@ def build_report(
                 "reviewed_missingness_semantics": contract["reviewed_missingness_semantics"],
                 "validity_signal_and_limit": contract["validity_signal"],
                 "observation_conversion": (
-                    "Nonfinite sequence values are converted to zero; the sequence mask marks rows, not per-feature validity."
+                    "Nonfinite values are sanitized to zero; when feature_validity_channels is enabled, a per-feature finite-value channel accompanies each value, while seq_mask remains temporal row/padding validity."
                 ),
             }
         )

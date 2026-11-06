@@ -93,7 +93,9 @@ def verify(report_path: Path, input_hashes: dict[str, str]) -> dict[str, Any]:
     env_events = lifecycle(report["environment_events"])
     backtest_events = lifecycle(report["backtest_events"])
     scenario = report.get("scenario", "account_transition")
-    expected_event_count = 2 if scenario == "max_loss_terminal" else 4
+    expected_event_count = (
+        2 if scenario in {"max_loss_terminal", "daily_loss_full_evaluation_failure"} else 4
+    )
     checks["lifecycle_event_counts_match"] = len(env_events) == len(backtest_events)
     checks["lifecycle_event_count_is_complete"] = len(env_events) == expected_event_count
     checks["two_selected_sessions_recorded"] = len(report["selected_sessions"]) == 2
@@ -164,7 +166,11 @@ def verify(report_path: Path, input_hashes: dict[str, str]) -> dict[str, Any]:
     env_closes = [event for event in env_events if event["type"] == "close"]
     backtest_closes = [event for event in backtest_events if event["type"] == "close"]
     session_ids = [int(session["session_id"]) for session in report["selected_sessions"]]
-    expected_close_session_ids = session_ids[:1] if scenario == "max_loss_terminal" else session_ids
+    expected_close_session_ids = (
+        session_ids[:1]
+        if scenario in {"max_loss_terminal", "daily_loss_full_evaluation_failure"}
+        else session_ids
+    )
     checks["each_engine_closes_once_per_selected_session"] = all(
         [session_for(event, report) for event in closes].count(session_id) == 1
         for closes in (env_closes, backtest_closes)
@@ -282,14 +288,13 @@ def verify(report_path: Path, input_hashes: dict[str, str]) -> dict[str, Any]:
     risk_transition = report.get("risk_transition", {})
     env_breaches = risk_transition.get("environment_breach_events", [])
     backtest_breaches = risk_transition.get("backtest_breach_events", [])
-    if scenario in {"daily_loss_reset", "max_loss_terminal"}:
+    if scenario in {"daily_loss_full_evaluation_failure", "max_loss_terminal"}:
         first_session_id, next_session_id = session_ids
-        expected_reason = "daily_loss" if scenario == "daily_loss_reset" else "max_drawdown"
-        expected_next_session_opens = 1 if scenario == "daily_loss_reset" else 0
+        daily_scenario = scenario == "daily_loss_full_evaluation_failure"
+        expected_reason = "daily_loss" if daily_scenario else "max_drawdown"
+        expected_next_session_opens = 0
         expected_limit = float(
-            risk_transition[
-                "daily_loss_limit" if scenario == "daily_loss_reset" else "max_loss_limit"
-            ]
+            risk_transition["daily_loss_limit" if daily_scenario else "max_loss_limit"]
         )
         env_expected_breaches = [
             event for event in env_breaches if event.get("reason") == expected_reason
@@ -394,15 +399,17 @@ def verify(report_path: Path, input_hashes: dict[str, str]) -> dict[str, Any]:
         risk_transition.get("risk_transition_matches") == risk_transition_matches
         and risk_transition.get("same_session_reentry_blocked")
         == (
-            scenario not in {"daily_loss_reset", "max_loss_terminal"}
+            scenario not in {"daily_loss_full_evaluation_failure", "max_loss_terminal"}
             or risk_details.get("environment_same_session_post_breach_opens") == 0
         )
-        and risk_transition.get("next_session_entry_allowed_after_reset")
-        == (
-            scenario == "daily_loss_reset"
-            and risk_details.get("environment_next_session_opens") == 1
-        )
+        and risk_transition.get("next_session_entry_allowed_after_reset") is False
         and risk_transition.get("max_loss_rollout_latched") == (scenario == "max_loss_terminal")
+        and risk_transition.get("daily_loss_evaluation_latched")
+        == (
+            scenario == "daily_loss_full_evaluation_failure"
+            and risk_details.get("environment_next_session_opens") == 0
+            and risk_details.get("backtest_next_session_opens") == 0
+        )
     )
     checks["risk_transition_matches_recomputed_events"] = risk_transition_matches
     checks["reported_risk_transition_flags_match_recomputation"] = risk_transition_fields_match

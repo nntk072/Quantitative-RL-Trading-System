@@ -46,6 +46,7 @@ def run_episode(
     """
     observation, _ = env.reset()
     equities: list[float] = []
+    account_state_rows: list[dict[str, Any]] = []
     done = truncated = False
     steps = 0
 
@@ -55,14 +56,19 @@ def run_episode(
         # Some environments emit an empty info dict on the terminal step
         if "equity" in info:
             equities.append(float(info["equity"]))
+        snapshot = info.get("account_state_snapshot")
+        if isinstance(snapshot, dict):
+            account_state_rows.append(snapshot)
 
     if not equities:
         raise ValueError("episode produced no steps; equity curve is empty")
 
     log = getattr(env, "trade_log", [])
     trade_pnls, fill_count, incomplete_positions = completed_position_trade_pnls(log)
-    breach_count = len(getattr(env, "breach_events", []))
+    breach_events = list(getattr(env, "breach_events", []))
+    breach_count = len(breach_events)
     initial_balance = float(getattr(env, "initial_balance", equities[0]))
+    episode_equity = info.get("episode_equity", {}) if isinstance(info, dict) else {}
 
     dist = compute_distribution_metrics(trade_pnls)
     extras = {
@@ -94,5 +100,11 @@ def run_episode(
         trade_pnls=trade_pnls,
         periods_per_year=periods_per_year,
         breach_count=breach_count,
+        n_sessions=len(getattr(env, "all_sessions", [])),
         extras=extras,
+        account_state_trace=account_state_rows or None,
+        breach_events=breach_events if hasattr(env, "breach_events") else None,
+        completed_data_split=(
+            episode_equity.get("completed_data_split") if isinstance(episode_equity, dict) else None
+        ),
     )

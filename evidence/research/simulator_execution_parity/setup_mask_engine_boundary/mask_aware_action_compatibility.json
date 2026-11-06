@@ -1,0 +1,52 @@
+{
+  "allocation": {
+    "job_id": "21410051",
+    "node": "gpuarm1",
+    "gpu_family": "GH200",
+    "gpus": 1,
+    "cpus": 48,
+    "memory_gib": 512,
+    "time_limit": "12:00:00",
+    "new_job_or_step_created": false
+  },
+  "command": ".venv/bin/python -m pytest tests/integration/backtest/test_setup_mask_backtest_boundary.py tests/integration/backtest/test_no_action_account_parity.py tests/integration/backtest/test_engine_execution_contract.py tests/integration/backtest/test_entry_levels.py tests/integration/backtest/test_repeated_payout_backtest.py -q",
+  "evidence_scope": "Current-source acceptance of the opt-in candidate-mask and categorical-action path with unchanged default scalar behavior; not full RL observation, risk, geometry, or exit parity",
+  "format_check": ".venv/bin/ruff format --check simulation/backtest/event_driven_backtest.py simulation/backtest/policy_actions.py tests/integration/backtest/test_setup_mask_backtest_boundary.py",
+  "lint_check": ".venv/bin/ruff check simulation/backtest/event_driven_backtest.py simulation/backtest/policy_actions.py tests/integration/backtest/test_setup_mask_backtest_boundary.py",
+  "result": {
+    "failed": 0,
+    "passed": 82,
+    "status": "passed",
+    "duration_seconds": 0.82
+  },
+  "schema": "qrl.stage_e_setup_mask_backtest_action.v1",
+  "source_files": [
+    "simulation/backtest/event_driven_backtest.py",
+    "simulation/backtest/policy_actions.py",
+    "decisioning/trade_setup.py",
+    "features/context/trade_setup_candidates.py"
+  ],
+  "test_files": [
+    "tests/integration/backtest/test_setup_mask_backtest_boundary.py",
+    "tests/integration/backtest/test_no_action_account_parity.py",
+    "tests/integration/backtest/test_engine_execution_contract.py",
+    "tests/integration/backtest/test_entry_levels.py",
+    "tests/integration/backtest/test_repeated_payout_backtest.py"
+  ],
+  "validation_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/setup_mask_backtest_compatibility_verified.log",
+  "acceptance": [
+    "default scalar action +1 still opens a long with all setup features zero",
+    "opt-in setup action rejects the same candidate when its mask bit is zero",
+    "active long and short candidates open with exact candidate identity",
+    "delayed fills preserve the originating candidate ID and order ID",
+    "NO_TRADE holds an open position in mask-aware mode",
+    "existing scalar account, execution, entry, and payout tests remain green"
+  ],
+  "remaining_parity_gates": [
+    "The mask-aware policy callback receives only trade_setup_mask, not the full TradingEnv observation schema.",
+    "Non-categorical risk, stop, target, and exit action coordinates are not yet applied by the event backtest path.",
+    "The event backtest still uses its configured scalar risk, stop/target geometry, and exit lifecycle."
+  ],
+  "training_performed": false,
+  "policy_replay_performed": false
+}

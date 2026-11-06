@@ -12,7 +12,7 @@ This page contains 10 public callable records owned by `integrations.mt5.domain.
 
 **Observed usage:**
 
-1. [production caller: `initialize_trading_system`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L194)
+1. [production caller: `initialize_trading_system`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L200)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -218,7 +218,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `initialize_trading_system`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L212)
+1. [production caller: `initialize_trading_system`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L218)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -373,7 +373,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `initialize_trading_system`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L207)
+1. [production caller: `initialize_trading_system`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L213)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -211,7 +211,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     )
 ```
 
-2. [test fixture: `test_strategy_order_uses_setup_floor_for_stops_and_all_timeframes_for_targets`](../../../../tests/integration/backtest/test_entry_levels.py#L244)
+2. [test fixture: `test_strategy_order_uses_setup_floor_for_stops_and_all_timeframes_for_targets`](../../../../tests/integration/backtest/test_entry_levels.py#L334)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

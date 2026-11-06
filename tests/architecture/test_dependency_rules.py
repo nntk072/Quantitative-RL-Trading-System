@@ -353,10 +353,10 @@ COMPOSITION_ROOT_BUDGETS = {
     "training/runner/lstm_baseline.py": 8,
     "training/runner/backtest.py": 8,
     "training/runner/walk_forward_validation.py": 5,
+    # Survival admission composes config, observation and feature schemas,
+    # source provenance, and atomic evidence publication before learning.
+    "training/configuration/survival_gate.py": 6,
     "evaluation/reanalysis/checkpoint_reanalysis.py": 8,
-    # Cross-domain ablation composition root: reads variants, builds the
-    # learner/environment, evaluates OOS, and aggregates reports.
-    "experiments/variants/variant_ablation_runner.py": 5,
     # One-off cache-repair command: composes configuration, training variant
     # resolution, market ingestion, feature construction, and artifact hashing.
     "experiments/runs/baseline_cache_rebuild.py": 5,

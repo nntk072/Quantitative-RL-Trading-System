@@ -1,0 +1,73 @@
+{
+  "schema": "qrl.local_timestamp_and_quote_chronology_limits.v1",
+  "status": "bounded_local_contracts_verified_external_clock_unverified",
+  "claim_scope": "Current local campaign inputs and configured repository behavior only; no independent source-clock, provider, license, or authoritative session-calendar claim.",
+  "timestamp_contract": {
+    "bar_timestamp_convention": "open",
+    "configured_timezone_carrier": "Etc/GMT-3",
+    "configured_source_clock_model": "ftmo_mt5_us_dst",
+    "tick_parse_format": "%Y.%m.%d %H:%M:%S.%f",
+    "tick_localization_behavior": "Parse source date/time as naive wall-clock labels and localize with the configured fixed-offset carrier. TickBook retains stable source-row order for equal timestamps.",
+    "session_feature_behavior": "The configured FTMO model maps source wall labels to New York wall time by subtracting seven hours, then localizes with America/New_York. Ambiguous or nonexistent reconstructed labels raise instead of being guessed.",
+    "verification_boundary": "These are configured code semantics. The available local export does not independently authenticate its source timezone, UTC offset, or DST policy."
+  },
+  "observed_local_quote_facts": {
+    "input_rows": 172290383,
+    "tick_inputs": 4,
+    "timestamp_parse_failures": 0,
+    "adjacent_timestamp_reversals": 0,
+    "adjacent_timestamp_tie_groups": 329471,
+    "tie_groups_with_changed_quote": 328918,
+    "tie_groups_with_missing_quote": 553,
+    "tie_groups_with_identical_quote": 0,
+    "raw_rows_with_missing_or_nonpositive_quote_side": 371390,
+    "rows_retained_after_side_carry_forward": 172290383,
+    "rows_dropped_after_side_carry_forward": 0,
+    "quote_side_availability_interpretation": "The bid and ask may be carried from separate source rows; the resulting pair does not prove simultaneous quote availability."
+  },
+  "bar_availability_facts": {
+    "configured_timeframe_series": 32,
+    "native_series_with_exact_m1_ohlcv_parity": 30,
+    "bars_partial_against_nominal_m1_grid": 19507,
+    "bars_with_zero_observed_m1_rows": 0,
+    "availability_rule": "A derived aggregate is exposed only at its configured or nominal close boundary and first appears on the first observed M1 row at or after that boundary.",
+    "limitation": "Partial bins are descriptive and are not classified as data loss, closures, or schedule gaps."
+  },
+  "bounded_no_go": [
+    "Do not interpret source-row order within millisecond timestamp ties as true sub-millisecond market chronology.",
+    "Do not claim that carried bid and ask values were simultaneously available.",
+    "Do not assert an authoritative timezone, DST transition, or session calendar from repository configuration alone.",
+    "Do not make provider, license, or external-calendar claims; those topics are outside the user-authorized local-data scope."
+  ],
+  "source_identities": [
+    {
+      "path": "config/base/default.yaml",
+      "sha256": "9397e5a55dd1e4445efda6ab22940ba8f419d31370df8d972d2111b079074e84"
+    },
+    {
+      "path": "market_data/loading/ticks.py",
+      "sha256": "6973db5a21d0adeebfd7f44c808525efc77dfdbb61333170219c37c850f51a31"
+    },
+    {
+      "path": "market_data/transforms/cleaning.py",
+      "sha256": "3dc16c86683cd8e0351ee68c5403ea8eddb98f596e78d60e24fdfae3b03ad3b7"
+    },
+    {
+      "path": "features/context/session_levels.py",
+      "sha256": "84a6b8f27109306df07b8ec564fa05b14d707c46ee49d76f88a1cb387b799773"
+    },
+    {
+      "path": "evidence/research/market_data_quality/local_market_data_quality.json",
+      "sha256": "ece6f87483318a41ea91ddb4b84f4f378775321229691c5812008f8116b1c97e"
+    },
+    {
+      "path": "evidence/research/market_data_quality/tickbook_carry_forward_audit.json",
+      "sha256": "51132d88ce871e65eadc39b00ec2a7e3eedf26f0a59d926df76cd1d826bcedff"
+    }
+  ],
+  "limitations": [
+    "No raw market data is copied into this packet.",
+    "Counts describe the hash-identified selected campaign exports; they are not universal feed properties.",
+    "This packet narrows local timestamp and quote claims but does not establish executable policy value or simulator parity."
+  ]
+}

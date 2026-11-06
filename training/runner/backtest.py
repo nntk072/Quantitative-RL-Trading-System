@@ -24,15 +24,20 @@ import numpy as np
 import pandas as pd
 
 from configuration import load_config
-from evaluation import PerformanceMetrics, calculate_metrics
+from evaluation import PerformanceMetrics, account_path_metric_inputs, calculate_metrics
 from evaluation.reporting.run_artifact_writer import save_run
-from features import FEATURE_CACHE_VERSION, build_features
 from market_data.loading import build_tick_books, run_pipeline
-from market_data.splits.definitions import get_split_config, split_bars, split_train_test
+from market_data.splits.definitions import (
+    get_split_config,
+    get_train_start_config,
+    split_bars,
+    split_train_test,
+)
 from simulation.backtest import run_backtest
-from simulation.environment.trading_environment_factory import eval_guardrail_kwargs
+from simulation.environment.trading_environment_factory import cost_model, eval_guardrail_kwargs
 from trading.policy import TradingPolicyConfig, resolve_trading_policy
 from trading.risk import RiskDailyPnlBasis
+from training.runner.feature_preparation import build_split_scoped_features
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -51,7 +56,14 @@ def _random_policy(obs: np.ndarray[Any, Any]) -> int:
 
 
 def _configured_backtest_policy(cfg: Any) -> TradingPolicyConfig:
-    """Resolve and validate account lifecycle semantics for a backtest run."""
+    """Resolve and validate account lifecycle semantics for a backtest run.
+
+    Args:
+        cfg: Resolved run configuration containing trading-policy settings.
+
+    Returns:
+        Validated policy with an explicit daily PnL basis.
+    """
     policy = resolve_trading_policy(cfg)
     if policy.daily_pnl_basis is None:
         raise ValueError("resolved trading policy must define a daily PnL basis")
@@ -81,18 +93,25 @@ def main() -> None:
     primary_m1 = data[primary_sym]["M1"]
     secondary_m1 = data.get(secondary_sym, {}).get("M1")
 
-    cache_dir = Path(cfg.data.cache_dir)
-    feat_cache = cache_dir / f"{primary_sym}_features_{FEATURE_CACHE_VERSION}.parquet"
-    features = build_features(primary_m1, secondary=secondary_m1, cfg=cfg, cache_path=feat_cache)
-
     # Date-based train / test split
     train_end, test_start = get_split_config(cfg)
+    train_start = get_train_start_config(cfg)
+    features = build_split_scoped_features(
+        primary_m1,
+        secondary=secondary_m1,
+        cfg=cfg,
+        train_end=train_end,
+        train_start=train_start,
+        cache_dir=Path(cfg.data.cache_dir),
+        symbol=str(primary_sym),
+        force=args.force,
+    )
     train_bars, test_bars, train_feat, test_feat = split_train_test(
-        primary_m1, features, train_end, test_start
+        primary_m1, features, train_end, test_start, train_start
     )
     train_sec = test_sec = None
     if secondary_m1 is not None and not secondary_m1.empty:
-        train_sec, test_sec = split_bars(secondary_m1, train_end, test_start)
+        train_sec, test_sec = split_bars(secondary_m1, train_end, test_start, train_start)
     log.info(
         "Split: train=%d bars (≤%s)  test=%d bars (≥%s)",
         len(train_bars),
@@ -160,6 +179,7 @@ def main() -> None:
             features=feats,
             policy=_random_policy,
             obs_window=cfg.env.obs_window,
+            cost_model=cost_model(cfg),
             initial_balance=cfg.account.initial_balance,
             guardrail_kwargs=eval_guardrail_kwargs(cfg),
             max_loss_per_trade_usd=max_loss_per_trade,
@@ -179,6 +199,7 @@ def main() -> None:
             sl_buffer_pts=float(cfg.env.get("sl_buffer_pts", 0.0)),
             min_lot=float(cfg.risk.min_lot),
             max_lot=float(cfg.risk.max_lot),
+            lot_step=float(cfg.risk.get("lot_step", 0.01)),
             contract_size=float(cfg.account.contract_size),
             tickbook=ticks,
             tick_execution_required=bool(cfg.costs.use_tick_execution),
@@ -199,6 +220,7 @@ def main() -> None:
             n_sessions=result.get("n_sessions", 1),
             n_breach_sessions=result.get("n_breach_sessions", 0),
             initial_balance=float(cfg.account.initial_balance),
+            **account_path_metric_inputs(result),
         )
         log.info(
             "[%s] Sharpe=%.3f  MaxDD=%.2f%%  Trades=%d  Breaches=%d/%d  Return=%.2f%%",

@@ -1,0 +1,424 @@
+{
+  "dag_path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+  "dag_sha256": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c",
+  "status": "incomplete",
+  "failure_count": 151,
+  "node_counts_by_kind_and_status": {
+    "data_input": {
+      "missing": 4,
+      "verified_current_path": 77
+    },
+    "job": {
+      "not_byte_addressed": 221
+    },
+    "manifest": {
+      "verified_current_path": 49
+    },
+    "run": {
+      "not_byte_addressed": 49
+    },
+    "run_artifact": {
+      "missing": 132,
+      "verified_relocated": 421
+    },
+    "source_file": {
+      "historical_source_unavailable": 15,
+      "verified_in_source_commit": 2,
+      "verified_in_source_snapshot": 1833
+    },
+    "source_snapshot": {
+      "verified": 45
+    }
+  },
+  "git_source_commit_verifications": [
+    {
+      "expected_sha256": "dfa0a5b0d195b40156eed52ad4db7ea20d174bb63753017929bfe17655a0d7e1",
+      "id": "source_file:038ba3faad96a70bfccf",
+      "path": "quant_rl/config/default.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "4cc2369a32a1696d0a70b15bed74d8d3f476ea7e4d021b6bd716b467eb8d86bd",
+            "run_ids": [
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 17614,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "a8cc311b6428483c64e60b38b1560c33dcd828b9a36490504a022d778eb7f506",
+      "id": "source_file:4fe82ab9931e25672e65",
+      "path": "quant_rl/train/train_rl.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "162ed7730470f157204b047f0e5b78941791c24da112716c9b72d82f55ccb643",
+            "run_ids": [
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 72243,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "9bd2ce4fec72f97d4b0ac94ac55a146efc726e0bb4ad44b340ea758aacb7f582",
+      "id": "source_file:526d7a3a13f235fb812a",
+      "path": "quant_rl/config/default.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "4cc2369a32a1696d0a70b15bed74d8d3f476ea7e4d021b6bd716b467eb8d86bd",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 17614,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "784ee0cf811301bd5420668417a0c3e6b2b3daf0271860fe2cce9b0bca67303d",
+      "id": "source_file:72d98cbb8ead3e2f09f9",
+      "path": "scripts/matrix/campaign_controller.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "9a667525ebdf08711f4e5dfb22a95edc6c435f8bcf5861ef7ba3dcb550bf5731",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 15980,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "1788be9c0477fb487aaca336f073654b1c44101afbfa991b306f22ba237d840d",
+      "id": "source_file:75cf8c6f5c7a6d382133",
+      "path": "quant_rl/eval/training_plots.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "1788be9c0477fb487aaca336f073654b1c44101afbfa991b306f22ba237d840d",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 20366,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "match"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 1,
+        "status": "verified"
+      }
+    },
+    {
+      "expected_sha256": "c4f708eda4ba64a92632755716b02cf6566f64c85d849c506bf220bde43365fd",
+      "id": "source_file:893b5a26deab0cad50a8",
+      "path": "quant_rl/train/train_rl.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "162ed7730470f157204b047f0e5b78941791c24da112716c9b72d82f55ccb643",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 72243,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "678c78189bed3ded81adfe4c12b0d6620a7ebcfe1a2959c3f55f37901f95e044",
+      "id": "source_file:9a49d7762ec44523e1d1",
+      "path": "scripts/matrix/audit_real_market_bundle_parity.py",
+      "verification": {
+        "checks": [
+          {
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "unavailable"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "unavailable"
+      }
+    },
+    {
+      "expected_sha256": "1a602ef59363c60f805094a9928e14e4475394eea018ea38f7d59d07f9296d4a",
+      "id": "source_file:a0233f29d99d79662da4",
+      "path": "quant_rl/features/htf_sweeps.py",
+      "verification": {
+        "checks": [
+          {
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "unavailable"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "unavailable"
+      }
+    },
+    {
+      "expected_sha256": "3b196ee093af6da18e7e263dc90b1588d17fcbc163a40e422aa23d9099e94fae",
+      "id": "source_file:b73f46b4eaa2ff5e5f90",
+      "path": "quant_rl/features/build.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "20133839e7cd7ae44b0bb2ebddff63199c6b77663cdd22f82d744efa6d5d6a15",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 46371,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "d9a470a0c9f1e98a4b45bac04e2a2a8df2048528c12a92448148708d7acdaf01",
+      "id": "source_file:c28bfb38167208adc440",
+      "path": "quant_rl/train/debug_trace.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "0d461315892cb57e07c180d12b8c1efa3d339a2388a7089086f5d20558d68d12",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 22820,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "e00b0fbfa44e4ddcf68cc97621e0ac068ce67b434c81905d49b9a9e3f9c1aff2",
+      "id": "source_file:c64fedefda3b22b50a0c",
+      "path": "quant_rl/eval/eval_run.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "efeb1ac2b734455c004dd1008deec9b4fd4811dc8c260c1d9ee33d8474507de2",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 10895,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "de0e82d177793b201925ef709023fc5f7ea47da1f627ff634e0e8cd6ec9bd619",
+      "id": "source_file:cadfc340baf443e68eb8",
+      "path": "quant_rl/train/variant_resolver.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "de0e82d177793b201925ef709023fc5f7ea47da1f627ff634e0e8cd6ec9bd619",
+            "run_ids": [
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 10643,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "match"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 1,
+        "status": "verified"
+      }
+    },
+    {
+      "expected_sha256": "2d1efc890be0b65c688af3f746624317ef395d3e14a17750bc970abf2e129d9b",
+      "id": "source_file:cfd40d245b0c762525de",
+      "path": "scripts/matrix/campaign_controller.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "9a667525ebdf08711f4e5dfb22a95edc6c435f8bcf5861ef7ba3dcb550bf5731",
+            "run_ids": [
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 15980,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "69e3383e47725d765078e23ab8e8f71769579ac01564de0afe111d0eb1e33dd3",
+      "id": "source_file:dcf985e65efe40ff5007",
+      "path": "config/2_po3_ifvg.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "f9d937e5363c22cfd222d03deca8808cab1b6ea8b0c22d2ff706b0cdd7ea4252",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 1267,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "e6a4969504ed207ddc4eb3ba586d78a60a8d211cc2bd578f0e0c37b9ff1da7b6",
+      "id": "source_file:dec94c7b2bdea24abf72",
+      "path": "quant_rl/train/dashboard.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "c401dfd3f169ea6c3471fe7d4d4ef52cf0f672142384425ea2c4f0eaf6e40a47",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 26469,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "81841a20c02f6a5b45e7ef39b74e4e42a8e2e9acb3518865280fca7b4395f3bf",
+      "id": "source_file:deeab956846e762506ba",
+      "path": "config/3_distribution.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "0c338fa4b2964a09b9059f8de66d7853cec52a4970fec6d7466cedfb6826fed6",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 939,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "ae5d70e9aa3231f42ae43c1dcf8962f99741cf60f9fc5c03def287b060288b6b",
+      "id": "source_file:f8ff94b95e4f1da31efc",
+      "path": "config/experiments.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "332ac0a3c22da374eb086679df17e4982d5844ffdce8b06d9f1fdf6dedbcfec6",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 8473,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    }
+  ]
+}

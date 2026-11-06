@@ -10,6 +10,8 @@ from decisioning.trade_setup import (
     NO_TRADE_ID,
     TradeSetupActionSchema,
     TradeSetupCandidate,
+    decode_trade_setup_execution_choice,
+    decode_trade_setup_geometry_choice,
     trade_setup_candidate,
     trade_setup_id_from_box,
 )
@@ -69,7 +71,9 @@ class ActionDecodingMixin(RuntimeMixinBase):
         self._last_action_trade_setup_candidate_id = None
         self._last_action_trade_setup_eligible = None
         indices = self.action_schema.indices
+        geometry = None
         if trade_setup_mode:
+            assert isinstance(self.action_schema, TradeSetupActionSchema)
             candidate_index = indices.get("trade_setup")
             if candidate_index is None:
                 raise ValueError("trade setup action schema has no categorical setup coordinate")
@@ -97,6 +101,19 @@ class ActionDecodingMixin(RuntimeMixinBase):
                     candidate_ids=(candidate_id,),
                 )
                 self._selected_trade_setup_event_identity = identities[0] if identities else None
+            self._selected_entry_execution = "market"
+            self._selected_limit_offset_atr = 0.0
+            self._selected_limit_ttl_bars = 1
+            if self.action_schema.has_entry_execution:
+                execution_choice = decode_trade_setup_execution_choice(
+                    [float(value) for value in raw],
+                    self.action_schema,
+                    max_limit_offset_atr=self.limit_order_max_offset_atr,
+                    max_limit_ttl_bars=self.limit_order_max_ttl_bars,
+                )
+                self._selected_entry_execution = execution_choice.order_type
+                self._selected_limit_offset_atr = execution_choice.limit_offset_atr
+                self._selected_limit_ttl_bars = execution_choice.ttl_bars
         else:
             self._selected_trade_setup = None
             assert isinstance(self.action_schema, ActionSchema)
@@ -125,8 +142,33 @@ class ActionDecodingMixin(RuntimeMixinBase):
         simplex_offset = 2 if z_idx >= 0 else 0
         exit_idx = indices["exit"]
 
-        # Extract stop/risk (indices unchanged regardless of target_width)
-        if u.size == self.action_schema.width:
+        if trade_setup_mode:
+            assert isinstance(self.action_schema, TradeSetupActionSchema)
+            geometry = decode_trade_setup_geometry_choice(
+                [float(value) for value in raw],
+                self.action_schema,
+                allow_ema_exit=self.allow_ema_exit,
+                default_sl_mode=self._default_sl_mode(),
+                default_tp_mode=self.tp_mode,
+                sl_mode_defer_threshold=self.sl_mode_defer_threshold,
+                tp_mode_defer_threshold=self.tp_mode_defer_threshold,
+            )
+            self._selected_sl_anchor = geometry.stop_anchor_fraction
+            self._selected_tp_fraction = geometry.target_fraction
+            self._selected_tp_selections = (
+                geometry.target_selections
+                if geometry.target_selections is not None
+                else (-1.0, -1.0, -1.0)
+            )
+            self._selected_tp_z = (
+                geometry.simplex_logits if geometry.simplex_logits is not None else (0.0, 0.0)
+            )
+            self._selected_exit_mode = geometry.exit_mode
+            r_lo, r_hi = self.risk_frac_range
+            risk_frac = r_lo + float(u[indices["risk"]]) * (r_hi - r_lo)
+            rr_ratio = self._selected_tp_fraction
+        # Extract stop/risk for the non-categorical strategy action schema.
+        elif u.size == self.action_schema.width:
             sl_raw = float(raw[indices["stop"]])
             self._selected_sl_anchor = float(np.clip(sl_raw + 1.0, 0.0, 2.0))
             r_lo, r_hi = self.risk_frac_range
@@ -156,7 +198,10 @@ class ActionDecodingMixin(RuntimeMixinBase):
             # Decode sl_mode
         self._selected_sl_mode = "structural"
         self._sl_mode_explicit = False
-        if sl_mode_offset and u.size > sl_idx:
+        if trade_setup_mode and geometry is not None:
+            self._selected_sl_mode = geometry.sl_mode
+            self._sl_mode_explicit = geometry.sl_mode_explicit
+        elif sl_mode_offset and u.size > sl_idx:
             u_sl = float(u[sl_idx])
             if abs(u_sl - 0.5) < self.sl_mode_defer_threshold:
                 self._selected_sl_mode = self._default_sl_mode()
@@ -169,7 +214,11 @@ class ActionDecodingMixin(RuntimeMixinBase):
 
             # Decode tp_mode
         self._tp_mode_explicit = False
-        if tp_mode_offset and u.size > tp_idx:
+        if trade_setup_mode and geometry is not None and geometry.has_tp_mode:
+            self._selected_tp_mode = geometry.tp_mode
+            self._tp_mode_explicit = geometry.tp_mode_explicit
+            tp_mode = geometry.tp_mode
+        elif tp_mode_offset and u.size > tp_idx:
             u_tp = float(u[tp_idx])
             decoded, explicit = decode_tp_mode(
                 u_tp, self.tp_mode, self.tp_mode_defer_threshold, is_unit=True
@@ -191,6 +240,17 @@ class ActionDecodingMixin(RuntimeMixinBase):
         if trade_setup_mode and discrete_action == 0:
             risk_frac = 0.0
         self._decision_action = _decision_from_action(raw, u, self.action_schema)
+        if (
+            isinstance(self.action_schema, TradeSetupActionSchema)
+            and self.action_schema.has_entry_execution
+        ):
+            self._decision_action.update(
+                {
+                    "entry_execution_mode_id": float(self._selected_entry_execution == "limit"),
+                    "limit_offset_atr": float(self._selected_limit_offset_atr),
+                    "limit_ttl_bars": int(self._selected_limit_ttl_bars),
+                }
+            )
         return discrete_action, risk_frac, rr_ratio, tp_mode
 
     def _decode_continuous_action(

@@ -28,7 +28,11 @@ automatically use fewer slots.
 - `execution.py` is the canonical experiment run composition root; it composes
   focused state, source-snapshot, artifact, checkpoint, and compute services.
 - Cache-failure recovery is owned by `cache_failure_recovery.py` and exposed through `qrl-experiment recover-cache`.
-- Variant workflows: `experiments/variants/`.
+- Variant report loading/aggregation: `experiments/variants/`.
+- New policy training must use the canonical `training.runner.training` or
+  `experiments/runs/` workflow so survival qualification and run provenance
+  cannot be bypassed. The former `qrl-experiment variants` learner path is
+  retired because it trained directly and could select on exposed OOS.
 - May compose training, evaluation, compute, and artifacts at explicit workflow roots.
 - Must not import simulation runtime internals or own feature/trading semantics.
 
@@ -62,5 +66,5 @@ automatically use fewer slots.
 - `experiments/runs/artifact_validation.py`
 - `experiments/runs/checkpoint_lineage.py`
 - `experiments/runs/constants.py`
-- `experiments/variants/variant_ablation_runner.py` (canonical lifecycle; CLI parsing is in `experiments/cli.py`)
+- `experiments/variants/variant_ablation_runner.py` (legacy report helpers and retired training command; CLI parsing is in `experiments/cli.py`)
 - `tests/unit/experiments/test_experiment_run_results_summary.py`

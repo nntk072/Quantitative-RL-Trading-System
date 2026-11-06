@@ -31,6 +31,7 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
         tp_reference: str,
         min_lot: float,
         max_lot: float,
+        lot_step: float,
         contract_size: float,
         max_loss_per_trade_usd: float,
         block_overnight: bool,
@@ -53,6 +54,7 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
             tp_reference: Text or path value identifying the tp reference.
             min_lot: Numeric value used for the min lot.
             max_lot: Numeric value used for the max lot.
+            lot_step: Broker volume increment for risk-based sizing.
             contract_size: Number specifying the contract size for this operation.
             max_loss_per_trade_usd: Numeric value used for the max loss per trade usd.
             block_overnight: Whether to enable or require the block overnight.
@@ -72,14 +74,19 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
             raise ValueError("repeated-payout initial balance must equal operating_balance")
         resolved_guardrails = dict(guardrail_kwargs or {})
         if self.repeated_payout_policy:
+            if self.trading_policy.max_loss_limit_initial_pct is None:
+                raise ValueError("maximum-loss percentage is required for repeated payouts")
             resolved_guardrails.update(
-                daily_loss_limit=self.trading_policy.daily_loss_limit,
-                max_loss_limit=self.trading_policy.operating_balance
-                - self.trading_policy.account_floor,
                 risk_per_trade_limit=self.trading_policy.operating_balance
                 * self.trading_policy.max_agent_risk_frac,
                 trailing_dd_limit=0.0,
                 soft_trailing_dd_limit=0.0,
+                limit_value_mode="percent_equity",
+                risk_per_trade_limit_pct=self.trading_policy.max_agent_risk_frac,
+                daily_loss_limit_pct=self.trading_policy.daily_loss_limit_pct,
+                soft_daily_loss_limit_pct=0.0,
+                max_loss_limit_initial_pct=float(self.trading_policy.max_loss_limit_initial_pct),
+                soft_max_loss_limit_initial_pct=0.0,
             )
         self.guardrails = FTMOGuardrails(**resolved_guardrails)
 
@@ -99,6 +106,9 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
         self.tp_reference = str(tp_reference or "structural")
         self.min_lot = min_lot
         self.max_lot = max_lot
+        if not 0.0 < float(lot_step) < float("inf"):
+            raise ValueError("lot_step must be finite and positive")
+        self.lot_step = float(lot_step)
         self.contract_size = contract_size
         self.max_loss_per_trade_usd = max_loss_per_trade_usd
         self.block_overnight = bool(block_overnight)

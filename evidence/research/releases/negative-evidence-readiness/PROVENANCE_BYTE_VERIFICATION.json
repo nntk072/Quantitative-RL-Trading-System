@@ -1,0 +1,1619 @@
+{
+  "claim_scope": "byte identity for manifest-declared files, complete verified source snapshots, and source files recovered from every linked run source commit; does not enumerate unmanifested caches or outputs",
+  "dag_path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+  "dag_sha256": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c",
+  "dag_size_bytes": 5077175,
+  "declared_hashed_nodes": 2533,
+  "failure_count": 151,
+  "failures": [
+    {
+      "id": "data_input:1cd64a44f8020b9c5f0e",
+      "kind": "data_input",
+      "path": "data/US500.cash_202412300105_202607031959.csv",
+      "status": "missing"
+    },
+    {
+      "id": "data_input:9880de7d085f446714dd",
+      "kind": "data_input",
+      "path": "data/US100.cash_202512290105_202607031959.csv",
+      "status": "missing"
+    },
+    {
+      "id": "data_input:c31aa5a4e9da4a788472",
+      "kind": "data_input",
+      "path": "data/US500.cash_M1_202412300105_202607031959.csv",
+      "status": "missing"
+    },
+    {
+      "id": "data_input:ea44384bce18f5bb1874",
+      "kind": "data_input",
+      "path": "data/US100.cash_M1_202412300105_202607031959.csv",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:010f7f5ba4a7a2f1fdcf",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:089f390090a34a9727b4",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a2_tp__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:08bede8ea18f135f70b0",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:09419500b934e0ef73d2",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp__seed50/20261016_035925_654565_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:095aef4a32e62ecedcb4",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:0bddd20a3e73d4176cdc",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:0cdb2259b8d51891528f",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4b_po3_ifvg__seed42/20261031_111839_909346_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:0d6da5bba228be288603",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a1_sl__seed42/20261031_100615_018331_rl_train_seed42_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:0ef0ade3dd5f45ae5d07",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1/sustainable_growth_ppo_log__seed50/20261027_012046_433495_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:0f469554a44f6ad148a6",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:0f54ff1203824fe5e6b5",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:144d3a119e409af9257b",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:16f5500dab2b2e2a65fe",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/rq_mtf_control_tcn__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:188fbd6c716dba844873",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden_dist__seed50/20261016_035937_547322_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:1955be462efab000b938",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp_dist__seed50/20261016_035933_227018_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:1ccb53762213d2fc51b0",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:1e56991cb9aef58b7880",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl__seed50/20261016_035925_661526_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:1e611f2a16da0d52366e",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:218503aae55fe794defc",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat_po3__seed50/20261016_035926_356574_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:2218b2169ff1a13dc668",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a2_tp__seed42/20261031_104003_686458_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:271c26c558410dd36eed",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl_po3__seed50/20261016_035926_042546_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:27df5a06633e05e8d5d9",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl_dist__seed50/20261016_035929_812142_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:2d37b8084bd80286c5a1",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a3_multi_tp__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:3029404d522dd3813489",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat_dist__seed50/20261016_035927_651924_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:30d84315ad148bf770d8",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/rq_mtf_treatment_mtf__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:31ae4e1d308431a7d875",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4a_dollar_band_q5_off__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:348d1972345e16df9d2d",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:3524517025dd4c975b6c",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl__seed50/20261016_035925_661526_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:39760efd0fd91c7c46e1",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:398c0dde20dca9f37198",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp_po3__seed50/20261016_035926_228386_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:39ea0fa03b6f99bf8c46",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp__seed50/20261016_035925_654565_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:3f102f26cbe8707a9c49",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden_po3__seed50/20261016_035926_154014_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:404adc69247bc4ebc960",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp_po3__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:41e779db43358095f9eb",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_entry_fsm__seed50/20261016_035925_904716_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:48d16376a1e4e0fea2c5",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp_dist__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:49581d16729551794b99",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_distribution__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:4ac098179fe8c1582322",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a1_sl__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:4fd0e2f0af994e6fb9da",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:522e3e22591a403ac79b",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat__seed50/20261016_035925_145987_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:542c1b4ce15fcaedac2e",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/rq_mtf_tcn_a4a_q5off_seed50_train2025_20261025_2m_normal_zero_latency_alltf_swings_v1/rq_mtf_treatment_mtf__seed50/20261025_145652_804681_rl_train_seed50_mtf/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:5453990280d17882b4d1",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:54f1bd484e973c219f9f",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:578bf0e501eb36a984b5",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4a_dollar_band_q5_on__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:599e92cbffbc32db49ef",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:5aaa0119f3da1f5bc087",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4b_distribution__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:5b35437e96a93515e0e4",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:5c765be45650cacdd353",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:5de5a6482b5df62d3b48",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp_po3__seed50/20261016_035926_228386_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:60ae858203b6169a6182",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:62039586709f3b93c7a4",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/rq_mtf_treatment_mtf__seed42/20261031_111312_209792_rl_train_seed42_mtf/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:63e957072719564f2fe2",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:67735ec0ce0a0f17e0e7",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp_po3__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:69c2834a2828cf7fc959",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden_po3__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:6b3b007d19798b001b1f",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat__seed50/20261016_035925_145987_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:6cd6d9a1eff0cc10221a",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4a_dollar_band_q5_on__seed42/20261031_111312_550534_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:73205ee2386adface0d6",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a0_flat__seed42/20261031_100351_542375_rl_train_seed42_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:78289b51a9c14db6971e",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:78451cf527caf55ee249",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/rq_mtf_tcn_a4a_q5off_seed50_train2025_20261025_2m_normal_zero_latency_alltf_swings_v1/rq_mtf_control_tcn__seed50/20261025_145649_902402_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:79d1ff1ea3a0ec294ee5",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp_dist__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:7a4ed2156a5df112de00",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:7b11270665dda1cb321e",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden__seed50/20261016_035925_729816_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:7cead1a115acd998c9aa",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4b_entry_fsm__seed42/20261031_111312_259525_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:7d888facc61de174f209",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden_dist__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:7eea3f3c17fb89e26863",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat_dist__seed50/20261016_035927_651924_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:82b8085fb745418f999e",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:8318d97b2bdefda88dee",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/rq_mtf_control_tcn__seed42/20261031_111312_544032_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:83515cc778f2bdfb9fbe",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a3_multi_tp__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:8356dc44bb1796b7d75c",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp_dist__seed50/20261016_035933_227018_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:85025024db423f250bc5",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden_po3__seed50/20261016_035926_154014_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:85f28102116146fed0ec",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4b_po3_ifvg__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:870c97b14a96958a3ba8",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:872e00b1dcaa562b5a4f",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl_dist__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:876d06c2f1370ebdf4f1",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4a_dollar_band_q5_off__seed42/20261031_111312_209191_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:8a535e12c52a8811d3e7",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:8a7e3eea2b7065df6f4e",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_po3_ifvg__seed50/20261016_035926_401957_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:8b3ffc3c4e716556e62a",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a1_sl__seed42/20261031_111312_324998_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:8f0bab69a97f0b08f63f",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp_dist__seed50/20261016_035930_043207_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:8f1621a65d3636a5d393",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl_po3__seed50/20261016_035926_042546_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:8fa60a4fc58b6a2c66a2",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp_po3__seed50/20261016_035926_430266_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:9057cb1b51348d8a8f38",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl_dist__seed50/20261016_035929_812142_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:92c2593cd43db49cac9d",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:94dbc4a16c8e7d4d8157",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4b_entry_fsm_qgrid025__seed42/20261031_111312_141408_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:94dccaec424f2bddd579",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a1_sl__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:9a440942499eeebc4b1a",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4b_distribution__seed42/20261031_111843_607741_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:9ad67c6044f3ea7b91f2",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat_po3__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:9e0bc67b03ff28c50f0b",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4b_entry_fsm_qgrid025__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:a16c9e9774b73143734a",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4a_entry_fsm_hidden__seed42/20261031_111312_081495_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:a2342746f04535a754a2",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:a401bbba25697d2b44fd",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4b_entry_fsm__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:a59a38bd6b2ed518ba42",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_entry_fsm__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:a6029d6d6b8623ed69f5",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_po3_ifvg__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:a860f875b542e250d5c1",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:a91a52bd1667f9873da4",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a0_flat__seed42/20261031_111311_379796_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:a9e16f348ca04f6dc264",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:ab4d5f6458066f5039ad",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_entry_fsm__seed50/20261016_035925_904716_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:ac967032bd09ae7760a6",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a0_flat__seed42/20261031_100351_542375_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:af4f11d0a599c74e53d8",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat_po3__seed50/20261016_035926_356574_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:b2a3785ea859587e30eb",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/rq_mtf_tcn_a4a_q5off_seed50_train2025_20261025_2m_normal_zero_latency_v1/rq_mtf_control_tcn__seed50/20261025_131739_456544_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:bb8cbea43e69c96c556f",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4a_entry_fsm_hidden_qgrid025__seed42/20261031_111312_438006_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:bd662a40db9d8128776a",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden_dist__seed50/20261016_035937_547322_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:bf54cc59522d31ffbbb6",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_distribution__seed50/20261016_035934_641486_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:c0048c3da527074c66d9",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:c2703e13e113038d62d5",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:c6f9e0a279f5e0a50187",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a0_flat_dist__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:c8028a9089395319a8d4",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp__seed50/20261016_035925_928194_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:c8f51b2402e1131202a2",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:cbe494742fcbef04ee5e",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_distribution__seed50/20261016_035934_641486_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:d3c94cf22f6a420ffac3",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4a_entry_fsm_hidden__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:d74c5119443c47003b4b",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:d87d5b1ba9d0533aa450",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:d9655c610482042421db",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4b_po3_ifvg__seed50/20261016_035926_401957_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:da53d6ed8bbd07214939",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a3_multi_tp__seed42/20261031_105257_222950_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:da662ad63ba73792ed13",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a1_sl__seed42/20261031_100615_018331_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:ddcfafb60f5cebe1942d",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp__seed50/20261016_035925_928194_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:de4bb62eee9b4596200a",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:e2ff76fe8cda96ae513d",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:e33abe2335b84e6953a8",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp_dist__seed50/20261016_035930_043207_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:e689f3f4b85763c1da18",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a2_tp__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:e7434519ae99f37c5415",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:e7441b495f92e40d4a5d",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a1_sl_po3__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:e7794bf37fdb94c3b63f",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a0_flat__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:e7c50648cbf86a84076e",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a2_tp_po3__seed50/20261016_035926_430266_rl_train_seed50_tcn/model/ppo_final.zip",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:ea656ff0336abaf1f590",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a4a_entry_fsm_hidden__seed50/20261016_035925_729816_rl_train_seed50_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:ef1d900819f22a1c5485",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a3_multi_tp__seed42/20261031_111312_378118_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:eff03a72553ed485ba3f",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a2_tp__seed42/20261031_111312_191273_rl_train_seed42_tcn/config.yaml",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:f0a4f19c2382d3ee1009",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:f413fed1845c7286c8d8",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/ladder_a4a_entry_fsm_hidden_qgrid025__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:f7f29f438a45bf84111d",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:fa97934cb442c77fe2cd",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_20261030/ladder_a0_flat__seed42/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:faee8b83b10d7872d1f2",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_experiment_runs/all_selectable_seed42_train2025_1m_n8_adaptive_20261031/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:fc94ca6ec066eb9e9a00",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/attempt_provenance.json",
+      "status": "missing"
+    },
+    {
+      "id": "run_artifact:fe669139b50b0535367b",
+      "kind": "run_artifact",
+      "path": "outputs/gpu_campaigns/ladder18_seed50_cpu_buffer_probe_20261016/ladder_a3_multi_tp__seed50/resolved_config.json",
+      "status": "missing"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "4cc2369a32a1696d0a70b15bed74d8d3f476ea7e4d021b6bd716b467eb8d86bd",
+            "run_ids": [
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 17614,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:038ba3faad96a70bfccf",
+      "kind": "source_file",
+      "path": "quant_rl/config/default.yaml",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "162ed7730470f157204b047f0e5b78941791c24da112716c9b72d82f55ccb643",
+            "run_ids": [
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 72243,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:4fe82ab9931e25672e65",
+      "kind": "source_file",
+      "path": "quant_rl/train/train_rl.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "4cc2369a32a1696d0a70b15bed74d8d3f476ea7e4d021b6bd716b467eb8d86bd",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 17614,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:526d7a3a13f235fb812a",
+      "kind": "source_file",
+      "path": "quant_rl/config/default.yaml",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "9a667525ebdf08711f4e5dfb22a95edc6c435f8bcf5861ef7ba3dcb550bf5731",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 15980,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:72d98cbb8ead3e2f09f9",
+      "kind": "source_file",
+      "path": "scripts/matrix/campaign_controller.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "162ed7730470f157204b047f0e5b78941791c24da112716c9b72d82f55ccb643",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 72243,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:893b5a26deab0cad50a8",
+      "kind": "source_file",
+      "path": "quant_rl/train/train_rl.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "unavailable"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "unavailable"
+      },
+      "id": "source_file:9a49d7762ec44523e1d1",
+      "kind": "source_file",
+      "path": "scripts/matrix/audit_real_market_bundle_parity.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "unavailable"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "unavailable"
+      },
+      "id": "source_file:a0233f29d99d79662da4",
+      "kind": "source_file",
+      "path": "quant_rl/features/htf_sweeps.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "20133839e7cd7ae44b0bb2ebddff63199c6b77663cdd22f82d744efa6d5d6a15",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 46371,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:b73f46b4eaa2ff5e5f90",
+      "kind": "source_file",
+      "path": "quant_rl/features/build.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "0d461315892cb57e07c180d12b8c1efa3d339a2388a7089086f5d20558d68d12",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 22820,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:c28bfb38167208adc440",
+      "kind": "source_file",
+      "path": "quant_rl/train/debug_trace.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "efeb1ac2b734455c004dd1008deec9b4fd4811dc8c260c1d9ee33d8474507de2",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 10895,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:c64fedefda3b22b50a0c",
+      "kind": "source_file",
+      "path": "quant_rl/eval/eval_run.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "9a667525ebdf08711f4e5dfb22a95edc6c435f8bcf5861ef7ba3dcb550bf5731",
+            "run_ids": [
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 15980,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:cfd40d245b0c762525de",
+      "kind": "source_file",
+      "path": "scripts/matrix/campaign_controller.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "expected_sha256": "69e3383e47725d765078e23ab8e8f71769579ac01564de0afe111d0eb1e33dd3",
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "f9d937e5363c22cfd222d03deca8808cab1b6ea8b0c22d2ff706b0cdd7ea4252",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 1267,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:dcf985e65efe40ff5007",
+      "kind": "source_file",
+      "path": "config/2_po3_ifvg.yaml",
+      "sha256": "d1b82169cb8b55cac5dae5fe43ee93fe24beb1144d6278fd606d310789d39a88",
+      "size_bytes": 1772,
+      "status": "historical_source_unavailable"
+    },
+    {
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "c401dfd3f169ea6c3471fe7d4d4ef52cf0f672142384425ea2c4f0eaf6e40a47",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 26469,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:dec94c7b2bdea24abf72",
+      "kind": "source_file",
+      "path": "quant_rl/train/dashboard.py",
+      "status": "historical_source_unavailable"
+    },
+    {
+      "expected_sha256": "81841a20c02f6a5b45e7ef39b74e4e42a8e2e9acb3518865280fca7b4395f3bf",
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "0c338fa4b2964a09b9059f8de66d7853cec52a4970fec6d7466cedfb6826fed6",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 939,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:deeab956846e762506ba",
+      "kind": "source_file",
+      "path": "config/3_distribution.yaml",
+      "sha256": "c04d194cc5e87a148c47fde63a910af9c3aacd914c93d0b06ca747b10f9b451c",
+      "size_bytes": 1521,
+      "status": "historical_source_unavailable"
+    },
+    {
+      "expected_sha256": "ae5d70e9aa3231f42ae43c1dcf8962f99741cf60f9fc5c03def287b060288b6b",
+      "git_source_commit_verification": {
+        "checks": [
+          {
+            "actual_sha256": "332ac0a3c22da374eb086679df17e4982d5844ffdce8b06d9f1fdf6dedbcfec6",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 8473,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      },
+      "id": "source_file:f8ff94b95e4f1da31efc",
+      "kind": "source_file",
+      "path": "config/experiments.yaml",
+      "sha256": "264e2de42d9759db5f898e6038714392e231e927ed787ef92b4d00183bb6f0d3",
+      "size_bytes": 18744,
+      "status": "historical_source_unavailable"
+    }
+  ],
+  "git_source_commit_verifications": [
+    {
+      "expected_sha256": "dfa0a5b0d195b40156eed52ad4db7ea20d174bb63753017929bfe17655a0d7e1",
+      "id": "source_file:038ba3faad96a70bfccf",
+      "path": "quant_rl/config/default.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "4cc2369a32a1696d0a70b15bed74d8d3f476ea7e4d021b6bd716b467eb8d86bd",
+            "run_ids": [
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 17614,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "a8cc311b6428483c64e60b38b1560c33dcd828b9a36490504a022d778eb7f506",
+      "id": "source_file:4fe82ab9931e25672e65",
+      "path": "quant_rl/train/train_rl.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "162ed7730470f157204b047f0e5b78941791c24da112716c9b72d82f55ccb643",
+            "run_ids": [
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 72243,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "9bd2ce4fec72f97d4b0ac94ac55a146efc726e0bb4ad44b340ea758aacb7f582",
+      "id": "source_file:526d7a3a13f235fb812a",
+      "path": "quant_rl/config/default.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "4cc2369a32a1696d0a70b15bed74d8d3f476ea7e4d021b6bd716b467eb8d86bd",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 17614,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "784ee0cf811301bd5420668417a0c3e6b2b3daf0271860fe2cce9b0bca67303d",
+      "id": "source_file:72d98cbb8ead3e2f09f9",
+      "path": "scripts/matrix/campaign_controller.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "9a667525ebdf08711f4e5dfb22a95edc6c435f8bcf5861ef7ba3dcb550bf5731",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 15980,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "1788be9c0477fb487aaca336f073654b1c44101afbfa991b306f22ba237d840d",
+      "id": "source_file:75cf8c6f5c7a6d382133",
+      "path": "quant_rl/eval/training_plots.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "1788be9c0477fb487aaca336f073654b1c44101afbfa991b306f22ba237d840d",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 20366,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "match"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 1,
+        "status": "verified"
+      }
+    },
+    {
+      "expected_sha256": "c4f708eda4ba64a92632755716b02cf6566f64c85d849c506bf220bde43365fd",
+      "id": "source_file:893b5a26deab0cad50a8",
+      "path": "quant_rl/train/train_rl.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "162ed7730470f157204b047f0e5b78941791c24da112716c9b72d82f55ccb643",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 72243,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "678c78189bed3ded81adfe4c12b0d6620a7ebcfe1a2959c3f55f37901f95e044",
+      "id": "source_file:9a49d7762ec44523e1d1",
+      "path": "scripts/matrix/audit_real_market_bundle_parity.py",
+      "verification": {
+        "checks": [
+          {
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "unavailable"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "unavailable"
+      }
+    },
+    {
+      "expected_sha256": "1a602ef59363c60f805094a9928e14e4475394eea018ea38f7d59d07f9296d4a",
+      "id": "source_file:a0233f29d99d79662da4",
+      "path": "quant_rl/features/htf_sweeps.py",
+      "verification": {
+        "checks": [
+          {
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "unavailable"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "unavailable"
+      }
+    },
+    {
+      "expected_sha256": "3b196ee093af6da18e7e263dc90b1588d17fcbc163a40e422aa23d9099e94fae",
+      "id": "source_file:b73f46b4eaa2ff5e5f90",
+      "path": "quant_rl/features/build.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "20133839e7cd7ae44b0bb2ebddff63199c6b77663cdd22f82d744efa6d5d6a15",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 46371,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "d9a470a0c9f1e98a4b45bac04e2a2a8df2048528c12a92448148708d7acdaf01",
+      "id": "source_file:c28bfb38167208adc440",
+      "path": "quant_rl/train/debug_trace.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "0d461315892cb57e07c180d12b8c1efa3d339a2388a7089086f5d20558d68d12",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 22820,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "e00b0fbfa44e4ddcf68cc97621e0ac068ce67b434c81905d49b9a9e3f9c1aff2",
+      "id": "source_file:c64fedefda3b22b50a0c",
+      "path": "quant_rl/eval/eval_run.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "efeb1ac2b734455c004dd1008deec9b4fd4811dc8c260c1d9ee33d8474507de2",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 10895,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "de0e82d177793b201925ef709023fc5f7ea47da1f627ff634e0e8cd6ec9bd619",
+      "id": "source_file:cadfc340baf443e68eb8",
+      "path": "quant_rl/train/variant_resolver.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "de0e82d177793b201925ef709023fc5f7ea47da1f627ff634e0e8cd6ec9bd619",
+            "run_ids": [
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 10643,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "match"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 1,
+        "status": "verified"
+      }
+    },
+    {
+      "expected_sha256": "2d1efc890be0b65c688af3f746624317ef395d3e14a17750bc970abf2e129d9b",
+      "id": "source_file:cfd40d245b0c762525de",
+      "path": "scripts/matrix/campaign_controller.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "9a667525ebdf08711f4e5dfb22a95edc6c435f8bcf5861ef7ba3dcb550bf5731",
+            "run_ids": [
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014"
+            ],
+            "size_bytes": 15980,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "69e3383e47725d765078e23ab8e8f71769579ac01564de0afe111d0eb1e33dd3",
+      "id": "source_file:dcf985e65efe40ff5007",
+      "path": "config/2_po3_ifvg.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "f9d937e5363c22cfd222d03deca8808cab1b6ea8b0c22d2ff706b0cdd7ea4252",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 1267,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "e6a4969504ed207ddc4eb3ba586d78a60a8d211cc2bd578f0e0c37b9ff1da7b6",
+      "id": "source_file:dec94c7b2bdea24abf72",
+      "path": "quant_rl/train/dashboard.py",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "c401dfd3f169ea6c3471fe7d4d4ef52cf0f672142384425ea2c4f0eaf6e40a47",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 26469,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "81841a20c02f6a5b45e7ef39b74e4e42a8e2e9acb3518865280fca7b4395f3bf",
+      "id": "source_file:deeab956846e762506ba",
+      "path": "config/3_distribution.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "0c338fa4b2964a09b9059f8de66d7853cec52a4970fec6d7466cedfb6826fed6",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 939,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    },
+    {
+      "expected_sha256": "ae5d70e9aa3231f42ae43c1dcf8962f99741cf60f9fc5c03def287b060288b6b",
+      "id": "source_file:f8ff94b95e4f1da31efc",
+      "path": "config/experiments.yaml",
+      "verification": {
+        "checks": [
+          {
+            "actual_sha256": "332ac0a3c22da374eb086679df17e4982d5844ffdce8b06d9f1fdf6dedbcfec6",
+            "run_ids": [
+              "ladder3_prebuilt_cache_seed42_20m_20261014",
+              "ladder3_shared_bundle_n64_seed42_20m_20261014",
+              "ladder18_shared_bundle_n64_seed42_100k_resource_probe_20261014",
+              "ladder3_strategy_seed42_20m_exploratory_selection_acknowledged_20261014"
+            ],
+            "size_bytes": 8473,
+            "source_commit": "b00b5e85622ec1410c8a11cc063cd52c87d3976d",
+            "status": "mismatch"
+          }
+        ],
+        "linked_source_commit_count": 1,
+        "matching_source_commit_count": 0,
+        "status": "mismatch"
+      }
+    }
+  ],
+  "node_counts_by_kind_and_status": {
+    "data_input": {
+      "missing": 4,
+      "verified_current_path": 77
+    },
+    "job": {
+      "not_byte_addressed": 221
+    },
+    "manifest": {
+      "verified_current_path": 49
+    },
+    "run": {
+      "not_byte_addressed": 49
+    },
+    "run_artifact": {
+      "missing": 132,
+      "verified_relocated": 421
+    },
+    "source_file": {
+      "historical_source_unavailable": 15,
+      "verified_in_source_commit": 2,
+      "verified_in_source_snapshot": 1833
+    },
+    "source_snapshot": {
+      "verified": 45
+    }
+  },
+  "nodes_verified": 2427,
+  "schema": "research-provenance-byte-verification-v1",
+  "source_snapshot_embedded_files_verified": 27093,
+  "source_snapshot_embedded_uncompressed_bytes": 182907747,
+  "status": "incomplete",
+  "verifier_path": "scripts/research/analysis/evidence/verify_research_provenance_bytes.py",
+  "verifier_sha256": "58b8d7b6f68f1b8d01d12482c685221ca6d84efd250da1d5df1818384b3448aa"
+}

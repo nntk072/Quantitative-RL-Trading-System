@@ -11,6 +11,7 @@ import pytest
 
 from evaluation.metrics import (
     PerformanceMetrics,
+    account_path_metric_inputs,
     calculate_metrics,
     compute_metrics,
     evaluation_periods_per_year,
@@ -23,6 +24,63 @@ from evaluation.metrics.bootstrap import (
     sortino_stat,
     win_rate_stat,
 )
+from evaluation.metrics.performance import completed_position_trade_pnls
+
+
+@pytest.mark.parametrize("completion", ["maybe", 2])
+def test_malformed_position_completion_does_not_infer_a_completed_trade(
+    completion: object,
+) -> None:
+    pnls, fill_count, incomplete_positions = completed_position_trade_pnls(
+        [
+            {
+                "type": "close",
+                "position_id": "p1",
+                "net_pnl": 12.0,
+                "position_complete": completion,
+            }
+        ]
+    )
+
+    assert pnls == []
+    assert fill_count == 1
+    assert incomplete_positions == 1
+
+
+def test_legacy_final_close_without_completion_marker_remains_inferred() -> None:
+    pnls, fill_count, incomplete_positions = completed_position_trade_pnls(
+        [{"type": "close", "position_id": "p1", "net_pnl": 12.0}]
+    )
+
+    assert pnls == [12.0]
+    assert fill_count == 1
+    assert incomplete_positions == 0
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        {
+            "type": "close",
+            "position_id": "p1",
+            "net_pnl": True,
+            "position_complete": True,
+        },
+        {
+            "type": "close",
+            "position_id": "p1",
+            "net_pnl": np.bool_(True),
+            "pnl": 12.0,
+            "position_complete": True,
+        },
+    ],
+)
+def test_boolean_net_pnl_does_not_become_a_dollar_amount(record: dict[str, object]) -> None:
+    pnls, fill_count, incomplete_positions = completed_position_trade_pnls([record])
+
+    assert pnls == []
+    assert fill_count == 0
+    assert incomplete_positions == 1
 
 
 @pytest.mark.unit
@@ -174,6 +232,25 @@ class TestComputeMetrics:
         with pytest.raises(ValueError, match="periods_per_year must be positive"):
             compute_metrics([100.0, 101.0], initial_balance=100.0, periods_per_year=0)
 
+    @pytest.mark.parametrize("value", [True, 2.5])
+    def test_malformed_periods_per_year_is_rejected(self, value: Any) -> None:
+        with pytest.raises(ValueError, match="periods_per_year must be positive"):
+            compute_metrics([100.0, 101.0], initial_balance=100.0, periods_per_year=value)
+
+    @pytest.mark.parametrize("trade_pnls", [[True], [float("nan")], ["1.0"]])
+    def test_malformed_trade_pnls_are_rejected(self, trade_pnls: list[Any]) -> None:
+        with pytest.raises(ValueError, match="trade_pnls values must be finite numbers"):
+            compute_metrics([100.0, 101.0], initial_balance=100.0, trade_pnls=trade_pnls)
+
+    def test_boolean_equity_and_initial_balance_are_rejected(self) -> None:
+        with pytest.raises(ValueError, match="equity_curve values must be finite numbers"):
+            compute_metrics([True, 101.0], initial_balance=100.0)
+        with pytest.raises(ValueError, match="equity_curve values must be finite numbers"):
+            malformed_equity: Any = ["100.0", 101.0]
+            compute_metrics(malformed_equity, initial_balance=100.0)
+        with pytest.raises(ValueError, match="initial_balance must be positive"):
+            compute_metrics([100.0, 101.0], initial_balance=True)
+
     def test_non_finite_equity_is_rejected(self) -> None:
         with pytest.raises(ValueError, match="finite"):
             compute_metrics([100_000.0, float("nan")], initial_balance=100_000.0)
@@ -230,6 +307,233 @@ class TestComputeMetrics:
         # Assert
         assert metrics.extras["sweep_delay_s"] == pytest.approx(2.5)
 
+    def test_session_returns_and_right_censored_time_to_ruin(self) -> None:
+        trace = [
+            {
+                "session_id": 10,
+                "session_start_equity": 100.0,
+                "equity": 101.0,
+                "cumulative_payouts": 0.0,
+            },
+            {
+                "session_id": 10,
+                "session_start_equity": 100.0,
+                "equity": 102.0,
+                "cumulative_payouts": 0.0,
+            },
+            {
+                "session_id": 11,
+                "session_start_equity": 102.0,
+                "equity": 100.0,
+                "cumulative_payouts": 0.0,
+            },
+        ]
+        metrics = compute_metrics(
+            [100.0, 102.0, 100.0],
+            initial_balance=100.0,
+            n_sessions=2,
+            account_state_trace=trace,
+            breach_events=[],
+            completed_data_split=True,
+        )
+
+        assert metrics.daily_return_count == 2
+        assert metrics.daily_return_mean_pct == pytest.approx((2.0 - (2.0 / 102.0 * 100.0)) / 2)
+        assert metrics.daily_return_min_pct == pytest.approx(-2.0 / 102.0 * 100.0)
+        assert metrics.daily_return_max_pct == pytest.approx(2.0)
+        assert metrics.daily_return_std_pct is not None
+        assert metrics.time_to_ruin_sessions == 2
+        assert metrics.ruin_event_observed is False
+        assert metrics.ruin_time_censored is True
+
+        missing_event_time = compute_metrics(
+            [100.0, 102.0, 100.0],
+            initial_balance=100.0,
+            breach_count=1,
+            account_state_trace=trace,
+            breach_events=[],
+            completed_data_split=True,
+        )
+        assert missing_event_time.time_to_ruin_sessions is None
+        assert missing_event_time.time_to_ruin_availability == "breach_count_without_event_timing"
+
+    def test_time_to_ruin_uses_first_breached_session_and_excludes_partial_day(self) -> None:
+        trace = [
+            {
+                "session_id": 10,
+                "session_start_equity": 100.0,
+                "equity": 102.0,
+                "cumulative_payouts": 0.0,
+            },
+            {
+                "session_id": 11,
+                "session_start_equity": 102.0,
+                "equity": 95.0,
+                "cumulative_payouts": 0.0,
+            },
+        ]
+        metrics = compute_metrics(
+            [100.0, 102.0, 95.0],
+            initial_balance=100.0,
+            n_sessions=2,
+            breach_count=1,
+            account_state_trace=trace,
+            breach_events=[{"session_id": 11, "reason": "daily_loss"}],
+            completed_data_split=False,
+        )
+
+        assert metrics.daily_return_count == 1
+        assert metrics.daily_return_mean_pct == pytest.approx(2.0)
+        assert metrics.time_to_ruin_sessions == 2
+        assert metrics.ruin_event_observed is True
+        assert metrics.ruin_time_censored is False
+
+    def test_time_to_ruin_uses_earliest_traced_session_not_event_row_order(self) -> None:
+        trace = [
+            {
+                "session_id": session_id,
+                "session_start_equity": 100.0,
+                "equity": 99.0,
+                "cumulative_payouts": 0.0,
+            }
+            for session_id in (10, 11, 12)
+        ]
+        events = [
+            {"session_id": 12, "reason": "max_drawdown"},
+            {"session_id": 10, "reason": "daily_loss"},
+        ]
+
+        metrics = compute_metrics(
+            [100.0, 99.0],
+            initial_balance=100.0,
+            breach_count=len(events),
+            n_sessions=3,
+            account_state_trace=trace,
+            breach_events=events,
+            completed_data_split=True,
+        )
+
+        assert metrics.time_to_ruin_sessions == 1
+        assert metrics.ruin_event_observed is True
+        assert metrics.breach_session_count == 2
+
+    def test_malformed_breach_event_keeps_path_metrics_unavailable(self) -> None:
+        trace = [
+            {
+                "session_id": 10,
+                "session_start_equity": 100.0,
+                "equity": 99.0,
+                "cumulative_payouts": 0.0,
+            }
+        ]
+
+        metrics = compute_metrics(
+            [100.0, 99.0],
+            initial_balance=100.0,
+            breach_count=1,
+            account_state_trace=trace,
+            breach_events=["not-an-event"],  # type: ignore[list-item]
+            completed_data_split=True,
+        )
+
+        assert metrics.breach_rate is None
+        assert metrics.time_to_ruin_sessions is None
+        assert metrics.time_to_ruin_availability == "breach_event_history_malformed"
+
+    def test_non_sequence_breach_history_is_unavailable(self) -> None:
+        metrics = compute_metrics(
+            [100.0, 99.0],
+            initial_balance=100.0,
+            breach_count=1,
+            account_state_trace=[],
+            breach_events=iter([{"session_id": 1}]),  # type: ignore[arg-type]
+        )
+
+        assert metrics.breach_event_count is None
+        assert metrics.breach_session_count is None
+        assert metrics.breach_rate is None
+        assert metrics.breach_rate_availability == "breach_event_history_malformed"
+
+    def test_session_return_counts_in_session_payout_and_marks_boundary_ambiguity(self) -> None:
+        trace = [
+            {
+                "session_id": 10,
+                "session_start_equity": 100.0,
+                "equity": 100.0,
+                "cumulative_payouts": 0.0,
+            },
+            {
+                "session_id": 10,
+                "session_start_equity": 100.0,
+                "equity": 90.0,
+                "cumulative_payouts": 10.0,
+            },
+        ]
+        metrics = compute_metrics(
+            [100.0, 90.0],
+            initial_balance=100.0,
+            account_state_trace=trace,
+            breach_events=[],
+            completed_data_split=True,
+        )
+        assert metrics.daily_return_mean_pct == pytest.approx(0.0)
+
+        payout_reset = [
+            {
+                "session_id": 10,
+                "session_start_equity": 100.0,
+                "equity": 110.0,
+                "cumulative_payouts": 0.0,
+            },
+            {
+                "session_id": 10,
+                "session_start_equity": 105.0,
+                "equity": 105.0,
+                "cumulative_payouts": 5.0,
+            },
+        ]
+        payout_reset_metrics = compute_metrics(
+            [100.0, 105.0],
+            initial_balance=100.0,
+            account_state_trace=payout_reset,
+            breach_events=[],
+            completed_data_split=True,
+        )
+        assert payout_reset_metrics.daily_return_count == 1
+        assert payout_reset_metrics.daily_return_mean_pct == pytest.approx(10.0)
+
+        ambiguous = [
+            {
+                "session_id": 10,
+                "session_start_equity": 90.0,
+                "equity": 90.0,
+                "cumulative_payouts": 10.0,
+            }
+        ]
+        unavailable = compute_metrics(
+            [100.0, 90.0],
+            initial_balance=100.0,
+            account_state_trace=ambiguous,
+            breach_events=[],
+            completed_data_split=True,
+        )
+        assert unavailable.daily_return_count == 0
+        assert unavailable.daily_return_mean_pct is None
+        assert unavailable.daily_return_availability == "payout_boundary_attribution_ambiguous"
+
+    def test_incomplete_account_trace_is_not_used_as_path_evidence(self) -> None:
+        inputs = account_path_metric_inputs(
+            {
+                "account_state_trace": [{"session_id": 1}],
+                "account_state_trace_complete": False,
+                "breach_events": [],
+                "completed_data_split": True,
+            }
+        )
+        assert inputs["account_state_trace"] is None
+        assert inputs["breach_events"] == []
+        assert inputs["completed_data_split"] is True
+
     def test_empty_curve_raises(self) -> None:
         # Act / Assert
         with pytest.raises(ValueError, match="equity_curve"):
@@ -260,6 +564,7 @@ class TestComputeMetrics:
             initial_balance=100_000.0,
             trade_pnls=trades,
             breach_count=2,
+            n_breach_sessions=2,
             n_sessions=4,
         )
 
@@ -268,6 +573,7 @@ class TestComputeMetrics:
         assert metrics.avg_trade == pytest.approx(metrics.expectancy)
         assert metrics.turnover == pytest.approx(4 / 6)
         assert metrics.breach_rate == pytest.approx(2 / 4)
+        assert metrics.breach_session_count == 2
 
     def test_breach_rate_zero_sessions_is_safe(self) -> None:
         # Act
@@ -276,8 +582,60 @@ class TestComputeMetrics:
         )
 
         # Assert
-        assert metrics.breach_rate == 0.0
+        assert metrics.breach_rate is None
         assert metrics.breach_count == 1
+
+    def test_breach_rate_is_distinct_breached_sessions_not_event_count(self) -> None:
+        events = [
+            {"session_id": 4, "event_type": "daily_loss"},
+            {"session_id": 4, "event_type": "max_drawdown"},
+            {"session_id": 6, "event_type": "daily_loss"},
+        ]
+
+        metrics = compute_metrics(
+            [100_000.0, 99_000.0],
+            initial_balance=100_000.0,
+            breach_count=len(events),
+            n_sessions=4,
+            breach_events=events,
+        )
+
+        assert metrics.breach_count == 3
+        assert metrics.breach_session_count == 2
+        assert metrics.breach_rate == pytest.approx(2 / 4)
+        assert metrics.breach_rate_availability is None
+
+    def test_breach_rate_is_unavailable_without_distinct_session_evidence(self) -> None:
+        metrics = compute_metrics(
+            [100_000.0, 99_000.0],
+            initial_balance=100_000.0,
+            breach_count=2,
+            n_sessions=4,
+        )
+
+        assert metrics.breach_rate is None
+        assert metrics.breach_session_count is None
+        assert metrics.breach_rate_availability == ("distinct_breach_session_count_unavailable")
+
+    def test_breach_rate_rejects_breached_session_count_mismatch(self) -> None:
+        metrics = compute_metrics(
+            [100_000.0, 99_000.0],
+            initial_balance=100_000.0,
+            breach_count=1,
+            n_sessions=4,
+            n_breach_sessions=2,
+            breach_events=[{"session_id": 4}],
+        )
+
+        assert metrics.breach_rate is None
+        assert metrics.breach_rate_availability == "breach_session_count_disagrees_with_events"
+
+    @pytest.mark.parametrize("field_name", ["breach_count", "n_sessions", "n_breach_sessions"])
+    @pytest.mark.parametrize("value", [False, "0", 0.0, -1])
+    def test_compute_metrics_rejects_malformed_counts(self, field_name: str, value: Any) -> None:
+        kwargs = {field_name: value}
+        with pytest.raises(ValueError, match=f"{field_name} must be a nonnegative integer"):
+            compute_metrics([100_000.0, 100_001.0], initial_balance=100_000.0, **kwargs)
 
 
 @pytest.mark.unit
@@ -296,6 +654,11 @@ class TestCalculateMetricsAdapter:
         assert metrics.win_rate == pytest.approx(2 / 3)
         assert metrics.max_consec_loss == 1
         assert metrics.breach_rate == pytest.approx(0.5)
+
+    @pytest.mark.parametrize("breach_count", [False, "0", 0.0, -1])
+    def test_rejects_malformed_breach_session_counts(self, breach_count: Any) -> None:
+        with pytest.raises(ValueError, match="n_breach_sessions must be a nonnegative integer"):
+            calculate_metrics(pd.Series([100_000.0, 100_001.0]), n_breach_sessions=breach_count)
 
     def test_m1_annualisation_default_is_preserved(self) -> None:
         # The adapter keeps the legacy 252*390 default so migrated runners

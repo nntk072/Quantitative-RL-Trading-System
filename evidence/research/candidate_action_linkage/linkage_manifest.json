@@ -1,0 +1,84 @@
+{
+  "action_rows_within_proposal_validity_window": 83540,
+  "audit_source_sha256": {
+    "scripts/research/analysis/evaluation/audit_candidate_action_linkage.py": "26fd068fb2ab797904887b0ff62a3306bb7d312587f4d1faf39e89d4942a6988"
+  },
+  "baseline_arms": {
+    "matched_setup_baselines_19770241b07b5b5e/always_no_trade": {
+      "decision_rows": 99492,
+      "decision_trace_sha256": "59cb1170776121552cba096961a0c4fadf02831197f92c4d7debaf86a27f22df",
+      "identified_selected_candidate_rows": 0,
+      "identity_status_counts": {
+        "not_applicable": 99492
+      },
+      "identity_version_counts": {
+        "trade-setup-event-identity-v3": 99492
+      },
+      "matched_identified_rows": 0,
+      "matched_unique_candidate_events": 0,
+      "outside_proposal_window_rows": 0,
+      "selected_non_no_trade_rows": 0,
+      "unmatched_identified_rows": 0,
+      "within_proposal_window_rows": 0,
+      "within_window_unique_candidate_events": 0
+    },
+    "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup": {
+      "decision_rows": 99492,
+      "decision_trace_sha256": "1498a1a9e48557442be19d4a59df696a472935e260c041a7303b4362387b7053",
+      "identified_selected_candidate_rows": 70716,
+      "identity_status_counts": {
+        "identified": 70716,
+        "not_applicable": 28776
+      },
+      "identity_version_counts": {
+        "trade-setup-event-identity-v3": 99492
+      },
+      "matched_identified_rows": 67973,
+      "matched_unique_candidate_events": 20383,
+      "outside_proposal_window_rows": 28407,
+      "selected_non_no_trade_rows": 70716,
+      "unmatched_identified_rows": 2743,
+      "within_proposal_window_rows": 39566,
+      "within_window_unique_candidate_events": 7945
+    },
+    "matched_setup_baselines_19770241b07b5b5e/structure_priority": {
+      "decision_rows": 99492,
+      "decision_trace_sha256": "03641827d20c0b06e138f381c58ca977f3620b72f78f71c3cf5cf35cbbb5569a",
+      "identified_selected_candidate_rows": 70716,
+      "identity_status_counts": {
+        "identified": 70716,
+        "not_applicable": 28776
+      },
+      "identity_version_counts": {
+        "trade-setup-event-identity-v3": 99492
+      },
+      "matched_identified_rows": 68011,
+      "matched_unique_candidate_events": 17102,
+      "outside_proposal_window_rows": 24037,
+      "selected_non_no_trade_rows": 70716,
+      "unmatched_identified_rows": 2705,
+      "within_proposal_window_rows": 43974,
+      "within_window_unique_candidate_events": 8223
+    }
+  },
+  "candidate_proposal_manifest_sha256": "80ca5e249ad302fe7f325d61f13d4b9d587e88ac187ef80b07f47f09f76e1662",
+  "candidate_proposal_parquet_sha256": "0dd4a94288ffe714fa87b6e72b0c15112805d5eb0267f67d4a1a154b1609c1da",
+  "claim_scope": "exact source-event overlap with selected matched-baseline setup actions",
+  "does_not_establish": [
+    "historical trained-PPO action linkage",
+    "selection of a specific market/limit proposal or bracket by the policy",
+    "account-state eligibility or portfolio contention",
+    "realized economic value from the conditional outcomes"
+  ],
+  "matched_baseline_result_manifest_sha256": "de1b93148181220c8e71b09ca61256fb00e19302b5586b4e128caa25048176e8",
+  "matched_rows_csv_sha256": "27b18aece02bf573336823343cb84c9a46755d0013a8ab985cb03b16c4a51432",
+  "proposal_rows": 54638,
+  "schema_version": "candidate-action-event-linkage-v1",
+  "status": "matched_development_baseline_traces_only",
+  "unique_proposal_candidate_events": 29116,
+  "unique_proposal_candidate_events_selected_in_any_baseline_arm": 22310,
+  "unique_proposal_candidate_events_selected_within_validity_window": 9137,
+  "unmatched_action_rows": 5448,
+  "unmatched_rows_csv_sha256": "4dda31fac7c96bf432cc66c5a50b8c52b55380b813fb0b234b35d64966f63186",
+  "within_window_rows_csv_sha256": "360d55ba59797e93358d3d73692e9e98a7916eedcc3d435d0106a190a44e2424"
+}

@@ -26,7 +26,7 @@ This page contains 1 public callable records owned by `market_data.transforms.se
 
 **Observed usage:**
 
-1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L143)
+1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L290)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -29,6 +29,7 @@ from configuration.paths import repository_root
 from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CANDIDATES
 from features import build_features
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
+from features.technical.indicators import atr as calculate_atr
 from market_data.loading.market_data_ingestion import run_pipeline
 
 ROOT = repository_root(__file__)
@@ -41,7 +42,7 @@ _ZONE_FAMILIES = {
     "ifvg_unretested": ("ifvg",),
 }
 _PO3_TIMEFRAME_CODES = (1, 3, 5, 10, 15, 30, 60, 240, 1440)
-GEOMETRY_SUPPORT_SCHEMA_VERSION = "candidate-price-geometry-support-v2"
+GEOMETRY_SUPPORT_SCHEMA_VERSION = "candidate-price-geometry-support-v3"
 
 
 def _active_mask(features: pd.DataFrame, candidate_id: int) -> tuple[pd.Series, str | None]:
@@ -139,7 +140,7 @@ def _candidate_geometry_summary(
     *,
     configured_support: bool,
 ) -> dict[str, Any]:
-    """Summarize valid active zone bounds without inferring order geometry."""
+    """Summarize active bounds in price units and relative to close and ATR."""
     candidate_id = int(candidate.candidate_id)
     if candidate_id == NO_TRADE_ID:
         return {
@@ -156,15 +157,57 @@ def _candidate_geometry_summary(
             "geometry_coverage_fraction": None,
             "median_geometry_width": None,
             "p95_geometry_width": None,
+            "rows_with_atr_normalized_geometry": None,
+            "atr_normalized_geometry_coverage_fraction": None,
+            "median_geometry_width_atr": None,
+            "p95_geometry_width_atr": None,
+            "fraction_price_inside_geometry": None,
+            "median_distance_to_geometry_atr": None,
+            "p95_distance_to_geometry_atr": None,
         }
 
     active, _active_column = _active_mask(features, candidate_id)
     active_values = active.to_numpy(dtype=bool)
+    reference_close = (
+        pd.to_numeric(features["close"], errors="coerce").to_numpy(dtype=float)
+        if "close" in features
+        else None
+    )
+    atr = (
+        pd.to_numeric(features["atr"], errors="coerce").to_numpy(dtype=float)
+        if "atr" in features
+        else None
+    )
     geometry_counts = np.zeros(len(features), dtype=np.int16)
     invalid_counts = np.zeros(len(features), dtype=np.int16)
     widths: list[np.ndarray[Any, Any]] = []
+    normalized_widths: list[np.ndarray[Any, Any]] = []
+    normalized_distances: list[np.ndarray[Any, Any]] = []
+    normalized_inside: list[np.ndarray[Any, Any]] = []
+    normalized_rows = np.zeros(len(features), dtype=bool)
     found_contract = False
     special_zone_valid = np.zeros(len(features), dtype=bool)
+
+    def record_valid_bounds(
+        low: np.ndarray[Any, Any],
+        high: np.ndarray[Any, Any],
+        valid: np.ndarray[Any, Any],
+    ) -> None:
+        """Collect raw widths and, when possible, close/ATR-scaled geometry."""
+        nonlocal normalized_rows
+        widths.append(high[valid] - low[valid])
+        if reference_close is None or atr is None:
+            return
+        scaled = valid & np.isfinite(reference_close) & np.isfinite(atr) & (atr > 0.0)
+        if not np.any(scaled):
+            return
+        normalized_rows |= scaled
+        normalized_widths.append((high[scaled] - low[scaled]) / atr[scaled])
+        outside_distance = np.maximum(low[scaled] - reference_close[scaled], 0.0) + np.maximum(
+            reference_close[scaled] - high[scaled], 0.0
+        )
+        normalized_distances.append(outside_distance / atr[scaled])
+        normalized_inside.append(outside_distance == 0.0)
 
     for family, active_column, low_column, high_column in _geometry_specs(candidate):
         if family == "po3_ifvg":
@@ -187,7 +230,7 @@ def _candidate_geometry_summary(
             )
             invalid_counts += (special_zone_active & ~special_zone_valid).astype(np.int16)
             geometry_counts += special_zone_valid.astype(np.int16)
-            widths.append(high[special_zone_valid] - low[special_zone_valid])
+            record_valid_bounds(low, high, special_zone_valid)
             continue
         if low_column not in features.columns or high_column not in features.columns:
             continue
@@ -213,7 +256,7 @@ def _candidate_geometry_summary(
         invalid = zone_active & ~valid
         geometry_counts += valid.astype(np.int16)
         invalid_counts += invalid.astype(np.int16)
-        widths.append(high[valid] - low[valid])
+        record_valid_bounds(low, high, valid)
 
     valid_geometry_rows = active_values & (geometry_counts > 0)
     invalid_geometry_rows = active_values & (invalid_counts > 0)
@@ -240,6 +283,23 @@ def _candidate_geometry_summary(
         if any(values.size for values in widths)
         else np.asarray([], dtype=float)
     )
+    normalized_width_values = (
+        np.concatenate([values for values in normalized_widths if values.size])
+        if any(values.size for values in normalized_widths)
+        else np.asarray([], dtype=float)
+    )
+    normalized_distance_values = (
+        np.concatenate([values for values in normalized_distances if values.size])
+        if any(values.size for values in normalized_distances)
+        else np.asarray([], dtype=float)
+    )
+    normalized_inside_values = (
+        np.concatenate([values for values in normalized_inside if values.size])
+        if any(values.size for values in normalized_inside)
+        else np.asarray([], dtype=bool)
+    )
+    normalization_available = reference_close is not None and atr is not None
+    normalized_row_count = int(normalized_rows.sum())
     return {
         "candidate_id": candidate_id,
         "idea": str(candidate.idea),
@@ -260,6 +320,35 @@ def _candidate_geometry_summary(
         ),
         "median_geometry_width": float(np.median(width_values)) if width_values.size else None,
         "p95_geometry_width": float(np.quantile(width_values, 0.95)) if width_values.size else None,
+        "rows_with_atr_normalized_geometry": (
+            normalized_row_count if normalization_available else None
+        ),
+        "atr_normalized_geometry_coverage_fraction": (
+            float(normalized_row_count / active_count)
+            if normalization_available and active_count
+            else None
+        ),
+        "median_geometry_width_atr": (
+            float(np.median(normalized_width_values)) if normalized_width_values.size else None
+        ),
+        "p95_geometry_width_atr": (
+            float(np.quantile(normalized_width_values, 0.95))
+            if normalized_width_values.size
+            else None
+        ),
+        "fraction_price_inside_geometry": (
+            float(normalized_inside_values.mean()) if normalized_inside_values.size else None
+        ),
+        "median_distance_to_geometry_atr": (
+            float(np.median(normalized_distance_values))
+            if normalized_distance_values.size
+            else None
+        ),
+        "p95_distance_to_geometry_atr": (
+            float(np.quantile(normalized_distance_values, 0.95))
+            if normalized_distance_values.size
+            else None
+        ),
     }
 
 
@@ -327,6 +416,11 @@ def build_report(
         timeframe_bars=primary,
         secondary_timeframe_bars=secondary,
     )
+    if not features.index.equals(primary["M1"].index):
+        raise ValueError("candidate geometry feature rows do not align to the M1 source bars")
+    features = features.copy()
+    features["close"] = pd.to_numeric(primary["M1"]["close"], errors="coerce")
+    features["atr"] = calculate_atr(primary["M1"], int(cfg.features.atr_period))
     if not features.columns.is_unique:
         raise ValueError("candidate geometry support requires unique feature columns")
 
@@ -372,7 +466,7 @@ def build_report(
         "schema_version": GEOMETRY_SUPPORT_SCHEMA_VERSION,
         "interpretation": (
             "Measures source-zone or standard-deviation retracement-band bounds on eligible "
-            "training feature rows. "
+            "training feature rows, plus width and distance scaled by the aligned M1 ATR. "
             "It does not provide proposed entry, stop, target, order TTL, fill, return, or policy evidence."
         ),
         "source_commit": subprocess.check_output(
@@ -409,7 +503,10 @@ def build_report(
         "execution geometry and is not policy or economic evidence.\n\n"
         "`candidate_price_geometry_support.csv` reports active rows, configured support, "
         "geometry kind, valid coverage, invalid bounds, and widths in instrument "
-        "price units. Standard-deviation candidates use their timeframe-specific "
+        "price units. It also reports geometry width and distance from current M1 close "
+        "in current M1 ATR units, plus the fraction of valid source bounds containing "
+        "the close. The close and ATR are joined from the same M1 source index. "
+        "Standard-deviation candidates use their timeframe-specific "
         "retracement band. A family with no applicable geometry fields is marked "
         "explicitly instead of being counted as missing data. PO3 "
         "uses its direct zone projection when available and otherwise mirrors "

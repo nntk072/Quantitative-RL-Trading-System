@@ -422,6 +422,49 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
         "equity": equity,
         "trades": trades,
         "initial_balance": 100_000.0,
+        "account_state_trace": pd.DataFrame(
+            [
+                {
+                    "schema_version": "account_state_trace.v1",
+                    "state_phase": "post_action_valuation",
+                    "rollout_step": 1,
+                    "valuation_time": "2025-01-01T00:01:00Z",
+                    "balance": 100_000.0,
+                    "equity": 100_010.0,
+                    "daily_loss": 0.0,
+                    "daily_floor_equity": 95_000.0,
+                    "max_loss_floor_equity": 90_000.0,
+                    "pending_order_limit_price": None,
+                    "breach_reason": "",
+                }
+            ]
+        ),
+        "account_state_trace_complete": True,
+        "policy_decisions": pd.DataFrame(
+            [
+                {
+                    "schema_version": "event_backtest_policy_decision.v2",
+                    "decision_id": "bt:d1",
+                    "decision_time": "2025-01-01T00:01:00Z",
+                    "action": 0,
+                    "trade_setup_candidate_id": 3,
+                    "trade_setup_eligible": True,
+                    "eligible_candidate_count": 2,
+                    "eligible_trade_setup_ids": [0, 3],
+                    "trade_setup_source_event_id": "source-event-3",
+                    "trade_setup_source_event_identity_status": "identified",
+                    "position_direction_at_decision": 0,
+                    "position_id_at_decision": None,
+                    "pending_order_id_at_decision": None,
+                },
+                {
+                    "schema_version": "event_backtest_policy_decision.v1",
+                    "decision_id": "bt:d0",
+                    "action": 0,
+                },
+            ]
+        ),
+        "policy_decisions_complete": True,
         "trade_setup_decisions": decisions,
         "trade_setup_policy_metrics": summarize_trade_setup_decisions(decisions, trades),
         "policy_metadata": {
@@ -442,7 +485,14 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
 
     split = run_dir / "training"
     saved_decisions = pd.read_csv(split / "trade_setup_decisions.csv")
+    saved_policy_decisions = pd.read_csv(split / "policy_decisions.csv")
+    saved_account_state = pd.read_csv(split / "account_state_trace.csv")
+    assert saved_account_state.loc[0, "schema_version"] == "account_state_trace.v1"
+    assert saved_account_state.loc[0, "daily_floor_equity"] == 95_000.0
+    assert pd.isna(saved_account_state.loc[0, "pending_order_limit_price"])
     assert len(saved_decisions) == 2
+    assert saved_policy_decisions.loc[0, "decision_id"] == "bt:d1"
+    assert saved_policy_decisions.loc[0, "trade_setup_eligible"]
     assert saved_decisions["trade_event_start_index"].tolist() == [0, 0]
     assert saved_decisions["trade_event_end_index_exclusive"].tolist() == [0, 0]
     assert saved_decisions["trade_setup_source_event_identity_status"].tolist() == [
@@ -457,6 +507,25 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
     assert (split / "trade_setup_performance_heatmap.png").is_file()
     diagnostics = json.loads((split / "trade_setup_policy_metrics.json").read_text())
     evaluation_diagnostics = json.loads((split / "evaluation_diagnostics.json").read_text())
+    assert evaluation_diagnostics["account_state_trace_rows"] == 1
+    assert evaluation_diagnostics["account_state_trace_complete"] is True
+    assert evaluation_diagnostics["account_state_trace_phases"] == ["post_action_valuation"]
+    assert evaluation_diagnostics["account_state_trace_schema"] == "account_state_trace.v1"
+    assert evaluation_diagnostics["account_state_reconciliation_status"] == "incomplete"
+    assert evaluation_diagnostics["breach_event_ledger_supplied"] is False
+    assert evaluation_diagnostics["breach_event_rows"] == 0
+    policy_reconciliation = json.loads((split / "policy_decision_reconciliation.json").read_text())
+    assert "breach_event_ledger_not_supplied" in policy_reconciliation["incomplete_reasons"]
+    reconciliation = json.loads((split / "account_state_reconciliation.json").read_text())
+    assert reconciliation["status"] == "incomplete"
+    assert "unsupported_or_mixed_trace_schema" in reconciliation["incomplete_reasons"]
+    assert evaluation_diagnostics["policy_decisions_rows"] == 2
+    assert evaluation_diagnostics["policy_decisions_complete"] is True
+    assert evaluation_diagnostics["policy_decisions_schema"] == "mixed"
+    assert evaluation_diagnostics["policy_decisions_schema_versions"] == [
+        "event_backtest_policy_decision.v1",
+        "event_backtest_policy_decision.v2",
+    ]
     assert evaluation_diagnostics["policy_metadata"]["seed"] == 42
     assert diagnostics["no_trade_count"] == 1
     assert diagnostics["invalid_selection_count"] == 0

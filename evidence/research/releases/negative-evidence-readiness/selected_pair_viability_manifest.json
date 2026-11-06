@@ -14,7 +14,7 @@
       ],
       "limitations": [
         "Both evaluations reached data_end; the failure does not mean that the data split was incomplete.",
-        "The legacy daily_loss counter is gross negative closed-trade PnL without offsetting winning closes.",
+        "The recorded daily_loss events use a gross realized-loss counter that sums negative closed-trade PnL without offsetting winning closes.",
         "The exposed 2026 report-period cannot be used as confirmation.",
         "The pair is one seed; its 6-vs-10 account widths are the declared entry-state visibility treatment, and preserved resolved configs differ only at env.entry_state_observation."
       ],
@@ -46,7 +46,7 @@
       "limitations": [
         "One seed and one previously inspected selection pair.",
         "The two policy arms have 6-versus-10 account-observation widths because env.entry_state_observation is the declared single-factor treatment; the inputs are not identical, and the single seed does not establish a robust benefit.",
-        "The legacy daily-loss counter is not net daily-equity semantics."
+        "The historical gross realized-loss counter is not net daily-equity semantics."
       ],
       "question": "Did either arm pass the predeclared strict zero-breach training survival gate on the configured 2025 training interval?",
       "result": "Both arms reached data_end and completed the configured split; both failed the declared risk-survival gate. The A4A/A4B outcome difference is descriptive, not causal.",
@@ -90,10 +90,10 @@
           "storage_scope": "project_research_archive"
         },
         {
-          "notes": "Shared interpretation of the legacy daily-loss breach semantics.",
-          "path": "evidence/research/releases/negative-evidence-readiness/legacy_daily_loss_counter_breach_trace.md",
+          "notes": "Shared interpretation of historical gross realized-loss counter breaches.",
+          "path": "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
           "role": "risk_gate_trace",
-          "sha256": "efb5bc3eba17a0251914c9448c8aa98a0722806c81de48c7167f519277bc06cb"
+          "sha256": "ce4c93b971e124139a9b48add8cb2e2229d34246dc39920617c611be3e81a641"
         }
       ],
       "identity": {
@@ -107,7 +107,7 @@
           "commission_per_lot=0.0",
           "slippage_points=5.0",
           "fill_latency_ms=30.0",
-          "legacy daily-loss counter sums gross negative closed PnL; not net daily equity"
+          "historical gross realized-loss counter sums negative closed PnL without offset; it is not net daily-equity loss"
         ],
         "checkpoint_hash": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703",
         "claimed_reproduction_level": "R2: selected report and linked run identities/artifact hashes are retained; no independent full rerun is claimed.",
@@ -137,7 +137,7 @@
           "One selected seed only.",
           "Training-period evidence is development/selection evidence, not untouched confirmation.",
           "Exposed 2026 report-period is not confirmation.",
-          "Configured legacy daily-loss gate is not net daily-equity semantics.",
+          "The configured historical gross realized-loss counter is not net daily-equity loss.",
           "No independent review is claimed.",
           "The two arms differ in account observation width and entry-state visibility; their outcome difference is descriptive, not causal."
         ],
@@ -236,10 +236,10 @@
           "storage_scope": "project_research_archive"
         },
         {
-          "notes": "Shared interpretation of the legacy daily-loss breach semantics.",
-          "path": "evidence/research/releases/negative-evidence-readiness/legacy_daily_loss_counter_breach_trace.md",
+          "notes": "Shared interpretation of historical gross realized-loss counter breaches.",
+          "path": "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
           "role": "risk_gate_trace",
-          "sha256": "efb5bc3eba17a0251914c9448c8aa98a0722806c81de48c7167f519277bc06cb"
+          "sha256": "ce4c93b971e124139a9b48add8cb2e2229d34246dc39920617c611be3e81a641"
         }
       ],
       "identity": {
@@ -253,7 +253,7 @@
           "commission_per_lot=0.0",
           "slippage_points=5.0",
           "fill_latency_ms=30.0",
-          "legacy daily-loss counter sums gross negative closed PnL; not net daily equity"
+          "historical gross realized-loss counter sums negative closed PnL without offset; it is not net daily-equity loss"
         ],
         "checkpoint_hash": "f2d07676fc5e1019dda9cbd1714874fd6997238ba70dc69a5f16be7c19a36fdf",
         "claimed_reproduction_level": "R2: selected report and linked run identities/artifact hashes are retained; no independent full rerun is claimed.",
@@ -283,7 +283,7 @@
           "One selected seed only.",
           "Training-period evidence is development/selection evidence, not untouched confirmation.",
           "Exposed 2026 report-period is not confirmation.",
-          "Configured legacy daily-loss gate is not net daily-equity semantics.",
+          "The configured historical gross realized-loss counter is not net daily-equity loss.",
           "No independent review is claimed.",
           "The two arms differ in account observation width and entry-state visibility; their outcome difference is descriptive, not causal."
         ],
@@ -372,13 +372,13 @@
       "notes": "Canonical bounded negative-result narrative.",
       "path": "evidence/research/releases/negative-evidence-readiness/CONSOLIDATED_RESEARCH_RESULTS.md",
       "role": "results_summary",
-      "sha256": "e5c800a325bb809c7736551a54f5df802b70ee2c07a977c615d966d95451f93f"
+      "sha256": "f8b4775198ecfe501af1402bb96d38d2553c54f3a41950655639f2bf239e8eed"
     },
     {
-      "notes": "Legacy counter trace and interpretation.",
-      "path": "evidence/research/releases/negative-evidence-readiness/legacy_daily_loss_counter_breach_trace.md",
+      "notes": "Historical gross realized-loss counter trace and interpretation.",
+      "path": "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
       "role": "risk_gate_semantics",
-      "sha256": "efb5bc3eba17a0251914c9448c8aa98a0722806c81de48c7167f519277bc06cb"
+      "sha256": "ce4c93b971e124139a9b48add8cb2e2229d34246dc39920617c611be3e81a641"
     }
   ]
 }

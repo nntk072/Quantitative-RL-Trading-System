@@ -31,16 +31,18 @@ PYTHONPATH=. .venv/bin/python -m pytest \
   -q
 ```
 
-Observed result: `1 passed in 0.37s`. The paired quote-wait-gap test and this
-case also pass together (`2 passed in 0.35s`) on `gpuarm2`, job `21367992`,
-2026-11-03. No new Slurm job or step was created.
+Verified against current source in the existing allocation `21405414` on
+`gpuarm1`: the tied-trigger and paired quote-wait-gap tests pass together
+(`2 passed in 0.36s`). Log:
+`/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/tied_protective_trigger_order_current.log`.
+No new Slurm job or step was created.
 
 ## Source identities at verification
 
 - Test: `a9fbb1f54d3fbae3e73c28da82752eb55bc3201ce1b1afa99a126f9643b208c1`
 - Environment protective runtime:
-  `415fdabf0b2dadd5572221cc8cc75cac13ee5c864f76af5059a36c4f463b4d27`
+  `0fc74436816d7bc7a2db7b30615b65b8c536f331bb15911362d0fff1dff0747d`
 - Backtest protective runtime:
-  `7d873860ed80dc251e87fdede298eb189cb21801b8f1d88c4c88941dec1faf48`
+  `fb87b6e84e3393191da1c392f0c1b4d3636ad33a2f971d087f433f3b2fc670e6`
 - TickBook execution resolver:
-  `50250798b0db1a8a20e5b006705bff40b40861860e538493c407ae28d6d41f83`
+  `6973db5a21d0adeebfd7f44c808525efc77dfdbb61333170219c37c850f51a31`

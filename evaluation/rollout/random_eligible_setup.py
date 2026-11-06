@@ -67,6 +67,12 @@ class RandomEligibleSetupPolicy:
         self._risk_index = action_schema.names.index("risk")
         self._action = np.zeros(action_schema.width, dtype=np.float32)
         self._action[self._risk_index] = np.float32(2.0 * self.normalized_risk - 1.0)
+        if action_schema.has_entry_execution:
+            # This reference randomizes setup choice only; execution stays
+            # market-based so it does not silently add a limit-order treatment.
+            self._action[action_schema.indices["entry_execution"]] = np.float32(-0.5)
+            self._action[action_schema.indices["limit_offset_atr"]] = np.float32(-1.0)
+            self._action[action_schema.indices["limit_ttl_bars"]] = np.float32(-1.0)
 
     def __call__(self, observation: dict[str, Any]) -> np.ndarray[Any, Any]:
         """Return an action selecting only a currently eligible setup.
@@ -120,7 +126,15 @@ class RandomEligibleSetupPolicy:
             "normalized_risk": self.normalized_risk,
             "risk_coordinate_semantics": "position within configured environment risk interval",
             "setup_selection": "uniform_over_currently_eligible_non_no_trade_ids",
-            "other_action_coordinates": "fixed_at_zero",
+            "other_action_coordinates": "management coordinates fixed at zero",
+            "entry_execution": (
+                "market" if self.action_schema.has_entry_execution else "market_default"
+            ),
+            "limit_order_controls": (
+                "minimum_offset_and_ttl_inactive_under_market_execution"
+                if self.action_schema.has_entry_execution
+                else "not_in_action_schema"
+            ),
             "execution_and_risk_controls": "delegated to shared evaluation environment",
         }
 
@@ -143,17 +157,29 @@ class RandomEligibleSetupRolloutModel:
 
     @property
     def policy(self) -> RandomEligibleSetupRolloutModel:
-        """Expose the semantic action coordinates used by rollout diagnostics."""
+        """Expose the semantic action coordinates used by rollout diagnostics.
+
+        Returns:
+            This rollout-compatible model wrapper.
+        """
         return self
 
     @property
     def hybrid_action_coordinates(self) -> tuple[str, ...]:
-        """Return the exact action-coordinate names used by the baseline."""
+        """Return the exact action-coordinate names used by the baseline.
+
+        Returns:
+            Ordered coordinate names from the policy action schema.
+        """
         return self._policy.action_schema.names
 
     @property
     def policy_metadata(self) -> dict[str, Any]:
-        """Return seed and action semantics for a future result manifest."""
+        """Return seed and action semantics for a future result manifest.
+
+        Returns:
+            Baseline identity, seed, action schema, and policy semantics.
+        """
         return self._policy.metadata()
 
     def predict(
@@ -182,18 +208,33 @@ class AlwaysNoTradePolicy(RandomEligibleSetupPolicy):
     """Return the versioned NO_TRADE action for every environment decision."""
 
     def __init__(self, action_schema: TradeSetupActionSchema) -> None:
-        """Initialize a deterministic flat control with minimum risk coordinate."""
+        """Initialize a deterministic flat control with minimum risk coordinate.
+
+        Args:
+            action_schema: Environment action schema populated by the control.
+        """
         super().__init__(action_schema, seed=0, trade_probability=0.0, normalized_risk=0.0)
 
     def __call__(self, observation: dict[str, Any]) -> np.ndarray[Any, Any]:
-        """Return NO_TRADE without reading market or eligibility fields."""
+        """Return NO_TRADE without reading market or eligibility fields.
+
+        Args:
+            observation: Environment observation, intentionally unused.
+
+        Returns:
+            Action vector selecting no-trade at minimum risk.
+        """
         del observation
         action = self._action.copy()
         action[self._setup_index] = np.float32(trade_setup_center(NO_TRADE_ID))
         return action
 
     def metadata(self) -> dict[str, Any]:
-        """Identify this policy as the always-flat accounting control."""
+        """Identify this policy as the always-flat accounting control.
+
+        Returns:
+            Provenance metadata identifying the no-trade baseline.
+        """
         metadata = super().metadata()
         metadata.update(
             {
@@ -212,5 +253,9 @@ class AlwaysNoTradeRolloutModel(RandomEligibleSetupRolloutModel):
     """Run the always-flat control through the shared policy evaluator."""
 
     def __init__(self, policy: AlwaysNoTradePolicy) -> None:
-        """Bind one deterministic no-trade policy to the rollout interface."""
+        """Bind one deterministic no-trade policy to the rollout interface.
+
+        Args:
+            policy: Always-flat policy exposed through the rollout interface.
+        """
         super().__init__(policy)

@@ -7,6 +7,8 @@ import logging
 from compute.environment.device import get_device, scale_training_cfg
 from compute.environment.precision import configure_accelerator_for_training
 from training.configuration.cli import load_merged_config, parse_train_args
+from training.configuration.survival_gate import validate_portfolio_gate
+from training.configuration.vae_admission import require_vae_candidate_admissible
 from training.runner.seed import _setup_rngs
 from training.setup.callbacks import (
     _build_lagrangian_callback,
@@ -26,13 +28,12 @@ def _prepare_training_configuration() -> TrainingConfigurationStage:
     """
     args = parse_train_args()
 
+    try:
+        require_vae_candidate_admissible(bool(args.use_vae))
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     if args.use_vae and not args.vae_path:
         raise SystemExit("--use-vae requires --vae-path pointing at a trained VAE .pth")
-    if args.walk_forward and args.use_vae:
-        raise SystemExit(
-            "Walk-forward with an externally fitted VAE has unverified fold provenance; "
-            "provide a fold-scoped VAE fitting pipeline before enabling this combination"
-        )
 
     cfg = load_merged_config(args)
     configure_accelerator_for_training(
@@ -72,6 +73,7 @@ def _prepare_training_configuration() -> TrainingConfigurationStage:
         preserve_ppo_geometry=preserve_ppo_geometry,
     )
     cfg.quality_execution.effective_n_envs = int(cfg.env.n_envs)
+    validate_portfolio_gate(cfg=cfg, args=args)
     if quality_variant and exact_n_envs:
         from training.configuration.quality import validate_quality_resource_shape
 

@@ -83,7 +83,7 @@ def _synthetic_inputs() -> tuple[pd.DataFrame, pd.DataFrame]:
     return bars, features
 
 
-def test_tier0_baselines_share_resolved_inputs_but_separate_seeds() -> None:
+def test_tier0_baselines_share_resolved_inputs_but_separate_seeds(tmp_path: Path) -> None:
     cfg = load_config(
         [
             "env.strategy_actions=true",
@@ -141,6 +141,99 @@ def test_tier0_baselines_share_resolved_inputs_but_separate_seeds() -> None:
     assert random["confidence_intervals"]["metrics"]["max_drawdown"]["estimate"] == pytest.approx(
         random["metrics"].max_drawdown
     )
+
+    # The bundle writer has two passes over policy outputs. Keep a distinctive
+    # value in the later arm to prove it does not reuse that arm's CI for the
+    # earlier control when serializing the second pass.
+    random["confidence_intervals"]["metrics"]["sharpe"]["estimate"] = 123.0
+    bundle_path = write_matched_setup_baseline_bundle(
+        outputs,
+        cfg,
+        bars,
+        features,
+        None,
+        output_root=tmp_path / "evidence/research/matched_setup_baselines",
+        artifact_root=tmp_path,
+        source_repository=ROOT,
+        config_path=ROOT / "config/base/default.yaml",
+        protocol_path="docs/research/setup_conditioned_reasoning_benchmark_protocol.md",
+        regeneration_command="pytest tests/integration/evaluation/test_matched_setup_baselines.py",
+        symbols=("SYNTHETIC",),
+        timeframes=("M1",),
+    )
+    flat_ci = json.loads(
+        (bundle_path / "always_no_trade/confidence_intervals.json").read_text(encoding="utf-8")
+    )
+    random_ci = json.loads(
+        (bundle_path / "random_eligible_setup/confidence_intervals.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert flat_ci["metrics"]["sharpe"]["estimate"] == 0.0
+    assert random_ci["metrics"]["sharpe"]["estimate"] == 123.0
+    manifest = json.loads((bundle_path / "result_manifest.json").read_text(encoding="utf-8"))
+    comparison = next(
+        item
+        for item in manifest["comparisons"]
+        if item["comparison_id"] == "always_flat_vs_random_eligible_setup"
+    )
+    reported_flat_ci = next(
+        item["confidence_intervals"]
+        for item in comparison["metrics"]
+        if item["run_id"].endswith("/always_no_trade")
+    )
+    reported_random_ci = next(
+        item["confidence_intervals"]
+        for item in comparison["metrics"]
+        if item["run_id"].endswith("/random_eligible_setup")
+    )
+    assert reported_flat_ci == flat_ci
+    assert reported_random_ci == random_ci
+
+
+def test_tier0_baselines_can_persist_an_independent_subset(tmp_path: Path) -> None:
+    cfg = load_config(
+        [
+            "env.strategy_actions=true",
+            "env.trade_setup_actions=true",
+            "costs.use_tick_execution=false",
+            "evaluation.periods_per_year=100",
+        ]
+    )
+    bars, features = _synthetic_inputs()
+
+    outputs = evaluate_tier0_setup_baselines(
+        cfg,
+        bars,
+        features,
+        None,
+        execution_seed=41,
+        random_policy_seed=7,
+        period_role="synthetic",
+        baseline_names=("always_no_trade",),
+    )
+
+    assert set(outputs) == {"always_no_trade"}
+    assert outputs["always_no_trade"]["trade_fill_event_ledger"].empty
+    bundle_path = write_matched_setup_baseline_bundle(
+        outputs,
+        cfg,
+        bars,
+        features,
+        None,
+        output_root=tmp_path / "evidence/research/flat_baseline",
+        artifact_root=tmp_path,
+        source_repository=ROOT,
+        config_path=ROOT / "config/base/default.yaml",
+        protocol_path="docs/research/setup_conditioned_reasoning_benchmark_protocol.md",
+        regeneration_command="qrl-research-baseline --baselines always_no_trade",
+        symbols=("SYNTHETIC",),
+        timeframes=("M1",),
+    )
+    manifest = json.loads((bundle_path / "result_manifest.json").read_text(encoding="utf-8"))
+    assert len(manifest["runs"]) == 1
+    assert manifest["runs"][0]["variant_id"] == "always_no_trade_v1"
+    assert manifest["comparisons"] == []
 
 
 @pytest.mark.parametrize(
@@ -248,6 +341,8 @@ def test_matched_runner_accepts_deterministic_structure_rule_without_checkpoint(
         timeframes=("M1", "M5"),
     )
     manifest = json.loads((bundle_path / "result_manifest.json").read_text(encoding="utf-8"))
+    for comparison in manifest["comparisons"]:
+        assert {row["run_id"] for row in comparison["metrics"]} == set(comparison["run_ids"])
     schema_document = json.loads(
         (ROOT / "schemas/research_result_manifest_v2.schema.json").read_text(encoding="utf-8")
     )

@@ -144,6 +144,116 @@ class TestZeroActionOpens:
         assert opened, "zero action (PPO mean) should open when context+SL valid"
 
 
+def test_early_reset_clears_open_episode_state_without_carryover() -> None:
+    bars = _bars()
+    feats = _features(bars, ctx_dir=1.0)
+    feats["po3_manipulation_low"] = np.full(len(bars), 80.0)
+    feats["asian_low"] = np.nan
+    feats["london_low"] = np.nan
+
+    def make_env() -> TradingEnv:
+        return TradingEnv(
+            bars.copy(),
+            feats.copy(),
+            strategy_actions=True,
+            strategy=PO3IFVGStrategy(enforce_gate=False),
+            obs_window=10,
+            risk_frac_range=(0.01, 0.01),
+            rr_ratio_range=(2.0, 2.0),
+            min_sl_points=5.0,
+            min_sl_atr_mult=0.0,
+            max_loss_per_trade_usd=1_000.0,
+        )
+
+    env = make_env()
+    env.reset(seed=42)
+    action = _default_schema_action(0.0, 0.0, 0.0, 0.0)
+    for _ in range(40):
+        env.step(action)
+        if env.position is not None:
+            break
+
+    assert env.position is not None
+    assert any(event.get("type") == "open" for event in env.trade_log)
+
+    observation, info = env.reset(seed=42)
+
+    fresh_env = make_env()
+    fresh_observation, _ = fresh_env.reset(seed=42)
+    assert info == {}
+    assert env.position is None
+    assert env._pending_entry_order is None
+    assert env.trade_log == []
+    assert env.account.balance == pytest.approx(env.initial_balance)
+    assert env.account.equity == pytest.approx(env.initial_balance)
+    assert env.equity_curve == [env.initial_balance]
+    assert env.breach_events == []
+    assert env.payout_events == []
+    assert env.cumulative_payouts == 0.0
+    assert env.cycle_count == 1
+    assert env.cycle_successes == 0
+    assert env.cycle_failures == 0
+    for key in fresh_observation:
+        np.testing.assert_array_equal(observation[key], fresh_observation[key])
+
+
+def test_rollout_max_loss_breach_blocks_later_eligible_entries() -> None:
+    bars = _bars()
+    feats = _features(bars, ctx_dir=1.0)
+    feats["po3_manipulation_low"] = np.full(len(bars), 80.0)
+    feats["asian_low"] = np.nan
+    feats["london_low"] = np.nan
+
+    def make_env() -> TradingEnv:
+        return TradingEnv(
+            bars.copy(),
+            feats.copy(),
+            strategy_actions=True,
+            strategy=PO3IFVGStrategy(enforce_gate=False),
+            obs_window=10,
+            episodic=False,
+            max_episode_steps=None,
+            risk_frac_range=(0.01, 0.01),
+            rr_ratio_range=(2.0, 2.0),
+            min_sl_points=5.0,
+            min_sl_atr_mult=0.0,
+            max_loss_per_trade_usd=1_000.0,
+            guardrail_kwargs={"daily_loss_limit": 5_000.0, "max_loss_limit": 10_000.0},
+        )
+
+    action = _default_schema_action(0.0, 0.0, 0.0, 0.0)
+    control = make_env()
+    control.reset(seed=42)
+    for _ in range(40):
+        control.step(action)
+        if any(row.get("type") == "open" for row in control.trade_log):
+            break
+    assert any(row.get("type") == "open" for row in control.trade_log)
+
+    breached = make_env()
+    breached.reset(seed=42)
+    breached.account.balance = 89_000.0
+    breached.account.equity = 89_000.0
+    breached.account._update_loss_from_initial()
+    for _ in range(40):
+        breached.step(action)
+        if breached.breach_events:
+            break
+    assert breached.breach_events[0]["reason"] == "max_drawdown"
+    breach_bar = int(breached.breach_events[0].get("bar", breached.step_idx))
+
+    for _ in range(20):
+        _, _, done, truncated, _ = breached.step(action)
+        assert not done
+        assert not truncated
+    later_opens = [
+        row
+        for row in breached.trade_log
+        if row.get("type") == "open" and int(row.get("bar", -1)) > breach_bar
+    ]
+    assert later_opens == []
+
+
 class TestContextDirectionForcesSide:
     def test_long_context_opens_long_only(self) -> None:
         bars = _bars()

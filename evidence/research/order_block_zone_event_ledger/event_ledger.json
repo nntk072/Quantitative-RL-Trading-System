@@ -14,7 +14,7 @@
   },
   "per_zone_retest_event_count": 134227,
   "primary_symbol": "US100.cash",
-  "resolved_config_sha256": "dcbbd796251f277a632b34a28816994d2e84c9d96bca2c67f50fd66c78a35e41",
+  "resolved_config_sha256": "ea1fd57a76bc44d8853b00740cd25d6e56a67a5322de2c8df592b8c256f78faa",
   "scalar_retest_pulse_count": 21154,
   "scalar_retest_pulse_count_by_timeframe": {
     "D1": 10,
@@ -27,7 +27,7 @@
     "M30": 452,
     "M5": 2567
   },
-  "source_commit": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
   "source_hashes": {
     "features/context/order_blocks.py": "e0e620c80fa7c3859f7abfc5c2a29aab9b0f444e506dba129d134f024858dbcd",
     "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",

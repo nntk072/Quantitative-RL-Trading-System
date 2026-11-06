@@ -1,0 +1,43 @@
+{
+  "checks": {
+    "2025_period_and_month_metadata_match": true,
+    "directions_metadata_match": true,
+    "generator_hash_matches": true,
+    "input_hashes_match": true,
+    "quote_groups_meet_unique_complete_rule": true,
+    "reported_pair_fields_reconcile": true,
+    "schema_valid": true,
+    "single_trade_pnl_to_balance_bridge_matches": true,
+    "source_events_not_reused": true,
+    "trace_count_matches": true
+  },
+  "inputs": {
+    "alignment": {
+      "current_sha256": "848956724b9383c124862da998a708638c55a3fce5b809505ad2accd93a8641d",
+      "matches": true,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/fill_quote_source_alignment/selected_campaign_fill_quote_alignment.json",
+      "recorded_sha256": "848956724b9383c124862da998a708638c55a3fce5b809505ad2accd93a8641d"
+    },
+    "bars": {
+      "current_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+      "matches": true,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+      "recorded_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0"
+    },
+    "ticks": {
+      "current_sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23",
+      "matches": true,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_202412300105_202610162349.csv",
+      "recorded_sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23"
+    }
+  },
+  "report_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/current_source_candidate_evidence_20261105/local_tick_action_trace_set_stratified.json",
+  "report_sha256": "03dff53ac8da3b3332d16070443e083dc49159de6f1a18dbf92e444c1638353c",
+  "schema_version": "simulator-local-tick-action-trace-verification-v1",
+  "scope": "Independent artifact/hash and report-field consistency check; does not rerun either simulator, prove the source alignment algorithm, or establish historical policy or economic validity.",
+  "source_event_identities_checked": 116,
+  "trace_pair_count": 58,
+  "verification_passed": true,
+  "verifier_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/scripts/research/analysis/evaluation/verify_simulator_local_tick_trace_set.py",
+  "verifier_sha256": "87bdbcf07d845775aadf572524f817b08288d6f4da972c5c7b4801b4a4bb2635"
+}

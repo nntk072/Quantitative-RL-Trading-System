@@ -93,7 +93,11 @@ def build_report(
     input_bars_sha256: str | None = None,
     input_ticks_sha256: str | None = None,
 ) -> dict[str, Any]:
-    if scenario not in {"account_transition", "daily_loss_reset", "max_loss_terminal"}:
+    if scenario not in {
+        "account_transition",
+        "daily_loss_full_evaluation_failure",
+        "max_loss_terminal",
+    }:
         raise ValueError(f"unsupported account trace scenario: {scenario!r}")
     bars = clean(load_bars(bars_path), tz=timezone)
     bars = add_session_labels(bars, tz=timezone)
@@ -139,18 +143,28 @@ def build_report(
     # same-session re-entry after a breach, then checks next-session recovery.
     actions = (
         [1, 0, 19, 1, 0, 0, 0, 0, 1, 0, 19, 0, 0, 0]
-        if scenario in {"daily_loss_reset", "max_loss_terminal"}
+        if scenario in {"daily_loss_full_evaluation_failure", "max_loss_terminal"}
         else [1, 0, 19, 0, 0, 0, 0, 0, 1, 0, 19, 0, 0, 0]
     )
     if len(actions) != len(trace_bars) - 2:
         raise ValueError("controlled action sequence does not match selected bars")
 
     guardrails = {
-        "daily_loss_limit": 1.0 if scenario == "daily_loss_reset" else 10_000.0,
+        "daily_loss_limit": 1.0 if scenario == "daily_loss_full_evaluation_failure" else 10_000.0,
         "max_loss_limit": 1.0 if scenario == "max_loss_terminal" else 20_000.0,
         "risk_per_trade_limit": 10_000.0,
         "soft_daily_loss_limit": 0.0,
         "soft_max_loss_limit": 0.0,
+        # Hard loss limits are percentage-based. Preserve the $1 controlled
+        # breach by configuring its equivalent share of initial balance.
+        "daily_loss_limit_pct": 1.0 / INITIAL_BALANCE
+        if scenario == "daily_loss_full_evaluation_failure"
+        else 0.05,
+        "max_loss_limit_initial_pct": 1.0 / INITIAL_BALANCE
+        if scenario == "max_loss_terminal"
+        else 0.10,
+        "soft_daily_loss_limit_pct": 0.0,
+        "soft_max_loss_limit_initial_pct": 0.0,
     }
     tick_mode = tickbook is not None
     randomized_fill_latency_ms = 30.0 if tick_mode else 0.0
@@ -247,7 +261,9 @@ def build_report(
     backtest_opens = [event for event in backtest_lifecycle if event["type"] == "open"]
     env_closes = [event for event in env_lifecycle if event["type"] == "close"]
     backtest_closes = [event for event in backtest_lifecycle if event["type"] == "close"]
-    expected_lifecycle_count = 1 if scenario == "max_loss_terminal" else 2
+    expected_lifecycle_count = (
+        1 if scenario in {"max_loss_terminal", "daily_loss_full_evaluation_failure"} else 2
+    )
     if (len(env_opens), len(backtest_opens), len(env_closes), len(backtest_closes)) != (
         expected_lifecycle_count,
         expected_lifecycle_count,
@@ -371,13 +387,23 @@ def build_report(
     first_session_id, second_session_id = (session_id for session_id, _ in eligible)
     expected_close_sessions = (
         {first_session_id}
-        if scenario == "max_loss_terminal"
+        if scenario in {"max_loss_terminal", "daily_loss_full_evaluation_failure"}
         else {first_session_id, second_session_id}
     )
     if {event_session(event) for event in env_closes} != expected_close_sessions:
-        raise ValueError("environment close events do not cover the expected selected sessions")
+        actual_sessions = {event_session(event) for event in env_closes}
+        raise ValueError(
+            "environment close events do not cover expected sessions: "
+            f"expected={expected_close_sessions}, actual={actual_sessions}, "
+            f"events={env_closes}"
+        )
     if {event_session(event) for event in backtest_closes} != expected_close_sessions:
-        raise ValueError("backtest close events do not cover the expected selected sessions")
+        actual_sessions = {event_session(event) for event in backtest_closes}
+        raise ValueError(
+            "backtest close events do not cover expected sessions: "
+            f"expected={expected_close_sessions}, actual={actual_sessions}, "
+            f"events={backtest_closes}"
+        )
     env_first_session_pnl = sum(
         float(event["pnl"]) for event in env_closes if event_session(event) == first_session_id
     )
@@ -436,7 +462,7 @@ def build_report(
     )
     env_post_breach_same_session_opens = 0
     backtest_post_breach_same_session_opens = 0
-    if scenario in {"daily_loss_reset", "max_loss_terminal"}:
+    if scenario in {"daily_loss_full_evaluation_failure", "max_loss_terminal"}:
         if env_breach_events and backtest_breach_events:
             env_breach_time = pd.Timestamp(env_breach_events[0]["time"])
             backtest_breach_time = pd.Timestamp(backtest_breach_events[0]["time"])
@@ -450,7 +476,7 @@ def build_report(
                 and event_timestamp(event) > backtest_breach_time
                 for event in backtest_opens
             )
-        if scenario == "daily_loss_reset":
+        if scenario == "daily_loss_full_evaluation_failure":
             breach_reason = "daily_loss"
         else:
             breach_reason = "max_drawdown"
@@ -477,9 +503,11 @@ def build_report(
             )
         )
         expected_limit = guardrails[
-            "daily_loss_limit" if scenario == "daily_loss_reset" else "max_loss_limit"
+            "daily_loss_limit"
+            if scenario == "daily_loss_full_evaluation_failure"
+            else "max_loss_limit"
         ]
-        expected_session_opens = 1 if scenario == "daily_loss_reset" else 0
+        expected_session_opens = 0
         risk_transition_matches = (
             breach_lists_match
             and actions[3] == 1
@@ -513,16 +541,18 @@ def build_report(
         "backtest_next_session_open_count": backtest_second_session_open_count,
         "environment_post_breach_same_session_open_count": env_post_breach_same_session_opens,
         "backtest_post_breach_same_session_open_count": backtest_post_breach_same_session_opens,
-        "attempted_same_session_reentry_after_first_close": scenario == "daily_loss_reset"
+        "attempted_same_session_reentry_after_first_close": scenario
+        in {"daily_loss_full_evaluation_failure"}
         and actions[3] == 1,
         "scheduled_same_session_entry_after_max_loss": scenario == "max_loss_terminal"
         and actions[3] == 1,
-        "same_session_reentry_blocked": scenario not in {"daily_loss_reset", "max_loss_terminal"}
+        "same_session_reentry_blocked": scenario != "max_loss_terminal"
         or (env_first_session_open_count == 1 and backtest_first_session_open_count == 1),
-        "next_session_entry_allowed_after_reset": scenario == "daily_loss_reset"
-        and env_second_session_open_count == 1
-        and backtest_second_session_open_count == 1,
+        "next_session_entry_allowed_after_reset": False,
         "max_loss_rollout_latched": scenario == "max_loss_terminal"
+        and env_second_session_open_count == 0
+        and backtest_second_session_open_count == 0,
+        "daily_loss_evaluation_latched": scenario == "daily_loss_full_evaluation_failure"
         and env_second_session_open_count == 0
         and backtest_second_session_open_count == 0,
         "environment_terminated": env_terminated,
@@ -556,8 +586,8 @@ def build_report(
             else "next-market-bar open quote and timestamp",
             "event_backtest": "TickBook quote at configured execution time"
             if tick_mode
-            else "next-market-bar close quote and timestamp",
-            "source_basis": "current engine implementations and the existing backtest execution-contract test",
+            else "next-market-bar open quote and timestamp",
+            "source_basis": "current engine implementations and the bar-open parity regression",
         },
         "session_source": "local M1 bar dates and the repository's date-derived session_id; local NY labels select the rows, with no external calendar claim",
         "timezone_label": timezone,
@@ -656,18 +686,24 @@ def main() -> None:
     parser.add_argument("--out", type=Path)
     parser.add_argument(
         "--scenario",
-        choices=("account_transition", "daily_loss_reset", "max_loss_terminal", "both", "all"),
+        choices=(
+            "account_transition",
+            "daily_loss_full_evaluation_failure",
+            "max_loss_terminal",
+            "both",
+            "all",
+        ),
         default="account_transition",
     )
     args = parser.parse_args()
     scenarios = (
-        ("account_transition", "daily_loss_reset")
+        ("account_transition", "daily_loss_full_evaluation_failure")
         if args.scenario == "both"
-        else ("account_transition", "daily_loss_reset", "max_loss_terminal")
+        else ("account_transition", "daily_loss_full_evaluation_failure", "max_loss_terminal")
         if args.scenario == "all"
         else (args.scenario,)
     )
-    packet_dir = args.out.parent if args.out is not None else ROOT / DEFAULT_PACKET
+    packet_dir = args.out.parent.resolve() if args.out is not None else ROOT / DEFAULT_PACKET
     packet_dir.mkdir(parents=True, exist_ok=True)
     input_bars_hash = file_sha256(args.bars_csv)
     input_ticks_hash = file_sha256(args.ticks_csv) if args.ticks_csv is not None else None
@@ -683,7 +719,7 @@ def main() -> None:
     reports: list[tuple[Path, dict[str, Any]]] = []
     for scenario in scenarios:
         if args.out is not None and len(scenarios) == 1:
-            output_path = args.out
+            output_path = args.out.resolve()
         elif scenario == "account_transition":
             filename = (
                 "session_tick_account_transition.json"
@@ -691,12 +727,8 @@ def main() -> None:
                 else "session_account_transition.json"
             )
             output_path = packet_dir / filename
-        elif scenario == "daily_loss_reset":
-            filename = (
-                "session_tick_daily_loss_reset.json"
-                if args.ticks_csv
-                else "session_daily_loss_reset.json"
-            )
+        elif scenario == "daily_loss_full_evaluation_failure":
+            filename = "daily_breach_full_evaluation_failure.json"
             output_path = packet_dir / filename
         else:
             filename = (
@@ -725,15 +757,15 @@ resets, daily-loss blocking, and final account state. It is not a learned-policy
 replay or an economic performance estimate.
 
 Both engines reset their session-start balance from their own prior-session
-close PnL. The bar fallback uses different next-bar quote/time contracts. The
-separate tick-required report uses the same TickBook, required execution, and
-30 ms randomized latency in both engines. Each report preserves exact event
-comparisons and the reset checks; neither is a learned-policy replay.
+close PnL. The bar fallback and tick-required traces use the same next-market-
+bar open time and quote contract across engines. The tick-required report uses
+the same TickBook and 30 ms randomized latency in both engines. Each report
+preserves exact event comparisons and the reset checks; neither is a learned-
+policy replay.
 
 The daily-loss trace sets a controlled $1 hard daily limit, attempts another
-entry after a first-session loss crosses that limit, checks that both engines
-block the same-session re-entry, then checks that the next session can trade
-after its account reset.
+entry after a first-session loss crosses that limit, and checks that both
+engines latch account failure across the remainder of the evaluation.
 
 The max-loss trace sets a controlled $1 account-loss limit and runs the
 environment episodically. Both engines record the max-loss breach and make no
@@ -747,8 +779,8 @@ clock, provider, or calendar claim is made.
 - `session_account_transition.json`: controlled bar-fallback trace.
 - `session_tick_account_transition.json`: controlled TickBook trace when
   generated with `--ticks-csv`.
-- `session_tick_daily_loss_reset.json`: controlled daily-breach block and
-  next-session reset trace when generated with `--scenario both --ticks-csv`.
+- `daily_breach_full_evaluation_failure.json`: controlled daily-breach latch
+  trace generated with `--scenario both --ticks-csv`.
 - `session_tick_max_loss_terminal.json`: controlled episodic max-loss
   termination and rollout-wide open latch when generated with `--scenario all --ticks-csv`.
 - `session_*_verification.json`: independently recomputed trace and input/source
@@ -761,7 +793,7 @@ clock, provider, or calendar claim is made.
 .venv/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py
 .venv/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py --scenario both --ticks-csv data/training/US100.cash_202412300105_202610162349.csv
 .venv/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py --scenario all --ticks-csv data/training/US100.cash_202412300105_202610162349.csv
-.venv/bin/python scripts/research/analysis/evaluation/verify_simulator_local_session_account_trace.py evidence/research/simulator_execution_parity/local_session_account_transition/session_account_transition.json evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_account_transition.json evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_daily_loss_reset.json
+.venv/bin/python scripts/research/analysis/evaluation/verify_simulator_local_session_account_trace.py evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_account_transition.json evidence/research/simulator_execution_parity/local_session_account_transition/daily_breach_full_evaluation_failure.json evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_max_loss_terminal.json
 ```
 """
     readme_path = packet_dir / "README.md"
@@ -772,7 +804,11 @@ clock, provider, or calendar claim is made.
         f"{_sha256(readme_path)}  {packet_prefix}/README.md",
         *[
             f"{_sha256(path)}  {path.relative_to(ROOT).as_posix()}"
-            for path in sorted(packet_dir.glob("session_*.json"))
+            for path in sorted(
+                candidate
+                for candidate in packet_dir.glob("*.json")
+                if not candidate.name.endswith("_verification.json")
+            )
         ],
         f"{_sha256(generator_path)}  {generator_path.relative_to(ROOT).as_posix()}",
     ]

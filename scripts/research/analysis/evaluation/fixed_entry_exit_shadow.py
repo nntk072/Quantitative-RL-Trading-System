@@ -669,8 +669,18 @@ def _source_compatibility(root: Path, cfg: Any) -> bool:
         return False
 
     archived_fixed_guardrails = {
-        "daily_loss_limit": float(cfg.ftmo.daily_loss_limit),
-        "max_loss_limit": float(cfg.ftmo.max_loss_limit),
+        "daily_loss_limit": float(
+            cfg.ftmo.get(
+                "daily_loss_limit",
+                cfg.account.initial_balance * cfg.ftmo.daily_loss_limit_pct,
+            )
+        ),
+        "max_loss_limit": float(
+            cfg.ftmo.get(
+                "max_loss_limit",
+                cfg.account.initial_balance * cfg.ftmo.max_loss_limit_initial_pct,
+            )
+        ),
         "risk_per_trade_limit": float(cfg.ftmo.risk_per_trade_limit),
         "soft_daily_loss_limit": float(cfg.ftmo.get("soft_daily_loss_limit", 2000.0)),
         "soft_max_loss_limit": float(cfg.ftmo.get("soft_max_loss_limit", 5000.0)),

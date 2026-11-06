@@ -1,6 +1,7 @@
 """Evaluation must preserve input runs and reproduce training fit scope."""
 
 import json
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -8,8 +9,11 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
+from decisioning.actions import build_action_schema_from_config
+from decisioning.trade_setup import build_trade_setup_action_schema
 from evaluation.reanalysis import checkpoint_reanalysis as eval_run
 from evaluation.reanalysis import provenance as reanalysis_provenance
+from evaluation.reanalysis.datasets import _load_train_only_feature_snapshot
 from evaluation.reanalysis.provenance import (
     _evaluation_dataset_records,
     _feature_build_scope,
@@ -20,8 +24,33 @@ from evaluation.reanalysis.provenance import (
     _validate_reanalysis_feature_cache,
     _validate_reanalysis_request,
 )
-from evaluation.reporting.run_manifest import file_sha256
+from evaluation.reanalysis.validation import (
+    resolve_recorded_sequence_schema,
+    validate_train_only_feature_snapshot_request,
+)
+from evaluation.reporting.run_manifest import build_sequence_feature_schema, file_sha256
 from features import feature_cache_path
+
+
+def test_checkpoint_reanalysis_schema_includes_policy_selected_entry_execution() -> None:
+    env_config = OmegaConf.create(
+        {
+            "trade_setup_actions": True,
+            "agent_entry_execution": True,
+            "allow_agent_sl_mode": True,
+            "allow_agent_tp_mode": True,
+            "allow_multi_tp": False,
+        }
+    )
+
+    assert build_action_schema_from_config(env_config) == (
+        build_trade_setup_action_schema(
+            has_sl_mode=True,
+            has_tp_mode=True,
+            has_multi_tp=False,
+            has_entry_execution=True,
+        )
+    )
 
 
 def test_checkpoint_reanalysis_defaults_to_source_action_mode() -> None:
@@ -38,6 +67,102 @@ def test_checkpoint_reanalysis_defaults_to_source_action_mode() -> None:
     assert sampled_args.stochastic is True
     assert deterministic_args.stochastic is False
     assert sampled_args.seed == 42
+
+
+def test_checkpoint_reanalysis_parses_recorded_sequence_schema_opt_in() -> None:
+    args = eval_run.build_reanalysis_parser().parse_args(
+        [
+            "--run",
+            "source",
+            "--output",
+            "out",
+            "--use-recorded-sequence-schema",
+            "--train-only-screen",
+            "--train-only-feature-snapshot",
+            "train.parquet",
+        ]
+    )
+    assert args.use_recorded_sequence_schema is True
+
+
+def test_checkpoint_reanalysis_parses_current_stop_menu_diagnostic() -> None:
+    args = eval_run.build_reanalysis_parser().parse_args(
+        ["--run", "source", "--output", "out", "--use-current-stop-menu"]
+    )
+
+    assert args.use_current_stop_menu is True
+
+
+def test_recorded_sequence_schema_requires_snapshot_and_rebuilds_exact_order() -> None:
+    columns = ["last_swing_high", "volume_spike", "reachable_r"]
+    schema = build_sequence_feature_schema(columns)
+    rebuilt, resolved = resolve_recorded_sequence_schema(
+        schema,
+        available_columns={"last_swing_high", "volume_spike"},
+        generated_columns={"reachable_r"},
+        train_only_screen=True,
+        has_train_only_feature_snapshot=True,
+        mtf_enabled=False,
+        feature_validity_channels=False,
+    )
+    assert rebuilt == schema
+    assert resolved == tuple(columns)
+
+    with pytest.raises(ValueError, match="requires --train-only-feature-snapshot"):
+        resolve_recorded_sequence_schema(
+            schema,
+            available_columns={"last_swing_high", "volume_spike"},
+            generated_columns={"reachable_r"},
+            train_only_screen=True,
+            has_train_only_feature_snapshot=False,
+            mtf_enabled=False,
+            feature_validity_channels=False,
+        )
+    with pytest.raises(ValueError, match="absent from the training feature frame"):
+        resolve_recorded_sequence_schema(
+            schema,
+            available_columns={"volume_spike"},
+            generated_columns={"reachable_r"},
+            train_only_screen=True,
+            has_train_only_feature_snapshot=True,
+            mtf_enabled=False,
+            feature_validity_channels=False,
+        )
+    with pytest.raises(ValueError, match="does not support MTF"):
+        resolve_recorded_sequence_schema(
+            schema,
+            available_columns={"last_swing_high", "volume_spike"},
+            generated_columns={"reachable_r"},
+            train_only_screen=True,
+            has_train_only_feature_snapshot=True,
+            mtf_enabled=True,
+            feature_validity_channels=False,
+        )
+
+
+def test_recorded_sequence_schema_rejects_corrupt_hash_and_channel_mismatch() -> None:
+    schema = build_sequence_feature_schema(["volume_spike"])
+    corrupt = {**schema, "sha256": "0" * 64}
+    with pytest.raises(ValueError, match="hash or dimensions"):
+        resolve_recorded_sequence_schema(
+            corrupt,
+            available_columns={"volume_spike"},
+            generated_columns=set(),
+            train_only_screen=True,
+            has_train_only_feature_snapshot=True,
+            mtf_enabled=False,
+            feature_validity_channels=False,
+        )
+    with pytest.raises(ValueError, match="validity channels differ"):
+        resolve_recorded_sequence_schema(
+            schema,
+            available_columns={"volume_spike"},
+            generated_columns=set(),
+            train_only_screen=True,
+            has_train_only_feature_snapshot=True,
+            mtf_enabled=False,
+            feature_validity_channels=True,
+        )
 
 
 def test_checkpoint_reanalysis_inherits_sampled_mode_and_seed(tmp_path: Path) -> None:
@@ -101,21 +226,40 @@ def test_train_only_screen_is_explicit_opt_in() -> None:
     screen_args = eval_run.build_reanalysis_parser().parse_args(
         ["--run", "source", "--output", "out", "--train-only-screen"]
     )
+    ledger_args = eval_run.build_reanalysis_parser().parse_args(
+        ["--run", "source", "--output", "out", "--train-only-screen", "--export-replay-ledger"]
+    )
 
     assert default_args.train_only_screen is False
     assert screen_args.train_only_screen is True
+    assert ledger_args.export_replay_ledger is True
 
 
-def test_train_only_screen_rejects_stochastic_actions(
+def test_replay_ledger_export_requires_train_only_screen(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        "sys.argv",
-        ["eval_run", "--run", "source", "--output", "out", "--train-only-screen", "--stochastic"],
+        sys,
+        "argv",
+        ["checkpoint-reanalysis", "--run", "source", "--output", "out", "--export-replay-ledger"],
     )
 
-    with pytest.raises(SystemExit, match="requires deterministic policy actions"):
+    with pytest.raises(SystemExit, match="requires --train-only-screen"):
         eval_run.main()
+
+
+def test_train_only_screen_requires_seed_for_stochastic_actions() -> None:
+    with pytest.raises(ValueError, match="requires a recorded or explicit seed"):
+        eval_run.validate_train_only_action_mode(
+            train_only_screen=True, stochastic=True, action_rng_seed=None
+        )
+
+    eval_run.validate_train_only_action_mode(
+        train_only_screen=True, stochastic=True, action_rng_seed=50
+    )
+    eval_run.validate_train_only_action_mode(
+        train_only_screen=True, stochastic=False, action_rng_seed=None
+    )
 
 
 def test_train_only_screen_report_records_evaluation_provenance(
@@ -136,6 +280,216 @@ def test_train_only_screen_report_records_evaluation_provenance(
     report = json.loads(report_path.read_text(encoding="utf-8"))
     assert report["evaluation_provenance"] == provenance
     assert report["test_split_evaluated"] is False
+
+
+def test_train_only_screen_exports_complete_replay_ledgers_with_hashes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(eval_run, "build_evaluation_provenance", lambda _repo: {})
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_account_state_trace",
+        lambda *_args, **_kwargs: {"status": "matched", "failure_count": 0, "checks": {}},
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_policy_decisions",
+        lambda *_args, **_kwargs: {"status": "matched", "failure_count": 0, "checks": {}},
+    )
+    result = {
+        "equity": pd.Series([100.0, 101.0], name="equity"),
+        "trades": pd.DataFrame({"trade_id": [1]}),
+        "policy_decisions": pd.DataFrame({"action": [0, 1]}),
+        "account_state_trace": pd.DataFrame({"balance": [100.0, 101.0]}),
+        "breaches": [{"time": "t1", "kind": "daily"}],
+        "breach_events": [],
+        "cycle_events": pd.DataFrame({"cycle": [1]}),
+        "payout_events": pd.DataFrame({"payout": [0.5]}),
+        "trade_setup_decisions": pd.DataFrame(
+            {"decision_id": ["decision-1"], "candidate_id": ["po3:M1:long"]}
+        ),
+        "policy_decisions_complete": True,
+        "account_state_trace_complete": True,
+        "n_steps": 2,
+    }
+
+    report_path = eval_run.write_train_only_screen_report(
+        tmp_path / "screen",
+        {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False},
+        replay_result=result,
+    )
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    ledger = report["replay_ledger"]
+
+    assert ledger["complete"] is True
+    assert ledger["test_split_evaluated"] is False
+    assert ledger["n_steps"] == 2
+    assert ledger["artifacts"]["trade_setup_decisions"]["row_count"] == 1
+    for name, artifact in ledger["artifacts"].items():
+        path = report_path.parent / artifact["path"]
+        assert path.is_file()
+        assert artifact["sha256"] == file_sha256(path)
+        if artifact["row_count"]:
+            frame = pd.read_csv(path)
+            assert len(frame) == artifact["row_count"]
+        else:
+            assert path.read_text(encoding="utf-8") == ""
+
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_account_state_trace",
+        lambda *_args, **_kwargs: {"status": "mismatch", "failure_count": 1, "checks": {}},
+    )
+    with pytest.raises(ValueError, match="account-state/daily-risk reconciliation"):
+        eval_run.write_train_only_screen_report(
+            tmp_path / "risk-mismatch",
+            {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False},
+            replay_result=result,
+        )
+    diagnostic = tmp_path / "risk-mismatch" / "replay_ledger_diagnostic.json"
+    assert diagnostic.is_file()
+    assert (tmp_path / "risk-mismatch" / "diagnostic_replay_account_state_trace.csv").is_file()
+
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_account_state_trace",
+        lambda *_args, **_kwargs: {"status": "matched", "failure_count": 0, "checks": {}},
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_policy_decisions",
+        lambda *_args, **_kwargs: {"status": "incomplete", "failure_count": 0, "checks": {}},
+    )
+    with pytest.raises(ValueError, match="policy-decision/action reconciliation"):
+        eval_run.write_train_only_screen_report(
+            tmp_path / "policy-mismatch",
+            {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False},
+            replay_result=result,
+        )
+
+
+@pytest.mark.parametrize("missing_field", ["cycle_events", "payout_events"])
+def test_train_only_screen_requires_cash_event_ledgers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, missing_field: str
+) -> None:
+    monkeypatch.setattr(eval_run, "build_evaluation_provenance", lambda _repo: {})
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_account_state_trace",
+        lambda *_args, **_kwargs: {"status": "matched", "failure_count": 0},
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_policy_decisions",
+        lambda *_args, **_kwargs: {"status": "matched", "failure_count": 0},
+    )
+    result = {
+        "equity": pd.Series([100.0]),
+        "trades": pd.DataFrame(),
+        "policy_decisions": pd.DataFrame({"action": [0]}),
+        "account_state_trace": pd.DataFrame({"balance": [100.0]}),
+        "breaches": [],
+        "breach_events": [],
+        "cycle_events": pd.DataFrame(),
+        "payout_events": pd.DataFrame(),
+        "policy_decisions_complete": True,
+        "account_state_trace_complete": True,
+        "n_steps": 1,
+    }
+    result.pop(missing_field)
+
+    with pytest.raises(ValueError, match=missing_field):
+        eval_run.write_train_only_screen_report(
+            tmp_path / missing_field,
+            {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False},
+            replay_result=result,
+        )
+
+
+def test_train_only_screen_requires_setup_ledger_for_setup_actions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(eval_run, "build_evaluation_provenance", lambda _repo: {})
+    result = {
+        "equity": pd.Series([100.0]),
+        "trades": pd.DataFrame(),
+        "policy_decisions": pd.DataFrame({"trade_setup_candidate_id": [0]}),
+        "account_state_trace": pd.DataFrame({"balance": [100.0]}),
+        "breaches": [],
+        "breach_events": [],
+        "cycle_events": pd.DataFrame(),
+        "payout_events": pd.DataFrame(),
+        "policy_decisions_complete": True,
+        "account_state_trace_complete": True,
+        "n_steps": 1,
+    }
+
+    with pytest.raises(ValueError, match="setup-aware policy decisions"):
+        eval_run.write_train_only_screen_report(
+            tmp_path / "missing-setup-ledger",
+            {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False},
+            replay_result=result,
+        )
+
+
+@pytest.mark.parametrize("failure_count", [False, 0.0, "0"])
+def test_train_only_screen_rejects_malformed_reconciliation_counts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure_count: object
+) -> None:
+    monkeypatch.setattr(eval_run, "build_evaluation_provenance", lambda _repo: {})
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_account_state_trace",
+        lambda *_args, **_kwargs: {"status": "matched", "failure_count": failure_count},
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "reconcile_policy_decisions",
+        lambda *_args, **_kwargs: {"status": "matched", "failure_count": 0},
+    )
+    result = {
+        "equity": pd.Series([100.0]),
+        "trades": pd.DataFrame(),
+        "policy_decisions": pd.DataFrame({"action": [0]}),
+        "account_state_trace": pd.DataFrame({"balance": [100.0]}),
+        "breaches": [],
+        "breach_events": [],
+        "cycle_events": pd.DataFrame(),
+        "payout_events": pd.DataFrame(),
+        "policy_decisions_complete": True,
+        "account_state_trace_complete": True,
+        "n_steps": 1,
+    }
+
+    with pytest.raises(ValueError, match="account-state/daily-risk reconciliation"):
+        eval_run.write_train_only_screen_report(
+            tmp_path / "malformed-reconciliation",
+            {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False},
+            replay_result=result,
+        )
+
+
+def test_train_only_screen_replay_ledger_fails_closed_on_incomplete_trace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(eval_run, "build_evaluation_provenance", lambda _repo: {})
+    result = {
+        "equity": pd.Series([100.0]),
+        "trades": pd.DataFrame(),
+        "policy_decisions": pd.DataFrame(),
+        "account_state_trace": pd.DataFrame(),
+        "breaches": [],
+        "breach_events": [],
+        "policy_decisions_complete": False,
+        "account_state_trace_complete": True,
+    }
+
+    with pytest.raises(ValueError, match="policy_decisions_complete"):
+        eval_run.write_train_only_screen_report(
+            tmp_path / "incomplete",
+            {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False},
+            replay_result=result,
+        )
 
 
 def test_train_only_evaluation_receives_only_training_frames(
@@ -467,6 +821,46 @@ def test_exact_source_feature_cache_replay_requires_manifest_file_identity(
         _load_exact_source_feature_cache({"identity": cache.name, "sha256": "content-hash"}, cache)
 
 
+def test_train_only_feature_snapshot_requires_train_only_and_excludes_full_cache() -> None:
+    with pytest.raises(ValueError, match="requires --train-only-screen"):
+        validate_train_only_feature_snapshot_request(
+            train_only_screen=False,
+            source_feature_cache=None,
+            train_only_feature_snapshot="train.parquet",
+        )
+    with pytest.raises(ValueError, match="cannot be combined"):
+        validate_train_only_feature_snapshot_request(
+            train_only_screen=True,
+            source_feature_cache="all.parquet",
+            train_only_feature_snapshot="train.parquet",
+        )
+    validate_train_only_feature_snapshot_request(
+        train_only_screen=True,
+        source_feature_cache=None,
+        train_only_feature_snapshot="train.parquet",
+    )
+
+
+def test_train_only_feature_snapshot_requires_exact_ordered_timeline(tmp_path: Path) -> None:
+    cache = tmp_path / "train_features.parquet"
+    index = pd.date_range("2025-01-01", periods=3, freq="min", tz="UTC")
+    expected = pd.DataFrame({"feature": [1.0, 0.0, 3.0]}, index=index)
+    expected.to_parquet(cache)
+
+    loaded, resolved, cache_hash = _load_train_only_feature_snapshot(cache, index)
+    pd.testing.assert_frame_equal(loaded, expected, check_freq=False)
+    assert resolved == cache.resolve()
+    assert cache_hash == file_sha256(cache)
+
+    with pytest.raises(ValueError, match="do not exactly match training bars"):
+        _load_train_only_feature_snapshot(cache, index.delete(1))
+
+    duplicated = pd.DataFrame({"feature": [1.0, 2.0]}, index=[index[0], index[0]])
+    duplicated.to_parquet(cache)
+    with pytest.raises(ValueError, match="must be unique and ordered"):
+        _load_train_only_feature_snapshot(cache, pd.DatetimeIndex(duplicated.index))
+
+
 def test_stop_schema_requires_checkpoint_manifest_and_config_agreement() -> None:
     schema = {"menu": "recent_confirmed_unswept_mtf_swings_v1"}
     assert (
@@ -492,6 +886,16 @@ def test_stop_schema_requires_checkpoint_manifest_and_config_agreement() -> None
             expected_schema={"menu": "legacy_last_accepted_swing_v1"},
             allow_legacy=False,
         )
+    assert (
+        eval_run.validate_stop_candidate_schema(
+            checkpoint_schema=schema,
+            manifest_schema=schema,
+            expected_schema={"menu": "current_eight_timeframe_menu"},
+            allow_legacy=False,
+            allow_changed_menu=True,
+        )
+        == "changed_policy_diagnostic"
+    )
 
 
 def test_legacy_stop_schema_requires_opt_in_and_cannot_claim_expanded_menu() -> None:

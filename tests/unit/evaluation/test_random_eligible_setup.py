@@ -9,6 +9,7 @@ from decisioning.trade_setup import (
     NO_TRADE_ID,
     TRADE_SETUP_CATEGORY_COUNT,
     build_trade_setup_action_schema,
+    decode_trade_setup_execution_choice,
     trade_setup_id_from_box,
 )
 from evaluation.rollout.random_eligible_setup import (
@@ -56,6 +57,24 @@ def test_random_eligible_policy_supports_abstention_and_fixed_risk() -> None:
     assert metadata["permitted_information"] == ["current_observation.trade_setup_mask"]
     assert metadata["training_performed"] is False
     assert metadata["selection_or_tuning_performed"] is False
+
+
+def test_random_setup_baseline_keeps_market_execution_when_schema_offers_limits() -> None:
+    schema = build_trade_setup_action_schema(has_entry_execution=True)
+    policy = RandomEligibleSetupPolicy(schema, seed=42)
+
+    action = policy(_observation(9))
+    choice = decode_trade_setup_execution_choice(
+        action.tolist(),
+        schema,
+        max_limit_offset_atr=1.0,
+        max_limit_ttl_bars=60,
+    )
+
+    assert choice.order_type == "market"
+    assert choice.limit_offset_atr == 0.0
+    assert choice.ttl_bars == 1
+    assert policy.metadata()["entry_execution"] == "market"
 
 
 def test_always_no_trade_policy_is_deterministic_and_identified_as_flat_control() -> None:

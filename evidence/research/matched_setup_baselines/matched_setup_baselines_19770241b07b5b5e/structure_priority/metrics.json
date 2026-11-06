@@ -1,0 +1,24 @@
+{
+  "avg_trade": -8.584171404563556,
+  "breach_count": 25,
+  "breach_rate": 0.09652509652509653,
+  "calmar": -0.4534952361573439,
+  "expectancy": -8.584171404563556,
+  "extras": {
+    "entry_active": 1.0,
+    "fill_count": 1209.0,
+    "incomplete_positions": 0.0
+  },
+  "max_consec_loss": 20,
+  "max_drawdown": 0.21872175508801384,
+  "metric_definition_version": "qrl.performance_metrics.v2",
+  "n_trades": 1169,
+  "periods_per_year": 98280,
+  "profit_factor": 0.9339871091639571,
+  "sharpe": -0.8817935139596585,
+  "sortino": -1.2624819772459595,
+  "total_pnl": -10034.89637193497,
+  "total_return_pct": -10.03489637193497,
+  "turnover": 0.011749570321530158,
+  "win_rate": 0.4619332763045338
+}

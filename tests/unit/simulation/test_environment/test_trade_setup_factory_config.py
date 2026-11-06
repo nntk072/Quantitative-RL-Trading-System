@@ -51,6 +51,29 @@ def test_trade_setup_observation_mode_defaults_off() -> None:
     assert eval_common["trade_setup_actions"] is False
 
 
+def test_feature_validity_channels_are_opt_in_and_flow_to_eval_env_kwargs() -> None:
+    config = OmegaConf.load("config/base/default.yaml")
+
+    eval_common, *_ = build_eval_common(config, arch="tcn")
+    assert eval_common["feature_validity_channels"] is False
+    assert eval_common["reachable_r_validity_mask"] is False
+
+    config.env.feature_validity_channels = True
+    config.env.reachable_r_validity_mask = True
+    eval_common, *_ = build_eval_common(config, arch="tcn")
+    assert eval_common["feature_validity_channels"] is True
+    assert eval_common["reachable_r_validity_mask"] is True
+
+
+def test_survival_qualification_overlay_exposes_required_sequence_validity_inputs() -> None:
+    config = load_config(config_path="config/research/survival_qualification.yaml")
+
+    eval_common, *_ = build_eval_common(config, arch="tcn")
+
+    assert eval_common["feature_validity_channels"] is True
+    assert eval_common["reachable_r_validity_mask"] is True
+
+
 @pytest.mark.parametrize(
     "arch",
     [

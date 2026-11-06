@@ -12,7 +12,7 @@ This page contains 12 public callable records owned by `decisioning.contracts`. 
 
 **Observed usage:**
 
-1. [test fixture: `test_structured_conversion_requires_exact_coordinate_set`](../../../../tests/integration/test_sb3_adapter.py#L132)
+1. [test fixture: `test_structured_conversion_requires_exact_coordinate_set`](../../../../tests/integration/test_sb3_adapter.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -31,23 +31,16 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         to_policy_action(inconsistent)
 ```
 
-2. [test fixture: `__init__`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L33)
+2. [test fixture: `test_policy_action_conversion_rejects_actions_that_disagree_with_schema`](../../../../tests/integration/test_sb3_adapter.py#L176)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def __init__(self, action: Decision) -> None:
-    self.action = action
-    self.inputs: list[tuple[DecisionInput, bool]] = []
-    self.metadata = PredictorMetadata(
-        provider_id="test",
-        model_family="test-provider",
-        training_paradigm="test",
-        input_schema_version="obs-v1",
-        action_schema=ActionSchemaRef(
-            version="test-v1", key="test", coordinates=("action",), kind="test"
-        ),
-    )
+def test_policy_action_conversion_rejects_actions_that_disagree_with_schema(
+    decision: Decision,
+) -> None:
+    with pytest.raises(ValueError):
+        to_policy_action(decision)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -67,7 +60,19 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_provider_rollout_adapter_returns_environment_action`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L57)
+1. [test fixture: `test_policy_action_conversion_rejects_actions_that_disagree_with_schema`](../../../../tests/integration/test_sb3_adapter.py#L181)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_policy_action_conversion_rejects_actions_that_disagree_with_schema(
+    decision: Decision,
+) -> None:
+    with pytest.raises(ValueError):
+        to_policy_action(decision)
+```
+
+2. [test fixture: `test_provider_rollout_adapter_returns_environment_action`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L57)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -75,22 +80,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_decode_action`](../../../../decisioning/adapters/sb3.py#L107)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        if values.size != len(names):
-            raise ValueError(
-                f"SB3 action width {values.size} differs from schema width {len(names)}"
-            )
-        if len(names) == 1:
-            return ContinuousAction(value=float(values[0]))
-        return StructuredAction(
-            coordinates={name: float(value) for name, value in zip(names, values, strict=True)}
-        )
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -107,7 +97,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_structured_conversion_requires_exact_coordinate_set`](../../../../tests/integration/test_sb3_adapter.py#L130)
+1. [test fixture: `test_structured_conversion_requires_exact_coordinate_set`](../../../../tests/integration/test_sb3_adapter.py#L161)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -128,12 +118,16 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         to_policy_action(inconsistent)
 ```
 
-2. [test fixture: `test_provider_rollout_adapter_returns_environment_action`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L47)
+2. [test fixture: `test_policy_action_conversion_rejects_actions_that_disagree_with_schema`](../../../../tests/integration/test_sb3_adapter.py#L174)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller assertions omitted …
+def test_policy_action_conversion_rejects_actions_that_disagree_with_schema(
+    decision: Decision,
+) -> None:
+    with pytest.raises(ValueError):
+        to_policy_action(decision)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -275,12 +269,16 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert provider.metadata.action_schema.coordinates == names
 ```
 
-2. [test fixture: `test_provider_rollout_adapter_returns_environment_action`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L48)
+2. [test fixture: `test_policy_action_conversion_rejects_actions_that_disagree_with_schema`](../../../../tests/integration/test_sb3_adapter.py#L175)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller assertions omitted …
+def test_policy_action_conversion_rejects_actions_that_disagree_with_schema(
+    decision: Decision,
+) -> None:
+    with pytest.raises(ValueError):
+        to_policy_action(decision)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -360,7 +358,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_box_provider_returns_named_structured_coordinates_in_schema_order`](../../../../tests/integration/test_sb3_adapter.py#L69)
+1. [test fixture: `test_box_provider_returns_named_structured_coordinates_in_schema_order`](../../../../tests/integration/test_sb3_adapter.py#L87)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -380,7 +378,7 @@ def test_box_provider_returns_named_structured_coordinates_in_schema_order() -> 
     np.testing.assert_array_equal(to_policy_action(decision), [0.25, -0.5, 1.0])
 ```
 
-2. [test fixture: `test_structured_conversion_requires_exact_coordinate_set`](../../../../tests/integration/test_sb3_adapter.py#L131)
+2. [test fixture: `test_structured_conversion_requires_exact_coordinate_set`](../../../../tests/integration/test_sb3_adapter.py#L162)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -447,7 +445,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert provider.metadata.action_schema.coordinates == names
 ```
 
-2. [test fixture: `test_box_provider_returns_named_structured_coordinates_in_schema_order`](../../../../tests/integration/test_sb3_adapter.py#L70)
+2. [test fixture: `test_box_provider_returns_named_structured_coordinates_in_schema_order`](../../../../tests/integration/test_sb3_adapter.py#L88)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

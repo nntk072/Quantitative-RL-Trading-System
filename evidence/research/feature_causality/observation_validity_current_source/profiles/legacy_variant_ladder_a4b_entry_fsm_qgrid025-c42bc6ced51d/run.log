@@ -1,0 +1,11 @@
+{
+  "group_key": "c42bc6ced51dd770a6d18bade79c5509a93eeb1ed9930b0721f94c71daa7ec4c",
+  "profile_ids": [
+    "legacy_variant/ladder_a4a_dollar_band_q5_off",
+    "legacy_variant/ladder_a4a_dollar_band_q5_on",
+    "legacy_variant/ladder_a4a_entry_fsm_hidden_qgrid025",
+    "legacy_variant/ladder_a4b_entry_fsm_qgrid025"
+  ],
+  "representative_profile": "legacy_variant/ladder_a4b_entry_fsm_qgrid025",
+  "status": "measured_training_split"
+}

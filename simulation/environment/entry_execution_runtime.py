@@ -4,10 +4,10 @@ from typing import Any
 
 import pandas as pd
 
-from trading.execution import Position
+from simulation.entry_state import EntryCandidate
+from trading.execution import FILL_COST_PROVENANCE_SCHEMA_VERSION, Position
 
 from .entry_order_runtime import EntryOrderRuntimeMixin
-from .entry_state import EntryCandidate
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase
 from .position_open_runtime import PositionOpenRuntimeMixin
@@ -45,26 +45,28 @@ class EntryExecutionRuntimeMixin(
             Mapping from ``str`` keys to ``Any]`` values.
         """
         execution_meta: dict[str, Any] = {}
-        if (
+        active_execution = getattr(self, "_active_step_execution", None)
+        if active_execution is not None:
+            execution_quote = active_execution["quote"]
+            execution_meta = dict(active_execution["metadata"])
+            execution_order_time = execution_quote.order_time
+            fill_bid, fill_ask = execution_quote.bid, execution_quote.ask
+            fill_time = execution_quote.tick_time
+            execution_meta["execution_order_time"] = execution_order_time
+        elif (
             getattr(self, "tick_execution_required", False)
             or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
         ):
-            active_execution = getattr(self, "_active_step_execution", None)
-            if active_execution is not None:
-                execution_quote = active_execution["quote"]
-                execution_meta = dict(active_execution["metadata"])
-                execution_order_time = execution_quote.order_time
-            else:
-                execution_order_time = (
-                    pd.Timestamp(fill_time)
-                    if self.fill_latency_bars > 0
-                    else pd.Timestamp(
-                        fill_time if order_submission_time is None else order_submission_time
-                    )
+            execution_order_time = (
+                pd.Timestamp(fill_time)
+                if self.fill_latency_bars > 0
+                else pd.Timestamp(
+                    fill_time if order_submission_time is None else order_submission_time
                 )
-                execution_quote, execution_meta = self._resolve_randomized_tick_quote(
-                    execution_order_time
-                )
+            )
+            execution_quote, execution_meta = self._resolve_randomized_tick_quote(
+                execution_order_time
+            )
             fill_bid, fill_ask = execution_quote.bid, execution_quote.ask
             fill_time = execution_quote.tick_time
             execution_meta["execution_order_time"] = execution_order_time
@@ -97,13 +99,13 @@ class EntryExecutionRuntimeMixin(
             pnl, fill_price = self._close_at_quote(
                 self.position,
                 (fill_bid, fill_ask),
-                tick_fill=bool(execution_meta),
+                tick_fill=True,
             )
             record = {
                 "type": "close",
                 "pnl": pnl,
                 "price": fill_price,
-                "fill_quote_source": "tick" if execution_meta else "bar_open",
+                "fill_quote_source": execution_meta.get("fill_quote_source", "bar_open"),
                 "bar": self.step_idx,
                 "time": fill_time,
                 "decision_time": (
@@ -157,11 +159,12 @@ class EntryExecutionRuntimeMixin(
                 (fill_bid, fill_ask),
                 lots,
                 discrete_action,
-                tick_fill=(
-                    bool(getattr(self, "tick_execution_required", False))
-                    or float(getattr(self, "randomized_fill_latency_ms", 0.0)) > 0.0
-                ),
+                # Entry quote stress is applied before geometry and sizing in
+                # _try_enter_position; applying it again here would double it.
+                tick_fill=False,
             )
+            if self.position is None:
+                self._reject("insufficient_margin")
         else:
             self.position = None
             self._reject("sl_already_hit")
@@ -184,6 +187,7 @@ class EntryExecutionRuntimeMixin(
         order_submission_time: Any | None = None,
         decision_bar_idx: int | None = None,
         signal_bar_idx: int | None = None,
+        order_id: str | None = None,
     ) -> None:
         """Attempt a flip or new entry through explicit execution stages.
 
@@ -203,6 +207,7 @@ class EntryExecutionRuntimeMixin(
             order_submission_time: Order submission time used by the operation described above.
             decision_bar_idx: Decision bar idx used by the operation described above.
             signal_bar_idx: Signal bar idx used by the operation described above.
+            order_id: Pending order identity, when the entry came from a resting order.
         """
         fill_bid, fill_ask, fill_time, execution_meta = self._resolve_entry_execution_quote(
             fill_bid, fill_ask, fill_time, order_submission_time
@@ -219,8 +224,48 @@ class EntryExecutionRuntimeMixin(
         )
         if self.position is not None or discrete_action not in (1, -1):
             return
+        # Size and place protection from the quote that will actually open a
+        # market position. Resting limits retain their hard price bound and do
+        # not receive adverse market slippage.
+        market_fill = execution_meta.get("order_type") != "limit"
+        pre_execution_quote = (float(fill_bid), float(fill_ask))
+        if market_fill:
+            fill_bid, fill_ask = self._adverse_tick_fill_quote(
+                (fill_bid, fill_ask), discrete_action, opening=True
+            )
+            if self.tick_fill_slippage_points > 0.0:
+                execution_meta["entry_slippage_applied"] = True
+                execution_meta["entry_slippage_points"] = self.tick_fill_slippage_points
+        execution_meta.update(
+            {
+                "fill_cost_provenance_schema_version": FILL_COST_PROVENANCE_SCHEMA_VERSION,
+                "pre_execution_quote_bid": pre_execution_quote[0],
+                "pre_execution_quote_ask": pre_execution_quote[1],
+                "broker_execution_quote_bid": float(fill_bid),
+                "broker_execution_quote_ask": float(fill_ask),
+                "slippage_points_applied_here": (
+                    float(self.tick_fill_slippage_points) if market_fill else 0.0
+                ),
+                "slippage_applied_here": bool(market_fill and self.tick_fill_slippage_points > 0.0),
+                "slippage_application_mode": (
+                    "transacted_side"
+                    if market_fill and self.tick_fill_slippage_points > 0.0
+                    else "none"
+                ),
+            }
+        )
         entry_price, sl_price, tp_price, lots, has_levels, placed = self._build_entry_levels(
-            discrete_action, risk_frac, rr_ratio, feat_row, fill_bid, fill_ask
+            discrete_action,
+            risk_frac,
+            rr_ratio,
+            feat_row,
+            fill_bid,
+            fill_ask,
+            entry_reference_price=(
+                float(execution_meta["limit_price"])
+                if execution_meta.get("order_type") == "limit"
+                else None
+            ),
         )
         if not has_levels:
             return
@@ -268,4 +313,5 @@ class EntryExecutionRuntimeMixin(
             signal_time=signal_time,
             entry_level=entry_level,
             sweep_delay=sweep_delay,
+            order_id=order_id,
         )

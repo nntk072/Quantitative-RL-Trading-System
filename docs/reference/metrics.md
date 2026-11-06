@@ -1,14 +1,16 @@
 # Evaluation metric definitions
 
 New canonical run summaries carry the definition identifier
-`qrl.performance_metrics.v2`. Annualized ratios still depend on the recorded
+`qrl.performance_metrics.v4`. Historical v2 and v3 results retain their
+original schema and values. Annualized ratios still depend on the recorded
 `periods_per_year` input; the general array API defaults to hourly bars while
 the legacy pandas adapter defaults to 252 × 390 M1 bars. Preserve that basis
 with the run protocol when comparing or regenerating results.
 
 `evaluation.metrics.performance.compute_metrics` is the canonical aggregate
 performance implementation. It consumes a chronological positive-equity
-curve and optional completed-position PnLs. Callers must retain the resolved
+curve, optional completed-position PnLs, and (for path-risk metrics) a complete
+account-state trace. Callers must retain the resolved
 metric inputs and sample scope with each result; a report should not silently
 substitute zero for an undefined quantity.
 
@@ -22,8 +24,13 @@ substitute zero for an undefined quantity.
 | Calmar | Annualized compounded return divided by maximum drawdown. A zero drawdown returns `0`; duration is the number of return intervals divided by `periods_per_year`. |
 | Maximum drawdown | Largest peak-to-trough loss relative to the running equity peak, returned as a positive fraction in `[0, 1]`. |
 | Total PnL / return | `final_equity - initial_balance` in account currency, and that difference divided by `initial_balance` as a percent. |
-| Breach count | Count supplied by the caller. The metric function cannot verify event identity or deduplicate events. |
-| Breach rate | Supplied breach count divided by supplied session count, or `0` when the session count is zero. Interpret this as breached sessions only when the caller supplies a count of distinct breached sessions, rather than raw events. |
+| Compatibility breach count | Caller-supplied count retained for old integrations. Its unit depends on the caller and it is not shown in the canonical summary table. |
+| Breach event count | Number of rows in a valid breach-event ledger. It is `N/A` when that ledger is unavailable or malformed. |
+| Breached-session count | Number of distinct sessions with a recorded breach, derived from breach-event session IDs or supplied explicitly. It is `N/A` when event/session linkage is missing, malformed, or inconsistent. |
+| Breached-session rate | Distinct breached-session count divided by the number of evaluation sessions. It is a fraction in `[0, 1]`; it is `N/A` when the count or denominator is unavailable. Multiple breach events in one session count once. |
+| Daily return | For each complete supplied session ID, `(ending equity + ending cumulative payouts) / (session-start equity + opening cumulative payouts) - 1`, in percent. In-session payouts are treated as earned economic value, including when the payout resets the session-start anchor; the first anchor in that session is retained. A payout first observed at a session boundary makes the daily-return series unavailable. The final session is included only when the data split completed. |
+| Daily-return summaries | Count, arithmetic mean, sample standard deviation, minimum, and maximum of complete-session returns. The standard deviation is `N/A` with fewer than two complete sessions. Missing, malformed, or incomplete account-state traces do not fall back to calendar-day grouping. |
+| Time to ruin | Number of observed supplied sessions through the first recorded hard-breach session. A path without a breach is right-censored at its observed session count and carries `ruin_event_observed=false`, `ruin_time_censored=true`; a breached path carries the converse. Missing trace/event linkage is `N/A`, not a zero-duration survival. |
 
 The general `compute_metrics` default annualization is 252 × 24 periods per
 year. The pandas-compatible `calculate_metrics` adapter and
@@ -36,8 +43,7 @@ appropriate for a particular evaluation.
 Daily chart helpers in `evaluation.plotting.plot_series` group by calendar
 date in the equity index's timezone. They describe an index-date view and do
 not establish the configured account session boundary or the simulator's
-guardrail accounting. Do not label that series as authoritative daily-loss
-exposure without validating the session mapping.
+guardrail accounting. They are not the source of the v3 daily-return metric.
 
 ## Position metrics
 
@@ -57,6 +63,19 @@ adapter's extras.
 | Expectancy / average trade | Arithmetic mean completed-position PnL in account currency. Both fields currently carry the same value; with no trades they are `0` in the core record. |
 | Maximum consecutive loss | Longest run of completed-position PnLs below zero; a breakeven breaks the run. |
 | Turnover | Completed-position count divided by the number of supplied equity values. This is a legacy count ratio, not notional turnover. |
+
+## Transaction-cost evidence
+
+`trade_fill_cashflow.v1` supports independent reconciliation of gross PnL at
+executed fill prices, entry and exit commission, and net closed-fill PnL.
+Current-source fills also emit `fill_cost_provenance.v1`, recording the
+pre-adjustment quote, broker-facing quote, slippage amount, and whether the
+adjustment changed only the traded side or shifted a protective-level quote.
+`cost_decomposition.json` uses complete closed-position fills to calculate
+midpoint-reference PnL, spread, slippage, commission, and net PnL, then checks
+that the components reconcile. Historical fills without quote provenance are
+reported as unavailable. These summaries do not claim a zero-cost counterfactual
+or infer costs from configuration values alone.
 
 `evaluation.metrics.trade_diagnostics` can derive OHLC-based MAE/MFE and
 whether bars crossed logged stop/target levels for chart analysis. Those

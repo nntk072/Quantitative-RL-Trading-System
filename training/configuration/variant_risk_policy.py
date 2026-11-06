@@ -13,10 +13,6 @@ PROJECT_ROOT = repository_root(__file__)
 VARIANT_POLICY_DIR = PROJECT_ROOT / "config" / "variants"
 
 _NUMERIC_FIELDS = {
-    "daily_loss_limit",
-    "soft_daily_loss_limit",
-    "max_loss_limit",
-    "soft_max_loss_limit",
     "risk_per_trade_limit",
     "risk_sizing_limit_usd",
     "trailing_dd_limit",
@@ -27,7 +23,7 @@ _NUMERIC_FIELDS = {
     "max_loss_limit_initial_pct",
     "soft_max_loss_limit_initial_pct",
 }
-_REQUIRED_FIELDS = _NUMERIC_FIELDS | {"limit_value_mode"}
+_REQUIRED_FIELDS = _NUMERIC_FIELDS | {"limit_value_mode", "max_drawdown_mode"}
 _PERCENT_FIELDS = {
     "risk_per_trade_limit_pct",
     "daily_loss_limit_pct",
@@ -40,8 +36,8 @@ _PERCENT_FIELDS = {
 def load_variant_ftmo_config(name: str, *, required: bool = True) -> dict[str, Any]:
     """Load one variant's explicit risk settings from ``config/variants``.
 
-    A separate file makes the active limits and both selectable value modes
-    inspectable for each variant. Missing files are allowed only for callers
+    A separate file makes percentage allowances and the maximum-loss drawdown
+    mode inspectable for each variant. Missing files are allowed only for callers
     resolving temporary experiment registries.
 
     Args:
@@ -71,9 +67,14 @@ def load_variant_ftmo_config(name: str, *, required: bool = True) -> dict[str, A
         raise ValueError(
             f"{path} ftmo fields mismatch; missing={sorted(missing)}, extra={sorted(extra)}"
         )
-    if ftmo["limit_value_mode"] not in {"fixed_usd", "percent_equity"}:
-        raise ValueError(f"{path} has invalid ftmo.limit_value_mode")
-    normalized: dict[str, Any] = {"limit_value_mode": str(ftmo["limit_value_mode"])}
+    if ftmo["limit_value_mode"] != "percent_equity":
+        raise ValueError(f"{path} must use percentage-based loss limits")
+    if ftmo["max_drawdown_mode"] not in {"static", "eod", "intraday_trailing"}:
+        raise ValueError(f"{path} has invalid ftmo.max_drawdown_mode")
+    normalized: dict[str, Any] = {
+        "limit_value_mode": str(ftmo["limit_value_mode"]),
+        "max_drawdown_mode": str(ftmo["max_drawdown_mode"]),
+    }
     for key in sorted(_NUMERIC_FIELDS):
         value = ftmo[key]
         if isinstance(value, bool) or not isinstance(value, (int, float)):

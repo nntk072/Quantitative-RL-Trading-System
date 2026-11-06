@@ -1,0 +1,32 @@
+{
+  "schema": "aalto.real_market_feature_prefix_invariance_run.v1",
+  "slurm_job_id": "21437787",
+  "host": "csl13",
+  "started_at_utc": "2026-11-06T10:14:01+00:00",
+  "finished_at_utc": "2026-11-06T12:11:09+00:00",
+  "elapsed_seconds": 7028,
+  "allocated_cpus": 32,
+  "requested_memory_gib": 128,
+  "max_rss_kib": 83762504,
+  "max_rss_gib": 79.88,
+  "average_cpu_seconds": 18494,
+  "average_cores_used": 2.63,
+  "worker_shard_count": 4,
+  "profile_count": 130,
+  "feature_builder_group_count": 19,
+  "input_hash_count": 4,
+  "source_hash_count": 78,
+  "compared_values": 21741766365,
+  "max_abs_delta": 0.0,
+  "summary": {
+    "passed": 57,
+    "failed": 0,
+    "cutoffs": 57,
+    "feature_profiles": 19
+  },
+  "profile_inventory_sha256": "f42df9e3e12116d9de47bff5281fa854756f0a0da517d1d2c42817ce45c1eb2a",
+  "report_bytes": 675655,
+  "report_sha256": "d83588a272e6535aaa70ffc701c7cc1e1ac1a051353f50c4d4dc4bed49714218",
+  "regeneration_command": "bash scripts/research/analysis/features/run_real_market_feature_prefix_audit.sh <output-dir>",
+  "resource_note": "Slurm accounting recorded 5:08:14 CPU time over 1:57:08 wall time; average allocated-core use was 2.63 of 32, with MaxRSS 79.93 GiB."
+}

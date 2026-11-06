@@ -1,0 +1,8 @@
+{
+  "group_key": "88e24bb00d5315ee2743d0e8cc1b041ce9bd497e7dbf5c73d605b8523c9f475c",
+  "profile_ids": [
+    "research/trade_setup_mtf_reasoning_conditioned_no_strategy_state"
+  ],
+  "representative_profile": "research/trade_setup_mtf_reasoning_conditioned_no_strategy_state",
+  "status": "measured_training_split"
+}

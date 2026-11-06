@@ -18,19 +18,24 @@ from omegaconf import DictConfig, OmegaConf
 
 from artifacts.atomic import write_json_atomic
 from artifacts.identity import file_sha256 as file_sha256
+from features.pipeline.normalization import apply_rolling_zscore_state
 
 STOP_CANDIDATE_SCHEMA_VERSION = "rq1-stop-menu-v1"
 SEQUENCE_FEATURE_SCHEMA_VERSION = "sequence-feature-columns-v1"
+SEQUENCE_FEATURE_VALIDITY_SCHEMA_VERSION = "sequence-feature-validity-channels-v1"
 # Python's hash secret is fixed before module import. Capture the startup
 # environment once so later mutation of os.environ cannot misreport it.
 _PYTHONHASHSEED_ENV_AT_STARTUP = os.environ.get("PYTHONHASHSEED")
 
 
-def build_sequence_feature_schema(columns: list[str] | tuple[str, ...]) -> dict[str, Any]:
+def build_sequence_feature_schema(
+    columns: list[str] | tuple[str, ...], *, include_validity_channels: bool = False
+) -> dict[str, Any]:
     """Describe the ordered numeric feature coordinates supplied to the policy.
 
     Args:
         columns: Items supplied for the columns, in input order.
+        include_validity_channels: Whether a finite-value mask channel follows each feature block.
 
     Returns:
         Mapping from ``str`` keys to ``Any`` values.
@@ -38,6 +43,24 @@ def build_sequence_feature_schema(columns: list[str] | tuple[str, ...]) -> dict[
     names = [str(column) for column in columns]
     if not names or len(names) != len(set(names)):
         raise ValueError("sequence feature schema requires non-empty unique column names")
+    if include_validity_channels:
+        layout = {
+            "base_version": SEQUENCE_FEATURE_SCHEMA_VERSION,
+            "channel_order": "feature_values_then_finite_masks",
+            "validity_definition": "finite_after_float32_conversion",
+            "columns": names,
+        }
+        payload = json.dumps(layout, separators=(",", ":")).encode("utf-8")
+        return {
+            "version": SEQUENCE_FEATURE_VALIDITY_SCHEMA_VERSION,
+            "width": len(names) * 2,
+            "value_width": len(names),
+            "validity_width": len(names),
+            "columns": names,
+            "channel_order": layout["channel_order"],
+            "validity_definition": layout["validity_definition"],
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        }
     payload = json.dumps(names, separators=(",", ":")).encode("utf-8")
     return {
         "version": SEQUENCE_FEATURE_SCHEMA_VERSION,
@@ -130,17 +153,18 @@ def build_stop_candidate_schema(cfg: DictConfig) -> dict[str, Any]:
     feature_stop_sources = {
         key: resolved_features.get(key) for key in feature_source_keys if key in resolved_features
     }
-    # Entry-level stop/target construction receives every configured HTF key
-    # (the environment starts with these defaults and then merges encoder
-    # windows). Record that effective menu so a custom timeframe cannot change
-    # stop candidates while appearing schema-compatible.
-    from simulation.environment.observations import DEFAULT_HTF_WINDOWS
-
-    stop_menu_timeframes = dict(DEFAULT_HTF_WINDOWS)
-    encoder_windows = OmegaConf.select(cfg, "encoder.windows", default={})
-    if encoder_windows:
-        for timeframe, window in dict(encoder_windows).items():
-            stop_menu_timeframes[str(timeframe)] = int(window)
+    # Stop/target selection consumes risk.target_timeframes. Observation MTF
+    # windows are an independent model-input setting and must not alter the
+    # recorded execution menu. Keep the same fallback used by environment and
+    # backtest factories for older run snapshots that predate this config key.
+    stop_menu_timeframes = OmegaConf.select(
+        cfg, "risk.target_timeframes", default=("M5", "M15", "H1")
+    )
+    if isinstance(stop_menu_timeframes, str):
+        stop_menu_timeframes = (stop_menu_timeframes,)
+    stop_menu_timeframes = [str(tf).upper() for tf in stop_menu_timeframes]
+    if not stop_menu_timeframes or len(stop_menu_timeframes) != len(set(stop_menu_timeframes)):
+        raise ValueError("risk.target_timeframes must be non-empty and contain no duplicates")
 
     return {
         "schema_version": STOP_CANDIDATE_SCHEMA_VERSION,
@@ -153,7 +177,7 @@ def build_stop_candidate_schema(cfg: DictConfig) -> dict[str, Any]:
         "enabled": enabled,
         "candidate_count_per_side_per_timeframe": count,
         "timeframes": [str(tf).upper() for tf in timeframes],
-        "stop_menu_timeframes": [str(tf).upper() for tf in stop_menu_timeframes],
+        "stop_menu_timeframes": stop_menu_timeframes,
         "confirmation": "completed_source_bar_close",
         "staleness": "drop_swept_or_after_count_newer_distinct_confirmations",
         "candidate_families": [
@@ -301,6 +325,18 @@ def _source_state(repository: Path) -> dict[str, Any]:
     }
 
 
+def source_state(repository: Path) -> dict[str, Any]:
+    """Return source commit and dirty-file provenance for a repository.
+
+    Args:
+        repository: Repository root whose Git state should be captured.
+
+    Returns:
+        Git availability, current commit, and dirty relative file records.
+    """
+    return _source_state(repository)
+
+
 def _runtime_versions() -> dict[str, str | None]:
     """Process versions.
 
@@ -366,6 +402,7 @@ def build_training_run_manifest(
     artifact_paths: dict[str, str],
     training_architecture: dict[str, Any] | None = None,
     training_protocol: dict[str, Any] | None = None,
+    feature_normalization_state_path: Path | None = None,
 ) -> dict[str, Any]:
     """Build a source/data/config/checkpoint/runtime manifest for one trial.
 
@@ -389,6 +426,7 @@ def build_training_run_manifest(
         artifact_paths: Key-value data used for the artifact paths.
         training_architecture: Key-value data used for the training architecture.
         training_protocol: Key-value data used for the training protocol.
+        feature_normalization_state_path: Train-fitted source-timeframe and matrix statistics.
 
     Returns:
         Mapping from ``str`` keys to ``Any`` values.
@@ -409,6 +447,23 @@ def build_training_run_manifest(
     )
     if any(type(action_schema.get(flag)) is not bool for flag in action_flags):
         raise ValueError("run manifest action schema requires explicit action flags")
+    action_coordinates = action_schema.get("coordinates", [])
+    has_entry_execution = action_schema.get("has_entry_execution")
+    entry_execution_coordinates = {"entry_execution", "limit_offset_atr", "limit_ttl_bars"}
+    declares_entry_execution = bool(
+        isinstance(action_coordinates, list)
+        and entry_execution_coordinates.intersection(action_coordinates)
+    )
+    if declares_entry_execution and type(has_entry_execution) is not bool:
+        raise ValueError("run manifest entry-execution schema requires an explicit action flag")
+    if declares_entry_execution and has_entry_execution is not True:
+        raise ValueError(
+            "run manifest entry-execution coordinates require has_entry_execution=true"
+        )
+    if has_entry_execution is True and not entry_execution_coordinates.issubset(
+        set(action_coordinates) if isinstance(action_coordinates, list) else set()
+    ):
+        raise ValueError("run manifest entry-execution schema requires all conditional coordinates")
     observation_schema = _validate_named_schema(
         observation_schema,
         label="observation",
@@ -451,20 +506,100 @@ def build_training_run_manifest(
         raise ValueError("run manifest requires a feature cache identity")
     if checkpoint_path is None or not checkpoint_path.is_file():
         raise FileNotFoundError(f"checkpoint required for manifest is missing: {checkpoint_path}")
-    required_artifacts = {"checkpoint", "training_log", "trade_log"}
+    if feature_normalization_state_path is None or not feature_normalization_state_path.is_file():
+        raise FileNotFoundError(
+            "train-fitted feature normalization state required for manifest is missing: "
+            f"{feature_normalization_state_path}"
+        )
+    try:
+        normalization_state = json.loads(
+            feature_normalization_state_path.read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("feature normalization state is not valid JSON") from exc
+    normalization_config = OmegaConf.load(config_path)
+    normalization_mode = (
+        normalization_state.get("mode") if isinstance(normalization_state, dict) else None
+    )
+    normalization_window = (
+        normalization_state.get("window") if isinstance(normalization_state, dict) else None
+    )
+    stages = normalization_state.get("stages") if isinstance(normalization_state, dict) else None
+    source_fit_required = bool(
+        OmegaConf.select(
+            normalization_config,
+            "features.normalize_d1_technical_on_source",
+            default=False,
+        )
+    )
+    if (
+        not isinstance(normalization_state, dict)
+        or normalization_state.get("schema") != "feature-normalization-v1"
+        or normalization_state.get("feature_cache_hash") != feature_cache_hash
+        or not isinstance(normalization_state.get("configuration_sha256"), str)
+        or not isinstance(stages, dict)
+        or not isinstance(stages.get("matrix"), dict)
+        or (source_fit_required and not isinstance(stages.get("source:D1"), dict))
+    ):
+        raise ValueError("feature normalization state does not match the run feature cache")
+    if (
+        normalization_mode not in {"legacy_masked_window", "frozen_fold"}
+        or isinstance(normalization_window, bool)
+        or not isinstance(normalization_window, int)
+        or normalization_window <= 0
+    ):
+        raise ValueError("feature normalization state has an invalid fit contract")
+    for stage_name, stage_state in stages.items():
+        if not isinstance(stage_state, dict):
+            raise ValueError(f"feature normalization stage {stage_name!r} is malformed")
+        if (
+            stage_state.get("mode") != normalization_mode
+            or stage_state.get("window") != normalization_window
+        ):
+            raise ValueError(
+                f"feature normalization stage {stage_name!r} differs from the run fit contract"
+            )
+        columns = stage_state.get("columns")
+        if not isinstance(columns, list) or not all(isinstance(column, str) for column in columns):
+            raise ValueError(f"feature normalization stage {stage_name!r} has invalid columns")
+        try:
+            apply_rolling_zscore_state(pd.DataFrame(columns=columns), stage_state)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"feature normalization stage {stage_name!r} has invalid fit statistics"
+            ) from exc
+    required_artifacts = {
+        "checkpoint",
+        "training_log",
+        "trade_log",
+        "feature_normalization_state",
+    }
     missing_artifacts = required_artifacts.difference(artifact_paths)
     if missing_artifacts:
         raise ValueError(
-            "run manifest requires checkpoint, training-log, and trade-log paths; "
+            "run manifest requires checkpoint, training-log, trade-log, and "
+            "feature-normalization-state paths; "
             f"missing {sorted(missing_artifacts)}"
         )
     if not stop_candidate_schema:
         raise ValueError("run manifest requires an explicit stop-candidate schema")
     if not isinstance(sequence_feature_schema, dict):
         raise ValueError("run manifest requires an explicit sequence feature schema")
-    sequence_feature_schema = build_sequence_feature_schema(
-        sequence_feature_schema.get("columns", [])
+    sequence_schema_version = sequence_feature_schema.get("version")
+    if sequence_schema_version not in {
+        SEQUENCE_FEATURE_SCHEMA_VERSION,
+        SEQUENCE_FEATURE_VALIDITY_SCHEMA_VERSION,
+    }:
+        raise ValueError("run manifest requires a supported sequence feature schema")
+    rebuilt_sequence_schema = build_sequence_feature_schema(
+        sequence_feature_schema.get("columns", []),
+        include_validity_channels=(
+            sequence_schema_version == SEQUENCE_FEATURE_VALIDITY_SCHEMA_VERSION
+        ),
     )
+    if sequence_feature_schema != rebuilt_sequence_schema:
+        raise ValueError("run manifest sequence feature schema is internally inconsistent")
+    sequence_feature_schema = rebuilt_sequence_schema
     return {
         "manifest_version": 6,
         "repository": str(repository.resolve()),
@@ -491,6 +626,12 @@ def build_training_run_manifest(
             "file_sha256": (
                 file_sha256(feature_cache_path) if feature_cache_path is not None else None
             ),
+        },
+        "feature_normalization": {
+            "schema": "feature-normalization-v1",
+            "path": feature_normalization_state_path.name,
+            "sha256": file_sha256(feature_normalization_state_path),
+            "feature_cache_hash": feature_cache_hash,
         },
         "checkpoint": {
             "path": None if checkpoint_path is None else str(checkpoint_path.resolve()),

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
+<title>Order-block retest requires later close confirmation</title><rect width="1000" height="560" fill="#fbfcfe"/>
+<style>text{font:14px sans-serif;fill:#152536} .small{font-size:12px} .axis{stroke:#8091a0;stroke-width:1} .bull{stroke:#18794e;fill:#18794e} .bear{stroke:#b42318;fill:#b42318} .ref{stroke:#7a5af8;stroke-dasharray:6 5} .zone{fill:#fdb022;fill-opacity:.19;stroke:#dc6803} .gate{stroke:#175cd3;stroke-dasharray:7 5}</style>
+<text x="44" y="34" font-size="20" font-weight="bold">Order-block retest requires later close confirmation</text>
+<text x="44" y="54" class="small">SYNTHETIC EXPLANATORY EXAMPLE — not historical data or a strategy result</text>
+<rect class="zone" x="165" y="230" width="730" height="115"/>
+<text x="175" y="218">active order-block zone [100,102]</text>
+<line class="axis" x1="145" y1="390" x2="910" y2="390"/>
+<line class="axis" x1="240" y1="145" x2="240" y2="395"/>
+<text x="170" y="420" class="small">2025-01-06T15:19:00Z</text>
+<line class="axis" x1="440" y1="145" x2="440" y2="395"/>
+<text x="370" y="420" class="small">2025-01-06T15:20:00Z</text>
+<line class="axis" x1="640" y1="145" x2="640" y2="395"/>
+<text x="570" y="420" class="small">2025-01-06T15:21:00Z</text>
+<line class="axis" x1="840" y1="145" x2="840" y2="395"/>
+<text x="770" y="420" class="small">2025-01-06T15:22:00Z</text>
+<line x1="440" y1="120" x2="440" y2="395" stroke="#b42318" stroke-dasharray="6 5"/>
+<text x="275" y="92" fill="#b42318" font-weight="bold">Overlap alone: not confirmed</text>
+<line class="gate" x1="640" y1="120" x2="640" y2="395"/>
+<text x="535" y="92" fill="#175cd3" font-weight="bold">Later close confirms retest</text>
+<text x="155" y="475">Zone available 2025-01-06T15:19:59.999Z → overlap bar 2025-01-06T15:20:00Z → close confirmation 2025-01-06T15:21:59.999Z.</text>
+<text x="155" y="505" class="small">Earliest next-bar action: 2025-01-06T15:22:00Z; no fill at overlap-bar time 2025-01-06T15:20:00Z.</text></svg>

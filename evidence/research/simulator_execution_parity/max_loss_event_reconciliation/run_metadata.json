@@ -1,0 +1,184 @@
+{
+  "execution": {
+    "allocation": "Slurm job 21405414 on gpuarm1; one GH200, 48 CPUs, 512G RAM",
+    "analyzer": "scripts/research/analysis/evaluation/audit_recorded_equity_series.py",
+    "analyzer_sha256": "cf169dddaf6cf944b5e579ffe100d6c4107a2d54491b4617d655bad3b25c2204",
+    "focused_test_command": ".venv/bin/python -m pytest tests/unit/research/test_recorded_equity_series_audit.py -q",
+    "focused_test_log": {
+      "path": "focused_tests.log",
+      "sha256": "fee6fea5f799e53e30fc9c0db2e035e417c3da850c060c5dd1062b5534f1ef9a"
+    },
+    "focused_test_result": "11 passed in 0.18s",
+    "ruff_check": "All checks passed",
+    "ruff_format": "2 files already formatted",
+    "runner": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run_selected_equity_risk_audit.py",
+    "runner_command": ".venv/bin/python /scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run_selected_equity_risk_audit.py",
+    "runner_sha256": "9734990c50cab8868dd991a6a86ea402e83361e65e9662cf87706b0ebfd07d55"
+  },
+  "inputs": [
+    {
+      "breach_ledger": {
+        "bytes": 131,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/breach_events.csv",
+        "sha256": "80db5cb794d17c15fa509b96a87f020b7d5d8edfb0785c13bafaf1bf716deee3"
+      },
+      "equity": {
+        "bytes": 4460126,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/equity.csv",
+        "sha256": "811672680ac1d0fe4eaf7f4d74912018a127ce9dd7d932aa15d207dc6afe7e37"
+      },
+      "equity_metrics_report": {
+        "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4a_training.json",
+        "sha256": "12b967066a2d68bbecdba9638b187599ba9d194058aa693224066f83b387ddff"
+      },
+      "metrics": {
+        "bytes": 709,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/metrics.json",
+        "sha256": "4b8f2764b3ac14d8d9f534fecefc907b47346b74cef1c0c507740a0065e0aed1"
+      },
+      "name": "a4a_training",
+      "source_config": {
+        "initial_equity_floor": 90000.0,
+        "limit_value_mode": "fixed_usd",
+        "max_drawdown_mode": null,
+        "max_drawdown_mode_recorded": false,
+        "maximum_loss_allowance": 10000.0,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml",
+        "sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411"
+      }
+    },
+    {
+      "breach_ledger": {
+        "bytes": 226,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/breach_events.csv",
+        "sha256": "193148970aa7a727d2218e1d38a511e89badc731bea8192f30e7a6b647d180e8"
+      },
+      "equity": {
+        "bytes": 4436148,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/equity.csv",
+        "sha256": "cc67ca871755fd03deea790347d7acfe54aa798b396204b3adc569037a46a970"
+      },
+      "equity_metrics_report": {
+        "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4b_training.json",
+        "sha256": "5bd3cef1adaf4c6f4d608be19c34058e48f695f05ce45b04af2dcf218d21ca22"
+      },
+      "metrics": {
+        "bytes": 704,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/metrics.json",
+        "sha256": "224879b8c36639d197174d48f7d8a33109423af246ffa22fcda010a4f32fd0e7"
+      },
+      "name": "a4b_training",
+      "source_config": {
+        "initial_equity_floor": 90000.0,
+        "limit_value_mode": "fixed_usd",
+        "max_drawdown_mode": null,
+        "max_drawdown_mode_recorded": false,
+        "maximum_loss_allowance": 10000.0,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml",
+        "sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc"
+      }
+    },
+    {
+      "breach_ledger": {
+        "bytes": 133,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/breach_events.csv",
+        "sha256": "8f0bdd57cc5e9cf0cf9d57ae4044be3710211e363fd472d3c3dba659f0b9da98"
+      },
+      "equity": {
+        "bytes": 3479562,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/equity.csv",
+        "sha256": "b2576bbc3cff024dbeb2a5f8db633f79a2a42484d9056b71fdaff61c28c66a0b"
+      },
+      "equity_metrics_report": {
+        "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4a_testing.json",
+        "sha256": "e2594894dcb62547b921616232d2699ae50531c40f92f225c3d5094cdd10d30d"
+      },
+      "metrics": {
+        "bytes": 701,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/metrics.json",
+        "sha256": "1db4588cc6fabe6249ef90bb15cd7fbb3de9f9c9570db0de31f44662cca7aba1"
+      },
+      "name": "a4a_testing",
+      "source_config": {
+        "initial_equity_floor": 90000.0,
+        "limit_value_mode": "fixed_usd",
+        "max_drawdown_mode": null,
+        "max_drawdown_mode_recorded": false,
+        "maximum_loss_allowance": 10000.0,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml",
+        "sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411"
+      }
+    },
+    {
+      "breach_ledger": {
+        "bytes": 133,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/breach_events.csv",
+        "sha256": "cb1e532a8f0d0addcfba65896734987216d4eaa36a44bb24529f5a23d4219174"
+      },
+      "equity": {
+        "bytes": 3478022,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/equity.csv",
+        "sha256": "c9830c462e8a09a2be58b7991466040cdb5bf877dde1945463fab5679569c94a"
+      },
+      "equity_metrics_report": {
+        "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4b_testing.json",
+        "sha256": "d3b372c15308b4a1d646bcdb9e42352a0cb895eb402ed9e42814bd0649b26e42"
+      },
+      "metrics": {
+        "bytes": 701,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/metrics.json",
+        "sha256": "f7cadb8ae54d663b98da6cab3e55526606d970d2f09a184f5b150daea2d007b4"
+      },
+      "name": "a4b_testing",
+      "source_config": {
+        "initial_equity_floor": 90000.0,
+        "limit_value_mode": "fixed_usd",
+        "max_drawdown_mode": null,
+        "max_drawdown_mode_recorded": false,
+        "maximum_loss_allowance": 10000.0,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml",
+        "sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc"
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "bytes": 211403,
+      "path": "a4a_testing.json",
+      "sha256": "2e782ebfe4e2086dce36c0d387e39ebce390813becec57ead0271d0e39425b65"
+    },
+    {
+      "bytes": 270667,
+      "path": "a4a_training.json",
+      "sha256": "280cde34dd3d8d5d0123b5b25b012dfaa523b7eadef1854f141fbd96ec95137f"
+    },
+    {
+      "bytes": 211303,
+      "path": "a4b_testing.json",
+      "sha256": "9fb6788ad3869bcbeee3ea6dc76c9fa4a5c42ebfbf327b8fbc655678be4522e2"
+    },
+    {
+      "bytes": 269584,
+      "path": "a4b_training.json",
+      "sha256": "c3eb9996109abdc39adb01ab935d6371be982cfaccd9dee70321bffb649fbd47"
+    },
+    {
+      "bytes": 4061,
+      "path": "summary.json",
+      "sha256": "c7724b4c3608d86e2fe31d82f870444feb0a5307506961c668a726a336e0b12d"
+    },
+    {
+      "bytes": 497,
+      "path": "focused_tests.log",
+      "sha256": "fee6fea5f799e53e30fc9c0db2e035e417c3da850c060c5dd1062b5534f1ef9a"
+    }
+  ],
+  "purpose": "Reconcile selected A4 hard maximum-loss event rows to exact saved equity observations and the pinned initial-equity floor.",
+  "result": "All four report summaries and chronology match. Three recorded max-loss events match an exact equity observation and the first sampled crossing below 90000 USD. A4A training has no recorded max-loss event or observed crossing.",
+  "schema_version": 1,
+  "status": "complete",
+  "test": {
+    "path": "tests/unit/research/test_recorded_equity_series_audit.py",
+    "sha256": "b32aa2d0a3f8968de362f9912b7f551ad9031b7b2854920ba0a0d3c8d18400a8"
+  }
+}

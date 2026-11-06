@@ -1,11 +1,14 @@
 # Timeframe padding and validity-mask semantics
 
-The initial focused audit passes 38 selected cases across M1/session-window
+The initial focused audit passed 38 selected cases across M1/session-window
 construction, closed timeframe windows, all nine sequence streams, the base
 MTF reasoning encoder, and the three efficient reasoning encoders. A follow-up
-versioned the legacy MTF empty-stream correction and passes a 66-test integration
-batch covering encoder behavior, registration, checkpoint round-trip, env
-construction, and catalog resolution. It verifies:
+versioned the legacy MTF empty-stream correction. Its six-file batch passed 66
+tests, and a current-source retest passed 98/98 cases in job `21390062`; the
+model catalog check also passes. Current source hashes and test output are
+recorded in `run_metadata.json` and `run_output.txt`. The tests cover encoder
+behavior, registration, checkpoint round-trip, environment construction, and
+catalog resolution. They verify:
 
 - left padding has a zero validity mask;
 - an unavailable closed-candle window has an all-zero mask;

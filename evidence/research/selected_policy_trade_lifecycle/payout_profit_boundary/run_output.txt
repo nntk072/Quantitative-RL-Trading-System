@@ -1,0 +1,9 @@
+$ .venv/bin/ruff format --check scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py tests/unit/research/test_policy_trade_lifecycle_summary.py
+2 files already formatted
+$ .venv/bin/ruff check scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py tests/unit/research/test_policy_trade_lifecycle_summary.py
+All checks passed!
+$ .venv/bin/python -m pytest tests/unit/research/test_policy_trade_lifecycle_summary.py tests/unit/research/test_policy_trade_lifecycle_packet.py -q
+20 passed in 0.25s
+PAYOUT_AUDIT_BATCH_EXIT=0
+$ .venv/bin/python scripts/research/analysis/evaluation/build_policy_trade_lifecycle_packet.py --packet-dir evidence/research/selected_policy_trade_lifecycle/payout_profit_boundary
+{"failures": 0, "partitions": 4, "status": "matched"}

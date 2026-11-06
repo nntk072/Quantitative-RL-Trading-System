@@ -12,43 +12,75 @@ This page contains 5 public callable records owned by `simulation.environment.en
 
 **Observed usage:**
 
-1. [test fixture: `test_exit_mode_split_at_one_half`](../../../../tests/integration/backtest/test_entry_levels.py#L544)
+1. [test fixture: `test_environment_and_backtest_reconcile_realized_and_open_account_transitions`](../../../../tests/integration/backtest/test_account_transition_parity.py#L70)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            "session": "ny",
-        },
-        index=idx,
+        "soft_daily_loss_limit_pct": 0.0,
+        "soft_max_loss_limit_initial_pct": 0.0,
+    }
+    actions = [1, 0, 19, 0, 1, 0, 0, 19, 1, 0, 19]
+
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        initial_balance=initial_balance,
+        cost_model=cost_model,
+        guardrail_kwargs=guardrails,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
     )
-    feats = pd.DataFrame({"ema_21": np.full(n, 101.0)}, index=idx)
-    env = TradingEnv(bars, feats, strategy_actions=True, allow_agent_sl_mode=False, obs_window=5)
-    env._decode_action(np.array([0.0, 0.0, 0.0, 0.0, -0.02], dtype=np.float32), feats.iloc[0])
-    assert env._selected_exit_mode == "structural"
-    env._decode_action(np.array([0.0, 0.0, 0.0, 0.0, 0.02], dtype=np.float32), feats.iloc[0])
-    assert env._selected_exit_mode == "ema_21"
-    structural = _place(row, exit_mode="structural")
+    env.reset(seed=7)
+    env_open_pnl_at_mark: float | None = None
+    env_account_trace_rows: list[dict[str, Any]] = []
+    for action_index, action in enumerate(actions):
+        _, _, _, _, info = env.step(action)
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_stop_wins_when_the_same_bar_crosses_ema`](../../../../tests/integration/backtest/test_entry_levels.py#L690)
+2. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L291)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            "session": "ny",
-        },
-        index=idx,
+        tick_times,
+        np.asarray([100.0, 99.5]),
+        np.asarray([100.2, 99.7]),
     )
-    feats = pd.DataFrame({"ema_21": np.full(n, 101.0)}, index=idx)
-    env = TradingEnv(bars, feats, strategy_actions=True, obs_window=5)
-    env.position = Position(
-        direction=1,
-        size=1.0,
-        entry_price=100.0,
-        margin_used=0.0,
+    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=2.0)
+    env = TradingEnv(
+        bars,
+        features,
+        obs_window=1,
+        initial_balance=50_000.0,
+        cost_model=cost_model,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
+        reward_mode="pnl",
+        tickbook=tickbook,
+        tick_execution_required=tick_execution_required,
+        randomized_fill_latency_ms=randomized_fill_latency_ms,
+        tick_fill_slippage_points=tick_slippage,
+    )
+    env.reset(seed=7)
+    env.step(env_action)
+    env.step(19)
+
+    actions = iter((direction, 19))
 # … caller assertions omitted …
 ```
 
@@ -69,43 +101,75 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_exit_mode_split_at_one_half`](../../../../tests/integration/backtest/test_entry_levels.py#L544)
+1. [test fixture: `test_environment_and_backtest_reconcile_realized_and_open_account_transitions`](../../../../tests/integration/backtest/test_account_transition_parity.py#L70)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            "session": "ny",
-        },
-        index=idx,
+        "soft_daily_loss_limit_pct": 0.0,
+        "soft_max_loss_limit_initial_pct": 0.0,
+    }
+    actions = [1, 0, 19, 0, 1, 0, 0, 19, 1, 0, 19]
+
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        initial_balance=initial_balance,
+        cost_model=cost_model,
+        guardrail_kwargs=guardrails,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
     )
-    feats = pd.DataFrame({"ema_21": np.full(n, 101.0)}, index=idx)
-    env = TradingEnv(bars, feats, strategy_actions=True, allow_agent_sl_mode=False, obs_window=5)
-    env._decode_action(np.array([0.0, 0.0, 0.0, 0.0, -0.02], dtype=np.float32), feats.iloc[0])
-    assert env._selected_exit_mode == "structural"
-    env._decode_action(np.array([0.0, 0.0, 0.0, 0.0, 0.02], dtype=np.float32), feats.iloc[0])
-    assert env._selected_exit_mode == "ema_21"
-    structural = _place(row, exit_mode="structural")
+    env.reset(seed=7)
+    env_open_pnl_at_mark: float | None = None
+    env_account_trace_rows: list[dict[str, Any]] = []
+    for action_index, action in enumerate(actions):
+        _, _, _, _, info = env.step(action)
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_stop_wins_when_the_same_bar_crosses_ema`](../../../../tests/integration/backtest/test_entry_levels.py#L690)
+2. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L291)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            "session": "ny",
-        },
-        index=idx,
+        tick_times,
+        np.asarray([100.0, 99.5]),
+        np.asarray([100.2, 99.7]),
     )
-    feats = pd.DataFrame({"ema_21": np.full(n, 101.0)}, index=idx)
-    env = TradingEnv(bars, feats, strategy_actions=True, obs_window=5)
-    env.position = Position(
-        direction=1,
-        size=1.0,
-        entry_price=100.0,
-        margin_used=0.0,
+    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=2.0)
+    env = TradingEnv(
+        bars,
+        features,
+        obs_window=1,
+        initial_balance=50_000.0,
+        cost_model=cost_model,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
+        reward_mode="pnl",
+        tickbook=tickbook,
+        tick_execution_required=tick_execution_required,
+        randomized_fill_latency_ms=randomized_fill_latency_ms,
+        tick_fill_slippage_points=tick_slippage,
+    )
+    env.reset(seed=7)
+    env.step(env_action)
+    env.step(19)
+
+    actions = iter((direction, 19))
 # … caller assertions omitted …
 ```
 
@@ -122,7 +186,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Create an environment whose persistent market arrays are read-only mmaps.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.from_bundle` · **Source:** [simulation/environment/env.py:362](../../../../simulation/environment/env.py#L362)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.from_bundle` · **Source:** [simulation/environment/env.py:386](../../../../simulation/environment/env.py#L386)
 
 **Inputs and outputs:**
 
@@ -141,7 +205,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_bundle_env_step_trace_matches_frames`](../../../../tests/unit/simulation/test_environment/test_bundle_env_equivalence.py#L60)
+1. [test fixture: `test_bundle_env_step_trace_matches_frames`](../../../../tests/unit/simulation/test_environment/test_bundle_env_equivalence.py#L69)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -153,15 +217,15 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         pre_ny_by_date=None,
     )
     shared = TradingEnv.from_bundle(bundle_path, **common)
-    assert "po3_ifvg_time_ns" not in frames._obs_columns
-    assert "M5_sweep_high_pivot_time_ns" not in frames._obs_columns
-    assert "po3_ifvg_age" in frames._obs_columns
-    assert shared._obs_columns == frames._obs_columns
-    obs_frames, _ = frames.reset(seed=41)
+    with pytest.raises(ValueError, match="reachable-r validity-mask mode"):
+        TradingEnv.from_bundle(
+            bundle_path,
+            **{
+                **common,
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_bundle_env_without_session_id_matches_frames`](../../../../tests/unit/simulation/test_environment/test_bundle_env_equivalence.py#L130)
+2. [test fixture: `test_bundle_env_without_session_id_matches_frames`](../../../../tests/unit/simulation/test_environment/test_bundle_env_equivalence.py#L148)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -194,7 +258,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Gymnasium adapter for :meth:`transition`.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.step` · **Source:** [simulation/environment/env.py:394](../../../../simulation/environment/env.py#L394)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.step` · **Source:** [simulation/environment/env.py:418](../../../../simulation/environment/env.py#L418)
 
 **Inputs and outputs:**
 
@@ -212,39 +276,44 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_full_strategy_pipeline_runs`](../../../../tests/integration/test_strategy_integration.py#L80)
+1. [test fixture: `test_environment_and_backtest_reconcile_realized_and_open_account_transitions`](../../../../tests/integration/backtest/test_account_transition_parity.py#L89)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    action = np.array([0.8, 0.5, 0.7, 0.0, -1.0], dtype=np.float32)
-    assert env.action_space.contains(action)
+    )
+    env.reset(seed=7)
+    env_open_pnl_at_mark: float | None = None
+    env_account_trace_rows: list[dict[str, Any]] = []
+    for action_index, action in enumerate(actions):
+        _, _, _, _, info = env.step(action)
+        env_account_trace_rows.append(info["account_state_snapshot"])
+        if action_index == 6:
+            env_open_pnl_at_mark = float(env.account.open_pnl)
 
-    # Step through; at least one strategy trade should be logged.
-    for _ in range(len(bars) - 5):
-        obs, reward, done, truncated, info = env.step(action)
-        if env.position is not None:
-            break
-        if done or truncated:
-            break
-
+    env_opens = [event for event in env.trade_log if event["type"] == "open"]
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_baseline_entry_uses_strategy_validator`](../../../../tests/unit/simulation/test_environment/test_baseline_regression.py#L211)
+2. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L311)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            nonlocal called_strategy
-            called_strategy = True
-            return original(self_bs, direction=direction, row=row)
+        tick_execution_required=tick_execution_required,
+        randomized_fill_latency_ms=randomized_fill_latency_ms,
+        tick_fill_slippage_points=tick_slippage,
+    )
+    env.reset(seed=7)
+    env.step(env_action)
+    env.step(19)
 
-        monkeypatch.setattr(BaselineStrategy, "validate_entry", spy)
-        env.step(1)
-        assert called_strategy, "baseline entries must follow BaselineStrategy.validate_entry"
+    actions = iter((direction, 19))
+
+    def policy(_observation: np.ndarray[Any, Any]) -> int:
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -260,7 +329,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Advance the simulator through its framework-neutral transition API.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.transition` · **Source:** [simulation/environment/env.py:408](../../../../simulation/environment/env.py#L408)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.transition` · **Source:** [simulation/environment/env.py:432](../../../../simulation/environment/env.py#L432)
 
 **Inputs and outputs:**
 
@@ -297,7 +366,7 @@ def test_native_transition_matches_gymnasium_step() -> None:
     _assert_same(native.as_gymnasium(), gym_result)
 ```
 
-2. [production caller: `step`](../../../../simulation/environment/env.py#L406)
+2. [production caller: `step`](../../../../simulation/environment/env.py#L430)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

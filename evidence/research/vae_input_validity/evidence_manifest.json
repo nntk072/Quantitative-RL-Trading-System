@@ -1,0 +1,14 @@
+{
+  "schema": "research-evidence-packet-v1",
+  "topic": "vae_input_validity",
+  "evidence_role": "bounded source and current-local-input audit",
+  "claim_limit": "Does not evaluate a trained VAE, checkpoint use, policy value, or external session-calendar authority.",
+  "primary_report": "vae_pre_ny_sequence_validity.json",
+  "inputs": [
+    "data/training/US100.cash_M1_202412300105_202610162349.csv",
+    "data/pre_ny_sequences.npy",
+    "config/vae.yaml"
+  ],
+  "reusable_analysis": "scripts/research/analysis/features/audit_vae_pre_ny_sequence_validity.py",
+  "disposition": "VAE candidate is not eligible for enablement or promotion until validity masking, dated sequence provenance, and chronological fitting are established."
+}

@@ -9,6 +9,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from evaluation.reporting.account_state_trace_reconciliation import (
+    reconcile_account_state_trace,
+)
 from market_data.loading.ticks import TickBook, TickExecutionUnavailable
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
@@ -55,11 +58,12 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
     )
     cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=0.0)
     guardrails = {
-        "daily_loss_limit": 10_000.0,
-        "max_loss_limit": 20_000.0,
+        "limit_value_mode": "fixed_usd",
+        "daily_loss_limit_pct": 0.10,
+        "max_loss_limit_initial_pct": 0.20,
         "risk_per_trade_limit": 10_000.0,
-        "soft_daily_loss_limit": 0.0,
-        "soft_max_loss_limit": 0.0,
+        "soft_daily_loss_limit_pct": 0.0,
+        "soft_max_loss_limit_initial_pct": 0.0,
     }
     actions = [1, 0, 19, 0, 1, 0, 0, 19, 1, 0, 19]
 
@@ -80,8 +84,10 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
     )
     env.reset(seed=7)
     env_open_pnl_at_mark: float | None = None
+    env_account_trace_rows: list[dict[str, Any]] = []
     for action_index, action in enumerate(actions):
-        env.step(action)
+        _, _, _, _, info = env.step(action)
+        env_account_trace_rows.append(info["account_state_snapshot"])
         if action_index == 6:
             env_open_pnl_at_mark = float(env.account.open_pnl)
 
@@ -124,12 +130,78 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
         exit_action=19,
         daily_pnl_basis=daily_pnl_basis,
     )
+    account_trace = result["account_state_trace"]
+    assert result["account_state_trace_complete"] is True
+    assert len(account_trace) == len(result["equity"])
+    assert account_trace["schema_version"].eq("account_state_trace.v2").all()
+    assert account_trace["state_phase"].eq("pre_action_valuation").all()
+    env_account_trace = pd.DataFrame.from_records(env_account_trace_rows)
+    assert len(env_account_trace) == len(actions)
+    assert env_account_trace["state_phase"].eq("post_action_valuation").all()
+    env_reconciliation = reconcile_account_state_trace(
+        env_account_trace,
+        pd.DataFrame.from_records(env.trade_log),
+        breach_events=[],
+    )
+    assert env_reconciliation["status"] == "matched", env_reconciliation["failures"]
+    backtest_reconciliation = reconcile_account_state_trace(
+        account_trace, result["trades"], breach_events=[]
+    )
+    assert backtest_reconciliation["status"] == "matched", backtest_reconciliation["failures"]
+    backtest_shared_marks = account_trace.iloc[: len(actions)]
+    np.testing.assert_allclose(
+        env_account_trace["equity"].to_numpy(dtype=float),
+        backtest_shared_marks["equity"].to_numpy(dtype=float),
+        rtol=0.0,
+        atol=1e-9,
+        err_msg="cross-engine equity marks differ at the shared synthetic boundaries",
+    )
+    assert np.any(
+        env_account_trace["balance"].to_numpy(dtype=float)
+        != backtest_shared_marks["balance"].to_numpy(dtype=float)
+    )
+    for trace in (env_account_trace, backtest_shared_marks):
+        np.testing.assert_allclose(
+            trace["balance"].to_numpy(dtype=float) + trace["open_pnl"].to_numpy(dtype=float),
+            trace["equity"].to_numpy(dtype=float),
+            rtol=0.0,
+            atol=1e-9,
+        )
+    np.testing.assert_allclose(
+        account_trace["equity"].to_numpy(dtype=float),
+        result["equity"].to_numpy(dtype=float),
+        rtol=0.0,
+        atol=1e-9,
+    )
+    np.testing.assert_allclose(
+        account_trace["daily_floor_equity"].to_numpy(dtype=float),
+        account_trace["session_start_equity"].to_numpy(dtype=float)
+        - account_trace["daily_loss_limit_usd"].to_numpy(dtype=float),
+        rtol=0.0,
+        atol=1e-9,
+    )
 
     env_closes = [event for event in env.trade_log if event["type"] == "close"]
     backtest_closes = result["trades"].loc[result["trades"]["type"] == "close"]
     env_close_pnl = np.asarray([float(event["pnl"]) for event in env_closes])
     backtest_close_pnl = backtest_closes["pnl"].to_numpy(dtype=float)
     np.testing.assert_allclose(env_close_pnl, backtest_close_pnl, rtol=0.0, atol=1e-9)
+    env_close_times = [pd.Timestamp(event["fill_time"]) for event in env_closes]
+    backtest_close_times = [pd.Timestamp(value) for value in backtest_closes["fill_time"]]
+    assert env_close_times == backtest_close_times
+    close_cash_by_time: dict[pd.Timestamp, float] = {}
+    for event in env_closes:
+        fill_time = pd.Timestamp(event["fill_time"])
+        close_cash_by_time[fill_time] = close_cash_by_time.get(fill_time, 0.0) + float(event["pnl"])
+    for row_index, env_row in env_account_trace.iterrows():
+        balance_delta = float(env_row["balance"]) - float(
+            backtest_shared_marks.iloc[row_index]["balance"]
+        )
+        if abs(balance_delta) <= 1e-9:
+            continue
+        boundary_time = pd.Timestamp(env_row["valuation_time"])
+        assert boundary_time in close_cash_by_time
+        assert balance_delta == pytest.approx(close_cash_by_time[boundary_time])
     assert env_close_pnl[0] < 0.0
     assert env_close_pnl[1] > 0.0
     assert env_close_pnl[2] < 0.0
@@ -290,7 +362,7 @@ def test_environment_and_backtest_match_on_one_shared_tick_execution_trace(
             backtest_event["order_submission_time"]
         ).tz_convert("UTC")
         assert pd.Timestamp(env_event["decision_bar_time"]).tz_convert("UTC") == pd.Timestamp(
-            backtest_event["decision_time"]
+            backtest_event["decision_bar_time"]
         ).tz_convert("UTC")
         assert env_event["price"] == pytest.approx(backtest_event["price"])
         assert pd.Timestamp(env_event["actual_tick_time"]) == pd.Timestamp(
@@ -731,11 +803,12 @@ def test_environment_and_backtest_size_to_the_same_trade_risk_cap(
         index=index,
     )
     guardrails = {
-        "daily_loss_limit": 10_000.0,
-        "max_loss_limit": 20_000.0,
+        "limit_value_mode": "fixed_usd",
+        "daily_loss_limit_pct": 0.10,
+        "max_loss_limit_initial_pct": 0.20,
         "risk_per_trade_limit": risk_limit,
-        "soft_daily_loss_limit": 0.0,
-        "soft_max_loss_limit": 0.0,
+        "soft_daily_loss_limit_pct": 0.0,
+        "soft_max_loss_limit_initial_pct": 0.0,
     }
     cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=0.0)
     env = TradingEnv(
@@ -869,7 +942,14 @@ def test_environment_and_backtest_reject_insufficient_margin_without_account_mut
 
     env_opens = [event for event in env.trade_log if event["type"] == "open"]
     assert not env_opens
-    assert result["trades"].empty
+    backtest_events = result["trades"].to_dict("records")
+    submit = next(event for event in backtest_events if event["type"] == "order_submit")
+    rejection = next(event for event in backtest_events if event["type"] == "reject")
+    assert submit["order_type"] == "market"
+    assert submit["decision_id"] == rejection["decision_id"]
+    assert submit["order_id"] == rejection["order_id"]
+    assert rejection["reason"] == "insufficient_margin"
+    assert not any(event["type"] in {"open", "close", "order_fill"} for event in backtest_events)
     assert not env.sessions_with_trades
     assert result["n_sessions_with_trades"] == 0
     for account in (env.account, result["account"]):

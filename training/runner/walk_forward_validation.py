@@ -10,12 +10,13 @@ import numpy as np
 import pandas as pd
 
 from artifacts.atomic import write_text_atomic
-from evaluation import calculate_metrics, evaluation_periods_per_year
+from evaluation import account_path_metric_inputs, calculate_metrics, evaluation_periods_per_year
 from features import build_walkforward_fold_features
 from features.context.policy_market import attach_policy_market_context
 from learning.rl.agent import build_agent
 from market_data.loading.ticks import ticks_covering
 from market_data.splits.walkforward import purged_walk_forward
+from training.artifacts.flags import strict_nonnegative_int
 from training.runner.seed import _setup_rngs
 from training.setup.environments import (
     _evaluate_final_split,
@@ -205,6 +206,7 @@ def run_walk_forward_validation(
             candidate_max_age_bars=int(cfg.env.get("candidate_max_age_bars", 5)),
             arm_requires_retest=bool(cfg.env.get("arm_requires_retest", False)),
             entry_state_observation=bool(cfg.env.get("entry_state_observation", True)),
+            feature_validity_channels=bool(cfg.env.get("feature_validity_channels", False)),
             strict_research_eligibility=bool(cfg.env.get("strict_research_eligibility", False)),
             use_vae=args.use_vae,
             vae=env_vae,
@@ -239,8 +241,9 @@ def run_walk_forward_validation(
             n_sessions=fold_result.get("n_sessions", 1),
             n_breach_sessions=fold_result.get("n_breach_sessions", 0),
             periods_per_year=evaluation_periods_per_year(cfg),
+            **account_path_metric_inputs(fold_result),
         )
-        fold_record: dict[str, float | int | str] = {
+        fold_record: dict[str, Any] = {
             "fold": split.fold,
             "train_bars": len(fold_train_bars),
             "test_bars": len(fold_test_bars),
@@ -251,6 +254,11 @@ def run_walk_forward_validation(
             "feature_cache_name": fold_cache.name,
             "normalization_mode": "frozen_fold",
             "policy_action_mode": fold_result["policy_action_mode"],
+            "completed_data_split": fold_result.get("completed_data_split") is True,
+            "survived_full_year": fold_result.get("survived_full_year") is True,
+            "n_breach_sessions": strict_nonnegative_int(fold_result.get("n_breach_sessions")),
+            "episode_end_reason": str(fold_result.get("episode_end_reason", "")),
+            "fail_time": str(fold_result.get("fail_time") or ""),
         }
         if not deterministic_eval:
             fold_record["action_rng_seed"] = int(seed)

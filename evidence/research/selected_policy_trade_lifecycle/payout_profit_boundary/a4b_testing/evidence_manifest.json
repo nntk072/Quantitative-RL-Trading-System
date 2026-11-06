@@ -1,0 +1,58 @@
+{
+  "analysis_script": {
+    "path": "scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py",
+    "sha256": "e16356a753493c6d25e3716a07ca7b0bdf2dac6c36b1710229325cdca6435735"
+  },
+  "input_files": {
+    "breach_events.csv": {
+      "bytes": 133,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/breach_events.csv",
+      "sha256": "cb1e532a8f0d0addcfba65896734987216d4eaa36a44bb24529f5a23d4219174"
+    },
+    "cycle_events.csv": {
+      "bytes": 1,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/cycle_events.csv",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "evaluation_diagnostics.json": {
+      "bytes": 19335754,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/evaluation_diagnostics.json",
+      "sha256": "e669c5bf592594269a7869d7ffafaf26e0e134a601e65a8fb9c5f825400c9be1"
+    },
+    "fills.csv": {
+      "bytes": 732232,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/fills.csv",
+      "sha256": "b1d0546ebc1dad6d4f19387ec7af333bdf431f8c5164245f1107864193ef4b1f"
+    },
+    "metrics.json": {
+      "bytes": 701,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/metrics.json",
+      "sha256": "f7cadb8ae54d663b98da6cab3e55526606d970d2f09a184f5b150daea2d007b4"
+    },
+    "payouts.csv": {
+      "bytes": 1,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/payouts.csv",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "positions.csv": {
+      "bytes": 41555,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/positions.csv",
+      "sha256": "2d21e9213e686c5368b9ac38676432e56d988e5c33512ec34eb5eb3964904db4"
+    },
+    "reanalysis_manifest.json": {
+      "bytes": 132919,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/reanalysis_manifest.json",
+      "sha256": "9f8a20e36ee26746855f6b842ea1fc113e33cb431859ead71fd04785e2a7db2f"
+    },
+    "trades.csv": {
+      "bytes": 29475728,
+      "path": "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/trades.csv",
+      "sha256": "b10f03af9612b42251bb106b8462e1f27891cd33e280844454b443b6b6e49b90"
+    }
+  },
+  "report_files": {
+    "selected_policy_trade_lifecycle.json": "3d7da2f871a19a13f4ad50e13a05d7d3a6df61fb5cf7075a19fab22daad34fe2",
+    "selected_policy_trade_lifecycle.md": "638677d2ce64f3bfc91e7c65cc1b96680f96461d81da68dcb37d90068b617046"
+  },
+  "reproduction": "python scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py --run-dir outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing --output-dir evidence/research/selected_policy_trade_lifecycle/payout_profit_boundary/a4b_testing"
+}

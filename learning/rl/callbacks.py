@@ -196,6 +196,8 @@ if _SB3_AVAILABLE:
             self._window_steps = 0
             self._trade_setup_entropy_sum: Any = 0.0
             self._trade_setup_entropy_count: Any = 0
+            self._entry_execution_entropy_sum: Any = 0.0
+            self._entry_execution_entropy_count: Any = 0
 
         def _on_step(self) -> bool:
             """Process step.
@@ -253,6 +255,33 @@ if _SB3_AVAILABLE:
                     finite = entropy_values[np.isfinite(entropy_values)]
                     self._trade_setup_entropy_sum += float(finite.sum())
                     self._trade_setup_entropy_count += int(finite.size)
+            policy = getattr(self.model, "policy", None)
+            execution_distribution = getattr(policy, "hybrid_distribution", None)
+            if execution_distribution is None:
+                execution_distribution = getattr(policy, "conditioned_distribution", None)
+            entropy_fn = getattr(execution_distribution, "categorical_coordinate_entropy", None)
+            execution_entropy = entropy_fn("entry_execution") if callable(entropy_fn) else None
+            if execution_entropy is not None:
+                detach = getattr(execution_entropy, "detach", None)
+                if callable(detach):
+                    entropy_values = detach().reshape(-1)
+                    import torch
+
+                    finite_mask = torch.isfinite(entropy_values)
+                    self._entry_execution_entropy_sum = (
+                        self._entry_execution_entropy_sum
+                        + torch.where(
+                            finite_mask, entropy_values, torch.zeros_like(entropy_values)
+                        ).sum()
+                    )
+                    self._entry_execution_entropy_count = (
+                        self._entry_execution_entropy_count + finite_mask.sum()
+                    )
+                else:
+                    entropy_values = np.asarray(execution_entropy, dtype=np.float64).reshape(-1)
+                    finite = entropy_values[np.isfinite(entropy_values)]
+                    self._entry_execution_entropy_sum += float(finite.sum())
+                    self._entry_execution_entropy_count += int(finite.size)
             return True
 
         def _on_rollout_end(self) -> None:
@@ -270,6 +299,14 @@ if _SB3_AVAILABLE:
             )
             self._trade_setup_entropy_sum = 0.0
             self._trade_setup_entropy_count = 0
+            execution_entropy_sum = self._entry_execution_entropy_sum
+            if hasattr(execution_entropy_sum, "item"):
+                execution_entropy_sum = float(execution_entropy_sum.item())
+            execution_entropy_count = self._entry_execution_entropy_count
+            if hasattr(execution_entropy_count, "item"):
+                execution_entropy_count = int(execution_entropy_count.item())
+            self._entry_execution_entropy_sum = 0.0
+            self._entry_execution_entropy_count = 0
             raw_actions = np.asarray(buffer.actions, dtype=np.float64)
             if isinstance(model.action_space, spaces.Box):
                 actions = raw_actions.reshape(-1, raw_actions.shape[-1])
@@ -287,6 +324,14 @@ if _SB3_AVAILABLE:
                 "action/near_minus_one_fraction": float(np.mean(actions <= -0.95)),
                 "action/near_plus_one_fraction": float(np.mean(actions >= 0.95)),
             }
+            if execution_entropy_count:
+                row["entry_execution/entropy_mean_nats"] = float(execution_entropy_sum) / int(
+                    execution_entropy_count
+                )
+                model.logger.record(
+                    "entry_execution/entropy_mean_nats",
+                    row["entry_execution/entropy_mean_nats"],
+                )
             schema = getattr(model, "_action_schema", {})
             raw_names = (
                 schema.get("coordinates", schema.get("names", []))
@@ -333,6 +378,22 @@ if _SB3_AVAILABLE:
                     raise ValueError("rollout setup mask and setup action counts differ")
                 valid = masks[np.arange(len(masks)), setup_ids] > 0.0
                 no_trade = setup_ids == 0
+                execution_index = (
+                    names.index("entry_execution") if "entry_execution" in names else None
+                )
+                selected_trade_rows = ~no_trade
+                if execution_index is not None and bool(selected_trade_rows.any()):
+                    market_selected = actions[selected_trade_rows, execution_index] < 0.0
+                    row["entry_execution/market_selection_rate"] = float(np.mean(market_selected))
+                    row["entry_execution/limit_selection_rate"] = float(np.mean(~market_selected))
+                    model.logger.record(
+                        "entry_execution/market_selection_rate",
+                        row["entry_execution/market_selection_rate"],
+                    )
+                    model.logger.record(
+                        "entry_execution/limit_selection_rate",
+                        row["entry_execution/limit_selection_rate"],
+                    )
                 trade_ids = setup_ids[~no_trade]
                 trade_eligible_steps = masks[:, 1:].sum(axis=1) > 0
                 selected_ideas = {
@@ -812,6 +873,7 @@ if _SB3_AVAILABLE:
             verbose: int = 0,
             viability_eval_env_factory: Any | None = None,
             viability_eval_freq: int = 5_000_000,
+            survival_objective: bool = False,
         ) -> None:
             """Initialize BestCheckpointEvalCallback and its owned state.
 
@@ -823,6 +885,7 @@ if _SB3_AVAILABLE:
                 verbose: Numeric value used for the verbose.
                 viability_eval_env_factory: Viability eval env factory used by the operation described above.
                 viability_eval_freq: Numeric value used for the viability eval freq.
+                survival_objective: Whether this callback is used for survival qualification.
             """
             super().__init__(verbose=verbose)
             self._eval_env_factory = eval_env_factory
@@ -834,12 +897,15 @@ if _SB3_AVAILABLE:
             self._viability_eval_env_factory = viability_eval_env_factory or eval_env_factory
             self._viability_eval_freq = int(viability_eval_freq)
             self._next_viability_eval_at = self._viability_eval_freq
+            self._survival_objective = bool(survival_objective)
             self.viability_eval_history: list[dict[str, Any]] = []
             self.best_end_equity: float = -np.inf
             # Kept in sync with ``best_end_equity`` so older callers still read a score.
             self.best_mean_reward: float = -np.inf
             self.best_n_trades = 0
-            self.best_checkpoint_status = "NO_ACTIVE_CHECKPOINT"
+            self.best_checkpoint_status = (
+                "SURVIVAL_FINAL_CHECKPOINT" if self._survival_objective else "NO_ACTIVE_CHECKPOINT"
+            )
             self.consecutive_inactive_viability_evals = 0
             self.viability_failure_reason: str | None = None
 
@@ -851,7 +917,11 @@ if _SB3_AVAILABLE:
             Returns:
                 Whether on step meets the requested condition.
             """
-            if self._eval_freq > 0 and self.num_timesteps >= self._next_eval_at:
+            if (
+                not self._survival_objective
+                and self._eval_freq > 0
+                and self.num_timesteps >= self._next_eval_at
+            ):
                 self._run_eval()
                 while self._next_eval_at <= self.num_timesteps:
                     self._next_eval_at += self._eval_freq
@@ -997,7 +1067,8 @@ if _SB3_AVAILABLE:
                 self.consecutive_inactive_viability_evals + 1 if inactive else 0
             )
             if (
-                inactive
+                not self._survival_objective
+                and inactive
                 and self.num_timesteps >= 5_000_000
                 and bool(entry_state.get("entry_state_machine", False))
                 and int(entry_state.get("candidate_created", 0)) == 0
@@ -1006,7 +1077,9 @@ if _SB3_AVAILABLE:
                     "FAIL_ENTRY_PATH: full training replay created no entry candidates"
                 )
             elif (
-                self.num_timesteps >= 10_000_000 and self.consecutive_inactive_viability_evals >= 2
+                not self._survival_objective
+                and self.num_timesteps >= 10_000_000
+                and self.consecutive_inactive_viability_evals >= 2
             ):
                 self.viability_failure_reason = (
                     "FAIL_POLICY_COLLAPSE: full training replay has zero trades "

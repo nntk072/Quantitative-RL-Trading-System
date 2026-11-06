@@ -1,0 +1,63 @@
+{
+  "candidate_bytes_hashed": 3746889603,
+  "candidate_file_count": 585,
+  "claim_scope": "Same-basename exact SHA-256 search for the 132 run artifacts currently missing from the provenance byte report, across ordinary files beneath the current scratch root",
+  "command": ".venv/bin/python scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py --max-candidate-bytes 32212254720 --workers 8 --output evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/local_file_search.json",
+  "directory_symlinks_followed": false,
+  "exact_matches": 0,
+  "hashed_file_count": 585,
+  "inputs": {
+    "provenance_byte_report": {
+      "path": "evidence/research/releases/negative-evidence-readiness/PROVENANCE_BYTE_VERIFICATION.json",
+      "sha256": "afacb529c0430cc371683af5148308dbdd614c883bbe63aba4047568a6c58c62"
+    },
+    "provenance_dag": {
+      "path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+      "sha256": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c"
+    }
+  },
+  "matching_rule": "target basename plus exact declared SHA-256; no matches by filename alone",
+  "max_candidate_bytes": 32212254720,
+  "output": {
+    "bytes": 265868,
+    "path": "local_file_search.json",
+    "sha256": "26892786791656622b00f2a21e05b503f0387678fa62c45592df4f4184a0e4f7"
+  },
+  "read_errors": 0,
+  "schema_version": 1,
+  "search_root": "/scratch/work/nguyenl37",
+  "source_hashes": {
+    "archive_tests": {
+      "path": "tests/research/test_missing_artifact_archive_reconciliation.py",
+      "sha256": "a4a68d54c108d18d9ea9e18f3193221f0ca8b840a8ad6360b83b3c1a0dabbff6"
+    },
+    "new_tests": {
+      "path": "tests/research/test_missing_artifact_filesystem_reconciliation.py",
+      "sha256": "cd9b7b6d70c8f57c3e8379dea4427f17a277a8dc0b38045e65f2ea66bac31f75"
+    },
+    "scanner": {
+      "path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py",
+      "sha256": "d4fdce32059cc668388daf0c93416edde0114690d12ddf7c5df1e63a8882f069"
+    },
+    "shared_archive_scanner": {
+      "path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_archives.py",
+      "sha256": "384c78dbfaa4d9cb06dd17b2926cf01f0b0cf1dbb6a0987640f48196932d91ce"
+    }
+  },
+  "status": "complete",
+  "target_count": 132,
+  "training_or_evaluation_run": false,
+  "unmatched_targets": 132,
+  "validation": {
+    "pytest_invocation": ".venv/bin/python -m pytest; the pytest script shebang targets a removed thesis checkout",
+    "ruff_format_and_check": "passed for the new scanner and tests",
+    "ruff_version_source": ".venv/bin/ruff",
+    "test_paths": [
+      "tests/research/test_missing_artifact_archive_reconciliation.py",
+      "tests/research/test_missing_artifact_filesystem_reconciliation.py"
+    ],
+    "test_result": "6 passed in 0.21 seconds",
+    "validation_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/filesystem_recovery_tests.log"
+  },
+  "workers": 8
+}

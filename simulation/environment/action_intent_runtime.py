@@ -7,7 +7,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .entry_state import EntryCandidate
+from features.context.trade_setup_candidates import trade_setup_event_is_current
+from simulation.entry_state import EntryCandidate
+
 from .market_view import FeatureRow
 from .mixin_base import RuntimeMixinBase
 
@@ -43,12 +45,32 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
         self._note_session_open(session_id, feat_row)
         if not self.trade_setup_actions:
             self._arm_po3_confirm(session_id)
-        entry_machine = None if self.trade_setup_actions else self.entry_state_machine
-        entry_state_for_action = entry_machine.state if entry_machine is not None else None
+        intent_pending_order = pending_order
+        if pending_order is not None and pending_order.get("order_type") == "limit":
+            selected = pending_order.get("selected", {})
+            if selected.get("_selected_trade_setup") is not None:
+                setup_is_current, setup_reason = trade_setup_event_is_current(
+                    selected.get("_selected_trade_setup_event_identity"), feat_row
+                )
+                pending_order["_source_setup_validity_at_current_row"] = (
+                    setup_is_current,
+                    setup_reason,
+                )
+                if not setup_is_current:
+                    # The constraint phase records/cancels the old order with
+                    # account/session priority. Decode this row's action as a
+                    # fresh intent so a replacement setup can be submitted.
+                    intent_pending_order = None
+        entry_machine = self.entry_state_machine
+        entry_state_for_action = (
+            entry_machine.state
+            if entry_machine is not None and not self.trade_setup_actions
+            else None
+        )
         discrete_action, risk_frac, rr_ratio, tp_mode = self._decode_action(action, feat_row)
         self._selected_tp_mode = tp_mode
         entry_candidate: EntryCandidate | None = None
-        if entry_machine is not None:
+        if entry_machine is not None and not self.trade_setup_actions:
             action_requested = self._entry_action_requested(discrete_action)
             if entry_state_for_action in ("FLAT", "CANDIDATE"):
                 if action_requested:
@@ -71,7 +93,7 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
                 discrete_action = 0
                 risk_frac = 0.0
 
-        if pending_order is not None:
+        if intent_pending_order is not None:
             if discrete_action != 0:
                 self._reject("entry_pending")
             discrete_action = 0

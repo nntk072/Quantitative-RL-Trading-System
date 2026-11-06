@@ -1,0 +1,212 @@
+{
+  "arms": [
+    {
+      "arm": "always_no_trade",
+      "artifacts": {
+        "confidence_intervals": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/confidence_intervals.json",
+          "sha256": "31b7b14f87c1b069475ac03e0afcdbe1f373d5dd8f42a906ee8d1abd26d6d6e7"
+        },
+        "decision_trace": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/decisions.csv",
+          "sha256": "59cb1170776121552cba096961a0c4fadf02831197f92c4d7debaf86a27f22df"
+        },
+        "equity_curve": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/equity.csv",
+          "sha256": "0f736eaf7954d5c7e6fa7b6c69b76667c22ae2c7719e0d7093dfb32dae14db19"
+        },
+        "evaluation_metadata": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/evaluation.json",
+          "sha256": "216eaccaf87abb6e47c736edfda77dac6b60020a7d25b7a2fe7a698117f936ea"
+        },
+        "metrics": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/metrics.json",
+          "sha256": "5044533315bd981e76ca3ce286e60679a056eaba6fab4a2e8219574cc7182c08"
+        },
+        "policy_metadata": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/policy_metadata.json",
+          "sha256": "1def9ef2876040736242f1223c51d21245a509f15e2ec2189c5b36f14a6e9744"
+        },
+        "trade_fill_event_ledger": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/always_no_trade/trade_fill_event_ledger.csv",
+          "sha256": "bd85bcdb8d4e613a79cb62d0903946ad10c83e63dc75f67614c159c0dbf4d184"
+        }
+      },
+      "breach_event_count": 0,
+      "checks": {
+        "all_open_positions_have_terminal_close": 1,
+        "breach_events_match_metrics_count": 1,
+        "decision_and_equity_rows_match_evaluation_steps": 1,
+        "decision_rows_have_unique_ids_and_match_arms": 1,
+        "equity_max_drawdown_matches_metrics": 1,
+        "equity_total_return_matches_metrics": 1,
+        "initial_balance_plus_realized_cashflows_matches_final_equity": 1,
+        "input_hashes_match_across_arms": 1,
+        "open_positions_match_metrics_trade_count": 1,
+        "position_cashflows_match_terminal_position_pnl": 0,
+        "realized_cashflows_match_metrics_total_pnl": 1
+      },
+      "close_fill_id_count": 0,
+      "decision_count": 99492,
+      "distinct_closed_positions": 0,
+      "ending_equity": 100000.0,
+      "failures": [],
+      "initial_balance": 100000.0,
+      "input_hashes": {
+        "bars": "ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+        "features": "c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+        "tickbook": "2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc"
+      },
+      "open_count": 0,
+      "opens_without_scalar_target": 0,
+      "partial_close_count": 0,
+      "realized_net_pnl": 0.0,
+      "status": "passed",
+      "terminal_close_count": 0
+    },
+    {
+      "arm": "random_eligible_setup",
+      "artifacts": {
+        "confidence_intervals": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/confidence_intervals.json",
+          "sha256": "1d95cf4e678cb993889de1cdb5f401b0d5b0aba55e1ac22fe7f6ae44d715d341"
+        },
+        "decision_trace": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/decisions.csv",
+          "sha256": "1498a1a9e48557442be19d4a59df696a472935e260c041a7303b4362387b7053"
+        },
+        "equity_curve": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/equity.csv",
+          "sha256": "f047456bd7d478cfd31212b616a0a5301c0cfceda13235cc0f76cfd6bf9d3f26"
+        },
+        "evaluation_metadata": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/evaluation.json",
+          "sha256": "fdf65de46d9a1ac17d9b3ca665342825d5f599223ed64c6f1cf79feb1f9488b9"
+        },
+        "metrics": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/metrics.json",
+          "sha256": "006aa8859e78c442149da6a2ef848cf3ae88e30f002b9b669f48fd48079b271c"
+        },
+        "policy_metadata": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/policy_metadata.json",
+          "sha256": "54e57f962b19e0772d14e06a8ff2ed286771baeb863c3d163904f91a5e90ce2f"
+        },
+        "trade_fill_event_ledger": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/random_eligible_setup/trade_fill_event_ledger.csv",
+          "sha256": "5484477d5072e1ff0d51fcbdffa18d81fe74f21bccaf30111f319c2dd898e6b2"
+        }
+      },
+      "breach_event_count": 25,
+      "checks": {
+        "all_open_positions_have_terminal_close": 1,
+        "breach_events_match_metrics_count": 1,
+        "decision_and_equity_rows_match_evaluation_steps": 1,
+        "decision_rows_have_unique_ids_and_match_arms": 1,
+        "decision_submission_fill_chronology": 1854,
+        "defined_target_is_on_favorable_side": 1647,
+        "equity_max_drawdown_matches_metrics": 1,
+        "equity_total_return_matches_metrics": 1,
+        "initial_balance_plus_realized_cashflows_matches_final_equity": 1,
+        "input_hashes_match_across_arms": 1,
+        "open_candidate_matches_selected_eligible_decision": 1854,
+        "open_positions_match_metrics_trade_count": 1,
+        "open_stop_is_on_protective_side": 1854,
+        "position_cashflows_match_terminal_position_pnl": 1854,
+        "realized_cashflows_match_metrics_total_pnl": 1
+      },
+      "close_fill_id_count": 1895,
+      "decision_count": 99492,
+      "distinct_closed_positions": 1854,
+      "ending_equity": 89840.15150531461,
+      "failures": [],
+      "initial_balance": 100000.0,
+      "input_hashes": {
+        "bars": "ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+        "features": "c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+        "tickbook": "2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc"
+      },
+      "open_count": 1854,
+      "opens_without_scalar_target": 207,
+      "partial_close_count": 41,
+      "realized_net_pnl": -10159.848494685386,
+      "status": "passed",
+      "terminal_close_count": 1854
+    },
+    {
+      "arm": "structure_priority",
+      "artifacts": {
+        "confidence_intervals": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/confidence_intervals.json",
+          "sha256": "b221f85ac0b0e95b0ceb25d7902d8374e274a0680fda3a3b3f9145a754fccc0e"
+        },
+        "decision_trace": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/decisions.csv",
+          "sha256": "03641827d20c0b06e138f381c58ca977f3620b72f78f71c3cf5cf35cbbb5569a"
+        },
+        "equity_curve": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/equity.csv",
+          "sha256": "fed546bc25b9cdb8371b17a36015ee33498140d94eed1f3125a66e06759f308f"
+        },
+        "evaluation_metadata": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/evaluation.json",
+          "sha256": "6038990e9f2ae485ac5383a40f4efe2cbfafc116ffa2bec1e27d062df77683c8"
+        },
+        "metrics": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/metrics.json",
+          "sha256": "7b844fde7fdad19a70e987faa681755de7a8c002769e7919d46a0f5905f226f8"
+        },
+        "policy_metadata": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/policy_metadata.json",
+          "sha256": "b960f7138a035ae45dc1a0f5108e04ba10116b3018ad95cbc4a787ad5c809805"
+        },
+        "trade_fill_event_ledger": {
+          "path": "matched_setup_baselines_19770241b07b5b5e/structure_priority/trade_fill_event_ledger.csv",
+          "sha256": "9d6b2ba68fe373cac9915ed6c1fc6846d6d78040a3b3b0d11741c783f8ba5407"
+        }
+      },
+      "breach_event_count": 25,
+      "checks": {
+        "all_open_positions_have_terminal_close": 1,
+        "breach_events_match_metrics_count": 1,
+        "decision_and_equity_rows_match_evaluation_steps": 1,
+        "decision_rows_have_unique_ids_and_match_arms": 1,
+        "decision_submission_fill_chronology": 1169,
+        "defined_target_is_on_favorable_side": 1079,
+        "equity_max_drawdown_matches_metrics": 1,
+        "equity_total_return_matches_metrics": 1,
+        "initial_balance_plus_realized_cashflows_matches_final_equity": 1,
+        "input_hashes_match_across_arms": 1,
+        "open_candidate_matches_selected_eligible_decision": 1169,
+        "open_positions_match_metrics_trade_count": 1,
+        "open_stop_is_on_protective_side": 1169,
+        "position_cashflows_match_terminal_position_pnl": 1169,
+        "realized_cashflows_match_metrics_total_pnl": 1
+      },
+      "close_fill_id_count": 1209,
+      "decision_count": 99492,
+      "distinct_closed_positions": 1169,
+      "ending_equity": 89965.10362806503,
+      "failures": [],
+      "initial_balance": 100000.0,
+      "input_hashes": {
+        "bars": "ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+        "features": "c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+        "tickbook": "2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc"
+      },
+      "open_count": 1169,
+      "opens_without_scalar_target": 90,
+      "partial_close_count": 40,
+      "realized_net_pnl": -10034.896371934745,
+      "status": "passed",
+      "terminal_close_count": 1169
+    }
+  ],
+  "bundle_id": "matched_setup_policy_evaluation",
+  "bundle_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/matched_setup_baselines/matched_setup_baselines_19770241b07b5b5e",
+  "initial_balance": 100000.0,
+  "manifest_sha256": "de1b93148181220c8e71b09ca61256fb00e19302b5586b4e128caa25048176e8",
+  "resolved_config_sha256": "86739cedc0e09742d74c66ef9cc5027486f7dd76f740c5cbcb479f69c3bef348",
+  "schema": "matched_setup_baseline_accounting_audit_v1",
+  "status": "passed",
+  "verifier_source_sha256": "97874a9fff6999213e87e226c92a3826d1feaba03ee36e6276d9031e9d038784"
+}

@@ -1,6 +1,6 @@
 # Market data · `loading.ticks`
 
-This page contains 11 public callable records owned by `market_data.loading.ticks`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 13 public callable records owned by `market_data.loading.ticks`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `TickBook`
 
@@ -8,54 +8,58 @@ This page contains 11 public callable records owned by `market_data.loading.tick
 
 **Purpose:** Sorted bid/ask lookup table backed by NumPy arrays.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook` · **Source:** [market_data/loading/ticks.py:284](../../../../market_data/loading/ticks.py#L284)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook` · **Source:** [market_data/loading/ticks.py:460](../../../../market_data/loading/ticks.py#L460)
 
 **Observed usage:**
 
-1. [test fixture: `test_delayed_tick_exit_records_the_actual_fill_timestamp`](../../../../tests/integration/backtest/test_engine_execution_contract.py#L108)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_delayed_tick_exit_records_the_actual_fill_timestamp() -> None:
-    index = pd.date_range("2026-01-05 12:00", periods=5, freq="1min", tz="UTC")
-    fill_time = index[2]
-    actual_fill_time = fill_time + pd.Timedelta(seconds=20)
-    ticks = [fill_time, fill_time + pd.Timedelta(seconds=10), actual_fill_time]
-    tickbook = TickBook(
-        np.asarray([ts.value for ts in ticks], dtype=np.int64),
-        np.asarray([100.0, 98.5, 98.0]),
-        np.asarray([100.5, 99.0, 98.5]),
-    )
-    features = pd.DataFrame({"last_swing_low": [99.0] * len(index)}, index=index)
-    actions = iter([1, 0, 0, 0])
-
-    result = run_backtest(
-        _bars(index),
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_randomized_tick_fills_are_seeded_and_record_order_and_fill_times`](../../../../tests/integration/backtest/test_engine_execution_contract.py#L254)
+1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L285)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        [
-            index[2] + pd.Timedelta(milliseconds=50),
-            index[4] + pd.Timedelta(minutes=1, milliseconds=50),
-        ]
+            (index[2] + pd.Timedelta(milliseconds=100)).value,
+            (index[3] + pd.Timedelta(milliseconds=100)).value,
+        ],
+        dtype=np.int64,
     )
     tickbook = TickBook(
-        tick_times.to_numpy(dtype="datetime64[ns]").astype(np.int64),
-        np.asarray([100.0, 100.1, 100.2, 100.3]),
-        np.asarray([100.5, 100.6, 100.7, 100.8]),
+        tick_times,
+        np.asarray([100.0, 99.5]),
+        np.asarray([100.2, 99.7]),
     )
+    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=2.0)
+    env = TradingEnv(
+        bars,
+        features,
+        obs_window=1,
+# … caller assertions omitted …
+```
 
-    def run(seed: int) -> pd.DataFrame:
-        actions = iter([1, 0, 0, 0])
-        result = run_backtest(
-            _bars(index),
+2. [test fixture: `test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending`](../../../../tests/integration/backtest/test_account_transition_parity.py#L408)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+            "last_swing_low": np.full(len(index), 90.0),
+            "last_swing_high": np.full(len(index), 110.0),
+        },
+        index=index,
+    )
+    tickbook = TickBook(
+        np.asarray(
+            [index[i].value for i in (5, 8, 9)] + [(index[-1] + pd.Timedelta(minutes=1)).value],
+            dtype=np.int64,
+        ),
+        np.asarray([100.0, 99.5, 99.2, 99.0]),
+        np.asarray([100.2, 99.7, 99.4, 99.2]),
+    )
+    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=0.0)
+    # Environment action IDs 1 and 10 encode long and short; the backtest
+    # adapter below receives their signed directions directly.
+    actions = [1, 0, 0, 0, 10, 10, 19, 0, 0, 0, 0]
+    env = TradingEnv(
 # … caller assertions omitted …
 ```
 
@@ -72,54 +76,58 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Sorted bid/ask lookup table backed by NumPy arrays.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook` · **Source:** [market_data/loading/ticks.py:284](../../../../market_data/loading/ticks.py#L284)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook` · **Source:** [market_data/loading/ticks.py:460](../../../../market_data/loading/ticks.py#L460)
 
 **Observed usage:**
 
-1. [test fixture: `test_delayed_tick_exit_records_the_actual_fill_timestamp`](../../../../tests/integration/backtest/test_engine_execution_contract.py#L108)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_delayed_tick_exit_records_the_actual_fill_timestamp() -> None:
-    index = pd.date_range("2026-01-05 12:00", periods=5, freq="1min", tz="UTC")
-    fill_time = index[2]
-    actual_fill_time = fill_time + pd.Timedelta(seconds=20)
-    ticks = [fill_time, fill_time + pd.Timedelta(seconds=10), actual_fill_time]
-    tickbook = TickBook(
-        np.asarray([ts.value for ts in ticks], dtype=np.int64),
-        np.asarray([100.0, 98.5, 98.0]),
-        np.asarray([100.5, 99.0, 98.5]),
-    )
-    features = pd.DataFrame({"last_swing_low": [99.0] * len(index)}, index=index)
-    actions = iter([1, 0, 0, 0])
-
-    result = run_backtest(
-        _bars(index),
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_randomized_tick_fills_are_seeded_and_record_order_and_fill_times`](../../../../tests/integration/backtest/test_engine_execution_contract.py#L254)
+1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L285)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        [
-            index[2] + pd.Timedelta(milliseconds=50),
-            index[4] + pd.Timedelta(minutes=1, milliseconds=50),
-        ]
+            (index[2] + pd.Timedelta(milliseconds=100)).value,
+            (index[3] + pd.Timedelta(milliseconds=100)).value,
+        ],
+        dtype=np.int64,
     )
     tickbook = TickBook(
-        tick_times.to_numpy(dtype="datetime64[ns]").astype(np.int64),
-        np.asarray([100.0, 100.1, 100.2, 100.3]),
-        np.asarray([100.5, 100.6, 100.7, 100.8]),
+        tick_times,
+        np.asarray([100.0, 99.5]),
+        np.asarray([100.2, 99.7]),
     )
+    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=2.0)
+    env = TradingEnv(
+        bars,
+        features,
+        obs_window=1,
+# … caller assertions omitted …
+```
 
-    def run(seed: int) -> pd.DataFrame:
-        actions = iter([1, 0, 0, 0])
-        result = run_backtest(
-            _bars(index),
+2. [test fixture: `test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending`](../../../../tests/integration/backtest/test_account_transition_parity.py#L408)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+            "last_swing_low": np.full(len(index), 90.0),
+            "last_swing_high": np.full(len(index), 110.0),
+        },
+        index=index,
+    )
+    tickbook = TickBook(
+        np.asarray(
+            [index[i].value for i in (5, 8, 9)] + [(index[-1] + pd.Timedelta(minutes=1)).value],
+            dtype=np.int64,
+        ),
+        np.asarray([100.0, 99.5, 99.2, 99.0]),
+        np.asarray([100.2, 99.7, 99.4, 99.2]),
+    )
+    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=0.0)
+    # Environment action IDs 1 and 10 encode long and short; the backtest
+    # adapter below receives their signed directions directly.
+    actions = [1, 0, 0, 0, 10, 10, 19, 0, 0, 0, 0]
+    env = TradingEnv(
 # … caller assertions omitted …
 ```
 
@@ -136,7 +144,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.build_tick_book` · **Source:** [market_data/loading/ticks.py:644](../../../../market_data/loading/ticks.py#L644)
+**Exact API:** {py:obj}`market_data.loading.ticks.build_tick_book` · **Source:** [market_data/loading/ticks.py:896](../../../../market_data/loading/ticks.py#L896)
 
 **Inputs and outputs:**
 
@@ -151,6 +159,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   force: Whether to enable or require the force.
   chunksize: Numeric value used for the chunksize.
   price_grid_increment: Price grid increment used by the operation described above.
+  diagnostics: Optional mutable counter record populated during a raw-source build.
   ```
 
 - **Returns:**
@@ -161,7 +170,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_equal_timestamp_quote_uses_first_source_row_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L63)
+1. [test fixture: `test_equal_timestamp_quote_uses_first_source_row_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L102)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -181,7 +190,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_build_tick_book_quantizes_executable_bid_ask`](../../../../tests/unit/market_data/test_ticks.py#L471)
+2. [test fixture: `test_build_tick_book_quantizes_executable_bid_ask`](../../../../tests/unit/market_data/test_ticks.py#L625)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -217,7 +226,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Yield recorded quotes in timestamp order within a half-open bar interval.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.bar_quotes` · **Source:** [market_data/loading/ticks.py:410](../../../../market_data/loading/ticks.py#L410)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.bar_quotes` · **Source:** [market_data/loading/ticks.py:662](../../../../market_data/loading/ticks.py#L662)
 
 **Inputs and outputs:**
 
@@ -236,7 +245,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes`](../../../../tests/unit/market_data/test_ticks.py#L718)
+1. [test fixture: `test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes`](../../../../tests/unit/market_data/test_ticks.py#L894)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -262,13 +271,52 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 - Semantic domain guide: {doc}`../../domains/data`
 - Generated package reference: {doc}`../../generated/market_data/index`
 
+## `TickBook.content_sha256`
+
+**Kind:** method · **Status:** stable · **Owner:** `market_data.loading.ticks`
+
+**Purpose:** Fingerprint the ordered timestamp and quote arrays used for execution.
+
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.content_sha256` · **Source:** [market_data/loading/ticks.py:625](../../../../market_data/loading/ticks.py#L625)
+
+**Inputs and outputs:**
+
+- **Returns:**
+
+  ```text
+  SHA-256 fingerprint of ordered timestamps, bids, and asks.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_tickbook_content_hash_includes_stable_quote_order`](../../../../tests/unit/market_data/test_ticks.py#L61)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_tickbook_content_hash_includes_stable_quote_order() -> None:
+    book = _make_book()
+    identical = TickBook(book._ts.copy(), book._bid.copy(), book._ask.copy())
+    reordered = TickBook(book._ts[::-1].copy(), book._bid[::-1].copy(), book._ask[::-1].copy())
+
+    assert book.content_sha256() == identical.content_sha256()
+    assert book.content_sha256() != reordered.content_sha256()
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/data`
+- Generated package reference: {doc}`../../generated/market_data/index`
+
 ## `TickBook.delayed_exit_event`
 
 **Kind:** method · **Status:** stable · **Owner:** `market_data.loading.ticks`
 
 **Purpose:** Return trigger kind, actual fill time, and delayed executable quote.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_event` · **Source:** [market_data/loading/ticks.py:469](../../../../market_data/loading/ticks.py#L469)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_event` · **Source:** [market_data/loading/ticks.py:721](../../../../market_data/loading/ticks.py#L721)
 
 **Inputs and outputs:**
 
@@ -292,7 +340,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_tick_exit_ignores_crossings_before_position_entry_time`](../../../../tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py#L83)
+1. [test fixture: `test_tick_exit_ignores_crossings_before_position_entry_time`](../../../../tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py#L111)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -315,7 +363,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert event is None
 ```
 
-2. [production caller: `delayed_exit_quote`](../../../../market_data/loading/ticks.py#L461)
+2. [production caller: `delayed_exit_quote`](../../../../market_data/loading/ticks.py#L713)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -349,7 +397,7 @@ def delayed_exit_quote(
 
 **Purpose:** Quote ``delay`` after the first tick that trades through SL or TP.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_quote` · **Source:** [market_data/loading/ticks.py:433](../../../../market_data/loading/ticks.py#L433)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_quote` · **Source:** [market_data/loading/ticks.py:685](../../../../market_data/loading/ticks.py#L685)
 
 **Inputs and outputs:**
 
@@ -381,7 +429,7 @@ instance = TickBook(...)
 result = instance.delayed_exit_quote(bar_start=..., direction=..., sl=..., tp=..., delay=..., bar_minutes=...)
 ```
 
-**Lifecycle context:** This callable participates in `TickBook`: Sorted bid/ask lookup table backed by NumPy arrays. Related public lifecycle methods: {py:obj}`market_data.loading.ticks.TickBook.quote_at`, {py:obj}`market_data.loading.ticks.TickBook.quote_event_at`, {py:obj}`market_data.loading.ticks.TickBook.execution_quote_event_at`, {py:obj}`market_data.loading.ticks.TickBook.has_ticks_between`, {py:obj}`market_data.loading.ticks.TickBook.bar_quotes`, {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_quote`, {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_event`, {py:obj}`market_data.loading.ticks.TickBook.slice`
+**Lifecycle context:** This callable participates in `TickBook`: Sorted bid/ask lookup table backed by NumPy arrays. Related public lifecycle methods: {py:obj}`market_data.loading.ticks.TickBook.quote_at`, {py:obj}`market_data.loading.ticks.TickBook.quote_event_at`, {py:obj}`market_data.loading.ticks.TickBook.execution_quote_event_at`, {py:obj}`market_data.loading.ticks.TickBook.first_limit_execution_event`, {py:obj}`market_data.loading.ticks.TickBook.content_sha256`, {py:obj}`market_data.loading.ticks.TickBook.has_ticks_between`, {py:obj}`market_data.loading.ticks.TickBook.bar_quotes`, {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_quote`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
@@ -396,7 +444,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return the first quote at or after an execution arrival time.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.execution_quote_event_at` · **Source:** [market_data/loading/ticks.py:358](../../../../market_data/loading/ticks.py#L358)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.execution_quote_event_at` · **Source:** [market_data/loading/ticks.py:534](../../../../market_data/loading/ticks.py#L534)
 
 **Inputs and outputs:**
 
@@ -414,7 +462,27 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [tutorial example: `tick_execution · code cell 2`](../../../../docs/learn/tutorials/advanced/tick_execution.ipynb)
+1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L372)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        assert env_event["price"] == pytest.approx(backtest_event["price"])
+        assert pd.Timestamp(env_event["actual_tick_time"]) == pd.Timestamp(
+            backtest_event["actual_tick_time"]
+        )
+
+    exit_quote = tickbook.execution_quote_event_at(index[3])
+    assert exit_quote is not None
+    assert env_close["fill_time"] == exit_quote[0]
+    assert env_close["pnl"] == pytest.approx(backtest_close["pnl"])
+    assert env.account.balance == pytest.approx(result["account"].balance)
+    lots = float(env_open["lots"])
+# … caller assertions omitted …
+```
+
+2. [tutorial example: `tick_execution · code cell 2`](../../../../docs/learn/tutorials/advanced/tick_execution.ipynb)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -454,23 +522,62 @@ print(
 )
 ```
 
-2. [production caller: `resolve_tick_execution`](../../../../market_data/loading/ticks.py#L118)
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/data`
+- Generated package reference: {doc}`../../generated/market_data/index`
+
+## `TickBook.first_limit_execution_event`
+
+**Kind:** method · **Status:** stable · **Owner:** `market_data.loading.ticks`
+
+**Purpose:** Return the earliest source-ordered quote that crosses a limit.
+
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.first_limit_execution_event` · **Source:** [market_data/loading/ticks.py:561](../../../../market_data/loading/ticks.py#L561)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  direction: Limit-order side, ``1`` for buy or ``-1`` for sell.
+  limit_price: Submitted limit price.
+  start_time: Earliest timestamp eligible for a fill.
+  expiry_time: Last timestamp eligible for a fill, inclusive.
+  require_trade_through: Whether a quote must cross beyond the limit.
+  ```
+
+- **Returns:**
+
+  ```text
+  Earliest matching timestamp and its bid/ask, or ``None`` if unfilled.
+  ```
+
+**Observed usage:**
+
+1. [production caller: `resolve_tick_limit_execution`](../../../../market_data/loading/ticks.py#L339)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+        0 if max_latency_ns_exclusive == 0 else int(rng.integers(0, max_latency_ns_exclusive))
+    )
     arrival = submitted + pd.Timedelta(latency_ns, unit="ns")
-    # Execution differs from a valuation lookup: if the order arrives just
-    # before the first observed tick, that first tick is still the first
-    # executable quote at or after arrival. ``quote_event_at`` intentionally
-    # treats pre-coverage timestamps as unavailable for ordinary lookups.
-    event = book.execution_quote_event_at(arrival)
+    if arrival > expiry:
+        return None
+    event = book.first_limit_execution_event(
+        direction,
+        float(limit_price),
+        arrival,
+        expiry,
+        require_trade_through=require_trade_through,
+    )
     if event is None:
         return None
     tick_time, bid, ask = event
-    if tick_time < arrival:
-        raise RuntimeError("TickBook returned a pre-arrival quote for execution")
+    return TickLimitExecutionQuote(
+        order_time=submitted,
 # … caller assertions omitted …
 ```
 
@@ -485,7 +592,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return whether any quote falls in the half-open interval [start, end).
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.has_ticks_between` · **Source:** [market_data/loading/ticks.py:393](../../../../market_data/loading/ticks.py#L393)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.has_ticks_between` · **Source:** [market_data/loading/ticks.py:645](../../../../market_data/loading/ticks.py#L645)
 
 **Inputs and outputs:**
 
@@ -513,7 +620,7 @@ instance = TickBook(...)
 result = instance.has_ticks_between(start=..., end=...)
 ```
 
-**Lifecycle context:** This callable participates in `TickBook`: Sorted bid/ask lookup table backed by NumPy arrays. Related public lifecycle methods: {py:obj}`market_data.loading.ticks.TickBook.quote_at`, {py:obj}`market_data.loading.ticks.TickBook.quote_event_at`, {py:obj}`market_data.loading.ticks.TickBook.execution_quote_event_at`, {py:obj}`market_data.loading.ticks.TickBook.has_ticks_between`, {py:obj}`market_data.loading.ticks.TickBook.bar_quotes`, {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_quote`, {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_event`, {py:obj}`market_data.loading.ticks.TickBook.slice`
+**Lifecycle context:** This callable participates in `TickBook`: Sorted bid/ask lookup table backed by NumPy arrays. Related public lifecycle methods: {py:obj}`market_data.loading.ticks.TickBook.quote_at`, {py:obj}`market_data.loading.ticks.TickBook.quote_event_at`, {py:obj}`market_data.loading.ticks.TickBook.execution_quote_event_at`, {py:obj}`market_data.loading.ticks.TickBook.first_limit_execution_event`, {py:obj}`market_data.loading.ticks.TickBook.content_sha256`, {py:obj}`market_data.loading.ticks.TickBook.has_ticks_between`, {py:obj}`market_data.loading.ticks.TickBook.bar_quotes`, {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_quote`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
@@ -528,7 +635,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return ``(bid, ask)`` for the first tick at or after *ts*.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.quote_at` · **Source:** [market_data/loading/ticks.py:312](../../../../market_data/loading/ticks.py#L312)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.quote_at` · **Source:** [market_data/loading/ticks.py:488](../../../../market_data/loading/ticks.py#L488)
 
 **Inputs and outputs:**
 
@@ -546,7 +653,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_quote_at_exact_tick`](../../../../tests/unit/market_data/test_ticks.py#L46)
+1. [test fixture: `test_quote_at_exact_tick`](../../../../tests/unit/market_data/test_ticks.py#L49)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -561,7 +668,7 @@ def test_quote_at_exact_tick():
     assert ask == pytest.approx(101.1)
 ```
 
-2. [test fixture: `test_quote_at_before_first_tick_returns_none`](../../../../tests/unit/market_data/test_ticks.py#L84)
+2. [test fixture: `test_quote_at_before_first_tick_returns_none`](../../../../tests/unit/market_data/test_ticks.py#L123)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -585,7 +692,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the first source-ordered quote at/after *ts* and its timestamp.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.quote_event_at` · **Source:** [market_data/loading/ticks.py:331](../../../../market_data/loading/ticks.py#L331)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.quote_event_at` · **Source:** [market_data/loading/ticks.py:507](../../../../market_data/loading/ticks.py#L507)
 
 **Inputs and outputs:**
 
@@ -603,7 +710,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_equal_timestamp_quote_uses_first_source_row_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L66)
+1. [test fixture: `test_equal_timestamp_quote_uses_first_source_row_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L105)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -623,7 +730,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_quote_at_after_last_tick_returns_none_instead_of_stale_quote`](../../../../tests/unit/market_data/test_ticks.py#L91)
+2. [test fixture: `test_quote_at_after_last_tick_returns_none_instead_of_stale_quote`](../../../../tests/unit/market_data/test_ticks.py#L130)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -648,7 +755,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a sub-book covering the half-open interval [start, end).
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.slice` · **Source:** [market_data/loading/ticks.py:533](../../../../market_data/loading/ticks.py#L533)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.slice` · **Source:** [market_data/loading/ticks.py:785](../../../../market_data/loading/ticks.py#L785)
 
 **Inputs and outputs:**
 
@@ -667,7 +774,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `ticks_covering`](../../../../market_data/loading/ticks.py#L569)
+1. [production caller: `ticks_covering`](../../../../market_data/loading/ticks.py#L821)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

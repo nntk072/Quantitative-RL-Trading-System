@@ -1,0 +1,17 @@
+2026-11-05 22:16:12,241 INFO Sampled-action RNG seed: 50
+2026-11-05 22:16:12,241 INFO Policy action mode: stochastic
+2026-11-05 22:16:12,242 INFO Loading config snapshot: /scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml
+2026-11-05 22:16:12,275 INFO Chart rendering: save_html=False max_order_charts=0 (CLI overrides snapshot)
+2026-11-05 22:16:12,275 INFO Loading model: /scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/model/ppo_final.zip
+2026-11-05 22:16:17,629 INFO Loading tick cache: cache/train_test_2025_2026_qgrid025_v1/training/US100.cash_ticks_v7-source-precision-quotes_grid_nearest_half_away_from_zero_0p25.parquet
+2026-11-05 22:16:17,765 INFO TickBook ready: US100.cash (56245046 ticks, 1 partitions)
+2026-11-05 22:16:21,317 INFO Evaluating train=351432 bars (≤2025-12-31)  test=0 bars (≥2026-01-01) under FTMO eval guardrails
+Traceback (most recent call last):
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evaluation/reanalysis/checkpoint_reanalysis.py", line 939, in <module>
+    main()
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evaluation/reanalysis/checkpoint_reanalysis.py", line 598, in main
+    sequence_schema_disposition = validate_sequence_feature_schema(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evaluation/reporting/run_manifest.py", line 96, in validate_sequence_feature_schema
+    raise ValueError("evaluated sequence feature schema differs from the training manifest")
+ValueError: evaluated sequence feature schema differs from the training manifest

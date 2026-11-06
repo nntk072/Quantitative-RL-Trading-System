@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:710](../../../../evaluation/rollout/trained_policy_rollout.py#L710)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:950](../../../../evaluation/rollout/trained_policy_rollout.py#L950)
 
 **Inputs and outputs:**
 
@@ -29,7 +29,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L159)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L225)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -90,7 +90,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Walk a trained RL ``model`` over *bars*/*features* and collect trades.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_model` · **Source:** [evaluation/rollout/trained_policy_rollout.py:118](../../../../evaluation/rollout/trained_policy_rollout.py#L118)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_model` · **Source:** [evaluation/rollout/trained_policy_rollout.py:176](../../../../evaluation/rollout/trained_policy_rollout.py#L176)
 
 **Inputs and outputs:**
 
@@ -110,6 +110,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   swing_buffer_pts: Numeric value used for the swing buffer pts.
   min_lot: Numeric value used for the min lot.
   max_lot: Numeric value used for the max lot.
+  lot_step: Broker volume increment used for risk-based sizing.
   contract_size: Number specifying the contract size for this operation.
   max_loss_per_trade_usd: Numeric value used for the max loss per trade usd.
   dsr_eta: Numeric value used for the dsr eta.
@@ -129,12 +130,14 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   strategy: Strategy used to select or evaluate trades.
   strategy_actions: Whether to enable or require the strategy actions.
   trade_setup_actions: Whether to enable or require the trade setup actions.
+  agent_entry_execution: Whether the policy selects market or limit execution.
   entry_state_machine: Whether to enable or require the entry state machine.
   candidate_max_age_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
   arm_requires_retest: Whether to enable or require the arm requires retest.
   entry_state_observation: Whether to enable or require the entry state observation.
   observation_schema_version: Text or path value identifying the observation schema version.
   observation_age_scale_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
+  reachable_r_validity_mask: Whether to append the reachable-R validity sequence channel.
   strict_research_eligibility: Whether to enable or require the strict research eligibility.
   strategy_reward: Strategy reward used by the operation described above.
   strategy_weight: Numeric value used for the strategy weight.
@@ -160,7 +163,10 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   fill_delay_ms: Numeric value used for the fill delay ms.
   randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
   max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
-  tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+  fill_latency_bars: Whole-M1-bar delay applied to entry orders.
+  tick_fill_slippage_points: Market-fill slippage override. Defaults to the
+      supplied ``cost_model.slippage_points``; explicit zero preserves a
+      zero-slippage replay.
   execution_seed: Execution seed used by the operation described above.
   agent_direction_control: Whether to enable or require the agent direction control.
   direction_override_threshold: Numeric value used for the direction override threshold.
@@ -178,12 +184,17 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   mtf: Whether to enable or require the mtf.
   mtf_windows: Key-value data used for the mtf windows.
   regime_observation: Whether to enable or require the regime observation.
+  feature_validity_channels: Whether sequence streams include per-feature finite masks.
   target_timeframes: Items supplied for the target timeframes, in input order.
   scheduled_session_closes: Key-value data used for the scheduled session closes.
   session_start: Text or path value identifying the session start.
   env: Environment whose state is read or updated.
   legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
+  sequence_columns_override: Exact saved input coordinates for a bounded replay.
   trading_policy: Key-value data used for the trading policy.
+  limit_order_max_offset_atr: Maximum policy limit distance in ATR units.
+  limit_order_max_ttl_bars: Maximum pending-limit lifetime in M1 bars.
+  limit_order_require_trade_through: Whether limit fills require a trade through the price.
   ```
 
 - **Returns:**
@@ -197,51 +208,58 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_model_output_satisfies_metrics_contract`](../../../../tests/unit/evaluation/test_evaluate_metrics_contract.py#L104)
+1. [test fixture: `test_random_setup_baseline_uses_shared_rollout_decision_trace`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L105)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        verbose=0,
-        seed=0,
+    assert schema.names[0] == "trade_setup"
+    model = RandomEligibleSetupRolloutModel(
+        RandomEligibleSetupPolicy(schema, seed=17, trade_probability=1.0)
     )
-    model.learn(total_timesteps=128, progress_bar=False)
 
     result = evaluate_model(
         model,
-        bars=bars,
-        features=features,
-        obs_window=10,
-        initial_balance=100_000.0,
+        bars,
+        features,
+        env=env,
+        strategy_actions=True,
+        trade_setup_actions=True,
     )
 
-    # --- Contract: equity is convertible to numpy and starts positive ---
-    assert hasattr(result["equity"], "to_numpy"), (
-        "evaluate_model must return a pd.Series for equity "
-        "(calculate_metrics relies on .to_numpy())"
+    decisions = result["trade_setup_decisions"]
+    assert len(decisions) == 4
+    assert decisions["decision_id"].notna().all()
+    assert decisions["decision_id"].is_unique
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_evaluate_model_forwards_trade_setup_mode_to_the_environment`](../../../../tests/unit/evaluation/test_rollout.py#L98)
+2. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L251)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+    assert isinstance(schema, TradeSetupActionSchema)
+    candidate_id = trade_setup_candidate_id("fvg_retest", "M5", 1)
+    probabilities = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
+    probabilities[[NO_TRADE_ID, candidate_id]] = [0.25, 0.75]
 
-    monkeypatch.setattr("evaluation.rollout.trained_policy_rollout.TradingEnv", capture_environment)
-    bars = _make_bars(20)
-
-    with pytest.raises(_CapturedEnvironmentConstruction):
-        evaluate_model(
-            _ScriptedModel({}),
-            bars=bars,
-            features=_make_features(bars),
-            trade_setup_actions=True,
-        )
-
-    assert received["trade_setup_actions"] is True
+    result = evaluate_model(
+        _FixedSetupModel(schema, candidate_id, probabilities),
+        bars,
+        features,
+        env=env,
+        strategy_actions=True,
+        trade_setup_actions=True,
+    )
+    run_dir = save_run(
+        run_dir=tmp_path / "model-choice-trace",
+        train_result=result,
+        train_metrics=calculate_metrics(
+            result["equity"],
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -257,7 +275,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:710](../../../../evaluation/rollout/trained_policy_rollout.py#L710)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:950](../../../../evaluation/rollout/trained_policy_rollout.py#L950)
 
 **Inputs and outputs:**
 
@@ -278,7 +296,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L159)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L225)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -339,7 +357,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return an observation → action callable with explicit action typing.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.make_action_fn` · **Source:** [evaluation/rollout/trained_policy_rollout.py:59](../../../../evaluation/rollout/trained_policy_rollout.py#L59)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.make_action_fn` · **Source:** [evaluation/rollout/trained_policy_rollout.py:117](../../../../evaluation/rollout/trained_policy_rollout.py#L117)
 
 **Inputs and outputs:**
 
@@ -376,27 +394,27 @@ def test_evaluation_rollout_routes_providers_through_semantic_adapter() -> None:
     assert provider.inputs[0][0].schema_version == "obs-v1"
 ```
 
-2. [production caller: `evaluate_model`](../../../../evaluation/rollout/trained_policy_rollout.py#L425)
+2. [test fixture: `test_random_eligible_rollout_model_uses_shared_action_adapter`](../../../../tests/unit/evaluation/test_random_eligible_setup.py#L105)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        obs, _ = env.reset()
-    else:
-        obs, _ = env.reset(seed=execution_seed)
-    done = False
-    truncated = False
-    action_fn = make_action_fn(
-        model, continuous_actions, deterministic, strategy_actions=strategy_actions
-    )
-    action_counts: Counter[str] = Counter()
-    trade_setup_decision_rows: list[dict[str, Any]] = []
-    reward_sum = 0.0
-    reward_attribution = RewardAttribution()
-    n_steps = 0
+    model = RandomEligibleSetupRolloutModel(policy)
+    observation = _observation(2, 7, 31)
+    expected = RandomEligibleSetupPolicy(schema, seed=31, normalized_risk=0.4)
+
+    direct_action, recurrent_state = model.predict(observation, deterministic=True)
+    rollout_action = make_action_fn(model, strategy_actions=True)(observation)
+
+    np.testing.assert_array_equal(direct_action, expected(observation))
+    np.testing.assert_array_equal(rollout_action, expected(observation))
+    assert recurrent_state is None
+    assert model.policy.hybrid_action_coordinates == schema.names
 # … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

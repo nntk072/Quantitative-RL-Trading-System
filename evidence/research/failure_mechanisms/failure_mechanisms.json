@@ -14,8 +14,8 @@
       "recorded_bid_ask_net_usd": -2154.314881668255,
       "ending_equity_usd": 97845.69,
       "return_pct": -2.154,
-      "gross_negative_closes_to_first_legacy_daily_breach_usd": 5017.66,
-      "net_realized_close_pnl_to_first_legacy_daily_breach_usd": -3004.28,
+      "gross_negative_closes_to_first_gross_counter_crossing_usd": 5017.66,
+      "net_realized_close_pnl_to_first_gross_counter_crossing_usd": -3004.28,
       "entry_requests": 47706,
       "unarmed_entry_requests": 42126,
       "unarmed_entry_request_share": 0.8830335806816753,
@@ -46,8 +46,8 @@
       "recorded_bid_ask_net_usd": -10056.04901299791,
       "ending_equity_usd": 89943.95,
       "return_pct": -10.056,
-      "gross_negative_closes_to_first_legacy_daily_breach_usd": 5399.25,
-      "net_realized_close_pnl_to_first_legacy_daily_breach_usd": -3389.32,
+      "gross_negative_closes_to_first_gross_counter_crossing_usd": 5399.25,
+      "net_realized_close_pnl_to_first_gross_counter_crossing_usd": -3389.32,
       "entry_requests": 52282,
       "unarmed_entry_requests": 47612,
       "unarmed_entry_request_share": 0.9106767147392985,
@@ -151,7 +151,7 @@
     {
       "claim": "The March daily_loss breach measures net daily-equity loss.",
       "disposition": "rejected",
-      "reason": "The historical legacy counter accumulated gross negative closed-trade PnL without positive-close offsets or open PnL."
+      "reason": "The historical gross realized-loss counter accumulated gross negative closed-trade PnL without positive-close offsets or open PnL."
     },
     {
       "claim": "2026 report-period replay is a fresh holdout.",
@@ -180,7 +180,7 @@
   "sources": [
     "evidence/research/releases/negative-evidence-readiness/CONSOLIDATED_RESEARCH_RESULTS.md",
     "evidence/research/releases/negative-evidence-readiness/entry_action_funnel_diagnosis/entry_action_funnel_diagnosis.json",
-    "evidence/research/releases/negative-evidence-readiness/legacy_daily_loss_counter_breach_trace.md",
+    "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
     "evidence/research/entry_and_exit_attribution/monthly_entry_exit_summary.json",
     "evidence/research/fill_quote_source_alignment/selected_campaign_fill_quote_alignment.json",
     "evidence/research/failure_mechanisms/ppo_training_dynamics.json",

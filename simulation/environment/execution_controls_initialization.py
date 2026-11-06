@@ -10,7 +10,7 @@ from .mixin_base import RuntimeMixinBase
 
 
 class ExecutionControlsInitializationMixin(RuntimeMixinBase):
-    """Initialize tick execution, fill latency, and quote-wait controls."""
+    """Initialize execution source, fill latency, slippage, and quote-wait controls."""
 
     def _initialize_execution_controls(
         self,
@@ -29,7 +29,8 @@ class ExecutionControlsInitializationMixin(RuntimeMixinBase):
             fill_delay_ms: Numeric value used for the fill delay ms.
             randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
             max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
-            tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+            tick_fill_slippage_points: Market-fill slippage in price points. The
+                historical parameter name is retained for API compatibility.
         """
         self._tickbook = tickbook
         self.tick_execution_required = bool(tick_execution_required)
@@ -45,8 +46,6 @@ class ExecutionControlsInitializationMixin(RuntimeMixinBase):
             raise ValueError("max_tick_quote_wait_ms must be positive")
         if not isfinite(self.tick_fill_slippage_points) or self.tick_fill_slippage_points < 0:
             raise ValueError("tick_fill_slippage_points must be finite and non-negative")
-        if self.tick_fill_slippage_points and not self.tick_execution_required:
-            raise ValueError("tick_fill_slippage_points requires tick execution")
         if (
             self.tick_execution_required or self.randomized_fill_latency_ms > 0
         ) and tickbook is None:

@@ -32,6 +32,7 @@ from market_data.splits.definitions import (
     split_bars,
     split_train_test,
 )
+from training.configuration.survival_gate import validate_portfolio_data, validate_portfolio_gate
 from training.setup.environments import (
     max_tick_quote_wait_ms,
 )
@@ -154,6 +155,7 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
             timeframe_bars=primary_timeframe_bars,
             secondary_timeframe_bars=secondary_timeframe_bars,
         )
+    feature_normalization_state_path = Path(str(feat_cache) + ".normalization.json")
     features = build_features(
         primary_m1,
         secondary=secondary_m1,
@@ -162,6 +164,7 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
         cache_path=feat_cache,
         timeframe_bars=primary_timeframe_bars,
         secondary_timeframe_bars=secondary_timeframe_bars,
+        fit_state_path=feature_normalization_state_path,
     )
     schedule_path = Path(str(cfg.data.session_schedule_file))
     if not schedule_path.is_absolute():
@@ -236,6 +239,12 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
             "sha256": tick_digest,
         }
 
+    portfolio_gate = validate_portfolio_gate(cfg=cfg, args=args)
+    if portfolio_gate is not None:
+        validate_portfolio_data(
+            gate=portfolio_gate, dataset_records=dataset_records, feat_cache=feat_cache
+        )
+
     vae_model = None
     env_vae = None
     pre_ny_by_date = None
@@ -272,6 +281,7 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
         schedule_path=schedule_path,
         feature_columns=feature_columns,
         feat_cache=feat_cache,
+        feature_normalization_state_path=feature_normalization_state_path,
         train_bars=train_bars,
         train_feat=train_feat,
         test_bars=test_bars,

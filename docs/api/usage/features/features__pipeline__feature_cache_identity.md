@@ -60,7 +60,7 @@ def feature_cache_path(
     return Path(cache_dir) / f"{symbol}_features_{FEATURE_CACHE_VERSION}_{digest}.parquet"
 ```
 
-2. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L107)
+2. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L184)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -74,11 +74,11 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         timeframe_bars=timeframe_bars,
         secondary_timeframe_bars=secondary_timeframe_bars,
     )
-    requested_reference_mode = str(
-        (OmegaConf.select(cfg, "features.po3_reference_mode") if cfg is not None else None)
-        or "m1_legacy"
+    normalization_window = (
+        int(cfg.features.zscore_window) if cfg is not None and "features" in cfg else 252
     )
-    sweep_audit_path = Path(str(cache_path) + ".htf_sweeps.parquet") if cache_path else None
+    normalization_config_sha256 = _normalization_configuration_sha256(
+        cfg, mode=normalization_mode, window=normalization_window
 # … caller assertions omitted …
 ```
 
@@ -210,7 +210,7 @@ def feature_cache_path(
     return Path(cache_dir) / f"{symbol}_features_{FEATURE_CACHE_VERSION}_{digest}.parquet"
 ```
 
-2. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L107)
+2. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L184)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -224,11 +224,11 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         timeframe_bars=timeframe_bars,
         secondary_timeframe_bars=secondary_timeframe_bars,
     )
-    requested_reference_mode = str(
-        (OmegaConf.select(cfg, "features.po3_reference_mode") if cfg is not None else None)
-        or "m1_legacy"
+    normalization_window = (
+        int(cfg.features.zscore_window) if cfg is not None and "features" in cfg else 252
     )
-    sweep_audit_path = Path(str(cache_path) + ".htf_sweeps.parquet") if cache_path else None
+    normalization_config_sha256 = _normalization_configuration_sha256(
+        cfg, mode=normalization_mode, window=normalization_window
 # … caller assertions omitted …
 ```
 

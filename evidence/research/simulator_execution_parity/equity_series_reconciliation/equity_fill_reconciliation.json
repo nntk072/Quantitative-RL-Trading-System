@@ -1,0 +1,1694 @@
+{
+  "analysis_script": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/scripts/research/analysis/evaluation/reconcile_saved_equity_to_fills.py",
+  "analysis_script_sha256": "21a5b2103b3b865958f75a08dfa76b0fad1ec74c0f8f143b9010f8078d6dc362",
+  "input_identity_report": {
+    "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/simulator_execution_parity/equity_series_reconciliation/source_reconstructed_bar_identity.json",
+    "sha256": "0ea02327cfdde8c50489dc6926c3f429c5316a4de61caa3de5218aad6e1dcd12"
+  },
+  "results": [
+    {
+      "calculation": {
+        "cashflows_calculated_from_fill_prices": true,
+        "commission_per_lot": 0.0,
+        "contract_size": 1.0,
+        "initial_balance": 100000.0,
+        "point_size": 0.01,
+        "saved_pnl_used_for_calculation": false,
+        "valuation_convention": "At valuation T, mark pre-existing positions to the exact raw M1 bar at floor(T - 1 minute); then apply fill events through T. Remaining quantity after a partial close is re-marked at the recorded close-side fill price, following Broker.close_position."
+      },
+      "comparison": {
+        "bar_mapping_failure_count": 0,
+        "calculation_error_count": 0,
+        "calculation_errors_first_20": [],
+        "close_pnl_abs_difference_max": 4.547473508864641e-13,
+        "ending_open_position_count": 0,
+        "ending_open_position_ids": [],
+        "largest_discrepancies": [
+          {
+            "cash_balance": 99442.8081117098,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:19:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99123.56282869077,
+            "row": 1072,
+            "saved_equity": 99123.56282869096,
+            "valuation_time_utc": "2026-01-06 18:20:00+00:00"
+          },
+          {
+            "cash_balance": 97632.37836290998,
+            "difference": 1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-02-06 18:35:00+00:00",
+            "open_positions": {
+              "e2:p98": {
+                "direction": -1.0,
+                "entry_price": 25014.0,
+                "size": 45.395040416389534
+              }
+            },
+            "reconstructed_equity": 97952.41339784567,
+            "row": 9900,
+            "saved_equity": 97952.41339784548,
+            "valuation_time_utc": "2026-02-06 18:36:00+00:00"
+          },
+          {
+            "cash_balance": 99442.8081117098,
+            "difference": -1.7462298274040222e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:27:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99168.84584755872,
+            "row": 1080,
+            "saved_equity": 99168.8458475589,
+            "valuation_time_utc": "2026-01-06 18:28:00+00:00"
+          },
+          {
+            "cash_balance": 99442.8081117098,
+            "difference": -1.6007106751203537e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:29:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99191.4873569927,
+            "row": 1082,
+            "saved_equity": 99191.48735699286,
+            "valuation_time_utc": "2026-01-06 18:30:00+00:00"
+          },
+          {
+            "cash_balance": 99442.8081117098,
+            "difference": -1.6007106751203537e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:33:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 98953.75150793607,
+            "row": 1086,
+            "saved_equity": 98953.75150793623,
+            "valuation_time_utc": "2026-01-06 18:34:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.6007106751203537e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:04:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 99043.23225017842,
+            "row": 1117,
+            "saved_equity": 99043.23225017858,
+            "valuation_time_utc": "2026-01-06 19:05:00+00:00"
+          },
+          {
+            "cash_balance": 99442.8081117098,
+            "difference": -1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:31:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99044.31754567198,
+            "row": 1084,
+            "saved_equity": 99044.31754567212,
+            "valuation_time_utc": "2026-01-06 18:32:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:06:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 99519.26530802967,
+            "row": 1119,
+            "saved_equity": 99519.26530802982,
+            "valuation_time_utc": "2026-01-06 19:07:00+00:00"
+          },
+          {
+            "cash_balance": 99948.96861077331,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 17:57:00+00:00",
+            "open_positions": {
+              "e2:p15": {
+                "direction": -1.0,
+                "entry_price": 25611.5,
+                "size": 48.20576181557185
+              }
+            },
+            "reconstructed_equity": 99813.99247768962,
+            "row": 1050,
+            "saved_equity": 99813.99247768975,
+            "valuation_time_utc": "2026-01-06 17:58:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:53:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98715.95952290572,
+            "row": 1106,
+            "saved_equity": 98715.95952290585,
+            "valuation_time_utc": "2026-01-06 18:54:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:10:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 99236.62067993051,
+            "row": 1123,
+            "saved_equity": 99236.62067993064,
+            "valuation_time_utc": "2026-01-06 19:11:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:15:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98715.95952290572,
+            "row": 1128,
+            "saved_equity": 98715.95952290585,
+            "valuation_time_utc": "2026-01-06 19:16:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:16:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98671.33142373218,
+            "row": 1129,
+            "saved_equity": 98671.3314237323,
+            "valuation_time_utc": "2026-01-06 19:17:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:20:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98671.33142373218,
+            "row": 1133,
+            "saved_equity": 98671.3314237323,
+            "valuation_time_utc": "2026-01-06 19:21:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:27:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98715.95952290572,
+            "row": 1140,
+            "saved_equity": 98715.95952290585,
+            "valuation_time_utc": "2026-01-06 19:28:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:36:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98195.29836588092,
+            "row": 1149,
+            "saved_equity": 98195.29836588106,
+            "valuation_time_utc": "2026-01-06 19:37:00+00:00"
+          },
+          {
+            "cash_balance": 98138.76944026118,
+            "difference": 1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:56:00+00:00",
+            "open_positions": {
+              "e2:p18": {
+                "direction": -1.0,
+                "entry_price": 25638.75,
+                "size": 49.6551724137931
+              }
+            },
+            "reconstructed_equity": 97875.59702646825,
+            "row": 1169,
+            "saved_equity": 97875.59702646812,
+            "valuation_time_utc": "2026-01-06 19:57:00+00:00"
+          },
+          {
+            "cash_balance": 99160.53409243129,
+            "difference": 1.1641532182693481e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-02 17:31:00+00:00",
+            "open_positions": {
+              "e2:p7": {
+                "direction": 1.0,
+                "entry_price": 25142.75,
+                "size": 44.20957107775723
+              }
+            },
+            "reconstructed_equity": 98950.53862981206,
+            "row": 242,
+            "saved_equity": 98950.53862981194,
+            "valuation_time_utc": "2026-01-02 17:32:00+00:00"
+          },
+          {
+            "cash_balance": 99442.8081117098,
+            "difference": -1.1641532182693481e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:22:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99089.60056453993,
+            "row": 1075,
+            "saved_equity": 99089.60056454004,
+            "valuation_time_utc": "2026-01-06 18:23:00+00:00"
+          },
+          {
+            "cash_balance": 98763.56282869093,
+            "difference": -1.1641532182693481e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:57:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 99102.73638240989,
+            "row": 1110,
+            "saved_equity": 99102.73638241,
+            "valuation_time_utc": "2026-01-06 18:58:00+00:00"
+          }
+        ],
+        "max_abs_equity_difference": 1.8917489796876907e-10,
+        "mean_abs_equity_difference": 2.2014671804948056e-12,
+        "tolerance_usd": 1e-06,
+        "unconsumed_fill_event_count": 0,
+        "within_tolerance_count": 79070,
+        "worst_difference": -1.8917489796876907e-10,
+        "worst_reconstructed_equity": 99123.56282869077,
+        "worst_row_index": 1072,
+        "worst_saved_equity": 99123.56282869096,
+        "worst_valuation_time_utc": "2026-01-06 18:20:00+00:00"
+      },
+      "input_identity": {
+        "config_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml",
+        "config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "exact_rebuilt_frame_match": true,
+        "expected_frame_sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "frame_sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "historical_run_manifest": {
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+          "runtime_versions": {
+            "cuda_available": "True",
+            "cuda_device": "NVIDIA GH200 144G HBM3e",
+            "cuda_visible_devices": "0",
+            "gymnasium": "1.3.0",
+            "numpy": "2.2.6",
+            "pandas": "2.3.2",
+            "platform": "Linux-5.14.0-687.58.1.el9_8.aarch64-aarch64-with-glibc2.34",
+            "python": "3.12.15",
+            "python_hash_seed_env": "0",
+            "stable-baselines3": "2.9.0",
+            "torch": "2.14.0+cu130"
+          },
+          "saved_frame_matches_reanalysis_manifest": true,
+          "sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+          "source_head": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+        },
+        "raw_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing/US100.cash_M1_202412300105_202610162349.csv",
+        "raw_sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "reanalysis_manifest_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/reanalysis_manifest.json",
+        "reanalysis_manifest_sha256": "4a6f40cc6230742870147f998a95879da01a11555f8d5bd02d3d01a1b75165be"
+      },
+      "inputs": {
+        "equity_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/equity.csv",
+        "equity_rows": 79070,
+        "equity_sha256": "b2576bbc3cff024dbeb2a5f8db633f79a2a42484d9056b71fdaff61c28c66a0b",
+        "fill_event_rows": 411,
+        "fill_event_types": {
+          "close": 14,
+          "eod_close": 32,
+          "forced_close": 1,
+          "open": 203,
+          "stop_close": 118,
+          "tp_close": 38,
+          "tp_partial_close": 5
+        },
+        "fills_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/testing/trades.csv",
+        "fills_sha256": "2fa7155e9aaf4fd2aa937d3cdd625a72b37317ae1b4566d947edbc86f0e2814e"
+      },
+      "name": "a4a_testing",
+      "partition": "testing",
+      "status": "exact_reconstruction"
+    },
+    {
+      "calculation": {
+        "cashflows_calculated_from_fill_prices": true,
+        "commission_per_lot": 0.0,
+        "contract_size": 1.0,
+        "initial_balance": 100000.0,
+        "point_size": 0.01,
+        "saved_pnl_used_for_calculation": false,
+        "valuation_convention": "At valuation T, mark pre-existing positions to the exact raw M1 bar at floor(T - 1 minute); then apply fill events through T. Remaining quantity after a partial close is re-marked at the recorded close-side fill price, following Broker.close_position."
+      },
+      "comparison": {
+        "bar_mapping_failure_count": 0,
+        "calculation_error_count": 0,
+        "calculation_errors_first_20": [],
+        "close_pnl_abs_difference_max": 4.547473508864641e-13,
+        "ending_open_position_count": 0,
+        "ending_open_position_ids": [],
+        "largest_discrepancies": [
+          {
+            "cash_balance": 113010.5626576693,
+            "difference": 2.3283064365386963e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:12:00+00:00",
+            "open_positions": {
+              "e2:p803": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 113150.82239792927,
+            "row": 81532,
+            "saved_equity": 113150.82239792903,
+            "valuation_time_utc": "2025-10-24 18:13:00+00:00"
+          },
+          {
+            "cash_balance": 113010.5626576693,
+            "difference": 2.1827872842550278e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:10:00+00:00",
+            "open_positions": {
+              "e2:p803": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 113057.31590442278,
+            "row": 81530,
+            "saved_equity": 113057.31590442256,
+            "valuation_time_utc": "2025-10-24 18:11:00+00:00"
+          },
+          {
+            "cash_balance": 113010.5626576693,
+            "difference": 2.1827872842550278e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:30:00+00:00",
+            "open_positions": {
+              "e2:p803": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 112578.09512520197,
+            "row": 81550,
+            "saved_equity": 112578.09512520175,
+            "valuation_time_utc": "2025-10-24 18:31:00+00:00"
+          },
+          {
+            "cash_balance": 103029.08767123899,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-01-24 19:35:00+00:00",
+            "open_positions": {
+              "e2:p83": {
+                "direction": -1.0,
+                "entry_price": 21738.0,
+                "size": 54.13533834586466
+              }
+            },
+            "reconstructed_equity": 102931.64406221668,
+            "row": 6832,
+            "saved_equity": 102931.64406221648,
+            "valuation_time_utc": "2025-01-24 19:36:00+00:00"
+          },
+          {
+            "cash_balance": 124265.57388572425,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-07-18 17:07:00+00:00",
+            "open_positions": {
+              "e2:p579": {
+                "direction": 1.0,
+                "entry_price": 23017.5,
+                "size": 54.84962278620228
+              }
+            },
+            "reconstructed_equity": 124443.8351597796,
+            "row": 54278,
+            "saved_equity": 124443.8351597794,
+            "valuation_time_utc": "2025-07-18 17:08:00+00:00"
+          },
+          {
+            "cash_balance": 120282.96960171893,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-08-13 14:55:00+00:00",
+            "open_positions": {
+              "e2:p622": {
+                "direction": 1.0,
+                "entry_price": 23855.25,
+                "size": 48.16492567938181
+              }
+            },
+            "reconstructed_equity": 120403.3819159176,
+            "row": 61184,
+            "saved_equity": 120403.3819159174,
+            "valuation_time_utc": "2025-08-13 14:56:00+00:00"
+          },
+          {
+            "cash_balance": 120282.96960171893,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-08-13 14:56:00+00:00",
+            "open_positions": {
+              "e2:p622": {
+                "direction": 1.0,
+                "entry_price": 23855.25,
+                "size": 48.16492567938181
+              }
+            },
+            "reconstructed_equity": 120403.3819159176,
+            "row": 61185,
+            "saved_equity": 120403.3819159174,
+            "valuation_time_utc": "2025-08-13 14:57:00+00:00"
+          },
+          {
+            "cash_balance": 120282.96960171893,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-08-13 15:00:00+00:00",
+            "open_positions": {
+              "e2:p622": {
+                "direction": 1.0,
+                "entry_price": 23855.25,
+                "size": 48.16492567938181
+              }
+            },
+            "reconstructed_equity": 120090.3098990016,
+            "row": 61189,
+            "saved_equity": 120090.3098990014,
+            "valuation_time_utc": "2025-08-13 15:01:00+00:00"
+          },
+          {
+            "cash_balance": 111646.97558483764,
+            "difference": -2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:00:00+00:00",
+            "open_positions": {
+              "e2:p768": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 114620.39330635642,
+            "row": 78663,
+            "saved_equity": 114620.39330635662,
+            "valuation_time_utc": "2025-10-15 16:01:00+00:00"
+          },
+          {
+            "cash_balance": 111646.97558483764,
+            "difference": -2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:38:00+00:00",
+            "open_positions": {
+              "e2:p768": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 114141.9122936982,
+            "row": 78701,
+            "saved_equity": 114141.9122936984,
+            "valuation_time_utc": "2025-10-15 16:39:00+00:00"
+          },
+          {
+            "cash_balance": 102332.55778075833,
+            "difference": -2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-12-23 16:29:00+00:00",
+            "open_positions": {
+              "e2:p965": {
+                "direction": -1.0,
+                "entry_price": 25540.75,
+                "size": 41.860465116279066
+              }
+            },
+            "reconstructed_equity": 102606.74382726973,
+            "row": 97492,
+            "saved_equity": 102606.74382726994,
+            "valuation_time_utc": "2025-12-23 16:30:00+00:00"
+          },
+          {
+            "cash_balance": 125881.05497407717,
+            "difference": 1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-07-08 13:45:00+00:00",
+            "open_positions": {
+              "e2:p560": {
+                "direction": 1.0,
+                "entry_price": 22714.75,
+                "size": 52.17391304347826
+              }
+            },
+            "reconstructed_equity": 126011.48975668605,
+            "row": 50948,
+            "saved_equity": 126011.48975668586,
+            "valuation_time_utc": "2025-07-08 13:46:00+00:00"
+          },
+          {
+            "cash_balance": 120282.96960171893,
+            "difference": 1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-08-13 14:54:00+00:00",
+            "open_positions": {
+              "e2:p622": {
+                "direction": 1.0,
+                "entry_price": 23855.25,
+                "size": 48.16492567938181
+              }
+            },
+            "reconstructed_equity": 120331.13452739849,
+            "row": 61183,
+            "saved_equity": 120331.1345273983,
+            "valuation_time_utc": "2025-08-13 14:55:00+00:00"
+          },
+          {
+            "cash_balance": 111646.97558483764,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:13:00+00:00",
+            "open_positions": {
+              "e2:p768": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 114472.29204053365,
+            "row": 78676,
+            "saved_equity": 114472.29204053384,
+            "valuation_time_utc": "2025-10-15 16:14:00+00:00"
+          },
+          {
+            "cash_balance": 111646.97558483764,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:27:00+00:00",
+            "open_positions": {
+              "e2:p768": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 115702.6717873691,
+            "row": 78690,
+            "saved_equity": 115702.67178736928,
+            "valuation_time_utc": "2025-10-15 16:28:00+00:00"
+          },
+          {
+            "cash_balance": 111646.97558483764,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:56:00+00:00",
+            "open_positions": {
+              "e2:p768": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 112763.43128103999,
+            "row": 78719,
+            "saved_equity": 112763.43128104018,
+            "valuation_time_utc": "2025-10-15 16:57:00+00:00"
+          },
+          {
+            "cash_balance": 113181.99122909787,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 17:43:00+00:00",
+            "open_positions": {
+              "e2:p802": {
+                "direction": -1.0,
+                "entry_price": 25406.5,
+                "size": 57.142857142857146
+              }
+            },
+            "reconstructed_equity": 113004.84837195491,
+            "row": 81503,
+            "saved_equity": 113004.8483719551,
+            "valuation_time_utc": "2025-10-24 17:44:00+00:00"
+          },
+          {
+            "cash_balance": 113010.5626576693,
+            "difference": 1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:29:00+00:00",
+            "open_positions": {
+              "e2:p803": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 112858.61460572144,
+            "row": 81549,
+            "saved_equity": 112858.61460572125,
+            "valuation_time_utc": "2025-10-24 18:30:00+00:00"
+          },
+          {
+            "cash_balance": 113010.5626576693,
+            "difference": 1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:32:00+00:00",
+            "open_positions": {
+              "e2:p803": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 112858.61460572144,
+            "row": 81552,
+            "saved_equity": 112858.61460572125,
+            "valuation_time_utc": "2025-10-24 18:33:00+00:00"
+          },
+          {
+            "cash_balance": 103501.41015904497,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-11-24 17:01:00+00:00",
+            "open_positions": {
+              "e2:p893": {
+                "direction": -1.0,
+                "entry_price": 24850.5,
+                "size": 54.54545454545455
+              }
+            },
+            "reconstructed_equity": 103155.04652268121,
+            "row": 89672,
+            "saved_equity": 103155.0465226814,
+            "valuation_time_utc": "2025-11-24 17:02:00+00:00"
+          }
+        ],
+        "max_abs_equity_difference": 2.3283064365386963e-10,
+        "mean_abs_equity_difference": 8.792900402027866e-12,
+        "tolerance_usd": 1e-06,
+        "unconsumed_fill_event_count": 0,
+        "within_tolerance_count": 99493,
+        "worst_difference": 2.3283064365386963e-10,
+        "worst_reconstructed_equity": 113150.82239792927,
+        "worst_row_index": 81532,
+        "worst_saved_equity": 113150.82239792903,
+        "worst_valuation_time_utc": "2025-10-24 18:13:00+00:00"
+      },
+      "input_identity": {
+        "config_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml",
+        "config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "exact_rebuilt_frame_match": true,
+        "expected_frame_sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "frame_sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "historical_run_manifest": {
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+          "runtime_versions": {
+            "cuda_available": "True",
+            "cuda_device": "NVIDIA GH200 144G HBM3e",
+            "cuda_visible_devices": "0",
+            "gymnasium": "1.3.0",
+            "numpy": "2.2.6",
+            "pandas": "2.3.2",
+            "platform": "Linux-5.14.0-687.58.1.el9_8.aarch64-aarch64-with-glibc2.34",
+            "python": "3.12.15",
+            "python_hash_seed_env": "0",
+            "stable-baselines3": "2.9.0",
+            "torch": "2.14.0+cu130"
+          },
+          "saved_frame_matches_reanalysis_manifest": true,
+          "sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+          "source_head": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+        },
+        "raw_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+        "raw_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "reanalysis_manifest_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/reanalysis_manifest.json",
+        "reanalysis_manifest_sha256": "4a6f40cc6230742870147f998a95879da01a11555f8d5bd02d3d01a1b75165be"
+      },
+      "inputs": {
+        "equity_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/equity.csv",
+        "equity_rows": 99493,
+        "equity_sha256": "811672680ac1d0fe4eaf7f4d74912018a127ce9dd7d932aa15d207dc6afe7e37",
+        "fill_event_rows": 2020,
+        "fill_event_types": {
+          "close": 83,
+          "eod_close": 151,
+          "open": 987,
+          "stop_close": 585,
+          "tp_close": 168,
+          "tp_partial_close": 46
+        },
+        "fills_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/trades.csv",
+        "fills_sha256": "c0f40c147d5e2f1204592bb2854a52265b4947b79ea87ddcc26ed3662c92fbd9"
+      },
+      "name": "a4a_training",
+      "partition": "training",
+      "status": "exact_reconstruction"
+    },
+    {
+      "calculation": {
+        "cashflows_calculated_from_fill_prices": true,
+        "commission_per_lot": 0.0,
+        "contract_size": 1.0,
+        "initial_balance": 100000.0,
+        "point_size": 0.01,
+        "saved_pnl_used_for_calculation": false,
+        "valuation_convention": "At valuation T, mark pre-existing positions to the exact raw M1 bar at floor(T - 1 minute); then apply fill events through T. Remaining quantity after a partial close is re-marked at the recorded close-side fill price, following Broker.close_position."
+      },
+      "comparison": {
+        "bar_mapping_failure_count": 0,
+        "calculation_error_count": 0,
+        "calculation_errors_first_20": [],
+        "close_pnl_abs_difference_max": 4.547473508864641e-13,
+        "ending_open_position_count": 0,
+        "ending_open_position_ids": [],
+        "largest_discrepancies": [
+          {
+            "cash_balance": 95723.77220879616,
+            "difference": 2.1827872842550278e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-02-25 14:23:00+00:00",
+            "open_positions": {
+              "e2:p127": {
+                "direction": -1.0,
+                "entry_price": 25252.75,
+                "size": 50.70422535211268
+              }
+            },
+            "reconstructed_equity": 95789.68770175408,
+            "row": 14550,
+            "saved_equity": 95789.68770175386,
+            "valuation_time_utc": "2026-02-25 14:24:00+00:00"
+          },
+          {
+            "cash_balance": 95723.77220879616,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-02-25 14:16:00+00:00",
+            "open_positions": {
+              "e2:p127": {
+                "direction": -1.0,
+                "entry_price": 25252.75,
+                "size": 50.70422535211268
+              }
+            },
+            "reconstructed_equity": 96246.02572992309,
+            "row": 14543,
+            "saved_equity": 96246.02572992288,
+            "valuation_time_utc": "2026-02-25 14:17:00+00:00"
+          },
+          {
+            "cash_balance": 95723.77220879616,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-02-25 14:17:00+00:00",
+            "open_positions": {
+              "e2:p127": {
+                "direction": -1.0,
+                "entry_price": 25252.75,
+                "size": 50.70422535211268
+              }
+            },
+            "reconstructed_equity": 95498.13840597942,
+            "row": 14544,
+            "saved_equity": 95498.13840597922,
+            "valuation_time_utc": "2026-02-25 14:18:00+00:00"
+          },
+          {
+            "cash_balance": 99487.3270015614,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:19:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99168.08171854237,
+            "row": 1072,
+            "saved_equity": 99168.08171854255,
+            "valuation_time_utc": "2026-01-06 18:20:00+00:00"
+          },
+          {
+            "cash_balance": 99487.3270015614,
+            "difference": -1.7462298274040222e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:33:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 98998.27039778767,
+            "row": 1086,
+            "saved_equity": 98998.27039778784,
+            "valuation_time_utc": "2026-01-06 18:34:00+00:00"
+          },
+          {
+            "cash_balance": 95723.77220879616,
+            "difference": 1.7462298274040222e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-02-25 14:18:00+00:00",
+            "open_positions": {
+              "e2:p127": {
+                "direction": -1.0,
+                "entry_price": 25252.75,
+                "size": 50.70422535211268
+              }
+            },
+            "reconstructed_equity": 95815.0398144301,
+            "row": 14545,
+            "saved_equity": 95815.03981442993,
+            "valuation_time_utc": "2026-02-25 14:19:00+00:00"
+          },
+          {
+            "cash_balance": 95723.77220879616,
+            "difference": 1.7462298274040222e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-02-25 14:20:00+00:00",
+            "open_positions": {
+              "e2:p127": {
+                "direction": -1.0,
+                "entry_price": 25252.75,
+                "size": 50.70422535211268
+              }
+            },
+            "reconstructed_equity": 95815.0398144301,
+            "row": 14547,
+            "saved_equity": 95815.03981442993,
+            "valuation_time_utc": "2026-02-25 14:21:00+00:00"
+          },
+          {
+            "cash_balance": 99487.3270015614,
+            "difference": -1.6007106751203537e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:27:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99213.36473741032,
+            "row": 1080,
+            "saved_equity": 99213.36473741048,
+            "valuation_time_utc": "2026-01-06 18:28:00+00:00"
+          },
+          {
+            "cash_balance": 99207.8139447754,
+            "difference": 1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-02 17:30:00+00:00",
+            "open_positions": {
+              "e2:p7": {
+                "direction": 1.0,
+                "entry_price": 25142.75,
+                "size": 42.75668157391752
+              }
+            },
+            "reconstructed_equity": 98897.82800336463,
+            "row": 241,
+            "saved_equity": 98897.82800336448,
+            "valuation_time_utc": "2026-01-02 17:31:00+00:00"
+          },
+          {
+            "cash_balance": 99487.3270015614,
+            "difference": -1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:29:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99236.00624684429,
+            "row": 1082,
+            "saved_equity": 99236.00624684444,
+            "valuation_time_utc": "2026-01-06 18:30:00+00:00"
+          },
+          {
+            "cash_balance": 98808.08171854253,
+            "difference": -1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:04:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 99087.75114003001,
+            "row": 1117,
+            "saved_equity": 99087.75114003016,
+            "valuation_time_utc": "2026-01-06 19:05:00+00:00"
+          },
+          {
+            "cash_balance": 98808.08171854253,
+            "difference": -1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:10:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 99281.1395697821,
+            "row": 1123,
+            "saved_equity": 99281.13956978224,
+            "valuation_time_utc": "2026-01-06 19:11:00+00:00"
+          },
+          {
+            "cash_balance": 98183.28833011277,
+            "difference": 1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:56:00+00:00",
+            "open_positions": {
+              "e2:p18": {
+                "direction": -1.0,
+                "entry_price": 25638.75,
+                "size": 49.6551724137931
+              }
+            },
+            "reconstructed_equity": 97920.11591631985,
+            "row": 1169,
+            "saved_equity": 97920.1159163197,
+            "valuation_time_utc": "2026-01-06 19:57:00+00:00"
+          },
+          {
+            "cash_balance": 95723.77220879616,
+            "difference": 1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-02-25 14:19:00+00:00",
+            "open_positions": {
+              "e2:p127": {
+                "direction": -1.0,
+                "entry_price": 25252.75,
+                "size": 50.70422535211268
+              }
+            },
+            "reconstructed_equity": 95979.82854682444,
+            "row": 14546,
+            "saved_equity": 95979.8285468243,
+            "valuation_time_utc": "2026-02-25 14:20:00+00:00"
+          },
+          {
+            "cash_balance": 95723.77220879616,
+            "difference": 1.4551915228366852e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-02-25 14:24:00+00:00",
+            "open_positions": {
+              "e2:p127": {
+                "direction": -1.0,
+                "entry_price": 25252.75,
+                "size": 50.70422535211268
+              }
+            },
+            "reconstructed_equity": 95384.05389893711,
+            "row": 14551,
+            "saved_equity": 95384.05389893697,
+            "valuation_time_utc": "2026-02-25 14:25:00+00:00"
+          },
+          {
+            "cash_balance": 99487.3270015614,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:31:00+00:00",
+            "open_positions": {
+              "e2:p16": {
+                "direction": -1.0,
+                "entry_price": 25619.5,
+                "size": 45.283018867924525
+              }
+            },
+            "reconstructed_equity": 99088.83643552357,
+            "row": 1084,
+            "saved_equity": 99088.8364355237,
+            "valuation_time_utc": "2026-01-06 18:32:00+00:00"
+          },
+          {
+            "cash_balance": 98808.08171854253,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 18:53:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98760.47841275731,
+            "row": 1106,
+            "saved_equity": 98760.47841275744,
+            "valuation_time_utc": "2026-01-06 18:54:00+00:00"
+          },
+          {
+            "cash_balance": 98808.08171854253,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:06:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 99563.78419788126,
+            "row": 1119,
+            "saved_equity": 99563.7841978814,
+            "valuation_time_utc": "2026-01-06 19:07:00+00:00"
+          },
+          {
+            "cash_balance": 98808.08171854253,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:15:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98760.47841275731,
+            "row": 1128,
+            "saved_equity": 98760.47841275744,
+            "valuation_time_utc": "2026-01-06 19:16:00+00:00"
+          },
+          {
+            "cash_balance": 98808.08171854253,
+            "difference": -1.3096723705530167e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2026-01-06 19:16:00+00:00",
+            "open_positions": {
+              "e2:p17": {
+                "direction": -1.0,
+                "entry_price": 25629.0,
+                "size": 59.50413223140495
+              }
+            },
+            "reconstructed_equity": 98715.85031358377,
+            "row": 1129,
+            "saved_equity": 98715.8503135839,
+            "valuation_time_utc": "2026-01-06 19:17:00+00:00"
+          }
+        ],
+        "max_abs_equity_difference": 2.1827872842550278e-10,
+        "mean_abs_equity_difference": 2.4778928371661984e-12,
+        "tolerance_usd": 1e-06,
+        "unconsumed_fill_event_count": 0,
+        "within_tolerance_count": 79070,
+        "worst_difference": 2.1827872842550278e-10,
+        "worst_reconstructed_equity": 95789.68770175408,
+        "worst_row_index": 14550,
+        "worst_saved_equity": 95789.68770175386,
+        "worst_valuation_time_utc": "2026-02-25 14:24:00+00:00"
+      },
+      "input_identity": {
+        "config_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml",
+        "config_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "exact_rebuilt_frame_match": true,
+        "expected_frame_sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "frame_sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "historical_run_manifest": {
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+          "runtime_versions": {
+            "cuda_available": "True",
+            "cuda_device": "NVIDIA GH200 144G HBM3e",
+            "cuda_visible_devices": "1",
+            "gymnasium": "1.3.0",
+            "numpy": "2.2.6",
+            "pandas": "2.3.2",
+            "platform": "Linux-5.14.0-687.58.1.el9_8.aarch64-aarch64-with-glibc2.34",
+            "python": "3.12.15",
+            "python_hash_seed_env": "0",
+            "stable-baselines3": "2.9.0",
+            "torch": "2.14.0+cu130"
+          },
+          "saved_frame_matches_reanalysis_manifest": true,
+          "sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+          "source_head": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+        },
+        "raw_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing/US100.cash_M1_202412300105_202610162349.csv",
+        "raw_sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "reanalysis_manifest_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/reanalysis_manifest.json",
+        "reanalysis_manifest_sha256": "9f8a20e36ee26746855f6b842ea1fc113e33cb431859ead71fd04785e2a7db2f"
+      },
+      "inputs": {
+        "equity_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/equity.csv",
+        "equity_rows": 79070,
+        "equity_sha256": "c9830c462e8a09a2be58b7991466040cdb5bf877dde1945463fab5679569c94a",
+        "fill_event_rows": 413,
+        "fill_event_types": {
+          "close": 16,
+          "eod_close": 32,
+          "open": 203,
+          "stop_close": 122,
+          "tp_close": 33,
+          "tp_partial_close": 7
+        },
+        "fills_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing/trades.csv",
+        "fills_sha256": "b10f03af9612b42251bb106b8462e1f27891cd33e280844454b443b6b6e49b90"
+      },
+      "name": "a4b_testing",
+      "partition": "testing",
+      "status": "exact_reconstruction"
+    },
+    {
+      "calculation": {
+        "cashflows_calculated_from_fill_prices": true,
+        "commission_per_lot": 0.0,
+        "contract_size": 1.0,
+        "initial_balance": 100000.0,
+        "point_size": 0.01,
+        "saved_pnl_used_for_calculation": false,
+        "valuation_convention": "At valuation T, mark pre-existing positions to the exact raw M1 bar at floor(T - 1 minute); then apply fill events through T. Remaining quantity after a partial close is re-marked at the recorded close-side fill price, following Broker.close_position."
+      },
+      "comparison": {
+        "bar_mapping_failure_count": 0,
+        "calculation_error_count": 0,
+        "calculation_errors_first_20": [],
+        "close_pnl_abs_difference_max": 9.094947017729282e-13,
+        "ending_open_position_count": 0,
+        "ending_open_position_ids": [],
+        "largest_discrepancies": [
+          {
+            "cash_balance": 92984.34647062887,
+            "difference": 2.3283064365386963e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:12:00+00:00",
+            "open_positions": {
+              "e2:p809": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 93124.60621088883,
+            "row": 81532,
+            "saved_equity": 93124.6062108886,
+            "valuation_time_utc": "2025-10-24 18:13:00+00:00"
+          },
+          {
+            "cash_balance": 100488.58366398158,
+            "difference": 2.1827872842550278e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-01-24 19:35:00+00:00",
+            "open_positions": {
+              "e2:p85": {
+                "direction": -1.0,
+                "entry_price": 21738.0,
+                "size": 54.13533834586466
+              }
+            },
+            "reconstructed_equity": 100391.14005495928,
+            "row": 6832,
+            "saved_equity": 100391.14005495906,
+            "valuation_time_utc": "2025-01-24 19:36:00+00:00"
+          },
+          {
+            "cash_balance": 92984.34647062887,
+            "difference": 2.1827872842550278e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:10:00+00:00",
+            "open_positions": {
+              "e2:p809": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 93031.09971738234,
+            "row": 81530,
+            "saved_equity": 93031.09971738212,
+            "valuation_time_utc": "2025-10-24 18:11:00+00:00"
+          },
+          {
+            "cash_balance": 92984.34647062887,
+            "difference": 2.1827872842550278e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:30:00+00:00",
+            "open_positions": {
+              "e2:p809": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 92551.87893816154,
+            "row": 81550,
+            "saved_equity": 92551.87893816132,
+            "valuation_time_utc": "2025-10-24 18:31:00+00:00"
+          },
+          {
+            "cash_balance": 107484.99785283438,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-07-18 17:25:00+00:00",
+            "open_positions": {
+              "e2:p585": {
+                "direction": 1.0,
+                "entry_price": 23043.25,
+                "size": 50.09939202660959
+              }
+            },
+            "reconstructed_equity": 107459.94815682128,
+            "row": 54296,
+            "saved_equity": 107459.94815682108,
+            "valuation_time_utc": "2025-07-18 17:26:00+00:00"
+          },
+          {
+            "cash_balance": 105063.36829511473,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-09-11 17:25:00+00:00",
+            "open_positions": {
+              "e2:p671": {
+                "direction": -1.0,
+                "entry_price": 23995.75,
+                "size": 48.39805921002554
+              }
+            },
+            "reconstructed_equity": 104794.75906649932,
+            "row": 69364,
+            "saved_equity": 104794.75906649911,
+            "valuation_time_utc": "2025-09-11 17:26:00+00:00"
+          },
+          {
+            "cash_balance": 105063.36829511473,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-09-11 17:29:00+00:00",
+            "open_positions": {
+              "e2:p671": {
+                "direction": -1.0,
+                "entry_price": 23995.75,
+                "size": 48.39805921002554
+              }
+            },
+            "reconstructed_equity": 105520.72995464971,
+            "row": 69368,
+            "saved_equity": 105520.7299546495,
+            "valuation_time_utc": "2025-09-11 17:30:00+00:00"
+          },
+          {
+            "cash_balance": 93931.41043835481,
+            "difference": -2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:00:00+00:00",
+            "open_positions": {
+              "e2:p772": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 96904.82815987359,
+            "row": 78663,
+            "saved_equity": 96904.8281598738,
+            "valuation_time_utc": "2025-10-15 16:01:00+00:00"
+          },
+          {
+            "cash_balance": 93931.41043835481,
+            "difference": -2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:56:00+00:00",
+            "open_positions": {
+              "e2:p772": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 95047.86613455716,
+            "row": 78719,
+            "saved_equity": 95047.86613455736,
+            "valuation_time_utc": "2025-10-15 16:57:00+00:00"
+          },
+          {
+            "cash_balance": 92954.63213911132,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 16:28:00+00:00",
+            "open_positions": {
+              "e2:p806": {
+                "direction": -1.0,
+                "entry_price": 25393.25,
+                "size": 48.41680163307586
+              }
+            },
+            "reconstructed_equity": 93095.0408638475,
+            "row": 81428,
+            "saved_equity": 93095.0408638473,
+            "valuation_time_utc": "2025-10-24 16:29:00+00:00"
+          },
+          {
+            "cash_balance": 92954.63213911132,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 16:33:00+00:00",
+            "open_positions": {
+              "e2:p806": {
+                "direction": -1.0,
+                "entry_price": 25393.25,
+                "size": 48.41680163307586
+              }
+            },
+            "reconstructed_equity": 93191.87446711367,
+            "row": 81433,
+            "saved_equity": 93191.87446711346,
+            "valuation_time_utc": "2025-10-24 16:34:00+00:00"
+          },
+          {
+            "cash_balance": 92984.34647062887,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:29:00+00:00",
+            "open_positions": {
+              "e2:p809": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 92832.398418681,
+            "row": 81549,
+            "saved_equity": 92832.3984186808,
+            "valuation_time_utc": "2025-10-24 18:30:00+00:00"
+          },
+          {
+            "cash_balance": 92984.34647062887,
+            "difference": 2.0372681319713593e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 18:32:00+00:00",
+            "open_positions": {
+              "e2:p809": {
+                "direction": 1.0,
+                "entry_price": 25400.5,
+                "size": 46.75324675324676
+              }
+            },
+            "reconstructed_equity": 92832.398418681,
+            "row": 81552,
+            "saved_equity": 92832.3984186808,
+            "valuation_time_utc": "2025-10-24 18:33:00+00:00"
+          },
+          {
+            "cash_balance": 108855.577986978,
+            "difference": 1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-07-08 13:45:00+00:00",
+            "open_positions": {
+              "e2:p564": {
+                "direction": 1.0,
+                "entry_price": 22714.75,
+                "size": 52.17391304347826
+              }
+            },
+            "reconstructed_equity": 108986.01276958687,
+            "row": 50948,
+            "saved_equity": 108986.01276958668,
+            "valuation_time_utc": "2025-07-08 13:46:00+00:00"
+          },
+          {
+            "cash_balance": 104241.26560804358,
+            "difference": 1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-09-19 17:08:00+00:00",
+            "open_positions": {
+              "e2:p693": {
+                "direction": -1.0,
+                "entry_price": 24577.75,
+                "size": 45.46923469997042
+              }
+            },
+            "reconstructed_equity": 104543.63601879863,
+            "row": 71693,
+            "saved_equity": 104543.63601879844,
+            "valuation_time_utc": "2025-09-19 17:09:00+00:00"
+          },
+          {
+            "cash_balance": 93931.41043835481,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:27:00+00:00",
+            "open_positions": {
+              "e2:p772": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 97987.10664088627,
+            "row": 78690,
+            "saved_equity": 97987.10664088646,
+            "valuation_time_utc": "2025-10-15 16:28:00+00:00"
+          },
+          {
+            "cash_balance": 93931.41043835481,
+            "difference": -1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-15 16:38:00+00:00",
+            "open_positions": {
+              "e2:p772": {
+                "direction": 1.0,
+                "entry_price": 24715.0,
+                "size": 45.56962025316455
+              }
+            },
+            "reconstructed_equity": 96426.34714721538,
+            "row": 78701,
+            "saved_equity": 96426.34714721557,
+            "valuation_time_utc": "2025-10-15 16:39:00+00:00"
+          },
+          {
+            "cash_balance": 92954.63213911132,
+            "difference": 1.8917489796876907e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-10-24 16:32:00+00:00",
+            "open_positions": {
+              "e2:p806": {
+                "direction": -1.0,
+                "entry_price": 25393.25,
+                "size": 48.41680163307586
+              }
+            },
+            "reconstructed_equity": 93046.62406221443,
+            "row": 81432,
+            "saved_equity": 93046.62406221424,
+            "valuation_time_utc": "2025-10-24 16:33:00+00:00"
+          },
+          {
+            "cash_balance": 108855.577986978,
+            "difference": 1.7462298274040222e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-07-08 13:41:00+00:00",
+            "open_positions": {
+              "e2:p564": {
+                "direction": 1.0,
+                "entry_price": 22714.75,
+                "size": 52.17391304347826
+              }
+            },
+            "reconstructed_equity": 108738.18668263033,
+            "row": 50944,
+            "saved_equity": 108738.18668263016,
+            "valuation_time_utc": "2025-07-08 13:42:00+00:00"
+          },
+          {
+            "cash_balance": 108855.577986978,
+            "difference": 1.7462298274040222e-10,
+            "events_applied": [],
+            "market_bar_time_utc": "2025-07-08 13:47:00+00:00",
+            "open_positions": {
+              "e2:p564": {
+                "direction": 1.0,
+                "entry_price": 22714.75,
+                "size": 52.17391304347826
+              }
+            },
+            "reconstructed_equity": 108738.18668263033,
+            "row": 50950,
+            "saved_equity": 108738.18668263016,
+            "valuation_time_utc": "2025-07-08 13:48:00+00:00"
+          }
+        ],
+        "max_abs_equity_difference": 2.3283064365386963e-10,
+        "mean_abs_equity_difference": 7.502149777457921e-12,
+        "tolerance_usd": 1e-06,
+        "unconsumed_fill_event_count": 0,
+        "within_tolerance_count": 99493,
+        "worst_difference": 2.3283064365386963e-10,
+        "worst_reconstructed_equity": 93124.60621088883,
+        "worst_row_index": 81532,
+        "worst_saved_equity": 93124.6062108886,
+        "worst_valuation_time_utc": "2025-10-24 18:13:00+00:00"
+      },
+      "input_identity": {
+        "config_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml",
+        "config_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "exact_rebuilt_frame_match": true,
+        "expected_frame_sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "frame_sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "historical_run_manifest": {
+          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+          "runtime_versions": {
+            "cuda_available": "True",
+            "cuda_device": "NVIDIA GH200 144G HBM3e",
+            "cuda_visible_devices": "1",
+            "gymnasium": "1.3.0",
+            "numpy": "2.2.6",
+            "pandas": "2.3.2",
+            "platform": "Linux-5.14.0-687.58.1.el9_8.aarch64-aarch64-with-glibc2.34",
+            "python": "3.12.15",
+            "python_hash_seed_env": "0",
+            "stable-baselines3": "2.9.0",
+            "torch": "2.14.0+cu130"
+          },
+          "saved_frame_matches_reanalysis_manifest": true,
+          "sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+          "source_head": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+        },
+        "raw_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+        "raw_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "reanalysis_manifest_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/reanalysis_manifest.json",
+        "reanalysis_manifest_sha256": "9f8a20e36ee26746855f6b842ea1fc113e33cb431859ead71fd04785e2a7db2f"
+      },
+      "inputs": {
+        "equity_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/equity.csv",
+        "equity_rows": 99493,
+        "equity_sha256": "cc67ca871755fd03deea790347d7acfe54aa798b396204b3adc569037a46a970",
+        "fill_event_rows": 1678,
+        "fill_event_types": {
+          "close": 82,
+          "eod_close": 125,
+          "open": 825,
+          "stop_close": 496,
+          "tp_close": 122,
+          "tp_partial_close": 28
+        },
+        "fills_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/trades.csv",
+        "fills_sha256": "f7117ab5c21833fe90324b604acae738b5d599a5a329df77df5749fe2f8e5a2d"
+      },
+      "name": "a4b_training",
+      "partition": "training",
+      "status": "exact_reconstruction"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "Independent account-equity reconstruction from hash-verified raw M1 bars and fill prices for the four preserved A4 partitions.",
+  "status": "exact_reconstruction"
+}

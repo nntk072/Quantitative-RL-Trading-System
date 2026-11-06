@@ -60,7 +60,16 @@ def _finite_constraint_cost(constraints: dict[str, Any], key: str) -> float:
 def _setup_choice_probability_summary(
     raw_probabilities: Any, eligibility_mask: NDArray[np.float32], selected_id: int
 ) -> dict[str, float | int | None]:
-    """Summarize one masked setup distribution without retaining its full vector."""
+    """Summarize one masked setup distribution without retaining its full vector.
+
+    Args:
+        raw_probabilities: Policy probabilities over setup candidates.
+        eligibility_mask: Boolean-like mask identifying valid setup choices.
+        selected_id: Setup ID selected by the evaluated policy action.
+
+    Returns:
+        Selected, no-trade, and maximum eligible probabilities with candidate identity.
+    """
     names = (
         "trade_setup_selected_probability",
         "trade_setup_no_trade_probability",
@@ -197,12 +206,14 @@ def evaluate_model(
     strategy: Any = None,
     strategy_actions: bool = False,
     trade_setup_actions: bool = False,
+    agent_entry_execution: bool = False,
     entry_state_machine: bool = False,
     candidate_max_age_bars: int = 5,
     arm_requires_retest: bool = False,
     entry_state_observation: bool = True,
     observation_schema_version: str = "account-state-v1",
     observation_age_scale_bars: float = 60.0,
+    reachable_r_validity_mask: bool = False,
     strict_research_eligibility: bool = False,
     strategy_reward: Any = None,
     strategy_weight: float = 0.0,
@@ -228,7 +239,8 @@ def evaluate_model(
     fill_delay_ms: int = 0,
     randomized_fill_latency_ms: float = 0.0,
     max_tick_quote_wait_ms: int = 60_000,
-    tick_fill_slippage_points: float = 0.0,
+    fill_latency_bars: int = 0,
+    tick_fill_slippage_points: float | None = None,
     execution_seed: int | None = None,
     agent_direction_control: bool = False,
     direction_override_threshold: float = 0.0,
@@ -246,12 +258,18 @@ def evaluate_model(
     mtf: bool = False,
     mtf_windows: dict[str, int] | None = None,
     regime_observation: bool = False,
+    feature_validity_channels: bool = False,
     target_timeframes: tuple[str, ...] = ("M5", "M15", "H1"),
     scheduled_session_closes: dict[str, str] | None = None,
     session_start: str = "16:30",
     env: TradingEnv | None = None,
     legacy_sequence_columns: bool = False,
+    sequence_columns_override: tuple[str, ...] | None = None,
     trading_policy: dict[str, Any] | None = None,
+    lot_step: float = 0.01,
+    limit_order_max_offset_atr: float = 1.0,
+    limit_order_max_ttl_bars: int = 60,
+    limit_order_require_trade_through: bool = False,
 ) -> dict[str, Any]:
     """Walk a trained RL ``model`` over *bars*/*features* and collect trades.
 
@@ -279,6 +297,7 @@ def evaluate_model(
         swing_buffer_pts: Numeric value used for the swing buffer pts.
         min_lot: Numeric value used for the min lot.
         max_lot: Numeric value used for the max lot.
+        lot_step: Broker volume increment used for risk-based sizing.
         contract_size: Number specifying the contract size for this operation.
         max_loss_per_trade_usd: Numeric value used for the max loss per trade usd.
         dsr_eta: Numeric value used for the dsr eta.
@@ -298,12 +317,14 @@ def evaluate_model(
         strategy: Strategy used to select or evaluate trades.
         strategy_actions: Whether to enable or require the strategy actions.
         trade_setup_actions: Whether to enable or require the trade setup actions.
+        agent_entry_execution: Whether the policy selects market or limit execution.
         entry_state_machine: Whether to enable or require the entry state machine.
         candidate_max_age_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
         arm_requires_retest: Whether to enable or require the arm requires retest.
         entry_state_observation: Whether to enable or require the entry state observation.
         observation_schema_version: Text or path value identifying the observation schema version.
         observation_age_scale_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
+        reachable_r_validity_mask: Whether to append the reachable-R validity sequence channel.
         strict_research_eligibility: Whether to enable or require the strict research eligibility.
         strategy_reward: Strategy reward used by the operation described above.
         strategy_weight: Numeric value used for the strategy weight.
@@ -329,7 +350,10 @@ def evaluate_model(
         fill_delay_ms: Numeric value used for the fill delay ms.
         randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
         max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
-        tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+        fill_latency_bars: Whole-M1-bar delay applied to entry orders.
+        tick_fill_slippage_points: Market-fill slippage override. Defaults to the
+            supplied ``cost_model.slippage_points``; explicit zero preserves a
+            zero-slippage replay.
         execution_seed: Execution seed used by the operation described above.
         agent_direction_control: Whether to enable or require the agent direction control.
         direction_override_threshold: Numeric value used for the direction override threshold.
@@ -347,12 +371,17 @@ def evaluate_model(
         mtf: Whether to enable or require the mtf.
         mtf_windows: Key-value data used for the mtf windows.
         regime_observation: Whether to enable or require the regime observation.
+        feature_validity_channels: Whether sequence streams include per-feature finite masks.
         target_timeframes: Items supplied for the target timeframes, in input order.
         scheduled_session_closes: Key-value data used for the scheduled session closes.
         session_start: Text or path value identifying the session start.
         env: Environment whose state is read or updated.
         legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
+        sequence_columns_override: Exact saved input coordinates for a bounded replay.
         trading_policy: Key-value data used for the trading policy.
+        limit_order_max_offset_atr: Maximum policy limit distance in ATR units.
+        limit_order_max_ttl_bars: Maximum pending-limit lifetime in M1 bars.
+        limit_order_require_trade_through: Whether limit fills require a trade through the price.
 
     Returns:
         dict with keys ``equity``, ``trades``, ``account``, ``breaches``,:
@@ -368,6 +397,11 @@ def evaluate_model(
         raise ValueError(
             "supplied evaluation environment does not use the requested legacy sequence columns"
         )
+    if env is not None and sequence_columns_override is not None:
+        if tuple(getattr(env, "_obs_columns", ())) != sequence_columns_override:
+            raise ValueError(
+                "supplied evaluation environment does not use the recorded sequence coordinates"
+            )
     if execution_seed is not None and execution_seed < 0:
         raise ValueError("execution_seed must be non-negative")
     effective_latency_ms = randomized_fill_latency_ms
@@ -391,6 +425,7 @@ def evaluate_model(
             swing_buffer_pts=swing_buffer_pts,
             min_lot=min_lot,
             max_lot=max_lot,
+            lot_step=lot_step,
             contract_size=contract_size,
             max_loss_per_trade_usd=max_loss_per_trade_usd,
             dsr_eta=dsr_eta,
@@ -410,13 +445,16 @@ def evaluate_model(
             strategy=strategy,
             strategy_actions=strategy_actions,
             trade_setup_actions=trade_setup_actions,
+            agent_entry_execution=agent_entry_execution,
             entry_state_machine=entry_state_machine,
             candidate_max_age_bars=candidate_max_age_bars,
             arm_requires_retest=arm_requires_retest,
             entry_state_observation=entry_state_observation,
             observation_schema_version=observation_schema_version,
             observation_age_scale_bars=observation_age_scale_bars,
+            reachable_r_validity_mask=reachable_r_validity_mask,
             legacy_sequence_columns=legacy_sequence_columns,
+            sequence_columns_override=sequence_columns_override,
             strict_research_eligibility=strict_research_eligibility,
             strategy_reward=strategy_reward,
             strategy_weight=strategy_weight,
@@ -442,7 +480,12 @@ def evaluate_model(
             fill_delay_ms=fill_delay_ms,
             randomized_fill_latency_ms=randomized_fill_latency_ms,
             max_tick_quote_wait_ms=max_tick_quote_wait_ms,
-            tick_fill_slippage_points=tick_fill_slippage_points,
+            fill_latency_bars=fill_latency_bars,
+            tick_fill_slippage_points=(
+                float(cost_model.slippage_points)
+                if tick_fill_slippage_points is None
+                else float(tick_fill_slippage_points)
+            ),
             agent_direction_control=agent_direction_control,
             direction_override_threshold=direction_override_threshold,
             sl_mode=sl_mode,
@@ -459,10 +502,14 @@ def evaluate_model(
             mtf=mtf,
             mtf_windows=mtf_windows,
             regime_observation=regime_observation,
+            feature_validity_channels=feature_validity_channels,
             target_timeframes=target_timeframes,
             scheduled_session_closes=scheduled_session_closes,
             session_start=session_start,
             trading_policy=trading_policy,
+            limit_order_max_offset_atr=limit_order_max_offset_atr,
+            limit_order_max_ttl_bars=limit_order_max_ttl_bars,
+            limit_order_require_trade_through=limit_order_require_trade_through,
         )
 
     if execution_seed is None:
@@ -476,6 +523,9 @@ def evaluate_model(
     )
     action_counts: Counter[str] = Counter()
     trade_setup_decision_rows: list[dict[str, Any]] = []
+    policy_decision_rows: list[dict[str, Any]] = []
+    account_state_rows: list[dict[str, Any]] = []
+    account_state_trace_complete = True
     reward_sum = 0.0
     reward_attribution = RewardAttribution()
     n_steps = 0
@@ -522,12 +572,19 @@ def evaluate_model(
     discount_factor = 1.0
     while not (done or truncated):
         action = action_fn(obs)
+        decision_candidate_count: int | None = None
+        eligible_candidate_ids: list[int] | None = None
+        if isinstance(obs, dict) and "trade_setup_mask" in obs:
+            decision_mask = np.asarray(obs["trade_setup_mask"], dtype=np.float32).reshape(-1)
+            decision_candidate_count = int(np.count_nonzero(decision_mask))
+            eligible_candidate_ids = np.flatnonzero(decision_mask).astype(int).tolist()
         trade_setup_record: dict[str, Any] | None = None
         policy = getattr(model, "policy", None)
         coordinates = tuple(getattr(policy, "hybrid_action_coordinates", ()))
         setup_coordinate = "trade_setup" if "trade_setup" in coordinates else None
         if strategy_actions and setup_coordinate is not None and isinstance(obs, dict):
             from decisioning.trade_setup import (
+                NO_TRADE_ID,
                 TRADE_SETUP_ACTION_VERSION,
                 TRADE_SETUP_CANDIDATES,
                 trade_setup_id_from_box,
@@ -540,7 +597,9 @@ def evaluate_model(
             setup_index = coordinates.index(setup_coordinate)
             selected_id = trade_setup_id_from_box(float(values[setup_index]))
             mask = np.asarray(obs.get("trade_setup_mask", []), dtype=np.float32).reshape(-1)
-            is_valid = selected_id < len(mask) and bool(mask[selected_id] > 0.0)
+            is_valid = selected_id == NO_TRADE_ID or (
+                selected_id < len(mask) and bool(mask[selected_id] > 0.0)
+            )
             candidate = TRADE_SETUP_CANDIDATES[selected_id]
             raw_entropy = getattr(policy, "last_trade_setup_entropy", None)
             entropy_value = (
@@ -585,9 +644,54 @@ def evaluate_model(
             action_key = str(action)
         action_counts[action_key] += 1
         trade_event_start_index = len(env.trade_log)
+        decision_bar_index = int(env.step_idx)
+        session_ids = getattr(env, "_session_ids_arr", None)
+        decision_session_id = int(session_ids[decision_bar_index]) if session_ids is not None else 0
         if trade_setup_record is not None:
             decision_bar_index = int(env.step_idx)
         obs, reward, done, truncated, info = env.step(action)
+        decision_id = str(info.get("decision_id", ""))
+        decision_row: dict[str, Any] = {
+            "schema_version": "environment_policy_decision.v2",
+            "decision_id": decision_id,
+            "decision_index": decision_bar_index,
+            "decision_bar_index": decision_bar_index,
+            "decision_bar_time": str(env._bar_time(decision_bar_index)),
+            "decision_time": str(info.get("decision_time", "")),
+            "session_id": decision_session_id,
+            "action": int(info.get("action", 0)),
+            "execution_type": str(info.get("execution_type", "market")),
+            "limit_offset_atr": float(info.get("limit_offset_atr", 0.0)),
+            "limit_ttl_bars": int(info.get("limit_ttl_bars", 1)),
+            "position_direction_at_decision": int(info.get("position_direction_at_decision", 0)),
+            "position_id_at_decision": info.get("position_id_at_decision"),
+            "pending_order_id_at_decision": info.get("pending_order_id_at_decision"),
+            "trade_event_start_index": trade_event_start_index,
+            "trade_event_end_index_exclusive": len(env.trade_log),
+        }
+        if "trade_setup_candidate_id" in info:
+            decision_row.update(
+                {
+                    "trade_setup_candidate_id": info.get("trade_setup_candidate_id"),
+                    "trade_setup_eligible": info.get("trade_setup_eligible"),
+                    "trade_setup_idea": info.get("trade_setup_selected_idea"),
+                    "trade_setup_timeframe": info.get("trade_setup_selected_timeframe"),
+                    "trade_setup_direction": info.get("trade_setup_selected_direction"),
+                    "trade_setup_source_event_id": info.get("trade_setup_source_event_id"),
+                    "trade_setup_source_event_identity_status": info.get(
+                        "trade_setup_source_event_identity_status"
+                    ),
+                }
+            )
+        if decision_candidate_count is not None:
+            decision_row["eligible_candidate_count"] = decision_candidate_count
+            decision_row["eligible_trade_setup_ids"] = eligible_candidate_ids
+        policy_decision_rows.append(decision_row)
+        account_snapshot = info.get("account_state_snapshot")
+        if isinstance(account_snapshot, dict):
+            account_state_rows.append({"rollout_step": n_steps + 1, **account_snapshot})
+        else:
+            account_state_trace_complete = False
         if trade_setup_record is not None:
             recorded_candidate_id = info.get("trade_setup_candidate_id")
             recorded_eligible = info.get("trade_setup_eligible")
@@ -595,9 +699,14 @@ def evaluate_model(
                 raise RuntimeError(
                     "environment decision trace candidate ID disagrees with the policy action"
                 )
-            if recorded_eligible is not trade_setup_record["selection_valid"]:
+            if not isinstance(recorded_eligible, (bool, np.bool_)) or bool(
+                recorded_eligible
+            ) != bool(trade_setup_record["selection_valid"]):
                 raise RuntimeError(
-                    "environment decision trace eligibility disagrees with the observation mask"
+                    "environment decision trace eligibility disagrees with the observation mask "
+                    f"(candidate_id={recorded_candidate_id!r}, "
+                    f"recorded={recorded_eligible!r}, "
+                    f"observation_mask={trade_setup_record['selection_valid']!r})"
                 )
             trade_setup_record["trade_setup_action_schema_version"] = str(
                 info.get("trade_setup_action_schema_version", "")
@@ -708,20 +817,17 @@ def evaluate_model(
     n_sessions = len(env.all_sessions)
     days_traded = len(env.sessions_with_trades)
     breach_events = list(env.breach_events)
-    # In chronological account mode a daily-loss limit blocks only that
-    # session, and evaluation resumes next session. Episodic and repeated-
-    # payout modes terminate on that same event, so it remains a failure there.
-    daily_loss_is_session_scoped = not bool(getattr(env, "episodic", False)) and not bool(
-        getattr(env, "repeated_payout_policy", False)
+    # A daily-floor breach permanently fails the account/evaluation, even
+    # though its allowance is recalculated from each session's opening equity.
+    daily_loss_is_session_scoped = False
+    hard_breach_events = breach_events
+    fail_time = (
+        hard_breach_events[0].get("detection_time", hard_breach_events[0].get("time"))
+        if hard_breach_events
+        else None
     )
-    hard_breach_events = [
-        event
-        for event in breach_events
-        if event.get("reason") != "daily_loss" or not daily_loss_is_session_scoped
-    ]
-    fail_time = hard_breach_events[0]["time"] if hard_breach_events else None
     episode_equity = final_info.get("episode_equity", {})
-    completed_data_split = bool(episode_equity.get("completed_data_split", False))
+    completed_data_split = episode_equity.get("completed_data_split") is True
     episode_end_reason = episode_equity.get("episode_end_reason")
     survived_full_year = not hard_breach_events and completed_data_split
 
@@ -764,6 +870,14 @@ def evaluate_model(
     return {
         "equity": equity_series,
         "trades": trades_df,
+        "policy_decisions": pd.DataFrame.from_records(policy_decision_rows),
+        "policy_decisions_complete": len(policy_decision_rows) == n_steps,
+        "account_state_trace": (
+            pd.DataFrame.from_records(account_state_rows)
+            if account_state_trace_complete
+            else pd.DataFrame()
+        ),
+        "account_state_trace_complete": account_state_trace_complete,
         "account": env.account,
         "breaches": env.breach_log,
         "breach_events": env.breach_events,
@@ -790,7 +904,7 @@ def evaluate_model(
         "max_peak_eod_trailing_dd_usd": float(
             episode_equity.get("max_peak_eod_trailing_dd_usd", 0.0)
         ),
-        "peak_eod_dd_policy_ok": bool(episode_equity.get("peak_eod_dd_policy_ok", True)),
+        "peak_eod_dd_policy_ok": episode_equity.get("peak_eod_dd_policy_ok") is True,
         "action_counts": dict(action_counts),
         **(
             {

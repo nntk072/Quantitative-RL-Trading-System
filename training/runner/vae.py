@@ -29,6 +29,7 @@ from torch.utils.data import DataLoader, Dataset, Subset, random_split
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from compute.environment.device import get_device  # noqa: E402
 from models.auxiliary.vae import VAE  # noqa: E402
+from training.configuration.vae_admission import require_vae_candidate_admissible  # noqa: E402
 
 # Configure logging
 logging.basicConfig(
@@ -143,6 +144,11 @@ def prepare_data(
     Returns:
         tuple[Subset[torch.Tensor], Subset[torch.Tensor], Subset[torch.Tensor]]: Training, validation, and test datasets.
     """
+    try:
+        require_vae_candidate_admissible(True)
+    except ValueError as exc:
+        raise RuntimeError(str(exc)) from exc
+
     data_path = Path(config["data_path"])
     seq_len = config["seq_len"]
     n_features = config["n_features"]
@@ -306,6 +312,10 @@ def main() -> None:
     args = parser.parse_args()
 
     config = load_config(args.config)
+    try:
+        require_vae_candidate_admissible(True)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
     # Create output directory
     output_dir = Path(config.get("output_dir", "outputs/vae"))

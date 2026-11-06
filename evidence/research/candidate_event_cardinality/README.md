@@ -21,11 +21,14 @@ sequences, standard-deviation source-leg projections, and IFVG per-zone
 confirmations separately from their scalar projections. None is a count of
 policy proposals, actions, orders, fills, or trades.
 
-The scoped 276-artifact inventory found no qualifying historical per-decision
-setup or price-geometry trace in its scanned roots. That is bounded absence
-evidence, not global proof. The scan does not follow directory symlinks and
-records the supplied physical roots only. Current rollout telemetry supports future
-decision-to-open correlation; it cannot reconstruct missing historical links.
+The refreshed artifact inventory recognizes the matched-baseline writer's
+`decisions.csv` files as selected-setup traces. These current controlled
+baselines record decision IDs, candidate IDs, and eligibility and are linked
+to opened positions by the independent accounting packet. They do not recover
+the earlier selected historical policy's per-decision actions. The historical
+candidate-to-action search remains a bounded no-go within the scanned physical
+roots; the scan does not follow directory symlinks and is not a global absence
+claim. Candidate price-geometry traces remain unavailable.
 
 ## Files
 

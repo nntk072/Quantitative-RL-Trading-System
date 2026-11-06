@@ -1,0 +1,2 @@
+4850030e5062ced3a7281568466d9b68769293ec950b57dbf9367f8d9a5e18a3  scripts/research/analysis/evaluation/audit_recorded_equity_series.py
+406f33744db91948bb768ba9e0547a9e75dae03298bec73d397dcdbfd6cd5e85  tests/unit/research/test_recorded_equity_series_audit.py

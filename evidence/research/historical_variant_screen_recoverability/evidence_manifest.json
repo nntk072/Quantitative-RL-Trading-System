@@ -1,45 +1,219 @@
 {
-  "schema": "qrl.historical_variant_screen_recoverability.v1",
-  "packet": "historical_variant_screen_recoverability",
-  "claim_scope": "historical report-pack and selected-pair checkpoint recoverability with bounded current archive searches",
   "assets": [
     {
-      "path": "evidence/research/historical_variant_screen_recoverability/screen_report_pack_recoverability.json",
-      "sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c",
-      "historical_source_path": "evidence/research/archive_2026/evidence/p3_seed50_report_pack_recoverability_20261018.json",
-      "historical_source_sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c",
-      "bytes": 20327,
-      "copied_into_packet": true
+      "archive_count": 577,
+      "archive_member_count": 42934,
+      "bytes": 265368,
+      "claim_scope": "2026-11-04 bounded 64-KiB-prefix search of eligible text members in all 577 ZIP archives under /scratch/work/nguyenl37, plus 16-byte format-signature probes; no candidate/action/order trace-field leads; archive contents not hashed",
+      "match_count": 0,
+      "member_read_error_count": 0,
+      "members_with_binary_signatures_probed": 42902,
+      "path": "evidence/research/historical_variant_screen_recoverability/archive_trace_content_search.json",
+      "prefix_bytes_read_total": 11138053,
+      "recognized_binary_signatures": {
+        "zip_container": 1437
+      },
+      "scanner_path": "scripts/research/analysis/evidence/search_archive_trace_contents.py",
+      "scanner_sha256": "36c7f2319342364feb8a3dc2f252e90de00cfbc36113b602ed79f6b9662760ff",
+      "search_root": "/scratch/work/nguyenl37",
+      "sha256": "4e54dbec994ebc07c13e5002a39631b905f59088a50d84991960bf6b136a93d5",
+      "text_members_inspected": 5638,
+      "unreadable_archive_count": 16,
+      "zip_container_signatures_by_suffix": {
+        ".pth": 1434,
+        ".vsix": 1,
+        ".zip": 2
+      }
     },
     {
-      "path": "evidence/research/historical_variant_screen_recoverability/current_workspace_availability.json",
-      "sha256": "b96fe34abad4aae33d8995bd7110f37a6c21daf24597c8a734645fd0b1cbd125",
-      "bytes": 2556,
-      "claim_scope": "current known-path availability; filename inventory only",
-      "copied_into_packet": true
-    },
-    {
-      "path": "evidence/research/historical_variant_screen_recoverability/archive_trace_member_search.json",
-      "sha256": "aea0afc1361da4376b3a6c1ae900c7693df9ea5eea814ab6c6c04d2acd85b6ee",
+      "archive_count": 577,
       "bytes": 246564,
       "claim_scope": "2026-11-03 ZIP member-name search under /scratch/work/nguyenl37; no archive content hashes",
+      "matching_member_count": 0,
+      "path": "evidence/research/historical_variant_screen_recoverability/archive_trace_member_search.json",
+      "readable_member_count": 42934,
       "scanner_path": "scripts/research/analysis/evidence/search_archive_trace_members.py",
       "scanner_sha256": "ca62b82ba9999fd78dd4107b3a30c4e92957755bbf7826c30c68a41ecfeaf2e4",
-      "archive_count": 577,
-      "readable_member_count": 42934,
-      "matching_member_count": 0,
+      "sha256": "aea0afc1361da4376b3a6c1ae900c7693df9ea5eea814ab6c6c04d2acd85b6ee",
       "unreadable_archive_count": 16
     },
     {
-      "path": "evidence/research/historical_variant_screen_recoverability/selected_checkpoint_recoverability.json",
-      "sha256": "7e3b1a823803471c3b97588d5db86157879d2ee444da28943d25dbccd34f2d96",
+      "bytes": 3605,
+      "claim_scope": "bounded P6 attempt-1 checkpoint-member classification against frozen replacement18 attempt-3 checkpoint digests",
+      "copied_into_packet": true,
+      "path": "evidence/research/historical_variant_screen_recoverability/archived_checkpoint_container_reconciliation.json",
+      "scanner_path": "scripts/research/analysis/evidence/inventory_archive_containers.py",
+      "scanner_sha256": "18101749a894b2ec3e5432921ca3562133aa0e7e53316a2f211212e2f5c41c23",
+      "sha256": "6cd75b96ace492e9e2c7c8235f2caffb3aba147c0bb77f16fa990f57edfbe08d"
+    },
+    {
+      "bytes": 2556,
+      "claim_scope": "current known-path availability; filename inventory only",
+      "copied_into_packet": true,
+      "path": "evidence/research/historical_variant_screen_recoverability/current_workspace_availability.json",
+      "sha256": "eddca19ffcb13ce6460d82640363e05bc92c4eadee21d8efda946280bc554e7d"
+    },
+    {
+      "archive_count": 577,
+      "archive_read_error_count": 16,
+      "bytes": 24653176,
+      "claim_scope": "SHA-256 search of every readable direct ZIP file member for the 132 run artifacts currently missing from the provenance byte report; no exact matches",
+      "direct_member_count": 42902,
+      "exact_match_count": 0,
+      "hashed_member_count": 42902,
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/archive_search.json",
+      "scanner_path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_archives.py",
+      "scanner_sha256": "384c78dbfaa4d9cb06dd17b2926cf01f0b0cf1dbb6a0987640f48196932d91ce",
+      "sha256": "8f65d5e8b7b6c2495652ef228775b99dc2e0d98fb2b9f7ea525b3864f1248cec",
+      "target_count": 132,
+      "uncompressed_bytes_hashed": 21671964914,
+      "unmatched_target_count": 132
+    },
+    {
+      "bytes": 6065,
+      "claim_scope": "same-basename exact-hash recovery search under /home/nguyenl37; zero matches among 132 targets",
+      "exact_matches": 0,
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/home_directory_search.json",
+      "sha256": "d6f20af7aa67931d59e1589db981e202aac1cdafd9b8532416f3058a349bab86",
+      "target_count": 132
+    },
+    {
+      "bytes": 2004,
+      "claim_scope": "inputs, scanner source, traversal completeness, and output identity for the /home/nguyenl37 hash search",
+      "exact_matches": 0,
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/home_directory_search_metadata.json",
+      "sha256": "b174a0e562ec4801a1fa0488118449b4b8fa1063b1a04f2783b31dafdf253689",
+      "target_count": 132
+    },
+    {
+      "bytes": 265868,
+      "candidate_bytes_hashed": 3746889603,
+      "candidate_file_count": 585,
+      "claim_scope": "Same-basename exact SHA-256 search for the 132 run artifacts currently missing from the provenance byte report, across ordinary files beneath the current scratch root",
+      "exact_match_count": 0,
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/local_file_search.json",
+      "read_error_count": 0,
+      "scanner_path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py",
+      "scanner_sha256": "d4fdce32059cc668388daf0c93416edde0114690d12ddf7c5df1e63a8882f069",
+      "sha256": "26892786791656622b00f2a21e05b503f0387678fa62c45592df4f4184a0e4f7",
+      "target_count": 132,
+      "unmatched_target_count": 132
+    },
+    {
+      "bytes": 6552,
+      "claim_scope": "One-level nested-member SHA-256 search for the 132 run artifacts marked missing by the current provenance byte report; 1,437 inventoried nested ZIP members under /scratch/work/nguyenl37",
+      "exact_match_count": 0,
+      "hashed_member_count": 177863,
+      "known_outer_archive_error_count": 16,
+      "nested_container_count": 1437,
+      "nested_member_uncompressed_bytes": 14469555000,
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/nested_archive_search.json",
+      "scanner_path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_nested_archives.py",
+      "scanner_sha256": "594e4fb0dcc936e0a56e8c5662c0d185afb407d5ef0cdd3f7dbd205915dee461",
+      "sha256": "826ee042fef71a080f290945b9ee44d04248651565c4a2bc7e7c3e9517909d61",
+      "target_count": 132,
+      "test_path": "tests/unit/research/test_missing_artifact_nested_archive_reconciliation.py",
+      "test_sha256": "d3f4a451438bcf08eff1da10fce9fdc11c404f582618de5526a8e5e86776580e",
+      "unmatched_target_count": 132
+    },
+    {
+      "bytes": 720575,
+      "claim_scope": "2026-11-04 search of all 1,437 ZIP-based members in 577 local ZIP archives under /scratch/work/nguyenl37; 80 MiB per-member limit, supported text headers only, checkpoint payloads not deserialized",
+      "nested_container_count": 1437,
+      "nested_container_limit_bytes": 83886080,
+      "nested_containers_scanned": 1437,
+      "nested_containers_skipped_size_limit": 0,
+      "outer_archive_count": 577,
+      "path": "evidence/research/historical_variant_screen_recoverability/nested_archive_trace_search.json",
+      "read_error_count": 16,
+      "scanner_path": "scripts/research/analysis/evidence/search_nested_archive_traces.py",
+      "scanner_sha256": "8b58f4c3e94a3baa74f4386d64dbd532d8e7e042a0bc1796918d97168cd1ba1d",
+      "sha256": "83ec6428269fee196a09823db48bc2e9bdd04a9b6f0fbb0ce8d29ffb13b6f34d",
+      "trace_match_count": 0
+    },
+    {
+      "bytes": 23666,
+      "claim_scope": "2026-11-04 whole-scratch symlink inventory without traversing links; detailed links retained for repo, archive, and historical thesis roots",
+      "focused_symlink_count": 41,
+      "missing_focused_target_count": 3,
+      "path": "evidence/research/historical_variant_screen_recoverability/scratch_symlink_inventory.json",
+      "scanner_path": "scripts/research/analysis/evidence/inventory_scratch_symlinks.py",
+      "scanner_sha256": "feb6fcd9aec5326ddbf6ec1fe1d39de0b92b1a35755b6623d25a52dbe62a8309",
+      "sha256": "a8ffad669c84c292da91893f0a3e7393dc1c7fd00a3de85973b4736d24d9fb5f",
+      "total_symlink_count": 5817
+    },
+    {
+      "bytes": 20327,
+      "copied_into_packet": true,
+      "historical_source_path": "evidence/research/archive_2026/evidence/p3_seed50_report_pack_recoverability_20261018.json",
+      "historical_source_sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c",
+      "path": "evidence/research/historical_variant_screen_recoverability/screen_report_pack_recoverability.json",
+      "sha256": "810fe4f2108f9b41cbcd85c39afa9edf58cef6b87e66b1cca3eaae39d924ed1c"
+    },
+    {
+      "archive_paths_inspected": 50,
       "bytes": 22724,
+      "checkpoint_bytes_hashed": 1663296245,
       "claim_scope": "frozen selected-pair exact checkpoint digest search; targeted variant-and-seed ZIP paths only",
+      "exact_match_count": 0,
+      "path": "evidence/research/historical_variant_screen_recoverability/selected_checkpoint_recoverability.json",
       "scanner_path": "scripts/research/analysis/evidence/audit_selected_checkpoint_recoverability.py",
       "scanner_sha256": "c800089ba09251a8162d67141408ce659069474d560492b14520efbe4efab9d4",
-      "archive_paths_inspected": 50,
-      "checkpoint_bytes_hashed": 1663296245,
-      "exact_match_count": 0
+      "sha256": "7e3b1a823803471c3b97588d5db86157879d2ee444da28943d25dbccd34f2d96"
+    },
+    {
+      "bytes": 7379,
+      "claim_scope": "same-basename exact SHA-256 search under /tmp and /var/tmp; zero matches among 132 targets",
+      "exact_matches": 0,
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/tmp_directory_search.json",
+      "sha256": "8a55a87db6ebb6dcc0d75d52e872de66ff1cfbed7d2e62fcf5e32635d0010223",
+      "target_count": 132
+    },
+    {
+      "bytes": 5772,
+      "claim_scope": "same-basename exact SHA-256 search under /tmp and /var/tmp; zero matches among 132 targets",
+      "exact_matches": 0,
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/var_tmp_directory_search.json",
+      "sha256": "d95f4489455261df747634c517890f942e28a3f799502c142fd1919b944b376c",
+      "target_count": 132
+    },
+    {
+      "bytes": 2647,
+      "claim_scope": "same-basename exact SHA-256 search under /tmp and /var/tmp; zero matches among 132 targets",
+      "exact_matches": 0,
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/temporary_roots_search_metadata.json",
+      "sha256": "7f7113b4cea13c8d8ada8431f8e9d064b0a6ca41489187e82704d5526a435323",
+      "target_count": 132
+    },
+    {
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/scratch_filesystem_search_v2.json",
+      "sha256": "e9cbb715e21803ceb7253fd93a5fd4cc8c7caed4ab389c811c180332625ccc66",
+      "bytes": 584636,
+      "claim_scope": "same-basename exact SHA-256 search among ordinary files beneath /scratch; incomplete traversal due to inaccessible directories",
+      "target_count": 132,
+      "candidate_file_count": 589,
+      "candidate_bytes": 3746898205,
+      "read_error_count": 0,
+      "walk_error_count": 3516,
+      "walk_errors_within_user_tree": 0,
+      "exact_match_count": 0,
+      "unmatched_target_count": 132,
+      "status": "incomplete_walk_errors",
+      "scanner_path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py",
+      "scanner_sha256": "7dab852205fb1b7bfe5765b8e2b5e89a0ade7ddfe9f4e22251f942dbc143da4c"
+    },
+    {
+      "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/scratch_filesystem_search_v2_metadata.json",
+      "sha256": "16bd48c850ca8403ed5039b5a178024c5aaa59d34a0e970de04c3245d3fa3778",
+      "bytes": 2553,
+      "claim_scope": "run, source, input, and bounded-recovery metadata for the whole-scratch same-basename file search",
+      "target_count": 132,
+      "exact_match_count": 0,
+      "unmatched_target_count": 132,
+      "status": "incomplete_walk_errors"
     }
-  ]
+  ],
+  "claim_scope": "historical report-pack and selected-pair checkpoint recoverability with bounded current archive searches",
+  "packet": "historical_variant_screen_recoverability",
+  "schema": "qrl.historical_variant_screen_recoverability.v1"
 }

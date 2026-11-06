@@ -8,12 +8,14 @@ from scripts.research.analysis.evaluation.report_variant_details import (
     _annotate_trade_outcome,
     _display,
     _flatten_markdown_rows,
+    _hard_risk_status_text,
     _markdown_config_results,
     _report_value,
     _trade_chart,
     _trade_outcome_caption,
     _validate_markdown_images,
     _validate_report_figures,
+    _validate_training_gate_policy,
 )
 
 
@@ -36,6 +38,43 @@ def test_report_value_formats_percentages_with_units(
 @pytest.mark.parametrize("value", [float("inf"), float("-inf"), float("nan")])
 def test_nonfinite_report_metrics_render_as_not_available(value: float) -> None:
     assert _display(value) == "N/A"
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [
+        {
+            "ok": False,
+            "max_peak_trailing_dd": 0.101,
+            "breached": "false",
+            "reason": "peak_trailing_dd",
+        },
+        {
+            "ok": False,
+            "max_peak_trailing_dd": 0.101,
+            "breached": False,
+            "hard_risk_ok": "true",
+        },
+        {
+            "ok": False,
+            "max_peak_trailing_dd": 0.101,
+            "breached": True,
+            "hard_risk_ok": True,
+        },
+    ],
+)
+def test_training_gate_report_rejects_malformed_or_conflicting_hard_risk_flags(
+    gate: dict[str, Any], tmp_path: Path
+) -> None:
+    with pytest.raises(ValueError, match="malformed|conflicting"):
+        _validate_training_gate_policy(gate, 0.1, tmp_path)
+
+
+def test_hard_risk_report_does_not_infer_pass_from_malformed_flags() -> None:
+    assert (
+        _hard_risk_status_text({"breached": "false", "reason": "peak_trailing_dd", "ok": False})
+        == "Not recorded"
+    )
 
 
 def test_nested_parameters_render_as_readable_rows_without_raw_objects() -> None:

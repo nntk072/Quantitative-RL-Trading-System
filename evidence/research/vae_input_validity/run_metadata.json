@@ -1,0 +1,13 @@
+{
+  "audit": "vae_pre_ny_sequence_validity",
+  "completed_date_utc": "2026-11-04",
+  "command": ".venv/bin/python scripts/research/analysis/features/audit_vae_pre_ny_sequence_validity.py --input data/training/US100.cash_M1_202412300105_202610162349.csv --config config/vae.yaml --start-date 2024-12-30 --end-date 2025-12-31 --output evidence/research/vae_input_validity/vae_pre_ny_sequence_validity.json",
+  "compute": {
+    "slurm_job_id": "21405414",
+    "node": "gpuarm1",
+    "allocation_gpu": "GH200",
+    "allocation_gpus_requested": 1,
+    "audit_device": "CPU"
+  },
+  "scope": "Current local US100 M1 bars and the configured local VAE sequence array; no training or policy evaluation was run."
+}

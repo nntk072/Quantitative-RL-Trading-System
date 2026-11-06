@@ -272,7 +272,7 @@ def build_ifvg_zone_features(
             ``price_in_ifvg_bull``, ``ifvg_bull_distance_atr``, ``ifvg_retest_bull``,
             ``ifvg_bull_origin`` and the bearish mirrors. ``ifvg_*_origin`` is the
             low (bull) or high (bear) of candle 1 in the 1-2-3 that left the gap.
-            Distance is 5 when no zone is live.
+            Distance is 5 when no zone is live or ATR is unavailable.
     """
     n = len(bars)
     idx = bars.index
@@ -431,7 +431,9 @@ def build_ifvg_zone_features(
             bear_confirmed_at = pd.Timestamp(idx[i]).value
             values[i, 19] = 1.0
 
-        a = atr_arr[i] if not np.isnan(atr_arr[i]) and atr_arr[i] > 0 else 1.0
+        # Preserve the 5.0 missing-distance sentinel when ATR cannot normalize
+        # a live zone; a unit-price fallback would invent scale-dependent data.
+        atr_available = np.isfinite(atr_arr[i]) and atr_arr[i] > 0
         if bull_start >= 0 and not bull_dead and close[i] < bull_zl:
             bull_dead = True
             bull_pending_retest = None
@@ -445,7 +447,8 @@ def build_ifvg_zone_features(
             values[i, 2] = bull_zh
             if bull_zl <= close[i] <= bull_zh:
                 values[i, 3] = 1.0
-            values[i, 4] = min(abs(close[i] - bull_zl), abs(close[i] - bull_zh)) / a
+            if atr_available:
+                values[i, 4] = min(abs(close[i] - bull_zl), abs(close[i] - bull_zh)) / atr_arr[i]
             if (
                 bull_pending_retest is not None
                 and i > bull_pending_retest[0]
@@ -481,7 +484,8 @@ def build_ifvg_zone_features(
             values[i, 8] = bear_zh
             if bear_zl <= close[i] <= bear_zh:
                 values[i, 9] = 1.0
-            values[i, 10] = min(abs(close[i] - bear_zl), abs(close[i] - bear_zh)) / a
+            if atr_available:
+                values[i, 10] = min(abs(close[i] - bear_zl), abs(close[i] - bear_zh)) / atr_arr[i]
             if (
                 bear_pending_retest is not None
                 and i > bear_pending_retest[0]

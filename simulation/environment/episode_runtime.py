@@ -7,7 +7,10 @@ import numpy as np
 import pandas as pd
 
 from decisioning.trade_setup import TradeSetupCandidate
-from features.context.trade_setup_candidates import TradeSetupEventIdentity
+from features.context.trade_setup_candidates import (
+    TradeSetupEventIdentity,
+    trade_setup_event_identity_record,
+)
 from market_data.loading.ticks import (
     TickExecutionUnavailable,
     event_keyed_execution_rng,
@@ -50,6 +53,12 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             seed: Random seed used to make sampling reproducible.
             options: Key-value data used for the options.
 
+        A caller may manually reset before a terminal transition. That aborts
+        the current episode and discards its open position and episode-local
+        ledger; it is not a market close, payout, or account-breach event.
+        Evaluation paths that need realized results must reach a configured
+        liquidation boundary before reset.
+
         Returns:
             Mapping from ``str`` keys to ``np.ndarray[Any, Any]], dict[str, Any]`` values.
         """
@@ -74,6 +83,9 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._position_sequence = 0
         self._episode_identity = getattr(self, "_episode_identity", 0) + 1
         self._current_decision_id = ""
+        self._position_direction_at_decision = 0
+        self._position_id_at_decision: str | None = None
+        self._pending_order_id_at_decision: str | None = None
         # Step counter within the current episode (0 at reset). Distinct
         # from ``step_idx`` (the absolute bar index); used to enforce
         # ``max_episode_steps`` truncation.
@@ -102,6 +114,9 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._pending_realized_r: float | None = None
         self._opened_this_step = False
         self._selected_sl_anchor = 0.0
+        self._selected_entry_execution = "market"
+        self._selected_limit_offset_atr = 0.0
+        self._selected_limit_ttl_bars = 1
         self._selected_trade_setup = None
         self._selected_trade_setup_event_identity = None
         self._last_action_trade_setup_candidate_id = None
@@ -217,7 +232,82 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
 
         pending_order = self._pending_entry_order
         pending_due = bool(
-            pending_order is not None and int(pending_order["fill_idx"]) == market_fill_idx
+            pending_order is not None
+            and pending_order.get("order_type") != "limit"
+            and int(pending_order["fill_idx"]) == market_fill_idx
+        )
+        if pending_order is not None and pending_order.get("order_type") == "limit":
+            current_interval_end = bar_time + pd.Timedelta(minutes=self._minutes_per_step)
+            cancel_reason = None
+            if self.block_overnight and self._is_ny_session_boundary():
+                cancel_reason = "session_end_before_limit_fill"
+            elif self.block_overnight and int(pending_order["session_id"]) != session_id:
+                cancel_reason = "session_changed_before_limit_fill"
+            else:
+                limit_fill = pending_order.get("fill_quote")
+                if (
+                    limit_fill is not None
+                    and pd.Timestamp(limit_fill.tick_time) <= current_interval_end
+                ):
+                    pending_due = True
+                    entry_fill_bid, entry_fill_ask = float(limit_fill.bid), float(limit_fill.ask)
+                    entry_fill_time = pd.Timestamp(limit_fill.tick_time)
+                    self._active_step_execution = {
+                        "quote": limit_fill,
+                        "metadata": {
+                            "order_type": "limit",
+                            "limit_price": float(pending_order["limit_price"]),
+                            "order_submission_time": pd.Timestamp(limit_fill.order_time),
+                            "execution_order_time": pd.Timestamp(limit_fill.order_time),
+                            "execution_arrival_time": pd.Timestamp(limit_fill.arrival_time),
+                            "execution_latency_ns": int(limit_fill.latency_ns),
+                            "actual_tick_time": pd.Timestamp(limit_fill.tick_time),
+                            "fill_quote_source": "tick",
+                        },
+                    }
+                elif pd.Timestamp(pending_order["expiry_time"]) <= current_interval_end:
+                    cancel_reason = "limit_ttl_expired"
+            if cancel_reason is not None:
+                self._pending_entry_order = None
+                self.trade_log.append(
+                    {
+                        "type": "order_cancel",
+                        "order_id": pending_order["order_id"],
+                        "order_type": "limit",
+                        "reason": cancel_reason,
+                        "decision_id": pending_order["decision_id"],
+                        "trade_setup_candidate_id": (
+                            pending_order.get("selected", {})
+                            .get("_selected_trade_setup")
+                            .candidate_id
+                            if pending_order.get("selected", {}).get("_selected_trade_setup")
+                            is not None
+                            else None
+                        ),
+                        **trade_setup_event_identity_record(
+                            pending_order.get("selected", {}).get(
+                                "_selected_trade_setup_event_identity"
+                            )
+                        ),
+                        "decision_bar_time": pending_order["decision_bar_time"],
+                        "order_submission_time": pending_order["order_submission_time"],
+                        "expiry_time": pending_order["expiry_time"],
+                        "limit_price": pending_order["limit_price"],
+                        "time": current_interval_end,
+                    }
+                )
+            pending_order = self._pending_entry_order
+            pending_due = pending_due and pending_order is not None
+        self._position_direction_at_decision = (
+            0 if self.position is None else int(self.position.direction)
+        )
+        self._position_id_at_decision = (
+            None if self.position is None else str(self.position.position_id)
+        )
+        self._pending_order_id_at_decision = (
+            None
+            if self._pending_entry_order is None
+            else str(self._pending_entry_order["order_id"])
         )
         (
             entry_machine,
@@ -243,7 +333,6 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             entry_fill_ask,
             entry_fill_time,
             market_fill_idx,
-            entry_machine,
         )
         self._execute_step_action(
             action,
@@ -264,12 +353,13 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             entry_fill_time,
             market_fill_idx,
             entry_candidate,
-            entry_machine,
             done,
             pending_due,
             session_blocked,
             peak_dd_block,
         )
+        if entry_machine is not None and self._opened_this_step:
+            entry_machine.mark_position_opened()
         done, valuation_time, _pnl_step, reward, reward_parts = self._record_step_accounting(
             bar, feat_row, bar_time, step_trade_log_start, done, truncated
         )
@@ -283,6 +373,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             entry_funnel,
             entry_machine,
             entry_state_for_action,
+            discrete_action,
             done,
         )
         observation, final_reward, terminated, truncated, final_info = self._resolve_step_end(
@@ -362,7 +453,10 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             self.broker.mark_to_market(self.account, self.position, (bid, ask))
 
         if fill_idx < self._n_bars:
-            fill_bid, fill_ask = self._bar_quote(self._bar_at(fill_idx))
+            # Guardrail and scheduled exits execute at the next bar's open,
+            # matching action fills and the event-driven backtest. Using the
+            # next bar close here leaks prices from after the recorded fill time.
+            fill_bid, fill_ask = self._bar_open_quote(self._bar_at(fill_idx))
         else:
             fill_bid, fill_ask = bid, ask
 
@@ -410,7 +504,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             pnl, fill_price = self._close_at_quote(
                 self.position,
                 eod_quote,
-                tick_fill=bool(execution_meta) or self._active_step_execution is not None,
+                tick_fill=True,
             )
             record = {
                 "type": "eod_close",
@@ -448,6 +542,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             policy=self.trading_policy,
             cycle=self.cycle_count,
             event_time=event_time,
+            max_drawdown_mode=self.guardrails.max_drawdown_mode,
         )
         if event is None:
             return False
@@ -457,11 +552,14 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self.payout_events.append(dict(event))
         self.cycle_events.append({**event, "outcome": "success"})
         self.trade_log.append(dict(event))
+        self._payout_withdrawn_this_step = payout
+        self.account.reset_operating_balance(
+            float(event["balance_after_reset"]),
+            max_drawdown_mode=self.guardrails.max_drawdown_mode,
+        )
         if self.episodic:
             return True
-        self._payout_withdrawn_this_step = payout
         self.cycle_count += 1
-        self.account.reset_operating_balance(self.trading_policy.operating_balance)
         return False
 
     def _calculate_reward(
@@ -487,6 +585,9 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         Returns:
             Numeric result returned by ``_calculate_reward``.
         """
+        if self.reward_mode == "survival":
+            return 0.0
+
         daily_loss = float(self.account.canonical_daily_loss())
         # Elapsed session time in minutes. Derived from the bar spacing rather
         # than assumed, because the sweep time-decay term is a linear penalty

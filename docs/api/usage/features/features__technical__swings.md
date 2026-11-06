@@ -26,7 +26,22 @@ This page contains 3 public callable records owned by `features.technical.swings
 
 **Observed usage:**
 
-1. [test fixture: `test_swing_features_are_causal`](../../../../tests/unit/features/test_pivots_swings.py#L59)
+1. [test fixture: `test_classify_structure_labels_new_highs_and_lows_against_prior_events`](../../../../tests/unit/features/test_pivots_swings.py#L48)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_classify_structure_labels_new_highs_and_lows_against_prior_events() -> None:
+    result = classify_structure(_accepted_swings())
+
+    assert result["structure"].tolist() == ["", "", "", "HH", "HL", "LH", "LL"]
+    assert result["hh"].tolist() == [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+    assert result["hl"].tolist() == [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+    assert result["lh"].tolist() == [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+    assert result["ll"].tolist() == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+```
+
+2. [test fixture: `test_swing_features_are_causal`](../../../../tests/unit/features/test_pivots_swings.py#L101)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -41,26 +56,6 @@ def test_swing_features_are_causal() -> None:
     sw_t = detect_swings(trunc, piv_t, atr_mult=0.0)
     feat_t = swing_features(trunc, sw_t, classify_structure(sw_t))
     overlap = feat_t.index[:6]
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_bars_since_last_swing_scales_by_obs_window`](../../../../tests/unit/features/test_pivots_swings.py#L336)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        index=idx,
-    )
-    feat = swing_features(
-        bars,
-        swings,
-        classify_structure(swings),
-        atr=pd.Series(1.0, index=idx),
-        obs_window=60,
-    )
-    since = feat["bars_since_last_swing"]
-    assert since.iloc[0] == pytest.approx(0.0)
 # … caller assertions omitted …
 ```
 
@@ -97,20 +92,19 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `smt_divergence`](../../../../features/context/smt.py#L32)
+1. [production caller: `smt_divergence`](../../../../features/context/smt.py#L33)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
     sec_close = secondary["close"].reindex(primary.index, method="ffill")
-    sec_aligned = secondary.reindex(primary.index, method="ffill")
 
     pr_piv = detect_pivots(primary, left=swing_period, right=swing_period)
-    sec_piv = detect_pivots(sec_aligned, left=swing_period, right=swing_period)
-
-    def _paired_divergences(
-        primary_event: pd.Series,
-        secondary_event: pd.Series,
+    # Detect pivots only on observed secondary bars. Forward-filled OHLC rows
+    # are useful for a synchronized close/spread, but they are not new bars and
+    # must not count toward a fractal's left/right confirmation window.
+    sec_piv = detect_pivots(secondary, left=swing_period, right=swing_period)
+    primary_times_ns = pd.DatetimeIndex(primary.index).to_numpy(dtype="datetime64[ns]").view("i8")
 # … caller assertions omitted …
 ```
 

@@ -142,6 +142,94 @@ def render_retest(data: dict[str, object]) -> str:
     return _svg("\n".join(body), "Optional confirmed retest variant — separate from main entry")
 
 
+def render_swing_confirmation(data: dict[str, object]) -> str:
+    fixture = data["swing_confirmation"]
+    assert isinstance(fixture, dict)
+    bars = fixture["bars"]
+    assert isinstance(bars, list)
+    x_positions = [190, 345, 500, 655, 810]
+    marks = [
+        '<line class="axis" x1="110" y1="390" x2="890" y2="390"/>',
+        '<line class="ref" x1="135" y1="130" x2="880" y2="130"/>',
+        '<text x="140" y="114">candidate pivot high 105</text>',
+    ]
+    for x, bar in zip(x_positions, bars, strict=True):
+        assert isinstance(bar, dict)
+        high = float(bar["high"])
+        y = 340 - (high - 98.0) * 30.0
+        marks.extend(
+            [
+                f'<line class="axis" x1="{x}" y1="{y:.1f}" x2="{x}" y2="390"/>',
+                f'<circle cx="{x}" cy="{y:.1f}" r="5" fill="#175cd3"/>',
+                f'<text x="{x - 52}" y="420" class="small">{bar["time"]}</text>',
+            ]
+        )
+    marks.extend(
+        [
+            '<line x1="500" y1="112" x2="500" y2="395" stroke="#b42318" stroke-dasharray="6 5"/>',
+            '<text x="365" y="92" fill="#b42318" font-weight="bold">INVALID: pivot candle is not yet confirmed</text>',
+            '<line class="gate" x1="810" y1="112" x2="810" y2="395"/>',
+            '<text x="610" y="92" fill="#175cd3" font-weight="bold">VALID: two right bars complete</text>',
+            f'<text x="130" y="475">Pivot bar {fixture["pivot_time"]}; confirmed at its right-window close {fixture["confirmed_at"]}.</text>',
+            f'<text x="130" y="505" class="small">A decision at {fixture["incorrect_visible_at"]} is premature; earliest next-bar time is {fixture["earliest_decision_at"]}.</text>',
+        ]
+    )
+    return _svg("\n".join(marks), "Swing pivot becomes visible after right-bar confirmation")
+
+
+def render_order_block_retest(data: dict[str, object]) -> str:
+    fixture = data["order_block_retest"]
+    assert isinstance(fixture, dict)
+    bars = fixture["bars"]
+    assert isinstance(bars, list)
+    xs = [240, 440, 640, 840]
+    marks = [
+        '<rect class="zone" x="165" y="230" width="730" height="115"/>',
+        '<text x="175" y="218">active order-block zone [100,102]</text>',
+        '<line class="axis" x1="145" y1="390" x2="910" y2="390"/>',
+    ]
+    for x, bar in zip(xs, bars, strict=True):
+        assert isinstance(bar, dict)
+        marks.extend(
+            [
+                f'<line class="axis" x1="{x}" y1="145" x2="{x}" y2="395"/>',
+                f'<text x="{x - 70}" y="420" class="small">{bar["time"]}</text>',
+            ]
+        )
+    marks.extend(
+        [
+            '<line x1="440" y1="120" x2="440" y2="395" stroke="#b42318" stroke-dasharray="6 5"/>',
+            '<text x="275" y="92" fill="#b42318" font-weight="bold">Overlap alone: not confirmed</text>',
+            '<line class="gate" x1="640" y1="120" x2="640" y2="395"/>',
+            '<text x="535" y="92" fill="#175cd3" font-weight="bold">Later close confirms retest</text>',
+            f'<text x="155" y="475">Zone available {fixture["zone_created_at"]} → overlap bar {fixture["first_overlap_bar_time"]} → close confirmation {fixture["confirmed_at"]}.</text>',
+            f'<text x="155" y="505" class="small">Earliest next-bar action: {fixture["earliest_next_bar_at"]}; no fill at overlap-bar time {fixture["incorrect_same_overlap_fill_at"]}.</text>',
+        ]
+    )
+    return _svg("\n".join(marks), "Order-block retest requires later close confirmation")
+
+
+def render_smt_missing_secondary_bar(data: dict[str, object]) -> str:
+    fixture = data["smt_missing_secondary_bar"]
+    assert isinstance(fixture, dict)
+    body = [
+        '<line class="axis" x1="170" y1="280" x2="840" y2="280"/>',
+        '<circle cx="290" cy="280" r="10" fill="#18794e"/>',
+        '<circle cx="720" cy="280" r="10" fill="#18794e"/>',
+        '<line x1="505" y1="115" x2="505" y2="365" stroke="#b42318" stroke-dasharray="6 5"/>',
+        '<circle cx="505" cy="280" r="10" fill="#b42318"/>',
+        '<text x="210" y="225">last completed secondary close = 200</text>',
+        '<text x="390" y="330" fill="#b42318">no secondary bar at primary decision time</text>',
+        '<text x="650" y="225">later secondary close = 204</text>',
+        '<line class="gate" x1="505" y1="115" x2="505" y2="155"/>',
+        '<text x="400" y="95" fill="#175cd3" font-weight="bold">forward-fill 200</text>',
+        '<text x="610" y="400" fill="#b42318">Backward-fill 204 here would use a future bar.</text>',
+        f'<text x="160" y="455">Previous source {fixture["secondary_previous_time"]} → decision {fixture["primary_time"]} → next source {fixture["secondary_next_time"]}.</text>',
+        f'<text x="160" y="490" class="small">At the decision, use {fixture["secondary_previous_close"]}; do not expose {fixture["incorrect_future_value"]} until the next source bar closes.</text>',
+    ]
+    return _svg("\n".join(body), "SMT secondary bars use the last available observation")
+
+
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE)
@@ -157,11 +245,17 @@ def main(argv: Sequence[str] | None = None) -> None:
         args.output_dir / "incorrect_same_bar_ifvg_entry.svg",
         args.output_dir / "previous_session_premium_gate.svg",
         args.output_dir / "confirmed_ifvg_retest_timing.svg",
+        args.output_dir / "swing_confirmation_timing.svg",
+        args.output_dir / "order_block_retest_timing.svg",
+        args.output_dir / "smt_secondary_bar_availability.svg",
     )
     outputs[0].write_text(render_fixture_a(data), encoding="utf-8")
     outputs[1].write_text(render_incorrect_same_bar_entry(data), encoding="utf-8")
     outputs[2].write_text(render_fixture_b(data), encoding="utf-8")
     outputs[3].write_text(render_retest(data), encoding="utf-8")
+    outputs[4].write_text(render_swing_confirmation(data), encoding="utf-8")
+    outputs[5].write_text(render_order_block_retest(data), encoding="utf-8")
+    outputs[6].write_text(render_smt_missing_secondary_bar(data), encoding="utf-8")
     for path in outputs:
         print(path)
 

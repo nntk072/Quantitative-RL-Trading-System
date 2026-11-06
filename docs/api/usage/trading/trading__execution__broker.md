@@ -8,13 +8,13 @@ This page contains 6 public callable records owned by `trading.execution.broker`
 
 **Purpose:** Simple broker model used by the simulation execution layer.
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker` · **Source:** [trading/execution/broker.py:127](../../../../trading/execution/broker.py#L127)
+**Exact API:** {py:obj}`trading.execution.broker.Broker` · **Source:** [trading/execution/broker.py:129](../../../../trading/execution/broker.py#L129)
 
 **Inputs and outputs:**
 
 **Observed usage:**
 
-1. [test fixture: `setUp`](../../../../tests/integration/backtest/test_broker_fill_accounting.py#L13)
+1. [test fixture: `setUp`](../../../../tests/integration/backtest/test_broker_fill_accounting.py#L14)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -62,7 +62,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_stop_wins_when_the_same_bar_crosses_ema`](../../../../tests/integration/backtest/test_entry_levels.py#L691)
+1. [test fixture: `test_stop_wins_when_the_same_bar_crosses_ema`](../../../../tests/integration/backtest/test_entry_levels.py#L781)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -131,7 +131,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Close an open position (or part of it) and return (pnl, fill_price).
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker.close_position` · **Source:** [trading/execution/broker.py:199](../../../../trading/execution/broker.py#L199)
+**Exact API:** {py:obj}`trading.execution.broker.Broker.close_position` · **Source:** [trading/execution/broker.py:202](../../../../trading/execution/broker.py#L202)
 
 **Inputs and outputs:**
 
@@ -172,7 +172,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_tick_quote_sides_match_buy_ask_and_sell_bid_for_entries_and_exits`](../../../../tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py#L62)
+2. [test fixture: `test_tick_quote_sides_match_buy_ask_and_sell_bid_for_entries_and_exits`](../../../../tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py#L90)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -205,7 +205,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Recompute and record unrealised P&L using the close-side price.
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker.mark_to_market` · **Source:** [trading/execution/broker.py:242](../../../../trading/execution/broker.py#L242)
+**Exact API:** {py:obj}`trading.execution.broker.Broker.mark_to_market` · **Source:** [trading/execution/broker.py:245](../../../../trading/execution/broker.py#L245)
 
 **Inputs and outputs:**
 
@@ -245,7 +245,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `close_position`](../../../../trading/execution/broker.py#L239)
+2. [production caller: `close_position`](../../../../trading/execution/broker.py#L242)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -271,7 +271,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Attempt to open a position.
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker.open_position` · **Source:** [trading/execution/broker.py:157](../../../../trading/execution/broker.py#L157)
+**Exact API:** {py:obj}`trading.execution.broker.Broker.open_position` · **Source:** [trading/execution/broker.py:159](../../../../trading/execution/broker.py#L159)
 
 **Inputs and outputs:**
 
@@ -312,7 +312,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_tick_quote_sides_match_buy_ask_and_sell_bid_for_entries_and_exits`](../../../../tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py#L59)
+2. [test fixture: `test_tick_quote_sides_match_buy_ask_and_sell_bid_for_entries_and_exits`](../../../../tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py#L87)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -344,7 +344,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Calculate margin required to open the requested position.
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker.required_margin` · **Source:** [trading/execution/broker.py:145](../../../../trading/execution/broker.py#L145)
+**Exact API:** {py:obj}`trading.execution.broker.Broker.required_margin` · **Source:** [trading/execution/broker.py:147](../../../../trading/execution/broker.py#L147)
 
 **Inputs and outputs:**
 
@@ -363,7 +363,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `open_position`](../../../../trading/execution/broker.py#L186)
+1. [production caller: `open_position`](../../../../trading/execution/broker.py#L188)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -383,7 +383,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `close_position`](../../../../trading/execution/broker.py#L238)
+2. [production caller: `close_position`](../../../../trading/execution/broker.py#L241)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

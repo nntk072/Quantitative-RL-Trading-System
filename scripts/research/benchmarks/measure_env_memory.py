@@ -12,6 +12,8 @@ import json
 import multiprocessing as mp
 import os
 import pickle
+import platform
+import socket
 import tempfile
 import time
 from functools import partial
@@ -26,11 +28,17 @@ import numpy as np
 import pandas as pd
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
+from artifacts.identity import file_sha256
 from configuration import load_config
 from features import build_features, feature_cache_path
 from market_data.loading import build_tick_books, run_pipeline
 from market_data.loading.ticks import TickBook, ticks_covering
-from market_data.splits.definitions import get_split_config, make_train_mask, split_train_test
+from market_data.splits.definitions import (
+    get_split_config,
+    get_train_start_config,
+    make_train_mask,
+    split_train_test,
+)
 from training.setup.environments import make_env, strategy_from_cfg
 from training.setup.observation_memmap import publish_observation_memmap
 
@@ -90,16 +98,31 @@ def _cgroup_memory_bytes() -> int | None:
     return None
 
 
-def _load_train_slice(days: int | None) -> tuple[Any, pd.DataFrame, pd.DataFrame, TickBook | None]:
+ROOT = Path(__file__).resolve().parents[3]
+
+
+def _load_train_slice(
+    days: int | None,
+    timing_out: dict[str, float] | None = None,
+) -> tuple[Any, pd.DataFrame, pd.DataFrame, TickBook | None]:
     """Load the canonical train split, optionally taking its last *days* of bars."""
+    total_started = time.monotonic()
+    stage_started = total_started
     cfg = load_config()
+    if timing_out is not None:
+        timing_out["config_load_seconds"] = time.monotonic() - stage_started
+    stage_started = time.monotonic()
     data = run_pipeline(cfg)
+    if timing_out is not None:
+        timing_out["market_data_pipeline_seconds"] = time.monotonic() - stage_started
     primary = str(cfg.data.primary)
     secondary = str(cfg.data.secondary)
     primary_bars = data[primary]["M1"]
     secondary_bars = data.get(secondary, {}).get("M1")
     train_end, test_start = get_split_config(cfg)
-    train_mask = make_train_mask(cast(pd.DatetimeIndex, primary_bars.index), train_end)
+    train_start = get_train_start_config(cfg)
+    train_mask = make_train_mask(cast(pd.DatetimeIndex, primary_bars.index), train_end, train_start)
+    stage_started = time.monotonic()
     cache_path = feature_cache_path(
         Path(cfg.data.cache_dir),
         primary,
@@ -115,6 +138,9 @@ def _load_train_slice(days: int | None) -> tuple[Any, pd.DataFrame, pd.DataFrame
         train_mask=train_mask,
         cache_path=cache_path,
     )
+    if timing_out is not None:
+        timing_out["feature_build_or_cache_seconds"] = time.monotonic() - stage_started
+    stage_started = time.monotonic()
     train_bars, _, train_features, _ = split_train_test(
         primary_bars, features, train_end, test_start
     )
@@ -122,8 +148,14 @@ def _load_train_slice(days: int | None) -> tuple[Any, pd.DataFrame, pd.DataFrame
         slice_start = pd.Timestamp(train_bars.index[-1]) - pd.Timedelta(days=days)
         train_bars = train_bars.loc[train_bars.index >= slice_start]
         train_features = train_features.loc[train_bars.index]
+    if timing_out is not None:
+        timing_out["split_and_slice_seconds"] = time.monotonic() - stage_started
+    stage_started = time.monotonic()
     tick_books = build_tick_books(cfg)
     tickbook = ticks_covering(tick_books.get(primary), train_bars)
+    if timing_out is not None:
+        timing_out["tickbook_build_and_coverage_seconds"] = time.monotonic() - stage_started
+        timing_out["train_data_preparation_total_seconds"] = time.monotonic() - total_started
     del data, primary_bars, secondary_bars, features, tick_books
     return cfg, train_bars, train_features, tickbook
 
@@ -169,6 +201,7 @@ def _measure_env_count(
     n_envs: int,
     steps: int,
     bundle_path: Path | None = None,
+    timing_out: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     """Start one vector env, measure PSS, and time fixed vector steps."""
     import torch
@@ -177,9 +210,12 @@ def _measure_env_count(
     cfg.env.n_envs = n_envs
     with tempfile.TemporaryDirectory(prefix="rl-mem-probe-") as temp_dir:
         if bundle_path is None:
+            stage_started = time.monotonic()
             mmap_path = publish_observation_memmap(
                 features, bars, cfg, Path(temp_dir) / "obs_features.npy"
             )
+            if timing_out is not None:
+                timing_out["observation_memmap_prepare_seconds"] = time.monotonic() - stage_started
             env_fn = partial(
                 make_env,
                 bars,
@@ -211,18 +247,25 @@ def _measure_env_count(
                     ]
                 )
         payload = _memory_report(bars, features, env_fn)
+        stage_started = time.monotonic()
         parent_env = env_fn()
+        if timing_out is not None:
+            timing_out["parent_environment_construct_seconds"] = time.monotonic() - stage_started
         env_attribute_sizes = _env_attribute_sizes(parent_env)
         cgroup_start = _cgroup_memory_bytes()
         started = time.monotonic()
+        vector_started = time.monotonic()
+        worker_start_started = time.monotonic()
         vec_env = SubprocVecEnv([env_fn] * n_envs)
         vec_env.reset()
+        worker_start_seconds = time.monotonic() - worker_start_started
         warmup_pss_mib = _tree_pss_mib(os.getpid())
         for _ in range(10):
             actions = np.asarray([vec_env.action_space.sample() for _ in range(n_envs)])
             vec_env.step(actions)
         steady_pss_mib = _tree_pss_mib(os.getpid())
         cgroup_warmup = _cgroup_memory_bytes()
+        vector_warmup_seconds = time.monotonic() - vector_started
         start = time.monotonic()
         for _ in range(steps):
             actions = np.asarray([vec_env.action_space.sample() for _ in range(n_envs)])
@@ -231,7 +274,12 @@ def _measure_env_count(
         final_pss_mib = _tree_pss_mib(os.getpid())
         cgroup_steady = _cgroup_memory_bytes()
         vec_env.close()
-        startup_seconds = time.monotonic() - started
+        lifecycle_seconds = time.monotonic() - started
+        if timing_out is not None:
+            timing_out["vector_worker_create_and_reset_seconds"] = worker_start_seconds
+            timing_out["vector_start_reset_and_10_step_warmup_seconds"] = vector_warmup_seconds
+            timing_out["steady_vector_step_seconds"] = elapsed
+            timing_out["vector_environment_lifecycle_total_seconds"] = lifecycle_seconds
     return {
         "n_envs": n_envs,
         **payload,
@@ -244,7 +292,9 @@ def _measure_env_count(
         "cgroup_steady_bytes": cgroup_steady,
         "vector_steps": steps,
         "env_steps_per_second": n_envs * steps / elapsed,
-        "startup_seconds": startup_seconds,
+        "startup_seconds": lifecycle_seconds,
+        "vector_environment_lifecycle_total_seconds": lifecycle_seconds,
+        "vector_start_reset_and_warmup_seconds": vector_warmup_seconds,
     }
 
 
@@ -279,12 +329,18 @@ def main() -> None:
         or any(count < 1 for count in args.env_counts)
     ):
         raise SystemExit("days, steps, and environment counts must be positive")
-    cfg, bars, features, tickbook = _load_train_slice(None if args.full_train else args.days)
+    preparation_timings: dict[str, float] = {}
+    cfg, bars, features, tickbook = _load_train_slice(
+        None if args.full_train else args.days,
+        timing_out=preparation_timings,
+    )
     bundle_path = None
+    bundle_prepare_seconds = None
     if args.data_source == "bundle":
         from simulation.environment.bundles import build_env_bundle
 
         strategy = strategy_from_cfg(cfg)[0]
+        bundle_started = time.monotonic()
         bundle_path = build_env_bundle(
             cfg.data.cache_dir,
             bars,
@@ -295,10 +351,17 @@ def main() -> None:
             tickbook=tickbook,
             pre_ny_by_date=None,
         )
-    results = [
-        _measure_env_count(cfg, bars, features, tickbook, count, args.steps, bundle_path)
-        for count in args.env_counts
-    ]
+        bundle_prepare_seconds = time.monotonic() - bundle_started
+    results = []
+    vector_stage_timings = []
+    for count in args.env_counts:
+        env_timings: dict[str, float] = {}
+        results.append(
+            _measure_env_count(
+                cfg, bars, features, tickbook, count, args.steps, bundle_path, env_timings
+            )
+        )
+        vector_stage_timings.append({"n_envs": count, **env_timings})
     base_pss_mib, worker_pss_mib = _fit_worker_pss(results)
     report = {
         "data_source": args.data_source,
@@ -313,6 +376,36 @@ def main() -> None:
             "forkserver" if "forkserver" in mp.get_all_start_methods() else "spawn"
         ),
         "env_fn_pickled_per_worker": True,
+        "run_identity": {
+            "host": socket.gethostname(),
+            "architecture": platform.machine(),
+            "node_cpu_count": os.cpu_count(),
+            "process_cpu_affinity_cpus": sorted(os.sched_getaffinity(0))
+            if hasattr(os, "sched_getaffinity")
+            else None,
+            "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+            "config_path": "config/base/default.yaml",
+            "config_sha256": file_sha256(ROOT / "config/base/default.yaml"),
+            "data_identity_reference": (
+                "evidence/research/pipeline_denominators/pipeline_denominator_register.json"
+            ),
+            "data_identity_reference_sha256": file_sha256(
+                ROOT / "evidence/research/pipeline_denominators/pipeline_denominator_register.json"
+            ),
+            "benchmark_script_path": str(Path(__file__).resolve()),
+            "benchmark_script_sha256": file_sha256(Path(__file__).resolve()),
+            "cuda_used": False,
+        },
+        "preparation_timings_seconds": preparation_timings,
+        "bundle_prepare_seconds": bundle_prepare_seconds,
+        "vector_environment_stage_timings": vector_stage_timings,
+        "unmeasured_pipeline_stages": [
+            "learner forward and update",
+            "checkpoint save and resume",
+            "frozen full-period evaluation",
+            "charts, reporting, and archive writeback",
+            "GPU/VRAM utilization during training",
+        ],
         "fit_base_pss_mib": base_pss_mib,
         "fit_per_worker_pss_mib": worker_pss_mib,
         "measurements": results,

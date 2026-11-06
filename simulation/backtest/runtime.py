@@ -13,7 +13,7 @@ from trading.execution import (
     CostModel,
     Position,
 )
-from trading.policy.config import TradingPolicyConfig
+from trading.policy import TradingPolicyConfig
 
 if TYPE_CHECKING:
     from market_data.loading.ticks import TickBook
@@ -37,10 +37,12 @@ class BacktestSettings:
     tick_execution_required: bool
     use_structure_sl_tp: bool
     risk_frac: float
+    policy_risk_frac_range: tuple[float, float]
     rr_ratio: float
     swing_buffer_pts: float
     min_lot: float
     max_lot: float
+    lot_step: float
     contract_size: float
     hold_on_zero: bool
     exit_action: int | None
@@ -49,9 +51,23 @@ class BacktestSettings:
     eod_risk: dict[str, Any] | None = None
     execution_seed: int = 0
     sl_mode: str = "fixed"
+    tp_mode: str = "fixed"
+    sl_mode_defer_threshold: float = 0.1
+    tp_mode_defer_threshold: float = 0.1
+    tp_breakeven_alpha: float = 0.5
     sl_buffer_pts: float = 0.0
     tick_fill_slippage_points: float = 0.0
     trading_policy: TradingPolicyConfig | None = None
+    trade_setup_geometry: bool = False
+    strategy: Any | None = None
+    min_sl_atr_mult: float = 0.5
+    min_sl_points: float = 0.0
+    policy_rr_ratio_range: tuple[float, float] = (1.0, 3.0)
+    target_timeframes: tuple[str, ...] = ("M5", "M15", "H1")
+    geometry_max_tp_dist: pd.Series | None = None
+    allow_multi_tp: bool = False
+    allow_simplex: bool = False
+    ema_runner_fraction: float = 0.0
 
 
 @dataclass

@@ -26,8 +26,8 @@
       "reason": "Preserve historical research results, machine evidence, schemas, source snapshots, and reproducibility records without editing their bytes."
     },
     {
-      "migration_type": "path-only archive move",
-      "new_path": "evidence/research/archive_2026/records/audit_experiment_run_feature_cache_resolution_current_source_2026-10-16.py",
+      "migration_type": "preserved_external_copy; removed from repository",
+      "new_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs_thesis_backup_20261031/audit_experiment_run_feature_cache_resolution_current_source_2026-10-16.py",
       "new_sha256": "5b8fecf5044ee142f832c10fa61802848e751d4a167ec933ca45d3a239357e99",
       "old_path": "docs/thesis/audit_experiment_run_feature_cache_resolution_current_source_2026-10-16.py",
       "old_sha256": "5b8fecf5044ee142f832c10fa61802848e751d4a167ec933ca45d3a239357e99",

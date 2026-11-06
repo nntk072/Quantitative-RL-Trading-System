@@ -17,6 +17,7 @@ from decisioning.trade_setup import (
     trade_setup_id_from_box,
 )
 from evaluation.metrics.performance import calculate_metrics
+from evaluation.reporting.policy_decision_reconciliation import reconcile_policy_decisions
 from evaluation.reporting.run_artifact_writer import save_run
 from evaluation.rollout.random_eligible_setup import (
     AlwaysNoTradePolicy,
@@ -171,6 +172,34 @@ def test_random_setup_baseline_uses_shared_rollout_decision_trace() -> None:
         ),
         axis=1,
     ).all()
+    policy_decisions = result["policy_decisions"]
+    assert len(policy_decisions) == len(decisions)
+    assert policy_decisions["schema_version"].eq("environment_policy_decision.v2").all()
+    assert (
+        policy_decisions["eligible_candidate_count"].tolist()
+        == decisions["eligible_trade_setup_count"].tolist()
+    )
+    assert (
+        policy_decisions["eligible_trade_setup_ids"].tolist()
+        == decisions["eligible_trade_setup_ids"].tolist()
+    )
+    assert policy_decisions.apply(
+        lambda row: (
+            int(row["trade_setup_candidate_id"]) in row["eligible_trade_setup_ids"]
+            if int(row["trade_setup_candidate_id"]) != NO_TRADE_ID
+            else NO_TRADE_ID in row["eligible_trade_setup_ids"]
+        ),
+        axis=1,
+    ).all()
+    policy_reconciliation = reconcile_policy_decisions(
+        policy_decisions,
+        result["trades"],
+        result["breach_events"],
+    )
+    assert policy_reconciliation["status"] == "matched", {
+        "failures": policy_reconciliation["failures"],
+        "incomplete_reasons": policy_reconciliation["incomplete_reasons"],
+    }
     assert result["trade_setup_policy_metrics"]["policy_class"] == (
         "RandomEligibleSetupRolloutModel"
     )

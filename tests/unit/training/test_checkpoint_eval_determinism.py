@@ -5,9 +5,11 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import numpy as np
+from omegaconf import OmegaConf
 
 from learning.rl import callbacks
 from training.setup import environments as training_environments
+from training.setup.callbacks import _early_abort_callback
 
 
 def test_best_checkpoint_callback_uses_deterministic_policy_actions(
@@ -219,6 +221,85 @@ def test_full_training_viability_uses_its_own_factory_and_crossed_thresholds(
     assert calls == 2
     assert callback.viability_failure_reason is not None
     assert callback.viability_failure_reason.startswith("FAIL_POLICY_COLLAPSE")
+
+
+def test_survival_qualification_does_not_rank_profit_or_abort_inactivity(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    class ZeroTradeEnv:
+        account = SimpleNamespace(equity=100_000.0)
+        trade_log: list[dict[str, Any]] = []
+        breach_events: list[dict[str, Any]] = []
+
+        def reset(self) -> tuple[int, dict[str, Any]]:
+            return 0, {}
+
+        def step(self, _action: int) -> tuple[int, float, bool, bool, dict[str, Any]]:
+            return 1, 0.0, True, False, {}
+
+        def entry_state_diagnostics(self) -> dict[str, Any]:
+            return {"entry_state_machine": True, "candidate_created": 0}
+
+    class Model:
+        num_timesteps = 10_000_000
+
+        def predict(self, _obs: int, *, deterministic: bool) -> tuple[int, None]:
+            assert deterministic is True
+            return 0, None
+
+    calls: list[str] = []
+
+    def prefix_factory() -> ZeroTradeEnv:
+        calls.append("prefix")
+        return ZeroTradeEnv()
+
+    def full_train_factory() -> ZeroTradeEnv:
+        calls.append("full_train")
+        return ZeroTradeEnv()
+
+    monkeypatch.setattr(
+        callbacks, "save_ppo_checkpoint", lambda *_args, **_kwargs: calls.append("save")
+    )
+    callback = callbacks.BestCheckpointEvalCallback(
+        eval_env_factory=prefix_factory,
+        eval_freq=1,
+        best_model_path=tmp_path / "ppo_best",
+        viability_eval_env_factory=full_train_factory,
+        viability_eval_freq=5_000_000,
+        survival_objective=True,
+    )
+    callback.model = cast(Any, Model())
+
+    callback.num_timesteps = 5_000_000
+    assert callback._on_step() is True
+    callback.num_timesteps = 10_000_000
+    assert callback._on_step() is True
+
+    assert calls == ["full_train", "full_train"]
+    assert callback.viability_failure_reason is None
+    assert callback.consecutive_inactive_viability_evals == 2
+    assert callback.best_checkpoint_status == "SURVIVAL_FINAL_CHECKPOINT"
+
+
+def test_survival_training_ignores_activity_and_equity_abort_settings() -> None:
+    cfg = OmegaConf.create(
+        {
+            "env": {"reward_mode": "survival"},
+            "training": {
+                "early_abort": {
+                    "enabled": True,
+                    "stop_on_nonfinite": True,
+                    "stop_on_no_trades": True,
+                    "stop_on_equity_gate": True,
+                }
+            },
+        }
+    )
+    callback = _early_abort_callback(cfg)
+    assert callback is not None
+    assert callback.stop_on_nonfinite is True
+    assert callback.stop_on_no_trades is False
+    assert callback.stop_on_equity_gate is False
 
 
 def test_full_training_viability_records_action_coordinates_and_rejections(

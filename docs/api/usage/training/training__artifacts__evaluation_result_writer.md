@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `training.artifacts.evalua
 
 **Purpose:** Write an explicit train/test evaluation report with unambiguous roles.
 
-**Exact API:** {py:obj}`training.artifacts.evaluation_result_writer.write_evaluation_artifacts` · **Source:** [training/artifacts/evaluation_result_writer.py:14](../../../../training/artifacts/evaluation_result_writer.py#L14)
+**Exact API:** {py:obj}`training.artifacts.evaluation_result_writer.write_evaluation_artifacts` · **Source:** [training/artifacts/evaluation_result_writer.py:16](../../../../training/artifacts/evaluation_result_writer.py#L16)
 
 **Inputs and outputs:**
 
@@ -25,6 +25,9 @@ This page contains 1 public callable records owned by `training.artifacts.evalua
   train_gate: Key-value data used for the train gate.
   train_activity_gate: Key-value data used for the train activity gate.
   account_currency: Text or path value identifying the account currency.
+  survival_objective: Whether this evaluation is part of survival qualification.
+  training_completed: Whether learner fitting reached its requested endpoint.
+  training_incomplete_reason: Reason provided when fitting stopped early.
   ```
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
@@ -34,7 +37,7 @@ This page contains 1 public callable records owned by `training.artifacts.evalua
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = write_evaluation_artifacts(run_dir=..., seed=..., completed_timesteps=..., train_result=..., test_result=..., train_metrics=..., test_metrics=..., train_gate=..., train_activity_gate=..., account_currency=...)
+result = write_evaluation_artifacts(run_dir=..., seed=..., completed_timesteps=..., train_result=..., test_result=..., train_metrics=..., test_metrics=..., train_gate=..., train_activity_gate=..., account_currency=..., survival_objective=..., training_completed=..., training_incomplete_reason=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.

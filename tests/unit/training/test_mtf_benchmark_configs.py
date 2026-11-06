@@ -33,6 +33,7 @@ def test_exact_environment_config_preserves_resolved_ppo_geometry(monkeypatch) -
     )
     monkeypatch.setattr(configuration_stage, "_setup_rngs", lambda _: None)
     monkeypatch.setattr(configuration_stage, "_validate_q5_resume_state", lambda *_, **__: None)
+    monkeypatch.setattr(configuration_stage, "validate_portfolio_gate", lambda **_: None)
     monkeypatch.setattr(configuration_stage, "get_device", lambda _: torch.device("cpu"))
 
     def record_scale(_cfg, _device, _arch, *, preserve_ppo_geometry=False):

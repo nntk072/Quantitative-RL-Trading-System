@@ -94,12 +94,12 @@ This generated audit checks files required for the stated claim scope. It does n
 
 ## Real-market feature prefix invariance (resolved profile inventory)
 
-**Tracked analysis and result: complete** (7/7 tracked assets present)
+**Tracked analysis and result: partial** (6/7 tracked assets present)
 - scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py — present
 - scripts/research/analysis/features/merge_real_market_feature_prefix_shards.py — present
 - tests/research/test_feature_prefix_invariance.py — present
 - tests/research/test_real_market_feature_prefix_shards.py — present
-- evidence/research/feature_causality/real_market_feature_prefix_invariance_all_profiles.json — present
+- evidence/research/feature_causality/real_market_feature_prefix_invariance_all_profiles.json — missing
 - docs/research/feature_causality_and_availability.md — present
 - evidence/research/feature_causality/feature_causality_matrix.csv — present
 

@@ -1,30 +1,21 @@
-"""Run descriptive encoder comparisons on train and held-out data.
+"""Retired direct-train encoder comparison command.
 
-Trains a short-horizon RL run per architecture on the in-sample slice
-(≤ --train-end), evaluates each through the shared evaluation pipeline on
-the held-out slice (≥ --test-start) and reports both sets of metrics. The
-held-out results are descriptive only and must not be used to select an
-architecture; use train-calendar walk-forward or designated development data.
-
-Example:
-    python scripts/compare_encoders.py --bars-csv data/us100_2025.csv \
-        --steps 50000 --archs gru transformer
+The old command trained reward-optimizing policies outside the survival
+qualification workflow and evaluated a previously exposed report period.
+Use ``evaluate_split`` only with an already-qualified model and a preregistered
+evaluation protocol. New training must go through the canonical runner.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
-from pathlib import Path
+import sys
 from typing import Any
 
 import pandas as pd
-from omegaconf import DictConfig, OmegaConf  # noqa: E402
 
 from evaluation import build_run_report, run_episode  # noqa: E402
 from evaluation.rollout.trained_policy_rollout import make_action_fn  # noqa: E402
-from learning.rl.agent import build_agent  # noqa: E402
-from market_data.splits.definitions import split_train_test  # noqa: E402
 from simulation.environment.env import TradingEnv  # noqa: E402
 
 
@@ -66,68 +57,14 @@ def evaluate_split(
 
 
 def main() -> None:
-    """Train one agent per encoder and report held-out metrics descriptively."""
-    args = parse_args()
-    bars = pd.read_csv(args.bars_csv, index_col=0, parse_dates=True)
-    if args.features_csv:
-        features = pd.read_csv(args.features_csv, index_col=0, parse_dates=True)
-    else:
-        features = bars.select_dtypes(include=["number"])
-    loaded = OmegaConf.load(args.config)
-    cfg = OmegaConf.create(loaded)
-    assert isinstance(cfg, DictConfig)
-
-    train_bars, test_bars, train_features, test_features = split_train_test(
-        bars, features, args.train_end, args.test_start
+    """Reject direct architecture training outside the survival-gated workflow."""
+    if sys.argv[1:] in (["-h"], ["--help"]):
+        parse_args()
+    raise SystemExit(
+        "direct encoder-comparison training bypasses survival-first qualification and is "
+        "disabled; use the canonical training workflow and a preregistered evaluation "
+        "after the survival gate passes"
     )
-    if train_bars.empty or test_bars.empty:
-        raise SystemExit(
-            f"empty split with --train-end {args.train_end} / --test-start {args.test_start}: "
-            f"train={len(train_bars)} bars, test={len(test_bars)} bars"
-        )
-    print(f"split: train={len(train_bars)} bars, test={len(test_bars)} bars (held-out)")
-
-    continuous = args.algo == "sac"
-    results: dict[str, dict[str, Any]] = {}
-    for arch in args.archs:
-        print(f"=== training {args.algo.upper()} + {arch} for {args.steps} steps ===")
-        env = TradingEnv(bars=train_bars, features=train_features, continuous_actions=continuous)
-        model = build_agent(env, cfg, arch=arch, algo=args.algo)
-        model.set_random_seed(args.seed)
-        model.learn(total_timesteps=args.steps)
-
-        row = {
-            "in_sample": evaluate_split(model, args.algo, train_bars, train_features),
-            "out_of_sample": evaluate_split(model, args.algo, test_bars, test_features),
-        }
-        results[arch] = row
-        print(
-            json.dumps(
-                {
-                    "in_sample_sharpe": row["in_sample"]["sharpe"],
-                    "out_of_sample_sharpe": row["out_of_sample"]["sharpe"],
-                    "oos_sweep_delay_mean_s": row["out_of_sample"]["sweep_delay"][
-                        "sweep_delay_mean_s"
-                    ],
-                },
-                indent=2,
-            )
-        )
-
-    out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    report = {
-        "_meta": {
-            "architecture_selection_authority": False,
-            "held_out_role": "descriptive_only",
-        },
-        **results,
-    }
-    out_path.write_text(json.dumps(report, indent=2))
-    print(
-        "Held-out metrics are descriptive only; use train-calendar development data for selection."
-    )
-    print(f"saved comparison to {out_path}")
 
 
 if __name__ == "__main__":

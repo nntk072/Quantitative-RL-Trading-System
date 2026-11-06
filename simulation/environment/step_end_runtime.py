@@ -8,8 +8,10 @@ import numpy as np
 import pandas as pd
 
 from decisioning.observation_state import ENTRY_STATE_DIM, entry_state_one_hot
+from features.context.trade_setup_candidates import trade_setup_event_identity_record
 from simulation.environment.diagnostics import note_debug_step
 from simulation.environment.episode_equity import assess_train_equity
+from simulation.environment.rewards import SurvivalReward
 
 from .mixin_base import RuntimeMixinBase
 
@@ -66,10 +68,30 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
                     obs["account"][entry_start:] = np.asarray(
                         entry_state_one_hot(entry_machine.state), dtype=np.float32
                     )
+        if self._ny_pos < len(self._ny_indices) and self.step_idx < self._n_bars:
+            obs = self._get_observation()
         self.episode_step_count += 1
 
-        # Past last NY bar → year survived (truncated, not terminated).
-        if self._ny_pos >= len(self._ny_indices) and not done:
+        # Data end is normally a truncation; survival training treats it as the
+        # terminal outcome because no later split data is available to bootstrap.
+        completed_data_split = self._ny_pos >= len(self._ny_indices)
+        if self.reward_mode == "survival":
+            survival_reward = self.reward_fn
+            if not isinstance(survival_reward, SurvivalReward):
+                raise RuntimeError(
+                    "survival reward mode was initialized with a non-survival reward"
+                )
+            breached = bool(self.breach_log)
+            if completed_data_split or breached:
+                done = True
+                truncated = False
+            reward = survival_reward(
+                breached=breached,
+                completed_data_split=completed_data_split,
+            )
+            reward_parts = dict(survival_reward.last_parts)
+            info["reward_parts"] = reward_parts
+        elif completed_data_split and not done:
             truncated = True
 
             # Apply max_episode_steps truncation last so it overrides
@@ -81,14 +103,30 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
         if (done or truncated) and self._pending_entry_order is not None:
             pending = self._pending_entry_order
             self._pending_entry_order = None
+            selected = pending.get("selected", {})
+            selected_setup = selected.get("_selected_trade_setup")
             self.trade_log.append(
                 {
                     "type": "order_cancel",
                     "decision_id": str(pending.get("decision_id", "")),
-                    "reason": "episode_ended_before_scheduled_fill",
+                    "order_id": pending.get("order_id"),
+                    "order_type": pending.get("order_type", "market"),
+                    "trade_setup_candidate_id": (
+                        None if selected_setup is None else int(selected_setup.candidate_id)
+                    ),
+                    **trade_setup_event_identity_record(
+                        selected.get("_selected_trade_setup_event_identity")
+                    ),
+                    "reason": (
+                        "episode_ended_before_limit_expiry"
+                        if pending.get("order_type") == "limit"
+                        else "episode_ended_before_scheduled_fill"
+                    ),
                     "decision_time": pending["decision_time"],
                     "decision_bar_time": pending["decision_bar_time"],
                     "order_submission_time": pending["order_submission_time"],
+                    "expiry_time": pending.get("expiry_time"),
+                    "limit_price": pending.get("limit_price"),
                     "time": valuation_time,
                     "fill_time": None,
                     "bar": self.step_idx,
@@ -120,10 +158,13 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
                 peak_eod_trailing_dd_limit_usd=float(self._peak_eod_trailing_dd_limit_usd),
                 max_peak_eod_trailing_dd_usd=float(self.account.max_peak_eod_drawdown_usd),
             )
-            completed_data_split = self._ny_pos >= len(self._ny_indices)
             if done:
                 if self.repeated_payout_policy and self.cycle_successes > 0 and not self.breach_log:
                     episode_end_reason = "payout_success"
+                elif (
+                    self.reward_mode == "survival" and completed_data_split and not self.breach_log
+                ):
+                    episode_end_reason = "data_end_survived"
                 else:
                     episode_end_reason = "risk_breach" if self.breach_log else "terminated"
             elif completed_data_split:

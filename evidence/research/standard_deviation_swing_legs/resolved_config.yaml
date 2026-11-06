@@ -224,13 +224,19 @@ execution:
   fill_latency_bars: 0
   randomized_fill_latency_ms: 0.0
   max_tick_quote_wait_ms: 60000
+  limit_order_max_offset_atr: 1.0
+  limit_order_max_ttl_bars: 60
+  limit_order_require_trade_through: false
 trading_policy:
   mode: legacy
+  daily_pnl_basis: session_net_equity
+  daily_loss_includes_open_pnl: true
+  daily_loss_reset_source: supplied_session_id_transition
   repeated_payout:
     operating_balance: 100000.0
     payout_target_balance: 110000.0
-    account_floor_equity: 90000.0
-    daily_loss_limit: 5000.0
+    max_loss_limit_initial_pct: 0.1
+    daily_loss_limit_pct: 0.05
     trailing_dd_limit: 0.0
     payout_trigger: realized_balance_flat
     continue_after_payout: true
@@ -245,11 +251,8 @@ trading_policy:
     enforce_remaining_account_capacity: true
     repeated_eval: true
 ftmo:
-  limit_value_mode: fixed_usd
-  daily_loss_limit: 5000.0
-  soft_daily_loss_limit: 5000.0
-  soft_max_loss_limit: 10000.0
-  max_loss_limit: 10000.0
+  limit_value_mode: percent_equity
+  max_drawdown_mode: static
   trailing_dd_limit: 0.0
   soft_trailing_dd_limit: 0.0
   risk_per_trade_limit: 1000.0
@@ -446,6 +449,7 @@ features:
     - lastweek
 env:
   obs_window: 60
+  feature_validity_channels: false
   regime_observation: false
   observation_schema_version: account-state-v1
   observation_age_scale_bars: 60
@@ -459,6 +463,7 @@ env:
   reward_dsr_eta: 0.01
   strategy_actions: true
   trade_setup_actions: true
+  agent_entry_execution: false
   entry_state_machine: false
   candidate_max_age_bars: 5
   arm_requires_retest: false
@@ -582,6 +587,15 @@ agent:
     adapter_dim: 64
     attention_heads: 4
     feedforward_dim: 256
+  mtf_empty_stream_masked_v1:
+    latent_dim: 128
+    channels:
+    - 128
+    - 128
+    - 256
+    - 256
+    kernel_size: 3
+    dropout: 0.1
   mtf_m1_tcn_htf_lite_reasoning:
     latent_dim: 128
     channels:
@@ -620,6 +634,9 @@ agent:
     - 256
     - 128
     mtf:
+    - 256
+    - 128
+    mtf_empty_stream_masked_v1:
     - 256
     - 128
     mtf_reasoning:
@@ -670,6 +687,7 @@ risk:
   - D1
   min_lot: 0.01
   max_lot: 100.0
+  lot_step: 0.01
   default_risk_frac: 0.01
   sl_mode: fixed
   tp_mode: fixed
@@ -679,6 +697,7 @@ risk:
   swing_buffer_pts: 1.0
   rr_ratio_default: 2.0
 training:
+  survival_gate_manifest: null
   mode: full
   progress_log_every: 0
   episode_mode: full_split

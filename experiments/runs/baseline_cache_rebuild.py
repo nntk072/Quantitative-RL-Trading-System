@@ -19,7 +19,7 @@ from artifacts.identity import file_sha256
 from configuration.paths import repository_root
 from features import build_features, feature_cache_content_hash
 from market_data.loading import run_pipeline
-from market_data.splits.definitions import get_split_config, make_train_mask
+from market_data.splits.definitions import get_split_config, get_train_start_config, make_train_mask
 from training.configuration.cli import load_merged_config
 from training.configuration.variant_resolution import resolve_variant
 
@@ -68,7 +68,8 @@ def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
     primary = market[str(cfg.data.primary)]["M1"]
     secondary = market.get(str(cfg.data.secondary), {}).get("M1")
     train_end, _ = get_split_config(cfg)
-    train_mask = make_train_mask(cast(pd.DatetimeIndex, primary.index), train_end)
+    train_start = get_train_start_config(cfg)
+    train_mask = make_train_mask(cast(pd.DatetimeIndex, primary.index), train_end, train_start)
     expected_hash = feature_cache_content_hash(
         cfg,
         primary,

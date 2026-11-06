@@ -18,6 +18,7 @@ from features.context.premium_discount import (
 )
 from features.technical.structure import structure_levels
 from market_data.transforms.sessions import add_session_labels
+from simulation.environment.observations import prepare_observation_feature_channels
 
 
 def _index_dates(idx: pd.Index) -> np.ndarray[Any, Any]:
@@ -135,6 +136,76 @@ class TestPdContextRouting:
         ctx = build_pd_context_features(bars, atr)
         for col in PD_CONTEXT_FEATURE_COLUMNS:
             assert col in ctx.columns
+
+    def test_day_bias_availability_distinguishes_unknown_from_neutral(
+        self, bars: pd.DataFrame
+    ) -> None:
+        atr = pd.Series(1.0, index=bars.index)
+        initial = build_pd_context_features(bars, atr)
+        unavailable = initial.index[initial["htf_day_bias_available"] == 0.0][0]
+        assert initial.loc[unavailable, "htf_day_bias"] == 0.0
+        assert not np.isfinite(initial.loc[unavailable, "ctx_pd_mid_dist_atr"])
+
+        available = initial.index[initial["htf_day_bias_available"] == 1.0][0]
+        assert initial.loc[available, "ctx_asia_active"] == 1.0
+        assert initial.loc[available, "ctx_london_active"] == 1.0
+        midpoint = (
+            max(
+                initial.loc[available, "ctx_asia_high"],
+                initial.loc[available, "ctx_london_high"],
+            )
+            + min(
+                initial.loc[available, "ctx_asia_low"],
+                initial.loc[available, "ctx_london_low"],
+            )
+        ) / 2.0
+        neutral_bars = bars.copy()
+        neutral_bars.loc[available, "close"] = midpoint
+        neutral = build_pd_context_features(neutral_bars, atr)
+
+        assert np.isclose(neutral.loc[available, "ctx_pd_mid_dist_atr"], 0.0)
+        assert neutral.loc[available, "htf_day_bias"] == 0.0
+        assert neutral.loc[available, "htf_day_bias_available"] == 1.0
+
+    def test_unavailable_active_distances_remain_nonfinite(self, bars: pd.DataFrame) -> None:
+        atr = pd.Series(1.0, index=bars.index)
+        london = add_session_labels(bars)["session"] == "london"
+        missing_atr_bar = bars.index[london][0]
+        atr.loc[missing_atr_bar] = np.nan
+
+        ctx = build_pd_context_features(bars, atr)
+
+        assert np.isnan(ctx.loc[missing_atr_bar, "ctx_asia_high_dist_atr"])
+        assert np.isnan(ctx.loc[missing_atr_bar, "ctx_london_high_dist_atr"])
+        assert np.isnan(ctx.loc[missing_atr_bar, "ctx_pd_mid_dist_atr"])
+
+        columns = [
+            "ctx_asia_high_dist_atr",
+            "ctx_london_high_dist_atr",
+            "ctx_pd_mid_dist_atr",
+        ]
+        channels = prepare_observation_feature_channels(
+            ctx.loc[[missing_atr_bar], columns].to_numpy(dtype=np.float32),
+            include_validity=True,
+        )
+        np.testing.assert_array_equal(channels[0, :3], np.zeros(3, dtype=np.float32))
+        np.testing.assert_array_equal(channels[0, 3:], np.zeros(3, dtype=np.float32))
+
+    def test_missing_active_session_range_is_not_zero_filled(self, bars: pd.DataFrame) -> None:
+        sessions = add_session_labels(bars)["session"]
+        day_two = _index_dates(bars.index) == pd.Timestamp("2025-01-07").date()
+        incomplete = bars.loc[~(day_two & sessions.eq("asia"))]
+        atr = pd.Series(1.0, index=incomplete.index)
+
+        ctx = build_pd_context_features(incomplete, atr)
+        day_two_london = (
+            _index_dates(incomplete.index) == pd.Timestamp("2025-01-07").date()
+        ) & add_session_labels(incomplete)["session"].eq("london").to_numpy()
+
+        assert day_two_london.any()
+        assert (ctx.loc[day_two_london, "ctx_asia_active"] == 1.0).all()
+        assert ctx.loc[day_two_london, "ctx_asia_high_dist_atr"].isna().all()
+        assert ctx.loc[day_two_london, "ctx_asia_low_dist_atr"].isna().all()
 
 
 class TestMssCausal:

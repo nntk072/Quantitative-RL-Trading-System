@@ -46,11 +46,8 @@ from training.setup.environments import _training_episodic
 
 def _through_train_end(frame: pd.DataFrame, train_end: str) -> pd.DataFrame:
     """Keep warm-up and training rows while excluding later report dates."""
-    end = pd.Timestamp(train_end) + pd.Timedelta(days=1) - pd.Timedelta(nanoseconds=1)
     index = pd.DatetimeIndex(frame.index)
-    if index.tz is not None:
-        end = end.tz_localize(index.tz)
-    return frame.loc[index <= end]
+    return frame.loc[make_train_mask(index, train_end)]
 
 
 def _source_files(cfg: Any, root: Path) -> list[dict[str, str]]:

@@ -165,7 +165,6 @@ def test_structural_menus_reject_invalid_trade_direction(direction: int) -> None
             manipulation="none",
             htf=(),
         )
-
     with pytest.raises(ValueError, match="direction must be -1 or 1"):
         target_menu(
             direction=direction,
@@ -174,6 +173,30 @@ def test_structural_menus_reject_invalid_trade_direction(direction: int) -> None
             stop_dist=1.0,
             max_tp_distance=float("nan"),
             htf=(),
+        )
+
+
+def test_structural_menus_reject_unknown_source_timeframe() -> None:
+    with pytest.raises(ValueError):
+        stop_menu(
+            BaselineStrategy(),
+            direction=1,
+            entry_price=100.0,
+            row=_row(M99_last_swing_low=95.0),
+            min_dist=1.0,
+            buffer=0.0,
+            manipulation="none",
+            htf=("M99",),
+        )
+
+    with pytest.raises(ValueError):
+        target_menu(
+            direction=1,
+            entry_price=100.0,
+            row=_row(M99_last_swing_high=110.0),
+            stop_dist=1.0,
+            max_tp_distance=float("nan"),
+            htf=("M99",),
         )
 
 

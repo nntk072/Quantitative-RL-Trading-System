@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
+import math
 from pathlib import Path
 from typing import Any
 
 from artifacts.atomic import write_text_atomic
+from evaluation.reporting.run_summary import performance_metrics_payload
+from training.artifacts.flags import strict_nonnegative_int
 from training.callbacks.activity import assess_train_activity, classify_zero_trade_cause
 
 
@@ -23,6 +25,9 @@ def write_evaluation_artifacts(
     train_gate: dict[str, Any],
     train_activity_gate: dict[str, Any],
     account_currency: str,
+    survival_objective: bool = False,
+    training_completed: bool = True,
+    training_incomplete_reason: str | None = None,
 ) -> None:
     """Write an explicit train/test evaluation report with unambiguous roles.
 
@@ -37,6 +42,9 @@ def write_evaluation_artifacts(
         train_gate: Key-value data used for the train gate.
         train_activity_gate: Key-value data used for the train activity gate.
         account_currency: Text or path value identifying the account currency.
+        survival_objective: Whether this evaluation is part of survival qualification.
+        training_completed: Whether learner fitting reached its requested endpoint.
+        training_incomplete_reason: Reason provided when fitting stopped early.
     """
     evaluation_dir = run_dir / "evaluations"
     evaluation_dir.mkdir(parents=True, exist_ok=True)
@@ -66,12 +74,12 @@ def write_evaluation_artifacts(
             "seed": int(seed),
             "completed_training_timesteps": int(completed_timesteps),
             "account_currency": str(account_currency),
-            "metrics": asdict(metrics),
+            "metrics": performance_metrics_payload(metrics),
             "activity_status": activity_status,
             "n_sessions": int(result.get("n_sessions", 0)),
             "days_traded": int(result.get("days_traded", 0)),
-            "survived_full_year": bool(result.get("survived_full_year", False)),
-            "completed_data_split": bool(result.get("completed_data_split", False)),
+            "survived_full_year": result.get("survived_full_year") is True,
+            "completed_data_split": result.get("completed_data_split") is True,
             "episode_end_reason": result.get("episode_end_reason"),
             "fail_time": (
                 str(result["fail_time"]) if result.get("fail_time") is not None else None
@@ -81,8 +89,8 @@ def write_evaluation_artifacts(
                 result.get("peak_eod_trailing_dd_limit_usd", 0.0)
             ),
             "max_peak_eod_trailing_dd_usd": float(result.get("max_peak_eod_trailing_dd_usd", 0.0)),
-            "peak_eod_dd_policy_ok": bool(result.get("peak_eod_dd_policy_ok", True)),
-            "breach_events": int(result.get("n_breach_sessions", 0)),
+            "peak_eod_dd_policy_ok": result.get("peak_eod_dd_policy_ok") is True,
+            "breach_events": strict_nonnegative_int(result.get("n_breach_sessions")),
             "entry_diagnostics": result.get("entry_diag", {}),
         }
 
@@ -108,13 +116,46 @@ def write_evaluation_artifacts(
     peak_dd_observed = float(train_gate.get("max_peak_trailing_dd", 0.0))
     peak_dd_enabled = peak_dd_limit > 0.0
     peak_dd_policy_ok = not peak_dd_enabled or peak_dd_observed <= peak_dd_limit
-    hard_risk_ok = bool(train_gate.get("hard_risk_ok", not train_gate.get("breached", False)))
+    hard_risk_ok = train_gate.get("hard_risk_ok") is True and train_gate.get("breached") is False
+    complete_survival_path = (
+        hard_risk_ok
+        and train_payload["survived_full_year"] is True
+        and train_payload["completed_data_split"] is True
+        and train_payload["breach_events"] == 0
+    )
+    if survival_objective:
+        training_admissible = training_completed is True and complete_survival_path
+    else:
+        training_admissible = (
+            training_completed is True
+            and train_gate.get("ok") is True
+            and train_activity_gate.get("ok") is True
+        )
+    train_payload["training_phase"] = (
+        "survival_qualification" if survival_objective else "portfolio_training"
+    )
+    train_payload["train_split_survival_ok"] = complete_survival_path
+    train_payload["training_completed"] = training_completed is True
+    train_payload["training_incomplete_reason"] = training_incomplete_reason
+    train_payload["training_admissible"] = training_admissible
+    train_payload["training_admissibility_scope"] = (
+        "single_seed_train_split"
+        if survival_objective
+        else "single_training_split_equity_and_activity"
+    )
+    train_payload["training_admissibility_basis"] = (
+        "completed_training_and_breach_free_train_split"
+        if survival_objective
+        else "completed_training_equity_gate_and_activity"
+    )
     peak_dd_policy_fit = {
         "enabled": peak_dd_enabled,
         "status": "DISABLED" if not peak_dd_enabled else ("PASS" if peak_dd_policy_ok else "MISS"),
         "limit": peak_dd_limit,
         "observed": peak_dd_observed,
-        "retraining_recommended": peak_dd_enabled and not peak_dd_policy_ok,
+        "retraining_recommended": (
+            not survival_objective and peak_dd_enabled and not peak_dd_policy_ok
+        ),
     }
     train_payload["peak_dd_policy_fit"] = peak_dd_policy_fit
     eod_dd_limit = float(train_payload["peak_eod_trailing_dd_limit_usd"])
@@ -127,7 +168,9 @@ def write_evaluation_artifacts(
         else ("PASS" if train_payload["peak_eod_dd_policy_ok"] else "MISS"),
         "limit_usd": eod_dd_limit,
         "observed_usd": eod_dd_observed,
-        "retraining_recommended": eod_dd_enabled and not train_payload["peak_eod_dd_policy_ok"],
+        "retraining_recommended": (
+            not survival_objective and eod_dd_enabled and not train_payload["peak_eod_dd_policy_ok"]
+        ),
     }
     train_payload["peak_eod_dd_policy_fit"] = eod_dd_policy_fit
     test_eod_dd_limit = float(test_payload["peak_eod_trailing_dd_limit_usd"])
@@ -160,7 +203,7 @@ def write_evaluation_artifacts(
         json.dumps(test_payload, indent=2, default=str, allow_nan=True),
     )
     summary = {
-        "schema_version": 1,
+        "schema_version": 3,
         "seed": int(seed),
         "completed_training_timesteps": int(completed_timesteps),
         "training_in_sample": train_payload,
@@ -170,10 +213,23 @@ def write_evaluation_artifacts(
         "peak_eod_dd_policy_fit": eod_dd_policy_fit,
         "test_peak_eod_dd_policy_fit": test_eod_dd_policy_fit,
         "hard_risk_ok": hard_risk_ok,
+        "training_completed": training_completed is True,
+        "training_incomplete_reason": training_incomplete_reason,
         "train_activity_gate": train_activity_gate,
-        "train_survival_ok": bool(train_gate.get("ok")),
-        "train_activity_ok": bool(train_activity_gate.get("ok")),
-        "training_admissible": bool(train_gate.get("ok")) and bool(train_activity_gate.get("ok")),
+        "training_phase": "survival_qualification" if survival_objective else "portfolio_training",
+        "train_split_survival_ok": complete_survival_path,
+        "train_activity_ok": train_activity_gate.get("ok") is True,
+        "training_admissible": training_admissible,
+        "training_admissibility_scope": (
+            "single_seed_train_split"
+            if survival_objective
+            else "single_training_split_equity_and_activity"
+        ),
+        "training_admissibility_basis": (
+            "completed_training_and_breach_free_train_split"
+            if survival_objective
+            else "completed_training_equity_gate_and_activity"
+        ),
         "zero_trade_diagnosis": train_payload["zero_trade_diagnosis"],
     }
     write_text_atomic(
@@ -191,12 +247,30 @@ def write_evaluation_artifacts(
             Text returned by ``line``.
         """
         metrics = payload["metrics"]
+
+        def fmt(name: str, spec: str) -> str:
+            """Render a finite metric value, using N/A for unavailable values.
+
+            Args:
+                name: Metric key in the report payload.
+                spec: Python numeric format specification.
+
+            Returns:
+                Formatted metric text or ``N/A`` when the value is unavailable.
+            """
+            value = metrics.get(name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                return "N/A"
+            if not math.isfinite(float(value)):
+                return "N/A"
+            return format(float(value), spec)
+
         return (
-            f"| {label} | {metrics['total_return_pct']:+.2f}% | "
-            f"{metrics['total_pnl']:+.2f} {account_currency} | "
-            f"{metrics['max_drawdown']:.2%} | "
-            f"{metrics['sharpe']:.3f} | {metrics['profit_factor']:.3f} | "
-            f"{metrics['win_rate']:.1%} | {metrics['n_trades']} |"
+            f"| {label} | {fmt('total_return_pct', '+.2f')}% | "
+            f"{fmt('total_pnl', '+.2f')} {account_currency} | "
+            f"{fmt('max_drawdown', '.2%')} | "
+            f"{fmt('sharpe', '.3f')} | {fmt('profit_factor', '.3f')} | "
+            f"{fmt('win_rate', '.1%')} | {metrics['n_trades']} |"
         )
 
     report = [
@@ -239,7 +313,23 @@ def write_evaluation_artifacts(
         line("Train (in-sample)", train_payload),
         line("Test (report-only; previously inspected)", test_payload),
         "",
-        f"Hard-risk survival: {'PASS' if hard_risk_ok else 'FAIL'}",
+        f"Training phase: {'survival qualification' if survival_objective else 'portfolio training'}",
+        f"Training complete: {'PASS' if training_completed else 'FAIL'}",
+        (
+            "Train-split survival: PASS"
+            if survival_objective and complete_survival_path
+            else "Train-split survival: FAIL"
+            if survival_objective
+            else "Train-split survival: not applicable"
+        ),
+        f"Train-split admissible: {'PASS' if training_admissible else 'FAIL'}",
+        (
+            "This report does not establish cross-seed and walk-forward qualification; "
+            "the run-level survival_phase_gate.json is authoritative."
+            if survival_objective
+            else ""
+        ),
+        f"Hard-risk survival: {'PASS' if complete_survival_path else 'FAIL'}",
         (
             "Peak-DD training policy: DISABLED"
             if not peak_dd_enabled
@@ -247,14 +337,23 @@ def write_evaluation_artifacts(
                 f"Peak-DD training policy: {'PASS' if peak_dd_policy_ok else 'MISS'} "
                 f"(observed {peak_dd_observed:.2%}; limit {peak_dd_limit:.2%}). "
                 + (
-                    "Training completed; another training iteration is recommended."
+                    (
+                        "This is a diagnostic and does not affect train-split survival."
+                        if survival_objective
+                        else "Training completed; another training iteration is recommended."
+                    )
                     if not peak_dd_policy_ok
                     else ""
                 )
             )
         ),
-        f"Train activity gate: {train_activity_gate['status']} "
-        f"(trades={train_activity_gate['n_trades']})",
+        (
+            f"Train activity diagnostic: {train_activity_gate['status']} "
+            f"(trades={train_activity_gate['n_trades']})"
+            if survival_objective
+            else f"Train activity gate: {train_activity_gate['status']} "
+            f"(trades={train_activity_gate['n_trades']})"
+        ),
         f"Zero-trade diagnosis: {train_payload['zero_trade_diagnosis'] or 'none'}",
         "",
         "The test split is report-only and must not be described as pristine confirmatory evidence.",

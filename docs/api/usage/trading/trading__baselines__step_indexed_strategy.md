@@ -1,6 +1,6 @@
 # Trading · `baselines.step_indexed_strategy`
 
-This page contains 4 public callable records owned by `trading.baselines.step_indexed_strategy`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 5 public callable records owned by `trading.baselines.step_indexed_strategy`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `BaseStrategy`
 
@@ -63,7 +63,49 @@ instance = BaseStrategy(...)
 result = instance.act(obs=...)
 ```
 
-**Lifecycle context:** This callable participates in `BaseStrategy`: Common interface for all non-learned and learned baselines. Related public lifecycle methods: {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.reset`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.fast_forward`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act`
+**Lifecycle context:** This callable participates in `BaseStrategy`: Common interface for all non-learned and learned baselines. Related public lifecycle methods: {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.reset`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.fast_forward`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act_at`
+
+The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/trading/index`
+
+## `BaseStrategy.act_at`
+
+**Kind:** method · **Status:** stable · **Owner:** `trading.baselines.step_indexed_strategy`
+
+**Purpose:** Return the action for an absolute bar without advancing strategy state.
+
+**Exact API:** {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act_at` · **Source:** [trading/baselines/step_indexed_strategy.py:65](../../../../trading/baselines/step_indexed_strategy.py#L65)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  bar_index: Absolute row index in the bars used to build the strategy.
+  ```
+
+- **Returns:**
+
+  ```text
+  The signal at ``bar_index``.
+  ```
+
+**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+
+**Invocation shape (placeholders):**
+
+Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+
+```python
+instance = BaseStrategy(...)
+result = instance.act_at(bar_index=...)
+```
+
+**Lifecycle context:** This callable participates in `BaseStrategy`: Common interface for all non-learned and learned baselines. Related public lifecycle methods: {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.reset`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.fast_forward`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act_at`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
@@ -99,7 +141,7 @@ instance = BaseStrategy(...)
 result = instance.fast_forward(n_bars=...)
 ```
 
-**Lifecycle context:** This callable participates in `BaseStrategy`: Common interface for all non-learned and learned baselines. Related public lifecycle methods: {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.reset`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.fast_forward`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act`
+**Lifecycle context:** This callable participates in `BaseStrategy`: Common interface for all non-learned and learned baselines. Related public lifecycle methods: {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.reset`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.fast_forward`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act_at`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
@@ -127,7 +169,7 @@ instance = BaseStrategy(...)
 result = instance.reset()
 ```
 
-**Lifecycle context:** This callable participates in `BaseStrategy`: Common interface for all non-learned and learned baselines. Related public lifecycle methods: {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.reset`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.fast_forward`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act`
+**Lifecycle context:** This callable participates in `BaseStrategy`: Common interface for all non-learned and learned baselines. Related public lifecycle methods: {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.reset`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.fast_forward`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act`, {py:obj}`trading.baselines.step_indexed_strategy.BaseStrategy.act_at`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 

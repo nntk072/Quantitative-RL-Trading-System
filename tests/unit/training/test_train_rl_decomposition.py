@@ -7,8 +7,10 @@ build_training_log behave correctly after the main() decomposition.
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import patch
 
 import numpy as np
@@ -22,13 +24,168 @@ from training.artifacts import (
     sequence_feature_schema_manifest,
     write_evaluation_artifacts,
 )
+from training.artifacts.aggregation import aggregate_seed_results
 from training.callbacks.activity import assess_train_activity
 from training.configuration.cli import load_merged_config, parse_train_args
-from training.runner.reporting_runtime import finalize_training_run
+from training.runner.reporting_runtime import (
+    _hard_risk_pass,
+    _peak_dd_policy_only_miss,
+    finalize_training_run,
+)
 from training.runner.seed import _setup_rngs
-from training.runner.seed_runtime import SeedRunner
+from training.runner.seed_runtime import SeedRunner, _log_train_survival_status
 from training.setup.environments import _training_episodic, cost_model
 from training.setup.model_state import _initialize_value_head
+
+
+def test_training_runtime_hard_risk_flags_require_typed_consistent_values() -> None:
+    assert _hard_risk_pass({"hard_risk_ok": True, "breached": False}) is True
+    assert _hard_risk_pass({"breached": False}) is True
+    assert _hard_risk_pass({"hard_risk_ok": True}) is True
+    assert _hard_risk_pass({"hard_risk_ok": "true", "breached": False}) is False
+    assert _hard_risk_pass({"hard_risk_ok": True, "breached": True}) is False
+    assert _hard_risk_pass({}) is False
+    assert (
+        _peak_dd_policy_only_miss({"ok": "false", "breached": False, "reason": "peak_trailing_dd"})
+        is False
+    )
+
+
+def test_training_aggregation_requires_explicit_boolean_gate_passes() -> None:
+    metrics = SimpleNamespace(
+        sharpe=0.0,
+        sortino=0.0,
+        max_drawdown=0.0,
+        total_return_pct=0.0,
+        profit_factor=0.0,
+        win_rate=0.0,
+        avg_trade=0.0,
+        turnover=0.0,
+        n_trades=0,
+    )
+    result = {
+        "seed": 7,
+        "test_m": metrics,
+        "train_m": metrics,
+        "train_gate": {
+            "ok": "false",
+            "end_equity": 100_000.0,
+            "slope": 0.0,
+            "reason": "malformed flag",
+        },
+        "train_activity_gate": {"ok": "false", "status": "INACTIVE", "n_trades": 0},
+        "abort_reason": "",
+        "model_num_timesteps": 10,
+    }
+
+    aggregated = aggregate_seed_results(
+        seed_results=[result],
+        seed=7,
+        mvp=False,
+        algo="ppo",
+        arch="mlp",
+        reward="survival",
+        timesteps=10,
+        train_bars=20,
+        test_bars=10,
+        strategy="baseline",
+        strategy_actions=False,
+        cfg=SimpleNamespace(env={}),
+        args=SimpleNamespace(allow_locked_oos_for_selection=False),
+        run_dir=Path("."),
+    )
+
+    assert aggregated["train_equity_ok"] is False
+    assert aggregated["train_activity_ok_by_seed"] == {"7": False}
+
+
+def test_training_log_does_not_truth_coerce_report_split_flags() -> None:
+    metrics = PerformanceMetrics(
+        total_return_pct=0.0,
+        total_pnl=0.0,
+        max_drawdown=0.0,
+        sharpe=0.0,
+        profit_factor=0.0,
+        win_rate=0.0,
+        n_trades=0,
+    )
+    log = build_training_log(
+        seed=7,
+        mvp=False,
+        algo="ppo",
+        arch="mlp",
+        reward="survival",
+        timesteps=10,
+        train_bars=20,
+        test_bars=10,
+        test_m=metrics,
+        test_result={
+            "survived_full_year": "false",
+            "completed_data_split": "false",
+            "n_breach_sessions": "0",
+        },
+    )
+
+    assert log["test_survived_full_year"] is False
+    assert log["test_completed_data_split"] is False
+    assert log["test_breaches"] is None
+
+
+def test_survival_training_logs_profit_and_activity_checks_as_diagnostics(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger="training.runner.seed_runtime")
+
+    _log_train_survival_status(
+        survival_objective=True,
+        train_result={
+            "survived_full_year": True,
+            "completed_data_split": True,
+            "n_breach_sessions": 0,
+        },
+        train_gate={
+            "ok": False,
+            "hard_risk_ok": True,
+            "reason": "peak_trailing_dd",
+        },
+        train_activity_gate={"ok": False, "status": "INACTIVE", "n_trades": 0},
+        n_trades=0,
+    )
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert "TRAIN_FULL_SPLIT_SURVIVAL PASS" in messages
+    assert "TRAIN_PORTFOLIO_FIT_DIAGNOSTIC MISS reason=peak_trailing_dd" in messages
+    assert "TRAIN_ACTIVITY_DIAGNOSTIC status=INACTIVE trades=0" in messages
+    assert "TRAIN_SURVIVAL_GATE FAIL" not in " ".join(messages)
+    assert "TRAIN_ACTIVITY_GATE FAIL" not in " ".join(messages)
+
+
+def test_survival_training_logs_any_incomplete_or_breached_path_as_failure(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.INFO, logger="training.runner.seed_runtime")
+
+    _log_train_survival_status(
+        survival_objective=True,
+        train_result={
+            "survived_full_year": False,
+            "completed_data_split": True,
+            "n_breach_sessions": 1,
+        },
+        train_gate={
+            "ok": False,
+            "hard_risk_ok": False,
+            "reason": "daily_loss",
+        },
+        train_activity_gate={"ok": False, "status": "INACTIVE"},
+        n_trades=0,
+    )
+
+    assert any(
+        record.levelno == logging.ERROR
+        and record.getMessage().startswith("TRAIN_FULL_SPLIT_SURVIVAL FAIL")
+        for record in caplog.records
+    )
 
 
 def test_sequence_feature_schema_manifest_preserves_column_order() -> None:
@@ -175,6 +332,168 @@ def test_evaluation_artifacts_separate_train_and_report_only_test(tmp_path: Path
     assert json.loads((evaluation_dir / "summary.json").read_text())["training_admissible"] is False
 
 
+@pytest.mark.parametrize("training_completed", [True, False])
+def test_survival_evaluation_summary_ignores_profit_and_activity(
+    tmp_path: Path, training_completed: bool
+) -> None:
+    metrics = PerformanceMetrics(
+        total_return_pct=-2.0,
+        total_pnl=-2_000.0,
+        max_drawdown=0.05,
+        sharpe=-0.5,
+        profit_factor=0.7,
+        win_rate=0.0,
+        n_trades=0,
+    )
+    result: dict[str, Any] = {
+        "survived_full_year": True,
+        "completed_data_split": True,
+        "n_breach_sessions": 0,
+        "n_sessions": 100,
+        "days_traded": 0,
+        "equity": [],
+        "peak_eod_trailing_dd_limit_usd": 10_000.0,
+        "max_peak_eod_trailing_dd_usd": 12_000.0,
+        "peak_eod_dd_policy_ok": False,
+    }
+    write_evaluation_artifacts(
+        run_dir=tmp_path,
+        seed=42,
+        completed_timesteps=1_000_000,
+        train_result=result,
+        test_result=result,
+        train_metrics=metrics,
+        test_metrics=metrics,
+        train_gate={
+            "ok": False,
+            "hard_risk_ok": True,
+            "breached": False,
+            "peak_trailing_dd_limit": 0.10,
+            "max_peak_trailing_dd": 0.12,
+        },
+        train_activity_gate=assess_train_activity(0),
+        account_currency="USD",
+        survival_objective=True,
+        training_completed=training_completed,
+        training_incomplete_reason=None if training_completed else "nonfinite",
+    )
+
+    summary_json = json.loads((tmp_path / "evaluations" / "summary.json").read_text())
+    summary = (tmp_path / "evaluations" / "summary.md").read_text()
+    assert summary_json["schema_version"] == 3
+    assert summary_json["training_phase"] == "survival_qualification"
+    assert summary_json["train_split_survival_ok"] is True
+    assert summary_json["train_activity_ok"] is False
+    assert summary_json["training_completed"] is training_completed
+    assert summary_json["training_admissible"] is training_completed
+    assert summary_json["training_admissibility_basis"] == (
+        "completed_training_and_breach_free_train_split"
+    )
+    assert summary_json["training_admissibility_scope"] == "single_seed_train_split"
+    assert "survival_qualification_ok" not in summary_json
+    assert summary_json["peak_dd_policy_fit"]["status"] == "MISS"
+    assert summary_json["peak_dd_policy_fit"]["retraining_recommended"] is False
+    assert summary_json["peak_eod_dd_policy_fit"]["status"] == "MISS"
+    assert summary_json["peak_eod_dd_policy_fit"]["retraining_recommended"] is False
+    train_payload = json.loads((tmp_path / "evaluations" / "train_in_sample.json").read_text())
+    assert train_payload["training_admissible"] is training_completed
+    assert train_payload["train_split_survival_ok"] is True
+    assert train_payload["metrics"]["profit_factor"] is None
+    assert train_payload["metrics"]["metric_availability"]["profit_factor"] == (
+        "not_applicable_no_completed_positions"
+    )
+    assert (
+        "| Train (in-sample) | -2.00% | -2000.00 USD | 5.00% | -0.500 | N/A | 0.0% | 0 |" in summary
+    )
+    assert f"Training complete: {'PASS' if training_completed else 'FAIL'}" in summary
+    assert "Train-split survival: PASS" in summary
+    assert f"Train-split admissible: {'PASS' if training_completed else 'FAIL'}" in summary
+    assert "does not establish cross-seed and walk-forward qualification" in summary
+    assert "does not affect train-split survival" in summary
+    assert "Train activity diagnostic: INACTIVE (trades=0)" in summary
+
+
+def test_evaluation_writer_rejects_truthy_malformed_survival_flags(tmp_path: Path) -> None:
+    metrics = PerformanceMetrics(
+        total_return_pct=0.0,
+        total_pnl=0.0,
+        max_drawdown=0.0,
+        sharpe=0.0,
+        profit_factor=0.0,
+        win_rate=0.0,
+        n_trades=0,
+    )
+    result = {
+        "survived_full_year": "false",
+        "completed_data_split": "false",
+        "n_breach_sessions": 0,
+        "n_sessions": 10,
+        "days_traded": 0,
+        "equity": [],
+    }
+    write_evaluation_artifacts(
+        run_dir=tmp_path,
+        seed=7,
+        completed_timesteps=10,
+        train_result=result,
+        test_result=result,
+        train_metrics=metrics,
+        test_metrics=metrics,
+        train_gate={"ok": "false", "hard_risk_ok": True, "breached": False},
+        train_activity_gate={"ok": "false", "status": "INACTIVE", "n_trades": 0},
+        account_currency="USD",
+        survival_objective=True,
+        training_completed=True,
+    )
+
+    summary = json.loads((tmp_path / "evaluations" / "summary.json").read_text())
+    assert summary["train_split_survival_ok"] is False
+    assert summary["training_admissible"] is False
+    assert summary["train_activity_ok"] is False
+
+
+@pytest.mark.parametrize("breach_count", [False, "0", 0.0, -1, None])
+def test_evaluation_writer_rejects_malformed_breach_counts(
+    tmp_path: Path, breach_count: object
+) -> None:
+    metrics = PerformanceMetrics(
+        total_return_pct=0.0,
+        total_pnl=0.0,
+        max_drawdown=0.0,
+        sharpe=0.0,
+        profit_factor=0.0,
+        win_rate=0.0,
+        n_trades=0,
+    )
+    result: dict[str, Any] = {
+        "survived_full_year": True,
+        "completed_data_split": True,
+        "n_sessions": 10,
+        "days_traded": 0,
+        "equity": [],
+    }
+    if breach_count is not None:
+        result["n_breach_sessions"] = breach_count
+    write_evaluation_artifacts(
+        run_dir=tmp_path,
+        seed=7,
+        completed_timesteps=10,
+        train_result=result,
+        test_result=result,
+        train_metrics=metrics,
+        test_metrics=metrics,
+        train_gate={"ok": True, "hard_risk_ok": True, "breached": False},
+        train_activity_gate={"ok": False, "status": "INACTIVE", "n_trades": 0},
+        account_currency="USD",
+        survival_objective=True,
+        training_completed=True,
+    )
+
+    train_payload = json.loads((tmp_path / "evaluations" / "train_in_sample.json").read_text())
+    assert train_payload["breach_events"] is None
+    assert train_payload["train_split_survival_ok"] is False
+
+
 def test_peak_dd_policy_miss_does_not_fail_completed_training_run(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -247,7 +566,114 @@ def test_peak_dd_policy_miss_does_not_fail_completed_training_run(
     assert training_log["retraining_recommended"] is True
 
 
-def test_zero_train_trades_fail_closed_after_a_survival_pass(
+def test_survival_qualification_precedes_profit_activity_and_policy_fit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import training.runner.reporting_runtime as reporting_runtime
+
+    monkeypatch.setattr(reporting_runtime, "build_training_log", lambda **_kwargs: {})
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "config.yaml").write_text("effective: true\n")
+    feature_cache = tmp_path / "features.parquet"
+    Path(f"{feature_cache}.hash").write_text("feature-hash\n")
+    result = {
+        "seed": 42,
+        "test_m": object(),
+        "test_result": {},
+        "train_gate": {
+            "ok": "false",
+            "end_equity": 98_000.0,
+            "slope": -1.0,
+            "reason": "peak_trailing_dd",
+            "breached": False,
+            "hard_risk_ok": True,
+        },
+        "train_activity_gate": {"ok": "false", "status": "INACTIVE", "n_trades": 0},
+        "train_result": {
+            "survived_full_year": True,
+            "completed_data_split": True,
+            "n_breach_sessions": 0,
+            "entry_state_diagnostics": {},
+            "entry_diag": {},
+        },
+        "abort_reason": None,
+        "model_num_timesteps": 1_000,
+        "best_checkpoint_status": "NO_ACTIVE_CHECKPOINT",
+        "best_checkpoint_n_trades": 0,
+        "deterministic_viability_evaluations": [],
+        "phase_timings_seconds": {},
+        "run_manifest": "manifest.json",
+    }
+    cfg = SimpleNamespace(env={"reward_mode": "survival"}, strategy={})
+    args = SimpleNamespace(
+        strategy="baseline",
+        mvp=False,
+        seed=42,
+        algo="ppo",
+        arch="tcn",
+        reward="survival",
+        wandb=False,
+        allow_locked_oos_for_selection=False,
+    )
+
+    training_log = finalize_training_run(
+        cfg=cfg,
+        args=args,
+        is_multi_seed=False,
+        seed_results=[result],
+        timesteps=1_000,
+        train_bar_count=100,
+        test_bar_count=50,
+        run_dir=run_dir,
+        feat_cache=feature_cache,
+        feature_columns=["close"],
+        seeds=[42],
+    )
+
+    assert training_log["train_split_survival_ok"] is True
+    assert training_log["train_activity_ok"] is False
+    assert training_log["train_activity_ok_by_seed"] == {"42": False}
+    assert training_log["train_activity_status"] == "INACTIVE"
+    assert training_log["inactive_seeds"] == [42]
+    assert training_log["train_portfolio_fit_ok_by_seed"] == {"42": False}
+    assert training_log["train_equity_ok"] is True
+    assert training_log["training_completed"] is True
+    assert training_log["training_admissible"] is True
+    assert training_log["overall_status"] == "PASS_TRAIN_SPLIT_SURVIVAL"
+    assert training_log["training_admissibility_scope"] == "all_configured_train_splits_only"
+    assert training_log["qualification_gate_artifact"] == "survival_phase_gate.json"
+    assert training_log["policy_fit_status"] == "MISS"
+    assert training_log["retraining_recommended"] is False
+
+    missing_run_dir = tmp_path / "missing-seed-run"
+    missing_run_dir.mkdir()
+    (missing_run_dir / "config.yaml").write_text("effective: true\n")
+    missing_feature_cache = tmp_path / "missing-seed-features.parquet"
+    Path(f"{missing_feature_cache}.hash").write_text("feature-hash\n")
+    incomplete_log = finalize_training_run(
+        cfg=cfg,
+        args=args,
+        is_multi_seed=False,
+        seed_results=[result],
+        timesteps=1_000,
+        train_bar_count=100,
+        test_bar_count=50,
+        run_dir=missing_run_dir,
+        feat_cache=missing_feature_cache,
+        feature_columns=["close"],
+        seeds=[42, 43],
+    )
+    assert incomplete_log["seed_results_cover_request"] is False
+    assert incomplete_log["missing_seed_results"] == [43]
+    assert incomplete_log["train_split_survival_ok"] is False
+    assert incomplete_log["train_equity_ok"] is False
+    assert incomplete_log["training_completed"] is False
+    assert incomplete_log["training_admissible"] is False
+    assert incomplete_log["overall_status"] == "INCOMPLETE"
+
+
+def test_zero_train_trades_fail_closed_in_portfolio_training(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     import training.runner.reporting_runtime as reporting_runtime
@@ -306,8 +732,9 @@ def test_zero_train_trades_fail_closed_after_a_survival_pass(
         )
 
     training_log = json.loads((run_dir / "training_log.json").read_text())
-    assert training_log["train_survival_ok"] is True
+    assert training_log["train_split_survival_ok"] is None
     assert training_log["train_activity_ok"] is False
+    assert training_log["train_activity_status"] == "INACTIVE"
     assert training_log["overall_status"] == "FAIL_INACTIVE"
     assert training_log["training_admissible"] is False
     assert training_log["zero_trade_diagnosis"] == "FAIL_ENTRY_PATH"

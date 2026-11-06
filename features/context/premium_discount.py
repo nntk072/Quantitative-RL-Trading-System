@@ -45,6 +45,7 @@ PD_CONTEXT_FEATURE_COLUMNS = (
     "ctx_prev_week_in_discount",
     # Trader-context bias (model-facing floats; no raw price levels).
     "htf_day_bias",
+    "htf_day_bias_available",
     "manip_reverses_htf",
     "context_trade_direction",
 )
@@ -288,32 +289,33 @@ def build_pd_context_features(
     out["ctx_asia_active"] = asia_active.astype(float)
     out["ctx_asia_high"] = ctx_asia_high
     out["ctx_asia_low"] = ctx_asia_low
-    out["ctx_asia_high_dist_atr"] = _atr_dist(ctx_asia_high, close, atr_s, side="high").fillna(0.0)
-    out["ctx_asia_low_dist_atr"] = _atr_dist(ctx_asia_low, close, atr_s, side="low").fillna(0.0)
-    # Zero-mask inactive sessions (distances already NaN→0; force zeros when masked).
+    out["ctx_asia_high_dist_atr"] = _atr_dist(ctx_asia_high, close, atr_s, side="high")
+    out["ctx_asia_low_dist_atr"] = _atr_dist(ctx_asia_low, close, atr_s, side="low")
+    # Inactive ranges are known neutral zero; active but unavailable ranges stay
+    # nonfinite so the policy's feature-validity channels can identify them.
     out.loc[~asia_active, ["ctx_asia_high_dist_atr", "ctx_asia_low_dist_atr"]] = 0.0
     out.loc[~asia_active, ["ctx_asia_high", "ctx_asia_low"]] = 0.0
 
     out["ctx_london_active"] = london_active.astype(float)
     out["ctx_london_high"] = ctx_london_high
     out["ctx_london_low"] = ctx_london_low
-    out["ctx_london_high_dist_atr"] = _atr_dist(ctx_london_high, close, atr_s, side="high").fillna(
-        0.0
-    )
-    out["ctx_london_low_dist_atr"] = _atr_dist(ctx_london_low, close, atr_s, side="low").fillna(0.0)
+    out["ctx_london_high_dist_atr"] = _atr_dist(ctx_london_high, close, atr_s, side="high")
+    out["ctx_london_low_dist_atr"] = _atr_dist(ctx_london_low, close, atr_s, side="low")
     out.loc[~london_active, ["ctx_london_high_dist_atr", "ctx_london_low_dist_atr"]] = 0.0
     out.loc[~london_active, ["ctx_london_high", "ctx_london_low"]] = 0.0
 
-    out["ctx_pd_mid_dist_atr"] = ((close - mid) / atr_s.where(atr_s > 0)).fillna(0.0)
+    out["ctx_pd_mid_dist_atr"] = (close - mid) / atr_s.where(atr_s > 0)
     out["ctx_in_premium"] = in_prem.astype(float)
     out["ctx_in_discount"] = in_disc.astype(float)
 
     # Same-day HTF bias from Asia+London composite mid vs close (causal).
-    # +1 discount/long, -1 premium/short, 0 chop / unavailable.
+    # +1 discount/long, -1 premium/short, 0 chop / unavailable. The companion
+    # availability feature distinguishes valid neutral state from no range.
     htf_bias: np.ndarray[Any, Any] = np.zeros(len(bars), dtype=float)
     htf_bias = np.where(in_disc.to_numpy(), 1.0, htf_bias)
     htf_bias = np.where(in_prem.to_numpy(), -1.0, htf_bias)
     out["htf_day_bias"] = htf_bias
+    out["htf_day_bias_available"] = mid.notna().to_numpy(dtype=float)
     # Filled later when PO3 state is available; default 0 here.
     out["manip_reverses_htf"] = 0.0
     out["context_trade_direction"] = htf_bias

@@ -5,6 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+OUTSIDE_SESSION_PHASE = -1
+
 
 def build_po3_phase_features(
     index: pd.DatetimeIndex,
@@ -19,9 +21,11 @@ def build_po3_phase_features(
     so it is identical across timeframes once aligned onto the M1 spine —
     computed once here rather than duplicated per TF.
 
-    Returns a DataFrame indexed like ``index`` with:
-    - ``po3_phase``: ordinal 0/1/2 (accumulation/manipulation/distribution)
-    - ``session_progress``: continuous fraction of session elapsed in [0, 1]
+    Returns a DataFrame indexed like ``index``. Its ``po3_phase`` column is -1
+    outside the session and 0/1/2 for accumulation, manipulation, and
+    distribution while active. Its ``session_progress`` column is the fraction
+    of session elapsed, clipped to [0, 1]; the phase sentinel distinguishes
+    clipped out-of-session values from active session boundaries.
 
     Args:
         index: Position or label identifying the requested item.
@@ -42,7 +46,8 @@ def build_po3_phase_features(
     start_secs = start_ts.hour * 3600 + start_ts.minute * 60
     elapsed = tod - start_secs
     progress = pd.Series(np.clip(elapsed / session_len, 0.0, 1.0), index=index)
-    phase = pd.Series(np.digitize(progress.to_numpy(), [1.0 / 3.0, 2.0 / 3.0]), index=index)
-    phase = phase.astype("float64")
-    phase[(elapsed < 0) | (elapsed > session_len)] = np.nan  # outside session → unknown phase
+    phase_values = np.digitize(progress.to_numpy(), [1.0 / 3.0, 2.0 / 3.0]).astype(np.int8)
+    outside_session = (elapsed < 0) | (elapsed > session_len)
+    phase_values[outside_session] = OUTSIDE_SESSION_PHASE
+    phase = pd.Series(phase_values, index=index, dtype="int8")
     return pd.DataFrame({"po3_phase": phase, "session_progress": progress})

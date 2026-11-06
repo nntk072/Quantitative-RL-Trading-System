@@ -8,21 +8,16 @@ through the shared evaluation pipeline (``build_run_report``), including any
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import yaml
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
-from configuration import load_config
 from evaluation import build_run_report, run_episode
 from evaluation.rollout.trained_policy_rollout import make_action_fn
-from learning.rl.agent import build_agent
-from market_data.splits.definitions import split_train_test
-from training.configuration.variants import merge_variant_cfg
 from training.setup.environments import make_env
 
 _AVG_KEYS = (
@@ -128,121 +123,49 @@ def train_and_score_variant(
     out_dir: str,
     name: str,
 ) -> dict[str, Any]:
-    """Train one seed of a variant and return the OOS report (+ metadata).
+    """Reject this retired ungated training path.
+
+    The former implementation trained each variant directly with
+    ``model.learn`` and could score exposed report-period rows without first
+    passing the cross-seed survival gate. Its configuration cannot express the
+    full-split and per-seed walk-forward qualification contract.
 
     Args:
-        bars: Market bars to process.
-        features: Feature values supplied to the operation.
-        base_cfg: Base cfg used by the operation described above.
-        variant: Key-value data used for the variant.
-        defaults: Key-value data used for the defaults.
-        steps: Number of environment or optimization steps to run.
-        seed: Random seed used to make sampling reproducible.
-        reward: Text or path value identifying the reward.
-        train_end: Text or path value identifying the train end.
-        test_start: Text or path value identifying the test start.
-        out_dir: Text or path value identifying the out dir.
-        name: Name used to identify the requested file, artifact, or item.
+        bars: Market bars accepted by the retired interface.
+        features: Feature rows accepted by the retired interface.
+        base_cfg: Base run configuration accepted by the retired interface.
+        variant: Variant settings accepted by the retired interface.
+        defaults: Variant defaults accepted by the retired interface.
+        steps: Training-step count accepted by the retired interface.
+        seed: Random seed accepted by the retired interface.
+        reward: Reward selector accepted by the retired interface.
+        train_end: Training boundary accepted by the retired interface.
+        test_start: Evaluation boundary accepted by the retired interface.
+        out_dir: Output directory accepted by the retired interface.
+        name: Variant name accepted by the retired interface.
 
     Returns:
-        Mapping from ``str`` keys to ``Any`` values.
+        This function never returns; it raises ``SystemExit`` with the supported workflow.
     """
-    algo = str(variant.get("algo", defaults.get("algo", "ppo")))
-    arch = str(variant.get("arch", defaults.get("arch", "gru")))
-    use_vae = bool(int(variant.get("use_vae", defaults.get("use_vae", 0))))
-    strategy = str(variant.get("strategy", defaults.get("strategy", "baseline")))
-    include_pd = bool(variant.get("include_pd_context", defaults.get("include_pd_context", False)))
-
-    if use_vae:
-        return {
-            "status": "skipped",
-            "reason": "use_vae=1 requires a loaded VAE; pass a trained VAE path in a future revision",
-            "algo": algo,
-            "arch": arch,
-            "seed": seed,
-        }
-
-    cfg = merge_variant_cfg(
+    del (
+        bars,
+        features,
         base_cfg,
-        strategy=strategy,
-        include_pd_context=include_pd,
-        variant=variant,
+        variant,
+        defaults,
+        steps,
+        seed,
+        reward,
+        train_end,
+        test_start,
+        out_dir,
+        name,
     )
-    train_bars, test_bars, train_feat, test_feat = split_train_test(
-        bars, features, train_end, test_start
+    raise SystemExit(
+        "variant ablation training is retired because it bypasses survival-first "
+        "qualification; use training.runner.training with the survival reward and "
+        "a complete survival gate before portfolio optimization"
     )
-    if train_bars.empty or test_bars.empty:
-        return {
-            "status": "skipped",
-            "reason": f"empty split train={len(train_bars)} test={len(test_bars)}",
-            "seed": seed,
-        }
-
-    try:
-        env = make_env(train_bars, train_feat, cfg, algo=algo, reward=reward, episodic=True)
-    except ValueError as exc:
-        return {"status": "skipped", "reason": str(exc), "seed": seed}
-
-    model = build_agent(env, cfg, arch=arch, algo=algo, use_vae=False)
-    model.set_random_seed(seed)
-    model.learn(total_timesteps=steps)
-
-    oos = evaluate_oos(
-        model,
-        algo=algo,
-        bars=test_bars,
-        features=test_feat,
-        cfg=cfg,
-        reward=reward,
-    )
-    artifacts = oos.pop("_artifacts", {})
-    action_space = getattr(env, "action_space", None)
-    action_space_width = (
-        int(action_space.shape[0])
-        if action_space is not None and hasattr(action_space, "shape")
-        else None
-    )
-    oos.update(
-        {
-            "status": "ok",
-            "algo": algo,
-            "arch": arch,
-            "strategy": strategy,
-            "include_pd_context": include_pd,
-            "seed": seed,
-            "steps": steps,
-            "action_space_width": action_space_width,
-            "observation_account_dim": int(cfg.env.get("account_dim", 0))
-            if "account_dim" in cfg.env
-            else None,
-            "env_flags": {
-                key: bool(cfg.env.get(key, False))
-                for key in (
-                    "strategy_actions",
-                    "allow_agent_sl_mode",
-                    "allow_agent_tp_mode",
-                    "allow_multi_tp",
-                    "entry_state_machine",
-                    "entry_state_observation",
-                    "arm_requires_retest",
-                )
-            },
-        }
-    )
-    if artifacts:
-        art_dir = Path(out_dir) / name / f"seed{seed}"
-        art_dir.mkdir(parents=True, exist_ok=True)
-        (art_dir / "trade_log.json").write_text(
-            json.dumps(artifacts["trade_log"], indent=2, default=str)
-        )
-        (art_dir / "entry_diag.json").write_text(json.dumps(artifacts["entry_diag"], indent=2))
-        (art_dir / "entry_state.json").write_text(
-            json.dumps(artifacts["entry_state_diagnostics"], indent=2, default=str)
-        )
-        (art_dir / "config.json").write_text(
-            json.dumps(OmegaConf.to_container(cfg, resolve=True), indent=2, default=str)
-        )
-    return oos
 
 
 def _flatten_report_metrics(report: dict[str, Any]) -> dict[str, Any]:
@@ -307,86 +230,14 @@ def load_experiments(path: Path) -> dict[str, Any]:
 
 
 def run_variant_ablation(request: VariantAblationRequest) -> None:
-    """Train and score selected variants, writing one JSON report per variant.
+    """Reject the retired ungated variant-training command.
 
     Args:
         request: Request used by the operation described above.
     """
-    print(
-        "WARNING: this legacy ablation workflow shares one features CSV across variants; "
-        "do not use it as a matched qrl-experiment runner."
+    del request
+    raise SystemExit(
+        "qrl-experiment variants is retired because it bypasses survival-first "
+        "qualification and can rank on exposed report data; use the canonical "
+        "training and experiment run workflows"
     )
-    spec = load_experiments(request.experiments)
-    defaults = dict(spec.get("defaults", {}))
-    bars = pd.read_csv(request.bars_csv, index_col=0, parse_dates=True)
-    features = (
-        pd.read_csv(request.features_csv, index_col=0, parse_dates=True)
-        if request.features_csv
-        else bars.select_dtypes(include=["number"])
-    )
-    base_cfg = load_config(config_path=request.rl_config) if request.rl_config else load_config()
-
-    out_root = request.out_dir
-    out_root.mkdir(parents=True, exist_ok=True)
-
-    steps = request.steps if request.steps is not None else int(defaults.get("steps", 50_000))
-    seeds = list(request.seeds) if request.seeds is not None else list(defaults.get("seeds", [42]))
-    train_end = str(defaults.get("train_end", "2025-12-31"))
-    test_start = str(defaults.get("test_start", "2026-01-01"))
-    oos_role = (
-        "selection_acknowledged" if request.allow_locked_oos_for_selection else "final_report_only"
-    )
-    if oos_role == "final_report_only":
-        print(
-            "NOTE (T-03.2): locked OOS is final_report_only. "
-            "Use walk-forward / validation for architecture selection; "
-            "pass --allow-locked-oos-for-selection only if you knowingly rank on OOS."
-        )
-
-    variants = list(spec.get("variants", []))
-    if request.variants:
-        wanted = set(request.variants)
-        variants = [v for v in variants if str(v.get("name")) in wanted]
-        missing = wanted - {str(v.get("name")) for v in variants}
-        if missing:
-            raise SystemExit(f"unknown variants: {sorted(missing)}")
-
-    for variant in variants:
-        name = str(variant["name"])
-        print(f"=== {name}: steps={steps} seeds={seeds} ===")
-        seed_reports: list[dict[str, Any]] = []
-        for seed in seeds:
-            report = train_and_score_variant(
-                bars=bars,
-                features=features,
-                base_cfg=base_cfg,
-                variant=variant,
-                defaults=defaults,
-                steps=steps,
-                seed=int(seed),
-                reward=request.reward,
-                train_end=train_end,
-                test_start=test_start,
-                out_dir=str(out_root),
-                name=name,
-            )
-            seed_reports.append(report)
-
-        aggregated = _average_seed_reports(seed_reports)
-        aggregated.update(
-            {
-                "name": name,
-                "n_seeds": len(seeds),
-                "steps": steps,
-                "oos_role": oos_role,
-                "train_end": train_end,
-                "test_start": test_start,
-                "per_seed": seed_reports,
-            }
-        )
-        out_path = out_root / f"{name}.json"
-        out_path.write_text(json.dumps(aggregated, indent=2))
-        summary = {k: v for k, v in aggregated.items() if k != "per_seed"}
-        print(json.dumps(summary, indent=2))
-
-    print(f"ablation reports saved under {out_root}")

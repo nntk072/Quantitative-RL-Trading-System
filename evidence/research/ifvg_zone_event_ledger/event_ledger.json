@@ -32,14 +32,14 @@
   ],
   "per_zone_confirmation_count": 72561,
   "primary_symbol": "US100.cash",
-  "resolved_config_sha256": "94e2de5bcea020327f5fbbdbc6045b1ff92474ad75dd22f87c80f40ea9caa3ca",
+  "resolved_config_sha256": "c935b1ce405160cca7c88fc55cc7e22ea3cf991c72ea68159b0ae04942cc46bc",
   "scalar_confirmation_pulse_count": 56349,
-  "source_commit": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
   "source_hashes": {
     "features/pipeline/po3_stage.py": "cc52cd3abb6b05eb0ab28e0709334d8a89d1a8ddc5841af5cb8795e4fe361267",
     "features/po3/fvg_detection.py": "39309e91ff551fa45b6eff76589d492f8bdfc50b8a23a409232a928c2f93a0ae",
     "features/po3/ifvg_detection.py": "ece55b2c6121cc6f7eb916010b24b47ce841a86f745a91a52894ece29a298144",
-    "features/po3/po3_phase_state.py": "141af5ab6ef13dcd687a1afcab789d1fba046a38a982556a9b295527b811fa7b",
+    "features/po3/po3_phase_state.py": "1af6cfc46a85dc3f8fee95957ea2d402416774679d303063aa8c451a5289ecbc",
     "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
     "scripts/research/analysis/features/ifvg_zone_event_ledger.py": "659228462dc37d1f63bd43f154c19e9ab60aab9ad8ffbcbe5558ee969f07146e"
   },

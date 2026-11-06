@@ -74,6 +74,35 @@ _OBSERVATION_SCHEMA = {
             },
             "requires entry_state_visibility",
         ),
+        (
+            {
+                **_ACTION_SCHEMA,
+                "width": 3,
+                "coordinates": ["entry_execution", "limit_offset_atr", "limit_ttl_bars"],
+            },
+            _OBSERVATION_SCHEMA,
+            "entry-execution schema requires an explicit action flag",
+        ),
+        (
+            {
+                **_ACTION_SCHEMA,
+                "width": 3,
+                "coordinates": ["entry_execution", "limit_offset_atr", "limit_ttl_bars"],
+                "has_entry_execution": False,
+            },
+            _OBSERVATION_SCHEMA,
+            "coordinates require has_entry_execution=true",
+        ),
+        (
+            {
+                **_ACTION_SCHEMA,
+                "width": 2,
+                "coordinates": ["entry_execution", "limit_offset_atr"],
+                "has_entry_execution": True,
+            },
+            _OBSERVATION_SCHEMA,
+            "requires all conditional coordinates",
+        ),
     ],
 )
 def test_manifest_requires_complete_action_and_observation_schemas(
@@ -192,8 +221,33 @@ def test_manifest_records_config_dataset_checkpoint_and_split_hashes(tmp_path) -
     training_log.write_text("step\n100\n")
     trade_log = repository / "trade_log.json"
     trade_log.write_text("[]\n")
+    normalization_state = repository / "feature_normalization_state.json"
+    normalization_state.write_text(
+        json.dumps(
+            {
+                "schema": "feature-normalization-v1",
+                "configuration_sha256": "a" * 64,
+                "feature_cache_hash": "cache-identity",
+                "mode": "legacy_masked_window",
+                "window": 252,
+                "stages": {
+                    "matrix": {
+                        "schema": "rolling-zscore-fit-v1",
+                        "mode": "legacy_masked_window",
+                        "window": 252,
+                        "columns": ["ema_9"],
+                        "as_of": "2023-12-29 16:00:00",
+                        "mean": {"ema_9": 0.0},
+                        "scale": {"ema_9": 1.0},
+                    }
+                },
+            }
+        )
+        + "\n"
+    )
+    valid_state_text = normalization_state.read_text(encoding="utf-8")
 
-    manifest = build_training_run_manifest(
+    manifest_kwargs: dict[str, Any] = dict(
         repository=repository,
         config_path=config,
         datasets=datasets,
@@ -250,11 +304,15 @@ def test_manifest_records_config_dataset_checkpoint_and_split_hashes(tmp_path) -
             "checkpoint": "model.zip",
             "training_log": "training_log.csv",
             "trade_log": "trade_log.json",
+            "feature_normalization_state": "feature_normalization_state.json",
         },
+        feature_normalization_state_path=normalization_state,
     )
+    manifest = build_training_run_manifest(**manifest_kwargs)
 
     assert manifest["config"]["sha256"] == file_sha256(config)
     assert manifest["checkpoint"]["sha256"] == file_sha256(checkpoint)
+    assert manifest["feature_normalization"]["sha256"] == file_sha256(normalization_state)
     assert manifest["datasets"]["train_bars"]["sha256"] == dataframe_sha256(frame)
     assert manifest["split"] == {
         "train_start": "2023-12-01",
@@ -276,6 +334,41 @@ def test_manifest_records_config_dataset_checkpoint_and_split_hashes(tmp_path) -
     assert manifest["stop_candidate_schema"]["menu"] == "recent_confirmed_unswept_mtf_swings_v1"
     assert manifest["training_architecture"]["physical_worker_count"] == 1
     assert manifest["training_architecture"]["encoder_channels"] == 96
+
+    manifest_kwargs["sequence_feature_schema"] = build_sequence_feature_schema(
+        ["ema_9", "po3_ifvg_active", "reachable_r"], include_validity_channels=True
+    )
+    validity_manifest = build_training_run_manifest(**manifest_kwargs)
+    assert validity_manifest["sequence_feature_schema"]["version"] == (
+        "sequence-feature-validity-channels-v1"
+    )
+    assert validity_manifest["sequence_feature_schema"]["width"] == 6
+    assert validity_manifest["sequence_feature_schema"]["value_width"] == 3
+    assert validity_manifest["sequence_feature_schema"]["validity_width"] == 3
+    assert validity_manifest["sequence_feature_schema"]["channel_order"] == (
+        "feature_values_then_finite_masks"
+    )
+    manifest_kwargs["sequence_feature_schema"] = {
+        **manifest_kwargs["sequence_feature_schema"],
+        "width": 3,
+    }
+    with pytest.raises(ValueError, match="internally inconsistent"):
+        build_training_run_manifest(**manifest_kwargs)
+    manifest_kwargs["sequence_feature_schema"] = build_sequence_feature_schema(
+        ["ema_9", "po3_ifvg_active", "reachable_r"]
+    )
+
+    invalid_state = json.loads(normalization_state.read_text(encoding="utf-8"))
+    invalid_state["stages"]["matrix"]["scale"]["ema_9"] = 0.0
+    normalization_state.write_text(json.dumps(invalid_state), encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid fit statistics"):
+        build_training_run_manifest(**manifest_kwargs)
+
+    normalization_state.write_text(valid_state_text, encoding="utf-8")
+    config.write_text("features:\n  normalize_d1_technical_on_source: true\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="does not match the run feature cache"):
+        build_training_run_manifest(**manifest_kwargs)
+    config.write_text("seed: 7\n", encoding="utf-8")
 
     output = repository / "run_manifest.json"
     write_run_manifest(output, manifest)
@@ -300,6 +393,22 @@ def test_sequence_feature_schema_is_order_sensitive_and_fails_closed() -> None:
     )
 
 
+def test_sequence_feature_validity_schema_is_versioned_and_fails_closed() -> None:
+    values_only = build_sequence_feature_schema(["ema_9", "reachable_r"])
+    with_validity = build_sequence_feature_schema(
+        ["ema_9", "reachable_r"], include_validity_channels=True
+    )
+
+    assert with_validity["version"] == "sequence-feature-validity-channels-v1"
+    assert with_validity["width"] == 4
+    assert with_validity["value_width"] == with_validity["validity_width"] == 2
+    assert with_validity["channel_order"] == "feature_values_then_finite_masks"
+    assert with_validity["sha256"] != values_only["sha256"]
+    assert validate_sequence_feature_schema(with_validity, with_validity) == "verified"
+    with pytest.raises(ValueError, match="differs from the training manifest"):
+        validate_sequence_feature_schema(values_only, with_validity)
+
+
 def _expanded_stop_schema_config():
     return OmegaConf.create(
         {
@@ -321,16 +430,25 @@ def _expanded_stop_schema_config():
     )
 
 
-def test_stop_candidate_schema_records_expanded_multitimeframe_contract() -> None:
+def test_stop_candidate_schema_uses_execution_targets_not_encoder_windows() -> None:
     cfg = _expanded_stop_schema_config()
     schema = build_stop_candidate_schema(cfg)
     assert schema["menu"] == "recent_confirmed_unswept_mtf_swings_v1"
     assert schema["candidate_count_per_side_per_timeframe"] == 3
     assert schema["timeframes"] == ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
-    assert schema["stop_menu_timeframes"] == ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+    assert schema["stop_menu_timeframes"] == ["M5", "M15", "H1"]
     assert schema["deduplication"]["price_increment"] == 0.1
     assert schema["feature_stop_sources"]["structure"]["swing_candidate_count"] == 3
     assert schema["strategy_config"]["manipulation_filter"] == "against"
+
+
+def test_stop_candidate_schema_tracks_explicit_execution_target_timeframes() -> None:
+    cfg = _expanded_stop_schema_config()
+    cfg.risk.target_timeframes = ["M3", "M15", "H4"]
+
+    schema = build_stop_candidate_schema(cfg)
+
+    assert schema["stop_menu_timeframes"] == ["M3", "M15", "H4"]
 
 
 class _SchemaRoundTripEnv(Env[npt.NDArray[np.float32], np.int64]):

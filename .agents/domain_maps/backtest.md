@@ -66,7 +66,7 @@
 
 1. **MT5 spread is in broker points** — must convert via `point_size` (e.g., 0.01 for US100)
 2. **Mark-to-market uses bar-close quote** — long @ bid, short @ ask
-3. **Guardrail breach blocks new trading** — daily-loss for the supplied session ID; max-loss and trailing-drawdown for the rest of the non-episodic rollout
+3. **Hard account-loss breach fails the full evaluation** — daily loss is measured from the supplied session anchor; any hard daily-loss, maximum-loss, or trailing-drawdown breach permanently blocks later sessions. A non-episodic split rollout may continue only to preserve its evaluation horizon, with the failed account unable to trade again.
 ## Change Map
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |

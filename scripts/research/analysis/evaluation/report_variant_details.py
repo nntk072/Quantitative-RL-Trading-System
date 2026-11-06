@@ -822,7 +822,14 @@ def _validate_training_gate_policy(
     gate_ok = gate.get("ok")
     if observed is None or not isinstance(gate_ok, bool):
         raise ValueError(f"training policy-fit record lacks evidence: {run_dir}")
-    breached = bool(gate.get("breached", False))
+    if "breached" in gate and not isinstance(gate["breached"], bool):
+        raise ValueError(f"training policy-fit record has a malformed breach flag: {run_dir}")
+    breached = gate.get("breached", False)
+    hard_risk_ok = gate.get("hard_risk_ok")
+    if "hard_risk_ok" in gate and not isinstance(hard_risk_ok, bool):
+        raise ValueError(f"training policy-fit record has a malformed hard-risk flag: {run_dir}")
+    if "hard_risk_ok" in gate and hard_risk_ok is breached:
+        raise ValueError(f"training policy-fit record has conflicting hard-risk flags: {run_dir}")
     drawdown_failed = configured_limit > 0.0 and observed > configured_limit
     expected_ok = not breached and not drawdown_failed
     if gate_ok != expected_ok:
@@ -863,6 +870,10 @@ def _peak_dd_policy_fit_text(gate: dict[str, Any], configured_limit: float | Non
 
 
 def _hard_risk_status_text(gate: dict[str, Any]) -> str:
+    if "hard_risk_ok" in gate and not isinstance(gate["hard_risk_ok"], bool):
+        return "Not recorded"
+    if "breached" in gate and not isinstance(gate["breached"], bool):
+        return "Not recorded"
     if isinstance(gate.get("hard_risk_ok"), bool):
         return "PASS" if gate["hard_risk_ok"] else "FAIL"
     if isinstance(gate.get("breached"), bool):
@@ -978,6 +989,9 @@ def _markdown_config_results(
         ("Risk mode", ("env", "risk_mode")),
         ("Risk floor", ("env", "risk_floor")),
         ("Risk fraction range", ("strategy", "risk", "risk_frac_range")),
+        ("Broker volume step", ("risk", "lot_step")),
+        ("Minimum lot", ("risk", "min_lot")),
+        ("Maximum lot", ("risk", "max_lot")),
         ("Position sizing cap (USD)", ("ftmo", "risk_sizing_limit_usd")),
         ("Per-trade risk limit (USD)", ("ftmo", "risk_per_trade_limit")),
         ("Training peak drawdown limit", ("env", "peak_trailing_dd_limit")),

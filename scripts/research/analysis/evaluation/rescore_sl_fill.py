@@ -27,6 +27,7 @@ from stable_baselines3 import PPO  # noqa: E402
 ROOT = repository_root(__file__)
 
 from evaluation import (  # noqa: E402
+    account_path_metric_inputs,
     build_comparison_table,
     calculate_metrics,
     save_metrics_json,
@@ -37,6 +38,7 @@ from learning.rl.ppo import ClampedStdMultiInputPolicy  # noqa: E402
 from market_data.loading import run_pipeline  # noqa: E402
 from market_data.splits.definitions import (  # noqa: E402
     get_split_config,
+    get_train_start_config,
     make_train_mask,
     split_train_test,
 )
@@ -208,7 +210,7 @@ def _split_block(result: dict, metrics, closes: list[dict]) -> dict:
         "long_share": (n_long / n) if n else None,
         "breaches": int(result.get("n_breach_sessions", 0)),
         "fail_time": None if result.get("fail_time") is None else str(result.get("fail_time")),
-        "survived_full_year": bool(result.get("survived_full_year", False)),
+        "survived_full_year": result.get("survived_full_year") is True,
         "days_traded": int(result.get("days_traded", 0)),
         "lots": _lot_block(closes),
     }
@@ -227,7 +229,8 @@ def rescore_one(name: str, source: Path, out_root: Path) -> dict:
     primary = data[cfg.data.primary]["M1"]
     secondary = data.get(cfg.data.secondary, {}).get("M1")
     train_end, test_start = get_split_config(cfg)
-    train_mask = make_train_mask(primary.index, train_end)
+    train_start = get_train_start_config(cfg)
+    train_mask = make_train_mask(primary.index, train_end, train_start)
     cache = feature_cache_path(
         Path(cfg.data.cache_dir),
         cfg.data.primary,
@@ -244,7 +247,7 @@ def rescore_one(name: str, source: Path, out_root: Path) -> dict:
         cache_path=cache,
     )
     train_bars, test_bars, train_feat, test_feat = split_train_test(
-        primary, features, train_end, test_start
+        primary, features, train_end, test_start, train_start
     )
     common = _eval_common(cfg)
 
@@ -255,6 +258,7 @@ def rescore_one(name: str, source: Path, out_root: Path) -> dict:
         trades=test_result["trades"],
         n_sessions=test_result.get("n_sessions", 1),
         n_breach_sessions=test_result.get("n_breach_sessions", 0),
+        **account_path_metric_inputs(test_result),
     )
     log.info("%s train bars=%d", name, len(train_bars))
     train_result = evaluate_model(model, bars=train_bars, features=train_feat, **common)
@@ -263,6 +267,7 @@ def rescore_one(name: str, source: Path, out_root: Path) -> dict:
         trades=train_result["trades"],
         n_sessions=train_result.get("n_sessions", 1),
         n_breach_sessions=train_result.get("n_breach_sessions", 0),
+        **account_path_metric_inputs(train_result),
     )
 
     out = out_root / name

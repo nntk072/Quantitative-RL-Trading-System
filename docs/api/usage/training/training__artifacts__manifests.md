@@ -8,7 +8,7 @@ This page contains 9 public callable records owned by `training.artifacts.manife
 
 **Purpose:** Return declared coordinate names and flags, never infer from width.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.action_schema_manifest` · **Source:** [training/artifacts/manifests.py:159](../../../../training/artifacts/manifests.py#L159)
+**Exact API:** {py:obj}`training.artifacts.manifests.action_schema_manifest` · **Source:** [training/artifacts/manifests.py:160](../../../../training/artifacts/manifests.py#L160)
 
 **Inputs and outputs:**
 
@@ -57,7 +57,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the action space width for logging.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.action_space_width` · **Source:** [training/artifacts/manifests.py:139](../../../../training/artifacts/manifests.py#L139)
+**Exact API:** {py:obj}`training.artifacts.manifests.action_space_width` · **Source:** [training/artifacts/manifests.py:140](../../../../training/artifacts/manifests.py#L140)
 
 **Inputs and outputs:**
 
@@ -98,7 +98,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build the training_log.json dict from run results.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.build_training_log` · **Source:** [training/artifacts/manifests.py:37](../../../../training/artifacts/manifests.py#L37)
+**Exact API:** {py:obj}`training.artifacts.manifests.build_training_log` · **Source:** [training/artifacts/manifests.py:38](../../../../training/artifacts/manifests.py#L38)
 
 **Inputs and outputs:**
 
@@ -160,7 +160,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build separately labeled train and report-only test entry funnels.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.entry_funnel_by_split` · **Source:** [training/artifacts/manifests.py:13](../../../../training/artifacts/manifests.py#L13)
+**Exact API:** {py:obj}`training.artifacts.manifests.entry_funnel_by_split` · **Source:** [training/artifacts/manifests.py:14](../../../../training/artifacts/manifests.py#L14)
 
 **Inputs and outputs:**
 
@@ -179,7 +179,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `aggregate_seed_results`](../../../../training/artifacts/aggregation.py#L167)
+1. [production caller: `aggregate_seed_results`](../../../../training/artifacts/aggregation.py#L182)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -201,7 +201,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `build_training_log`](../../../../training/artifacts/manifests.py#L122)
+2. [production caller: `build_training_log`](../../../../training/artifacts/manifests.py#L123)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -232,7 +232,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return the account observation dimension from the env's observation space.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_account_dim` · **Source:** [training/artifacts/manifests.py:356](../../../../training/artifacts/manifests.py#L356)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_account_dim` · **Source:** [training/artifacts/manifests.py:365](../../../../training/artifacts/manifests.py#L365)
 
 **Inputs and outputs:**
 
@@ -273,7 +273,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return explicit account observation coordinate meanings.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_schema_manifest` · **Source:** [training/artifacts/manifests.py:176](../../../../training/artifacts/manifests.py#L176)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_schema_manifest` · **Source:** [training/artifacts/manifests.py:177](../../../../training/artifacts/manifests.py#L177)
 
 **Inputs and outputs:**
 
@@ -324,7 +324,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return every observation branch shape for the run manifest.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_space_shapes` · **Source:** [training/artifacts/manifests.py:374](../../../../training/artifacts/manifests.py#L374)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_space_shapes` · **Source:** [training/artifacts/manifests.py:383](../../../../training/artifacts/manifests.py#L383)
 
 **Inputs and outputs:**
 
@@ -365,7 +365,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return ordered model sequence coordinates from the effective environment.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.sequence_feature_schema_manifest` · **Source:** [training/artifacts/manifests.py:201](../../../../training/artifacts/manifests.py#L201)
+**Exact API:** {py:obj}`training.artifacts.manifests.sequence_feature_schema_manifest` · **Source:** [training/artifacts/manifests.py:202](../../../../training/artifacts/manifests.py#L202)
 
 **Inputs and outputs:**
 
@@ -406,7 +406,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Persist the effective optimizer/reward/risk protocol for later reproduction.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.training_protocol_manifest` · **Source:** [training/artifacts/manifests.py:216](../../../../training/artifacts/manifests.py#L216)
+**Exact API:** {py:obj}`training.artifacts.manifests.training_protocol_manifest` · **Source:** [training/artifacts/manifests.py:220](../../../../training/artifacts/manifests.py#L220)
 
 **Inputs and outputs:**
 
@@ -443,16 +443,19 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     manifest = training_protocol_manifest(
         model=model,
         cfg=cfg,
-        args=SimpleNamespace(),
+        args=SimpleNamespace(reward="sweep", mvp=True, allow_locked_oos_for_selection=True),
         seed=50,
         requested_steps=8,
     )
     assert manifest["reward"]["mode"] == "equity_log_growth"
+    assert manifest["reward"]["selector"] == "sweep"
     assert manifest["reward"]["equity_log_growth_scale"] == 25.0
     assert manifest["risk"]["eod_peak_trailing_dd_limit_usd"] == 10_000.0
+    assert manifest["mvp_mode"] is True
+# … caller assertions omitted …
 ```
 
-2. [test fixture: `test_sac_training_protocol_uses_sac_fields_without_ppo_geometry`](../../../../tests/unit/training/test_sustainable_growth_variant_resolution.py#L192)
+2. [test fixture: `test_sac_training_protocol_uses_sac_fields_without_ppo_geometry`](../../../../tests/unit/training/test_sustainable_growth_variant_resolution.py#L195)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -466,7 +469,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     manifest = training_protocol_manifest(
         model=model,
         cfg=cfg,
-        args=SimpleNamespace(),
+        args=SimpleNamespace(reward="dsr"),
         seed=50,
         requested_steps=8,
         algo="sac",

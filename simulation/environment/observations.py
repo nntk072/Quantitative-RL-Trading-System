@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -38,6 +38,46 @@ DEFAULT_HTF_WINDOWS: dict[str, int] = {
     "h4": 6,
     "d1": 5,
 }
+
+
+def sanitize_observation_values(values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    """Map invalid feature values to neutral zero before policy inference.
+
+    Args:
+        values: Feature array that may contain NaN or infinite values.
+
+    Returns:
+        Float32 array with invalid values replaced by zero.
+    """
+    array = np.asarray(values, dtype=np.float32)
+    return cast(
+        np.ndarray[Any, Any],
+        np.nan_to_num(array, nan=0.0, posinf=0.0, neginf=0.0),
+    )
+
+
+def prepare_observation_feature_channels(
+    values: np.ndarray[Any, Any],
+    *,
+    include_validity: bool,
+) -> np.ndarray[Any, Any]:
+    """Sanitize feature values and optionally append their finite-value mask.
+
+    Args:
+        values: Two-dimensional feature window.
+        include_validity: Whether to append one finite-value indicator per feature.
+
+    Returns:
+        Sanitized features, optionally concatenated with validity channels.
+    """
+    array = np.asarray(values, dtype=np.float32)
+    if array.ndim != 2:
+        raise ValueError("observation feature values must be a two-dimensional array")
+    validity = np.isfinite(array).astype(np.float32)
+    finite_values = sanitize_observation_values(array)
+    if not include_validity:
+        return finite_values
+    return cast(np.ndarray[Any, Any], np.concatenate((finite_values, validity), axis=1))
 
 
 def split_obs_columns(
@@ -130,6 +170,7 @@ def closed_window(
     end: int,
     length: int,
     columns: np.ndarray[Any, Any] | None = None,
+    include_validity: bool = False,
 ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
     """Last ``length`` closed runs at or before ``end``, oldest to newest.
 
@@ -143,24 +184,31 @@ def closed_window(
         end: Numeric value used for the end.
         length: Numeric value used for the length.
         columns: Columns used by the operation described above.
+        include_validity: Append per-feature finite-value mask channels.
 
     Returns:
         Array returned by ``closed_window``.
     """
     if block.ndim != 2:
         empty = np.zeros((0, 1), dtype=np.float32)
+        empty = prepare_observation_feature_channels(empty, include_validity=include_validity)
         return pad_observation_window(empty, length)
     selected_columns = None if columns is None else np.asarray(columns, dtype=np.int64)
     width = int(block.shape[1]) if selected_columns is None else int(selected_columns.size)
     if width == 0:
         empty = np.zeros((0, 1), dtype=np.float32)
+        empty = prepare_observation_feature_channels(empty, include_validity=include_validity)
         return pad_observation_window(empty, length)
     decision = int(end)
     if decision < 0 or starts.size == 0:
-        return pad_observation_window(np.zeros((0, width), dtype=np.float32), length)
+        empty = np.zeros((0, width), dtype=np.float32)
+        empty = prepare_observation_feature_channels(empty, include_validity=include_validity)
+        return pad_observation_window(empty, length)
     visible_end = int(np.searchsorted(starts, decision, side="right"))
     if visible_end == 0:
-        return pad_observation_window(np.zeros((0, width), dtype=np.float32), length)
+        empty = np.zeros((0, width), dtype=np.float32)
+        empty = prepare_observation_feature_channels(empty, include_validity=include_validity)
+        return pad_observation_window(empty, length)
     first_visible = max(0, visible_end - int(length))
     visible = starts[first_visible:visible_end]
     rows = np.empty(visible.size, dtype=np.int64)
@@ -169,5 +217,5 @@ def closed_window(
     values_block = (
         block[rows] if selected_columns is None else block[np.ix_(rows, selected_columns)]
     )
-    values = np.nan_to_num(np.asarray(values_block, dtype=np.float32), nan=0.0)
+    values = prepare_observation_feature_channels(values_block, include_validity=include_validity)
     return pad_observation_window(values, length)

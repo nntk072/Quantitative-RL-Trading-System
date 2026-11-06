@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+TRADE_CASHFLOW_SCHEMA_VERSION = "trade_fill_cashflow.v1"
+FILL_COST_PROVENANCE_SCHEMA_VERSION = "fill_cost_provenance.v1"
+
 
 @dataclass(frozen=True)
 class CostModel:

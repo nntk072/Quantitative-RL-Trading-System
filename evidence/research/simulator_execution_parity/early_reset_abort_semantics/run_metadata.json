@@ -1,0 +1,56 @@
+{
+  "claim_scope": "current-source manual TradingEnv reset abort semantics and distinction from configured liquidation boundaries",
+  "execution": {
+    "architecture": "aarch64",
+    "command": ".venv/bin/python -m pytest tests/unit/simulation/test_environment/test_trader_actions.py::test_early_reset_clears_open_episode_state_without_carryover -q",
+    "focused_test_result": "1 passed in 0.41s",
+    "ruff_format": "2 files already formatted",
+    "ruff_check": "All checks passed",
+    "job_id": "21405414",
+    "node": "gpuarm1",
+    "gpu": "1 GH200",
+    "cpus": 48,
+    "host_ram": "512G requested",
+    "python": "3.12.15",
+    "working_directory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System"
+  },
+  "production_sources": [
+    {
+      "path": "simulation/environment/episode_runtime.py",
+      "bytes": 28754,
+      "sha256": "aeff3855d01fdffd8b473b8adb1068a04c7a7d16573088abd7f98ee1cbf0d08e"
+    },
+    {
+      "path": "simulation/environment/step_accounting_runtime.py",
+      "bytes": 5327,
+      "sha256": "fc3a0409fa34d2dc25e06f95d42eadb70c8cbdc16ebfcc3d79ea85858f0b56cc"
+    },
+    {
+      "path": "simulation/environment/step_end_runtime.py",
+      "bytes": 7066,
+      "sha256": "e10a2591bf69b91bbf78c09d5fdc9f50d923223a04486de20aacef150c567476"
+    }
+  ],
+  "test_sources": [
+    {
+      "path": "tests/unit/simulation/test_environment/test_trader_actions.py",
+      "bytes": 38116,
+      "sha256": "f184c0b84b1d41684f1b457f202b13c443855a9520618e26219f2381840c8637"
+    }
+  ],
+  "documentation": [
+    {
+      "path": "docs/operations/research_execution_plan.md",
+      "bytes": 177171,
+      "sha256": "562c940dd8a19a852801a0a65918fd15ff779d0d429a04b29e9d09f0b655c121"
+    },
+    {
+      "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/full_plan_execution_checklist.md",
+      "bytes": 119351,
+      "sha256": "a8f7980178703358124da6f5c6159c8734ccb3f1df3c027db399036716e0e286"
+    }
+  ],
+  "result": "Manual reset clears active episode state without a close event; configured data-end/step-limit liquidation is a separate transition.",
+  "schema_version": 1,
+  "status": "passed_bounded_reset_contract"
+}

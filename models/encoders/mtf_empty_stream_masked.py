@@ -25,7 +25,14 @@ class MTFEmptyStreamMaskedV1Encoder(MTFEncoder):
     }
 
     def forward(self, observations: dict[str, torch.Tensor]) -> torch.Tensor:
-        """Encode timeframe streams, excluding any stream with no valid rows."""
+        """Encode timeframe streams, excluding any stream with no valid rows.
+
+        Args:
+            observations: Sequence, validity-mask, and account tensors keyed by stream.
+
+        Returns:
+            Fused market latent concatenated with the encoded account state.
+        """
         parts: list[torch.Tensor] = []
         for branch, (seq_key, mask_key) in zip(self.branches, self._keys, strict=True):
             latent = branch(observations[seq_key], observations[mask_key])

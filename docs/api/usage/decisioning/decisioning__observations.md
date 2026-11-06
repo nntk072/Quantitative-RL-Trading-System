@@ -8,11 +8,11 @@ This page contains 6 public callable records owned by `decisioning.observations`
 
 **Purpose:** Explicit coordinate names and version for the account branch.
 
-**Exact API:** {py:obj}`decisioning.observations.ObservationSchema` · **Source:** [decisioning/observations.py:129](../../../../decisioning/observations.py#L129)
+**Exact API:** {py:obj}`decisioning.observations.ObservationSchema` · **Source:** [decisioning/observations.py:154](../../../../decisioning/observations.py#L154)
 
 **Observed usage:**
 
-1. [production caller: `build_observation_schema`](../../../../decisioning/observations.py#L182)
+1. [production caller: `build_observation_schema`](../../../../decisioning/observations.py#L207)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -45,7 +45,7 @@ def build_observation_schema(
 
 **Purpose:** Return a named schema; never infer semantics from a vector width.
 
-**Exact API:** {py:obj}`decisioning.observations.build_observation_schema` · **Source:** [decisioning/observations.py:159](../../../../decisioning/observations.py#L159)
+**Exact API:** {py:obj}`decisioning.observations.build_observation_schema` · **Source:** [decisioning/observations.py:184](../../../../decisioning/observations.py#L184)
 
 **Inputs and outputs:**
 
@@ -64,34 +64,46 @@ def build_observation_schema(
 
 **Observed usage:**
 
-1. [test fixture: `_StubModel`](../../../../tests/unit/features/test_stage_a_observation.py#L24)
+1. [test fixture: `test_setup_backtest_emits_versioned_account_state`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L759)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-class _StubModel:
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V1).to_dict()
-    _action_schema = build_discrete_trading_action_schema().to_dict()
-    action_space: Any = spaces.Discrete(20)
+# … caller setup omitted …
+        columns=[name for _, name in trade_setup_candidate_feature_columns()],
+    )
+    action_schema = build_trade_setup_action_schema()
+    action = np.zeros(action_schema.width, dtype=np.float32)
+    action[action_schema.indices["trade_setup"]] = trade_setup_center(0)
+    observation_schema = build_observation_schema(schema_version)
+    captured: dict[str, Array] = {}
 
-    def predict(self, obs: dict[str, Any], deterministic: bool = True) -> np.ndarray[Any, Any]:  # noqa: ARG002
-        return np.array([1])
+    def no_trade(observation: Any) -> Array:
+        if not captured:
+            captured.update(observation)
+# … caller assertions omitted …
 ```
 
-2. [test fixture: `_StubModel`](../../../../tests/unit/live/test_rl_bridge.py#L164)
+2. [test fixture: `test_scalar_backtest_entry_state_tracks_causal_candidate_and_arming`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L914)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-class _StubModel:
-    """Duck-typed SB3 model: action = +1 (long) always."""
+# … caller setup omitted …
+    result = run_backtest(
+        bars,
+        features,
+        hold,
+        obs_window=1,
+        observation_schema=build_observation_schema(
+            OBSERVATION_SCHEMA_V1, entry_state_visibility=True
+        ),
+        entry_state_machine=True,
+        strategy=BaselineStrategy(),
+        hold_on_zero=True,
+    )
 
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V1).to_dict()
-    action_space: Any = spaces.Discrete(20)
-    _action_schema: dict[str, object] = build_discrete_trading_action_schema().to_dict()
-
-    def predict(self, obs: dict[str, Any], deterministic: bool = True) -> np.ndarray[Any, Any]:  # noqa: ARG002
-        return np.array([1])
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -107,7 +119,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build the legacy normalized account input coordinates.
 
-**Exact API:** {py:obj}`decisioning.observations.normalized_account_vector` · **Source:** [decisioning/observations.py:47](../../../../decisioning/observations.py#L47)
+**Exact API:** {py:obj}`decisioning.observations.normalized_account_vector` · **Source:** [decisioning/observations.py:51](../../../../decisioning/observations.py#L51)
 
 **Inputs and outputs:**
 
@@ -132,57 +144,54 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `build_observation`](../../../../live/runtime/strategy.py#L288)
+1. [test fixture: `test_normalized_account_vector_preserves_valid_legacy_coordinates`](../../../../tests/unit/decisioning/test_observations.py#L12)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-                tp_mode=str(st["tp_mode"]),
-                exit_mode=str(st["exit_mode"]),
-                entry_state=str(st["entry_state"]) if "entry_state" in st else None,
-            )
-        else:
-            account = normalized_account_vector(
-                equity=equity,
-                initial_balance=self._initial_balance,
-                pos_dir=pos_dir,
-                open_pnl=open_pnl,
-                dist_to_sl=dist_to_sl,
-                trailing_dd=trailing_dd,
-                close=close,
-            )
-        return {"seq": seq, "seq_mask": seq_mask, "account": account}
-```
+def test_normalized_account_vector_preserves_valid_legacy_coordinates() -> None:
+    values = normalized_account_vector(
+        equity=99_000.0,
+        initial_balance=100_000.0,
+        pos_dir=-1.0,
+        open_pnl=-100.0,
+        dist_to_sl=10.0,
+        trailing_dd=0.1,
+        close=20_000.0,
+        entry_state="IN_POSITION",
+    )
 
-2. [production caller: `_get_observation`](../../../../simulation/environment/observation_runtime.py#L155)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-            )
-        elif self.normalize_account:
-            # Rescale so the account vector matches the ~O(1) magnitude of
-            # the z-scored seq features. Without this, equity (1e5) and
-            # raw open_pnl dwarf the time-series signal.
-            account_state = normalized_account_vector(
-                equity=float(self.account.equity),
-                initial_balance=float(self.initial_balance),
-                pos_dir=pos_dir,
-                open_pnl=open_pnl,
-                dist_to_sl=dist_to_sl,
-                trailing_dd=trailing_dd,
-                close=current_close,
-                entry_state=exposed_entry_state,
-            )
-        else:
-            raw_account = [
-                self.account.equity,
-                pos_dir,
-                open_pnl,
+    assert values.shape == (10,)
+    assert values.dtype == np.float32
+    np.testing.assert_allclose(
+        values[:6], [np.log(0.99), -1.0, -0.001, -100.0 / 99_000 * 100, 0.0005, 0.1]
 # … caller assertions omitted …
 ```
+
+2. [test fixture: `test_normalized_account_vector_rejects_nonfinite_inputs`](../../../../tests/unit/decisioning/test_observations.py#L48)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        "close": 20_000.0,
+    }
+    inputs[name] = float("nan")
+
+    with pytest.raises(ValueError, match=f"input {name} must be finite"):
+        normalized_account_vector(
+            equity=inputs["equity"],
+            initial_balance=inputs["initial_balance"],
+            pos_dir=inputs["pos_dir"],
+            open_pnl=inputs["open_pnl"],
+            dist_to_sl=inputs["dist_to_sl"],
+            trailing_dd=inputs["trailing_dd"],
+            close=inputs["close"],
+            entry_state=None,
+        )
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -214,45 +223,32 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_observation`](../../../../live/runtime/strategy.py#L213)
+1. [test fixture: `test_pad_observation_window_left_pads_two_dimensional_values_and_mask`](../../../../tests/unit/decisioning/test_observations.py#L87)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        feats = select_obs_columns(self._features, self._raw_columns())
-        if self._bars is not None:
-            feats = attach_reachable_r(feats, self._bars, self._features)
-        window = feats.iloc[-self.obs_window :]
-        seq = np.nan_to_num(np.asarray(window.values, dtype=np.float32), nan=0.0)
-        seq, seq_mask = pad_observation_window(seq, self.obs_window)
+def test_pad_observation_window_left_pads_two_dimensional_values_and_mask() -> None:
+    values, mask = pad_observation_window(np.array([[1.0, 2.0], [3.0, 4.0]]), 4)
 
-        st = account_state or {}
-        equity = float(st.get("equity", self._initial_balance))
-        pos_dir = float(st.get("position_direction", 0.0))
-        open_pnl = float(st.get("open_pnl", 0.0))
-# … caller assertions omitted …
+    np.testing.assert_array_equal(values, [[0.0, 0.0], [0.0, 0.0], [1.0, 2.0], [3.0, 4.0]])
+    np.testing.assert_array_equal(mask, [0.0, 0.0, 1.0, 1.0])
+    assert values.dtype == np.float32
 ```
 
-2. [production caller: `_get_observation`](../../../../simulation/environment/observation_runtime.py#L79)
+2. [test fixture: `test_pad_observation_window_keeps_only_the_latest_rows_when_sequence_is_long`](../../../../tests/unit/decisioning/test_observations.py#L95)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        if self.mtf and self._m1_idx.size:
-            seq = seq[:, self._m1_idx]
-        elif self.mtf:
-            seq = np.zeros((seq.shape[0], 1), dtype=np.float32)
-        seq = cast(np.ndarray[Any, Any], np.nan_to_num(seq, nan=0.0))
-        seq, seq_mask = pad_observation_window(seq, self.obs_window)
+def test_pad_observation_window_keeps_only_the_latest_rows_when_sequence_is_long() -> None:
+    values, mask = pad_observation_window(np.array([1.0, 2.0, 3.0]), 2)
 
-        # Account state
-        pos_dir = float(self.position.direction) if self.position is not None else 0.0
-        open_pnl = float(self.account.open_pnl) if self.position is not None else 0.0
-        unrealised_r = (open_pnl / self.account.equity * 100) if self.account.equity > 0 else 0.0
-# … caller assertions omitted …
+    np.testing.assert_array_equal(values, [[2.0], [3.0]])
+    np.testing.assert_array_equal(mask, [1.0, 1.0])
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -265,7 +261,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return the ordered observation contract as JSON-compatible data.
 
-**Exact API:** {py:obj}`decisioning.observations.ObservationSchema.to_dict` · **Source:** [decisioning/observations.py:145](../../../../decisioning/observations.py#L145)
+**Exact API:** {py:obj}`decisioning.observations.ObservationSchema.to_dict` · **Source:** [decisioning/observations.py:170](../../../../decisioning/observations.py#L170)
 
 **Inputs and outputs:**
 
@@ -277,31 +273,35 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `_StubModel`](../../../../tests/unit/features/test_stage_a_observation.py#L24)
+1. [test fixture: `test_setup_backtest_emits_versioned_account_state`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L798)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-class _StubModel:
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V1).to_dict()
-    _action_schema = build_discrete_trading_action_schema().to_dict()
-    action_space: Any = spaces.Discrete(20)
+# … caller setup omitted …
+        current_price=20_000.0,
+        entry_price=0.0,
+    )
+    np.testing.assert_allclose(captured["account"], expected)
+    assert captured["account"].shape == (28,)
+    assert result["observation_schema"] == observation_schema.to_dict()
+    assert result["daily_pnl_basis"] == "session_net_equity"
+    assert result["daily_loss_limit_pct"] == 0.05
+    assert result["daily_loss_limit_usd"] == 5_000.0
 
-    def predict(self, obs: dict[str, Any], deterministic: bool = True) -> np.ndarray[Any, Any]:  # noqa: ARG002
-        return np.array([1])
+    visible_entry_state = build_observation_schema(schema_version, entry_state_visibility=True)
+# … caller assertions omitted …
 ```
 
-2. [test fixture: `_StubModel`](../../../../tests/unit/live/test_rl_bridge.py#L164)
+2. [test fixture: `_StubModel`](../../../../tests/unit/features/test_stage_a_observation.py#L24)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 class _StubModel:
-    """Duck-typed SB3 model: action = +1 (long) always."""
-
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V1).to_dict()
+    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
+    _action_schema = build_discrete_trading_action_schema().to_dict()
     action_space: Any = spaces.Discrete(20)
-    _action_schema: dict[str, object] = build_discrete_trading_action_schema().to_dict()
 
     def predict(self, obs: dict[str, Any], deterministic: bool = True) -> np.ndarray[Any, Any]:  # noqa: ARG002
         return np.array([1])
@@ -320,7 +320,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the total number of flattened observation coordinates.
 
-**Exact API:** {py:obj}`decisioning.observations.ObservationSchema.width` · **Source:** [decisioning/observations.py:137](../../../../decisioning/observations.py#L137)
+**Exact API:** {py:obj}`decisioning.observations.ObservationSchema.width` · **Source:** [decisioning/observations.py:162](../../../../decisioning/observations.py#L162)
 
 **Inputs and outputs:**
 
@@ -332,7 +332,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_v2_schema_has_exact_named_width`](../../../../tests/unit/simulation/test_environment/test_observation_schema.py#L60)
+1. [test fixture: `test_v2_schema_has_exact_named_width`](../../../../tests/unit/simulation/test_environment/test_observation_schema.py#L61)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -343,7 +343,7 @@ def test_v2_schema_has_exact_named_width() -> None:
     assert schema.coordinates == V2_COORDINATES
 ```
 
-2. [production caller: `to_dict`](../../../../decisioning/observations.py#L153)
+2. [production caller: `to_dict`](../../../../decisioning/observations.py#L178)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

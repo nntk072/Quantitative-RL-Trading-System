@@ -7,6 +7,7 @@ from typing import Any
 
 from artifacts.atomic import write_text_atomic
 from training.artifacts import aggregate_seed_results, build_training_log
+from training.artifacts.aggregation import _recorded_true
 from training.callbacks.activity import classify_zero_trade_cause
 
 
@@ -90,7 +91,7 @@ def finalize_training_run(
             env_flags=single.get("env_flags"),
             oos_role=single.get("oos_role", "final_report_only"),
         )
-        training_log["train_equity_ok"] = bool(single["train_gate"]["ok"])
+        training_log["train_equity_ok"] = single["train_gate"].get("ok") is True
         training_log["train_end_equity"] = float(single["train_gate"]["end_equity"])
         training_log["train_equity_slope"] = float(single["train_gate"]["slope"])
         training_log["train_equity_reason"] = str(single["train_gate"]["reason"])
@@ -100,10 +101,27 @@ def finalize_training_run(
     inactive_seeds = [
         int(result["seed"])
         for result in seed_results
-        if not bool(result["train_activity_gate"]["ok"])
+        if result["train_activity_gate"].get("ok") is not True
     ]
+    survival_objective = str(cfg.env.get("reward_mode", "dsr")).strip().lower() == "survival"
+    survival_ok_by_seed = (
+        {
+            str(result["seed"]): _complete_breach_free_train_split(
+                result.get("train_result", {}), result.get("train_gate", {})
+            )
+            for result in seed_results
+        }
+        if survival_objective
+        else {}
+    )
     failed_survival_seeds = [
-        int(result["seed"]) for result in seed_results if not bool(result["train_gate"]["ok"])
+        int(result["seed"])
+        for result in seed_results
+        if not (
+            survival_ok_by_seed[str(result["seed"])]
+            if survival_objective
+            else result["train_gate"].get("ok") is True
+        )
     ]
     policy_fit_miss_seeds = [
         int(result["seed"])
@@ -113,28 +131,48 @@ def finalize_training_run(
     hard_survival_failure_seeds = [
         int(result["seed"])
         for result in seed_results
-        if not bool(result["train_gate"].get("ok"))
+        if result["train_gate"].get("ok") is not True
         and not _peak_dd_policy_only_miss(result["train_gate"])
     ]
+    if survival_objective:
+        hard_survival_failure_seeds = list(failed_survival_seeds)
     aborts = {
         str(result["seed"]): str(result["abort_reason"])
         for result in seed_results
         if result["abort_reason"]
     }
-    training_admissible = not (inactive_seeds or failed_survival_seeds or aborts)
+    expected_seeds = [int(value) for value in seeds]
+    result_seeds = [int(result["seed"]) for result in seed_results]
+    seed_results_cover_request = (
+        bool(expected_seeds)
+        and len(expected_seeds) == len(set(expected_seeds))
+        and len(result_seeds) == len(expected_seeds)
+        and len(result_seeds) == len(set(result_seeds))
+        and set(result_seeds) == set(expected_seeds)
+    )
     training_completed_by_seed = {
         str(result["seed"]): int(result.get("model_num_timesteps", 0)) >= int(timesteps)
         for result in seed_results
     }
     training_completed = (
-        bool(seed_results) and all(training_completed_by_seed.values()) and not aborts
+        seed_results_cover_request and all(training_completed_by_seed.values()) and not aborts
+    )
+    train_split_survival_ok = (
+        seed_results_cover_request and bool(seed_results) and not failed_survival_seeds
+        if survival_objective
+        else None
+    )
+    training_admissible = training_completed and not (
+        failed_survival_seeds or aborts or (inactive_seeds and not survival_objective)
     )
     if any("nonfinite" in reason.lower() for reason in aborts.values()):
         overall_status = "FAIL_NUMERICAL"
     elif aborts:
         overall_status = "FAIL_EARLY_ABORT"
     elif hard_survival_failure_seeds:
-        overall_status = "FAIL_SURVIVAL"
+        overall_status = "FAIL_TRAIN_SPLIT_SURVIVAL" if survival_objective else "FAIL_SURVIVAL"
+    elif survival_objective:
+        overall_status = "PASS_TRAIN_SPLIT_SURVIVAL" if training_completed else "INCOMPLETE"
     elif inactive_seeds:
         overall_status = "FAIL_INACTIVE"
     elif policy_fit_miss_seeds and training_completed:
@@ -143,28 +181,32 @@ def finalize_training_run(
         overall_status = "INCOMPLETE_POLICY_MISS"
     else:
         overall_status = "PASS_ACTIVE" if training_completed else "INCOMPLETE"
-    training_log["train_activity_ok"] = not inactive_seeds
-    training_log["train_survival_ok"] = not failed_survival_seeds
+    training_log["train_activity_ok"] = bool(seed_results) and not inactive_seeds
+    training_log["train_split_survival_ok"] = train_split_survival_ok
     training_log["train_activity_ok_by_seed"] = {
-        str(result["seed"]): bool(result["train_activity_gate"]["ok"]) for result in seed_results
+        str(result["seed"]): _recorded_true(result["train_activity_gate"].get("ok"))
+        for result in seed_results
     }
-    training_log["train_survival_ok_by_seed"] = {
-        str(result["seed"]): bool(result["train_gate"]["ok"]) for result in seed_results
+    training_log["train_split_survival_ok_by_seed"] = survival_ok_by_seed or None
+    training_log["train_portfolio_fit_ok_by_seed"] = {
+        str(result["seed"]): _recorded_true(result["train_gate"].get("ok"))
+        for result in seed_results
     }
+    if survival_objective:
+        # Do not let the older return/equity-fit gate overrule survival status.
+        training_log["train_equity_ok"] = bool(train_split_survival_ok)
     training_log["train_activity_status_by_seed"] = {
         str(result["seed"]): str(result["train_activity_gate"]["status"]) for result in seed_results
     }
+    activity_statuses = [str(result["train_activity_gate"]["status"]) for result in seed_results]
     training_log["train_activity_status"] = (
-        "INACTIVE"
-        if inactive_seeds
-        else (
-            "ACTIVE_SPARSE"
-            if any(
-                result["train_activity_gate"]["status"] == "ACTIVE_SPARSE"
-                for result in seed_results
-            )
-            else "ACTIVE"
-        )
+        "NO_RESULTS"
+        if not activity_statuses
+        else "INACTIVE"
+        if "INACTIVE" in activity_statuses
+        else "ACTIVE_SPARSE"
+        if "ACTIVE_SPARSE" in activity_statuses
+        else "ACTIVE"
     )
     training_log["train_n_trades"] = {
         str(result["seed"]): int(result["train_activity_gate"]["n_trades"])
@@ -198,10 +240,11 @@ def finalize_training_run(
     training_log["failed_survival_seeds"] = failed_survival_seeds
     training_log["hard_survival_failure_seeds"] = hard_survival_failure_seeds
     training_log["hard_risk_ok_by_seed"] = {
-        str(result["seed"]): bool(
-            result["train_gate"].get(
-                "hard_risk_ok", not result["train_gate"].get("breached", False)
-            )
+        str(result["seed"]): (
+            result["train_gate"].get("hard_risk_ok") is True
+            and result["train_gate"].get("breached") is False
+            if survival_objective
+            else _hard_risk_pass(result["train_gate"])
         )
         for result in seed_results
     }
@@ -220,9 +263,21 @@ def finalize_training_run(
     )
     training_log["training_completed_by_seed"] = training_completed_by_seed
     training_log["training_completed"] = training_completed
-    training_log["retraining_recommended"] = bool(policy_fit_miss_seeds and training_completed)
+    training_log["seed_results_cover_request"] = seed_results_cover_request
+    training_log["missing_seed_results"] = sorted(set(expected_seeds) - set(result_seeds))
+    training_log["unexpected_seed_results"] = sorted(set(result_seeds) - set(expected_seeds))
+    training_log["retraining_recommended"] = bool(
+        policy_fit_miss_seeds and training_completed and not survival_objective
+    )
     training_log["early_abort_reasons_by_seed"] = aborts
     training_log["training_admissible"] = training_admissible
+    training_log["training_admissibility_scope"] = (
+        "all_configured_train_splits_only"
+        if survival_objective
+        else "all_configured_training_splits"
+    )
+    if survival_objective:
+        training_log["qualification_gate_artifact"] = "survival_phase_gate.json"
     training_log["overall_status"] = overall_status
 
     sequence_schemas = [
@@ -257,7 +312,7 @@ def finalize_training_run(
     write_text_atomic(run_dir / "training_log.json", json.dumps(training_log, indent=2))
     if hard_survival_failure_seeds:
         raise SystemExit(f"TRAIN_SURVIVAL_FAILED: seeds={hard_survival_failure_seeds}")
-    if inactive_seeds:
+    if inactive_seeds and not survival_objective:
         raise SystemExit(f"TRAIN_ACTIVITY_FAILED: zero train-replay trades; seeds={inactive_seeds}")
     if aborts:
         raise SystemExit(f"TRAIN_EARLY_ABORT: {aborts}")
@@ -319,6 +374,56 @@ def _peak_dd_policy_missed(gate: dict[str, Any]) -> bool:
     return "peak_trailing_dd" in reasons
 
 
+def _complete_breach_free_train_split(outcome: Any, gate: Any) -> bool:
+    """Return whether one result proves a completed, breach-free train split.
+
+    Args:
+        outcome: Full-split evaluation result recorded by the rollout.
+        gate: Train-equity assessment containing the explicit hard-risk result.
+
+    Returns:
+        Whether the outcome proves survival through the complete train split.
+    """
+    if not isinstance(outcome, dict) or not isinstance(gate, dict):
+        return False
+    breaches = outcome.get("n_breach_sessions")
+    return (
+        gate.get("hard_risk_ok") is True
+        and gate.get("breached") is False
+        and outcome.get("survived_full_year") is True
+        and outcome.get("completed_data_split") is True
+        and isinstance(breaches, int)
+        and not isinstance(breaches, bool)
+        and breaches == 0
+    )
+
+
+def _hard_risk_pass(gate: Any) -> bool:
+    """Require typed, internally consistent hard-risk evidence.
+
+    Args:
+        gate: Persisted hard-risk gate record.
+
+    Returns:
+        Whether available breach and hard-risk fields show a passing result.
+    """
+    if not isinstance(gate, dict):
+        return False
+    has_hard_risk = "hard_risk_ok" in gate
+    has_breached = "breached" in gate
+    hard_risk_ok = gate.get("hard_risk_ok")
+    breached = gate.get("breached")
+    if has_hard_risk and not isinstance(hard_risk_ok, bool):
+        return False
+    if has_breached and not isinstance(breached, bool):
+        return False
+    if has_hard_risk and has_breached and hard_risk_ok is breached:
+        return False
+    if has_hard_risk:
+        return hard_risk_ok is True
+    return has_breached and breached is False
+
+
 def _peak_dd_policy_only_miss(gate: dict[str, Any]) -> bool:
     """Separate a DD-only policy miss from a hard-risk or malformed-gate failure.
 
@@ -330,8 +435,9 @@ def _peak_dd_policy_only_miss(gate: dict[str, Any]) -> bool:
     """
     reasons = {part.strip() for part in str(gate.get("reason", "")).split(",") if part.strip()}
     return (
-        not bool(gate.get("ok"))
+        gate.get("ok") is False
         and "peak_trailing_dd" in reasons
-        and not bool(gate.get("breached"))
+        and gate.get("breached") is False
+        and ("hard_risk_ok" not in gate or gate.get("hard_risk_ok") is True)
         and "max_loss_stopped_trading" not in reasons
     )

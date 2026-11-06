@@ -43,7 +43,7 @@ This page contains 5 public callable records owned by `trading.risk.sizing`. Sta
 
 **Observed usage:**
 
-1. [test fixture: `test_wider_stop_returns_fewer_lots`](../../../../tests/integration/backtest/test_entry_levels.py#L665)
+1. [test fixture: `test_wider_stop_returns_fewer_lots`](../../../../tests/integration/backtest/test_entry_levels.py#L755)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -60,7 +60,7 @@ def test_wider_stop_returns_fewer_lots() -> None:
     assert wide < tight
 ```
 
-2. [test fixture: `test_explicit_risk_usd_overrides_zero_risk_frac`](../../../../tests/unit/simulation/test_environment/test_fixed_risk_sizing.py#L78)
+2. [test fixture: `test_explicit_risk_usd_overrides_zero_risk_frac`](../../../../tests/unit/simulation/test_environment/test_fixed_risk_sizing.py#L79)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -109,6 +109,8 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   execution_reserve_per_lot: Numeric value used for the execution reserve per lot.
   min_lot: Numeric value used for the min lot.
   max_lot: Numeric value used for the max lot.
+  point_value: Account-currency value of one price unit per contract.
+  lot_step: Broker volume increment. The result is rounded down to this step.
   ```
 
 - **Returns:**
@@ -138,7 +140,33 @@ def test_trading_risk_primitives_share_risk_and_reserve_sizing() -> None:
         execution_reserve_per_lot=2.0,
         min_lot=0.01,
         max_lot=20.0,
-    ) == pytest.approx(100.0 / 12.0)
+    ) == pytest.approx(8.33)
+```
+
+2. [test fixture: `test_execution_reserved_lots_round_down_to_broker_volume_step`](../../../../tests/unit/trading/test_risk.py#L37)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_execution_reserved_lots_round_down_to_broker_volume_step() -> None:
+    lots = compute_lots_with_execution_reserve(
+        total_risk_budget_usd=100.0,
+        equity=100_000.0,
+        risk_frac=0.01,
+        entry_price=100.0,
+        sl_price=90.0,
+        contract_size=1.0,
+        execution_reserve_per_lot=2.0,
+        min_lot=0.1,
+        max_lot=20.0,
+        lot_step=0.1,
+    )
+    assert lots == 8.3
+    assert lots * 12.0 <= 100.0
+
+    below_step_boundary = compute_lots_with_execution_reserve(
+        total_risk_budget_usd=0.8999999999,
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -181,7 +209,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_compute_sl_tp_long`](../../../../tests/unit/trading/test_risk.py#L38)
+1. [test fixture: `test_compute_sl_tp_long`](../../../../tests/unit/trading/test_risk.py#L83)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -271,7 +299,7 @@ print(
 
 **Observed usage:**
 
-1. [test fixture: `test_compute_sl_tp_short`](../../../../tests/unit/trading/test_risk.py#L52)
+1. [test fixture: `test_compute_sl_tp_short`](../../../../tests/unit/trading/test_risk.py#L97)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -287,7 +315,7 @@ def test_compute_sl_tp_short() -> None:
     assert tp == 88.0  # 100 - 2*(106-100)
 ```
 
-2. [production caller: `compute_sl_tp_from_structure`](../../../../trading/risk/sizing.py#L236)
+2. [production caller: `compute_sl_tp_from_structure`](../../../../trading/risk/sizing.py#L251)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

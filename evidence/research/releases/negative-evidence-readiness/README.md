@@ -11,13 +11,13 @@ data and makes no data-rights or redistribution claim.
 
 - [Final readiness report](FINAL_READINESS_REPORT.md) gives the gate-by-gate
   disposition and the exact remaining blockers.
-- [Evidence-bounded thesis report](../../../../docs/thesis/research_evidence_report.md)
+- [Evidence-bounded research report](../../../../docs/research/research_evidence_report.md)
   provides the current manuscript-style synthesis. It is a draft with open
   scientific gates, not a final thesis verdict.
 - [Consolidated results](CONSOLIDATED_RESEARCH_RESULTS.md) states the bounded
   empirical conclusion and separates training from exposed report-period data.
-- [Legacy risk-gate trace](legacy_daily_loss_counter_breach_trace.md) documents
-  the historical legacy daily-loss counter and reconciles the March events to
+- [Gross realized-loss counter trace](gross_realized_loss_counter_breach_trace.md) documents
+  the historical gross realized-loss counter and reconciles the March events to
   the close ledgers.
 - [Data provenance and access](DATA_PROVENANCE_AND_ACCESS.md) records what was
   found in the checkout and scratch campaign, and what remains unverified.
@@ -48,10 +48,12 @@ data and makes no data-rights or redistribution claim.
   both the M1 mean and last-value references, and the configured schedule is
   not asserted as authoritative.
 - [Real-market feature prefix invariance](../../feature_causality/real_market_feature_prefix_invariance_all_profiles.json)
-  is the current all-profile report: 130 configurations resolved to 19
-  feature-builder groups, 57/57 comparisons passed across three cutoffs, and
-  the current runner, inventory, feature-source, and local-input hashes are
-  recorded. The selected-profile report at
+  is the current v39 all-profile result: 130 configurations resolved to 19
+  feature-builder groups, with 57/57 comparisons passing across three cutoffs
+  and zero maximum absolute delta. It records 78 source hashes and four local
+  input hashes. This closes the current-source prefix check while leaving
+  broader event-cardinality, publication-time, configuration, and historical
+  action-linkage gates open. The selected-profile report at
   [its historical path](real_market_feature_prefix_invariance.json) remains
   for comparison only.
 - [Tick flag/quote-side cross-tab](tick_quote_side_flag_cross_tab.json)
@@ -64,6 +66,14 @@ data and makes no data-rights or redistribution claim.
   preliminary exports are outside the repository archive.
 - [Model and baseline catalog](MODEL_AND_BASELINE_CATALOG.md) describes what
   the tested policy can and cannot establish.
+- [Matched setup baseline packet](../../matched_setup_baselines/README.md)
+  records the completed 2025 Tier 0 controls, fixed Tier 1 structure rule, and
+  execution diagnostics. The flat arm is unchanged; the random and rule
+  references ended at -10.16% and -10.03%, each with 25 breach events. These
+  are negative accounting results, not a policy ranking. Two earlier pair
+  bundles are retained as superseded because their flat-arm interval files
+  repeated the random arm's intervals; the corrected three-arm bundle's
+  per-arm intervals and result-manifest hashes were verified.
 - [Training-only setup opportunity census](../../trade_setup_opportunity_census/README.md)
   records monthly/regime eligibility and horizon coverage for all 108 setup
   categories under the registered feature overlay. Only 24 are enabled there;
@@ -74,6 +84,11 @@ data and makes no data-rights or redistribution claim.
   claim boundaries, and exact artifact hashes. The v2 record remains draft
   because several historical identity fields are unavailable; each is marked
   unknown with a reason.
+- [Selected campaign artifact integrity](selected_campaign_artifact_integrity.json)
+  rehashes the campaign source ZIP and all 590 manifested files, plus both run
+  manifests, configs, and final checkpoints. It does not replay the models or
+  rehash raw data; the run source-tree hash remains unknown and the recorded
+  feature cache is unavailable at its run-manifest path.
 - [Experiment provenance DAG](EXPERIMENT_PROVENANCE_DAG.json) links all
   discovered campaign/experiment manifests to their declared source, input,
   job, and artifact identities. Large data and checkpoint payloads are not

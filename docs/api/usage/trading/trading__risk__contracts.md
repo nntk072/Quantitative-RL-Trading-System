@@ -8,13 +8,13 @@ This page contains 4 public callable records owned by `trading.risk.contracts`. 
 
 **Purpose:** Risk-policy result for one requested trade.
 
-**Exact API:** {py:obj}`trading.risk.contracts.RiskDecision` · **Source:** [trading/risk/contracts.py:26](../../../../trading/risk/contracts.py#L26)
+**Exact API:** {py:obj}`trading.risk.contracts.RiskDecision` · **Source:** [trading/risk/contracts.py:53](../../../../trading/risk/contracts.py#L53)
 
 **Inputs and outputs:**
 
 **Observed usage:**
 
-1. [test fixture: `decide`](../../../../tests/unit/trading/test_risk_policy_contract.py#L15)
+1. [test fixture: `decide`](../../../../tests/unit/trading/test_risk_policy_contract.py#L126)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -25,13 +25,12 @@ def decide(self, state: RiskState, requested_risk: float) -> RiskDecision:
     return RiskDecision(allowed=amount > 0.0, risk_amount=amount)
 ```
 
-2. [test fixture: `test_two_risk_policies_consume_the_same_semantic_state`](../../../../tests/unit/trading/test_risk_policy_contract.py#L34)
+2. [test fixture: `test_two_risk_policies_consume_the_same_semantic_state`](../../../../tests/unit/trading/test_risk_policy_contract.py#L151)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_two_risk_policies_consume_the_same_semantic_state() -> None:
-    state = RiskState(equity=100_000.0, daily_pnl=-400.0, open_risk=100.0, daily_loss_limit=500.0)
+# … caller setup omitted …
     policies: tuple[RiskPolicy, ...] = (_FixedCapPolicy(50.0), _DailyLossPolicy())
 
     decisions = tuple(policy.decide(state, requested_risk=200.0) for policy in policies)
@@ -55,7 +54,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate requested risk without depending on a broker or policy model.
 
-**Exact API:** {py:obj}`trading.risk.contracts.RiskPolicy` · **Source:** [trading/risk/contracts.py:39](../../../../trading/risk/contracts.py#L39)
+**Exact API:** {py:obj}`trading.risk.contracts.RiskPolicy` · **Source:** [trading/risk/contracts.py:76](../../../../trading/risk/contracts.py#L76)
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
 
@@ -82,27 +81,50 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Account risk state provided to a risk policy.
 
-**Exact API:** {py:obj}`trading.risk.contracts.RiskState` · **Source:** [trading/risk/contracts.py:10](../../../../trading/risk/contracts.py#L10)
+**Exact API:** {py:obj}`trading.risk.contracts.RiskState` · **Source:** [trading/risk/contracts.py:18](../../../../trading/risk/contracts.py#L18)
 
 **Inputs and outputs:**
 
 **Observed usage:**
 
-1. [test fixture: `test_two_risk_policies_consume_the_same_semantic_state`](../../../../tests/unit/trading/test_risk_policy_contract.py#L28)
+1. [test fixture: `test_two_risk_policies_consume_the_same_semantic_state`](../../../../tests/unit/trading/test_risk_policy_contract.py#L139)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 def test_two_risk_policies_consume_the_same_semantic_state() -> None:
-    state = RiskState(equity=100_000.0, daily_pnl=-400.0, open_risk=100.0, daily_loss_limit=500.0)
+    state = RiskState(
+        equity=100_000.0,
+        daily_pnl=-400.0,
+        open_risk=100.0,
+        daily_loss_limit=500.0,
+        daily_pnl_basis=RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
+    )
     policies: tuple[RiskPolicy, ...] = (_FixedCapPolicy(50.0), _DailyLossPolicy())
 
     decisions = tuple(policy.decide(state, requested_risk=200.0) for policy in policies)
 
     assert decisions == (
-        RiskDecision(True, 50.0),
-        RiskDecision(False, 0.0, "daily_loss_limit"),
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_risk_state_and_decision_declare_supported_schema_versions`](../../../../tests/unit/trading/test_risk_policy_contract.py#L157)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_risk_state_and_decision_declare_supported_schema_versions() -> None:
+    state = RiskState(
+        100_000.0,
+        -400.0,
+        100.0,
+        500.0,
+        RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
     )
+    decision = RiskDecision(True, 50.0)
+
+    assert state.schema_version == RISK_STATE_SCHEMA_V1
+    assert decision.schema_version == RISK_DECISION_SCHEMA_V1
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -118,7 +140,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate requested risk against the current account state.
 
-**Exact API:** {py:obj}`trading.risk.contracts.RiskPolicy.decide` · **Source:** [trading/risk/contracts.py:42](../../../../trading/risk/contracts.py#L42)
+**Exact API:** {py:obj}`trading.risk.contracts.RiskPolicy.decide` · **Source:** [trading/risk/contracts.py:79](../../../../trading/risk/contracts.py#L79)
 
 **Inputs and outputs:**
 

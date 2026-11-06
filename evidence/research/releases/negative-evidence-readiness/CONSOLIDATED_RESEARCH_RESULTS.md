@@ -31,9 +31,9 @@ breaches of the configured historical counter, not evidence of a net
 FTMO-style daily-equity breach. A4B also had a separate `max_drawdown` event on
 2025-10-28. The stored `fail_time` is the first breach timestamp, not a
 terminal stop: both evaluations separately record that they reached the end
-of the configured data split. The trace explains how the legacy counter
+of the configured data split. The trace explains how the gross realized-loss counter
 crossed its threshold, but not why the policy entered the stopped trades; see
-the [risk-gate trace](legacy_daily_loss_counter_breach_trace.md).
+the [risk-gate trace](gross_realized_loss_counter_breach_trace.md).
 
 The training entry funnel adds a separate mechanism trace: 88.3% of treatment
 entry requests and 91.1% of control requests were rejected because the entry
@@ -58,6 +58,20 @@ ended at $90,026.53 over 1,031 positions. These were one-seed negative screens,
 not 2M results or confirmation. Their full-year ledgers record no new opens
 after the breach.
 
+## Current-source Tier 0 setup reference
+
+The matched setup evaluator completed the 2025 development split for the
+always-no-trade control, one seeded random-eligible reference, and one fixed
+structure-priority rule. Each arm processed 351,432 bars and 99,492 decisions
+from the same bar, feature, and TickBook inputs. The control remained at
+$100,000 with no fills or breaches. The random reference completed 1,854
+positions, returned −10.16%, and recorded 25 breach events; the fixed rule
+completed 1,169 positions, returned −10.03%, and also recorded 25 breaches.
+Per-arm and step-aligned paired within-trajectory intervals are retained in
+the [matched setup baseline packet](../../matched_setup_baselines/README.md).
+These are negative Tier 0/Tier 1 accounting results, not a comparison with the
+historical RL checkpoint, multi-seed estimates, or viable strategy claims.
+
 ## Exposed report period
 
 2026-01-01 through 2026-10-16 was already inspected and is report-only. The
@@ -79,6 +93,30 @@ result does not resolve tick-side missingness, same-time quote chronology,
 feature-prefix coverage, or execution parity. See
 [configured multi-timeframe data alignment](../../../../docs/research/multitimeframe_data_alignment.md)
 and its [machine report](configured_timeframe_parity.json).
+
+## Candidate outcome-data feasibility
+
+The training-only conditional replay covers 54,638 statically eligible
+proposals across the 24 candidate categories enabled by the recorded profile,
+with 1,067,731 proposal/bracket combinations. It verified 259,358
+filled/resolved rows, 39,186 unfilled/expired limit rows, and 769,187
+unresolved rows. Most unresolved outcomes reflect incomplete local quote
+coverage before exit resolution (355,861 rows) or order disposition (319,870);
+89,609 more have no market-entry quote within the configured wait. The
+remaining unresolved rows retain invalid realized stop/target geometry,
+session-close boundary, or quote-order failures.
+
+Coverage is strongly unequal by signal month: unresolved shares are 84.8%–94.2%
+from 2024-12 through 2025-08, 53.0% in September, 45.4% in October, 32.1% in
+November, and 15.9% in December. The candidate-by-month and monthly reason
+tables preserve their exact denominators. This pattern is a coverage and
+trigger-horizon limitation; it does not identify an economic regime effect.
+The stratified replay audit exactly reproduces 12 rows through the same
+versioned execution function, not an independent implementation. The packet is
+conditional fixed-entry evidence and excludes policy actions, account state,
+portfolio contention, and policy value. The current resolved subset is not a
+representative basis for candidate calibration, model fitting, or a return
+claim. See the [candidate outcome packet](../../candidate_outcomes/README.md).
 
 ## Conclusion
 

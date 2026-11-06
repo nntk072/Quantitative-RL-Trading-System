@@ -19,12 +19,14 @@ from typing import Any, cast
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
 
+from decisioning.trade_setup import trade_setup_candidate  # noqa: E402
 from features.context.trade_setup_candidates import (  # noqa: E402
     TRADE_SETUP_EVENT_IDENTITY_VERSION,
     trade_setup_candidate_event_time_fields,
 )
 
 OUT = ROOT / "evidence/research/candidate_event_cardinality"
+CURRENT_MATCHED_BASELINE_TRACE_ROOT = "evidence/research/matched_setup_baselines/"
 
 INPUTS = [
     "evidence/research/trade_setup_opportunity_census/candidate_event_identity_summary.csv",
@@ -70,6 +72,17 @@ def build_identity_contract(rows: list[dict[str, str]]) -> list[dict[str, str]]:
     result: list[dict[str, str]] = []
     for row in rows:
         candidate_id = int(row["candidate_id"])
+        candidate = trade_setup_candidate(candidate_id)
+        expected_direction = "long" if candidate.direction == 1 else "short"
+        if (row["idea"], row["timeframe"], row["direction"]) != (
+            candidate.idea,
+            candidate.setup_timeframe,
+            expected_direction,
+        ):
+            raise ValueError(
+                "Candidate identity census semantics disagree with the canonical catalog "
+                f"for candidate {candidate_id}"
+            )
         time_fields = [
             {"field": field, "scale_to_nanoseconds": scale}
             for field, scale in trade_setup_candidate_event_time_fields(candidate_id)
@@ -142,6 +155,21 @@ def register_row(
         "interpretation": interpretation,
         "source_path": source,
     }
+
+
+def trace_paths_by_scope(trace: dict[str, Any], field: str) -> tuple[list[str], list[str]]:
+    """Separate generated matched-baseline traces from other scanned traces."""
+    baseline_paths: list[str] = []
+    other_paths: list[str] = []
+    for value in trace.get(field, []):
+        if not isinstance(value, str):
+            continue
+        path = value.split("::", maxsplit=1)[0]
+        target = (
+            baseline_paths if path.startswith(CURRENT_MATCHED_BASELINE_TRACE_ROOT) else other_paths
+        )
+        target.append(value)
+    return sorted(baseline_paths), sorted(other_paths)
 
 
 def main() -> None:
@@ -368,28 +396,51 @@ def main() -> None:
 
     trace_path = "evidence/research/model_observation_and_action_semantics/decision_trace_availability_inventory.json"
     trace = read_json(ROOT / trace_path)
+    baseline_setup_paths, historical_setup_paths = trace_paths_by_scope(
+        trace, "per_decision_setup_trace_paths"
+    )
+    _baseline_geometry_paths, historical_geometry_paths = trace_paths_by_scope(
+        trace, "per_decision_price_geometry_trace_paths"
+    )
+    historical_setup_status = (
+        "found" if historical_setup_paths else "not_found_in_scanned_artifacts"
+    )
+    historical_geometry_status = (
+        "found" if historical_geometry_paths else "not_found_in_scanned_artifacts"
+    )
     register.extend(
         [
             register_row(
-                "historical_traceability",
-                "all supported families",
-                "scanned artifact roots",
+                "current_baseline_trace",
+                "matched setup baselines",
+                "current controlled baseline bundles",
                 "per_decision_setup_trace",
-                trace["per_decision_setup_trace_status"],
-                "availability status",
-                "276 recognized artifacts under four supplied roots; directory symlinks are not followed.",
-                "No qualifying historical setup-decision trace was found under the supplied physical roots; this is not global absence proof.",
+                len(baseline_setup_paths),
+                "trace files",
+                "Decision exports are counted as files, not independent policies or outcomes.",
+                "Generated baseline exports contain decision IDs, selected candidate IDs, and eligibility; the independent bundle audit links selected candidates to opened positions.",
                 trace_path,
             ),
             register_row(
                 "historical_traceability",
                 "all supported families",
-                "scanned artifact roots",
-                "per_decision_price_geometry_trace",
-                trace["per_decision_price_geometry_trace_status"],
+                "scanned artifacts outside current matched-baseline bundles",
+                "per_decision_setup_trace",
+                historical_setup_status,
                 "availability status",
-                "276 recognized artifacts under four supplied roots; directory symlinks are not followed.",
-                "No qualifying historical price-geometry trace was found under the supplied physical roots; this is not global absence proof.",
+                f"Current matched-baseline exports excluded; {trace['artifact_count']} recognized artifacts scanned under four supplied roots; directory symlinks are not followed.",
+                "No qualifying selected historical-policy setup-decision trace was found outside the generated matched-baseline exports; this is not global absence proof.",
+                trace_path,
+            ),
+            register_row(
+                "historical_traceability",
+                "all supported families",
+                "scanned artifacts outside current matched-baseline bundles",
+                "per_decision_price_geometry_trace",
+                historical_geometry_status,
+                "availability status",
+                f"Current matched-baseline exports excluded; {trace['artifact_count']} recognized artifacts scanned under four supplied roots; directory symlinks are not followed.",
+                "No qualifying historical per-decision candidate price-geometry trace was found outside the generated matched-baseline exports; this is not global absence proof.",
                 trace_path,
             ),
         ]
@@ -428,8 +479,11 @@ def main() -> None:
             "semantics": "candidate-scoped ordered source-time keys from the production identity function",
             "global_source_object_deduplication": False,
         },
-        "historical_candidate_to_action_linkage": trace["per_decision_setup_trace_status"],
-        "historical_price_geometry_trace": trace["per_decision_price_geometry_trace_status"],
+        "current_matched_baseline_setup_trace_paths": baseline_setup_paths,
+        "historical_candidate_to_action_linkage": historical_setup_status,
+        "historical_candidate_to_action_linkage_paths": historical_setup_paths,
+        "historical_price_geometry_trace": historical_geometry_status,
+        "historical_price_geometry_trace_paths": historical_geometry_paths,
         "input_sha256": {relative: sha256(ROOT / relative) for relative in INPUTS},
         "verified_packet_files": sorted(verified_packet_files),
         "generator": "scripts/research/analysis/evidence/build_candidate_event_cardinality_register.py",
@@ -438,7 +492,8 @@ def main() -> None:
             "Producer event counts, feature scalar pulses, candidate identities, and eligibility contexts use different units and are not summed into one event count.",
             "The generated v3 identity contract records exact source-time fields and scales for each candidate category; it does not assert that candidate-scoped IDs equal globally unique market source objects.",
             "Candidate-scoped IDs can refer to the same source-time tuple across candidates or timeframes.",
-            "The inventory found no qualifying historical per-decision setup or price-geometry traces in its scanned roots; absence is scoped to those roots and recognized filenames.",
+            "Current generated matched-baseline decisions.csv exports are recognized as selected-setup traces; they do not reconstruct the earlier selected historical policy.",
+            "No qualifying historical per-decision setup or price-geometry traces were found outside current matched-baseline outputs under the supplied roots; absence is scoped to those roots and recognized filenames.",
             "The broad inventory does not follow directory symlinks; artifacts reachable only through symlink directories outside the supplied physical roots are not included.",
             "Historical trades and fills are not linked back to candidate proposals by this register.",
             "All counts are descriptive local training-profile evidence, not economic performance or holdout evidence.",
@@ -472,11 +527,14 @@ sequences, standard-deviation source-leg projections, and IFVG per-zone
 confirmations separately from their scalar projections. None is a count of
 policy proposals, actions, orders, fills, or trades.
 
-The scoped 276-artifact inventory found no qualifying historical per-decision
-setup or price-geometry trace in its scanned roots. That is bounded absence
-evidence, not global proof. The scan does not follow directory symlinks and
-records the supplied physical roots only. Current rollout telemetry supports future
-decision-to-open correlation; it cannot reconstruct missing historical links.
+The refreshed artifact inventory recognizes the matched-baseline writer's
+`decisions.csv` files as selected-setup traces. These current controlled
+baselines record decision IDs, candidate IDs, and eligibility and are linked
+to opened positions by the independent accounting packet. They do not recover
+the earlier selected historical policy's per-decision actions. The historical
+candidate-to-action search remains a bounded no-go within the scanned physical
+roots; the scan does not follow directory symlinks and is not a global absence
+claim. Candidate price-geometry traces remain unavailable.
 
 ## Files
 

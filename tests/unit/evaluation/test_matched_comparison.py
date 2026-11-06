@@ -48,7 +48,7 @@ def test_paired_equity_metric_intervals_reject_unaligned_timestamps() -> None:
         index=pd.date_range("2025-01-01 00:01", periods=3, freq="min", tz="UTC"),
     )
 
-    with pytest.raises(ValueError, match="indexes must match exactly"):
+    with pytest.raises(ValueError, match="indexes must match exactly or share an exact prefix"):
         paired_equity_metric_differences(
             treatment,
             control,
@@ -56,6 +56,29 @@ def test_paired_equity_metric_intervals_reject_unaligned_timestamps() -> None:
             periods_per_year=100,
             n_boot=10,
         )
+
+
+def test_paired_equity_metric_intervals_use_exact_shared_prefix_when_one_policy_terminates() -> (
+    None
+):
+    index = pd.date_range("2025-01-01", periods=5, freq="min", tz="UTC")
+    treatment = pd.Series([100.0, 101.0, 102.0, 103.0, 104.0], index=index)
+    control = pd.Series([100.0, 100.5, 99.5], index=index[:3])
+
+    intervals = paired_equity_metric_differences(
+        treatment,
+        control,
+        initial_balance=100.0,
+        periods_per_year=100,
+        n_boot=50,
+        rng_seed=17,
+        block_len=2,
+    )
+
+    assert set(intervals) == {"mean_bar_return", "sharpe", "sortino", "max_drawdown"}
+    expected = np.mean(np.diff(treatment.iloc[:3].to_numpy()) / treatment.iloc[:3].to_numpy()[:-1])
+    expected -= np.mean(np.diff(control.to_numpy()) / control.to_numpy()[:-1])
+    assert intervals["mean_bar_return"].estimate == pytest.approx(expected)
 
 
 def test_paired_bundle_interval_record_matches_manifest_schema() -> None:
@@ -97,6 +120,52 @@ def test_paired_bundle_interval_record_matches_manifest_schema() -> None:
     assert record["status"] == "estimated"
 
 
+def test_paired_bundle_aligns_execution_valuation_times_by_shared_step_contract() -> None:
+    treatment_index = pd.date_range("2025-01-01", periods=4, freq="min", tz="UTC")
+    control_index = treatment_index.to_series().index.copy()
+    control_index = pd.DatetimeIndex(
+        [
+            treatment_index[0],
+            treatment_index[1] + pd.Timedelta(milliseconds=76),
+            *treatment_index[2:],
+        ]
+    )
+    protocol = {"n_boot": 20, "level": 0.95, "seed": 5, "block_length_bars": 2}
+    identity = {"bars": "shared", "features": "shared", "tickbook": "shared"}
+    evaluation = {
+        "n_steps": 3,
+        "evaluation_start": "2025-01-01T00:00:00+00:00",
+        "evaluation_end": "2025-01-01T00:03:00+00:00",
+    }
+    outputs = {
+        name: {
+            "equity": pd.Series(values, index=index),
+            "evaluation": evaluation,
+            "policy_metadata": {
+                "confidence_interval_protocol": protocol,
+                "input_hashes": identity,
+                "evaluation_start": evaluation["evaluation_start"],
+                "evaluation_end": evaluation["evaluation_end"],
+            },
+        }
+        for name, values, index in (
+            ("treatment", [100.0, 101.0, 102.0, 103.0], treatment_index),
+            ("control", [100.0, 100.5, 101.5, 102.0], control_index),
+        )
+    }
+
+    record = _paired_interval_record(
+        outputs,
+        "treatment",
+        "control",
+        {"account": {"initial_balance": 100.0}, "evaluation": {"periods_per_year": 100}},
+    )
+
+    assert record["status"] == "estimated"
+    assert record["paired_return_observations"] == 3
+    assert "shared environment-step path" in record["scope"]
+
+
 def test_paired_bundle_interval_record_reports_insufficient_returns() -> None:
     index = pd.date_range("2025-01-01", periods=2, freq="min", tz="UTC")
     protocol = {"n_boot": 20, "level": 0.95, "seed": 5, "block_length_bars": 2}
@@ -131,7 +200,7 @@ def test_paired_bundle_interval_record_reports_insufficient_returns() -> None:
     assert record["metrics"] == {}
 
 
-def test_paired_bundle_rejects_misaligned_paths_when_interval_is_not_estimable() -> None:
+def test_paired_bundle_records_misaligned_paths_without_paired_inference() -> None:
     treatment_index = pd.date_range("2025-01-01", periods=2, freq="min", tz="UTC")
     control_index = pd.date_range("2025-01-01 00:01", periods=2, freq="min", tz="UTC")
     protocol = {"n_boot": 20, "level": 0.95, "seed": 5, "block_length_bars": 2}
@@ -146,10 +215,13 @@ def test_paired_bundle_rejects_misaligned_paths_when_interval_is_not_estimable()
         },
     }
 
-    with pytest.raises(ValueError, match="indexes must match exactly"):
-        _paired_interval_record(
-            outputs,
-            "treatment",
-            "control",
-            {"account": {"initial_balance": 100.0}, "evaluation": {"periods_per_year": 100}},
-        )
+    record = _paired_interval_record(
+        outputs,
+        "treatment",
+        "control",
+        {"account": {"initial_balance": 100.0}, "evaluation": {"periods_per_year": 100}},
+    )
+
+    assert record["status"] == "not_estimable"
+    assert record["paired_return_observations"] == 0
+    assert "do not share an exact prefix" in record["reason"]

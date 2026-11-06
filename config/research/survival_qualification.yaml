@@ -1,0 +1,53 @@
+# Reusable policy-learning overlay. Load on top of config/base/default.yaml
+# with qrl-train train --config config/research/survival_qualification.yaml.
+# Architecture, seed set, and walk-forward count remain explicit CLI choices.
+account:
+  initial_balance: 100000.0
+
+data:
+  timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
+
+features:
+  htf_timeframes: [M3, M5, M10, M15, M30, H1, H4, D1]
+  entry_ideas:
+    enabled: true
+    timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
+
+env:
+  reward_mode: survival
+  observation_schema_version: account-state-v2
+  feature_validity_channels: true
+  reachable_r_validity_mask: true
+  strict_research_eligibility: true
+  max_episode_steps: null
+
+ftmo:
+  limit_value_mode: percent_equity
+  max_drawdown_mode: static
+  risk_per_trade_limit: 1000.0
+  risk_sizing_limit_usd: 900.0
+  risk_per_trade_limit_pct: 0.01
+  daily_loss_limit_pct: 0.05
+  soft_daily_loss_limit_pct: 0.05
+  max_loss_limit_initial_pct: 0.10
+  soft_max_loss_limit_initial_pct: 0.10
+
+trading_policy:
+  mode: legacy
+  daily_pnl_basis: session_net_equity
+  daily_loss_includes_open_pnl: true
+  daily_loss_reset_source: supplied_session_id_transition
+
+risk:
+  # All higher-timeframe structural target references; primary M1 swing levels
+  # are already present as unprefixed fields and are not repeated in this list.
+  target_timeframes: [M3, M5, M10, M15, M30, H1, H4, D1]
+
+training:
+  episode_mode: full_split
+  max_days: null
+  survival_gate_manifest: null
+
+ppo:
+  gamma: 1.0
+  gae_lambda: 1.0

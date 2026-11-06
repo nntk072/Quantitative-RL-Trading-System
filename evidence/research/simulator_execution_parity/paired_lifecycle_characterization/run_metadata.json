@@ -1,0 +1,16 @@
+{
+  "run_date": "2026-11-04",
+  "checkout": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System",
+  "git_head": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "device": "one GH200; test suite used CPU execution in the existing GPU allocation",
+  "python": "ARM64 .venv/bin/python",
+  "command": ".venv/bin/python -m pytest tests/integration/backtest/test_account_transition_parity.py tests/integration/backtest/test_multi_target_protective_lifecycle.py tests/integration/backtest/test_risk_lifecycle_characterization.py tests/integration/backtest/test_repeated_payout_backtest.py tests/integration/backtest/test_broker_fill_accounting.py tests/integration/backtest/test_broker_quote_parity.py tests/integration/backtest/test_local_tick_action_trace.py -q",
+  "exit_code": 0,
+  "collected": 69,
+  "passed": 69,
+  "failed": 0,
+  "duration_seconds": 1.01,
+  "claim_limit": "Focused current-source simulator lifecycle characterization only. This does not establish complete simulator parity, historical policy linkage, financing costs, external quote chronology, or live broker parity."
+}

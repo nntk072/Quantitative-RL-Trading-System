@@ -1,0 +1,49 @@
+{
+  "schema": "missing-artifact-filesystem-search-metadata-v1",
+  "completed_at_utc": "2026-11-06T05:27:02Z",
+  "git_sha": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "slurm_job_id": "21426161",
+  "node": "gpuarm1",
+  "python_version": "Python 3.12.15",
+  "command": ".venv/bin/python scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py --search-root /scratch --max-candidate-bytes 32212254720 --workers 8 --output evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/scratch_filesystem_search_v2.json",
+  "exit_code": 2,
+  "search": {
+    "root": "/scratch",
+    "scope": "ordinary files with basenames matching the 132 missing artifact targets",
+    "follows_directory_symlinks": false,
+    "candidate_byte_limit": 32212254720,
+    "workers": 8,
+    "target_count": 132,
+    "candidate_file_count": 589,
+    "candidate_bytes": 3746898205,
+    "hashed_file_count": 589,
+    "read_error_count": 0,
+    "walk_error_count": 3516,
+    "walk_errors_within_user_tree": 0,
+    "exact_match_count": 0,
+    "unmatched_target_count": 132,
+    "status": "incomplete_walk_errors",
+    "disposition": "No exact artifacts recovered among readable same-basename files. The user tree had zero walk errors. Traversal was blocked in 3516 directories elsewhere under /scratch, so this is not a global absence claim."
+  },
+  "inputs": {
+    "provenance_byte_report": {
+      "path": "evidence/research/releases/negative-evidence-readiness/PROVENANCE_BYTE_VERIFICATION.json",
+      "sha256": "afacb529c0430cc371683af5148308dbdd614c883bbe63aba4047568a6c58c62"
+    },
+    "provenance_dag": {
+      "path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+      "sha256": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c"
+    }
+  },
+  "source": {
+    "scanner_path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py",
+    "scanner_sha256": "7dab852205fb1b7bfe5765b8e2b5e89a0ade7ddfe9f4e22251f942dbc143da4c",
+    "test_path": "tests/research/test_missing_artifact_filesystem_reconciliation.py",
+    "test_sha256": "5409015249408a3062cb44adfb873d70fd923525b9eeadf2f52ec86babb903d1",
+    "test_status": "deferred to consolidated implementation validation"
+  },
+  "output": {
+    "path": "evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/scratch_filesystem_search_v2.json",
+    "sha256": "e9cbb715e21803ceb7253fd93a5fd4cc8c7caed4ab389c811c180332625ccc66"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "archive_count": 577,
+  "archive_members_hashed": "Every readable direct file member; nested ZIP/checkpoint payloads not recursively opened",
+  "claim_scope": "Basename-targeted SHA-256 search for 132 currently missing run artifacts across direct ZIP archives under the current scratch root",
+  "command": ".venv/bin/python scripts/research/analysis/evidence/reconcile_missing_artifacts_from_archives.py --all-members --hash-candidates --max-uncompressed-bytes 32212254720 --workers 8 --output /scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/all_archive_member_sha_reconciliation.json",
+  "direct_member_count": 42902,
+  "directory_symlinks_followed": false,
+  "exact_matches": 0,
+  "hashed_member_count": 42902,
+  "home_directory_search": {
+    "metadata_path": "home_directory_search_metadata.json",
+    "metadata_sha256": "b174a0e562ec4801a1fa0488118449b4b8fa1063b1a04f2783b31dafdf253689",
+    "report_path": "home_directory_search.json",
+    "report_sha256": "d6f20af7aa67931d59e1589db981e202aac1cdafd9b8532416f3058a349bab86"
+  },
+  "inputs": {
+    "provenance_byte_report": {
+      "path": "evidence/research/releases/negative-evidence-readiness/PROVENANCE_BYTE_VERIFICATION.json",
+      "sha256": "afacb529c0430cc371683af5148308dbdd614c883bbe63aba4047568a6c58c62"
+    },
+    "provenance_dag": {
+      "path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+      "sha256": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c"
+    }
+  },
+  "max_uncompressed_bytes": 32212254720,
+  "member_read_errors": 0,
+  "output": {
+    "bytes": 24653176,
+    "path": "archive_search.json",
+    "sha256": "8f65d5e8b7b6c2495652ef228775b99dc2e0d98fb2b9f7ea525b3864f1248cec"
+  },
+  "reproduction_command": ".venv/bin/python scripts/research/analysis/evidence/reconcile_missing_artifacts_from_archives.py --all-members --hash-candidates --max-uncompressed-bytes 32212254720 --workers 8 --output evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/archive_search.json",
+  "schema_version": 1,
+  "search_root": "/scratch/work/nguyenl37",
+  "status": "incomplete_archive_errors",
+  "target_count": 132,
+  "temporary_roots_search": {
+    "exact_matches": 0,
+    "metadata_path": "temporary_roots_search_metadata.json",
+    "metadata_sha256": "7f7113b4cea13c8d8ada8431f8e9d064b0a6ca41489187e82704d5526a435323",
+    "report_paths": [
+      "tmp_directory_search.json",
+      "var_tmp_directory_search.json"
+    ],
+    "target_count": 132,
+    "unmatched_targets": 132
+  },
+  "training_or_evaluation_run": false,
+  "uncompressed_bytes_hashed": 21671964914,
+  "unmatched_targets": 132,
+  "unreadable_archive_error": "BadZipFile",
+  "unreadable_archives": 16,
+  "validation": {
+    "test_path": "tests/research/test_missing_artifact_archive_reconciliation.py",
+    "test_result": "4 passed",
+    "validation_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/archive_artifact_reconciliation_tests.log"
+  },
+  "workers": 8
+}

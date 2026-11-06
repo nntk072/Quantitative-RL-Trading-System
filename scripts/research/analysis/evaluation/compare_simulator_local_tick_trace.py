@@ -169,23 +169,33 @@ def _select_event_pairs(
     timezone: str,
     max_hold_minutes: int,
     max_pairs: int,
+    max_pairs_per_stratum: int = 1,
+    start_month: str | None = None,
+    end_month: str | None = None,
 ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
     """Select quality-screened source pairs across months and both directions.
 
     Pair selection uses timestamp-group quality and TickBook resolution only;
-    it does not rank or filter pairs by reported PnL. At most one pair per
-    month/direction stratum is selected, and no source event is reused.
+    it does not rank or filter pairs by reported PnL. A bounded number of pairs
+    per month/direction stratum is selected, and no source event is reused.
     """
-    if max_pairs < 1:
-        raise ValueError("max_pairs must be positive")
+    if max_pairs < 1 or max_pairs_per_stratum < 1:
+        raise ValueError("max_pairs and max_pairs_per_stratum must be positive")
+    for name, value in (("start_month", start_month), ("end_month", end_month)):
+        if value is not None and (len(value) != 7 or value[4] != "-"):
+            raise ValueError(f"{name} must use YYYY-MM format")
+    if start_month is not None and end_month is not None and start_month > end_month:
+        raise ValueError("start_month must not be later than end_month")
     raw_events = alignment.get("events", [])
-    event_keys = {
-        id(event): str(event.get("event_id"))
-        if event.get("event_id") is not None
-        else f"row:{index}"
-        for index, event in enumerate(raw_events)
-        if isinstance(event, Mapping)
-    }
+    event_keys: dict[int, str] = {}
+    for index, event in enumerate(raw_events):
+        if not isinstance(event, Mapping):
+            continue
+        source = str(event.get("event_ledger_source", ""))
+        event_id = event.get("event_id")
+        event_keys[id(event)] = (
+            f"{source}::event:{event_id}" if event_id is not None else f"row:{index}"
+        )
     months = sorted(
         {
             _time(event["event_time_utc"]).strftime("%Y-%m")
@@ -193,41 +203,47 @@ def _select_event_pairs(
             if isinstance(event, Mapping)
             and event.get("event_time_utc")
             and str(event.get("event_type", "")).lower() == "open"
+            and (
+                start_month is None
+                or _time(event["event_time_utc"]).strftime("%Y-%m") >= start_month
+            )
+            and (end_month is None or _time(event["event_time_utc"]).strftime("%Y-%m") <= end_month)
         }
     )
     used_events: set[str] = set()
     selected: list[tuple[dict[str, Any], dict[str, Any]]] = []
     for month in months:
         for direction in (1, -1):
-            if len(selected) >= max_pairs:
-                return selected
-            stratum_events = []
-            for event in raw_events:
-                if not isinstance(event, Mapping) or event_keys[id(event)] in used_events:
-                    continue
-                event_time = event.get("event_time_utc")
-                if not event_time or _time(event_time).strftime("%Y-%m") != month:
-                    continue
-                if (
-                    str(event.get("event_type", "")).lower() == "open"
-                    and int(event.get("direction", 0) or 0) != direction
-                ):
-                    continue
-                stratum_event = dict(event)
-                stratum_event["_source_event_key"] = event_keys[id(event)]
-                stratum_events.append(stratum_event)
-            try:
-                pair = _select_event_pair(
-                    {**alignment, "events": stratum_events},
-                    bars,
-                    book,
-                    timezone=timezone,
-                    max_hold_minutes=max_hold_minutes,
-                )
-            except ValueError:
-                continue
-            selected.append(pair)
-            used_events.update(str(event["_source_event_key"]) for event in pair)
+            for _ in range(max_pairs_per_stratum):
+                if len(selected) >= max_pairs:
+                    return selected
+                stratum_events = []
+                for event in raw_events:
+                    if not isinstance(event, Mapping) or event_keys[id(event)] in used_events:
+                        continue
+                    event_time = event.get("event_time_utc")
+                    if not event_time or _time(event_time).strftime("%Y-%m") != month:
+                        continue
+                    if (
+                        str(event.get("event_type", "")).lower() == "open"
+                        and int(event.get("direction", 0) or 0) != direction
+                    ):
+                        continue
+                    stratum_event = dict(event)
+                    stratum_event["_source_event_key"] = event_keys[id(event)]
+                    stratum_events.append(stratum_event)
+                try:
+                    pair = _select_event_pair(
+                        {**alignment, "events": stratum_events},
+                        bars,
+                        book,
+                        timezone=timezone,
+                        max_hold_minutes=max_hold_minutes,
+                    )
+                except ValueError:
+                    break
+                selected.append(pair)
+                used_events.update(str(event["_source_event_key"]) for event in pair)
     return selected
 
 
@@ -398,7 +414,11 @@ def replay_local_tick_trace(
                 "same_source_decision_bar": pd.Timestamp(env_event["decision_bar_time"]).tz_convert(
                     "UTC"
                 )
-                == pd.Timestamp(backtest_event["decision_time"]).tz_convert("UTC"),
+                == pd.Timestamp(backtest_event["decision_bar_time"]).tz_convert("UTC"),
+                "same_order_submission_time": pd.Timestamp(
+                    env_event["order_submission_time"]
+                ).tz_convert("UTC")
+                == pd.Timestamp(backtest_event["order_submission_time"]).tz_convert("UTC"),
             }
         )
     close_pnl_match = bool(np.isclose(env_close["pnl"], backtest_close["pnl"], rtol=0.0, atol=1e-8))
@@ -409,6 +429,7 @@ def replay_local_tick_trace(
         "trace_passed": all(all(check.values()) for check in comparisons)
         and close_pnl_match
         and balance_match,
+        "initial_balance": initial_balance,
         "direction": direction,
         "environment_entry_action": env_entry_action,
         "backtest_entry_action": backtest_entry_action,
@@ -450,6 +471,9 @@ def build_report(
     timezone: str = "Etc/GMT-3",
     max_hold_minutes: int = 60,
     max_trace_pairs: int = 24,
+    max_pairs_per_stratum: int = 1,
+    start_month: str | None = None,
+    end_month: str | None = None,
 ) -> dict[str, Any]:
     """Build source-verified quote pairs and replay each through both engines."""
     alignment = json.loads(alignment_path.read_text(encoding="utf-8"))
@@ -479,6 +503,9 @@ def build_report(
         timezone=timezone,
         max_hold_minutes=max_hold_minutes,
         max_pairs=max_trace_pairs,
+        max_pairs_per_stratum=max_pairs_per_stratum,
+        start_month=start_month,
+        end_month=end_month,
     )
     if not pairs:
         raise ValueError("no monthly direction strata matched unique full source quotes")
@@ -486,6 +513,7 @@ def build_report(
     def evidence_event(event: Mapping[str, Any]) -> dict[str, Any]:
         group = event["timestamp_group"]
         return {
+            "event_ledger_source": event.get("event_ledger_source"),
             "event_id": event.get("event_id"),
             "event_type": event.get("event_type"),
             "reported_order_submission_time_utc": event.get("order_submission_time_utc"),
@@ -537,9 +565,10 @@ def build_report(
         "directions_covered": sorted(directions),
         "source_event_reuse": False,
         "selection_rule": (
-            "At most one pair per source month and direction, selected in chronological order "
-            "using unique complete quote groups reproduced by the current TickBook; no PnL-based "
-            "selection."
+            f"At most {max_pairs_per_stratum} pairs per source month and direction, selected in "
+            "chronological order using unique complete quote groups reproduced by the current "
+            f"TickBook within {start_month or 'all'} through {end_month or 'all'}; no PnL-based "
+            "selection and no source event reused."
         ),
         "claim_scope": (
             "Controlled one-entry/one-exit action replays across source month/direction strata "
@@ -580,6 +609,9 @@ def main() -> None:
     parser.add_argument("--timezone", default="Etc/GMT-3")
     parser.add_argument("--max-hold-minutes", type=int, default=60)
     parser.add_argument("--max-trace-pairs", type=int, default=24)
+    parser.add_argument("--max-pairs-per-stratum", type=int, default=1)
+    parser.add_argument("--start-month", help="inclusive source month in YYYY-MM form")
+    parser.add_argument("--end-month", help="inclusive source month in YYYY-MM form")
     parser.add_argument("--out", type=Path, default=ROOT / DEFAULT_OUTPUT)
     args = parser.parse_args()
     report = build_report(
@@ -589,6 +621,9 @@ def main() -> None:
         timezone=args.timezone,
         max_hold_minutes=args.max_hold_minutes,
         max_trace_pairs=args.max_trace_pairs,
+        max_pairs_per_stratum=args.max_pairs_per_stratum,
+        start_month=args.start_month,
+        end_month=args.end_month,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     write_json_atomic(args.out, report)

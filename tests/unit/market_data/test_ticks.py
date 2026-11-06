@@ -18,9 +18,11 @@ from market_data.loading.ticks import (
     TickExecutionUnavailable,
     _ffill_inplace,
     build_tick_book,
+    limit_entry_execution_rng,
     resolve_tick_execution,
     resolve_tick_execution_by_deadline,
     resolve_tick_exit,
+    resolve_tick_limit_execution,
     tick_execution_coverage,
 )
 from market_data.transforms.price_grid import tick_cache_filename
@@ -58,6 +60,33 @@ def test_tickbook_content_hash_includes_stable_quote_order() -> None:
 
     assert book.content_sha256() == identical.content_sha256()
     assert book.content_sha256() != reordered.content_sha256()
+
+
+def test_limit_latency_rng_is_stable_for_shared_order_intent() -> None:
+    submission = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    environment_rng = limit_entry_execution_rng(42, submission, 1, 20_000.0, candidate_id=17)
+    backtest_rng = limit_entry_execution_rng(42, submission, 1, 20_000.0, candidate_id=17)
+
+    assert (
+        environment_rng.integers(0, 10_000, size=8).tolist()
+        == backtest_rng.integers(0, 10_000, size=8).tolist()
+    )
+
+
+@pytest.mark.parametrize(
+    ("order_time", "direction", "limit_price", "candidate_id"),
+    (
+        (pd.Timestamp("2025-01-06 16:30:00"), 1, 20_000.0, 17),
+        (pd.Timestamp("2025-01-06 16:30:00", tz="UTC"), 0, 20_000.0, 17),
+        (pd.Timestamp("2025-01-06 16:30:00", tz="UTC"), 1, 0.0, 17),
+        (pd.Timestamp("2025-01-06 16:30:00", tz="UTC"), 1, 20_000.0, -1),
+    ),
+)
+def test_limit_latency_rng_rejects_invalid_order_identity(
+    order_time: pd.Timestamp, direction: int, limit_price: float, candidate_id: int
+) -> None:
+    with pytest.raises(ValueError):
+        limit_entry_execution_rng(42, order_time, direction, limit_price, candidate_id)
 
 
 def test_equal_timestamp_quote_uses_first_source_row_across_chunks(tmp_path: Path):
@@ -252,6 +281,121 @@ def test_scheduled_close_uses_first_quote_after_arrival_before_deadline():
     assert fill.order_time == order_time
     assert order_time <= fill.arrival_time < fill.tick_time <= deadline
     assert fill.tick_time == eligible_tick
+
+
+def test_buy_limit_uses_first_executable_ask_at_or_below_limit():
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    times = pd.to_datetime(
+        [start, start + pd.Timedelta(seconds=5), start + pd.Timedelta(seconds=10)], utc=True
+    )
+    book = TickBook(
+        times.values.astype("int64"),
+        np.array([101.0, 100.5, 100.0]),
+        np.array([101.6, 101.1, 100.6]),
+    )
+
+    fill = resolve_tick_limit_execution(
+        book,
+        direction=1,
+        limit_price=101.1,
+        order_time=start,
+        expiry_time=start + pd.Timedelta(seconds=10),
+        rng=np.random.default_rng(1),
+    )
+
+    assert fill is not None
+    assert fill.tick_time == start + pd.Timedelta(seconds=5)
+    assert (fill.bid, fill.ask) == pytest.approx((100.5, 101.1))
+    assert fill.limit_price == pytest.approx(101.1)
+
+
+def test_sell_limit_uses_first_executable_bid_at_or_above_limit():
+    book = _make_book()
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+
+    fill = resolve_tick_limit_execution(
+        book,
+        direction=-1,
+        limit_price=100.5,
+        order_time=start,
+        expiry_time=start + pd.Timedelta(seconds=10),
+        rng=np.random.default_rng(1),
+    )
+
+    assert fill is not None
+    assert fill.tick_time == start + pd.Timedelta(seconds=5)
+    assert (fill.bid, fill.ask) == pytest.approx((100.5, 101.1))
+
+
+def test_limit_execution_can_require_trade_through_for_queue_sensitivity():
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    times = pd.to_datetime(
+        [start, start + pd.Timedelta(seconds=5), start + pd.Timedelta(seconds=10)], utc=True
+    )
+    book = TickBook(
+        times.values.astype("int64"),
+        np.array([101.0, 100.5, 100.0]),
+        np.array([101.6, 101.1, 100.6]),
+    )
+
+    fill = resolve_tick_limit_execution(
+        book,
+        direction=1,
+        limit_price=101.1,
+        order_time=start,
+        expiry_time=start + pd.Timedelta(seconds=10),
+        rng=np.random.default_rng(1),
+        require_trade_through=True,
+    )
+
+    assert fill is not None
+    assert fill.tick_time == times[2]
+
+
+def test_limit_execution_respects_inclusive_expiry():
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    times = pd.to_datetime(
+        [start + pd.Timedelta(milliseconds=1), start + pd.Timedelta(milliseconds=2)],
+        utc=True,
+    )
+    book = TickBook(
+        times.values.astype("int64"),
+        np.array([100.0, 100.0]),
+        np.array([101.0, 100.5]),
+    )
+
+    fill = resolve_tick_limit_execution(
+        book,
+        direction=1,
+        limit_price=100.5,
+        order_time=start,
+        expiry_time=times[1],
+        rng=np.random.default_rng(1),
+    )
+
+    assert fill is not None
+    assert fill.tick_time == times[1]
+    assert fill.tick_time <= times[1]
+
+
+def test_limit_execution_rejects_invalid_side_price_and_timestamps():
+    book = _make_book()
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    rng = np.random.default_rng(1)
+
+    with pytest.raises(ValueError, match="direction"):
+        resolve_tick_limit_execution(book, 0, 100.0, start, start, rng)
+    with pytest.raises(ValueError, match="limit_price"):
+        resolve_tick_limit_execution(book, 1, float("nan"), start, start, rng)
+    with pytest.raises(ValueError, match="timezone-aware"):
+        resolve_tick_limit_execution(
+            book,
+            1,
+            100.0,
+            pd.Timestamp("2025-01-06 16:30:00"),
+            start,
+            rng,
+        )
 
 
 def test_scheduled_close_rejects_quote_before_sampled_arrival():
@@ -488,6 +632,28 @@ def test_build_tick_book_quantizes_executable_bid_ask(tmp_path: Path) -> None:
 
     quote = book.quote_at(pd.Timestamp("2025-01-06 16:30:00", tz="Etc/GMT-3"))
     assert quote == pytest.approx((25633.75, 25634.0))
+
+
+def test_build_tick_book_preserves_price_grid_equality_for_protective_levels(
+    tmp_path: Path,
+) -> None:
+    csv_path = tmp_path / "protective_level_grid_ticks.csv"
+    _write_tick_csv(
+        csv_path,
+        [("2025.01.06", "16:30:00.000", 21460.15, 21460.95)],
+    )
+
+    book = build_tick_book(
+        csv_path,
+        session_start=None,
+        session_end=None,
+        chunksize=1,
+    )
+
+    quote = book.quote_at(pd.Timestamp("2025-01-06 16:30:00", tz="Etc/GMT-3"))
+    assert quote is not None
+    assert quote[0] == 21460.15
+    assert quote[0] <= 21460.15
 
 
 def test_tick_cache_identity_prevents_grid_quotes_from_leaking_to_raw_mode(tmp_path: Path) -> None:

@@ -1,0 +1,32 @@
+{
+  "assets": [
+    {
+      "path": "evidence/research/simulator_execution_parity/early_reset_abort_semantics/README.md",
+      "bytes": 1385,
+      "sha256": "b9d9fdc4dfd7537778b2557bfea34f92172ed8e12adaf238fd1e4367c941c9eb"
+    },
+    {
+      "path": "evidence/research/simulator_execution_parity/early_reset_abort_semantics/SOURCE_SHA256SUMS",
+      "bytes": 736,
+      "sha256": "5c0334bd11d839a5b20d0a423ec968d2bab8647667e771e33f2e510589bfa609"
+    },
+    {
+      "path": "evidence/research/simulator_execution_parity/early_reset_abort_semantics/focused_tests.log",
+      "bytes": 495,
+      "sha256": "e7b378492c59b271dc295870cce222d434e9acd7d65593d94bd683aaf5f8201d"
+    },
+    {
+      "path": "evidence/research/simulator_execution_parity/early_reset_abort_semantics/run_metadata.json",
+      "bytes": 2166,
+      "sha256": "780d9c322ef33804d811f34f93f6753da110bc0635560c0d8d735d0ffa574868"
+    },
+    {
+      "path": "evidence/research/simulator_execution_parity/early_reset_abort_semantics/summary.json",
+      "bytes": 611,
+      "sha256": "562456c3b053bec4c3afbaa8d6012b22581334cc0e134df4e540f5ed38072eb5"
+    }
+  ],
+  "claim_scope": "current-source manual TradingEnv reset abort semantics and distinction from configured liquidation boundaries",
+  "packet": "early_reset_abort_semantics",
+  "schema": "qrl.evidence_packet.v1"
+}

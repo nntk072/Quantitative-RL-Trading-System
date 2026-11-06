@@ -155,6 +155,25 @@ class MatchedComparisonTest(unittest.TestCase):
 
         self.assertAlmostEqual(result.estimate, 0.001)
 
+    def test_policy_identity_can_be_the_declared_intervention(self):
+        times = pd.date_range("2025-01-01", periods=20, freq="h")
+        control = pd.Series(np.zeros(20), index=times)
+        treatment = pd.Series(np.linspace(-0.01, 0.01, 20), index=times)
+        common = _contract_for(control)
+        control_provenance = common | {"policy_sha256": "1" * 64}
+        treatment_provenance = common | {"policy_sha256": "2" * 64}
+
+        result = compare_matched_returns(
+            treatment,
+            control,
+            treatment_provenance,
+            control_provenance,
+            intervention_field="policy_sha256",
+            n_boot=20,
+        )
+
+        self.assertAlmostEqual(result.estimate, 0.0)
+
     def test_declared_intervention_must_be_the_only_difference(self):
         times = pd.date_range("2025-01-01", periods=3, freq="h")
         values = pd.Series([0.01, -0.01, 0.02], index=times)

@@ -47,7 +47,14 @@ class TradeSetupEventIdentity:
 def trade_setup_event_identity_record(
     identity: TradeSetupEventIdentity | None,
 ) -> dict[str, object]:
-    """Serialize one resolved setup identity for a decision or order ledger."""
+    """Serialize one resolved setup identity for a decision or order ledger.
+
+    Args:
+        identity: Resolved candidate source-event identity, if available.
+
+    Returns:
+        Identity fields for the ledger, or an empty mapping when unavailable.
+    """
     if identity is None:
         return {}
     return {
@@ -123,15 +130,16 @@ def _event_time_fields(candidate: TradeSetupCandidate) -> tuple[tuple[str, int],
     return tuple((f"{prefix}{name}", scale) for name, scale in names)
 
 
-def _time_values(value: Any, scale: int) -> tuple[int, ...]:
-    """Normalize finite scalar/vector timestamp values to integer nanoseconds.
+def _time_values(value: Any, scale: int) -> tuple[tuple[int, ...], str]:
+    """Normalize timestamp values and report whether their state is unambiguous.
 
     Args:
         value: Timestamp value or duplicate-column values from the feature row.
         scale: Multiplier converting the source unit to nanoseconds.
 
     Returns:
-        Distinct finite integer nanosecond keys in source order. Float-backed epoch
+        Distinct integer nanosecond keys and one of ``valid``, ``missing``,
+        ``partial``, ``conflicting``, or ``invalid``. Float-backed epoch
         timestamps retain their existing binary precision limits.
     """
     if isinstance(value, pd.Series):
@@ -141,16 +149,36 @@ def _time_values(value: Any, scale: int) -> tuple[int, ...]:
     else:
         values = [value]
     result: list[int] = []
+    saw_missing = False
     for item in values:
+        if item is None:
+            saw_missing = True
+            continue
+        try:
+            missing = pd.isna(item)
+        except (TypeError, ValueError):
+            return (), "invalid"
+        if isinstance(missing, (bool, np.bool_)) and bool(missing):
+            saw_missing = True
+            continue
+        if not isinstance(missing, (bool, np.bool_)):
+            return (), "invalid"
         try:
             numeric = float(item)
-        except (TypeError, ValueError):
-            continue
-        if np.isfinite(numeric):
-            timestamp_ns = int(round(numeric * scale))
-            if timestamp_ns not in result:
-                result.append(timestamp_ns)
-    return tuple(result)
+        except (TypeError, ValueError, OverflowError):
+            return (), "invalid"
+        if not np.isfinite(numeric):
+            return (), "invalid"
+        timestamp_ns = int(round(numeric * scale))
+        if timestamp_ns not in result:
+            result.append(timestamp_ns)
+    if not result:
+        return (), "missing" if saw_missing else "invalid"
+    if saw_missing:
+        return tuple(result), "partial"
+    if len(result) > 1:
+        return tuple(result), "conflicting"
+    return tuple(result), "valid"
 
 
 def trade_setup_candidate_event_identities(
@@ -202,10 +230,10 @@ def trade_setup_candidate_event_identities(
             if column not in row:
                 missing = True
                 continue
-            values = _time_values(_signal_value(row, column), scale)
-            if len(values) > 1:
+            values, state = _time_values(_signal_value(row, column), scale)
+            if state in {"partial", "conflicting", "invalid"}:
                 conflict = True
-            elif not values:
+            elif state == "missing":
                 missing = True
             else:
                 resolved.append((column, values[0]))
@@ -253,6 +281,144 @@ def trade_setup_candidate_event_time_fields(candidate_id: int) -> tuple[tuple[st
     if candidate.candidate_id == NO_TRADE_ID:
         raise ValueError("NO_TRADE has no source-event timestamp fields")
     return _event_time_fields(candidate)
+
+
+def trade_setup_event_is_current(
+    identity: TradeSetupEventIdentity | None,
+    row: Mapping[str, Any] | pd.Series | _FeatureRowLike,
+) -> tuple[bool, str]:
+    """Check whether an identified source setup remains active on a later row.
+
+    This is intended for a resting order that was submitted against a selected
+    setup. Confirmation flags may be pulses, so validity follows the producer's
+    live state: PO3 distribution plus its same-direction IFVG zone, the active
+    order-block/FVG/IFVG zone, or the standard-deviation leg's latched validity.
+    Persistent source timestamps must still identify the submission event;
+    retest-confirmation timestamps are one-row event pulses whose explicit
+    absence is allowed while the source zone remains active. Missing columns,
+    malformed pulses, conflicting, or changed source data fail closed so an
+    old order cannot attach itself to a replacement setup.
+
+    Args:
+        identity: Source identity captured when the candidate was selected.
+        row: Later feature row whose live setup state is checked.
+
+    Returns:
+        Whether the source remains current and a reason code when it does not.
+    """
+    if identity is None or identity.status != "identified" or not identity.source_event_id:
+        return False, "source_setup_identity_unavailable"
+    if not 0 <= identity.candidate_id < TRADE_SETUP_CATEGORY_COUNT:
+        return False, "source_setup_identity_unavailable"
+    candidate = TRADE_SETUP_CANDIDATES[identity.candidate_id]
+    if candidate.candidate_id == NO_TRADE_ID or candidate.setup_timeframe is None:
+        return False, "source_setup_identity_unavailable"
+
+    fields = _event_time_fields(candidate)
+    expected = dict(identity.source_event_times_ns)
+    if len(expected) != len(fields) or any(field not in expected for field, _ in fields):
+        return False, "source_setup_identity_unavailable"
+    prefix = "" if candidate.setup_timeframe == "M1" else f"{candidate.setup_timeframe}_"
+    side = "bull" if candidate.direction == 1 else "bear"
+    pulse_field_by_idea = {
+        "order_block": f"{prefix}ob_{side}_retest_confirmed_at_time_ns",
+        "fvg_retest": f"{prefix}fvg_{side}_retest_confirmed_at_time_ns",
+        "ifvg_retest": f"{prefix}ifvg_{side}_retest_confirmed_at_time_ns",
+    }
+    pulse_field = pulse_field_by_idea.get(candidate.idea) if candidate.idea is not None else None
+    pulse_confirmation_fields = frozenset({pulse_field}) if pulse_field in expected else frozenset()
+    for field, scale in fields:
+        if field not in row:
+            return False, "source_setup_state_unavailable"
+        current, timestamp_state = _time_values(_signal_value(row, field), scale)
+        # Retest confirmation is an event pulse. The event identifies the
+        # submitted setup, but its disappearance does not end the underlying
+        # active zone. A later confirmation with a new timestamp replaces it.
+        if timestamp_state == "missing" and field in pulse_confirmation_fields:
+            continue
+        if timestamp_state != "valid":
+            return False, "source_setup_invalidated"
+        if current[0] != expected[field]:
+            return False, "source_setup_replaced"
+
+    active_columns: tuple[str, ...]
+    if candidate.idea == "po3":
+        active_columns = (
+            f"{prefix}po3_distribution_after_ifvg",
+            f"{prefix}ifvg_{side}_active",
+        )
+        direction_column = f"{prefix}po3_distribution_direction"
+        if direction_column not in row:
+            return False, "source_setup_state_unavailable"
+        direction_values = _numeric_values(_signal_value(row, direction_column))
+        if not direction_values or any(
+            not np.isfinite(value) or value * candidate.direction <= 0.0
+            for value in direction_values
+        ):
+            return False, "source_setup_invalidated"
+    elif candidate.idea == "order_block":
+        active_columns = (f"{prefix}ob_{side}_active",)
+    elif candidate.idea == "fvg_retest":
+        active_columns = (f"{prefix}fvg_{side}_active",)
+    elif candidate.idea in {"ifvg_retest", "ifvg_unretested"}:
+        active_columns = (f"{prefix}ifvg_{side}_active",)
+    elif candidate.idea == "standard_deviation":
+        active_columns = (f"{prefix}standard_deviation_leg_valid",)
+        direction_column = f"{prefix}standard_deviation_leg_direction"
+        if direction_column not in row:
+            return False, "source_setup_state_unavailable"
+        direction_values = _numeric_values(_signal_value(row, direction_column))
+        if not direction_values or any(
+            not np.isfinite(value) or value * candidate.direction <= 0.0
+            for value in direction_values
+        ):
+            return False, "source_setup_invalidated"
+    else:
+        return False, "source_setup_state_unavailable"
+
+    if any(column not in row for column in active_columns):
+        return False, "source_setup_state_unavailable"
+    if not all(_all_values_are_active(_signal_value(row, column)) for column in active_columns):
+        return False, "source_setup_invalidated"
+    return True, ""
+
+
+def _numeric_values(value: Any) -> tuple[float, ...]:
+    """Flatten numeric values while preserving malformed or missing entries.
+
+    Args:
+        value: Scalar or duplicate feature values to normalize.
+
+    Returns:
+        Numeric values with invalid entries represented as NaN.
+    """
+    if isinstance(value, pd.Series):
+        values = value.tolist()
+    elif isinstance(value, (list, tuple, np.ndarray)):
+        values = list(value)
+    else:
+        values = [value]
+    result: list[float] = []
+    for item in values:
+        try:
+            numeric = float(item)
+        except (TypeError, ValueError):
+            numeric = float("nan")
+        result.append(numeric)
+    return tuple(result)
+
+
+def _all_values_are_active(value: Any) -> bool:
+    """Require every duplicate source-state value to be finite and active.
+
+    Args:
+        value: Scalar or repeated state values for one source feature.
+
+    Returns:
+        Whether at least one value exists and every value is finite and positive.
+    """
+    values = _numeric_values(value)
+    return bool(values) and all(np.isfinite(item) and item > 0.0 for item in values)
 
 
 def _value_is_active(value: Any) -> bool:
@@ -405,4 +571,5 @@ __all__ = [
     "trade_setup_candidate_event_time_fields",
     "trade_setup_candidate_feature_columns",
     "trade_setup_candidate_mask",
+    "trade_setup_event_is_current",
 ]

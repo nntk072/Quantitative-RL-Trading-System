@@ -1,0 +1,93 @@
+{
+  "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+  "campaign_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1",
+  "campaign_json": {
+    "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/campaign.json",
+    "sha256": "486c5a450019ce215f99e998fd306224bee4239cc5f9dec59233839955fc0497"
+  },
+  "campaign_source_commit": "b93642a368439a7838c3107c25fd4999b32bc028",
+  "created_at_utc": "2026-11-04T03:27:23.782237+00:00",
+  "elapsed_seconds": 0.39463357799104415,
+  "limitations": [
+    "This verifies archived identity and bytes; it does not reproduce the historical model run.",
+    "Raw data identity remains covered by the separate selected-campaign input audit.",
+    "The recorded feature cache is reported only at its run-manifest path; it is not required for this checkpoint-byte verification.",
+    "The separate replacement18 checkpoint-recovery freeze is a different campaign and is not used as P6 checkpoint evidence."
+  ],
+  "runs": [
+    {
+      "arm": "A4A",
+      "campaign_commit_is_ancestor": true,
+      "feature_cache_at_recorded_path_exists": false,
+      "feature_cache_recorded_file_sha256": "4a97305f1d4b21c3eca61fab78ad76ea8ec09f586c058094d81877ec8b82aeca",
+      "feature_cache_recorded_identity": "US100.cash_features_v24-native-source-timeframes_8a037e1d6633f0c4.parquet",
+      "final_checkpoint": {
+        "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/model/ppo_final.zip",
+        "sha256": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703",
+        "size_bytes": 25610834
+      },
+      "resolved_config": {
+        "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml",
+        "sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "size_bytes": 12221
+      },
+      "run_commit_is_ancestor_of_current_head": true,
+      "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4A/seed50",
+      "run_manifest": {
+        "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+        "sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+        "size_bytes": 84315
+      },
+      "source_commit": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+    },
+    {
+      "arm": "A4B",
+      "campaign_commit_is_ancestor": true,
+      "feature_cache_at_recorded_path_exists": false,
+      "feature_cache_recorded_file_sha256": "4a97305f1d4b21c3eca61fab78ad76ea8ec09f586c058094d81877ec8b82aeca",
+      "feature_cache_recorded_identity": "US100.cash_features_v24-native-source-timeframes_8a037e1d6633f0c4.parquet",
+      "final_checkpoint": {
+        "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/model/ppo_final.zip",
+        "sha256": "f2d07676fc5e1019dda9cbd1714874fd6997238ba70dc69a5f16be7c19a36fdf",
+        "size_bytes": 25614877
+      },
+      "resolved_config": {
+        "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml",
+        "sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "size_bytes": 12220
+      },
+      "run_commit_is_ancestor_of_current_head": true,
+      "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4B/seed50",
+      "run_manifest": {
+        "path": "archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+        "sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+        "size_bytes": 84403
+      },
+      "source_commit": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+    }
+  ],
+  "schema": "qrl.selected_campaign_artifact_integrity.v1",
+  "scope": {
+    "archive_wide_checkpoint_search": false,
+    "campaign_artifacts_rehashed": [
+      "campaign.json",
+      "source_snapshot.zip and every manifested source member",
+      "both run manifests",
+      "both resolved configs",
+      "both final checkpoints"
+    ],
+    "checkpoint_loaded_or_replayed": false,
+    "feature_cache_rehashed": false,
+    "raw_data_rehashed": false,
+    "training_performed": false
+  },
+  "source_snapshot": {
+    "embedded_manifest_sha256": "aa76f464a6569e1dc0f7ea4b3d0814fb285f679ba3c087bb4f2d359e07ead016",
+    "git_sha": "b93642a368439a7838c3107c25fd4999b32bc028",
+    "manifested_file_count": 590,
+    "manifested_file_hashes_match": 590,
+    "sha256": "9f8b3459820b7220b50e8d9145a15fb608f352438f90b388962c2ece48c62b99",
+    "size_bytes": 1287474
+  },
+  "status": "passed_with_scoped_limits"
+}

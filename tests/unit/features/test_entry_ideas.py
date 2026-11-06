@@ -328,6 +328,21 @@ def test_swing_extension_levels_expire_when_body_closes_beyond_level_zero() -> N
     assert np.isnan(result.iloc[9]["standard_deviation_level_neg_4_price"])
 
 
+def test_swing_retracement_leg_expires_only_after_close_exceeds_0786_envelope() -> None:
+    initial_bars = _bars([1, 2, 3, 2, 1, 2, 3, 4, 2.2])
+    pivots = structure_levels(initial_bars, swing_period=1, atr_mult=0.0)
+    swing_high = float(pivots.iloc[-1]["last_swing_high"])
+    swing_low = float(pivots.iloc[-1]["last_swing_low"])
+    exact_boundary = swing_high - 0.786 * (swing_high - swing_low)
+    bars = _bars([1, 2, 3, 2, 1, 2, 3, 4, 2.2, exact_boundary, exact_boundary - 0.001])
+    result = build_swing_retracement_features(bars, swing_period=1, atr_mult=0.0)
+
+    assert result.iloc[8]["standard_deviation_leg_valid"] == 1.0
+    assert result.iloc[9]["standard_deviation_leg_valid"] == 1.0
+    assert result.iloc[9]["standard_deviation_retracement_fraction"] == pytest.approx(0.786)
+    assert result.iloc[10]["standard_deviation_leg_valid"] == 0.0
+
+
 @pytest.mark.parametrize(
     ("low", "high"),
     [(0.5, 0.5), (-0.1, 0.5), (0.2, 1.1)],

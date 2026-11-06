@@ -401,6 +401,8 @@ def wick_ratio(df: pd.DataFrame) -> pd.Series:
     """Compute wick ratio as ``abs(High - max(Open, Close)) / (High - Low)``.
 
     High values indicate rejection (false sweep).
+    A zero-range candle has no upper wick and maps to a finite ratio of zero;
+    other invalid OHLC inputs remain non-finite.
 
     Args:
         df (pd.DataFrame): OHLCV DataFrame
@@ -419,7 +421,8 @@ def wick_ratio(df: pd.DataFrame) -> pd.Series:
 
     range_ = high - low
 
-    wick_ratio = wick / range_.replace(0, np.nan)
+    wick_ratio = wick / range_.where(range_ != 0)
+    wick_ratio = wick_ratio.mask(range_ == 0, 0.0)
     wick_ratio.name = "wick_ratio"
 
     return wick_ratio

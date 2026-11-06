@@ -11,6 +11,7 @@ import pytest
 
 from market_data.transforms.sessions import add_session_id, add_session_labels
 from simulation.environment.env import TradingEnv
+from simulation.environment.rewards import SurvivalReward
 from trading.account.account_state import AccountState
 from training.setup.environments import _training_episodic, max_episode_steps
 
@@ -44,6 +45,8 @@ def _multi_day_env(
     episodic: bool = True,
     max_episode_steps: int | None = None,
     guardrail_kwargs: dict[str, float] | None = None,
+    reward_mode: str = "dsr",
+    use_sweep_reward: bool = False,
 ) -> TradingEnv:
     chunks: list[pd.DatetimeIndex] = []
     for d in range(n_days):
@@ -88,6 +91,8 @@ def _multi_day_env(
         obs_window=obs_window,
         episodic=episodic,
         max_episode_steps=max_episode_steps,
+        reward_mode=reward_mode,
+        use_sweep_reward=use_sweep_reward,
         guardrail_kwargs=guardrail_kwargs,
         eod_risk={"max_age_hours": 1000.0, "stale_bars": 10_000, "max_loss_usd": 1e12},
     )
@@ -120,6 +125,89 @@ def test_training_and_evaluation_share_hard_breach_penalty() -> None:
     eval_env = _multi_day_env(episodic=False)
     assert getattr(train_env.reward_fn, "breach_penalty") == pytest.approx(-10.0)
     assert getattr(eval_env.reward_fn, "breach_penalty") == pytest.approx(-10.0)
+
+
+@pytest.mark.unit
+def test_survival_reward_is_emitted_only_for_a_complete_breach_free_split() -> None:
+    env = _multi_day_env(
+        n_days=2,
+        bars_per_day=80,
+        obs_window=10,
+        episodic=False,
+        reward_mode="survival",
+        use_sweep_reward=True,
+    )
+    assert isinstance(env.reward_fn, SurvivalReward)
+    env.reset()
+    rewards: list[float] = []
+    done = truncated = False
+    info: dict[str, Any] = {}
+    while not (done or truncated):
+        _, reward, done, truncated, info = env.step(0)
+        rewards.append(float(reward))
+
+    assert done is True
+    assert truncated is False
+    assert rewards[:-1] and all(value == 0.0 for value in rewards[:-1])
+    assert rewards[-1] == pytest.approx(1.0)
+    assert sum(rewards) == pytest.approx(1.0)
+    assert info["reward_parts"]["survival"] == pytest.approx(1.0)
+    assert info["episode_equity"]["episode_end_reason"] == "data_end_survived"
+
+
+@pytest.mark.unit
+def test_survival_reward_fails_breached_full_split_without_profit_reward() -> None:
+    env = _multi_day_env(
+        n_days=2,
+        bars_per_day=80,
+        obs_window=10,
+        episodic=False,
+        reward_mode="survival",
+        use_sweep_reward=True,
+    )
+    assert isinstance(env.reward_fn, SurvivalReward)
+    env.reset()
+    env.account.balance = 89_000.0
+    env.account.equity = 89_000.0
+    env.account._update_loss_from_initial()
+
+    rewards: list[float] = []
+    done = truncated = False
+    info: dict[str, Any] = {}
+    while not (done or truncated):
+        _, reward, done, truncated, info = env.step(0)
+        rewards.append(float(reward))
+
+    assert done is True
+    assert truncated is False
+    assert len(rewards) == 1
+    assert rewards[:-1] == []
+    assert rewards[-1] == pytest.approx(-1.0)
+    assert sum(rewards) == pytest.approx(-1.0)
+    assert info["reward_parts"]["survival"] == pytest.approx(-1.0)
+    assert info["episode_equity"]["episode_end_reason"] == "risk_breach"
+    assert info["episode_equity"]["completed_data_split"] is False
+
+
+@pytest.mark.unit
+def test_survival_objective_requires_complete_full_split_training() -> None:
+    cfg = SimpleNamespace(training={"episode_mode": "full_split"}, env={"reward_mode": "survival"})
+    assert _training_episodic(cfg) is False
+
+    capped = SimpleNamespace(
+        training={"episode_mode": "full_split"},
+        env={"reward_mode": "survival", "max_episode_steps": 10},
+    )
+    with pytest.raises(ValueError, match="survival reward requires env.max_episode_steps=null"):
+        _training_episodic(capped)
+
+    risk_terminated = SimpleNamespace(
+        training={"episode_mode": "risk_terminated"}, env={"reward_mode": "survival"}
+    )
+    with pytest.raises(
+        ValueError, match="survival reward requires training.episode_mode='full_split'"
+    ):
+        _training_episodic(risk_terminated)
 
 
 @pytest.mark.unit
@@ -205,6 +293,8 @@ def test_hard_daily_terminates_year_episode() -> None:
         },
     )
     env.reset()
+    env.account.balance = env.account.session_start_equity - 5_500.0
+    env.account.equity = env.account.balance
     env.account.daily_loss = 5_500.0
     _, reward, done, truncated, _ = env.step(0)
     assert done is True

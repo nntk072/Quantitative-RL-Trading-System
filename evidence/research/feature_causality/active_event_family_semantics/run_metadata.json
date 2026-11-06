@@ -1,0 +1,178 @@
+{
+  "claim_scope": "current-source synthetic event semantics for swing, order-block, FVG/IFVG, PO3, higher-timeframe, liquidity, and SMT feature families",
+  "documentation": [
+    {
+      "path": "evidence/research/feature_causality/README.md",
+      "sha256": "41ce2f42954d8e467e818b9347fb94bbc327fba37a369c32c81b305cb881ca20"
+    },
+    {
+      "path": "docs/operations/research_execution_plan.md",
+      "sha256": "562c940dd8a19a852801a0a65918fd15ff779d0d429a04b29e9d09f0b655c121"
+    },
+    {
+      "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/full_plan_execution_checklist.md",
+      "sha256": "a8f7980178703358124da6f5c6159c8734ccb3f1df3c027db399036716e0e286"
+    }
+  ],
+  "execution": {
+    "architecture": "aarch64",
+    "command": ".venv/bin/python -m pytest tests/unit/features/test_pivots_swings.py tests/unit/features/test_order_blocks.py tests/unit/features/test_variants.py tests/unit/features/test_po3_config.py tests/unit/features/test_po3_state.py tests/unit/features/test_po3_ifvg_state.py tests/unit/features/test_po3_mtf_state.py tests/unit/features/test_smt.py tests/unit/features/test_liquidity.py -q",
+    "cpus": 48,
+    "gpu": "1 GH200",
+    "host_ram": "512G requested",
+    "job_id": "21405414",
+    "node": "gpuarm1",
+    "pytest_output": "focused_tests.log",
+    "pytest_result": "157 passed",
+    "python": "3.12.15",
+    "wall_time_seconds": 3.64,
+    "working_directory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System"
+  },
+  "output": {
+    "bytes": 765,
+    "path": "summary.json",
+    "sha256": "f2308412c6ab85addb194bcc9710aa166d11d509813fb72cc7ad5241e6519c2a"
+  },
+  "production_sources": [
+    {
+      "bytes": 1027,
+      "path": "features/__init__.py",
+      "sha256": "24927f74ad4539ddba8f5594d9a9f4d42300f82685055fcf166cfe597e0b236e"
+    },
+    {
+      "bytes": 28626,
+      "path": "features/pipeline/feature_matrix_builder.py",
+      "sha256": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff"
+    },
+    {
+      "bytes": 13452,
+      "path": "features/pipeline/po3_stage.py",
+      "sha256": "cc52cd3abb6b05eb0ab28e0709334d8a89d1a8ddc5841af5cb8795e4fe361267"
+    },
+    {
+      "bytes": 8093,
+      "path": "features/technical/structure.py",
+      "sha256": "53ad602f9874ce5843c08f2f7012a37e1a3c6442066069671f4a69b9c5dcf6e9"
+    },
+    {
+      "bytes": 24109,
+      "path": "features/technical/swings.py",
+      "sha256": "7e3158182417637523583ca08768d577707d80ef829603b787ff172b71910714"
+    },
+    {
+      "bytes": 13631,
+      "path": "features/context/order_blocks.py",
+      "sha256": "e0e620c80fa7c3859f7abfc5c2a29aab9b0f444e506dba129d134f024858dbcd"
+    },
+    {
+      "bytes": 25616,
+      "path": "features/context/entry_ideas.py",
+      "sha256": "afed23247516a0c73ff6ba8b9969e003fab84f5a4da755cd9835dfd660d8ec34"
+    },
+    {
+      "bytes": 13310,
+      "path": "features/context/liquidity.py",
+      "sha256": "3ca55fcb53881ee374ecb67264a47114231a23ea371cc815a1c14922883f9e2f"
+    },
+    {
+      "bytes": 6178,
+      "path": "features/context/smt.py",
+      "sha256": "8b669f666fe119b3dd8d1f7d953a440f709097839c1f50b940bd1a87e96b224e"
+    },
+    {
+      "bytes": 13411,
+      "path": "features/po3/fvg.py",
+      "sha256": "8be5a6965eea735ffd606d494f5a9d430a8c5b3638eb5321767e631dd4e17cca"
+    },
+    {
+      "bytes": 3059,
+      "path": "features/po3/fvg_detection.py",
+      "sha256": "39309e91ff551fa45b6eff76589d492f8bdfc50b8a23a409232a928c2f93a0ae"
+    },
+    {
+      "bytes": 11653,
+      "path": "features/po3/ifvg_detection.py",
+      "sha256": "ece55b2c6121cc6f7eb916010b24b47ce841a86f745a91a52894ece29a298144"
+    },
+    {
+      "bytes": 11029,
+      "path": "features/po3/ifvg_state.py",
+      "sha256": "4752d0f172d3f7a229cd24c6269d58bb69c19815c4e3751db80353f2bbfd74ef"
+    },
+    {
+      "bytes": 27965,
+      "path": "features/po3/po3_phase_state.py",
+      "sha256": "1af6cfc46a85dc3f8fee95957ea2d402416774679d303063aa8c451a5289ecbc"
+    },
+    {
+      "bytes": 19266,
+      "path": "features/po3/trigger_rules.py",
+      "sha256": "972064fe27d9c20f48478b2986b388d967ac7145272912994e8a6dcaf6c7550f"
+    },
+    {
+      "bytes": 11232,
+      "path": "features/po3/zones.py",
+      "sha256": "d7a890ddb64088161a207c57cc6229d03d0c173f09e5be30deab1f012fe6e676"
+    },
+    {
+      "bytes": 6067,
+      "path": "market_data/transforms/align.py",
+      "sha256": "0835dfb2f84ba67cd182a619e06c559cae2774bf37b98a9700921cf4aa8ef37d"
+    },
+    {
+      "bytes": 32723,
+      "path": "config/base/default.yaml",
+      "sha256": "24b9dee00affc9ac00aeb1ad4291e6d5786eb0d65ce6c82be438db6dcefd769e"
+    }
+  ],
+  "result": "All nine focused feature suites passed; packet README maps each Stage D event family to tested contracts.",
+  "schema_version": 1,
+  "status": "passed",
+  "test_sources": [
+    {
+      "bytes": 14698,
+      "path": "tests/unit/features/test_pivots_swings.py",
+      "sha256": "be9e568b26c436f0f2518bccbb8ee43d196908d25d5944cecc84e34e77cfe4b3"
+    },
+    {
+      "bytes": 5186,
+      "path": "tests/unit/features/test_order_blocks.py",
+      "sha256": "9ea04e73bc3768c08967be3dbe15af043fd308588b851d2c93cf562ddd7db4ca"
+    },
+    {
+      "bytes": 20884,
+      "path": "tests/unit/features/test_variants.py",
+      "sha256": "03be218e0ca158744efe95158495b37ccb77bb817fc6d9d20d27ae1cd3164a4b"
+    },
+    {
+      "bytes": 45326,
+      "path": "tests/unit/features/test_po3_config.py",
+      "sha256": "66266c2de05b3ce93cb207024e2bc12099adbb77e4dc3651ac41d2745f71939a"
+    },
+    {
+      "bytes": 22811,
+      "path": "tests/unit/features/test_po3_state.py",
+      "sha256": "1914a34e43da7d70501c3e3017d198b3c47d389862893c6954b0e18e88688188"
+    },
+    {
+      "bytes": 6520,
+      "path": "tests/unit/features/test_po3_ifvg_state.py",
+      "sha256": "958ee7410814a48e43b02b307f877871cdb253c15fcfa284647f31d98e2bcbc8"
+    },
+    {
+      "bytes": 4305,
+      "path": "tests/unit/features/test_po3_mtf_state.py",
+      "sha256": "01181764d11a0575f73196bb334794acc48ec0555292112f30298a9b988d07c7"
+    },
+    {
+      "bytes": 3320,
+      "path": "tests/unit/features/test_smt.py",
+      "sha256": "2c49fd29ba21e1d2b2e5aaa21d81e966640fb3a7785389359531589a8d0b77be"
+    },
+    {
+      "bytes": 9376,
+      "path": "tests/unit/features/test_liquidity.py",
+      "sha256": "00b427fab40c75b53fd3723a65629e8741051feaa042ca91c6f64eae8ba11706"
+    }
+  ]
+}

@@ -107,7 +107,7 @@
   "cross_timeframe_definition": "Exact equality of serialized direction and source pivot-time keys across timeframe projections. It is a linkage relation, not proof of one shared logical event.",
   "eligibility_definition": "Contiguous eligible M1 rows for the exact source leg and configured candidate side; a renewed eligible span after a gap is counted as another episode.",
   "feature_rows": 351432,
-  "git_head": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "git_head": "367561a7717a3367fbb280084ffcf0781f57119c",
   "interpretation": "Rows count the selected feature producer's latest confirmed swing-leg projections and retracement eligibility episodes. They are not ground-truth market-event counts, policy choices, orders, fills, or economic results.",
   "limitations": [
     "The upstream structure producer exposes the latest confirmed pivot pair, not every latent or overlapping swing pattern.",
@@ -119,7 +119,7 @@
   "primary_symbol": "US100.cash",
   "raw_data_manifest_path": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
   "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
-  "resolved_config_sha256": "d992f23ac38889ed04da5b56c6db91c3b3d64f203764d746f10a1591983260cf",
+  "resolved_config_sha256": "c935b1ce405160cca7c88fc55cc7e22ea3cf991c72ea68159b0ae04942cc46bc",
   "schema": "qrl.standard_deviation_swing_leg_projection.v1",
   "secondary_symbol": "US500.cash",
   "source_event_key": [
@@ -129,10 +129,10 @@
   ],
   "source_hashes": {
     "features/context/entry_ideas.py": "afed23247516a0c73ff6ba8b9969e003fab84f5a4da755cd9835dfd660d8ec34",
-    "features/context/swing_retracement.py": "053aa0ab45d52eb8ab4ccfc67a37ad55a3043fe7439bba827c9d0ba7033a5b5c",
+    "features/context/swing_retracement.py": "813fed5a0395014177cef8b616dbf7f89ae0075c7dcd33f6ae3590fcf0777a3f",
     "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-    "features/technical/structure.py": "c6e355f55cdf2f5e8ed3580def333d64c11e3e84e98ce8780eaeb1a7871d61d9",
-    "scripts/research/analysis/features/standard_deviation_swing_ledger.py": "6cb001d376f367e9084414b21057a2cffde375a1286365f3335ef0a597c6b8f7"
+    "features/technical/structure.py": "53ad602f9874ce5843c08f2f7012a37e1a3c6442066069671f4a69b9c5dcf6e9",
+    "scripts/research/analysis/features/standard_deviation_swing_ledger.py": "3131bacd299c70ff00fe4199e9b491d3b9ffa48c22c8d8edd1023eb9060a3f2d"
   },
   "status": "descriptive_training_feature_projection_only",
   "training_input_sha256": {

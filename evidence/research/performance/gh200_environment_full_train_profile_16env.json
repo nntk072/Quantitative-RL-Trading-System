@@ -1,0 +1,51 @@
+{
+  "data_source": "frames",
+  "slice_days": null,
+  "full_train_split": true,
+  "bundle_size_bytes": null,
+  "sb3_start_method": "forkserver",
+  "env_fn_pickled_per_worker": true,
+  "fit_base_pss_mib": 45059.07714843749,
+  "fit_per_worker_pss_mib": 2816.1923217773424,
+  "measurements": [
+    {
+      "n_envs": 16,
+      "bars_rows": 351432,
+      "bars_deep_bytes": 44338840,
+      "features_rows": 351432,
+      "features_deep_bytes": 1141451136,
+      "tickbook_array_bytes": 1349881104,
+      "env_payload_pickle_bytes": 2517799278,
+      "parent_env_attribute_bytes": {
+        "bars": 44338840,
+        "features": 1141451136,
+        "_feature_time_ms": 2811456,
+        "_ny_indices": 795936,
+        "_tickbook": 1349881104,
+        "_obs_features": 1073976192,
+        "_obs_features_arr": 535582368,
+        "_features_arr": 1138639680,
+        "_bar_times": 2811456,
+        "_session_ids_arr": 2811456,
+        "_m1_idx": 552,
+        "_trade_setup_candidate_ids": 0,
+        "_trade_setup_feature_indices": 0,
+        "_regime_idx": 56,
+        "_open_arr": 2811456,
+        "_high_arr": 2811456,
+        "_low_arr": 2811456,
+        "_close_arr": 2811456,
+        "_spread_arr": 2811456
+      },
+      "cgroup_start_bytes": 12568686592,
+      "warmup_tree_pss_mib": 90116.353515625,
+      "steady_tree_pss_mib": 90118.154296875,
+      "final_tree_pss_mib": 90124.814453125,
+      "cgroup_warmup_bytes": 95553667072,
+      "cgroup_steady_bytes": 95560048640,
+      "vector_steps": 256,
+      "env_steps_per_second": 4497.504377007749,
+      "startup_seconds": 62.87348875400494
+    }
+  ]
+}

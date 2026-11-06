@@ -19,12 +19,15 @@ import pandas as pd
 
 from artifacts.atomic import write_json_atomic, write_text_atomic
 from artifacts.identity import file_sha256
+from configuration.configuration_loader import load_config
 from configuration.paths import repository_root
-from decisioning.actions import build_action_schema, build_discrete_trading_action_schema
+from decisioning.actions import (
+    build_action_schema_from_config,
+    build_discrete_trading_action_schema,
+)
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.observations import build_observation_schema
-from decisioning.trade_setup import build_trade_setup_action_schema
-from evaluation import calculate_metrics, evaluation_periods_per_year
+from evaluation import account_path_metric_inputs, calculate_metrics, evaluation_periods_per_year
 from evaluation.reanalysis.checkpoint import resolve_checkpoint
 from evaluation.reanalysis.cli import build_reanalysis_parser
 from evaluation.reanalysis.datasets import reconstruct_reanalysis_datasets
@@ -45,10 +48,16 @@ from evaluation.reanalysis.provenance import (
 )
 from evaluation.reanalysis.validation import (
     resolve_execution_seed,
+    resolve_recorded_sequence_schema,
     validate_checkpoint_manifest_hash,
     validate_sequence_input_width,
     validate_stop_candidate_schema,
+    validate_train_only_feature_snapshot_request,
 )
+from evaluation.reporting.account_state_trace_reconciliation import (
+    reconcile_account_state_trace,
+)
+from evaluation.reporting.policy_decision_reconciliation import reconcile_policy_decisions
 from evaluation.reporting.run_artifact_writer import save_run
 from evaluation.reporting.run_manifest import (
     build_evaluation_provenance,
@@ -86,17 +95,18 @@ __all__ = [
 ]
 
 
-def load_checkpoint(path: Path, *, legacy_layout_key: str | None) -> Any:
+def load_checkpoint(path: Path, *, legacy_layout_key: str | None, algo: str = "ppo") -> Any:
     """Compatibility entry point; SB3 checkpoint loading belongs to its adapter.
 
     Args:
         path: Path to the input file or directory.
         legacy_layout_key: Legacy layout key used by the operation described above.
+        algo: Stable-Baselines3 algorithm recorded for the source checkpoint.
 
     Returns:
         Result of compatibility entry point; SB3 checkpoint loading belongs to its adapter.
     """
-    return load_sb3_checkpoint(path, legacy_layout_key=legacy_layout_key)
+    return load_sb3_checkpoint(path, legacy_layout_key=legacy_layout_key, algo=algo)
 
 
 def _source_final_evaluation_metadata(run_dir: Path) -> dict[str, Any]:
@@ -152,6 +162,23 @@ def resolve_reanalysis_action_seed(
     return int(value) if isinstance(value, int) and not isinstance(value, bool) else None
 
 
+def validate_train_only_action_mode(
+    *, train_only_screen: bool, stochastic: bool, action_rng_seed: int | None
+) -> None:
+    """Require seeded sampling when a train-only screen uses stochastic actions.
+
+    Args:
+        train_only_screen: Whether the requested evaluation is a train-only screen.
+        stochastic: Whether policy actions are sampled stochastically.
+        action_rng_seed: Recorded or explicitly supplied action-sampling seed.
+    """
+    if train_only_screen and stochastic and action_rng_seed is None:
+        raise ValueError(
+            "--train-only-screen with stochastic policy actions requires a recorded "
+            "or explicit seed"
+        )
+
+
 def evaluate_checkpoint_split(provider: Any, *, stochastic: bool, **kwargs: Any) -> dict[str, Any]:
     """Replay one final split using the explicitly selected policy action mode.
 
@@ -197,6 +224,7 @@ def evaluate_train_split(
     eval_common: dict[str, Any],
     initial_balance: float,
     periods_per_year: int,
+    sequence_columns_override: tuple[str, ...] | None = None,
 ) -> tuple[dict[str, Any], Any]:
     """Evaluate only the supplied training split and calculate its metrics.
 
@@ -210,6 +238,8 @@ def evaluate_train_split(
         eval_common: Key-value data used for the eval common.
         initial_balance: Numeric value used for the initial balance.
         periods_per_year: Numeric value used for the periods per year.
+        sequence_columns_override: Exact recorded sequence coordinates, when replaying a saved
+            schema.
 
     Returns:
         Mapping from ``str`` keys to ``Any], Any`` values.
@@ -221,6 +251,7 @@ def evaluate_train_split(
         features=features,
         tickbook=tickbook,
         legacy_sequence_columns=legacy_sequence_columns,
+        sequence_columns_override=sequence_columns_override,
         **eval_common,
     )
     result["initial_balance"] = initial_balance
@@ -231,22 +262,198 @@ def evaluate_train_split(
         n_breach_sessions=result.get("n_breach_sessions", 0),
         initial_balance=initial_balance,
         periods_per_year=periods_per_year,
+        **account_path_metric_inputs(result),
     )
     return result, metrics
 
 
-def write_train_only_screen_report(output_dir: Path, report: dict[str, Any]) -> Path:
+def _replay_ledger_frame(name: str, value: Any) -> pd.DataFrame:
+    """Convert one captured replay ledger to a stable tabular artifact.
+
+    Args:
+        name: Ledger field name used in errors and tabular conversion.
+        value: Captured DataFrame, Series, or list of row records.
+
+    Returns:
+        Copy of the ledger as a DataFrame.
+    """
+    if isinstance(value, pd.DataFrame):
+        return value.copy()
+    if isinstance(value, pd.Series):
+        index_name = str(value.index.name or "time")
+        return value.to_frame(name="value").rename_axis(index=index_name).reset_index()
+    if isinstance(value, list):
+        return pd.DataFrame.from_records(value)
+    raise TypeError(f"replay ledger {name!r} must be a pandas object or list of records")
+
+
+def _reconciliation_is_clean(report: Any) -> bool:
+    """Accept only a matched report with an explicit integer zero failure count.
+
+    Args:
+        report: Reconciliation output to validate.
+
+    Returns:
+        Whether it has matched status and a typed zero failure count.
+    """
+    if not isinstance(report, dict):
+        return False
+    failure_count = report.get("failure_count")
+    return (
+        report.get("status") == "matched"
+        and isinstance(failure_count, int)
+        and not isinstance(failure_count, bool)
+        and failure_count == 0
+    )
+
+
+def _write_train_only_replay_ledger(output_dir: Path, result: dict[str, Any]) -> dict[str, Any]:
+    """Write full train-split replay ledgers, rejecting incomplete traces.
+
+    Args:
+        output_dir: Destination directory for exported replay tables.
+        result: Train-only evaluation result containing complete replay ledgers.
+
+    Returns:
+        Ledger export metadata keyed by the source result field.
+    """
+    for field in ("policy_decisions_complete", "account_state_trace_complete"):
+        if result.get(field) is not True:
+            raise ValueError(f"cannot export replay ledger: {field} is not true")
+
+    ledger_fields = (
+        "equity",
+        "trades",
+        "policy_decisions",
+        "account_state_trace",
+        "breaches",
+        "breach_events",
+        "trade_setup_decisions",
+        "cycle_events",
+        "payout_events",
+    )
+    required_fields = set(ledger_fields) - {"trade_setup_decisions"}
+    missing = sorted(required_fields - result.keys())
+    if missing:
+        raise ValueError(f"cannot export replay ledger: missing fields {missing}")
+
+    frames = {
+        name: _replay_ledger_frame(name, result[name]) for name in ledger_fields if name in result
+    }
+    if (
+        "trade_setup_candidate_id" in frames["policy_decisions"].columns
+        and "trade_setup_decisions" not in frames
+    ):
+        raise ValueError(
+            "cannot export replay ledger: setup-aware policy decisions lack trade_setup_decisions"
+        )
+    n_steps = int(result.get("n_steps", 0))
+    for name in ("policy_decisions", "account_state_trace"):
+        if len(frames[name]) != n_steps:
+            raise ValueError(
+                f"cannot export replay ledger: {name} has {len(frames[name])} rows for "
+                f"{n_steps} rollout steps"
+            )
+    account_state_reconciliation = reconcile_account_state_trace(
+        frames["account_state_trace"],
+        frames["trades"],
+        breach_events=result["breach_events"],
+    )
+    policy_decision_reconciliation = reconcile_policy_decisions(
+        frames["policy_decisions"],
+        frames["trades"],
+        breach_events=result["breach_events"],
+    )
+    account_state_matched = _reconciliation_is_clean(account_state_reconciliation)
+    policy_decisions_matched = _reconciliation_is_clean(policy_decision_reconciliation)
+    if not account_state_matched or not policy_decisions_matched:
+        diagnostic_artifacts: dict[str, dict[str, Any]] = {}
+        for name, frame in frames.items():
+            filename = f"diagnostic_replay_{name}.csv"
+            payload = (
+                ""
+                if frame.empty and len(frame.columns) == 0
+                else frame.to_csv(index=False, lineterminator="\n", float_format="%.17g")
+            )
+            path = write_text_atomic(output_dir / filename, payload)
+            diagnostic_artifacts[name] = {
+                "path": filename,
+                "row_count": len(frame),
+                "sha256": file_sha256(path),
+            }
+        write_json_atomic(
+            output_dir / "replay_ledger_diagnostic.json",
+            {
+                "schema_version": "checkpoint_replay_ledger_diagnostic.v1",
+                "complete": False,
+                "test_split_evaluated": False,
+                "n_steps": n_steps,
+                "account_state_reconciliation": account_state_reconciliation,
+                "policy_decision_reconciliation": policy_decision_reconciliation,
+                "artifacts": diagnostic_artifacts,
+            },
+        )
+        raise ValueError(
+            "cannot export complete replay ledger: account-state/daily-risk "
+            f"reconciliation is {account_state_reconciliation.get('status')} "
+            f"({account_state_reconciliation.get('failure_count')} failures; "
+            f"{account_state_reconciliation.get('failures', [])[:10]}), "
+            "policy-decision/action reconciliation is "
+            f"{policy_decision_reconciliation.get('status')} "
+            f"({policy_decision_reconciliation.get('failure_count')} failures; "
+            f"{policy_decision_reconciliation.get('failures', [])[:10]}). "
+            "Diagnostic traces were preserved in replay_ledger_diagnostic.json."
+        )
+
+    artifacts: dict[str, dict[str, Any]] = {}
+    for name in ledger_fields:
+        if name not in frames:
+            continue
+        frame = frames[name]
+        filename = f"replay_{name}.csv"
+        payload = (
+            ""
+            if frame.empty and len(frame.columns) == 0
+            else frame.to_csv(index=False, lineterminator="\n", float_format="%.17g")
+        )
+        path = write_text_atomic(output_dir / filename, payload)
+        artifacts[name] = {
+            "path": filename,
+            "row_count": len(frame),
+            "sha256": file_sha256(path),
+        }
+
+    return {
+        "schema_version": "checkpoint_replay_ledger.v1",
+        "complete": True,
+        "test_split_evaluated": False,
+        "n_steps": n_steps,
+        "account_state_reconciliation": account_state_reconciliation,
+        "policy_decision_reconciliation": policy_decision_reconciliation,
+        "artifacts": artifacts,
+    }
+
+
+def write_train_only_screen_report(
+    output_dir: Path,
+    report: dict[str, Any],
+    *,
+    replay_result: dict[str, Any] | None = None,
+) -> Path:
     """Write the minimal train-only candidate screen into a new directory.
 
     Args:
         output_dir: Text or path value identifying the output dir.
         report: Key-value data used for the report.
+        replay_result: Optional complete training replay ledgers to export alongside the report.
 
     Returns:
         Path returned by ``write_train_only_screen_report``.
     """
     report["evaluation_provenance"] = build_evaluation_provenance(repository_root(__file__))
     output_dir.mkdir(parents=True, exist_ok=False)
+    if replay_result is not None:
+        report["replay_ledger"] = _write_train_only_replay_ledger(output_dir, replay_result)
     report_path = output_dir / "train_only_screen.json"
     write_json_atomic(report_path, report)
     return report_path
@@ -255,15 +462,33 @@ def write_train_only_screen_report(output_dir: Path, report: dict[str, Any]) -> 
 def main() -> None:
     """Re-evaluate a retained checkpoint against the requested run data."""
     args = build_reanalysis_parser().parse_args()
-    if args.train_only_screen and args.stochastic is True:
-        raise SystemExit("--train-only-screen requires deterministic policy actions")
+    if args.export_replay_ledger and not args.train_only_screen:
+        raise SystemExit("--export-replay-ledger requires --train-only-screen")
+    if args.use_recorded_sequence_schema and args.allow_legacy_sequence_schema:
+        raise SystemExit(
+            "--use-recorded-sequence-schema cannot be combined with --allow-legacy-sequence-schema"
+        )
+    try:
+        validate_train_only_feature_snapshot_request(
+            train_only_screen=bool(args.train_only_screen),
+            source_feature_cache=args.source_feature_cache,
+            train_only_feature_snapshot=args.train_only_feature_snapshot,
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     run_dir = Path(args.run)
     if not run_dir.is_dir():
         raise SystemExit(f"Run directory not found: {run_dir}")
     stochastic = resolve_reanalysis_action_mode(run_dir, args.stochastic)
     action_rng_seed = resolve_reanalysis_action_seed(run_dir, args.seed, stochastic=stochastic)
-    if args.train_only_screen and stochastic:
-        raise SystemExit("--train-only-screen requires deterministic policy actions")
+    try:
+        validate_train_only_action_mode(
+            train_only_screen=args.train_only_screen,
+            stochastic=stochastic,
+            action_rng_seed=action_rng_seed,
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     output_dir = Path(args.output)
     _validate_reanalysis_request(run_dir, output_dir, allow_historical=args.allow_historical)
 
@@ -285,6 +510,17 @@ def main() -> None:
             seed_sb3(action_rng_seed)
 
     cfg = _load_run_config(run_dir)
+    source_stop_menu = [
+        str(value).upper() for value in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
+    ]
+    if args.use_current_stop_menu:
+        current_stop_menu = [str(value).upper() for value in load_config().risk.target_timeframes]
+        cfg.risk.target_timeframes = current_stop_menu
+        log.warning(
+            "Changed-policy diagnostic: source stop menu=%s current stop menu=%s",
+            source_stop_menu,
+            current_stop_menu,
+        )
     # The run's own snapshot is authoritative for data, split, and risk settings,
     # but how many charts to draw is a present-day rendering choice. A snapshot
     # written before a config change must not force the slow default back on.
@@ -317,8 +553,20 @@ def main() -> None:
             "source run manifest lacks feature-cache or dataset identities; pass "
             "--allow-legacy-data-provenance only for an explicitly unverified legacy replay"
         )
+    if not isinstance(source_datasets, dict):
+        raise ValueError("source run manifest datasets must be an object")
     checkpoint_hash_disposition = validate_checkpoint_manifest_hash(ckpt_path, source_manifest)
-    model: Any = load_checkpoint(ckpt_path, legacy_layout_key=args.legacy_action_layout)
+    training_protocol = source_manifest.get("training_protocol", {})
+    if not isinstance(training_protocol, dict):
+        raise ValueError("source run manifest training_protocol must be an object")
+    checkpoint_algo = str(training_protocol.get("algorithm", "ppo")).strip().lower()
+    if checkpoint_algo not in {"ppo", "sac"}:
+        raise ValueError(f"unsupported source checkpoint algorithm: {checkpoint_algo!r}")
+    model: Any = load_checkpoint(
+        ckpt_path,
+        legacy_layout_key=args.legacy_action_layout,
+        algo=checkpoint_algo,
+    )
     expected_stop_schema = build_stop_candidate_schema(cfg)
     checkpoint_stop_schema = getattr(model, "stop_candidate_schema", None)
     manifest_stop_schema = source_manifest.get("stop_candidate_schema")
@@ -327,6 +575,7 @@ def main() -> None:
         manifest_schema=manifest_stop_schema,
         expected_schema=expected_stop_schema,
         allow_legacy=bool(args.allow_legacy_stop_schema),
+        allow_changed_menu=bool(args.use_current_stop_menu),
     )
     policy = resolve_trading_policy(cfg)
     expected_observation_schema = build_observation_schema(
@@ -364,23 +613,7 @@ def main() -> None:
             cfg.env.allow_agent_tp_mode = False
             cfg.env.allow_multi_tp = False
             cfg.env.allow_simplex = False
-        multi_tp = bool(cfg.env.get("allow_multi_tp", False))
-        schema: Any
-        if bool(cfg.env.get("trade_setup_actions", False)):
-            schema = build_trade_setup_action_schema(
-                has_sl_mode=bool(cfg.env.get("allow_agent_sl_mode", True)),
-                has_tp_mode=bool(cfg.env.get("allow_agent_tp_mode", False)),
-                has_multi_tp=multi_tp,
-                has_simplex=multi_tp and bool(cfg.env.get("allow_simplex", True)),
-            )
-        else:
-            schema = build_action_schema(
-                has_direction=bool(cfg.env.get("agent_direction_control", False)),
-                has_sl_mode=bool(cfg.env.get("allow_agent_sl_mode", True)),
-                has_tp_mode=bool(cfg.env.get("allow_agent_tp_mode", False)),
-                has_multi_tp=multi_tp,
-                has_simplex=multi_tp and bool(cfg.env.get("allow_simplex", True)),
-            )
+        schema = build_action_schema_from_config(cfg.env)
         model = validate_sb3_overlay_action_schema(
             model,
             schema,
@@ -427,6 +660,7 @@ def main() -> None:
     dataset_parity_disposition = datasets.dataset_parity_disposition
     training_data_source = datasets.training_data_source
     backend_parity_disposition = datasets.backend_parity_disposition
+    train_feature_snapshot_path = datasets.train_feature_snapshot_path
     train_tickbook = ticks_covering(primary_ticks, train_bars)
 
     # Eval CLI does not expose training --algo / --reward flags; PPO replay
@@ -465,12 +699,34 @@ def main() -> None:
     ]
     if "reachable_r" not in sequence_columns:
         sequence_columns.append("reachable_r")
-    expected_sequence_schema = build_sequence_feature_schema(sequence_columns)
-    sequence_schema_disposition = validate_sequence_feature_schema(
-        source_manifest.get("sequence_feature_schema"),
-        expected_sequence_schema,
-        allow_legacy=bool(args.allow_legacy_sequence_schema),
+    current_sequence_schema = build_sequence_feature_schema(
+        sequence_columns,
+        include_validity_channels=bool(cfg.env.get("feature_validity_channels", False)),
     )
+    sequence_columns_override: tuple[str, ...] | None = None
+    if args.use_recorded_sequence_schema:
+        generated_columns = {"reachable_r"}
+        if bool(cfg.env.get("reachable_r_validity_mask", False)):
+            generated_columns.add("reachable_r_valid")
+        expected_sequence_schema, sequence_columns_override = resolve_recorded_sequence_schema(
+            source_manifest.get("sequence_feature_schema"),
+            available_columns={
+                str(column) for column in train_feat.select_dtypes(include="number").columns
+            },
+            generated_columns=generated_columns,
+            train_only_screen=bool(args.train_only_screen),
+            has_train_only_feature_snapshot=train_feature_snapshot_path is not None,
+            mtf_enabled=bool(eval_common.get("mtf", False)),
+            feature_validity_channels=bool(cfg.env.get("feature_validity_channels", False)),
+        )
+        sequence_schema_disposition = "recorded_manifest_schema_opt_in"
+    else:
+        expected_sequence_schema = current_sequence_schema
+        sequence_schema_disposition = validate_sequence_feature_schema(
+            source_manifest.get("sequence_feature_schema"),
+            expected_sequence_schema,
+            allow_legacy=bool(args.allow_legacy_sequence_schema),
+        )
     validate_sequence_input_width(model, expected_sequence_schema["width"])
     provider = SB3DecisionProvider(
         model,
@@ -490,6 +746,7 @@ def main() -> None:
             eval_common=eval_common,
             initial_balance=float(cfg.account.initial_balance),
             periods_per_year=evaluation_periods_per_year(cfg),
+            sequence_columns_override=sequence_columns_override,
         )
         log.info(
             "[train screen] Sharpe=%.3f  MaxDD=%.2f%%  Trades=%d  Return=%.2f%%  fail_time=%s",
@@ -515,7 +772,21 @@ def main() -> None:
         report_path = write_train_only_screen_report(
             output_dir,
             {
-                "artifact_role": "candidate_screen_train_only",
+                "artifact_role": (
+                    "changed_policy_train_only_diagnostic"
+                    if args.use_current_stop_menu
+                    else "candidate_screen_train_only"
+                ),
+                "policy_comparison_disposition": (
+                    "current_8_timeframe_stop_menu_changed_policy_diagnostic"
+                    if args.use_current_stop_menu
+                    else "source_stop_menu_compatibility_replay"
+                ),
+                "stop_menu_comparison": {
+                    "source_timeframes": source_stop_menu,
+                    "evaluated_timeframes": list(expected_stop_schema["stop_menu_timeframes"]),
+                    "schema_disposition": stop_schema_disposition,
+                },
                 "test_split_evaluated": False,
                 "source_run": str(run_dir.resolve()),
                 "source_run_manifest_sha256": (
@@ -535,8 +806,8 @@ def main() -> None:
                     "bar_count": len(train_bars),
                     "metrics": asdict(train_m),
                     "trade_count": train_m.n_trades,
-                    "survived_full_period": bool(train_result.get("survived_full_year", False)),
-                    "completed_data_split": bool(train_result.get("completed_data_split", False)),
+                    "survived_full_period": train_result.get("survived_full_year") is True,
+                    "completed_data_split": train_result.get("completed_data_split") is True,
                     "episode_end_reason": train_result.get("episode_end_reason"),
                     "fail_time": (
                         str(train_result["fail_time"])
@@ -558,10 +829,30 @@ def main() -> None:
                 },
                 "feature_cache": {
                     "identity": feat_cache.name,
+                    "path": str(feat_cache.resolve()),
                     "content_hash": evaluated_feature_cache_hash or None,
                     "file_sha256": evaluated_feature_cache_file_sha256,
                     "disposition": feature_cache_disposition,
+                    "identity_scope": (
+                        "train_features_frame_only"
+                        if train_feature_snapshot_path is not None
+                        else "feature_cache"
+                    ),
                 },
+                "train_feature_snapshot": (
+                    {
+                        "path": str(train_feature_snapshot_path),
+                        "file_sha256": evaluated_feature_cache_file_sha256,
+                        "train_features_sha256": evaluated_datasets["train_features"]["sha256"],
+                        "source_run_train_features_sha256": source_datasets["train_features"][
+                            "sha256"
+                        ],
+                        "dataset_identity_verified": True,
+                        "scope": "training_split_only; original_full_cache_bytes_not_claimed",
+                    }
+                    if train_feature_snapshot_path is not None
+                    else None
+                ),
                 "evaluation_protocol": {
                     "policy_action_mode": policy_action_mode,
                     "seed": action_rng_seed,
@@ -571,9 +862,14 @@ def main() -> None:
                     "backend_parity_disposition": backend_parity_disposition,
                     "sequence_feature_schema": expected_sequence_schema,
                     "sequence_feature_schema_disposition": sequence_schema_disposition,
+                    "recorded_sequence_schema_opt_in": bool(args.use_recorded_sequence_schema),
+                    "current_source_selected_sequence_schema": (
+                        current_sequence_schema if args.use_recorded_sequence_schema else None
+                    ),
                     "observation_schema": expected_observation_schema.to_dict(),
                 },
             },
+            replay_result=train_result if args.export_replay_ledger else None,
         )
         log.info("Train-only screen written to %s", report_path)
         return
@@ -596,6 +892,7 @@ def main() -> None:
         n_breach_sessions=test_result.get("n_breach_sessions", 0),
         initial_balance=float(cfg.account.initial_balance),
         periods_per_year=evaluation_periods_per_year(cfg),
+        **account_path_metric_inputs(test_result),
     )
     log.info(
         "[test] Sharpe=%.3f  MaxDD=%.2f%%  Trades=%d  Return=%.2f%%  fail_time=%s",
@@ -616,6 +913,7 @@ def main() -> None:
         eval_common=eval_common,
         initial_balance=float(cfg.account.initial_balance),
         periods_per_year=evaluation_periods_per_year(cfg),
+        sequence_columns_override=None,
     )
     log.info(
         "[train] Sharpe=%.3f  MaxDD=%.2f%%  Trades=%d  Return=%.2f%%  fail_time=%s",
@@ -664,8 +962,8 @@ def main() -> None:
             "test_trades": test_m.n_trades,
             "test_return": float(test_m.total_return_pct),
             "test_breaches": test_result.get("n_breach_sessions", 0),
-            "test_survived_full_year": bool(test_result.get("survived_full_year", False)),
-            "test_completed_data_split": bool(test_result.get("completed_data_split", False)),
+            "test_survived_full_year": test_result.get("survived_full_year") is True,
+            "test_completed_data_split": test_result.get("completed_data_split") is True,
             "test_episode_end_reason": test_result.get("episode_end_reason"),
             "test_fail_time": (
                 str(test_result["fail_time"]) if test_result.get("fail_time") is not None else None

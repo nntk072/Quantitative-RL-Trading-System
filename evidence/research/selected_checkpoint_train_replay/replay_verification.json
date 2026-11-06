@@ -1,0 +1,90 @@
+{
+  "schema": "qrl.selected_checkpoint_train_replay.v1",
+  "evidence_role": "diagnostic_checkpoint_replay_not_policy_selection",
+  "training_source_commit": "0d056dcd3ab42165eec183a2f44cfe7e441edd39",
+  "pinned_runner_patch": {
+    "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/checkpoint_replay_a4_pinned_0d056dc/source_0d056dcd3ab42165eec183a2f44cfe7e441edd39/evaluation/reanalysis/runner.py",
+    "sha256": "ab16708f1b25e0246643c887d9bb5bcf8570232d728dae8d667000a8b41efb7f",
+    "change": "Allow seeded stochastic action mode for a training-only screen; unseeded stochastic train-only screens remain rejected."
+  },
+  "current_cli_source": {
+    "path": "evaluation/reanalysis/checkpoint_reanalysis.py",
+    "sha256": "c30edf89685ea509e5c35b4ed5b2057f25cadef2ca4624b02f58982fa8cc6172"
+  },
+  "focused_test_source": {
+    "path": "tests/unit/evaluation/test_eval_run_provenance.py",
+    "sha256": "ef65d7c775f05127e1d1ed541ee064efb695de93ace5110198364e35c682c94f",
+    "result": "45 passed; Ruff check and format check passed"
+  },
+  "allocation": {
+    "job_id": "21410797",
+    "node": "gpuarm1",
+    "gpu_family": "GH200",
+    "gpus": 1,
+    "cpus": 48,
+    "memory_gib": 512,
+    "time_limit": "12:00:00",
+    "allocation_request_count": 1,
+    "interactive_allocation_step_count": 1,
+    "additional_child_steps": 0,
+    "policy_training": false
+  },
+  "protocol": {
+    "policy_action_mode": "stochastic",
+    "action_seed": 50,
+    "execution_seed": 50,
+    "train_bars": 351432,
+    "test_split_evaluated": false,
+    "primary_tick_rows_loaded": 56245046,
+    "primary_tick_sha256": "73bf5c2b305a9aed3285901bdbce68f2105516dc11c912fa4243f45f3220e984",
+    "train_bar_sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+    "train_feature_sha256": "696cff0bef5ecea1b3d872d645752a28bc40fb8a862ee641084b903e89419717",
+    "train_bar_and_feature_hashes_match_both_source_run_manifests": true,
+    "dataset_parity_disposition": "train_only_verified_full_tick_identity_not_reloaded",
+    "feature_cache_disposition": "training_partition_rebuilt_train_feature_digest_checked",
+    "feature_cache_file_sha256": "b1298e36f7b4b893780377904f697a0ad65ac3b3f76dde0a0bd918dd21922778"
+  },
+  "arms": {
+    "a4a": {
+      "source_checkpoint_sha256": "a8c92fa5bd77223baf476636ffa76a3360ad096da80ba7341f43b5bbff817703",
+      "source_config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+      "source_run_manifest_sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+      "saved_metrics_sha256": "4b8f2764b3ac14d8d9f534fecefc907b47346b74cef1c0c507740a0065e0aed1",
+      "replay_report": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/checkpoint_replay_a4_pinned_0d056dc/a4a_seed50_stochastic_train_replay/train_only_screen.json",
+      "replay_report_sha256": "f6550fd95b4c6f6220fe3f90b855caa9f8461b2732feaa554ee9a50fe8c7d168",
+      "trades": 987,
+      "return_pct": -2.1543148816683098,
+      "sharpe": 0.005967416327427564,
+      "max_drawdown": 0.3253177503649073,
+      "breach_count": 1,
+      "survived_full_period": false,
+      "fail_time": "2025-03-06 20:16:00+03:00",
+      "saved_training_metrics_match": true
+    },
+    "a4b": {
+      "source_checkpoint_sha256": "f2d07676fc5e1019dda9cbd1714874fd6997238ba70dc69a5f16be7c19a36fdf",
+      "source_config_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+      "source_run_manifest_sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+      "saved_metrics_sha256": "224879b8c36639d197174d48f7d8a33109423af246ffa22fcda010a4f32fd0e7",
+      "replay_report": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/checkpoint_replay_a4_pinned_0d056dc/a4b_seed50_stochastic_train_replay/train_only_screen.json",
+      "replay_report_sha256": "ba352efffde3df65392041a607446fa0e6e517fa97aed866221e122c0ca80b71",
+      "trades": 825,
+      "return_pct": -10.056049012997974,
+      "sharpe": -0.41611481845279225,
+      "max_drawdown": 0.3259510310143251,
+      "breach_count": 2,
+      "survived_full_period": false,
+      "fail_time": "2025-03-06 20:32:00+03:00",
+      "saved_training_metrics_match": true
+    }
+  },
+  "comparison_contract": [
+    "trade_count",
+    "total_return_pct",
+    "sharpe",
+    "max_drawdown",
+    "breach_count"
+  ],
+  "interpretation": "Both preserved stochastic seed-50 A4 training metrics reproduce exactly under the pinned source and matching train-only inputs. Both fail full-evaluation survival. This is diagnostic reproducibility, not a new economic comparison or a gate to resume training.",
+  "operational_note": "An accidentally duplicated A4B process was interrupted; its trace remains in the external raw log. The surviving paired-script A4B replay produced the validated report. The duplicate is not counted as an independent replication."
+}

@@ -86,6 +86,24 @@ Reproduce inside the existing ARM/GH200 environment with:
 PYTHONPATH=. .venv/bin/python -m scripts.research.analysis.market_data.audit_tickbook_carry_forward
 ```
 
+## Local timestamp and quote chronology limits
+
+[`local_timestamp_and_quote_chronology_limits.json`](local_timestamp_and_quote_chronology_limits.json)
+records the configured timestamp transforms alongside the current input-level
+observations. The selected exports have 329,471 adjacent millisecond-timestamp
+tie groups; 328,918 contain changed quotes, 553 contain a missing quote, and
+none contain identical quotes. TickBook preserves stable source order for
+ties, which makes replay deterministic but does not recover sub-millisecond
+market order. Side carry-forward also does not establish that the resulting
+bid/ask pair was simultaneously available.
+
+The repository uses `Etc/GMT-3` as a wall-clock carrier and declares the
+`ftmo_mt5_us_dst` source-clock model. Session-level conversion follows that
+configured model and raises on ambiguous or nonexistent reconstructed New
+York wall times. This verifies implementation behavior, not the source export's
+actual timezone or an authoritative calendar. Provider, license, and external
+calendar questions are excluded from this local-data packet.
+
 ## Artifacts
 
 - [`local_market_data_quality.json`](local_market_data_quality.json): campaign
@@ -101,7 +119,19 @@ PYTHONPATH=. .venv/bin/python -m scripts.research.analysis.market_data.audit_tic
   quote side. The plot labels are parsed source-wall months.
 - [`monthly_tick_quote_quality.provenance.json`](monthly_tick_quote_quality.provenance.json):
   profile, generator, CSV, and figure hashes.
+- [`local_timestamp_and_quote_chronology_limits.json`](local_timestamp_and_quote_chronology_limits.json):
+  hash-linked local timestamp behavior, quote-tie counts, availability limits,
+  and bounded no-go claims.
+- [`verify_local_timestamp_limits.py`](../../../../scripts/research/analysis/market_data/verify_local_timestamp_limits.py):
+  verifies the packet's counts against the existing hash-verified scan reports
+  and checks the recorded source identities/configuration markers.
 - [`SHA256SUMS`](SHA256SUMS): packet output checksums.
+
+Verify the timestamp-limit packet from the repository root with:
+
+```bash
+.venv/bin/python scripts/research/analysis/market_data/verify_local_timestamp_limits.py
+```
 
 ## Reproduction
 

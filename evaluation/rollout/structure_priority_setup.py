@@ -35,7 +35,14 @@ class StructurePrioritySetupPolicy:
         timeframe_priority: Sequence[str],
         normalized_risk: float = 0.5,
     ) -> None:
-        """Bind a fixed, auditable structure precedence to an action schema."""
+        """Bind a fixed, auditable structure precedence to an action schema.
+
+        Args:
+            action_schema: Versioned policy action schema to populate.
+            idea_priority: Ordered setup families considered by the rule.
+            timeframe_priority: Ordered setup timeframes considered per family.
+            normalized_risk: Fixed risk coordinate emitted for every action.
+        """
         if "trade_setup" not in action_schema.names or "risk" not in action_schema.names:
             raise ValueError("action schema must contain trade_setup and risk coordinates")
         ideas = tuple(idea_priority)
@@ -63,12 +70,25 @@ class StructurePrioritySetupPolicy:
         self._risk_index = action_schema.names.index("risk")
         self._action = np.zeros(action_schema.width, dtype=np.float32)
         self._action[self._risk_index] = np.float32(2.0 * self.normalized_risk - 1.0)
+        if action_schema.has_entry_execution:
+            # The fixed reference policy is market-only. Zero encodes a limit
+            # order in this schema, so set the explicit market category.
+            self._action[action_schema.indices["entry_execution"]] = np.float32(-0.5)
+            self._action[action_schema.indices["limit_offset_atr"]] = np.float32(-1.0)
+            self._action[action_schema.indices["limit_ttl_bars"]] = np.float32(-1.0)
         self._candidate_semantics = {
             candidate.candidate_id: candidate for candidate in TRADE_SETUP_CANDIDATES
         }
 
     def __call__(self, observation: dict[str, Any]) -> np.ndarray[Any, Any]:
-        """Choose the first unambiguous eligible family/timeframe candidate."""
+        """Choose the first unambiguous eligible family/timeframe candidate.
+
+        Args:
+            observation: Current policy observation containing the setup mask.
+
+        Returns:
+            Action vector selecting the preferred eligible setup or no-trade.
+        """
         if "trade_setup_mask" not in observation:
             raise ValueError("observation is missing trade_setup_mask")
         mask = np.asarray(observation["trade_setup_mask"], dtype=np.float32).reshape(-1)
@@ -108,7 +128,11 @@ class StructurePrioritySetupPolicy:
         return action
 
     def metadata(self) -> dict[str, Any]:
-        """Describe the fixed rule and the information it is permitted to use."""
+        """Describe the fixed rule and the information it is permitted to use.
+
+        Returns:
+            Provenance metadata for this deterministic baseline policy.
+        """
         return {
             "policy_id": "structure_priority_setup_v1",
             "baseline_tier": "tier_1_deterministic_structure_rule",
@@ -121,6 +145,14 @@ class StructurePrioritySetupPolicy:
             "timeframe_priority": list(self.timeframe_priority),
             "normalized_risk": self.normalized_risk,
             "risk_coordinate_is_constant": True,
+            "entry_execution": (
+                "market" if self.action_schema.has_entry_execution else "market_default"
+            ),
+            "limit_order_controls": (
+                "minimum_offset_and_ttl_inactive_under_market_execution"
+                if self.action_schema.has_entry_execution
+                else "not_in_action_schema"
+            ),
             "setup_selection": "first eligible family/timeframe; abstain on direction conflict",
             "execution_and_risk_controls": "delegated to shared evaluation environment",
         }
@@ -130,22 +162,51 @@ class StructurePrioritySetupRolloutModel:
     """Expose the deterministic structure rule through the rollout interface."""
 
     def __init__(self, policy: StructurePrioritySetupPolicy) -> None:
+        """Wrap a deterministic setup policy in the rollout model interface.
+
+        Args:
+            policy: Deterministic structure-priority policy to expose.
+        """
         self._policy = policy
 
     @property
     def policy(self) -> StructurePrioritySetupRolloutModel:
+        """Return this rollout-compatible model instance.
+
+        Returns:
+            This model wrapper.
+        """
         return self
 
     @property
     def hybrid_action_coordinates(self) -> tuple[str, ...]:
+        """Return the action coordinate names expected by the policy.
+
+        Returns:
+            Ordered names defined by the wrapped action schema.
+        """
         return self._policy.action_schema.names
 
     @property
     def policy_metadata(self) -> dict[str, Any]:
+        """Return setup-rule identity and permitted-information metadata.
+
+        Returns:
+            Provenance metadata emitted by the wrapped policy.
+        """
         return self._policy.metadata()
 
     def predict(
         self, observation: dict[str, Any], *, deterministic: bool = True
     ) -> tuple[np.ndarray[Any, Any], None]:
+        """Predict an action while matching the trained-model rollout API.
+
+        Args:
+            observation: Current environment observation.
+            deterministic: Accepted for API compatibility; this policy is deterministic.
+
+        Returns:
+            Action vector and ``None`` for the unused recurrent state.
+        """
         del deterministic
         return self._policy(observation), None

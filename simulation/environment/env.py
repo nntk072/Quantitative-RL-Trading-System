@@ -144,6 +144,13 @@ class TradingEnv(
         strict_research_eligibility: bool = False,
         legacy_sequence_columns: bool | None = None,
         trading_policy: dict[str, Any] | None = None,
+        feature_validity_channels: bool = False,
+        sequence_columns_override: tuple[str, ...] | None = None,
+        agent_entry_execution: bool = False,
+        limit_order_max_offset_atr: float = 1.0,
+        limit_order_max_ttl_bars: int = 60,
+        limit_order_require_trade_through: bool = False,
+        lot_step: float = 0.01,
     ):
         """Initialize the trading environment through semantic runtime stages.
 
@@ -164,6 +171,7 @@ class TradingEnv(
             sl_mode: Text or path value identifying the sl mode.
             min_lot: Numeric value used for the min lot.
             max_lot: Numeric value used for the max lot.
+            lot_step: Broker volume increment used for risk-based sizing.
             contract_size: Number specifying the contract size for this operation.
             max_loss_per_trade_usd: Numeric value used for the max loss per trade usd.
             dsr_eta: Numeric value used for the dsr eta.
@@ -182,6 +190,10 @@ class TradingEnv(
             pre_ny_by_date: Key-value data used for the pre ny by date.
             ny_session_start_idx: Ny session start idx used by the operation described above.
             fill_latency_bars: Whole-M1-bar delay for entry orders after the initial next-bar fill.
+            agent_entry_execution: Whether the action schema includes market-versus-limit entry.
+            limit_order_max_offset_atr: Maximum policy-selected limit distance in ATR units.
+            limit_order_max_ttl_bars: Maximum lifetime of a policy-selected limit order in bars.
+            limit_order_require_trade_through: Require quotes to trade through the limit to fill.
             max_episode_steps: Number specifying the max episode steps for this operation.
             normalize_account: Whether to enable or require the normalize account.
             strategy: Strategy used to select or evaluate trades.
@@ -244,6 +256,8 @@ class TradingEnv(
             strict_research_eligibility: Whether to enable or require the strict research eligibility.
             legacy_sequence_columns: Legacy sequence columns used by the operation described above.
             trading_policy: Key-value data used for the trading policy.
+            feature_validity_channels: Whether to append per-feature finite-value masks.
+            sequence_columns_override: Exact saved feature order for a bounded replay.
         """
         self._initialize_market_source(bars, features, bundle_data, strict_research_eligibility)
         self._initialize_account_policy(
@@ -261,6 +275,7 @@ class TradingEnv(
             tp_reference,
             min_lot,
             max_lot,
+            lot_step,
             contract_size,
             max_loss_per_trade_usd,
             block_overnight,
@@ -334,6 +349,7 @@ class TradingEnv(
             bars,
             features,
             legacy_sequence_columns,
+            sequence_columns_override,
             episodic,
             obs_features_mmap,
             mtf,
@@ -344,6 +360,7 @@ class TradingEnv(
             regime_observation,
             self.trade_setup_actions,
             reachable_r_validity_mask,
+            feature_validity_channels,
         )
         self._initialize_action_and_episode_contracts(
             continuous_actions,
@@ -355,6 +372,10 @@ class TradingEnv(
             fill_latency_bars,
             max_episode_steps,
             normalize_account,
+            agent_entry_execution,
+            limit_order_max_offset_atr,
+            limit_order_max_ttl_bars,
+            limit_order_require_trade_through,
         )
         self._initialize_episode_spaces(
             ny_session_start_idx, bars, bundle_data, use_vae, vae, obs_window

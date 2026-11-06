@@ -8,17 +8,11 @@ import pandas as pd
 from omegaconf import DictConfig
 
 from configuration.paths import repository_root
+from market_data.splits.definitions import make_train_mask
 
 ROOT = repository_root(__file__)
 DEFAULT_CONFIG = ROOT / "config/research/trade_setup_mtf_reasoning_2m.yaml"
 TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
-
-
-def _timestamp(value: str, index: pd.DatetimeIndex) -> pd.Timestamp:
-    stamp = pd.Timestamp(value)
-    if index.tz is not None:
-        stamp = stamp.tz_localize(index.tz) if stamp.tzinfo is None else stamp.tz_convert(index.tz)
-    return stamp
 
 
 def training_slice(
@@ -28,9 +22,7 @@ def training_slice(
     result: dict[str, pd.DataFrame] = {}
     for timeframe, frame in frames.items():
         index = pd.DatetimeIndex(frame.index)
-        lower = _timestamp(start, index)
-        upper = _timestamp(end, index) + pd.Timedelta(days=1) - pd.Timedelta(nanoseconds=1)
-        result[timeframe] = frame.loc[(index >= lower) & (index <= upper)]
+        result[timeframe] = frame.loc[make_train_mask(index, end, start)]
     return result
 
 

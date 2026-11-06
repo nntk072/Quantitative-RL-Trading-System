@@ -1,38 +1,100 @@
 {
-  "schema_version": 1,
+  "schema_version": 3,
   "status": "passed",
-  "date_local": "2026-11-03",
-  "cluster_job_id": "21367992",
-  "node": "gpuarm2",
-  "allocation_context": "reused existing one-GH200 allocation; no new job or Slurm step",
-  "test_command": ".venv/bin/python -m pytest -q tests/unit/features/test_synthetic_entry_timing_examples.py",
-  "generation_command": ".venv/bin/python scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py --fixture tests/fixtures/research/idea12/synthetic_examples.json --output-dir evidence/research/feature_causality/synthetic_event_timing_examples",
-  "test_result": {
-    "collected": 1,
-    "passed": 1,
-    "failed": 0,
-    "duration_seconds": 0.2
-  },
-  "outputs": [
-    "confirmed_po3_ifvg_entry_timing.svg",
-    "incorrect_same_bar_ifvg_entry.svg",
-    "previous_session_premium_gate.svg",
-    "confirmed_ifvg_retest_timing.svg"
+  "date_local": "2026-11-04",
+  "execution_context": "lightweight SVG formatting, focused synthetic feature tests, and rendering on x86_64 login host; no market-data construction or training",
+  "platform": "Linux-5.14.0-687.64.1.el9_8.x86_64-x86_64-with-glibc2.34",
+  "machine": "x86_64",
+  "hostname": "login5.triton.aalto.fi",
+  "commands": [
+    ".venv-x86/bin/ruff format scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py tests/unit/features/test_synthetic_entry_timing_examples.py",
+    ".venv-x86/bin/ruff check scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py tests/unit/features/test_synthetic_entry_timing_examples.py",
+    ".venv-x86/bin/python -m pytest -q tests/unit/features/test_synthetic_entry_timing_examples.py",
+    ".venv-x86/bin/python -m pytest -q tests/unit/features/test_smt.py",
+    ".venv-x86/bin/python -m pytest -q tests/unit/features/test_variants.py -k 'smt_mtf_additive_and_causal'",
+    ".venv-x86/bin/python -m pytest -q tests/architecture/test_functional_filename_contracts.py -k 'operational_docs_match_live_market_cache_versions'",
+    ".venv-x86/bin/python scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py --fixture tests/fixtures/research/idea12/synthetic_examples.json --output-dir evidence/research/feature_causality/synthetic_event_timing_examples"
   ],
-  "sources": [
+  "test_results": [
     {
-      "path": "scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py",
-      "sha256": "a7b49113f527ba12ff7919635ac7b8e87abba403eded1b52ea5db76e1cf889fa"
+      "path": "tests/architecture/test_functional_filename_contracts.py::test_operational_docs_match_live_market_cache_versions",
+      "collected": 1,
+      "passed": 1,
+      "failed": 0
     },
     {
-      "path": "tests/fixtures/research/idea12/synthetic_examples.json",
-      "sha256": "878718c56461410dd1574fead58a1c289916f527436a2b8546bb0d9295e5e4b3"
+      "path": "tests/unit/features/test_smt.py",
+      "collected": 5,
+      "passed": 5,
+      "failed": 0,
+      "duration_seconds": 0.46
     },
     {
       "path": "tests/unit/features/test_synthetic_entry_timing_examples.py",
-      "sha256": "4686eddef82741741cd8813797910508af608c62114eea8a722f625a4aceff87"
+      "collected": 1,
+      "passed": 1,
+      "failed": 0,
+      "duration_seconds": 0.32
+    },
+    {
+      "path": "tests/unit/features/test_variants.py::test_smt_mtf_additive_and_causal",
+      "collected": 1,
+      "passed": 1,
+      "failed": 0,
+      "duration_seconds": 1.01
     }
   ],
-  "claim_limit": "Synthetic event-time examples only; no historical market, policy, feed-publication, external-calendar, or economic claim.",
+  "outputs": [
+    "confirmed_ifvg_retest_timing.svg",
+    "confirmed_po3_ifvg_entry_timing.svg",
+    "incorrect_same_bar_ifvg_entry.svg",
+    "order_block_retest_timing.svg",
+    "previous_session_premium_gate.svg",
+    "smt_secondary_bar_availability.svg",
+    "swing_confirmation_timing.svg"
+  ],
+  "sources": [
+    {
+      "path": "features/context/order_blocks.py",
+      "sha256": "e0e620c80fa7c3859f7abfc5c2a29aab9b0f444e506dba129d134f024858dbcd"
+    },
+    {
+      "path": "features/context/smt.py",
+      "sha256": "8b669f666fe119b3dd8d1f7d953a440f709097839c1f50b940bd1a87e96b224e"
+    },
+    {
+      "path": "features/technical/swings.py",
+      "sha256": "7e3158182417637523583ca08768d577707d80ef829603b787ff172b71910714"
+    },
+    {
+      "path": "scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py",
+      "sha256": "347e50587519b311cfad47a1db87e1475bd17c2ca7b2231433d761722950a9bc"
+    },
+    {
+      "path": "tests/fixtures/research/idea12/synthetic_examples.json",
+      "sha256": "3bb3ec3bb8a25f2712bed5b2077b5e2a3c66d6adfa2c5774ee9dab3454526299"
+    },
+    {
+      "path": "tests/unit/features/test_order_blocks.py",
+      "sha256": "9ea04e73bc3768c08967be3dbe15af043fd308588b851d2c93cf562ddd7db4ca"
+    },
+    {
+      "path": "tests/unit/features/test_pivots_swings.py",
+      "sha256": "be9e568b26c436f0f2518bccbb8ee43d196908d25d5944cecc84e34e77cfe4b3"
+    },
+    {
+      "path": "tests/unit/features/test_smt.py",
+      "sha256": "433c2545e971b596c3a7a23fe261fbf227fb38ef1f0d5cc71f277dfe057970d6"
+    },
+    {
+      "path": "tests/unit/features/test_synthetic_entry_timing_examples.py",
+      "sha256": "bfcf1c7e650d7158aaec7d341b4fb7a808893c1095d693677ef93f9a151ae2fc"
+    },
+    {
+      "path": "tests/unit/features/test_variants.py",
+      "sha256": "584069cb26bbc113f148ccac75cdec66a6f66eed712d539c66425d17a62f6a4b"
+    }
+  ],
+  "claim_limit": "Synthetic UTC timing examples and focused source-contract regressions only. No historical-market, provider-time, feed-clock, policy-value, or economic claim; the all-profile market prefix audit must be rerun after the SMT source correction.",
   "run_output_file": "run_output.txt"
 }

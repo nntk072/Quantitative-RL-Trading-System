@@ -35,7 +35,7 @@ PREBUILT_FEATURE_CACHES: dict[str, str] = {}
 STRATEGIES = ("baseline", "po3_ifvg", "distribution")
 ALGOS = ("ppo", "sac")
 ARCHS = ENCODER_ARCHITECTURE_IDS
-REWARD_MODES = ("dsr", "pnl", "rr", "equity_delta_r", "equity_log_growth")
+REWARD_MODES = ("dsr", "pnl", "rr", "equity_delta_r", "equity_log_growth", "survival")
 
 LADDER_FLAGS: tuple[str, ...] = (
     "entry_state_machine",
@@ -45,6 +45,8 @@ LADDER_FLAGS: tuple[str, ...] = (
     "allow_multi_tp",
     "agent_direction_control",
     "strategy_actions",
+    "trade_setup_actions",
+    "agent_entry_execution",
     "arm_requires_retest",
     "candidate_max_age_bars",
     "peak_trailing_dd_limit",
@@ -162,6 +164,23 @@ def resolve_variant(
     if len(matches) != 1:
         raise VariantError(f"variant {name!r} must be defined exactly once (found {len(matches)})")
     declared = {**defaults, **matches[0]}
+    declared_overrides = declared.get("config_overrides", [])
+    if not isinstance(declared_overrides, list) or any(
+        not isinstance(item, str) for item in declared_overrides
+    ):
+        raise VariantError(f"{name}: config_overrides must be a list of key=value strings")
+    run_overrides: list[str] = []
+    for item in config_overrides or []:
+        key, separator, value = item.partition("=")
+        if not separator or not key.strip() or not value.strip():
+            raise VariantError(
+                f"invalid experiment run config override {item!r}; expected key=value"
+            )
+        run_overrides.append(f"{key.strip()}={value.strip()}")
+    for item in [*declared_overrides, *run_overrides]:
+        key, separator, value = item.partition("=")
+        if not separator or not key.strip() or not value.strip():
+            raise VariantError(f"{name}: invalid config override {item!r}; expected key=value")
 
     if "reward_mode" not in matches[0]:
         raise VariantError(f"{name}: reward_mode must be declared explicitly on the variant")
@@ -190,6 +209,37 @@ def resolve_variant(
     strategy_actions = bool(
         matches[0].get("strategy_actions", declared.get("strategy_actions", False))
     )
+    trade_setup_actions = bool(declared.get("trade_setup_actions", False))
+    agent_entry_execution = bool(declared.get("agent_entry_execution", False))
+
+    def configured_flag(key: str, fallback: bool) -> bool:
+        """Resolve a boolean config flag after declared variant overrides.
+
+        Args:
+            key: Fully qualified configuration key.
+            fallback: Resolved base value used when no override is present.
+
+        Returns:
+            The final boolean value after validated override application.
+        """
+        value = fallback
+        for item in [*declared_overrides, *run_overrides]:
+            override_key, _, override_value = item.partition("=")
+            if override_key.strip() != key:
+                continue
+            normalized = override_value.strip().lower()
+            if normalized not in {"true", "false", "1", "0"}:
+                raise VariantError(f"{name}: {key} must be true or false, got {normalized!r}")
+            value = normalized in {"true", "1"}
+        return value
+
+    strategy_actions = configured_flag("env.strategy_actions", strategy_actions)
+    trade_setup_actions = configured_flag("env.trade_setup_actions", trade_setup_actions)
+    agent_entry_execution = configured_flag("env.agent_entry_execution", agent_entry_execution)
+    if trade_setup_actions and not strategy_actions:
+        raise VariantError(f"{name}: trade_setup_actions requires strategy_actions=true")
+    if agent_entry_execution and not trade_setup_actions:
+        raise VariantError(f"{name}: agent_entry_execution requires trade_setup_actions=true")
     include_pd = bool(declared.get("include_pd_context", False))
     full_po3 = strategy != "baseline" or strategy_actions
     base_config = FULL_PO3_BASE if full_po3 else DEFAULT_BASE
@@ -213,11 +263,6 @@ def resolve_variant(
             overrides.append(f"env.{key}={_fmt(matches[0][key])}")
     overrides.extend(_data_price_grid_overrides(matches[0]))
     overrides.extend(variant_ftmo_overrides(name, required=experiments_path is None))
-    declared_overrides = declared.get("config_overrides", [])
-    if not isinstance(declared_overrides, list) or any(
-        not isinstance(item, str) for item in declared_overrides
-    ):
-        raise VariantError(f"{name}: config_overrides must be a list of key=value strings")
     for item in declared_overrides:
         key, separator, value = item.partition("=")
         if not separator or not key.strip() or not value.strip():
@@ -231,13 +276,31 @@ def resolve_variant(
     prebuilt_cache = PREBUILT_FEATURE_CACHES.get(name)
     if prebuilt_cache is not None:
         overrides.append(f"data.prebuilt_feature_cache={prebuilt_cache}")
-    for item in config_overrides or []:
-        key, separator, value = item.partition("=")
-        if not separator or not key.strip() or not value.strip():
+    overrides.extend(run_overrides)
+
+    # Trade-setup actions require the categorical setup distribution. A plain
+    # diagonal Gaussian silently models categorical coordinates as continuous,
+    # so fail during profile resolution instead of at policy construction (or,
+    # worse, training with the wrong action contract).
+    distribution_values = [
+        item.partition("=")[2]
+        for item in overrides
+        if item.partition("=")[0].strip() == "ppo.policy_distribution"
+    ]
+    if trade_setup_actions:
+        policy_distribution = (
+            distribution_values[-1] if distribution_values else "trade_setup_hybrid_v1"
+        )
+        if policy_distribution not in {
+            "trade_setup_hybrid_v1",
+            "trade_setup_conditioned_v1",
+        }:
             raise VariantError(
-                f"invalid experiment run config override {item!r}; expected key=value"
+                f"{name}: trade_setup_actions requires ppo.policy_distribution to be "
+                "'trade_setup_hybrid_v1' or 'trade_setup_conditioned_v1'"
             )
-        overrides.append(f"{key.strip()}={value.strip()}")
+        if not distribution_values:
+            overrides.append("ppo.policy_distribution=trade_setup_hybrid_v1")
 
     return {
         "variant": name,
@@ -247,6 +310,13 @@ def resolve_variant(
         "vae_path": vae_path if use_vae else None,
         "strategy": strategy,
         "strategy_actions": strategy_actions,
+        "trade_setup_actions": trade_setup_actions,
+        "agent_entry_execution": agent_entry_execution,
+        "policy_distribution": (
+            distribution_values[-1]
+            if distribution_values
+            else ("trade_setup_hybrid_v1" if trade_setup_actions else None)
+        ),
         "reward_mode": reward_mode,
         "include_pd_context": include_pd,
         "feature_profile": "full_po3" if full_po3 else "default",
@@ -312,6 +382,9 @@ def consistency_table(names: list[str], **kwargs: Any) -> list[dict[str, Any]]:
                     "variant",
                     "strategy",
                     "strategy_actions",
+                    "trade_setup_actions",
+                    "agent_entry_execution",
+                    "policy_distribution",
                     "reward_mode",
                     "include_pd_context",
                     "feature_profile",

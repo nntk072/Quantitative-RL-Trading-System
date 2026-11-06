@@ -1,0 +1,7 @@
+$ .venv/bin/ruff format --check simulation/environment/step_accounting_runtime.py tests/integration/backtest/test_risk_lifecycle_characterization.py
+2 files already formatted
+$ .venv/bin/ruff check simulation/environment/step_accounting_runtime.py tests/integration/backtest/test_risk_lifecycle_characterization.py
+All checks passed!
+$ .venv/bin/python -m pytest tests/integration/backtest/test_risk_lifecycle_characterization.py tests/integration/backtest/test_repeated_payout_backtest.py tests/unit/simulation/test_environment/test_year_episode_survival.py -q
+40 passed in 1.00s
+FINAL_TERMINAL_BATCH_EXIT=0

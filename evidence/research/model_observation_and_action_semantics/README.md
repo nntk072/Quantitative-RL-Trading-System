@@ -99,12 +99,17 @@ agreement and save/load compatibility for that schema. These tests establish
 categorical ID conditioning and policy plumbing only; the model has no
 candidate-specific proposed entry/stop/target/TTL geometry input.
 
-No qualifying per-decision selected-setup trace or candidate price-geometry
-trace was found in the scanned artifacts. Trade-level examples and aggregate
-setup counts are intentionally not treated as decision traces. The historical
-100k replay note independently says its wrapper did not preserve a per-
-decision setup trace. This is a scoped absence finding, not a claim that no
-other trace exists outside the scanned roots.
+Trade-level examples and aggregate setup counts are intentionally not treated
+as decision traces. The refreshed inventory now recognizes the matched-baseline
+writer's `decisions.csv` schema and finds 13 decision exports under
+`evidence/research/matched_setup_baselines/`, including the accepted three-arm
+bundle. Those current controlled runs record candidate ID and eligibility; they
+do not recover the earlier selected policy's actions. No qualifying trace was
+found elsewhere under the scanned roots, and the historical 100k replay note
+independently says its wrapper did not preserve per-decision setup choices.
+This remains a bounded historical absence finding, not global proof. None of
+the recognized decision exports contains proposed entry, stop, target, and TTL
+together on one row, so per-decision price-geometry labels remain unavailable.
 
 The inventory recognizes the evaluator's canonical
 `trade_setup_decisions.csv` export and its `trade_setup_candidate_id` field.

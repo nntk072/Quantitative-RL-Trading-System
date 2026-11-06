@@ -87,7 +87,11 @@ def test_same_action_trace_reconciles_between_custom_engine_and_backtrader(
     custom = run_backtest(
         bars,
         features,
-        lambda observation: int(observation[-1, 0]),
+        lambda observation: (
+            int(observation["sequence"][-1, 0])
+            if isinstance(observation, dict)
+            else int(observation[-1, 0])
+        ),
         obs_window=1,
         cost_model=cost,
         initial_balance=100_000.0,

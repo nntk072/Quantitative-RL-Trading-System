@@ -7,6 +7,7 @@ from .entries import (
     place_strategy_order,
     resolve_strategy_entry,
 )
+from .entry_execution import limit_order_expiry, limit_price_from_atr_offset
 from .levels import DEVIATION_KS, deviation_levels, level_near_candles
 from .selection import decode_tp_fractions, decode_tp_mode, decode_tp_selections, validate_tp_levels
 from .stops import filter_sl_candidates, manipulation_state, stop_menu
@@ -36,6 +37,8 @@ __all__ = [
     "manipulation_state",
     "normalize_timeframe",
     "level_near_candles",
+    "limit_order_expiry",
+    "limit_price_from_atr_offset",
     "place_strategy_order",
     "reference_timeframe",
     "reference_timeframe_index",

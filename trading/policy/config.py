@@ -33,13 +33,18 @@ class TradingPolicyConfig:
         daily_pnl_basis: Signed daily-PnL basis consumed by risk checks.
         daily_loss_includes_open_pnl: Whether current unrealized PnL is included.
         daily_loss_reset_source: Dataset key that determines a daily reset.
+
+    ``mode`` selects account lifecycle behavior. ``daily_pnl_basis`` separately
+    selects the daily-loss contract. When omitted, it defaults to session equity
+    for every account lifecycle mode.
     """
 
     mode: str = "legacy"
     operating_balance: float = 100_000.0
     profit_target_balance: float = 110_000.0
     account_floor: float = 90_000.0
-    daily_loss_limit: float = 5_000.0
+    max_loss_limit_initial_pct: float | None = None
+    daily_loss_limit_pct: float = 0.05
     min_agent_risk_frac: float = 0.0
     max_agent_risk_frac: float = 0.009
     execution_reserve_usd: float = 0.0
@@ -54,19 +59,6 @@ class TradingPolicyConfig:
     daily_loss_includes_open_pnl: bool | None = None
     daily_loss_reset_source: str = "supplied_session_id_transition"
 
-    def __post_init__(self) -> None:
-        """Resolve the explicit risk-state semantics from the selected policy."""
-        if self.mode == "legacy":
-            basis, includes_open_pnl = "legacy_gross_closed_losses", False
-        elif self.mode == "repeated_payout":
-            basis, includes_open_pnl = "session_net_equity", True
-        else:
-            return
-        if self.daily_pnl_basis is None:
-            object.__setattr__(self, "daily_pnl_basis", basis)
-        if self.daily_loss_includes_open_pnl is None:
-            object.__setattr__(self, "daily_loss_includes_open_pnl", includes_open_pnl)
-
     @property
     def repeated_payout(self) -> bool:
         """Return whether the account policy enables repeated payouts.
@@ -76,6 +68,69 @@ class TradingPolicyConfig:
         """
         return self.mode == "repeated_payout"
 
+    @property
+    def daily_loss_limit(self) -> float:
+        """Return the initial-equity daily allowance in account currency.
+
+        Returns:
+            Daily-loss amount computed from operating balance and configured fraction.
+        """
+        return float(self.operating_balance) * float(self.daily_loss_limit_pct)
+
+    @classmethod
+    def from_mapping(cls, values: Mapping[str, Any]) -> TradingPolicyConfig:
+        """Load resolved settings, converting historical dollar limits to fractions.
+
+        Args:
+            values: Resolved trading-policy settings mapping.
+
+        Returns:
+            Validated immutable trading-policy configuration.
+        """
+        normalized = dict(values)
+        initial = float(normalized.get("operating_balance", 100_000.0))
+        historical_daily_limit = normalized.pop("daily_loss_limit", None)
+        if "daily_loss_limit_pct" not in normalized and historical_daily_limit is not None:
+            if initial <= 0.0:
+                raise ValueError("historical trading policy operating balance must be positive")
+            normalized["daily_loss_limit_pct"] = float(historical_daily_limit) / initial
+        if "max_loss_limit_initial_pct" not in normalized:
+            floor = float(normalized.get("account_floor", 90_000.0))
+            if initial <= 0.0:
+                raise ValueError("historical trading policy operating balance must be positive")
+            normalized["max_loss_limit_initial_pct"] = (initial - floor) / initial
+        return cls(**normalized)
+
+    def __post_init__(self) -> None:
+        """Resolve risk semantics and derive the dollar floor from its percentage."""
+        basis = self.daily_pnl_basis
+        if basis is None:
+            basis = "session_net_equity"
+        if basis is not None:
+            if self.daily_pnl_basis is None:
+                object.__setattr__(self, "daily_pnl_basis", basis)
+            if self.daily_loss_includes_open_pnl is None:
+                object.__setattr__(
+                    self, "daily_loss_includes_open_pnl", basis == "session_net_equity"
+                )
+        # Explicit percentages are canonical for new configs. A missing
+        # percentage preserves direct construction from historical dollar-floor
+        # snapshots; both values are normalized before the config is exposed.
+        if self.max_loss_limit_initial_pct is None:
+            percent = (
+                (float(self.operating_balance) - float(self.account_floor))
+                / float(self.operating_balance)
+                if self.operating_balance > 0.0
+                else 0.10
+            )
+            object.__setattr__(self, "max_loss_limit_initial_pct", percent)
+        else:
+            object.__setattr__(
+                self,
+                "account_floor",
+                float(self.operating_balance) * (1.0 - float(self.max_loss_limit_initial_pct)),
+            )
+
     def validate(self) -> TradingPolicyConfig:
         """Validate payout thresholds and account-floor relationships.
 
@@ -84,15 +139,22 @@ class TradingPolicyConfig:
         """
         if self.mode not in {"legacy", "repeated_payout"}:
             raise ValueError(f"unknown trading_policy.mode: {self.mode!r}")
-        expected_basis, expected_open_pnl = (
-            ("legacy_gross_closed_losses", False)
-            if self.mode == "legacy"
-            else ("session_net_equity", True)
-        )
         if self.risk_state_schema_version != "risk-state-v1":
             raise ValueError("unsupported trading policy risk-state schema")
-        if self.daily_pnl_basis != expected_basis:
-            raise ValueError("daily PnL basis does not match trading_policy.mode")
+        if not 0.0 <= self.daily_loss_limit_pct <= 1.0:
+            raise ValueError("daily-loss percentage must be in [0, 1]")
+        if self.max_loss_limit_initial_pct is None:
+            raise ValueError("maximum-loss percentage is required")
+        max_loss_pct = float(self.max_loss_limit_initial_pct)
+        if not 0.0 < max_loss_pct < 1.0:
+            raise ValueError("maximum-loss percentage must be in (0, 1)")
+        expected_open_pnl_by_basis = {
+            "legacy_gross_closed_losses": False,
+            "session_net_equity": True,
+        }
+        if self.daily_pnl_basis not in expected_open_pnl_by_basis:
+            raise ValueError(f"unsupported daily PnL basis: {self.daily_pnl_basis!r}")
+        expected_open_pnl = expected_open_pnl_by_basis[self.daily_pnl_basis]
         if self.daily_loss_includes_open_pnl is not expected_open_pnl:
             raise ValueError("open-PnL inclusion does not match the daily PnL basis")
         if self.daily_loss_reset_source != "supplied_session_id_transition":
@@ -102,8 +164,6 @@ class TradingPolicyConfig:
                 raise ValueError("repeated payout target must exceed operating balance")
             if self.account_floor >= self.operating_balance:
                 raise ValueError("repeated payout account floor must be below operating balance")
-            if self.daily_loss_limit < 0.0:
-                raise ValueError("repeated payout daily loss limit cannot be negative")
             if self.min_agent_risk_frac != 0.0:
                 raise ValueError("repeated payout minimum agent risk must be zero")
             if not 0.0 <= self.max_agent_risk_frac < 0.01:
@@ -146,17 +206,42 @@ def resolve_trading_policy(cfg: Any) -> TradingPolicyConfig:
     mode = str(block.get("mode", "legacy")).strip().lower()
     repeated = block.get("repeated_payout", {}) or {}
     account = cfg.get("account", {}) if hasattr(cfg, "get") else {}
-    initial = float(account.get("initial_balance", 100_000.0))
+    initial = float(account.get("initial_balance", repeated.get("operating_balance", 100_000.0)))
+    daily_loss_pct_value = repeated.get("daily_loss_limit_pct")
+    if daily_loss_pct_value is None:
+        # Read old resolved configs without retaining a dollar-valued control.
+        old_daily_loss = repeated.get("daily_loss_limit")
+        daily_loss_pct_value = (
+            float(old_daily_loss) / initial if old_daily_loss is not None else 0.05
+        )
+    max_loss_pct_value = repeated.get("max_loss_limit_initial_pct")
+    if max_loss_pct_value is None:
+        old_account_floor = repeated.get("account_floor_equity", repeated.get("account_floor"))
+        operating_balance = float(repeated.get("operating_balance", initial))
+        max_loss_pct_value = (
+            (operating_balance - float(old_account_floor)) / operating_balance
+            if old_account_floor is not None and operating_balance > 0.0
+            else 0.10
+        )
     result = TradingPolicyConfig(
         mode=mode,
+        daily_pnl_basis=(
+            str(block["daily_pnl_basis"]) if block.get("daily_pnl_basis") is not None else None
+        ),
+        daily_loss_includes_open_pnl=(
+            bool(block["daily_loss_includes_open_pnl"])
+            if block.get("daily_loss_includes_open_pnl") is not None
+            else None
+        ),
+        daily_loss_reset_source=str(
+            block.get("daily_loss_reset_source", "supplied_session_id_transition")
+        ),
         operating_balance=float(repeated.get("operating_balance", initial)),
         profit_target_balance=float(
             repeated.get("payout_target_balance", repeated.get("profit_target_balance", 110_000.0))
         ),
-        account_floor=float(
-            repeated.get("account_floor_equity", repeated.get("account_floor", 90_000.0))
-        ),
-        daily_loss_limit=float(repeated.get("daily_loss_limit", 5_000.0)),
+        max_loss_limit_initial_pct=float(max_loss_pct_value),
+        daily_loss_limit_pct=float(daily_loss_pct_value),
         min_agent_risk_frac=_float_or_default(
             repeated.get("min_agent_risk_frac")
             if repeated.get("min_agent_risk_frac") is not None

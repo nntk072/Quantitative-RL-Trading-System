@@ -1,0 +1,14 @@
+{
+  "run_date": "2026-11-04",
+  "run_name": "git_source_commit_reconciliation",
+  "source_dag": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+  "verifier": "scripts/research/analysis/evidence/verify_research_provenance_bytes.py",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "focused_tests_passed": 8,
+  "scoped_ruff": "passed",
+  "git_diff_check": "passed",
+  "overall_provenance_status": "incomplete",
+  "source_nodes_verified_in_run_commits": 2,
+  "source_nodes_still_unresolved": 15
+}

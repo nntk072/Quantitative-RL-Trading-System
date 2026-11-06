@@ -9,6 +9,7 @@ import json
 import math
 import re
 import subprocess
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Any, cast
@@ -19,6 +20,11 @@ from omegaconf import DictConfig, OmegaConf
 
 from configuration.paths import repository_root
 from evaluation import calculate_metrics, evaluation_periods_per_year
+from evaluation.metrics.performance import METRIC_DEFINITION_VERSION
+from evaluation.reporting.account_state_trace_reconciliation import (
+    reconcile_account_state_trace,
+)
+from evaluation.reporting.cost_decomposition import decompose_fill_costs
 from evaluation.reporting.trade_event_export import _fill_events, _position_summaries
 
 _SPLITS = ("training", "testing")
@@ -113,6 +119,8 @@ def _same_resolved_config(left: DictConfig, right: DictConfig) -> bool:
 
 
 def _same_number(actual: Any, expected: Any) -> bool:
+    if actual is None or expected is None:
+        return actual is expected
     if (
         not isinstance(actual, (int, float))
         or isinstance(actual, bool)
@@ -129,6 +137,25 @@ def _same_number(actual: Any, expected: Any) -> bool:
     if math.isinf(left) or math.isinf(right):
         return left == right
     return math.isclose(left, right, rel_tol=1e-10, abs_tol=1e-8)
+
+
+def _same_report_value(actual: Any, expected: Any) -> bool:
+    """Compare JSON report structures while tolerating CSV float round-trips."""
+    if isinstance(expected, dict):
+        return (
+            isinstance(actual, dict)
+            and actual.keys() == expected.keys()
+            and all(_same_report_value(actual[key], value) for key, value in expected.items())
+        )
+    if isinstance(expected, list):
+        return (
+            isinstance(actual, list)
+            and len(actual) == len(expected)
+            and all(_same_report_value(left, right) for left, right in zip(actual, expected))
+        )
+    if isinstance(expected, (int, float)) and not isinstance(expected, bool):
+        return _same_number(actual, expected)
+    return type(actual) is type(expected) and actual == expected
 
 
 def _is_nonnegative_int(value: Any) -> bool:
@@ -303,6 +330,71 @@ def verify_split(
     metrics_report = _read_json(split_dir / "metrics.json")
     diagnostics = _read_json(split_dir / "evaluation_diagnostics.json")
     session_activity = _read_json(split_dir / "session_activity.json")
+    account_trace_path = split_dir / "account_state_trace.csv"
+    trace_complete = diagnostics.get("account_state_trace_complete") is True
+    if trace_complete and not account_trace_path.is_file():
+        errors.append(f"{split_dir.name}: complete account trace is declared but its CSV is absent")
+    account_trace = (
+        pd.read_csv(account_trace_path) if trace_complete and account_trace_path.is_file() else None
+    )
+    if trace_complete and account_trace is not None:
+        declared_trace_rows = diagnostics.get("account_state_trace_rows")
+        if not _is_nonnegative_int(declared_trace_rows) or declared_trace_rows != len(
+            account_trace
+        ):
+            errors.append(f"{split_dir.name}: account trace row count does not match diagnostics")
+    account_reconciliation_path = split_dir / "account_state_reconciliation.json"
+    if trace_complete:
+        if not account_reconciliation_path.is_file():
+            errors.append(
+                f"{split_dir.name}: complete account trace lacks account_state_reconciliation.json"
+            )
+        elif account_trace is not None:
+            reported_account_reconciliation = _read_json(account_reconciliation_path)
+            recomputed_account_reconciliation = reconcile_account_state_trace(
+                account_trace,
+                pd.read_csv(split_dir / "trades.csv"),
+                breach_events=pd.read_csv(split_dir / "breach_events.csv"),
+            )
+            if not _same_report_value(
+                reported_account_reconciliation, recomputed_account_reconciliation
+            ):
+                errors.append(
+                    f"{split_dir.name}: account state reconciliation does not reproduce "
+                    "from exported trace and trade events"
+                )
+            if recomputed_account_reconciliation.get("status") != "matched":
+                errors.append(f"{split_dir.name}: account state reconciliation is not matched")
+            expected_checks = recomputed_account_reconciliation.get("checks", {})
+            expected_check_count = (
+                sum(expected_checks.values()) if isinstance(expected_checks, dict) else -1
+            )
+            if diagnostics.get("account_state_reconciliation_status") != (
+                recomputed_account_reconciliation.get("status")
+            ):
+                errors.append(
+                    f"{split_dir.name}: account reconciliation status differs from diagnostics"
+                )
+            if (
+                not _is_nonnegative_int(diagnostics.get("account_state_reconciliation_checks"))
+                or diagnostics.get("account_state_reconciliation_checks") != expected_check_count
+            ):
+                errors.append(
+                    f"{split_dir.name}: account reconciliation check count differs from diagnostics"
+                )
+            if diagnostics.get("account_state_reconciliation_failures") != (
+                recomputed_account_reconciliation.get("failure_count")
+            ):
+                errors.append(
+                    f"{split_dir.name}: account reconciliation failure count differs from diagnostics"
+                )
+            if not _same_report_value(
+                diagnostics.get("fill_cost_provenance"),
+                recomputed_account_reconciliation.get("fill_cost_provenance"),
+            ):
+                errors.append(
+                    f"{split_dir.name}: fill-cost provenance summary differs from diagnostics"
+                )
 
     required_diagnostics = {
         "n_steps",
@@ -373,8 +465,12 @@ def verify_split(
             errors.append(f"{split_dir.name}: split-completion flag disagrees with end reason")
     if diagnostics["fail_time"] is not None and not isinstance(diagnostics["fail_time"], str):
         errors.append(f"{split_dir.name}: fail_time must be null or a string")
+    hard_events = breach_events
     if list(breach_events.columns) != [
+        "schema_version",
         "time",
+        "detection_time",
+        "trade_event_count",
         "session_id",
         "reason",
         "equity",
@@ -617,15 +713,93 @@ def verify_split(
         n_breach_sessions=int(diagnostics.get("n_breach_sessions", 0)),
         initial_balance=initial_balance,
         periods_per_year=periods_per_year,
+        account_state_trace=account_trace,
+        breach_events=cast(Sequence[Mapping[str, Any]], breach_events.to_dict(orient="records")),
+        completed_data_split=(
+            diagnostics.get("completed_data_split")
+            if isinstance(diagnostics.get("completed_data_split"), bool)
+            else None
+        ),
     )
     expected_metrics = asdict(recomputed)
-    for key, expected in expected_metrics.items():
+    metric_version = metrics_report.get("metric_definition_version")
+    historical_metric_versions = {
+        "qrl.performance_metrics.v2",
+        "qrl.performance_metrics.v3",
+    }
+    if metric_version not in historical_metric_versions | {METRIC_DEFINITION_VERSION}:
+        errors.append(f"{split_dir.name}: unsupported metric definition version")
+    cost_decomposition_path = split_dir / "cost_decomposition.json"
+    if metric_version == METRIC_DEFINITION_VERSION and not cost_decomposition_path.is_file():
+        errors.append(f"{split_dir.name}: current metrics require cost_decomposition.json")
+    if cost_decomposition_path.is_file():
+        reported_costs = _read_json(cost_decomposition_path)
+        recomputed_costs = decompose_fill_costs(trades)
+        for key, expected in recomputed_costs.items():
+            actual = reported_costs.get(key)
+            if key in {"schema_version", "status", "availability_reason"}:
+                if actual != expected:
+                    errors.append(
+                        f"{split_dir.name}: cost decomposition {key} differs from trades.csv"
+                    )
+            elif not _same_number(actual, expected):
+                errors.append(
+                    f"{split_dir.name}: cost decomposition {key} does not reconcile to trades.csv"
+                )
+        if diagnostics.get("cost_decomposition_status") != recomputed_costs["status"]:
+            errors.append(f"{split_dir.name}: cost decomposition status differs from diagnostics")
+        completed_positions = diagnostics.get("cost_decomposition_completed_positions")
+        if (
+            not _is_nonnegative_int(completed_positions)
+            or completed_positions != recomputed_costs["completed_position_count"]
+        ):
+            errors.append(
+                f"{split_dir.name}: cost decomposition position count differs from diagnostics"
+            )
+    v3_path_fields = {
+        "daily_return_count",
+        "daily_return_mean_pct",
+        "daily_return_std_pct",
+        "daily_return_min_pct",
+        "daily_return_max_pct",
+        "daily_return_availability",
+        "time_to_ruin_sessions",
+        "ruin_event_observed",
+        "ruin_time_censored",
+        "time_to_ruin_availability",
+    }
+    v4_path_fields = {
+        "breach_event_count",
+        "breach_event_count_availability",
+        "breach_session_count",
+        "breach_rate_availability",
+    }
+    boolean_path_fields = {"ruin_event_observed", "ruin_time_censored"}
+    string_path_fields = {
+        "daily_return_availability",
+        "time_to_ruin_availability",
+        "breach_event_count_availability",
+        "breach_rate_availability",
+    }
+    for key, expected_metric in expected_metrics.items():
+        if metric_version == "qrl.performance_metrics.v2" and key in v3_path_fields:
+            continue
+        if metric_version in historical_metric_versions and key in v4_path_fields:
+            continue
+        if (
+            metric_version == "qrl.performance_metrics.v2"
+            and key == "breach_rate"
+            and int(diagnostics.get("n_sessions", 0)) == 0
+        ):
+            expected_metric = 0.0
+        if metric_version in historical_metric_versions and key == "breach_count":
+            expected_metric = int(diagnostics.get("n_breach_sessions", 0))
         if key not in metrics_report:
             if key not in {"periods_per_year", "metric_definition_version"}:
                 errors.append(f"{split_dir.name}: metrics.json missing {key}")
         elif (
             key == "profit_factor"
-            and math.isinf(float(expected))
+            and math.isinf(float(expected_metric))
             and metrics_report[key] is None
             and isinstance(metrics_report.get("metric_availability"), dict)
             and metrics_report["metric_availability"].get(key)
@@ -633,22 +807,49 @@ def verify_split(
         ):
             continue
         elif key == "metric_definition_version":
-            if metrics_report[key] != expected:
+            if metrics_report[key] not in historical_metric_versions | {expected_metric}:
                 errors.append(f"{split_dir.name}: metric definition version differs")
+        elif key in boolean_path_fields | string_path_fields:
+            if metrics_report[key] != expected_metric:
+                errors.append(f"{split_dir.name}: metric {key} differs from raw account trace")
         elif key == "extras":
             actual_extras = metrics_report[key]
             if not isinstance(actual_extras, dict):
                 errors.append(f"{split_dir.name}: metrics extras is not an object")
             else:
-                for extra_key, extra_value in expected.items():
+                for extra_key, extra_value in expected_metric.items():
                     if extra_key not in actual_extras or not _same_number(
                         actual_extras[extra_key], extra_value
                     ):
                         errors.append(
                             f"{split_dir.name}: metric extra {extra_key} does not reconcile"
                         )
-        elif not _same_number(metrics_report[key], expected):
+        elif not _same_number(metrics_report[key], expected_metric):
             errors.append(f"{split_dir.name}: metric {key} does not reconcile to raw artifacts")
+    if metric_version == METRIC_DEFINITION_VERSION:
+        availability = metrics_report.get("metric_availability")
+        if not isinstance(availability, dict):
+            errors.append(f"{split_dir.name}: metric_availability must be an object")
+        else:
+            expected_availability = {
+                "breach_event_count": recomputed.breach_event_count_availability,
+                "breach_session_count": recomputed.breach_rate_availability
+                if recomputed.breach_session_count is None
+                else None,
+                "breach_rate": recomputed.breach_rate_availability
+                if recomputed.breach_rate is None
+                else None,
+            }
+            for key, reason in expected_availability.items():
+                if reason is not None and availability.get(key) != reason:
+                    errors.append(
+                        f"{split_dir.name}: metric availability for {key} "
+                        "does not match raw artifacts"
+                    )
+                elif reason is None and key in availability:
+                    errors.append(
+                        f"{split_dir.name}: available metric {key} has an availability reason"
+                    )
     expected_activity = "ACTIVE" if recomputed.n_trades > 0 else "INACTIVE"
     if metrics_report.get("activity_status") != expected_activity:
         errors.append(f"{split_dir.name}: activity status does not match completed trades")

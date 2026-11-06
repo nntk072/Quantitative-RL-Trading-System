@@ -11,6 +11,7 @@ from features.context.trade_setup_candidates import (
     TradeSetupEventIdentity,
     trade_setup_event_identity_record,
 )
+from trading.account import account_state_snapshot
 
 from .entry_diagnostics import _previous_session_audit
 from .market_view import BarView, FeatureRow
@@ -25,6 +26,9 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
     _selected_trade_setup_event_identity: TradeSetupEventIdentity | None
     _last_action_trade_setup_candidate_id: int | None
     _last_action_trade_setup_eligible: bool | None
+    _position_direction_at_decision: int
+    _position_id_at_decision: str | None
+    _pending_order_id_at_decision: str | None
     trade_setup_actions: bool
     action_schema: Any
 
@@ -38,6 +42,7 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
         entry_funnel: dict[str, int],
         entry_machine: Any,
         entry_state_for_action: str | None,
+        action: int,
         done: bool,
     ) -> tuple[dict[str, np.ndarray[Any, Any]], str, dict[str, Any]]:
         """Build step info.
@@ -51,6 +56,7 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
             entry_funnel: Key-value data used for the entry funnel.
             entry_machine: Entry machine used by the operation described above.
             entry_state_for_action: Entry state for action used by the operation described above.
+            action: Direction selected after environment eligibility and risk gates.
             done: Whether to enable or require the done.
 
         Returns:
@@ -67,13 +73,25 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
             ):
                 close_reason = str(last_trade.get("reason") or "")
         if self._entry_rejection_reason and not self._opened_this_step:
+            selected_setup = self._selected_trade_setup if self.trade_setup_actions else None
             self.trade_log.append(
                 {
                     "type": "reject",
                     "decision_id": self._entry_rejection_decision_id or self._current_decision_id,
                     "entry_rejection_reason": self._entry_rejection_reason,
+                    "direction": int(action),
                     "bar": self.step_idx,
                     "time": bar_time,
+                    **(
+                        {
+                            "trade_setup_candidate_id": int(selected_setup.candidate_id),
+                            **trade_setup_event_identity_record(
+                                self._selected_trade_setup_event_identity
+                            ),
+                        }
+                        if selected_setup is not None
+                        else {}
+                    ),
                     **(
                         _previous_session_audit(self.strategy, feat_row, float(bar.close))
                         if feat_row is not None
@@ -86,6 +104,13 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
         info: dict[str, Any] = {
             "decision_id": self._current_decision_id,
             "decision_time": bar_time,
+            "action": int(action),
+            "execution_type": str(self._selected_entry_execution),
+            "limit_offset_atr": float(self._selected_limit_offset_atr),
+            "limit_ttl_bars": int(self._selected_limit_ttl_bars),
+            "position_direction_at_decision": self._position_direction_at_decision,
+            "position_id_at_decision": self._position_id_at_decision,
+            "pending_order_id_at_decision": self._pending_order_id_at_decision,
             "equity": self.account.equity,
             "valuation_time": valuation_time,
             "position": self.position is not None,
@@ -137,13 +162,17 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
                     "trading_policy_mode": self.trading_policy.mode,
                     "daily_loss": float(self.account.canonical_daily_loss()),
                     "daily_floor": float(
-                        self.account.daily_floor(self.guardrails.daily_loss_limit)
+                        self.account.daily_floor(self.guardrails.daily_limit_for(self.account))
                     ),
                     "remaining_daily_capacity": float(
-                        self.account.remaining_daily_capacity(self.guardrails.daily_loss_limit)
+                        self.account.remaining_daily_capacity(
+                            self.guardrails.daily_limit_for(self.account)
+                        )
                     ),
                     "remaining_account_capacity": float(
-                        self.account.remaining_account_capacity(self.trading_policy.account_floor)
+                        self.account.remaining_account_capacity(
+                            self.guardrails.max_loss_floor_for(self.account)
+                        )
                     ),
                     "cumulative_payouts": float(self.cumulative_payouts),
                     "total_economic_value": float(self.account.equity + self.cumulative_payouts),
@@ -162,7 +191,8 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
                 else 0.0
             ),
             "max_loss": (
-                self.account.loss_from_initial() / self.guardrails.max_loss_limit_for(self.account)
+                self.guardrails.max_drawdown_from_reference(self.account)
+                / self.guardrails.max_loss_limit_for(self.account)
                 if self.guardrails.max_loss_limit_for(self.account) > 0.0
                 else 0.0
             ),
@@ -179,6 +209,11 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
         info["constraints"] = {
             "daily_ratio": float(constraint_ratios["daily"]),
             "max_loss_ratio": float(constraint_ratios["max_loss"]),
+            "max_drawdown_mode": self.guardrails.max_drawdown_mode,
+            "max_loss_floor": float(self.guardrails.max_loss_floor_for(self.account)),
+            "max_drawdown_from_reference": float(
+                self.guardrails.max_drawdown_from_reference(self.account)
+            ),
             "trailing_ratio": float(constraint_ratios["trailing"]),
             "daily_cost": max(
                 0.0, constraint_ratios["daily"] - self._previous_constraint_ratios["daily"]
@@ -202,6 +237,35 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
             "previous_max_loss_ratio": self._previous_constraint_ratios["max_loss"],
             "previous_trailing_ratio": self._previous_constraint_ratios["trailing"],
         }
+        session_id = None
+        session_ids = getattr(self, "_session_ids_arr", None)
+        if session_ids is not None and 0 <= int(self.step_idx) < len(session_ids):
+            session_id = int(session_ids[int(self.step_idx)])
+        info["account_state_snapshot"] = account_state_snapshot(
+            self.account,
+            valuation_time=valuation_time,
+            decision_time=bar_time,
+            session_id=session_id,
+            daily_loss_limit_usd=self.guardrails.daily_limit_for(self.account),
+            soft_daily_loss_limit_usd=self.guardrails.soft_daily_limit_for(self.account),
+            max_loss_limit_usd=self.guardrails.max_loss_limit_for(self.account),
+            max_loss_floor_equity=self.guardrails.max_loss_floor_for(self.account),
+            max_drawdown_mode=self.guardrails.max_drawdown_mode,
+            max_drawdown_from_reference_usd=self.guardrails.max_drawdown_from_reference(
+                self.account
+            ),
+            soft_max_loss_limit_usd=self.guardrails.soft_max_loss_limit_for(self.account),
+            trailing_drawdown_limit_usd=float(self.guardrails.trailing_dd_limit),
+            soft_trailing_drawdown_limit_usd=float(self.guardrails.soft_trailing_dd_limit),
+            risk_per_trade_limit_usd=self.guardrails.risk_per_trade_limit_for(self.account),
+            position=self.position,
+            pending_order=getattr(self, "_pending_entry_order", None),
+            cumulative_payouts=float(getattr(self, "cumulative_payouts", 0.0)),
+            cycle_count=int(getattr(self, "cycle_count", 1)),
+            breach_reason=breach_reason,
+            trade_event_count=len(self.trade_log),
+            contract_size=float(self.broker.contract_size),
+        )
         self._previous_constraint_ratios = constraint_ratios
         if entry_machine is not None:
             info["entry_state"] = entry_machine.state

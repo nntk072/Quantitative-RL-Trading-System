@@ -1,0 +1,111 @@
+{
+  "action_schema": {
+    "categorical_coordinates": [
+      "trade_setup",
+      "sl_mode",
+      "exit"
+    ],
+    "coordinates": [
+      "trade_setup",
+      "stop",
+      "risk",
+      "target",
+      "sl_mode",
+      "exit"
+    ],
+    "has_direction": false,
+    "has_multi_tp": false,
+    "has_simplex": false,
+    "has_sl_mode": true,
+    "has_tp_mode": false,
+    "has_trade_setup": true,
+    "key": "trade_setup:trade_setup_stop_risk_target_sl_mode_exit",
+    "kind": "trade_setup_overlay",
+    "trade_setup_candidate_schema_version": "trade-setup-candidate-v1",
+    "trade_setup_category_count": 109,
+    "version": "trade-setup-overlay-action-v1",
+    "width": 6
+  },
+  "bars_rows": 351432,
+  "baseline_tier": "tier_1_deterministic_structure_rule",
+  "confidence_interval_protocol": {
+    "block_length_bars": 8,
+    "level": 0.95,
+    "n_boot": 2000,
+    "schema": "within_trajectory_bootstrap_ci_v1",
+    "scope": "within-trajectory only",
+    "seed": 42
+  },
+  "evaluation_action_mode": "deterministic",
+  "evaluation_end": "2025-12-31 23:49:00+03:00",
+  "evaluation_start": "2024-12-30 01:05:00+03:00",
+  "execution_and_risk_controls": "delegated to shared evaluation environment",
+  "execution_seed": 50,
+  "features_rows": 351432,
+  "idea_priority": [
+    "po3",
+    "order_block",
+    "standard_deviation",
+    "fvg_retest",
+    "ifvg_retest",
+    "ifvg_unretested"
+  ],
+  "input_hashes": {
+    "bars": "ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+    "features": "c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+    "tickbook": "2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc"
+  },
+  "matched_input_bundle": "shared bars, features, and TickBook inputs",
+  "normalized_risk": 0.5,
+  "period_role": "development",
+  "permitted_information": [
+    "current_observation.trade_setup_mask"
+  ],
+  "policy_action_mode": "deterministic",
+  "policy_id": "structure_priority_setup_v1",
+  "policy_source": "deterministic_rule",
+  "random_policy_seed": null,
+  "resolved_config_sha256": "64594261c7ccabb155f9f077895ba1fae83884853b5063ad31bde475381afc87",
+  "risk_coordinate_is_constant": true,
+  "risk_sizing": {
+    "absolute_risk_budget_usd": 900.0,
+    "configured_static_trade_risk_cap_usd": 900.0,
+    "contract_size": 1.0,
+    "fixed_risk_usd": 0.0,
+    "ftmo_limit_value_mode": "fixed_usd",
+    "ftmo_risk_per_trade_limit_pct": 0.01,
+    "ftmo_risk_per_trade_limit_usd": 1000.0,
+    "ftmo_risk_sizing_limit_usd": 900.0,
+    "legacy_risk_fraction": 0.01,
+    "max_lot": 100.0,
+    "min_lot": 0.01,
+    "policy_normalized_risk": 0.5,
+    "policy_risk_coordinate_is_constant": true,
+    "repeated_payout_agent_risk_max_frac": 0.009,
+    "repeated_payout_reserve_cost_buffer_usd": 0.0,
+    "risk_band_hold_below_usd": 0.0,
+    "risk_band_max_usd": 900.0,
+    "risk_budget_semantics": "normalized action coordinate maps to a requested total budget under risk_band_max_usd; sizing reserves modeled execution costs before assigning stop exposure, while lot limits and guardrails may reduce realized exposure",
+    "risk_mode": "dollar_band",
+    "strategy_risk_frac_range": [
+      0.0,
+      0.01
+    ],
+    "trading_policy_mode": "legacy"
+  },
+  "selection_or_tuning_performed": false,
+  "setup_selection": "first eligible family/timeframe; abstain on direction conflict",
+  "tick_fill_slippage_points": 0.0,
+  "timeframe_priority": [
+    "M1",
+    "M3",
+    "M5",
+    "M10",
+    "M15",
+    "M30",
+    "H1",
+    "H4",
+    "D1"
+  ],
+  "training_performed": false
+}

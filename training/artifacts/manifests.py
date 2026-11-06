@@ -8,6 +8,7 @@ from typing import Any
 from omegaconf import OmegaConf
 
 from evaluation.reporting.run_manifest import build_sequence_feature_schema
+from training.artifacts.flags import strict_nonnegative_int
 
 
 def entry_funnel_by_split(
@@ -107,11 +108,11 @@ def build_training_log(
         "test_max_dd": float(test_m.max_drawdown),
         "test_trades": test_m.n_trades,
         "test_return": float(test_m.total_return_pct),
-        "test_breaches": test_result.get("n_breach_sessions", 0),
+        "test_breaches": strict_nonnegative_int(test_result.get("n_breach_sessions", 0)),
         "test_n_sessions": int(test_result.get("n_sessions", 0)),
         "test_days_traded": int(test_result.get("days_traded", 0)),
-        "test_survived_full_year": bool(test_result.get("survived_full_year", False)),
-        "test_completed_data_split": bool(test_result.get("completed_data_split", False)),
+        "test_survived_full_year": test_result.get("survived_full_year") is True,
+        "test_completed_data_split": test_result.get("completed_data_split") is True,
         "test_episode_end_reason": test_result.get("episode_end_reason"),
         "test_max_trailing_dd": float(test_result.get("max_trailing_dd", test_m.max_drawdown)),
         "test_fail_time": (
@@ -210,7 +211,10 @@ def sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:
     columns = getattr(env, "_obs_columns", None)
     if not isinstance(columns, (list, tuple)):
         raise RuntimeError("training environment does not expose sequence feature columns")
-    return build_sequence_feature_schema([str(column) for column in columns])
+    return build_sequence_feature_schema(
+        [str(column) for column in columns],
+        include_validity_channels=bool(getattr(env, "feature_validity_channels", False)),
+    )
 
 
 def training_protocol_manifest(
@@ -315,6 +319,10 @@ def training_protocol_manifest(
             "purge_bars": int(getattr(args, "purge_bars", 0)),
             "embargo_bars": int(getattr(args, "embargo_bars", 0)),
         },
+        "mvp_mode": bool(getattr(args, "mvp", False)),
+        "locked_oos_selection_allowed": bool(
+            getattr(args, "allow_locked_oos_for_selection", False)
+        ),
         "observation_schema_version": str(
             cfg.env.get("observation_schema_version", "account-state-v1")
         ),
@@ -326,6 +334,7 @@ def training_protocol_manifest(
         ),
         "reward": {
             "mode": str(cfg.env.get("reward_mode", "dsr")),
+            "selector": str(getattr(args, "reward", "dsr")),
             "dsr_eta": float(cfg.env.get("reward_dsr_eta", 0.01)),
             "fixed_risk_usd": float(cfg.env.get("fixed_risk_usd", 0.0)),
             "equity_log_growth_scale": float(cfg.env.get("equity_log_growth_scale", 100.0)),

@@ -44,15 +44,19 @@ sizing and does not enforce the training environment's FTMO daily-loss or
 maximum-loss dollar limits. On the default $100,000 account, the configured
 1% per-symbol sizing is numerically comparable to the $1,000 training
 per-trade sizing cap; this scale relationship is not runtime risk parity.
-`FTMOGuardrails` runs in the current environment and backtest paths. In
-non-episodic chronological evaluation, daily-loss breaches block the supplied
-session ID, while maximum-loss and trailing-drawdown breaches latch for the
-remainder of the rollout. Same-bar protective-exit versus account-guardrail
-precedence remains different between the environment and backtest pending a
-shared contract. Risk-contract unit tests verify the v1 value shapes only;
-separate guardrail, environment, and backtest tests cover their respective
-paths. These tests do not establish live parity or equivalence to an external
-account's reset clock.
+`FTMOGuardrails` runs in the current environment and backtest paths. Any hard
+daily-loss breach permanently fails the full evaluation, including
+non-episodic chronological runs; a later session does not restore trading.
+Equality at the daily floor and static maximum-loss floor is allowed, and a
+breach occurs only below the floor. EOD and intraday trailing maximum-loss
+floors retain their touch-breach behavior while above the initial-equity cap;
+after a payout locks either floor at initial equity, equality is allowed and a
+later value below initial equity fails. Same-bar protective-exit versus
+account-guardrail precedence remains different between the environment and
+backtest pending a shared contract. Risk-contract unit tests verify the v1
+value shapes only; separate guardrail, environment, and backtest tests cover
+their respective paths. These tests do not establish live parity or equivalence
+to an external account's reset clock.
 
 ## Quote and fill semantics
 

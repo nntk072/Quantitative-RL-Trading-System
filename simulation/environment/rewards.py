@@ -26,6 +26,7 @@ REWARD_PART_KEYS: tuple[str, ...] = (
     "peak_dd",
     "peak_eod_dd",
     "equity_growth",
+    "survival",
 )
 
 
@@ -36,6 +37,37 @@ def empty_reward_parts() -> dict[str, float]:
         Mapping from ``str`` keys to ``float`` values.
     """
     return {key: 0.0 for key in REWARD_PART_KEYS}
+
+
+class SurvivalReward:
+    """Reward complete breach-free paths and make a hard breach infeasible.
+
+    Intermediate transitions carry no portfolio objective. The environment
+    supplies the path outcome at its terminal boundary: a hard breach is -1,
+    a complete breach-free split is +1, and all other transitions are 0.
+    """
+
+    def __init__(self) -> None:
+        """Initialize empty per-component reward attribution."""
+        self.last_parts: dict[str, float] = empty_reward_parts()
+
+    def reset(self) -> None:
+        """Clear the component breakdown for the next episode."""
+        self.last_parts = empty_reward_parts()
+
+    def __call__(self, *, breached: bool, completed_data_split: bool) -> float:
+        """Score one path transition using account outcome, never profit.
+
+        Args:
+            breached: Whether the account breached a hard risk limit.
+            completed_data_split: Whether the path completed the full data split.
+
+        Returns:
+            Survival reward: negative on breach, positive on full completion, otherwise zero.
+        """
+        reward = -1.0 if breached else 1.0 if completed_data_split else 0.0
+        self.last_parts = fit_reward_parts({"survival": reward}, reward, reward)
+        return reward
 
 
 def fit_reward_parts(parts: dict[str, float], raw: float, clipped: float) -> dict[str, float]:

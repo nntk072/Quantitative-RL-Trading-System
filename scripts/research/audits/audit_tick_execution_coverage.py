@@ -31,7 +31,11 @@ ROOT = repository_root(__file__)
 from configuration import load_config  # noqa: E402
 from market_data.loading.bars import load_bars  # noqa: E402
 from market_data.loading.ticks import TICK_CACHE_VERSION, TickBook, build_tick_book  # noqa: E402
-from market_data.splits.definitions import get_split_config, make_train_mask  # noqa: E402
+from market_data.splits.definitions import (  # noqa: E402
+    get_split_config,
+    get_train_start_config,
+    make_train_mask,
+)
 from market_data.transforms.cleaning import clean  # noqa: E402
 from market_data.transforms.sessions import add_session_id, add_session_labels  # noqa: E402
 from training.configuration.variant_resolution import (  # noqa: E402
@@ -136,8 +140,9 @@ def audit_symbol(
     tick_cache_matches_source = _same_tickbook(cached_book, rebuilt_book)
 
     train_end, test_start = get_split_config(cfg)
+    train_start = get_train_start_config(cfg)
     m1_index = pd.DatetimeIndex(m1_cache.index)
-    train_mask = make_train_mask(m1_index, train_end)
+    train_mask = make_train_mask(m1_index, train_end, train_start)
     coverage_cache = tick_execution_split_coverage(
         cached_book,
         m1_index,

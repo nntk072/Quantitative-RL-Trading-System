@@ -1,0 +1,7 @@
+# Current-source all-profile feature prefix invariance
+
+The 2026-11-06 current-source real-market prefix audit resolved all 130 inventoried profiles into 19 feature-builder groups. All 57 registered group/cutoff comparisons passed at the three cutoffs (2025-12-15, 2026-03-09, and 2026-06-15), with zero changed values and zero maximum absolute delta across 21,741,766,365 compared values.
+
+The audit ran as four worker shards in Slurm job `21437787` on csl13 (32 CPUs, 128 GiB requested). Slurm recorded 1:57:08 wall time, 5:08:14 CPU time, 79.93 GiB peak RSS, and 2.63 average allocated cores used. The merged packet independently matches all 78 current source hashes and the 130-profile inventory identity. Its four local M1 input hashes match the existing checked input registry; no provider, licensing, or external calendar claim is made. The current audit's numeric results are identical to the prior source-snapshot packet, while eight source hashes changed and are now recorded here.
+
+This establishes prefix invariance for the listed source snapshot, resolved profiles, local inputs, and cutoffs. It does not prove every execution, label, model-selection path, publication timestamp, or logical-event identity is leakage-free. The previous source-snapshot result is superseded by this report; the historical v39 report remains at [`real_market_feature_prefix_invariance_v39.json`](../real_market_feature_prefix_invariance_v39.json).

@@ -34,29 +34,47 @@ requested local-analysis scope.
    ordering, and within-minute quote availability remain open. See
    [`configured_timeframe_parity.json`](configured_timeframe_parity.json) and
    [its research interpretation](../../../../docs/research/multitimeframe_data_alignment.md).
-2. **Real-data causality:** the current-source report resolved 130
-   configurations into 19 feature-builder groups and passed 57/57 prefix
-   comparisons across three cutoffs. Its verifier and inventory hashes match
-   the checkout, all 78 feature-source and four local-input hashes are
-   recorded, and the strict shard merger checked complete profile/group/cutoff
-   coverage. This does not cover every execution, label, or model-selection
-   path or prove upstream source-event time, publication latency, or
-   authoritative session/calendar semantics. Candidate-event timing and
-   exhaustive feature-family review remain incomplete.
+   The candidate conditional replay adds 54,638 proposals and 1,067,731
+   bracket combinations; 769,187 rows (72.0%) remain unresolved. Monthly
+   unresolved shares are 84.8%–94.2% through 2025-08 and 15.9% in December.
+   Incomplete local quote intervals dominate unresolved rows in every month.
+   The 12-row deterministic replay audit uses the same execution function and
+   is a reproducibility sample, not an independent implementation or a full
+   outcome recalculation. These labels are not suitable for an unbiased
+   candidate-value comparison; see the
+   [candidate outcome packet](../../candidate_outcomes/README.md).
+2. **Real-data causality:** the current v39 report resolves 130 configurations
+   into 19 feature-builder groups and passes 57/57 prefix comparisons across
+   three cutoffs with zero maximum absolute delta. The strict merge records 78
+   current source hashes and four local input hashes. This establishes prefix
+   invariance only for the recorded inventory, source snapshot, and cutoffs. It
+   does not prove every
+   execution, label, or model-selection path, upstream source-event time,
+   publication latency, or authoritative session/calendar semantics.
+   Candidate-event timing and exhaustive feature-family review remain
+   incomplete.
 3. **Execution reconciliation:** focused current-source tests pass, but full
    real-feed trace reconciliation across all order, partial-exit, breach,
    session-close, and checkpoint cases is not complete. The selected matched pair
-   campaign used legacy gross-losing-close daily-loss semantics; this is not
+   campaign used historical gross realized-loss counter semantics; this is not
    net daily-equity/FTMO semantics. The March events are therefore code-gate
    failures, not verified FTMO daily-loss breaches. A4B separately breached
    the configured maximum account loss. Both simulators now reset either
    policy mode on the normalized source-date `session_id`, covered by a
    controlled cross-midnight test. Equivalence to 00:00 CE(S)T remains
    unverified.
-4. **Comparative selection:** a seeded mask-aware random-eligible setup policy
-   now exists with unit coverage, but matched economic results for flat,
-   random, rule, supervised, and RL baselines, independent seeds, and
-   uncertainty are incomplete. There is no untouched confirmation period.
+4. **Comparative selection:** the verified three-arm packet covers 351,432
+   bars and 99,492 decisions in each arm. The flat control has zero
+   entries/fills, return, and breaches. The one-seed random-eligible reference
+   completed 1,854 positions, returned -10.16%, and recorded 25 breach events.
+   The fixed structure-priority rule completed 1,169 positions, returned
+   -10.03%, and recorded 25 breach events. A bundle
+   writer defect that had copied the random arm's intervals into the flat arm
+   is fixed and regression-tested; two affected immutable bundles remain
+   marked superseded. The corrected result is negative accounting/sanity
+   evidence, not a policy ranking. Matched economic results for other simple
+   rules, supervised and RL baselines, independent seeds, and uncertainty remain
+   incomplete. There is no untouched confirmation period.
 5. **Release verification:** the `verification` section in
    [`RELEASE_MANIFEST.json`](RELEASE_MANIFEST.json) is authoritative for the
    latest full-tree Ruff and Mypy results, scoped test totals, strict Sphinx
@@ -70,7 +88,12 @@ requested local-analysis scope.
    613 source files and 965 direct static test references (421/1,355 P0).
    It records imports
    and attribute paths; it is not a call graph or executed-test map, and a
-   missing reference does not prove code is unused or untested.
+  missing reference does not prove code is unused or untested. The selected P6
+  campaign's source snapshot, both run manifests/configs, and both checkpoint
+  byte hashes now verify against their recorded identities. Its run-level dirty
+  source-tree hash is unknown, and the recorded feature cache is unavailable
+  at its manifest path; no model replay is claimed. See the
+  [bounded artifact integrity report](selected_campaign_artifact_integrity.json).
 
 ## Research interpretation limits
 

@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `training.configuration.va
 
 **Purpose:** Resolve one variant into a fully explicit, validated configuration.
 
-**Exact API:** {py:obj}`training.configuration.variant_resolution.resolve_variant` · **Source:** [training/configuration/variant_resolution.py:137](../../../../training/configuration/variant_resolution.py#L137)
+**Exact API:** {py:obj}`training.configuration.variant_resolution.resolve_variant` · **Source:** [training/configuration/variant_resolution.py:139](../../../../training/configuration/variant_resolution.py#L139)
 
 **Inputs and outputs:**
 
@@ -31,7 +31,7 @@ This page contains 2 public callable records owned by `training.configuration.va
 
 **Observed usage:**
 
-1. [test fixture: `test_resolved_reasoning_treatment_uses_canonical_trade_setup_contract`](../../../../tests/unit/simulation/test_environment/test_trade_setup_factory_config.py#L115)
+1. [test fixture: `test_resolved_reasoning_treatment_uses_canonical_trade_setup_contract`](../../../../tests/unit/simulation/test_environment/test_trade_setup_factory_config.py#L139)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -75,7 +75,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Arguments for ``python -m training.runner.training`` for one seed.
 
-**Exact API:** {py:obj}`training.configuration.variant_resolution.train_args` · **Source:** [training/configuration/variant_resolution.py:260](../../../../training/configuration/variant_resolution.py#L260)
+**Exact API:** {py:obj}`training.configuration.variant_resolution.train_args` · **Source:** [training/configuration/variant_resolution.py:330](../../../../training/configuration/variant_resolution.py#L330)
 
 **Inputs and outputs:**
 
@@ -94,7 +94,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_strategy_rungs_use_strategy_flag_not_name_override`](../../../../tests/unit/training/test_variant_resolver.py#L139)
+1. [test fixture: `test_strategy_rungs_use_strategy_flag_not_name_override`](../../../../tests/unit/training/test_variant_resolver.py#L246)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -107,7 +107,7 @@ def test_strategy_rungs_use_strategy_flag_not_name_override() -> None:
     assert args[args.index("--strategy") + 1] == "distribution"
 ```
 
-2. [test fixture: `test_controls_run_declared_algo_and_arch`](../../../../tests/unit/training/test_variant_resolver.py#L148)
+2. [test fixture: `test_controls_run_declared_algo_and_arch`](../../../../tests/unit/training/test_variant_resolver.py#L255)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -68,13 +68,15 @@ def test_every_variant_resolves_and_declares_reward_mode() -> None:
             "rr",
             "equity_delta_r",
             "equity_log_growth",
+            "survival",
         )
         assert resolved["steps"] > 0
         assert resolved["seeds"]
         policy_path = PROJECT_ROOT / "config" / "variants" / f"{name}.yaml"
         assert policy_path.is_file(), f"missing per-variant policy YAML: {policy_path}"
         policy = load_variant_ftmo_config(name)
-        assert policy["limit_value_mode"] == "fixed_usd"
+        assert policy["limit_value_mode"] == "percent_equity"
+        assert policy["max_drawdown_mode"] == "static"
         assert policy["risk_per_trade_limit_pct"] == pytest.approx(0.01)
         assert policy["daily_loss_limit_pct"] == pytest.approx(0.05)
         assert policy["max_loss_limit_initial_pct"] == pytest.approx(0.10)
@@ -101,6 +103,111 @@ def test_variant_row_overrides_registry_defaults() -> None:
     assert resolved["strategy"] == "distribution"
     assert resolved["steps"] == 4096
     assert resolved["seeds"] == [7, 8]
+
+
+def test_resolver_exposes_policy_selected_market_or_limit_entry() -> None:
+    experiments = _write_experiments(
+        {
+            "defaults": {
+                "algo": "ppo",
+                "arch": "tcn",
+                "strategy": "baseline",
+                "steps": 2048,
+                "seeds": [42, 43, 44, 45, 46, 47],
+            },
+            "variants": [
+                {
+                    "name": "market_limit_probe",
+                    "reward_mode": "dsr",
+                    "strategy_actions": True,
+                    "trade_setup_actions": True,
+                    "agent_entry_execution": True,
+                }
+            ],
+        }
+    )
+
+    resolved = resolve_variant("market_limit_probe", experiments_path=experiments)
+    overrides = _overrides_by_key(resolved)
+
+    assert resolved["feature_profile"] == "full_po3"
+    assert resolved["trade_setup_actions"] is True
+    assert resolved["agent_entry_execution"] is True
+    assert resolved["policy_distribution"] == "trade_setup_hybrid_v1"
+    assert overrides["env.strategy_actions"] == "true"
+    assert overrides["env.trade_setup_actions"] == "true"
+    assert overrides["env.agent_entry_execution"] == "true"
+    assert overrides["ppo.policy_distribution"] == "trade_setup_hybrid_v1"
+    assert resolved["seeds"] == [42, 43, 44, 45, 46, 47]
+
+
+def test_resolver_reports_trade_setup_flags_from_effective_config_overrides() -> None:
+    resolved = resolve_variant("rq_mtf_treatment_reasoning")
+    overrides = _overrides_by_key(resolved)
+
+    assert resolved["strategy_actions"] is True
+    assert resolved["trade_setup_actions"] is True
+    assert resolved["agent_entry_execution"] is False
+    assert resolved["policy_distribution"] == "trade_setup_hybrid_v1"
+    assert overrides["env.trade_setup_actions"] == "true"
+
+
+def test_resolver_rejects_entry_execution_override_without_trade_setup_schema() -> None:
+    experiments = _write_experiments(
+        {
+            "variants": [
+                {
+                    "name": "invalid_effective_entry_execution",
+                    "reward_mode": "dsr",
+                    "strategy_actions": True,
+                    "config_overrides": ["env.agent_entry_execution=true"],
+                }
+            ]
+        }
+    )
+
+    with pytest.raises(VariantError, match="agent_entry_execution requires trade_setup_actions"):
+        resolve_variant("invalid_effective_entry_execution", experiments_path=experiments)
+
+
+@pytest.mark.parametrize(
+    ("strategy_actions", "trade_setup_actions", "agent_entry_execution", "message"),
+    [
+        (False, True, False, "trade_setup_actions requires strategy_actions=true"),
+        (True, False, True, "agent_entry_execution requires trade_setup_actions=true"),
+    ],
+)
+def test_resolver_rejects_invalid_trade_setup_execution_dependencies(
+    strategy_actions: bool,
+    trade_setup_actions: bool,
+    agent_entry_execution: bool,
+    message: str,
+) -> None:
+    variant: dict[str, object] = {
+        "name": "invalid_entry_execution",
+        "reward_mode": "dsr",
+        "strategy_actions": strategy_actions,
+        "trade_setup_actions": trade_setup_actions,
+        "agent_entry_execution": agent_entry_execution,
+    }
+    experiments = _write_experiments({"variants": [variant]})
+
+    with pytest.raises(VariantError, match=message):
+        resolve_variant("invalid_entry_execution", experiments_path=experiments)
+
+
+def test_resolver_rejects_gaussian_distribution_for_trade_setup_actions() -> None:
+    variant: dict[str, object] = {
+        "name": "invalid_setup_distribution",
+        "reward_mode": "dsr",
+        "strategy_actions": True,
+        "trade_setup_actions": True,
+        "config_overrides": ["ppo.policy_distribution=clamped_diagonal_gaussian"],
+    }
+    experiments = _write_experiments({"variants": [variant]})
+
+    with pytest.raises(VariantError, match="trade_setup_actions requires ppo.policy_distribution"):
+        resolve_variant("invalid_setup_distribution", experiments_path=experiments)
 
 
 def test_all_18_research_variants_build_features_from_the_active_split() -> None:
@@ -197,6 +304,24 @@ def test_reward_mode_must_be_declared() -> None:
         raise AssertionError("missing reward_mode must fail")
 
 
+def test_survival_reward_mode_is_resolvable_for_an_explicit_variant() -> None:
+    data = load_experiments()
+    data["variants"].append(
+        {
+            "name": "survival_objective_probe",
+            "reward_mode": "survival",
+            "arch": "tcn",
+            "config_overrides": ["ppo.gamma=1.0", "ppo.gae_lambda=1.0"],
+        }
+    )
+    path = _write_experiments(data)
+    resolved = resolve_variant("survival_objective_probe", experiments_path=path)
+
+    assert resolved["reward_mode"] == "survival"
+    assert _overrides_by_key(resolved)["ppo.gamma"] == "1.0"
+    assert _overrides_by_key(resolved)["ppo.gae_lambda"] == "1.0"
+
+
 def test_steps_and_seeds_overrides_flow_into_args() -> None:
     resolved = resolve_variant("ladder_a2_tp", steps=8192, seeds=[7])
     assert _overrides_by_key(resolved)["ppo.total_timesteps"] == "8192"
@@ -232,6 +357,36 @@ def test_selected_entry_fsm_pair_disables_peak_drawdown_behavior() -> None:
     assert treatment["env.risk_floor"] == "0.0005"
     assert control["env.entry_state_observation"] == "true"
     assert treatment["env.entry_state_observation"] == "false"
+
+
+def test_market_limit_entry_profiles_are_matched_on_all_other_resolved_settings() -> None:
+    control = resolve_variant("entry_execution_market_control")
+    treatment = resolve_variant("entry_execution_policy_market_limit")
+    control_overrides = _overrides_by_key(control)
+    treatment_overrides = _overrides_by_key(treatment)
+
+    assert control["seeds"] == treatment["seeds"]
+    assert (
+        control["policy_distribution"]
+        == treatment["policy_distribution"]
+        == ("trade_setup_hybrid_v1")
+    )
+    assert len(control["seeds"]) >= 6
+    assert {
+        key: value for key, value in control_overrides.items() if key != "env.agent_entry_execution"
+    } == {
+        key: value
+        for key, value in treatment_overrides.items()
+        if key != "env.agent_entry_execution"
+    }
+    assert control_overrides["env.strategy_actions"] == "true"
+    assert control_overrides["env.trade_setup_actions"] == "true"
+    assert control_overrides["env.agent_entry_execution"] == "false"
+    assert control_overrides["ppo.policy_distribution"] == "trade_setup_hybrid_v1"
+    assert treatment_overrides["env.agent_entry_execution"] == "true"
+    assert treatment_overrides["execution.limit_order_max_offset_atr"] == "1.0"
+    assert treatment_overrides["execution.limit_order_max_ttl_bars"] == "60"
+    assert treatment_overrides["execution.limit_order_require_trade_through"] == "false"
 
 
 def test_quarter_grid_pair_preserves_policy_and_shares_data_transform() -> None:
@@ -297,6 +452,12 @@ def test_consistency_table_covers_all_variants() -> None:
     assert by_name["ladder_a0_flat_po3"]["reward_mode"] == "pnl"
     assert by_name["ladder_a0_flat"]["include_pd_context"] is False
     assert by_name["ladder_a0_flat_po3"]["include_pd_context"] is True
+    assert by_name["entry_execution_market_control"]["trade_setup_actions"] is True
+    assert by_name["entry_execution_market_control"]["agent_entry_execution"] is False
+    assert by_name["entry_execution_policy_market_limit"]["agent_entry_execution"] is True
+    assert by_name["entry_execution_policy_market_limit"]["policy_distribution"] == (
+        "trade_setup_hybrid_v1"
+    )
 
 
 def test_dollar_band_q5_pair_differs_only_by_q5_objective() -> None:

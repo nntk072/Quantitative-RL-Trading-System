@@ -1,0 +1,40 @@
+{
+  "status": "verified",
+  "rule": "A sampled daily drawdown equal to the configured loss limit is allowed; only a drawdown strictly greater than the limit counts as a crossing.",
+  "configured_limit_usd": 10.0,
+  "synthetic_boundary_cases": {
+    "drawdown_equal_to_limit": {
+      "drawdown_usd": 10.0,
+      "at_or_above_limit": true,
+      "strictly_exceeds_limit": false,
+      "listed_as_unmatched_crossing": false
+    },
+    "drawdown_above_limit": {
+      "drawdown_usd": 10.01,
+      "at_or_above_limit": true,
+      "strictly_exceeds_limit": true,
+      "listed_as_unmatched_crossing": true
+    }
+  },
+  "preserved_a4_reports": {
+    "calendar_dates": 928,
+    "dates_at_or_above_5000_usd": 0,
+    "dates_strictly_above_5000_usd": 0,
+    "unmatched_first_sample_crossing_dates": []
+  },
+  "validation": {
+    "test": "tests/unit/research/test_recorded_equity_series_audit.py::test_daily_loss_sample_equality_is_allowed_but_strict_crossing_is_counted",
+    "focused_test_file_result": "12 passed",
+    "ruff_format": "passed",
+    "ruff_check": "passed",
+    "allocation": "21410051",
+    "node": "gpuarm1",
+    "validation_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/daily_loss_equality_audit.log",
+    "report_regeneration_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/daily_loss_equality_reports.log"
+  },
+  "limitations": [
+    "The sampled calendar-date screen is not a session-reset account-risk reconstruction.",
+    "The 2026 report-period observations remain exploratory.",
+    "This verifies the audit comparison boundary and does not establish policy quality."
+  ]
+}

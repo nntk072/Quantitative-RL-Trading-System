@@ -1,7 +1,10 @@
+from typing import cast
+
 import numpy as np
 import pandas as pd
 
 from trading.account import AccountState
+from trading.risk import RiskDailyPnlBasis
 
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase
@@ -39,7 +42,9 @@ class MarketAccessMixin(RuntimeMixinBase):
             Result of factory for fresh account state.
         """
         return AccountState(
-            initial_balance=self.initial_balance, policy_mode=self.trading_policy.mode
+            initial_balance=self.initial_balance,
+            policy_mode=self.trading_policy.mode,
+            daily_pnl_basis_override=cast(RiskDailyPnlBasis, self.trading_policy.daily_pnl_basis),
         )
 
     def _sync_bar_arrays(self) -> None:

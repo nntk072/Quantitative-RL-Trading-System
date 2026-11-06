@@ -60,10 +60,20 @@ def _training_episodic(cfg: Any) -> bool:
     Returns:
         Whether training episodic meets the requested condition.
     """
-    if resolve_trading_policy(cfg).repeated_payout:
-        return True
     training = cfg.get("training", {}) if hasattr(cfg, "get") else getattr(cfg, "training", {})
     mode = str(training.get("episode_mode", "full_split")).strip().lower()
+    reward_mode = str(cfg.env.get("reward_mode", "dsr")).strip().lower()
+    repeated_payout = resolve_trading_policy(cfg).repeated_payout
+    if reward_mode == "survival":
+        if repeated_payout:
+            raise ValueError("survival reward requires one continuous account per full data split")
+        if mode != "full_split":
+            raise ValueError("survival reward requires training.episode_mode='full_split'")
+        if max_episode_steps(cfg) is not None:
+            raise ValueError("survival reward requires env.max_episode_steps=null")
+        return False
+    if repeated_payout:
+        return True
     if mode == "full_split":
         if max_episode_steps(cfg) is not None:
             raise ValueError(

@@ -6,6 +6,8 @@ from typing import Any
 
 import pandas as pd
 
+from trading.execution import Position
+
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase
 from .timebase import BAR_TIME_TZ
@@ -13,6 +15,59 @@ from .timebase import BAR_TIME_TZ
 
 class StepAccountingRuntimeMixin(RuntimeMixinBase):
     """Record realized step outcomes for account and evaluation bookkeeping."""
+
+    position: Position | None
+
+    def _liquidate_position_at_episode_end(
+        self, bar: BarView, bar_time: Any, *, reason: str = "data_end"
+    ) -> None:
+        """Realize an open position at the final policy bar's close.
+
+        Args:
+            bar: Final market bar used when no tick fill is required.
+            bar_time: Timestamp of the final policy bar.
+            reason: Terminal close reason recorded in the trade ledger.
+        """
+        position = self.position
+        if position is None:
+            return
+
+        terminal_time = pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step)
+        execution_meta: dict[str, Any] = {}
+        tick_fill = bool(self.tick_execution_required or self.randomized_fill_latency_ms > 0.0)
+        if tick_fill:
+            quote, execution_meta = self._resolve_randomized_tick_quote(
+                terminal_time,
+                event_key=f"bar_fill:{terminal_time.value}",
+            )
+            fill_quote = (float(quote.bid), float(quote.ask))
+            fill_time = pd.Timestamp(quote.tick_time)
+            quote_source = "tick"
+        else:
+            fill_quote = self._bar_quote(bar)
+            fill_time = terminal_time
+            quote_source = "terminal_bar_close"
+
+        pnl, fill_price = self._close_at_quote(position, fill_quote, tick_fill=True)
+        record = {
+            "type": "eod_close",
+            "pnl": pnl,
+            "price": fill_price,
+            "reason": reason,
+            "bar": self.step_idx,
+            "time": fill_time,
+            "decision_time": bar_time,
+            "order_submission_time": terminal_time,
+            "fill_time": fill_time,
+            "fill_quote_source": quote_source,
+            "equity": self.account.equity,
+            **execution_meta,
+        }
+        self._stamp_exit(record, fill_price)
+        self.trade_log.append(record)
+        self.position = None
+        self.sessions_with_trades.add(self._current_session_id())
+        self._note_close(pnl)
 
     def _record_step_accounting(
         self,
@@ -36,6 +91,18 @@ class StepAccountingRuntimeMixin(RuntimeMixinBase):
         Returns:
             Whether record step accounting meets the requested condition.
         """
+        data_end = self._ny_pos + 1 >= len(self._ny_indices)
+        step_limit = (
+            self.max_episode_steps is not None
+            and self.episode_step_count + 1 >= self.max_episode_steps
+        )
+        if data_end or (step_limit and not done):
+            self._liquidate_position_at_episode_end(
+                bar,
+                bar_time,
+                reason="data_end" if data_end else "max_episode_steps",
+            )
+
         payout_terminal = self._handle_repeated_payout(bar_time)
         if payout_terminal:
             done = True

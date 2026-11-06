@@ -14,7 +14,7 @@ from omegaconf import DictConfig, OmegaConf
 from configuration.paths import repository_root
 
 # Increment when feature output or cache-key semantics change.
-FEATURE_CACHE_VERSION = "v37-zero-variance-neutral"
+FEATURE_CACHE_VERSION = "v43-heldout-fit-state"
 
 
 def feature_cache_content_hash(

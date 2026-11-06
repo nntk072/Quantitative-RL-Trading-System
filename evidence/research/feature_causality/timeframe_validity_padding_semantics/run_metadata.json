@@ -1,0 +1,115 @@
+{
+  "claim_scope": "current-source tensor-level validity-channel, temporal-mask, and padding behavior for M1 and eight HTF sequences",
+  "execution": {
+    "architecture": "aarch64",
+    "command": ".venv/bin/python -m pytest tests/unit/simulation/test_environment/test_mtf_windows.py tests/unit/models/test_mtf_efficient_encoders.py tests/unit/models/test_mtf_encoder_registration.py tests/unit/models/test_encoders.py tests/unit/evaluation/test_run_manifest.py tests/unit/simulation/test_environment/test_trade_setup_factory_config.py -q",
+    "cpus": 48,
+    "gpu": "1 GH200",
+    "host_ram": "512G requested",
+    "job_id": "21405414",
+    "node": "gpuarm1",
+    "python": "3.12.15",
+    "pytest_result": "119 passed, 45 warnings in 42.00s",
+    "wall_time_seconds": 42.0,
+    "working_directory": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System"
+  },
+  "documentation": [
+    {
+      "path": "docs/operations/research_execution_plan.md",
+      "bytes": 177171,
+      "sha256": "562c940dd8a19a852801a0a65918fd15ff779d0d429a04b29e9d09f0b655c121"
+    },
+    {
+      "path": "evidence/research/feature_causality/README.md",
+      "bytes": 18447,
+      "sha256": "41ce2f42954d8e467e818b9347fb94bbc327fba37a369c32c81b305cb881ca20"
+    },
+    {
+      "path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/full_plan_execution_checklist.md",
+      "bytes": 119351,
+      "sha256": "a8f7980178703358124da6f5c6159c8734ccb3f1df3c027db399036716e0e286"
+    }
+  ],
+  "production_sources": [
+    {
+      "path": "simulation/environment/observations.py",
+      "bytes": 7929,
+      "sha256": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
+    },
+    {
+      "path": "simulation/environment/observation_runtime.py",
+      "bytes": 12334,
+      "sha256": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057"
+    },
+    {
+      "path": "simulation/environment/episode_spaces_initialization.py",
+      "bytes": 5888,
+      "sha256": "55cf9295fbf55e5f633a72f6e8212fbda816a0b03d16c57dc79e7c088a61db71"
+    },
+    {
+      "path": "simulation/environment/trading_environment_factory.py",
+      "bytes": 29260,
+      "sha256": "90b7503baa50aea06ef3be1b229e28d9f405cadda7c864431989cdf92580b30e"
+    },
+    {
+      "path": "models/encoders/mtf_reasoning.py",
+      "bytes": 4088,
+      "sha256": "bc16a4ce441ad0eb17c1f83e8ba336d05b545fd6fb0a24e76288690109461598"
+    },
+    {
+      "path": "models/encoders/mtf_m1_htf_lite_reasoning.py",
+      "bytes": 5314,
+      "sha256": "82a4705e018b00fbee18810ed370b89e022e1c5d2d277abaee4e39fec13b341c"
+    },
+    {
+      "path": "models/encoders/mtf_m1_htf_snapshot_reasoning.py",
+      "bytes": 5114,
+      "sha256": "d94a71e29ba2e3d0dc99a1bc0c65c2319bf6cca4f6ce6330b518d904e27262ca"
+    },
+    {
+      "path": "models/encoders/mtf_shared_tcn_reasoning.py",
+      "bytes": 7715,
+      "sha256": "0c4986475bf5c48ecfdbf15aa17b8024ff6688e9e76ecc6244e22c444f8a3365"
+    },
+    {
+      "path": "evaluation/reporting/run_manifest.py",
+      "bytes": 22808,
+      "sha256": "79753a0e90777bd85e14dbad98fd997aef833bd084f40bd9a1bf367b71143bfe"
+    }
+  ],
+  "test_sources": [
+    {
+      "path": "tests/unit/simulation/test_environment/test_mtf_windows.py",
+      "bytes": 13381,
+      "sha256": "4ecd672844715515b3687dcaf55bfb21849ed32498e8c9efff8b7e83d8914e07"
+    },
+    {
+      "path": "tests/unit/models/test_mtf_efficient_encoders.py",
+      "bytes": 10531,
+      "sha256": "296d1177997106ed4e25be986b59a5eacc5fab07fcca763d6a811173ad5e7244"
+    },
+    {
+      "path": "tests/unit/models/test_mtf_encoder_registration.py",
+      "bytes": 9040,
+      "sha256": "ce2a2b067f60c4c51ea20830dd03447a044496a5edb47f33b002dd800de274a2"
+    },
+    {
+      "path": "tests/unit/models/test_encoders.py",
+      "bytes": 29197,
+      "sha256": "f91324a49d3ec491dd89d350d63be4eac0c9691e8a5a273f4662f1970dd6aa65"
+    },
+    {
+      "path": "tests/unit/evaluation/test_run_manifest.py",
+      "bytes": 18078,
+      "sha256": "0236bf1abc12374268238e7721e49c505dc268ae985ce1eeb75c6c29642ce723"
+    },
+    {
+      "path": "tests/unit/simulation/test_environment/test_trade_setup_factory_config.py",
+      "bytes": 17825,
+      "sha256": "bf147ebd3d6ae2968b5d2c057355f39200ffea3fca91d5241d02b736f8a57674"
+    }
+  ],
+  "result": "All six focused modules passed; producer-level finite-zero warmup ambiguity remains open.",
+  "schema_version": 1,
+  "status": "passed_with_warmup_gate_open"
+}

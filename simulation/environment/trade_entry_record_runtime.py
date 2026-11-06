@@ -8,9 +8,10 @@ from features.context.trade_setup_candidates import (
     active_trade_setup_candidates,
     trade_setup_event_identity_record,
 )
+from simulation.entry_state import EntryCandidate
+from trading.execution import TRADE_CASHFLOW_SCHEMA_VERSION
 
 from .entry_diagnostics import _previous_session_audit
-from .entry_state import EntryCandidate
 from .market_view import BarView, FeatureRow
 from .mixin_base import RuntimeMixinBase
 
@@ -42,6 +43,7 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
         signal_time: pd.Timestamp,
         entry_level: str | None,
         sweep_delay: float,
+        order_id: str | None = None,
     ) -> None:
         """Process open trade.
 
@@ -67,6 +69,7 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
             signal_time: Signal time used by the operation described above.
             entry_level: Entry level used by the operation described above.
             sweep_delay: Numeric value used for the sweep delay.
+            order_id: Pending order identity, when the entry came from a resting order.
         """
         assert self.position is not None
         selected_setup = self._selected_trade_setup if self.trade_setup_actions else None
@@ -77,11 +80,9 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
             if selected_setup is None or candidate.candidate_id != primary_id
         ]
         if selected_setup is not None:
-            from decisioning.trade_setup import TRADE_SETUP_ACTION_VERSION
-
             setup_identity = {
                 "trade_setup_candidate_id": primary_id,
-                "trade_setup_schema_version": TRADE_SETUP_ACTION_VERSION,
+                "trade_setup_schema_version": self.action_schema.version,
                 "trade_setup_decision_time": self.position.trade_setup_decision_time,
             }
             setup_identity.update(
@@ -94,6 +95,7 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
             {
                 "type": "open",
                 "decision_id": self._current_decision_id,
+                **({} if order_id is None else {"order_id": order_id}),
                 "position_id": self.position.position_id,
                 "requested_risk_usd": float(self._last_requested_risk_usd),
                 "approved_risk_usd": float(self._last_approved_risk_usd),
@@ -102,6 +104,9 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
                 "strategy": self.strategy.name,
                 "variant_id": str(getattr(self.strategy, "variant_id", self.strategy.name)),
                 "direction": discrete_action,
+                "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
+                "contract_size": float(self.broker.contract_size),
+                "commission_per_lot": float(self.broker.cost_model.commission_per_lot),
                 **setup_identity,
                 "primary_idea": selected_setup.idea if selected_setup is not None else "",
                 "primary_setup_timeframe": (
@@ -110,13 +115,14 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
                 "primary_direction": selected_setup.direction if selected_setup is not None else 0,
                 "supporting_idea_timeframes": supporting,
                 "price": self.position.entry_price,
+                "entry_commission": float(self.broker.cost_model.total_cost(self.position.size)),
                 "bar": self.step_idx if decision_bar_idx is None else decision_bar_idx,
                 "signal_bar": signal_bar,
                 "signal_time": signal_time,
                 "order_submission_bar": signal_bar,
                 "fill_bar": self.step_idx if fill_bar_idx is None else fill_bar_idx,
-                "fill_phase": "tick" if execution_meta else "bar_open",
-                "fill_quote_source": "tick" if execution_meta else "bar_open",
+                "fill_phase": execution_meta.get("fill_quote_source", "bar_open"),
+                "fill_quote_source": execution_meta.get("fill_quote_source", "bar_open"),
                 "entry_mode": str(getattr(self.strategy, "entry_mode", "legacy")),
                 "time": fill_time,
                 "decision_time": signal_time,

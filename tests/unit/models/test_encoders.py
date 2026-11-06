@@ -21,6 +21,38 @@ from models.encoders import (
 from models.factory import encoder_for
 
 
+@pytest.mark.parametrize(
+    "encoder_cls", [TCNEncoder, TransformerEncoder, GRUEncoder, LiteTCNEncoder]
+)
+def test_single_stream_encoders_accept_widened_validity_channel_inputs(
+    encoder_cls: type[Any],
+) -> None:
+    feature_count = 12  # six values followed by six finite-value channels
+    observation_space = spaces.Dict(
+        {
+            "seq": spaces.Box(low=-1.0, high=1.0, shape=(8, feature_count), dtype=np.float32),
+            "seq_mask": spaces.Box(low=0.0, high=1.0, shape=(8,), dtype=np.float32),
+            "account": spaces.Box(low=-1.0, high=1.0, shape=(10,), dtype=np.float32),
+        }
+    )
+    encoder = encoder_cls(
+        observation_space=observation_space,
+        seq_len=8,
+        n_features=feature_count,
+        latent_dim=16,
+    ).eval()
+    observations = {
+        "seq": torch.zeros(2, 8, feature_count),
+        "seq_mask": torch.ones(2, 8),
+        "account": torch.zeros(2, 10),
+    }
+
+    output = encoder(observations)
+
+    assert output.shape == (2, 48)
+    assert torch.isfinite(output).all()
+
+
 def test_legacy_encoder_core_path_reexports_registered_encoder_classes() -> None:
     from models.encoders import core as legacy_encoder_exports
 

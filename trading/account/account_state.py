@@ -35,6 +35,7 @@ class AccountState:
     equity: float = field(init=False)
     peak_equity: float = field(init=False)  # informational HWM only
     peak_eod_equity: float = field(init=False)  # high-water mark at completed NY sessions
+    payout_drawdown_floor: float | None = field(init=False)
     max_peak_eod_drawdown_usd: float = field(init=False)
     session_start_balance: float = field(init=False)
     session_start_equity: float = field(init=False)
@@ -60,6 +61,7 @@ class AccountState:
         self.equity = self.initial_balance
         self.peak_equity = self.initial_balance
         self.peak_eod_equity = self.initial_balance
+        self.payout_drawdown_floor = None
         self.max_peak_eod_drawdown_usd = 0.0
         self.session_start_balance = self.initial_balance
         self.session_start_equity = self.initial_balance
@@ -112,7 +114,7 @@ class AccountState:
         self.daily_loss = daily_loss
 
     def reset_daily(self) -> None:
-        """Anchor a new session without changing legacy accounting semantics."""
+        """Set a new session equity anchor and clear the prior loss counter."""
         self.session_start_balance = self.balance
         self.session_start_equity = self.equity
         self.daily_loss = 0.0
@@ -128,30 +130,27 @@ class AccountState:
 
     @property
     def daily_pnl_basis(self) -> RiskDailyPnlBasis:
-        """Return the versioned daily-PnL basis selected by ``policy_mode``.
+        """Return the versioned daily-PnL basis used for daily risk.
 
         Returns:
-            The session-equity or legacy gross-closed-loss basis.
+            The explicitly selected basis, or session equity by default.
         """
         from trading.risk.contracts import (
-            RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES,
             RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
         )
 
         if self.daily_pnl_basis_override is not None:
             return self.daily_pnl_basis_override
-        if self.policy_mode == "repeated_payout":
-            return RISK_DAILY_PNL_BASIS_SESSION_EQUITY
-        if self.policy_mode == "legacy":
-            return RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES
-        raise ValueError(f"unknown account policy mode: {self.policy_mode!r}")
+        if self.policy_mode not in {"legacy", "repeated_payout"}:
+            raise ValueError(f"unknown account policy mode: {self.policy_mode!r}")
+        return RISK_DAILY_PNL_BASIS_SESSION_EQUITY
 
     def to_risk_state(self, *, daily_loss_limit: float, open_risk: float = 0.0) -> RiskState:
         """Build the versioned risk-policy view of the current account.
 
         ``RiskState.daily_pnl`` is signed: positive for session gains and
-        negative for session losses. Legacy mode retains its historical
-        gross-negative-close counter and does not offset winning closes.
+        negative for session losses. Historical gross-negative-close accounting
+        is available only when an old trace explicitly supplies that basis.
 
         Args:
             daily_loss_limit: Current hard or soft daily-loss threshold.
@@ -180,7 +179,7 @@ class AccountState:
         )
 
     def daily_floor(self, daily_loss_limit: float) -> float:
-        """Fixed session floor for repeated-payout mode.
+        """Return the session equity anchor minus its fixed loss allowance.
 
         Args:
             daily_loss_limit: Numeric value used for the daily loss limit.
@@ -191,7 +190,7 @@ class AccountState:
         return compute_daily_floor(self.session_start_equity, daily_loss_limit)
 
     def remaining_daily_capacity(self, daily_loss_limit: float) -> float:
-        """Return the remaining capacity before the daily loss limit is breached.
+        """Return the remaining capacity to the strict-below session floor.
 
         Args:
             daily_loss_limit: Maximum daily loss in account currency.
@@ -214,15 +213,23 @@ class AccountState:
         """
         return compute_remaining_account_capacity(self.equity, account_floor)
 
-    def reset_operating_balance(self, operating_balance: float) -> None:
-        """Reset deployable capital after a payout while preserving global counters elsewhere.
+    def reset_operating_balance(
+        self,
+        post_payout_balance: float,
+        *,
+        max_drawdown_mode: str = "static",
+    ) -> None:
+        """Reset account anchors after payout while preserving retained profit.
 
         Args:
-            operating_balance: Numeric value used for the operating balance.
+            post_payout_balance: Account balance remaining after withdrawal.
+            max_drawdown_mode: Maximum-loss mode controlling the payout floor.
         """
-        balance = self._validated_amount(operating_balance, "operating_balance")
+        balance = self._validated_amount(post_payout_balance, "post_payout_balance")
         if balance < 0.0:
-            raise ValueError("operating_balance must be non-negative")
+            raise ValueError("post_payout_balance must be non-negative")
+        if max_drawdown_mode not in {"static", "eod", "intraday_trailing"}:
+            raise ValueError("unsupported max_drawdown_mode for payout reset")
         self.balance = balance
         self.equity = balance
         self.open_pnl = 0.0
@@ -230,10 +237,21 @@ class AccountState:
         self.session_start_balance = self.balance
         self.session_start_equity = self.equity
         self.daily_loss = 0.0
+        # Dynamic drawdowns lock at initial capital after payout; static mode
+        # keeps its original fixed percentage floor and does not add a payout cap.
+        self.payout_drawdown_floor = self.initial_balance if max_drawdown_mode != "static" else None
 
     @staticmethod
     def _validated_amount(value: float, name: str) -> float:
-        """Return a finite monetary input or fail before mutating account state."""
+        """Return a finite monetary input or fail before mutating account state.
+
+        Args:
+            value: Monetary value to validate.
+            name: Field name included in validation errors.
+
+        Returns:
+            Finite monetary amount as a float.
+        """
         if isinstance(value, bool):
             raise ValueError(f"{name} must be finite")
         try:

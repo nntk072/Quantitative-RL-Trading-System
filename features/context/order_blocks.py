@@ -285,6 +285,17 @@ def build_order_block_features_with_event_ledger(
     The scalar projection preserves latest-zone behavior. Ledger rows also
     include confirmations from older still-active zones without changing the
     model-facing feature output.
+
+    Args:
+        bars: Chronological OHLC bars used to identify order blocks.
+        swing_period: Lookback for confirming local swing structure.
+        impulse_atr: Minimum displacement after the block, measured in ATR.
+        search_bars: Maximum backward search for the source candle.
+        max_age_bars: Maximum lifetime of an active order-block zone.
+        atr_period: Lookback used to calculate the volatility scale.
+
+    Returns:
+        Scalar feature frame and event ledger of confirmed zone retests.
     """
     scalar, ledger = _build_order_block_features(
         bars,
@@ -308,7 +319,19 @@ def build_order_block_features(
     max_age_bars: int = 240,
     atr_period: int = 14,
 ) -> pd.DataFrame:
-    """Return the existing scalar latest-zone order-block feature view."""
+    """Return the existing scalar latest-zone order-block feature view.
+
+    Args:
+        bars: Chronological OHLC bars used to identify order blocks.
+        swing_period: Lookback for confirming local swing structure.
+        impulse_atr: Minimum displacement after the block, measured in ATR.
+        search_bars: Maximum backward search for the source candle.
+        max_age_bars: Maximum lifetime of an active order-block zone.
+        atr_period: Lookback used to calculate the volatility scale.
+
+    Returns:
+        Feature frame containing the latest active order-block projection.
+    """
     features, ledger = _build_order_block_features(
         bars,
         swing_period=swing_period,

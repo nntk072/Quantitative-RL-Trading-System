@@ -32,7 +32,7 @@
     "two_selected_sessions_recorded": true
   },
   "details": {
-    "backtest_close_pnl_sum": -0.7890444987588014,
+    "backtest_close_pnl_sum": 0.20199999999997087,
     "code_hash_checks": {
       "generator": true,
       "market_data/transforms/sessions.py": true,
@@ -41,12 +41,12 @@
       "simulation/environment/env.py": true,
       "simulation/environment/risk_runtime.py": true
     },
-    "environment_close_pnl_sum": -0.18027722575347793,
+    "environment_close_pnl_sum": 0.20199999999997087,
     "execution_mode": "bar_fallback",
-    "expected_backtest_balance": 49999.21095550124,
-    "expected_environment_balance": 49999.81972277425,
-    "independently_recomputed_account_equal": false,
-    "independently_recomputed_simulator_parity": false,
+    "expected_backtest_balance": 50000.202,
+    "expected_environment_balance": 50000.202,
+    "independently_recomputed_account_equal": true,
+    "independently_recomputed_simulator_parity": true,
     "input_hashes": {
       "input_bars_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0"
     },
@@ -54,46 +54,46 @@
       {
         "direction_matches": true,
         "pnl_matches": true,
-        "price_delta": 4.0,
-        "price_matches": false,
+        "price_delta": 0.0,
+        "price_matches": true,
         "session_matches": true,
-        "size_matches": false,
-        "time_matches": false,
-        "type_matches": true
-      },
-      {
-        "direction_matches": true,
-        "pnl_matches": false,
-        "price_delta": 6.799999999999272,
-        "price_matches": false,
-        "session_matches": true,
-        "size_matches": false,
-        "time_matches": false,
+        "size_matches": true,
+        "time_matches": true,
         "type_matches": true
       },
       {
         "direction_matches": true,
         "pnl_matches": true,
-        "price_delta": 7.200000000000728,
-        "price_matches": false,
+        "price_delta": 0.0,
+        "price_matches": true,
         "session_matches": true,
-        "size_matches": false,
-        "time_matches": false,
+        "size_matches": true,
+        "time_matches": true,
         "type_matches": true
       },
       {
         "direction_matches": true,
-        "pnl_matches": false,
-        "price_delta": 16.599999999998545,
-        "price_matches": false,
+        "pnl_matches": true,
+        "price_delta": 0.0,
+        "price_matches": true,
         "session_matches": true,
-        "size_matches": false,
-        "time_matches": false,
+        "size_matches": true,
+        "time_matches": true,
+        "type_matches": true
+      },
+      {
+        "direction_matches": true,
+        "pnl_matches": true,
+        "price_delta": 0.0,
+        "price_matches": true,
+        "session_matches": true,
+        "size_matches": true,
+        "time_matches": true,
         "type_matches": true
       }
     ],
-    "lifecycle_fields_match_across_engines": false,
-    "report_trace_passed": false,
+    "lifecycle_fields_match_across_engines": true,
+    "report_trace_passed": true,
     "risk_transition": {
       "backtest_breach_count": 0,
       "environment_breach_count": 0
@@ -101,8 +101,8 @@
   },
   "independent_verification_passed": true,
   "independent_verifier": "scripts/research/analysis/evaluation/verify_simulator_local_session_account_trace.py",
-  "independent_verifier_sha256": "bf5a2a0ef6282a50105437e8bb2ef7950aefa9e411b2bf77c4bb1a94a4b3c799",
+  "independent_verifier_sha256": "50b2e5ca0fa3545dd9baa2da994bbd8d07e002a1ab6a012719f5dbe2e6e0b82c",
   "schema_version": 1,
-  "simulator_parity_passed": false,
+  "simulator_parity_passed": true,
   "source_report": "evidence/research/simulator_execution_parity/local_session_account_transition/session_account_transition.json"
 }

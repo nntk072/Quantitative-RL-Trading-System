@@ -70,6 +70,11 @@ def test_wrong_typed_known_override_is_rejected(override: str, message: str) -> 
         load_config([override])
 
 
+def test_interpolated_list_alias_uses_its_referenced_leaf_type() -> None:
+    with pytest.raises(ValueError, match=r"expected list\[float\].*standard_deviation\.levels"):
+        load_config(["evaluation.trade_idea_plots.standard_deviation.levels=invalid"])
+
+
 def test_variant_config_merge_is_not_flagged() -> None:
     """Chain B/F variant fragments (features.* keys) load via config_path,
     *before* overrides, so overriding their keys must not raise.

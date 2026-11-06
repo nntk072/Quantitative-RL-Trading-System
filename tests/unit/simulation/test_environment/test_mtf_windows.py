@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pandas as pd
+import torch
 
 from simulation.environment.env import TradingEnv
-from simulation.environment.observations import closed_window, run_starts, timeframe_starts
+from simulation.environment.observations import (
+    closed_window,
+    run_starts,
+    timeframe_starts,
+)
 from trading.strategies import PO3IFVGStrategy
 
 
@@ -34,6 +41,44 @@ def test_closed_window_column_selection_matches_materialized_branch() -> None:
         actual, actual_mask = closed_window(block, starts, decision, length, columns=columns)
         np.testing.assert_array_equal(actual, expected)
         np.testing.assert_array_equal(actual_mask, expected_mask)
+
+
+def test_closed_window_maps_every_nonfinite_feature_to_zero() -> None:
+    block = np.asarray([[1.0], [np.nan], [np.inf], [-np.inf], [2.0]], dtype=np.float32)
+
+    window, mask = closed_window(block, np.arange(5), end=4, length=5)
+
+    np.testing.assert_array_equal(window[:, 0], [1.0, 0.0, 0.0, 0.0, 2.0])
+    np.testing.assert_array_equal(mask, np.ones(5, dtype=np.float32))
+
+
+def test_closed_window_can_append_feature_validity_channels() -> None:
+    block = np.asarray([[1.0], [np.nan], [np.inf], [-np.inf], [2.0]], dtype=np.float32)
+
+    window, temporal_mask = closed_window(
+        block, np.arange(5), end=4, length=7, include_validity=True
+    )
+
+    np.testing.assert_array_equal(window[-5:, 0], [1.0, 0.0, 0.0, 0.0, 2.0])
+    np.testing.assert_array_equal(window[-5:, 1], [1.0, 0.0, 0.0, 0.0, 1.0])
+    np.testing.assert_array_equal(window[:2], np.zeros((2, 2), dtype=np.float32))
+    np.testing.assert_array_equal(temporal_mask, [0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+
+
+def test_environment_m1_observation_maps_infinite_features_to_zero() -> None:
+    bars, features, decision = _day()
+    features.loc[features.index[decision - 3], "sweep_high"] = np.inf
+    features.loc[features.index[decision - 2], "sweep_high"] = -np.inf
+    features.loc[features.index[decision - 1], "sweep_high"] = np.nan
+    env = _env(bars, features, mtf=False)
+    env.reset()
+    env.step_idx = decision
+
+    observation = env._get_observation()
+    feature_column = env._obs_columns.index("sweep_high")
+
+    assert np.isfinite(observation["seq"]).all()
+    np.testing.assert_array_equal(observation["seq"][-3:, feature_column], [0.0, 0.0, 0.0])
 
 
 def test_closed_window_without_available_candles_marks_every_row_invalid() -> None:
@@ -130,7 +175,15 @@ def _day() -> tuple[pd.DataFrame, pd.DataFrame, int]:
     return bars, features, decision
 
 
-def _env(bars: pd.DataFrame, features: pd.DataFrame, *, mtf: bool) -> TradingEnv:
+def _env(
+    bars: pd.DataFrame,
+    features: pd.DataFrame,
+    *,
+    mtf: bool,
+    vae: torch.nn.Module | None = None,
+    pre_ny_data: pd.DataFrame | None = None,
+    feature_validity_channels: bool = False,
+) -> TradingEnv:
     return TradingEnv(
         bars,
         features,
@@ -145,7 +198,73 @@ def _env(bars: pd.DataFrame, features: pd.DataFrame, *, mtf: bool) -> TradingEnv
         allow_agent_sl_mode=False,
         mtf=mtf,
         mtf_windows={"m5": 24, "m15": 16, "h1": 12},
+        use_vae=vae is not None,
+        vae=vae,
+        pre_ny_data=pre_ny_data,
+        feature_validity_channels=feature_validity_channels,
     )
+
+
+def test_opt_in_m1_validity_distinguishes_missing_from_valid_zero() -> None:
+    bars, features, decision = _day()
+    features.loc[features.index[decision - 3], "sweep_high"] = np.nan
+    features.loc[features.index[decision - 2], "sweep_high"] = 0.0
+    features.loc[features.index[decision - 1], "sweep_high"] = np.inf
+    env = _env(bars, features, mtf=False, feature_validity_channels=True)
+    env.reset()
+    env.step_idx = decision
+
+    observation = env._get_observation()
+    column = env._obs_columns.index("sweep_high")
+    width = len(env._obs_columns)
+
+    np.testing.assert_array_equal(observation["seq"][-3:, column], [0.0, 0.0, 0.0])
+    np.testing.assert_array_equal(observation["seq"][-3:, width + column], [0.0, 1.0, 0.0])
+    np.testing.assert_array_equal(observation["seq_mask"][-3:], [1.0, 1.0, 1.0])
+    assert observation["seq"].shape[1] == width * 2
+    assert env.observation_space.contains(observation)
+
+
+def test_opt_in_mtf_validity_masks_missing_columns_and_padding() -> None:
+    bars, features, decision = _day()
+    env = _env(bars, features.drop(columns=["H1_bias"]), mtf=True, feature_validity_channels=True)
+    env.reset()
+    env.step_idx = decision
+
+    observation = env._get_observation()
+
+    assert observation["seq_h1"].shape == (12, 2)
+    np.testing.assert_array_equal(observation["seq_h1"], np.zeros((12, 2), dtype=np.float32))
+    np.testing.assert_array_equal(observation["mask_h1"], np.zeros(12, dtype=np.float32))
+    assert observation["seq_m5"].shape[1] == 2
+    assert env.observation_space.contains(observation)
+
+
+class _FiniteInputVAE(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.encoder = SimpleNamespace(seq_len=4, n_features=1, latent_dim=2)
+        self.device_anchor = torch.nn.Parameter(torch.zeros(()))
+        self.received: torch.Tensor | None = None
+
+    def encode(self, values: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        self.received = values.detach().clone()
+        latent = values.new_zeros((values.shape[0], self.encoder.latent_dim))
+        return latent, latent
+
+
+def test_vae_context_maps_nonfinite_input_features_to_zero() -> None:
+    bars, features, _decision = _day()
+    vae = _FiniteInputVAE()
+    pre_ny = pd.DataFrame([[np.nan, np.inf, -np.inf, 1.0]])
+    env = _env(bars, features, mtf=False, vae=vae, pre_ny_data=pre_ny)
+    env.reset()
+
+    observation = env._get_observation()
+
+    assert vae.received is not None
+    np.testing.assert_array_equal(vae.received[0, :, 0].cpu().numpy(), [0.0, 0.0, 0.0, 1.0])
+    assert np.isfinite(observation["vae_z"]).all()
 
 
 def test_column_ownership_and_closed_bars() -> None:

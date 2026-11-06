@@ -34,6 +34,7 @@ flowchart LR
     orchestra[`orchestra/`]
     market_data -->|imports| artifacts
     market_data -->|imports| configuration
+    features -->|imports| artifacts
     features -->|imports| configuration
     features -->|imports| decisioning
     features -->|imports| market_data
@@ -90,7 +91,7 @@ flowchart LR
 | `configuration` | None |
 | `artifacts` | None |
 | `market_data` | `artifacts`, `configuration` |
-| `features` | `configuration`, `decisioning`, `market_data` |
+| `features` | `artifacts`, `configuration`, `decisioning`, `market_data` |
 | `trading` | `features` |
 | `decisioning` | None |
 | `simulation` | `decisioning`, `features`, `market_data`, `trading` |

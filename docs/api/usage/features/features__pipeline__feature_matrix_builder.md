@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `features.pipeline.feature
 
 **Purpose:** Build the full feature matrix for the primary instrument.
 
-**Exact API:** {py:obj}`features.pipeline.feature_matrix_builder.build_features` · **Source:** [features/pipeline/feature_matrix_builder.py:80](../../../../features/pipeline/feature_matrix_builder.py#L80)
+**Exact API:** {py:obj}`features.pipeline.feature_matrix_builder.build_features` · **Source:** [features/pipeline/feature_matrix_builder.py:153](../../../../features/pipeline/feature_matrix_builder.py#L153)
 
 **Inputs and outputs:**
 
@@ -24,6 +24,8 @@ This page contains 2 public callable records owned by `features.pipeline.feature
   normalization_mode: Normalization behavior used for continuous feature columns.
   timeframe_bars: Optional precomputed primary bars indexed by timeframe.
   secondary_timeframe_bars: Optional precomputed correlated-symbol bars by timeframe.
+  fit_state_path: Persist the train-only normalization fit state beside this run/cache.
+  fitted_normalization_state: Apply a previously captured state without refitting.
   ```
 
 - **Returns:**
@@ -34,24 +36,24 @@ This page contains 2 public callable records owned by `features.pipeline.feature
 
 **Observed usage:**
 
-1. [production caller: `_replot_split`](../../../../evaluation/reporting/order_chart_regeneration.py#L409)
+1. [production caller: `_build_chart_features`](../../../../evaluation/reporting/order_chart_regeneration.py#L98)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-            ifvg_timeframes=ifvg_timeframes,
-            swing_timeframes=swing_timeframes,
-            standard_deviation_timeframes=standard_deviation_timeframes,
-            entry_idea_timeframes=idea_timeframes,
-        )
-        chart_features = build_features(bars, secondary=secondary, cfg=feature_cfg)
-
-    bar_tz = pd.DatetimeIndex(bars.index).tz
-
-    def align_trade_time(value: Any) -> pd.Timestamp:
-        """Localize or convert a trade timestamp to the bar-index timezone.
-# … caller assertions omitted …
+def _build_chart_features(
+    run_cfg: Any,
+    feature_cfg: Any,
+    primary: pd.DataFrame,
+    secondary: pd.DataFrame | None,
+) -> pd.DataFrame:
+    train_mask = _chart_feature_train_mask(run_cfg, pd.DatetimeIndex(primary.index))
+    return build_features(
+        primary,
+        secondary=secondary,
+        cfg=feature_cfg,
+        train_mask=train_mask,
+    )
 ```
 
 **Workflow context:**
@@ -65,7 +67,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Build the full feature matrix for the primary instrument.
 
-**Exact API:** {py:obj}`features.pipeline.feature_matrix_builder.build_features` · **Source:** [features/pipeline/feature_matrix_builder.py:80](../../../../features/pipeline/feature_matrix_builder.py#L80)
+**Exact API:** {py:obj}`features.pipeline.feature_matrix_builder.build_features` · **Source:** [features/pipeline/feature_matrix_builder.py:153](../../../../features/pipeline/feature_matrix_builder.py#L153)
 
 **Inputs and outputs:**
 
@@ -81,6 +83,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   normalization_mode: Normalization behavior used for continuous feature columns.
   timeframe_bars: Optional precomputed primary bars indexed by timeframe.
   secondary_timeframe_bars: Optional precomputed correlated-symbol bars by timeframe.
+  fit_state_path: Persist the train-only normalization fit state beside this run/cache.
+  fitted_normalization_state: Apply a previously captured state without refitting.
   ```
 
 - **Returns:**
@@ -91,24 +95,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `_replot_split`](../../../../evaluation/reporting/order_chart_regeneration.py#L409)
+1. [production caller: `_build_chart_features`](../../../../evaluation/reporting/order_chart_regeneration.py#L98)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-            ifvg_timeframes=ifvg_timeframes,
-            swing_timeframes=swing_timeframes,
-            standard_deviation_timeframes=standard_deviation_timeframes,
-            entry_idea_timeframes=idea_timeframes,
-        )
-        chart_features = build_features(bars, secondary=secondary, cfg=feature_cfg)
-
-    bar_tz = pd.DatetimeIndex(bars.index).tz
-
-    def align_trade_time(value: Any) -> pd.Timestamp:
-        """Localize or convert a trade timestamp to the bar-index timezone.
-# … caller assertions omitted …
+def _build_chart_features(
+    run_cfg: Any,
+    feature_cfg: Any,
+    primary: pd.DataFrame,
+    secondary: pd.DataFrame | None,
+) -> pd.DataFrame:
+    train_mask = _chart_feature_train_mask(run_cfg, pd.DatetimeIndex(primary.index))
+    return build_features(
+        primary,
+        secondary=secondary,
+        cfg=feature_cfg,
+        train_mask=train_mask,
+    )
 ```
 
 **Workflow context:**

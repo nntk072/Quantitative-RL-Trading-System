@@ -34,10 +34,16 @@ MATCH_FIELDS = (
 )
 
 # A matched intervention may change exactly one declared design dimension.
-# Dataset, split, reward, execution, budget, seed, capital, model settings and
-# evaluation window remain identical for a cost sensitivity comparison.
+# `policy_sha256` is the identity of the treatment/control policy; data, split,
+# features, risk, execution, budget, seed, capital, and evaluation still match.
 INTERVENTION_FIELDS = frozenset(
-    {"features_sha256", "reward_sha256", "environment_sha256", "costs_sha256"}
+    {
+        "features_sha256",
+        "reward_sha256",
+        "environment_sha256",
+        "costs_sha256",
+        "policy_sha256",
+    }
 )
 
 
@@ -75,6 +81,20 @@ def compare_matched_returns(
     """
     if intervention_field is not None and intervention_field not in INTERVENTION_FIELDS:
         raise ValueError(f"Unsupported comparison intervention field: {intervention_field}")
+    if intervention_field is not None and intervention_field not in MATCH_FIELDS:
+        left = treatment_provenance.get(intervention_field)
+        right = control_provenance.get(intervention_field)
+        if (
+            left is None
+            or right is None
+            or left == right
+            or (isinstance(left, str) and not left.strip())
+            or (isinstance(right, str) and not right.strip())
+        ):
+            raise ValueError(
+                "Declared intervention must have distinct, non-empty provenance: "
+                f"{intervention_field}"
+            )
     for field in MATCH_FIELDS:
         left = treatment_provenance.get(field)
         right = control_provenance.get(field)
@@ -151,6 +171,19 @@ def paired_equity_metric_differences(
     The same moving-block indices are applied to both arms. Results describe
     within-path uncertainty conditional on this evaluation and the supplied
     policy action seeds; they do not estimate between-seed variation.
+
+    Args:
+        treatment: Timestamp-indexed treatment equity path.
+        control: Timestamp-indexed control equity path on the same timestamps.
+        initial_balance: Account value used to normalize returns and drawdown.
+        periods_per_year: Annualization factor for return-based metrics.
+        n_boot: Number of paired moving-block bootstrap replicates.
+        level: Confidence level for the intervals.
+        rng_seed: Seed controlling bootstrap block sampling.
+        block_len: Number of adjacent observations in each sampled block.
+
+    Returns:
+        Confidence intervals for paired differences in return and drawdown metrics.
     """
     if periods_per_year <= 0:
         raise ValueError("periods_per_year must be positive")
@@ -161,6 +194,14 @@ def paired_equity_metric_differences(
     right_returns = np.diff(right_path) / right_path[:-1]
 
     def drawdown_from_returns(returns: NDArray[np.float64]) -> float:
+        """Compute maximum drawdown for one bootstrapped return path.
+
+        Args:
+            returns: Sampled bar returns in chronological block order.
+
+        Returns:
+            Maximum peak-to-trough drawdown for the reconstructed equity path.
+        """
         path = np.concatenate(([initial_balance], initial_balance * np.cumprod(1.0 + returns)))
         return max_drawdown_stat(path)
 
@@ -190,7 +231,16 @@ def _paired_equity_return_observation_count(
     *,
     initial_balance: float,
 ) -> int:
-    """Validate matched equity paths and count their aligned bar returns."""
+    """Validate matched equity paths and count their aligned bar returns.
+
+    Args:
+        treatment: Timestamp- or step-indexed treatment equity path.
+        control: Matching control equity path.
+        initial_balance: Common equity value before the first observation.
+
+    Returns:
+        Number of aligned bar-return observations.
+    """
     left_path, _ = _paired_equity_paths(treatment, control, initial_balance)
     return left_path.size - 1
 
@@ -200,18 +250,37 @@ def _paired_equity_paths(
     control: pd.Series,
     initial_balance: float,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-    """Validate timestamp-matched equity and prepend common starting capital."""
+    """Validate timestamp-matched equity and prepend common starting capital.
+
+    Args:
+        treatment: Treatment equity observations.
+        control: Control equity observations with matching timestamps or steps.
+        initial_balance: Common starting capital prepended to both paths.
+
+    Returns:
+        Treatment and control equity arrays beginning at initial balance.
+    """
     for name, series in (("treatment", treatment), ("control", control)):
         if not isinstance(series, pd.Series):
             raise TypeError(f"{name} equity must be a pandas Series")
-        if not isinstance(series.index, pd.DatetimeIndex):
-            raise ValueError("Paired equity requires timestamp indexes")
-        if series.index.hasnans or not series.index.is_monotonic_increasing:
-            raise ValueError("Paired equity timestamps must be present and chronological")
+        if isinstance(series.index, pd.DatetimeIndex):
+            if series.index.hasnans or not series.index.is_monotonic_increasing:
+                raise ValueError("Paired equity timestamps must be present and chronological")
+        elif not isinstance(series.index, pd.RangeIndex):
+            raise ValueError("Paired equity requires timestamp or environment-step indexes")
         if not series.index.is_unique:
-            raise ValueError("Paired equity timestamps must be unique")
+            raise ValueError("Paired equity indexes must be unique")
     if not treatment.index.equals(control.index):
-        raise ValueError("Paired equity indexes must match exactly")
+        common_count = min(len(treatment), len(control))
+        if (
+            not isinstance(treatment.index, pd.DatetimeIndex)
+            or not isinstance(control.index, pd.DatetimeIndex)
+            or common_count == 0
+            or not treatment.index[:common_count].equals(control.index[:common_count])
+        ):
+            raise ValueError("Paired equity indexes must match exactly or share an exact prefix")
+        treatment = treatment.iloc[:common_count]
+        control = control.iloc[:common_count]
     if not np.isfinite(initial_balance) or initial_balance <= 0:
         raise ValueError("initial_balance must be finite and positive")
     if treatment.empty:

@@ -1,6 +1,6 @@
 {
   "config_path": "features/full_po3_mtf",
-  "config_sha256": "d7d726e693d371c42e68481f449a87f30e36df47d7608e1c3698baea6214832a",
+  "config_sha256": "bd0c6173036aaacede78c33895ce857485dac1082a3e37c0c7d8c40acec072a0",
   "limitations": [
     "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
     "It is not a learned-policy or economic result.",
@@ -12,7 +12,7 @@
   "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
   "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
   "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-  "resolved_config_sha256": "0ce0e9555c352ba429b3b481de722c6f8073e0759c2417db6aa3872c767e2131",
+  "resolved_config_sha256": "bc87e6fe06887a09fe6a98342d5c8ca1ebe1168703785cbe983c1595b6d4c559",
   "schema_version": 1,
   "secondary_symbol": "US500.cash",
   "semantics": {
@@ -25,25 +25,25 @@
   "source_sha256": {
     "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
     "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-    "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+    "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
     "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-    "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+    "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
     "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
     "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
     "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-    "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-    "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-    "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-    "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+    "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+    "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+    "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+    "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
   },
   "status": "measured_training_split",
   "stream_summaries": [
     {
       "feature_count": 91,
-      "features_where_missing_collides_with_finite_zero": 39,
-      "features_with_nonfinite_values": 71,
-      "nonfinite_cells": 254417,
-      "nonfinite_fraction": 0.007955425825739286,
+      "features_where_missing_collides_with_finite_zero": 38,
+      "features_with_nonfinite_values": 70,
+      "nonfinite_cells": 2463,
+      "nonfinite_fraction": 7.701613417655212e-05,
       "sampled_cells": 31980312,
       "sampled_rows": 351432,
       "source_rows": 351432,

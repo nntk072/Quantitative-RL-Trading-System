@@ -39,7 +39,8 @@ class RLRobot:
             in ``config/base/default.yaml`` for the recommended values).
         secondary_data_source: Optional secondary-symbol data source for SMT
             features — required when the deployed model was trained with
-            SMT enabled (train/live feature parity, Stage 8 Task 8.4).
+            SMT enabled so the configured feature builder receives that
+            symbol. This does not establish train/live normalization parity.
         stop_loss_pips: Stop-loss distance used by ``RiskManager`` sizing.
         magic_number: MT5 magic number tagging orders opened by this robot.
         paper_trading: When True (the safe default), every signal and intended

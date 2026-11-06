@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `trading.baselines.lstm_cl
 
 **Purpose:** Fixed-position-size strategy driven by a trained classifier.
 
-**Exact API:** {py:obj}`trading.baselines.lstm_classifier.LSTMStrategy` · **Source:** [trading/baselines/lstm_classifier.py:148](../../../../trading/baselines/lstm_classifier.py#L148)
+**Exact API:** {py:obj}`trading.baselines.lstm_classifier.LSTMStrategy` · **Source:** [trading/baselines/lstm_classifier.py:156](../../../../trading/baselines/lstm_classifier.py#L156)
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
 
@@ -35,7 +35,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Small LSTM over feature windows producing a 3-class direction logit.
 
-**Exact API:** {py:obj}`trading.baselines.lstm_classifier.LSTMSweepClassifier` · **Source:** [trading/baselines/lstm_classifier.py:106](../../../../trading/baselines/lstm_classifier.py#L106)
+**Exact API:** {py:obj}`trading.baselines.lstm_classifier.LSTMSweepClassifier` · **Source:** [trading/baselines/lstm_classifier.py:114](../../../../trading/baselines/lstm_classifier.py#L114)
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
 
@@ -107,7 +107,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return logits of shape ``(batch, 3)`` for classes {-1, 0, 1}.
 
-**Exact API:** {py:obj}`trading.baselines.lstm_classifier.LSTMSweepClassifier.forward` · **Source:** [trading/baselines/lstm_classifier.py:134](../../../../trading/baselines/lstm_classifier.py#L134)
+**Exact API:** {py:obj}`trading.baselines.lstm_classifier.LSTMSweepClassifier.forward` · **Source:** [trading/baselines/lstm_classifier.py:142](../../../../trading/baselines/lstm_classifier.py#L142)
 
 **Inputs and outputs:**
 

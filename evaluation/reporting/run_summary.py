@@ -45,8 +45,15 @@ _TABLE_ROWS: tuple[tuple[str, str], ...] = (
     ("Avg Trade PnL", "avg_trade"),
     ("Max Consec Loss", "max_consec_loss"),
     ("Turnover", "turnover"),
-    ("Breach Count", "breach_count"),
-    ("Breach Rate", "breach_rate"),
+    ("Breach Events", "breach_event_count"),
+    ("Breached Sessions", "breach_session_count"),
+    ("Breached Session Rate", "breach_rate"),
+    ("Daily Return Samples", "daily_return_count"),
+    ("Mean Daily Return", "daily_return_mean_pct"),
+    ("Daily Return Volatility", "daily_return_std_pct"),
+    ("Worst Daily Return", "daily_return_min_pct"),
+    ("Best Daily Return", "daily_return_max_pct"),
+    ("Ruin Time (Sessions)", "time_to_ruin_sessions"),
 )
 
 
@@ -99,15 +106,29 @@ def _format_value(label: str, value: float) -> str:
     Returns:
         Text returned by ``_format_value``.
     """
-    if label in ("Completed Positions", "Max Consec Loss", "Breach Count"):
+    if label in (
+        "Completed Positions",
+        "Max Consec Loss",
+        "Breach Events",
+        "Breached Sessions",
+    ):
         return str(int(value))
     if label == "Total Return":
         # total_return_pct is already percent (pnl / balance * 100).
         return f"{value:.2f}%"
-    if label in ("Max Drawdown", "Win Rate", "Breach Rate"):
+    if label in (
+        "Mean Daily Return",
+        "Daily Return Volatility",
+        "Worst Daily Return",
+        "Best Daily Return",
+    ):
+        return f"{value:.3f}%"
+    if label in ("Max Drawdown", "Win Rate", "Breached Session Rate"):
         return f"{value * 100:.2f}%"
     if label == "Turnover":
         return f"{value:.6f}"
+    if label in ("Daily Return Samples", "Ruin Time (Sessions)"):
+        return str(int(value))
     if label == "Total PnL":
         return f"{value:.2f}"
     return f"{value:.4f}"
@@ -150,6 +171,40 @@ def _metric_availability(metrics: PerformanceMetrics) -> dict[str, str]:
     for name, value in asdict(metrics).items():
         if isinstance(value, float) and not math.isfinite(value):
             availability.setdefault(name, "non_finite_metric_result")
+    if metrics.breach_event_count is None:
+        availability["breach_event_count"] = (
+            metrics.breach_event_count_availability or "breach_event_count_unavailable"
+        )
+    daily_fields = (
+        "daily_return_count",
+        "daily_return_mean_pct",
+        "daily_return_std_pct",
+        "daily_return_min_pct",
+        "daily_return_max_pct",
+    )
+    if metrics.daily_return_availability is not None:
+        for name in daily_fields:
+            if getattr(metrics, name) is None:
+                availability[name] = metrics.daily_return_availability
+    if metrics.daily_return_count == 1 and metrics.daily_return_std_pct is None:
+        availability["daily_return_std_pct"] = "fewer_than_two_complete_sessions"
+    if metrics.breach_rate is None:
+        availability["breach_rate"] = (
+            metrics.breach_rate_availability or "breach_session_rate_unavailable"
+        )
+    if metrics.breach_session_count is None:
+        availability["breach_session_count"] = (
+            metrics.breach_rate_availability or "breach_session_count_unavailable"
+        )
+    ruin_fields = (
+        "time_to_ruin_sessions",
+        "ruin_event_observed",
+        "ruin_time_censored",
+    )
+    if metrics.time_to_ruin_availability is not None:
+        for name in ruin_fields:
+            if getattr(metrics, name) is None:
+                availability[name] = metrics.time_to_ruin_availability
     return availability
 
 
@@ -173,7 +228,7 @@ def _json_safe(value: Any) -> Any:
     return value
 
 
-def _metrics_payload(metrics: PerformanceMetrics) -> dict[str, Any]:
+def performance_metrics_payload(metrics: PerformanceMetrics) -> dict[str, Any]:
     """Build a JSON-safe metric record with explicit unavailable-value reasons.
 
     Args:
@@ -205,11 +260,14 @@ def _format_metric(metrics: PerformanceMetrics, label: str, attr: str) -> str:
     Returns:
         ``N/A`` for unavailable trade-only statistics, otherwise formatted text.
     """
+    metric_value = getattr(metrics, attr)
+    if metric_value is None:
+        return "N/A"
     if metrics.n_trades == 0 and attr in _TRADE_METRICS_REQUIRING_COMPLETED_POSITIONS:
         return "N/A"
-    if not math.isfinite(float(getattr(metrics, attr))):
+    if not math.isfinite(float(metric_value)):
         return "N/A"
-    return _format_value(label, float(getattr(metrics, attr)))
+    return _format_value(label, float(metric_value))
 
 
 def build_summary_table(m: PerformanceMetrics) -> str:
@@ -290,7 +348,7 @@ def save_metrics_json(
         initial_balance: Initial balance used by the operation described above.
         final_equity: Final equity used by the operation described above.
     """
-    payload = _metrics_payload(m)
+    payload = performance_metrics_payload(m)
     if initial_balance is not None:
         payload["initial_balance"] = float(initial_balance)
     if final_equity is not None:
@@ -319,7 +377,7 @@ def build_run_report(
     Returns:
         A dict safe to pass to ``json.dumps``.
     """
-    report = _metrics_payload(metrics)
+    report = performance_metrics_payload(metrics)
     report["sweep_delay"] = sweep_delay_breakdown(trade_log or [])
     report.update(context)
     return report

@@ -55,7 +55,15 @@ class TestReportTables:
         table = build_summary_table(_metrics(150.0, 2))
 
         # Assert
-        for label in ("Sharpe", "Max Drawdown", "Breach Rate", "Max Consec Loss", "Turnover"):
+        for label in (
+            "Sharpe",
+            "Max Drawdown",
+            "Breach Events",
+            "Breached Sessions",
+            "Breached Session Rate",
+            "Max Consec Loss",
+            "Turnover",
+        ):
             assert label in table
         assert "Completed Positions" in table
 
@@ -90,11 +98,35 @@ class TestReportTables:
         # Assert
         assert data["n_trades"] == 2
         assert data["periods_per_year"] == 6048
-        assert data["metric_definition_version"] == "qrl.performance_metrics.v2"
+        assert data["metric_definition_version"] == "qrl.performance_metrics.v4"
         assert "breach_rate" in data
+        assert data["breach_event_count"] == 0
         assert "turnover" in data
         assert data["initial_balance"] == pytest.approx(100_000.0)
         assert data["final_equity"] == pytest.approx(100_120.0)
+
+    def test_metrics_json_separates_breach_events_from_breached_sessions(
+        self, tmp_path: Path
+    ) -> None:
+        metrics = compute_metrics(
+            [100_000.0, 99_000.0],
+            initial_balance=100_000.0,
+            breach_count=3,
+            n_sessions=4,
+            breach_events=[
+                {"session_id": 1},
+                {"session_id": 1},
+                {"session_id": 3},
+            ],
+        )
+        path = tmp_path / "breach_metrics.json"
+
+        save_metrics_json(metrics, path, initial_balance=100_000.0, final_equity=99_000.0)
+        payload = json.loads(path.read_text())
+
+        assert payload["breach_event_count"] == 3
+        assert payload["breach_session_count"] == 2
+        assert payload["breach_rate"] == pytest.approx(0.5)
 
     def test_zero_trade_metrics_are_labeled_inactive(self, tmp_path: Path) -> None:
         metrics = _metrics(0.0, 0)
@@ -113,6 +145,14 @@ class TestReportTables:
         )
         assert saved_metrics["profit_factor"] is None
         assert saved_metrics["win_rate"] is None
+        assert saved_metrics["daily_return_mean_pct"] is None
+        assert saved_metrics["metric_availability"]["daily_return_mean_pct"] == (
+            "account_state_trace_missing_or_invalid"
+        )
+        assert saved_metrics["time_to_ruin_sessions"] is None
+        assert saved_metrics["metric_availability"]["time_to_ruin_sessions"] == (
+            "account_state_trace_missing_or_invalid"
+        )
         json.dumps(report, allow_nan=False)
 
     def test_unbounded_profit_factor_uses_json_null_and_reason(self, tmp_path: Path) -> None:
@@ -179,7 +219,7 @@ class TestBuildRunReport:
 
         # Assert
         assert report["run_name"] == "r1"
-        assert report["metric_definition_version"] == "qrl.performance_metrics.v2"
+        assert report["metric_definition_version"] == "qrl.performance_metrics.v4"
         assert report["total_pnl"] == pytest.approx(80.0)
         assert report["sweep_delay"]["sweep_delay_mean_s"] == pytest.approx(5.0)
         assert report["sweep_delay"]["n_entries"] == 1

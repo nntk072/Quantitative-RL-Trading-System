@@ -19,7 +19,7 @@ from gymnasium import spaces
 from configuration.paths import repository_root
 from decisioning.actions import build_action_schema
 from decisioning.observations import build_observation_schema
-from evaluation import calculate_metrics, evaluation_periods_per_year
+from evaluation import account_path_metric_inputs, calculate_metrics, evaluation_periods_per_year
 from evaluation.reanalysis import checkpoint_reanalysis as eval_run
 from evaluation.reanalysis.provenance import (
     _evaluation_dataset_records,
@@ -98,6 +98,7 @@ def _metrics(result: dict[str, Any], cfg: Any) -> dict[str, Any]:
         n_breach_sessions=int(result.get("n_breach_sessions", 0)),
         initial_balance=float(cfg.account.initial_balance),
         periods_per_year=evaluation_periods_per_year(cfg),
+        **account_path_metric_inputs(result),
     )
     raw = asdict(value) if is_dataclass(value) else vars(value)
     return {

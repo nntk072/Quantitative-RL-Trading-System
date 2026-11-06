@@ -63,8 +63,8 @@ Use package APIs or these command surfaces. `scripts/` includes command entry po
 | Constant | File | Current value |
 |---|---|---|
 | `BAR_CACHE_VERSION` | `market_data/loading/market_data_ingestion.py` | `v4-semantic-manifest` |
-| `TICK_CACHE_VERSION` | `market_data/loading/ticks.py` | `v4-semantic-manifest` |
-| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v37-zero-variance-neutral` |
+| `TICK_CACHE_VERSION` | `market_data/loading/ticks.py` | `v7-source-precision-quotes` |
+| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v43-heldout-fit-state` |
 
 Cache identity must remain causal and include fit scope/configuration inputs that affect generated content.
 

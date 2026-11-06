@@ -22,6 +22,39 @@ defaults:
   test_start: "2026-01-01"
 
 variants:
+  # Matched action-contract pair for the policy-selected market/limit entry
+  # path. These are registered as reusable profiles only; upstream data,
+  # lifecycle, and research gates must pass before either profile is run.
+  - name: entry_execution_market_control
+    reward_mode: dsr
+    algo: ppo
+    arch: tcn
+    steps: 100000
+    seeds: [42, 43, 44, 45, 46, 47]
+    strategy_actions: true
+    trade_setup_actions: true
+    agent_entry_execution: false
+    config_overrides:
+      - ppo.policy_distribution=trade_setup_hybrid_v1
+      - execution.limit_order_max_offset_atr=1.0
+      - execution.limit_order_max_ttl_bars=60
+      - execution.limit_order_require_trade_through=false
+
+  - name: entry_execution_policy_market_limit
+    reward_mode: dsr
+    algo: ppo
+    arch: tcn
+    steps: 100000
+    seeds: [42, 43, 44, 45, 46, 47]
+    strategy_actions: true
+    trade_setup_actions: true
+    agent_entry_execution: true
+    config_overrides:
+      - ppo.policy_distribution=trade_setup_hybrid_v1
+      - execution.limit_order_max_offset_atr=1.0
+      - execution.limit_order_max_ttl_bars=60
+      - execution.limit_order_require_trade_through=false
+
   # ===== LADDER: additive architecture layers (TCN) =====
   - name: ladder_a0_flat
     reward_mode: dsr

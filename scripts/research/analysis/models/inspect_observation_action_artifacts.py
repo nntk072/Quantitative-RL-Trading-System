@@ -31,6 +31,7 @@ _TRACE_NAME_PARTS = (
     "candidate_trace",
     "trade_setup_decisions",
 )
+_TRACE_FILE_NAMES = {"decisions.csv"}
 _DECISION_KEYS = {
     "decision_time",
     "decision_ts",
@@ -290,8 +291,9 @@ def _candidate_files(roots: list[Path]) -> tuple[list[tuple[Path, Path]], list[t
                     relative = path.name
                 if name in _JSON_NAMES:
                     json_files.append((path, root / relative))
-                elif path.suffix.lower() in {".csv", ".jsonl"} and any(
-                    part in name.lower() for part in _TRACE_NAME_PARTS
+                elif path.suffix.lower() in {".csv", ".jsonl"} and (
+                    name.lower() in _TRACE_FILE_NAMES
+                    or any(part in name.lower() for part in _TRACE_NAME_PARTS)
                 ):
                     trace_files.append((path, root / relative))
     return json_files, trace_files

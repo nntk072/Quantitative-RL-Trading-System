@@ -1,0 +1,35 @@
+{
+  "block_length_bars": 8,
+  "level": 0.95,
+  "method": "moving_block_bar_returns_and_trade_pnl_resampling",
+  "metrics": {
+    "max_drawdown": {
+      "estimate": 0.21872175508801384,
+      "level": 0.95,
+      "lower": 0.07580314666012057,
+      "upper": 0.29428154872160034
+    },
+    "sharpe": {
+      "estimate": -0.8817935139596662,
+      "level": 0.95,
+      "lower": -2.7794594638616035,
+      "upper": 0.8889936622104664
+    },
+    "sortino": {
+      "estimate": -1.2624819772459699,
+      "level": 0.95,
+      "lower": -3.893348760179549,
+      "upper": 1.3163965711678782
+    },
+    "win_rate": {
+      "estimate": 0.46107784431137727,
+      "level": 0.95,
+      "lower": 0.43453806672369555,
+      "upper": 0.49103934987168507
+    }
+  },
+  "n_boot": 2000,
+  "schema": "within_trajectory_bootstrap_ci_v1",
+  "scope": "within-trajectory sampling uncertainty; not between-seed or paired-policy uncertainty",
+  "seed": 42
+}

@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 69 items
+
+tests/integration/backtest/test_account_transition_parity.py ........... [ 15%]
+............                                                             [ 33%]
+tests/integration/backtest/test_multi_target_protective_lifecycle.py ... [ 37%]
+.......                                                                  [ 47%]
+tests/integration/backtest/test_risk_lifecycle_characterization.py ..... [ 55%]
+...........                                                              [ 71%]
+tests/integration/backtest/test_repeated_payout_backtest.py .......      [ 81%]
+tests/integration/backtest/test_broker_fill_accounting.py ......         [ 89%]
+tests/integration/backtest/test_broker_quote_parity.py .                 [ 91%]
+tests/integration/backtest/test_local_tick_action_trace.py ......        [100%]
+
+============================== 69 passed in 1.01s ==============================

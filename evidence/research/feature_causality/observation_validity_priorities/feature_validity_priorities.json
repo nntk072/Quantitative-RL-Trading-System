@@ -1,14 +1,14 @@
 {
   "all_groups_fully_nonfinite_count": 2,
   "analyzer_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/scripts/research/analysis/features/summarize_observation_validity.py",
-  "analyzer_sha256": "ddab6b21c44d56e62387b752017436eb2eccb01be437296d8a6cd4a9da92f53b",
+  "analyzer_sha256": "fbf9cb96c25877063a05f45165334e252b323d67db845c0894cc298c113e8d51",
   "feature_timeframe_count": 1291,
-  "finite_zero_collision_count": 220,
+  "finite_zero_collision_count": 219,
   "input_path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_across_profiles/column_warmup_all_profiles.csv",
-  "input_sha256": "f71f31c086073b3ea866e370a44d0ae8946421f0ceeb8ec729889a8eb6457fd5",
-  "interior_missing_count": 208,
+  "input_sha256": "23985c8b9bff4aff95c74d627510255e2b12c7dc6edbd54b6d704ba1afa53537",
+  "interior_missing_count": 206,
   "interpretation_limit": "Triage flags describe observed counts only; producer semantics and economic meaning require separate source review.",
-  "observed_at_utc": "2026-11-03T08:14:29.864204+00:00",
+  "observed_at_utc": "2026-11-04T19:57:09.222223+00:00",
   "profile_group_count": 23,
   "schema": "qrl.observation_validity_priorities.v1",
   "summaries": [
@@ -471,27 +471,6 @@
       "profile_group_count": 6,
       "sampled_rows": 35568,
       "timeframe": "H1",
-      "triage_flags": [
-        "interior_missing_values_present",
-        "missing_collides_with_finite_zero"
-      ]
-    },
-    {
-      "feature": "po3_phase",
-      "finite_rows": 795928,
-      "finite_zero_collision_group_count": 8,
-      "finite_zero_rows": 269280,
-      "fully_nonfinite_group_count": 0,
-      "groups_with_missing_values": 8,
-      "interior_missing_group_count": 8,
-      "interior_nonfinite_rows": 2008120,
-      "leading_nonfinite_rows": 7408,
-      "nonfinite_fraction": 0.7168982904231829,
-      "nonfinite_rows": 2015528,
-      "profile_count": 38,
-      "profile_group_count": 8,
-      "sampled_rows": 2811456,
-      "timeframe": "M1",
       "triage_flags": [
         "interior_missing_values_present",
         "missing_collides_with_finite_zero"
@@ -1614,7 +1593,7 @@
       "feature": "tick_bid_offset_atr",
       "finite_rows": 8082407,
       "finite_zero_collision_group_count": 23,
-      "finite_zero_rows": 1788071,
+      "finite_zero_rows": 8082271,
       "fully_nonfinite_group_count": 0,
       "groups_with_missing_values": 23,
       "interior_missing_group_count": 23,
@@ -1622,27 +1601,6 @@
       "leading_nonfinite_rows": 0,
       "nonfinite_fraction": 6.54465159689499e-05,
       "nonfinite_rows": 529,
-      "profile_count": 130,
-      "profile_group_count": 23,
-      "sampled_rows": 8082936,
-      "timeframe": "M1",
-      "triage_flags": [
-        "interior_missing_values_present",
-        "missing_collides_with_finite_zero"
-      ]
-    },
-    {
-      "feature": "wick_ratio",
-      "finite_rows": 8082609,
-      "finite_zero_collision_group_count": 23,
-      "finite_zero_rows": 970507,
-      "fully_nonfinite_group_count": 0,
-      "groups_with_missing_values": 23,
-      "interior_missing_group_count": 23,
-      "interior_nonfinite_rows": 327,
-      "leading_nonfinite_rows": 0,
-      "nonfinite_fraction": 4.045559682768737e-05,
-      "nonfinite_rows": 327,
       "profile_count": 130,
       "profile_group_count": 23,
       "sampled_rows": 8082936,
@@ -7233,6 +7191,27 @@
       ]
     },
     {
+      "feature": "po3_phase",
+      "finite_rows": 2811448,
+      "finite_zero_collision_group_count": 8,
+      "finite_zero_rows": 1497056,
+      "fully_nonfinite_group_count": 0,
+      "groups_with_missing_values": 8,
+      "interior_missing_group_count": 0,
+      "interior_nonfinite_rows": 0,
+      "leading_nonfinite_rows": 8,
+      "nonfinite_fraction": 2.8455006943021696e-06,
+      "nonfinite_rows": 8,
+      "profile_count": 38,
+      "profile_group_count": 8,
+      "sampled_rows": 2811456,
+      "timeframe": "M1",
+      "triage_flags": [
+        "missing_values_only_at_leading_edge",
+        "missing_collides_with_finite_zero"
+      ]
+    },
+    {
       "feature": "session_progress",
       "finite_rows": 2811448,
       "finite_zero_collision_group_count": 8,
@@ -7257,7 +7236,7 @@
       "feature": "smt_bearish",
       "finite_rows": 8082913,
       "finite_zero_collision_group_count": 23,
-      "finite_zero_rows": 2955026,
+      "finite_zero_rows": 2951454,
       "fully_nonfinite_group_count": 0,
       "groups_with_missing_values": 23,
       "interior_missing_group_count": 0,
@@ -7278,7 +7257,7 @@
       "feature": "smt_bullish",
       "finite_rows": 8082913,
       "finite_zero_collision_group_count": 23,
-      "finite_zero_rows": 2970966,
+      "finite_zero_rows": 2961732,
       "fully_nonfinite_group_count": 0,
       "groups_with_missing_values": 23,
       "interior_missing_group_count": 0,
@@ -21231,6 +21210,26 @@
       "profile_count": 36,
       "profile_group_count": 6,
       "sampled_rows": 2108592,
+      "timeframe": "M1",
+      "triage_flags": [
+        "no_nonfinite_values"
+      ]
+    },
+    {
+      "feature": "wick_ratio",
+      "finite_rows": 8082936,
+      "finite_zero_collision_group_count": 0,
+      "finite_zero_rows": 970834,
+      "fully_nonfinite_group_count": 0,
+      "groups_with_missing_values": 0,
+      "interior_missing_group_count": 0,
+      "interior_nonfinite_rows": 0,
+      "leading_nonfinite_rows": 0,
+      "nonfinite_fraction": 0.0,
+      "nonfinite_rows": 0,
+      "profile_count": 130,
+      "profile_group_count": 23,
+      "sampled_rows": 8082936,
       "timeframe": "M1",
       "triage_flags": [
         "no_nonfinite_values"

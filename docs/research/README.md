@@ -3,9 +3,9 @@
 This section organizes results by research question, not run directories. Read each finding alongside its evidence packet, evaluation method, limitations, and reproduction status.
 
 The current end-to-end synthesis is the
-[evidence-bounded thesis report](../thesis/research_evidence_report.md). It
+[research evidence report](research_evidence_report.md). It
 preserves the negative findings and makes the remaining scientific gates
-explicit; it is not a final thesis or a release verdict.
+explicit; it is not a release verdict.
 
 ## Policy architecture and decision structure
 

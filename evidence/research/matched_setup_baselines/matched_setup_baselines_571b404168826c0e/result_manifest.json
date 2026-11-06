@@ -1,0 +1,878 @@
+{
+  "claims": [],
+  "comparisons": [
+    {
+      "comparison_id": "always_flat_vs_random_eligible_setup",
+      "evidence_role": "development",
+      "limitations": [
+        "Paired time-series intervals are conditional on one evaluation path and action seeds; no between-seed uncertainty is reported.",
+        "Recorded risk controls do not establish matched realized-risk distributions."
+      ],
+      "metrics": [
+        {
+          "aggregate_end_equity": 100000.0,
+          "breach_events": 0,
+          "completed_positions": 0,
+          "confidence_intervals": {
+            "block_length_bars": 8,
+            "level": 0.95,
+            "method": "moving_block_bar_returns_and_trade_pnl_resampling",
+            "metrics": {
+              "max_drawdown": {
+                "estimate": 0.0,
+                "level": 0.95,
+                "lower": 0.0,
+                "upper": 0.0
+              },
+              "sharpe": {
+                "estimate": 0.0,
+                "level": 0.95,
+                "lower": 0.0,
+                "upper": 0.0
+              },
+              "sortino": {
+                "estimate": 0.0,
+                "level": 0.95,
+                "lower": 0.0,
+                "upper": 0.0
+              },
+              "win_rate": {
+                "estimate": null,
+                "level": 0.95,
+                "lower": null,
+                "upper": null
+              }
+            },
+            "n_boot": 2000,
+            "schema": "within_trajectory_bootstrap_ci_v1",
+            "scope": "within-trajectory sampling uncertainty; not between-seed or paired-policy uncertainty",
+            "seed": 42
+          },
+          "net_return_pct": 0.0,
+          "run_id": "matched_setup_baselines_571b404168826c0e/always_no_trade",
+          "survival_gate": "passed"
+        },
+        {
+          "aggregate_end_equity": 89840.15150531461,
+          "breach_events": 25,
+          "completed_positions": 1854,
+          "confidence_intervals": {
+            "block_length_bars": 8,
+            "level": 0.95,
+            "method": "moving_block_bar_returns_and_trade_pnl_resampling",
+            "metrics": {
+              "max_drawdown": {
+                "estimate": 0.21231321955140026,
+                "level": 0.95,
+                "lower": 0.07654358844678669,
+                "upper": 0.30444819116588856
+              },
+              "sharpe": {
+                "estimate": -0.9031719565947359,
+                "level": 0.95,
+                "lower": -2.8419483565533166,
+                "upper": 0.9813699434790737
+              },
+              "sortino": {
+                "estimate": -1.299119716240198,
+                "level": 0.95,
+                "lower": -3.967371681999553,
+                "upper": 1.461626706169871
+              },
+              "win_rate": {
+                "estimate": 0.4190938511326861,
+                "level": 0.95,
+                "lower": 0.39750539374325783,
+                "upper": 0.44282632146709816
+              }
+            },
+            "n_boot": 2000,
+            "schema": "within_trajectory_bootstrap_ci_v1",
+            "scope": "within-trajectory sampling uncertainty; not between-seed or paired-policy uncertainty",
+            "seed": 42
+          },
+          "net_return_pct": -10.159848494685386,
+          "run_id": "matched_setup_baselines_571b404168826c0e/random_eligible_setup",
+          "survival_gate": "failed"
+        },
+        {
+          "aggregate_end_equity": 89965.10362806503,
+          "breach_events": 25,
+          "completed_positions": 1169,
+          "confidence_intervals": {
+            "block_length_bars": 8,
+            "level": 0.95,
+            "method": "moving_block_bar_returns_and_trade_pnl_resampling",
+            "metrics": {
+              "max_drawdown": {
+                "estimate": 0.21872175508801384,
+                "level": 0.95,
+                "lower": 0.07580314666012057,
+                "upper": 0.29428154872160034
+              },
+              "sharpe": {
+                "estimate": -0.8817935139596662,
+                "level": 0.95,
+                "lower": -2.7794594638616035,
+                "upper": 0.8889936622104664
+              },
+              "sortino": {
+                "estimate": -1.2624819772459699,
+                "level": 0.95,
+                "lower": -3.893348760179549,
+                "upper": 1.3163965711678782
+              },
+              "win_rate": {
+                "estimate": 0.46107784431137727,
+                "level": 0.95,
+                "lower": 0.43453806672369555,
+                "upper": 0.49103934987168507
+              }
+            },
+            "n_boot": 2000,
+            "schema": "within_trajectory_bootstrap_ci_v1",
+            "scope": "within-trajectory sampling uncertainty; not between-seed or paired-policy uncertainty",
+            "seed": 42
+          },
+          "net_return_pct": -10.03489637193497,
+          "run_id": "matched_setup_baselines_571b404168826c0e/structure_priority",
+          "survival_gate": "failed"
+        }
+      ],
+      "paired_time_series_intervals": {
+        "block_length_bars": 8,
+        "control": "random_eligible_setup",
+        "difference_direction": "treatment_minus_control",
+        "level": 0.95,
+        "method": "paired_moving_block_bar_return_bootstrap",
+        "metrics": {
+          "max_drawdown": {
+            "estimate": -0.2123132195513937,
+            "level": 0.95,
+            "lower": -0.30444819116588856,
+            "upper": -0.07654358844678669
+          },
+          "mean_bar_return": {
+            "estimate": 1.0148253542387569e-06,
+            "level": 0.95,
+            "lower": -1.0943327939786406e-06,
+            "upper": 3.19166915280064e-06
+          },
+          "sharpe": {
+            "estimate": 0.9031719565947359,
+            "level": 0.95,
+            "lower": -0.9813699434790744,
+            "upper": 2.8419483565533166
+          },
+          "sortino": {
+            "estimate": 1.299119716240198,
+            "level": 0.95,
+            "lower": -1.4616267061698713,
+            "upper": 3.967371681999549
+          }
+        },
+        "n_boot": 2000,
+        "paired_return_observations": 99492,
+        "schema": "paired_matched_bar_metric_ci_v2",
+        "scope": "paired within-trajectory uncertainty over the exact shared environment-step path; valuation timestamps may differ because execution fills occur within a bar; not between-seed uncertainty",
+        "seed": 42,
+        "status": "estimated",
+        "treatment": "always_no_trade"
+      },
+      "question": "What absolute outcomes do the two Tier 0 controls record?",
+      "result": "Per-policy absolute metrics are recorded below. This bundle does not make an inferential, causal, or deployment claim.",
+      "run_ids": [
+        "matched_setup_baselines_571b404168826c0e/always_no_trade",
+        "matched_setup_baselines_571b404168826c0e/random_eligible_setup"
+      ],
+      "status": "draft_descriptive"
+    },
+    {
+      "comparison_id": "structure_priority_vs_random_eligible_setup",
+      "evidence_role": "development",
+      "limitations": [
+        "Paired time-series intervals are conditional on one evaluation path and action seeds; no between-seed uncertainty is reported.",
+        "Recorded risk caps do not establish matched realized-risk distributions."
+      ],
+      "metrics": [
+        {
+          "aggregate_end_equity": 89840.15150531461,
+          "breach_events": 25,
+          "completed_positions": 1854,
+          "confidence_intervals": {
+            "block_length_bars": 8,
+            "level": 0.95,
+            "method": "moving_block_bar_returns_and_trade_pnl_resampling",
+            "metrics": {
+              "max_drawdown": {
+                "estimate": 0.21231321955140026,
+                "level": 0.95,
+                "lower": 0.07654358844678669,
+                "upper": 0.30444819116588856
+              },
+              "sharpe": {
+                "estimate": -0.9031719565947359,
+                "level": 0.95,
+                "lower": -2.8419483565533166,
+                "upper": 0.9813699434790737
+              },
+              "sortino": {
+                "estimate": -1.299119716240198,
+                "level": 0.95,
+                "lower": -3.967371681999553,
+                "upper": 1.461626706169871
+              },
+              "win_rate": {
+                "estimate": 0.4190938511326861,
+                "level": 0.95,
+                "lower": 0.39750539374325783,
+                "upper": 0.44282632146709816
+              }
+            },
+            "n_boot": 2000,
+            "schema": "within_trajectory_bootstrap_ci_v1",
+            "scope": "within-trajectory sampling uncertainty; not between-seed or paired-policy uncertainty",
+            "seed": 42
+          },
+          "net_return_pct": -10.159848494685386,
+          "run_id": "matched_setup_baselines_571b404168826c0e/random_eligible_setup",
+          "survival_gate": "failed"
+        },
+        {
+          "aggregate_end_equity": 89965.10362806503,
+          "breach_events": 25,
+          "completed_positions": 1169,
+          "confidence_intervals": {
+            "block_length_bars": 8,
+            "level": 0.95,
+            "method": "moving_block_bar_returns_and_trade_pnl_resampling",
+            "metrics": {
+              "max_drawdown": {
+                "estimate": 0.21872175508801384,
+                "level": 0.95,
+                "lower": 0.07580314666012057,
+                "upper": 0.29428154872160034
+              },
+              "sharpe": {
+                "estimate": -0.8817935139596662,
+                "level": 0.95,
+                "lower": -2.7794594638616035,
+                "upper": 0.8889936622104664
+              },
+              "sortino": {
+                "estimate": -1.2624819772459699,
+                "level": 0.95,
+                "lower": -3.893348760179549,
+                "upper": 1.3163965711678782
+              },
+              "win_rate": {
+                "estimate": 0.46107784431137727,
+                "level": 0.95,
+                "lower": 0.43453806672369555,
+                "upper": 0.49103934987168507
+              }
+            },
+            "n_boot": 2000,
+            "schema": "within_trajectory_bootstrap_ci_v1",
+            "scope": "within-trajectory sampling uncertainty; not between-seed or paired-policy uncertainty",
+            "seed": 42
+          },
+          "net_return_pct": -10.03489637193497,
+          "run_id": "matched_setup_baselines_571b404168826c0e/structure_priority",
+          "survival_gate": "failed"
+        }
+      ],
+      "paired_time_series_intervals": {
+        "block_length_bars": 8,
+        "control": "random_eligible_setup",
+        "difference_direction": "treatment_minus_control",
+        "level": 0.95,
+        "method": "paired_moving_block_bar_return_bootstrap",
+        "metrics": {
+          "max_drawdown": {
+            "estimate": 0.006408535536622906,
+            "level": 0.95,
+            "lower": -0.11029154039401838,
+            "upper": 0.10637323053215346
+          },
+          "mean_bar_return": {
+            "estimate": 1.509075236540174e-08,
+            "level": 0.95,
+            "lower": -1.7639556949156917e-06,
+            "upper": 1.7633805024280228e-06
+          },
+          "sharpe": {
+            "estimate": 0.021378442635069717,
+            "level": 0.95,
+            "lower": -1.6031254444823357,
+            "upper": 1.601102780995175
+          },
+          "sortino": {
+            "estimate": 0.036637738994228064,
+            "level": 0.95,
+            "lower": -2.2422970023651945,
+            "upper": 2.246408269827735
+          }
+        },
+        "n_boot": 2000,
+        "paired_return_observations": 99492,
+        "schema": "paired_matched_bar_metric_ci_v2",
+        "scope": "paired within-trajectory uncertainty over the exact shared environment-step path; valuation timestamps may differ because execution fills occur within a bar; not between-seed uncertainty",
+        "seed": 42,
+        "status": "estimated",
+        "treatment": "structure_priority"
+      },
+      "question": "What absolute outcomes does structure_priority record relative to the random eligible-setup control?",
+      "result": "Per-policy absolute metrics are recorded below. This bundle does not make an inferential, causal, or deployment claim.",
+      "run_ids": [
+        "matched_setup_baselines_571b404168826c0e/structure_priority",
+        "matched_setup_baselines_571b404168826c0e/random_eligible_setup"
+      ],
+      "status": "draft_descriptive"
+    }
+  ],
+  "created_at_utc": "2026-11-03T18:34:07.434873Z",
+  "evidence_grade": "draft_ungraded",
+  "finding_id": "matched_setup_policy_evaluation",
+  "finding_status": "draft_descriptive_evaluation",
+  "frozen_at_utc": null,
+  "hypothesis": "The shared evaluator records each policy with explicit action, execution, risk, period, source, and input identities.",
+  "limitations": [
+    "Raw bars, features, and ticks are not copied into the bundle.",
+    "No market-data economic claim is supported by synthetic contract tests.",
+    "Provider/license status and authoritative timestamp/session semantics are not assessed."
+  ],
+  "manifest_status": "draft",
+  "protocol_path": "evidence/research/releases/negative-evidence-readiness/RESEARCH_QUESTIONS_AND_METHODS.md",
+  "research_question": "How do the declared policies behave under one configured evaluation path?",
+  "runs": [
+    {
+      "artifacts": [
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/always_no_trade/decisions.csv",
+          "role": "decision_trace",
+          "sha256": "59cb1170776121552cba096961a0c4fadf02831197f92c4d7debaf86a27f22df",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/always_no_trade/trade_fill_event_ledger.csv",
+          "role": "trade_fill_event_ledger",
+          "sha256": "bd85bcdb8d4e613a79cb62d0903946ad10c83e63dc75f67614c159c0dbf4d184",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/always_no_trade/equity.csv",
+          "role": "equity_curve",
+          "sha256": "0f736eaf7954d5c7e6fa7b6c69b76667c22ae2c7719e0d7093dfb32dae14db19",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/always_no_trade/metrics.json",
+          "role": "metrics",
+          "sha256": "5044533315bd981e76ca3ce286e60679a056eaba6fab4a2e8219574cc7182c08",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/always_no_trade/confidence_intervals.json",
+          "role": "confidence_intervals",
+          "sha256": "31b7b14f87c1b069475ac03e0afcdbe1f373d5dd8f42a906ee8d1abd26d6d6e7",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/always_no_trade/policy_metadata.json",
+          "role": "policy_metadata",
+          "sha256": "1def9ef2876040736242f1223c51d21245a509f15e2ec2189c5b36f14a6e9744",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/always_no_trade/evaluation.json",
+          "role": "evaluation_metadata",
+          "sha256": "216eaccaf87abb6e47c736edfda77dac6b60020a7d25b7a2fe7a698117f936ea",
+          "storage_scope": "repository"
+        }
+      ],
+      "identity": {
+        "action_mode": "trade-setup-overlay-action-v1",
+        "broker_cost_risk_assumptions": [
+          "resolved config SHA-256: 64594261c7ccabb155f9f077895ba1fae83884853b5063ad31bde475381afc87",
+          "risk sizing settings: {\"absolute_risk_budget_usd\":900.0,\"configured_static_trade_risk_cap_usd\":900.0,\"contract_size\":1.0,\"fixed_risk_usd\":0.0,\"ftmo_limit_value_mode\":\"fixed_usd\",\"ftmo_risk_per_trade_limit_pct\":0.01,\"ftmo_risk_per_trade_limit_usd\":1000.0,\"ftmo_risk_sizing_limit_usd\":900.0,\"legacy_risk_fraction\":0.01,\"max_lot\":100.0,\"min_lot\":0.01,\"policy_normalized_risk\":0.0,\"policy_risk_coordinate_is_constant\":true,\"repeated_payout_agent_risk_max_frac\":0.009,\"repeated_payout_reserve_cost_buffer_usd\":0.0,\"risk_band_hold_below_usd\":0.0,\"risk_band_max_usd\":900.0,\"risk_budget_semantics\":\"normalized action coordinate maps to a requested total budget under risk_band_max_usd; sizing reserves modeled execution costs before assigning stop exposure, while lot limits and guardrails may reduce realized exposure\",\"risk_mode\":\"dollar_band\",\"strategy_risk_frac_range\":[0.0,0.01],\"trading_policy_mode\":\"legacy\"}",
+          "execution and cost semantics are from the recorded resolved configuration",
+          "period role: development"
+        ],
+        "checkpoint_hash": {
+          "reason": "deterministic baseline does not load a checkpoint",
+          "status": "unknown"
+        },
+        "claimed_reproduction_level": "Draft local reproducibility record; hashes bind in-memory inputs and outputs, but raw data are not copied into the bundle.",
+        "config_file_hash": "cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+        "cuda_version": {
+          "reason": "policy evaluation CUDA version was not recorded",
+          "status": "unknown"
+        },
+        "dataset_file_hashes": [
+          "bars_dataframe:ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+          "features_dataframe:c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+          "tickbook_arrays:2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc",
+          "configured_session_schedule:7e9f5def3385185905f7265f946a0835ccb43c53f1351c057aa23f00480e6cbc",
+          "selected_config:cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+          "training_US100.cash_H1:693e9b3df53e522b16c63f1d9ab9c7e29f0c29555f066b3a90554b34a9dd7c0b",
+          "training_US100.cash_H4:83855aed1db0517f43b76ef2e3484908e43d9744d955abb8c828aad699a1e2af",
+          "training_US100.cash_M1:c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+          "training_US100.cash_M10:a13bdee2606d3bed19e301196fc29e426d97fdf05373fee83a734181004ade53",
+          "training_US100.cash_M15:1eb96fafbdbcfa140e50d6430e7fdfbd891dcad22eae597771678c0ed607c6cd",
+          "training_US100.cash_M3:217c2f8bfdd1ff30938868f81d3fb682f8919bc703171cb29f88ddc6a6bab461",
+          "training_US100.cash_M30:256a8fb8c959a61f2fada196163ba8da0edf94de67146d175fbdab9eba75c5d7",
+          "training_US100.cash_M5:07e162ade037e3da909bce02041e0f4ce6e2e85d417c5e3fab9bfeaacc94a7ec",
+          "training_US100.cash_ticks:631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23",
+          "training_US500.cash_D1:8eccb7d28f99e403df36adbd76097df388187f110e0c19544487dde7b8ceb990",
+          "training_US500.cash_H1:bb19f7ef3f8fdf3729b34b91379a3ccef0822d83e73e30b22b9cddbbe785051e",
+          "training_US500.cash_H4:d34786fb2fd9f5514298d66756f51b08ac7d3a77b846f133c7e278f4f046235c",
+          "training_US500.cash_M1:8ee4ef65d952974dadb3ba0f5e39536060a1563665dd5ad509404355b888d41e",
+          "training_US500.cash_M10:3326e4e0063ca941d90bf7041b8a53cddcc2e971f47d0cdadb7f8e117ca8ce0a",
+          "training_US500.cash_M15:a7785b7005bf7dd8dc1e68c202cd7c10a5a0b2eeebc87fa18021b111a42a4b04",
+          "training_US500.cash_M3:076fbc56d648817308174cd1e5c0487fb6da96a9ea4c727dcb2e4565fa0ac684",
+          "training_US500.cash_M30:afcf8b1928c3a6a740f6cb15de21a50430a8ef114c157789bfd5fed245649e65",
+          "training_US500.cash_M5:7940ffbc5b3041061a51c6267ab969f5bc2559a782d4aa1eba7bdc5dbeda7397",
+          "training_US500.cash_ticks:36e59a0d20c06bf008c81d5d3126c48b5cc2dd06f7fdd92428e068760415e1b3"
+        ],
+        "environment_lock_hash": "31960d7401c9d1cc5dc9c53f5513eaf36a710ac9681a76e2b51862b29227344a",
+        "execution_seed": 50,
+        "exposure_roles": [
+          "development"
+        ],
+        "feature_cache_content_hash": "c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+        "feature_cache_version": "v37-zero-variance-neutral",
+        "limitations": [
+          "Draft bundle; no independent rerun or external review is claimed.",
+          "A synthetic period role is implementation validation, not economic evidence.",
+          "Unknown source rights, timestamp authority, and calendar semantics remain unassessed."
+        ],
+        "metric_calculator_revision": "qrl.performance_metrics.v2:aa58a1ae0e7541a84a80c837e3afde4613f860a7f82bee30c9e6aac2d89a0a2b",
+        "missing_assets": [],
+        "n_envs": 1,
+        "python_version": "3.12.15",
+        "regeneration_command": "cd /scratch/work/nguyenl37/Quantitative-RL-Trading-System && /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python -m scripts.research.analysis.evaluation.run_matched_setup_baselines --config config/research/trade_setup_mtf_reasoning_2m.yaml --period-role development --dataset training --execution-seed 50 --random-policy-seed 42 --absolute-risk-budget-usd 900 --normalized-risk 0.5 --trade-probability 1 --bootstrap-samples 2000 --bootstrap-seed 42 --baselines always_no_trade random_eligible_setup structure_priority --artifact-root evidence/research/matched_setup_baselines",
+        "resolved_config_hash": "64594261c7ccabb155f9f077895ba1fae83884853b5063ad31bde475381afc87",
+        "reviewer_check_status": "automated artifact hashes; independent review not performed",
+        "rollout_geometry": "one non-episodic TradingEnv; one action per input bar",
+        "sample_denominators": [
+          "bars=351432",
+          "features=351432",
+          "decisions=99492",
+          "event_rows=0",
+          "completed_positions=0"
+        ],
+        "schema_versions": [
+          "action:trade-setup-overlay-action-v1",
+          "feature_cache:v37-zero-variance-neutral",
+          "result_manifest:v2"
+        ],
+        "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
+        "source_tree_hash": "63053bfaeb1cf06dc30bd7f5a28d8fb178c24b3f49b2b9614fc9340d3eabdefb",
+        "split_fold_ids": [
+          "development:2024-12-30 01:05:00+03:00..2025-12-31 23:49:00+03:00"
+        ],
+        "stochastic_eval_seed": {
+          "reason": "policy action was evaluated deterministically",
+          "status": "unknown"
+        },
+        "symbols": [
+          "US100.cash"
+        ],
+        "timeframes": [
+          "M1",
+          "M3",
+          "M5",
+          "M10",
+          "M15",
+          "M30",
+          "H1",
+          "H4",
+          "D1"
+        ],
+        "timezone_session_schedule": {
+          "reason": "input index/session labels are recorded; authoritative timezone/calendar semantics were not assessed",
+          "status": "unknown"
+        },
+        "torch_version": "2.14.0+cu130",
+        "training_effective_steps": 0,
+        "training_seed": {
+          "reason": "deterministic baseline is not trained",
+          "status": "unknown"
+        },
+        "training_total_steps": 0
+      },
+      "role": "control",
+      "run_id": "matched_setup_baselines_571b404168826c0e/always_no_trade",
+      "seed": 0,
+      "status": "completed",
+      "variant_id": "always_no_trade_v1"
+    },
+    {
+      "artifacts": [
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/random_eligible_setup/decisions.csv",
+          "role": "decision_trace",
+          "sha256": "1498a1a9e48557442be19d4a59df696a472935e260c041a7303b4362387b7053",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/random_eligible_setup/trade_fill_event_ledger.csv",
+          "role": "trade_fill_event_ledger",
+          "sha256": "5484477d5072e1ff0d51fcbdffa18d81fe74f21bccaf30111f319c2dd898e6b2",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/random_eligible_setup/equity.csv",
+          "role": "equity_curve",
+          "sha256": "f047456bd7d478cfd31212b616a0a5301c0cfceda13235cc0f76cfd6bf9d3f26",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/random_eligible_setup/metrics.json",
+          "role": "metrics",
+          "sha256": "006aa8859e78c442149da6a2ef848cf3ae88e30f002b9b669f48fd48079b271c",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/random_eligible_setup/confidence_intervals.json",
+          "role": "confidence_intervals",
+          "sha256": "1d95cf4e678cb993889de1cdb5f401b0d5b0aba55e1ac22fe7f6ae44d715d341",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/random_eligible_setup/policy_metadata.json",
+          "role": "policy_metadata",
+          "sha256": "54e57f962b19e0772d14e06a8ff2ed286771baeb863c3d163904f91a5e90ce2f",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/random_eligible_setup/evaluation.json",
+          "role": "evaluation_metadata",
+          "sha256": "fdf65de46d9a1ac17d9b3ca665342825d5f599223ed64c6f1cf79feb1f9488b9",
+          "storage_scope": "repository"
+        }
+      ],
+      "identity": {
+        "action_mode": "trade-setup-overlay-action-v1",
+        "broker_cost_risk_assumptions": [
+          "resolved config SHA-256: 64594261c7ccabb155f9f077895ba1fae83884853b5063ad31bde475381afc87",
+          "risk sizing settings: {\"absolute_risk_budget_usd\":900.0,\"configured_static_trade_risk_cap_usd\":900.0,\"contract_size\":1.0,\"fixed_risk_usd\":0.0,\"ftmo_limit_value_mode\":\"fixed_usd\",\"ftmo_risk_per_trade_limit_pct\":0.01,\"ftmo_risk_per_trade_limit_usd\":1000.0,\"ftmo_risk_sizing_limit_usd\":900.0,\"legacy_risk_fraction\":0.01,\"max_lot\":100.0,\"min_lot\":0.01,\"policy_normalized_risk\":0.5,\"policy_risk_coordinate_is_constant\":true,\"repeated_payout_agent_risk_max_frac\":0.009,\"repeated_payout_reserve_cost_buffer_usd\":0.0,\"risk_band_hold_below_usd\":0.0,\"risk_band_max_usd\":900.0,\"risk_budget_semantics\":\"normalized action coordinate maps to a requested total budget under risk_band_max_usd; sizing reserves modeled execution costs before assigning stop exposure, while lot limits and guardrails may reduce realized exposure\",\"risk_mode\":\"dollar_band\",\"strategy_risk_frac_range\":[0.0,0.01],\"trading_policy_mode\":\"legacy\"}",
+          "execution and cost semantics are from the recorded resolved configuration",
+          "period role: development"
+        ],
+        "checkpoint_hash": {
+          "reason": "deterministic baseline does not load a checkpoint",
+          "status": "unknown"
+        },
+        "claimed_reproduction_level": "Draft local reproducibility record; hashes bind in-memory inputs and outputs, but raw data are not copied into the bundle.",
+        "config_file_hash": "cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+        "cuda_version": {
+          "reason": "policy evaluation CUDA version was not recorded",
+          "status": "unknown"
+        },
+        "dataset_file_hashes": [
+          "bars_dataframe:ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+          "features_dataframe:c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+          "tickbook_arrays:2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc",
+          "configured_session_schedule:7e9f5def3385185905f7265f946a0835ccb43c53f1351c057aa23f00480e6cbc",
+          "selected_config:cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+          "training_US100.cash_H1:693e9b3df53e522b16c63f1d9ab9c7e29f0c29555f066b3a90554b34a9dd7c0b",
+          "training_US100.cash_H4:83855aed1db0517f43b76ef2e3484908e43d9744d955abb8c828aad699a1e2af",
+          "training_US100.cash_M1:c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+          "training_US100.cash_M10:a13bdee2606d3bed19e301196fc29e426d97fdf05373fee83a734181004ade53",
+          "training_US100.cash_M15:1eb96fafbdbcfa140e50d6430e7fdfbd891dcad22eae597771678c0ed607c6cd",
+          "training_US100.cash_M3:217c2f8bfdd1ff30938868f81d3fb682f8919bc703171cb29f88ddc6a6bab461",
+          "training_US100.cash_M30:256a8fb8c959a61f2fada196163ba8da0edf94de67146d175fbdab9eba75c5d7",
+          "training_US100.cash_M5:07e162ade037e3da909bce02041e0f4ce6e2e85d417c5e3fab9bfeaacc94a7ec",
+          "training_US100.cash_ticks:631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23",
+          "training_US500.cash_D1:8eccb7d28f99e403df36adbd76097df388187f110e0c19544487dde7b8ceb990",
+          "training_US500.cash_H1:bb19f7ef3f8fdf3729b34b91379a3ccef0822d83e73e30b22b9cddbbe785051e",
+          "training_US500.cash_H4:d34786fb2fd9f5514298d66756f51b08ac7d3a77b846f133c7e278f4f046235c",
+          "training_US500.cash_M1:8ee4ef65d952974dadb3ba0f5e39536060a1563665dd5ad509404355b888d41e",
+          "training_US500.cash_M10:3326e4e0063ca941d90bf7041b8a53cddcc2e971f47d0cdadb7f8e117ca8ce0a",
+          "training_US500.cash_M15:a7785b7005bf7dd8dc1e68c202cd7c10a5a0b2eeebc87fa18021b111a42a4b04",
+          "training_US500.cash_M3:076fbc56d648817308174cd1e5c0487fb6da96a9ea4c727dcb2e4565fa0ac684",
+          "training_US500.cash_M30:afcf8b1928c3a6a740f6cb15de21a50430a8ef114c157789bfd5fed245649e65",
+          "training_US500.cash_M5:7940ffbc5b3041061a51c6267ab969f5bc2559a782d4aa1eba7bdc5dbeda7397",
+          "training_US500.cash_ticks:36e59a0d20c06bf008c81d5d3126c48b5cc2dd06f7fdd92428e068760415e1b3"
+        ],
+        "environment_lock_hash": "31960d7401c9d1cc5dc9c53f5513eaf36a710ac9681a76e2b51862b29227344a",
+        "execution_seed": 50,
+        "exposure_roles": [
+          "development"
+        ],
+        "feature_cache_content_hash": "c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+        "feature_cache_version": "v37-zero-variance-neutral",
+        "limitations": [
+          "Draft bundle; no independent rerun or external review is claimed.",
+          "A synthetic period role is implementation validation, not economic evidence.",
+          "Unknown source rights, timestamp authority, and calendar semantics remain unassessed."
+        ],
+        "metric_calculator_revision": "qrl.performance_metrics.v2:aa58a1ae0e7541a84a80c837e3afde4613f860a7f82bee30c9e6aac2d89a0a2b",
+        "missing_assets": [],
+        "n_envs": 1,
+        "python_version": "3.12.15",
+        "regeneration_command": "cd /scratch/work/nguyenl37/Quantitative-RL-Trading-System && /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python -m scripts.research.analysis.evaluation.run_matched_setup_baselines --config config/research/trade_setup_mtf_reasoning_2m.yaml --period-role development --dataset training --execution-seed 50 --random-policy-seed 42 --absolute-risk-budget-usd 900 --normalized-risk 0.5 --trade-probability 1 --bootstrap-samples 2000 --bootstrap-seed 42 --baselines always_no_trade random_eligible_setup structure_priority --artifact-root evidence/research/matched_setup_baselines",
+        "resolved_config_hash": "64594261c7ccabb155f9f077895ba1fae83884853b5063ad31bde475381afc87",
+        "reviewer_check_status": "automated artifact hashes; independent review not performed",
+        "rollout_geometry": "one non-episodic TradingEnv; one action per input bar",
+        "sample_denominators": [
+          "bars=351432",
+          "features=351432",
+          "decisions=99492",
+          "event_rows=6249",
+          "completed_positions=1854"
+        ],
+        "schema_versions": [
+          "action:trade-setup-overlay-action-v1",
+          "feature_cache:v37-zero-variance-neutral",
+          "result_manifest:v2"
+        ],
+        "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
+        "source_tree_hash": "63053bfaeb1cf06dc30bd7f5a28d8fb178c24b3f49b2b9614fc9340d3eabdefb",
+        "split_fold_ids": [
+          "development:2024-12-30 01:05:00+03:00..2025-12-31 23:49:00+03:00"
+        ],
+        "stochastic_eval_seed": 42,
+        "symbols": [
+          "US100.cash"
+        ],
+        "timeframes": [
+          "M1",
+          "M3",
+          "M5",
+          "M10",
+          "M15",
+          "M30",
+          "H1",
+          "H4",
+          "D1"
+        ],
+        "timezone_session_schedule": {
+          "reason": "input index/session labels are recorded; authoritative timezone/calendar semantics were not assessed",
+          "status": "unknown"
+        },
+        "torch_version": "2.14.0+cu130",
+        "training_effective_steps": 0,
+        "training_seed": {
+          "reason": "deterministic baseline is not trained",
+          "status": "unknown"
+        },
+        "training_total_steps": 0
+      },
+      "role": "randomized_control",
+      "run_id": "matched_setup_baselines_571b404168826c0e/random_eligible_setup",
+      "seed": 42,
+      "status": "completed",
+      "variant_id": "random_eligible_trade_setup_v1"
+    },
+    {
+      "artifacts": [
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/structure_priority/decisions.csv",
+          "role": "decision_trace",
+          "sha256": "03641827d20c0b06e138f381c58ca977f3620b72f78f71c3cf5cf35cbbb5569a",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/structure_priority/trade_fill_event_ledger.csv",
+          "role": "trade_fill_event_ledger",
+          "sha256": "9d6b2ba68fe373cac9915ed6c1fc6846d6d78040a3b3b0d11741c783f8ba5407",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "text/csv",
+          "path": "matched_setup_baselines_571b404168826c0e/structure_priority/equity.csv",
+          "role": "equity_curve",
+          "sha256": "fed546bc25b9cdb8371b17a36015ee33498140d94eed1f3125a66e06759f308f",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/structure_priority/metrics.json",
+          "role": "metrics",
+          "sha256": "7b844fde7fdad19a70e987faa681755de7a8c002769e7919d46a0f5905f226f8",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/structure_priority/confidence_intervals.json",
+          "role": "confidence_intervals",
+          "sha256": "b221f85ac0b0e95b0ceb25d7902d8374e274a0680fda3a3b3f9145a754fccc0e",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/structure_priority/policy_metadata.json",
+          "role": "policy_metadata",
+          "sha256": "b960f7138a035ae45dc1a0f5108e04ba10116b3018ad95cbc4a787ad5c809805",
+          "storage_scope": "repository"
+        },
+        {
+          "media_type": "application/json",
+          "path": "matched_setup_baselines_571b404168826c0e/structure_priority/evaluation.json",
+          "role": "evaluation_metadata",
+          "sha256": "6038990e9f2ae485ac5383a40f4efe2cbfafc116ffa2bec1e27d062df77683c8",
+          "storage_scope": "repository"
+        }
+      ],
+      "identity": {
+        "action_mode": "deterministic",
+        "broker_cost_risk_assumptions": [
+          "resolved config SHA-256: 64594261c7ccabb155f9f077895ba1fae83884853b5063ad31bde475381afc87",
+          "risk sizing settings: {\"absolute_risk_budget_usd\":900.0,\"configured_static_trade_risk_cap_usd\":900.0,\"contract_size\":1.0,\"fixed_risk_usd\":0.0,\"ftmo_limit_value_mode\":\"fixed_usd\",\"ftmo_risk_per_trade_limit_pct\":0.01,\"ftmo_risk_per_trade_limit_usd\":1000.0,\"ftmo_risk_sizing_limit_usd\":900.0,\"legacy_risk_fraction\":0.01,\"max_lot\":100.0,\"min_lot\":0.01,\"policy_normalized_risk\":0.5,\"policy_risk_coordinate_is_constant\":true,\"repeated_payout_agent_risk_max_frac\":0.009,\"repeated_payout_reserve_cost_buffer_usd\":0.0,\"risk_band_hold_below_usd\":0.0,\"risk_band_max_usd\":900.0,\"risk_budget_semantics\":\"normalized action coordinate maps to a requested total budget under risk_band_max_usd; sizing reserves modeled execution costs before assigning stop exposure, while lot limits and guardrails may reduce realized exposure\",\"risk_mode\":\"dollar_band\",\"strategy_risk_frac_range\":[0.0,0.01],\"trading_policy_mode\":\"legacy\"}",
+          "execution and cost semantics are from the recorded resolved configuration",
+          "period role: development"
+        ],
+        "checkpoint_hash": {
+          "reason": "deterministic baseline does not load a checkpoint",
+          "status": "unknown"
+        },
+        "claimed_reproduction_level": "Draft local reproducibility record; hashes bind in-memory inputs and outputs, but raw data are not copied into the bundle.",
+        "config_file_hash": "cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+        "cuda_version": {
+          "reason": "policy evaluation CUDA version was not recorded",
+          "status": "unknown"
+        },
+        "dataset_file_hashes": [
+          "bars_dataframe:ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+          "features_dataframe:c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+          "tickbook_arrays:2e55f5d6e4100877e3cd0df8191438281b4b0afee9d82e657f475608067b2fbc",
+          "configured_session_schedule:7e9f5def3385185905f7265f946a0835ccb43c53f1351c057aa23f00480e6cbc",
+          "selected_config:cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+          "training_US100.cash_H1:693e9b3df53e522b16c63f1d9ab9c7e29f0c29555f066b3a90554b34a9dd7c0b",
+          "training_US100.cash_H4:83855aed1db0517f43b76ef2e3484908e43d9744d955abb8c828aad699a1e2af",
+          "training_US100.cash_M1:c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+          "training_US100.cash_M10:a13bdee2606d3bed19e301196fc29e426d97fdf05373fee83a734181004ade53",
+          "training_US100.cash_M15:1eb96fafbdbcfa140e50d6430e7fdfbd891dcad22eae597771678c0ed607c6cd",
+          "training_US100.cash_M3:217c2f8bfdd1ff30938868f81d3fb682f8919bc703171cb29f88ddc6a6bab461",
+          "training_US100.cash_M30:256a8fb8c959a61f2fada196163ba8da0edf94de67146d175fbdab9eba75c5d7",
+          "training_US100.cash_M5:07e162ade037e3da909bce02041e0f4ce6e2e85d417c5e3fab9bfeaacc94a7ec",
+          "training_US100.cash_ticks:631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23",
+          "training_US500.cash_D1:8eccb7d28f99e403df36adbd76097df388187f110e0c19544487dde7b8ceb990",
+          "training_US500.cash_H1:bb19f7ef3f8fdf3729b34b91379a3ccef0822d83e73e30b22b9cddbbe785051e",
+          "training_US500.cash_H4:d34786fb2fd9f5514298d66756f51b08ac7d3a77b846f133c7e278f4f046235c",
+          "training_US500.cash_M1:8ee4ef65d952974dadb3ba0f5e39536060a1563665dd5ad509404355b888d41e",
+          "training_US500.cash_M10:3326e4e0063ca941d90bf7041b8a53cddcc2e971f47d0cdadb7f8e117ca8ce0a",
+          "training_US500.cash_M15:a7785b7005bf7dd8dc1e68c202cd7c10a5a0b2eeebc87fa18021b111a42a4b04",
+          "training_US500.cash_M3:076fbc56d648817308174cd1e5c0487fb6da96a9ea4c727dcb2e4565fa0ac684",
+          "training_US500.cash_M30:afcf8b1928c3a6a740f6cb15de21a50430a8ef114c157789bfd5fed245649e65",
+          "training_US500.cash_M5:7940ffbc5b3041061a51c6267ab969f5bc2559a782d4aa1eba7bdc5dbeda7397",
+          "training_US500.cash_ticks:36e59a0d20c06bf008c81d5d3126c48b5cc2dd06f7fdd92428e068760415e1b3"
+        ],
+        "environment_lock_hash": "31960d7401c9d1cc5dc9c53f5513eaf36a710ac9681a76e2b51862b29227344a",
+        "execution_seed": 50,
+        "exposure_roles": [
+          "development"
+        ],
+        "feature_cache_content_hash": "c5e2cb5db87892974a0486f8fb66f655b5b3a47e3c259f10ffcf3fbe321220cd",
+        "feature_cache_version": "v37-zero-variance-neutral",
+        "limitations": [
+          "Draft bundle; no independent rerun or external review is claimed.",
+          "A synthetic period role is implementation validation, not economic evidence.",
+          "Unknown source rights, timestamp authority, and calendar semantics remain unassessed."
+        ],
+        "metric_calculator_revision": "qrl.performance_metrics.v2:aa58a1ae0e7541a84a80c837e3afde4613f860a7f82bee30c9e6aac2d89a0a2b",
+        "missing_assets": [],
+        "n_envs": 1,
+        "python_version": "3.12.15",
+        "regeneration_command": "cd /scratch/work/nguyenl37/Quantitative-RL-Trading-System && /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python -m scripts.research.analysis.evaluation.run_matched_setup_baselines --config config/research/trade_setup_mtf_reasoning_2m.yaml --period-role development --dataset training --execution-seed 50 --random-policy-seed 42 --absolute-risk-budget-usd 900 --normalized-risk 0.5 --trade-probability 1 --bootstrap-samples 2000 --bootstrap-seed 42 --baselines always_no_trade random_eligible_setup structure_priority --artifact-root evidence/research/matched_setup_baselines",
+        "resolved_config_hash": "64594261c7ccabb155f9f077895ba1fae83884853b5063ad31bde475381afc87",
+        "reviewer_check_status": "automated artifact hashes; independent review not performed",
+        "rollout_geometry": "one non-episodic TradingEnv; one action per input bar",
+        "sample_denominators": [
+          "bars=351432",
+          "features=351432",
+          "decisions=99492",
+          "event_rows=4897",
+          "completed_positions=1169"
+        ],
+        "schema_versions": [
+          "action:trade-setup-overlay-action-v1",
+          "feature_cache:v37-zero-variance-neutral",
+          "result_manifest:v2"
+        ],
+        "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
+        "source_tree_hash": "63053bfaeb1cf06dc30bd7f5a28d8fb178c24b3f49b2b9614fc9340d3eabdefb",
+        "split_fold_ids": [
+          "development:2024-12-30 01:05:00+03:00..2025-12-31 23:49:00+03:00"
+        ],
+        "stochastic_eval_seed": {
+          "reason": "policy action was evaluated deterministically",
+          "status": "unknown"
+        },
+        "symbols": [
+          "US100.cash"
+        ],
+        "timeframes": [
+          "M1",
+          "M3",
+          "M5",
+          "M10",
+          "M15",
+          "M30",
+          "H1",
+          "H4",
+          "D1"
+        ],
+        "timezone_session_schedule": {
+          "reason": "input index/session labels are recorded; authoritative timezone/calendar semantics were not assessed",
+          "status": "unknown"
+        },
+        "torch_version": "2.14.0+cu130",
+        "training_effective_steps": 0,
+        "training_seed": {
+          "reason": "deterministic baseline is not trained",
+          "status": "unknown"
+        },
+        "training_total_steps": 0
+      },
+      "role": "deterministic_rule",
+      "run_id": "matched_setup_baselines_571b404168826c0e/structure_priority",
+      "seed": 0,
+      "status": "completed",
+      "variant_id": "structure_priority_setup_v1"
+    }
+  ],
+  "schema": "qrl.research_result_manifest.v2",
+  "supporting_artifacts": [
+    {
+      "media_type": "application/json",
+      "path": "matched_setup_baselines_571b404168826c0e/resolved_config.json",
+      "role": "resolved_config",
+      "sha256": "86739cedc0e09742d74c66ef9cc5027486f7dd76f740c5cbcb479f69c3bef348",
+      "storage_scope": "repository"
+    },
+    {
+      "media_type": "application/json",
+      "path": "matched_setup_baselines_571b404168826c0e/source_identity.json",
+      "role": "source_hash_manifest",
+      "sha256": "d480cd05ca21e2d912c7b4cd8cc501d4190f2d962d2e2e71c0f28a7df69f815e",
+      "storage_scope": "repository"
+    },
+    {
+      "media_type": "application/json",
+      "path": "matched_setup_baselines_571b404168826c0e/input_identity.json",
+      "role": "input_identity",
+      "sha256": "9d79b46e0aceb8ed2b417ecf7e260103b0ec474cffb7bd223f4513bdd25d276c",
+      "storage_scope": "repository"
+    }
+  ]
+}

@@ -9,9 +9,9 @@ import pandas as pd
 from market_data.loading.ticks import (
     TickExecutionUnavailable,
 )
-from trading.execution import Position
+from trading.execution import Position, exit_side_bar_range, raw_spread_to_price
 from trading.positions import target_close_size
-from trading.risk.stop_management import tightened_breakeven_stop_price
+from trading.risk import tightened_breakeven_stop_price
 
 from .market_view import BarView
 from .mixin_base import RuntimeMixinBase
@@ -22,30 +22,97 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
 
     position: Position | None
 
-    def _assert_tick_protective_events_observed(self, bar: BarView) -> None:
-        """Reject OHLC protective crossings that have no matching executable tick."""
+    def _exit_side_bar_range(self, bar: BarView, direction: int) -> tuple[float, float]:
+        """Return the executable low/high range for the exiting position side.
+
+        Args:
+            bar: Current market bar with high, low, and spread values.
+            direction: Position direction, ``1`` for long or ``-1`` for short.
+
+        Returns:
+            Low and high executable price bounds after spread handling.
+        """
+        spread = raw_spread_to_price(float(bar.spread), self.cost_model.point_size)
+        return exit_side_bar_range(
+            direction, float(bar.low), float(bar.high), spread, self.cost_model
+        )
+
+    def _assert_tick_protective_events_observed(
+        self,
+        bar: BarView,
+        bar_idx: int | None = None,
+        *,
+        protective_levels: tuple[float | None, tuple[float | None, ...]] | None = None,
+    ) -> None:
+        """Reject OHLC protective crossings that have no matching executable tick.
+
+        Args:
+            bar: Market bar whose stop and target crossings are checked.
+            bar_idx: Optional bar index; defaults to the current environment step.
+            protective_levels: Optional stop and target levels to validate.
+        """
         position = self.position
         if position is None:
             return
-        stop_touched = position.sl_price is not None and (
-            (position.direction == 1 and float(bar.low) <= position.sl_price)
-            or (position.direction == -1 and float(bar.high) >= position.sl_price)
+        idx = self.step_idx if bar_idx is None else bar_idx
+        bar_time = self._bar_time(idx)
+        entry_time = (
+            None
+            if position.entry_timestamp is None
+            else pd.Timestamp(cast(Any, position.entry_timestamp))
         )
-        target_levels = [getattr(position, f"tp{slot}_price") for slot in (1, 2, 3)]
-        if not any(target is not None for target in target_levels):
-            target_levels = [position.tp_price]
+        if entry_time is not None and entry_time > bar_time:
+            return
+        exit_low, exit_high = self._exit_side_bar_range(bar, int(position.direction))
+        sl_price, target_levels = protective_levels or (
+            position.sl_price,
+            tuple(getattr(position, f"tp{slot}_price") for slot in (1, 2, 3)),
+        )
+        if protective_levels is None and not any(target is not None for target in target_levels):
+            target_levels = (position.tp_price,)
+        stop_touched = sl_price is not None and (
+            exit_low <= sl_price if position.direction == 1 else exit_high >= sl_price
+        )
         target_touched = any(
             target is not None
             and (
-                (position.direction == 1 and float(bar.high) >= target)
-                or (position.direction == -1 and float(bar.low) <= target)
+                (position.direction == 1 and exit_high >= target)
+                or (position.direction == -1 and exit_low <= target)
             )
             for target in target_levels
         )
         if stop_touched or target_touched:
+            tick_window = "unavailable"
+            if self._tickbook is not None:
+                window_end = bar_time + pd.Timedelta(
+                    minutes=max(1, int(round(self._minutes_per_step)))
+                )
+                tick_start = int(self._tickbook._ts.searchsorted(bar_time.value, side="left"))
+                tick_end = int(self._tickbook._ts.searchsorted(window_end.value, side="left"))
+                executable_side = (
+                    self._tickbook._bid if position.direction == 1 else self._tickbook._ask
+                )
+                window_prices = executable_side[tick_start:tick_end]
+                tick_window = (
+                    f"count={tick_end - tick_start}, "
+                    f"side_min={float(window_prices.min()) if len(window_prices) else None}, "
+                    f"side_max={float(window_prices.max()) if len(window_prices) else None}, "
+                    f"start={pd.Timestamp(int(self._tickbook._ts[tick_start]), unit='ns', tz='UTC') if tick_start < len(self._tickbook) else None}"
+                )
+            target_text = ", ".join(
+                f"tp{slot}={getattr(position, f'tp{slot}_price')}" for slot in (1, 2, 3)
+            )
             raise TickExecutionUnavailable(
                 "OHLC indicates a protective level was reached, but no matching "
-                "tick trigger was found; candle fallback is disabled"
+                "tick trigger was found; candle fallback is disabled "
+                f"(bar_idx={idx}, bar_time={bar_time.isoformat()}, "
+                f"entry_time={entry_time}, "
+                f"direction={position.direction}, open={bar.open}, high={bar.high}, "
+                f"low={bar.low}, close={bar.close}, exit_low={exit_low}, "
+                f"exit_high={exit_high}, sl={sl_price}, "
+                f"tick_window=({tick_window}), "
+                f"multi_target_replay={getattr(self, '_last_multi_target_replay', None)}, "
+                f"{target_text})"
             )
 
     def _check_sl_tp(
@@ -76,6 +143,7 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             return
         record: dict[str, Any]
         idx = self.step_idx if bar_idx is None else bar_idx
+        exit_low, exit_high = self._exit_side_bar_range(bar, int(self.position.direction))
         log_time = (
             self._bar_time(idx)
             if 0 <= idx < len(self._bar_times)
@@ -91,12 +159,54 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             getattr(self.position, f"tp{slot}_price") is not None for slot in (1, 2, 3)
         )
         if has_tick_slots and self._tickbook is not None:
+            before_replay = (
+                int(self.position.direction),
+                self.position.sl_price,
+                tuple(getattr(self.position, f"tp{slot}_price") for slot in (1, 2, 3)),
+                float(self.position.size),
+                int(self.position.tp_hit_mask),
+            )
             if self._check_multi_tp_ticks(log_time, idx):
-                if (
+                self._last_multi_target_replay = {
+                    "before": before_replay,
+                    "after": (
+                        None
+                        if self.position is None
+                        else (
+                            int(self.position.direction),
+                            self.position.sl_price,
+                            tuple(getattr(self.position, f"tp{slot}_price") for slot in (1, 2, 3)),
+                            float(self.position.size),
+                            int(self.position.tp_hit_mask),
+                        )
+                    ),
+                }
+                # Replay may leave a runner with updated protective levels.
+                # Check only that live position after replay; a fully closed
+                # position has no remaining event to validate.
+                if self.position is not None and (
                     getattr(self, "tick_execution_required", False)
                     or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
                 ):
-                    self._assert_tick_protective_events_observed(bar)
+                    replayed_targets = before_replay[2]
+                    remaining_targets = tuple(
+                        current if current is not None and current == previous else None
+                        for current, previous in zip(
+                            (getattr(self.position, f"tp{slot}_price") for slot in (1, 2, 3)),
+                            replayed_targets,
+                            strict=True,
+                        )
+                    )
+                    unchanged_stop = (
+                        self.position.sl_price
+                        if self.position.sl_price == before_replay[1]
+                        else None
+                    )
+                    self._assert_tick_protective_events_observed(
+                        bar,
+                        idx,
+                        protective_levels=(unchanged_stop, remaining_targets),
+                    )
                 return
 
         tick_hit = None if has_tick_slots else self._tick_exit_quote(log_time)
@@ -125,7 +235,7 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             getattr(self, "tick_execution_required", False)
             or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
         ):
-            self._assert_tick_protective_events_observed(bar)
+            self._assert_tick_protective_events_observed(bar, idx)
             # Intrabar OHLC extrema are not executable bid/ask evidence. Keep
             # the position open when no matching executable tick was observed.
             self._maybe_ema_exit(bar, idx, log_time)
@@ -133,9 +243,9 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
 
         sl_hit = False
         if self.position.sl_price is not None:
-            if self.position.direction == 1 and float(bar.low) <= self.position.sl_price:
+            if self.position.direction == 1 and exit_low <= self.position.sl_price:
                 sl_hit = True
-            elif self.position.direction == -1 and float(bar.high) >= self.position.sl_price:
+            elif self.position.direction == -1 and exit_high >= self.position.sl_price:
                 sl_hit = True
 
         if sl_hit:
@@ -186,9 +296,9 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                     continue
 
                 slot_hit = False
-                if pos.direction == 1 and float(bar.high) >= float(slot_px):
+                if pos.direction == 1 and exit_high >= float(slot_px):
                     slot_hit = True
-                elif pos.direction == -1 and float(bar.low) <= float(slot_px):
+                elif pos.direction == -1 and exit_low <= float(slot_px):
                     slot_hit = True
 
                 if slot_hit:
@@ -261,9 +371,9 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 return
         elif self.position.tp_price is not None:
             tp_hit = False
-            if self.position.direction == 1 and float(bar.high) >= self.position.tp_price:
+            if self.position.direction == 1 and exit_high >= self.position.tp_price:
                 tp_hit = True
-            elif self.position.direction == -1 and float(bar.low) <= self.position.tp_price:
+            elif self.position.direction == -1 and exit_low <= self.position.tp_price:
                 tp_hit = True
 
             if tp_hit:

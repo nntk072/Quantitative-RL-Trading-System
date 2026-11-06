@@ -2,6 +2,7 @@
 
 import unittest
 
+from simulation.backtest.accounting import _needs_adverse_market_slippage
 from trading.account.account_state import AccountState
 from trading.execution.broker import Broker
 from trading.execution.costs import CostModel
@@ -68,6 +69,19 @@ class BrokerAccountingTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "quote"):
                     self.broker.mark_to_market(self.acc, pos, quote)
                 self.assertEqual((self.acc.balance, self.acc.equity, pos.size), before)
+
+    def test_market_slippage_classifies_forced_closes_without_double_charging_protection(self):
+        self.assertTrue(
+            _needs_adverse_market_slippage(
+                {"type": "forced_close", "fill_quote_source": "bar_open"}
+            )
+        )
+        self.assertTrue(
+            _needs_adverse_market_slippage({"type": "stop_close", "fill_quote_source": "tick"})
+        )
+        self.assertFalse(
+            _needs_adverse_market_slippage({"type": "stop_close", "fill_quote_source": "bar_open"})
+        )
 
 
 if __name__ == "__main__":

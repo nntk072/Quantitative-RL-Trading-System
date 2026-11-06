@@ -1,0 +1,35 @@
+{
+  "block_length_bars": 8,
+  "level": 0.95,
+  "method": "moving_block_bar_returns_and_trade_pnl_resampling",
+  "metrics": {
+    "max_drawdown": {
+      "estimate": 0.0,
+      "level": 0.95,
+      "lower": 0.0,
+      "upper": 0.0
+    },
+    "sharpe": {
+      "estimate": 0.0,
+      "level": 0.95,
+      "lower": 0.0,
+      "upper": 0.0
+    },
+    "sortino": {
+      "estimate": 0.0,
+      "level": 0.95,
+      "lower": 0.0,
+      "upper": 0.0
+    },
+    "win_rate": {
+      "estimate": null,
+      "level": 0.95,
+      "lower": null,
+      "upper": null
+    }
+  },
+  "n_boot": 2000,
+  "schema": "within_trajectory_bootstrap_ci_v1",
+  "scope": "within-trajectory sampling uncertainty; not between-seed or paired-policy uncertainty",
+  "seed": 42
+}

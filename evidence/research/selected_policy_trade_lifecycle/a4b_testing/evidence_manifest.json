@@ -1,7 +1,7 @@
 {
   "analysis_script": {
     "path": "scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py",
-    "sha256": "a7e1d04031de55575cab2e38bb83ed370290b8b0a091c2d09e5a5ab4fff6df5e"
+    "sha256": "891b1b9829e965176694ddd21746b53d003a8fa21ce68354608ff8f07e63b494"
   },
   "input_files": {
     "breach_events.csv": {
@@ -51,8 +51,8 @@
     }
   },
   "report_files": {
-    "selected_policy_trade_lifecycle.json": "98459e5b012b585b34687a09a3416eacbf0281c3606a6aee78e93cc1a173e3cd",
-    "selected_policy_trade_lifecycle.md": "c326fa54128e5a03a83fed17d68f5faa14a2b20ffde72a6b8fd23ed979bf8482"
+    "selected_policy_trade_lifecycle.json": "3d7da2f871a19a13f4ad50e13a05d7d3a6df61fb5cf7075a19fab22daad34fe2",
+    "selected_policy_trade_lifecycle.md": "638677d2ce64f3bfc91e7c65cc1b96680f96461d81da68dcb37d90068b617046"
   },
   "reproduction": "python scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py --run-dir outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing --output-dir evidence/research/selected_policy_trade_lifecycle/a4b_testing"
 }

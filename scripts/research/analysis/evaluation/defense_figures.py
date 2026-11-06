@@ -35,7 +35,7 @@ from evaluation.plotting.plots import plot_daily_pnl, plot_drawdown, plot_equity
 from evaluation.plotting.po3_plots import plot_annotated_ny_session, plot_fvg_signals
 from features import build_features, feature_cache_path
 from market_data.loading import run_pipeline
-from market_data.splits.definitions import get_split_config, make_train_mask
+from market_data.splits.definitions import get_split_config, get_train_start_config, make_train_mask
 from market_data.transforms.activity import attach_activity, tick_counts_from_index
 from market_data.transforms.sessions import ny_session_mask
 from training.configuration.strategy_overlays import merge_strategy_config
@@ -213,6 +213,7 @@ def main() -> None:
     cfg.features.vwap_session = True
     cfg.features.include_session_ohlc = True
     train_end, test_start = get_split_config(cfg)
+    train_start = get_train_start_config(cfg)
     data = run_pipeline(cfg, force=False)
     secondary = data.get(str(cfg.data.secondary), {}).get("M1")
     bars = attach_activity(data[str(cfg.data.primary)]["M1"])
@@ -226,7 +227,7 @@ def main() -> None:
             bars["tick_count"] = tick_counts_from_index(cast(pd.DatetimeIndex, bars.index), tidx)
             bars = attach_activity(bars)
     cache_dir = Path(cfg.data.cache_dir)
-    mask = make_train_mask(cast(pd.DatetimeIndex, bars.index), train_end)
+    mask = make_train_mask(cast(pd.DatetimeIndex, bars.index), train_end, train_start)
     feat_path = feature_cache_path(
         cache_dir,
         str(cfg.data.primary),

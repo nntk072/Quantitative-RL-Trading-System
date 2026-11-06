@@ -49,7 +49,8 @@ _VARIANTS: tuple[tuple[str, type[torch.nn.Module]], ...] = (
 
 
 class _TradeSetupMTFEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[np.float32]]):
-    def __init__(self) -> None:
+    def __init__(self, *, include_validity_channels: bool = False) -> None:
+        self.include_validity_channels = include_validity_channels
         schema: dict[str, spaces.Space[Any]] = {
             "account": spaces.Box(-10.0, 10.0, (6,), dtype=np.float32),
             "trade_setup_mask": spaces.Box(
@@ -57,6 +58,8 @@ class _TradeSetupMTFEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[
             ),
         }
         for seq_key, mask_key, length, width in _STREAMS:
+            if include_validity_channels:
+                width *= 2
             schema[seq_key] = spaces.Box(-1.0, 1.0, (length, width), dtype=np.float32)
             schema[mask_key] = spaces.Box(0.0, 1.0, (length,), dtype=np.float32)
         self.observation_space = spaces.Dict(schema)
@@ -73,6 +76,8 @@ class _TradeSetupMTFEnv(gym.Env[dict[str, npt.NDArray[np.float32]], npt.NDArray[
         }
         observation["trade_setup_mask"][[0, 12, 51]] = 1.0
         for seq_key, mask_key, length, width in _STREAMS:
+            if self.include_validity_channels:
+                width *= 2
             observation[seq_key] = np.zeros((length, width), dtype=np.float32)
             observation[mask_key] = np.ones(length, dtype=np.float32)
         return observation
@@ -194,3 +199,21 @@ def test_trade_setup_conditioned_ppo_checkpoint_roundtrip_preserves_encoder(
     other_arch = next(name for name, _ in _VARIANTS if name != arch)
     with pytest.raises(ValueError, match="does not match requested architecture"):
         validate_model_architecture(loaded, other_arch)
+
+
+@pytest.mark.parametrize("arch,encoder_class", _VARIANTS)
+def test_mtf_encoders_accept_versioned_feature_validity_widths(
+    arch: str,
+    encoder_class: type[torch.nn.Module],
+) -> None:
+    env = _TradeSetupMTFEnv(include_validity_channels=True)
+    config = _agent_config(arch)
+    model = build_agent(env, config, arch=arch, device="cpu", seed=29)
+    observation, _ = env.reset(seed=29)
+
+    assert type(model.policy.features_extractor) is encoder_class
+    for sequence_key, _mask_key, _length, value_width in _STREAMS:
+        assert observation[sequence_key].shape[-1] == value_width * 2
+    action, _ = model.predict(observation, deterministic=True)
+
+    assert np.isfinite(action).all()

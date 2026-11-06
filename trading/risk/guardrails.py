@@ -1,10 +1,11 @@
 """FTMO guardrail checks.
 
-Hard limits (``daily_loss_limit``, ``max_loss_limit``) are FTMO kill-switches.
-``trailing_dd_limit`` is an optional PPO-only dollar cap from peak (0 = off).
-The selected ``limit_value_mode`` can use fixed dollars or percentages. In
-percentage mode, per-trade and daily values use current equity, while max loss
-uses initial equity. Soft bricks
+Hard daily and maximum-loss thresholds are configured as percentages of
+initial equity. The daily allowance is applied to each session's
+starting-equity anchor. ``limit_value_mode`` controls the per-trade risk limit;
+historical dollar-valued loss fields remain accepted as compatibility inputs
+but do not change the percentage-based loss rules. ``trailing_dd_limit`` is an
+optional PPO-only cap from peak (0 = off). Soft bricks
 (``soft_daily_loss_limit``, ``soft_trailing_dd_limit``) block new entries /
 add reward pressure only — they do **not** force-close or end the day.
 """
@@ -18,31 +19,29 @@ from typing import Literal
 from trading.account import AccountState
 
 GuardrailBreachScope = Literal["session", "rollout"]
+MaximumLossDrawdownMode = Literal["static", "eod", "intraday_trailing"]
 
 
 def guardrail_breach_scope(reason: str | None) -> GuardrailBreachScope | None:
     """Return the lifecycle scope for a hard account-guardrail breach.
 
-    Daily loss blocks the supplied session and may recover at the next session
-    boundary. Maximum-loss and trailing-drawdown breaches remain latched for
-    the rest of a non-episodic rollout. Episodic and repeated-payout runtimes
-    retain their own termination/cycle behavior around this shared scope.
+    Any hard account-loss breach fails the full evaluation. Daily loss remains
+    measured against the supplied session anchor, but crossing that floor
+    latches the account failure across later sessions.
 
     Args:
         reason: Stable reason returned by ``FTMOGuardrails.breach_reason``.
 
     Returns:
-        ``"session"`` for daily loss, ``"rollout"`` for max/trailing loss,
-        or ``None`` when no breach occurred.
+        ``"rollout"`` for a hard loss breach, or ``None`` when no breach
+        occurred.
 
     Raises:
         ValueError: If a non-null reason is not a recognized hard breach.
     """
     if reason is None:
         return None
-    if reason == "daily_loss":
-        return "session"
-    if reason in {"max_drawdown", "trailing_dd"}:
+    if reason in {"daily_loss", "max_drawdown", "trailing_dd"}:
         return "rollout"
     raise ValueError(f"unsupported hard guardrail breach reason: {reason!r}")
 
@@ -89,6 +88,8 @@ class FTMOGuardrails:
         risk_per_trade_limit: Maximum risk budget for one trade.
     """
 
+    # Dollar-valued threshold fields below are retained for source compatibility;
+    # loss-floor calculations always use the percentage fields.
     daily_loss_limit: float = 5_000.0
     max_loss_limit: float = 10_000.0
     risk_per_trade_limit: float = 1_000.0
@@ -98,17 +99,22 @@ class FTMOGuardrails:
     # Optional PPO-only fraction of *initial* balance as a dollar cap from peak.
     trailing_dd_limit: float = 0.0
     soft_trailing_dd_limit: float = 0.0
-    limit_value_mode: str = "fixed_usd"
+    limit_value_mode: str = "percent_equity"
     risk_per_trade_limit_pct: float = 0.01
     daily_loss_limit_pct: float = 0.05
     soft_daily_loss_limit_pct: float = 0.05
     max_loss_limit_initial_pct: float = 0.10
     soft_max_loss_limit_initial_pct: float = 0.10
+    max_drawdown_mode: MaximumLossDrawdownMode = "static"
 
     def __post_init__(self) -> None:
         """Validate and initialize FTMOGuardrails after construction."""
         if self.limit_value_mode not in {"fixed_usd", "percent_equity"}:
             raise ValueError("ftmo.limit_value_mode must be 'fixed_usd' or 'percent_equity'")
+        if self.max_drawdown_mode not in {"static", "eod", "intraday_trailing"}:
+            raise ValueError(
+                "ftmo.max_drawdown_mode must be 'static', 'eod', or 'intraday_trailing'"
+            )
         percentages = (
             self.risk_per_trade_limit_pct,
             self.daily_loss_limit_pct,
@@ -122,7 +128,7 @@ class FTMOGuardrails:
             raise ValueError("FTMO percentage limits must be fractions in [0, 1]")
 
     def daily_limit_for(self, acc: AccountState) -> float:
-        """Resolve the hard daily-loss threshold from the selected value mode.
+        """Derive the hard daily-loss threshold from initial equity only.
 
         Args:
             acc: Acc used by the operation described above.
@@ -130,12 +136,10 @@ class FTMOGuardrails:
         Returns:
             Numeric result returned by ``daily_limit_for``.
         """
-        if self.limit_value_mode == "percent_equity":
-            return max(0.0, float(acc.equity)) * float(self.daily_loss_limit_pct)
-        return float(self.daily_loss_limit)
+        return max(0.0, float(acc.initial_balance)) * float(self.daily_loss_limit_pct)
 
     def soft_daily_limit_for(self, acc: AccountState) -> float:
-        """Resolve the soft daily threshold from current equity when requested.
+        """Derive the soft daily threshold from initial equity only.
 
         Args:
             acc: Acc used by the operation described above.
@@ -143,12 +147,10 @@ class FTMOGuardrails:
         Returns:
             Numeric result returned by ``soft_daily_limit_for``.
         """
-        if self.limit_value_mode == "percent_equity":
-            return max(0.0, float(acc.equity)) * float(self.soft_daily_loss_limit_pct)
-        return float(self.soft_daily_loss_limit)
+        return max(0.0, float(acc.initial_balance)) * float(self.soft_daily_loss_limit_pct)
 
     def max_loss_limit_for(self, acc: AccountState) -> float:
-        """Resolve the maximum-loss threshold; percentage mode uses initial equity.
+        """Derive the maximum-loss allowance from initial equity only.
 
         Args:
             acc: Acc used by the operation described above.
@@ -156,12 +158,52 @@ class FTMOGuardrails:
         Returns:
             Numeric result returned by ``max_loss_limit_for``.
         """
-        if self.limit_value_mode == "percent_equity":
-            return max(0.0, float(acc.initial_balance)) * float(self.max_loss_limit_initial_pct)
-        return float(self.max_loss_limit)
+        return max(0.0, float(acc.initial_balance)) * float(self.max_loss_limit_initial_pct)
+
+    def max_loss_floor_for(self, acc: AccountState) -> float:
+        """Return the active maximum-loss floor, capped at initial equity.
+
+        Static drawdown uses the initial-equity floor. EOD drawdown ratchets
+        from completed-session highs; intraday trailing drawdown ratchets from
+        the running equity high. Both use the same initial-equity loss
+        allowance and stop ratcheting once the floor reaches initial equity.
+
+        Args:
+            acc: Account state containing initial and reference equity values.
+
+        Returns:
+            Active maximum-loss equity floor, capped at initial balance.
+        """
+        initial = float(acc.initial_balance)
+        allowance = self.max_loss_limit_for(acc)
+        floor = initial - allowance
+        if self.max_drawdown_mode == "eod":
+            floor = max(floor, float(acc.peak_eod_equity) - allowance)
+        elif self.max_drawdown_mode == "intraday_trailing":
+            floor = max(floor, float(acc.peak_equity) - allowance)
+        if self.max_drawdown_mode != "static" and acc.payout_drawdown_floor is not None:
+            floor = max(floor, float(acc.payout_drawdown_floor))
+        return min(initial, floor)
+
+    def max_drawdown_from_reference(self, acc: AccountState) -> float:
+        """Return current loss from the reference equity for the selected mode.
+
+        Args:
+            acc: Account state containing current and reference equity values.
+
+        Returns:
+            Nonnegative drawdown amount from the mode-specific reference.
+        """
+        if self.max_drawdown_mode == "eod":
+            reference = float(acc.peak_eod_equity)
+        elif self.max_drawdown_mode == "intraday_trailing":
+            reference = float(acc.peak_equity)
+        else:
+            reference = float(acc.initial_balance)
+        return max(0.0, reference - float(acc.equity))
 
     def soft_max_loss_limit_for(self, acc: AccountState) -> float:
-        """Resolve the soft maximum-loss threshold from initial equity.
+        """Derive the soft maximum-loss threshold from initial equity only.
 
         Args:
             acc: Acc used by the operation described above.
@@ -169,11 +211,7 @@ class FTMOGuardrails:
         Returns:
             Numeric result returned by ``soft_max_loss_limit_for``.
         """
-        if self.limit_value_mode == "percent_equity":
-            return max(0.0, float(acc.initial_balance)) * float(
-                self.soft_max_loss_limit_initial_pct
-            )
-        return float(self.soft_max_loss_limit)
+        return max(0.0, float(acc.initial_balance)) * float(self.soft_max_loss_limit_initial_pct)
 
     def risk_per_trade_limit_for(self, acc: AccountState) -> float:
         """Resolve the hard per-trade threshold from current equity if selected.
@@ -198,7 +236,7 @@ class FTMOGuardrails:
             Whether check daily meets the requested condition.
         """
         risk_state = acc.to_risk_state(daily_loss_limit=self.daily_limit_for(acc))
-        return risk_state.daily_pnl <= -risk_state.daily_loss_limit
+        return risk_state.daily_pnl < -risk_state.daily_loss_limit
 
     def check_soft_daily(self, acc: AccountState) -> bool:
         """Return True when the soft brick is active (no new entries).
@@ -216,10 +254,10 @@ class FTMOGuardrails:
         return risk_state.daily_pnl <= -risk_state.daily_loss_limit
 
     def check_max_drawdown(self, acc: AccountState) -> bool:
-        """Return True if absolute loss from *initial* balance ≥ ``max_loss_limit``.
+        """Return True when equity breaches the configured maximum-loss floor.
 
-        This is FTMO-style max loss (fixed from deposit), **not** trailing
-        high-water-mark drawdown from peak equity.
+        Every maximum-loss mode allows equity to touch its floor. A breach
+        occurs only after equity moves below the active floor.
 
         Args:
             acc: Acc used by the operation described above.
@@ -227,7 +265,8 @@ class FTMOGuardrails:
         Returns:
             Whether check max drawdown meets the requested condition.
         """
-        return acc.loss_from_initial() >= self.max_loss_limit_for(acc)
+        floor = self.max_loss_floor_for(acc)
+        return float(acc.equity) < floor
 
     def check_trailing_dd(self, acc: AccountState) -> bool:
         """Return True if enabled peak-to-trough DD reaches its initial-balance cap.
@@ -270,7 +309,9 @@ class FTMOGuardrails:
             Whether check trade risk meets the requested condition.
         """
         limit = self.risk_per_trade_limit if acc is None else self.risk_per_trade_limit_for(acc)
-        return risk > limit
+        # Allow equality, including the final floating-point ulp introduced by
+        # converting an affordable stepped lot count back into dollar risk.
+        return float(risk) > float(limit) + 1e-9
 
     def any_breach(self, acc: AccountState) -> bool:
         """Return whether any configured account guardrail is breached.

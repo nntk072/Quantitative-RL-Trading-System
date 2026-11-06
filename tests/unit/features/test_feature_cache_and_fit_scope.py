@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
+import pytest
 from omegaconf import OmegaConf
 
 from features import (
@@ -165,6 +167,82 @@ def test_d1_technical_features_are_normalized_before_m1_alignment() -> None:
     )
 
 
+def test_live_feature_rebuild_reuses_both_training_normalization_stages(
+    tmp_path: Path,
+) -> None:
+    primary = _bars(240)
+    daily_sessions = [
+        pd.date_range(
+            pd.Timestamp("2025-01-06", tz="Etc/GMT-3")
+            + pd.Timedelta(days=day)
+            + pd.Timedelta(hours=16, minutes=30),
+            periods=40,
+            freq="1min",
+        )
+        for day in range(6)
+    ]
+    primary.index = pd.DatetimeIndex([timestamp for index in daily_sessions for timestamp in index])
+    daily = (
+        primary.resample("1D")
+        .agg(
+            {
+                "open": "first",
+                "high": "max",
+                "low": "min",
+                "close": "last",
+                "tickvol": "sum",
+                "volume": "sum",
+                "vol": "sum",
+                "spread": "last",
+            }
+        )
+        .dropna()
+    )
+    cfg = _cfg(
+        htf_timeframes=["D1"],
+        zscore_window=3,
+        normalize_d1_technical_on_source=True,
+    )
+    train_mask = pd.Series(np.arange(len(primary)) < 160, index=primary.index)
+    state_path = tmp_path / "feature_normalization_state.json"
+    training_features = build_features(
+        primary,
+        cfg=cfg,
+        train_mask=train_mask,
+        timeframe_bars={"D1": daily},
+        fit_state_path=state_path,
+        force=True,
+    )
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    mismatched_stage_state = json.loads(json.dumps(state))
+    mismatched_stage_state["stages"]["matrix"]["window"] += 1
+    with pytest.raises(ValueError, match="differs from the run fit contract"):
+        build_features(
+            primary,
+            cfg=cfg,
+            timeframe_bars={"D1": daily},
+            fitted_normalization_state=mismatched_stage_state,
+            force=True,
+        )
+    live_features = build_features(
+        primary,
+        cfg=cfg,
+        timeframe_bars={"D1": daily},
+        fitted_normalization_state=state,
+        force=True,
+    )
+
+    assert "source:D1" in state["stages"]
+    validation_index = training_features.index[
+        training_features.index.isin(primary.index[~train_mask])
+    ]
+    pd.testing.assert_frame_equal(
+        live_features.loc[validation_index, training_features.columns],
+        training_features.loc[validation_index],
+        check_freq=False,
+    )
+
+
 def test_feature_cache_hit_and_miss(tmp_path: Path) -> None:
     bars = _bars()
     cfg = _cfg()
@@ -180,6 +258,63 @@ def test_feature_cache_hit_and_miss(tmp_path: Path) -> None:
     assert path2 != path
     build_features(bars, cfg=cfg2, cache_path=path2)
     assert path2.exists()
+
+
+def test_cache_rebuilds_missing_fit_state_and_reuses_matching_state(tmp_path: Path) -> None:
+    bars = _bars(180)
+    train_mask = pd.Series(np.arange(len(bars)) < 120, index=bars.index)
+    cfg = _cfg()
+    cache_path = feature_cache_path(tmp_path, "US100", cfg, bars, train_mask=train_mask)
+    state_path = Path(str(cache_path) + ".normalization.json")
+
+    first = build_features(
+        bars,
+        cfg=cfg,
+        train_mask=train_mask,
+        cache_path=cache_path,
+        fit_state_path=state_path,
+    )
+    state_bytes = state_path.read_bytes()
+    cache_mtime = cache_path.stat().st_mtime_ns
+    cached = build_features(
+        bars,
+        cfg=cfg,
+        train_mask=train_mask,
+        cache_path=cache_path,
+        fit_state_path=state_path,
+    )
+    assert state_path.read_bytes() == state_bytes
+    assert cache_path.stat().st_mtime_ns == cache_mtime
+    pd.testing.assert_frame_equal(first, cached, check_freq=False)
+
+    state_path.unlink()
+    rebuilt = build_features(
+        bars,
+        cfg=cfg,
+        train_mask=train_mask,
+        cache_path=cache_path,
+        fit_state_path=state_path,
+    )
+    assert state_path.is_file()
+    pd.testing.assert_frame_equal(first, rebuilt, check_freq=False)
+
+    corrupted_state = json.loads(state_path.read_text(encoding="utf-8"))
+    corrupted_state["stages"]["matrix"]["mean"].pop(
+        corrupted_state["stages"]["matrix"]["columns"][0]
+    )
+    state_path.write_text(json.dumps(corrupted_state), encoding="utf-8")
+    repaired = build_features(
+        bars,
+        cfg=cfg,
+        train_mask=train_mask,
+        cache_path=cache_path,
+        fit_state_path=state_path,
+    )
+    repaired_state = json.loads(state_path.read_text(encoding="utf-8"))
+    assert len(repaired_state["stages"]["matrix"]["mean"]) == len(
+        repaired_state["stages"]["matrix"]["columns"]
+    )
+    pd.testing.assert_frame_equal(first, repaired, check_freq=False)
 
 
 def test_fit_scoped_zscore_ignores_future_poison() -> None:
@@ -218,11 +353,13 @@ def test_fold_cache_separates_normalization_conventions() -> None:
 
 def test_walkforward_fold_rebuilds_using_only_fold_train_fit(tmp_path: Path) -> None:
     bars = _bars(400)
+    secondary = _bars(400)
+    secondary.loc[:, ["open", "high", "low", "close"]] += 3_000.0
     train = bars.iloc[:220]
     validation = bars.iloc[245:310]
     cfg = _cfg()
     fitted_train, fitted_val, cache_path = build_walkforward_fold_features(
-        bars, None, cfg, train, validation, tmp_path, "US100"
+        bars, secondary, cfg, train, validation, tmp_path, "US100"
     )
     assert cache_path.exists()
     assert fitted_train.index.equals(train.index)
@@ -235,12 +372,35 @@ def test_walkforward_fold_rebuilds_using_only_fold_train_fit(tmp_path: Path) -> 
     altered.loc[altered.index[310:], "open"] *= 50
     altered.loc[altered.index[310:], "high"] *= 50
     altered.loc[altered.index[310:], "low"] *= 50
+    altered_secondary = secondary.copy()
+    altered_secondary.loc[altered_secondary.index[310:], "close"] *= 50
+    altered_secondary.loc[altered_secondary.index[310:], "open"] *= 50
+    altered_secondary.loc[altered_secondary.index[310:], "high"] *= 50
+    altered_secondary.loc[altered_secondary.index[310:], "low"] *= 50
     other_train, other_val, other_cache = build_walkforward_fold_features(
-        altered, None, cfg, train, validation, tmp_path, "US100"
+        altered, altered_secondary, cfg, train, validation, tmp_path, "US100"
     )
     pd.testing.assert_frame_equal(fitted_train, other_train, check_freq=False)
     pd.testing.assert_frame_equal(fitted_val, other_val, check_freq=False)
     assert other_cache == cache_path
+
+    # A secondary-symbol validation shock is allowed to affect validation
+    # features, but it must not alter the earlier fold's fitted/training view.
+    validation_poisoned_secondary = secondary.copy()
+    validation_poisoned_secondary.loc[validation.index[0] :, ["open", "high", "low", "close"]] *= (
+        1.5
+    )
+    validation_poison_train, _, validation_poison_cache = build_walkforward_fold_features(
+        bars,
+        validation_poisoned_secondary,
+        cfg,
+        train,
+        validation,
+        tmp_path,
+        "US100",
+    )
+    pd.testing.assert_frame_equal(fitted_train, validation_poison_train, check_freq=False)
+    assert validation_poison_cache != cache_path
 
     # Changing which observations belong to the fold changes fitted state
     # and the cache identity even though the bars are identical.

@@ -104,5 +104,51 @@
     "status": "property tested in strategy and geometry tests; not a market observation"
   },
   "provenance": "Synthetic explanatory examples only; not historical market data or strategy results.",
-  "timezone": "America/Chicago"
+  "timezone": "America/Chicago",
+  "swing_confirmation": {
+    "pivot_time": "2025-01-06T15:02:00Z",
+    "pivot_price": 105.0,
+    "left_bars": 2,
+    "right_bars": 2,
+    "confirmed_bar_time": "2025-01-06T15:04:00Z",
+    "confirmed_at": "2025-01-06T15:04:59.999Z",
+    "incorrect_visible_at": "2025-01-06T15:02:00Z",
+    "earliest_decision_at": "2025-01-06T15:05:00Z",
+    "bars": [
+      {"time": "2025-01-06T15:00:00Z", "high": 102.0, "low": 99.0},
+      {"time": "2025-01-06T15:01:00Z", "high": 104.0, "low": 100.0},
+      {"time": "2025-01-06T15:02:00Z", "high": 105.0, "low": 101.0},
+      {"time": "2025-01-06T15:03:00Z", "high": 103.0, "low": 100.0},
+      {"time": "2025-01-06T15:04:00Z", "high": 101.0, "low": 98.0}
+    ]
+  },
+  "order_block_retest": {
+    "zone_created_at": "2025-01-06T15:19:59.999Z",
+    "zone_low": 100.0,
+    "zone_high": 102.0,
+    "first_overlap_bar_time": "2025-01-06T15:20:00Z",
+    "confirmed_bar_time": "2025-01-06T15:21:00Z",
+    "confirmed_at": "2025-01-06T15:21:59.999Z",
+    "earliest_next_bar_at": "2025-01-06T15:22:00Z",
+    "incorrect_same_overlap_fill_at": "2025-01-06T15:20:00Z",
+    "bars": [
+      {"time": "2025-01-06T15:19:00Z", "open": 103.0, "high": 104.0, "low": 101.0, "close": 103.5},
+      {"time": "2025-01-06T15:20:00Z", "open": 103.5, "high": 104.0, "low": 101.5, "close": 102.5},
+      {"time": "2025-01-06T15:21:00Z", "open": 102.5, "high": 103.0, "low": 100.5, "close": 102.8},
+      {"time": "2025-01-06T15:22:00Z", "open": 102.8, "high": 103.2, "low": 102.0, "close": 103.0}
+    ]
+  },
+  "smt_missing_secondary_bar": {
+    "primary_time": "2025-01-06T15:31:00Z",
+    "secondary_previous_time": "2025-01-06T15:30:00Z",
+    "secondary_previous_close": 200.0,
+    "secondary_next_time": "2025-01-06T15:32:00Z",
+    "secondary_next_close": 204.0,
+    "incorrect_future_value": 204.0,
+    "timestamps": [
+      "2025-01-06T15:30:00Z",
+      "2025-01-06T15:31:00Z",
+      "2025-01-06T15:32:00Z"
+    ]
+  }
 }

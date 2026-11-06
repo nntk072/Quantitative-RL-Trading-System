@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 137 items
+
+tests/unit/features/test_causal_features.py ..............               [ 10%]
+tests/unit/features/test_pivots_swings.py .................              [ 22%]
+tests/unit/features/test_order_blocks.py ......                          [ 27%]
+tests/unit/features/test_structure.py .....                              [ 30%]
+tests/unit/features/test_po3_state.py .....................              [ 45%]
+tests/unit/features/test_po3_ifvg_state.py .......                       [ 51%]
+tests/unit/features/test_po3_setup_lifecycle.py ........                 [ 56%]
+tests/unit/features/test_smt.py .....                                    [ 60%]
+tests/unit/simulation/test_environment/test_mtf_windows.py .......       [ 65%]
+tests/unit/features/test_assembled_causality.py .                        [ 66%]
+tests/unit/features/test_trade_setup_candidate_events.py ............... [ 77%]
+.......                                                                  [ 82%]
+tests/research/test_feature_causality_matrix.py .                        [ 83%]
+tests/research/test_feature_prefix_invariance.py ....................    [ 97%]
+tests/research/test_observation_validity_semantics.py ...                [100%]
+
+=============================== warnings summary ===============================
+tests/unit/features/test_causal_features.py::test_transformer_encoder_output_shape
+tests/unit/features/test_causal_features.py::test_transformer_causal_mask_consistency
+  /scratch/work/nguyenl37/Quantitative-RL-Trading-System/models/encoders/transformer.py:119: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    self.transformer = nn.TransformerEncoder(enc_layer, num_layers=num_layers)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 137 passed, 2 warnings in 24.49s =======================

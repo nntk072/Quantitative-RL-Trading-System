@@ -8,12 +8,17 @@ bar closes, preserving causal timing for the simulation and live consumers.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
+from artifacts.atomic import write_json_atomic
+from configuration.paths import repository_root
 from features.context.entry_ideas import build_entry_idea_features
 from features.context.liquidity import detect_bos, detect_liquidity_sweeps, detect_mss
 from features.context.order_blocks import build_order_block_features
@@ -33,9 +38,14 @@ from features.pipeline.feature_build_inputs import (
     split_raw_fvg_features,
 )
 from features.pipeline.feature_cache_identity import (
+    FEATURE_CACHE_VERSION,
     feature_cache_content_hash,
 )
-from features.pipeline.normalization import rolling_zscore
+from features.pipeline.normalization import (
+    apply_rolling_zscore_state,
+    fit_rolling_zscore_state,
+    rolling_zscore,
+)
 from features.pipeline.po3_stage import append_po3_state_features
 from features.pipeline.session_context_features import ensure_london_atr_distances
 from features.pipeline.session_stage import append_session_features
@@ -72,6 +82,69 @@ _FVG_DIST_CAP = 5.0
 # the feature matrix stays homogeneous float (TradingEnv casts to float32).
 _PO3_TRIGGER_CODE = {"": 0, "retest": 1, "close_through": 2, "ltf_fvg": 3}
 
+
+def _normalization_configuration_sha256(cfg: DictConfig | None, *, mode: str, window: int) -> str:
+    """Hash only configuration that defines feature values and their fit.
+
+    Args:
+        cfg: Resolved run config whose feature, strategy, session, and data settings matter.
+        mode: Normalization fit mode.
+        window: Rolling-statistic lookback in bars.
+
+    Returns:
+        SHA-256 digest for the feature and normalization configuration.
+    """
+    payload: dict[str, Any] = {
+        "feature_cache_version": FEATURE_CACHE_VERSION,
+        "mode": mode,
+        "window": int(window),
+    }
+    if cfg is not None:
+        feature_cfg = OmegaConf.select(cfg, "features", default={})
+        strategy_cfg = OmegaConf.select(cfg, "strategy", default={})
+        session_cfg = OmegaConf.select(cfg, "session", default={})
+        payload["features"] = (
+            OmegaConf.to_container(feature_cfg, resolve=True)
+            if OmegaConf.is_config(feature_cfg)
+            else feature_cfg
+        )
+        payload["strategy"] = (
+            OmegaConf.to_container(strategy_cfg, resolve=True)
+            if OmegaConf.is_config(strategy_cfg)
+            else strategy_cfg
+        )
+        payload["session"] = (
+            OmegaConf.to_container(session_cfg, resolve=True)
+            if OmegaConf.is_config(session_cfg)
+            else session_cfg
+        )
+        data_fields = (
+            "data.primary",
+            "data.secondary",
+            "data.timeframes",
+            "data.tz",
+            "data.timestamp_clock",
+            "data.session_schedule_file",
+        )
+        payload["data"] = {
+            field: OmegaConf.select(cfg, field, default=None) for field in data_fields
+        }
+        payload["point_size"] = OmegaConf.select(cfg, "costs.point_size", default=None)
+        schedule_value = OmegaConf.select(cfg, "data.session_schedule_file", default=None)
+        if schedule_value:
+            schedule_path = Path(str(schedule_value)).expanduser()
+            if not schedule_path.is_absolute():
+                schedule_path = repository_root(__file__) / schedule_path
+            payload["session_schedule_sha256"] = (
+                hashlib.sha256(schedule_path.read_bytes()).hexdigest()
+                if schedule_path.is_file()
+                else "missing"
+            )
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    ).hexdigest()
+
+
 # Default MTF subset for SMT divergence, structure, and liquidity sweeps. Each
 # block accepts an explicit list of standard resampled timeframes; the bounded
 # default keeps column growth predictable.
@@ -87,6 +160,8 @@ def build_features(
     normalization_mode: str = "legacy_masked_window",
     timeframe_bars: dict[str, pd.DataFrame] | None = None,
     secondary_timeframe_bars: dict[str, pd.DataFrame] | None = None,
+    fit_state_path: Path | None = None,
+    fitted_normalization_state: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     """Build the full feature matrix for the primary instrument.
 
@@ -100,6 +175,8 @@ def build_features(
         normalization_mode: Normalization behavior used for continuous feature columns.
         timeframe_bars: Optional precomputed primary bars indexed by timeframe.
         secondary_timeframe_bars: Optional precomputed correlated-symbol bars by timeframe.
+        fit_state_path: Persist the train-only normalization fit state beside this run/cache.
+        fitted_normalization_state: Apply a previously captured state without refitting.
 
     Returns:
         DataFrame returned by ``build_features``.
@@ -113,6 +190,40 @@ def build_features(
         timeframe_bars=timeframe_bars,
         secondary_timeframe_bars=secondary_timeframe_bars,
     )
+    normalization_window = (
+        int(cfg.features.zscore_window) if cfg is not None and "features" in cfg else 252
+    )
+    normalization_config_sha256 = _normalization_configuration_sha256(
+        cfg, mode=normalization_mode, window=normalization_window
+    )
+    if fit_state_path is not None and fitted_normalization_state is not None:
+        raise ValueError("fit_state_path and fitted_normalization_state are mutually exclusive")
+    if fit_state_path is not None and train_mask is None:
+        raise ValueError("persisting a feature normalization state requires a training mask")
+    if fitted_normalization_state is not None:
+        if fitted_normalization_state.get("schema") != "feature-normalization-v1":
+            raise ValueError("unsupported feature normalization state")
+        if fitted_normalization_state.get("configuration_sha256") != normalization_config_sha256:
+            raise ValueError(
+                "feature normalization state does not match the effective configuration"
+            )
+        if fitted_normalization_state.get("mode") != normalization_mode:
+            raise ValueError("feature normalization state mode differs from the requested mode")
+        if fitted_normalization_state.get("window") != normalization_window:
+            raise ValueError("feature normalization state window differs from the effective config")
+        stages = fitted_normalization_state.get("stages")
+        if not isinstance(stages, dict):
+            raise ValueError("feature normalization state must contain stage fits")
+        for stage_name, stage_state in stages.items():
+            if not isinstance(stage_state, dict):
+                raise ValueError(f"feature normalization stage {stage_name!r} is malformed")
+            if (
+                stage_state.get("mode") != normalization_mode
+                or stage_state.get("window") != normalization_window
+            ):
+                raise ValueError(
+                    f"feature normalization stage {stage_name!r} differs from the run fit contract"
+                )
     requested_reference_mode = str(
         (OmegaConf.select(cfg, "features.po3_reference_mode") if cfg is not None else None)
         or "m1_legacy"
@@ -120,11 +231,46 @@ def build_features(
     sweep_audit_path = Path(str(cache_path) + ".htf_sweeps.parquet") if cache_path else None
     if cache_path and Path(cache_path).exists() and not force:
         meta_path = Path(str(cache_path) + ".hash")
+        state_ready = fit_state_path is None
+        if fit_state_path is not None and fit_state_path.is_file():
+            try:
+                cached_state = json.loads(fit_state_path.read_text(encoding="utf-8"))
+                cached_stages = cached_state.get("stages", {})
+                matrix_fit = (
+                    cached_stages.get("matrix") if isinstance(cached_stages, dict) else None
+                )
+                source_fit = (
+                    cached_stages.get("source:D1") if isinstance(cached_stages, dict) else None
+                )
+                source_fit_required = bool(
+                    cfg is not None
+                    and OmegaConf.select(
+                        cfg, "features.normalize_d1_technical_on_source", default=False
+                    )
+                )
+                if isinstance(matrix_fit, dict):
+                    apply_rolling_zscore_state(
+                        pd.DataFrame(columns=matrix_fit.get("columns", [])), matrix_fit
+                    )
+                if isinstance(source_fit, dict):
+                    apply_rolling_zscore_state(
+                        pd.DataFrame(columns=source_fit.get("columns", [])), source_fit
+                    )
+                state_ready = (
+                    cached_state.get("schema") == "feature-normalization-v1"
+                    and cached_state.get("feature_cache_hash") == expected_hash
+                    and cached_state.get("configuration_sha256") == normalization_config_sha256
+                    and isinstance(matrix_fit, dict)
+                    and (not source_fit_required or isinstance(source_fit, dict))
+                )
+            except (OSError, json.JSONDecodeError, TypeError, ValueError):
+                state_ready = False
         audit_ready = requested_reference_mode != "htf_confirmed" or (
             sweep_audit_path is not None and sweep_audit_path.exists()
         )
         if (
             audit_ready
+            and state_ready
             and meta_path.exists()
             and meta_path.read_text(encoding="utf-8").strip() == expected_hash
         ):
@@ -132,6 +278,7 @@ def build_features(
             # Stale or pre-hash cache: rebuild rather than silently reuse.
 
     feat_cfg = cfg.features if cfg is not None else None
+    captured_stages: dict[str, dict[str, Any]] = {}
     secondary_m1: pd.DataFrame | None = secondary  # M1 copy kept for per-TF resampling
     primary_timeframes = {str(tf).upper(): frame for tf, frame in (timeframe_bars or {}).items()}
     primary_timeframes["M1"] = primary
@@ -258,12 +405,33 @@ def build_features(
                         scheduled_closes,
                         session_start,
                     )
-                    block = rolling_zscore(
-                        block,
-                        window=window,
-                        train_mask=daily_train_mask,
-                        mode=normalization_mode,
-                    )
+                    if fitted_normalization_state is not None:
+                        source_state = fitted_normalization_state.get("stages", {}).get("source:D1")
+                        if not isinstance(source_state, dict):
+                            raise ValueError("feature normalization state is missing source:D1 fit")
+                        block = apply_rolling_zscore_state(block, source_state)
+                    else:
+                        if fit_state_path is not None:
+                            if train_mask is None:
+                                raise ValueError(
+                                    "persisting a feature normalization state requires a training mask"
+                                )
+                            if daily_train_mask is None:
+                                raise ValueError(
+                                    "persisting D1 source normalization requires a training mask"
+                                )
+                            captured_stages["source:D1"] = fit_rolling_zscore_state(
+                                block,
+                                train_mask=daily_train_mask,
+                                window=window,
+                                mode=normalization_mode,
+                            )
+                        block = rolling_zscore(
+                            block,
+                            window=window,
+                            train_mask=daily_train_mask,
+                            mode=normalization_mode,
+                        )
                     d1_source_normalized_columns = [f"D1_{column}" for column in block.columns]
                 htf_blocks[tf_name] = block
             feat = align_blocks(feat, htf_blocks)
@@ -334,15 +502,52 @@ def build_features(
         ]
         original_columns = list(feat.columns)
         source_normalized = feat[source_normalized_columns]
-        feat = rolling_zscore(
-            feat.drop(columns=source_normalized_columns),
-            window=window,
-            train_mask=train_mask,
-            mode=normalization_mode,
-        )
+        matrix_to_normalize = feat.drop(columns=source_normalized_columns)
+        if fitted_normalization_state is not None:
+            matrix_state = fitted_normalization_state.get("stages", {}).get("matrix")
+            if not isinstance(matrix_state, dict):
+                raise ValueError("feature normalization state is missing matrix fit")
+            feat = apply_rolling_zscore_state(matrix_to_normalize, matrix_state)
+        else:
+            if fit_state_path is not None:
+                if train_mask is None:
+                    raise ValueError(
+                        "persisting a feature normalization state requires a training mask"
+                    )
+                captured_stages["matrix"] = fit_rolling_zscore_state(
+                    matrix_to_normalize,
+                    train_mask=train_mask,
+                    window=window,
+                    mode=normalization_mode,
+                )
+            feat = rolling_zscore(
+                matrix_to_normalize,
+                window=window,
+                train_mask=train_mask,
+                mode=normalization_mode,
+            )
         feat = pd.concat([feat, source_normalized], axis=1).reindex(columns=original_columns)
     else:
-        feat = rolling_zscore(feat, window=window, train_mask=train_mask, mode=normalization_mode)
+        if fitted_normalization_state is not None:
+            matrix_state = fitted_normalization_state.get("stages", {}).get("matrix")
+            if not isinstance(matrix_state, dict):
+                raise ValueError("feature normalization state is missing matrix fit")
+            feat = apply_rolling_zscore_state(feat, matrix_state)
+        else:
+            if fit_state_path is not None:
+                if train_mask is None:
+                    raise ValueError(
+                        "persisting a feature normalization state requires a training mask"
+                    )
+                captured_stages["matrix"] = fit_rolling_zscore_state(
+                    feat,
+                    train_mask=train_mask,
+                    window=window,
+                    mode=normalization_mode,
+                )
+            feat = rolling_zscore(
+                feat, window=window, train_mask=train_mask, mode=normalization_mode
+            )
     if len(_fvg_raw.columns) > 0:
         feat = pd.concat([feat, _fvg_raw], axis=1)
 
@@ -641,5 +846,18 @@ def build_features(
         if requested_reference_mode == "htf_confirmed" and sweep_audit_path is not None:
             htf_sweep_audit.to_parquet(sweep_audit_path)
         path.with_name(path.name + ".hash").write_text(expected_hash + "\n", encoding="utf-8")
+
+    if fit_state_path is not None:
+        final_state = {
+            "schema": "feature-normalization-v1",
+            "configuration_sha256": normalization_config_sha256,
+            "feature_cache_hash": expected_hash,
+            "mode": normalization_mode,
+            "window": normalization_window,
+            "stages": captured_stages,
+        }
+        if "matrix" not in captured_stages:
+            raise RuntimeError("feature builder did not capture its matrix normalization fit")
+        write_json_atomic(fit_state_path, final_state, default=None)
 
     return feat

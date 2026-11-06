@@ -29,7 +29,11 @@ from features import (  # noqa: E402
     select_obs_columns,
 )
 from market_data.loading.bars import load_bars  # noqa: E402
-from market_data.splits.definitions import get_split_config, make_train_mask  # noqa: E402
+from market_data.splits.definitions import (  # noqa: E402
+    get_split_config,
+    get_train_start_config,
+    make_train_mask,
+)
 from market_data.splits.walkforward import purged_walk_forward  # noqa: E402
 from market_data.transforms.cleaning import clean  # noqa: E402
 from market_data.transforms.sessions import add_session_id, add_session_labels  # noqa: E402
@@ -125,7 +129,8 @@ def main(report_path: Path = OUT) -> None:
 
     primary, secondary = load_symbol(primary_path), load_symbol(secondary_path)
     train_end, test_start = get_split_config(base)
-    train = primary.loc[make_train_mask(pd.DatetimeIndex(primary.index), train_end)]
+    train_start = get_train_start_config(base)
+    train = primary.loc[make_train_mask(pd.DatetimeIndex(primary.index), train_end, train_start)]
     folds = list(
         purged_walk_forward(len(train), n_splits=5, test_size=0.2, purge_bars=60, embargo_bars=20)
     )

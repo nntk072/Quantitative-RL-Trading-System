@@ -582,6 +582,15 @@ agent:
     adapter_dim: 64
     attention_heads: 4
     feedforward_dim: 256
+  mtf_empty_stream_masked_v1:
+    latent_dim: 128
+    channels:
+    - 128
+    - 128
+    - 256
+    - 256
+    kernel_size: 3
+    dropout: 0.1
   mtf_m1_tcn_htf_lite_reasoning:
     latent_dim: 128
     channels:
@@ -620,6 +629,9 @@ agent:
     - 256
     - 128
     mtf:
+    - 256
+    - 128
+    mtf_empty_stream_masked_v1:
     - 256
     - 128
     mtf_reasoning:

@@ -133,7 +133,7 @@ def build_swing_retracement_features(
             leg_is_valid = leg_direction != 0
         if leg_is_valid:
             retracement = long_retrace.iloc[i] if leg_direction == 1 else short_retrace.iloc[i]
-            if not 0.0 <= retracement <= retracement_high:
+            if not -1e-12 <= retracement <= retracement_high + 1e-12:
                 leg_is_valid = False
         setup_valid[i] = leg_is_valid
     valid_setup = pd.Series(setup_valid, index=bars.index)

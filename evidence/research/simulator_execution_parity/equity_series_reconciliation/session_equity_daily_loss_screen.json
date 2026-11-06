@@ -1,0 +1,125 @@
+{
+  "limitations": [
+    "Observed saved account-equity samples only; no reconstruction of every tick-level mark-to-market value.",
+    "Historical runs used the gross realized-loss counter, which blocked later entries after its threshold. The counterfactual path under the current session-net rule is not simulated.",
+    "2026 report-period observations are exploratory and are not a fresh holdout.",
+    "Session IDs derive from supplied local date labels; no external calendar is asserted."
+  ],
+  "observed_at_utc": "2026-11-04T20:54:24+00:00",
+  "overall_status": "verified_observed_path",
+  "reports": [
+    {
+      "active_risk_config_sha256": "a4347557dde566a45e95906bfbdd27fb077ad9dacb5fb0432a1646c6bf7cd969",
+      "equity_observation_count": 99493,
+      "exact_m1_timestamp_match_count": 98403,
+      "historical_gross_counter_session_47": {
+        "breached_current_daily_floor": false,
+        "maximum_observed_loss": 3004.280227984782,
+        "minimum_equity": 120356.7025084208,
+        "opening_equity_anchor": 123360.98273640558
+      },
+      "largest_observed_session_loss": {
+        "maximum_observed_loss": 4972.044779740798,
+        "minimum_equity": 124346.01370289669,
+        "minimum_time_utc": "2025-04-04T19:56:00+00:00",
+        "opening_equity_anchor": 129318.05848263748,
+        "session_id": 68
+      },
+      "metric_status": "matched",
+      "name": "a4a_training",
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4a_training.json",
+      "same_date_subbar_count": 1090,
+      "screen_status": "verified_observed_path",
+      "session_count": 259,
+      "sessions_breaching_daily_limit": 0,
+      "sha256": "1cd6848c4a7d04f8bd7668679403e94d4ce70ceac535bc8824b13e61d42dcb3b",
+      "source_config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+      "source_m1_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+      "unmatched_date_count": 0
+    },
+    {
+      "active_risk_config_sha256": "a4347557dde566a45e95906bfbdd27fb077ad9dacb5fb0432a1646c6bf7cd969",
+      "equity_observation_count": 99493,
+      "exact_m1_timestamp_match_count": 98567,
+      "historical_gross_counter_session_47": {
+        "breached_current_daily_floor": false,
+        "maximum_observed_loss": 3389.324062965563,
+        "minimum_equity": 115413.66636309477,
+        "opening_equity_anchor": 118802.99042606034
+      },
+      "largest_observed_session_loss": {
+        "maximum_observed_loss": 4473.279135447898,
+        "minimum_equity": 112677.49131709519,
+        "minimum_time_utc": "2025-05-01T17:00:00+00:00",
+        "opening_equity_anchor": 117150.77045254309,
+        "session_id": 86
+      },
+      "metric_status": "matched",
+      "name": "a4b_training",
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4b_training.json",
+      "same_date_subbar_count": 926,
+      "screen_status": "verified_observed_path",
+      "session_count": 259,
+      "sessions_breaching_daily_limit": 0,
+      "sha256": "7d596ee03e2d46f07afbe7646dcc31fda56141e2b7db8018827f7bb4f2cfbd6e",
+      "source_config_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+      "source_m1_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+      "unmatched_date_count": 0
+    },
+    {
+      "active_risk_config_sha256": "a4347557dde566a45e95906bfbdd27fb077ad9dacb5fb0432a1646c6bf7cd969",
+      "equity_observation_count": 79070,
+      "exact_m1_timestamp_match_count": 78846,
+      "largest_observed_session_loss": {
+        "maximum_observed_loss": 3447.4520693139784,
+        "minimum_equity": 97480.83840577843,
+        "minimum_time_utc": "2026-01-06T19:59:00+00:00",
+        "opening_equity_anchor": 100928.2904750924,
+        "session_id": 2
+      },
+      "metric_status": "matched",
+      "name": "a4a_testing",
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4a_testing.json",
+      "same_date_subbar_count": 224,
+      "screen_status": "verified_observed_path",
+      "session_count": 205,
+      "sessions_breaching_daily_limit": 0,
+      "sha256": "33a473c470970baeaa4e90149be5687eb5826f0545b980aca989f62137594971",
+      "source_config_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+      "source_m1_sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+      "unmatched_date_count": 0
+    },
+    {
+      "active_risk_config_sha256": "a4347557dde566a45e95906bfbdd27fb077ad9dacb5fb0432a1646c6bf7cd969",
+      "equity_observation_count": 79070,
+      "exact_m1_timestamp_match_count": 78845,
+      "largest_observed_session_loss": {
+        "maximum_observed_loss": 3388.300624393436,
+        "minimum_equity": 97525.35729563002,
+        "minimum_time_utc": "2026-01-06T19:59:00+00:00",
+        "opening_equity_anchor": 100913.65792002346,
+        "session_id": 2
+      },
+      "metric_status": "matched",
+      "name": "a4b_testing",
+      "path": "evidence/research/simulator_execution_parity/equity_series_reconciliation/a4b_testing.json",
+      "same_date_subbar_count": 225,
+      "screen_status": "verified_observed_path",
+      "session_count": 205,
+      "sessions_breaching_daily_limit": 0,
+      "sha256": "9d160c2e9d93f15440ffcc8ef2ab0bf6c6a716b35988ce2d1994a97c92e85c04",
+      "source_config_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+      "source_m1_sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+      "unmatched_date_count": 0
+    }
+  ],
+  "risk_rule": {
+    "basis": "session_net_equity",
+    "breach_boundary": "equity strictly below session opening equity minus allowance; equality allowed",
+    "daily_allowance_usd": 5000.0,
+    "initial_balance_usd": 100000.0,
+    "percentage_of_initial_equity": 0.05
+  },
+  "schema": "qrl.session_equity_daily_loss_screen.v2",
+  "source_run_commit": "258bed03ebec87698feaf14a3fa8a0cfc7d965ce"
+}

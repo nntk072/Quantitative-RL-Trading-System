@@ -13,6 +13,7 @@ from market_data.loading.ticks import TickBook
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
 from trading.execution import CostModel
+from trading.risk import RISK_BREACH_EVENT_SCHEMA_V1
 from trading.strategies.feature_row_contract import FeatureRow
 from trading.strategies.strategy_contract import TradingStrategy
 
@@ -92,14 +93,15 @@ def _guardrails(
     *,
     daily_loss_limit: float = 50_000.0,
     trailing_dd_limit: float = 0.0,
-) -> dict[str, float]:
+) -> dict[str, Any]:
     """Keep guardrails inactive except for the explicitly chosen thresholds."""
     return {
-        "daily_loss_limit": daily_loss_limit,
-        "max_loss_limit": max_loss_limit,
+        "limit_value_mode": "fixed_usd",
+        "daily_loss_limit_pct": daily_loss_limit / 100_000.0,
+        "max_loss_limit_initial_pct": max_loss_limit / 100_000.0,
         "risk_per_trade_limit": 10_000.0,
-        "soft_daily_loss_limit": 0.0,
-        "soft_max_loss_limit": 0.0,
+        "soft_daily_loss_limit_pct": 0.0,
+        "soft_max_loss_limit_initial_pct": 0.0,
         "trailing_dd_limit": trailing_dd_limit,
     }
 
@@ -901,23 +903,43 @@ def test_recovered_annual_loss_breach_blocks_environment_and_backtest_for_rollou
     assert backtest_breach["equity"] == pytest.approx(99_998.0)
 
 
-def test_daily_loss_breach_blocks_only_its_supplied_session() -> None:
-    """A daily-loss breach blocks its supplied session, then permits the next one."""
+def test_daily_loss_breach_fails_full_evaluation() -> None:
+    """A daily-loss breach keeps both engines blocked after the session changes."""
     close = (100.0, 100.0, 100.0, 100.0, 98.0, 100.0, 100.0)
     high = (100.1, 100.1, 100.1, 100.1, 98.1, 100.1, 100.1)
     low = (99.9, 99.9, 99.9, 99.9, 97.9, 99.9, 99.9)
     bars = _bars(close, high, low, session_ids=(0, 0, 0, 0, 0, 1, 1))
     features = _features(bars.index, stop=99.0, target=110.0)
-    actions: Iterator[int] = iter((1, 0, 0, 1))
+    cost_model = _cost_model()
+    guardrails = _guardrails(max_loss_limit=50_000.0, daily_loss_limit=0.5)
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        initial_balance=100_000.0,
+        cost_model=cost_model,
+        guardrail_kwargs=guardrails,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
+        episodic=False,
+    )
+    env.reset(seed=7)
+    for _ in bars.index:
+        env.step(1)
 
     result = run_backtest(
         bars,
         features,
-        lambda _observation: next(actions, 0),
+        lambda _observation: 1,
         obs_window=1,
-        cost_model=_cost_model(),
+        cost_model=cost_model,
         initial_balance=100_000.0,
-        guardrail_kwargs=_guardrails(max_loss_limit=50_000.0, daily_loss_limit=0.5),
+        guardrail_kwargs=guardrails,
         risk_frac=0.001,
         rr_ratio=1.0,
         use_structure_sl_tp=True,
@@ -930,12 +952,135 @@ def test_daily_loss_breach_blocks_only_its_supplied_session() -> None:
         block_overnight=False,
     )
 
+    assert len(env.breach_events) == 1
+    env_breach = env.breach_events[0]
+    assert env_breach["reason"] == "daily_loss"
+    assert env_breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V1
+    assert pd.Timestamp(env_breach["detection_time"]) == bars.index[5]
+    assert len([event for event in env.trade_log if event["type"] == "open"]) == 1
     assert len(result["breach_events"]) == 1
-    assert result["breach_events"][0]["session_id"] == 0
-    assert result["breach_events"][0]["reason"] == "daily_loss"
+    backtest_breach = result["breach_events"][0]
+    assert backtest_breach["session_id"] == 0
+    assert backtest_breach["reason"] == "daily_loss"
+    assert backtest_breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V1
+    assert pd.Timestamp(backtest_breach["detection_time"]) == bars.index[5]
+    for breach, event_count, events in (
+        (env_breach, len(env.trade_log), env.trade_log),
+        (backtest_breach, len(result["trades"]), result["trades"].to_dict("records")),
+    ):
+        prefix = int(breach["trade_event_count"])
+        assert 0 <= prefix <= event_count
+        assert not any(
+            event.get("type") in {"order_submit", "order_fill", "open"} for event in events[prefix:]
+        )
     opens = result["trades"].loc[result["trades"]["type"] == "open"]
-    assert len(opens) == 2
-    assert int(opens.iloc[-1]["bar"]) == 5
+    assert len(opens) == 1
+
+
+@pytest.mark.parametrize("randomized_fill_latency_ms", [0.0, 30.0])
+@pytest.mark.parametrize("episode_limit_steps", [None, 4])
+def test_terminal_liquidation_matches_environment_and_backtest(
+    randomized_fill_latency_ms: float, episode_limit_steps: int | None
+) -> None:
+    """A data or explicit step limit realizes the final open position in both engines."""
+    close = (100.0, 100.0, 100.0, 100.0, 100.0, 101.0)
+    high = (100.1, 100.1, 100.1, 100.1, 100.1, 101.1)
+    low = (99.9, 99.9, 99.9, 99.9, 99.9, 100.9)
+    bars = _bars(close, high, low)
+    features = _features(bars.index, stop=90.0, target=110.0)
+    cost_model = _cost_model()
+    guardrails = _guardrails(max_loss_limit=50_000.0)
+    quote_starts = bars.index.append(pd.DatetimeIndex([bars.index[-1] + pd.Timedelta(minutes=1)]))
+    quote_times = pd.DatetimeIndex(
+        [
+            timestamp + pd.Timedelta(milliseconds=offset)
+            for timestamp in quote_starts
+            for offset in (0, 5, 10, 20, 25, 30)
+        ]
+    )
+    quote_bids = np.full(len(quote_times), 100.0)
+    terminal_bar_count = len(bars) if episode_limit_steps is None else episode_limit_steps + 1
+    quote_bids[quote_times >= quote_starts[terminal_bar_count]] = 101.0
+    tickbook = TickBook(
+        quote_times.to_numpy(dtype="datetime64[ns]").astype(np.int64),
+        quote_bids,
+        quote_bids,
+    )
+
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        initial_balance=100_000.0,
+        cost_model=cost_model,
+        guardrail_kwargs=guardrails,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
+        episodic=False,
+        tickbook=tickbook,
+        randomized_fill_latency_ms=randomized_fill_latency_ms,
+        max_episode_steps=episode_limit_steps,
+    )
+    env.reset(seed=11)
+    for action in (1, 0, 0, 0, 0, 0):
+        _, _, done, truncated, _ = env.step(action)
+        if done or truncated:
+            break
+
+    actions: Iterator[int] = iter((1, 0, 0, 0, 0, 0))
+    terminal_bars = bars.iloc[:terminal_bar_count]
+    terminal_features = features.iloc[:terminal_bar_count]
+    result = run_backtest(
+        terminal_bars,
+        terminal_features,
+        lambda _observation: next(actions, 0),
+        execution_seed=11,
+        obs_window=1,
+        cost_model=cost_model,
+        initial_balance=100_000.0,
+        guardrail_kwargs=guardrails,
+        risk_frac=0.001,
+        rr_ratio=1.0,
+        use_structure_sl_tp=True,
+        swing_buffer_pts=0.0,
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        hold_on_zero=True,
+        block_overnight=False,
+        tickbook=tickbook,
+        randomized_fill_latency_ms=randomized_fill_latency_ms,
+    )
+
+    env_terminal_closes = [event for event in env.trade_log if event.get("type") == "eod_close"]
+    assert not result["trades"].empty, (env.trade_log, terminal_bar_count)
+    backtest_terminal_closes = result["trades"].loc[result["trades"]["type"] == "eod_close"]
+    assert truncated is True
+    assert env.position is None
+    assert len(env_terminal_closes) == 1
+    assert len(backtest_terminal_closes) == 1
+    assert env.account.balance == pytest.approx(result["account"].balance)
+    assert env.account.equity == pytest.approx(result["account"].equity)
+    env_terminal_close = env_terminal_closes[0]
+    backtest_terminal_close = backtest_terminal_closes.iloc[0]
+    assert pd.Timestamp(env_terminal_close["fill_time"]) == pd.Timestamp(
+        backtest_terminal_close["fill_time"]
+    )
+    assert env_terminal_close["price"] == pytest.approx(float(backtest_terminal_close["price"]))
+    assert env_terminal_close["pnl"] == pytest.approx(float(backtest_terminal_close["pnl"]))
+    assert env_terminal_close["reason"] == (
+        "data_end" if episode_limit_steps is None else "max_episode_steps"
+    )
+    if randomized_fill_latency_ms > 0:
+        assert env_terminal_close["execution_latency_ns"] == int(
+            backtest_terminal_close["execution_latency_ns"]
+        )
 
 
 @pytest.mark.parametrize("randomized_fill_latency_ms", [0.0, 30.0])

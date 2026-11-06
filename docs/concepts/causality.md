@@ -27,9 +27,9 @@ second time; see the `completed_bars` contract in
 
 The `frozen_fold` normalization mode fits rolling statistics on training
 observations only, then forward-fills the final available training statistics
-through validation. `legacy_masked_window` retains historical calendar-window
-semantics for compatibility, so it must not be described as the frozen-fold
-method. State the mode with the fold/split used.
+through validation. `legacy_masked_window` keeps its historical calendar-row
+window for fitting, then carries the last training statistics through held-out
+rows. State the mode with the fold/split used.
 
 ## Causality audit
 

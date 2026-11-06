@@ -253,7 +253,16 @@ def detect_ifvg_confirmation(
     fvg_df: pd.DataFrame,
     config: IFVGConfig | None = None,
 ) -> pd.DataFrame:
-    """Return the existing scalar newest-confirmation-per-side feature view."""
+    """Return the existing scalar newest-confirmation-per-side feature view.
+
+    Args:
+        bars: Chronological OHLC bars used to confirm inversion events.
+        fvg_df: Fair-value-gap features aligned with ``bars``.
+        config: Optional IFVG detection settings.
+
+    Returns:
+        Scalar feature frame containing the newest confirmed inversion by side.
+    """
     result, _ = _detect_ifvg_confirmation_outputs(
         bars,
         fvg_df,
@@ -273,6 +282,14 @@ def detect_ifvg_confirmation_events(
     The returned ledger is diagnostic. It exposes same-row source zones that
     the model-facing scalar output resolves to the newest matching gap; it
     does not change feature or action semantics.
+
+    Args:
+        bars: Chronological OHLC bars used to confirm inversion events.
+        fvg_df: Fair-value-gap features aligned with ``bars``.
+        config: Optional IFVG detection settings.
+
+    Returns:
+        Event ledger with each confirmed source gap and scalar-selection marker.
     """
     if not isinstance(bars.index, pd.DatetimeIndex):
         raise TypeError("IFVG event ledger requires a DatetimeIndex")

@@ -1,0 +1,44 @@
+{
+  "candidate_bytes_hashed": 2515,
+  "candidate_file_count": 1,
+  "claim_scope": "Same-basename exact SHA-256 search for the 132 currently missing run artifacts under the user home directory; no differently named ordinary files searched",
+  "command": ".venv/bin/python scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py --search-root /home/nguyenl37 --output evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/home_directory_search.json",
+  "directory_symlinks_followed": false,
+  "exact_matches": 0,
+  "hashed_file_count": 1,
+  "inputs": {
+    "provenance_byte_report": {
+      "path": "evidence/research/releases/negative-evidence-readiness/PROVENANCE_BYTE_VERIFICATION.json",
+      "sha256": "afacb529c0430cc371683af5148308dbdd614c883bbe63aba4047568a6c58c62"
+    },
+    "provenance_dag": {
+      "path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+      "sha256": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c"
+    }
+  },
+  "matching_rule": "target basename plus exact declared SHA-256; no matches by filename alone",
+  "output": {
+    "bytes": 6065,
+    "path": "home_directory_search.json",
+    "sha256": "d6f20af7aa67931d59e1589db981e202aac1cdafd9b8532416f3058a349bab86"
+  },
+  "read_errors": 0,
+  "schema_version": 1,
+  "search_root": "/home/nguyenl37",
+  "source_hashes": {
+    "scanner": {
+      "path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_filesystem.py",
+      "sha256": "d4fdce32059cc668388daf0c93416edde0114690d12ddf7c5df1e63a8882f069"
+    }
+  },
+  "status": "complete",
+  "target_count": 132,
+  "training_or_evaluation_run": false,
+  "unmatched_targets": 132,
+  "validation": {
+    "same_scanner_prior_tests": "6 passed with existing archive/file scanner suites; no new test run was needed for the selected search root",
+    "walk_error_count": 0
+  },
+  "walk_error_count": 0,
+  "walked_directory_count": 9417
+}

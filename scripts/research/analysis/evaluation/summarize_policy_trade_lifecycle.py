@@ -65,12 +65,15 @@ def _payout_reconciliation(
     payout_rows: list[dict[str, str]],
     evaluation_diagnostics: dict[str, Any],
     total_economic_values: list[float],
+    initial_balance: float | None,
 ) -> dict[str, Any]:
     """Reconcile payout rows with reset amounts and reported economic value."""
     checks: Counter[str] = Counter()
     failures: Counter[str] = Counter()
     required = {"type", "time", "cycle", "payout", "balance_before_reset", "operating_balance"}
     missing = sorted(required.difference(payout_header)) if payout_rows else []
+    if payout_rows and initial_balance is None:
+        missing.append("metrics.initial_balance")
     payout_values = [_number(row.get("payout")) for row in payout_rows]
     payout_sum = (
         sum(value for value in payout_values if value is not None)
@@ -100,6 +103,75 @@ def _payout_reconciliation(
                 event_times.append(event_time)
             before = _number(row.get("balance_before_reset"))
             operating = _number(row.get("operating_balance"))
+            schema = row.get("payout_schema_version") or "payout_reset.v1"
+            if payout is None or before is None or operating is None:
+                failures["payout_is_positive_profit_above_operating_balance_failed"] += 1
+            elif payout > 0 and before > operating > 0:
+                checks["payout_is_positive_profit_above_operating_balance"] += 1
+            else:
+                failures["payout_is_positive_profit_above_operating_balance_failed"] += 1
+            if (
+                operating is not None
+                and initial_balance is not None
+                and math.isclose(operating, initial_balance, rel_tol=1e-9, abs_tol=1e-7)
+            ):
+                checks["payout_operating_balance_matches_initial"] += 1
+            else:
+                failures["payout_operating_balance_matches_initial_failed"] += 1
+            post_reset = _number(row.get("balance_after_reset"))
+            if schema == "payout_reset.v2":
+                mode = row.get("max_drawdown_mode")
+                expected_fraction = 1.0 if mode == "static" else 0.5
+                fraction = _number(row.get("payout_fraction"))
+                retained = _number(row.get("retained_profit"))
+                profit = _number(row.get("profit_above_operating_balance"))
+                if mode not in {"static", "eod", "intraday_trailing"}:
+                    failures["payout_mode_is_supported_failed"] += 1
+                elif fraction is not None and math.isclose(
+                    fraction, expected_fraction, rel_tol=1e-9, abs_tol=1e-7
+                ):
+                    checks["payout_fraction_matches_drawdown_mode"] += 1
+                else:
+                    failures["payout_fraction_matches_drawdown_mode_failed"] += 1
+                if (
+                    before is not None
+                    and operating is not None
+                    and profit is not None
+                    and math.isclose(profit, before - operating, rel_tol=1e-9, abs_tol=1e-7)
+                ):
+                    checks["payout_profit_matches_balance"] += 1
+                else:
+                    failures["payout_profit_matches_balance_failed"] += 1
+                if (
+                    profit is not None
+                    and retained is not None
+                    and math.isclose(
+                        retained, profit * (1.0 - expected_fraction), rel_tol=1e-9, abs_tol=1e-7
+                    )
+                ):
+                    checks["payout_retained_profit_matches_mode"] += 1
+                else:
+                    failures["payout_retained_profit_matches_mode_failed"] += 1
+                if (
+                    profit is not None
+                    and payout is not None
+                    and math.isclose(payout, profit * expected_fraction, rel_tol=1e-9, abs_tol=1e-7)
+                ):
+                    checks["payout_amount_matches_mode_fraction"] += 1
+                else:
+                    failures["payout_amount_matches_mode_fraction_failed"] += 1
+                if post_reset is None:
+                    failures["payout_post_reset_balance_is_finite_failed"] += 1
+                elif (
+                    before is not None
+                    and payout is not None
+                    and math.isclose(before - payout, post_reset, rel_tol=1e-9, abs_tol=1e-7)
+                ):
+                    checks["payout_post_reset_balance_matches_withdrawal"] += 1
+                else:
+                    failures["payout_post_reset_balance_matches_withdrawal_failed"] += 1
+            elif schema != "payout_reset.v1":
+                failures["payout_schema_is_supported_failed"] += 1
             if (
                 payout is None
                 or before is None
@@ -108,7 +180,15 @@ def _payout_reconciliation(
                 or operating <= 0
             ):
                 failures["payout_amount_matches_balance_reset_failed"] += 1
-            elif math.isclose(before - operating, payout, rel_tol=1e-9, abs_tol=1e-7):
+            elif (
+                schema == "payout_reset.v1"
+                and math.isclose(before - operating, payout, rel_tol=1e-9, abs_tol=1e-7)
+            ) or (
+                schema == "payout_reset.v2"
+                and payout is not None
+                and post_reset is not None
+                and math.isclose(before - payout, post_reset, rel_tol=1e-9, abs_tol=1e-7)
+            ):
                 checks["payout_amount_matches_balance_reset"] += 1
             else:
                 failures["payout_amount_matches_balance_reset_failed"] += 1
@@ -273,9 +353,20 @@ def _cycle_reconciliation(
                     failures["cycle_successes_match_payout_rows_failed"] += 1
                     continue
                 cycle_row = success_rows.get(int(raw_cycle))
+                shared_event_keys = ["cycle", "payout", "balance_before_reset", "operating_balance"]
+                if payout.get("payout_schema_version") == "payout_reset.v2":
+                    shared_event_keys.extend(
+                        [
+                            "payout_schema_version",
+                            "max_drawdown_mode",
+                            "payout_fraction",
+                            "profit_above_operating_balance",
+                            "retained_profit",
+                            "balance_after_reset",
+                        ]
+                    )
                 same_event = cycle_row is not None and all(
-                    cycle_row.get(key) == payout.get(key)
-                    for key in ("cycle", "payout", "balance_before_reset", "operating_balance")
+                    cycle_row.get(key) == payout.get(key) for key in shared_event_keys
                 )
                 payout_time = _timestamp(payout.get("time"))
                 cycle_time = _timestamp(None if cycle_row is None else cycle_row.get("time"))
@@ -333,6 +424,189 @@ def _cycle_reconciliation(
         "failure_count": sum(failures.values()),
         "missing_columns": missing,
         "missing_failure_link_columns": missing_failure_link_columns,
+    }
+
+
+def _cashflow_equity_reconciliation(
+    fills_header: list[str],
+    fills: list[dict[str, str]],
+    payout_rows: list[dict[str, str]],
+    initial_balance: float | None,
+) -> dict[str, Any]:
+    """Reconcile completed-close equity with chronological fill cashflows."""
+    required = {
+        "type",
+        "position_id",
+        "time",
+        "fill_time",
+        "pnl",
+        "net_pnl",
+        "entry_commission_allocated",
+        "equity",
+        "position_complete",
+    }
+    missing = sorted(required.difference(fills_header))
+    if initial_balance is None or missing:
+        return {
+            "status": "incomplete",
+            "reason": "missing_initial_balance_or_fill_columns",
+            "missing_columns": missing,
+            "open_fill_count": 0,
+            "close_fill_count": 0,
+            "completed_close_count": 0,
+            "completed_close_equity_checks": 0,
+            "payout_count": 0,
+            "checks": {},
+            "failures": {},
+            "failure_count": 0,
+        }
+
+    timeline: list[tuple[datetime, int, int, str, dict[str, str]]] = []
+    failures: Counter[str] = Counter()
+    checks: Counter[str] = Counter()
+    open_fill_count = 0
+    close_fill_count = 0
+    completed_close_count = 0
+    close_charge_checks = 0
+    allocated_entry_commission = 0.0
+    for row_index, row in enumerate(fills):
+        event_type = row.get("type")
+        if event_type not in _CLOSE_TYPES and event_type != "open":
+            continue
+        timestamp = _timestamp(row.get("fill_time") or row.get("time"))
+        position_id = row.get("position_id", "")
+        if timestamp is None or not position_id:
+            failures["trade_fill_has_identity_and_timezone_aware_time_failed"] += 1
+            continue
+        if event_type == "open":
+            open_fill_count += 1
+            priority = 1
+        else:
+            close_fill_count += 1
+            priority = 0
+            exit_pnl = _number(row.get("pnl"))
+            net_pnl = _number(row.get("net_pnl"))
+            entry_commission = _number(row.get("entry_commission_allocated"))
+            if exit_pnl is None or net_pnl is None or entry_commission is None:
+                failures["close_fill_has_finite_pnl_and_commission_fields_failed"] += 1
+                continue
+            allocated_entry_commission += entry_commission
+            close_charge_checks += 1
+            if math.isclose(
+                net_pnl,
+                exit_pnl - entry_commission,
+                rel_tol=1e-9,
+                abs_tol=1e-7,
+            ):
+                checks["close_net_pnl_matches_exit_pnl_less_entry_commission"] += 1
+            else:
+                failures["close_net_pnl_matches_exit_pnl_less_entry_commission_failed"] += 1
+            completion = row.get("position_complete", "").casefold()
+            if completion == "true":
+                completed_close_count += 1
+            elif completion != "false":
+                failures["close_fill_completion_flag_is_boolean_failed"] += 1
+        timeline.append((timestamp, priority, row_index, event_type, row))
+
+    for row_index, row in enumerate(payout_rows):
+        timestamp = _timestamp(row.get("time"))
+        if timestamp is None:
+            failures["payout_has_timezone_aware_time_failed"] += 1
+            continue
+        timeline.append((timestamp, 2, row_index, "payout", row))
+
+    balance = float(initial_balance)
+    open_positions: set[str] = set()
+    checked_equities: list[float] = []
+    first_mismatch: dict[str, Any] | None = None
+    for timestamp, _, _, event_type, row in sorted(timeline, key=lambda item: item[:3]):
+        if event_type == "open":
+            position_id = row["position_id"]
+            if position_id in open_positions:
+                failures["position_opened_twice_before_close_failed"] += 1
+            open_positions.add(position_id)
+        elif event_type in _CLOSE_TYPES:
+            position_id = row["position_id"]
+            net_pnl = _number(row.get("net_pnl"))
+            assert net_pnl is not None
+            balance += net_pnl
+            if row.get("position_complete", "").casefold() != "true":
+                continue
+            if position_id not in open_positions:
+                failures["completed_close_has_prior_open_failed"] += 1
+            else:
+                open_positions.remove(position_id)
+            if open_positions:
+                # Another position may contribute unrealized PnL to recorded equity.
+                continue
+            actual_equity = _number(row.get("equity"))
+            if actual_equity is None:
+                failures["completed_close_has_finite_equity_failed"] += 1
+                continue
+            checked_equities.append(actual_equity)
+            delta = actual_equity - balance
+            if math.isclose(delta, 0.0, rel_tol=1e-9, abs_tol=1e-6):
+                checks["flat_close_equity_matches_cumulative_cashflows"] += 1
+            else:
+                failures["flat_close_equity_matches_cumulative_cashflows_failed"] += 1
+                if first_mismatch is None:
+                    first_mismatch = {
+                        "position_id": position_id,
+                        "fill_time": timestamp.isoformat(),
+                        "recorded_equity": actual_equity,
+                        "reconstructed_balance": balance,
+                        "difference": delta,
+                    }
+        else:
+            if open_positions:
+                failures["payout_requires_flat_account_failed"] += 1
+            payout = _number(row.get("payout"))
+            before_reset = _number(row.get("balance_before_reset"))
+            operating_balance = _number(row.get("operating_balance"))
+            if payout is None or before_reset is None or operating_balance is None:
+                failures["payout_cashflow_fields_are_finite_failed"] += 1
+                continue
+            if math.isclose(before_reset, balance, rel_tol=1e-9, abs_tol=1e-6):
+                checks["payout_balance_matches_cumulative_cashflows"] += 1
+            else:
+                failures["payout_balance_matches_cumulative_cashflows_failed"] += 1
+            reset_balance = _number(row.get("balance_after_reset"))
+            if row.get("payout_schema_version") == "payout_reset.v2":
+                if reset_balance is not None and math.isclose(
+                    before_reset - payout, reset_balance, rel_tol=1e-9, abs_tol=1e-6
+                ):
+                    checks["payout_reset_matches_cash_withdrawal"] += 1
+                else:
+                    failures["payout_reset_matches_cash_withdrawal_failed"] += 1
+                balance = operating_balance if reset_balance is None else reset_balance
+            elif math.isclose(before_reset - payout, operating_balance, rel_tol=1e-9, abs_tol=1e-6):
+                checks["payout_reset_matches_cash_withdrawal"] += 1
+                balance = operating_balance
+            else:
+                failures["payout_reset_matches_cash_withdrawal_failed"] += 1
+                balance = operating_balance
+
+    if open_positions or len(checked_equities) != completed_close_count:
+        status = "incomplete" if not failures else "mismatch"
+    else:
+        status = "mismatch" if failures else "matched"
+    return {
+        "status": status,
+        "basis": "initial balance plus chronological close-fill net PnL less recorded payouts; equity is checked only when flat",
+        "open_fill_count": open_fill_count,
+        "close_fill_count": close_fill_count,
+        "completed_close_count": completed_close_count,
+        "close_charge_checks": close_charge_checks,
+        "allocated_entry_commission_total": allocated_entry_commission,
+        "completed_close_equity_checks": len(checked_equities),
+        "payout_count": len(payout_rows),
+        "ending_reconstructed_balance": balance,
+        "open_position_count_at_end": len(open_positions),
+        "first_mismatch": first_mismatch,
+        "checks": dict(sorted(checks.items())),
+        "failures": dict(sorted(failures.items())),
+        "failure_count": sum(failures.values()),
+        "missing_columns": missing,
     }
 
 
@@ -532,6 +806,7 @@ def summarize_trade_lifecycle(run_dir: Path) -> dict[str, Any]:
         payout_rows,
         evaluation_diagnostics,
         total_economic_values,
+        initial_balance,
     )
     cycle_reconciliation = _cycle_reconciliation(
         cycle_header,
@@ -578,6 +853,16 @@ def summarize_trade_lifecycle(run_dir: Path) -> dict[str, Any]:
             if matched
             else "initial_plus_position_net_pnl_matches_final_equity_failed"
         ] += 1
+    cashflow_equity_reconciliation = _cashflow_equity_reconciliation(
+        fills_header,
+        fills,
+        payout_rows,
+        initial_balance,
+    )
+    if cashflow_equity_reconciliation["status"] == "mismatch":
+        pnl_checks["chronological_cashflow_equity_reconciliation_failed"] += int(
+            cashflow_equity_reconciliation["failure_count"]
+        )
     integrity_failures = (
         sum(lifecycle_check_failures.values())
         + sum(value for key, value in pnl_checks.items() if key.endswith("_failed"))
@@ -593,6 +878,7 @@ def summarize_trade_lifecycle(run_dir: Path) -> dict[str, Any]:
         positions_complete
         and aggregate_pnl_reconciliation["status"] == "matched"
         and account_equity_reconciliation["status"] == "matched"
+        and cashflow_equity_reconciliation["status"] == "matched"
         and payout_reconciliation["status"] in {"matched", "not_applicable"}
         and cycle_reconciliation["status"] in {"matched", "not_applicable"}
         and not lifecycle_check_failures
@@ -695,6 +981,7 @@ def summarize_trade_lifecycle(run_dir: Path) -> dict[str, Any]:
         "pnl_reconciliation_checks": dict(sorted(pnl_checks.items())),
         "aggregate_pnl_reconciliation": aggregate_pnl_reconciliation,
         "account_equity_reconciliation": account_equity_reconciliation,
+        "cashflow_equity_reconciliation": cashflow_equity_reconciliation,
         "payout_reconciliation": payout_reconciliation,
         "cycle_reconciliation": cycle_reconciliation,
         "integrity_status": integrity_status,
@@ -712,6 +999,7 @@ def summarize_trade_lifecycle(run_dir: Path) -> dict[str, Any]:
             "Per-position MFE and MAE are not present in the required source columns and are not derived by this report.",
             "Payout and total-economic-value reconciliation requires the recorded payout ledger and evaluation diagnostics; missing source fields are reported as incomplete.",
             "Repeated-payout cycle outcomes reconcile against payout, breach, and diagnostic ledgers when the corresponding events occur; missing linkage fields remain incomplete.",
+            "Chronological cashflow/equity checks validate completed-close equity only when the account is flat; they do not reconstruct open-position mark-to-market or historical daily-risk state.",
             "This report is descriptive and does not identify causal loss mechanisms or economic superiority.",
         ],
     }
@@ -769,6 +1057,7 @@ def _render_markdown(report: dict[str, Any]) -> str:
                     "pnl_reconciliation_checks": report["pnl_reconciliation_checks"],
                     "aggregate_pnl_reconciliation": report["aggregate_pnl_reconciliation"],
                     "account_equity_reconciliation": report["account_equity_reconciliation"],
+                    "cashflow_equity_reconciliation": report["cashflow_equity_reconciliation"],
                     "payout_reconciliation": report["payout_reconciliation"],
                     "cycle_reconciliation": report["cycle_reconciliation"],
                     "integrity_status": report["integrity_status"],

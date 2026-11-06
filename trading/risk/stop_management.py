@@ -13,7 +13,18 @@ def confirmed_swing_trailing_stop_price(
     current_stop_price: float | None,
     buffer_points: float,
 ) -> float | None:
-    """Return a confirmed-swing stop only when it tightens and stays protective."""
+    """Return a confirmed-swing stop only when it tightens and stays protective.
+
+    Args:
+        direction: Position direction, ``1`` for long or ``-1`` for short.
+        swing_price: Confirmed structural swing used as the stop reference.
+        current_close: Latest close used to keep the stop beyond current price.
+        current_stop_price: Existing stop, when one is already set.
+        buffer_points: Distance applied beyond the swing in instrument points.
+
+    Returns:
+        Tighter protective stop price, or ``None`` when it is not valid.
+    """
     if isinstance(direction, bool) or direction not in (-1, 1):
         raise ValueError("direction must be -1 or 1")
 
@@ -60,7 +71,17 @@ def tightened_breakeven_stop_price(
     current_stop_price: float | None,
     buffer_points: float,
 ) -> float | None:
-    """Return a buffered breakeven stop only when it tightens the current stop."""
+    """Return a buffered breakeven stop only when it tightens the current stop.
+
+    Args:
+        direction: Position direction, ``1`` for long or ``-1`` for short.
+        entry_price: Position entry price used as the breakeven reference.
+        current_stop_price: Existing stop price, if present.
+        buffer_points: Offset beyond entry in instrument points.
+
+    Returns:
+        Improved breakeven stop price, or ``None`` if it would not tighten.
+    """
     if isinstance(direction, bool) or direction not in (-1, 1):
         raise ValueError("direction must be -1 or 1")
 
@@ -110,6 +131,18 @@ def breakeven_stop_price(
 
     Raises:
         ValueError: If direction, prices, or management settings are invalid.
+
+    Args:
+        direction: Position direction, ``1`` for long or ``-1`` for short.
+        entry_price: Position entry price.
+        initial_stop_price: Stop price that defines initial risk, if available.
+        current_stop_price: Current stop that the new stop must tighten.
+        best_favorable_points: Best favorable movement observed since entry.
+        trigger_r: Favorable-movement threshold expressed in initial-risk units.
+        buffer_points: Offset beyond entry in instrument points.
+
+    Returns:
+        Tighter breakeven stop after the threshold, or ``None`` if not triggered.
     """
     if isinstance(direction, bool) or direction not in (-1, 1):
         raise ValueError("direction must be -1 or 1")

@@ -55,15 +55,15 @@ The reusable static resolver
 now inventories 130 feature profiles from the canonical default, six feature
 overlays, three legacy strategy overlays, eight research overlays, 69 saved
 experiment-run specs, and 43 variants resolved through the legacy variant
-resolver. These reduce to 17 exact resolved feature-tree fingerprints. The
+resolver. These reduce to 18 exact resolved feature-tree fingerprints. The
 inventory includes source paths and SHA-256 hashes in both JSON and CSV. It
 does not build features or inspect market rows, so it identifies configuration
 coverage but does not close causality, event-cardinality, availability, or feed
 timing gates.
 
-The reusable assembled-prefix audit
+The existing reusable assembled-prefix audit
 (`scripts/research/analysis/features/verify_feature_profile_prefix_invariance.py`)
-compares each of those 17 distinct feature trees on a 3,600-row synthetic
+compares 17 distinct feature trees in its recorded inventory snapshot on a 3,600-row synthetic
 two-symbol M1 input, using each profile's declared session timezone. All 17
 full-build outputs match their separately truncated 2,400-row builds. The
 machine-readable result is
@@ -126,23 +126,25 @@ boundary, and a market order targets the next bar's open. This establishes
 simulator timing, not provider publication latency. No definite future leak
 was established.
 
-The current-source all-profile real-market report completed in existing
-allocation 21376798. It resolves 130 configurations into 19 feature-builder
-groups and passes 57/57 comparisons across three cutoffs. The strict merger
-verified complete group and cutoff coverage; the runner and profile-inventory
-hashes match current files, and the report records 78 source-file and four
-local-input hashes. The latest full-tree software gate passed 931 scoped
-release tests with two existing transformer warnings; full-tree Ruff and Mypy
-also passed. The documentation inventory, evidence audit, and strict Sphinx
-build remain for the final release pass. Prefix invariance does not establish
-event cardinality, publication timing, calendar authority, or untested
-configurations. No provider, license, or external timestamp-authority claim
-is made here.
-
-The [all-profile real-market report](real_market_feature_prefix_invariance_all_profiles.json)
-is the current source-linked result. Prefix invariance does not establish
-every execution, label, or model-selection path, logical-event cardinality,
-or historical candidate-to-action linkage.
+The [current-source all-profile real-market report](real_market_feature_prefix_invariance_current_source/README.md)
+records the v40 IFVG missing-ATR cache identity. The strict merge resolved all
+130 profiles and verified 78 source hashes plus four local input hashes. All
+19 feature-builder groups pass 57/57 cutoffs with zero changed values and zero
+maximum absolute delta across 21,741,766,365 compared values. This supersedes
+the [v39 snapshot report](real_market_feature_prefix_invariance_v39.json) for
+current-source prefix evidence; the source reconciliation documents prior
+snapshots and limits.
+The v40 IFVG/PO3 subset packet
+(`ifvg_profile_prefix_current_source/`) checks five selected feature groups
+at all three registered cutoffs: 15/15 comparisons pass with zero changed
+features and zero maximum absolute delta. This is current-source evidence for
+those groups only; the full-inventory packet above now supersedes that subset.
+Even when current-source prefix checks pass, they do not establish every
+execution, label, or model-selection path, logical-event cardinality, or
+historical candidate-to-action linkage.
+The [source reconciliation](prefix_source_reconciliation.md) retains earlier
+source-hash differences as historical notes and records the final v40 run whose
+source, inventory, and local-input hashes match current bytes.
 
 The standalone [synthetic HTF availability example](causal_feature_availability_example.png)
 shows the source-bar interval and compares a deliberately leaked open-time
@@ -152,8 +154,11 @@ code-semantic illustration, not market-data evidence.
 The [synthetic event-timing examples](synthetic_event_timing_examples/README.md)
 show source-ordered PO3/IFVG confirmation and next-bar fill using explicit UTC
 fixture timestamps, alongside an incorrect same-bar fill. They also show the
-previous-session premium gate and optional retest path. All values and times
-are synthetic; the examples make no external calendar or feed-clock claim.
+previous-session premium gate and optional retest path, swing confirmation
+after the right-side bars, order-block overlap followed by a later confirmed
+retest, and forward-fill behavior when an SMT secondary bar is missing. All
+values and times are synthetic; these examples make no external calendar,
+feed-clock, historical-market, or economic claim.
 
 The [timeframe mask audit](timeframe_mask_semantics/README.md) verifies
 left-padding, empty closed windows, valid all-zero candle rows, and payload
@@ -162,15 +167,34 @@ versioned `mtf_empty_stream_masked_v1` encoder for empty-stream masking while
 preserving legacy `mtf` checkpoint semantics. Per-feature warmup validity and
 the broader active-feature mask gate remain open.
 
-The [observation warmup-validity packet](observation_warmup_validity/README.md)
-measures all nine configured training streams and source-reviews representative
-missing-value causes. It found that finite day-of-week features were being
-turned into missing values by zero-variance rolling normalization; the
-`v37-zero-variance-neutral` correction maps those finite values to zero and
-leaves true missing inputs nonfinite. After regeneration, M1 nonfinite cells
-fall from 5.84% to 4.99%, and sampled HTF rates range from 14.19% to 21.22%.
-Conditional event distances and ages still require a full feature-validity
-contract; this packet does not close that gate.
+The [timeframe validity and padding semantics packet](timeframe_validity_padding_semantics/README.md)
+checks M1 and all eight HTF sequence tensors, temporal and per-feature validity
+channels, left-padding, empty streams, and registered encoder compatibility.
+It confirms finite-value validity semantics and temporal padding behavior. It
+does not establish producer-level warmup validity where upstream feature code
+already emits finite zero; that source classification remains open.
+
+The current-source [profile-wide observation validity audit](observation_validity_across_profiles/README.md)
+measures 130 configurations in 23 groups across 15,571 feature/profile rows.
+The [producer semantics crosswalk](observation_validity_semantics/README.md)
+maps all 1,291 feature/timeframe pairs to 41 source-reviewed producer
+contracts. It records 620 pairs with no missing rows, 463 with leading-only
+missingness, 206 with interior missingness, and two unavailable throughout the
+measured profiles; 219 pairs contain both nonfinite values and finite zeros.
+These are observation-boundary measurements and reviewed limitations, not
+evidence that a policy consumes validity signals or that those features have
+economic value. VAE validity remains a separate gate.
+
+The current 130-profile observation-validity packet covers 23 observation
+groups and 15,571 feature rows, with zero failed groups and verified packet
+checksums. Its 1,291 feature/timeframe pairs include 206 with interior missing
+values, 463 with leading-only missingness, 620 with no missing values, and two
+unavailable in every group; 219 pairs have a missing/finite-zero collision.
+`po3_phase` now uses `-1` outside the configured session, which distinguishes
+clipped `session_progress` from active session boundaries. Valid zero-range
+candles now produce a zero upper-wick ratio. Eight leading nonfinite rows per M1 PO3 feature (one in each affected group) are consistent with train-only rolling normalization requiring two observations for standard deviation. Conditional
+event distances and ages still require a full feature-validity contract; this
+packet does not close that gate.
 
 ## Selected-overlay signal timing review
 
@@ -216,3 +240,29 @@ Artifacts:
   configurations outside selected checks. Local timestamp meaning inherits
   supplied bar/index labels; external provider-clock authority is outside this
   work's scope.
+
+## Current-source active-family regression batch
+
+`active_family_contracts/` records a consolidated run of 14 focused modules
+covering swing, order-block, FVG/IFVG, PO3, SMT, candidate projection, MTF
+window, prefix, and observation-validity contracts. All 137 tests passed in
+24.49 seconds on the existing GH200 allocation. The packet includes test and
+production-source hashes. It does not resolve the model-input feature-validity
+mask gap or historical proposal-to-action linkage.
+
+## Observation value sanitization
+
+`observation_value_sanitization/` records a small production fix at the model
+input boundary. NaN and both infinities now map to zero for M1, MTF, and VAE
+feature inputs; the focused observation/schema suite passes 32/32 tests. This
+prevents extreme infinity values from reaching encoders. It does not add
+per-feature validity masks or resolve zero/missing collisions.
+
+## Active event-family contract tests
+
+The focused [event-family semantics packet](active_event_family_semantics/README.md)
+records 157 passing current-source tests across swings, order blocks, FVG/IFVG,
+PO3, higher-timeframe close visibility, liquidity sweeps/BOS, and SMT secondary
+bars. It verifies the listed synthetic event order, state transitions, and
+prefix behavior. It does not measure event prevalence or policy outcomes; the
+broader validity-channel and model-input acceptance gate remains open.

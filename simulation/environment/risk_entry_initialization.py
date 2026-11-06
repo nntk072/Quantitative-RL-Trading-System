@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from decisioning.observations import build_observation_schema
+from simulation.entry_state import EntryStateMachine
 
-from .entry_state import EntryStateMachine
 from .mixin_base import RuntimeMixinBase
 
 

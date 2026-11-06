@@ -1,10 +1,11 @@
 {
   "account_equity_reconciliation": {
-    "basis": "initial balance + completed position net PnL = final equity; no payout rows recorded",
+    "basis": "initial balance + completed position net PnL = final account equity + recorded payouts",
     "difference": 5.820766091346741e-11,
     "final_equity": 97845.68511833169,
     "initial_balance": 100000.0,
     "payout_event_rows": 0,
+    "payout_sum": 0,
     "position_net_pnl_sum": -2154.3148816682547,
     "status": "matched"
   },
@@ -12,6 +13,27 @@
     "difference": 5.502442945726216e-11,
     "position_net_pnl_sum": -2154.3148816682547,
     "reported_total_pnl": -2154.3148816683097,
+    "status": "matched"
+  },
+  "cashflow_equity_reconciliation": {
+    "allocated_entry_commission_total": 0.0,
+    "basis": "initial balance plus chronological close-fill net PnL less recorded payouts; equity is checked only when flat",
+    "checks": {
+      "close_net_pnl_matches_exit_pnl_less_entry_commission": 1033,
+      "flat_close_equity_matches_cumulative_cashflows": 987
+    },
+    "close_charge_checks": 1033,
+    "close_fill_count": 1033,
+    "completed_close_count": 987,
+    "completed_close_equity_checks": 987,
+    "ending_reconstructed_balance": 97845.68511833169,
+    "failure_count": 0,
+    "failures": {},
+    "first_mismatch": null,
+    "missing_columns": [],
+    "open_fill_count": 987,
+    "open_position_count_at_end": 0,
+    "payout_count": 0,
     "status": "matched"
   },
   "counts": {
@@ -49,6 +71,18 @@
     "positions_with_linked_fill_events": 987,
     "unlinked_fill_position_ids": 0
   },
+  "cycle_reconciliation": {
+    "checks": {},
+    "event_rows": 0,
+    "failure_count": 0,
+    "failure_rows": 0,
+    "failures": {},
+    "missing_columns": [],
+    "missing_failure_link_columns": {},
+    "reported_cycle_count": 1.0,
+    "status": "not_applicable",
+    "success_rows": 0
+  },
   "decision_order_checks": {
     "decision_le_submission_le_fill": 987
   },
@@ -69,6 +103,21 @@
     "median": 670.655
   },
   "inputs": {
+    "breach_events.csv": {
+      "bytes": 131,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/breach_events.csv",
+      "sha256": "80db5cb794d17c15fa509b96a87f020b7d5d8edfb0785c13bafaf1bf716deee3"
+    },
+    "cycle_events.csv": {
+      "bytes": 1,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/cycle_events.csv",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "evaluation_diagnostics.json": {
+      "bytes": 24332760,
+      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/evaluation_diagnostics.json",
+      "sha256": "01405c58b778d9376bc39c3d9e234ea7034325fc03fc18a020ca7fe00c05f405"
+    },
     "fills.csv": {
       "bytes": 3589884,
       "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/fills.csv",
@@ -100,6 +149,9 @@
       "sha256": "c0f40c147d5e2f1204592bb2854a52265b4947b79ea87ddcc26ed3662c92fbd9"
     }
   },
+  "integrity_failure_count": 0,
+  "integrity_status": "matched",
+  "lifecycle_check_failures": {},
   "lifecycle_checks": {
     "fill_count_matches_event_rows": 987,
     "last_close_event_time_matches_position_exit_time": 987,
@@ -112,13 +164,31 @@
     "Decision-to-submission gaps are descriptive; they may reflect bar-label versus completed-bar availability semantics rather than agent or network latency.",
     "Candidate detection and eligibility before recorded policy decisions are not fully linked by these CSVs.",
     "Per-position MFE and MAE are not present in the required source columns and are not derived by this report.",
-    "Aggregate equity reconciliation is only attempted when metrics, complete position net PnL, and a no-payout ledger are available; other cash-flow and reset semantics remain outside this check.",
+    "Payout and total-economic-value reconciliation requires the recorded payout ledger and evaluation diagnostics; missing source fields are reported as incomplete.",
+    "Repeated-payout cycle outcomes reconcile against payout, breach, and diagnostic ledgers when the corresponding events occur; missing linkage fields remain incomplete.",
+    "Chronological cashflow/equity checks validate completed-close equity only when the account is flat; they do not reconstruct open-position mark-to-market or historical daily-risk state.",
     "This report is descriptive and does not identify causal loss mechanisms or economic superiority."
   ],
   "mfe_mae_columns": {
     "fills.csv": [],
     "positions.csv": [],
     "trades.csv": []
+  },
+  "payout_reconciliation": {
+    "checks": {
+      "payout_rows_match_cycle_successes": 1,
+      "payout_sum_matches_reported_cumulative": 1
+    },
+    "ending_total_economic_value_curve": null,
+    "event_rows": 0,
+    "failure_count": 0,
+    "failures": {},
+    "missing_columns": [],
+    "payout_sum": 0,
+    "reported_cumulative_payouts": 0.0,
+    "reported_cycle_successes": 0.0,
+    "reported_total_economic_value": 97845.68511833169,
+    "status": "not_applicable"
   },
   "pnl_reconciliation_checks": {
     "close_fill_net_pnl_matches_position": 987,

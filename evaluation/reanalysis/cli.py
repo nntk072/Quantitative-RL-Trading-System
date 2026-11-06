@@ -12,7 +12,7 @@ def build_reanalysis_parser() -> argparse.ArgumentParser:
         Result of build the checkpoint-reanalysis CLI with an explicit action mode.
     """
     parser = argparse.ArgumentParser(
-        description="Reanalyse a PPO checkpoint into a separate, new output directory."
+        description="Reanalyse an SB3 PPO/SAC checkpoint into a separate, new output directory."
     )
     parser.add_argument("--run", required=True, help="Existing source RL run (read-only)")
     parser.add_argument("--output", required=True, help="New, non-existing reanalysis directory")
@@ -40,11 +40,29 @@ def build_reanalysis_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--use-recorded-sequence-schema",
+        action="store_true",
+        help=(
+            "For a train-only replay with --train-only-feature-snapshot, feed the exact ordered "
+            "sequence coordinates recorded in the source run manifest. This is an explicit "
+            "historical checkpoint-input replay and does not change normal observation selection."
+        ),
+    )
+    parser.add_argument(
         "--allow-legacy-stop-schema",
         action="store_true",
         help=(
             "Explicitly opt in when an older checkpoint or run manifest has no stop-candidate "
             "schema; this does not assert that it used the expanded multi-HTF menu"
+        ),
+    )
+    parser.add_argument(
+        "--use-current-stop-menu",
+        action="store_true",
+        help=(
+            "Use risk.target_timeframes from the current default configuration, even when it "
+            "differs from the checkpoint's recorded menu; label the result as a changed-policy "
+            "diagnostic"
         ),
     )
     parser.add_argument(
@@ -61,6 +79,14 @@ def build_reanalysis_parser() -> argparse.ArgumentParser:
         help=(
             "Read-only replay of a preserved training cache; its filename, sidecar content hash, "
             "file SHA-256, saved config, and train/test feature fingerprints must match the run"
+        ),
+    )
+    parser.add_argument(
+        "--train-only-feature-snapshot",
+        default=None,
+        help=(
+            "Read an assembled training-only feature DataFrame for --train-only-screen; its "
+            "timeline and post-context train_features SHA-256 must match the source run manifest"
         ),
     )
     parser.add_argument(
@@ -138,6 +164,14 @@ def build_reanalysis_parser() -> argparse.ArgumentParser:
         help=(
             "Evaluate only the training split and write a candidate-screen report; the test "
             "split is not evaluated or reported"
+        ),
+    )
+    parser.add_argument(
+        "--export-replay-ledger",
+        action="store_true",
+        help=(
+            "With --train-only-screen, export the complete training replay ledgers and their "
+            "row counts and SHA-256 hashes for deterministic replay checks"
         ),
     )
     return parser

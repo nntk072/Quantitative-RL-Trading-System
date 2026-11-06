@@ -1,0 +1,350 @@
+{
+  "python_executable": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+  "runtime": {
+    "cuda_available": "True",
+    "cuda_device": "NVIDIA GH200 144G HBM3e",
+    "cuda_visible_devices": "0",
+    "gymnasium": "1.3.0",
+    "numpy": "2.2.6",
+    "pandas": "2.3.2",
+    "platform": "Linux-5.14.0-687.64.1.el9_8.aarch64-aarch64-with-glibc2.34",
+    "python": "3.12.15",
+    "python_hash_seed_env": null,
+    "stable-baselines3": "2.9.0",
+    "torch": "2.14.0+cu130"
+  },
+  "source": {
+    "available": true,
+    "dirty_files": [
+      {
+        "path": ".agents/architecture.md",
+        "sha256": "4978293cef765d829837598555b50fdb4f659d4d0cceb460e7a18a2f0fe25df6"
+      },
+      {
+        "path": "docs/README.md",
+        "sha256": "e6961e7b3a896d5b73210e508ae19754ad44409c4516849a673a135e010a9ae7"
+      },
+      {
+        "path": "docs/architecture/migrations/experiment_run_name_migration.json",
+        "sha256": "054a3c0eec7bea7b8900e1db2762edf57c4b122fcdd232e3d48362cac2222a47"
+      },
+      {
+        "path": "docs/architecture/migrations/research_directory_classification_20261031.json",
+        "sha256": "f1e95c71868ca1915ea1e106c76851f414b0ba65612b8933f1e7dbf4bfd52f25"
+      },
+      {
+        "path": "docs/config.md",
+        "sha256": "453c7b0d6780da8bea591eb1fc2c8a7eafba89979269cc2827fd8590b1e8609b"
+      },
+      {
+        "path": "docs/documentation_inventory.json",
+        "sha256": "a32bd5fb9363b21c8d5373e8946d69606ca207509e70ca707d57fcbcead560d7"
+      },
+      {
+        "path": "docs/index.md",
+        "sha256": "c301d33562164ed459cc330b4169a98b91eff1bc6729d96e386e4eb6014d7981"
+      },
+      {
+        "path": "docs/operations/research_execution_plan.md",
+        "sha256": "bb3c29c4f3a8d2cd57b465898f1a378dcefaf67b50d49a2086b1c0ac5fa236e8"
+      },
+      {
+        "path": "docs/reference/public_api.json",
+        "sha256": "7dd71d73d3d3fba96f71f7b93c00ff304acbaa3d70aa37fa1f800b6e4d11638b"
+      },
+      {
+        "path": "docs/reference/public_api.md",
+        "sha256": "123994a5db944d91d1580a66c54659adde18a71a38dd823c1cd0fcf8ff530d34"
+      },
+      {
+        "path": "docs/research/README.md",
+        "sha256": "a5cbaf363282ddf229a453f39150e2e0c4e19545f0f325ca475899406acc22c1"
+      },
+      {
+        "path": "docs/research/model_observation_and_action_semantics.md",
+        "sha256": "385d94fb182ae74c041e8f5c789f671b85c653c911d37dbb46569a5d2d693e9e"
+      },
+      {
+        "path": "docs/research/research_evidence_report.md",
+        "sha256": "9dc983a2bb60ec0cb2dc4bf41cd1b2d23b122ab4cfe4f3be130b14396ba0aea6"
+      },
+      {
+        "path": "docs/thesis/research_evidence_report.md"
+      },
+      {
+        "path": "evaluation/metrics/matched_comparison.py",
+        "sha256": "0ed8f0533ae221eed1d2f32476d870dc2065661ade452d3dfa1023534ac4a3e6"
+      },
+      {
+        "path": "evaluation/metrics/trade_excursions.py",
+        "sha256": "12c756e7a78325436a9f5b4b5fea28a022a36096b381dcd10da139d5fed54c30"
+      },
+      {
+        "path": "evaluation/reporting/matched_setup_baseline_bundle.py",
+        "sha256": "1b1a139ae30bbf74d71c752dffdecf4ba5a34422a1485d70e4c9aaad308eee97"
+      },
+      {
+        "path": "evaluation/rollout/matched_setup_baselines.py",
+        "sha256": "8f46d9a69971ee82954b626aa73489d4609ad69f6b645229774c304df797dc92"
+      },
+      {
+        "path": "evaluation/rollout/structure_priority_setup.py",
+        "sha256": "d0690b1707c023d23fbeb056f29e07bdceff29c38f09bf79dbd984496ebc8c7a"
+      },
+      {
+        "path": "evaluation/rollout/trained_policy_rollout.py",
+        "sha256": "ab454e71741c4b3e6652a22b71509be182ababc905628c8000ad0190d7c24e37"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/README.md",
+        "sha256": "d1f1d3d2288a30b20ee8cbbb4f7b743f01e236ce7344470e541e6cbb8c430e57"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/always_no_trade/confidence_intervals.json",
+        "sha256": "31b7b14f87c1b069475ac03e0afcdbe1f373d5dd8f42a906ee8d1abd26d6d6e7"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/always_no_trade/decisions.csv",
+        "sha256": "59cb1170776121552cba096961a0c4fadf02831197f92c4d7debaf86a27f22df"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/always_no_trade/equity.csv",
+        "sha256": "0f736eaf7954d5c7e6fa7b6c69b76667c22ae2c7719e0d7093dfb32dae14db19"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/always_no_trade/evaluation.json",
+        "sha256": "216eaccaf87abb6e47c736edfda77dac6b60020a7d25b7a2fe7a698117f936ea"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/always_no_trade/metrics.json",
+        "sha256": "5044533315bd981e76ca3ce286e60679a056eaba6fab4a2e8219574cc7182c08"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/always_no_trade/policy_metadata.json",
+        "sha256": "aed0cf9f5d745a024b9c1861cb976f9430876914604370fcee028f22d5517fb0"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/always_no_trade/trade_fill_event_ledger.csv",
+        "sha256": "bd85bcdb8d4e613a79cb62d0903946ad10c83e63dc75f67614c159c0dbf4d184"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/input_identity.json",
+        "sha256": "df92394f726f179cf28572358671ef225885c40ed53190b2b3d945a747724b6f"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/resolved_config.json",
+        "sha256": "86739cedc0e09742d74c66ef9cc5027486f7dd76f740c5cbcb479f69c3bef348"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/result_manifest.json",
+        "sha256": "168ad1f747f2b5eb70dccd1710bc780ac680f0b851425f2c3650aa5b9e668f57"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_18c585089f5e7857/source_identity.json",
+        "sha256": "a9dd387350d1a95630962b5207ec72ab5ebe971c8e3dcf07daa13f96725c9d0a"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/always_no_trade/confidence_intervals.json",
+        "sha256": "1d95cf4e678cb993889de1cdb5f401b0d5b0aba55e1ac22fe7f6ae44d715d341"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/always_no_trade/decisions.csv",
+        "sha256": "59cb1170776121552cba096961a0c4fadf02831197f92c4d7debaf86a27f22df"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/always_no_trade/equity.csv",
+        "sha256": "0f736eaf7954d5c7e6fa7b6c69b76667c22ae2c7719e0d7093dfb32dae14db19"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/always_no_trade/evaluation.json",
+        "sha256": "216eaccaf87abb6e47c736edfda77dac6b60020a7d25b7a2fe7a698117f936ea"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/always_no_trade/metrics.json",
+        "sha256": "5044533315bd981e76ca3ce286e60679a056eaba6fab4a2e8219574cc7182c08"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/always_no_trade/policy_metadata.json",
+        "sha256": "1def9ef2876040736242f1223c51d21245a509f15e2ec2189c5b36f14a6e9744"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/always_no_trade/trade_fill_event_ledger.csv",
+        "sha256": "bd85bcdb8d4e613a79cb62d0903946ad10c83e63dc75f67614c159c0dbf4d184"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/input_identity.json",
+        "sha256": "9d79b46e0aceb8ed2b417ecf7e260103b0ec474cffb7bd223f4513bdd25d276c"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/random_eligible_setup/confidence_intervals.json",
+        "sha256": "1d95cf4e678cb993889de1cdb5f401b0d5b0aba55e1ac22fe7f6ae44d715d341"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/random_eligible_setup/decisions.csv",
+        "sha256": "1498a1a9e48557442be19d4a59df696a472935e260c041a7303b4362387b7053"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/random_eligible_setup/equity.csv",
+        "sha256": "f047456bd7d478cfd31212b616a0a5301c0cfceda13235cc0f76cfd6bf9d3f26"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/random_eligible_setup/evaluation.json",
+        "sha256": "fdf65de46d9a1ac17d9b3ca665342825d5f599223ed64c6f1cf79feb1f9488b9"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/random_eligible_setup/metrics.json",
+        "sha256": "006aa8859e78c442149da6a2ef848cf3ae88e30f002b9b669f48fd48079b271c"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/random_eligible_setup/policy_metadata.json",
+        "sha256": "54e57f962b19e0772d14e06a8ff2ed286771baeb863c3d163904f91a5e90ce2f"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/random_eligible_setup/trade_fill_event_ledger.csv",
+        "sha256": "5484477d5072e1ff0d51fcbdffa18d81fe74f21bccaf30111f319c2dd898e6b2"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/resolved_config.json",
+        "sha256": "86739cedc0e09742d74c66ef9cc5027486f7dd76f740c5cbcb479f69c3bef348"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/result_manifest.json",
+        "sha256": "bd7fd24bdd09e407be7f2271a9daf376dd997ff6b9f353a96ec63a3182464d81"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/matched_setup_baselines_8afa8f28a2342aa1/source_identity.json",
+        "sha256": "02ca66b037e79e53041d4c62d2cdc46f4f6355282ca135864de39a0c85bce7ed"
+      },
+      {
+        "path": "evidence/research/matched_setup_baselines/random_eligible_setup_execution_diagnostics.json",
+        "sha256": "572bae6a0d7dbed3155b0b1410ea00603120dab8b45550de7375eec6ab38813c"
+      },
+      {
+        "path": "evidence/research/releases/negative-evidence-readiness/FINAL_READINESS_REPORT.md",
+        "sha256": "216787bacdf45fb8998dc832f1b0bbba3d65e32c8f645768667600c4a72b78df"
+      },
+      {
+        "path": "evidence/research/releases/negative-evidence-readiness/KNOWN_LIMITATIONS.md",
+        "sha256": "13515b6340ae3117b3c714750dd3c4f36eadac8d8f2bdad470100bab64ab0f69"
+      },
+      {
+        "path": "evidence/research/releases/negative-evidence-readiness/MODEL_AND_BASELINE_CATALOG.md",
+        "sha256": "68c963923bd392d11332799bef8ea8b20312f0787686a3db6bf194bbffe83c6e"
+      },
+      {
+        "path": "evidence/research/releases/negative-evidence-readiness/README.md",
+        "sha256": "b1115fb3acf861d425134ec9b8aaf60f1f36d3a1c6c78f5bdd715271446ebfd0"
+      },
+      {
+        "path": "evidence/research/releases/negative-evidence-readiness/RELEASE_MANIFEST.json",
+        "sha256": "a58aff3e34f64c1351124fd875c621e326894785f57f8975b94735b1a2bbcce0"
+      },
+      {
+        "path": "evidence/research/releases/negative-evidence-readiness/THESIS_FIGURE_TABLE_INDEX.md",
+        "sha256": "cdc691e71174b9da03da3f469aa3353f506739d0921d09908c3027f94da85e64"
+      },
+      {
+        "path": "features/po3/setup_lifecycle.py",
+        "sha256": "c1ed3324772ab4f0fc1ebbf2df884d15c4bc7d2aedeb84068391bb447d01460f"
+      },
+      {
+        "path": "market_data/loading/bars.py",
+        "sha256": "78ec2e0aae8c86f85cf1fe8d7455bba94c8e601200eb3f66e7768017a2216962"
+      },
+      {
+        "path": "market_data/loading/ticks.py",
+        "sha256": "6973db5a21d0adeebfd7f44c808525efc77dfdbb61333170219c37c850f51a31"
+      },
+      {
+        "path": "scripts/research/analysis/evaluation/run_matched_setup_baselines.py",
+        "sha256": "2577b67c3292cca9fe04356bb2aa388a4d23ba6b1999b910759345e88112de4f"
+      },
+      {
+        "path": "scripts/research/analysis/evidence/audit_selected_checkpoint_recoverability.py",
+        "sha256": "b954c02dbe6c4e90ca29a7bc5e0d35e6161d02f794886cf83e0406720368766c"
+      },
+      {
+        "path": "scripts/research/analysis/features/build_po3_setup_lifecycle_ledger.py",
+        "sha256": "c42e9156b47a88563a8cc6e2036c89fa6444aeb5a76ec27085f4924191d182cb"
+      },
+      {
+        "path": "scripts/research/audits/verify_release_quality.sh",
+        "sha256": "2f3f99bc701506f7b6d1ece322f187a359c0187f6ce6951fc0b51b3a9b1b727b"
+      },
+      {
+        "path": "simulation/backtest/event_driven_backtest.py",
+        "sha256": "b58c11ff1c98c2a5cfe0b451228d558a5f9b9177d986b9a87596230bf445e58a"
+      },
+      {
+        "path": "simulation/backtest/protective_events.py",
+        "sha256": "7170bbbfaab0333b47001fd017bb687761f637479b862b0ab0921c2c93ec75ef"
+      },
+      {
+        "path": "simulation/backtest/runtime.py",
+        "sha256": "3bf1664540cb449b30f9eb8996a28516c22c6c416cddee6447eee49c31e90476"
+      },
+      {
+        "path": "simulation/environment/position_runtime.py",
+        "sha256": "b3c3baff1063c423f5f5023dc0dea11bf120d69f06c3804f72652823e28a46de"
+      },
+      {
+        "path": "simulation/environment/protective_level_runtime.py",
+        "sha256": "0fc74436816d7bc7a2db7b30615b65b8c536f331bb15911362d0fff1dff0747d"
+      },
+      {
+        "path": "simulation/environment/step_end_runtime.py",
+        "sha256": "e10a2591bf69b91bbf78c09d5fdc9f50d923223a04486de20aacef150c567476"
+      },
+      {
+        "path": "tests/architecture/test_repository_path_migration.py",
+        "sha256": "d6d5a07c6ea099291860c0b6c4e77f9d36faca2a0a031b5262a02139b833c0b6"
+      },
+      {
+        "path": "tests/integration/backtest/test_engine_execution_contract.py",
+        "sha256": "d5399949cfbae675618302b95f3e427026fa976d30e37424acc842326f341915"
+      },
+      {
+        "path": "tests/integration/backtest/test_multi_target_protective_lifecycle.py",
+        "sha256": "5bf6c8f2782bf3e520065866745150e0d06c4bf483139f19b32946fdfd93e569"
+      },
+      {
+        "path": "tests/integration/evaluation/test_matched_setup_baselines.py",
+        "sha256": "1f66621a8df470dfbd1e7f8502a30eddbb923a5185e36f95248ef94d08a7439b"
+      },
+      {
+        "path": "tests/unit/evaluation/test_matched_comparison.py",
+        "sha256": "6e716464647df2101ca72355c87271b0b6172de52438c05f70f498c012caa835"
+      },
+      {
+        "path": "tests/unit/market_data/test_ticks.py",
+        "sha256": "1d8f3fbdc39d36f65fa0ab05fe404b52e191283956861938592e4c964bcebad7"
+      },
+      {
+        "path": "tests/unit/simulation/test_environment/test_protective_level_runtime.py",
+        "sha256": "162f722ba65a375312a277ffe76d9d2b1e789dc7626fd8f6acb476bc38e26696"
+      },
+      {
+        "path": "tests/unit/simulation/test_environment/test_trade_setup_observation.py",
+        "sha256": "381dc9bbab203dab204132a21d44448b629d651163d24ae8ab74d800a1c30bc1"
+      },
+      {
+        "path": "tests/unit/trading/test_execution_quote_ranges.py",
+        "sha256": "6310804ee2d39b52710da4828cad5bccea1dfca943f7063d570a958d9ec6e0f3"
+      },
+      {
+        "path": "trading/execution/__init__.py",
+        "sha256": "655348c260798108bc30ab462c2c482e6f667f1a62695fc27bb75ea8fbb3ba40"
+      },
+      {
+        "path": "trading/execution/quotes.py",
+        "sha256": "acc7e20404bbbb8287237e98c8212dcbe4ba1414b89d7c9f0116e66405bfddc9"
+      },
+      {
+        "path": "trading/risk/__init__.py",
+        "sha256": "05d89f17e6e89cdedcc8e558ef50715b6b5dff9d2aa58619d7637d11bddf6072"
+      }
+    ],
+    "head": "367561a7717a3367fbb280084ffcf0781f57119c"
+  },
+  "source_tree_hash": "16103f595dbef4c5f39a5a44ccdfb398bcffee27689bbb15b69a8c1b480a3a98"
+}

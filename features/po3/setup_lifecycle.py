@@ -31,6 +31,14 @@ _REQUIRED_COLUMNS = (
 
 
 def _first_positive(values: Iterable[float]) -> int | None:
+    """Return the first position containing a positive value, if present.
+
+    Args:
+        values: Ordered state values to inspect.
+
+    Returns:
+        Index of the first positive item, or ``None`` when there is none.
+    """
     for position, value in enumerate(values):
         if float(value) > 0.0:
             return position
@@ -38,12 +46,29 @@ def _first_positive(values: Iterable[float]) -> int | None:
 
 
 def _finite_or_none(value: Any) -> float | None:
+    """Convert a value to a finite float, returning ``None`` for non-finite input.
+
+    Args:
+        value: Source value to normalize.
+
+    Returns:
+        Finite float, or ``None`` when the result is non-finite.
+    """
     numeric = float(value)
     return numeric if np.isfinite(numeric) else None
 
 
 def _origin_time_ns(state: pd.DataFrame, start: int, confirm_offset: int | None) -> int | None:
-    """Recover the exact FVG origin timestamp from its producer bar index."""
+    """Recover the exact FVG origin timestamp from its producer bar index.
+
+    Args:
+        state: PO3 state frame containing the source-origin bar column.
+        start: Start row for the setup sequence.
+        confirm_offset: Offset of the confirmation row within the sequence.
+
+    Returns:
+        Origin timestamp in nanoseconds, or ``None`` when no confirmation exists.
+    """
     if confirm_offset is None:
         return None
     origin = _finite_or_none(state["po3_ifvg_fvg_origin_bar"].iloc[start + confirm_offset])

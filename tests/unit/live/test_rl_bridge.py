@@ -22,7 +22,7 @@ from omegaconf import OmegaConf
 from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.observations import (
-    OBSERVATION_SCHEMA_V1,
+    OBSERVATION_SCHEMA_V2,
     build_observation_schema,
 )
 from integrations.mt5.adapters.data import TradingData
@@ -166,7 +166,7 @@ def test_pending_latency_order_is_cancelled_when_episode_ends(trending_bars):
 class _StubModel:
     """Duck-typed SB3 model: action = +1 (long) always."""
 
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V1).to_dict()
+    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
     action_space: Any = spaces.Discrete(20)
     _action_schema: dict[str, object] = build_discrete_trading_action_schema().to_dict()
 
@@ -191,15 +191,33 @@ def test_rl_bridge_observation_contract(trending_bars):
     """Bridge builds the same dict obs contract as the env (T, F) + (5,)."""
     from live.runtime.strategy import RLStrategyAdapter
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter.update_bars(trending_bars)
     obs = adapter.build_observation({"equity": 100_000.0})
     assert set(obs) == {"seq", "seq_mask", "account"}
     assert obs["seq"].dtype == np.float32
-    assert obs["account"].shape == (6,)
+    assert obs["account"].shape == (28,)
     assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
     action = adapter.predict_signal()
     assert action == 1
+
+
+def test_live_adapter_requires_fit_state_without_diagnostic_opt_in() -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+
+    with pytest.raises(ValueError, match="train-fitted feature normalization state is required"):
+        RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
+    assert adapter is not None
 
 
 def test_rl_bridge_accepts_a_decision_provider(trending_bars):
@@ -208,9 +226,13 @@ def test_rl_bridge_accepts_a_decision_provider(trending_bars):
 
     provider = SB3DecisionProvider(
         _StubModel(),
-        input_schema_version=OBSERVATION_SCHEMA_V1,
+        input_schema_version=OBSERVATION_SCHEMA_V2,
     )
-    adapter = RLStrategyAdapter(provider=provider, config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        provider=provider,
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter.update_bars(trending_bars)
 
     assert adapter.predict_signal() == 1
@@ -220,7 +242,11 @@ def test_rl_bridge_maps_actions_to_signals(trending_bars):
     """as_strategy maps action>0 → BUY, 0 → HOLD via the duck-typed source."""
     from live.runtime.strategy import RLStrategyAdapter
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     strategy = adapter.as_strategy(_StubData(trending_bars))
     symbol, sig = strategy.signal()
     assert symbol == "US100.cash"
@@ -240,7 +266,11 @@ def test_account_state_v2_live_policy_fails_closed_without_snapshot(
 
     model = _StubModel()
     model._observation_schema = build_observation_schema("account-state-v2").to_dict()
-    adapter = RLStrategyAdapter(model=model, config_path=config_path)
+    adapter = RLStrategyAdapter(
+        model=model,
+        config_path=config_path,
+        allow_runtime_normalization_fallback=True,
+    )
     strategy = adapter.as_strategy(_StubData(trending_bars))
 
     symbol, signal = strategy.signal()
@@ -253,7 +283,11 @@ def test_rl_bridge_too_few_bars_no_signal(trending_bars):
     """Bridge returns NONE when there isn't enough history."""
     from live.runtime.strategy import RLStrategyAdapter
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     strategy = adapter.as_strategy(_StubData(trending_bars.iloc[:5]))
     _, sig = strategy.signal()
     assert sig.value == "none"

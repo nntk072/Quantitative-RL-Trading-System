@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "status": "complete_inventoried_nested_members_with_unreadable_outer_archives",
+  "claim_scope": "One-level nested-member SHA-256 search for the 132 run artifacts currently missing from the provenance byte report, across previously inventoried nested ZIP members under the current scratch root",
+  "search_root": "/scratch/work/nguyenl37",
+  "target_count": 132,
+  "nested_container_count": 1437,
+  "skipped_container_count": 0,
+  "nested_member_count": 177863,
+  "nested_member_uncompressed_bytes": 14469555000,
+  "hashed_member_count": 177863,
+  "exact_matches": 0,
+  "unmatched_targets": 132,
+  "nested_read_errors": 0,
+  "known_outer_archive_errors": 16,
+  "max_container_bytes": 83886080,
+  "max_uncompressed_bytes": 107374182400,
+  "training_or_evaluation_run": false,
+  "command": ".venv/bin/python scripts/research/analysis/evidence/reconcile_missing_artifacts_from_nested_archives.py --max-container-bytes 83886080 --max-uncompressed-bytes 107374182400 --output evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/nested_archive_search.json",
+  "inputs": {
+    "provenance_byte_report": {
+      "path": "evidence/research/releases/negative-evidence-readiness/PROVENANCE_BYTE_VERIFICATION.json",
+      "sha256": "afacb529c0430cc371683af5148308dbdd614c883bbe63aba4047568a6c58c62"
+    },
+    "provenance_dag": {
+      "path": "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json",
+      "sha256": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c"
+    },
+    "nested_container_inventory": {
+      "path": "evidence/research/historical_variant_screen_recoverability/nested_archive_trace_search.json",
+      "sha256": "83ec6428269fee196a09823db48bc2e9bdd04a9b6f0fbb0ce8d29ffb13b6f34d"
+    }
+  },
+  "output": {
+    "path": "nested_archive_search.json",
+    "bytes": 6552,
+    "sha256": "826ee042fef71a080f290945b9ee44d04248651565c4a2bc7e7c3e9517909d61"
+  },
+  "source_hashes": {
+    "scanner": {
+      "path": "scripts/research/analysis/evidence/reconcile_missing_artifacts_from_nested_archives.py",
+      "sha256": "594e4fb0dcc936e0a56e8c5662c0d185afb407d5ef0cdd3f7dbd205915dee461"
+    },
+    "test": {
+      "path": "tests/unit/research/test_missing_artifact_nested_archive_reconciliation.py",
+      "sha256": "d3f4a451438bcf08eff1da10fce9fdc11c404f582618de5526a8e5e86776580e"
+    }
+  },
+  "validation": {
+    "test_path": "tests/unit/research/test_missing_artifact_nested_archive_reconciliation.py",
+    "test_result": "2 passed in 0.19 seconds",
+    "ruff_format_and_check": "passed for scanner and test",
+    "execution_log": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/nested_archive_recovery_21390062.log"
+  },
+  "execution_profile": {
+    "slurm_job": "21390062",
+    "node": "gpuarm1",
+    "gpu": "1 GH200",
+    "cpus": 48,
+    "host_ram_requested": "512G",
+    "wall_seconds": 66.66,
+    "max_rss_kib": 152776
+  },
+  "limitations": [
+    "Only the direct members of the inventoried nested ZIP containers were hashed; deeper containers were not recursively opened.",
+    "The 16 outer archives that failed the prior inventory remain unsearched.",
+    "The scan did not follow directory symlinks or search outside /scratch/work/nguyenl37.",
+    "Checkpoint tensor and pickle bytes were hashed but never deserialized.",
+    "No match does not establish global artifact absence."
+  ]
+}

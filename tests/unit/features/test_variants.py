@@ -69,20 +69,20 @@ def test_po3_phase_known_timestamps():
     assert feats.loc[pd.Timestamp("2025-01-06 22:30", tz="Etc/GMT-3"), "po3_phase"] == 2
 
 
-def test_po3_phase_outside_session_nan():
+def test_po3_phase_outside_session_has_distinct_sentinel():
     idx = pd.date_range("2025-01-06 10:00", periods=5, freq="1min", tz="Etc/GMT-3")
     feats = build_po3_phase_features(idx, session_start="16:30", session_end="23:00")
-    assert feats["po3_phase"].isna().all()
+    assert (feats["po3_phase"] == -1).all()
     assert (feats["session_progress"] == 0.0).all()
 
 
-def test_po3_phase_turns_unknown_after_session_end():
+def test_po3_phase_uses_sentinel_after_session_end():
     idx = pd.date_range("2025-01-06 22:59", periods=3, freq="1min", tz="Etc/GMT-3")
     feats = build_po3_phase_features(idx, session_start="16:30", session_end="23:00")
 
     assert feats.loc[idx[0], "po3_phase"] == 2
     assert feats.loc[idx[1], "session_progress"] == pytest.approx(1.0)
-    assert pd.isna(feats.loc[idx[2], "po3_phase"])
+    assert feats.loc[idx[2], "po3_phase"] == -1
 
 
 def test_po3_phase_rejects_nonpositive_session_duration():

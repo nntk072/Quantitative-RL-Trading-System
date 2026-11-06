@@ -42,5 +42,12 @@ class SignalSeriesStrategy(BaseStrategy):
         super().__init__(len(values))
 
     def _signal(self, idx: int) -> float:
-        """Return the precomputed target at ``idx``."""
+        """Return the precomputed target at ``idx``.
+
+        Args:
+            idx: Position in the validated signal series.
+
+        Returns:
+            Signal value for that position.
+        """
         return float(self._signals[idx])

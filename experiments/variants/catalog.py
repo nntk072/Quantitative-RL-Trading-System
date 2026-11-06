@@ -285,7 +285,9 @@ def _risk_summary(risk: dict[str, Any]) -> str:
     """
     return (
         f"{risk['limit_value_mode']}; trade ${risk['risk_per_trade_limit']:,.0f}; "
-        f"daily ${risk['daily_loss_limit']:,.0f}; max ${risk['max_loss_limit']:,.0f}; "
+        f"daily {risk['daily_loss_limit_pct']:.1%} of initial balance from session-open equity; "
+        f"max {risk['max_loss_limit_initial_pct']:.1%} of initial balance "
+        f"({risk['max_drawdown_mode']}); "
         f"size cap ${risk['risk_sizing_limit_usd']:,.0f}"
     )
 

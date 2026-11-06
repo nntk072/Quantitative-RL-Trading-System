@@ -1,0 +1,170 @@
+{
+  "coverage_csv_sha256": "ab1f3533394a2197a65c36b550ccec40b7cb06e9b919bdd49d31f2b9541982f5",
+  "coverage_rule": "A minute is quote_complete only if raw tick row count equals M1 tickvol, the count is positive, and every raw row has a finite positive non-crossed bid/ask. This is a local-source consistency rule, not proof of exchange-tape completeness.",
+  "first_invalid_quote_minutes": [
+    "2024-12-30T01:12:00",
+    "2024-12-30T01:21:00",
+    "2024-12-30T01:22:00",
+    "2024-12-30T01:24:00",
+    "2024-12-30T01:25:00",
+    "2024-12-30T01:26:00",
+    "2024-12-30T01:48:00",
+    "2024-12-30T01:59:00",
+    "2024-12-30T02:00:00",
+    "2024-12-30T02:18:00",
+    "2024-12-30T02:21:00",
+    "2024-12-30T02:22:00",
+    "2024-12-30T02:29:00",
+    "2024-12-30T02:31:00",
+    "2024-12-30T02:34:00",
+    "2024-12-30T02:35:00",
+    "2024-12-30T02:36:00",
+    "2024-12-30T02:37:00",
+    "2024-12-30T02:43:00",
+    "2024-12-30T02:44:00"
+  ],
+  "first_mismatches": [
+    {
+      "m1_tickvol": 60,
+      "source_tick_rows": 62,
+      "source_wall_clock": "2024-12-30T01:21:00",
+      "valid_two_sided_quotes": 60
+    },
+    {
+      "m1_tickvol": 24,
+      "source_tick_rows": 25,
+      "source_wall_clock": "2024-12-30T01:22:00",
+      "valid_two_sided_quotes": 24
+    },
+    {
+      "m1_tickvol": 59,
+      "source_tick_rows": 60,
+      "source_wall_clock": "2024-12-30T01:24:00",
+      "valid_two_sided_quotes": 59
+    },
+    {
+      "m1_tickvol": 106,
+      "source_tick_rows": 110,
+      "source_wall_clock": "2024-12-30T01:25:00",
+      "valid_two_sided_quotes": 103
+    },
+    {
+      "m1_tickvol": 80,
+      "source_tick_rows": 83,
+      "source_wall_clock": "2024-12-30T01:26:00",
+      "valid_two_sided_quotes": 80
+    },
+    {
+      "m1_tickvol": 158,
+      "source_tick_rows": 159,
+      "source_wall_clock": "2024-12-30T02:00:00",
+      "valid_two_sided_quotes": 156
+    },
+    {
+      "m1_tickvol": 60,
+      "source_tick_rows": 61,
+      "source_wall_clock": "2024-12-30T02:21:00",
+      "valid_two_sided_quotes": 60
+    },
+    {
+      "m1_tickvol": 69,
+      "source_tick_rows": 72,
+      "source_wall_clock": "2024-12-30T02:22:00",
+      "valid_two_sided_quotes": 69
+    },
+    {
+      "m1_tickvol": 111,
+      "source_tick_rows": 112,
+      "source_wall_clock": "2024-12-30T02:29:00",
+      "valid_two_sided_quotes": 109
+    },
+    {
+      "m1_tickvol": 64,
+      "source_tick_rows": 65,
+      "source_wall_clock": "2024-12-30T02:34:00",
+      "valid_two_sided_quotes": 64
+    },
+    {
+      "m1_tickvol": 82,
+      "source_tick_rows": 83,
+      "source_wall_clock": "2024-12-30T02:35:00",
+      "valid_two_sided_quotes": 81
+    },
+    {
+      "m1_tickvol": 101,
+      "source_tick_rows": 103,
+      "source_wall_clock": "2024-12-30T02:37:00",
+      "valid_two_sided_quotes": 99
+    },
+    {
+      "m1_tickvol": 92,
+      "source_tick_rows": 93,
+      "source_wall_clock": "2024-12-30T02:43:00",
+      "valid_two_sided_quotes": 92
+    },
+    {
+      "m1_tickvol": 78,
+      "source_tick_rows": 81,
+      "source_wall_clock": "2024-12-30T02:44:00",
+      "valid_two_sided_quotes": 74
+    },
+    {
+      "m1_tickvol": 86,
+      "source_tick_rows": 89,
+      "source_wall_clock": "2024-12-30T02:45:00",
+      "valid_two_sided_quotes": 86
+    },
+    {
+      "m1_tickvol": 95,
+      "source_tick_rows": 96,
+      "source_wall_clock": "2024-12-30T02:49:00",
+      "valid_two_sided_quotes": 92
+    },
+    {
+      "m1_tickvol": 46,
+      "source_tick_rows": 48,
+      "source_wall_clock": "2024-12-30T02:52:00",
+      "valid_two_sided_quotes": 44
+    },
+    {
+      "m1_tickvol": 75,
+      "source_tick_rows": 78,
+      "source_wall_clock": "2024-12-30T02:54:00",
+      "valid_two_sided_quotes": 73
+    },
+    {
+      "m1_tickvol": 57,
+      "source_tick_rows": 58,
+      "source_wall_clock": "2024-12-30T02:56:00",
+      "valid_two_sided_quotes": 54
+    },
+    {
+      "m1_tickvol": 34,
+      "source_tick_rows": 36,
+      "source_wall_clock": "2024-12-30T02:58:00",
+      "valid_two_sided_quotes": 33
+    }
+  ],
+  "input_sha256": {
+    "config/base/default.yaml": "8c42ee1d2790a2655a24e76940ce4213c74584f52cb6c9f8b766652c5458f691",
+    "data/training/US100.cash_202412300105_202610162349.csv": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23",
+    "data/training/US100.cash_M1_202412300105_202610162349.csv": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0"
+  },
+  "m1_rows": 351432,
+  "m1_tickvol_total": 56187210,
+  "minutes_quote_complete": 258106,
+  "minutes_quote_incomplete": 93326,
+  "minutes_with_all_quote_rows_valid": 258134,
+  "minutes_with_tick_count_match": 311102,
+  "minutes_with_tick_count_mismatch": 40330,
+  "raw_tick_rows_in_training_window": 56245046,
+  "raw_tick_rows_without_valid_quote": 161302,
+  "schema_version": "local-tick-quote-coverage-v1",
+  "status": "source_count_mismatches_present",
+  "symbol": "US100.cash",
+  "time_basis": "MT5 source wall-clock, compared without timezone conversion",
+  "training_window": {
+    "end_exclusive": "2026-01-01T00:00:00",
+    "start_inclusive": "2024-12-30T00:00:00"
+  }
+}

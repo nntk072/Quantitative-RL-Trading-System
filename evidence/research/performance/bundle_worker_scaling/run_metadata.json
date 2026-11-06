@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "claim_scope": "Matched current-source environment worker resource comparison for frame-backed and shared-bundle data sources; no learner updates or CUDA use",
+  "allocation": {
+    "slurm_job_id": "21390062",
+    "node": "gpuarm1.int.triton.aalto.fi",
+    "gpu_model": "NVIDIA GH200 144G HBM3e",
+    "gpus": 1,
+    "cpus": 48,
+    "requested_host_memory_gib": 512,
+    "architecture": "aarch64"
+  },
+  "benchmark": {
+    "script": "scripts/research/benchmarks/measure_env_memory.py",
+    "script_sha256": "c1800a22e41ba34eb81f50630ae5189b901e2f79ec9e024c7f8a69aab9b94421",
+    "config": "config/base/default.yaml",
+    "config_sha256": "dd7503d22fadb95fe4b11034f19515081ca7b28228c589700e4ba10bc91dfbc5",
+    "data_identity_reference": "evidence/research/pipeline_denominators/pipeline_denominator_register.json",
+    "data_identity_reference_sha256": "f22ac05ee942b8d8be346915626e618e3d0eab260ca8c3bda64ef94245cb66f6",
+    "training_rows_per_configured_symbol_timeframe_split": 351432,
+    "worker_counts": [2, 8, 16],
+    "vector_steps_per_worker_count": 256,
+    "warmup_vector_steps": 10,
+    "training_updates": 0,
+    "cuda_used": false
+  },
+  "profiles": {
+    "bundle": {
+      "path": "bundle_profile.json",
+      "sha256": "45823137c4e76a0faa1cfbd582bec23ed46cccd1f5536d39f1ea27feb62b5aca",
+      "command": ".venv/bin/python scripts/research/benchmarks/measure_env_memory.py --full-train --data-source bundle --env-counts 2 8 16 --steps 256 --output evidence/research/performance/bundle_worker_scaling/bundle_profile.json",
+      "wall_seconds": 111.18,
+      "process_max_rss_kib": 13852812,
+      "bundle_size_bytes": 3057875546
+    },
+    "frames": {
+      "path": "frames_reference_profile.json",
+      "sha256": "f3fb801bae02a03d47655e3a2accbb64ca572f1c048027d9c432437eb76f71ff",
+      "command": ".venv/bin/python scripts/research/benchmarks/measure_env_memory.py --full-train --data-source frames --env-counts 2 8 16 --steps 256 --output evidence/research/performance/bundle_worker_scaling/frames_reference_profile.json",
+      "wall_seconds": 126.53,
+      "process_max_rss_kib": 16251092
+    }
+  },
+  "semantics_validation": {
+    "test": "tests/unit/simulation/test_environment/test_bundle_env_equivalence.py",
+    "command": ".venv/bin/python -m pytest tests/unit/simulation/test_environment/test_bundle_env_equivalence.py -q",
+    "result": "16 passed in 6.30 seconds",
+    "output_archive": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/bundle_env_equivalence_validation.log"
+  },
+  "limitations": [
+    "The bundle profile ran before the frame profile, so feature-cache preparation timings are not directly comparable.",
+    "Both measurements are environment-only and do not measure learning updates, checkpoint I/O, full evaluation, GPU utilization, reports, or archive writeback.",
+    "The results do not validate a campaign worker count or establish end-to-end training throughput."
+  ]
+}

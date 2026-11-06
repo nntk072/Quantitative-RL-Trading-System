@@ -3,11 +3,11 @@
   "failed_groups": [],
   "groups": [
     {
-      "column_warmup_sha256": "2d8d70a0c2efeaa01c415191a7f0e1b053318b5705771070d98d51b543dac285",
+      "column_warmup_sha256": "12ca1121bba38e69e216c0d885c39d4af55278e6ff8261089a3eed944de086fd",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/legacy_variant_ladder_a1_sl-09f573d5fdba",
       "group_key": "09f573d5fdbae3dab6066bbe8e72e7c76a2405018518cc9c46e5738e3c689825",
       "log_sha256": "4aef63ec992a969ce6242efe20b125724d21a9a60ac34cd1e35797be2649ff82",
-      "profile_config_sha256": "e1841753ce93b99b54c31316aae1656db98069f4f99af18346f95b1c04400335",
+      "profile_config_sha256": "ca01b8c1cf881f1ad7b2bc7f636f4c6bb3b8273cf19b7c30a04d1c45bcac6401",
       "profile_ids": [
         "legacy_variant/knob_age_20",
         "legacy_variant/knob_age_60",
@@ -29,7 +29,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "legacy_variant/ladder_a1_sl",
-        "config_sha256": "e1841753ce93b99b54c31316aae1656db98069f4f99af18346f95b1c04400335",
+        "config_sha256": "ca01b8c1cf881f1ad7b2bc7f636f4c6bb3b8273cf19b7c30a04d1c45bcac6401",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -41,7 +41,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "c480e0da81a0df958fa526ddb5857e5f8c6ddf863d3d4bdc0fbc3e5065c5f381",
+        "resolved_config_sha256": "28c07efde104c7f6b43fae71c4359c7cf05bf0c8d81f8365aa6f8310e7fa6d0d",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -54,25 +54,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 160,
-            "features_where_missing_collides_with_finite_zero": 43,
-            "features_with_nonfinite_values": 105,
-            "nonfinite_cells": 2064834,
-            "nonfinite_fraction": 0.03672179112886704,
+            "features_where_missing_collides_with_finite_zero": 42,
+            "features_with_nonfinite_values": 104,
+            "nonfinite_cells": 1812880,
+            "nonfinite_fraction": 0.03224094561679073,
             "sampled_cells": 56229120,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -171,14 +171,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "19addc32f57866c1929f5d169671f4717b1b29a0d1b758d1d018208696e907d5"
+      "summary_sha256": "f586db8ff022f60e5f5e620aac5e01ea6fc11873f4f2806b6f14ec356d90703c"
     },
     {
-      "column_warmup_sha256": "07aafd63b20f356897996d02f73489818334b0603cc98f15c11d4900190b9af4",
+      "column_warmup_sha256": "9c7f812613d9f105a7bf6d2bdb6132d0a225a60d7151df80a280986d07cdeab0",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/legacy_variant_ladder_a4b_po3_ifvg-143b93716c13",
       "group_key": "143b93716c139b9d58953c28ac2ee8d4eaaded132e49efc66ff22655ffd8bae0",
       "log_sha256": "c2065403ad21eb00fe6cfbea13ce7715dbaed60b4e87d7e773e064d00c0362c2",
-      "profile_config_sha256": "87eac9864821b0faf9986162c2fcb8bc4d7466c8da6ad937be7edd2b2edb3dae",
+      "profile_config_sha256": "d8b6c429af2cba519a90a0c73bd08debfb2c5c0d9b5491e94538c7973c64492e",
       "profile_ids": [
         "legacy_variant/ablation_po3_ifvg",
         "legacy_variant/ladder_a0_flat_po3",
@@ -192,7 +192,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "legacy_variant/ladder_a4b_po3_ifvg",
-        "config_sha256": "87eac9864821b0faf9986162c2fcb8bc4d7466c8da6ad937be7edd2b2edb3dae",
+        "config_sha256": "d8b6c429af2cba519a90a0c73bd08debfb2c5c0d9b5491e94538c7973c64492e",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -204,7 +204,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "a0860808b5664f7fa589da65898fd71af88adb444a3a9d9150c27c5a1e25e56f",
+        "resolved_config_sha256": "b6d2cf235d07932c1e1353cb748077cf02deed46deb28eae2c2e4d49bc79e6c0",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -217,25 +217,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 188,
-            "features_where_missing_collides_with_finite_zero": 43,
-            "features_with_nonfinite_values": 107,
-            "nonfinite_cells": 2231423,
-            "nonfinite_fraction": 0.033774019658413985,
+            "features_where_missing_collides_with_finite_zero": 42,
+            "features_with_nonfinite_values": 106,
+            "nonfinite_cells": 1979469,
+            "nonfinite_fraction": 0.029960534116221387,
             "sampled_cells": 66069216,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -334,14 +334,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "c60a58c5bf1352617bcbfff201ece6a1bf5cc4baba1c6ae68da44a4761333d6e"
+      "summary_sha256": "8c2d2d322eb474202b006ba6163159c79a2033c521926d982b0b1fab87229d15"
     },
     {
-      "column_warmup_sha256": "09ce69c31977950251aa18654ec73d75044ca30d12e16aedc2901127076562b2",
+      "column_warmup_sha256": "674edf3dfd0fbc9ff5a38e36d0579d19fef5b5b2bff20964fd3f7458476fe85f",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/legacy_variant_rq_mtf_treatment_reasoning-16aa7873cf86",
       "group_key": "16aa7873cf865ce588b4813a0fad5e8480ff042957f8b8c1d4de37bd6fd34929",
       "log_sha256": "efe1c529b17918f1de86e556547254aa71e8a13b7d7bff430d9fe440b4c7687a",
-      "profile_config_sha256": "cd42aa2634b10d13f25a5e11d2af86f1aa7282eb71bfd1ac8ce83ee4cfe63e71",
+      "profile_config_sha256": "7d4eda88538e4c28cc5866b008120bc3bf4522c9bd0402612f5ef2e9ab056eb8",
       "profile_ids": [
         "legacy_variant/rq_mtf_treatment_reasoning"
       ],
@@ -349,7 +349,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "legacy_variant/rq_mtf_treatment_reasoning",
-        "config_sha256": "cd42aa2634b10d13f25a5e11d2af86f1aa7282eb71bfd1ac8ce83ee4cfe63e71",
+        "config_sha256": "7d4eda88538e4c28cc5866b008120bc3bf4522c9bd0402612f5ef2e9ab056eb8",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -361,7 +361,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "b9163521acd864a4beb95aab63997e1014c935ab68652b479002999d1d1c8a92",
+        "resolved_config_sha256": "151511405df1a0a841156b627766324f65a9e2bc695f41c4aacf16b3210baf7d",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -374,25 +374,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 322,
-            "features_where_missing_collides_with_finite_zero": 46,
-            "features_with_nonfinite_values": 121,
-            "nonfinite_cells": 5209767,
-            "nonfinite_fraction": 0.046038495700784256,
+            "features_where_missing_collides_with_finite_zero": 45,
+            "features_with_nonfinite_values": 120,
+            "nonfinite_cells": 4957813,
+            "nonfinite_fraction": 0.04381198861403827,
             "sampled_cells": 113161104,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -491,14 +491,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "f864064a45147cf18ed1fdef736cb3927b88188c5c4d24149c1fe87613fb20be"
+      "summary_sha256": "de98d03c657389b51fd65ee5f023117b224e0e7fda2ded27ca5710da49aba130"
     },
     {
-      "column_warmup_sha256": "c132643e568eddac7e206bc655ffd6687bb69672f177d2a857634c825edab91c",
+      "column_warmup_sha256": "3f0be97fcb3665cc02bb84e57511cf7f808907b0384c90a0d7fbfa606b88b4d8",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/legacy_variant_ladder_a4b_distribution-391e8a78b14d",
       "group_key": "391e8a78b14d2fe32a5a71c74efd0543385484e44629c7022282040fc04b1d76",
       "log_sha256": "bd65c75da80d6ec3bbcaf9bd05ea2f50a9a4ed812bbaba7299d28d87dd022ad4",
-      "profile_config_sha256": "103808a0e2e2b5185d7a6d6eb9bb5dd1abde72e546c13da3d1dd97255fca011a",
+      "profile_config_sha256": "332bf8aadb42249d9c7cea2ba9a6846a1ef5b3edf2cbb85eaac20dc3994df9d0",
       "profile_ids": [
         "legacy_variant/ablation_distribution",
         "legacy_variant/ladder_a0_flat_dist",
@@ -512,7 +512,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "legacy_variant/ladder_a4b_distribution",
-        "config_sha256": "103808a0e2e2b5185d7a6d6eb9bb5dd1abde72e546c13da3d1dd97255fca011a",
+        "config_sha256": "332bf8aadb42249d9c7cea2ba9a6846a1ef5b3edf2cbb85eaac20dc3994df9d0",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -524,7 +524,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "5339d858d2c815930f6cd2f97579b4bb9722fc361c53d2c40f1037f6fc6a0dbc",
+        "resolved_config_sha256": "583e93a8269e13f44957ea988bf00a4052551bc23e8feb89a3ca56dadc1b528d",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -537,25 +537,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 189,
-            "features_where_missing_collides_with_finite_zero": 43,
-            "features_with_nonfinite_values": 107,
-            "nonfinite_cells": 2231423,
-            "nonfinite_fraction": 0.0335953211417028,
+            "features_where_missing_collides_with_finite_zero": 42,
+            "features_with_nonfinite_values": 106,
+            "nonfinite_cells": 1979469,
+            "nonfinite_fraction": 0.029802012771691117,
             "sampled_cells": 66420648,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -654,14 +654,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "de0bc73c47fc36698f9981618c2415a5b1db8ac9ebc72ca19944aff32632abe1"
+      "summary_sha256": "5f7f080b1e6efcdc26cfa7816afa892f14bd00de70fd6fbacb186f650b1443a0"
     },
     {
-      "column_warmup_sha256": "ef60a618ecfc7080abd58715ee5464a4a78ed3492ccdb10c0055fe5c7a7b1ee1",
+      "column_warmup_sha256": "f82808d6c85bcf3126c6fd227e9defcaa934d9ba44a992e1af90f1402bff99d4",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/features_pd_context-3962eaebafcd",
       "group_key": "3962eaebafcde21f30630a7aa76bdf81b8c4eff492be780f21bd9b51bdaccc43",
       "log_sha256": "55c837311af923d68329fae74d31fc335dc5f675077cdf7e4abde82cbf84e9e7",
-      "profile_config_sha256": "cffc129f5860ca655412ea1174ed87c8269b361b7cb8f53b8140153065cf1387",
+      "profile_config_sha256": "5d70c6b8f9f6054dfbf38890f0d8ff865aac55131caa23b27e6a69191aa98064",
       "profile_ids": [
         "features/pd_context",
         "legacy_variant/ablation_pd_context"
@@ -670,7 +670,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "features/pd_context",
-        "config_sha256": "cffc129f5860ca655412ea1174ed87c8269b361b7cb8f53b8140153065cf1387",
+        "config_sha256": "5d70c6b8f9f6054dfbf38890f0d8ff865aac55131caa23b27e6a69191aa98064",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -682,7 +682,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "ed5468be5a4d01c6a25818776dfb45e6438924b5de9bc28ccd40ed6cb65a1f9b",
+        "resolved_config_sha256": "5b7546c22d51c7f1a75051478b9235ca22c8062d1c635529e4ba968a7ce63211",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -695,25 +695,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 107,
-            "features_where_missing_collides_with_finite_zero": 31,
-            "features_with_nonfinite_values": 67,
-            "nonfinite_cells": 1262653,
-            "nonfinite_fraction": 0.033578317646380536,
+            "features_where_missing_collides_with_finite_zero": 30,
+            "features_with_nonfinite_values": 66,
+            "nonfinite_cells": 1262639,
+            "nonfinite_fraction": 0.03357794533787847,
             "sampled_cells": 37603224,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -812,14 +812,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "273b3ef32fea815a6bb5b9e40976ed989efa7e032e2d5f28eebcd03ca3eb2d47"
+      "summary_sha256": "ee2c233cbe9e1be986837c9747de28662010ee3e9f8fee7d601a2870df67817c"
     },
     {
-      "column_warmup_sha256": "7a23bbc6cb91f5a377cf417b30cc5300c0e4a33f5cd86b4ea219dfb307847aaa",
+      "column_warmup_sha256": "c1c4099247821e7ef15c85a32c569a3bf8fc274738fee0bf2a63f3dd5ff976b0",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/experiment_run_regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_log-3c768c8b070e",
       "group_key": "3c768c8b070e2e5508ec60c0bef3909ce9f645a1b52348b7bd6c759e7403a0fd",
       "log_sha256": "9d271f3ae33da362d7434a385d35db6e6ad8161cfee29a7d1bf23ff3576b8ad9",
-      "profile_config_sha256": "ed014edc75c7ff35be53f45fc75f570b0bf7dca5c46b64d9cba936313a8476ea",
+      "profile_config_sha256": "68c28ac4f1bfabc4edd4e0bb6495ecb33969464eb8d8e8b7e4f3a0b8241e8081",
       "profile_ids": [
         "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_20261026_v1",
         "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_no_cooldown_20261027_v1",
@@ -838,7 +838,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_entry_ideas_loggrowth_20261026_v1",
-        "config_sha256": "ed014edc75c7ff35be53f45fc75f570b0bf7dca5c46b64d9cba936313a8476ea",
+        "config_sha256": "68c28ac4f1bfabc4edd4e0bb6495ecb33969464eb8d8e8b7e4f3a0b8241e8081",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -850,7 +850,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "a353bf5c97a937dd6b86de68c9540055a3496e304c6883ed68ebc7a2a3e57a98",
+        "resolved_config_sha256": "840bb82bc907f27daf565c62d2652d71e99771d08afda32623654a0cc8900c3b",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -863,25 +863,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 299,
-            "features_where_missing_collides_with_finite_zero": 48,
-            "features_with_nonfinite_values": 96,
-            "nonfinite_cells": 5881504,
-            "nonfinite_fraction": 0.055972654567026714,
+            "features_where_missing_collides_with_finite_zero": 47,
+            "features_with_nonfinite_values": 95,
+            "nonfinite_cells": 5881490,
+            "nonfinite_fraction": 0.05597252133288049,
             "sampled_cells": 105078168,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -980,14 +980,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "472ca485e1c895d7a84ab0f65d892599d9658c62e039fac90fecd1d4dea0449f"
+      "summary_sha256": "8839e934984f83a171fd468b11202e468df1c33e718be65433df682e38149aaf"
     },
     {
-      "column_warmup_sha256": "08539d55f885e7ceb0a917df6226a52d724a5d22ac88aadecdc9947e204562a5",
+      "column_warmup_sha256": "731c3415e1fe2765214e6e58e69fbb00b68247951f2e8dad3d134a3951e6d8c4",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/legacy_variant_regime_d1_norm_tcn_control-469c7f8e1264",
       "group_key": "469c7f8e126402882947f2bc858b2af281095543efbe01e180abce397a6fd08c",
       "log_sha256": "aa0603f1ae4abd705e0e948aafb80bd04477fc6ba7ae301b49639382ca044460",
-      "profile_config_sha256": "701d37b473828425f06c2af6b100b49baedf87021bd447aa8139d4cf9be467a9",
+      "profile_config_sha256": "1fbf295e6e48d94b615087a80fbee6ec163348d3f8dd517bf5d5aa6bb07478f8",
       "profile_ids": [
         "legacy_variant/regime_d1_norm_tcn_control",
         "legacy_variant/regime_d1_norm_tcn_regime"
@@ -996,7 +996,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "legacy_variant/regime_d1_norm_tcn_control",
-        "config_sha256": "701d37b473828425f06c2af6b100b49baedf87021bd447aa8139d4cf9be467a9",
+        "config_sha256": "1fbf295e6e48d94b615087a80fbee6ec163348d3f8dd517bf5d5aa6bb07478f8",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -1008,7 +1008,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "67fe1ba76c2b3792ccdbe0ae1b8d5b7790400e553e2a4860af625f3981b02ebf",
+        "resolved_config_sha256": "e2f4782521b97e2fabaac151cdf012e6f2e2a97db0ca80f417d9326341f9bc95",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -1021,25 +1021,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 160,
-            "features_where_missing_collides_with_finite_zero": 43,
-            "features_with_nonfinite_values": 105,
-            "nonfinite_cells": 2064834,
-            "nonfinite_fraction": 0.03672179112886704,
+            "features_where_missing_collides_with_finite_zero": 42,
+            "features_with_nonfinite_values": 104,
+            "nonfinite_cells": 1812880,
+            "nonfinite_fraction": 0.03224094561679073,
             "sampled_cells": 56229120,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -1138,14 +1138,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "7fbc777c33af20c7eb0f772c7028937ac2fde8673f9d8bd7b3669e24d7adf3b8"
+      "summary_sha256": "57d88486ffa6a880f7b1f748dfb6bf8dbd54b185a46910403aae35afec520b07"
     },
     {
-      "column_warmup_sha256": "aae6dfff1a0b5a41c901f43614a4c7c3db10fefa4c6334c33f641575c256775b",
+      "column_warmup_sha256": "e930e94b97b4e659bacfa7ee49d53e39cf85e9de53022d25fa692c9b6fb8fa7c",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/research_trade_setup_mtf_shared_tcn_2m-5c390985b21b",
       "group_key": "5c390985b21b7662e7421753f228ac9f100757b6eb2a147ef1306166642ca380",
       "log_sha256": "0842a2759d36042a17e138c46402717b0bf66c6999e17de0ca98973aaf6c346d",
-      "profile_config_sha256": "23486b463b009fc110b930fc9b7bac503c51459b4bb3a1fd20b9f1411629745b",
+      "profile_config_sha256": "d8dbe59486709db25151a718c3a977905b0f90ba2c617388f1f5b9bc8ea6cc6c",
       "profile_ids": [
         "research/trade_setup_mtf_shared_tcn_2m"
       ],
@@ -1153,7 +1153,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "research/trade_setup_mtf_shared_tcn_2m",
-        "config_sha256": "23486b463b009fc110b930fc9b7bac503c51459b4bb3a1fd20b9f1411629745b",
+        "config_sha256": "d8dbe59486709db25151a718c3a977905b0f90ba2c617388f1f5b9bc8ea6cc6c",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -1165,7 +1165,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "03662f36b4193a9d6da65bc2b1ff077b19058801c584a120430a9958e526189c",
+        "resolved_config_sha256": "7e6a847bd31116dff1d329986ce042554488878efe25a2d355227e9a0fdfcdda",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -1178,25 +1178,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 282,
-            "features_where_missing_collides_with_finite_zero": 36,
-            "features_with_nonfinite_values": 85,
-            "nonfinite_cells": 4943903,
-            "nonfinite_fraction": 0.049886097230718365,
+            "features_where_missing_collides_with_finite_zero": 35,
+            "features_with_nonfinite_values": 84,
+            "nonfinite_cells": 4943889,
+            "nonfinite_fraction": 0.04988595596472645,
             "sampled_cells": 99103824,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -1295,14 +1295,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "60ba41de5c500d9f8383138b12afd309f88a3fc7e781cecb1178fdc83f889181"
+      "summary_sha256": "21e58834b552fb18fc33f198b731f04b6c4f1055a5ff8301572c740b7e941227"
     },
     {
-      "column_warmup_sha256": "12b1eb80db679e6bd1fa81db52ec1108840eef933513fa685ee6904ad36a709a",
+      "column_warmup_sha256": "9d0666e0aae038cfc126a26b68925d5410143f6eb23181854ab6fdee80329f6c",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/experiment_run_regime_tcn_context_r2_seed50_train2025_2m_normal_mtf_cont-6276eeb24398",
       "group_key": "6276eeb24398417e7c58022fa0ceb58d51a0d0d70d233e64d229d688ae6f0b11",
       "log_sha256": "96819478525b6ac47c91df84fc4d79efcbb06cab7cb1deb022ea88c5df58b335",
-      "profile_config_sha256": "cd1f63d0ed0995d30666939099b1bef33ef468ad5d594137c7741d8755f11cb7",
+      "profile_config_sha256": "24f093713ed00b542ec39f4547b575cc73b889449872fd6b8d93bad76f34dd87",
       "profile_ids": [
         "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_mtf_context_20261026"
       ],
@@ -1310,7 +1310,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_mtf_context_20261026",
-        "config_sha256": "cd1f63d0ed0995d30666939099b1bef33ef468ad5d594137c7741d8755f11cb7",
+        "config_sha256": "24f093713ed00b542ec39f4547b575cc73b889449872fd6b8d93bad76f34dd87",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -1322,7 +1322,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "bc8b115e8ff2291e4b240b6e7a4a4cb1852c4ec769539055c4955069156e06c5",
+        "resolved_config_sha256": "cc56e56d710160a06ed786b5fdccb5b0be0d90c16966259f33e39c877494ae03",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -1335,25 +1335,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 299,
-            "features_where_missing_collides_with_finite_zero": 48,
-            "features_with_nonfinite_values": 96,
-            "nonfinite_cells": 5881504,
-            "nonfinite_fraction": 0.055972654567026714,
+            "features_where_missing_collides_with_finite_zero": 47,
+            "features_with_nonfinite_values": 95,
+            "nonfinite_cells": 5881490,
+            "nonfinite_fraction": 0.05597252133288049,
             "sampled_cells": 105078168,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -1452,14 +1452,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "924002b398ef74c71884a0c802ae230dd78941e69ac5f641940885ddd9bdc0df"
+      "summary_sha256": "441ca88a76105254edad7c61b1c8d3e6d211a27b806f0a2266a04211eee8fa7b"
     },
     {
-      "column_warmup_sha256": "d6a4f9164c4104b6df94314b1b87ff3701dbf41a14aa8d3efa5ab3de78300a27",
+      "column_warmup_sha256": "80c7210c4fdd62e284157b3977e2ccad6159ad3cdf9a06de0496d0a8b1519091",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/features_po3_mtf-739b6ab49724",
       "group_key": "739b6ab497242ca532e96109407d3cd5e9124dcce8daa5388e1c6dd9229952fd",
       "log_sha256": "3ece7c925195081aa4dfe0193f01044b1942ac1aad7460311f9762300b1a0abc",
-      "profile_config_sha256": "f2e601b773c5b89e46568bc2903402852b75fce3d4097a5cabe3d0363070e678",
+      "profile_config_sha256": "47a12f6f17edda7c504b0a9192c2874b41e52d1b885e618aab96d0d45ca1ccc9",
       "profile_ids": [
         "features/po3_mtf"
       ],
@@ -1467,7 +1467,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "features/po3_mtf",
-        "config_sha256": "f2e601b773c5b89e46568bc2903402852b75fce3d4097a5cabe3d0363070e678",
+        "config_sha256": "47a12f6f17edda7c504b0a9192c2874b41e52d1b885e618aab96d0d45ca1ccc9",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -1479,7 +1479,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "19cf4a10a8238cd6abb92c9066d448e5e16d8efed2a191afade74ca1650c8946",
+        "resolved_config_sha256": "a324c659714dfd78bda8b2deec8a1df6485cb5837049d4791cb0ccbf2db0ea90",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -1492,25 +1492,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 80,
-            "features_where_missing_collides_with_finite_zero": 31,
-            "features_with_nonfinite_values": 63,
-            "nonfinite_cells": 254405,
-            "nonfinite_fraction": 0.009048870051674292,
+            "features_where_missing_collides_with_finite_zero": 30,
+            "features_with_nonfinite_values": 62,
+            "nonfinite_cells": 2451,
+            "nonfinite_fraction": 8.717902752168271e-05,
             "sampled_cells": 28114560,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -1609,14 +1609,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "91018bd8e7a202b973eff9a80e83b3173570d70a7404faead4dc5360b890f252"
+      "summary_sha256": "ea069233c655f93478288f203195b2fa426e62342d62360d5fe6178fb616f539"
     },
     {
-      "column_warmup_sha256": "ef60a618ecfc7080abd58715ee5464a4a78ed3492ccdb10c0055fe5c7a7b1ee1",
+      "column_warmup_sha256": "f82808d6c85bcf3126c6fd227e9defcaa934d9ba44a992e1af90f1402bff99d4",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/features_pd_context_mtf_swing_candidates-775e1010293e",
       "group_key": "775e1010293e610888e7e3e353a490f8b9c4616c483517362207bf3cf7b5628e",
       "log_sha256": "43ba7ac84e4d8900a87e740c97f409a6f78547835d60b2c7940377b8485a230f",
-      "profile_config_sha256": "376015eb1430b5372462d8a6fbf97b4842fd60fafc14eecbfd60dda57217e719",
+      "profile_config_sha256": "e54e4db9c575de7485d283837035c16f0cfbadffba2e6bf581501aa80f131e6e",
       "profile_ids": [
         "features/pd_context_mtf_swing_candidates"
       ],
@@ -1624,7 +1624,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "features/pd_context_mtf_swing_candidates",
-        "config_sha256": "376015eb1430b5372462d8a6fbf97b4842fd60fafc14eecbfd60dda57217e719",
+        "config_sha256": "e54e4db9c575de7485d283837035c16f0cfbadffba2e6bf581501aa80f131e6e",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -1636,7 +1636,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "bff1cb9ba456c5e2ad85acae914eb19cfa48f3478a23d4e256a708870113df14",
+        "resolved_config_sha256": "a4bb9f7e9de4a4a205c65562bcc7dcb043a5ad9c1aa126932b8a1ecf94ad5523",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -1649,25 +1649,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 107,
-            "features_where_missing_collides_with_finite_zero": 31,
-            "features_with_nonfinite_values": 67,
-            "nonfinite_cells": 1262653,
-            "nonfinite_fraction": 0.033578317646380536,
+            "features_where_missing_collides_with_finite_zero": 30,
+            "features_with_nonfinite_values": 66,
+            "nonfinite_cells": 1262639,
+            "nonfinite_fraction": 0.03357794533787847,
             "sampled_cells": 37603224,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -1766,14 +1766,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "5c7cac59563241869b260503d69a1901383bda93f9a0ada5d1130bf3e2ad70f3"
+      "summary_sha256": "91368dda422d7106a4f6d7783cb47515e7fb2da95e500f3a18deece885128773"
     },
     {
-      "column_warmup_sha256": "b2ec54c77ba457f25567c98a58dbfef0a5485130ea4af492ff76bee270e684db",
+      "column_warmup_sha256": "a398f95c07edf6304d1c3dd34d9048e6e57723fd08298f8f04180f0178a1b8d8",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/strategy_overlay_3_distribution-7911a50b99ff",
       "group_key": "7911a50b99fff1fd62b310de5605e80da229bb48b93b7d6a3c12388f540748b7",
       "log_sha256": "8d3fd61601f6ae8c2271ae45694c5529564bbf5d1c4dc91519c16595d072e16c",
-      "profile_config_sha256": "317a449e19c4aaeb74e564fb336203e452cb1f2deef0542776075a051691eb22",
+      "profile_config_sha256": "94cffdcbd00bab17491122ef780858e04a34cd06dd543c0629a8d860132e2b5b",
       "profile_ids": [
         "strategy_overlay/3_distribution"
       ],
@@ -1781,7 +1781,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "strategy_overlay/3_distribution",
-        "config_sha256": "317a449e19c4aaeb74e564fb336203e452cb1f2deef0542776075a051691eb22",
+        "config_sha256": "94cffdcbd00bab17491122ef780858e04a34cd06dd543c0629a8d860132e2b5b",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -1793,7 +1793,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "6e2ea4eeac1c64bf82ef3b8465d2d10ceafc671393848fbc3e9c4c3e1d02529e",
+        "resolved_config_sha256": "515b01590e07aee714dfd1172e110e86e017817e57640bd8d7df3204d9ac449d",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -1806,25 +1806,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 149,
-            "features_where_missing_collides_with_finite_zero": 33,
-            "features_with_nonfinite_values": 71,
-            "nonfinite_cells": 1965559,
-            "nonfinite_fraction": 0.03753690939054952,
+            "features_where_missing_collides_with_finite_zero": 32,
+            "features_with_nonfinite_values": 70,
+            "nonfinite_cells": 1965545,
+            "nonfinite_fraction": 0.037536642028068175,
             "sampled_cells": 52363368,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -1923,14 +1923,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "9ed85ccb3f04be83c468bd8da64f7f154ba3f086955fc63b4aa43bc6c965e2dd"
+      "summary_sha256": "3274a6aba174d87236a994133effc1b71a726d798f304c7f602340c13991d6df"
     },
     {
-      "column_warmup_sha256": "4a70c8d6a568cb8f56bbf1724dc65f7f35df82b9e220d970df8676a6b4ba7e4b",
+      "column_warmup_sha256": "e2fa4c60700b09b3e822b4a6b9a56ad08877cee921b9a75de3991529a0f69a91",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/research_trade_setup_mtf_reasoning_conditioned_no_strategy_state-88e24bb00d53",
       "group_key": "88e24bb00d5315ee2743d0e8cc1b041ce9bd497e7dbf5c73d605b8523c9f475c",
       "log_sha256": "90e0fb9448db8e58e6c6c560604906a2d61333015604ae3c456e9ad12408ccfc",
-      "profile_config_sha256": "d43c26377ff353171e2feb76c03cdb7622338a08456115e29a0059775e984db7",
+      "profile_config_sha256": "04050aa45ad9f6b905541ed5edb5e2ec22a92e7b904e4a194c25b70f354d2a39",
       "profile_ids": [
         "research/trade_setup_mtf_reasoning_conditioned_no_strategy_state"
       ],
@@ -1938,7 +1938,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "research/trade_setup_mtf_reasoning_conditioned_no_strategy_state",
-        "config_sha256": "d43c26377ff353171e2feb76c03cdb7622338a08456115e29a0059775e984db7",
+        "config_sha256": "04050aa45ad9f6b905541ed5edb5e2ec22a92e7b904e4a194c25b70f354d2a39",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -1950,7 +1950,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "729cacf2efe51bfbd8fbdfbd07cbcb34079082effd35f27503371a7e7da324e9",
+        "resolved_config_sha256": "cb6943720fc9609b03c01ed0a33fcfa1708b51fc8bb448c368db2a6c71444e88",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -1963,25 +1963,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 240,
-            "features_where_missing_collides_with_finite_zero": 32,
-            "features_with_nonfinite_values": 77,
-            "nonfinite_cells": 3147396,
-            "nonfinite_fraction": 0.0373163229301828,
+            "features_where_missing_collides_with_finite_zero": 31,
+            "features_with_nonfinite_values": 76,
+            "nonfinite_cells": 3147382,
+            "nonfinite_fraction": 0.037316156942642294,
             "sampled_cells": 84343680,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -2080,14 +2080,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "506cffcea50d1d4277dc55f5611c8376c127c650ab3790428488186bffa7399a"
+      "summary_sha256": "a2b76eaaf8be2008c7c8617cf4f80e1a60266e26a5d6c4c3828051c8693b08de"
     },
     {
-      "column_warmup_sha256": "aae6dfff1a0b5a41c901f43614a4c7c3db10fefa4c6334c33f641575c256775b",
+      "column_warmup_sha256": "e930e94b97b4e659bacfa7ee49d53e39cf85e9de53022d25fa692c9b6fb8fa7c",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/research_trade_setup_mtf_m1_htf_snapshot_2m-9bd81ceb10af",
       "group_key": "9bd81ceb10af521c457dc30e77276e1d1b59bab66ffa7b2f62474e7a06e99f65",
       "log_sha256": "ca5aac6bb5c8fc6d75954671b56016ed5e1ca195be5b3d099db0a6fa2e73d73d",
-      "profile_config_sha256": "51c5e100a55eb992ae7aca7824cc12b1c3aa4eb31e5a5093692a68dc7ce8b5f1",
+      "profile_config_sha256": "8263d4804d82fd6cceaf63f63a057f545904b3538c7e398680d7a2baf2d7de66",
       "profile_ids": [
         "research/trade_setup_mtf_m1_htf_snapshot_2m"
       ],
@@ -2095,7 +2095,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "research/trade_setup_mtf_m1_htf_snapshot_2m",
-        "config_sha256": "51c5e100a55eb992ae7aca7824cc12b1c3aa4eb31e5a5093692a68dc7ce8b5f1",
+        "config_sha256": "8263d4804d82fd6cceaf63f63a057f545904b3538c7e398680d7a2baf2d7de66",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -2107,7 +2107,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "a6d98397d569b7c9223a0758d80c448b74a81054c5927944d31947ccecfc4188",
+        "resolved_config_sha256": "8665ddf5c0bf1c751ad83bbe8522d2338f648ad4ef9e922965bd0d9103280399",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -2120,25 +2120,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 282,
-            "features_where_missing_collides_with_finite_zero": 36,
-            "features_with_nonfinite_values": 85,
-            "nonfinite_cells": 4943903,
-            "nonfinite_fraction": 0.049886097230718365,
+            "features_where_missing_collides_with_finite_zero": 35,
+            "features_with_nonfinite_values": 84,
+            "nonfinite_cells": 4943889,
+            "nonfinite_fraction": 0.04988595596472645,
             "sampled_cells": 99103824,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -2237,14 +2237,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "d3a7a4461bb475e589def236da6a8eeb6d6ad33ddfe05b45f264aec699f58b01"
+      "summary_sha256": "830b93f0a95edc6b130178cdab2ca7211fa39f4ee7096a8712ecc6e7e2ef8f21"
     },
     {
-      "column_warmup_sha256": "b74872dd91dc342f5d142a7572cd2e81b0da8229038db4cc9a78cecc3c51e611",
+      "column_warmup_sha256": "e724304e6944f1be8f171114a3c4a3d70d3c8f990bec5aa12741094fd4072b82",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/features_full_po3_mtf-9c9482009813",
       "group_key": "9c94820098138f2e9bb2bbe1b3a78aef5696fe294f8241e933ba5b44fea57510",
       "log_sha256": "d0b4ab4ca4d30aa1b002affea343d957d0e08d90c70f1f88e7d63f980102169e",
-      "profile_config_sha256": "d7d726e693d371c42e68481f449a87f30e36df47d7608e1c3698baea6214832a",
+      "profile_config_sha256": "bd0c6173036aaacede78c33895ce857485dac1082a3e37c0c7d8c40acec072a0",
       "profile_ids": [
         "features/full_po3_mtf"
       ],
@@ -2252,7 +2252,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "features/full_po3_mtf",
-        "config_sha256": "d7d726e693d371c42e68481f449a87f30e36df47d7608e1c3698baea6214832a",
+        "config_sha256": "bd0c6173036aaacede78c33895ce857485dac1082a3e37c0c7d8c40acec072a0",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -2264,7 +2264,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "0ce0e9555c352ba429b3b481de722c6f8073e0759c2417db6aa3872c767e2131",
+        "resolved_config_sha256": "bc87e6fe06887a09fe6a98342d5c8ca1ebe1168703785cbe983c1595b6d4c559",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -2277,25 +2277,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 91,
-            "features_where_missing_collides_with_finite_zero": 39,
-            "features_with_nonfinite_values": 71,
-            "nonfinite_cells": 254417,
-            "nonfinite_fraction": 0.007955425825739286,
+            "features_where_missing_collides_with_finite_zero": 38,
+            "features_with_nonfinite_values": 70,
+            "nonfinite_cells": 2463,
+            "nonfinite_fraction": 7.701613417655212e-05,
             "sampled_cells": 31980312,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -2394,14 +2394,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "61fb0b5ee85b3f2962f40a1239ed9e42dd7e48ac44d383b6ba5261c637715823"
+      "summary_sha256": "7b45b80bfe04c46f5f3f6d61e5d32d75e5170ac7ce09613d49bc99071daf1e5b"
     },
     {
-      "column_warmup_sha256": "aae6dfff1a0b5a41c901f43614a4c7c3db10fefa4c6334c33f641575c256775b",
+      "column_warmup_sha256": "e930e94b97b4e659bacfa7ee49d53e39cf85e9de53022d25fa692c9b6fb8fa7c",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/research_trade_setup_mtf_reasoning-ac660cca48a1",
       "group_key": "ac660cca48a11729d8cdd26a3d645fe67bb8da0a4911f700637262bdc96f53cf",
       "log_sha256": "122244ac0fa476b89f02fd320ae1492b10e0d36d0455179d2ff70972b32ed7a9",
-      "profile_config_sha256": "2b995930f078b062a5425b9d11b95d8684e3ee7f76a473069fbe2cc417f778e0",
+      "profile_config_sha256": "c74e05df647250d2c89d1f02b854f53766bda982f2ad5dc9e6e16a018fa2a317",
       "profile_ids": [
         "research/trade_setup_mtf_reasoning",
         "research/trade_setup_mtf_reasoning_2m",
@@ -2412,7 +2412,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "research/trade_setup_mtf_reasoning",
-        "config_sha256": "2b995930f078b062a5425b9d11b95d8684e3ee7f76a473069fbe2cc417f778e0",
+        "config_sha256": "c74e05df647250d2c89d1f02b854f53766bda982f2ad5dc9e6e16a018fa2a317",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -2424,7 +2424,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "4be341db7c2b7ddf0f0d878d346b423b69c3e11a5649d16212125f1945c44978",
+        "resolved_config_sha256": "28c8d80bc86cb5aa845191cff485418b441c79da8f04ec8629f265d791b98733",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -2437,25 +2437,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 282,
-            "features_where_missing_collides_with_finite_zero": 36,
-            "features_with_nonfinite_values": 85,
-            "nonfinite_cells": 4943903,
-            "nonfinite_fraction": 0.049886097230718365,
+            "features_where_missing_collides_with_finite_zero": 35,
+            "features_with_nonfinite_values": 84,
+            "nonfinite_cells": 4943889,
+            "nonfinite_fraction": 0.04988595596472645,
             "sampled_cells": 99103824,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -2554,14 +2554,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "fb8a88b61b3fd367427426d676b7bcb89a1a83078186bbf6c21db4fa7a3c36e2"
+      "summary_sha256": "68df328dcd70a718bed1368fb988f2a2e9987824452bef603952c5f8f841444a"
     },
     {
-      "column_warmup_sha256": "5b7171ecea014c863399c1d85a30ec600266ce4c828d61ccaaa43452b4eeef1a",
+      "column_warmup_sha256": "889c94dacd2639605a8be2d1f511b9a9f41be3d23e223304c8f1c44fbafbda1b",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/strategy_overlay_2_po3_ifvg-ae4393e8ce01",
       "group_key": "ae4393e8ce01f9919d8548b83cb805748c8625fec0eacfaab56e091f45f3fd18",
       "log_sha256": "972ed788f36ed3a42c5460241dfac02ca9edd26373327a153459c0f18c723f14",
-      "profile_config_sha256": "b50bed24fb47c47906d14dc5fd4d355709a171cc3d0e6ddc316f3335af35d652",
+      "profile_config_sha256": "1987f6cfcb06ef8783b939c8fc0eeb7553dde02dc3526ced58b87a508def957e",
       "profile_ids": [
         "strategy_overlay/2_po3_ifvg"
       ],
@@ -2569,7 +2569,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "strategy_overlay/2_po3_ifvg",
-        "config_sha256": "b50bed24fb47c47906d14dc5fd4d355709a171cc3d0e6ddc316f3335af35d652",
+        "config_sha256": "1987f6cfcb06ef8783b939c8fc0eeb7553dde02dc3526ced58b87a508def957e",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -2581,7 +2581,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "a22048322e052bf43456577fa0c26c7722b50891c446d7ede2e094929ab008de",
+        "resolved_config_sha256": "79af7ca0e18ea981506d47fd10497f6285da1975b48374a32eb7f75a0807a031",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -2594,25 +2594,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 148,
-            "features_where_missing_collides_with_finite_zero": 33,
-            "features_with_nonfinite_values": 71,
-            "nonfinite_cells": 1965559,
-            "nonfinite_fraction": 0.03779053715670188,
+            "features_where_missing_collides_with_finite_zero": 32,
+            "features_with_nonfinite_values": 70,
+            "nonfinite_cells": 1965545,
+            "nonfinite_fraction": 0.03779026798771728,
             "sampled_cells": 52011936,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -2711,14 +2711,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "46fc038172867e6b0acb6d47d952ae2453a18b6477a4edbafb15cbc384273329"
+      "summary_sha256": "a26f39bc4374f06386e4f68b43bc55754938cd567d36d0c5250826b34fc90584"
     },
     {
-      "column_warmup_sha256": "da0c8dd168866438c9504f589772e5b0c3170c01ab560fbbf600cdc10d037001",
+      "column_warmup_sha256": "08800d774e5b021fd1b37186084734b27410f46bb8178b156ebb582c6add268b",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/experiment_run_regime_d1_norm_r1_seed50_train2025_2m-b0ae7a41f538",
       "group_key": "b0ae7a41f53802fc17553171d3d4b357bdeb635204509a6d73751fdafd84300c",
       "log_sha256": "bd961bd0b5befac1f30081ce7a03673f1209309228235355528c99801af5b759",
-      "profile_config_sha256": "5a5fdf284833fcbc79e76099866b3dffbaa9135b15e9eb9fb534f5b15c833c5f",
+      "profile_config_sha256": "c1b5c60dd4fd811c978b1d36d657498604fbfddc730eeecf320c180f7aa237f2",
       "profile_ids": [
         "experiment_run/regime_d1_norm_r1_seed50_train2025_2m",
         "experiment_run/regime_d1_norm_r1_seed50_train2025_2m_retry1",
@@ -2729,7 +2729,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "experiment_run/regime_d1_norm_r1_seed50_train2025_2m",
-        "config_sha256": "5a5fdf284833fcbc79e76099866b3dffbaa9135b15e9eb9fb534f5b15c833c5f",
+        "config_sha256": "c1b5c60dd4fd811c978b1d36d657498604fbfddc730eeecf320c180f7aa237f2",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -2741,7 +2741,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "32ff1e95e99ef37d8df8d528186878725d18b12c60ae7dfa65912d1837ec6f31",
+        "resolved_config_sha256": "e535ba00bd7a406f64165e968521ce5175077af29b22405875ea360166eed264",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -2754,25 +2754,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 78,
-            "features_where_missing_collides_with_finite_zero": 29,
-            "features_with_nonfinite_values": 61,
-            "nonfinite_cells": 2463,
-            "nonfinite_fraction": 8.985215653931082e-05,
+            "features_where_missing_collides_with_finite_zero": 28,
+            "features_with_nonfinite_values": 60,
+            "nonfinite_cells": 2449,
+            "nonfinite_fraction": 8.93414256454617e-05,
             "sampled_cells": 27411696,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -2871,14 +2871,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "174d72097b2f4f8e286bfd7f2e5deaeefe88468d8e98d4fd0551898181ed8a93"
+      "summary_sha256": "5db9e111f91f58979291f279456fb38de52a1a71bc840c058a574399e2c9a15d"
     },
     {
-      "column_warmup_sha256": "c6eb6fef628cea489510e76f46caa7ae3587f6ad41a45857be642aedcd213f45",
+      "column_warmup_sha256": "683d03c1dc39d8c59c6e91aedd6306fa4b64d90efc61bc617000618dc5fa89b4",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/features_fvg_ifvg_mtf-b36d95fd8f83",
       "group_key": "b36d95fd8f8398bfc586f2218b1b5c618073cbbebcf935883fad2d2c2c1d9f9e",
       "log_sha256": "73765358db1b8086d66377cf876d42551c92f90dbbfc8e58c08c04e0b14313c5",
-      "profile_config_sha256": "35ec7aa286a3826c8cbc0cfc07ce831426f70e18211127b6f8f0a4a3bf9ca596",
+      "profile_config_sha256": "5563650ff8b4e1203ef5d1991c124325e3e6bd8f8f28efbc58da18699d7d77a2",
       "profile_ids": [
         "features/fvg_ifvg_mtf"
       ],
@@ -2886,7 +2886,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "features/fvg_ifvg_mtf",
-        "config_sha256": "35ec7aa286a3826c8cbc0cfc07ce831426f70e18211127b6f8f0a4a3bf9ca596",
+        "config_sha256": "5563650ff8b4e1203ef5d1991c124325e3e6bd8f8f28efbc58da18699d7d77a2",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -2898,7 +2898,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "7b567ba2038c27de691c93852efa60ebd6e358345b10dc49a447eddf3d8e3c7b",
+        "resolved_config_sha256": "ad3488f0d8282c849555b0ac63dab7ea852f49a9d4aa09455c7b2eacde72ed86",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -2911,25 +2911,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 86,
-            "features_where_missing_collides_with_finite_zero": 37,
-            "features_with_nonfinite_values": 69,
-            "nonfinite_cells": 2475,
-            "nonfinite_fraction": 8.189086300462638e-05,
+            "features_where_missing_collides_with_finite_zero": 36,
+            "features_with_nonfinite_values": 68,
+            "nonfinite_cells": 2461,
+            "nonfinite_fraction": 8.14276419613679e-05,
             "sampled_cells": 30223152,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -3028,14 +3028,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "19ed34b64e2a278cbe62c81ec2352c7d46002a2d58fa72c5beead0fc766a7991"
+      "summary_sha256": "a026582ecdcbab94c3808e2694abf7110164b3603dd5f508bab63c9cffa99f94"
     },
     {
-      "column_warmup_sha256": "18d16e82785d0cf6a6d0fb7280574d6fa27b1f65e0395edb7c8e655d5753c290",
+      "column_warmup_sha256": "737a220fde641416017028f838e2a31cbbe7f8f1c7a3049ff6c818b9f303ccd9",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/base_default-b80b4b61f04a",
       "group_key": "b80b4b61f04a937ee4c278bf2522d12ff40582928702be9f3554f4ba544a6f73",
       "log_sha256": "3620aa766e407ec0bc35381c1c0e3dad7b9f6483a1bb1ac77094b0af2849c815",
-      "profile_config_sha256": "ff0445acbcee15fc78c790c8bc742e479230398f3c2cac94057e304863cceee8",
+      "profile_config_sha256": "acf3e186e3de2a5bc9fcea5b335601723e211432c348467431f47985681f4f1e",
       "profile_ids": [
         "base/default",
         "experiment_run/18_variant_seed42_20m",
@@ -3091,7 +3091,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "base/default",
-        "config_sha256": "ff0445acbcee15fc78c790c8bc742e479230398f3c2cac94057e304863cceee8",
+        "config_sha256": "acf3e186e3de2a5bc9fcea5b335601723e211432c348467431f47985681f4f1e",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -3103,7 +3103,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "928e689dfef1ef908bfb81767beee3d11615aebc4b99aa0fd2397569d5b64996",
+        "resolved_config_sha256": "d857346c97f0596ae9c5555da667fe5641c0cb84ac8efcd4ee78c058003071ca",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -3116,25 +3116,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 78,
-            "features_where_missing_collides_with_finite_zero": 29,
-            "features_with_nonfinite_values": 61,
-            "nonfinite_cells": 2463,
-            "nonfinite_fraction": 8.985215653931082e-05,
+            "features_where_missing_collides_with_finite_zero": 28,
+            "features_with_nonfinite_values": 60,
+            "nonfinite_cells": 2449,
+            "nonfinite_fraction": 8.93414256454617e-05,
             "sampled_cells": 27411696,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -3233,14 +3233,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "ac6f185080a7652dd6a40952483ed809762cb6d4ab02b72006f53e64b6f52e1b"
+      "summary_sha256": "b73c3a8fa0b6c1cc35a9464baaa4c0ccec9545dd7e9a64e8576d8fc806a11553"
     },
     {
-      "column_warmup_sha256": "aae6dfff1a0b5a41c901f43614a4c7c3db10fefa4c6334c33f641575c256775b",
+      "column_warmup_sha256": "e930e94b97b4e659bacfa7ee49d53e39cf85e9de53022d25fa692c9b6fb8fa7c",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/research_trade_setup_mtf_m1_htf_lite_2m-bee4cfea5606",
       "group_key": "bee4cfea5606bf85e8eb3a54a4baaf643bae007dc46d5cc15da2e62601eaaa60",
       "log_sha256": "98669245598106a3000cb7ec50ad469e4a58e77bd6c66e2ffd1f629338e1b886",
-      "profile_config_sha256": "600997f19c31c0c681ffd56d27d6240ec2cbd2d33d3a3f47b6761fb93df12354",
+      "profile_config_sha256": "3854611c4b72010600821d6d95468e722e576da7baa3f06eab1ff1aec1833979",
       "profile_ids": [
         "research/trade_setup_mtf_m1_htf_lite_2m"
       ],
@@ -3248,7 +3248,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "research/trade_setup_mtf_m1_htf_lite_2m",
-        "config_sha256": "600997f19c31c0c681ffd56d27d6240ec2cbd2d33d3a3f47b6761fb93df12354",
+        "config_sha256": "3854611c4b72010600821d6d95468e722e576da7baa3f06eab1ff1aec1833979",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -3260,7 +3260,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "e2d2a5850dd75878e8a359477f48cc9f02630644b74e175e7d7eb996744592ad",
+        "resolved_config_sha256": "ff3efa6ec4071b0f6ef2d28dc490dc29e5733e256f379e26227b08f5c2d84de1",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -3273,25 +3273,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 282,
-            "features_where_missing_collides_with_finite_zero": 36,
-            "features_with_nonfinite_values": 85,
-            "nonfinite_cells": 4943903,
-            "nonfinite_fraction": 0.049886097230718365,
+            "features_where_missing_collides_with_finite_zero": 35,
+            "features_with_nonfinite_values": 84,
+            "nonfinite_cells": 4943889,
+            "nonfinite_fraction": 0.04988595596472645,
             "sampled_cells": 99103824,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -3390,14 +3390,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "a0b74b16fa5288fe15dfdc0cae194c57a708a7f6be28b6ec6f7b5df3579a98fc"
+      "summary_sha256": "9c7e5da5e8961694fe589e96d878c4233419a2c593e17515af1aabfdfed4794c"
     },
     {
-      "column_warmup_sha256": "075bbd10be2c9b4ff01aab5997c9d4de6545898d96a93300813627795e0b610c",
+      "column_warmup_sha256": "235f6b34d5320bebb0ef7fe0a33c844c7e22320910e8a0f8000e6dd2d3d6fabf",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/legacy_variant_ladder_a4b_entry_fsm_qgrid025-c42bc6ced51d",
       "group_key": "c42bc6ced51dd770a6d18bade79c5509a93eeb1ed9930b0721f94c71daa7ec4c",
       "log_sha256": "22c3f3cd1c4b280dc70eabd9162ab46142124cc3d2bb2b4b14d75b787fe587a3",
-      "profile_config_sha256": "65fba48c6406e3d1e364ab1ccd548fbf8d8efa6c12b5aa56bbde3910a7fc0f2b",
+      "profile_config_sha256": "eb1d4a192ea7bb56cf35847d5d8e93aa27e70d28a50b291f0c93c17cd2fc9e6c",
       "profile_ids": [
         "legacy_variant/ladder_a4a_dollar_band_q5_off",
         "legacy_variant/ladder_a4a_dollar_band_q5_on",
@@ -3408,7 +3408,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "legacy_variant/ladder_a4b_entry_fsm_qgrid025",
-        "config_sha256": "65fba48c6406e3d1e364ab1ccd548fbf8d8efa6c12b5aa56bbde3910a7fc0f2b",
+        "config_sha256": "eb1d4a192ea7bb56cf35847d5d8e93aa27e70d28a50b291f0c93c17cd2fc9e6c",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -3420,7 +3420,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "d4b1292e602b97682cd5456b50a7e8498add814dd0035ef8e4ddadd68d8d98d0",
+        "resolved_config_sha256": "a725162695fd2d54443ae8848f86e6a8f4b3c9514a7b76794f4d461372a70918",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -3433,25 +3433,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 160,
-            "features_where_missing_collides_with_finite_zero": 43,
-            "features_with_nonfinite_values": 105,
-            "nonfinite_cells": 2055857,
-            "nonfinite_fraction": 0.03656214075553734,
+            "features_where_missing_collides_with_finite_zero": 42,
+            "features_with_nonfinite_values": 104,
+            "nonfinite_cells": 1803898,
+            "nonfinite_fraction": 0.032081206321564346,
             "sampled_cells": 56229120,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -3550,14 +3550,14 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "3b427a42ff3b2549f7ec06f09d1e54e109011feb1cf13db80fb845c7dab956ad"
+      "summary_sha256": "b45e74169e0c6273a59843b1a5008e8fb50f1d9d5379ac7117f74c251b3eec9a"
     },
     {
-      "column_warmup_sha256": "18d16e82785d0cf6a6d0fb7280574d6fa27b1f65e0395edb7c8e655d5753c290",
+      "column_warmup_sha256": "737a220fde641416017028f838e2a31cbbe7f8f1c7a3049ff6c818b9f303ccd9",
       "directory": "evidence/research/feature_causality/observation_validity_across_profiles/profiles/experiment_run_all_selectable_seed42_train2025_1m_n8_20261030-d8f9796f9679",
       "group_key": "d8f9796f9679721085dc26f4b3f75ebc2f8f5c27436877a443d0afff83a0bab5",
       "log_sha256": "df080203edb2a128beb1433264f37da07602969ca7e385653561998bf8a92c64",
-      "profile_config_sha256": "3ac2df3f587f5c2f16de0d9de01c651ee016d7a2ae5fb2bdfe873608b35575bc",
+      "profile_config_sha256": "f9114955e0b5aa9b4ac5f8bedbf59b0d824b039e91593b620b4faa70f6e9c85f",
       "profile_ids": [
         "experiment_run/all_selectable_seed42_train2025_1m_n8_20261030",
         "experiment_run/all_selectable_seed42_train2025_1m_n8_adaptive_20261031",
@@ -3576,7 +3576,7 @@
       "return_code": 0,
       "summary": {
         "config_path": "experiment_run/all_selectable_seed42_train2025_1m_n8_20261030",
-        "config_sha256": "3ac2df3f587f5c2f16de0d9de01c651ee016d7a2ae5fb2bdfe873608b35575bc",
+        "config_sha256": "f9114955e0b5aa9b4ac5f8bedbf59b0d824b039e91593b620b4faa70f6e9c85f",
         "limitations": [
           "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
           "It is not a learned-policy or economic result.",
@@ -3588,7 +3588,7 @@
         "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
         "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
         "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
-        "resolved_config_sha256": "9f593615aca7371420e6861a5bc8a0f1b97b8622dcd00a396d05e16809678d9a",
+        "resolved_config_sha256": "ee8ec352289828884e25af1c265a7ac924210625bb481b512a6a09b30e57c05d",
         "schema_version": 1,
         "secondary_symbol": "US500.cash",
         "semantics": {
@@ -3601,25 +3601,25 @@
         "source_sha256": {
           "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
           "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
-          "features/pipeline/feature_cache_identity.py": "5e30932a9e94cc74f5363d4b62f9bf7570122a20b7453cb87df158d1263e6eed",
+          "features/pipeline/feature_cache_identity.py": "da511e505c4c99741fc2fef58158d7728120c58326f07ea37bab0772c857bb05",
           "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
-          "features/pipeline/normalization.py": "576474e792935eeecd464bf16cceb26ac45604df698bb75c2539b87e4cb86875",
+          "features/pipeline/normalization.py": "724f1838cda62004142ff20d923e5708463ecd4c26168f907b817dbd118260ef",
           "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
           "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
           "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
-          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
-          "simulation/environment/observation_arrays_initialization.py": "bdb8dbb3de1ea7fedca516953f3752bc1d239fc58999b18918f149ce50b6e80b",
-          "simulation/environment/observation_runtime.py": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2",
-          "simulation/environment/observations.py": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+          "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
+          "simulation/environment/observation_arrays_initialization.py": "aabb11a2d81b8729e325bea0d1bd530768827c22c7697b38eb263844e4c368bf",
+          "simulation/environment/observation_runtime.py": "d4ad1702a66f72fd1bf0c7a6ec542661de3c330468d10ba9ae3b95737b756057",
+          "simulation/environment/observations.py": "00f7704f18a944ed8172039396a5d5ec051767775bfe969cb3f5cee3680fdbc6"
         },
         "status": "measured_training_split",
         "stream_summaries": [
           {
             "feature_count": 78,
-            "features_where_missing_collides_with_finite_zero": 29,
-            "features_with_nonfinite_values": 61,
-            "nonfinite_cells": 2463,
-            "nonfinite_fraction": 8.985215653931082e-05,
+            "features_where_missing_collides_with_finite_zero": 28,
+            "features_with_nonfinite_values": 60,
+            "nonfinite_cells": 2449,
+            "nonfinite_fraction": 8.93414256454617e-05,
             "sampled_cells": 27411696,
             "sampled_rows": 351432,
             "source_rows": 351432,
@@ -3718,11 +3718,11 @@
         "training_m1_rows": 351432,
         "training_start": "2024-12-30"
       },
-      "summary_sha256": "63ae177a22e9925e7ebbe33e6f8573e083674b646e70e89ca18c9aca5a1e2ccd"
+      "summary_sha256": "ec3bad3bb4b8f28511ef59e94458d849958aa5906bb4a309ba25c2704a073634"
     }
   ],
   "inventory_path": "evidence/research/feature_causality/feature_configuration_inventory.json",
-  "inventory_sha256": "fe0fd290834c31831d7486a0f26b0e6a04a4922d377b02a4458f56b2e4fdf84d",
+  "inventory_sha256": "f42df9e3e12116d9de47bff5281fa854756f0a0da517d1d2c42817ce45c1eb2a",
   "limitations": [
     "Each effective observation contract is measured on the configured local training split.",
     "This reports nonfinite/finite-zero behavior; producer-specific cause attribution remains separate evidence.",
@@ -3733,16 +3733,16 @@
   "row_count": 15571,
   "schema_version": 1,
   "source_sha256": {
-    "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
+    "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
     "scripts/research/analysis/features/audit_observation_warmup_validity_profiles.py": "cd2ec9cf1757c0ea8f305b31592ce4ce9ea83109fde71e9a74087b0b001e1a11",
     "scripts/research/analysis/features/build_feature_configuration_inventory.py": "9faaf41578644fd8889f5738f163ed55fef27d6fc6a2d5a56612f86b49b54a32",
-    "scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py": "e8bcc92e2a3707180ea529b1e4c9e360942c35d50b4309a32b2b56c87f89bf57"
+    "scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py": "cad5779760af716695e09b9da7bde5ac9f8d163d6739f39e0c6c7534525c6031"
   },
   "source_sha256_at_end": {
-    "scripts/research/analysis/features/audit_observation_warmup_validity.py": "1c451741bf13e89cc4e7d7f7c72abe38d6b77d76c90be97f9bb18bf02584afc6",
+    "scripts/research/analysis/features/audit_observation_warmup_validity.py": "687253adf029778772aa545052cf269d67499f62513e462aa739076965c1e1bf",
     "scripts/research/analysis/features/audit_observation_warmup_validity_profiles.py": "cd2ec9cf1757c0ea8f305b31592ce4ce9ea83109fde71e9a74087b0b001e1a11",
     "scripts/research/analysis/features/build_feature_configuration_inventory.py": "9faaf41578644fd8889f5738f163ed55fef27d6fc6a2d5a56612f86b49b54a32",
-    "scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py": "e8bcc92e2a3707180ea529b1e4c9e360942c35d50b4309a32b2b56c87f89bf57"
+    "scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py": "cad5779760af716695e09b9da7bde5ac9f8d163d6739f39e0c6c7534525c6031"
   },
   "sources_unchanged_during_run": true,
   "status": "complete",

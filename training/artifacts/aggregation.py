@@ -14,6 +14,18 @@ from artifacts.atomic import write_text_atomic
 from training.artifacts.manifests import entry_funnel_by_split
 
 
+def _recorded_true(value: Any) -> bool:
+    """Accept only an explicit boolean pass from persisted gate data.
+
+    Args:
+        value: Persisted gate status value.
+
+    Returns:
+        Whether the value is exactly Python ``True``.
+    """
+    return value is True
+
+
 def save_seed_artifacts(
     seed_dir: Path,
     seed: int,
@@ -142,7 +154,9 @@ def aggregate_seed_results(
             aggregated[f"train_{metric}_mean"] = round(sum(train_vals) / len(train_vals), 4)
             aggregated[f"train_{metric}_std"] = round(float(np.std(train_vals)), 4)
 
-    all_ok = all(r["train_gate"]["ok"] for r in seed_results)
+    all_ok = bool(seed_results) and all(
+        _recorded_true(r["train_gate"].get("ok")) for r in seed_results
+    )
     aggregated["train_equity_ok"] = all_ok
     aggregated["train_end_equity"] = float(seed_results[-1]["train_gate"]["end_equity"])
     aggregated["train_equity_slope"] = float(seed_results[-1]["train_gate"]["slope"])
@@ -151,7 +165,8 @@ def aggregate_seed_results(
         str(result["seed"]): str(result["train_activity_gate"]["status"]) for result in seed_results
     }
     aggregated["train_activity_ok_by_seed"] = {
-        str(result["seed"]): bool(result["train_activity_gate"]["ok"]) for result in seed_results
+        str(result["seed"]): _recorded_true(result["train_activity_gate"].get("ok"))
+        for result in seed_results
     }
     aggregated["train_n_trades_by_seed"] = {
         str(result["seed"]): int(result["train_activity_gate"]["n_trades"])

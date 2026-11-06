@@ -20,6 +20,7 @@ from evaluation.reanalysis.provenance import (
     _validate_reanalysis_datasets,
     _validate_reanalysis_feature_cache,
 )
+from evaluation.reanalysis.validation import validate_train_only_feature_snapshot_request
 from features import build_features
 from features.context.policy_market import attach_policy_market_context
 from market_data.loading import build_tick_books, run_pipeline
@@ -57,6 +58,37 @@ class ReanalysisDatasets:
     dataset_parity_disposition: str
     training_data_source: str
     backend_parity_disposition: str
+    train_feature_snapshot_path: Path | None
+
+
+def _load_train_only_feature_snapshot(
+    path: Path, expected_index: pd.DatetimeIndex
+) -> tuple[pd.DataFrame, Path, str]:
+    """Load an assembled train feature frame only when its timestamps are exact.
+
+    Args:
+        path: Saved parquet feature snapshot path.
+        expected_index: Exact ordered bar timestamps required for the replay.
+
+    Returns:
+        Loaded feature frame, resolved snapshot path, and file digest.
+    """
+    resolved = path.expanduser().resolve()
+    if not resolved.is_file():
+        raise FileNotFoundError(f"train-only feature snapshot is missing: {resolved}")
+    features = pd.read_parquet(resolved)
+    if not isinstance(features, pd.DataFrame):
+        raise TypeError("train-only feature snapshot did not load as a DataFrame")
+    if not isinstance(features.index, pd.DatetimeIndex):
+        raise ValueError("train-only feature snapshot must have a DatetimeIndex")
+    if features.index.has_duplicates or not features.index.is_monotonic_increasing:
+        raise ValueError("train-only feature snapshot timestamps must be unique and ordered")
+    if not features.index.equals(expected_index):
+        raise ValueError(
+            "train-only feature snapshot timestamps do not exactly match training bars: "
+            f"snapshot={len(features.index)}, bars={len(expected_index)}"
+        )
+    return features, resolved, file_sha256(resolved)
 
 
 def reconstruct_reanalysis_datasets(
@@ -80,6 +112,11 @@ def reconstruct_reanalysis_datasets(
     source_feature_cache = source_manifest.get("feature_cache")
     source_datasets = source_manifest.get("datasets")
     source_execution_protocol = source_manifest.get("execution_protocol")
+    validate_train_only_feature_snapshot_request(
+        train_only_screen=bool(args.train_only_screen),
+        source_feature_cache=args.source_feature_cache,
+        train_only_feature_snapshot=args.train_only_feature_snapshot,
+    )
     selected_datasets = ["training"] if args.train_only_screen else None
     data = run_pipeline(cfg, force=args.force, datasets=selected_datasets)
     primary_m1 = data[cfg.data.primary]["M1"]
@@ -97,12 +134,22 @@ def reconstruct_reanalysis_datasets(
     train_end, test_start = get_split_config(cfg)
     train_start = get_train_start_config(cfg)
     source_cache_replay_path: Path | None = None
-    if args.source_feature_cache and args.train_only_screen:
-        raise ValueError(
-            "--train-only-screen rebuilds features from training inputs to stay within memory; "
-            "omit --source-feature-cache"
+    train_feature_snapshot_path: Path | None = None
+    if args.train_only_feature_snapshot:
+        features, train_feature_snapshot_path, evaluated_feature_cache_file_sha256 = (
+            _load_train_only_feature_snapshot(
+                Path(args.train_only_feature_snapshot), pd.DatetimeIndex(primary_m1.index)
+            )
         )
-    if args.source_feature_cache:
+        feature_cache = train_feature_snapshot_path
+        evaluated_feature_cache_hash = ""
+        feature_cache_disposition = "train_only_feature_snapshot_pending_frame_verification"
+    elif args.source_feature_cache and args.train_only_screen:
+        raise ValueError(
+            "--train-only-screen cannot use --source-feature-cache; use "
+            "--train-only-feature-snapshot for an assembled training-only frame"
+        )
+    elif args.source_feature_cache:
         config_record = source_manifest.get("config")
         source_config_path = run_dir / "config.yaml"
         expected_config_hash = (
@@ -166,14 +213,15 @@ def reconstruct_reanalysis_datasets(
     schedule_path = Path(str(cfg.data.session_schedule_file))
     if not schedule_path.is_absolute():
         schedule_path = repository_root(__file__) / schedule_path
-    features = attach_policy_market_context(
-        primary_m1,
-        features,
-        primary_ticks,
-        schedule_path=schedule_path,
-        session_start=str(cfg.session.start),
-        session_end=str(cfg.session.end),
-    )
+    if train_feature_snapshot_path is None:
+        features = attach_policy_market_context(
+            primary_m1,
+            features,
+            primary_ticks,
+            schedule_path=schedule_path,
+            session_start=str(cfg.session.start),
+            session_end=str(cfg.session.end),
+        )
 
     train_bars, test_bars, train_features, test_features = split_train_test(
         primary_m1, features, train_end, test_start, train_start
@@ -198,6 +246,9 @@ def reconstruct_reanalysis_datasets(
         allow_legacy=bool(args.allow_legacy_data_provenance),
         train_only=bool(args.train_only_screen),
     )
+    if train_feature_snapshot_path is not None:
+        feature_cache_disposition = "train_only_feature_snapshot_verified_by_frame_sha256"
+        evaluated_feature_cache_hash = str(evaluated_datasets["train_features"]["sha256"])
     training_data_source, backend_parity_disposition = _reanalysis_backend_disposition(
         source_execution_protocol,
         evaluation_backend="frame",
@@ -229,6 +280,7 @@ def reconstruct_reanalysis_datasets(
         dataset_parity_disposition=dataset_parity_disposition,
         training_data_source=training_data_source,
         backend_parity_disposition=backend_parity_disposition,
+        train_feature_snapshot_path=train_feature_snapshot_path,
     )
 
 

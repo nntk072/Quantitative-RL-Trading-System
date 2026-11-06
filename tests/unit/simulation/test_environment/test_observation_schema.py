@@ -21,6 +21,7 @@ from tests.unit.simulation.test_environment._account_fixtures import (
     _make_bars,
     _make_features,
 )
+from trading.execution.broker import Position
 
 
 def _state(**overrides: object) -> np.ndarray[Any, Any]:
@@ -131,6 +132,56 @@ def test_daily_loss_definition_is_not_reinterpreted() -> None:
     assert _state()[V2_COORDINATES.index("daily_loss_over_limit")] == pytest.approx(0.02)
 
 
+def test_remaining_daily_and_max_loss_budgets_are_policy_observations() -> None:
+    state = _state()
+    assert state[V2_COORDINATES.index("remaining_daily_loss_budget_over_limit")] == pytest.approx(
+        0.98
+    )
+    assert state[V2_COORDINATES.index("remaining_max_loss_budget_over_limit")] == pytest.approx(
+        0.98
+    )
+
+    daily_floor = _state(daily_loss=5_000.0)
+    max_loss_floor = _state(loss_from_initial=10_000.0)
+    assert daily_floor[
+        V2_COORDINATES.index("remaining_daily_loss_budget_over_limit")
+    ] == pytest.approx(0.0)
+    assert max_loss_floor[
+        V2_COORDINATES.index("remaining_max_loss_budget_over_limit")
+    ] == pytest.approx(0.0)
+
+
+def test_environment_observation_tracks_open_pnl_against_both_loss_budgets() -> None:
+    bars = _make_bars(120)
+    env = TradingEnv(
+        bars=bars,
+        features=_make_features(bars),
+        obs_window=10,
+        observation_schema_version=OBSERVATION_SCHEMA_V2,
+    )
+    env.reset(seed=19)
+    env.position = Position(
+        direction=1,
+        size=1.0,
+        entry_price=100.0,
+        margin_used=0.0,
+        initial_size=1.0,
+        planned_risk_usd=500.0,
+        sl_initial_price=99.0,
+        sl_price=99.0,
+    )
+    env.account.update_equity(-2_500.0)
+
+    account_state = env._get_observation()["account"]
+    assert account_state[V2_COORDINATES.index("open_pnl_over_initial")] == pytest.approx(-0.025)
+    assert account_state[V2_COORDINATES.index("remaining_daily_loss_budget_over_limit")] == (
+        pytest.approx(0.5)
+    )
+    assert account_state[V2_COORDINATES.index("remaining_max_loss_budget_over_limit")] == (
+        pytest.approx(0.75)
+    )
+
+
 def test_observation_schema_validation_fails_closed_for_v2() -> None:
     expected = build_observation_schema(OBSERVATION_SCHEMA_V2)
     with pytest.raises(ValueError, match="no observation schema metadata"):
@@ -186,3 +237,38 @@ def test_legacy_sequence_column_mode_reconstructs_pre_filter_coordinates() -> No
     current_obs, _ = current.reset(seed=7)
     legacy_obs, _ = legacy.reset(seed=7)
     assert legacy_obs["seq"].shape[1] == current_obs["seq"].shape[1] + 1
+
+
+def test_recorded_sequence_columns_override_preserves_exact_saved_order() -> None:
+    bars = _make_bars(120)
+    features = _make_features(bars)
+    features["last_swing_high"] = 21_234.5
+    requested = ("last_swing_high", "volume_spike", "reachable_r")
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=10,
+        sequence_columns_override=requested,
+    )
+    obs, _ = env.reset(seed=7)
+
+    assert tuple(env._obs_columns) == requested
+    assert obs["seq"].shape == (10, len(requested))
+    assert obs["seq"][-1, 0] == pytest.approx(21_234.5)
+
+
+def test_recorded_sequence_columns_override_rejects_missing_and_duplicate_names() -> None:
+    bars = _make_bars(120)
+    features = _make_features(bars)
+    with pytest.raises(ValueError, match="missing from features"):
+        TradingEnv(
+            bars=bars,
+            features=features,
+            sequence_columns_override=("absent_feature",),
+        )
+    with pytest.raises(ValueError, match="non-empty and unique"):
+        TradingEnv(
+            bars=bars,
+            features=features,
+            sequence_columns_override=("volume_spike", "volume_spike"),
+        )

@@ -1,0 +1,44 @@
+{
+  "action_eligible_fraction": 0.2742607389196203,
+  "action_eligible_row_count": 96384,
+  "eligibility_reason_counts": {
+    "eligible": 96384,
+    "fill_bar_off_session": 259,
+    "off_session": 251940,
+    "open_blackout": 2590,
+    "overnight_boundary": 259
+  },
+  "execution_controls": {
+    "block_overnight": true,
+    "fill_latency_bars": 0,
+    "open_manipulation_bars": 10,
+    "session_end": "23:00",
+    "session_start": "16:30"
+  },
+  "fill_position_count": 96384,
+  "input": {
+    "path": "data/training/US100.cash_M1_202412300105_202610162349.csv",
+    "sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+    "size_bytes": 23379899
+  },
+  "m1_row_count": 351432,
+  "ny_session_row_count": 99492,
+  "outputs": {
+    "training_action_eligibility_by_session.csv": "8ae50278d1f35347cbc1cb721a1965806ca4c000f0271461d1d2922cc58c30f7"
+  },
+  "primary_symbol": "US100.cash",
+  "resolved_config_sha256": "a9cbaa63c305ff1801d63c9ec4ed8d1d3e5343cc4f321b605f60551c5a7598f7",
+  "schema_version": "training-action-eligibility-census-v1",
+  "scope_limit": "bar-level static eligibility only; not active feature candidates, account-state eligibility, proposal counts, fills, or policy actions",
+  "sources": {
+    "evaluation/candidate_eligibility.py": "41996ba6f2f5c7730710d1692982cec4091cad9c862a0f6d134e8b0aea666d31",
+    "market_data/loading/bars.py": "78ec2e0aae8c86f85cf1fe8d7455bba94c8e601200eb3f66e7768017a2216962",
+    "market_data/transforms/sessions.py": "950c8212809801a734eb567239bd50f59dcad0eb16d32c5abadc2a319e017866",
+    "scripts/research/analysis/evaluation/audit_candidate_action_eligibility.py": "c9a4eba9c4b149356729fea0b8514d51fac821b843be0836915b3058d148ae64"
+  },
+  "status": "configured_training_bar_eligibility_census",
+  "training_window": {
+    "end_exclusive": "2026-01-01T00:00:00+03:00",
+    "start_inclusive": "2024-12-30T00:00:00+03:00"
+  }
+}

@@ -125,7 +125,7 @@ links are unavailable.
 
 1. **Purged walk-forward** — `purge_bars` removed from train end, `embargo_bars` from test start
 2. **Same risk params as training** — `risk_frac_range` and `rr_ratio_range` must match training env
-3. **Episodic=False for RL eval** — guardrail breach blocks new trading for session, not whole rollout
+3. **Episodic=False for RL eval** — a hard account-loss breach fails the full evaluation and permanently blocks trading in later sessions. Split rollout collection may continue to the configured horizon, but it cannot resume trading or restore account eligibility.
 4. **Training/evaluation action mode parity** — final train/test replays use
    the configured policy action mode; PPO defaults to sampled actions to match
    training. Record the mode and action RNG seed. Deterministic replay is an

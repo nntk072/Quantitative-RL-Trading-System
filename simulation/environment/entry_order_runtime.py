@@ -24,6 +24,7 @@ class EntryOrderRuntimeMixin(RuntimeMixinBase):
         feat_row: FeatureRow | pd.Series,
         fill_bid: float,
         fill_ask: float,
+        entry_reference_price: float | None = None,
     ) -> tuple[float, float | None, float | None, float, bool, Any]:
         """Build entry levels.
 
@@ -34,6 +35,8 @@ class EntryOrderRuntimeMixin(RuntimeMixinBase):
             feat_row: Feature values for the current market bar.
             fill_bid: Numeric value used for the fill bid.
             fill_ask: Numeric value used for the fill ask.
+            entry_reference_price: Intended pending-order price used for stop
+                placement and risk sizing when the actual fill is improved.
 
         Returns:
             Whether build entry levels meets the requested condition.
@@ -53,7 +56,13 @@ class EntryOrderRuntimeMixin(RuntimeMixinBase):
             else np.nan
         )
 
-        entry_price = float(fill_ask if discrete_action == 1 else fill_bid)
+        entry_price = (
+            float(fill_ask if discrete_action == 1 else fill_bid)
+            if entry_reference_price is None
+            else float(entry_reference_price)
+        )
+        if not np.isfinite(entry_price) or entry_price <= 0.0:
+            raise ValueError("entry_reference_price must be finite and positive")
 
         has_levels = False
         placed = None

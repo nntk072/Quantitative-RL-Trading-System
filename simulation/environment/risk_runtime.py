@@ -8,9 +8,9 @@ import pandas as pd
 from trading.execution import Position
 from trading.policy import uses_fixed_risk_budget
 from trading.risk import (
+    RISK_BREACH_EVENT_SCHEMA_V1,
     adverse_position_loss_limit_usd,
     approve_dynamic_risk,
-    compute_lots,
     compute_lots_with_execution_reserve,
     guardrail_breach_scope,
     modeled_execution_reserve_usd,
@@ -39,11 +39,12 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         Returns ``(reason, session_blocked, done, truncated)`` where:
 
         - ``reason`` is the breach reason string or ``None`` if no breach.
-        - ``session_blocked`` is ``True`` when the session is blocked after an
-          earlier breach.
-        - ``done`` / ``truncated`` follow the episode mode: in episodic mode
-          a breach ends the episode; in non-episodic mode the split rollout
-          continues with the breached session/year blocked as appropriate.
+        - ``session_blocked`` is ``True`` after a prior session or rollout
+          failure blocks new entries.
+        - ``done`` / ``truncated`` follow the episode mode: an episodic breach
+          ends the episode; non-episodic evaluation can continue with a failed
+          account blocked. Survival training also terminates at first breach so
+          its path reward is a terminal infeasibility outcome.
 
         When a breach occurs, any open position is force-closed and the
         breach is recorded in ``breach_log`` / ``breach_events``.
@@ -73,12 +74,17 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             if reason:
                 self.breached_sessions.add(session_id)
                 session_blocked = True
-                if guardrail_breach_scope(reason) == "rollout":
-                    self._year_failed = True
 
         if reason:
+            if guardrail_breach_scope(reason) == "rollout":
+                self._year_failed = True
             breach_equity = float(self.account.equity)
             breach_daily_loss = float(self.account.daily_loss)
+            # Preserve the precise valuation boundary separately from the
+            # decision-bar label. The prefix lets replay distinguish a fill
+            # that caused this breach from an entry recorded afterward.
+            detection_time = pd.Timestamp(fill_time if fill_time is not None else bar_time)
+            breach_event_prefix = len(self.trade_log)
             if self.position is not None:
                 execution_meta: dict[str, Any] = {}
                 if getattr(self, "tick_execution_required", False):
@@ -100,7 +106,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                 pnl, fill_price = self._close_at_quote(
                     self.position,
                     (fill_bid, fill_ask),
-                    tick_fill=bool(execution_meta),
+                    tick_fill=True,
                 )
                 record = {
                     "type": "forced_close",
@@ -123,7 +129,10 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             self.breach_log.append(reason)
             self.breach_events.append(
                 {
+                    "schema_version": RISK_BREACH_EVENT_SCHEMA_V1,
                     "time": bar_time,
+                    "detection_time": detection_time,
+                    "trade_event_count": breach_event_prefix,
                     "session_id": session_id,
                     "reason": reason,
                     "equity": breach_equity,
@@ -147,10 +156,14 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                         ),
                     }
                 )
-                # Repeated-payout breaches fail the sustainability path even during
-                # chronological evaluation. Legacy non-episodic evaluation retains
-                # its session/year latch behavior.
-            done = self.episodic or self.repeated_payout_policy
+                # Repeated-payout breaches fail the sustainability path during
+                # chronological evaluation. Non-episodic evaluation also latches
+                # the account failure across later sessions while allowing the
+                # split rollout to finish its configured horizon.
+            # Survival qualification treats the first hard breach as a terminal
+            # infeasible path, even though ordinary full-split evaluation keeps
+            # walking the calendar to report post-breach behavior.
+            done = self.episodic or self.repeated_payout_policy or self.reward_mode == "survival"
             truncated = False
         elif session_blocked:
             done = False
@@ -200,7 +213,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             pnl, fill_price = self._close_at_quote(
                 self.position,
                 (fill_bid, fill_ask),
-                tick_fill=bool(execution_meta),
+                tick_fill=True,
             )
             record = {
                 "type": "close",
@@ -268,7 +281,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                 pnl, fill_price = self._close_at_quote(
                     self.position,
                     (fill_bid, fill_ask),
-                    tick_fill=bool(execution_meta),
+                    tick_fill=True,
                 )
                 record = {
                     "type": "close",
@@ -340,10 +353,10 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                 risk_frac=risk_frac,
                 max_agent_risk_frac=self.trading_policy.max_agent_risk_frac,
                 daily_capacity=self.account.remaining_daily_capacity(
-                    self.guardrails.daily_loss_limit
+                    self.guardrails.daily_limit_for(self.account)
                 ),
                 account_capacity=self.account.remaining_account_capacity(
-                    self.trading_policy.account_floor
+                    self.guardrails.max_loss_floor_for(self.account)
                 ),
                 execution_reserve_usd=self.trading_policy.execution_reserve_usd,
             )
@@ -390,6 +403,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             slippage_points=self.cost_model.slippage_points,
             commission_per_lot=self.cost_model.commission_per_lot,
             contract_size=self.contract_size,
+            point_value=self.cost_model.point_value,
         )
 
     def _compute_lots_for(self, risk_frac: float, entry_price: float, sl_price: float) -> float:
@@ -427,18 +441,6 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         )
         approved_total_risk = per_trade_limit
         self._last_approved_risk_usd = approved_total_risk
-        if self.risk_mode == "fixed":
-            return compute_lots(
-                self._sizing_equity(),
-                risk_frac,
-                entry_price,
-                sl_price,
-                contract_size=self.contract_size,
-                min_lot=self.min_lot,
-                max_lot=self.max_lot,
-                max_loss_cap=None,
-                risk_usd=approved_total_risk,
-            )
         lots = self._lots_with_execution_reserve(
             approved_total_risk,
             risk_frac,
@@ -476,6 +478,8 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             execution_reserve_per_lot=self._modeled_execution_reserve_usd(1.0),
             min_lot=self.min_lot,
             max_lot=self.max_lot,
+            point_value=self.cost_model.point_value,
+            lot_step=self.lot_step,
         )
 
     def _actual_risk_usd(self, stop_distance: float) -> float:
@@ -494,7 +498,9 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         pos = self.position
         if pos is None or not np.isfinite(stop_distance) or stop_distance <= 0.0:
             return float("nan")
-        return stop_loss_risk_usd(stop_distance, pos.size, self.contract_size)
+        return stop_loss_risk_usd(
+            stop_distance, pos.size, self.contract_size, self.cost_model.point_value
+        )
 
     def _eod_adverse_cut_usd(self, pos: Position) -> float:
         """Dollar adverse excursion that fires the intraday max-loss guard.

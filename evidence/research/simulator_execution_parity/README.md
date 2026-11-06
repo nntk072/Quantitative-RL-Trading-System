@@ -42,6 +42,37 @@ all feed rows. They do not resolve tied-timestamp chronology, session-clock
 authority, provider semantics, market impact, or broker behavior. The earlier
 52-minute trace remains preserved as a separate two-fill fixture.
 
+`local_tick_action_trace_set_stratified.json` adds a larger, deterministic
+2025-only sample using the same quote-quality and TickBook-resolution gates.
+It selected 58 controlled pairs across 23 of the 24 month/direction strata,
+with up to three pairs per stratum and no source event reused. Every pair
+passed environment/backtest checks for tick source, fill time and price,
+source decision bar, close PnL, and ending balance. The missing stratum is
+May-long; pair availability is determined by the source-quote criteria, not
+by PnL. These are independent one-position trace fixtures, not statistically
+independent observations, historical policy replays, portfolio lifecycle
+coverage, or economic results. Existing tie, feed, account, and live-parity
+limits still apply.
+
+The independent check
+`local_tick_action_trace_set_stratified_verification.json` rehashes the tick,
+bar, alignment, and generator inputs; checks persisted source-ledger/event
+identities for reuse; and recomputes reported fill, price, PnL, and balance
+comparisons plus the single-trade `initial_balance + net_pnl = ending_balance`
+bridge. It validates packet consistency and provenance, not either
+simulator's implementation independently.
+
+Reproduce the expanded sample inside a compatible existing allocation with:
+
+```bash
+.venv/bin/python scripts/research/analysis/evaluation/compare_simulator_local_tick_trace.py \
+  --start-month 2025-01 --end-month 2025-12 \
+  --max-trace-pairs 72 --max-pairs-per-stratum 3 \
+  --out evidence/research/simulator_execution_parity/local_tick_action_trace_set_stratified.json
+.venv/bin/python scripts/research/analysis/evaluation/verify_simulator_local_tick_trace_set.py \
+  --report evidence/research/simulator_execution_parity/local_tick_action_trace_set_stratified.json
+```
+
 ## Fail-closed quote-wait gap
 
 `quote_wait_gap/` pairs the training environment and event-driven backtest on
@@ -69,27 +100,29 @@ matrix remains open.
 `local_session_account_transition/session_account_transition.json` compares
 the environment and event backtest on prescribed actions across two
 date-derived training sessions. Each engine resets its own session-start
-balance from its first-session realized closes. The cross-engine lifecycle
-does not match in bar-only fallback mode: `TradingEnv` uses the next bar's open
-quote/time, while `run_backtest` uses the next bar's close quote/time. The
-selected research run requires TickBook execution and fails closed when tick
-input is unavailable; the separate 23-pair packet covers that configured tick
-path. This trace is an alternate-mode limitation, not a learned-policy result
-or strategy comparison.
+balance from its first-session realized closes. A previously observed
+bar-fallback mismatch is fixed: `run_backtest` now uses the same next-bar-open
+quote and timestamp as `TradingEnv`. The refreshed two-session trace and its
+independent verifier pass. The selected research run still requires TickBook
+execution and fails closed when tick input is unavailable; the separate
+23-pair packet covers that configured tick path. This is controlled parity
+evidence, not a learned-policy result or strategy comparison.
 
 The packet also contains a separate two-session trace through the selected
 TickBook path with required execution and 30 ms latency. Environment and
 backtest fills, closes, session resets, and final account state match for the
-controlled actions. A companion $1 daily-loss scenario confirms that both
-engines record a daily breach, block an attempted same-session re-entry, reset
-on the next local session ID, and allow a next-session entry. Independent
-verification reports recompute event/account arithmetic and input/source
-hashes. A third controlled case verifies the episodic max-loss close: both
-engines use the same selected TickBook quote and match close PnL and breach-time
-equity/daily loss; final daily-loss counters are not compared across different
-terminal horizons. These are bounded simulator traces, not policy replays.
-They do not close the broader lifecycle matrix, feed-wide tie/missing-quote
-chronology, or live-account parity. See
+controlled actions. A historical $1 daily-loss trace records the earlier
+behavior: it blocks same-session re-entry, resets on the next local session
+ID, and allows a next-session entry. That output is preserved and superseded by
+[`daily_breach_full_evaluation_failure/`](daily_breach_full_evaluation_failure/README.md),
+which independently verifies that both engines latch account failure and
+block later-session entries after a daily breach. A third controlled case
+verifies the episodic max-loss close: both engines use the same selected
+TickBook quote and match close PnL and breach-time equity/daily loss; final
+daily-loss counters are not compared across different terminal horizons.
+These are bounded simulator traces, not policy replays. They do not close the
+broader lifecycle matrix, feed-wide tie/missing-quote chronology, or
+live-account parity. See
 `local_session_account_transition/README.md`.
 
 ## Scheduled session close
@@ -152,3 +185,24 @@ settings, and both event ledgers. Raw market data is not included.
 ```bash
 .venv-x86/bin/python -m pytest tests/integration/backtest/test_local_tick_action_trace.py -q
 ```
+
+## Paired lifecycle characterization
+
+`paired_lifecycle_characterization/` records a consolidated current-source run
+of seven integration modules. It passed 69/69 tests in the existing GH200
+allocation, spanning account transitions, protective exits, risk lifecycle,
+repeated payouts, fill accounting, quote parity, and local TickBook traces.
+Exact output and test/source hashes are included. This strengthens bounded
+contract coverage; it does not close the broader lifecycle/accounting gate or
+historical policy linkage.
+
+## Selected-run maximum-loss events
+
+`max_loss_event_reconciliation/` independently checks hard maximum-loss breach
+rows against the four saved A4 equity series and the pinned initial-equity
+allowance. Three recorded events match both the first sampled crossing below
+$90,000 and an exact saved equity value; the A4A training partition has no
+crossing or event. The configs do not record `max_drawdown_mode`, so the packet
+verifies only the $90,000 initial-equity floor and does not infer EOD or
+intraday ratchets. It does not replay the historical policies or close the
+broader Stage E accounting gate.

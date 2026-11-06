@@ -32,9 +32,12 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         fractions: tuple[float, ...] = (0.3, 0.3, 0.4),
         runner_fraction: float = 0.0,
         low: float = 99.5,
+        high: float | None = None,
         direction: int = 1,
         require_tick_execution: bool = False,
         randomized_fill_latency_ms: float = 0.0,
+        breakeven_trigger_r: float = 0.0,
+        breakeven_buffer_pts: float = 0.1,
     ) -> SimpleNamespace:
         cost_model = CostModel(spread_points=0.0, commission_per_lot=2.0, point_size=0.01)
         broker = Broker(cost_model=cost_model, contract_size=1.0)
@@ -106,7 +109,8 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             fill_delay_ms=0,
             randomized_fill_latency_ms=randomized_fill_latency_ms,
             tick_execution_required=require_tick_execution,
-            _breakeven_trigger_r=0.0,
+            _breakeven_trigger_r=breakeven_trigger_r,
+            _breakeven_buffer_pts=breakeven_buffer_pts,
             _last_realized_close_pnl=None,
             _last_realized_close_r=None,
             _pending_realized_r=None,
@@ -116,25 +120,38 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             _current_session_id=lambda: 0,
             _bar_times=[bar_time],
             _bar_time=lambda _index: bar_time,
+            _n_bars=1,
             _minutes_per_step=1,
             step_idx=0,
             _maybe_ema_exit=lambda *_args: None,
             _resolve_randomized_tick_quote=resolve_randomized_quote,
+            tick_protective_assertion_calls=[],
         )
         for name in (
             "_stamp_exit",
             "_note_close",
+            "_record_stop_update",
             "_sl_tp_fill_quote",
+            "_exit_side_bar_range",
             "_check_multi_tp_ticks",
             "_assert_tick_protective_events_observed",
             "_adverse_tick_fill_quote",
             "_close_at_quote",
         ):
             setattr(env, name, MethodType(getattr(TradingEnv, name), env))
+        original_assertion = env._assert_tick_protective_events_observed
+
+        def record_assertion(self: SimpleNamespace, *args: object, **kwargs: object) -> None:
+            self.tick_protective_assertion_calls.append((args, kwargs))
+            original_assertion(*args, **kwargs)
+
+        env._assert_tick_protective_events_observed = MethodType(record_assertion, env)
         bar = SimpleNamespace(
+            open=100.0,
             low=low if direction == 1 else 98.0,
-            high=102.0 if direction == 1 else 100.5,
+            high=(102.0 if direction == 1 else 100.5) if high is None else high,
             close=101.0 if direction == 1 else 99.0,
+            spread=0.0,
         )
         TradingEnv._check_sl_tp(cast(TradingEnv, env), cast(BarView, bar), 101.0, 101.0, bar_idx=0)
         return env
@@ -177,10 +194,12 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             tick_execution_required=tickbook is not None,
             use_structure_sl_tp=True,
             risk_frac=0.01,
+            policy_risk_frac_range=(0.01, 0.01),
             rr_ratio=2.0,
             swing_buffer_pts=0.0,
             min_lot=0.01,
             max_lot=100.0,
+            lot_step=0.01,
             contract_size=1.0,
             hold_on_zero=False,
             exit_action=None,
@@ -300,6 +319,59 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             sum(record["net_pnl"] for record in closes), state.account.balance - 100_000.0
         )
         self.assertAlmostEqual(state.account.balance, env.account.balance)
+
+    def test_multi_target_tick_replay_checks_only_remaining_position_levels(self) -> None:
+        start = pd.Timestamp("2026-01-05T10:00:00Z")
+        tick_time = start + pd.Timedelta(seconds=10)
+        book = TickBook(
+            np.array([tick_time.value], dtype=np.int64),
+            np.array([100.5]),
+            np.array([100.51]),
+        )
+        env = self._run_environment(
+            tickbook=book,
+            runner_fraction=0.2,
+            high=100.75,
+            require_tick_execution=True,
+        )
+
+        self.assertIsNotNone(env.position)
+        self.assertEqual(len(env.tick_protective_assertion_calls), 1)
+        self.assertEqual([record.get("type") for record in env.trade_log], ["tp_partial_close"])
+
+    def test_multi_target_replay_does_not_apply_new_stop_to_prior_ohlc_range(self) -> None:
+        start = pd.Timestamp("2026-01-05T10:00:00Z")
+        tick_times = np.array(
+            [
+                (start + pd.Timedelta(seconds=1)).value,
+                (start + pd.Timedelta(seconds=10)).value,
+                (start + pd.Timedelta(seconds=11)).value,
+            ],
+            dtype=np.int64,
+        )
+        book = TickBook(
+            tick_times,
+            np.array([100.7, 99.4, 99.5]),
+            np.array([100.8, 99.5, 99.6]),
+        )
+        env = self._run_environment(
+            tickbook=book,
+            fractions=(0.8,),
+            runner_fraction=0.2,
+            high=100.8,
+            direction=-1,
+            require_tick_execution=True,
+            breakeven_trigger_r=0.5,
+        )
+
+        self.assertIsNotNone(env.position)
+        self.assertAlmostEqual(env.position.size, 0.2)
+        self.assertAlmostEqual(env.position.sl_price, 99.9)
+        self.assertEqual(len(env.tick_protective_assertion_calls), 1)
+        self.assertEqual(
+            env.tick_protective_assertion_calls[0][1]["protective_levels"],
+            (None, (None, None, None)),
+        )
 
     def test_randomized_tick_latency_matches_across_all_partial_targets(self) -> None:
         start = pd.Timestamp("2026-01-05T10:00:00Z")

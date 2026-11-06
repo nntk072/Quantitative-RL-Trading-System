@@ -15,6 +15,8 @@ import importlib.metadata
 import json
 import os
 import platform
+import time
+from datetime import UTC, datetime
 from functools import cache
 from pathlib import Path
 from typing import Any, cast
@@ -70,30 +72,67 @@ def load_market_bars(
     symbol: str,
     dataset_name: str = "training",
     raw_cache: dict[Path, pd.DataFrame] | None = None,
+    preprocessed_cache: dict[tuple[Path, str, str, float | None], pd.DataFrame] | None = None,
+    cache_metrics: dict[str, float | int] | None = None,
 ) -> tuple[pd.DataFrame, Path]:
     source = configured_m1_path(cfg, symbol, dataset_name)
+    tz = str(cfg.data.tz)
+    ny_end = str(cfg.session.end)
+    price_grid = configured_price_grid_increment(cfg)
+    cache_key = (source, tz, ny_end, price_grid)
+    if preprocessed_cache is not None and cache_key in preprocessed_cache:
+        if cache_metrics is not None:
+            cache_metrics["preprocessed_cache_hits"] = (
+                int(cache_metrics.get("preprocessed_cache_hits", 0)) + 1
+            )
+        return preprocessed_cache[cache_key].copy(deep=True), source
     if raw_cache is not None and source in raw_cache:
         raw = raw_cache[source]
     else:
+        load_started = time.perf_counter()
         raw = load_bars(source)
+        if cache_metrics is not None:
+            cache_metrics["raw_loads"] = int(cache_metrics.get("raw_loads", 0)) + 1
+            cache_metrics["raw_load_seconds"] = (
+                float(cache_metrics.get("raw_load_seconds", 0.0))
+                + time.perf_counter()
+                - load_started
+            )
         if raw_cache is not None:
             raw_cache[source] = raw
-    raw = quantize_bar_prices(raw, configured_price_grid_increment(cfg))
-    bars = clean(raw, tz=str(cfg.data.tz))
-    bars = add_session_labels(bars, tz=str(cfg.data.tz), ny_end=str(cfg.session.end))
+    preprocess_started = time.perf_counter()
+    raw = quantize_bar_prices(raw, price_grid)
+    bars = clean(raw, tz=tz)
+    bars = add_session_labels(bars, tz=tz, ny_end=ny_end)
     bars = add_session_id(bars)
-    return bars, source
+    if cache_metrics is not None:
+        cache_metrics["preprocessed_builds"] = int(cache_metrics.get("preprocessed_builds", 0)) + 1
+        cache_metrics["preprocessing_seconds"] = (
+            float(cache_metrics.get("preprocessing_seconds", 0.0))
+            + time.perf_counter()
+            - preprocess_started
+        )
+    if preprocessed_cache is None:
+        return bars, source
+    preprocessed_cache[cache_key] = bars
+    return bars.copy(deep=True), source
 
 
 def load_all_market_bars(
-    cfg: Any, symbol: str, raw_cache: dict[Path, pd.DataFrame] | None = None
+    cfg: Any,
+    symbol: str,
+    raw_cache: dict[Path, pd.DataFrame] | None = None,
+    preprocessed_cache: dict[tuple[Path, str, str, float | None], pd.DataFrame] | None = None,
+    cache_metrics: dict[str, float | int] | None = None,
 ) -> tuple[pd.DataFrame, list[Path], list[dict[str, Any]]]:
     """Load and join the configured training and testing M1 exports."""
     split_bars: list[pd.DataFrame] = []
     paths: list[Path] = []
     split_metadata: list[dict[str, Any]] = []
     for dataset_name in ("training", "testing"):
-        bars, source = load_market_bars(cfg, symbol, dataset_name, raw_cache)
+        bars, source = load_market_bars(
+            cfg, symbol, dataset_name, raw_cache, preprocessed_cache, cache_metrics
+        )
         if bars.empty:
             raise ValueError(f"{dataset_name} M1 export is empty for {symbol}")
         split_bars.append(bars)
@@ -331,6 +370,8 @@ def load_inventory_profiles(path: Path) -> tuple[list[tuple[str, Any, dict[str, 
 
 
 def main() -> int:
+    run_started_at = datetime.now(UTC)
+    run_started = time.perf_counter()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--variant-file", type=Path, default=DEFAULT_VARIANT_FILE)
     parser.add_argument(
@@ -396,10 +437,20 @@ def main() -> int:
     primary_symbol = str(cfg.data.primary)
     secondary_symbol = str(cfg.data.secondary)
     raw_cache: dict[Path, pd.DataFrame] = {}
+    preprocessed_cache: dict[tuple[Path, str, str, float | None], pd.DataFrame] = {}
+    cache_metrics: dict[str, float | int] = {
+        "raw_loads": 0,
+        "raw_load_seconds": 0.0,
+        "preprocessed_builds": 0,
+        "preprocessed_cache_hits": 0,
+        "preprocessing_seconds": 0.0,
+    }
     input_paths: set[Path] = set()
     group_results: list[dict[str, Any]] = []
     first_profile_data: dict[str, Any] | None = None
     for group_key, group in feature_groups.items():
+        group_started = time.perf_counter()
+        input_load_started = time.perf_counter()
         representative, group_cfg, resolved = group[0]
         if (
             str(group_cfg.data.primary) != primary_symbol
@@ -407,11 +458,12 @@ def main() -> int:
         ):
             raise ValueError(f"profile {representative} uses different configured symbols")
         primary, primary_paths, primary_splits = load_all_market_bars(
-            group_cfg, primary_symbol, raw_cache
+            group_cfg, primary_symbol, raw_cache, preprocessed_cache, cache_metrics
         )
         secondary, secondary_paths, secondary_splits = load_all_market_bars(
-            group_cfg, secondary_symbol, raw_cache
+            group_cfg, secondary_symbol, raw_cache, preprocessed_cache, cache_metrics
         )
+        input_load_seconds = time.perf_counter() - input_load_started
         input_paths.update(primary_paths)
         input_paths.update(secondary_paths)
         train_end, test_start = get_split_config(group_cfg)
@@ -447,6 +499,7 @@ def main() -> int:
             f"features={FEATURE_CACHE_VERSION} hash={feature_hash}",
             flush=True,
         )
+        full_build_started = time.perf_counter()
         reference = build_features(
             primary,
             secondary=secondary,
@@ -454,10 +507,13 @@ def main() -> int:
             train_mask=train_mask,
             force=True,
         )
+        full_build_seconds = time.perf_counter() - full_build_started
         if not reference.index.equals(primary.index):
             raise RuntimeError(f"full feature reference for {representative} is misaligned")
 
         cutoff_results: list[dict[str, Any]] = []
+        prefix_build_seconds = 0.0
+        prefix_compare_seconds = 0.0
         for cutoff in cutoff_timestamps:
             prefix_primary = primary.loc[:cutoff]
             prefix_secondary = secondary.loc[:cutoff]
@@ -470,6 +526,7 @@ def main() -> int:
                 f"rows={len(prefix_primary)}",
                 flush=True,
             )
+            prefix_build_started = time.perf_counter()
             prefix = build_features(
                 prefix_primary,
                 secondary=prefix_secondary,
@@ -477,9 +534,13 @@ def main() -> int:
                 train_mask=prefix_mask,
                 force=True,
             )
+            prefix_build_seconds += time.perf_counter() - prefix_build_started
+            compare_started = time.perf_counter()
             cutoff_results.append(compare_prefix(reference, prefix, cutoff))
+            prefix_compare_seconds += time.perf_counter() - compare_started
             del prefix, prefix_primary, prefix_secondary, prefix_mask
             gc.collect()
+        group_elapsed_seconds = time.perf_counter() - group_started
         group_results.append(
             {
                 "profile_id": group_key,
@@ -504,6 +565,13 @@ def main() -> int:
                 "profile_kinds": sorted(
                     {str(item[2].get("profile_kind", "legacy_variant")) for item in group}
                 ),
+                "timing_seconds": {
+                    "input_load_and_prepare": input_load_seconds,
+                    "full_feature_build": full_build_seconds,
+                    "prefix_feature_builds": prefix_build_seconds,
+                    "prefix_comparisons": prefix_compare_seconds,
+                    "group_total": group_elapsed_seconds,
+                },
                 "inventory_feature_config_hashes": sorted(
                     {
                         str(item[2]["feature_config_sha256"])
@@ -520,6 +588,12 @@ def main() -> int:
                     "cutoffs": len(cutoff_results),
                 },
             }
+        )
+        print(
+            f"completed profile={representative} elapsed_s={group_elapsed_seconds:.1f} "
+            f"full_build_s={full_build_seconds:.1f} "
+            f"prefix_build_s={prefix_build_seconds:.1f}",
+            flush=True,
         )
         del reference
         del primary, secondary, train_mask
@@ -582,6 +656,10 @@ def main() -> int:
         ),
         "feature_version": FEATURE_CACHE_VERSION,
         "runtime": {
+            "started_at_utc": run_started_at.isoformat(),
+            "finished_at_utc": datetime.now(UTC).isoformat(),
+            "elapsed_seconds": time.perf_counter() - run_started,
+            "input_cache_metrics": cache_metrics,
             "python": platform.python_version(),
             "platform": platform.platform(),
             "packages": {

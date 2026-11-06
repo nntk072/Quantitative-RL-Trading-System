@@ -106,11 +106,11 @@ def test_approved_2m_policy_spec_uses_each_variants_policy_yaml() -> None:
     for name in spec["variants"]:
         policy = yaml.safe_load((ROOT / "config/variants" / f"{name}.yaml").read_text())
         assert policy["variant"] == name
-        assert policy["ftmo"]["limit_value_mode"] == "fixed_usd"
-        assert policy["ftmo"]["daily_loss_limit"] == 5_000.0
-        assert policy["ftmo"]["soft_daily_loss_limit"] == 5_000.0
-        assert policy["ftmo"]["max_loss_limit"] == 10_000.0
-        assert policy["ftmo"]["soft_max_loss_limit"] == 10_000.0
+        assert policy["ftmo"]["limit_value_mode"] == "percent_equity"
+        assert policy["ftmo"]["daily_loss_limit_pct"] == 0.05
+        assert policy["ftmo"]["soft_daily_loss_limit_pct"] == 0.05
+        assert policy["ftmo"]["max_loss_limit_initial_pct"] == 0.10
+        assert policy["ftmo"]["soft_max_loss_limit_initial_pct"] == 0.10
         assert policy["ftmo"]["risk_per_trade_limit"] == 1_000.0
         assert policy["ftmo"]["risk_sizing_limit_usd"] == 900.0
         assert policy["ftmo"]["max_loss_limit_initial_pct"] == 0.10

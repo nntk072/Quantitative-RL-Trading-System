@@ -144,6 +144,8 @@ def stop_menu(
         raise ValueError("direction must be -1 or 1")
     if price_increment is not None and (not np.isfinite(price_increment) or price_increment <= 0.0):
         raise ValueError("price_increment must be finite and positive")
+    for timeframe in htf:
+        timeframe_index(str(timeframe))
     early_audit: list[dict[str, Any]] = []
     candidate_meta: dict[str, dict[str, Any]] = {}
     candidate_schema_active = False

@@ -8,7 +8,7 @@ This page contains 16 public callable records owned by `simulation.environment.t
 
 **Purpose:** Kwargs shared by the in-loop dashboard slice and the final eval.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.build_eval_common` · **Source:** [simulation/environment/trading_environment_factory.py:220](../../../../simulation/environment/trading_environment_factory.py#L220)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.build_eval_common` · **Source:** [simulation/environment/trading_environment_factory.py:216](../../../../simulation/environment/trading_environment_factory.py#L216)
 
 **Inputs and outputs:**
 
@@ -20,7 +20,8 @@ This page contains 16 public callable records owned by `simulation.environment.t
   env_vae: Env vae used by the operation described above.
   pre_ny_by_date: Key-value data used for the pre ny by date.
   arch: Arch used by the operation described above.
-  tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+  tick_fill_slippage_points: Market-fill slippage override; defaults to
+      ``costs.slippage_points``. Explicit zero preserves a zero-slippage replay.
   ```
 
 - **Returns:**
@@ -29,19 +30,31 @@ This page contains 16 public callable records owned by `simulation.environment.t
   Whether build eval common meets the requested condition.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [production caller: `evaluate_tier0_setup_baselines`](../../../../evaluation/rollout/matched_setup_baselines.py#L414)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = build_eval_common(cfg=..., args=..., env_vae=..., pre_ny_by_date=..., arch=..., tick_fill_slippage_points=...)
+# … caller setup omitted …
+        raise ValueError(f"unknown baseline_names: {unknown_policy_names}")
+    if not policy_names:
+        raise ValueError("baseline_names must select at least one policy")
+    for baseline_name in policy_names:
+        # Resolve anew to give every baseline fresh stateful strategy adapters.
+        eval_common, _, _, _, _ = build_eval_common(
+            effective_cfg,
+            args=None,
+            tick_fill_slippage_points=resolved_tick_slippage,
+        )
+        eval_common = dict(eval_common)
+        eval_common["execution_seed"] = execution_seed
+
+        # build_eval_common serves both environment construction and rollout.
+        # Route values by each API's declared signature at this seam.
+# … caller assertions omitted …
 ```
-
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
 **Workflow context:**
 
@@ -54,7 +67,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build the broker ``CostModel`` from ``costs.*``.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.cost_model` · **Source:** [simulation/environment/trading_environment_factory.py:471](../../../../simulation/environment/trading_environment_factory.py#L471)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.cost_model` · **Source:** [simulation/environment/trading_environment_factory.py:511](../../../../simulation/environment/trading_environment_factory.py#L511)
 
 **Inputs and outputs:**
 
@@ -72,43 +85,39 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L255)
+1. [test fixture: `test_configured_backtest_runner_resolves_static_daily_loss_semantics`](../../../../tests/unit/training/test_backtest_runner_policy.py#L16)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        else str(cfg.env.get("observation_schema_version", "account-state-v1"))
-    )
-    eval_common = {
-        "obs_window": cfg.env.obs_window,
-        "initial_balance": cfg.account.initial_balance,
-        "cost_model": cost_model(cfg),
-        "guardrail_kwargs": eval_guardrail_kwargs(cfg),
-        "risk_frac_range": risk_frac_range,
-        "rr_ratio_range": rr_ratio_range,
-        "sl_mode": str(cfg.risk.get("sl_mode", "fixed")),
-        "tp_mode": str(cfg.risk.get("tp_mode", "fixed")),
-# … caller assertions omitted …
+def test_configured_backtest_runner_resolves_static_daily_loss_semantics() -> None:
+    cfg = load_config()
+
+    policy = _configured_backtest_policy(cfg)
+    assert policy.daily_pnl_basis == "session_net_equity"
+    assert policy.daily_loss_includes_open_pnl
+    assert policy.daily_loss_limit_pct == 0.05
+    assert cost_model(cfg).slippage_points == float(cfg.costs.slippage_points) == 5.0
+    assert not policy.repeated_payout
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L548)
+2. [production caller: `evaluate_tier0_setup_baselines`](../../../../evaluation/rollout/matched_setup_baselines.py#L365)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    return TradingEnv(
-        bars=bars,
-        features=features,
-        obs_window=cfg.env.obs_window,
-        initial_balance=cfg.account.initial_balance,
-        cost_model=cost_model(cfg),
-        guardrail_kwargs=guardrail_kwargs(cfg),
-        risk_frac_range=risk_frac_range,
-        rr_ratio_range=rr_ratio_range,
-        swing_buffer_pts=cfg.risk.swing_buffer_pts,
-        sl_mode=str(cfg.risk.get("sl_mode", "fixed")),
+        raise TypeError("matched setup baselines require a DatetimeIndex")
+    if len(bars) != len(features) or not bars.index.equals(features.index):
+        raise ValueError("bars and features must have identical rows and ordered timestamps")
+    try:
+        resolved_tick_slippage = (
+            float(cost_model(effective_cfg).slippage_points)
+            if tick_fill_slippage_points is None
+            else float(tick_fill_slippage_points)
+        )
+    except (TypeError, ValueError) as exc:
+        raise ValueError("tick_fill_slippage_points must be finite and non-negative") from exc
 # … caller assertions omitted …
 ```
 
@@ -121,9 +130,9 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Kind:** function · **Status:** stable · **Owner:** `simulation.environment.trading_environment_factory`
 
-**Purpose:** FTMO rules for train/test rollouts: daily $5k + max $10k from initial.
+**Purpose:** Resolve percentage-based daily and maximum-loss rules for evaluation.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.eval_guardrail_kwargs` · **Source:** [simulation/environment/trading_environment_factory.py:115](../../../../simulation/environment/trading_environment_factory.py#L115)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.eval_guardrail_kwargs` · **Source:** [simulation/environment/trading_environment_factory.py:111](../../../../simulation/environment/trading_environment_factory.py#L111)
 
 **Inputs and outputs:**
 
@@ -141,7 +150,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L256)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L259)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -151,13 +160,33 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     eval_common = {
         "obs_window": cfg.env.obs_window,
         "initial_balance": cfg.account.initial_balance,
-        "cost_model": cost_model(cfg),
+        "cost_model": resolved_cost_model,
         "guardrail_kwargs": eval_guardrail_kwargs(cfg),
         "risk_frac_range": risk_frac_range,
         "rr_ratio_range": rr_ratio_range,
         "sl_mode": str(cfg.risk.get("sl_mode", "fixed")),
         "tp_mode": str(cfg.risk.get("tp_mode", "fixed")),
         "tp_reference": str(cfg.risk.get("tp_reference", "structural")),
+# … caller assertions omitted …
+```
+
+2. [production caller: `_run`](../../../../training/runner/backtest.py#L184)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+            features=feats,
+            policy=_random_policy,
+            obs_window=cfg.env.obs_window,
+            cost_model=cost_model(cfg),
+            initial_balance=cfg.account.initial_balance,
+            guardrail_kwargs=eval_guardrail_kwargs(cfg),
+            max_loss_per_trade_usd=max_loss_per_trade,
+            take_profit_per_trade_usd=take_profit_per_trade,
+            eod_risk=dict(cfg.env.get("eod_risk", {})),
+            sl_mode=str(cfg.risk.get("sl_mode", "fixed")),
+            daily_pnl_basis=daily_pnl_basis,
 # … caller assertions omitted …
 ```
 
@@ -172,7 +201,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Milliseconds between the crossing tick and the SL/TP fill.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.fill_delay_ms` · **Source:** [simulation/environment/trading_environment_factory.py:334](../../../../simulation/environment/trading_environment_factory.py#L334)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.fill_delay_ms` · **Source:** [simulation/environment/trading_environment_factory.py:349](../../../../simulation/environment/trading_environment_factory.py#L349)
 
 **Inputs and outputs:**
 
@@ -190,27 +219,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L301)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L310)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "observation_age_scale_bars": float(cfg.env.get("observation_age_scale_bars", 60.0)),
+        "feature_validity_channels": bool(cfg.env.get("feature_validity_channels", False)),
         "entry_intensity_threshold": float(cfg.env.get("entry_intensity_threshold", 0.0)),
         "peak_trailing_dd_limit": float(cfg.env.get("peak_trailing_dd_limit", 0.0)),
         "agent_direction_control": bool(cfg.env.get("agent_direction_control", False)),
         "direction_override_threshold": float(cfg.env.get("direction_override_threshold", 0.0)),
         "fill_delay_ms": fill_delay_ms(cfg),
         "randomized_fill_latency_ms": randomized_fill_latency_ms(cfg),
-        "tick_fill_slippage_points": float(tick_fill_slippage_points),
+        "tick_fill_slippage_points": float(resolved_market_slippage),
         "tick_execution_required": tick_execution_required(cfg),
         "max_tick_quote_wait_ms": max_tick_quote_wait_ms(cfg),
         "execution_seed": (
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L605)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L658)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -219,12 +248,12 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         ema_runner_fraction=float(cfg.env.get("ema_runner_fraction", 0.0)),
         tp_breakeven_alpha=float(cfg.env.get("tp_breakeven_alpha", 0.5)),
         risk_floor=float(cfg.env.get("risk_floor", 0.0005)),
-        tickbook=tickbook,
+        tickbook=configured_tickbook,
         tick_execution_required=tick_execution_required(cfg),
         fill_delay_ms=fill_delay_ms(cfg),
         randomized_fill_latency_ms=randomized_fill_latency_ms(cfg),
         max_tick_quote_wait_ms=max_tick_quote_wait_ms(cfg),
-        tick_fill_slippage_points=0.0,
+        tick_fill_slippage_points=cost_model(cfg).slippage_points,
         use_vae=use_vae,
         vae=vae,
 # … caller assertions omitted …
@@ -259,7 +288,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `eval_guardrail_kwargs`](../../../../simulation/environment/trading_environment_factory.py#L124)
+1. [production caller: `eval_guardrail_kwargs`](../../../../simulation/environment/trading_environment_factory.py#L120)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -271,7 +300,7 @@ def eval_guardrail_kwargs(cfg: Any) -> dict[str, float]:
     return kwargs
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L549)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L598)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -302,7 +331,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Construct a configured trading environment and its feature/observation adapters.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.make_env` · **Source:** [simulation/environment/trading_environment_factory.py:498](../../../../simulation/environment/trading_environment_factory.py#L498)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.make_env` · **Source:** [simulation/environment/trading_environment_factory.py:538](../../../../simulation/environment/trading_environment_factory.py#L538)
 
 **Inputs and outputs:**
 
@@ -354,7 +383,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Parse ``env.max_episode_steps``; YAML ``null`` → full-year episode.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_episode_steps` · **Source:** [simulation/environment/trading_environment_factory.py:130](../../../../simulation/environment/trading_environment_factory.py#L130)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_episode_steps` · **Source:** [simulation/environment/trading_environment_factory.py:126](../../../../simulation/environment/trading_environment_factory.py#L126)
 
 **Inputs and outputs:**
 
@@ -372,16 +401,16 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L559)
+1. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L609)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        tp_mode=str(cfg.risk.get("tp_mode", "fixed")),
         tp_reference=str(cfg.risk.get("tp_reference", "structural")),
         contract_size=cfg.account.contract_size,
         max_loss_per_trade_usd=max_loss_per_trade(cfg),
+        lot_step=float(cfg.risk.get("lot_step", 0.01)),
         dsr_eta=cfg.env.reward_dsr_eta,
         max_episode_steps=max_episode_steps(cfg),
         episodic=episodic,
@@ -421,17 +450,17 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L264)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L270)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "sl_mode": str(cfg.risk.get("sl_mode", "fixed")),
-        "tp_mode": str(cfg.risk.get("tp_mode", "fixed")),
-        "tp_reference": str(cfg.risk.get("tp_reference", "structural")),
         "swing_buffer_pts": cfg.risk.swing_buffer_pts,
         "contract_size": cfg.account.contract_size,
+        "min_lot": float(cfg.risk.min_lot),
+        "max_lot": float(cfg.risk.max_lot),
+        "lot_step": float(cfg.risk.get("lot_step", 0.01)),
         "max_loss_per_trade_usd": max_loss_per_trade(cfg),
         "dsr_eta": cfg.env.reward_dsr_eta,
         "continuous_actions": (args.algo == "sac") if args is not None else False,
@@ -441,7 +470,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L557)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L606)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -453,11 +482,11 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         tp_reference=str(cfg.risk.get("tp_reference", "structural")),
         contract_size=cfg.account.contract_size,
         max_loss_per_trade_usd=max_loss_per_trade(cfg),
+        lot_step=float(cfg.risk.get("lot_step", 0.01)),
         dsr_eta=cfg.env.reward_dsr_eta,
         max_episode_steps=max_episode_steps(cfg),
         episodic=episodic,
         continuous_actions=continuous_actions,
-        use_sweep_reward=use_sweep_reward,
 # … caller assertions omitted …
 ```
 
@@ -472,7 +501,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Maximum permitted delay from sampled arrival to the next tick quote.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_tick_quote_wait_ms` · **Source:** [simulation/environment/trading_environment_factory.py:407](../../../../simulation/environment/trading_environment_factory.py#L407)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_tick_quote_wait_ms` · **Source:** [simulation/environment/trading_environment_factory.py:446](../../../../simulation/environment/trading_environment_factory.py#L446)
 
 **Inputs and outputs:**
 
@@ -490,7 +519,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L305)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L314)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -499,7 +528,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         "direction_override_threshold": float(cfg.env.get("direction_override_threshold", 0.0)),
         "fill_delay_ms": fill_delay_ms(cfg),
         "randomized_fill_latency_ms": randomized_fill_latency_ms(cfg),
-        "tick_fill_slippage_points": float(tick_fill_slippage_points),
+        "tick_fill_slippage_points": float(resolved_market_slippage),
         "tick_execution_required": tick_execution_required(cfg),
         "max_tick_quote_wait_ms": max_tick_quote_wait_ms(cfg),
         "execution_seed": (
@@ -510,19 +539,19 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L607)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L660)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
         risk_floor=float(cfg.env.get("risk_floor", 0.0005)),
-        tickbook=tickbook,
+        tickbook=configured_tickbook,
         tick_execution_required=tick_execution_required(cfg),
         fill_delay_ms=fill_delay_ms(cfg),
         randomized_fill_latency_ms=randomized_fill_latency_ms(cfg),
         max_tick_quote_wait_ms=max_tick_quote_wait_ms(cfg),
-        tick_fill_slippage_points=0.0,
+        tick_fill_slippage_points=cost_model(cfg).slippage_points,
         use_vae=use_vae,
         vae=vae,
         pre_ny_by_date=pre_ny_by_date,
@@ -541,7 +570,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Enable multi-window observations for each architecture that consumes them.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.mtf_settings` · **Source:** [simulation/environment/trading_environment_factory.py:425](../../../../simulation/environment/trading_environment_factory.py#L425)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.mtf_settings` · **Source:** [simulation/environment/trading_environment_factory.py:464](../../../../simulation/environment/trading_environment_factory.py#L464)
 
 **Inputs and outputs:**
 
@@ -560,16 +589,17 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L246)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L249)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-    strategy, strategy_reward, strategy_weight = strategy_from_cfg(cfg)
-    strategy_actions = bool(cfg.env.get("strategy_actions", False))
-    sl_buffer_pts = float(cfg.env.get("sl_buffer_pts", 0.0))
-    risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
-    policy = resolve_trading_policy(cfg)
+# … caller setup omitted …
+    resolved_market_slippage = (
+        resolved_cost_model.slippage_points
+        if tick_fill_slippage_points is None
+        else float(tick_fill_slippage_points)
+    )
     use_mtf, mtf_windows = mtf_settings(cfg, arch)
     observation_schema_version = (
         "account-state-v3-repeated-payout"
@@ -579,7 +609,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L534)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L574)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -606,7 +636,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Maximum exclusive randomized tick latency; zero means immediate tick.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.randomized_fill_latency_ms` · **Source:** [simulation/environment/trading_environment_factory.py:352](../../../../simulation/environment/trading_environment_factory.py#L352)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.randomized_fill_latency_ms` · **Source:** [simulation/environment/trading_environment_factory.py:391](../../../../simulation/environment/trading_environment_factory.py#L391)
 
 **Inputs and outputs:**
 
@@ -624,7 +654,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L302)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L311)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -636,7 +666,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         "direction_override_threshold": float(cfg.env.get("direction_override_threshold", 0.0)),
         "fill_delay_ms": fill_delay_ms(cfg),
         "randomized_fill_latency_ms": randomized_fill_latency_ms(cfg),
-        "tick_fill_slippage_points": float(tick_fill_slippage_points),
+        "tick_fill_slippage_points": float(resolved_market_slippage),
         "tick_execution_required": tick_execution_required(cfg),
         "max_tick_quote_wait_ms": max_tick_quote_wait_ms(cfg),
         "execution_seed": (
@@ -644,23 +674,23 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L606)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L587)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        tp_breakeven_alpha=float(cfg.env.get("tp_breakeven_alpha", 0.5)),
-        risk_floor=float(cfg.env.get("risk_floor", 0.0005)),
-        tickbook=tickbook,
-        tick_execution_required=tick_execution_required(cfg),
-        fill_delay_ms=fill_delay_ms(cfg),
-        randomized_fill_latency_ms=randomized_fill_latency_ms(cfg),
-        max_tick_quote_wait_ms=max_tick_quote_wait_ms(cfg),
-        tick_fill_slippage_points=0.0,
-        use_vae=use_vae,
-        vae=vae,
-        pre_ny_by_date=pre_ny_by_date,
+    )
+    configured_tickbook = (
+        tickbook
+        if (
+            tick_execution_required(cfg)
+            or randomized_fill_latency_ms(cfg) > 0.0
+            or bool(cfg.env.get("agent_entry_execution", False))
+        )
+        else None
+    )
+    return TradingEnv(
 # … caller assertions omitted …
 ```
 
@@ -675,7 +705,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Resolve the opt-in D1 branch and require its train-only source scaling.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.regime_observation_enabled` · **Source:** [simulation/environment/trading_environment_factory.py:383](../../../../simulation/environment/trading_environment_factory.py#L383)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.regime_observation_enabled` · **Source:** [simulation/environment/trading_environment_factory.py:422](../../../../simulation/environment/trading_environment_factory.py#L422)
 
 **Inputs and outputs:**
 
@@ -693,7 +723,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L323)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L332)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -713,7 +743,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L615)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L668)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -744,7 +774,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Read the configured market-data session calendar.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.scheduled_session_closes` · **Source:** [simulation/environment/trading_environment_factory.py:457](../../../../simulation/environment/trading_environment_factory.py#L457)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.scheduled_session_closes` · **Source:** [simulation/environment/trading_environment_factory.py:497](../../../../simulation/environment/trading_environment_factory.py#L497)
 
 **Inputs and outputs:**
 
@@ -762,7 +792,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L327)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L336)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -776,11 +806,13 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         "scheduled_session_closes": scheduled_session_closes(cfg),
         "session_start": str(cfg.session.get("start", "16:30")),
         "trading_policy": policy.to_dict(),
-    }
-    return eval_common, strategy, strategy_reward, strategy_weight, strategy_actions
+        "fill_latency_bars": fill_latency_bars(cfg),
+        "limit_order_max_offset_atr": float(cfg.execution.get("limit_order_max_offset_atr", 1.0)),
+        "limit_order_max_ttl_bars": int(cfg.execution.get("limit_order_max_ttl_bars", 60)),
+# … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L619)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L672)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -794,7 +826,10 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         scheduled_session_closes=scheduled_session_closes(cfg),
         session_start=str(cfg.session.get("start", "16:30")),
         trading_policy=policy.to_dict(),
-    )
+        fill_latency_bars=fill_latency_bars(cfg),
+        limit_order_max_offset_atr=float(cfg.execution.get("limit_order_max_offset_atr", 1.0)),
+        limit_order_max_ttl_bars=int(cfg.execution.get("limit_order_max_ttl_bars", 60)),
+# … caller assertions omitted …
 ```
 
 **Workflow context:**
@@ -808,7 +843,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Build (strategy, strategy_reward, strategy_weight) from merged config.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.strategy_from_cfg` · **Source:** [simulation/environment/trading_environment_factory.py:147](../../../../simulation/environment/trading_environment_factory.py#L147)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.strategy_from_cfg` · **Source:** [simulation/environment/trading_environment_factory.py:143](../../../../simulation/environment/trading_environment_factory.py#L143)
 
 **Inputs and outputs:**
 
@@ -826,7 +861,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L241)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L238)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -836,11 +871,11 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     sl_buffer_pts = float(cfg.env.get("sl_buffer_pts", 0.0))
     risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
     policy = resolve_trading_policy(cfg)
-    use_mtf, mtf_windows = mtf_settings(cfg, arch)
+    resolved_cost_model = cost_model(cfg)
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L535)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L575)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -886,7 +921,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L244)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L241)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -896,14 +931,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     sl_buffer_pts = float(cfg.env.get("sl_buffer_pts", 0.0))
     risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
     policy = resolve_trading_policy(cfg)
-    use_mtf, mtf_windows = mtf_settings(cfg, arch)
-    observation_schema_version = (
-        "account-state-v3-repeated-payout"
-        if policy.repeated_payout
+    resolved_cost_model = cost_model(cfg)
+    resolved_market_slippage = (
+        resolved_cost_model.slippage_points
+        if tick_fill_slippage_points is None
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L536)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L576)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -932,7 +967,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Whether the effective config forbids candle-priced execution fills.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.tick_execution_required` · **Source:** [simulation/environment/trading_environment_factory.py:370](../../../../simulation/environment/trading_environment_factory.py#L370)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.tick_execution_required` · **Source:** [simulation/environment/trading_environment_factory.py:409](../../../../simulation/environment/trading_environment_factory.py#L409)
 
 **Inputs and outputs:**
 
@@ -950,7 +985,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L304)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L313)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -960,7 +995,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         "direction_override_threshold": float(cfg.env.get("direction_override_threshold", 0.0)),
         "fill_delay_ms": fill_delay_ms(cfg),
         "randomized_fill_latency_ms": randomized_fill_latency_ms(cfg),
-        "tick_fill_slippage_points": float(tick_fill_slippage_points),
+        "tick_fill_slippage_points": float(resolved_market_slippage),
         "tick_execution_required": tick_execution_required(cfg),
         "max_tick_quote_wait_ms": max_tick_quote_wait_ms(cfg),
         "execution_seed": (
@@ -970,23 +1005,23 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L604)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L586)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        allow_ema_exit=bool(cfg.env.get("allow_ema_exit", True)),
-        ema_runner_fraction=float(cfg.env.get("ema_runner_fraction", 0.0)),
-        tp_breakeven_alpha=float(cfg.env.get("tp_breakeven_alpha", 0.5)),
-        risk_floor=float(cfg.env.get("risk_floor", 0.0005)),
-        tickbook=tickbook,
-        tick_execution_required=tick_execution_required(cfg),
-        fill_delay_ms=fill_delay_ms(cfg),
-        randomized_fill_latency_ms=randomized_fill_latency_ms(cfg),
-        max_tick_quote_wait_ms=max_tick_quote_wait_ms(cfg),
-        tick_fill_slippage_points=0.0,
-        use_vae=use_vae,
+        else str(cfg.env.get("observation_schema_version", "account-state-v1"))
+    )
+    configured_tickbook = (
+        tickbook
+        if (
+            tick_execution_required(cfg)
+            or randomized_fill_latency_ms(cfg) > 0.0
+            or bool(cfg.env.get("agent_entry_execution", False))
+        )
+        else None
+    )
 # … caller assertions omitted …
 ```
 

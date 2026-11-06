@@ -23,6 +23,7 @@ from configuration.paths import repository_root
 from features.pipeline.feature_matrix_builder import build_features
 from features.po3.setup_lifecycle import build_po3_setup_lifecycle_ledger
 from market_data.loading.market_data_ingestion import run_pipeline
+from market_data.splits.definitions import make_train_mask
 
 ROOT = repository_root(__file__)
 DEFAULT_CONFIG = ROOT / "config/2_po3_ifvg.yaml"
@@ -63,12 +64,7 @@ SOURCE_PATHS = (
 def _training_slice(frame: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
     """Return the inclusive configured training-date slice."""
     index = pd.DatetimeIndex(frame.index)
-    lower = pd.Timestamp(start)
-    upper = pd.Timestamp(end) + pd.Timedelta(days=1) - pd.Timedelta(nanoseconds=1)
-    if index.tz is not None:
-        lower = lower.tz_localize(index.tz) if lower.tzinfo is None else lower.tz_convert(index.tz)
-        upper = upper.tz_localize(index.tz) if upper.tzinfo is None else upper.tz_convert(index.tz)
-    return frame.loc[(index >= lower) & (index <= upper)]
+    return frame.loc[make_train_mask(index, end, start)]
 
 
 def _source_hashes() -> dict[str, str]:
@@ -243,7 +239,7 @@ def build_ledger(
             "producer setup sequences are not a ground-truth event ontology",
             "the packet does not count policy proposals or actions",
             "only the configured M1 state path is included",
-            "no economic performance or thesis holdout claim is made",
+            "no economic performance or confirmation-period claim is made",
         ],
     }
     (output_dir / "event_ledger.json").write_text(

@@ -17,16 +17,27 @@ from trading.risk.contracts import (
 
 
 def test_account_state_exports_selected_daily_loss_basis_through_risk_state() -> None:
-    legacy = AccountState(policy_mode="legacy")
-    legacy.close_trade(-4_000.0)
-    legacy.close_trade(2_500.0)
-    legacy.close_trade(-1_000.0)
-    legacy_state = legacy.to_risk_state(daily_loss_limit=5_000.0, open_risk=125.0)
+    legacy_mode = AccountState(policy_mode="legacy")
+    legacy_mode.close_trade(-4_000.0)
+    legacy_mode.close_trade(2_500.0)
+    legacy_mode.close_trade(-1_000.0)
+    session_state = legacy_mode.to_risk_state(daily_loss_limit=5_000.0, open_risk=125.0)
 
-    assert legacy_state.daily_pnl_basis == RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES
-    assert legacy_state.daily_pnl == -5_000.0
-    assert legacy_state.open_risk == 125.0
-    assert legacy.canonical_daily_loss() == 5_000.0
+    assert session_state.daily_pnl_basis == RISK_DAILY_PNL_BASIS_SESSION_EQUITY
+    assert session_state.daily_pnl == -2_500.0
+    assert session_state.open_risk == 125.0
+    assert legacy_mode.canonical_daily_loss() == 2_500.0
+
+    historical = AccountState(
+        policy_mode="legacy",
+        daily_pnl_basis_override=RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES,
+    )
+    historical.close_trade(-4_000.0)
+    historical.close_trade(2_500.0)
+    historical.close_trade(-1_000.0)
+    historical_state = historical.to_risk_state(daily_loss_limit=5_000.0)
+    assert historical_state.daily_pnl_basis == RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES
+    assert historical_state.daily_pnl == -5_000.0
 
     repeated = AccountState(policy_mode="repeated_payout")
     repeated.update_equity(-2_000.0)

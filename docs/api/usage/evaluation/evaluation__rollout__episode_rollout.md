@@ -31,7 +31,7 @@ This page contains 2 public callable records owned by `evaluation.rollout.episod
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluation_counts_two_fills_as_one_completed_position`](../../../../tests/integration/test_position_fill_accounting.py#L79)
+1. [test fixture: `test_evaluation_counts_two_fills_as_one_completed_position`](../../../../tests/integration/test_position_fill_accounting.py#L86)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -84,7 +84,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluation_counts_two_fills_as_one_completed_position`](../../../../tests/integration/test_position_fill_accounting.py#L79)
+1. [test fixture: `test_evaluation_counts_two_fills_as_one_completed_position`](../../../../tests/integration/test_position_fill_accounting.py#L86)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

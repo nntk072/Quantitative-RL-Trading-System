@@ -7,7 +7,12 @@ constructing policy priors. Existing coordinate ordering is intentionally kept.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from decisioning.trade_setup import TradeSetupActionSchema
 
 SCHEMA_VERSION = "overlay-action-v2"
 DISCRETE_TRADING_SCHEMA_VERSION = "discrete-trading-v1"
@@ -217,5 +222,39 @@ def build_action_schema(
         has_sl_mode=has_sl_mode,
         has_tp_mode=has_tp_mode,
         has_multi_tp=has_multi_tp,
+        has_simplex=has_simplex,
+    )
+
+
+def build_action_schema_from_config(
+    env_config: Mapping[str, Any],
+) -> ActionSchema | TradeSetupActionSchema:
+    """Build the Box action schema shared by training, replay, and reports.
+
+    Args:
+        env_config: Environment action settings from the resolved run config.
+
+    Returns:
+        Scalar or trade-setup action schema matching the configured coordinates.
+    """
+    multi_tp = bool(env_config.get("allow_multi_tp", False))
+    has_simplex = multi_tp and bool(env_config.get("allow_simplex", True))
+    if bool(env_config.get("trade_setup_actions", False)):
+        from decisioning.trade_setup import build_trade_setup_action_schema
+
+        return build_trade_setup_action_schema(
+            has_sl_mode=bool(env_config.get("allow_agent_sl_mode", True)),
+            has_tp_mode=bool(env_config.get("allow_agent_tp_mode", False)),
+            has_multi_tp=multi_tp,
+            has_simplex=has_simplex,
+            has_entry_execution=bool(env_config.get("agent_entry_execution", False)),
+        )
+    if bool(env_config.get("agent_entry_execution", False)):
+        raise ValueError("agent_entry_execution requires trade_setup_actions=true")
+    return build_action_schema(
+        has_direction=bool(env_config.get("agent_direction_control", False)),
+        has_sl_mode=bool(env_config.get("allow_agent_sl_mode", True)),
+        has_tp_mode=bool(env_config.get("allow_agent_tp_mode", False)),
+        has_multi_tp=multi_tp,
         has_simplex=has_simplex,
     )

@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `training.artifacts.aggreg
 
 **Purpose:** Aggregate per-seed results into a multi-seed training_log.json.
 
-**Exact API:** {py:obj}`training.artifacts.aggregation.aggregate_seed_results` · **Source:** [training/artifacts/aggregation.py:61](../../../../training/artifacts/aggregation.py#L61)
+**Exact API:** {py:obj}`training.artifacts.aggregation.aggregate_seed_results` · **Source:** [training/artifacts/aggregation.py:73](../../../../training/artifacts/aggregation.py#L73)
 
 **Inputs and outputs:**
 
@@ -37,19 +37,41 @@ This page contains 2 public callable records owned by `training.artifacts.aggreg
   Mapping from ``str`` keys to ``Any`` values.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_training_aggregation_requires_explicit_boolean_gate_passes`](../../../../tests/unit/training/test_train_rl_decomposition.py#L81)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = aggregate_seed_results(seed_results=..., seed=..., mvp=..., algo=..., arch=..., reward=..., timesteps=..., train_bars=..., test_bars=..., strategy=..., strategy_actions=..., cfg=..., args=..., run_dir=...)
+# … caller setup omitted …
+        "train_activity_gate": {"ok": "false", "status": "INACTIVE", "n_trades": 0},
+        "abort_reason": "",
+        "model_num_timesteps": 10,
+    }
+
+    aggregated = aggregate_seed_results(
+        seed_results=[result],
+        seed=7,
+        mvp=False,
+        algo="ppo",
+        arch="mlp",
+        reward="survival",
+        timesteps=10,
+        train_bars=20,
+        test_bars=10,
+        strategy="baseline",
+        strategy_actions=False,
+        cfg=SimpleNamespace(env={}),
+        args=SimpleNamespace(allow_locked_oos_for_selection=False),
+        run_dir=Path("."),
+    )
+
+    assert aggregated["train_equity_ok"] is False
+    assert aggregated["train_activity_ok_by_seed"] == {"7": False}
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -62,7 +84,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Write per-seed artifacts for multi-seed mode.
 
-**Exact API:** {py:obj}`training.artifacts.aggregation.save_seed_artifacts` · **Source:** [training/artifacts/aggregation.py:17](../../../../training/artifacts/aggregation.py#L17)
+**Exact API:** {py:obj}`training.artifacts.aggregation.save_seed_artifacts` · **Source:** [training/artifacts/aggregation.py:29](../../../../training/artifacts/aggregation.py#L29)
 
 **Inputs and outputs:**
 

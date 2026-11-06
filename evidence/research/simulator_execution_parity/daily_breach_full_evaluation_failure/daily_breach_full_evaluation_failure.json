@@ -1,0 +1,229 @@
+{
+  "backtest_events": [
+    {
+      "decision_bar_time": "2024-12-30T16:31:00+03:00",
+      "decision_time": "2024-12-30T16:31:00+03:00",
+      "direction": 1.0,
+      "equity": 50000.0,
+      "fill_time": "2024-12-30T13:32:00.082000+00:00",
+      "lots": 0.04988526389304603,
+      "net_pnl": null,
+      "order_submission_time": "2024-12-30T16:32:00+03:00",
+      "pnl": null,
+      "price": 21171.25,
+      "size": null,
+      "time": "2024-12-30T13:32:00.082000+00:00",
+      "type": "open"
+    },
+    {
+      "decision_bar_time": null,
+      "decision_time": "2024-12-30T16:33:00+03:00",
+      "direction": null,
+      "equity": 49998.06694602415,
+      "fill_time": "2024-12-30T13:34:00.081000+00:00",
+      "lots": null,
+      "net_pnl": -1.9330539758555338,
+      "order_submission_time": "2024-12-30T16:34:00+03:00",
+      "pnl": -1.9330539758555338,
+      "price": 21132.5,
+      "size": 0.04988526389304603,
+      "time": "2024-12-30T13:34:00.081000+00:00",
+      "type": "close"
+    }
+  ],
+  "backtest_second_session_start_balance": 49998.06694602415,
+  "close_comparisons": [
+    {
+      "pnl_delta": 0.0,
+      "same_close_time": true,
+      "same_pnl": true,
+      "same_session_id": true
+    }
+  ],
+  "code_sha256": {
+    "generator": "4731309a1efbd78d565a5d5753f5f67b516559e0b4fda50e33e7757f28ca0598",
+    "market_data/transforms/sessions.py": "950c8212809801a734eb567239bd50f59dcad0eb16d32c5abadc2a319e017866",
+    "simulation/backtest/event_driven_backtest.py": "9bb20184d2758cd867aa83418c0253e251bf809310a9cd2c36fd18a65d53893b",
+    "simulation/backtest/protective_events.py": "defa895980b342ac4d1fbdc0ca6f55e6493fffc25ccb7dc9e2b2a2936e502314",
+    "simulation/environment/env.py": "ae1c2f98235c58c7a485ba4ed9a16918cd5a9f2936e8d604355e55596d7f92c4",
+    "simulation/environment/risk_runtime.py": "4376e04f1813419d66ac52579241ec47de6d0fd5358bac0a2aa76cebe3ce0ae1"
+  },
+  "controlled_actions": [
+    1,
+    0,
+    19,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    19,
+    0,
+    0,
+    0
+  ],
+  "environment_events": [
+    {
+      "decision_bar_time": "2024-12-30T16:31:00+03:00",
+      "decision_time": "2024-12-30T16:32:00+03:00",
+      "direction": 1,
+      "equity": 50000.0,
+      "fill_time": "2024-12-30T13:32:00.082000+00:00",
+      "lots": 0.04988526389304603,
+      "order_submission_time": "2024-12-30T16:32:00+03:00",
+      "price": 21171.25,
+      "time": "2024-12-30T13:32:00.082000+00:00",
+      "type": "open"
+    },
+    {
+      "decision_bar_time": "2024-12-30T16:33:00+03:00",
+      "decision_time": "2024-12-30T16:34:00+03:00",
+      "equity": 49998.06694602415,
+      "fill_time": "2024-12-30T13:34:00.081000+00:00",
+      "net_pnl": -1.9330539758555338,
+      "order_submission_time": "2024-12-30T16:34:00+03:00",
+      "pnl": -1.9330539758555338,
+      "price": 21132.5,
+      "size": 0.04988526389304603,
+      "time": "2024-12-30T13:34:00.081000+00:00",
+      "type": "close"
+    }
+  ],
+  "environment_second_session_start_balance": 49998.06694602415,
+  "execution_mode": "tick_required",
+  "execution_timing_contracts": {
+    "environment": "TickBook quote at configured execution time",
+    "event_backtest": "TickBook quote at configured execution time",
+    "source_basis": "current engine implementations and the bar-open parity regression"
+  },
+  "expected_second_session_start_balance": {
+    "environment": 49998.06694602415,
+    "event_backtest": 49998.06694602415
+  },
+  "final_account": {
+    "backtest_balance": 49998.06694602415,
+    "backtest_daily_loss": 0.0,
+    "backtest_equity": 49998.06694602415,
+    "balance_delta": 0.0,
+    "cross_engine_account_state_matches": true,
+    "daily_loss_comparison_applicable": true,
+    "daily_loss_comparison_scope": "final_state",
+    "daily_loss_delta": 0.0,
+    "environment_balance": 49998.06694602415,
+    "environment_daily_loss": 0.0,
+    "environment_equity": 49998.06694602415,
+    "equity_delta": 0.0
+  },
+  "first_session_realized_close_pnl": {
+    "environment": -1.9330539758555338,
+    "event_backtest": -1.9330539758555338
+  },
+  "guardrail_settings": {
+    "daily_loss_limit": 1.0,
+    "max_loss_limit": 20000.0,
+    "risk_per_trade_limit": 10000.0,
+    "soft_daily_loss_limit": 0.0,
+    "soft_max_loss_limit": 0.0
+  },
+  "initial_balance": 50000.0,
+  "input_bars": "data/training/US100.cash_M1_202412300105_202610162349.csv",
+  "input_bars_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+  "input_ticks": "data/training/US100.cash_202412300105_202610162349.csv",
+  "input_ticks_sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23",
+  "interpretation": "Controlled account-transition comparison on local training bars; not a learned-policy replay or economic performance estimate.",
+  "lifecycle_comparisons": [
+    {
+      "price_delta": 0.0,
+      "same_direction": true,
+      "same_fill_time": true,
+      "same_price": true,
+      "same_session_id": true,
+      "type": "open"
+    },
+    {
+      "price_delta": 0.0,
+      "same_direction": true,
+      "same_fill_time": true,
+      "same_price": true,
+      "same_session_id": true,
+      "type": "close"
+    }
+  ],
+  "limitations": [
+    "Two selected local date-derived sessions and two controlled positions are not comprehensive execution coverage.",
+    "The action schedule is prescribed and does not estimate policy quality or economic value.",
+    "Local broker-time session IDs are used as supplied; no external clock or schedule authority is asserted.",
+    "This does not establish broker-connected or restart-safe live account parity."
+  ],
+  "randomized_fill_latency_ms": 30.0,
+  "risk_transition": {
+    "attempted_same_session_reentry_after_first_close": true,
+    "backtest_breach_events": [
+      {
+        "daily_loss": 1.9330539758555338,
+        "equity": 49998.06694602415,
+        "reason": "daily_loss",
+        "session_id": 0,
+        "time": "2024-12-30T16:34:00+03:00"
+      }
+    ],
+    "backtest_first_session_open_count": 1,
+    "backtest_next_session_open_count": 0,
+    "backtest_post_breach_same_session_open_count": 0,
+    "daily_loss_evaluation_latched": true,
+    "daily_loss_limit": 1.0,
+    "environment_actions_executed": 14,
+    "environment_breach_events": [
+      {
+        "daily_loss": 1.9330539758555338,
+        "equity": 49998.06694602415,
+        "fill_time": "2024-12-30T13:35:00.080000+00:00",
+        "reason": "daily_loss",
+        "session_id": 0,
+        "time": "2024-12-30T16:34:00+03:00"
+      }
+    ],
+    "environment_first_session_open_count": 1,
+    "environment_next_session_open_count": 0,
+    "environment_post_breach_same_session_open_count": 0,
+    "environment_terminated": false,
+    "environment_termination_action_index": null,
+    "environment_truncated": false,
+    "max_loss_limit": 20000.0,
+    "max_loss_rollout_latched": false,
+    "next_session_entry_allowed_after_reset": false,
+    "risk_transition_matches": true,
+    "same_session_reentry_blocked": true,
+    "scenario": "daily_loss_full_evaluation_failure",
+    "scheduled_same_session_entry_after_max_loss": false
+  },
+  "scenario": "daily_loss_full_evaluation_failure",
+  "schema_version": 1,
+  "selected_sessions": [
+    {
+      "date": "2024-12-30",
+      "first_bar": "2024-12-30T16:30:00+03:00",
+      "last_bar": "2024-12-30T16:37:00+03:00",
+      "selected_rows": 8,
+      "session_id": 0
+    },
+    {
+      "date": "2024-12-31",
+      "first_bar": "2024-12-31T16:30:00+03:00",
+      "last_bar": "2024-12-31T16:37:00+03:00",
+      "selected_rows": 8,
+      "session_id": 1
+    }
+  ],
+  "session_reset_check_applicable": true,
+  "session_reset_matches_within_engine": {
+    "environment": true,
+    "event_backtest": true
+  },
+  "session_source": "local M1 bar dates and the repository's date-derived session_id; local NY labels select the rows, with no external calendar claim",
+  "timezone_label": "Etc/GMT-3",
+  "trace_passed": true,
+  "trace_status": "matched"
+}

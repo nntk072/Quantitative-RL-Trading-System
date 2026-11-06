@@ -55,10 +55,12 @@ def split_train_test(
         else:
             test_start_ts = test_start_ts.tz_convert(tz)
 
-            # Include the full last training day (end of 2025-12-31)
-    train_end_ts = train_end_ts + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
+    # Use the next local calendar midnight as an exclusive boundary. Subtracting
+    # one second omitted subsecond rows and adding a fixed 24 hours crossed the
+    # wrong local date on daylight-saving transitions.
+    train_end_exclusive = train_end_ts.normalize() + pd.DateOffset(days=1)
 
-    train_mask = b.index <= train_end_ts
+    train_mask = b.index < train_end_exclusive
     if train_start is not None:
         train_start_ts = pd.Timestamp(train_start)
         if tz is not None:
@@ -104,9 +106,11 @@ def get_split_config(cfg: Any) -> tuple[str, str]:
     """
     try:
         train_end = str(cfg.data.split.train_end)
-        test_start = str(cfg.data.split.test_start)
     except Exception:
         train_end = "2025-12-31"
+    try:
+        test_start = str(cfg.data.split.test_start)
+    except Exception:
         test_start = "2026-01-01"
     return train_end, test_start
 
@@ -149,8 +153,10 @@ def make_train_mask(
             train_end_ts = train_end_ts.tz_localize(tz)
         else:
             train_end_ts = train_end_ts.tz_convert(tz)
-    train_end_ts = train_end_ts + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
-    mask = index <= train_end_ts
+    # Match split_train_test: include the whole local calendar date without
+    # imposing a one-second precision limit or assuming every date is 24 hours.
+    train_end_exclusive = train_end_ts.normalize() + pd.DateOffset(days=1)
+    mask = index < train_end_exclusive
     if train_start is not None:
         train_start_ts = pd.Timestamp(train_start)
         if tz is not None:

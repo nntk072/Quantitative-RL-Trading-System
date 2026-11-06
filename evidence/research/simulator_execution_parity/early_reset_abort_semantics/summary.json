@@ -1,0 +1,12 @@
+{
+  "claim_scope": "current-source manual TradingEnv reset abort semantics and distinction from configured liquidation boundaries",
+  "limitations": [
+    "Manual early reset discards the active episode ledger and is not a market close or realized-result observation.",
+    "Full-ledger daily-risk reconciliation remains open.",
+    "Checkpoint-backed policy replay determinism remains gated and unverified.",
+    "No environment/backtest parity claim is made for an external manual abort."
+  ],
+  "schema": "qrl.early_reset_abort_semantics.v1",
+  "status": "passed_bounded_reset_contract",
+  "test_count": 1
+}

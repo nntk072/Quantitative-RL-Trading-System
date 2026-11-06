@@ -10,6 +10,7 @@ import pytest
 from omegaconf import DictConfig, OmegaConf
 
 from features import build_features
+from features.po3 import po3_phase_state as po3_phase_state_module
 from features.po3.fvg import build_fvg_zone_features
 from features.po3.fvg_detection import FVGConfig
 from features.po3.ifvg_state import build_po3_ifvg_state
@@ -270,6 +271,37 @@ class TestIFVGZones:
         # Retest bar closes inside the zone bounds.
         assert zones["price_in_ifvg_bull"].iloc[8] == 1
         assert zones["ifvg_bull_distance_atr"].iloc[start] >= 0
+
+    @pytest.mark.parametrize("atr_value", [float("nan"), 0.0])
+    def test_distance_uses_sentinel_when_atr_is_unavailable(
+        self, monkeypatch: pytest.MonkeyPatch, atr_value: float
+    ) -> None:
+        monkeypatch.setattr(
+            po3_phase_state_module,
+            "atr",
+            lambda frame, _period: pd.Series(atr_value, index=frame.index),
+        )
+        bullish_zones = build_ifvg_zone_features(self.build_frame())
+        bullish_start = int(np.argmax(bullish_zones["ifvg_bull_active"].to_numpy()))
+        assert bullish_zones["ifvg_bull_distance_atr"].iloc[bullish_start] == 5.0
+
+        bearish_bars = make_bars(
+            [
+                (101.0, 100.0, 100.5),
+                (100.5, 99.5, 100.0),
+                (100.2, 99.0, 99.5),
+                (99.0, 97.5, 98.0),
+                (100.0, 96.0, 98.5),
+                (100.0, 95.0, 95.5),
+                (98.8, 95.8, 96.2),
+                (98.9, 95.5, 96.0),
+                (99.5, 99.0, 99.2),
+                (99.3, 99.0, 99.1),
+            ]
+        )
+        bearish_zones = build_ifvg_zone_features(bearish_bars)
+        bearish_start = int(np.argmax(bearish_zones["ifvg_bear_active"].to_numpy()))
+        assert bearish_zones["ifvg_bear_distance_atr"].iloc[bearish_start] == 5.0
 
     def test_same_bar_confirmations_retain_selected_gap_origin_time(self) -> None:
         bars = make_bars(

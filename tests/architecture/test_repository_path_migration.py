@@ -31,9 +31,16 @@ def test_path_migration_preserves_originals_and_resolves_repository_paths() -> N
                 assert resolved_path.is_relative_to(ROOT.resolve())
                 assert resolved_path.is_file()
             else:
-                assert row["superseded_archive_path"].startswith(
-                    "../Quantitative-RL-Trading-System-bin/superseded/"
+                superseded_path = row["superseded_archive_path"]
+                assert superseded_path.startswith(
+                    (
+                        "../Quantitative-RL-Trading-System-bin/superseded/",
+                        "../agent_plans/Quantitative-RL-Trading-System/",
+                    )
                 )
+                archived_copy = (ROOT / superseded_path).resolve()
+                assert archived_copy.is_file()
+                assert hashlib.sha256(archived_copy.read_bytes()).hexdigest() == row["old_sha256"]
 
 
 def test_fingerprint_migration_is_deterministic_and_collision_free() -> None:

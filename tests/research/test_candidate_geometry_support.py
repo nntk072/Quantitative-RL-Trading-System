@@ -41,6 +41,33 @@ def test_candidate_geometry_coverage_counts_only_valid_active_source_bounds() ->
     assert report["rows_with_invalid_geometry_bounds"] == 2
     assert report["geometry_coverage_fraction"] == 1.0 / 3.0
     assert report["median_geometry_width"] == 1.0
+    assert report["rows_with_atr_normalized_geometry"] is None
+    assert report["median_geometry_width_atr"] is None
+
+
+def test_candidate_geometry_reports_close_and_atr_scaled_width_and_distance() -> None:
+    candidate = _candidate("order_block", "M5", 1)
+    candidate_feature = dict(trade_setup_candidate_feature_columns())[candidate.candidate_id]
+    features = pd.DataFrame(
+        {
+            candidate_feature: [1.0, 1.0, 0.0],
+            "M5_ob_bull_active": [1.0, 1.0, 1.0],
+            "M5_ob_bull_low": [100.0, 103.0, 100.0],
+            "M5_ob_bull_high": [102.0, 104.0, 102.0],
+            "close": [101.0, 100.0, 101.0],
+            "atr": [2.0, 1.0, 1.0],
+        }
+    )
+
+    report = _candidate_geometry_summary(features, candidate, configured_support=True)
+
+    assert report["rows_with_atr_normalized_geometry"] == 2
+    assert report["atr_normalized_geometry_coverage_fraction"] == 1.0
+    assert report["median_geometry_width_atr"] == 1.0
+    assert report["p95_geometry_width_atr"] == 1.0
+    assert report["fraction_price_inside_geometry"] == 0.5
+    assert report["median_distance_to_geometry_atr"] == 1.5
+    assert np.isclose(report["p95_distance_to_geometry_atr"], 2.85)
 
 
 def test_candidate_without_exposed_geometry_fields_is_reported_as_missing() -> None:

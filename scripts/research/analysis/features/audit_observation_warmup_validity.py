@@ -27,6 +27,7 @@ from features.context.policy_market import attach_policy_market_context
 from features.pipeline.feature_matrix_builder import build_features
 from market_data.loading.market_data_ingestion import run_pipeline
 from market_data.loading.tick_book_pipeline import build_tick_books
+from market_data.splits.definitions import make_train_mask
 from simulation.environment.observations import split_obs_columns, timeframe_starts
 from simulation.environment.trading_environment_factory import scheduled_session_closes
 
@@ -55,16 +56,6 @@ SOURCE_PATHS = (
 )
 
 
-def _timestamp(value: str, index: pd.DatetimeIndex) -> pd.Timestamp:
-    """Convert a configured split boundary into the source index timezone."""
-    result = pd.Timestamp(value)
-    if index.tz is not None:
-        result = (
-            result.tz_localize(index.tz) if result.tzinfo is None else result.tz_convert(index.tz)
-        )
-    return result
-
-
 def _sha256(path: Path) -> str:
     """Hash a file without loading it all into memory."""
     with path.open("rb") as stream:
@@ -78,9 +69,7 @@ def _source_hashes() -> dict[str, str]:
 
 def _training_mask(index: pd.DatetimeIndex, start: str, end: str) -> NDArray[np.bool_]:
     """Select configured training decision rows, inclusive of the end date."""
-    lower = _timestamp(start, index)
-    upper = _timestamp(end, index) + pd.Timedelta(days=1) - pd.Timedelta(nanoseconds=1)
-    return np.asarray((index >= lower) & (index <= upper), dtype=bool)
+    return make_train_mask(index, end, start).to_numpy(dtype=bool)
 
 
 def _column_rows(

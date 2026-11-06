@@ -129,60 +129,50 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_session_extremes_are_structural_order_candidates`](../../../../tests/integration/backtest/test_entry_levels.py#L136)
+1. [test fixture: `test_structural_stop_buffer_rounds_away_from_entry_to_price_grid`](../../../../tests/integration/backtest/test_entry_levels.py#L120)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_session_extremes_are_structural_order_candidates(
-    direction: int, expected_stops: set[str], expected_targets: set[str]
+def test_structural_stop_buffer_rounds_away_from_entry_to_price_grid(
+    direction: int, reference: float, expected_stop: float
 ) -> None:
-    row = _row(london_low=95.0, asian_low=94.0, london_high=105.0, asian_high=106.0)
-
-    menu, _audit = stop_menu(
-        BaselineStrategy(),
+    menu, audit = stop_menu(
+        _Menu([("custom_stop", reference)]),
         direction=direction,
         entry_price=100.0,
-        row=row,
+        row=_row(),
         min_dist=1.0,
-        buffer=0.0,
+        buffer=0.1,
         manipulation="none",
         htf=(),
+        price_increment=0.25,
     )
 
-    stop_names = {part for name, _stop, _distance in menu for part in name.split("|")}
-    assert expected_stops <= stop_names
-    targets = target_menu(
-        direction=direction,
-# … caller assertions omitted …
+    assert len(menu) == 1
+    assert menu[0][:2] == ("custom_stop", expected_stop)
+    assert menu[0][2] == pytest.approx(abs(100.0 - expected_stop))
+    assert audit[0]["stop_price"] == pytest.approx(expected_stop)
 ```
 
-2. [test fixture: `test_stop_menu_applies_h2_floor_and_keeps_weekly_references`](../../../../tests/integration/backtest/test_entry_levels.py#L215)
+2. [test fixture: `test_structural_stop_menu_rejects_invalid_price_increment`](../../../../tests/integration/backtest/test_entry_levels.py#L141)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        M15_last_swing_low=95.0,
-        H2_last_swing_low=90.0,
-        W1_last_swing_low=80.0,
-    )
-
-    menu, _audit = stop_menu(
-        BaselineStrategy(),
-        direction=1,
-        entry_price=100.0,
-        row=row,
-        min_dist=1.0,
-        buffer=0.0,
-        manipulation="none",
-        htf=("M15", "H2", "W1"),
-        min_timeframe="H2",
-    )
-
-    names = {part for name, _stop, _distance in menu for part in name.split("|")}
-    assert "M15_last_swing_low" not in names
-    assert {"H2_last_swing_low", "W1_last_swing_low"} <= names
+def test_structural_stop_menu_rejects_invalid_price_increment(price_increment: float) -> None:
+    with pytest.raises(ValueError, match="price_increment must be finite and positive"):
+        stop_menu(
+            _Menu([("custom_stop", 95.0)]),
+            direction=1,
+            entry_price=100.0,
+            row=_row(),
+            min_dist=1.0,
+            buffer=0.0,
+            manipulation="none",
+            htf=(),
+            price_increment=price_increment,
+        )
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

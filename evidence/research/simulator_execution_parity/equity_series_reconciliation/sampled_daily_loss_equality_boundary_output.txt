@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 12 items
+
+tests/unit/research/test_recorded_equity_series_audit.py ............    [100%]
+
+============================== 12 passed in 0.25s ==============================
+PYTEST_EXIT=0
+2 files already formatted
+RUFF_FORMAT_EXIT=0
+All checks passed!
+RUFF_CHECK_EXIT=0

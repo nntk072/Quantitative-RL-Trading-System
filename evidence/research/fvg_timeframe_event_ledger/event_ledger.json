@@ -83,13 +83,13 @@
   },
   "per_zone_retest_count": 49780,
   "primary_symbol": "US100.cash",
-  "resolved_config_sha256": "9e73b1932655642f515542c831988279ab9733e94aa2ee7719758ba6d3df87d1",
+  "resolved_config_sha256": "50905622d3e0c7d2f13ed9195b32e2ab7b0151fb6d4326831ee1835497430c85",
   "scalar_retest_count": 46285,
   "session_schedule_identity": {
     "path": "config/ny_session_schedule.csv",
     "sha256": "7e9f5def3385185905f7265f946a0835ccb43c53f1351c057aa23f00480e6cbc"
   },
-  "source_commit": "c2541a8662d9cfb677a33b774a4bb51d5a8a5cb9",
+  "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
   "source_hashes": {
     "features/pipeline/feature_matrix_builder.py": "3799f0bc1f090e2acb056542f0432a5bd19dc767068984c08bc6bff3d487caff",
     "features/po3/fvg.py": "8be5a6965eea735ffd606d494f5a9d430a8c5b3638eb5321767e631dd4e17cca",

@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `evaluation.reporting.run_
 
 **Purpose:** Persist a complete train + test run.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_artifact_writer.save_run` · **Source:** [evaluation/reporting/run_artifact_writer.py:668](../../../../evaluation/reporting/run_artifact_writer.py#L668)
+**Exact API:** {py:obj}`evaluation.reporting.run_artifact_writer.save_run` · **Source:** [evaluation/reporting/run_artifact_writer.py:848](../../../../evaluation/reporting/run_artifact_writer.py#L848)
 
 **Inputs and outputs:**
 
@@ -47,7 +47,40 @@ This page contains 1 public callable records owned by `evaluation.reporting.run_
 
 **Observed usage:**
 
-1. [test fixture: `test_save_run_creates_files`](../../../../tests/unit/evaluation/test_plots_export.py#L689)
+1. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L259)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        features,
+        env=env,
+        strategy_actions=True,
+        trade_setup_actions=True,
+    )
+    run_dir = save_run(
+        run_dir=tmp_path / "model-choice-trace",
+        train_result=result,
+        train_metrics=calculate_metrics(
+            result["equity"],
+            trades=result["trades"],
+            initial_balance=100_000.0,
+        ),
+        train_bars=bars,
+        save_plots=False,
+        save_html=False,
+        save_csv=True,
+        report_profile="experiment_run_fast",
+    )
+
+    saved = pd.read_csv(run_dir / "training" / "trade_setup_decisions.csv")
+    assert len(saved) == 1
+    saved_candidate_id = saved["trade_setup_candidate_id"].to_numpy(dtype=np.int64)[0]
+    assert int(saved_candidate_id) == candidate_id
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_save_run_creates_files`](../../../../tests/unit/evaluation/test_plots_export.py#L689)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -70,27 +103,6 @@ def test_save_run_creates_files(synthetic_result, metrics, tmp_path):
     assert (run_dir / "summary.txt").stat().st_size > 0
     evaluation_manifest = json.loads((run_dir / "evaluation_manifest.json").read_text())
     assert evaluation_manifest["schema_version"] == "evaluation-artifacts-v1"
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_save_run_no_overwrite`](../../../../tests/unit/evaluation/test_plots_export.py#L726)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-    d1 = save_run(
-        out_dir=tmp_path,
-        name="run",
-        train_result=synthetic_result,
-        train_metrics=metrics,
-        save_plots=False,
-        save_html=False,
-    )
-    time.sleep(1.1)  # ensure different timestamp
-    d2 = save_run(
-        out_dir=tmp_path,
-        name="run",
-        train_result=synthetic_result,
 # … caller assertions omitted …
 ```
 

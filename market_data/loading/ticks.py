@@ -35,7 +35,7 @@ from market_data.loading.bars import iter_ticks_chunks
 from market_data.transforms.price_grid import price_grid_identity, quantize_prices
 
 log = logging.getLogger(__name__)
-TICK_CACHE_VERSION = "v4-semantic-manifest"
+TICK_CACHE_VERSION = "v7-source-precision-quotes"
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +59,19 @@ class TickDeadlineExecutionQuote:
     tick_time: pd.Timestamp
     bid: float
     ask: float
+    latency_ns: int
+
+
+@dataclass(frozen=True, slots=True)
+class TickLimitExecutionQuote:
+    """First executable quote satisfying a resting limit before expiry."""
+
+    order_time: pd.Timestamp
+    arrival_time: pd.Timestamp
+    tick_time: pd.Timestamp
+    bid: float
+    ask: float
+    limit_price: float
     latency_ns: int
 
 
@@ -98,9 +111,63 @@ def event_keyed_execution_rng(execution_seed: int, event_key: str) -> np.random.
     Separate execution paths can consume different numbers of draws while
     advancing bars. Keying scheduled events prevents unrelated quote lookups
     from changing the sampled latency for that event.
+
+    Args:
+        execution_seed: Shared seed for execution randomness.
+        event_key: Stable identity of the logical execution event.
+
+    Returns:
+        NumPy generator deterministic for this seed and event key.
     """
     digest = hashlib.sha256(f"{int(execution_seed)}:{event_key}".encode()).digest()
     return np.random.default_rng(int.from_bytes(digest[:16], byteorder="big"))
+
+
+def limit_entry_execution_rng(
+    execution_seed: int,
+    order_time: pd.Timestamp,
+    direction: int,
+    limit_price: float,
+    candidate_id: int | None,
+) -> np.random.Generator:
+    """Key limit-entry latency by shared order intent, not engine-local IDs.
+
+    Environment and event-backtest order IDs use different counters. Using
+    either in the random key would break paired fill parity when latency is
+    sampled. The submission instant, side, stable candidate ID, and exact
+    submitted price identify the same order intent across both engines.
+
+    Args:
+        execution_seed: Seed shared by paired simulator executions.
+        order_time: Time at which the order becomes active.
+        direction: Signed side, +1 for long or -1 for short.
+        limit_price: Submitted hard limit price.
+        candidate_id: Stable setup ID, or ``None`` for a non-categorical order.
+
+    Returns:
+        A deterministic generator keyed to the shared order intent.
+
+    Raises:
+        ValueError: If time, side, limit price, or candidate ID is invalid.
+    """
+    submitted = pd.Timestamp(order_time)
+    if submitted.tz is None:
+        raise ValueError("limit order time must be timezone-aware")
+    if direction not in (-1, 1):
+        raise ValueError("limit order direction must be -1 or +1")
+    if not np.isfinite(limit_price) or limit_price <= 0.0:
+        raise ValueError("limit_price must be finite and positive")
+    if candidate_id is not None and (
+        isinstance(candidate_id, bool)
+        or not isinstance(candidate_id, (int, np.integer))
+        or candidate_id < 0
+    ):
+        raise ValueError("candidate_id must be a nonnegative integer or None")
+    candidate_key = "none" if candidate_id is None else str(int(candidate_id))
+    event_key = (
+        f"limit_entry:{submitted.value}:{direction}:{candidate_key}:{float(limit_price).hex()}"
+    )
+    return event_keyed_execution_rng(execution_seed, event_key)
 
 
 def resolve_tick_execution(
@@ -218,6 +285,76 @@ def resolve_tick_execution_by_deadline(
             )
 
     return None
+
+
+def resolve_tick_limit_execution(
+    book: TickBook,
+    direction: int,
+    limit_price: float,
+    order_time: pd.Timestamp,
+    expiry_time: pd.Timestamp,
+    rng: np.random.Generator,
+    *,
+    max_latency_ns_exclusive: int = 0,
+    require_trade_through: bool = False,
+) -> TickLimitExecutionQuote | None:
+    """Find the first observed executable quote at a resting limit by expiry.
+
+    A buy limit is executable when the observed ask reaches or passes below the
+    limit; a sell limit is executable when bid reaches or passes above it.
+    ``require_trade_through`` excludes a quote exactly at the limit, providing
+    a stricter sensitivity case for the absence of queue-position data.
+
+    Args:
+        book: Ordered local bid/ask observations.
+        direction: +1 for a buy limit and -1 for a sell limit.
+        limit_price: Maximum buy price or minimum sell price.
+        order_time: Time at which the order is submitted.
+        expiry_time: Inclusive final time at which the order can fill.
+        rng: Random generator used to sample submission latency.
+        max_latency_ns_exclusive: Upper-exclusive submission latency in ns.
+        require_trade_through: Require ask < limit for buys or bid > limit for sells.
+
+    Returns:
+        The first source-ordered executable quote, or None when it never arrives.
+    """
+    if direction not in (-1, 1):
+        raise ValueError("limit order direction must be -1 or +1")
+    if not np.isfinite(limit_price) or limit_price <= 0.0:
+        raise ValueError("limit_price must be finite and positive")
+    if max_latency_ns_exclusive < 0:
+        raise ValueError("max_latency_ns_exclusive cannot be negative")
+    submitted = pd.Timestamp(order_time)
+    expiry = pd.Timestamp(expiry_time)
+    if submitted.tz is None or expiry.tz is None:
+        raise ValueError("limit order timestamps must be timezone-aware")
+    if expiry < submitted:
+        raise ValueError("expiry_time cannot precede order_time")
+    latency_ns = (
+        0 if max_latency_ns_exclusive == 0 else int(rng.integers(0, max_latency_ns_exclusive))
+    )
+    arrival = submitted + pd.Timedelta(latency_ns, unit="ns")
+    if arrival > expiry:
+        return None
+    event = book.first_limit_execution_event(
+        direction,
+        float(limit_price),
+        arrival,
+        expiry,
+        require_trade_through=require_trade_through,
+    )
+    if event is None:
+        return None
+    tick_time, bid, ask = event
+    return TickLimitExecutionQuote(
+        order_time=submitted,
+        arrival_time=arrival,
+        tick_time=tick_time,
+        bid=bid,
+        ask=ask,
+        limit_price=float(limit_price),
+        latency_ns=latency_ns,
+    )
 
 
 def resolve_tick_exit(
@@ -421,6 +558,62 @@ class TickBook:
             float(self._ask[i]),
         )
 
+    def first_limit_execution_event(
+        self,
+        direction: int,
+        limit_price: float,
+        start_time: pd.Timestamp,
+        expiry_time: pd.Timestamp,
+        *,
+        require_trade_through: bool = False,
+    ) -> tuple[pd.Timestamp, float, float] | None:
+        """Return the earliest source-ordered quote that crosses a limit.
+
+        Tick data does not contain queue position or displayed depth. The
+        returned crossing is therefore a quote-based fill model, not proof of
+        broker queue priority. Callers can require trade-through for a stricter
+        sensitivity analysis.
+
+        Args:
+            direction: Limit-order side, ``1`` for buy or ``-1`` for sell.
+            limit_price: Submitted limit price.
+            start_time: Earliest timestamp eligible for a fill.
+            expiry_time: Last timestamp eligible for a fill, inclusive.
+            require_trade_through: Whether a quote must cross beyond the limit.
+
+        Returns:
+            Earliest matching timestamp and its bid/ask, or ``None`` if unfilled.
+        """
+        if direction not in (-1, 1):
+            raise ValueError("limit order direction must be -1 or +1")
+        if not np.isfinite(limit_price) or limit_price <= 0.0:
+            raise ValueError("limit_price must be finite and positive")
+        start = pd.Timestamp(start_time)
+        expiry = pd.Timestamp(expiry_time)
+        if start.tz is None or expiry.tz is None:
+            raise ValueError("limit order timestamps must be timezone-aware")
+        if expiry < start:
+            raise ValueError("expiry_time cannot precede start_time")
+        first = int(np.searchsorted(self._ts, start.value, side="left"))
+        last = int(np.searchsorted(self._ts, expiry.value, side="right"))
+        if first >= last:
+            return None
+        bid = self._bid[first:last]
+        ask = self._ask[first:last]
+        if direction == 1:
+            eligible = ask < limit_price if require_trade_through else ask <= limit_price
+        else:
+            eligible = bid > limit_price if require_trade_through else bid >= limit_price
+        matches = np.flatnonzero(eligible)
+        if matches.size == 0:
+            return None
+        index = first + int(matches[0])
+        return (
+            pd.Timestamp(int(self._ts[index]), unit="ns", tz="UTC"),
+            float(self._bid[index]),
+            float(self._ask[index]),
+        )
+
     def __len__(self) -> int:
         """Process TickBook.
 
@@ -434,6 +627,9 @@ class TickBook:
 
         Equal-timestamp source order affects quote selection, so the digest
         includes array order, dtype, and shape for all three owned arrays.
+
+        Returns:
+            SHA-256 fingerprint of ordered timestamps, bids, and asks.
         """
         digest = hashlib.sha256(b"qrl.tickbook.content.v1\0")
         for name, values in ((b"timestamp_ns", self._ts), (b"bid", self._bid), (b"ask", self._ask)):
@@ -720,7 +916,9 @@ def build_tick_book(
 
     * Only ``date``/``time``/``bid``/``ask`` are read — ``last``/``volume``/
       ``flags`` are dropped at the CSV-parser level via ``usecols``.
-    * ``bid``/``ask`` are read as ``float32``.
+    * ``bid``/``ask`` are read as ``float64`` so executable price-grid values
+      remain comparable to float64 stop and target levels without a binary32
+      rounding offset.
     * The session-hours filter is applied **per chunk**, discarding the
       ~70%+ of rows outside the trading window before they ever accumulate.
     * Forward-fill state (the last valid bid/ask) is carried across chunk
@@ -816,8 +1014,8 @@ def build_tick_book(
         if diagnostics is not None:
             diagnostics.rows_after_session_filter += int(mask.sum())
 
-        bid = raw_chunk["bid"].to_numpy(dtype=np.float32, copy=True)[mask]
-        ask = raw_chunk["ask"].to_numpy(dtype=np.float32, copy=True)[mask]
+        bid = raw_chunk["bid"].to_numpy(dtype=np.float64, copy=True)[mask]
+        ask = raw_chunk["ask"].to_numpy(dtype=np.float64, copy=True)[mask]
         ts_ns = dt.values.astype("int64")[mask]
 
         raw_bid_valid = np.isfinite(bid) & (bid > 0.0)
@@ -876,8 +1074,8 @@ def build_tick_book(
         if len(bid):
             last_bid, last_ask = float(bid[-1]), float(ask[-1])
         if price_grid_increment is not None:
-            bid = quantize_prices(bid, price_grid_increment).astype(np.float32, copy=False)
-            ask = quantize_prices(ask, price_grid_increment).astype(np.float32, copy=False)
+            bid = quantize_prices(bid, price_grid_increment)
+            ask = quantize_prices(ask, price_grid_increment)
 
         if not valid.all():
             bid, ask, ts_ns = bid[valid], ask[valid], ts_ns[valid]

@@ -22,6 +22,7 @@ is read by every listed package.
 | `agent.head_arch.gru` | `array` | `[256,128]` | `learning/rl` |
 | `agent.head_arch.lite_tcn` | `array` | `[128,64]` | `learning/rl` |
 | `agent.head_arch.mtf` | `array` | `[256,128]` | `learning/rl` |
+| `agent.head_arch.mtf_empty_stream_masked_v1` | `array` | `[256,128]` | `learning/rl` |
 | `agent.head_arch.mtf_m1_tcn_htf_lite_reasoning` | `array` | `[256,128]` | `learning/rl` |
 | `agent.head_arch.mtf_m1_tcn_htf_snapshot_reasoning` | `array` | `[256,128]` | `learning/rl` |
 | `agent.head_arch.mtf_reasoning` | `array` | `[256,128]` | `learning/rl` |
@@ -33,6 +34,10 @@ is read by every listed package.
 | `agent.lite_tcn.dropout` | `number` | `0.1` | `learning/rl` |
 | `agent.lite_tcn.kernel_size` | `integer` | `3` | `learning/rl` |
 | `agent.lite_tcn.latent_dim` | `integer` | `128` | `learning/rl` |
+| `agent.mtf_empty_stream_masked_v1.channels` | `array` | `[128,128,256,256]` | `learning/rl` |
+| `agent.mtf_empty_stream_masked_v1.dropout` | `number` | `0.1` | `learning/rl` |
+| `agent.mtf_empty_stream_masked_v1.kernel_size` | `integer` | `3` | `learning/rl` |
+| `agent.mtf_empty_stream_masked_v1.latent_dim` | `integer` | `128` | `learning/rl` |
 | `agent.mtf_m1_tcn_htf_lite_reasoning.adapter_dim` | `integer` | `32` | `learning/rl` |
 | `agent.mtf_m1_tcn_htf_lite_reasoning.attention_heads` | `integer` | `4` | `learning/rl` |
 | `agent.mtf_m1_tcn_htf_lite_reasoning.channels` | `array` | `[128,128,256,256]` | `learning/rl` |
@@ -151,6 +156,7 @@ is read by every listed package.
 | `encoder.windows.m5` | `integer` | `24` | `models/encoders` |
 | `env.action_type` | `string` | `"discrete"` | `simulation/environment and decisioning` |
 | `env.agent_direction_control` | `boolean` | `false` | `simulation/environment and decisioning` |
+| `env.agent_entry_execution` | `boolean` | `false` | `simulation/environment and decisioning` |
 | `env.allow_agent_sl_mode` | `boolean` | `true` | `simulation/environment and decisioning` |
 | `env.allow_agent_tp_mode` | `boolean` | `false` | `simulation/environment and decisioning` |
 | `env.allow_ema_exit` | `boolean` | `true` | `simulation/environment and decisioning` |
@@ -176,20 +182,22 @@ is read by every listed package.
 | `env.eod_risk.respect_planned_risk` | `boolean` | `true` | `simulation/environment and decisioning` |
 | `env.eod_risk.stale_bars` | `integer` | `60` | `simulation/environment and decisioning` |
 | `env.equity_log_growth_scale` | `number` | `100.0` | `simulation/environment and decisioning` |
-| `env.fixed_risk_usd` | `integer` | `0` | `simulation/environment and decisioning` |
+| `env.feature_validity_channels` | `boolean` | `false` | `simulation/environment and decisioning` |
+| `env.fixed_risk_usd` | `number` | `0.0` | `simulation/environment and decisioning` |
 | `env.max_entries_per_session` | `integer` | `0` | `simulation/environment and decisioning` |
 | `env.max_episode_steps` | `null` | `null` | `simulation/environment and decisioning` |
 | `env.n_envs` | `integer` | `8` | `simulation/environment and decisioning` |
 | `env.obs_window` | `integer` | `60` | `simulation/environment and decisioning` |
 | `env.observation_age_scale_bars` | `integer` | `60` | `simulation/environment and decisioning` |
-| `env.observation_schema_version` | `string` | `"account-state-v1"` | `simulation/environment and decisioning` |
+| `env.observation_schema_version` | `string` | `"account-state-v2"` | `simulation/environment and decisioning` |
 | `env.open_manipulation_bars` | `integer` | `10` | `simulation/environment and decisioning` |
 | `env.peak_trailing_dd_limit` | `number` | `0.0` | `simulation/environment and decisioning` |
+| `env.reachable_r_validity_mask` | `boolean` | `false` | `simulation/environment and decisioning` |
 | `env.regime_observation` | `boolean` | `false` | `simulation/environment and decisioning` |
 | `env.reward_dsr_eta` | `number` | `0.01` | `simulation/environment and decisioning` |
 | `env.reward_mode` | `string` | `"dsr"` | `simulation/environment and decisioning` |
-| `env.risk_band_hold_below_usd` | `integer` | `0` | `simulation/environment and decisioning` |
-| `env.risk_band_max_usd` | `integer` | `0` | `simulation/environment and decisioning` |
+| `env.risk_band_hold_below_usd` | `number` | `0.0` | `simulation/environment and decisioning` |
+| `env.risk_band_max_usd` | `number` | `0.0` | `simulation/environment and decisioning` |
 | `env.risk_floor` | `number` | `0.0005` | `simulation/environment and decisioning` |
 | `env.risk_mode` | `string` | `"dynamic"` | `simulation/environment and decisioning` |
 | `env.sl_buffer_pts` | `number` | `0.0` | `simulation/environment and decisioning` |
@@ -229,6 +237,9 @@ is read by every listed package.
 | `evaluation.trade_idea_plots.standard_deviation.timeframes` | `array` | `["M1","M3","M5","M10","M15","M30","H1","H4","D1"]` | `evaluation` |
 | `execution.fill_delay_ms` | `integer` | `0` | `trading/execution and simulation` |
 | `execution.fill_latency_bars` | `integer` | `0` | `trading/execution and simulation` |
+| `execution.limit_order_max_offset_atr` | `number` | `1.0` | `trading/execution and simulation` |
+| `execution.limit_order_max_ttl_bars` | `integer` | `60` | `trading/execution and simulation` |
+| `execution.limit_order_require_trade_through` | `boolean` | `false` | `trading/execution and simulation` |
 | `execution.max_tick_quote_wait_ms` | `integer` | `60000` | `trading/execution and simulation` |
 | `execution.randomized_fill_latency_ms` | `number` | `0.0` | `trading/execution and simulation` |
 | `features.adx_period` | `integer` | `14` | `features` |
@@ -297,18 +308,15 @@ is read by every listed package.
 | `features.vwap_session` | `boolean` | `true` | `features` |
 | `features.window` | `integer` | `60` | `features` |
 | `features.zscore_window` | `integer` | `252` | `features` |
-| `ftmo.daily_loss_limit` | `number` | `5000.0` | `trading/risk` |
 | `ftmo.daily_loss_limit_pct` | `number` | `0.05` | `trading/risk` |
-| `ftmo.limit_value_mode` | `string` | `"fixed_usd"` | `trading/risk` |
-| `ftmo.max_loss_limit` | `number` | `10000.0` | `trading/risk` |
+| `ftmo.limit_value_mode` | `string` | `"percent_equity"` | `trading/risk` |
+| `ftmo.max_drawdown_mode` | `string` | `"static"` | `trading/risk` |
 | `ftmo.max_loss_limit_initial_pct` | `number` | `0.1` | `trading/risk` |
 | `ftmo.profit_target` | `number` | `10000.0` | `trading/risk` |
 | `ftmo.risk_per_trade_limit` | `number` | `1000.0` | `trading/risk` |
 | `ftmo.risk_per_trade_limit_pct` | `number` | `0.01` | `trading/risk` |
 | `ftmo.risk_sizing_limit_usd` | `number` | `900.0` | `trading/risk` |
-| `ftmo.soft_daily_loss_limit` | `number` | `5000.0` | `trading/risk` |
 | `ftmo.soft_daily_loss_limit_pct` | `number` | `0.05` | `trading/risk` |
-| `ftmo.soft_max_loss_limit` | `number` | `10000.0` | `trading/risk` |
 | `ftmo.soft_max_loss_limit_initial_pct` | `number` | `0.1` | `trading/risk` |
 | `ftmo.soft_trailing_dd_limit` | `number` | `0.0` | `trading/risk` |
 | `ftmo.trailing_dd_limit` | `number` | `0.0` | `trading/risk` |
@@ -353,6 +361,7 @@ is read by every listed package.
 | `quality_execution.exact_n_envs` | `boolean` | `false` | `trading/risk and simulation` |
 | `quality_execution.requested_n_envs` | `null` | `null` | `trading/risk and simulation` |
 | `risk.default_risk_frac` | `number` | `0.01` | `trading/risk` |
+| `risk.lot_step` | `number` | `0.01` | `trading/risk` |
 | `risk.max_lot` | `number` | `100.0` | `trading/risk` |
 | `risk.min_lot` | `number` | `0.01` | `trading/risk` |
 | `risk.min_sl_atr_mult` | `number` | `0.5` | `trading/risk` |
@@ -409,16 +418,19 @@ is read by every listed package.
 | `strategy.tp.invalid_target_policy` | `string` | `"rr_fallback"` | `trading/strategies` |
 | `strategy.tp.mode` | `string` | `"agent"` | `trading/strategies` |
 | `strategy.variant_id` | `null` | `null` | `trading/strategies` |
+| `trading_policy.daily_loss_includes_open_pnl` | `boolean` | `true` | `trading/policy` |
+| `trading_policy.daily_loss_reset_source` | `string` | `"supplied_session_id_transition"` | `trading/policy` |
+| `trading_policy.daily_pnl_basis` | `string` | `"session_net_equity"` | `trading/policy` |
 | `trading_policy.mode` | `string` | `"legacy"` | `trading/policy` |
-| `trading_policy.repeated_payout.account_floor_equity` | `number` | `90000.0` | `trading/policy` |
 | `trading_policy.repeated_payout.agent_risk_max_frac` | `number` | `0.009` | `trading/policy` |
 | `trading_policy.repeated_payout.agent_risk_min_frac` | `number` | `0.0` | `trading/policy` |
 | `trading_policy.repeated_payout.continue_after_payout` | `boolean` | `true` | `trading/policy` |
-| `trading_policy.repeated_payout.daily_loss_limit` | `number` | `5000.0` | `trading/policy` |
+| `trading_policy.repeated_payout.daily_loss_limit_pct` | `number` | `0.05` | `trading/policy` |
 | `trading_policy.repeated_payout.enforce_remaining_account_capacity` | `boolean` | `true` | `trading/policy` |
 | `trading_policy.repeated_payout.enforce_remaining_daily_capacity` | `boolean` | `true` | `trading/policy` |
 | `trading_policy.repeated_payout.execution_reserve_usd` | `null` | `null` | `trading/policy` |
 | `trading_policy.repeated_payout.max_agent_risk_frac` | `null` | `null` | `trading/policy` |
+| `trading_policy.repeated_payout.max_loss_limit_initial_pct` | `number` | `0.1` | `trading/policy` |
 | `trading_policy.repeated_payout.min_agent_risk_frac` | `null` | `null` | `trading/policy` |
 | `trading_policy.repeated_payout.operating_balance` | `number` | `100000.0` | `trading/policy` |
 | `trading_policy.repeated_payout.payout_target_balance` | `number` | `110000.0` | `trading/policy` |
@@ -467,5 +479,6 @@ is read by every listed package.
 | `training.mode` | `string` | `"full"` | `training` |
 | `training.primary_only` | `boolean` | `false` | `training` |
 | `training.progress_log_every` | `integer` | `0` | `training` |
+| `training.survival_gate_manifest` | `null` | `null` | `training` |
 | `training.total_timesteps_mvp` | `integer` | `8192` | `training` |
 | `training.use_m1_only` | `boolean` | `false` | `training` |

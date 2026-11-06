@@ -31,59 +31,49 @@ This page contains 1 public callable records owned by `features.context.policy_m
 
 **Observed usage:**
 
-1. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L169)
+1. [test fixture: `test_attach_policy_market_context_preserves_features_and_appends_context`](../../../../tests/unit/features/test_policy_market_context.py#L89)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            )
+    schedule.write_text(
+        "session_date,scheduled_ny_close_broker_time,scheduled_short\n",
+        encoding="utf-8",
+    )
 
-    schedule_path = Path(str(cfg.data.session_schedule_file))
-    if not schedule_path.is_absolute():
-        schedule_path = repository_root(__file__) / schedule_path
-    features = attach_policy_market_context(
-        primary_m1,
+    result = attach_policy_market_context(
+        bars,
         features,
-        primary_ticks,
-        schedule_path=schedule_path,
-        session_start=str(cfg.session.start),
-        session_end=str(cfg.session.end),
+        _book(index, [5, 30, 60, 90]),
+        schedule_path=schedule,
     )
 
-    train_bars, test_bars, train_features, test_features = split_train_test(
-        primary_m1, features, train_end, test_start, train_start
-    )
-    train_secondary = test_secondary = None
-# … caller assertions omitted …
+    assert result.index.equals(features.index)
+    pd.testing.assert_frame_equal(result.loc[:, features.columns], features)
+    assert result["tick_quote_available"].eq(1.0).all()
 ```
 
-2. [production caller: `_prepare_training_data`](../../../../training/runner/data_stage.py#L169)
+2. [test fixture: `test_attach_policy_market_context_rejects_duplicate_context_columns`](../../../../tests/unit/features/test_policy_market_context.py#L112)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        secondary_timeframe_bars=secondary_timeframe_bars,
+        "session_date,scheduled_ny_close_broker_time,scheduled_short\n",
+        encoding="utf-8",
     )
-    schedule_path = Path(str(cfg.data.session_schedule_file))
-    if not schedule_path.is_absolute():
-        schedule_path = repository_root(__file__) / schedule_path
-    features = attach_policy_market_context(
-        primary_m1,
-        features,
-        primary_ticks,
-        schedule_path=schedule_path,
-        session_start=str(cfg.session.start),
-        session_end=str(cfg.session.end),
-    )
-    feature_columns = [str(column) for column in features.columns]
 
-    # Split
-    train_bars, test_bars, train_feat, test_feat = split_train_test(
-        primary_m1, features, train_end, test_start, train_start
-# … caller assertions omitted …
+    with pytest.raises(ValueError, match="columns already exist"):
+        attach_policy_market_context(
+            bars,
+            features,
+            _book(index, [5]),
+            schedule_path=schedule,
+        )
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

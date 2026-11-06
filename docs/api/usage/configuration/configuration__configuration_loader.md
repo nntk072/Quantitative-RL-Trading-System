@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `configuration.configurati
 
 **Purpose:** Apply ``key=value`` string overrides on top of an already-merged ``cfg``.
 
-**Exact API:** {py:obj}`configuration.configuration_loader.apply_overrides` · **Source:** [configuration/configuration_loader.py:80](../../../../configuration/configuration_loader.py#L80)
+**Exact API:** {py:obj}`configuration.configuration_loader.apply_overrides` · **Source:** [configuration/configuration_loader.py:81](../../../../configuration/configuration_loader.py#L81)
 
 **Inputs and outputs:**
 
@@ -27,7 +27,7 @@ This page contains 4 public callable records owned by `configuration.configurati
 
 **Observed usage:**
 
-1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L38)
+1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L39)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -57,7 +57,7 @@ def load_config(
 
 **Purpose:** Load config from ``config_path`` (the root config/base/default.yaml when None), then apply overrides.
 
-**Exact API:** {py:obj}`configuration.configuration_loader.load_config` · **Source:** [configuration/configuration_loader.py:17](../../../../configuration/configuration_loader.py#L17)
+**Exact API:** {py:obj}`configuration.configuration_loader.load_config` · **Source:** [configuration/configuration_loader.py:18](../../../../configuration/configuration_loader.py#L18)
 
 **Inputs and outputs:**
 
@@ -77,38 +77,48 @@ def load_config(
 
 **Observed usage:**
 
-1. [test fixture: `test_mtf_reasoning_research_overlay_is_opt_in_and_complete`](../../../../tests/unit/simulation/test_environment/test_trade_setup_factory_config.py#L72)
+1. [test fixture: `test_tier0_baselines_share_resolved_inputs_but_separate_seeds`](../../../../tests/integration/evaluation/test_matched_setup_baselines.py#L87)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_mtf_reasoning_research_overlay_is_opt_in_and_complete() -> None:
-    config = load_config(config_path="config/research/trade_setup_mtf_reasoning.yaml")
+def test_tier0_baselines_share_resolved_inputs_but_separate_seeds(tmp_path: Path) -> None:
+    cfg = load_config(
+        [
+            "env.strategy_actions=true",
+            "env.trade_setup_actions=true",
+            "costs.use_tick_execution=false",
+            "evaluation.periods_per_year=100",
+        ]
+    )
+    bars, features = _synthetic_inputs()
 
-    assert config.env.strategy_actions is True
-    assert config.env.trade_setup_actions is True
-    assert config.env.agent_direction_control is False
-    assert config.features.include_strategy_state is True
-    assert config.features.entry_ideas.enabled is True
-    assert config.agent.arch == "mtf_reasoning"
-    assert config.ppo.policy_distribution == "trade_setup_hybrid_v1"
-    assert config.ppo.actor_arch == "shared"
+    outputs = evaluate_tier0_setup_baselines(
+        cfg,
+        bars,
+# … caller assertions omitted …
 ```
 
-2. [test fixture: `test_mtf_reasoning_conditioned_overlay_is_opt_in_and_complete`](../../../../tests/unit/simulation/test_environment/test_trade_setup_factory_config.py#L85)
+2. [test fixture: `test_tier0_baselines_can_persist_an_independent_subset`](../../../../tests/integration/evaluation/test_matched_setup_baselines.py#L195)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_mtf_reasoning_conditioned_overlay_is_opt_in_and_complete() -> None:
-    config = load_config(config_path="config/research/trade_setup_mtf_reasoning_conditioned.yaml")
+def test_tier0_baselines_can_persist_an_independent_subset(tmp_path: Path) -> None:
+    cfg = load_config(
+        [
+            "env.strategy_actions=true",
+            "env.trade_setup_actions=true",
+            "costs.use_tick_execution=false",
+            "evaluation.periods_per_year=100",
+        ]
+    )
+    bars, features = _synthetic_inputs()
 
-    assert config.env.strategy_actions is True
-    assert config.env.trade_setup_actions is True
-    assert config.agent.arch == "mtf_reasoning"
-    assert config.ppo.policy_distribution == "trade_setup_conditioned_v1"
-    assert config.ppo.trade_setup_conditioned.embedding_dim == 32
-    assert config.ppo.trade_setup_conditioned.execution_hidden_dim == 128
+    outputs = evaluate_tier0_setup_baselines(
+        cfg,
+        bars,
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -124,7 +134,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Load one YAML mapping and reject list/scalar roots before merging.
 
-**Exact API:** {py:obj}`configuration.configuration_loader.load_config_overlay` · **Source:** [configuration/configuration_loader.py:41](../../../../configuration/configuration_loader.py#L41)
+**Exact API:** {py:obj}`configuration.configuration_loader.load_config_overlay` · **Source:** [configuration/configuration_loader.py:42](../../../../configuration/configuration_loader.py#L42)
 
 **Inputs and outputs:**
 
@@ -142,7 +152,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L32)
+1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L33)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -161,6 +171,26 @@ def load_config(
     return apply_overrides(cfg, overrides)
 ```
 
+2. [production caller: `apply_overrides`](../../../../configuration/configuration_loader.py#L142)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    # Key-name validation above prevents accidental new leaves, but a known
+    # leaf can still receive the wrong CLI type (for example,
+    # ``ppo.learning_rate=fast``). Validate the completed effective config
+    # against the same defaults schema used for YAML overlays before callers
+    # use it to construct an environment or launch a run.
+    schema_container = OmegaConf.to_container(load_config_overlay(_DEFAULT_CFG), resolve=False)
+    config_container = OmegaConf.to_container(cfg, resolve=False)
+    if not isinstance(schema_container, Mapping) or not isinstance(config_container, Mapping):
+        raise ValueError("configuration schema and effective config roots must be mappings")
+    reject_unknown_keys(
+        cast(Mapping[str, Any], config_container),
+# … caller assertions omitted …
+```
+
 **Workflow context:**
 
 - Semantic domain guide: {doc}`../../domains/configuration`
@@ -172,7 +202,7 @@ def load_config(
 
 **Purpose:** Validate a partial config against ``base`` and merge it once.
 
-**Exact API:** {py:obj}`configuration.configuration_loader.merge_config_overlay` · **Source:** [configuration/configuration_loader.py:56](../../../../configuration/configuration_loader.py#L56)
+**Exact API:** {py:obj}`configuration.configuration_loader.merge_config_overlay` · **Source:** [configuration/configuration_loader.py:57](../../../../configuration/configuration_loader.py#L57)
 
 **Inputs and outputs:**
 
@@ -191,7 +221,7 @@ def load_config(
 
 **Observed usage:**
 
-1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L37)
+1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L38)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

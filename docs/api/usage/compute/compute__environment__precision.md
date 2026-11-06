@@ -32,15 +32,15 @@ def configure_cuda_for_training(
     configure_accelerator_for_training(device_hint, cudnn_benchmark=cudnn_benchmark)
 ```
 
-2. [production caller: `_prepare_training_configuration`](../../../../training/runner/configuration_stage.py#L38)
+2. [production caller: `_prepare_training_configuration`](../../../../training/runner/configuration_stage.py#L39)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            "Walk-forward with an externally fitted VAE has unverified fold provenance; "
-            "provide a fold-scoped VAE fitting pipeline before enabling this combination"
-        )
+        raise SystemExit(str(exc)) from exc
+    if args.use_vae and not args.vae_path:
+        raise SystemExit("--use-vae requires --vae-path pointing at a trained VAE .pth")
 
     cfg = load_merged_config(args)
     configure_accelerator_for_training(

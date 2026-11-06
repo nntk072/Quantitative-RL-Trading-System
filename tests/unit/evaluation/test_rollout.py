@@ -22,6 +22,7 @@ from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.observations import OBSERVATION_SCHEMA_V1
 from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CATEGORY_COUNT
+from evaluation.reporting.policy_decision_reconciliation import reconcile_policy_decisions
 from evaluation.rollout.trained_policy_rollout import (
     _setup_choice_probability_summary,
     evaluate_model,
@@ -182,6 +183,25 @@ def test_evaluate_model_produces_trades_and_valid_equity():
     assert isinstance(equity.index, pd.DatetimeIndex)
     assert result["completed_data_split"] is True
     assert result["episode_end_reason"] == "data_end"
+    assert result["account_state_trace_complete"] is True
+    account_trace = result["account_state_trace"]
+    assert len(account_trace) == result["n_steps"]
+    assert account_trace["schema_version"].eq("account_state_trace.v2").all()
+    assert account_trace["balance"].notna().all()
+    assert account_trace["equity"].notna().all()
+    assert account_trace["daily_floor_equity"].eq(95_000.0).all()
+    assert "pending_order_limit_price" in account_trace.columns
+    decisions = result["policy_decisions"]
+    assert len(decisions) == result["n_steps"]
+    assert decisions["schema_version"].eq("environment_policy_decision.v2").all()
+    assert decisions["decision_id"].is_unique
+    assert result["policy_decisions_complete"] is True
+    policy_reconciliation = reconcile_policy_decisions(
+        decisions,
+        trades,
+        result["breach_events"],
+    )
+    assert policy_reconciliation["status"] == "matched", policy_reconciliation
 
     close_rows = trades[trades["type"] == "close"]
     assert not close_rows.empty
@@ -237,6 +257,12 @@ class _ExposureEnv:
         self.account = object()
         self._entry_diag: dict[str, int] = {}
         self.reset_seed: int | None = None
+        self.step_idx = 0
+        self._session_ids_arr = None
+
+    @staticmethod
+    def _bar_time(index: int) -> pd.Timestamp:
+        return pd.Timestamp("2025-01-06T16:40:00+03:00") + pd.Timedelta(minutes=index)
 
     def reset(self, *, seed: int | None = None) -> tuple[dict[str, object], dict[str, object]]:
         self.reset_seed = seed
@@ -247,6 +273,7 @@ class _ExposureEnv:
     ) -> tuple[dict[str, object], float, bool, bool, dict[str, object]]:
         del action
         is_open = next(self.exposure)
+        self.step_idx += 1
         self.equity_curve.append(100_000.0)
         self.equity_times.append(self.equity_times[-1] + pd.Timedelta(minutes=1))
         completed = len(self.equity_curve) == 4
@@ -279,26 +306,33 @@ def test_evaluate_model_reports_bar_close_exposure_fraction() -> None:
 
 
 @pytest.mark.parametrize(
-    ("breach_reason", "episodic", "repeated_payout", "survived", "fail_time"),
+    ("breach_reason", "episodic", "repeated_payout", "survived"),
     [
-        ("daily_loss", False, False, True, None),
-        ("daily_loss", True, False, False, "2025-01-06T16:41:00+03:00"),
-        ("daily_loss", False, True, False, "2025-01-06T16:41:00+03:00"),
-        ("max_drawdown", False, False, False, "2025-01-06T16:41:00+03:00"),
+        ("daily_loss", False, False, False),
+        ("daily_loss", True, False, False),
+        ("daily_loss", False, True, False),
+        ("max_drawdown", False, False, False),
     ],
 )
-def test_evaluate_model_distinguishes_session_stop_from_year_failure(
+def test_evaluate_model_counts_daily_breach_as_full_evaluation_failure(
     breach_reason: str,
     episodic: bool,
     repeated_payout: bool,
     survived: bool,
-    fail_time: str | None,
 ) -> None:
     env = _ExposureEnv()
     setattr(env, "episodic", episodic)
     setattr(env, "repeated_payout_policy", repeated_payout)
     breach_time = "2025-01-06T16:41:00+03:00"
-    env.breach_events = [{"time": breach_time, "reason": breach_reason}]
+    detection_time = "2025-01-06T16:41:00.218+03:00"
+    env.breach_events = [
+        {
+            "time": breach_time,
+            "detection_time": detection_time,
+            "trade_event_count": 0,
+            "reason": breach_reason,
+        }
+    ]
 
     result = evaluate_model(
         _ScriptedModel({}),
@@ -309,7 +343,7 @@ def test_evaluate_model_distinguishes_session_stop_from_year_failure(
 
     assert result["completed_data_split"] is True
     assert result["survived_full_year"] is survived
-    assert result["fail_time"] == fail_time
+    assert result["fail_time"] == detection_time
     assert result["breach_events"] == env.breach_events
 
 
@@ -451,10 +485,8 @@ def test_evaluate_model_uses_requested_observation_schema(monkeypatch):
     assert env_kwargs["tp_breakeven_alpha"] == 0.37
 
 
-def test_eval_mode_resumes_trading_after_breach_in_next_session():
-    """A guardrail breach in one session must block further trading for the
-    rest of that session, but not the entire rollout: the next session_id
-    (calendar day) must resume trading normally.
+def test_eval_mode_daily_breach_fails_full_evaluation():
+    """A daily breach blocks later sessions and marks full evaluation failed.
 
     Regression for episodic=True breach handling ending the whole
     evaluation early (the root cause of the flat-equity/zero-trade bug).
@@ -478,19 +510,18 @@ def test_eval_mode_resumes_trading_after_breach_in_next_session():
         initial_balance=100_000.0,
         # Any realised loss (even just the bid/ask spread) breaches the
         # daily limit immediately, independent of price action.
-        guardrail_kwargs={"daily_loss_limit": 0.0001, "max_loss_limit": 1e9},
+        guardrail_kwargs={
+            "limit_value_mode": "percent_equity",
+            "daily_loss_limit_pct": 1e-9,
+            "max_loss_limit_initial_pct": 1.0,
+        },
     )
 
     trades = result["trades"]
     opens = trades[trades["type"] == "open"]
-    assert len(opens) == 2, f"expected exactly 2 opens (session 0 + session 1), got {len(opens)}"
+    assert len(opens) == 1, f"expected one open before account failure, got {len(opens)}"
     assert opens.iloc[0]["bar"] == obs_window
-    assert opens.iloc[1]["bar"] >= session_split, (
-        "second open must occur in session 1, after the breach in session 0 clears"
-    )
-
-    # The first session's realised loss blocks the remaining entries for that
-    # session. Trading resumes in session 1, whose terminal close also breaches
-    # the deliberately tiny per-session loss limit.
-    assert result["n_breach_sessions"] == 2
-    assert [event["session_id"] for event in result["breach_events"]] == [0, 1]
+    assert result["n_breach_sessions"] == 1
+    assert [event["session_id"] for event in result["breach_events"]] == [0]
+    assert result["daily_loss_is_session_scoped"] is False
+    assert result["survived_full_year"] is False

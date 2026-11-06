@@ -31,6 +31,7 @@ from features.po3.ifvg_detection import (
     detect_ifvg_confirmation_events,
 )
 from market_data.loading.market_data_ingestion import run_pipeline
+from market_data.splits.definitions import make_train_mask
 from market_data.transforms.align import timeframe_close_times
 from market_data.transforms.resample import resample
 from market_data.transforms.session_schedule import scheduled_session_close_map
@@ -76,12 +77,7 @@ COLLISION_COLUMNS = [
 def _training_slice(frame: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
     """Keep rows within the inclusive configured training dates."""
     index = pd.DatetimeIndex(frame.index)
-    lower = pd.Timestamp(start)
-    upper = pd.Timestamp(end) + pd.Timedelta(days=1) - pd.Timedelta(nanoseconds=1)
-    if index.tz is not None:
-        lower = lower.tz_localize(index.tz) if lower.tzinfo is None else lower.tz_convert(index.tz)
-        upper = upper.tz_localize(index.tz) if upper.tzinfo is None else upper.tz_convert(index.tz)
-    return frame.loc[(index >= lower) & (index <= upper)]
+    return frame.loc[make_train_mask(index, end, start)]
 
 
 def _ifvg_config(cfg: DictConfig) -> IFVGConfig:

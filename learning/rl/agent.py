@@ -2,12 +2,13 @@
 
 Usage
 -----
+Construct policies inside the canonical training workflow so survival and
+provenance gates are enforced before portfolio-reward training.
+
     from learning.rl.agent import build_agent
     model = build_agent(env, cfg)                    # default PPO with TCN
     model = build_agent(env, cfg, arch="transformer")
     model = build_agent(env, cfg, arch="gru", algo="sac")  # SAC agent
-    model.learn(total_timesteps=cfg.ppo.total_timesteps)
-    model.save("outputs/ppo_trading")
 """
 
 from __future__ import annotations
@@ -527,6 +528,8 @@ def build_agent(
     if not _SB3_AVAILABLE:
         raise ImportError("stable-baselines3 is required: pip install stable-baselines3")
 
+    _validate_survival_objective_config(cfg, algo)
+
     from learning.rl.vae_extractor import VAEFeatureExtractor
 
     if use_vae and vae is None:
@@ -702,7 +705,6 @@ def build_agent(
             setattr(model, "_trade_setup_observation_schema", setup_schema)
         persist_action_schema(model, env)
         return _finalize_cuda_policy(model, device)
-
         # Default to PPO
     ppo_n_steps = cfg.ppo.n_steps
     if n_envs > 1 and env_fn is not None:
@@ -755,6 +757,29 @@ def build_agent(
 
     install_single_copy_add(ppo_model.rollout_buffer)
     return _finalize_cuda_policy(ppo_model, device)
+
+
+def _validate_survival_objective_config(cfg: DictConfig, algo: str) -> None:
+    """Require undiscounted learning for the terminal survival objective.
+
+    Args:
+        cfg: Effective run configuration.
+        algo: Selected learner algorithm.
+
+    Raises:
+        ValueError: If discounting would change the binary path-survival objective.
+    """
+    if str(cfg.env.get("reward_mode", "dsr")).strip().lower() != "survival":
+        return
+    if algo == "ppo":
+        if float(cfg.ppo.gamma) != 1.0 or float(cfg.ppo.gae_lambda) != 1.0:
+            raise ValueError("survival reward requires PPO gamma=1 and gae_lambda=1")
+    elif algo == "sac":
+        sac_cfg = cfg.get("sac", cfg.get("ppo", {}))
+        if float(sac_cfg.get("gamma", 0.99)) != 1.0:
+            raise ValueError("survival reward requires SAC gamma=1")
+    else:
+        raise ValueError(f"survival reward is unsupported for algo={algo!r}")
 
 
 def _ppo_policy_and_ent_coef(

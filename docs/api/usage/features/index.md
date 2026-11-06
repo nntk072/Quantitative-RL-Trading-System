@@ -1,6 +1,6 @@
 # Features function usage
 
-This guide contains 45 public callable records across 19 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+This guide contains 48 public callable records across 20 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
 
 ```{toctree}
 :maxdepth: 1
@@ -21,6 +21,7 @@ features__po3__fvg
 features__po3__fvg_detection
 features__po3__ifvg_detection
 features__po3__ifvg_state
+features__po3__setup_lifecycle
 features__po3__trigger_rules
 features__po3__zones
 features__technical__indicators

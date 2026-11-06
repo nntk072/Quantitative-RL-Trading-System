@@ -33,7 +33,14 @@ BASELINE_NAMES = ("always_no_trade", "random_eligible_setup")
 
 
 def _json_value(value: Any) -> Any:
-    """Convert result values into strict JSON primitives."""
+    """Convert result values into strict JSON primitives.
+
+    Args:
+        value: Nested result value that may include pandas, NumPy, or dataclass objects.
+
+    Returns:
+        JSON-compatible value with non-finite numbers represented as null.
+    """
     if dataclasses.is_dataclass(value) and not isinstance(value, type):
         return _json_value(dataclasses.asdict(value))
     if isinstance(value, Mapping):
@@ -56,6 +63,14 @@ def _json_value(value: Any) -> Any:
 
 
 def _canonical_sha256(value: Any) -> str:
+    """Hash the canonical JSON representation of a value.
+
+    Args:
+        value: Value to normalize and encode as canonical JSON.
+
+    Returns:
+        Lowercase hexadecimal SHA-256 digest.
+    """
     encoded = json.dumps(
         _json_value(value), sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode("utf-8")
@@ -63,10 +78,26 @@ def _canonical_sha256(value: Any) -> str:
 
 
 def _unknown(reason: str) -> dict[str, str]:
+    """Build an explicit unknown-status record with its reason.
+
+    Args:
+        reason: Explanation for why the evidence state cannot be established.
+
+    Returns:
+        Mapping with ``status`` set to ``unknown`` and the supplied reason.
+    """
     return {"status": "unknown", "reason": reason}
 
 
 def _frame_record(frame: pd.DataFrame) -> dict[str, Any]:
+    """Describe a frame's shape, index bounds, and content digest.
+
+    Args:
+        frame: DataFrame whose structure and content are recorded.
+
+    Returns:
+        Row count, column names, index bounds, and content digest.
+    """
     return {
         "rows": int(len(frame)),
         "columns": [str(column) for column in frame.columns],
@@ -84,6 +115,18 @@ def _artifact(
     *,
     published_path: Path | None = None,
 ) -> dict[str, Any]:
+    """Describe a persisted artifact and its repository-relative identity.
+
+    Args:
+        path: On-disk file whose bytes are hashed.
+        root: Repository root used to form a relative artifact path.
+        role: Evidence role assigned to this artifact.
+        notes: Optional human-readable artifact context.
+        published_path: Optional path to publish when storage is staged elsewhere.
+
+    Returns:
+        Artifact metadata containing its path, digest, role, and media type.
+    """
     relative = (published_path or path).resolve().relative_to(root.resolve()).as_posix()
     record: dict[str, Any] = {
         "path": relative,
@@ -98,16 +141,37 @@ def _artifact(
 
 
 def _write_frame(frame: pd.DataFrame, path: Path) -> None:
+    """Atomically persist a frame using the bundle's canonical CSV format.
+
+    Args:
+        frame: Tabular evidence to serialize.
+        path: Destination CSV path.
+    """
     payload = _frame_csv_bytes(frame)
     write_bytes_atomic(path, payload)
 
 
 def _frame_csv_bytes(frame: pd.DataFrame) -> bytes:
-    """Return the exact deterministic representation persisted for an output frame."""
+    """Return the exact deterministic representation persisted for an output frame.
+
+    Args:
+        frame: Output evidence frame to serialize.
+
+    Returns:
+        UTF-8 CSV bytes with a stable newline convention.
+    """
     return frame.to_csv(index=True, lineterminator="\n").encode("utf-8")
 
 
 def _tickbook_record(tickbook: TickBook | None) -> dict[str, Any] | None:
+    """Describe a tickbook by row count and content digest when available.
+
+    Args:
+        tickbook: Tick data used by the matched evaluation, if available.
+
+    Returns:
+        Tick row count and digest, or ``None`` when no tickbook was supplied.
+    """
     if tickbook is None:
         return None
     return {
@@ -122,7 +186,17 @@ def _paired_interval_record(
     control_name: str,
     resolved_cfg: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Build a versioned paired interval record from matched equity paths."""
+    """Build a versioned paired interval record from matched equity paths.
+
+    Args:
+        outputs: Completed policy results keyed by policy name.
+        treatment_name: Policy whose metrics are compared with the control.
+        control_name: Reference policy name for the paired comparison.
+        resolved_cfg: Shared resolved account and evaluation configuration.
+
+    Returns:
+        Versioned record describing the paired confidence interval estimate.
+    """
     treatment_metadata = outputs[treatment_name]["policy_metadata"]
     control_metadata = outputs[control_name]["policy_metadata"]
     treatment_protocol = treatment_metadata.get("confidence_interval_protocol", {})
@@ -134,11 +208,78 @@ def _paired_interval_record(
         raise ValueError("resolved config must declare account.initial_balance")
     equity = outputs[treatment_name]["equity"]
     control_equity = outputs[control_name]["equity"]
-    paired_observations = _paired_equity_return_observation_count(
-        equity,
-        control_equity,
-        initial_balance=float(account["initial_balance"]),
+    treatment_eval = outputs[treatment_name].get("evaluation", {})
+    control_eval = outputs[control_name].get("evaluation", {})
+    treatment_policy = outputs[treatment_name]["policy_metadata"]
+    control_policy = outputs[control_name]["policy_metadata"]
+    step_aligned = (
+        not equity.index.equals(control_equity.index)
+        and isinstance(treatment_eval, Mapping)
+        and isinstance(control_eval, Mapping)
+        and treatment_eval.get("n_steps") == control_eval.get("n_steps")
+        and treatment_policy.get("evaluation_start") == control_policy.get("evaluation_start")
+        and treatment_policy.get("evaluation_end") == control_policy.get("evaluation_end")
+        and treatment_policy.get("evaluation_start") is not None
+        and treatment_policy.get("evaluation_end") is not None
+        and treatment_eval.get("n_steps") == len(equity) - 1 == len(control_equity) - 1
+        and treatment_policy.get("input_hashes") == control_policy.get("input_hashes")
     )
+    if step_aligned:
+        equity = pd.Series(equity.to_numpy(), index=pd.RangeIndex(len(equity)), dtype=float)
+        control_equity = pd.Series(
+            control_equity.to_numpy(), index=pd.RangeIndex(len(control_equity)), dtype=float
+        )
+    try:
+        paired_observations = _paired_equity_return_observation_count(
+            equity,
+            control_equity,
+            initial_balance=float(account["initial_balance"]),
+        )
+    except ValueError as exc:
+        if "Paired equity indexes" not in str(exc):
+            raise
+        treatment_index = equity.index
+        control_index = control_equity.index
+        shared_count = min(len(equity), len(control_equity))
+        first_mismatch = next(
+            (
+                index
+                for index in range(shared_count)
+                if treatment_index[index] != control_index[index]
+            ),
+            shared_count,
+        )
+        treatment_time = (
+            treatment_index[first_mismatch].isoformat()
+            if first_mismatch < len(treatment_index)
+            else "<ended>"
+        )
+        control_time = (
+            control_index[first_mismatch].isoformat()
+            if first_mismatch < len(control_index)
+            else "<ended>"
+        )
+        return {
+            "schema": "paired_matched_bar_metric_ci_v2",
+            "method": "paired_moving_block_bar_return_bootstrap",
+            "treatment": treatment_name,
+            "control": control_name,
+            "paired_return_observations": 0,
+            "n_boot": int(treatment_protocol.get("n_boot", 2000)),
+            "level": float(treatment_protocol.get("level", 0.95)),
+            "seed": int(treatment_protocol.get("seed", 42)),
+            "block_length_bars": int(treatment_protocol.get("block_length_bars", 8)),
+            "scope": "no paired estimate; policy equity timestamps diverged",
+            "difference_direction": "treatment_minus_control",
+            "status": "not_estimable",
+            "reason": (
+                "policy equity timelines do not share an exact prefix at offset "
+                f"{first_mismatch}: {treatment_name}={treatment_time}, "
+                f"{control_name}={control_time}; available lengths are "
+                f"{len(equity)} and {len(control_equity)}"
+            ),
+            "metrics": {},
+        }
     interval_record: dict[str, Any] = {
         "schema": "paired_matched_bar_metric_ci_v2",
         "method": "paired_moving_block_bar_return_bootstrap",
@@ -150,8 +291,9 @@ def _paired_interval_record(
         "seed": int(treatment_protocol.get("seed", 42)),
         "block_length_bars": int(treatment_protocol.get("block_length_bars", 8)),
         "scope": (
-            "paired within-trajectory uncertainty conditional on this shared evaluation path "
-            "and each policy action seed; not between-seed uncertainty"
+            "paired within-trajectory uncertainty over the exact shared environment-step path; "
+            "valuation timestamps may differ because execution fills occur within a bar; not "
+            "between-seed uncertainty"
         ),
         "difference_direction": "treatment_minus_control",
     }
@@ -202,10 +344,33 @@ def write_matched_setup_baseline_bundle(
     in-memory content hashes and any caller-supplied source-file hashes are
     recorded so the caller can later bind a market-data result to its inputs.
     Existing bundle paths are immutable and cause ``FileExistsError``.
+
+    Args:
+        outputs: Completed results for the baseline and candidate policy arms.
+        cfg: Resolved configuration shared by all policy arms.
+        bars: Market bars used for evaluation.
+        features: Feature rows aligned one-to-one with ``bars``.
+        tickbook: Optional tick data used to model execution.
+        output_root: Directory under ``artifact_root`` for the new bundle.
+        artifact_root: Root that owns all generated evidence artifacts.
+        source_repository: Repository root containing source config and protocol.
+        config_path: Existing source configuration file to record.
+        protocol_path: Repository-relative evaluation protocol document.
+        regeneration_command: Command that reproduces this bundle.
+        symbols: Optional market symbols represented in the evidence.
+        timeframes: Optional timeframe labels represented in the evidence.
+        source_files: Optional named source files whose hashes bind the inputs.
+
+    Returns:
+        Path to the newly written immutable evidence bundle.
     """
-    if not set(BASELINE_NAMES).issubset(outputs):
-        raise ValueError(f"outputs must contain the Tier 0 controls {BASELINE_NAMES}")
-    policy_names = (*BASELINE_NAMES, *sorted(set(outputs) - set(BASELINE_NAMES)))
+    if not outputs:
+        raise ValueError("outputs must contain at least one completed policy arm")
+    policy_names = tuple(
+        name
+        for name in (*BASELINE_NAMES, *sorted(set(outputs) - set(BASELINE_NAMES)))
+        if name in outputs
+    )
     if any(not re.fullmatch(r"[a-z][a-z0-9_]*", name) for name in policy_names):
         raise ValueError("policy output names must be lowercase identifiers")
     if len(bars) != len(features) or not bars.index.equals(features.index):
@@ -371,20 +536,23 @@ def write_matched_setup_baseline_bundle(
             "evaluation": _json_value(result.get("evaluation", {})),
         }
 
-    paired_comparison_intervals = {
-        "always_flat_vs_random_eligible_setup": _paired_interval_record(
-            outputs, "always_no_trade", "random_eligible_setup", resolved_cfg
-        )
-    }
-    paired_comparison_intervals.update(
-        {
-            f"{name}_vs_random_eligible_setup": _paired_interval_record(
-                outputs, name, "random_eligible_setup", resolved_cfg
+    paired_comparison_intervals: dict[str, Any] = {}
+    if {"always_no_trade", "random_eligible_setup"}.issubset(outputs):
+        paired_comparison_intervals["always_flat_vs_random_eligible_setup"] = (
+            _paired_interval_record(
+                outputs, "always_no_trade", "random_eligible_setup", resolved_cfg
             )
-            for name in policy_names
-            if name not in BASELINE_NAMES
-        }
-    )
+        )
+    if "random_eligible_setup" in outputs:
+        paired_comparison_intervals.update(
+            {
+                f"{name}_vs_random_eligible_setup": _paired_interval_record(
+                    outputs, name, "random_eligible_setup", resolved_cfg
+                )
+                for name in policy_names
+                if name not in BASELINE_NAMES
+            }
+        )
     output_identity["paired_comparison_intervals"] = _json_value(paired_comparison_intervals)
 
     bundle_hash = _canonical_sha256(
@@ -434,6 +602,15 @@ def write_matched_setup_baseline_bundle(
                 equity_frame.columns = ["equity"]
             else:
                 raise TypeError("baseline equity must be a Series or one-column DataFrame")
+            confidence_intervals = result.get("confidence_intervals")
+            if (
+                not isinstance(confidence_intervals, Mapping)
+                or confidence_intervals.get("schema") != "within_trajectory_bootstrap_ci_v1"
+                or not isinstance(confidence_intervals.get("metrics"), Mapping)
+            ):
+                raise ValueError(
+                    f"{name} must include versioned within-trajectory confidence intervals"
+                )
 
             artifact_files = []
             for frame, filename, role in (
@@ -662,27 +839,42 @@ def write_matched_setup_baseline_bundle(
             "evidence_grade": "draft_ungraded",
             "protocol_path": protocol_path,
             "runs": runs,
-            "comparisons": [
-                {
-                    "comparison_id": "always_flat_vs_random_eligible_setup",
-                    "question": "What absolute outcomes do the two Tier 0 controls record?",
-                    "run_ids": [f"{bundle_id}/{name}" for name in BASELINE_NAMES],
-                    "evidence_role": period_role,
-                    "status": "draft_descriptive",
-                    "result": (
-                        "Per-policy absolute metrics are recorded below. This bundle does not "
-                        "make an inferential, causal, or deployment claim."
-                    ),
-                    "metrics": comparison_metrics,
-                    "paired_time_series_intervals": paired_comparison_intervals[
-                        "always_flat_vs_random_eligible_setup"
-                    ],
-                    "limitations": [
-                        "Paired time-series intervals are conditional on one evaluation path and action seeds; no between-seed uncertainty is reported.",
-                        "Recorded risk controls do not establish matched realized-risk distributions.",
-                    ],
-                }
-            ]
+            "comparisons": (
+                [
+                    {
+                        "comparison_id": "always_flat_vs_random_eligible_setup",
+                        "question": "What absolute outcomes do the two Tier 0 controls record?",
+                        "run_ids": [
+                            f"{bundle_id}/always_no_trade",
+                            f"{bundle_id}/random_eligible_setup",
+                        ],
+                        "evidence_role": period_role,
+                        "status": "draft_descriptive",
+                        "result": (
+                            "Per-policy absolute metrics are recorded below. This bundle does not "
+                            "make an inferential, causal, or deployment claim."
+                        ),
+                        "metrics": [
+                            item
+                            for item in comparison_metrics
+                            if item["run_id"]
+                            in {
+                                f"{bundle_id}/always_no_trade",
+                                f"{bundle_id}/random_eligible_setup",
+                            }
+                        ],
+                        "paired_time_series_intervals": paired_comparison_intervals[
+                            "always_flat_vs_random_eligible_setup"
+                        ],
+                        "limitations": [
+                            "Paired time-series intervals are conditional on one evaluation path and action seeds; no between-seed uncertainty is reported.",
+                            "Recorded risk controls do not establish matched realized-risk distributions.",
+                        ],
+                    }
+                ]
+                if "always_flat_vs_random_eligible_setup" in paired_comparison_intervals
+                else []
+            )
             + [
                 {
                     "comparison_id": f"{name}_vs_random_eligible_setup",
@@ -710,6 +902,7 @@ def write_matched_setup_baseline_bundle(
                 }
                 for name in policy_names
                 if name not in BASELINE_NAMES
+                and f"{name}_vs_random_eligible_setup" in paired_comparison_intervals
             ],
             "claims": [],
             "supporting_artifacts": shared_artifacts,

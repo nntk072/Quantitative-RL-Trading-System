@@ -89,7 +89,14 @@ This audit establishes the source-defined catalog, mask construction, stream
 windows, encoder composition, and two policy-factorization choices. It does
 not establish source-event timestamps or signal lifetime, actual tensor widths
 for every run, candidate-level fill probability or return, or correct
-price-specific geometry. Those remain separate gates in
+executable order geometry. A separate training-only [candidate geometry
+support report](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/candidate_geometry_price_scale/README.md)
+found valid source-zone or retracement-band bounds for all 488,008 active
+candidate-row occurrences in the selected profile. Widths and distance from
+the aligned M1 close are also reported in M1 ATR units. This establishes
+feature-level input availability and scale only: those bounds are not selected
+entry, stop, target, TTL, fill, label, or outcome records, and they are not
+currently provided to the policy. The remaining gaps are separate gates in
 [feature causality and availability](feature_causality_and_availability.md),
 the data contract, and execution-parity evidence. Keep the existing model as a
 benchmark control; do not train a new challenger until those gates and a
@@ -102,15 +109,15 @@ which are more specific than config window lengths. One MTF run records an M1
 stream of `[60, 160]`, plus M3–D1 streams with 71 columns and row counts
 `20, 24, 12, 16, 8, 12, 6, 5`. A separate MTF reasoning run records M1
 `[60, 322]`, M3–D1 streams with 91 columns at those same configured row
-counts, and a 109-element `thesis_mask` under
-`thesis-overlay-action-v1`, which has 11 continuous action coordinates. This
+counts, and a 109-element legacy setup mask under its historical action
+schema, which has 11 continuous action coordinates. This
 is a distinct overlay/action contract from the configured C/D
 `trade_setup_mask` policy; its 109-element width does not
 establish the selected setup-policy schema. The MTF reasoning screen itself
 had one seed and all three variants failed training survival and full-period
 exposed test survival; it is descriptive negative architecture evidence, not
-a ranking. These observations do not establish source-event times or
-candidate price geometry.
+a ranking. Feature-level candidate source geometry is measured separately,
+but is absent from these recorded model observations and policy artifacts.
 
 The older selected matched-policy artifacts record a single M1 `[60, 746]`
 stream and a 12-coordinate action schema. Their account observation vectors

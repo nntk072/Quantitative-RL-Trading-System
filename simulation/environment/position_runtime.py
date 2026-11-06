@@ -7,7 +7,7 @@ import pandas as pd
 
 from trading.execution import Position
 from trading.positions import reorder_remaining_targets
-from trading.risk.stop_management import (
+from trading.risk import (
     breakeven_stop_price,
     confirmed_swing_trailing_stop_price,
 )
@@ -520,9 +520,7 @@ class PositionRuntimeMixin(RuntimeMixinBase):
             quote, execution_meta = self._resolve_randomized_tick_quote(order_time)
             fill_bid, fill_ask = quote.bid, quote.ask
             fill_time = quote.tick_time
-        pnl, fill_price = self._close_at_quote(
-            self.position, (fill_bid, fill_ask), tick_fill=bool(execution_meta)
-        )
+        pnl, fill_price = self._close_at_quote(self.position, (fill_bid, fill_ask), tick_fill=True)
         record = {
             "type": "eod_close",
             "pnl": pnl,

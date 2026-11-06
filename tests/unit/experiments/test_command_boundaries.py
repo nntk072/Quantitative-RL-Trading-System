@@ -3,9 +3,18 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+from typing import Any, cast
+
+import pytest
+from scripts.research.benchmarks import compare_encoders
 
 from experiments import cli
-from experiments.variants.variant_ablation_runner import VariantAblationRequest
+from experiments.variants.variant_ablation_runner import (
+    VariantAblationRequest,
+    run_variant_ablation,
+    train_and_score_variant,
+)
 
 
 def test_variant_arguments_resolve_into_runner_request() -> None:
@@ -35,6 +44,41 @@ def test_variant_arguments_resolve_into_runner_request() -> None:
     assert request.steps == 128
     assert request.seeds == (7, 9)
     assert request.variants == ("baseline", "treatment")
+
+
+def test_legacy_variant_training_entry_points_fail_closed(tmp_path: Path) -> None:
+    request = VariantAblationRequest(bars_csv=tmp_path / "missing-bars.csv")
+    with pytest.raises(SystemExit, match="bypasses survival-first qualification"):
+        run_variant_ablation(request)
+
+    with pytest.raises(SystemExit, match="bypasses survival-first qualification"):
+        train_and_score_variant(
+            bars=cast(Any, None),
+            features=cast(Any, None),
+            base_cfg=cast(Any, None),
+            variant={},
+            defaults={},
+            steps=100,
+            seed=42,
+            reward="dsr",
+            train_end="2025-12-31",
+            test_start="2026-01-01",
+            out_dir=str(tmp_path),
+            name="unqualified",
+        )
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["compare_encoders.py"],
+        ["compare_encoders.py", "--bars-csv", "unread-bars.csv"],
+    ],
+)
+def test_direct_encoder_comparison_training_fails_closed(monkeypatch, argv: list[str]) -> None:
+    monkeypatch.setattr(sys, "argv", argv)
+    with pytest.raises(SystemExit, match="bypasses survival-first qualification"):
+        compare_encoders.main()
 
 
 def test_root_variants_command_forwards_arguments_at_package_boundary(monkeypatch) -> None:

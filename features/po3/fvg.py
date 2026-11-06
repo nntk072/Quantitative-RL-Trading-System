@@ -80,7 +80,17 @@ def _build_fvg_zone_features(
     *,
     collect_events: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build model-facing FVG features and optionally collect zone events."""
+    """Build model-facing FVG features and optionally collect zone events.
+
+    Args:
+        bars: Chronological OHLC bars for the source timeframe.
+        fvg_config: Gap detection and retest settings, when customized.
+        max_zone_bars: Maximum age of a zone in source-timeframe bars.
+        collect_events: Whether to return every per-zone confirmation.
+
+    Returns:
+        Scalar feature frame and event ledger; the ledger is empty when disabled.
+    """
     if max_zone_bars < 0:
         raise ValueError("max_zone_bars must be nonnegative")
     n = len(bars)

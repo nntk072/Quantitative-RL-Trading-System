@@ -174,14 +174,24 @@ execution:
   # decision time. A run may set another value explicitly in its YAML config.
   randomized_fill_latency_ms: 0.0
   max_tick_quote_wait_ms: 60000
+  # Conditional action bounds for learned resting limit entries. These controls
+  # are only exposed when env.agent_entry_execution is enabled.
+  limit_order_max_offset_atr: 1.0
+  limit_order_max_ttl_bars: 60
+  limit_order_require_trade_through: false
 
 trading_policy:
   mode: "legacy"
+  # Measure daily loss as equity change from the current session's opening
+  # equity. This risk basis is independent of the account lifecycle mode.
+  daily_pnl_basis: session_net_equity
+  daily_loss_includes_open_pnl: true
+  daily_loss_reset_source: supplied_session_id_transition
   repeated_payout:
     operating_balance: 100000.0
     payout_target_balance: 110000.0
-    account_floor_equity: 90000.0
-    daily_loss_limit: 5000.0
+    max_loss_limit_initial_pct: 0.10
+    daily_loss_limit_pct: 0.05
     trailing_dd_limit: 0.0
     payout_trigger: "realized_balance_flat"
     continue_after_payout: true
@@ -201,38 +211,33 @@ trading_policy:
     repeated_eval: true
 
 ftmo:
-  # Fixed-dollar limits are the default. Percent mode uses current equity for
-  # per-trade and daily limits, and initial equity for max loss.
-  limit_value_mode: fixed_usd        # "fixed_usd" | "percent_equity"
-  # Hard daily loss (5% of $100k): force-close + block the rest of that session.
-  daily_loss_limit: 5000.0
-  # Match soft thresholds to hard limits: no earlier soft band or penalty.
-  soft_daily_loss_limit: 5000.0
-  soft_max_loss_limit: 10000.0
-  max_loss_limit: 10000.0              # FTMO max loss from initial (eval train/test)
-  # Peak-to-trough trailing drawdown is disabled; max loss is fixed from initial.
+  # This mode selects per-trade sizing units. Daily and maximum-loss rules
+  # always use their percentage of initial equity below.
+  limit_value_mode: percent_equity   # "fixed_usd" | "percent_equity"
+  # Maximum-loss floor: static, EOD high-water mark, or intraday high-water mark.
+  max_drawdown_mode: static          # "static" | "eod" | "intraday_trailing"
+  # Loss allowances are configured as percentages below; reports derive dollars.
+  # Peak-to-trough trailing drawdown remains disabled unless selected as the
+  # maximum-loss drawdown mode above.
   trailing_dd_limit: 0.0
   soft_trailing_dd_limit: 0.0
   risk_per_trade_limit: 1000.0         # hard per-trade sizing ceiling
   risk_sizing_limit_usd: 900.0         # stop risk plus modeled execution reserve
   risk_per_trade_limit_pct: 0.01       # current equity in percent mode
-  daily_loss_limit_pct: 0.05           # current equity in percent mode
+  daily_loss_limit_pct: 0.05           # initial equity; applied from each session's start
   soft_daily_loss_limit_pct: 0.05      # equals hard daily threshold
   max_loss_limit_initial_pct: 0.10     # initial equity in percent mode
   soft_max_loss_limit_initial_pct: 0.10 # equals hard max-loss threshold
   profit_target: 10000.0               # not enforced in env, only reported
 
-# LIVE/paper execution risk for integrations.mt5's RiskManager (used by
-# live_trading_rl.py / integrations.mt5.robot.rl_robot). These are intentionally a
-# percentage-of-balance sizing model, NOT the FTMO dollar kill-switches in
-# `ftmo:` above: training/eval enforce ftmo.daily_loss_limit /
-# max_loss_limit / risk_per_trade_limit via FTMOGuardrails, while MT5 sizing
-# works from balance fractions. Scaling here is chosen so that on the default
-# $100k account, risk_per_symbol (1%) ≈ ftmo.risk_per_trade_limit ($1000) —
-# keep that ratio aligned if you change account size, and never change one
-# without the other.
+# LIVE/paper execution sizing for integrations.mt5's RiskManager (used by
+# live_trading_rl.py / integrations.mt5.robot.rl_robot). Percentage sizing is
+# additionally capped by `ftmo.risk_sizing_limit_usd` per symbol. Live sizing
+# reserves configured adverse stop slippage and round-trip commission using MT5
+# tick values. This does not implement training-equivalent daily or maximum
+# account-loss guardrails.
 live_risk_overrides:
-  risk_per_symbol: 0.01          # 1% of balance ≈ $1000 on a $100k account
+  risk_per_symbol: 0.01          # percentage ceiling; hard-capped by ftmo.risk_sizing_limit_usd
   max_total_risk: 0.02           # broker-stop risk across open positions; unknown stops block entries
   stop_loss_pips: 50.0           # distance used for sizing and attached broker-side stop
   interval_minutes: 1            # M1 policy cadence for live_trading_rl.py
@@ -299,7 +304,9 @@ features:
     impulse_atr: 0.5
     search_bars: 10
     max_age_bars: 240
-  # Multi-hot entry context; signals may overlap and do not gate PPO actions.
+  # Multi-hot context. In categorical setup-action policies these flags also
+  # define candidate eligibility; direct directional policies may use them only
+  # as observations.
   entry_ideas:
     enabled: false
     timeframes: ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
@@ -327,8 +334,11 @@ features:
 
 env:
   obs_window: 60                       # T in [T, F] obs
+  feature_validity_channels: false     # opt-in sequence layout: values then finite-value masks
   regime_observation: false             # separate completed-D1 context branch for tcn_regime
-  observation_schema_version: account-state-v1 # account-state-v2 is an opt-in new lineage
+  # New policies observe remaining daily/max-loss budgets as part of account state.
+  # Historical checkpoints retain their recorded schema in their saved configs.
+  observation_schema_version: account-state-v2
   observation_age_scale_bars: 60       # v2 position-age normalization scale
   reachable_r_validity_mask: false     # opt-in sequence column distinguishes unknown reachable_r from zero
   data_source: frames                   # frames remains default until bundle gates pass
@@ -341,15 +351,20 @@ env:
   reward_dsr_eta: 0.01                 # differential Sharpe damping
   strategy_actions: false              # legacy Idea 1/2 trader Box action interface
   trade_setup_actions: false           # canonical primary trade-setup choice and eligibility mask
+  agent_entry_execution: false         # policy chooses market or limit entry; requires TickBook
   entry_state_machine: false           # A4 persistent opportunity lifecycle
   candidate_max_age_bars: 5            # last valid candidate age, in bars
   arm_requires_retest: false           # require a current directional gap retest to arm
   entry_state_observation: true        # false supports the A4a hidden-state ablation
-  strict_research_eligibility: false   # opt-in: fail when the training split has no eligible NY bars
+  # Survival qualification requires true so absent NY labels cannot make all
+  # bars tradable through the compatibility fallback.
+  strict_research_eligibility: false
   # Overlay: intensity does not gate entry (0 = follow context_direction).
   # A positive band lets PPO park at "never trade"; seed-50 20M did that at 0.1.
   entry_intensity_threshold: 0.0
-  reward_mode: dsr                     # dsr | rr | pnl | equity_delta_r | equity_log_growth
+  # Survival emits +1 only after a complete breach-free split and -1 on any hard breach.
+  # It emits no interim portfolio reward and requires undiscounted learner returns.
+  reward_mode: dsr                     # dsr | rr | pnl | equity_delta_r | equity_log_growth | survival
   equity_log_growth_scale: 100.0       # k for k * log(E_after / E_before); fixed per run
   # "rr" scores the agent on cumulative realized R instead of Sharpe or dollar PnL.
   # Only meaningful with `fixed_risk_usd`: under fractional sizing the same edge
@@ -572,6 +587,7 @@ risk:
   target_timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
   min_lot: 0.01
   max_lot: 100.0
+  lot_step: 0.01
   default_risk_frac: 0.01              # 1% equity fallback for baselines
   sl_mode: fixed                       # fixed | breakeven | trailing
   tp_mode: fixed                       # fixed | breakeven | trailing
@@ -584,6 +600,7 @@ risk:
   rr_ratio_default: 2.0
 
 training:
+  survival_gate_manifest: null        # required before any non-survival portfolio reward training
   mode: "full"           # "full" = all data / "mvp" = M1-only minimal slice
   # Cheap step/FPS heartbeat, independent of dashboard and policy cadence.
   progress_log_every: 0

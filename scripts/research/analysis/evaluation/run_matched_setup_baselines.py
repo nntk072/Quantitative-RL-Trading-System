@@ -25,10 +25,11 @@ from omegaconf import DictConfig
 
 from configuration.configuration_loader import load_config
 from configuration.paths import repository_root
+from decisioning.actions import build_action_schema_from_config
 from decisioning.trade_setup import (
     TRADE_SETUP_IDEAS,
     TRADE_SETUP_TIMEFRAMES,
-    build_trade_setup_action_schema,
+    TradeSetupActionSchema,
 )
 from evaluation.reporting.matched_setup_baseline_bundle import (
     write_matched_setup_baseline_bundle,
@@ -81,7 +82,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             "setup-family and timeframe order"
         ),
     )
-    parser.add_argument("--tick-fill-slippage-points", type=float, default=0.0)
+    parser.add_argument(
+        "--baselines",
+        nargs="+",
+        choices=("always_no_trade", "random_eligible_setup", "structure_priority"),
+        help="Select independent policy arms to run and persist in this evidence bundle",
+    )
+    parser.add_argument(
+        "--tick-fill-slippage-points",
+        type=float,
+        default=None,
+        help="Override configured costs.slippage_points for market fills; use 0 for replay.",
+    )
     parser.add_argument("--bootstrap-samples", type=int, default=2000)
     parser.add_argument("--bootstrap-seed", type=int, default=42)
     parser.add_argument(
@@ -108,12 +120,11 @@ def _additional_policies(
     """Build explicitly requested fixed rules against the configured action schema."""
     if not include_structure_priority:
         return {}
-    action_schema = build_trade_setup_action_schema(
-        has_sl_mode=bool(cfg.env.allow_agent_sl_mode),
-        has_tp_mode=bool(cfg.env.allow_agent_tp_mode),
-        has_multi_tp=bool(cfg.env.allow_multi_tp),
-        has_simplex=bool(cfg.env.allow_multi_tp and cfg.env.allow_simplex),
-    )
+    action_schema = build_action_schema_from_config(cfg.env)
+    if not isinstance(action_schema, TradeSetupActionSchema):
+        raise ValueError("structure-priority setup baseline requires a trade setup schema")
+    if "trade_setup" not in action_schema.names:
+        raise ValueError("structure-priority setup baseline requires trade_setup_actions=true")
     structure_rule = StructurePrioritySetupPolicy(
         action_schema,
         idea_priority=TRADE_SETUP_IDEAS,
@@ -302,9 +313,13 @@ def main(argv: Sequence[str] | None = None) -> Path:
         tick_fill_slippage_points=args.tick_fill_slippage_points,
         bootstrap_samples=args.bootstrap_samples,
         bootstrap_seed=args.bootstrap_seed,
+        baseline_names=args.baselines,
         additional_policies=_additional_policies(
             cfg,
-            include_structure_priority=args.include_structure_priority,
+            include_structure_priority=(
+                args.include_structure_priority
+                or (args.baselines is not None and "structure_priority" in args.baselines)
+            ),
             normalized_risk=args.normalized_risk,
         ),
     )

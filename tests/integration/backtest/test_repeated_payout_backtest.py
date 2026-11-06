@@ -41,7 +41,7 @@ def test_repeated_payout_backtest_withdraws_realized_overshoot_and_reports_econo
         operating_balance=100.0,
         profit_target_balance=101.5,
         account_floor=90.0,
-        daily_loss_limit=20.0,
+        daily_loss_limit_pct=0.20,
         max_agent_risk_frac=0.009,
     ).validate()
     if policy_input == "instance":
@@ -129,7 +129,7 @@ def test_repeated_payout_backtest_continues_through_multiple_cycles() -> None:
         operating_balance=100.0,
         profit_target_balance=101.5,
         account_floor=90.0,
-        daily_loss_limit=20.0,
+        daily_loss_limit_pct=0.20,
         max_agent_risk_frac=0.009,
     ).validate()
 
@@ -189,7 +189,7 @@ def test_repeated_payout_backtest_records_one_failed_cycle_on_account_breach() -
         operating_balance=100.0,
         profit_target_balance=101.5,
         account_floor=99.5,
-        daily_loss_limit=20.0,
+        daily_loss_limit_pct=0.20,
         max_agent_risk_frac=0.009,
     ).validate()
 
@@ -247,7 +247,7 @@ def test_repeated_payout_environment_and_backtest_match_controlled_target_and_re
         operating_balance=100.0,
         profit_target_balance=101.5,
         account_floor=90.0,
-        daily_loss_limit=20.0,
+        daily_loss_limit_pct=0.20,
         max_agent_risk_frac=0.009,
     ).validate()
     cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=0.0)
@@ -314,6 +314,14 @@ def test_repeated_payout_environment_and_backtest_match_controlled_target_and_re
     assert env.account.equity + env.cumulative_payouts == pytest.approx(
         backtest["total_economic_value"]
     )
+    payout_trace = backtest["account_state_trace"]
+    assert payout_trace.iloc[-1]["equity"] == pytest.approx(backtest["account"].equity)
+    assert payout_trace.iloc[-1]["cumulative_payouts"] == pytest.approx(
+        backtest["cumulative_payouts"]
+    )
+    assert payout_trace.iloc[-1]["total_economic_value"] == pytest.approx(
+        backtest["total_economic_value"]
+    )
     env_open = next(event for event in env.trade_log if event["type"] == "open")
     backtest_open = backtest["trades"].loc[backtest["trades"]["type"] == "open"].iloc[0]
     assert env_open["lots"] == pytest.approx(backtest_open["lots"])
@@ -322,7 +330,10 @@ def test_repeated_payout_environment_and_backtest_match_controlled_target_and_re
     assert env_close["net_pnl"] == pytest.approx(backtest_close["net_pnl"])
 
 
-def test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach() -> None:
+@pytest.mark.parametrize("max_drawdown_mode", ["static", "eod", "intraday_trailing"])
+def test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach(
+    max_drawdown_mode: str,
+) -> None:
     prices = np.asarray([100.0, 100.0, 100.0, 103.0, 103.0, 103.0, 100.0, 100.0, 98.0, 98.0, 98.0])
     index = pd.date_range("2025-01-06 16:30", periods=len(prices), freq="1min", tz="Etc/GMT-3")
     bars = pd.DataFrame(
@@ -349,7 +360,7 @@ def test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach
         operating_balance=100.0,
         profit_target_balance=101.4,
         account_floor=99.5,
-        daily_loss_limit=20.0,
+        daily_loss_limit_pct=0.05,
         max_agent_risk_frac=0.009,
     ).validate()
     cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=0.0)
@@ -360,6 +371,7 @@ def test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach
         initial_balance=100.0,
         cost_model=cost_model,
         guardrail_kwargs={
+            "max_drawdown_mode": max_drawdown_mode,
             "daily_loss_limit": 20.0,
             "max_loss_limit": 0.5,
             "risk_per_trade_limit": 0.9,
@@ -395,6 +407,7 @@ def test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach
         cost_model=cost_model,
         initial_balance=100.0,
         trading_policy=policy,
+        guardrail_kwargs={"max_drawdown_mode": max_drawdown_mode},
         use_structure_sl_tp=True,
         risk_frac=0.009,
         rr_ratio=3.0,
@@ -411,7 +424,11 @@ def test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach
     assert env.cycle_count == backtest["cycle_count"] == 2
     assert env.cycle_successes == backtest["cycle_successes"] == 1
     assert env.cycle_failures == backtest["cycle_failures"] == 1
-    assert env.cumulative_payouts == pytest.approx(backtest["cumulative_payouts"]) == 1.5
+    expected_fraction = 1.0 if max_drawdown_mode == "static" else 0.5
+    first_close = next(event for event in env.trade_log if event.get("type") == "tp_close")
+    expected_payout = float(first_close["net_pnl"]) * expected_fraction
+    assert env.cumulative_payouts == pytest.approx(backtest["cumulative_payouts"])
+    assert env.cumulative_payouts == pytest.approx(expected_payout)
     env_failure = [event for event in env.cycle_events if event["outcome"] == "failure"]
     backtest_failure = [
         event for event in backtest["cycle_events"] if event["outcome"] == "failure"
@@ -420,13 +437,26 @@ def test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach
     assert env_failure[0]["cycle"] == backtest_failure[0]["cycle"] == 2
     assert env_failure[0]["reason"] == backtest_failure[0]["reason"] == "max_drawdown"
     assert env_failure[0]["time"] == backtest_failure[0]["time"]
-    assert env.account.balance == pytest.approx(backtest["account"].balance) == 99.0
+    assert env.account.balance == pytest.approx(backtest["account"].balance)
     assert env.account.equity == pytest.approx(backtest["account"].equity)
+    post_payout_balance = float(env.payout_events[0]["balance_after_reset"])
+    assert env.account.session_start_equity == pytest.approx(post_payout_balance)
+    assert backtest["account"].session_start_equity == pytest.approx(post_payout_balance)
+    assert env.account.daily_floor(env.guardrails.daily_limit_for(env.account)) == pytest.approx(
+        post_payout_balance - 5.0
+    )
+    assert backtest["account"].daily_floor(policy.daily_loss_limit) == pytest.approx(
+        post_payout_balance - 5.0
+    )
     assert env.account.canonical_daily_loss() == pytest.approx(
         backtest["account"].canonical_daily_loss()
     )
-    assert env.account.equity + env.cumulative_payouts == pytest.approx(100.5)
     assert env.account.equity + env.cumulative_payouts == pytest.approx(
         backtest["total_economic_value"]
     )
-    assert backtest["total_economic_value_curve"].iloc[-1] == pytest.approx(100.5)
+    assert backtest["total_economic_value_curve"].iloc[-1] == pytest.approx(
+        env.account.equity + env.cumulative_payouts
+    )
+    assert backtest["account_state_trace"].iloc[-1]["total_economic_value"] == pytest.approx(
+        backtest["ending_total_economic_value"]
+    )

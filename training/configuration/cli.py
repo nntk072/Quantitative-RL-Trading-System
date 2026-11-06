@@ -55,7 +55,7 @@ def parse_train_args() -> argparse.Namespace:
     parser.add_argument(
         "--resume-checkpoint",
         default=None,
-        help="Continue PPO optimizer/policy state from an intact periodic checkpoint",
+        help="Continue PPO or SAC optimizer/policy state from an intact checkpoint",
     )
     parser.add_argument(
         "--allow-legacy-observation-schema",

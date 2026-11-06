@@ -9,6 +9,7 @@ from typing import Final, Literal, Protocol
 RiskDailyPnlBasis = Literal["session_net_equity", "legacy_gross_closed_losses"]
 RISK_STATE_SCHEMA_V1 = "risk-state-v1"
 RISK_DECISION_SCHEMA_V1 = "risk-decision-v1"
+RISK_BREACH_EVENT_SCHEMA_V1 = "risk-breach-event-v1"
 RISK_DAILY_PNL_BASIS_SESSION_EQUITY: Final[RiskDailyPnlBasis] = "session_net_equity"
 RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES: Final[RiskDailyPnlBasis] = "legacy_gross_closed_losses"
 

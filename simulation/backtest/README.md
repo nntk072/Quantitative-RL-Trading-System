@@ -20,18 +20,26 @@ configuration. Outputs include event/trade records, account changes, and
 metrics suitable for reporting. The event ordering and fill assumptions must
 be read from the configured run and report; this engine is not a live broker
 and is not interchangeable with the RL environment without parity evidence.
+Config-driven market entries and market exits use `costs.slippage_points` as
+adverse slippage for both tick and bar quotes. A caller can pass an explicit
+`tick_fill_slippage_points=0.0` to replay zero-slippage historical fills.
+Resting limit fills remain bounded by their limit price, and protective OHLC
+fills keep their existing cost adjustment without a duplicate market charge.
 
 ## Policy evaluation boundary
 
-This engine accepts one integer scalar signal per bar. It is used by the
-configured scalar backtest and rule-baseline runners. Checkpoint evaluation and
-schema-versioned setup-policy comparisons use
-`evaluation.rollout.evaluate_model` with `TradingEnv`; the matched setup
-baseline runner gives every arm that same environment and validates the exact
-action schema. Do not cast a structured action vector to a direction signal:
-that would discard its setup eligibility, risk, stop/target, and exit
-coordinates. The explicit rejection in `event_driven_backtest.py` protects
-against that lossy comparison.
+The default policy API accepts one integer scalar signal per bar and remains in
+use by configured scalar backtests and rule-baseline runners. With
+`trade_setup_actions=True`, the engine accepts the versioned setup-action
+vector, candidate mask, and explicit `TradeSetupActionSchema`. Its optional
+`observation_schema` selects account-state-v1, v2, or repeated-payout v3 for
+that callback; entry-state visibility is rejected because this engine does not
+run the environment's entry-state machine. Results include the resolved action
+and observation schema metadata. Checkpoint evaluation and matched setup-policy
+comparisons still use `evaluation.rollout.evaluate_model` with `TradingEnv`;
+the event-backtest callback is not historical-checkpoint replay evidence.
+Never cast a structured action vector to a direction signal, because that
+would discard eligibility and selected controls.
 
 There is no general bridge between a versioned `TradingEnv` policy and this
 event loop. Any future cross-engine comparison must preserve the policy
@@ -39,6 +47,18 @@ observation and all active action/lifecycle coordinates, then pass paired
 trace-level parity checks. Until such a bridge exists, results from the two
 engines are comparable only when a declared scalar policy and matched
 execution assumptions make the comparison meaningful.
+
+The schema-aware path supports account-state-v1/v2/v3, the current setup
+action coordinates, and opt-in parity for completed-D1 regime features,
+closed multi-timeframe windows, and per-feature validity channels. Returned
+results record selected feature columns and observation inputs. Optional VAE
+embeddings accept the same frozen encoder plus per-date or legacy pre-NY inputs
+as `TradingEnv`. Entry-state-machine observations remain explicitly rejected:
+the event loop does not run that lifecycle, and checkpoint evaluation uses
+`TradingEnv`; a second partial state-machine implementation here would create
+two sources of entry-state semantics. Account-vector and optional-channel
+parity alone does not establish full cross-engine observation or execution
+parity.
 
 `run_backtest(..., eod_risk=...)` enables the shared configured intrabar
 adverse-excursion close used by `TradingEnv`; `max_loss_per_trade_usd` remains
@@ -57,9 +77,14 @@ stop update after the bar's existing stop/target checks, so the new level first
 affects the following bar. Static `trailing` mode additionally tightens the
 stop against the completed bar's confirmed protective-side swing, using
 `env.sl_buffer_pts`; it never loosens the stop or places it through the current
-close. Learned per-action stop-mode vectors remain on the `TradingEnv`
-evaluation path and are not supported by this scalar event engine. Paired
-synthetic traces cover fixed, breakeven, and confirmed-swing trailing modes.
+close. A mask-aware setup action schema can also carry learned per-position SL
+and TP modes through market/limit submission and delayed fills. Its breakeven
+and trailing TP updates take effect on the following bar, matching the
+environment's no-retroactive-fill rule. This closes the mode-coordinate and
+position-management slice, not full `TradingEnv` parity: optional observations,
+complete account transitions, feed chronology, and the broader order lifecycle
+still require paired evidence. Paired synthetic traces cover fixed,
+breakeven, and confirmed-swing trailing stop modes.
 
 `run_backtest(..., daily_pnl_basis=...)` selects the daily-loss accounting
 contract used by account guardrails. Configured training and baseline runners

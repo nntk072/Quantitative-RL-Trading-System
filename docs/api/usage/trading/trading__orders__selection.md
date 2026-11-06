@@ -87,14 +87,14 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_hybrid_mode_centers_match_existing_box_decoders`](../../../../tests/unit/models/test_hybrid_actor.py#L41)
+1. [test fixture: `test_hybrid_mode_centers_match_existing_box_decoders`](../../../../tests/unit/models/test_hybrid_actor.py#L62)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    assert int(units[3] * 3) == 2
     assert _encoded_centers("exit", 0.0) == (-0.5, 0.5)
+    assert _encoded_centers("entry_execution", 0.0) == (-0.5, 0.5)
 
     tp_centers = _encoded_centers("tp_mode", 0.1)
     decoded = [

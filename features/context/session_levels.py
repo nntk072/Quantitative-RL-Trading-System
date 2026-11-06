@@ -11,10 +11,13 @@ FTMO MT4/5 server wall timestamps, pass
 ``source_clock_model="ftmo_mt5_us_dst"`` so conversion uses the documented
 GMT+2/+3 platform clock.
 
-Levels follow "live/running" semantics (matching
-``features.technical.structure.detect_session_levels``): O/H/L/C update bar-by-bar
-while the session forms and are then held until the next session's window
-starts. Bars before the first session in the data are NaN.
+These CT-anchored features use per-session-date semantics: O/H/L/C update
+bar-by-bar from the current session date's rows and are then held until the
+next session's window starts. Bars before the first session in the data are
+NaN. This differs from the legacy broker-time
+``features.technical.structure.detect_session_levels`` features, which pool
+matching time-of-day rows across the supplied history before applying a rolling
+window.
 
 The CT-anchored levels are additive to the legacy broker-tz levels in
 ``features.technical.structure`` (``asian_high``/``asian_low``/``london_high``/

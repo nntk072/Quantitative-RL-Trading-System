@@ -14,7 +14,7 @@ This page contains 2 public callable records owned by `features.po3.fvg_detectio
 
 **Observed usage:**
 
-1. [test fixture: `test_fvg_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L63)
+1. [test fixture: `test_fvg_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L67)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -25,7 +25,7 @@ def test_fvg_with_custom_config(self, sample_bars: pd.DataFrame) -> None:
     assert isinstance(result, pd.DataFrame)
 ```
 
-2. [test fixture: `test_fvg_buffer_fraction_is_not_forced_to_ten_percent`](../../../../tests/unit/features/test_po3_config.py#L135)
+2. [test fixture: `test_fvg_buffer_fraction_is_not_forced_to_ten_percent`](../../../../tests/unit/features/test_po3_config.py#L139)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -74,7 +74,23 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_static_plot_with_plain_fvg`](../../../../tests/unit/evaluation/test_po3_plots.py#L106)
+1. [test fixture: `test_zone_ledger_reconciles_scalar_selection_and_monthly_suppression`](../../../../tests/research/test_ifvg_zone_event_ledger.py#L30)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_zone_ledger_reconciles_scalar_selection_and_monthly_suppression() -> None:
+    bars = _two_same_row_bullish_confirmations()
+    fvg = detect_fvg(bars)
+    scalar = detect_ifvg_confirmation(bars, fvg)
+    ledger = detect_ifvg_confirmation_events(bars, fvg)
+
+    _validate_scalar_projection(ledger, scalar)
+    collisions = _collision_table(ledger, bars)
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_static_plot_with_plain_fvg`](../../../../tests/unit/evaluation/test_po3_plots.py#L106)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -83,21 +99,6 @@ def test_static_plot_with_plain_fvg(signal_bars: pd.DataFrame, tmp_path) -> None
     fvg = detect_fvg(signal_bars)
     fig = plot_fvg_signals(signal_bars, fvg, candle_tf="5min", out_path=tmp_path / "fvg.png")
     assert len(fig.axes) == 1
-```
-
-2. [test fixture: `test_detect_fvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L47)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_detect_fvg_returns_expected_columns(self, sample_bars: pd.DataFrame) -> None:
-    result = detect_fvg(sample_bars)
-    assert "fvg_bullish" in result.columns
-    assert "fvg_bearish" in result.columns
-    assert "fvg_bullish_low" in result.columns
-    assert "fvg_bullish_high" in result.columns
-    assert "fvg_bearish_low" in result.columns
-    assert "fvg_bearish_high" in result.columns
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

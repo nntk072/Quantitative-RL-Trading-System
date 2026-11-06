@@ -34,10 +34,11 @@ Execution audit: bid/ask and configured slippage are applied by the broker
 fill path; commissions are deducted when configured. US100 spread is configured
 as 0.6 points and raw tick quotes can supply their own bid/ask. Explicit
 commission defaults to zero. The configured 5-point adverse slippage applies to
-stop/target fills; the extra tick-entry slippage parameter defaults to zero.
-Stage 2 sets added randomized fill latency to zero and keeps all other cost
-settings at their repository defaults, so its stop/target costs include the
-configured 5-point slippage.
+market entries and exits as well as stop/target fills. Limit entries remain
+bounded by their limit price and do not receive market slippage. Callers
+replaying historical fills can explicitly pass zero; old saved evidence is not
+rewritten. Stage 2 sets added randomized fill latency to zero and keeps all
+other cost settings at their repository defaults.
 
 ## Growth reward
 

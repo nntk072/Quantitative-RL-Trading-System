@@ -9,7 +9,7 @@ import pandas as pd
 from gymnasium import spaces
 
 from decisioning.actions import build_discrete_trading_action_schema
-from decisioning.observations import OBSERVATION_SCHEMA_V1, build_observation_schema
+from decisioning.observations import OBSERVATION_SCHEMA_V2, build_observation_schema
 from features import (
     attach_reachable_r,
     ensure_london_atr_distances,
@@ -21,7 +21,7 @@ from simulation.environment.env import TradingEnv
 
 
 class _StubModel:
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V1).to_dict()
+    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
     _action_schema = build_discrete_trading_action_schema().to_dict()
     action_space: Any = spaces.Discrete(20)
 
@@ -107,11 +107,21 @@ def test_train_live_observation_parity() -> None:
         },
         index=idx,
     )
-    env = TradingEnv(bars=bars, features=features, obs_window=10, initial_balance=100_000.0)
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=10,
+        initial_balance=100_000.0,
+        observation_schema_version=OBSERVATION_SCHEMA_V2,
+    )
     env.account.update_equity(-250.0)
     env_obs = env._get_observation()
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter._features = features
     adapter._bars = bars
     adapter.obs_window = 10
@@ -132,7 +142,7 @@ def test_train_live_observation_parity() -> None:
     assert set(live_obs) == {"seq", "seq_mask", "account"}
     assert env_obs["seq"].shape == live_obs["seq"].shape
     assert env_obs["seq_mask"].shape == live_obs["seq_mask"].shape
-    assert env_obs["account"].shape == live_obs["account"].shape == (6,)
+    assert env_obs["account"].shape == live_obs["account"].shape == (28,)
     assert list(env._obs_features.columns) == list(
         attach_reachable_r(select_obs_columns(features), bars, features).columns
     )

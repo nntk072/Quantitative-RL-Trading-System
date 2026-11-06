@@ -55,7 +55,10 @@ def parse_variant_ablation_args(
 
     parser = argparse.ArgumentParser(
         prog=f"{_cli_program()} variants",
-        description="Run the configured ablation workflow.",
+        description=(
+            "Retired legacy training command. New model training must pass the "
+            "canonical survival-first qualification workflow."
+        ),
     )
     parser.add_argument("--bars-csv", required=True, help="OHLCV CSV with DatetimeIndex")
     parser.add_argument(

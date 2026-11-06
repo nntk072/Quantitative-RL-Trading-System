@@ -1,10 +1,6 @@
 {
-  "schema_version": 1,
-  "status": "passed",
-  "date_local": "2026-11-03",
-  "cluster_job_id": "21367992",
-  "node": "gpuarm2",
   "allocation_context": "reused existing one-GH200 allocation; no new job or Slurm step",
+  "cluster_job_id": "21390062",
   "commands": [
     ".venv/bin/ruff format --check <touched Python paths>",
     ".venv/bin/ruff check <touched Python paths>",
@@ -12,48 +8,139 @@
     ".venv/bin/python -m experiments.variants.catalog --write",
     ".venv/bin/python -m experiments.variants.catalog --check"
   ],
+  "date_local": "2026-11-04",
+  "node": "gpuarm1",
   "result": {
-    "initial_mask_slice_tests_passed": 38,
-    "integration_tests_passed": 66,
-    "integration_test_failures": 0,
-    "ruff_format_check": "passed",
-    "ruff_check": "passed",
     "catalog_check": "passed",
-    "legacy_architecture_id": "mtf",
     "corrected_architecture_id": "mtf_empty_stream_masked_v1",
+    "current_source_retest": {
+      "catalog_check": "passed",
+      "failures": 0,
+      "focused_test_cases_passed": 98,
+      "test_log_path": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/timeframe_mask_current_source/pytest.log"
+    },
+    "historical_policy_replay_or_economic_run": false,
+    "initial_mask_slice_tests_passed": 38,
+    "integration_test_failures": 0,
+    "integration_tests_passed": 98,
+    "legacy_architecture_id": "mtf",
     "parameter_names_and_shapes_match": true,
-    "selected_ppo_agent_checkpoint_round_trip": "passed",
-    "historical_policy_replay_or_economic_run": false
+    "ruff_check": "passed",
+    "ruff_format_check": "passed",
+    "selected_ppo_agent_checkpoint_round_trip": "passed"
   },
-  "sources": [
-    {"path": "simulation/environment/observations.py", "sha256": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"},
-    {"path": "simulation/environment/observation_runtime.py", "sha256": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2"},
-    {"path": "decisioning/observations.py", "sha256": "82d534e6e9684fd615822c1f33e0d6b9127f12134ccefb21efa99c5a2101c7d8"},
-    {"path": "models/encoders/sequence_encoder_components.py", "sha256": "8da48532a8a4a28f01b5cca51e13ad218a1b78564be4d83d4884230502672dbe"},
-    {"path": "models/encoders/mtf.py", "sha256": "f3048f4c926e28a163d24d202fd7c69e9cf78ab157fdf5fdb5cb092d24fb9124"},
-    {"path": "models/encoders/mtf_empty_stream_masked.py", "sha256": "2c24cc8ff93699e1bae67adbc3c6f9a1d508c1845775438adffe87b9ef9369a4"},
-    {"path": "models/encoders/mtf_reasoning.py", "sha256": "bc16a4ce441ad0eb17c1f83e8ba336d05b545fd6fb0a24e76288690109461598"},
-    {"path": "models/encoders/mtf_efficiency_components.py", "sha256": "b5280b6285bdca9ab65d17e09e398b62ec13f14ae1730286ae71db2c9cf2cd86"},
-    {"path": "models/encoders/mtf_shared_tcn_reasoning.py", "sha256": "0c4986475bf5c48ecfdbf15aa17b8024ff6688e9e76ecc6244e22c444f8a3365"},
-    {"path": "models/encoders/mtf_m1_htf_lite_reasoning.py", "sha256": "82a4705e018b00fbee18810ed370b89e022e1c5d2d277abaee4e39fec13b341c"},
-    {"path": "models/encoders/mtf_m1_htf_snapshot_reasoning.py", "sha256": "d94a71e29ba2e3d0dc99a1bc0c65c2319bf6cca4f6ce6330b518d904e27262ca"},
-    {"path": "models/architecture_ids.py", "sha256": "be03ebf0d441f5679d97790eb7ab600edb7b60cdaaf216a0896128c531ad8312"},
-    {"path": "models/encoders/__init__.py", "sha256": "e207ae5f7563612686a231792d4c96a4980fb9e5e7abd879616cb892ae11bbfa"},
-    {"path": "models/factory/encoder_registry.py", "sha256": "4f9cfa98db56a52888dd8edc058d466b90b05e8beac7f0c6c9c87310f0b7923f"},
-    {"path": "learning/rl/agent.py", "sha256": "c9e85c9c0b51c63ca368ed6f89c19d2282ecb0b357296e0709d9e4b39d036fdc"},
-    {"path": "simulation/environment/trading_environment_factory.py", "sha256": "f1b7fc434f0dadba16fe329f2c8cf338c82623be83c3342ab187d6de36d85fa3"},
-    {"path": "simulation/environment/worker.py", "sha256": "f1625c9e516e529b87d908ca6f298725c0e5b4b16a02f6a9db8ead16bf5a3a0e"},
-    {"path": "training/configuration/cli.py", "sha256": "ee894a10d201b7eff154b6cfd229089efa11900fcbbdda17b2ffd5bab6b21717"},
-    {"path": "config/base/default.yaml", "sha256": "9397e5a55dd1e4445efda6ab22940ba8f419d31370df8d972d2111b079074e84"},
-    {"path": "config/variant_catalog.yaml", "sha256": "458a8296a4a436114d040de7f11a5153a87a817c9758d473f06c0e61a756e25d"},
-    {"path": "docs/model_variants.md", "sha256": "12cb6106892a386b82828d2d946e4881d140abd0fb3d61b223149198d5488a02"},
-    {"path": "tests/unit/simulation/test_environment/test_mtf_windows.py", "sha256": "197941f89361792c1cc3fa553adabd9c7c0251f0452c724dbdeee044866b7bb7"},
-    {"path": "tests/unit/models/test_mtf_efficient_encoders.py", "sha256": "296d1177997106ed4e25be986b59a5eacc5fab07fcca763d6a811173ad5e7244"},
-    {"path": "tests/unit/models/test_encoders.py", "sha256": "f91324a49d3ec491dd89d350d63be4eac0c9691e8a5a273f4662f1970dd6aa65"},
-    {"path": "tests/unit/models/test_mtf_encoder_registration.py", "sha256": "510882fa21b36d08e5ca8c13f07d3e9ef0cd197c38006f73bd8c452f7f08823c"},
-    {"path": "tests/unit/simulation/test_environment/test_trade_setup_factory_config.py", "sha256": "4d2d414269bb0012afe3522a98bfd2a9c832c889cb4e6b06f6589488766426e2"},
-    {"path": "tests/unit/experiments/test_model_variant_catalog.py", "sha256": "61f1df7823dcc5600b7dcbf9c7bff8ef97d5e0f19dd9e049f65d107575d84cc2"}
-  ],
+  "run_output_file": "run_output.txt",
+  "schema_version": 1,
   "scope_limit": "No per-feature warmup mask, no historical policy equivalence under corrected semantics, and no economic result.",
-  "run_output_file": "run_output.txt"
+  "sources": [
+    {
+      "path": "simulation/environment/observations.py",
+      "sha256": "15ad07e13b78728a20192696530057fcba8685b0e0ef254fb20d3c501991bd51"
+    },
+    {
+      "path": "simulation/environment/observation_runtime.py",
+      "sha256": "9161b1ceb3fde76736de3e975779537e2dbddc2d288f60d47ca4cb815c3e8ce2"
+    },
+    {
+      "path": "decisioning/observations.py",
+      "sha256": "3c285e46f91c43359bce3a98d1b3e5b0c45d74c99ee8fd53c8a142c083e61812"
+    },
+    {
+      "path": "models/encoders/sequence_encoder_components.py",
+      "sha256": "8da48532a8a4a28f01b5cca51e13ad218a1b78564be4d83d4884230502672dbe"
+    },
+    {
+      "path": "models/encoders/mtf.py",
+      "sha256": "f3048f4c926e28a163d24d202fd7c69e9cf78ab157fdf5fdb5cb092d24fb9124"
+    },
+    {
+      "path": "models/encoders/mtf_empty_stream_masked.py",
+      "sha256": "2c24cc8ff93699e1bae67adbc3c6f9a1d508c1845775438adffe87b9ef9369a4"
+    },
+    {
+      "path": "models/encoders/mtf_reasoning.py",
+      "sha256": "bc16a4ce441ad0eb17c1f83e8ba336d05b545fd6fb0a24e76288690109461598"
+    },
+    {
+      "path": "models/encoders/mtf_efficiency_components.py",
+      "sha256": "b5280b6285bdca9ab65d17e09e398b62ec13f14ae1730286ae71db2c9cf2cd86"
+    },
+    {
+      "path": "models/encoders/mtf_shared_tcn_reasoning.py",
+      "sha256": "0c4986475bf5c48ecfdbf15aa17b8024ff6688e9e76ecc6244e22c444f8a3365"
+    },
+    {
+      "path": "models/encoders/mtf_m1_htf_lite_reasoning.py",
+      "sha256": "82a4705e018b00fbee18810ed370b89e022e1c5d2d277abaee4e39fec13b341c"
+    },
+    {
+      "path": "models/encoders/mtf_m1_htf_snapshot_reasoning.py",
+      "sha256": "d94a71e29ba2e3d0dc99a1bc0c65c2319bf6cca4f6ce6330b518d904e27262ca"
+    },
+    {
+      "path": "models/architecture_ids.py",
+      "sha256": "be03ebf0d441f5679d97790eb7ab600edb7b60cdaaf216a0896128c531ad8312"
+    },
+    {
+      "path": "models/encoders/__init__.py",
+      "sha256": "e207ae5f7563612686a231792d4c96a4980fb9e5e7abd879616cb892ae11bbfa"
+    },
+    {
+      "path": "models/factory/encoder_registry.py",
+      "sha256": "4f9cfa98db56a52888dd8edc058d466b90b05e8beac7f0c6c9c87310f0b7923f"
+    },
+    {
+      "path": "learning/rl/agent.py",
+      "sha256": "c9e85c9c0b51c63ca368ed6f89c19d2282ecb0b357296e0709d9e4b39d036fdc"
+    },
+    {
+      "path": "simulation/environment/trading_environment_factory.py",
+      "sha256": "f1b7fc434f0dadba16fe329f2c8cf338c82623be83c3342ab187d6de36d85fa3"
+    },
+    {
+      "path": "simulation/environment/worker.py",
+      "sha256": "f1625c9e516e529b87d908ca6f298725c0e5b4b16a02f6a9db8ead16bf5a3a0e"
+    },
+    {
+      "path": "training/configuration/cli.py",
+      "sha256": "ee894a10d201b7eff154b6cfd229089efa11900fcbbdda17b2ffd5bab6b21717"
+    },
+    {
+      "path": "config/base/default.yaml",
+      "sha256": "9397e5a55dd1e4445efda6ab22940ba8f419d31370df8d972d2111b079074e84"
+    },
+    {
+      "path": "config/variant_catalog.yaml",
+      "sha256": "458a8296a4a436114d040de7f11a5153a87a817c9758d473f06c0e61a756e25d"
+    },
+    {
+      "path": "docs/model_variants.md",
+      "sha256": "12cb6106892a386b82828d2d946e4881d140abd0fb3d61b223149198d5488a02"
+    },
+    {
+      "path": "tests/unit/simulation/test_environment/test_mtf_windows.py",
+      "sha256": "197941f89361792c1cc3fa553adabd9c7c0251f0452c724dbdeee044866b7bb7"
+    },
+    {
+      "path": "tests/unit/models/test_mtf_efficient_encoders.py",
+      "sha256": "296d1177997106ed4e25be986b59a5eacc5fab07fcca763d6a811173ad5e7244"
+    },
+    {
+      "path": "tests/unit/models/test_encoders.py",
+      "sha256": "f91324a49d3ec491dd89d350d63be4eac0c9691e8a5a273f4662f1970dd6aa65"
+    },
+    {
+      "path": "tests/unit/models/test_mtf_encoder_registration.py",
+      "sha256": "510882fa21b36d08e5ca8c13f07d3e9ef0cd197c38006f73bd8c452f7f08823c"
+    },
+    {
+      "path": "tests/unit/simulation/test_environment/test_trade_setup_factory_config.py",
+      "sha256": "33f04a2ec79dd231b2531c97b63a898dc902340288ca4e0469c9e2ea7d95c6d4"
+    },
+    {
+      "path": "tests/unit/experiments/test_model_variant_catalog.py",
+      "sha256": "61f1df7823dcc5600b7dcbf9c7bff8ef97d5e0f19dd9e049f65d107575d84cc2"
+    }
+  ],
+  "status": "passed"
 }

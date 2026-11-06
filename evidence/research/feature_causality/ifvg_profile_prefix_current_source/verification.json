@@ -1,0 +1,45 @@
+{
+  "feature_version": "v40-ifvg-missing-atr-distance",
+  "profile_inventory_sha256": "26a944c52f600d5c4fff2690a12cedf0c38e79fcfc502a384e002fbd1543bb8b",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "selected_feature_groups": 5,
+  "passed_cutoff_comparisons": 15,
+  "failed_cutoff_comparisons": 0,
+  "max_abs_delta": 0.0,
+  "source_hash_count": 78,
+  "input_hash_count": 4,
+  "reports": [
+    {
+      "name": "strategy_overlay_2_po3_ifvg",
+      "representative_variant": "strategy_overlay/2_po3_ifvg",
+      "report": "strategy_overlay_2_po3_ifvg.json",
+      "sha256": "f44e64edf7452879deb355bd9218172433697c6131f1116a5d36040bbccdfdc8"
+    },
+    {
+      "name": "legacy_variant_a4b_po3_ifvg",
+      "representative_variant": "legacy_variant/ladder_a4b_po3_ifvg",
+      "report": "legacy_variant_a4b_po3_ifvg.json",
+      "sha256": "a728eb7ae7e25bfbaf59e71b503cc6fe511977d6b0d95b6339454b78fc6eacdd"
+    },
+    {
+      "name": "features_fvg_ifvg_mtf",
+      "representative_variant": "features/fvg_ifvg_mtf",
+      "report": "features_fvg_ifvg_mtf.json",
+      "sha256": "50d5ca04beeca2e5980e72a8dcb5363e9c1d379f9d86edf0792aa6aaa5b01acf"
+    },
+    {
+      "name": "features_full_po3_mtf",
+      "representative_variant": "features/full_po3_mtf",
+      "report": "features_full_po3_mtf.json",
+      "sha256": "1bf123e1f1c19c1b526684c327b107f90b0977e6233b10cf4b03774560e9ac9e"
+    },
+    {
+      "name": "legacy_variant_a4b_distribution",
+      "representative_variant": "legacy_variant/ladder_a4b_distribution",
+      "report": "legacy_variant_a4b_distribution.json",
+      "sha256": "a0a0584ded2565f9c32922f533e4058898da42a4f8cc4ed2b40ff4c4a39a2f78"
+    }
+  ],
+  "scope_note": "Five selected IFVG/PO3 feature groups only; not a complete 130-profile prefix acceptance run."
+}

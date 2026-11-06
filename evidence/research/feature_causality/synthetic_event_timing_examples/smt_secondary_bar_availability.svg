@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
+<title>SMT secondary bars use the last available observation</title><rect width="1000" height="560" fill="#fbfcfe"/>
+<style>text{font:14px sans-serif;fill:#152536} .small{font-size:12px} .axis{stroke:#8091a0;stroke-width:1} .bull{stroke:#18794e;fill:#18794e} .bear{stroke:#b42318;fill:#b42318} .ref{stroke:#7a5af8;stroke-dasharray:6 5} .zone{fill:#fdb022;fill-opacity:.19;stroke:#dc6803} .gate{stroke:#175cd3;stroke-dasharray:7 5}</style>
+<text x="44" y="34" font-size="20" font-weight="bold">SMT secondary bars use the last available observation</text>
+<text x="44" y="54" class="small">SYNTHETIC EXPLANATORY EXAMPLE — not historical data or a strategy result</text>
+<line class="axis" x1="170" y1="280" x2="840" y2="280"/>
+<circle cx="290" cy="280" r="10" fill="#18794e"/>
+<circle cx="720" cy="280" r="10" fill="#18794e"/>
+<line x1="505" y1="115" x2="505" y2="365" stroke="#b42318" stroke-dasharray="6 5"/>
+<circle cx="505" cy="280" r="10" fill="#b42318"/>
+<text x="210" y="225">last completed secondary close = 200</text>
+<text x="390" y="330" fill="#b42318">no secondary bar at primary decision time</text>
+<text x="650" y="225">later secondary close = 204</text>
+<line class="gate" x1="505" y1="115" x2="505" y2="155"/>
+<text x="400" y="95" fill="#175cd3" font-weight="bold">forward-fill 200</text>
+<text x="610" y="400" fill="#b42318">Backward-fill 204 here would use a future bar.</text>
+<text x="160" y="455">Previous source 2025-01-06T15:30:00Z → decision 2025-01-06T15:31:00Z → next source 2025-01-06T15:32:00Z.</text>
+<text x="160" y="490" class="small">At the decision, use 200.0; do not expose 204.0 until the next source bar closes.</text></svg>

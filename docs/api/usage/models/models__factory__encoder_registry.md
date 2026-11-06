@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `models.factory.encoder_re
 
 **Purpose:** Resolve a declared encoder ID, failing closed for unknown names.
 
-**Exact API:** {py:obj}`models.factory.encoder_registry.encoder_for` · **Source:** [models/factory/encoder_registry.py:38](../../../../models/factory/encoder_registry.py#L38)
+**Exact API:** {py:obj}`models.factory.encoder_registry.encoder_for` · **Source:** [models/factory/encoder_registry.py:40](../../../../models/factory/encoder_registry.py#L40)
 
 **Inputs and outputs:**
 

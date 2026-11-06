@@ -6,6 +6,30 @@ from pathlib import Path
 from typing import Any
 
 from artifacts.identity import file_sha256
+from evaluation.reporting.run_manifest import build_sequence_feature_schema
+
+
+def validate_train_only_feature_snapshot_request(
+    *,
+    train_only_screen: bool,
+    source_feature_cache: str | None,
+    train_only_feature_snapshot: str | None,
+) -> None:
+    """Restrict reconstructed feature snapshots to a train-only replay.
+
+    Args:
+        train_only_screen: Whether only the training split is requested.
+        source_feature_cache: Exact all-period source cache, if requested.
+        train_only_feature_snapshot: Assembled train-only feature frame, if requested.
+    """
+    if train_only_feature_snapshot is None:
+        return
+    if not train_only_screen:
+        raise ValueError("--train-only-feature-snapshot requires --train-only-screen")
+    if source_feature_cache is not None:
+        raise ValueError(
+            "--train-only-feature-snapshot cannot be combined with --source-feature-cache"
+        )
 
 
 def resolve_execution_seed(
@@ -59,12 +83,80 @@ def validate_sequence_input_width(model: Any, expected_width: int) -> int:
     return int(shape[-1])
 
 
+def resolve_recorded_sequence_schema(
+    schema: dict[str, Any] | None,
+    *,
+    available_columns: set[str],
+    generated_columns: set[str],
+    train_only_screen: bool,
+    has_train_only_feature_snapshot: bool,
+    mtf_enabled: bool,
+    feature_validity_channels: bool,
+) -> tuple[dict[str, Any], tuple[str, ...]]:
+    """Validate and return exact saved sequence coordinates for a train-only replay.
+
+    This opt-in is for reproducing an existing checkpoint's recorded input
+    layout. It requires a hashed training-only feature snapshot and does not
+    permit MTF observation branches, whose coordinates are a separate contract.
+
+    Args:
+        schema: Saved sequence-feature schema from the checkpoint manifest.
+        available_columns: Feature columns already present in the replay frame.
+        generated_columns: Columns that replay can deterministically construct.
+        train_only_screen: Whether this replay is restricted to training data.
+        has_train_only_feature_snapshot: Whether a hashed training snapshot exists.
+        mtf_enabled: Whether the policy uses separate timeframe observations.
+        feature_validity_channels: Whether validity-mask channels are configured.
+
+    Returns:
+        Validated schema and its ordered sequence feature columns.
+    """
+    if not train_only_screen:
+        raise ValueError("recorded sequence schema replay requires --train-only-screen")
+    if not has_train_only_feature_snapshot:
+        raise ValueError("recorded sequence schema replay requires --train-only-feature-snapshot")
+    if mtf_enabled:
+        raise ValueError(
+            "recorded sequence schema replay does not support MTF observation branches"
+        )
+    if not isinstance(schema, dict):
+        raise ValueError("recorded sequence schema replay requires a saved sequence schema")
+    columns = schema.get("columns")
+    if (
+        not isinstance(columns, list)
+        or not columns
+        or any(not isinstance(column, str) or not column for column in columns)
+        or len(columns) != len(set(columns))
+    ):
+        raise ValueError("saved sequence schema must contain unique ordered column names")
+    version = schema.get("version")
+    include_validity_channels = version == "sequence-feature-validity-channels-v1"
+    if version not in {"sequence-feature-columns-v1", "sequence-feature-validity-channels-v1"}:
+        raise ValueError("saved sequence schema version is unsupported for recorded replay")
+    if include_validity_channels != feature_validity_channels:
+        raise ValueError("saved sequence schema validity channels differ from the run config")
+    rebuilt = build_sequence_feature_schema(
+        columns,
+        include_validity_channels=include_validity_channels,
+    )
+    if rebuilt != schema:
+        raise ValueError("saved sequence schema hash or dimensions are inconsistent")
+    missing = set(columns) - available_columns - generated_columns
+    if missing:
+        raise ValueError(
+            "saved sequence schema columns are absent from the training feature frame: "
+            f"{sorted(missing)[:10]}"
+        )
+    return rebuilt, tuple(columns)
+
+
 def validate_stop_candidate_schema(
     *,
     checkpoint_schema: dict[str, Any] | None,
     manifest_schema: dict[str, Any] | None,
     expected_schema: dict[str, Any],
     allow_legacy: bool,
+    allow_changed_menu: bool = False,
 ) -> str:
     """Reject checkpoint/config drift and label explicit latest-swing legacy use.
 
@@ -73,6 +165,7 @@ def validate_stop_candidate_schema(
         manifest_schema: Key-value data used for the manifest schema.
         expected_schema: Key-value data used for the expected schema.
         allow_legacy: Whether to enable or require the allow legacy.
+        allow_changed_menu: Whether this is an explicitly labelled changed-policy diagnostic.
 
     Returns:
         Text returned by ``validate_stop_candidate_schema``.
@@ -100,6 +193,8 @@ def validate_stop_candidate_schema(
     if checkpoint_schema != manifest_schema:
         raise ValueError("checkpoint and run manifest stop-candidate schemas disagree")
     if checkpoint_schema != expected_schema:
+        if allow_changed_menu:
+            return "changed_policy_diagnostic"
         raise ValueError(
             "checkpoint stop-candidate schema differs from the run config; refusing to evaluate "
             "under a changed stop menu"
@@ -131,7 +226,9 @@ def validate_checkpoint_manifest_hash(path: Path, manifest: dict[str, Any]) -> s
 
 __all__ = [
     "resolve_execution_seed",
+    "validate_train_only_feature_snapshot_request",
     "validate_checkpoint_manifest_hash",
     "validate_sequence_input_width",
+    "resolve_recorded_sequence_schema",
     "validate_stop_candidate_schema",
 ]

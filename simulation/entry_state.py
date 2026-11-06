@@ -1,0 +1,264 @@
+"""Causal lifecycle for persistent entry opportunities."""
+
+from __future__ import annotations
+
+import math
+from collections.abc import Mapping
+from dataclasses import dataclass
+
+from decisioning.observation_state import (
+    EntryState,
+)
+
+
+def immutable_setup_levels(
+    values: Mapping[str, float] | tuple[tuple[str, float], ...],
+) -> tuple[tuple[str, float], ...]:
+    """Copy finite setup geometry into a stable, immutable tuple.
+
+    Args:
+        values: Values to process, in input order.
+
+    Returns:
+        Values returned by ``immutable_setup_levels``, in the declared order.
+    """
+    items = values.items() if isinstance(values, Mapping) else values
+    copied = []
+    for key, raw_value in items:
+        value = float(raw_value)
+        if math.isfinite(value):
+            copied.append((str(key), value))
+    return tuple(sorted(copied))
+
+
+@dataclass(frozen=True, slots=True)
+class EntryEvidence:
+    """Market interpretation supplied to the lifecycle state machine."""
+
+    bar: int
+    evidence_detected: bool
+    invalidated: bool
+    arm_condition: bool
+    retest_confirmed: bool
+    direction: int
+    setup_types: tuple[str, ...]
+    setup_levels_snapshot: tuple[tuple[str, float], ...]
+
+    def __post_init__(self) -> None:
+        """Validate and initialize EntryEvidence after construction."""
+        object.__setattr__(self, "bar", int(self.bar))
+        object.__setattr__(self, "direction", int(self.direction))
+        object.__setattr__(self, "setup_types", tuple(self.setup_types))
+        object.__setattr__(
+            self,
+            "setup_levels_snapshot",
+            immutable_setup_levels(self.setup_levels_snapshot),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EntryCandidate:
+    """Immutable opportunity details captured on its origin bar."""
+
+    direction: int
+    setup_types: tuple[str, ...]
+    origin_bar: int
+    setup_levels_snapshot: tuple[tuple[str, float], ...]
+
+    def __post_init__(self) -> None:
+        """Validate and initialize EntryCandidate after construction."""
+        if int(self.direction) not in (-1, 1):
+            raise ValueError("candidate direction must be -1 or 1")
+        object.__setattr__(self, "direction", int(self.direction))
+        object.__setattr__(self, "setup_types", tuple(self.setup_types))
+        object.__setattr__(self, "origin_bar", int(self.origin_bar))
+        object.__setattr__(
+            self,
+            "setup_levels_snapshot",
+            immutable_setup_levels(self.setup_levels_snapshot),
+        )
+
+
+class EntryStateMachine:
+    """Manage candidate, armed, and executed entry opportunity states."""
+
+    def __init__(self, candidate_max_age_bars: int, arm_requires_retest: bool = False) -> None:
+        """Initialize EntryStateMachine and its owned state.
+
+        Args:
+            candidate_max_age_bars: Market bar or price data used for initialize EntryStateMachine and its owned state.
+            arm_requires_retest: Whether to enable or require the arm requires retest.
+        """
+        if int(candidate_max_age_bars) < 0:
+            raise ValueError("candidate_max_age_bars must be non-negative")
+        self.candidate_max_age_bars = int(candidate_max_age_bars)
+        self.arm_requires_retest = bool(arm_requires_retest)
+        self.state: EntryState = "FLAT"
+        self.candidate: EntryCandidate | None = None
+        # Per-episode lifecycle counters. Kept here (not on the env) so the
+        # FSM owns its own reporting surface; the env only reads them out.
+        self.visits: dict[EntryState, int] = {
+            "FLAT": 0,
+            "CANDIDATE": 0,
+            "ARMED": 0,
+            "IN_POSITION": 0,
+        }
+        self.candidate_created: int = 0
+        self.candidate_expired: int = 0
+        self.candidate_invalidated: int = 0
+        self.trigger_requested: int = 0
+        self.trigger_refused: int = 0
+        self.entered: int = 0
+        self.closed: int = 0
+        self.armed_bars: int = 0
+
+    def reset(self) -> None:
+        """Return to the initial state at an episode boundary."""
+        self.state = "FLAT"
+        self.candidate = None
+        self.visits = {"FLAT": 0, "CANDIDATE": 0, "ARMED": 0, "IN_POSITION": 0}
+        self.candidate_created = 0
+        self.candidate_expired = 0
+        self.candidate_invalidated = 0
+        self.trigger_requested = 0
+        self.trigger_refused = 0
+        self.entered = 0
+        self.closed = 0
+        self.armed_bars = 0
+
+    def observe(self, evidence: EntryEvidence) -> EntryState:
+        """Apply one bar of evidence without changing executed trade state.
+
+        Args:
+            evidence: Evidence used by the operation described above.
+
+        Returns:
+            Result of apply one bar of evidence without changing executed trade state.
+        """
+        if self.state == "IN_POSITION":
+            return self.state
+        if self.state == "FLAT":
+            if (
+                evidence.evidence_detected
+                and not evidence.invalidated
+                and evidence.direction in (-1, 1)
+            ):
+                self.candidate = EntryCandidate(
+                    direction=evidence.direction,
+                    setup_types=evidence.setup_types,
+                    origin_bar=evidence.bar,
+                    setup_levels_snapshot=evidence.setup_levels_snapshot,
+                )
+                self.candidate_created += 1
+                self._enter("CANDIDATE")
+            return self.state
+
+        candidate = self.candidate
+        if candidate is None:
+            self._clear()
+            return self.state
+        if evidence.bar < candidate.origin_bar:
+            raise ValueError("entry evidence bars must be monotonic")
+
+            # An armed trigger is still the same market opportunity. Do not let a
+            # policy keep an old setup alive indefinitely after it has left the
+            # candidate state; otherwise it can enter several bars after the
+            # named evidence disappeared.
+        age = evidence.bar - candidate.origin_bar
+        if age > self.candidate_max_age_bars:
+            self.candidate_expired += 1
+            self._clear()
+            return self.state
+
+        opposing_evidence = evidence.direction == -candidate.direction and (
+            evidence.evidence_detected or evidence.retest_confirmed
+        )
+        if evidence.invalidated or opposing_evidence:
+            self.candidate_invalidated += 1
+            self._clear()
+            return self.state
+
+        if self.state == "CANDIDATE":
+            if evidence.arm_condition and (
+                not self.arm_requires_retest
+                or (evidence.retest_confirmed and evidence.direction == candidate.direction)
+            ):
+                self._enter("ARMED")
+        return self.state
+
+    def request_trigger(self) -> EntryCandidate | None:
+        """Return the armed candidate for an attempt without consuming it.
+
+        Returns:
+            Result of return the armed candidate for an attempt without consuming it.
+        """
+        if self.state != "ARMED":
+            return None
+        self.trigger_requested += 1
+        return self.candidate
+
+    def mark_entered(self) -> None:
+        """Record successful position creation for the armed candidate."""
+        if self.state != "ARMED" or self.candidate is None:
+            raise RuntimeError("only an armed candidate can enter a position")
+        self.entered += 1
+        self._enter("IN_POSITION")
+
+    def mark_external_entry(self) -> None:
+        """Track a position opened by an action contract that bypasses the FSM gate."""
+        if self.state == "IN_POSITION":
+            raise RuntimeError("cannot record a second entry while already in position")
+        self.entered += 1
+        self._enter("IN_POSITION")
+
+    def mark_position_opened(self) -> None:
+        """Record an actual open, whether or not an armed FSM caused it."""
+        if self.state == "ARMED" and self.candidate is not None:
+            self.mark_entered()
+        else:
+            self.mark_external_entry()
+
+    def mark_closed(self) -> None:
+        """Clear lifecycle state after the environment closes the position."""
+        if self.state != "IN_POSITION":
+            raise RuntimeError("only an open position can be marked closed")
+        self.closed += 1
+        self._clear()
+
+    def invalidate(self) -> None:
+        """Clear an unexecuted opportunity."""
+        if self.state in ("CANDIDATE", "ARMED"):
+            self.candidate_invalidated += 1
+            self._clear()
+
+    def is_armed(self) -> bool:
+        """Whether PPO may request an execution attempt.
+
+        Returns:
+            Whether is armed meets the requested condition.
+        """
+        return self.state == "ARMED"
+
+    def is_candidate(self) -> bool:
+        """Whether an unarmed candidate is waiting for confirmation.
+
+        Returns:
+            Whether is candidate meets the requested condition.
+        """
+        return self.state == "CANDIDATE"
+
+    def _clear(self) -> None:
+        """Clear EntryStateMachine."""
+        self.state = "FLAT"
+        self.candidate = None
+
+    def _enter(self, state: EntryState) -> None:
+        """Record a state transition and count bars spent in ARMED.
+
+        Args:
+            state: State object read or updated by the operation.
+        """
+        if self.state == "ARMED":
+            self.armed_bars += 1
+        self.state = state
+        self.visits[state] += 1

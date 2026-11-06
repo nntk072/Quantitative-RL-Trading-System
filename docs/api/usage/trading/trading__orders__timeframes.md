@@ -26,7 +26,7 @@ This page contains 5 public callable records owned by `trading.orders.timeframes
 
 **Observed usage:**
 
-1. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L157)
+1. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -46,7 +46,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `target_menu`](../../../../trading/orders/targets.py#L124)
+2. [production caller: `target_menu`](../../../../trading/orders/targets.py#L128)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -95,7 +95,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `target_menu`](../../../../trading/orders/targets.py#L151)
+1. [production caller: `target_menu`](../../../../trading/orders/targets.py#L155)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -245,43 +245,42 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L272)
+1. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L148)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-                "reason": "standard_deviation_stop_level_must_be_1",
-            }
-        )
-    raw = [item for item in raw if item not in invalid_deviation_candidates]
-    normalized_floor = normalize_timeframe(min_timeframe)
-    minimum_rank = timeframe_index(normalized_floor)
-    sd_timeframes = tuple(
-        normalize_timeframe(timeframe) for timeframe in (standard_deviation_timeframes or ())
-    )
-    if sd_timeframes:
-        expected_sd_stops = {
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or 1")
+    if price_increment is not None and (not np.isfinite(price_increment) or price_increment <= 0.0):
+        raise ValueError("price_increment must be finite and positive")
+    for timeframe in htf:
+        timeframe_index(str(timeframe))
+    early_audit: list[dict[str, Any]] = []
+    candidate_meta: dict[str, dict[str, Any]] = {}
+    candidate_schema_active = False
+    raw = list(strategy.sl_candidates(direction=direction, row=row))
+    sweep_name = "sweep_low_wick" if direction == 1 else "sweep_high_wick"
 # … caller assertions omitted …
 ```
 
-2. [production caller: `target_menu`](../../../../trading/orders/targets.py#L149)
+2. [production caller: `target_menu`](../../../../trading/orders/targets.py#L97)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        # origin (`*_time`) is not a confirmation time and is not used here.
-    decision_at = getattr(row, "name", None)
-    if not isinstance(decision_at, pd.Timestamp):
-        decision_at = None
-    available: list[tuple[str, float]] = []
-    minimum_rank = timeframe_index(min_timeframe) if min_timeframe is not None else 0
-    for name, level in raw:
-        if timeframe_index(reference_timeframe(name)) < minimum_rank:
-            continue
-        confirmed_at = row.get(f"{name}_confirmed_at") if hasattr(row, "get") else None
-        if confirmed_at is not None and not pd.isna(confirmed_at):
+    if not np.isfinite(front_run_pts) or front_run_pts < 0.0:
+        raise ValueError("front_run_pts must be finite and nonnegative")
+    if price_increment is not None and (not np.isfinite(price_increment) or price_increment <= 0.0):
+        raise ValueError("price_increment must be finite and positive")
+    for timeframe in htf:
+        timeframe_index(str(timeframe))
+    if direction == 1:
+        names = [
+            "last_swing_high",
+            "asian_high",
+            "london_high",
 # … caller assertions omitted …
 ```
 

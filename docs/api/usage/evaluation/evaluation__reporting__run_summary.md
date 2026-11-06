@@ -8,7 +8,7 @@ This page contains 12 public callable records owned by `evaluation.reporting.run
 
 **Purpose:** Aggregate per-seed :class:`PerformanceMetrics` into a summary DataFrame.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.aggregate_seeds` · **Source:** [evaluation/reporting/run_summary.py:41](../../../../evaluation/reporting/run_summary.py#L41)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.aggregate_seeds` · **Source:** [evaluation/reporting/run_summary.py:60](../../../../evaluation/reporting/run_summary.py#L60)
 
 **Inputs and outputs:**
 
@@ -32,7 +32,7 @@ This page contains 12 public callable records owned by `evaluation.reporting.run
 
 **Observed usage:**
 
-1. [test fixture: `test_one_row_per_seed`](../../../../tests/unit/evaluation/test_run_summary.py#L33)
+1. [test fixture: `test_one_row_per_seed`](../../../../tests/unit/evaluation/test_run_summary.py#L34)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -51,7 +51,7 @@ def test_one_row_per_seed(self) -> None:
     assert {"sharpe", "max_drawdown", "n_trades", "breach_rate"} <= set(df.columns)
 ```
 
-2. [test fixture: `test_rejects_non_metrics`](../../../../tests/unit/evaluation/test_run_summary.py#L43)
+2. [test fixture: `test_rejects_non_metrics`](../../../../tests/unit/evaluation/test_run_summary.py#L44)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -74,7 +74,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a two-column Train vs Test comparison table.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_comparison_table` · **Source:** [evaluation/reporting/run_summary.py:137](../../../../evaluation/reporting/run_summary.py#L137)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_comparison_table` · **Source:** [evaluation/reporting/run_summary.py:294](../../../../evaluation/reporting/run_summary.py#L294)
 
 **Inputs and outputs:**
 
@@ -105,7 +105,7 @@ def test_build_comparison_table(metrics):
     assert "Sharpe" in table
 ```
 
-2. [test fixture: `test_comparison_table_train_and_test_columns`](../../../../tests/unit/evaluation/test_run_summary.py#L68)
+2. [test fixture: `test_comparison_table_train_and_test_columns`](../../../../tests/unit/evaluation/test_run_summary.py#L78)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -133,7 +133,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build the JSON-serialisable report block for one evaluation run.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_run_report` · **Source:** [evaluation/reporting/run_summary.py:203](../../../../evaluation/reporting/run_summary.py#L203)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_run_report` · **Source:** [evaluation/reporting/run_summary.py:359](../../../../evaluation/reporting/run_summary.py#L359)
 
 **Inputs and outputs:**
 
@@ -153,40 +153,42 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_zero_trade_metrics_are_labeled_inactive`](../../../../tests/unit/evaluation/test_run_summary.py#L100)
+1. [test fixture: `test_zero_trade_metrics_are_labeled_inactive`](../../../../tests/unit/evaluation/test_run_summary.py#L136)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_zero_trade_metrics_are_labeled_inactive(self, tmp_path: Path) -> None:
-    metrics = _metrics(0.0, 0)
-    table = build_summary_table(metrics)
-    path = tmp_path / "inactive_metrics.json"
-    save_metrics_json(metrics, path)
-    report = build_run_report(metrics)
+    def test_zero_trade_metrics_are_labeled_inactive(self, tmp_path: Path) -> None:
+        metrics = _metrics(0.0, 0)
+        table = build_summary_table(metrics)
+        path = tmp_path / "inactive_metrics.json"
+        save_metrics_json(metrics, path)
+        report = build_run_report(metrics)
+        saved_metrics = json.loads(path.read_text())
 
-    assert "INACTIVE" in table
-    assert json.loads(path.read_text())["activity_status"] == "INACTIVE"
-    assert report["activity_status"] == "INACTIVE"
+        assert "INACTIVE" in table
+        assert saved_metrics["activity_status"] == "INACTIVE"
+        assert report["activity_status"] == "INACTIVE"
+# … caller assertions omitted …
 ```
 
-2. [test fixture: `test_merges_metrics_delay_and_context`](../../../../tests/unit/evaluation/test_run_summary.py#L114)
+2. [test fixture: `test_unbounded_profit_factor_uses_json_null_and_reason`](../../../../tests/unit/evaluation/test_run_summary.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_merges_metrics_delay_and_context(self) -> None:
-    # Arrange
-    trade_log = [{"type": "open", "sweep_delay_s": 5.0, "level_type": "london_high"}]
+    def test_unbounded_profit_factor_uses_json_null_and_reason(self, tmp_path: Path) -> None:
+        metrics = _metrics(100.0, 1)
+        path = tmp_path / "unbounded_profit_factor.json"
 
-    # Act
-    report = build_run_report(_metrics(80.0, 1), trade_log, run_name="r1")
+        save_metrics_json(metrics, path)
+        report = build_run_report(metrics)
+        saved = json.loads(path.read_text())
 
-    # Assert
-    assert report["run_name"] == "r1"
-    assert report["total_pnl"] == pytest.approx(80.0)
-    assert report["sweep_delay"]["sweep_delay_mean_s"] == pytest.approx(5.0)
-    assert report["sweep_delay"]["n_entries"] == 1
+        assert metrics.profit_factor == float("inf")
+        assert saved["profit_factor"] is None
+        assert saved["metric_availability"]["profit_factor"] == (
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -202,7 +204,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a human-readable text table of a single PerformanceMetrics.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_summary_table` · **Source:** [evaluation/reporting/run_summary.py:116](../../../../evaluation/reporting/run_summary.py#L116)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_summary_table` · **Source:** [evaluation/reporting/run_summary.py:273](../../../../evaluation/reporting/run_summary.py#L273)
 
 **Inputs and outputs:**
 
@@ -229,21 +231,23 @@ def test_build_summary_table(metrics):
     table = build_summary_table(metrics)
     assert "Sharpe" in table
     assert "Max Drawdown" in table
-    assert "Breach Rate" in table
+    assert "Breached Session Rate" in table
 ```
 
-2. [test fixture: `test_summary_table_contains_key_rows`](../../../../tests/unit/evaluation/test_run_summary.py#L54)
+2. [test fixture: `test_summary_table_contains_key_rows`](../../../../tests/unit/evaluation/test_run_summary.py#L55)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_summary_table_contains_key_rows(self) -> None:
-    # Act
-    table = build_summary_table(_metrics(150.0, 2))
+    def test_summary_table_contains_key_rows(self) -> None:
+        # Act
+        table = build_summary_table(_metrics(150.0, 2))
 
-    # Assert
-    for label in ("Sharpe", "Max Drawdown", "Breach Rate", "Max Consec Loss", "Turnover"):
-        assert label in table
+        # Assert
+        for label in (
+            "Sharpe",
+            "Max Drawdown",
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -259,7 +263,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Print a describe()-style summary of an aggregated seed DataFrame.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.print_report` · **Source:** [evaluation/reporting/run_summary.py:69](../../../../evaluation/reporting/run_summary.py#L69)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.print_report` · **Source:** [evaluation/reporting/run_summary.py:88](../../../../evaluation/reporting/run_summary.py#L88)
 
 **Inputs and outputs:**
 
@@ -294,7 +298,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Persist metrics plus account endpoints when supplied by the evaluator.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.save_metrics_json` · **Source:** [evaluation/reporting/run_summary.py:179](../../../../evaluation/reporting/run_summary.py#L179)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.save_metrics_json` · **Source:** [evaluation/reporting/run_summary.py:336](../../../../evaluation/reporting/run_summary.py#L336)
 
 **Inputs and outputs:**
 
@@ -322,7 +326,7 @@ def test_save_metrics_json(metrics, tmp_path):
     assert "total_pnl" in data
 ```
 
-2. [test fixture: `test_save_metrics_json_roundtrip`](../../../../tests/unit/evaluation/test_run_summary.py#L80)
+2. [test fixture: `test_save_metrics_json_roundtrip`](../../../../tests/unit/evaluation/test_run_summary.py#L90)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -342,7 +346,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
         # Assert
         assert data["n_trades"] == 2
-        assert "breach_rate" in data
+        assert data["periods_per_year"] == 6048
 # … caller assertions omitted …
 ```
 
@@ -359,7 +363,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Aggregate per-seed :class:`PerformanceMetrics` into a summary DataFrame.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.aggregate_seeds` · **Source:** [evaluation/reporting/run_summary.py:41](../../../../evaluation/reporting/run_summary.py#L41)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.aggregate_seeds` · **Source:** [evaluation/reporting/run_summary.py:60](../../../../evaluation/reporting/run_summary.py#L60)
 
 **Inputs and outputs:**
 
@@ -383,7 +387,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_one_row_per_seed`](../../../../tests/unit/evaluation/test_run_summary.py#L33)
+1. [test fixture: `test_one_row_per_seed`](../../../../tests/unit/evaluation/test_run_summary.py#L34)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -402,7 +406,7 @@ def test_one_row_per_seed(self) -> None:
     assert {"sharpe", "max_drawdown", "n_trades", "breach_rate"} <= set(df.columns)
 ```
 
-2. [test fixture: `test_rejects_non_metrics`](../../../../tests/unit/evaluation/test_run_summary.py#L43)
+2. [test fixture: `test_rejects_non_metrics`](../../../../tests/unit/evaluation/test_run_summary.py#L44)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -425,7 +429,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a two-column Train vs Test comparison table.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_comparison_table` · **Source:** [evaluation/reporting/run_summary.py:137](../../../../evaluation/reporting/run_summary.py#L137)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_comparison_table` · **Source:** [evaluation/reporting/run_summary.py:294](../../../../evaluation/reporting/run_summary.py#L294)
 
 **Inputs and outputs:**
 
@@ -456,7 +460,7 @@ def test_build_comparison_table(metrics):
     assert "Sharpe" in table
 ```
 
-2. [test fixture: `test_comparison_table_train_and_test_columns`](../../../../tests/unit/evaluation/test_run_summary.py#L68)
+2. [test fixture: `test_comparison_table_train_and_test_columns`](../../../../tests/unit/evaluation/test_run_summary.py#L78)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -484,7 +488,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build the JSON-serialisable report block for one evaluation run.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_run_report` · **Source:** [evaluation/reporting/run_summary.py:203](../../../../evaluation/reporting/run_summary.py#L203)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_run_report` · **Source:** [evaluation/reporting/run_summary.py:359](../../../../evaluation/reporting/run_summary.py#L359)
 
 **Inputs and outputs:**
 
@@ -504,40 +508,42 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_zero_trade_metrics_are_labeled_inactive`](../../../../tests/unit/evaluation/test_run_summary.py#L100)
+1. [test fixture: `test_zero_trade_metrics_are_labeled_inactive`](../../../../tests/unit/evaluation/test_run_summary.py#L136)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_zero_trade_metrics_are_labeled_inactive(self, tmp_path: Path) -> None:
-    metrics = _metrics(0.0, 0)
-    table = build_summary_table(metrics)
-    path = tmp_path / "inactive_metrics.json"
-    save_metrics_json(metrics, path)
-    report = build_run_report(metrics)
+    def test_zero_trade_metrics_are_labeled_inactive(self, tmp_path: Path) -> None:
+        metrics = _metrics(0.0, 0)
+        table = build_summary_table(metrics)
+        path = tmp_path / "inactive_metrics.json"
+        save_metrics_json(metrics, path)
+        report = build_run_report(metrics)
+        saved_metrics = json.loads(path.read_text())
 
-    assert "INACTIVE" in table
-    assert json.loads(path.read_text())["activity_status"] == "INACTIVE"
-    assert report["activity_status"] == "INACTIVE"
+        assert "INACTIVE" in table
+        assert saved_metrics["activity_status"] == "INACTIVE"
+        assert report["activity_status"] == "INACTIVE"
+# … caller assertions omitted …
 ```
 
-2. [test fixture: `test_merges_metrics_delay_and_context`](../../../../tests/unit/evaluation/test_run_summary.py#L114)
+2. [test fixture: `test_unbounded_profit_factor_uses_json_null_and_reason`](../../../../tests/unit/evaluation/test_run_summary.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_merges_metrics_delay_and_context(self) -> None:
-    # Arrange
-    trade_log = [{"type": "open", "sweep_delay_s": 5.0, "level_type": "london_high"}]
+    def test_unbounded_profit_factor_uses_json_null_and_reason(self, tmp_path: Path) -> None:
+        metrics = _metrics(100.0, 1)
+        path = tmp_path / "unbounded_profit_factor.json"
 
-    # Act
-    report = build_run_report(_metrics(80.0, 1), trade_log, run_name="r1")
+        save_metrics_json(metrics, path)
+        report = build_run_report(metrics)
+        saved = json.loads(path.read_text())
 
-    # Assert
-    assert report["run_name"] == "r1"
-    assert report["total_pnl"] == pytest.approx(80.0)
-    assert report["sweep_delay"]["sweep_delay_mean_s"] == pytest.approx(5.0)
-    assert report["sweep_delay"]["n_entries"] == 1
+        assert metrics.profit_factor == float("inf")
+        assert saved["profit_factor"] is None
+        assert saved["metric_availability"]["profit_factor"] == (
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -553,7 +559,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a human-readable text table of a single PerformanceMetrics.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_summary_table` · **Source:** [evaluation/reporting/run_summary.py:116](../../../../evaluation/reporting/run_summary.py#L116)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.build_summary_table` · **Source:** [evaluation/reporting/run_summary.py:273](../../../../evaluation/reporting/run_summary.py#L273)
 
 **Inputs and outputs:**
 
@@ -580,21 +586,23 @@ def test_build_summary_table(metrics):
     table = build_summary_table(metrics)
     assert "Sharpe" in table
     assert "Max Drawdown" in table
-    assert "Breach Rate" in table
+    assert "Breached Session Rate" in table
 ```
 
-2. [test fixture: `test_summary_table_contains_key_rows`](../../../../tests/unit/evaluation/test_run_summary.py#L54)
+2. [test fixture: `test_summary_table_contains_key_rows`](../../../../tests/unit/evaluation/test_run_summary.py#L55)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_summary_table_contains_key_rows(self) -> None:
-    # Act
-    table = build_summary_table(_metrics(150.0, 2))
+    def test_summary_table_contains_key_rows(self) -> None:
+        # Act
+        table = build_summary_table(_metrics(150.0, 2))
 
-    # Assert
-    for label in ("Sharpe", "Max Drawdown", "Breach Rate", "Max Consec Loss", "Turnover"):
-        assert label in table
+        # Assert
+        for label in (
+            "Sharpe",
+            "Max Drawdown",
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -610,7 +618,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Print a describe()-style summary of an aggregated seed DataFrame.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.print_report` · **Source:** [evaluation/reporting/run_summary.py:69](../../../../evaluation/reporting/run_summary.py#L69)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.print_report` · **Source:** [evaluation/reporting/run_summary.py:88](../../../../evaluation/reporting/run_summary.py#L88)
 
 **Inputs and outputs:**
 
@@ -645,7 +653,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Persist metrics plus account endpoints when supplied by the evaluator.
 
-**Exact API:** {py:obj}`evaluation.reporting.run_summary.save_metrics_json` · **Source:** [evaluation/reporting/run_summary.py:179](../../../../evaluation/reporting/run_summary.py#L179)
+**Exact API:** {py:obj}`evaluation.reporting.run_summary.save_metrics_json` · **Source:** [evaluation/reporting/run_summary.py:336](../../../../evaluation/reporting/run_summary.py#L336)
 
 **Inputs and outputs:**
 
@@ -673,7 +681,7 @@ def test_save_metrics_json(metrics, tmp_path):
     assert "total_pnl" in data
 ```
 
-2. [test fixture: `test_save_metrics_json_roundtrip`](../../../../tests/unit/evaluation/test_run_summary.py#L80)
+2. [test fixture: `test_save_metrics_json_roundtrip`](../../../../tests/unit/evaluation/test_run_summary.py#L90)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -693,7 +701,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
         # Assert
         assert data["n_trades"] == 2
-        assert "breach_rate" in data
+        assert data["periods_per_year"] == 6048
 # … caller assertions omitted …
 ```
 

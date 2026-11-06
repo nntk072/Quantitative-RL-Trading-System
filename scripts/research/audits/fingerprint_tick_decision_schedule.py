@@ -28,7 +28,11 @@ from configuration.paths import repository_root
 ROOT = repository_root(__file__)
 
 from configuration import load_config  # noqa: E402
-from market_data.splits.definitions import get_split_config, make_train_mask  # noqa: E402
+from market_data.splits.definitions import (  # noqa: E402
+    get_split_config,
+    get_train_start_config,
+    make_train_mask,
+)
 from training.setup.tick_execution_preflight import tick_execution_split_schedule  # noqa: E402
 
 
@@ -93,6 +97,7 @@ def main() -> int:
     shape_report = json.loads(shape_path.read_text(encoding="utf-8"))
     cfg = load_config()
     train_end, test_start = get_split_config(cfg)
+    train_start = get_train_start_config(cfg)
     config_path = ROOT / "config/base/default.yaml"
     schedule_rows: dict[str, Any] = {}
     source_rows: dict[str, Any] = {}
@@ -116,7 +121,7 @@ def main() -> int:
         session_labels = frame["session"]
         schedule = tick_execution_split_schedule(
             index,
-            make_train_mask(index, train_end),
+            make_train_mask(index, train_end, train_start),
             test_start,
             session_labels=session_labels,
         )

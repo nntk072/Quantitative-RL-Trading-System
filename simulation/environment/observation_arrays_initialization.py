@@ -33,6 +33,7 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         bars: pd.DataFrame | None,
         features: pd.DataFrame | None,
         legacy_sequence_columns: bool | None,
+        sequence_columns_override: tuple[str, ...] | None,
         episodic: bool,
         obs_features_mmap: str | None,
         mtf: bool,
@@ -43,7 +44,34 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         regime_observation: bool,
         trade_setup_actions: bool,
         reachable_r_validity_mask: bool,
+        feature_validity_channels: bool,
     ) -> None:
+        """Build the cached inputs used by policy observations and decisions.
+
+        Args:
+            bundle_data: Optional memory-mapped or bundled market-data source.
+            bars: Frame-backed market bars when no bundle is selected.
+            features: Frame-backed engineered features when no bundle is selected.
+            legacy_sequence_columns: Whether to use the legacy sequence-column selection.
+            sequence_columns_override: Exact saved sequence columns for replay.
+            episodic: Whether environment episodes may terminate on account failure.
+            obs_features_mmap: Optional path for memory-mapped observation features.
+            mtf: Whether to construct multi-timeframe observation arrays.
+            mtf_windows: Configured lookback windows for higher timeframes.
+            target_timeframes: Timeframes considered for target selection.
+            scheduled_session_closes: Known close timestamps keyed by date.
+            session_start: Local session start used for session identifiers.
+            regime_observation: Whether regime fields are included in observations.
+            trade_setup_actions: Whether setup masks are included in observations.
+            reachable_r_validity_mask: Whether to add the reachability-validity feature.
+            feature_validity_channels: Whether to append finite-value masks.
+        """
+        if sequence_columns_override is not None and (
+            bundle_data is not None or mtf or obs_features_mmap is not None
+        ):
+            raise ValueError(
+                "recorded sequence coordinates require a frame-backed single-sequence environment"
+            )
         # Model-facing observation frame: the strategy's raw price-level
         # columns stay in ``features`` for execution/risk but must not enter
         # the normalised ``seq`` tensor (Agent.md §11). MTF blocks reuse the
@@ -52,40 +80,66 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         # never reach the encoder.
         # Drop non-numeric columns (e.g. string ``session`` labels) — they cannot
         # be cast to float32 and are not part of the model's normalized observation.
-        """Initialize observation arrays.
-
-        Args:
-            bundle_data: Bundle data used by the operation described above.
-            bars: Market bars to process.
-            features: Feature values supplied to the operation.
-            legacy_sequence_columns: Legacy sequence columns used by the operation described above.
-            episodic: Whether to enable or require the episodic.
-            obs_features_mmap: Obs features mmap used by the operation described above.
-            mtf: Whether to enable or require the mtf.
-            mtf_windows: Key-value data used for the mtf windows.
-            target_timeframes: Items supplied for the target timeframes, in input order.
-            scheduled_session_closes: Key-value data used for the scheduled session closes.
-            session_start: Text or path value identifying the session start.
-            regime_observation: Whether to enable or require the regime observation.
-            trade_setup_actions: Whether to enable or require the trade setup actions.
-            reachable_r_validity_mask: Whether to append the reachability-validity sequence feature.
-        """
         self._reachable_r_validity_mask = bool(reachable_r_validity_mask)
+        self.feature_validity_channels = bool(feature_validity_channels)
         if self._bundle_arrays is None:
             assert bars is not None and features is not None
             self._legacy_sequence_columns = bool(legacy_sequence_columns)
-            select_columns = (
-                select_legacy_obs_columns if self._legacy_sequence_columns else select_obs_columns
-            )
-            self._obs_features: pd.DataFrame = attach_reachable_r(
-                select_columns(features, self.strategy.raw_columns),
-                bars,
-                features,
-                include_validity_mask=self._reachable_r_validity_mask,
-            )
+            if sequence_columns_override is not None:
+                if self._legacy_sequence_columns:
+                    raise ValueError(
+                        "recorded sequence coordinates cannot be combined with legacy selection"
+                    )
+                if not sequence_columns_override or len(sequence_columns_override) != len(
+                    set(sequence_columns_override)
+                ):
+                    raise ValueError("sequence_columns_override must be non-empty and unique")
+                generated_columns = {"reachable_r"}
+                if self._reachable_r_validity_mask:
+                    generated_columns.add("reachable_r_valid")
+                missing = set(sequence_columns_override) - set(features.columns) - generated_columns
+                if missing:
+                    raise ValueError(
+                        "sequence_columns_override contains columns missing from features: "
+                        f"{sorted(missing)[:10]}"
+                    )
+                non_numeric = [
+                    name
+                    for name in sequence_columns_override
+                    if name in features.columns
+                    and not pd.api.types.is_numeric_dtype(features[name].dtype)
+                ]
+                if non_numeric:
+                    raise ValueError(
+                        "sequence_columns_override must contain numeric feature columns: "
+                        f"{non_numeric[:10]}"
+                    )
+                selected = features.loc[
+                    :, [name for name in sequence_columns_override if name in features.columns]
+                ]
+                self._obs_features = attach_reachable_r(
+                    selected,
+                    bars,
+                    features,
+                    include_validity_mask=self._reachable_r_validity_mask,
+                ).loc[:, list(sequence_columns_override)]
+            else:
+                select_columns = (
+                    select_legacy_obs_columns
+                    if self._legacy_sequence_columns
+                    else select_obs_columns
+                )
+                self._obs_features = attach_reachable_r(
+                    select_columns(features, self.strategy.raw_columns),
+                    bars,
+                    features,
+                    include_validity_mask=self._reachable_r_validity_mask,
+                )
             self._obs_columns = list(self._obs_features.columns)
         else:
             assert bundle_data is not None
+            if sequence_columns_override is not None:
+                raise ValueError("recorded sequence coordinates are unsupported for bundled envs")
             self._obs_features = cast(pd.DataFrame, None)
             self._obs_columns = list(bundle_data.manifest["column_names"]["obs_features"])
             saved_legacy_columns = bool(

@@ -30,7 +30,52 @@ def test_trading_risk_primitives_share_risk_and_reserve_sizing() -> None:
         execution_reserve_per_lot=2.0,
         min_lot=0.01,
         max_lot=20.0,
-    ) == pytest.approx(100.0 / 12.0)
+    ) == pytest.approx(8.33)
+
+
+def test_execution_reserved_lots_round_down_to_broker_volume_step() -> None:
+    lots = compute_lots_with_execution_reserve(
+        total_risk_budget_usd=100.0,
+        equity=100_000.0,
+        risk_frac=0.01,
+        entry_price=100.0,
+        sl_price=90.0,
+        contract_size=1.0,
+        execution_reserve_per_lot=2.0,
+        min_lot=0.1,
+        max_lot=20.0,
+        lot_step=0.1,
+    )
+    assert lots == 8.3
+    assert lots * 12.0 <= 100.0
+
+    below_step_boundary = compute_lots_with_execution_reserve(
+        total_risk_budget_usd=0.8999999999,
+        equity=100_000.0,
+        risk_frac=0.01,
+        entry_price=100.0,
+        sl_price=99.0,
+        contract_size=1.0,
+        execution_reserve_per_lot=0.0,
+        min_lot=0.01,
+        max_lot=20.0,
+        lot_step=0.01,
+    )
+    assert below_step_boundary == 0.89
+
+    below_minimum = compute_lots_with_execution_reserve(
+        total_risk_budget_usd=1.0,
+        equity=100_000.0,
+        risk_frac=0.01,
+        entry_price=100.0,
+        sl_price=90.0,
+        contract_size=1.0,
+        execution_reserve_per_lot=2.0,
+        min_lot=0.1,
+        max_lot=20.0,
+        lot_step=0.1,
+    )
+    assert below_minimum == 0.0
 
 
 def test_compute_sl_tp_long() -> None:

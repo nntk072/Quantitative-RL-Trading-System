@@ -6,7 +6,7 @@ This page contains 4 public callable records owned by `trading.baselines.rule_ba
 
 **Kind:** function · **Status:** stable · **Owner:** `trading.baselines.rule_based`
 
-**Purpose:** EMA crossover with ATR-based stop logic (positional, bar-by-bar).
+**Purpose:** Return the directional EMA trend signal aligned to ``bars.index``.
 
 **Exact API:** {py:obj}`trading.baselines.rule_based.ema_crossover` · **Source:** [trading/baselines/rule_based.py:28](../../../../trading/baselines/rule_based.py#L28)
 
@@ -18,29 +18,38 @@ This page contains 4 public callable records owned by `trading.baselines.rule_ba
   bars: Market bars to process.
   fast: Numeric value used for the fast.
   slow: Numeric value used for the slow.
-  atr_period: Numeric value used for the atr period.
-  atr_stop_mult: Numeric value used for the atr stop mult.
+  atr_period: Legacy compatibility argument; unused by the signal.
+  atr_stop_mult: Legacy compatibility argument; unused by the signal.
   ```
 
 - **Returns:**
 
   ```text
-  Result of eMA crossover with ATR-based stop logic (positional, bar-by-bar).
+  ``+1`` for a bullish EMA trend, ``-1`` for a bearish trend, or ``0``
+  when the averages are equal.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_legacy_atr_arguments_do_not_claim_or_change_signal_exit_semantics`](../../../../tests/unit/trading/test_rule_based_baselines_causality.py#L56)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = ema_crossover(bars=..., fast=..., slow=..., atr_period=..., atr_stop_mult=...)
+def test_legacy_atr_arguments_do_not_claim_or_change_signal_exit_semantics() -> None:
+    bars = _bars()
+
+    pd.testing.assert_series_equal(
+        ema_crossover(bars, atr_period=3, atr_stop_mult=0.5),
+        ema_crossover(bars, atr_period=40, atr_stop_mult=5.0),
+    )
+    pd.testing.assert_series_equal(
+        rsi_mean_reversion(bars, atr_period=3),
+        rsi_mean_reversion(bars, atr_period=40),
+    )
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -53,7 +62,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** MACD histogram sign → signal.
 
-**Exact API:** {py:obj}`trading.baselines.rule_based.macd_baseline` · **Source:** [trading/baselines/rule_based.py:63](../../../../trading/baselines/rule_based.py#L63)
+**Exact API:** {py:obj}`trading.baselines.rule_based.macd_baseline` · **Source:** [trading/baselines/rule_based.py:60](../../../../trading/baselines/rule_based.py#L60)
 
 **Inputs and outputs:**
 
@@ -94,7 +103,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** MACD+EMA50 baseline with cross-only entry/exit and 5-bar cooldown.
 
-**Exact API:** {py:obj}`trading.baselines.rule_based.macd_ema50_baseline` · **Source:** [trading/baselines/rule_based.py:79](../../../../trading/baselines/rule_based.py#L79)
+**Exact API:** {py:obj}`trading.baselines.rule_based.macd_ema50_baseline` · **Source:** [trading/baselines/rule_based.py:76](../../../../trading/baselines/rule_based.py#L76)
 
 **Inputs and outputs:**
 
@@ -159,9 +168,9 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Kind:** function · **Status:** stable · **Owner:** `trading.baselines.rule_based`
 
-**Purpose:** RSI mean-reversion: buy oversold, sell overbought, exit at 50.
+**Purpose:** Return an RSI mean-reversion signal with a neutral-zone exit.
 
-**Exact API:** {py:obj}`trading.baselines.rule_based.rsi_mean_reversion` · **Source:** [trading/baselines/rule_based.py:179](../../../../trading/baselines/rule_based.py#L179)
+**Exact API:** {py:obj}`trading.baselines.rule_based.rsi_mean_reversion` · **Source:** [trading/baselines/rule_based.py:176](../../../../trading/baselines/rule_based.py#L176)
 
 **Inputs and outputs:**
 
@@ -172,28 +181,55 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   period: Numeric value used for the period.
   oversold: Numeric value used for the oversold.
   overbought: Numeric value used for the overbought.
-  atr_period: Numeric value used for the atr period.
+  atr_period: Legacy compatibility argument; unused by the signal.
   ```
 
 - **Returns:**
 
   ```text
-  Result of rSI mean-reversion: buy oversold, sell overbought, exit at 50.
+  A stateful position signal: enter long below ``oversold`` or short
+  above ``overbought``; hold that side until RSI enters the 45–55 neutral
+  zone, then return to flat. Opposite entries require first becoming flat.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_legacy_atr_arguments_do_not_claim_or_change_signal_exit_semantics`](../../../../tests/unit/trading/test_rule_based_baselines_causality.py#L60)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = rsi_mean_reversion(bars=..., period=..., oversold=..., overbought=..., atr_period=...)
+def test_legacy_atr_arguments_do_not_claim_or_change_signal_exit_semantics() -> None:
+    bars = _bars()
+
+    pd.testing.assert_series_equal(
+        ema_crossover(bars, atr_period=3, atr_stop_mult=0.5),
+        ema_crossover(bars, atr_period=40, atr_stop_mult=5.0),
+    )
+    pd.testing.assert_series_equal(
+        rsi_mean_reversion(bars, atr_period=3),
+        rsi_mean_reversion(bars, atr_period=40),
+    )
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+2. [test fixture: `test_rsi_mean_reversion_holds_until_neutral_then_rearms`](../../../../tests/unit/trading/test_rule_based_baselines_causality.py#L72)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_rsi_mean_reversion_holds_until_neutral_then_rearms(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bars = _bars().iloc[:9]
+    rsi_values = pd.Series([60.0, 25.0, 35.0, 44.9, 45.0, 75.0, 60.0, 55.0, 25.0])
+    monkeypatch.setattr(rule_based, "_rsi", lambda _close, _period: rsi_values)
+
+    signals = rsi_mean_reversion(bars)
+
+    assert signals.tolist() == [0, 1, 1, 1, 0, -1, -1, 0, 1]
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

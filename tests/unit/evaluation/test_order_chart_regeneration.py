@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pandas as pd
+import pytest
 from omegaconf import OmegaConf
 
+from evaluation.reporting import order_chart_regeneration
 from evaluation.reporting.order_chart_regeneration import (
+    _build_chart_features,
     _chart_feature_config,
     _entry_idea_timeframes,
 )
@@ -53,6 +58,51 @@ def test_m1_only_swing_plot_keeps_primary_structure_without_mtf_build() -> None:
     )
 
     assert chart_config.features.structure.enabled is False
+
+
+def test_chart_feature_build_uses_full_history_and_saved_training_mask(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = OmegaConf.create(
+        {"data": {"split": {"train_start": "2025-01-02", "train_end": "2025-01-03"}}}
+    )
+    index = pd.DatetimeIndex(
+        [
+            "2025-01-01 23:59:59.999999",
+            "2025-01-02 00:00:00",
+            "2025-01-03 23:59:59.999999",
+            "2025-01-04 00:00:00",
+        ],
+        tz="America/New_York",
+    )
+
+    primary = pd.DataFrame({"close": [1.0, 2.0, 3.0, 4.0]}, index=index)
+    secondary = pd.DataFrame({"close": [5.0, 6.0, 7.0, 8.0]}, index=index)
+    feature_config = OmegaConf.create({"features": {}})
+    expected = pd.DataFrame({"normalized": [0.0, 0.0, 1.0, 2.0]}, index=index)
+    captured: dict[str, Any] = {}
+
+    def build_features(
+        primary_arg: pd.DataFrame,
+        *,
+        secondary: pd.DataFrame | None,
+        cfg: Any,
+        train_mask: pd.Series,
+    ) -> pd.DataFrame:
+        captured["primary"] = primary_arg
+        captured["secondary"] = secondary
+        captured["cfg"] = cfg
+        captured["train_mask"] = train_mask
+        return expected
+
+    monkeypatch.setattr(order_chart_regeneration, "build_features", build_features)
+    result = _build_chart_features(config, feature_config, primary, secondary)
+
+    assert result is expected
+    assert captured["primary"] is primary
+    assert captured["secondary"] is secondary
+    assert captured["cfg"] is feature_config
+    assert captured["train_mask"].tolist() == [False, True, True, False]
 
 
 def test_replot_rebuilds_all_timeframes_used_by_overlapping_trade_ideas() -> None:

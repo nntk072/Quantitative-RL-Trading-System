@@ -14,7 +14,7 @@ This page contains 5 public callable records owned by `features.po3.trigger_rule
 
 **Observed usage:**
 
-1. [test fixture: `test_entry_trigger_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L206)
+1. [test fixture: `test_entry_trigger_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L210)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -27,22 +27,20 @@ def test_entry_trigger_with_custom_config(self, sample_bars: pd.DataFrame) -> No
     assert isinstance(entry_result, pd.DataFrame)
 ```
 
-2. [test fixture: `test_po3_entries_with_custom_configs`](../../../../tests/unit/features/test_po3_config.py#L369)
+2. [test fixture: `test_retest_requires_a_bar_after_confirmation`](../../../../tests/unit/features/test_po3_config.py#L231)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_po3_entries_with_custom_configs(self, sample_bars: pd.DataFrame) -> None:
-    fvg_config = FVGConfig(min_imbalance_pts=0.5)
-    ifvg_config = IFVGConfig(close_through_threshold=0.3)
-    entry_config = EntryConfig(retest_threshold=0.05)
-    result = detect_po3_entries(
-        sample_bars,
-        fvg_config=fvg_config,
-        ifvg_config=ifvg_config,
-        entry_config=entry_config,
-    )
-    assert isinstance(result, pd.DataFrame)
+# … caller setup omitted …
+                "ifvg_bullish_high": [12.0, 12.0],
+            },
+            index=idx,
+        )
+
+        entry = detect_entry_trigger(bars, ifvg, config=EntryConfig(retest_threshold=0.2))
+
+        assert entry["entry_long"].tolist() == [0, 1]
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -82,7 +80,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_entry_trigger_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L168)
+1. [test fixture: `test_entry_trigger_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L172)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -96,7 +94,7 @@ def test_entry_trigger_returns_expected_columns(self, sample_bars: pd.DataFrame)
     assert "entry_trigger_type" in entry_result.columns
 ```
 
-2. [test fixture: `test_entry_trigger_output_shape`](../../../../tests/unit/features/test_po3_config.py#L177)
+2. [test fixture: `test_entry_trigger_output_shape`](../../../../tests/unit/features/test_po3_config.py#L181)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -121,7 +119,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Detect FVG on higher timeframe and map back to M1 bars.
 
-**Exact API:** {py:obj}`features.po3.trigger_rules.detect_htf_fvg` · **Source:** [features/po3/trigger_rules.py:204](../../../../features/po3/trigger_rules.py#L204)
+**Exact API:** {py:obj}`features.po3.trigger_rules.detect_htf_fvg` · **Source:** [features/po3/trigger_rules.py:210](../../../../features/po3/trigger_rules.py#L210)
 
 **Inputs and outputs:**
 
@@ -149,7 +147,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_htf_fvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L245)
+1. [test fixture: `test_htf_fvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L299)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -164,7 +162,7 @@ def test_htf_fvg_returns_expected_columns(self, sample_bars: pd.DataFrame) -> No
     assert "htf_fvg_bearish_high" in result.columns
 ```
 
-2. [test fixture: `test_htf_fvg_output_shape`](../../../../tests/unit/features/test_po3_config.py#L255)
+2. [test fixture: `test_htf_fvg_output_shape`](../../../../tests/unit/features/test_po3_config.py#L309)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -188,7 +186,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Detect IFVG on lower timeframe and map back to primary timeframe bars.
 
-**Exact API:** {py:obj}`features.po3.trigger_rules.detect_ltf_ifvg` · **Source:** [features/po3/trigger_rules.py:283](../../../../features/po3/trigger_rules.py#L283)
+**Exact API:** {py:obj}`features.po3.trigger_rules.detect_ltf_ifvg` · **Source:** [features/po3/trigger_rules.py:289](../../../../features/po3/trigger_rules.py#L289)
 
 **Inputs and outputs:**
 
@@ -218,7 +216,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_ltf_ifvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L284)
+1. [test fixture: `test_ltf_ifvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L338)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -233,7 +231,7 @@ def test_ltf_ifvg_returns_expected_columns(self, sample_bars: pd.DataFrame) -> N
     assert "ltf_ifvg_bearish_high" in result.columns
 ```
 
-2. [test fixture: `test_ltf_ifvg_output_shape`](../../../../tests/unit/features/test_po3_config.py#L294)
+2. [test fixture: `test_ltf_ifvg_output_shape`](../../../../tests/unit/features/test_po3_config.py#L348)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -257,7 +255,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Unified PO3 entry detection combining HTF FVG, LTF IFVG, and entry triggers.
 
-**Exact API:** {py:obj}`features.po3.trigger_rules.detect_po3_entries` · **Source:** [features/po3/trigger_rules.py:366](../../../../features/po3/trigger_rules.py#L366)
+**Exact API:** {py:obj}`features.po3.trigger_rules.detect_po3_entries` · **Source:** [features/po3/trigger_rules.py:372](../../../../features/po3/trigger_rules.py#L372)
 
 **Inputs and outputs:**
 

@@ -98,7 +98,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L727)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L991)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -111,10 +111,10 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
     for raw_chunk in iter_ticks_chunks(path, chunksize=chunksize):
         n_rows_total += len(raw_chunk)
+        if diagnostics is not None:
+            diagnostics.source_rows_read += len(raw_chunk)
 
         # Chunk-local datetime parse (bounded memory) — Etc/GMT-3 etc. are
-        # fixed-offset zones (no DST), so tz_localize here is unambiguous
-        # regardless of how the file happens to be chunked.  MT5 tick time
 # … caller assertions omitted …
 ```
 

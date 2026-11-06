@@ -37,7 +37,7 @@ from features import (
     feature_cache_content_hash,
 )
 from market_data.loading import run_pipeline
-from market_data.splits.definitions import get_split_config, make_train_mask
+from market_data.splits.definitions import get_split_config, get_train_start_config, make_train_mask
 from training.configuration.variant_resolution import resolve_variant
 
 ROOT = repository_root(__file__)
@@ -485,7 +485,8 @@ def rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
     primary_timeframe_bars = market[str(base_cfg.data.primary)]
     secondary_timeframe_bars = market.get(str(base_cfg.data.secondary), {})
     train_end, _ = get_split_config(base_cfg)
-    train_mask = make_train_mask(cast(pd.DatetimeIndex, primary.index), train_end)
+    train_start = get_train_start_config(base_cfg)
+    train_mask = make_train_mask(cast(pd.DatetimeIndex, primary.index), train_end, train_start)
 
     staged_dir = Path(tempfile.mkdtemp(prefix="named-feature-cache-stage-", dir=cache_dir))
     staged_by_target: dict[Path, Path] = {}

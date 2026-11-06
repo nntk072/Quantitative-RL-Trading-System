@@ -1,0 +1,98 @@
+{
+  "schema": "qrl.matched_setup_baseline_failure.v1",
+  "policy": "random_eligible_setup",
+  "status": "superseded_false_positive_diagnostic",
+  "result_status": "no_economic_estimate",
+  "attempt": {
+    "source_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
+    "run_identity_status": "partial_failure_attempt; bundle writer was not reached",
+    "period_role": "development",
+    "dataset": "training",
+    "symbols": ["US100.cash"],
+    "execution_seed": 50,
+    "random_policy_seed": 42,
+    "absolute_risk_budget_usd": 900,
+    "normalized_risk": 0.5,
+    "trade_probability": 1.0,
+    "config_path": "config/research/trade_setup_mtf_reasoning_2m.yaml",
+    "config_sha256": "cf9c2b84263bc738ef421222ebec838156970351bcfb654e608f327cc24a9165",
+    "resolved_config_sha256": "64594261c7ccabb155f9f077895ba1fae83884853b5063ad31bde475381afc87",
+    "shared_completed_control_input_identity": "matched_setup_baselines_18c585089f5e7857/input_identity.json",
+    "shared_completed_control_resolved_config": "matched_setup_baselines_18c585089f5e7857/resolved_config.json",
+    "source_identity": {
+      "status": "not_emitted",
+      "reason": "evaluation raised before the baseline bundle writer; no source-tree fingerprint was persisted for this attempt"
+    }
+  },
+  "failure": {
+    "exception": "market_data.loading.ticks.TickExecutionUnavailable",
+    "message": "OHLC indicates a protective level was reached, but no matching tick trigger was found; candle fallback is disabled",
+    "bar_index": 3854,
+    "bar_time": "2025-01-02T19:49:00+03:00",
+    "direction": "short",
+    "ohlc": {
+      "open": 20810.25,
+      "high": 20817.25,
+      "low": 20790.65,
+      "close": 20790.65
+    },
+    "stop_price": 20975.850000000002,
+    "take_profit_prices": {
+      "tp1": null,
+      "tp2": null,
+      "tp3": 20790.65
+    },
+    "tick_trigger_status": "no matching executable trigger observed by configured resolver",
+    "interpretation": "the first checker compared bid-based bar low with an ask-side short exit; tick-side inspection shows the ask remained above TP3, so this was not an executable protective touch",
+    "bar_spread_points": 120,
+    "bar_spread_price_units": 1.2,
+    "tick_window": {
+      "rows": 455,
+      "bid_min": 20790.45,
+      "bid_max": 20817.25,
+      "ask_min": 20791.65,
+      "ask_max": 20818.45,
+      "ask_min_above_tp3": 1.0
+    },
+    "code_disposition": "side-aware exit bar bounds now compare long exits with bid OHLC and short exits with spread-adjusted ask OHLC; tick-only mode no longer falls back to candle SL/TP fills",
+    "paired_rerun": {
+      "status": "stopped_on_entry_bar_excursion_check; rerun after entry-time guard",
+      "log_path_external": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run-21376798/matched-baseline/side-aware-paired-rerun.log",
+      "log_sha256": "99d694345a2ee604d1f223d2cc6a368bc2d123aea2ce14e7508ac78f0a0bd047",
+      "exit_code": 1
+    },
+    "candle_fallback_enabled": false
+  },
+  "subsequent_failure": {
+    "bar_index": 5289,
+    "bar_time": "2025-01-03T20:59:00+03:00",
+    "direction": "short",
+    "stop_price": 21323.650390625,
+    "bar_spread_points": 80,
+    "bar_spread_price_units": 0.8,
+    "tick_window": {
+      "rows": 326,
+      "first_tick_time": "20:59:00.262",
+      "last_tick_time": "20:59:59.962",
+      "ask_max": 21329.95,
+      "ask_stop_crossing_rows": 152,
+      "first_crossing_tick_time": "20:59:00.262"
+    },
+    "position_entry_time_in_error": "not recorded by this attempt",
+    "diagnosis": "the OHLC high may include quotes earlier than a position opened during this bar; entry-time causality was not captured, so this attempt does not establish an executable post-entry stop",
+    "code_disposition": "TradingEnv now skips OHLC assertions when the position entry timestamp is later than the bar start; event-driven backtest requires a full bar after entry before asserting candle extrema"
+  },
+  "process": {
+    "exit_code": 1,
+    "slurm_allocation": "21376798",
+    "node": "gpuarm2",
+    "log_path_external": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run-21376798/matched-baseline/random-diagnostic.log",
+    "log_sha256": "1c765a25e5af67b231dcd0340a19de0ace8709bfd8b6fd647316805b7707fac5"
+  },
+  "limitations": [
+    "No return, risk, or baseline comparison is reported for this incomplete arm.",
+    "The local-data issue does not identify whether OHLC aggregation or tick chronology is authoritative.",
+    "Provider/license and external calendar research were excluded by user direction.",
+    "The selected historical checkpoint remains unavailable for independent replay."
+  ]
+}

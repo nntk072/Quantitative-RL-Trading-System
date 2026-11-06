@@ -19,6 +19,7 @@ This page contains 1 public callable records owned by `trading.risk.execution_re
   slippage_points: Adverse slippage estimate in points per fill.
   commission_per_lot: Commission charged per lot per side.
   contract_size: Units represented by one lot.
+  point_value: Account-currency value of one price unit per contract.
   ```
 
 - **Returns:**
@@ -34,7 +35,7 @@ This page contains 1 public callable records owned by `trading.risk.execution_re
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = modeled_execution_reserve_usd(lots=..., slippage_points=..., commission_per_lot=..., contract_size=...)
+result = modeled_execution_reserve_usd(lots=..., slippage_points=..., commission_per_lot=..., contract_size=..., point_value=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.

@@ -81,6 +81,26 @@ _POSITION_DECISION_METADATA = (
 )
 
 
+def _explicit_boolean(value: Any) -> bool | None:
+    """Parse an explicit boolean flag without truthiness coercion.
+
+    Args:
+        value: Raw completion flag from a trade event.
+
+    Returns:
+        Parsed boolean, or ``None`` when the input is not explicit.
+    """
+    if isinstance(value, bool) or type(value).__name__ == "bool_":
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1"}:
+            return True
+        if normalized in {"false", "0"}:
+            return False
+    return None
+
+
 def _fill_events(trades: pd.DataFrame) -> pd.DataFrame:
     """Return actual execution events, excluding rejects and order-only records.
 
@@ -132,7 +152,7 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
                 "net_pnl": event.get("net_pnl") if is_close else None,
                 "position_net_pnl": event.get("position_net_pnl"),
                 "fill_count": 1,
-                "completed": bool(event.get("position_complete", False)),
+                "completed": _explicit_boolean(event.get("position_complete")),
                 "holding_seconds": None,
                 "exit_reason": event.get("reason"),
                 "reconstruction_status": f"unidentified_event_{event_index}",
@@ -154,11 +174,10 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
                     net_values = net_values.fillna(pnl_values)
             else:
                 net_values = pnl_values
-            completed_values = (
-                closes.get("position_complete", pd.Series(False, index=closes.index))
-                .astype("boolean")
-                .fillna(False)
-                .astype(bool)
+            completed = (
+                False
+                if last_close is None
+                else _explicit_boolean(last_close.get("position_complete"))
             )
             position_pnl_values = (
                 pd.to_numeric(closes["position_net_pnl"], errors="coerce").dropna()
@@ -201,7 +220,7 @@ def _position_summaries(trades: pd.DataFrame) -> pd.DataFrame:
                     "net_pnl": float(net_values.sum()) if not closes.empty else None,
                     "position_net_pnl": final_net,
                     "fill_count": int(len(events)),
-                    "completed": bool(completed_values.any()),
+                    "completed": completed,
                     "holding_seconds": holding_seconds,
                     "exit_reason": None if last_close is None else last_close.get("reason"),
                     "reconstruction_status": "identified_by_position_id",

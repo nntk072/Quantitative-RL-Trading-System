@@ -16,9 +16,8 @@ from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
 DEFAULT_FREEZE = Path(
-    "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/"
-    "agent_state/architecture_refactor_baseline_source_3fbbb74/docs/thesis/evidence/"
-    "p6_selected_pair_freeze_20261019.json"
+    "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/"
+    "research_evidence/selected_pair_freeze.json"
 )
 DEFAULT_ARCHIVE_ROOT = Path(
     "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs"

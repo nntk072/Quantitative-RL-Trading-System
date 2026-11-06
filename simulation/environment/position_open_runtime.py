@@ -5,10 +5,10 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
+from simulation.entry_state import EntryCandidate
 from trading.orders import target_menu
 from trading.risk import stop_loss_risk_usd
 
-from .entry_state import EntryCandidate
 from .market_view import FeatureRow
 from .mixin_base import RuntimeMixinBase
 
@@ -62,10 +62,8 @@ class PositionOpenRuntimeMixin(RuntimeMixinBase):
         self.position.initial_size = float(self.position.size)
         selected_setup = self._selected_trade_setup if self.trade_setup_actions else None
         if selected_setup is not None:
-            from decisioning.trade_setup import TRADE_SETUP_ACTION_VERSION
-
             self.position.trade_setup_candidate_id = int(selected_setup.candidate_id)
-            self.position.trade_setup_schema_version = TRADE_SETUP_ACTION_VERSION
+            self.position.trade_setup_schema_version = self.action_schema.version
             self.position.trade_setup_decision_time = pd.Timestamp(
                 cast(Any, bar_time)
             ) + pd.Timedelta(minutes=self._minutes_per_step)

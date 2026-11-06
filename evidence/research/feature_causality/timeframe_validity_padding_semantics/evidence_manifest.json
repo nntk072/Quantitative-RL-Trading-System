@@ -1,0 +1,32 @@
+{
+  "assets": [
+    {
+      "path": "evidence/research/feature_causality/timeframe_validity_padding_semantics/README.md",
+      "bytes": 1659,
+      "sha256": "96f7bd1475fa6c20f059917c73082ab283e6f980cacaca90c22847f9cc818a17"
+    },
+    {
+      "path": "evidence/research/feature_causality/timeframe_validity_padding_semantics/SOURCE_SHA256SUMS",
+      "bytes": 2091,
+      "sha256": "30c021aee6d1ab26edc04ef850eb964161ec02ac98e29eb3009b801002f63682"
+    },
+    {
+      "path": "evidence/research/feature_causality/timeframe_validity_padding_semantics/focused_tests.log",
+      "bytes": 3870,
+      "sha256": "ae410a5cc7a79b86e0b43f518ba6e8dee18ae2b0204c6f3f37dff287303a7e7a"
+    },
+    {
+      "path": "evidence/research/feature_causality/timeframe_validity_padding_semantics/run_metadata.json",
+      "bytes": 4444,
+      "sha256": "31f1e16cd31d821422d99104bd1907ae2ab2ca53317e03a3edcf063c71000a59"
+    },
+    {
+      "path": "evidence/research/feature_causality/timeframe_validity_padding_semantics/summary.json",
+      "bytes": 637,
+      "sha256": "bda211bcc9803536e41765eee293993cd2ad56d25c86c8bdfa1257b29c756896"
+    }
+  ],
+  "claim_scope": "current-source tensor-level validity-channel, temporal-mask, and padding behavior for M1 and eight HTF sequences",
+  "packet": "timeframe_validity_padding_semantics",
+  "schema": "qrl.evidence_packet.v1"
+}

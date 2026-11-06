@@ -17,7 +17,7 @@ import pytest
 from gymnasium import spaces
 
 from decisioning.actions import build_discrete_trading_action_schema
-from decisioning.observations import OBSERVATION_SCHEMA_V1, build_observation_schema
+from decisioning.observations import OBSERVATION_SCHEMA_V2, build_observation_schema
 from integrations.mt5.adapters import Trader, TradingData
 
 # --- headless MetaTrader5 stub (Windows-only package, absent on Linux) -----
@@ -131,7 +131,7 @@ class _StubModel:
 
     action_space: Any = spaces.Discrete(20)
     _action_schema: dict[str, object] = build_discrete_trading_action_schema().to_dict()
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V1).to_dict()
+    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
 
     def predict(self, obs: dict[str, Any], deterministic: bool = True) -> np.ndarray[Any, Any]:  # noqa: ARG002
         return np.array([1])
@@ -196,7 +196,11 @@ def _make_robot(
     from live.runtime.strategy import RLStrategyAdapter
 
     bars = _make_bars()
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     secondary_data = (
         _StubData(secondary_bars, symbol="US500.cash") if secondary_bars is not None else None
     )
@@ -241,7 +245,11 @@ def test_live_robot_rejects_real_order_mode_without_account_loss_guardrails() ->
     from live.runtime.strategy import RLStrategyAdapter
 
     trader = RecordingTrader()
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     with pytest.raises(ValueError, match="training-equivalent daily and maximum account-loss"):
         RLRobot(
             adapter=adapter,
@@ -267,7 +275,11 @@ def test_robot_class_defaults_to_paper_trading() -> None:
     from integrations.mt5.robot.rl_robot import RLRobot
     from live.runtime.strategy import RLStrategyAdapter
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     robot = RLRobot(
         adapter=adapter,
         data_source=_StubData(_make_bars()),
@@ -335,7 +347,11 @@ def test_too_few_bars_yields_no_signal() -> None:
 
     tiny = _make_bars(n=5)
     trader = RecordingTrader()
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     robot = RLRobot(
         adapter=adapter,
         data_source=_StubData(tiny),
@@ -357,11 +373,11 @@ def _load_entrypoint_helpers():
     return live_trading_rl
 
 
-def test_live_sizing_limit_matches_nominal_ftmo_single_trade_scale() -> None:
-    """Verify the default live per-symbol sizing against configured capital.
+def test_live_sizing_cap_matches_training_per_trade_budget() -> None:
+    """Verify live per-symbol sizing cannot exceed the training budget.
 
-    This checks only the nominal single-trade scale; MT5 does not implement
-    training-equivalent daily or maximum-loss account guardrails.
+    MT5 still does not implement training-equivalent daily or maximum-loss
+    account guardrails; this verifies only the configured stop-risk ceiling.
     """
     import live_trading_rl  # noqa: PLC0415
     from omegaconf import OmegaConf
@@ -371,8 +387,13 @@ def test_live_sizing_limit_matches_nominal_ftmo_single_trade_scale() -> None:
 
     assert risk["risk_per_symbol"] == 0.01
     assert risk["max_total_risk"] == 0.02
-    nominal_risk_usd = float(cfg.account.initial_balance) * risk["risk_per_symbol"]
-    assert abs(nominal_risk_usd - cfg.ftmo.risk_per_trade_limit) < 1e-6
+    assert risk["risk_per_symbol_usd_cap"] == float(cfg.ftmo.risk_sizing_limit_usd)
+    assert risk["risk_per_symbol_usd_cap"] == 900.0
+    nominal_risk_usd = min(
+        float(cfg.account.initial_balance) * risk["risk_per_symbol"],
+        risk["risk_per_symbol_usd_cap"],
+    )
+    assert nominal_risk_usd == 900.0
 
 
 def test_use_secondary_symbol_decision() -> None:
@@ -392,9 +413,7 @@ def test_use_secondary_symbol_decision() -> None:
 
 
 def test_resolve_run_config_prefers_saved_run_config(tmp_path) -> None:
-    """The entrypoint must use the model run's saved config.yaml when
-    available (train/live parity) and fall back to the repo default.
-    """
+    """The entrypoint requires the model run's saved config for train/live parity."""
     import live_trading_rl  # noqa: PLC0415
 
     run_dir = tmp_path / "rl_run" / "model"
@@ -406,6 +425,6 @@ def test_resolve_run_config_prefers_saved_run_config(tmp_path) -> None:
 
     assert resolved == run_dir.parent / "config.yaml"
 
-    # No saved config → repo default
-    resolved_default = live_trading_rl.resolve_run_config(tmp_path / "no_run" / "model" / "x")
-    assert resolved_default.name == "default.yaml"
+    # No saved config → fail closed rather than use unrelated repository defaults.
+    with pytest.raises(FileNotFoundError, match="no saved config.yaml"):
+        live_trading_rl.resolve_run_config(tmp_path / "no_run" / "model" / "x")

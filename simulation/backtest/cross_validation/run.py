@@ -31,7 +31,7 @@ class _SignalFeed(bt.feeds.PandasData):
 
 
 class _DelayedSignalStrategy(bt.Strategy):
-    """Execute a precomputed action at the matching custom-engine close."""
+    """Execute a precomputed action at the custom engine's next bar open."""
 
     params = (("last_bar", 0),)
 
@@ -49,22 +49,22 @@ class _DelayedSignalStrategy(bt.Strategy):
             self.order = None
 
     def next(self) -> None:
-        """Apply the delayed signal for this bar while avoiding duplicate orders."""
+        """Apply the close-observed signal and reserve final-close liquidation."""
         if self.order is not None:
             return
-        if len(self) == self.p.last_bar + 1:
+        if len(self) > self.p.last_bar:
+            return
+        if len(self) == self.p.last_bar:
             if self.position:
                 self.order = self.close()
             return
-        if len(self) > self.p.last_bar + 1:
+        if len(self) < 2:
             return
-        if len(self) < 3:
-            return
-
-            # The custom engine observes action[i - 1] on bar i and fills at
-            # bar i + 1 close. This delayed signal reaches the same close in
-            # Backtrader with cheat-on-close enabled.
-        action = int(self.data.signal[-2])
+        # The custom runner's observation at decision bar ``i`` ends at
+        # ``i - 1``. Read the same causal signal in Backtrader before its
+        # next-open market order; using signal[0] here advances the action by
+        # one bar relative to the custom path.
+        action = int(self.data.signal[-1])
         if action == 2 and self.position:
             self.order = self.close()
         elif action == 1 and not self.position:
@@ -146,31 +146,50 @@ def run_backtrader_engine(
     action_series = _crossover_actions(df["close"]) if actions is None else actions
     if not action_series.index.equals(df.index):
         raise ValueError("Cross-validation actions must align exactly with bar timestamps")
-        # Duplicate the final quote so a final liquidation submitted at the last
-        # real close gets one broker cycle to execute at that same close.
-    final_quote = df.iloc[[-1]].assign(signal=0)
-    feed_bars = pd.concat(
-        [df.assign(signal=action_series), final_quote, final_quote], ignore_index=False
+    # Duplicate the final close as the next bar's open so a terminal liquidation
+    # can execute at the same price the custom engine uses at data end.
+    final_quote = df.iloc[[-1]].copy()
+    final_price = float(df.iloc[-1]["close"])
+    final_quote.loc[:, ["open", "high", "low", "close"]] = final_price
+    final_quote.loc[:, "signal"] = 0
+    index = pd.DatetimeIndex(df.index)
+    median_interval = index.to_series().diff().dropna().median()
+    interval = (
+        pd.Timedelta(minutes=1)
+        if pd.isna(median_interval) or pd.Timedelta(median_interval) <= pd.Timedelta(0)
+        else pd.Timedelta(median_interval)
     )
+    liquidation_quotes = []
+    for offset in range(1, 4):
+        quote = final_quote.copy()
+        quote.index = pd.DatetimeIndex([df.index[-1] + offset * interval])
+        liquidation_quotes.append(quote)
+    feed_bars = pd.concat([df.assign(signal=action_series), *liquidation_quotes])
 
     cerebro = bt.Cerebro()
     cerebro.adddata(_SignalFeed(dataname=feed_bars))
-    cerebro.addstrategy(_DelayedSignalStrategy, last_bar=len(df))
+    # Backtrader updates market orders after the strategy callback. Two
+    # additional callbacks let it observe a position opened on the final
+    # source bar, submit its close, and execute that close on the next quote.
+    cerebro.addstrategy(_DelayedSignalStrategy, last_bar=len(df) + 2)
     cerebro.broker.setcash(100000.0)
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
     cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
-    cerebro.broker.set_coc(True)
+    cerebro.broker.set_coc(False)
     results = cerebro.run()
     strat = results[0]
 
     trade_analysis = strat.analyzers.trades.get_analysis()
-    total_trades = trade_analysis.get("total", {}).get("closed", 0)
+    trade_totals = trade_analysis.get("total", {})
+    total_trades = trade_totals.get("closed", 0)
     dd_analysis = strat.analyzers.drawdown.get_analysis()
     max_drawdown = dd_analysis.get("max", {}).get("drawdown", 0.0) / 100.0
 
     return {
         "engine": "backtrader",
         "trade_count": int(total_trades),
+        "trade_count_opened": int(trade_totals.get("total", 0)),
+        "open_position_size": float(strat.position.size),
         "total_pnl": float(cerebro.broker.getvalue() - 100000.0),
         "max_drawdown": float(max_drawdown),
     }
@@ -202,7 +221,11 @@ def run_custom_engine(
     result = run_backtest(
         bars=df,
         features=features,
-        policy=lambda observation: int(observation[-1, 0]),
+        policy=lambda observation: (
+            int(observation["sequence"][-1, 0])
+            if isinstance(observation, dict)
+            else int(observation[-1, 0])
+        ),
         obs_window=1,
         cost_model=CostModel(spread_points=0.0, slippage_points=0.0),
         initial_balance=100000.0,

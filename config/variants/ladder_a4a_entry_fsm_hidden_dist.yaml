@@ -1,10 +1,7 @@
 variant: ladder_a4a_entry_fsm_hidden_dist
 ftmo:
-  limit_value_mode: fixed_usd
-  daily_loss_limit: 5000.0
-  soft_daily_loss_limit: 5000.0
-  max_loss_limit: 10000.0
-  soft_max_loss_limit: 10000.0
+  limit_value_mode: percent_equity
+  max_drawdown_mode: static
   risk_per_trade_limit: 1000.0
   risk_sizing_limit_usd: 900.0
   trailing_dd_limit: 0.0

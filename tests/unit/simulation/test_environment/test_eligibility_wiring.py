@@ -31,9 +31,11 @@ def test_strict_eligibility_config_override_propagates_to_env_and_eval(monkeypat
     training_environments.make_env(empty, empty, cfg, algo="ppo", reward="dsr")
     assert captured["strict_research_eligibility"] is True
     assert captured["tick_execution_required"] is True
+    assert captured["tick_fill_slippage_points"] == cfg.costs.slippage_points
 
     eval_kwargs = training_environments.build_eval_common(cfg)[0]
     assert eval_kwargs["strict_research_eligibility"] is True
+    assert eval_kwargs["tick_fill_slippage_points"] == cfg.costs.slippage_points
     assert "strict_research_eligibility" in inspect.signature(evaluate_model).parameters
 
 
@@ -71,6 +73,16 @@ def test_evaluation_tick_fill_slippage_override_does_not_change_cost_model() -> 
     assert eval_kwargs["tick_execution_required"] is True
     assert eval_kwargs["cost_model"].slippage_points == cfg.costs.slippage_points
     assert "tick_fill_slippage_points" in inspect.signature(evaluate_model).parameters
+
+
+def test_evaluation_config_slippage_defaults_but_explicit_zero_is_preserved() -> None:
+    cfg = load_config()
+    configured = training_environments.build_eval_common(cfg)[0]
+    zero_stress = training_environments.build_eval_common(cfg, tick_fill_slippage_points=0.0)[0]
+
+    assert configured["tick_fill_slippage_points"] == cfg.costs.slippage_points
+    assert zero_stress["tick_fill_slippage_points"] == 0.0
+    assert configured["cost_model"].slippage_points == cfg.costs.slippage_points
 
 
 def test_dollar_band_sizing_config_reaches_evaluation_environment() -> None:
@@ -250,6 +262,38 @@ def test_management_settings_match_training_and_evaluation_environment_kwargs(mo
     assert evaluation_kwargs["allow_ema_exit"] is False
     assert captured["eod_risk"]["breakeven_trigger_r"] == 1.3
     assert captured["eod_risk"]["breakeven_buffer_pts"] == 1.7
+
+
+def test_limit_entry_settings_reach_evaluation_rollout_and_environment(monkeypatch) -> None:
+    cfg = load_config(
+        [
+            "env.trade_setup_actions=true",
+            "env.agent_entry_execution=true",
+            "execution.limit_order_max_offset_atr=0.75",
+            "execution.limit_order_max_ttl_bars=12",
+            "execution.limit_order_require_trade_through=true",
+            "execution.fill_latency_bars=2",
+            "env.reachable_r_validity_mask=true",
+        ]
+    )
+    captured = {}
+    monkeypatch.setattr(environment_factory, "TradingEnv", lambda **kwargs: captured.update(kwargs))
+    empty = pd.DataFrame()
+    training_environments.make_env(empty, empty, cfg, algo="ppo", reward="dsr")
+    evaluation_kwargs = training_environments.build_eval_common(cfg)[0]
+
+    expected = {
+        "agent_entry_execution": True,
+        "limit_order_max_offset_atr": 0.75,
+        "limit_order_max_ttl_bars": 12,
+        "limit_order_require_trade_through": True,
+        "fill_latency_bars": 2,
+        "reachable_r_validity_mask": True,
+    }
+    for key, value in expected.items():
+        assert captured[key] == value
+        assert evaluation_kwargs[key] == value
+    assert set(evaluation_kwargs).issubset(inspect.signature(evaluate_model).parameters)
 
 
 def test_eval_environment_uses_experiment_run_seed_for_randomized_fill_latency() -> None:

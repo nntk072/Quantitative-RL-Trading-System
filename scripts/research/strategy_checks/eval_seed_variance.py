@@ -29,13 +29,18 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 from stable_baselines3 import PPO
 
-from evaluation import calculate_metrics
+from evaluation import account_path_metric_inputs, calculate_metrics
 from evaluation.rollout.trained_policy_rollout import evaluate_model
-from features import FEATURE_CACHE_VERSION, build_features
 from learning.rl.ppo import ClampedStdMultiInputPolicy
 from market_data.loading import build_tick_books, run_pipeline
 from market_data.loading.ticks import ticks_covering
-from market_data.splits.definitions import get_split_config, split_bars, split_train_test
+from market_data.splits.definitions import (
+    get_split_config,
+    get_train_start_config,
+    split_bars,
+    split_train_test,
+)
+from training.runner.feature_preparation import build_split_scoped_features
 from training.setup.environments import (
     eval_guardrail_kwargs,
     fill_delay_ms,
@@ -116,14 +121,19 @@ def main() -> int:
     data = run_pipeline(cfg)
     primary_m1 = data[cfg.data.primary]["M1"]
     secondary_m1 = data.get(cfg.data.secondary, {}).get("M1")
-    feat_cache = (
-        Path(cfg.data.cache_dir) / f"{cfg.data.primary}_features_{FEATURE_CACHE_VERSION}.parquet"
-    )
-    features = build_features(primary_m1, secondary=secondary_m1, cfg=cfg, cache_path=feat_cache)
-
     train_end, test_start = get_split_config(cfg)
+    features = build_split_scoped_features(
+        primary_m1,
+        secondary=secondary_m1,
+        cfg=cfg,
+        train_start=get_train_start_config(cfg),
+        train_end=train_end,
+        cache_dir=cfg.data.cache_dir,
+        symbol=str(cfg.data.primary),
+    )
+
     train_bars, test_bars, train_feat, test_feat = split_train_test(
-        primary_m1, features, train_end, test_start
+        primary_m1, features, train_end, test_start, get_train_start_config(cfg)
     )
     train_sec = test_sec = None
     if secondary_m1 is not None and not secondary_m1.empty:
@@ -155,6 +165,7 @@ def main() -> int:
                 trades=result["trades"],
                 n_sessions=result.get("n_sessions", 1),
                 n_breach_sessions=result.get("n_breach_sessions", 0),
+                **account_path_metric_inputs(result),
             )
             rows.append(
                 {

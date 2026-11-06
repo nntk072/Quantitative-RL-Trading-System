@@ -1,0 +1,436 @@
+{
+  "analysis_script": {
+    "path": "scripts/research/analysis/evaluation/audit_saved_equity_bar_identity.py",
+    "sha256": "d2d70852592540c91ed8d3976588ebc796ad25c5b7bb87a322cfdc321e8d3f90"
+  },
+  "exact_source_rebuild_match_count": 4,
+  "hash_algorithm": "evaluation.reporting.run_manifest.dataframe_sha256",
+  "input_identity_mismatch_count": 0,
+  "partitions": [
+    {
+      "arm": "A4A",
+      "current_local_frame": {
+        "cache_manifest_sha256": "9db94803c0afb879a4b877e542473e85380687846a3b89644906da1171279684",
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "parquet_sha256": "6d8f5921f680c8dc1ef246a7bf0792512da01ebe789e05199f5703f376dc40b2",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/training/US100.cash_M1_v4-semantic-manifest.parquet",
+        "rows": 351432,
+        "sha256": "ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+        "start": "2024-12-30 01:05:00+03:00"
+      },
+      "exact_frame_hash_matches_expected": false,
+      "expected_run_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "rows": 351432,
+        "sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "start": "2024-12-30 01:05:00+03:00"
+      },
+      "historical_run_manifest": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+        "runtime_versions": {
+          "cuda_available": "True",
+          "cuda_device": "NVIDIA GH200 144G HBM3e",
+          "cuda_visible_devices": "0",
+          "gymnasium": "1.3.0",
+          "numpy": "2.2.6",
+          "pandas": "2.3.2",
+          "platform": "Linux-5.14.0-687.58.1.el9_8.aarch64-aarch64-with-glibc2.34",
+          "python": "3.12.15",
+          "python_hash_seed_env": "0",
+          "stable-baselines3": "2.9.0",
+          "torch": "2.14.0+cu130"
+        },
+        "saved_frame_matches_reanalysis_manifest": true,
+        "sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+        "source_head": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+      },
+      "interpretation": "The current Parquet-loaded frame hash differs, but rebuilding the configured raw M1 source with the saved run config reproduces the exact saved in-memory frame hash. Use that verified source reconstruction for saved-run equity reconciliation.",
+      "layout_matches_expected": true,
+      "partition": "training",
+      "raw_source_reconstructed_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "matches_saved_run_frame": true,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+        "raw_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "rows": 351432,
+        "sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "start": "2024-12-30 01:05:00+03:00",
+        "status": "exact_match"
+      },
+      "source_config": {
+        "current_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "expected_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml"
+      },
+      "source_raw_input": {
+        "current_cache_source_identity": "native:c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+        "sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "sha256_matches_current_cache_source_identity": true
+      },
+      "status": "exact_source_rebuild_match"
+    },
+    {
+      "arm": "A4A",
+      "current_local_frame": {
+        "cache_manifest_sha256": "793939edbaaf03f7fbae3514dcc1d2008cda5ef02b106383978fc3ab70f02255",
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "parquet_sha256": "180dd261b02c3d80321c6f4e735c3bfcb90a9f21395f12a8887e3ccec62fdca3",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/testing/US100.cash_M1_v4-semantic-manifest.parquet",
+        "rows": 279355,
+        "sha256": "8e394641b9734209e4265e3c978e26b912c61c8e4fd4db236a5f9ff0635bc624",
+        "start": "2026-01-02 01:05:00+03:00"
+      },
+      "exact_frame_hash_matches_expected": false,
+      "expected_run_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "rows": 279355,
+        "sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "start": "2026-01-02 01:05:00+03:00"
+      },
+      "historical_run_manifest": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/run_manifest.json",
+        "runtime_versions": {
+          "cuda_available": "True",
+          "cuda_device": "NVIDIA GH200 144G HBM3e",
+          "cuda_visible_devices": "0",
+          "gymnasium": "1.3.0",
+          "numpy": "2.2.6",
+          "pandas": "2.3.2",
+          "platform": "Linux-5.14.0-687.58.1.el9_8.aarch64-aarch64-with-glibc2.34",
+          "python": "3.12.15",
+          "python_hash_seed_env": "0",
+          "stable-baselines3": "2.9.0",
+          "torch": "2.14.0+cu130"
+        },
+        "saved_frame_matches_reanalysis_manifest": true,
+        "sha256": "5ae156bea2c088e918c02b3ea065baa43a2b8803a129c30c50eaf7be43897279",
+        "source_head": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+      },
+      "interpretation": "The current Parquet-loaded frame hash differs, but rebuilding the configured raw M1 source with the saved run config reproduces the exact saved in-memory frame hash. Use that verified source reconstruction for saved-run equity reconciliation.",
+      "layout_matches_expected": true,
+      "partition": "testing",
+      "raw_source_reconstructed_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "matches_saved_run_frame": true,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing/US100.cash_M1_202412300105_202610162349.csv",
+        "raw_sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "rows": 279355,
+        "sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "start": "2026-01-02 01:05:00+03:00",
+        "status": "exact_match"
+      },
+      "source_config": {
+        "current_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "expected_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml"
+      },
+      "source_raw_input": {
+        "current_cache_source_identity": "native:0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing/US100.cash_M1_202412300105_202610162349.csv",
+        "sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "sha256_matches_current_cache_source_identity": true
+      },
+      "status": "exact_source_rebuild_match"
+    },
+    {
+      "arm": "A4B",
+      "current_local_frame": {
+        "cache_manifest_sha256": "9db94803c0afb879a4b877e542473e85380687846a3b89644906da1171279684",
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "parquet_sha256": "6d8f5921f680c8dc1ef246a7bf0792512da01ebe789e05199f5703f376dc40b2",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/training/US100.cash_M1_v4-semantic-manifest.parquet",
+        "rows": 351432,
+        "sha256": "ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+        "start": "2024-12-30 01:05:00+03:00"
+      },
+      "exact_frame_hash_matches_expected": false,
+      "expected_run_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "rows": 351432,
+        "sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "start": "2024-12-30 01:05:00+03:00"
+      },
+      "historical_run_manifest": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+        "runtime_versions": {
+          "cuda_available": "True",
+          "cuda_device": "NVIDIA GH200 144G HBM3e",
+          "cuda_visible_devices": "1",
+          "gymnasium": "1.3.0",
+          "numpy": "2.2.6",
+          "pandas": "2.3.2",
+          "platform": "Linux-5.14.0-687.58.1.el9_8.aarch64-aarch64-with-glibc2.34",
+          "python": "3.12.15",
+          "python_hash_seed_env": "0",
+          "stable-baselines3": "2.9.0",
+          "torch": "2.14.0+cu130"
+        },
+        "saved_frame_matches_reanalysis_manifest": true,
+        "sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+        "source_head": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+      },
+      "interpretation": "The current Parquet-loaded frame hash differs, but rebuilding the configured raw M1 source with the saved run config reproduces the exact saved in-memory frame hash. Use that verified source reconstruction for saved-run equity reconciliation.",
+      "layout_matches_expected": true,
+      "partition": "training",
+      "raw_source_reconstructed_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "matches_saved_run_frame": true,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+        "raw_sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "rows": 351432,
+        "sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "start": "2024-12-30 01:05:00+03:00",
+        "status": "exact_match"
+      },
+      "source_config": {
+        "current_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "expected_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml"
+      },
+      "source_raw_input": {
+        "current_cache_source_identity": "native:c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+        "sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "sha256_matches_current_cache_source_identity": true
+      },
+      "status": "exact_source_rebuild_match"
+    },
+    {
+      "arm": "A4B",
+      "current_local_frame": {
+        "cache_manifest_sha256": "793939edbaaf03f7fbae3514dcc1d2008cda5ef02b106383978fc3ab70f02255",
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "parquet_sha256": "180dd261b02c3d80321c6f4e735c3bfcb90a9f21395f12a8887e3ccec62fdca3",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/testing/US100.cash_M1_v4-semantic-manifest.parquet",
+        "rows": 279355,
+        "sha256": "8e394641b9734209e4265e3c978e26b912c61c8e4fd4db236a5f9ff0635bc624",
+        "start": "2026-01-02 01:05:00+03:00"
+      },
+      "exact_frame_hash_matches_expected": false,
+      "expected_run_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "rows": 279355,
+        "sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "start": "2026-01-02 01:05:00+03:00"
+      },
+      "historical_run_manifest": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/run_manifest.json",
+        "runtime_versions": {
+          "cuda_available": "True",
+          "cuda_device": "NVIDIA GH200 144G HBM3e",
+          "cuda_visible_devices": "1",
+          "gymnasium": "1.3.0",
+          "numpy": "2.2.6",
+          "pandas": "2.3.2",
+          "platform": "Linux-5.14.0-687.58.1.el9_8.aarch64-aarch64-with-glibc2.34",
+          "python": "3.12.15",
+          "python_hash_seed_env": "0",
+          "stable-baselines3": "2.9.0",
+          "torch": "2.14.0+cu130"
+        },
+        "saved_frame_matches_reanalysis_manifest": true,
+        "sha256": "1421a99e577711d6f525b707d95a2677841b96c104739b198a2fa06c88c1976a",
+        "source_head": "0d056dcd3ab42165eec183a2f44cfe7e441edd39"
+      },
+      "interpretation": "The current Parquet-loaded frame hash differs, but rebuilding the configured raw M1 source with the saved run config reproduces the exact saved in-memory frame hash. Use that verified source reconstruction for saved-run equity reconciliation.",
+      "layout_matches_expected": true,
+      "partition": "testing",
+      "raw_source_reconstructed_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "matches_saved_run_frame": true,
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing/US100.cash_M1_202412300105_202610162349.csv",
+        "raw_sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "rows": 279355,
+        "sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "start": "2026-01-02 01:05:00+03:00",
+        "status": "exact_match"
+      },
+      "source_config": {
+        "current_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "expected_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml"
+      },
+      "source_raw_input": {
+        "current_cache_source_identity": "native:0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing/US100.cash_M1_202412300105_202610162349.csv",
+        "sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "sha256_matches_current_cache_source_identity": true
+      },
+      "status": "exact_source_rebuild_match"
+    }
+  ],
+  "reconstruction_sources": [
+    {
+      "path": "market_data/loading/bars.py",
+      "sha256": "78ec2e0aae8c86f85cf1fe8d7455bba94c8e601200eb3f66e7768017a2216962"
+    },
+    {
+      "path": "market_data/transforms/price_grid.py",
+      "sha256": "633b2c3cf1ec0425f3ce7e319c7306796f47c0a0033be03790a052c330a4cb75"
+    },
+    {
+      "path": "market_data/transforms/cleaning.py",
+      "sha256": "3dc16c86683cd8e0351ee68c5403ea8eddb98f596e78d60e24fdfae3b03ad3b7"
+    },
+    {
+      "path": "market_data/transforms/sessions.py",
+      "sha256": "950c8212809801a734eb567239bd50f59dcad0eb16d32c5abadc2a319e017866"
+    },
+    {
+      "path": "market_data/splits/definitions.py",
+      "sha256": "9640f1dae01207b45f9e2e5b30556a19528406df3332925e5dde69e388ead919"
+    },
+    {
+      "path": "evaluation/reporting/run_manifest.py",
+      "sha256": "79753a0e90777bd85e14dbad98fd997aef833bd084f40bd9a1bf367b71143bfe"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "source identity preflight only; no equity or mark-to-market values were reconstructed",
+  "status": "exact_source_rebuild_match"
+}

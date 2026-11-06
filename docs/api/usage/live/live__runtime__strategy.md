@@ -8,22 +8,26 @@ This page contains 5 public callable records owned by `live.runtime.strategy`. S
 
 **Purpose:** Wraps a trained SB3 model as a live-trading strategy.
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter` · **Source:** [live/runtime/strategy.py:69](../../../../live/runtime/strategy.py#L69)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter` · **Source:** [live/runtime/strategy.py:70](../../../../live/runtime/strategy.py#L70)
 
 **Observed usage:**
 
-1. [test fixture: `test_train_live_observation_parity`](../../../../tests/unit/features/test_stage_a_observation.py#L114)
+1. [test fixture: `test_train_live_observation_parity`](../../../../tests/unit/features/test_stage_a_observation.py#L120)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+        observation_schema_version=OBSERVATION_SCHEMA_V2,
     )
-    env = TradingEnv(bars=bars, features=features, obs_window=10, initial_balance=100_000.0)
     env.account.update_equity(-250.0)
     env_obs = env._get_observation()
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter._features = features
     adapter._bars = bars
     adapter.obs_window = 10
@@ -32,23 +36,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L189)
+2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L194)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_rl_bridge_observation_contract(trending_bars):
     from live.runtime.strategy import RLStrategyAdapter
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter.update_bars(trending_bars)
     obs = adapter.build_observation({"equity": 100_000.0})
     assert set(obs) == {"seq", "seq_mask", "account"}
     assert obs["seq"].dtype == np.float32
-    assert obs["account"].shape == (6,)
-    assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
-    action = adapter.predict_signal()
-    assert action == 1
+    assert obs["account"].shape == (28,)
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -64,7 +69,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a duck-typed MT5 strategy that wraps this adapter.
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.as_strategy` · **Source:** [live/runtime/strategy.py:325](../../../../live/runtime/strategy.py#L325)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.as_strategy` · **Source:** [live/runtime/strategy.py:354](../../../../live/runtime/strategy.py#L354)
 
 **Inputs and outputs:**
 
@@ -85,7 +90,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_maps_actions_to_signals`](../../../../tests/unit/live/test_rl_bridge.py#L219)
+1. [test fixture: `test_rl_bridge_maps_actions_to_signals`](../../../../tests/unit/live/test_rl_bridge.py#L250)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -93,25 +98,34 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_rl_bridge_maps_actions_to_signals(trending_bars):
     from live.runtime.strategy import RLStrategyAdapter
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     strategy = adapter.as_strategy(_StubData(trending_bars))
     symbol, sig = strategy.signal()
     assert symbol == "US100.cash"
     assert sig.value == "buy"
 ```
 
-2. [test fixture: `test_rl_bridge_too_few_bars_no_signal`](../../../../tests/unit/live/test_rl_bridge.py#L230)
+2. [test fixture: `test_account_state_v2_live_policy_fails_closed_without_snapshot`](../../../../tests/unit/live/test_rl_bridge.py#L274)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_rl_bridge_too_few_bars_no_signal(trending_bars):
-    from live.runtime.strategy import RLStrategyAdapter
+# … caller setup omitted …
+    adapter = RLStrategyAdapter(
+        model=model,
+        config_path=config_path,
+        allow_runtime_normalization_fallback=True,
+    )
+    strategy = adapter.as_strategy(_StubData(trending_bars))
 
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
-    strategy = adapter.as_strategy(_StubData(trending_bars.iloc[:5]))
-    _, sig = strategy.signal()
-    assert sig.value == "none"
+    symbol, signal = strategy.signal()
+
+    assert symbol == "US100.cash"
+    assert signal.value == "none"
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -127,7 +141,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Construct the dict observation with the same contract as the env.
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.build_observation` · **Source:** [live/runtime/strategy.py:194](../../../../live/runtime/strategy.py#L194)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.build_observation` · **Source:** [live/runtime/strategy.py:223](../../../../live/runtime/strategy.py#L223)
 
 **Inputs and outputs:**
 
@@ -145,7 +159,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_train_live_observation_parity`](../../../../tests/unit/features/test_stage_a_observation.py#L120)
+1. [test fixture: `test_train_live_observation_parity`](../../../../tests/unit/features/test_stage_a_observation.py#L130)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -174,23 +188,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L191)
+2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L200)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_rl_bridge_observation_contract(trending_bars):
-    from live.runtime.strategy import RLStrategyAdapter
-
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+# … caller setup omitted …
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter.update_bars(trending_bars)
     obs = adapter.build_observation({"equity": 100_000.0})
     assert set(obs) == {"seq", "seq_mask", "account"}
     assert obs["seq"].dtype == np.float32
-    assert obs["account"].shape == (6,)
+    assert obs["account"].shape == (28,)
     assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
     action = adapter.predict_signal()
-    assert action == 1
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -206,7 +221,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Run the provider and return its discrete id or scalar direction.
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.predict_signal` · **Source:** [live/runtime/strategy.py:299](../../../../live/runtime/strategy.py#L299)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.predict_signal` · **Source:** [live/runtime/strategy.py:328](../../../../live/runtime/strategy.py#L328)
 
 **Inputs and outputs:**
 
@@ -224,26 +239,22 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L196)
+1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L205)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_rl_bridge_observation_contract(trending_bars):
-    from live.runtime.strategy import RLStrategyAdapter
-
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
-    adapter.update_bars(trending_bars)
+# … caller setup omitted …
     obs = adapter.build_observation({"equity": 100_000.0})
     assert set(obs) == {"seq", "seq_mask", "account"}
     assert obs["seq"].dtype == np.float32
-    assert obs["account"].shape == (6,)
+    assert obs["account"].shape == (28,)
     assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
     action = adapter.predict_signal()
     assert action == 1
 ```
 
-2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L211)
+2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L238)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -253,9 +264,13 @@ def test_rl_bridge_accepts_a_decision_provider(trending_bars):
 
     provider = SB3DecisionProvider(
         _StubModel(),
-        input_schema_version=OBSERVATION_SCHEMA_V1,
+        input_schema_version=OBSERVATION_SCHEMA_V2,
     )
-    adapter = RLStrategyAdapter(provider=provider, config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        provider=provider,
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter.update_bars(trending_bars)
 
     assert adapter.predict_signal() == 1
@@ -274,7 +289,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Feed the latest M1 bars; rebuilds features (call once per new bar).
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.update_bars` · **Source:** [live/runtime/strategy.py:161](../../../../live/runtime/strategy.py#L161)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.update_bars` · **Source:** [live/runtime/strategy.py:190](../../../../live/runtime/strategy.py#L190)
 
 **Inputs and outputs:**
 
@@ -287,26 +302,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L190)
+1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L199)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_rl_bridge_observation_contract(trending_bars):
-    from live.runtime.strategy import RLStrategyAdapter
-
-    adapter = RLStrategyAdapter(model=_StubModel(), config_path="config/base/default.yaml")
+# … caller setup omitted …
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter.update_bars(trending_bars)
     obs = adapter.build_observation({"equity": 100_000.0})
     assert set(obs) == {"seq", "seq_mask", "account"}
     assert obs["seq"].dtype == np.float32
-    assert obs["account"].shape == (6,)
+    assert obs["account"].shape == (28,)
     assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
-    action = adapter.predict_signal()
-    assert action == 1
+# … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L209)
+2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L236)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -316,9 +332,13 @@ def test_rl_bridge_accepts_a_decision_provider(trending_bars):
 
     provider = SB3DecisionProvider(
         _StubModel(),
-        input_schema_version=OBSERVATION_SCHEMA_V1,
+        input_schema_version=OBSERVATION_SCHEMA_V2,
     )
-    adapter = RLStrategyAdapter(provider=provider, config_path="config/base/default.yaml")
+    adapter = RLStrategyAdapter(
+        provider=provider,
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
     adapter.update_bars(trending_bars)
 
     assert adapter.predict_signal() == 1

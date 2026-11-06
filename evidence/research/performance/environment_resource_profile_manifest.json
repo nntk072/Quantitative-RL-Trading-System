@@ -1,0 +1,264 @@
+{
+  "schema": "qrl.environment_resource_profile_manifest.v1",
+  "claim_scope": "Bounded current-GH200 TradingEnv worker memory and step-throughput profile; no learner training or GPU computation",
+  "baseline_commit": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "slurm_job_id": "21376798",
+  "node": "gpuarm2.int.triton.aalto.fi",
+  "allocation": {
+    "gpus": 1,
+    "gpu_model": "NVIDIA GH200 144G HBM3e",
+    "cpus": 48,
+    "requested_host_memory_gib": 512,
+    "host_visible_memory": "1.2 TiB (rounded node total from free -h; allocation request is 512 GiB)",
+    "gpu_memory_used_before_profile_mib": 0,
+    "gpu_utilization_before_profile_percent": 0,
+    "gpu_utilization_sample_scope": "single pre-run observation; workload itself does not invoke CUDA"
+  },
+  "benchmark": {
+    "script": "scripts/research/benchmarks/measure_env_memory.py",
+    "script_sha256": "f23240eca1096d7eb48cb7464d80bec499f3740f58e73469642f91ab9a489063",
+    "command": ".venv/bin/python scripts/research/benchmarks/measure_env_memory.py --days 7 --env-counts 2 8 16 --steps 256 --data-source frames --output evidence/research/performance/gh200_environment_resource_profile.json",
+    "config": "config/base/default.yaml",
+    "config_sha256": "9397e5a55dd1e4445efda6ab22940ba8f419d31370df8d972d2111b079074e84",
+    "data_identity_reference": "evidence/research/pipeline_denominators/pipeline_denominator_register.json",
+    "data_identity_reference_sha256": "f22ac05ee942b8d8be346915626e618e3d0eab260ca8c3bda64ef94245cb66f6",
+    "input_scope": "Trailing 7 calendar days from the configured 2024-12-30 through 2025-12-31 training split; canonical run_pipeline, build_features, and TickBook construction were used before slicing.",
+    "symbols": ["US100.cash", "US500.cash"],
+    "process_start_method": "forkserver",
+    "worker_counts": [2, 8, 16],
+    "vector_steps_per_worker": 256,
+    "warmup_vector_steps": 10,
+    "training_updates": 0,
+    "evaluation_model": null
+  },
+  "output": {
+    "path": "evidence/research/performance/gh200_environment_resource_profile.json",
+    "sha256": "fa3ebd8e3d1419e962a62ce78d4ab843601c4e96f9983761abfe11cacc18fa9d",
+    "bars_and_features_rows": 5460,
+    "tickbook_array_bytes": 16958736,
+    "fit_base_process_tree_pss_mib": 1533.4780537373313,
+    "fit_per_worker_pss_mib": 444.49212811444266,
+    "measurements": [
+      {
+        "n_envs": 2,
+        "startup_seconds": 5.194911653001327,
+        "steady_tree_pss_mib": 2424.248046875,
+        "steady_cgroup_bytes": 36501561344,
+        "env_steps_per_second": 1030.5480984910814
+      },
+      {
+        "n_envs": 8,
+        "startup_seconds": 17.850347286992474,
+        "steady_tree_pss_mib": 5086.2900390625,
+        "steady_cgroup_bytes": 39328174080,
+        "env_steps_per_second": 2947.482963320416
+      },
+      {
+        "n_envs": 16,
+        "startup_seconds": 33.706105571007356,
+        "steady_tree_pss_mib": 8646.69140625,
+        "steady_cgroup_bytes": 43100311552,
+        "env_steps_per_second": 5081.106360129669
+      }
+    ]
+  },
+  "full_train_profile": {
+    "path": "evidence/research/performance/gh200_environment_full_train_profile.json",
+    "sha256": "681038225fb7b4b73e712099afed221e011b6aa36fd00c06514a3679b17b7aa0",
+    "command": ".venv/bin/python scripts/research/benchmarks/measure_env_memory.py --full-train --env-counts 2 8 --steps 256 --data-source frames --output evidence/research/performance/gh200_environment_full_train_profile.json",
+    "wall_seconds": 62.81,
+    "process_max_rss_kib": 16396344,
+    "train_rows_per_symbol_timeframe_split": 351432,
+    "fit_base_process_tree_pss_mib": 11229.5498,
+    "fit_per_worker_pss_mib": 4930.7124,
+    "measurements": [
+      {
+        "n_envs": 2,
+        "tickbook_array_bytes": 1349881104,
+        "env_payload_pickle_bytes": 2517799278,
+        "steady_tree_pss_mib": 21090.9746,
+        "steady_cgroup_bytes": 57904001024,
+        "env_steps_per_second": 819.3579,
+        "startup_seconds": 9.2826
+      },
+      {
+        "n_envs": 8,
+        "tickbook_array_bytes": 1349881104,
+        "env_payload_pickle_bytes": 2517799278,
+        "steady_tree_pss_mib": 50675.2490,
+        "steady_cgroup_bytes": 89011331072,
+        "env_steps_per_second": 2586.8855,
+        "startup_seconds": 32.1051
+      }
+    ],
+    "training_updates": 0,
+    "cuda_used": false,
+    "limitations": [
+      "Full configured training split, environment-only; no learner updates, GPU compute, or 16+ worker measurement.",
+      "Cgroup totals include allocation-charged memory beyond the measured process tree.",
+      "The profile does not establish end-to-end training throughput or validate a campaign worker count."
+    ]
+  },
+  "full_train_16_worker_extension": {
+    "path": "evidence/research/performance/gh200_environment_full_train_profile_16env.json",
+    "sha256": "c074b4fed0476c0306996b792fc80f3940425296e552104acb55fcc01b27c76f",
+    "command": ".venv/bin/python scripts/research/benchmarks/measure_env_memory.py --full-train --env-counts 16 --steps 256 --data-source frames --output evidence/research/performance/gh200_environment_full_train_profile_16env.json",
+    "wall_seconds": 80.30,
+    "process_max_rss_kib": 16343364,
+    "train_rows_per_symbol_timeframe_split": 351432,
+    "fit_base_process_tree_pss_mib": 45059.0771,
+    "fit_per_worker_pss_mib": 2816.1923,
+    "measurement": {
+      "n_envs": 16,
+      "tickbook_array_bytes": 1349881104,
+      "env_payload_pickle_bytes": 2517799278,
+      "steady_tree_pss_mib": 90118.1543,
+      "steady_cgroup_bytes": 95560048640,
+      "env_steps_per_second": 4497.5044,
+      "startup_seconds": 62.8735
+    },
+    "training_updates": 0,
+    "cuda_used": false,
+    "limitations": [
+      "Environment-only full configured training split; no learner updates or GPU compute.",
+      "Cgroup totals include allocation-charged memory beyond the measured process tree.",
+      "The result does not establish end-to-end training throughput or validate a campaign worker count."
+    ]
+  },
+  "stage_timed_full_train_profile": {
+    "path": "evidence/research/performance/gh200_environment_full_train_pipeline_profile.json",
+    "sha256": "45cee2bf524d3e73836fc4b34f0479dac7ad2435a5a85b242a7d42f4767f19d3",
+    "command": ".venv/bin/python scripts/research/benchmarks/measure_env_memory.py --full-train --env-counts 2 8 16 --steps 256 --data-source frames --output evidence/research/performance/gh200_environment_full_train_pipeline_profile.json",
+    "wall_seconds": 128.65,
+    "process_max_rss_kib": 16267224,
+    "train_rows_per_symbol_timeframe_split": 351432,
+    "run_identity": {
+      "slurm_job_id": "21376798",
+      "host": "gpuarm2.int.triton.aalto.fi",
+      "architecture": "aarch64",
+      "cpu_affinity": "0-47",
+      "config_sha256": "9397e5a55dd1e4445efda6ab22940ba8f419d31370df8d972d2111b079074e84",
+      "data_identity_reference_sha256": "f22ac05ee942b8d8be346915626e618e3d0eab260ca8c3bda64ef94245cb66f6",
+      "benchmark_script_sha256": "c1800a22e41ba34eb81f50630ae5189b901e2f79ec9e024c7f8a69aab9b94421",
+      "cuda_used": false
+    },
+    "preparation_timings_seconds": {
+      "config_load": 0.063,
+      "market_data_pipeline": 2.558,
+      "feature_build_or_cache": 1.256,
+      "split_and_slice": 0.489,
+      "tickbook_build_and_coverage": 8.109,
+      "total": 12.477
+    },
+    "vector_measurements": [
+      {
+        "n_envs": 2,
+        "worker_create_reset_seconds": 9.084,
+        "vector_step_seconds": 0.614,
+        "steps_per_second": 833.92,
+        "steady_tree_pss_mib": 21039.59,
+        "steady_cgroup_bytes": 22956761088
+      },
+      {
+        "n_envs": 8,
+        "worker_create_reset_seconds": 31.679,
+        "vector_step_seconds": 0.793,
+        "steps_per_second": 2582.11,
+        "steady_tree_pss_mib": 50634.55,
+        "steady_cgroup_bytes": 54062485504
+      },
+      {
+        "n_envs": 16,
+        "worker_create_reset_seconds": 62.158,
+        "vector_step_seconds": 0.912,
+        "steps_per_second": 4488.88,
+        "steady_tree_pss_mib": 90095.38,
+        "steady_cgroup_bytes": 95532339200
+      }
+    ],
+    "unmeasured_pipeline_stages": [
+      "learner forward and update",
+      "checkpoint save and resume",
+      "frozen full-period evaluation",
+      "charts, reporting, and archive writeback",
+      "GPU/VRAM utilization during training"
+    ]
+  },
+  "full_train_32_worker_extension": {
+    "path": "evidence/research/performance/gh200_environment_full_train_profile_32env.json",
+    "sha256": "271275c9a6fb16a6dc43ffd01c7a797d7eb7aaf4284b9061e64b87414bd4c195",
+    "command": ".venv/bin/python scripts/research/benchmarks/measure_env_memory.py --full-train --env-counts 32 --steps 256 --data-source frames --output evidence/research/performance/gh200_environment_full_train_profile_32env.json",
+    "wall_seconds": 144.45,
+    "process_max_rss_kib": 16252832,
+    "train_rows_per_symbol_timeframe_split": 351432,
+    "slurm_job_id": "21376798",
+    "host": "gpuarm2.int.triton.aalto.fi",
+    "cpu_affinity": "0-47",
+    "script_sha256": "c1800a22e41ba34eb81f50630ae5189b901e2f79ec9e024c7f8a69aab9b94421",
+    "preparation_seconds": 12.593,
+    "worker_create_and_reset_seconds": 124.570,
+    "vector_step_seconds": 1.143,
+    "steps_per_second": 7166.52,
+    "steady_tree_pss_mib": 168991.80,
+    "steady_cgroup_bytes": 178532515840,
+    "training_updates": 0,
+    "cuda_used": false,
+    "limitations": [
+      "Environment-only full configured training split; no learner updates or GPU compute.",
+      "This worker count used 32 of the 48 allocated CPUs and should not be extrapolated to larger counts.",
+      "The result does not establish end-to-end training throughput or validate a campaign worker count."
+    ]
+  },
+  "bundle_worker_scaling_comparison": {
+    "packet": "evidence/research/performance/bundle_worker_scaling/",
+    "slurm_job_id": "21390062",
+    "host": "gpuarm1.int.triton.aalto.fi",
+    "architecture": "aarch64",
+    "worker_counts": [2, 8, 16],
+    "train_rows_per_symbol_timeframe_split": 351432,
+    "config_sha256": "dd7503d22fadb95fe4b11034f19515081ca7b28228c589700e4ba10bc91dfbc5",
+    "data_identity_reference_sha256": "f22ac05ee942b8d8be346915626e618e3d0eab260ca8c3bda64ef94245cb66f6",
+    "benchmark_script_sha256": "c1800a22e41ba34eb81f50630ae5189b901e2f79ec9e024c7f8a69aab9b94421",
+    "bundle_profile": {
+      "path": "evidence/research/performance/bundle_worker_scaling/bundle_profile.json",
+      "sha256": "45823137c4e76a0faa1cfbd582bec23ed46cccd1f5536d39f1ea27feb62b5aca",
+      "bundle_size_bytes": 3057875546,
+      "wall_seconds": 111.18,
+      "process_max_rss_kib": 13852812,
+      "steady_tree_pss_mib": [5710.81, 6337.31, 7174.19],
+      "steady_cgroup_bytes": [21236269056, 21907243008, 22802919424],
+      "environment_steps_per_second": [838.31, 2510.39, 4414.01],
+      "startup_seconds": [3.51, 1.66, 1.87]
+    },
+    "frames_reference_profile": {
+      "path": "evidence/research/performance/bundle_worker_scaling/frames_reference_profile.json",
+      "sha256": "f3fb801bae02a03d47655e3a2accbb64ca572f1c048027d9c432437eb76f71ff",
+      "wall_seconds": 126.53,
+      "process_max_rss_kib": 16251092,
+      "steady_tree_pss_mib": [20952.68, 50538.22, 89984.89],
+      "steady_cgroup_bytes": [35872055296, 66969460736, 108433850368],
+      "environment_steps_per_second": [817.65, 2545.90, 4369.13],
+      "startup_seconds": [9.80, 31.23, 60.88]
+    },
+    "bundle_equivalence_validation": {
+      "test": "tests/unit/simulation/test_environment/test_bundle_env_equivalence.py",
+      "passed": 16,
+      "duration_seconds": 6.30,
+      "output_archive": "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/bundle_env_equivalence_validation.log"
+    },
+    "training_updates": 0,
+    "cuda_used": false,
+    "limitations": [
+      "Bundle was run before frames and warmed feature caches; preparation-time comparison is invalid.",
+      "Environment-component profile only; learner, checkpoint, full evaluation, GPU, report, and archive stages are unmeasured.",
+      "Does not validate a training campaign worker count or end-to-end training throughput."
+    ]
+  },
+  "limitations": [
+    "This is a seven-day environment-only slice, not a full-year rollout or end-to-end learner benchmark.",
+    "The script loads and prepares the configured train split before taking the seven-day slice; it does not separately time the load and feature/cache stages.",
+    "The cgroup memory figure includes other memory charged to the allocation; process-tree PSS is the direct worker-tree measure.",
+    "GPU utilization was sampled once before the CPU-only workload, not continuously during it.",
+    "Do not extrapolate the measured 2/8/16 worker points to 32/64 workers or another architecture."
+  ]
+}

@@ -17,6 +17,7 @@ from scripts.research.analysis.evidence.verify_numerical_report import (
     _evaluation_provenance_errors,
     _hard_breach_events,
     _policy_action_mode_errors,
+    _same_report_value,
     _same_resolved_config,
     _source_manifest_errors,
     verify_split,
@@ -385,6 +386,75 @@ def _write_split(tmp_path: Path) -> Path:
     return run_dir / "training"
 
 
+def _write_complete_trace_split(tmp_path: Path) -> Path:
+    from trading.account.account_state import AccountState
+    from trading.account.snapshots import account_state_snapshot
+
+    account = AccountState(initial_balance=100.0)
+    trace = pd.DataFrame(
+        [
+            account_state_snapshot(
+                account,
+                valuation_time="2025-01-01T00:00:00Z",
+                decision_time="2025-01-01T00:00:00Z",
+                session_id=1,
+                daily_loss_limit_usd=5.0,
+                soft_daily_loss_limit_usd=5.0,
+                max_loss_limit_usd=10.0,
+                max_loss_floor_equity=90.0,
+                max_drawdown_mode="static",
+                max_drawdown_from_reference_usd=0.0,
+                soft_max_loss_limit_usd=10.0,
+                trailing_drawdown_limit_usd=10.0,
+                soft_trailing_drawdown_limit_usd=10.0,
+                risk_per_trade_limit_usd=1.0,
+                trade_event_count=0,
+                contract_size=1.0,
+            )
+        ]
+    )
+    equity = pd.Series([100.0, 100.0, 100.0], index=pd.RangeIndex(3))
+    trades = pd.DataFrame(
+        columns=["type", "position_id", "direction", "time", "price", "fill_quote_source"]
+    )
+    result = {
+        "equity": equity,
+        "trades": trades,
+        "account_state_trace": trace,
+        "account_state_trace_complete": True,
+        "initial_balance": 100.0,
+        "n_steps": 2,
+        "exposure_bars": 0,
+        "exposure_fraction": 0.0,
+        "exposure_measure": "fraction_of_evaluation_steps_with_position_at_bar_close",
+        "n_sessions": 1,
+        "n_breach_sessions": 0,
+        "survived_full_year": True,
+        "completed_data_split": True,
+        "episode_end_reason": "data_end",
+        "fail_time": None,
+        "action_counts": {"hold": 2},
+    }
+    metrics = calculate_metrics(
+        equity,
+        trades=trades,
+        n_sessions=1,
+        initial_balance=100.0,
+        periods_per_year=10,
+        account_state_trace=trace,
+        completed_data_split=True,
+    )
+    run_dir = save_run(
+        run_dir=tmp_path / "complete-trace-report",
+        train_result=result,
+        train_metrics=metrics,
+        save_plots=False,
+        save_html=False,
+        save_csv=True,
+    )
+    return run_dir / "training"
+
+
 def _add_q5_cost_evidence(split_dir: Path) -> None:
     rows = pd.DataFrame(
         [
@@ -439,13 +509,48 @@ def test_verify_split_reconciles_exported_raw_artifacts(tmp_path):
 
     assert errors == []
     assert list(breach_events.columns) == [
+        "schema_version",
         "time",
+        "detection_time",
+        "trade_event_count",
         "session_id",
         "reason",
         "equity",
         "fill_time",
     ]
     assert breach_events.empty
+
+
+def test_verify_split_rejects_false_availability_for_breach_metrics(tmp_path: Path) -> None:
+    split_dir = _write_split(tmp_path)
+    metrics_path = split_dir / "metrics.json"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    metrics["metric_availability"]["breach_rate"] = "missing_session_count"
+    metrics_path.write_text(json.dumps(metrics), encoding="utf-8")
+
+    errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
+
+    assert any(
+        "available metric breach_rate has an availability reason" in error for error in errors
+    )
+
+
+def test_verify_split_accepts_historical_v3_metric_schema(tmp_path: Path) -> None:
+    split_dir = _write_split(tmp_path)
+    metrics_path = split_dir / "metrics.json"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    metrics["metric_definition_version"] = "qrl.performance_metrics.v3"
+    for key in (
+        "breach_event_count",
+        "breach_event_count_availability",
+        "breach_session_count",
+        "breach_rate_availability",
+    ):
+        metrics.pop(key, None)
+        metrics["metric_availability"].pop(key, None)
+    metrics_path.write_text(json.dumps(metrics), encoding="utf-8")
+
+    assert verify_split(split_dir, initial_balance=100.0, periods_per_year=10) == []
 
 
 def test_verify_split_reconciles_q5_discounted_constraint_costs(tmp_path: Path) -> None:
@@ -493,6 +598,92 @@ def test_verify_split_detects_modified_position_export(tmp_path):
     errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
 
     assert any("positions.csv does not reconcile" in error for error in errors)
+
+
+def test_verify_split_recomputes_cost_decomposition_from_trade_events(tmp_path: Path) -> None:
+    split_dir = _write_split(tmp_path)
+    costs_path = split_dir / "cost_decomposition.json"
+    costs = json.loads(costs_path.read_text(encoding="utf-8"))
+    assert costs["status"] == "unavailable"
+    assert costs["spread_cost"] is None
+
+    costs["spread_cost"] = 0.0
+    costs_path.write_text(json.dumps(costs), encoding="utf-8")
+    errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
+
+    assert any("cost decomposition spread_cost" in error for error in errors)
+
+
+def test_verify_split_requires_account_reconciliation_for_complete_trace(tmp_path: Path) -> None:
+    split_dir = _write_split(tmp_path)
+    diagnostics_path = split_dir / "evaluation_diagnostics.json"
+    diagnostics = json.loads(diagnostics_path.read_text(encoding="utf-8"))
+    diagnostics["account_state_trace_complete"] = True
+    diagnostics["account_state_trace_rows"] = 0
+    diagnostics_path.write_text(json.dumps(diagnostics), encoding="utf-8")
+
+    errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
+
+    assert any("lacks account_state_reconciliation.json" in error for error in errors)
+
+
+def test_same_report_value_compares_nested_values_and_rejects_tampering() -> None:
+    expected = {"status": "matched", "checks": {"fills": 3}, "residual": 1e-12}
+
+    assert _same_report_value(
+        {"status": "matched", "checks": {"fills": 3}, "residual": 0.0}, expected
+    )
+    assert not _same_report_value(
+        {"status": "matched", "checks": {"fills": 4}, "residual": 0.0}, expected
+    )
+
+
+def test_verify_split_recomputes_complete_account_reconciliation(tmp_path: Path) -> None:
+    split_dir = _write_complete_trace_split(tmp_path)
+    assert verify_split(split_dir, initial_balance=100.0, periods_per_year=10) == []
+
+    report_path = split_dir / "account_state_reconciliation.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["failure_count"] = 1
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
+
+    assert any("account state reconciliation does not reproduce" in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        (
+            "account_state_reconciliation_checks",
+            True,
+            "account reconciliation check count differs from diagnostics",
+        ),
+        (
+            "fill_cost_provenance",
+            {"status": "matched"},
+            "fill-cost provenance summary differs from diagnostics",
+        ),
+        (
+            "cost_decomposition_completed_positions",
+            True,
+            "cost decomposition position count differs from diagnostics",
+        ),
+    ],
+)
+def test_verify_split_rejects_malformed_diagnostic_evidence(
+    tmp_path: Path, field: str, value: object, message: str
+) -> None:
+    split_dir = _write_complete_trace_split(tmp_path)
+    diagnostics_path = split_dir / "evaluation_diagnostics.json"
+    diagnostics = json.loads(diagnostics_path.read_text(encoding="utf-8"))
+    diagnostics[field] = value
+    diagnostics_path.write_text(json.dumps(diagnostics), encoding="utf-8")
+
+    errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
+
+    assert any(message in error for error in errors)
 
 
 def test_verify_split_detects_modified_metric_endpoint(tmp_path):

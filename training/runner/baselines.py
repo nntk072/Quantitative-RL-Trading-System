@@ -26,9 +26,8 @@ import numpy as np
 import pandas as pd
 
 from configuration import load_config
-from evaluation import PerformanceMetrics, calculate_metrics
+from evaluation import PerformanceMetrics, account_path_metric_inputs, calculate_metrics
 from evaluation.reporting.run_artifact_writer import save_run
-from features import FEATURE_CACHE_VERSION, build_features
 from market_data.loading import build_tick_books, run_pipeline
 from market_data.loading.ticks import TickBook
 from market_data.splits.definitions import (
@@ -38,10 +37,11 @@ from market_data.splits.definitions import (
     split_train_test,
 )
 from simulation.backtest import run_backtest
-from simulation.environment.trading_environment_factory import eval_guardrail_kwargs
+from simulation.environment.trading_environment_factory import cost_model, eval_guardrail_kwargs
 from trading.baselines import ema_crossover, macd_ema50_baseline, rsi_mean_reversion
 from trading.policy import resolve_trading_policy
 from trading.risk import RiskDailyPnlBasis
+from training.runner.feature_preparation import build_split_scoped_features
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -174,12 +174,19 @@ def main() -> None:
     secondary_m1 = data.get(secondary_sym, {}).get("M1")
 
     cache_dir = Path(cfg.data.cache_dir)
-    feat_cache = cache_dir / f"{primary_sym}_features_{FEATURE_CACHE_VERSION}.parquet"
-    features = build_features(primary_m1, secondary=secondary_m1, cfg=cfg, cache_path=feat_cache)
-
     # Date-based train / test split
     train_end, test_start = get_split_config(cfg)
     train_start = get_train_start_config(cfg)
+    features = build_split_scoped_features(
+        primary_m1,
+        secondary=secondary_m1,
+        cfg=cfg,
+        train_end=train_end,
+        train_start=train_start,
+        cache_dir=cache_dir,
+        symbol=str(primary_sym),
+        force=args.force,
+    )
     train_bars, test_bars, train_feat, test_feat = split_train_test(
         primary_m1, features, train_end, test_start, train_start
     )
@@ -345,6 +352,7 @@ def main() -> None:
             features=feats,
             policy=run_policy,
             obs_window=cfg.env.obs_window,
+            cost_model=cost_model(cfg),
             initial_balance=cfg.account.initial_balance,
             guardrail_kwargs=eval_guardrail_kwargs(cfg),
             max_loss_per_trade_usd=max_loss_per_trade,
@@ -361,6 +369,9 @@ def main() -> None:
             swing_buffer_pts=swing_buffer,
             sl_mode=str(cfg.risk.get("sl_mode", "fixed")),
             sl_buffer_pts=float(cfg.env.get("sl_buffer_pts", 0.0)),
+            min_lot=float(cfg.risk.min_lot),
+            max_lot=float(cfg.risk.max_lot),
+            lot_step=float(cfg.risk.get("lot_step", 0.01)),
             contract_size=cfg.account.contract_size,
             hold_on_zero=(args.strategy == "macd"),
             exit_action=2 if args.strategy == "macd" else None,
@@ -371,6 +382,7 @@ def main() -> None:
             trades=result["trades"],
             n_sessions=result.get("n_sessions", 1),
             n_breach_sessions=result.get("n_breach_sessions", 0),
+            **account_path_metric_inputs(result),
         )
         log.info(
             "[%s] Sharpe=%.3f  MaxDD=%.2f%%  Trades=%d  Return=%.2f%%",

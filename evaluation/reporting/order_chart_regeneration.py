@@ -32,7 +32,13 @@ from evaluation.reporting.run_artifact_writer import (
 )
 from features.pipeline.feature_matrix_builder import build_features
 from market_data.loading import run_pipeline
-from market_data.splits.definitions import get_split_config, split_bars, split_train_test
+from market_data.splits.definitions import (
+    get_split_config,
+    get_train_start_config,
+    make_train_mask,
+    split_bars,
+    split_train_test,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -57,7 +63,49 @@ def _load_run_config(run_dir: Path) -> Any:
     return load_config([])
 
 
-def _load_split_bars(cfg: Any, split: str, force: bool) -> tuple[pd.DataFrame, pd.DataFrame | None]:
+def _chart_feature_train_mask(cfg: Any, index: pd.DatetimeIndex) -> pd.Series:
+    """Return the saved run's date-bounded feature-fit mask.
+
+    Args:
+        cfg: Saved run configuration containing training date boundaries.
+        index: Bar timestamps to classify as training or later data.
+
+    Returns:
+        Boolean mask selecting rows used for training-only feature fitting.
+    """
+    train_end, _ = get_split_config(cfg)
+    return make_train_mask(index, train_end, get_train_start_config(cfg))
+
+
+def _build_chart_features(
+    run_cfg: Any,
+    feature_cfg: Any,
+    primary: pd.DataFrame,
+    secondary: pd.DataFrame | None,
+) -> pd.DataFrame:
+    """Build chart context over full history with training-only fit statistics.
+
+    Args:
+        run_cfg: Saved run config defining the training interval.
+        feature_cfg: Feature-construction configuration.
+        primary: Primary timeframe bars.
+        secondary: Optional higher-timeframe bars.
+
+    Returns:
+        Full-history chart features fitted using only training rows.
+    """
+    train_mask = _chart_feature_train_mask(run_cfg, pd.DatetimeIndex(primary.index))
+    return build_features(
+        primary,
+        secondary=secondary,
+        cfg=feature_cfg,
+        train_mask=train_mask,
+    )
+
+
+def _load_split_bars(
+    cfg: Any, split: str, force: bool
+) -> tuple[pd.DataFrame, pd.DataFrame | None, pd.DataFrame, pd.DataFrame | None]:
     """Rebuild primary (and secondary if configured) M1 bars for one split.
 
     Args:
@@ -66,7 +114,8 @@ def _load_split_bars(cfg: Any, split: str, force: bool) -> tuple[pd.DataFrame, p
         force: Whether to enable or require the force.
 
     Returns:
-        DataFrame returned by ``_load_split_bars``.
+        Split bars and the full primary/secondary timelines used for causal
+        context and train-scoped feature normalization.
     """
     data = run_pipeline(cfg, force=force)
     primary_m1 = data[cfg.data.primary]["M1"]
@@ -77,8 +126,8 @@ def _load_split_bars(cfg: Any, split: str, force: bool) -> tuple[pd.DataFrame, p
     if secondary_m1 is not None and not secondary_m1.empty:
         train_sec, test_sec = split_bars(secondary_m1, train_end, test_start)
     if split == "training":
-        return train_bars, train_sec
-    return test_bars, test_sec
+        return train_bars, train_sec, primary_m1, secondary_m1
+    return test_bars, test_sec, primary_m1, secondary_m1
 
 
 def _chart_feature_config(
@@ -387,7 +436,7 @@ def _replot_split(
     standard_deviation_timeframes = _standard_deviation_timeframes(trades)
     idea_timeframes = _entry_idea_timeframes(trades)
 
-    bars, secondary = _load_split_bars(cfg, split, force)
+    bars, secondary, feature_bars, feature_secondary = _load_split_bars(cfg, split, force)
     chart_features = None
     if (
         order_block_timeframes
@@ -406,7 +455,7 @@ def _replot_split(
             standard_deviation_timeframes=standard_deviation_timeframes,
             entry_idea_timeframes=idea_timeframes,
         )
-        chart_features = build_features(bars, secondary=secondary, cfg=feature_cfg)
+        chart_features = _build_chart_features(cfg, feature_cfg, feature_bars, feature_secondary)
 
     bar_tz = pd.DatetimeIndex(bars.index).tz
 

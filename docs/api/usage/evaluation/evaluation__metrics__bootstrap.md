@@ -8,44 +8,45 @@ This page contains 4 public callable records owned by `evaluation.metrics.bootst
 
 **Purpose:** A percentile confidence interval.
 
-**Exact API:** {py:obj}`evaluation.metrics.bootstrap.CI` · **Source:** [evaluation/metrics/bootstrap.py:22](../../../../evaluation/metrics/bootstrap.py#L22)
+**Exact API:** {py:obj}`evaluation.metrics.bootstrap.CI` · **Source:** [evaluation/metrics/bootstrap.py:62](../../../../evaluation/metrics/bootstrap.py#L62)
 
 **Observed usage:**
 
-1. [production caller: `bootstrap_ci`](../../../../evaluation/metrics/bootstrap.py#L67)
+1. [production caller: `bootstrap_ci`](../../../../evaluation/metrics/bootstrap.py#L108)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-    arr = np.asarray(values, dtype=np.float64)
+    _validate_bootstrap_parameters(n_boot, level, block_len)
+    arr = _finite_vector(values, "values")
     n = arr.size
     if n == 0:
         return CI(float("nan"), float("nan"), float("nan"), level)
     estimate = float(stat_fn(arr))
-    if n == 1 or n_boot <= 0:
+    if n == 1 or n_boot == 0:
         return CI(estimate, estimate, estimate, level)
 
-        # Moving-block starts require ``n - block_len + 1 > 0``; shrink the block
+    # Moving-block starts require ``n - block_len + 1 > 0``; shrink the block
 # … caller assertions omitted …
 ```
 
-2. [production caller: `paired_metric_difference_ci`](../../../../evaluation/metrics/bootstrap.py#L127)
+2. [production caller: `paired_metric_difference_ci`](../../../../evaluation/metrics/bootstrap.py#L167)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+    control = _finite_vector(control_returns, "control_returns")
+    if treatment.ndim != 1 or control.ndim != 1 or treatment.size != control.size:
         raise ValueError("Paired return series must be one-dimensional and have the same length")
-    if not np.isfinite(treatment).all() or not np.isfinite(control).all():
-        raise ValueError("Paired return series must contain only finite returns")
     n = treatment.size
     if n == 0:
         return CI(float("nan"), float("nan"), float("nan"), level)
     estimate = float(stat_fn(treatment) - stat_fn(control))
-    if n == 1 or n_boot <= 0:
+    if n == 1 or n_boot == 0:
         return CI(estimate, estimate, estimate, level)
 
-    block_len = max(1, min(int(block_len), n))
+    block_len = min(int(block_len), n)
 # … caller assertions omitted …
 ```
 
@@ -60,7 +61,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Percentile bootstrap CI for ``stat_fn(values)``.
 
-**Exact API:** {py:obj}`evaluation.metrics.bootstrap.bootstrap_ci` · **Source:** [evaluation/metrics/bootstrap.py:39](../../../../evaluation/metrics/bootstrap.py#L39)
+**Exact API:** {py:obj}`evaluation.metrics.bootstrap.bootstrap_ci` · **Source:** [evaluation/metrics/bootstrap.py:79](../../../../evaluation/metrics/bootstrap.py#L79)
 
 **Inputs and outputs:**
 
@@ -83,7 +84,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `metrics_with_ci`](../../../../evaluation/metrics/bootstrap.py#L274)
+1. [production caller: `metrics_with_ci`](../../../../evaluation/metrics/bootstrap.py#L311)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -114,7 +115,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Sharpe of bar returns (annualisation matching evaluation/metrics).
 
-**Exact API:** {py:obj}`evaluation.metrics.bootstrap.sharpe_stat` · **Source:** [evaluation/metrics/bootstrap.py:148](../../../../evaluation/metrics/bootstrap.py#L148)
+**Exact API:** {py:obj}`evaluation.metrics.bootstrap.sharpe_stat` · **Source:** [evaluation/metrics/bootstrap.py:188](../../../../evaluation/metrics/bootstrap.py#L188)
 
 **Inputs and outputs:**
 
@@ -133,25 +134,40 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `metrics_with_ci`](../../../../evaluation/metrics/bootstrap.py#L280)
+1. [test fixture: `test_bootstrap_statistics_match_canonical_metric_definitions`](../../../../tests/unit/evaluation/test_metrics.py#L190)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    # Bootstrap estimate should describe the observed path, including the
-    # initial-capital observation and its first loss.
-    mdd_ci = CI(max_drawdown_stat(eq), mdd_ci.lower, mdd_ci.upper, mdd_ci.level)
-    return {
-        "sharpe": bootstrap_ci(
-            rets, lambda r: sharpe_stat(r, periods_per_year), n_boot, level, rng_seed
-        ),
-        "sortino": bootstrap_ci(
-            rets, lambda r: sortino_stat(r, periods_per_year), n_boot, level, rng_seed
-        ),
-        "max_drawdown": mdd_ci,
-# … caller assertions omitted …
+            initial_balance=100.0,
+            trade_pnls=trade_pnls,
+            periods_per_year=12,
+        )
+
+        assert sharpe_stat(returns, periods_per_year=12) == pytest.approx(canonical.sharpe)
+        assert sortino_stat(returns, periods_per_year=12) == pytest.approx(canonical.sortino)
+        assert max_drawdown_stat(equity) == pytest.approx(canonical.max_drawdown)
+        assert win_rate_stat(np.asarray(trade_pnls, dtype=np.float64)) == pytest.approx(
+            canonical.win_rate
+        )
 ```
+
+2. [test fixture: `test_bootstrap_statistics_keep_empty_sample_conventions`](../../../../tests/unit/evaluation/test_metrics.py#L200)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_bootstrap_statistics_keep_empty_sample_conventions(self) -> None:
+    empty = np.asarray([], dtype=np.float64)
+
+    assert sharpe_stat(empty) == 0.0
+    assert sortino_stat(empty) == 0.0
+    assert math.isnan(max_drawdown_stat(empty))
+    assert math.isnan(win_rate_stat(empty))
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -164,7 +180,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return the lower and upper confidence limits as a pair.
 
-**Exact API:** {py:obj}`evaluation.metrics.bootstrap.CI.as_tuple` · **Source:** [evaluation/metrics/bootstrap.py:30](../../../../evaluation/metrics/bootstrap.py#L30)
+**Exact API:** {py:obj}`evaluation.metrics.bootstrap.CI.as_tuple` · **Source:** [evaluation/metrics/bootstrap.py:70](../../../../evaluation/metrics/bootstrap.py#L70)
 
 **Inputs and outputs:**
 

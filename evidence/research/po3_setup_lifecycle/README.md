@@ -12,14 +12,6 @@ The feature tensor and action schema are unchanged.
 - `resolved_config.yaml`: fully resolved feature and data configuration.
 - `event_ledger.json`: source, configuration, input, and limitation metadata.
 - `OUTPUT_SHA256SUMS`: packet file checksums.
-- `producer_state_validation/`: current synthetic source and lifecycle test
-  results, with exact output and source hashes. These tests verify the state
-  transition implementation; they do not turn producer counts into ground-
-  truth events or actions.
-
-The producer-state validation passed 29/29 focused cases on the current source,
-including reclaim/IFVG transitions, conflict separation, prefix invariance, and
-ambiguous-state rejection. See `producer_state_validation/` for the run record.
 
 ## Regeneration
 

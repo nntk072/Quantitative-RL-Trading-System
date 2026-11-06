@@ -11,6 +11,7 @@ from market_data.loading.ticks import TickBook, TickExecutionUnavailable
 from simulation.environment.env import TradingEnv
 from simulation.environment.market_view import BarView
 from trading.account.account_state import AccountState
+from trading.execution import undo_adverse_quote_level_slippage
 from trading.execution.broker import Broker
 from trading.execution.costs import CostModel
 
@@ -36,6 +37,19 @@ def test_adverse_tick_slippage_changes_only_executed_side(
     assert env._adverse_tick_fill_quote((99.0, 101.0), direction, opening=opening) == expected
 
 
+@pytest.mark.parametrize(("direction", "opening"), [(1, False), (-1, False), (1, True), (-1, True)])
+def test_quote_level_slippage_provenance_can_recover_reference_quote(
+    direction: int, opening: bool
+) -> None:
+    quote = (99.0, 101.0)
+    slippage = 2.5
+    shift = slippage if (direction == -1 if opening else direction == 1) else -slippage
+    adjusted = (quote[0] - shift, quote[1] - shift)
+    assert undo_adverse_quote_level_slippage(
+        adjusted, direction, slippage, opening=opening
+    ) == pytest.approx(quote)
+
+
 @pytest.mark.parametrize("slippage", [-0.1, float("nan"), float("inf")])
 def test_environment_rejects_invalid_tick_fill_slippage(slippage: float) -> None:
     env = TradingEnv.__new__(TradingEnv)
@@ -56,6 +70,13 @@ def test_tick_fill_slippage_worsens_entry_and_exit_exactly_once(
     assert position.entry_price == pytest.approx(100.0 + slippage * direction)
     _, exit_price = env._close_at_quote(position, (100.0, 100.0), tick_fill=True)
     assert exit_price == pytest.approx(100.0 - slippage * direction)
+    provenance = env._pending_fill_cost_provenance
+    assert provenance is not None
+    assert provenance["fill_cost_provenance_schema_version"] == "fill_cost_provenance.v1"
+    assert provenance["pre_execution_quote_bid"] == pytest.approx(100.0)
+    assert provenance["pre_execution_quote_ask"] == pytest.approx(100.0)
+    assert provenance["slippage_points_applied_here"] == pytest.approx(slippage)
+    assert provenance["slippage_applied_here"] is True
 
 
 def test_tick_quote_sides_match_buy_ask_and_sell_bid_for_entries_and_exits() -> None:
@@ -253,13 +274,14 @@ def test_tick_and_bar_match_for_identical_unambiguous_target_crossings() -> None
             "_check_multi_tp_ticks",
             "_adverse_tick_fill_quote",
             "_close_at_quote",
+            "_exit_side_bar_range",
         ):
             setattr(env, method, MethodType(getattr(TradingEnv, method), env))
         return env
 
     tick_env = make_env(True)
     bar_env = make_env(False)
-    bar: Any = SimpleNamespace(low=101.0, high=110.0, close=110.0)
+    bar: Any = SimpleNamespace(low=101.0, high=110.0, close=110.0, spread=0.0)
     TradingEnv._check_sl_tp(tick_env, bar, 110.0, 110.5, bar_idx=0)
     TradingEnv._check_sl_tp(bar_env, bar, 110.0, 110.5, bar_idx=0)
     assert tick_env.position is None and bar_env.position is None

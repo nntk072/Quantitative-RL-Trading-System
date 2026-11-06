@@ -42,7 +42,7 @@ def test_session_id_increments_per_day():
     assert sessions[0] != sessions[1]
 ```
 
-2. [test fixture: `_ohlc_index`](../../../../tests/unit/simulation/test_environment/test_ny_steps_eod.py#L33)
+2. [test fixture: `_ohlc_index`](../../../../tests/unit/simulation/test_environment/test_ny_steps_eod.py#L34)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -90,7 +90,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_asia_masks_london_and_asia_ctx`](../../../../tests/unit/features/test_pd_context.py#L78)
+1. [test fixture: `test_asia_masks_london_and_asia_ctx`](../../../../tests/unit/features/test_pd_context.py#L80)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -107,7 +107,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_london_has_asia_not_completed_self_as_running`](../../../../tests/unit/features/test_pd_context.py#L94)
+2. [test fixture: `test_london_has_asia_not_completed_self_as_running`](../../../../tests/unit/features/test_pd_context.py#L96)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

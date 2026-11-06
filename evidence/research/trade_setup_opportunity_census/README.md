@@ -53,7 +53,3 @@ Rebuild the heatmap from the census tables with:
 ```bash
 .venv-x86/bin/python -m scripts.research.analysis.features.plot_entry_idea_opportunity_census
 ```
-
-## Descriptive support review
-
-The review tables mark all 108 catalog combinations as `unsupported_by_config`, `low_episode_support`, or `supported_episode_coverage`. `low_episode_support` means fewer than 10 contiguous active-mask identity episodes in this selected training profile. This is a descriptive review threshold only: these episodes are not ground-truth logical events or independent samples. The month/regime and horizon review tables preserve the original per-cell rows and repeat the candidate-level review status. See `candidate_support_review_provenance.json` for source and output hashes.

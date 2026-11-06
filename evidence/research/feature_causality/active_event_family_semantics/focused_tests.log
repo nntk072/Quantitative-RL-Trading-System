@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 157 items
+
+tests/unit/features/test_pivots_swings.py .................              [ 10%]
+tests/unit/features/test_order_blocks.py ......                          [ 14%]
+tests/unit/features/test_variants.py .......................             [ 29%]
+tests/unit/features/test_po3_config.py ................................. [ 50%]
+..........................                                               [ 66%]
+tests/unit/features/test_po3_state.py .......................            [ 81%]
+tests/unit/features/test_po3_ifvg_state.py .......                       [ 85%]
+tests/unit/features/test_po3_mtf_state.py ..                             [ 87%]
+tests/unit/features/test_smt.py .....                                    [ 90%]
+tests/unit/features/test_liquidity.py ...............                    [100%]
+
+============================= 157 passed in 3.64s ==============================

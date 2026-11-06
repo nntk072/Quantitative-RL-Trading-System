@@ -5,7 +5,12 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from market_data.splits.definitions import get_split_config, split_bars, split_train_test
+from market_data.splits.definitions import (
+    get_split_config,
+    make_train_mask,
+    split_bars,
+    split_train_test,
+)
 
 
 def _make_bars(start: str, end: str, freq: str = "1D", tz: str = "Etc/GMT-3") -> pd.DataFrame:
@@ -111,3 +116,37 @@ def test_split_bars_matches_split_train_test() -> None:
     tr_b, te_b, _, _ = split_train_test(bars, bars, "2025-12-31", "2026-01-01")
     assert tr.index.equals(tr_b.index)
     assert te.index.equals(te_b.index)
+
+
+def test_inclusive_train_end_keeps_subsecond_rows_and_excludes_next_midnight() -> None:
+    index = pd.DatetimeIndex(
+        [
+            "2025-12-31 23:59:59.999999999+00:00",
+            "2026-01-01 00:00:00+00:00",
+        ]
+    )
+    bars = pd.DataFrame({"close": [1.0, 2.0]}, index=index)
+
+    train, test, _, _ = split_train_test(bars, bars, "2025-12-31", "2026-01-01")
+    mask = make_train_mask(index, "2025-12-31")
+
+    assert train.index.equals(index[:1])
+    assert test.index.equals(index[1:])
+    assert mask.tolist() == [True, False]
+
+
+def test_inclusive_train_end_uses_local_calendar_day_across_dst() -> None:
+    index = pd.DatetimeIndex(
+        [
+            "2025-03-08 23:59:59.999999999-05:00",
+            "2025-03-09 00:00:00-05:00",
+        ]
+    ).tz_convert("America/New_York")
+    bars = pd.DataFrame({"close": [1.0, 2.0]}, index=index)
+
+    train, test, _, _ = split_train_test(bars, bars, "2025-03-08", "2025-03-09")
+    mask = make_train_mask(index, "2025-03-08")
+
+    assert train.index.equals(index[:1])
+    assert test.index.equals(index[1:])
+    assert mask.tolist() == [True, False]

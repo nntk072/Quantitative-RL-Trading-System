@@ -31,7 +31,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `initialize_trading_system`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L204)
+2. [production caller: `initialize_trading_system`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L210)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

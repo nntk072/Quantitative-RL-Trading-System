@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from zipfile import ZipFile
 
 import torch
 from gymnasium import spaces
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.save_util import json_to_data
 
 
@@ -42,7 +42,11 @@ def _install_pre_reorganization_checkpoint_modules() -> None:
 
 
 def load_sb3_checkpoint(
-    path: Path, *, legacy_layout_key: str | None = None, device: Any = "auto"
+    path: Path,
+    *,
+    legacy_layout_key: str | None = None,
+    device: Any = "auto",
+    algo: str = "ppo",
 ) -> Any:
     """Load an SB3 checkpoint with only the explicitly selected legacy migration.
 
@@ -50,6 +54,7 @@ def load_sb3_checkpoint(
         path: Path to the input file or directory.
         legacy_layout_key: Legacy layout key used by the operation described above.
         device: Compute device on which to perform the operation.
+        algo: Stable-Baselines3 algorithm stored in the checkpoint.
 
     Returns:
         Result of load an SB3 checkpoint with only the explicitly selected legacy migration.
@@ -58,8 +63,14 @@ def load_sb3_checkpoint(
     from learning.rl.ppo import LegacyClampedStdMultiInputPolicy
     from models.encoders import LegacyTCNEncoderV1, TCNEncoder
 
+    normalized_algo = str(algo).strip().lower()
+    algorithm = {"ppo": PPO, "sac": SAC}.get(normalized_algo)
+    if algorithm is None:
+        raise ValueError(f"unsupported SB3 checkpoint algorithm: {algo!r}")
     if legacy_layout_key != "legacy4_no_exit_v1":
-        return PPO.load(path, device=device)
+        return cast(Any, algorithm).load(path, device=device)
+    if normalized_algo != "ppo":
+        raise ValueError("legacy4_no_exit_v1 migration is supported only for PPO checkpoints")
     with ZipFile(path) as archive:
         if "data" not in archive.namelist():
             raise ValueError(f"legacy checkpoint has no SB3 data record: {path}")
@@ -86,19 +97,23 @@ def load_sb3_checkpoint(
     )
 
 
-def load_sb3_training_checkpoint(path: Path, *, env: Any, device: Any) -> Any:
+def load_sb3_training_checkpoint(path: Path, *, env: Any, device: Any, algo: str = "ppo") -> Any:
     """Resume an SB3 training checkpoint on the caller's prepared environment.
 
     Args:
         path: Path to the input file or directory.
         env: Environment whose state is read or updated.
         device: Compute device on which to perform the operation.
+        algo: Stable-Baselines3 algorithm stored in the checkpoint.
 
     Returns:
         Result of resume an SB3 training checkpoint on the caller's prepared environment.
     """
     _install_pre_reorganization_checkpoint_modules()
-    return PPO.load(path, env=env, device=device)
+    algorithm = {"ppo": PPO, "sac": SAC}.get(str(algo).strip().lower())
+    if algorithm is None:
+        raise ValueError(f"unsupported SB3 training checkpoint algorithm: {algo!r}")
+    return cast(Any, algorithm).load(path, env=env, device=device)
 
 
 def seed_sb3(seed: int) -> None:

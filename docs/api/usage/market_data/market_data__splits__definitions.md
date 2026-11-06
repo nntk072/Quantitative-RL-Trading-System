@@ -8,7 +8,7 @@ This page contains 8 public callable records owned by `market_data.splits.defini
 
 **Purpose:** Extract *train_end* / *test_start* from config with fallback defaults.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.get_split_config` · **Source:** [market_data/splits/definitions.py:96](../../../../market_data/splits/definitions.py#L96)
+**Exact API:** {py:obj}`market_data.splits.definitions.get_split_config` · **Source:** [market_data/splits/definitions.py:98](../../../../market_data/splits/definitions.py#L98)
 
 **Inputs and outputs:**
 
@@ -26,7 +26,7 @@ This page contains 8 public callable records owned by `market_data.splits.defini
 
 **Observed usage:**
 
-1. [test fixture: `test_get_split_config_fallback`](../../../../tests/unit/market_data/test_data_split.py#L83)
+1. [test fixture: `test_get_split_config_fallback`](../../../../tests/unit/market_data/test_data_split.py#L88)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -37,7 +37,7 @@ def test_get_split_config_fallback():
     assert test_start == "2026-01-01"
 ```
 
-2. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L97)
+2. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L134)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -51,9 +51,9 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     train_end, test_start = get_split_config(cfg)
     train_start = get_train_start_config(cfg)
     source_cache_replay_path: Path | None = None
-    if args.source_feature_cache and args.train_only_screen:
-        raise ValueError(
-            "--train-only-screen rebuilds features from training inputs to stay within memory; "
+    train_feature_snapshot_path: Path | None = None
+    if args.train_only_feature_snapshot:
+        features, train_feature_snapshot_path, evaluated_feature_cache_file_sha256 = (
 # … caller assertions omitted …
 ```
 
@@ -70,7 +70,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Boolean mask for the inclusive configured training date range.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.make_train_mask` · **Source:** [market_data/splits/definitions.py:130](../../../../market_data/splits/definitions.py#L130)
+**Exact API:** {py:obj}`market_data.splits.definitions.make_train_mask` · **Source:** [market_data/splits/definitions.py:134](../../../../market_data/splits/definitions.py#L134)
 
 **Inputs and outputs:**
 
@@ -90,39 +90,43 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L121)
+1. [test fixture: `test_inclusive_train_end_keeps_subsecond_rows_and_excludes_next_midnight`](../../../../tests/unit/market_data/test_data_split.py#L131)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        ):
-            raise ValueError("saved run config does not match its manifest SHA-256")
-        source_cache_replay_path = Path(args.source_feature_cache).expanduser()
-        if not source_cache_replay_path.is_absolute():
-            source_cache_replay_path = repository_root(__file__) / source_cache_replay_path
-        train_mask = make_train_mask(pd.DatetimeIndex(primary_m1.index), train_end, train_start)
-        (
-            features,
-            feature_cache,
-            evaluated_feature_cache_hash,
-            evaluated_feature_cache_file_sha256,
-# … caller assertions omitted …
+        ]
+    )
+    bars = pd.DataFrame({"close": [1.0, 2.0]}, index=index)
+
+    train, test, _, _ = split_train_test(bars, bars, "2025-12-31", "2026-01-01")
+    mask = make_train_mask(index, "2025-12-31")
+
+    assert train.index.equals(index[:1])
+    assert test.index.equals(index[1:])
+    assert mask.tolist() == [True, False]
 ```
 
-2. [production caller: `_feature_build_scope`](../../../../evaluation/reanalysis/provenance.py#L105)
+2. [test fixture: `test_inclusive_train_end_uses_local_calendar_day_across_dst`](../../../../tests/unit/market_data/test_data_split.py#L148)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-    mask = make_train_mask(cast(Any, bars.index), train_end, train_start)
-    prebuilt_value = OmegaConf.select(cfg, "data.prebuilt_feature_cache", default=None)
-    if prebuilt_value:
-        cache_path = Path(str(prebuilt_value)).expanduser()
-        if not cache_path.is_absolute():
-            cache_path = repository_root(__file__) / cache_path
-# … caller assertions omitted …
+# … caller setup omitted …
+        ]
+    ).tz_convert("America/New_York")
+    bars = pd.DataFrame({"close": [1.0, 2.0]}, index=index)
+
+    train, test, _, _ = split_train_test(bars, bars, "2025-03-08", "2025-03-09")
+    mask = make_train_mask(index, "2025-03-08")
+
+    assert train.index.equals(index[:1])
+    assert test.index.equals(index[1:])
+    assert mask.tolist() == [True, False]
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -159,7 +163,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_smoke_fixture_spans_default_split`](../../../../tests/integration/test_scripts_smoke.py#L229)
+1. [test fixture: `test_smoke_fixture_spans_default_split`](../../../../tests/integration/test_scripts_smoke.py#L240)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -174,7 +178,7 @@ def test_smoke_fixture_spans_default_split(tmp_path: Path) -> None:
     assert not test_bars.empty
 ```
 
-2. [test fixture: `test_train_max_date`](../../../../tests/unit/market_data/test_data_split.py#L31)
+2. [test fixture: `test_train_max_date`](../../../../tests/unit/market_data/test_data_split.py#L36)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -197,7 +201,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Extract *train_end* / *test_start* from config with fallback defaults.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.get_split_config` · **Source:** [market_data/splits/definitions.py:96](../../../../market_data/splits/definitions.py#L96)
+**Exact API:** {py:obj}`market_data.splits.definitions.get_split_config` · **Source:** [market_data/splits/definitions.py:98](../../../../market_data/splits/definitions.py#L98)
 
 **Inputs and outputs:**
 
@@ -215,7 +219,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_get_split_config_fallback`](../../../../tests/unit/market_data/test_data_split.py#L83)
+1. [test fixture: `test_get_split_config_fallback`](../../../../tests/unit/market_data/test_data_split.py#L88)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -226,7 +230,7 @@ def test_get_split_config_fallback():
     assert test_start == "2026-01-01"
 ```
 
-2. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L97)
+2. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L134)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -240,9 +244,9 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     train_end, test_start = get_split_config(cfg)
     train_start = get_train_start_config(cfg)
     source_cache_replay_path: Path | None = None
-    if args.source_feature_cache and args.train_only_screen:
-        raise ValueError(
-            "--train-only-screen rebuilds features from training inputs to stay within memory; "
+    train_feature_snapshot_path: Path | None = None
+    if args.train_only_feature_snapshot:
+        features, train_feature_snapshot_path, evaluated_feature_cache_file_sha256 = (
 # … caller assertions omitted …
 ```
 
@@ -259,7 +263,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Read the optional first train date without changing legacy split config.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.get_train_start_config` · **Source:** [market_data/splits/definitions.py:114](../../../../market_data/splits/definitions.py#L114)
+**Exact API:** {py:obj}`market_data.splits.definitions.get_train_start_config` · **Source:** [market_data/splits/definitions.py:118](../../../../market_data/splits/definitions.py#L118)
 
 **Inputs and outputs:**
 
@@ -277,7 +281,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L98)
+1. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L135)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -290,31 +294,21 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     train_end, test_start = get_split_config(cfg)
     train_start = get_train_start_config(cfg)
     source_cache_replay_path: Path | None = None
-    if args.source_feature_cache and args.train_only_screen:
-        raise ValueError(
-            "--train-only-screen rebuilds features from training inputs to stay within memory; "
-            "omit --source-feature-cache"
+    train_feature_snapshot_path: Path | None = None
+    if args.train_only_feature_snapshot:
+        features, train_feature_snapshot_path, evaluated_feature_cache_file_sha256 = (
+            _load_train_only_feature_snapshot(
 # … caller assertions omitted …
 ```
 
-2. [production caller: `main`](../../../../training/runner/baselines.py#L175)
+2. [production caller: `_chart_feature_train_mask`](../../../../evaluation/reporting/order_chart_regeneration.py#L77)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-    feat_cache = cache_dir / f"{primary_sym}_features_{FEATURE_CACHE_VERSION}.parquet"
-    features = build_features(primary_m1, secondary=secondary_m1, cfg=cfg, cache_path=feat_cache)
-
-    # Date-based train / test split
-    train_end, test_start = get_split_config(cfg)
-    train_start = get_train_start_config(cfg)
-    train_bars, test_bars, train_feat, test_feat = split_train_test(
-        primary_m1, features, train_end, test_start, train_start
-    )
-    train_sec = test_sec = None
-    if secondary_m1 is not None and not secondary_m1.empty:
-# … caller assertions omitted …
+def _chart_feature_train_mask(cfg: Any, index: pd.DatetimeIndex) -> pd.Series:
+    train_end, _ = get_split_config(cfg)
+    return make_train_mask(index, train_end, get_train_start_config(cfg))
 ```
 
 **Workflow context:**
@@ -328,7 +322,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Boolean mask for the inclusive configured training date range.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.make_train_mask` · **Source:** [market_data/splits/definitions.py:130](../../../../market_data/splits/definitions.py#L130)
+**Exact API:** {py:obj}`market_data.splits.definitions.make_train_mask` · **Source:** [market_data/splits/definitions.py:134](../../../../market_data/splits/definitions.py#L134)
 
 **Inputs and outputs:**
 
@@ -348,39 +342,43 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L121)
+1. [test fixture: `test_inclusive_train_end_keeps_subsecond_rows_and_excludes_next_midnight`](../../../../tests/unit/market_data/test_data_split.py#L131)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        ):
-            raise ValueError("saved run config does not match its manifest SHA-256")
-        source_cache_replay_path = Path(args.source_feature_cache).expanduser()
-        if not source_cache_replay_path.is_absolute():
-            source_cache_replay_path = repository_root(__file__) / source_cache_replay_path
-        train_mask = make_train_mask(pd.DatetimeIndex(primary_m1.index), train_end, train_start)
-        (
-            features,
-            feature_cache,
-            evaluated_feature_cache_hash,
-            evaluated_feature_cache_file_sha256,
-# … caller assertions omitted …
+        ]
+    )
+    bars = pd.DataFrame({"close": [1.0, 2.0]}, index=index)
+
+    train, test, _, _ = split_train_test(bars, bars, "2025-12-31", "2026-01-01")
+    mask = make_train_mask(index, "2025-12-31")
+
+    assert train.index.equals(index[:1])
+    assert test.index.equals(index[1:])
+    assert mask.tolist() == [True, False]
 ```
 
-2. [production caller: `_feature_build_scope`](../../../../evaluation/reanalysis/provenance.py#L105)
+2. [test fixture: `test_inclusive_train_end_uses_local_calendar_day_across_dst`](../../../../tests/unit/market_data/test_data_split.py#L148)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-    mask = make_train_mask(cast(Any, bars.index), train_end, train_start)
-    prebuilt_value = OmegaConf.select(cfg, "data.prebuilt_feature_cache", default=None)
-    if prebuilt_value:
-        cache_path = Path(str(prebuilt_value)).expanduser()
-        if not cache_path.is_absolute():
-            cache_path = repository_root(__file__) / cache_path
-# … caller assertions omitted …
+# … caller setup omitted …
+        ]
+    ).tz_convert("America/New_York")
+    bars = pd.DataFrame({"close": [1.0, 2.0]}, index=index)
+
+    train, test, _, _ = split_train_test(bars, bars, "2025-03-08", "2025-03-09")
+    mask = make_train_mask(index, "2025-03-08")
+
+    assert train.index.equals(index[:1])
+    assert test.index.equals(index[1:])
+    assert mask.tolist() == [True, False]
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -393,7 +391,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Split a single bar frame on the same date boundaries as ``split_train_test``.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.split_bars` · **Source:** [market_data/splits/definitions.py:75](../../../../market_data/splits/definitions.py#L75)
+**Exact API:** {py:obj}`market_data.splits.definitions.split_bars` · **Source:** [market_data/splits/definitions.py:77](../../../../market_data/splits/definitions.py#L77)
 
 **Inputs and outputs:**
 
@@ -414,7 +412,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_split_bars_matches_split_train_test`](../../../../tests/unit/market_data/test_data_split.py#L110)
+1. [test fixture: `test_split_bars_matches_split_train_test`](../../../../tests/unit/market_data/test_data_split.py#L115)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -432,7 +430,7 @@ def test_split_bars_matches_split_train_test() -> None:
     assert te.index.equals(te_b.index)
 ```
 
-2. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L183)
+2. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L231)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -489,7 +487,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_smoke_fixture_spans_default_split`](../../../../tests/integration/test_scripts_smoke.py#L229)
+1. [test fixture: `test_smoke_fixture_spans_default_split`](../../../../tests/integration/test_scripts_smoke.py#L240)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -504,7 +502,7 @@ def test_smoke_fixture_spans_default_split(tmp_path: Path) -> None:
     assert not test_bars.empty
 ```
 
-2. [test fixture: `test_train_max_date`](../../../../tests/unit/market_data/test_data_split.py#L31)
+2. [test fixture: `test_train_max_date`](../../../../tests/unit/market_data/test_data_split.py#L36)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

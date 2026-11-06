@@ -78,28 +78,24 @@ def guardrail_kwargs(cfg: Any) -> dict[str, Any]:
     """
     policy = resolve_trading_policy(cfg)
     if policy.repeated_payout:
+        if policy.max_loss_limit_initial_pct is None:
+            raise ValueError("maximum-loss percentage is required for repeated payouts")
         return {
-            "daily_loss_limit": policy.daily_loss_limit,
-            "max_loss_limit": policy.operating_balance - policy.account_floor,
+            "max_drawdown_mode": str(cfg.ftmo.get("max_drawdown_mode", "static")),
             "risk_per_trade_limit": policy.operating_balance * policy.max_agent_risk_frac,
-            "soft_daily_loss_limit": 0.0,
-            "soft_max_loss_limit": 0.0,
             "trailing_dd_limit": 0.0,
             "soft_trailing_dd_limit": 0.0,
-            "limit_value_mode": "fixed_usd",
-            "risk_per_trade_limit_pct": 0.0,
-            "daily_loss_limit_pct": 0.0,
+            "limit_value_mode": "percent_equity",
+            "risk_per_trade_limit_pct": policy.max_agent_risk_frac,
+            "daily_loss_limit_pct": policy.daily_loss_limit_pct,
             "soft_daily_loss_limit_pct": 0.0,
-            "max_loss_limit_initial_pct": 0.0,
+            "max_loss_limit_initial_pct": float(policy.max_loss_limit_initial_pct),
             "soft_max_loss_limit_initial_pct": 0.0,
         }
     return {
+        "max_drawdown_mode": str(cfg.ftmo.get("max_drawdown_mode", "static")),
         "limit_value_mode": str(cfg.ftmo.get("limit_value_mode", "fixed_usd")),
-        "daily_loss_limit": float(cfg.ftmo.daily_loss_limit),
-        "max_loss_limit": float(cfg.ftmo.max_loss_limit),
         "risk_per_trade_limit": float(cfg.ftmo.risk_per_trade_limit),
-        "soft_daily_loss_limit": float(cfg.ftmo.get("soft_daily_loss_limit", 5000.0)),
-        "soft_max_loss_limit": float(cfg.ftmo.get("soft_max_loss_limit", 10000.0)),
         "trailing_dd_limit": float(cfg.ftmo.get("trailing_dd_limit", 0.0)),
         "soft_trailing_dd_limit": float(cfg.ftmo.get("soft_trailing_dd_limit", 0.0)),
         "risk_per_trade_limit_pct": float(cfg.ftmo.get("risk_per_trade_limit_pct", 0.01)),
@@ -113,7 +109,7 @@ def guardrail_kwargs(cfg: Any) -> dict[str, Any]:
 
 
 def eval_guardrail_kwargs(cfg: Any) -> dict[str, float]:
-    """FTMO rules for train/test rollouts: daily $5k + max $10k from initial.
+    """Resolve percentage-based daily and maximum-loss rules for evaluation.
 
     Args:
         cfg: Run configuration used by this operation.
@@ -223,7 +219,7 @@ def build_eval_common(
     env_vae: Any | None = None,
     pre_ny_by_date: dict[Any, Any] | None = None,
     arch: str | None = None,
-    tick_fill_slippage_points: float = 0.0,
+    tick_fill_slippage_points: float | None = None,
 ) -> tuple[dict[str, Any], Any, Any, float, bool]:
     """Kwargs shared by the in-loop dashboard slice and the final eval.
 
@@ -233,7 +229,8 @@ def build_eval_common(
         env_vae: Env vae used by the operation described above.
         pre_ny_by_date: Key-value data used for the pre ny by date.
         arch: Arch used by the operation described above.
-        tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
+        tick_fill_slippage_points: Market-fill slippage override; defaults to
+            ``costs.slippage_points``. Explicit zero preserves a zero-slippage replay.
 
     Returns:
         Whether build eval common meets the requested condition.
@@ -243,6 +240,12 @@ def build_eval_common(
     sl_buffer_pts = float(cfg.env.get("sl_buffer_pts", 0.0))
     risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
     policy = resolve_trading_policy(cfg)
+    resolved_cost_model = cost_model(cfg)
+    resolved_market_slippage = (
+        resolved_cost_model.slippage_points
+        if tick_fill_slippage_points is None
+        else float(tick_fill_slippage_points)
+    )
     use_mtf, mtf_windows = mtf_settings(cfg, arch)
     observation_schema_version = (
         "account-state-v3-repeated-payout"
@@ -252,7 +255,7 @@ def build_eval_common(
     eval_common = {
         "obs_window": cfg.env.obs_window,
         "initial_balance": cfg.account.initial_balance,
-        "cost_model": cost_model(cfg),
+        "cost_model": resolved_cost_model,
         "guardrail_kwargs": eval_guardrail_kwargs(cfg),
         "risk_frac_range": risk_frac_range,
         "rr_ratio_range": rr_ratio_range,
@@ -261,6 +264,9 @@ def build_eval_common(
         "tp_reference": str(cfg.risk.get("tp_reference", "structural")),
         "swing_buffer_pts": cfg.risk.swing_buffer_pts,
         "contract_size": cfg.account.contract_size,
+        "min_lot": float(cfg.risk.min_lot),
+        "max_lot": float(cfg.risk.max_lot),
+        "lot_step": float(cfg.risk.get("lot_step", 0.01)),
         "max_loss_per_trade_usd": max_loss_per_trade(cfg),
         "dsr_eta": cfg.env.reward_dsr_eta,
         "continuous_actions": (args.algo == "sac") if args is not None else False,
@@ -272,6 +278,7 @@ def build_eval_common(
         "strategy": strategy,
         "strategy_actions": strategy_actions,
         "trade_setup_actions": bool(cfg.env.get("trade_setup_actions", False)),
+        "agent_entry_execution": bool(cfg.env.get("agent_entry_execution", False)),
         "entry_state_machine": bool(cfg.env.get("entry_state_machine", False)),
         "candidate_max_age_bars": int(cfg.env.get("candidate_max_age_bars", 5)),
         "arm_requires_retest": bool(cfg.env.get("arm_requires_retest", False)),
@@ -295,13 +302,14 @@ def build_eval_common(
         "observation_schema_version": observation_schema_version,
         "observation_age_scale_bars": float(cfg.env.get("observation_age_scale_bars", 60.0)),
         "reachable_r_validity_mask": bool(cfg.env.get("reachable_r_validity_mask", False)),
+        "feature_validity_channels": bool(cfg.env.get("feature_validity_channels", False)),
         "entry_intensity_threshold": float(cfg.env.get("entry_intensity_threshold", 0.0)),
         "peak_trailing_dd_limit": float(cfg.env.get("peak_trailing_dd_limit", 0.0)),
         "agent_direction_control": bool(cfg.env.get("agent_direction_control", False)),
         "direction_override_threshold": float(cfg.env.get("direction_override_threshold", 0.0)),
         "fill_delay_ms": fill_delay_ms(cfg),
         "randomized_fill_latency_ms": randomized_fill_latency_ms(cfg),
-        "tick_fill_slippage_points": float(tick_fill_slippage_points),
+        "tick_fill_slippage_points": float(resolved_market_slippage),
         "tick_execution_required": tick_execution_required(cfg),
         "max_tick_quote_wait_ms": max_tick_quote_wait_ms(cfg),
         "execution_seed": (
@@ -329,6 +337,11 @@ def build_eval_common(
         "session_start": str(cfg.session.get("start", "16:30")),
         "trading_policy": policy.to_dict(),
         "fill_latency_bars": fill_latency_bars(cfg),
+        "limit_order_max_offset_atr": float(cfg.execution.get("limit_order_max_offset_atr", 1.0)),
+        "limit_order_max_ttl_bars": int(cfg.execution.get("limit_order_max_ttl_bars", 60)),
+        "limit_order_require_trade_through": bool(
+            cfg.execution.get("limit_order_require_trade_through", False)
+        ),
     }
     return eval_common, strategy, strategy_reward, strategy_weight, strategy_actions
 
@@ -567,6 +580,15 @@ def make_env(
         if policy.repeated_payout
         else str(cfg.env.get("observation_schema_version", "account-state-v1"))
     )
+    configured_tickbook = (
+        tickbook
+        if (
+            tick_execution_required(cfg)
+            or randomized_fill_latency_ms(cfg) > 0.0
+            or bool(cfg.env.get("agent_entry_execution", False))
+        )
+        else None
+    )
     return TradingEnv(
         bars=bars,
         features=features,
@@ -582,6 +604,7 @@ def make_env(
         tp_reference=str(cfg.risk.get("tp_reference", "structural")),
         contract_size=cfg.account.contract_size,
         max_loss_per_trade_usd=max_loss_per_trade(cfg),
+        lot_step=float(cfg.risk.get("lot_step", 0.01)),
         dsr_eta=cfg.env.reward_dsr_eta,
         max_episode_steps=max_episode_steps(cfg),
         episodic=episodic,
@@ -590,6 +613,7 @@ def make_env(
         strategy=strategy,
         strategy_actions=bool(cfg.env.get("strategy_actions", False)),
         trade_setup_actions=bool(cfg.env.get("trade_setup_actions", False)),
+        agent_entry_execution=bool(cfg.env.get("agent_entry_execution", False)),
         entry_state_machine=bool(cfg.env.get("entry_state_machine", False)),
         candidate_max_age_bars=int(cfg.env.get("candidate_max_age_bars", 5)),
         arm_requires_retest=bool(cfg.env.get("arm_requires_retest", False)),
@@ -597,6 +621,7 @@ def make_env(
         observation_schema_version=observation_schema_version,
         observation_age_scale_bars=float(cfg.env.get("observation_age_scale_bars", 60.0)),
         reachable_r_validity_mask=bool(cfg.env.get("reachable_r_validity_mask", False)),
+        feature_validity_channels=bool(cfg.env.get("feature_validity_channels", False)),
         strict_research_eligibility=bool(cfg.env.get("strict_research_eligibility", False)),
         sl_buffer_pts=float(cfg.env.get("sl_buffer_pts", 0.0)),
         strategy_reward=strategy_reward,
@@ -628,12 +653,12 @@ def make_env(
         ema_runner_fraction=float(cfg.env.get("ema_runner_fraction", 0.0)),
         tp_breakeven_alpha=float(cfg.env.get("tp_breakeven_alpha", 0.5)),
         risk_floor=float(cfg.env.get("risk_floor", 0.0005)),
-        tickbook=tickbook,
+        tickbook=configured_tickbook,
         tick_execution_required=tick_execution_required(cfg),
         fill_delay_ms=fill_delay_ms(cfg),
         randomized_fill_latency_ms=randomized_fill_latency_ms(cfg),
         max_tick_quote_wait_ms=max_tick_quote_wait_ms(cfg),
-        tick_fill_slippage_points=0.0,
+        tick_fill_slippage_points=cost_model(cfg).slippage_points,
         use_vae=use_vae,
         vae=vae,
         pre_ny_by_date=pre_ny_by_date,
@@ -648,4 +673,9 @@ def make_env(
         session_start=str(cfg.session.get("start", "16:30")),
         trading_policy=policy.to_dict(),
         fill_latency_bars=fill_latency_bars(cfg),
+        limit_order_max_offset_atr=float(cfg.execution.get("limit_order_max_offset_atr", 1.0)),
+        limit_order_max_ttl_bars=int(cfg.execution.get("limit_order_max_ttl_bars", 60)),
+        limit_order_require_trade_through=bool(
+            cfg.execution.get("limit_order_require_trade_through", False)
+        ),
     )

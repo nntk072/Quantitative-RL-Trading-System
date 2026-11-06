@@ -89,6 +89,31 @@ def _default_cfg() -> dict[str, Any]:
 class TestBuildFeaturesPipeline:
     """End-to-end build_features pipeline tests."""
 
+    def test_survival_overlay_builds_setup_flags_for_all_timeframes(
+        self, deterministic_bars: pd.DataFrame
+    ) -> None:
+        from configuration import load_config
+        from decisioning.trade_setup import (
+            TRADE_SETUP_DIRECTIONS,
+            TRADE_SETUP_IDEAS,
+            TRADE_SETUP_TIMEFRAMES,
+        )
+
+        cfg = load_config(config_path="config/research/survival_qualification.yaml")
+        assert cfg.features.entry_ideas.enabled is True
+        features = build_features(deterministic_bars, cfg=cfg)
+        observation = select_obs_columns(features)
+        expected = {
+            f"entry_idea_{idea}_{timeframe}_{'long' if direction == 1 else 'short'}"
+            for idea in TRADE_SETUP_IDEAS
+            for timeframe in TRADE_SETUP_TIMEFRAMES
+            for direction in TRADE_SETUP_DIRECTIONS
+        }
+
+        assert len(expected) == 108
+        assert expected.issubset(set(map(str, features.columns)))
+        assert expected.issubset(set(map(str, observation.columns)))
+
     def test_default_config_enables_all_timeframe_swing_levels_and_targets(self) -> None:
         cfg = OmegaConf.load("config/base/default.yaml")
         all_timeframes = ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]

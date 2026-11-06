@@ -15,6 +15,27 @@
     "reported_total_pnl": -10001.61757134684,
     "status": "matched"
   },
+  "cashflow_equity_reconciliation": {
+    "allocated_entry_commission_total": 0.0,
+    "basis": "initial balance plus chronological close-fill net PnL less recorded payouts; equity is checked only when flat",
+    "checks": {
+      "close_net_pnl_matches_exit_pnl_less_entry_commission": 208,
+      "flat_close_equity_matches_cumulative_cashflows": 203
+    },
+    "close_charge_checks": 208,
+    "close_fill_count": 208,
+    "completed_close_count": 203,
+    "completed_close_equity_checks": 203,
+    "ending_reconstructed_balance": 89998.38242865316,
+    "failure_count": 0,
+    "failures": {},
+    "first_mismatch": null,
+    "missing_columns": [],
+    "open_fill_count": 203,
+    "open_position_count_at_end": 0,
+    "payout_count": 0,
+    "status": "matched"
+  },
   "counts": {
     "completed_positions": 203,
     "decision_event_types": {
@@ -148,6 +169,7 @@
     "Per-position MFE and MAE are not present in the required source columns and are not derived by this report.",
     "Payout and total-economic-value reconciliation requires the recorded payout ledger and evaluation diagnostics; missing source fields are reported as incomplete.",
     "Repeated-payout cycle outcomes reconcile against payout, breach, and diagnostic ledgers when the corresponding events occur; missing linkage fields remain incomplete.",
+    "Chronological cashflow/equity checks validate completed-close equity only when the account is flat; they do not reconstruct open-position mark-to-market or historical daily-risk state.",
     "This report is descriptive and does not identify causal loss mechanisms or economic superiority."
   ],
   "mfe_mae_columns": {

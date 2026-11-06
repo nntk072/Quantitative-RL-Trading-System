@@ -284,10 +284,11 @@ def account_state_v2(
 ) -> np.ndarray[Any, Any]:
     """Build normalized v2 state without changing account or risk semantics.
 
-    The caller supplies the policy-canonical ``daily_loss`` value. For v2 that
-    remains legacy realized-loss-only; repeated-payout v3 supplies the fixed-session
-    equity loss. ``active_sl_headroom_over_initial_risk`` is positive when the
-    current price is on the safe side of the active stop.
+    The caller supplies the policy-canonical ``daily_loss`` value. The current
+    account policy uses session-equity loss, including open PnL; v3 retains this
+    coordinate layout while versioning repeated-payout account semantics.
+    ``active_sl_headroom_over_initial_risk`` is positive when the current price
+    is on the safe side of the active stop.
 
     Args:
         equity: Current account equity in account currency.

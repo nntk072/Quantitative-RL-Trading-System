@@ -1,0 +1,13 @@
+{
+  "claim_scope": "current-source tensor-level validity-channel, temporal-mask, and padding behavior for M1 and eight HTF sequence inputs",
+  "limitations": [
+    "Finite zero already emitted by an upstream producer remains indistinguishable from a genuine finite zero.",
+    "No policy was trained or evaluated with the default-off validity channels.",
+    "VAE validity, causal/economic feature acceptance, and historical decision linkage are outside scope."
+  ],
+  "schema": "qrl.timeframe_validity_padding_semantics.v1",
+  "status": "passed_with_warmup_gate_open",
+  "stream_count": 9,
+  "test_count": 119,
+  "test_file_count": 6
+}

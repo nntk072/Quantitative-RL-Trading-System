@@ -30,7 +30,14 @@ def test_partial_fills_accumulate_once_and_complete_only_at_final_fill() -> None
         _last_realized_close_pnl=None,
         _last_realized_close_r=None,
         _pending_realized_r=None,
-        broker=SimpleNamespace(cost_model=SimpleNamespace(total_cost=lambda qty: 0.0)),
+        contract_size=1.0,
+        broker=SimpleNamespace(
+            cost_model=SimpleNamespace(
+                total_cost=lambda qty: 0.0,
+                commission_per_lot=0.0,
+            ),
+            contract_size=1.0,
+        ),
     )
     first = {"type": "tp_partial_close", "pnl": 30.0, "size": 0.3}
     TradingEnv._stamp_exit(env, first, 110.0)

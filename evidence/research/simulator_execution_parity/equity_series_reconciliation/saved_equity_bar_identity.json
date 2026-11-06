@@ -1,0 +1,246 @@
+{
+  "analysis_script": {
+    "path": "scripts/research/analysis/evaluation/audit_saved_equity_bar_identity.py",
+    "sha256": "baf31518baff669717fa6c24b9b9aa3e4241770872b1b07e3c47d456893bd718"
+  },
+  "exact_match_count": 0,
+  "hash_algorithm": "evaluation.reporting.run_manifest.dataframe_sha256",
+  "input_identity_mismatch_count": 4,
+  "partitions": [
+    {
+      "arm": "A4A",
+      "current_local_frame": {
+        "cache_manifest_sha256": "9db94803c0afb879a4b877e542473e85380687846a3b89644906da1171279684",
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "parquet_sha256": "6d8f5921f680c8dc1ef246a7bf0792512da01ebe789e05199f5703f376dc40b2",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/training/US100.cash_M1_v4-semantic-manifest.parquet",
+        "rows": 351432,
+        "sha256": "ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+        "start": "2024-12-30 01:05:00+03:00"
+      },
+      "exact_frame_hash_matches_expected": false,
+      "expected_run_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "rows": 351432,
+        "sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "start": "2024-12-30 01:05:00+03:00"
+      },
+      "interpretation": "Matching row counts, columns, and time bounds do not establish value identity; do not use these bars to claim exact saved-run mark-to-market reconciliation.",
+      "layout_matches_expected": true,
+      "partition": "training",
+      "source_config": {
+        "current_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "expected_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml"
+      },
+      "source_raw_input": {
+        "current_cache_source_identity": "native:c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+        "sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "sha256_matches_current_cache_source_identity": true
+      },
+      "status": "input_identity_mismatch"
+    },
+    {
+      "arm": "A4A",
+      "current_local_frame": {
+        "cache_manifest_sha256": "793939edbaaf03f7fbae3514dcc1d2008cda5ef02b106383978fc3ab70f02255",
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "parquet_sha256": "180dd261b02c3d80321c6f4e735c3bfcb90a9f21395f12a8887e3ccec62fdca3",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/testing/US100.cash_M1_v4-semantic-manifest.parquet",
+        "rows": 279355,
+        "sha256": "8e394641b9734209e4265e3c978e26b912c61c8e4fd4db236a5f9ff0635bc624",
+        "start": "2026-01-02 01:05:00+03:00"
+      },
+      "exact_frame_hash_matches_expected": false,
+      "expected_run_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "rows": 279355,
+        "sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "start": "2026-01-02 01:05:00+03:00"
+      },
+      "interpretation": "Matching row counts, columns, and time bounds do not establish value identity; do not use these bars to claim exact saved-run mark-to-market reconciliation.",
+      "layout_matches_expected": true,
+      "partition": "testing",
+      "source_config": {
+        "current_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "expected_sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/attempt1/ladder_a4a_entry_fsm_hidden_qgrid025__seed50/20261024_150835_114072_rl_train_seed50_tcn/config.yaml"
+      },
+      "source_raw_input": {
+        "current_cache_source_identity": "native:0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing/US100.cash_M1_202412300105_202610162349.csv",
+        "sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "sha256_matches_current_cache_source_identity": true
+      },
+      "status": "input_identity_mismatch"
+    },
+    {
+      "arm": "A4B",
+      "current_local_frame": {
+        "cache_manifest_sha256": "9db94803c0afb879a4b877e542473e85380687846a3b89644906da1171279684",
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "parquet_sha256": "6d8f5921f680c8dc1ef246a7bf0792512da01ebe789e05199f5703f376dc40b2",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/training/US100.cash_M1_v4-semantic-manifest.parquet",
+        "rows": 351432,
+        "sha256": "ddb03dd3494803dfd5fda1dc4edf9f7601301480c5246d119cb1a815dc0819ad",
+        "start": "2024-12-30 01:05:00+03:00"
+      },
+      "exact_frame_hash_matches_expected": false,
+      "expected_run_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2025-12-31 23:49:00+03:00",
+        "rows": 351432,
+        "sha256": "6212340f79b3cf7d9b31c60a4717f685bceac55fb4225b51be23f0ec7b380696",
+        "start": "2024-12-30 01:05:00+03:00"
+      },
+      "interpretation": "Matching row counts, columns, and time bounds do not establish value identity; do not use these bars to claim exact saved-run mark-to-market reconciliation.",
+      "layout_matches_expected": true,
+      "partition": "training",
+      "source_config": {
+        "current_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "expected_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml"
+      },
+      "source_raw_input": {
+        "current_cache_source_identity": "native:c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/training/US100.cash_M1_202412300105_202610162349.csv",
+        "sha256": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+        "sha256_matches_current_cache_source_identity": true
+      },
+      "status": "input_identity_mismatch"
+    },
+    {
+      "arm": "A4B",
+      "current_local_frame": {
+        "cache_manifest_sha256": "793939edbaaf03f7fbae3514dcc1d2008cda5ef02b106383978fc3ab70f02255",
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "parquet_sha256": "180dd261b02c3d80321c6f4e735c3bfcb90a9f21395f12a8887e3ccec62fdca3",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/cache/train_test_2025_2026/testing/US100.cash_M1_v4-semantic-manifest.parquet",
+        "rows": 279355,
+        "sha256": "8e394641b9734209e4265e3c978e26b912c61c8e4fd4db236a5f9ff0635bc624",
+        "start": "2026-01-02 01:05:00+03:00"
+      },
+      "exact_frame_hash_matches_expected": false,
+      "expected_run_frame": {
+        "columns": [
+          "open",
+          "high",
+          "low",
+          "close",
+          "tickvol",
+          "vol",
+          "spread",
+          "gap_flag",
+          "session",
+          "session_id"
+        ],
+        "end": "2026-10-16 23:49:00+03:00",
+        "rows": 279355,
+        "sha256": "2856c00ee00e12d1749e85942119605e22665c67834bdc5b99e258cd90103b13",
+        "start": "2026-01-02 01:05:00+03:00"
+      },
+      "interpretation": "Matching row counts, columns, and time bounds do not establish value identity; do not use these bars to claim exact saved-run mark-to-market reconciliation.",
+      "layout_matches_expected": true,
+      "partition": "testing",
+      "source_config": {
+        "current_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "expected_sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/ladder_a4b_entry_fsm_qgrid025__seed50/attempt1/ladder_a4b_entry_fsm_qgrid025__seed50/20261024_150835_483291_rl_train_seed50_tcn/config.yaml"
+      },
+      "source_raw_input": {
+        "current_cache_source_identity": "native:0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/testing/US100.cash_M1_202412300105_202610162349.csv",
+        "sha256": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+        "sha256_matches_current_cache_source_identity": true
+      },
+      "status": "input_identity_mismatch"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "preflight only; no equity or mark-to-market values were reconstructed",
+  "status": "incomplete"
+}

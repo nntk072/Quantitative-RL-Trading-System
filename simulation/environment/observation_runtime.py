@@ -16,7 +16,13 @@ from decisioning.observations import (
 from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CATEGORY_COUNT
 
 from .mixin_base import RuntimeMixinBase
-from .observations import DEFAULT_HTF_WINDOWS, HTF_BRANCHES, closed_window
+from .observations import (
+    DEFAULT_HTF_WINDOWS,
+    HTF_BRANCHES,
+    closed_window,
+    prepare_observation_feature_channels,
+    sanitize_observation_values,
+)
 
 
 class ObservationRuntimeMixin(RuntimeMixinBase):
@@ -75,7 +81,12 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             seq = seq[:, self._m1_idx]
         elif self.mtf:
             seq = np.zeros((seq.shape[0], 1), dtype=np.float32)
-        seq = cast(np.ndarray[Any, Any], np.nan_to_num(seq, nan=0.0))
+            seq.fill(np.nan)
+        elif not self._obs_columns:
+            seq = np.full_like(seq, np.nan, dtype=np.float32)
+        seq = prepare_observation_feature_channels(
+            seq, include_validity=self.feature_validity_channels
+        )
         seq, seq_mask = pad_observation_window(seq, self.obs_window)
 
         # Account state
@@ -144,8 +155,16 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
                     else (None, None, None)
                 ),
                 sl_mode=position.sl_mode if position is not None else "fixed",
-                tp_mode=position.tp_mode if position is not None else "fixed",
-                exit_mode=position.exit_mode if position is not None else "structural",
+                tp_mode=(
+                    "fixed"
+                    if position is None or position.tp_mode in {"", "rr"}
+                    else position.tp_mode
+                ),
+                exit_mode=(
+                    position.exit_mode
+                    if position is not None and position.exit_mode
+                    else "structural"
+                ),
                 entry_state=exposed_entry_state,
             )
         elif self.normalize_account:
@@ -198,6 +217,7 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
                     decision,
                     int(self._mtf_windows.get(key, DEFAULT_HTF_WINDOWS[key])),
                     columns=cols,
+                    include_validity=self.feature_validity_channels,
                 )
                 obs[seq_key] = window
                 obs[f"mask_{key}"] = mask
@@ -226,7 +246,7 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
                 # Legacy: each row is a flattened (seq_len * n_features) vector
                 current_idx = min(self.step_idx, len(self.pre_ny_data) - 1)
                 flat = np.asarray(self.pre_ny_data.iloc[current_idx].values, dtype=np.float32)
-                flat = np.nan_to_num(flat, nan=0.0)
+                flat = sanitize_observation_values(flat)
                 if flat.size == seq_len * n_feat:
                     pre_ny_seq = flat.reshape(seq_len, n_feat)
                 elif flat.ndim == 2:
@@ -235,7 +255,7 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             if pre_ny_seq is None:
                 vae_z = np.zeros(latent_dim, dtype=np.float32)
             else:
-                pre_ny_seq = np.nan_to_num(np.asarray(pre_ny_seq, dtype=np.float32), nan=0.0)
+                pre_ny_seq = sanitize_observation_values(pre_ny_seq)
                 if pre_ny_seq.shape != (seq_len, n_feat):
                     # Pad / truncate to the encoder contract
                     fixed = np.zeros((seq_len, n_feat), dtype=np.float32)

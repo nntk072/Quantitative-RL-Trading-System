@@ -1,0 +1,19 @@
+{
+  "run_date": "2026-11-04",
+  "git_head": "367561a7717a3367fbb280084ffcf0781f57119c",
+  "allocation": "21390062",
+  "node": "gpuarm1",
+  "runtime": "ARM64 project .venv",
+  "cache_identity": "v40-ifvg-missing-atr-distance",
+  "checks": [
+    ".venv/bin/ruff format --check features/po3/po3_phase_state.py features/pipeline/feature_cache_identity.py tests/unit/features/test_po3_state.py",
+    ".venv/bin/ruff check features/po3/po3_phase_state.py features/pipeline/feature_cache_identity.py tests/unit/features/test_po3_state.py",
+    ".venv/bin/python -m pytest tests/unit/features/test_po3_state.py -q",
+    "git diff --check"
+  ],
+  "pytest_collected": 23,
+  "pytest_passed": 23,
+  "pytest_failed": 0,
+  "behavior": "When ATR is unavailable, active IFVG bull and bear distance features retain the 5.0 missing-distance sentinel instead of dividing raw price distance by a unit fallback.",
+  "claim_limit": "Does not refresh the all-profile real-market prefix report or close broader feature causality and availability gates."
+}

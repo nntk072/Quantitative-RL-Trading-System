@@ -26,7 +26,25 @@ This page contains 1 public callable records owned by `decisioning.observation_s
 
 **Observed usage:**
 
-1. [test fixture: `test_env_uses_armed_candidate_after_per_bar_setup_disappears`](../../../../tests/unit/simulation/test_environment/test_entry_state_machine.py#L288)
+1. [test fixture: `test_scalar_backtest_entry_state_tracks_causal_candidate_and_arming`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L925)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    )
+
+    states = [
+        tuple(int(value) for value in observation["account"][6:]) for observation in observations
+    ]
+    assert entry_state_one_hot("FLAT") in states
+    assert entry_state_one_hot("CANDIDATE") in states
+    assert entry_state_one_hot("ARMED") in states
+    assert result["entry_state_diagnostics"]["candidate_created"] == 1
+    assert result["entry_state_diagnostics"]["entered"] == 0
+```
+
+2. [test fixture: `test_env_uses_armed_candidate_after_per_bar_setup_disappears`](../../../../tests/unit/simulation/test_environment/test_entry_state_machine.py#L310)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -44,25 +62,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     def track_decoded_state(action: Any, feat_row: Any = None) -> tuple[int, float, float, str]:
         assert env.entry_state_machine is not None
 # … caller assertions omitted …
-```
-
-2. [test fixture: `test_a3_shape_and_action_space_are_unchanged`](../../../../tests/unit/simulation/test_environment/test_entry_state_machine.py#L401)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-    assert legacy.observation_space.spaces["account"].shape == (6,)
-    assert hidden.observation_space.spaces["account"].shape == (6,)
-    assert stateful.observation_space.spaces["account"].shape == (10,)
-    raw_obs, _ = raw.reset()
-    assert raw_obs["account"].shape == (10,)
-    assert tuple(raw_obs["account"][6:]) == entry_state_one_hot("FLAT")
-    assert legacy.action_space.shape == stateful.action_space.shape
-    obs, _, _, _, info = legacy.step(np.zeros(5, dtype=np.float32))
-    assert obs["account"].shape == (6,)
-    assert "entry_state" not in info
-    assert tuple(stateful.reset()[0]["account"][6:]) == entry_state_one_hot(ENTRY_STATES[0])
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
