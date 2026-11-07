@@ -460,9 +460,10 @@
         "../../../../tests/integration/evaluation/test_matched_setup_baselines.py#L87",
         "../../../../tests/integration/evaluation/test_matched_setup_baselines.py#L195",
         "../../../../configuration/configuration_loader.py#L42",
+        "../../../../tests/unit/configuration/test_configuration_helpers.py#L32",
         "../../../../configuration/configuration_loader.py#L33",
-        "../../../../configuration/configuration_loader.py#L142",
         "../../../../configuration/configuration_loader.py#L57",
+        "../../../../tests/unit/configuration/test_configuration_helpers.py#L35",
         "../../../../configuration/configuration_loader.py#L38"
       ],
       "orphan_status": "in toctree",
@@ -477,7 +478,8 @@
     },
     {
       "links": [
-        "../../../../configuration/hashing.py#L23"
+        "../../../../configuration/hashing.py#L23",
+        "../../../../tests/unit/configuration/test_configuration_helpers.py#L15"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/configuration/configuration__hashing.md",
@@ -492,7 +494,8 @@
     {
       "links": [
         "../../../../configuration/paths.py#L8",
-        "../../../../configuration/paths.py#L30"
+        "../../../../configuration/paths.py#L30",
+        "../../../../tests/unit/configuration/test_configuration_helpers.py#L17"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/configuration/configuration__paths.md",
@@ -585,7 +588,7 @@
         "../../../../tests/integration/test_sb3_adapter.py#L176",
         "../../../../decisioning/contracts.py#L41",
         "../../../../tests/integration/test_sb3_adapter.py#L181",
-        "../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L57",
+        "../../../../tests/unit/decisioning/test_contracts.py#L48",
         "../../../../decisioning/contracts.py#L58",
         "../../../../tests/integration/test_sb3_adapter.py#L161",
         "../../../../tests/integration/test_sb3_adapter.py#L174",

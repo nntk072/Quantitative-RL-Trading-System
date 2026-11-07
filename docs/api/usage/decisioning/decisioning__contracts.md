@@ -72,11 +72,21 @@ def test_policy_action_conversion_rejects_actions_that_disagree_with_schema(
         to_policy_action(decision)
 ```
 
-2. [test fixture: `test_provider_rollout_adapter_returns_environment_action`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L57)
+2. [test fixture: `test_continuous_and_structured_actions_enforce_schema_shape_and_finiteness`](../../../../tests/unit/decisioning/test_contracts.py#L48)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
+def test_continuous_and_structured_actions_enforce_schema_shape_and_finiteness() -> None:
+    scalar = ActionSchemaRef("v1", "position", ("position",), "continuous")
+    with pytest.raises(ValueError, match="one-coordinate"):
+        to_policy_action(
+            Decision(ContinuousAction(0.5), ActionSchemaRef("v1", "pair", ("x", "y"), "continuous"))
+        )
+    with pytest.raises(ValueError, match="finite"):
+        to_policy_action(Decision(ContinuousAction(float("inf")), scalar))
+    with pytest.raises(ValueError, match="requires a continuous"):
+        to_policy_action(
 # … caller assertions omitted …
 ```
 

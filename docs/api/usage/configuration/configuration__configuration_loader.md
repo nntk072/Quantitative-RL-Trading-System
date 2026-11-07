@@ -152,7 +152,22 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L33)
+1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L32)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_configuration_overlay_and_override_reject_invalid_roots(tmp_path) -> None:
+    scalar = tmp_path / "scalar.yaml"
+    scalar.write_text("- one\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="overlay root must be a mapping"):
+        load_config_overlay(scalar)
+
+    with pytest.raises(ValueError, match="base and overlay roots must be mappings"):
+        merge_config_overlay(OmegaConf.create([]), {})  # type: ignore[arg-type]
+```
+
+2. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L33)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -169,26 +184,6 @@ def load_config(
     # everything else comes from defaults) and for full standalone configs.
     cfg = merge_config_overlay(base, extra)
     return apply_overrides(cfg, overrides)
-```
-
-2. [production caller: `apply_overrides`](../../../../configuration/configuration_loader.py#L142)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-    # Key-name validation above prevents accidental new leaves, but a known
-    # leaf can still receive the wrong CLI type (for example,
-    # ``ppo.learning_rate=fast``). Validate the completed effective config
-    # against the same defaults schema used for YAML overlays before callers
-    # use it to construct an environment or launch a run.
-    schema_container = OmegaConf.to_container(load_config_overlay(_DEFAULT_CFG), resolve=False)
-    config_container = OmegaConf.to_container(cfg, resolve=False)
-    if not isinstance(schema_container, Mapping) or not isinstance(config_container, Mapping):
-        raise ValueError("configuration schema and effective config roots must be mappings")
-    reject_unknown_keys(
-        cast(Mapping[str, Any], config_container),
-# … caller assertions omitted …
 ```
 
 **Workflow context:**
@@ -221,7 +216,22 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L38)
+1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L35)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_configuration_overlay_and_override_reject_invalid_roots(tmp_path) -> None:
+    scalar = tmp_path / "scalar.yaml"
+    scalar.write_text("- one\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="overlay root must be a mapping"):
+        load_config_overlay(scalar)
+
+    with pytest.raises(ValueError, match="base and overlay roots must be mappings"):
+        merge_config_overlay(OmegaConf.create([]), {})  # type: ignore[arg-type]
+```
+
+2. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L38)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
