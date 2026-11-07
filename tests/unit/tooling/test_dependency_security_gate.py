@@ -10,7 +10,10 @@ from scripts.dev.security.dependency_audit import (
     unexpected_skips,
     uv_command,
 )
-from scripts.dev.security.secret_scan import findings_from_baseline
+from scripts.dev.security.secret_scan import (
+    findings_from_baseline,
+    oversized_research_table_exclusion,
+)
 from scripts.dev.security.secret_scan import uv_command as secret_uv_command
 
 
@@ -60,6 +63,18 @@ def test_secret_scanner_prefers_canonical_qrl_uv(monkeypatch, tmp_path: Path) ->
     monkeypatch.setattr("scripts.dev.security.secret_scan.shutil.which", lambda _: "/usr/bin/uv")
 
     assert secret_uv_command() == str(native_uv)
+
+
+def test_secret_scanner_excludes_only_oversized_generated_research_tables() -> None:
+    pattern, count = oversized_research_table_exclusion()
+
+    assert pattern is not None
+    assert count > 0
+    assert (
+        r"evidence/research/candidate_action_linkage/matched_baseline_candidate_actions\.csv"
+        in pattern
+    )
+    assert "configuration/configuration_loader.py" not in pattern
 
 
 def test_empty_exception_file_is_valid(tmp_path: Path) -> None:

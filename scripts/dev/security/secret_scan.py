@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -14,6 +15,36 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 SCANNER_VERSION = "1.5.0"
 DISABLED_PLUGINS = ("Base64HighEntropyString", "HexHighEntropyString")
+MAX_RESEARCH_TABLE_BYTES = 8 * 1024 * 1024
+
+
+def oversized_research_table_exclusion() -> tuple[str | None, int]:
+    """Build a scanner exclusion for oversized generated CSV/Parquet evidence.
+
+    Args:
+        None.
+
+    Returns:
+        A path regex and the number of matching files, or ``(None, 0)``.
+    """
+    result = subprocess.run(
+        ["git", "ls-files", "-z", "--", "evidence/research"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    )
+    paths = [entry.decode("utf-8") for entry in result.stdout.split(b"\0") if entry]
+    excluded = []
+    for relative in paths:
+        path = ROOT / relative
+        if path.suffix.lower() not in {".csv", ".parquet"}:
+            continue
+        if path.stat().st_size > MAX_RESEARCH_TABLE_BYTES:
+            excluded.append(relative)
+    if not excluded:
+        return None, 0
+    pattern = "^(?:" + "|".join(re.escape(path) for path in sorted(excluded)) + ")$"
+    return pattern, len(excluded)
 
 
 def uv_command() -> str:
@@ -57,6 +88,13 @@ def main() -> int:
     ]
     for plugin in DISABLED_PLUGINS:
         command.extend(("--disable-plugin", plugin))
+    exclusion_pattern, excluded_count = oversized_research_table_exclusion()
+    if exclusion_pattern:
+        command.extend(("--exclude-files", exclusion_pattern))
+        print(
+            f"Excluding {excluded_count} generated research CSV/Parquet tables larger than "
+            f"{MAX_RESEARCH_TABLE_BYTES // (1024 * 1024)} MiB from credential scanning."
+        )
     result = subprocess.run(command, cwd=ROOT, check=False, capture_output=True, text=True)
     if result.returncode != 0:
         print(result.stderr, file=sys.stderr, end="")
