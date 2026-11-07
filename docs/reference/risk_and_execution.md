@@ -23,7 +23,7 @@ The current training environment and event-driven backtest do not yet consume
 this protocol: both use `AccountState`, `FTMOGuardrails`, and the existing
 sizing helpers. The live path has its MT5 risk adapter. Contract unit tests
 verify the v1 value shape only, not runtime integration or parity; see the
-[risk package API](../api/generated/trading/risk/index) and
+[risk package API](../api/usage/trading/trading__risk__contracts) and
 `trading/risk/README.md`.
 
 ## Sizing and risk limits

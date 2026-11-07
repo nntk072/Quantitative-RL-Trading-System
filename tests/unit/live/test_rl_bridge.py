@@ -197,12 +197,36 @@ def test_rl_bridge_observation_contract(trending_bars):
         allow_runtime_normalization_fallback=True,
     )
     adapter.update_bars(trending_bars)
-    obs = adapter.build_observation({"equity": 100_000.0})
+    state = {
+        "equity": 100_000.0,
+        "planned_risk_usd": 0.0,
+        "trailing_drawdown": 0.0,
+        "trailing_drawdown_limit": 10_000.0,
+        "daily_loss": 0.0,
+        "daily_loss_limit": 5_000.0,
+        "loss_from_initial": 0.0,
+        "max_loss_limit": 10_000.0,
+        "risk_per_trade_limit": 900.0,
+        "entry_price": 0.0,
+        "initial_sl_price": 0.0,
+        "active_sl_price": 0.0,
+        "remaining_size": 0.0,
+        "initial_size": 0.0,
+        "position_age_bars": 0.0,
+        "tp_hit_mask": 0,
+        "tp1_price": 0.0,
+        "tp2_price": 0.0,
+        "tp3_price": 0.0,
+        "sl_mode": "fixed",
+        "tp_mode": "fixed",
+        "exit_mode": "structural",
+    }
+    obs = adapter.build_observation(state)
     assert set(obs) == {"seq", "seq_mask", "account"}
     assert obs["seq"].dtype == np.float32
     assert obs["account"].shape == (28,)
     assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
-    action = adapter.predict_signal()
+    action = adapter.predict_signal(state)
     assert action == 1
 
 
@@ -235,16 +259,46 @@ def test_rl_bridge_accepts_a_decision_provider(trending_bars):
     )
     adapter.update_bars(trending_bars)
 
-    assert adapter.predict_signal() == 1
+    state = {
+        "equity": 100_000.0,
+        "planned_risk_usd": 0.0,
+        "trailing_drawdown": 0.0,
+        "trailing_drawdown_limit": 10_000.0,
+        "daily_loss": 0.0,
+        "daily_loss_limit": 5_000.0,
+        "loss_from_initial": 0.0,
+        "max_loss_limit": 10_000.0,
+        "risk_per_trade_limit": 900.0,
+        "entry_price": 0.0,
+        "initial_sl_price": 0.0,
+        "active_sl_price": 0.0,
+        "remaining_size": 0.0,
+        "initial_size": 0.0,
+        "position_age_bars": 0.0,
+        "tp_hit_mask": 0,
+        "tp1_price": 0.0,
+        "tp2_price": 0.0,
+        "tp3_price": 0.0,
+        "sl_mode": "fixed",
+        "tp_mode": "fixed",
+        "exit_mode": "structural",
+    }
+    assert adapter.predict_signal(state) == 1
 
 
-def test_rl_bridge_maps_actions_to_signals(trending_bars):
+def test_rl_bridge_maps_actions_to_signals(trending_bars, tmp_path: Path):
     """as_strategy maps action>0 → BUY, 0 → HOLD via the duck-typed source."""
     from live.runtime.strategy import RLStrategyAdapter
 
+    cfg = OmegaConf.load("config/base/default.yaml")
+    cfg.env.observation_schema_version = "account-state-v1"
+    config_path = tmp_path / "bridge_test_config.yaml"
+    OmegaConf.save(cfg, config_path)
+    model = _StubModel()
+    model._observation_schema = build_observation_schema("account-state-v1").to_dict()
     adapter = RLStrategyAdapter(
-        model=_StubModel(),
-        config_path="config/base/default.yaml",
+        model=model,
+        config_path=config_path,
         allow_runtime_normalization_fallback=True,
     )
     strategy = adapter.as_strategy(_StubData(trending_bars))

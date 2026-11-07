@@ -403,7 +403,7 @@ def test_survival_evaluation_summary_ignores_profit_and_activity(
         "not_applicable_no_completed_positions"
     )
     assert (
-        "| Train (in-sample) | -2.00% | -2000.00 USD | 5.00% | -0.500 | N/A | 0.0% | 0 |" in summary
+        "| Train (in-sample) | -2.00% | -2000.00 USD | 5.00% | -0.500 | N/A | N/A | 0 |" in summary
     )
     assert f"Training complete: {'PASS' if training_completed else 'FAIL'}" in summary
     assert "Train-split survival: PASS" in summary

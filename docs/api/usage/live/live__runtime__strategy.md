@@ -49,10 +49,10 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         allow_runtime_normalization_fallback=True,
     )
     adapter.update_bars(trending_bars)
-    obs = adapter.build_observation({"equity": 100_000.0})
-    assert set(obs) == {"seq", "seq_mask", "account"}
-    assert obs["seq"].dtype == np.float32
-    assert obs["account"].shape == (28,)
+    state = {
+        "equity": 100_000.0,
+        "planned_risk_usd": 0.0,
+        "trailing_drawdown": 0.0,
 # … caller assertions omitted …
 ```
 
@@ -90,17 +90,15 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_maps_actions_to_signals`](../../../../tests/unit/live/test_rl_bridge.py#L250)
+1. [test fixture: `test_rl_bridge_maps_actions_to_signals`](../../../../tests/unit/live/test_rl_bridge.py#L304)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_rl_bridge_maps_actions_to_signals(trending_bars):
-    from live.runtime.strategy import RLStrategyAdapter
-
+# … caller setup omitted …
     adapter = RLStrategyAdapter(
-        model=_StubModel(),
-        config_path="config/base/default.yaml",
+        model=model,
+        config_path=config_path,
         allow_runtime_normalization_fallback=True,
     )
     strategy = adapter.as_strategy(_StubData(trending_bars))
@@ -109,7 +107,7 @@ def test_rl_bridge_maps_actions_to_signals(trending_bars):
     assert sig.value == "buy"
 ```
 
-2. [test fixture: `test_account_state_v2_live_policy_fails_closed_without_snapshot`](../../../../tests/unit/live/test_rl_bridge.py#L274)
+2. [test fixture: `test_account_state_v2_live_policy_fails_closed_without_snapshot`](../../../../tests/unit/live/test_rl_bridge.py#L328)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -177,6 +175,26 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
             "position_direction": 0.0,
             "dist_to_sl": 0.0,
             "trailing_dd": float(env.account.trailing_drawdown_pct()),
+            "planned_risk_usd": 0.0,
+            "trailing_drawdown_limit": float(env.guardrails.trailing_dd_limit),
+            "daily_loss": float(env.account.canonical_daily_loss()),
+            "daily_loss_limit": float(env.guardrails.daily_limit_for(env.account)),
+            "loss_from_initial": float(env.account.loss_from_initial()),
+            "max_loss_limit": float(env.guardrails.max_loss_limit_for(env.account)),
+            "risk_per_trade_limit": float(env.guardrails.risk_per_trade_limit_for(env.account)),
+            "entry_price": 0.0,
+            "initial_sl_price": 0.0,
+            "active_sl_price": 0.0,
+            "remaining_size": 0.0,
+            "initial_size": 0.0,
+            "position_age_bars": 0.0,
+            "tp_hit_mask": 0,
+            "tp1_price": 0.0,
+            "tp2_price": 0.0,
+            "tp3_price": 0.0,
+            "sl_mode": "fixed",
+            "tp_mode": "fixed",
+            "exit_mode": "structural",
             "close": float(bars["close"].iloc[step]),
         }
     )
@@ -188,23 +206,23 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L200)
+2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L224)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        model=_StubModel(),
-        config_path="config/base/default.yaml",
-        allow_runtime_normalization_fallback=True,
-    )
-    adapter.update_bars(trending_bars)
-    obs = adapter.build_observation({"equity": 100_000.0})
+        "tp3_price": 0.0,
+        "sl_mode": "fixed",
+        "tp_mode": "fixed",
+        "exit_mode": "structural",
+    }
+    obs = adapter.build_observation(state)
     assert set(obs) == {"seq", "seq_mask", "account"}
     assert obs["seq"].dtype == np.float32
     assert obs["account"].shape == (28,)
     assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
-    action = adapter.predict_signal()
+    action = adapter.predict_signal(state)
 # … caller assertions omitted …
 ```
 
@@ -239,41 +257,33 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L205)
+1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L229)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    obs = adapter.build_observation({"equity": 100_000.0})
+    obs = adapter.build_observation(state)
     assert set(obs) == {"seq", "seq_mask", "account"}
     assert obs["seq"].dtype == np.float32
     assert obs["account"].shape == (28,)
     assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
-    action = adapter.predict_signal()
+    action = adapter.predict_signal(state)
     assert action == 1
 ```
 
-2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L238)
+2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L286)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_rl_bridge_accepts_a_decision_provider(trending_bars):
-    from live.runtime.strategy import RLStrategyAdapter
-
-    provider = SB3DecisionProvider(
-        _StubModel(),
-        input_schema_version=OBSERVATION_SCHEMA_V2,
-    )
-    adapter = RLStrategyAdapter(
-        provider=provider,
-        config_path="config/base/default.yaml",
-        allow_runtime_normalization_fallback=True,
-    )
-    adapter.update_bars(trending_bars)
-
-    assert adapter.predict_signal() == 1
+# … caller setup omitted …
+        "tp3_price": 0.0,
+        "sl_mode": "fixed",
+        "tp_mode": "fixed",
+        "exit_mode": "structural",
+    }
+    assert adapter.predict_signal(state) == 1
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -314,26 +324,20 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         allow_runtime_normalization_fallback=True,
     )
     adapter.update_bars(trending_bars)
-    obs = adapter.build_observation({"equity": 100_000.0})
-    assert set(obs) == {"seq", "seq_mask", "account"}
-    assert obs["seq"].dtype == np.float32
-    assert obs["account"].shape == (28,)
-    assert obs["seq_mask"].shape == (obs["seq"].shape[0],)
+    state = {
+        "equity": 100_000.0,
+        "planned_risk_usd": 0.0,
+        "trailing_drawdown": 0.0,
+        "trailing_drawdown_limit": 10_000.0,
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L236)
+2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L260)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_rl_bridge_accepts_a_decision_provider(trending_bars):
-    from live.runtime.strategy import RLStrategyAdapter
-
-    provider = SB3DecisionProvider(
-        _StubModel(),
-        input_schema_version=OBSERVATION_SCHEMA_V2,
-    )
+# … caller setup omitted …
     adapter = RLStrategyAdapter(
         provider=provider,
         config_path="config/base/default.yaml",
@@ -341,7 +345,11 @@ def test_rl_bridge_accepts_a_decision_provider(trending_bars):
     )
     adapter.update_bars(trending_bars)
 
-    assert adapter.predict_signal() == 1
+    state = {
+        "equity": 100_000.0,
+        "planned_risk_usd": 0.0,
+        "trailing_drawdown": 0.0,
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

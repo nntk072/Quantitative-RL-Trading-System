@@ -228,7 +228,9 @@ def test_account_trace_checks_fill_quote_slippage_provenance() -> None:
     assert matched["checks"]["broker_quote_ask_matches_slippage_application"] == 2
     assert matched["checks"]["fill_price_matches_broker_quote_side"] == 2
 
-    close_event["broker_execution_quote_ask"] = 102.25
+    # Keep the modified quote internally valid (ask >= bid), so reconciliation
+    # reports a provenance mismatch instead of malformed/incomplete evidence.
+    close_event["broker_execution_quote_ask"] = 114.0
     mismatch = reconcile_account_state_trace(
         trace, pd.DataFrame([open_event, close_event]), breach_events=[]
     )

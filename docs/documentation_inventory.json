@@ -2056,17 +2056,17 @@
         "../../../../tests/unit/features/test_stage_a_observation.py#L120",
         "../../../../tests/unit/live/test_rl_bridge.py#L194",
         "../../../../live/runtime/strategy.py#L354",
-        "../../../../tests/unit/live/test_rl_bridge.py#L250",
-        "../../../../tests/unit/live/test_rl_bridge.py#L274",
+        "../../../../tests/unit/live/test_rl_bridge.py#L304",
+        "../../../../tests/unit/live/test_rl_bridge.py#L328",
         "../../../../live/runtime/strategy.py#L223",
         "../../../../tests/unit/features/test_stage_a_observation.py#L130",
-        "../../../../tests/unit/live/test_rl_bridge.py#L200",
+        "../../../../tests/unit/live/test_rl_bridge.py#L224",
         "../../../../live/runtime/strategy.py#L328",
-        "../../../../tests/unit/live/test_rl_bridge.py#L205",
-        "../../../../tests/unit/live/test_rl_bridge.py#L238",
+        "../../../../tests/unit/live/test_rl_bridge.py#L229",
+        "../../../../tests/unit/live/test_rl_bridge.py#L286",
         "../../../../live/runtime/strategy.py#L190",
         "../../../../tests/unit/live/test_rl_bridge.py#L199",
-        "../../../../tests/unit/live/test_rl_bridge.py#L236"
+        "../../../../tests/unit/live/test_rl_bridge.py#L260"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/live/live__runtime__strategy.md",
@@ -6787,7 +6787,7 @@
     },
     {
       "links": [
-        "../api/generated/trading/risk/index",
+        "../api/usage/trading/trading__risk__contracts",
         "../architecture/runtime/environment_step.md",
         "../concepts/execution_and_costs.md",
         "../concepts/risk_and_account_limits.md",

@@ -8,6 +8,7 @@ is stubbed in ``sys.modules`` so the ``integrations.mt5`` imports resolve.
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any, cast
 
@@ -15,6 +16,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from gymnasium import spaces
+from omegaconf import OmegaConf
 
 from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.observations import OBSERVATION_SCHEMA_V2, build_observation_schema
@@ -191,14 +193,16 @@ def _make_robot(
     trader: RecordingTrader | None = None,
     paper_trading: bool = False,
     secondary_bars: pd.DataFrame | None = None,
+    config_path: str | Path = "config/base/default.yaml",
+    model: _StubModel | None = None,
 ):
     from integrations.mt5.robot.rl_robot import RLRobot
     from live.runtime.strategy import RLStrategyAdapter
 
     bars = _make_bars()
     adapter = RLStrategyAdapter(
-        model=_StubModel(),
-        config_path="config/base/default.yaml",
+        model=model or _StubModel(),
+        config_path=config_path,
         allow_runtime_normalization_fallback=True,
     )
     secondary_data = (
@@ -217,6 +221,7 @@ def _make_robot(
 
 def test_live_mode_places_buy_and_closes_opposite_sell(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """BUY signal with an open sell → open the long and close the short."""
     from integrations.mt5.domain import risk_manager as risk_manager_module
@@ -225,8 +230,14 @@ def test_live_mode_places_buy_and_closes_opposite_sell(
     current_mt5_stub = sys.modules["MetaTrader5"]
     monkeypatch.setattr(risk_manager_module, "mt5", current_mt5_stub)
     monkeypatch.setattr(rl_robot_module, "mt5", current_mt5_stub)
+    cfg = OmegaConf.load("config/base/default.yaml")
+    cfg.env.observation_schema_version = "account-state-v1"
+    config_path = tmp_path / "robot_test_config.yaml"
+    OmegaConf.save(cfg, config_path)
+    model = _StubModel()
+    model._observation_schema = build_observation_schema("account-state-v1").to_dict()
     trader = RecordingTrader(sells_open=True)
-    robot, _ = _make_robot(trader, paper_trading=False)
+    robot, _ = _make_robot(trader, paper_trading=False, config_path=config_path, model=model)
     assert robot.trader is trader
 
     robot.trade()

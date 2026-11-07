@@ -258,6 +258,9 @@ def write_evaluation_artifacts(
             Returns:
                 Formatted metric text or ``N/A`` when the value is unavailable.
             """
+            availability = metrics.get("metric_availability", {})
+            if availability.get(name) == "not_applicable_no_completed_positions":
+                return "N/A"
             value = metrics.get(name)
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 return "N/A"
@@ -348,7 +351,8 @@ def write_evaluation_artifacts(
             )
         ),
         (
-            f"Train activity diagnostic: {train_activity_gate['status']} "
+            f"Train activity diagnostic: "
+            f"{'INACTIVE' if train_activity_gate['n_trades'] == 0 else train_activity_gate['status']} "
             f"(trades={train_activity_gate['n_trades']})"
             if survival_objective
             else f"Train activity gate: {train_activity_gate['status']} "

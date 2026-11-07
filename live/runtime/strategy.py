@@ -325,7 +325,7 @@ class RLStrategyAdapter:
             )
         return {"seq": seq, "seq_mask": seq_mask, "account": account}
 
-    def predict_signal(self, account_state: dict[str, float] | None = None) -> int | float:
+    def predict_signal(self, account_state: dict[str, Any] | None = None) -> int | float:
         """Run the provider and return its discrete id or scalar direction.
 
         Args:
