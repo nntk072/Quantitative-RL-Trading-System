@@ -445,6 +445,7 @@ def process_protective_and_account_events(
                     max_quote_wait_ns=settings.max_tick_quote_wait_ms * 1_000_000,
                     earliest_time=cursor_time,
                     event_seed=settings.execution_seed,
+                    server_side_protective=settings.server_side_protective_orders,
                 )
                 if resolved_exit is None:
                     break
@@ -540,6 +541,7 @@ def process_protective_and_account_events(
                 max_quote_wait_ns=settings.max_tick_quote_wait_ms * 1_000_000,
                 earliest_time=entry_time,
                 event_seed=settings.execution_seed,
+                server_side_protective=settings.server_side_protective_orders,
             )
             if resolved_exit is not None:
                 quote = resolved_exit.quote

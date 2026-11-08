@@ -13,6 +13,7 @@ from trading.execution import (
     TRADE_CASHFLOW_SCHEMA_VERSION,
 )
 from trading.risk import RISK_BREACH_EVENT_SCHEMA_V1
+from trading.risk.ftmo_clock import ftmo_trading_day
 
 ACCOUNT_STATE_RECONCILIATION_SCHEMA = "account_state_reconciliation.v2"
 _TRACE_SCHEMA = "account_state_trace.v2"
@@ -269,6 +270,7 @@ def reconcile_account_state_trace(
     legacy_daily_loss = 0.0
     previous_event_count = 0
     previous_session: Any = object()
+    previous_ftmo_day: object | None = None
     expected_session_start_balance: float | None = None
     expected_session_start_equity: float | None = None
     payout_replay_complete = True
@@ -301,15 +303,22 @@ def reconcile_account_state_trace(
         if not pd.isna(valuation_time):
             prior_valuation_time = valuation_time
 
-        if session != previous_session:
+        basis_at_row = str(row["daily_pnl_basis"])
+        if basis_at_row == "ftmo_midnight_balance" and not pd.isna(valuation_time):
+            ftmo_day = ftmo_trading_day(valuation_time)
+            anchor_changed = ftmo_day != previous_ftmo_day
+            previous_ftmo_day = ftmo_day
+        else:
+            anchor_changed = session != previous_session
+        if anchor_changed:
             legacy_daily_loss = 0.0
-            previous_session = session
             expected_session_start_balance = (
                 initial_balance_reference if prior_balance is None else prior_balance
             )
             expected_session_start_equity = (
                 initial_balance_reference if prior_equity is None else prior_equity
             )
+        previous_session = session
         payout_reset_balance: float | None = None
 
         raw_count = _number(row["trade_event_count"])
@@ -893,23 +902,36 @@ def reconcile_account_state_trace(
                     1.0,
                 )
         session_start_equity = _number(row["session_start_equity"])
+        session_start_balance = _number(row["session_start_balance"])
+        basis = str(row["daily_pnl_basis"])
+        daily_anchor = (
+            session_start_balance if basis == "ftmo_midnight_balance" else session_start_equity
+        )
         daily_limit = _number(row["daily_loss_limit_usd"])
         daily_floor = _number(row["daily_floor_equity"])
-        if session_start_equity is None or daily_limit is None or daily_floor is None:
+        if daily_anchor is None or daily_limit is None or daily_floor is None:
             result["incomplete_reasons"].append("daily_risk_fields_missing")
         else:
             check(
                 row_index,
                 "daily_floor_matches_anchor_and_limit",
                 daily_floor,
-                session_start_equity - daily_limit,
+                daily_anchor - daily_limit,
             )
             basis = str(row["daily_pnl_basis"])
             observed_daily_loss = _number(row["daily_loss"])
             if observed_daily_loss is None:
                 result["incomplete_reasons"].append("daily_loss_is_not_finite")
+            elif basis == "ftmo_midnight_balance":
+                expected_daily_loss = max(0.0, daily_anchor - equity)
+                check(
+                    row_index,
+                    "ftmo_midnight_daily_loss_matches_equity",
+                    observed_daily_loss,
+                    expected_daily_loss,
+                )
             elif basis == "session_net_equity":
-                expected_daily_loss = max(0.0, session_start_equity - equity)
+                expected_daily_loss = max(0.0, daily_anchor - equity)
                 check(
                     row_index,
                     "session_net_daily_loss_matches_equity",
@@ -927,7 +949,11 @@ def reconcile_account_state_trace(
                     observed_daily_loss,
                     legacy_daily_loss,
                 )
-            elif basis not in {"legacy_gross_closed_losses", "session_net_equity"}:
+            elif basis not in {
+                "legacy_gross_closed_losses",
+                "session_net_equity",
+                "ftmo_midnight_balance",
+            }:
                 result["incomplete_reasons"].append("unknown_daily_pnl_basis")
 
         max_loss_limit = _number(row["max_loss_limit_usd"])

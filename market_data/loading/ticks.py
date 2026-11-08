@@ -370,6 +370,7 @@ def resolve_tick_exit(
     max_latency_ns_exclusive: int = 30_000_000,
     max_quote_wait_ns: int | None = 60_000_000_000,
     event_seed: int | None = None,
+    server_side_protective: bool = False,
 ) -> TickExitExecution | None:
     """Resolve the first tick-triggered SL/TP after randomized execution latency.
 
@@ -391,6 +392,8 @@ def resolve_tick_exit(
         max_quote_wait_ns: Max quote wait ns used by the operation described above.
         event_seed: Optional stable seed for trigger-keyed latency independent of
             unrelated execution RNG draws.
+        server_side_protective: Execute an already-attached protective order on the
+            triggering source quote without sampling a new network latency.
 
     Returns:
         Result of resolve the first tick-triggered SL/TP after randomized execution latency.
@@ -420,6 +423,19 @@ def resolve_tick_exit(
             continue
         kind = "sl" if sl_cross else "tp"
         trigger_time = pd.Timestamp(int(book._ts[i]), unit="ns", tz="UTC")
+        if server_side_protective:
+            # Resting protective order is already at the server. Do not apply
+            # the EA request/response network delay. Preserve the precise source
+            # row when multiple quote changes share the same millisecond.
+            instant_quote = TickExecutionQuote(
+                order_time=trigger_time,
+                arrival_time=trigger_time,
+                tick_time=trigger_time,
+                bid=float(book._bid[i]),
+                ask=float(book._ask[i]),
+                latency_ns=0,
+            )
+            return TickExitExecution(kind=kind, trigger_time=trigger_time, quote=instant_quote)
         event_rng = (
             rng
             if event_seed is None

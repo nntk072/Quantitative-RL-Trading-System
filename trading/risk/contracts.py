@@ -6,12 +6,15 @@ import math
 from dataclasses import dataclass
 from typing import Final, Literal, Protocol
 
-RiskDailyPnlBasis = Literal["session_net_equity", "legacy_gross_closed_losses"]
+RiskDailyPnlBasis = Literal[
+    "session_net_equity", "legacy_gross_closed_losses", "ftmo_midnight_balance"
+]
 RISK_STATE_SCHEMA_V1 = "risk-state-v1"
 RISK_DECISION_SCHEMA_V1 = "risk-decision-v1"
 RISK_BREACH_EVENT_SCHEMA_V1 = "risk-breach-event-v1"
 RISK_DAILY_PNL_BASIS_SESSION_EQUITY: Final[RiskDailyPnlBasis] = "session_net_equity"
 RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES: Final[RiskDailyPnlBasis] = "legacy_gross_closed_losses"
+RISK_DAILY_PNL_BASIS_FTMO_MIDNIGHT: Final[RiskDailyPnlBasis] = "ftmo_midnight_balance"
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +41,7 @@ class RiskState:
         if self.daily_pnl_basis not in {
             RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
             RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES,
+            RISK_DAILY_PNL_BASIS_FTMO_MIDNIGHT,
         }:
             raise ValueError(f"unsupported daily PnL basis: {self.daily_pnl_basis!r}")
         values = (self.equity, self.daily_pnl, self.open_risk, self.daily_loss_limit)

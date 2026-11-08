@@ -1,0 +1,12 @@
+# Opt-in method sensitivity, not a calibrated broker or MT5 Strategy Tester.
+# Merge this overlay over config/base/default.yaml through the repository loader.
+# Preserve the historical defaults and existing evidence artifacts.
+costs:
+  use_tick_execution: true
+execution:
+  server_side_protective_orders: true
+trading_policy:
+  mode: legacy
+  daily_pnl_basis: ftmo_midnight_balance
+  daily_loss_includes_open_pnl: true
+  daily_loss_reset_source: prague_midnight

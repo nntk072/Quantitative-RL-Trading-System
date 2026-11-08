@@ -65,6 +65,8 @@ class CandidateQuoteCoverage:
         end_utc = pd.Timestamp(end)
         if start_utc.tz is None or end_utc.tz is None:
             raise ValueError("coverage interval bounds must be timezone-aware")
+        start_utc = start_utc.tz_convert("UTC")
+        end_utc = end_utc.tz_convert("UTC")
         if end_utc <= start_utc:
             return None
         local_start = start_utc.tz_convert(self.timezone).tz_localize(None).floor("min")
@@ -72,12 +74,12 @@ class CandidateQuoteCoverage:
         left = int((local_start - self.first_minute) / pd.Timedelta(minutes=1))
         right = int((local_end - self.first_minute) / pd.Timedelta(minutes=1))
         if left < 0:
-            return local_start.tz_localize(self.timezone).tz_convert("UTC")
+            return start_utc
         extends_past_coverage = right > len(self.complete_minutes)
         if right > len(self.complete_minutes):
             right = len(self.complete_minutes)
         if left >= len(self.complete_minutes):
-            return local_start.tz_localize(self.timezone).tz_convert("UTC")
+            return start_utc
         if right > left and self.incomplete_prefix[right] != self.incomplete_prefix[left]:
             local_offset = left + int(np.flatnonzero(~self.complete_minutes[left:right])[0])
         elif extends_past_coverage:
@@ -85,7 +87,7 @@ class CandidateQuoteCoverage:
         else:
             return None
         first_incomplete = self.first_minute + pd.Timedelta(minutes=local_offset)
-        return first_incomplete.tz_localize(self.timezone).tz_convert("UTC")
+        return max(first_incomplete.tz_localize(self.timezone).tz_convert("UTC"), start_utc)
 
 
 __all__ = ["CandidateQuoteCoverage"]

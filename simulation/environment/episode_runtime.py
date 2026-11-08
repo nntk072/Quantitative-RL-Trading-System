@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Any, cast
 
 import gymnasium as gym
@@ -20,6 +21,7 @@ from market_data.transforms.sessions import ny_session_mask
 from simulation.contracts import SimulationTransition
 from trading.execution import Position
 from trading.policy import build_payout_reset_event
+from trading.risk.ftmo_clock import FTMOMidnightSnapshotUnavailable, ftmo_trading_day
 
 from .action_diagnostics import _empty_decision
 from .entry_diagnostics import _empty_entry_diag
@@ -32,6 +34,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
     """Manage reset, bar progression, reward accounting, and episode termination."""
 
     prev_session: int | None
+    _previous_ftmo_day: date | None
     position: Position | None
     _selected_trade_setup: TradeSetupCandidate | None
     _selected_trade_setup_event_identity: TradeSetupEventIdentity | None
@@ -98,6 +101,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         # Non-episodic full-split bookkeeping, used by evaluation and
         # full-split training; unused in risk-terminated training mode.
         self.prev_session: int | None = None
+        self._previous_ftmo_day = None
         self.breached_sessions: set[int] = set()
         self.sessions_with_trades: set[int] = set()
         self.all_sessions: set[int] = set()
@@ -444,7 +448,17 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
                 self._level_crosses[key] = bar_time
 
         self.all_sessions.add(session_id)
-        if self.prev_session is not None and session_id != self.prev_session:
+        if self.trading_policy.daily_loss_reset_source == "prague_midnight":
+            current_day = ftmo_trading_day(pd.Timestamp(bar_time))
+            if self._previous_ftmo_day is not None and current_day != self._previous_ftmo_day:
+                if self.position is not None:
+                    raise FTMOMidnightSnapshotUnavailable(
+                        "open position crossed FTMO midnight without a verified midnight "
+                        "balance/equity snapshot"
+                    )
+                self.account.reset_daily()
+            self._previous_ftmo_day = current_day
+        elif self.prev_session is not None and session_id != self.prev_session:
             self.account.reset_daily()
         self.prev_session = session_id
 

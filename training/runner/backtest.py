@@ -203,6 +203,9 @@ def main() -> None:
             contract_size=float(cfg.account.contract_size),
             tickbook=ticks,
             tick_execution_required=bool(cfg.costs.use_tick_execution),
+            server_side_protective_orders=bool(
+                cfg.execution.get("server_side_protective_orders", False)
+            ),
             fill_latency_bars=cfg.execution.get("fill_latency_bars", 0),
             randomized_fill_latency_ms=cfg.execution.randomized_fill_latency_ms,
             max_tick_quote_wait_ms=cfg.execution.max_tick_quote_wait_ms,

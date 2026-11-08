@@ -358,8 +358,16 @@ def main() -> None:
             max_loss_per_trade_usd=max_loss_per_trade,
             eod_risk=dict(cfg.env.get("eod_risk", {})),
             daily_pnl_basis=daily_pnl_basis,
+            trading_policy=(
+                resolve_trading_policy(cfg)
+                if str(cfg.trading_policy.daily_loss_reset_source) == "prague_midnight"
+                else None
+            ),
             tickbook=ticks,
             tick_execution_required=bool(cfg.costs.use_tick_execution),
+            server_side_protective_orders=bool(
+                cfg.execution.get("server_side_protective_orders", False)
+            ),
             fill_latency_bars=cfg.execution.get("fill_latency_bars", 0),
             randomized_fill_latency_ms=float(cfg.execution.get("randomized_fill_latency_ms", 0.0)),
             max_tick_quote_wait_ms=int(cfg.execution.get("max_tick_quote_wait_ms", 60_000)),

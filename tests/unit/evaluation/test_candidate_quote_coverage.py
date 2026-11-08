@@ -41,6 +41,19 @@ def test_partial_minute_interval_includes_the_touched_minute(tmp_path) -> None:
     assert first_gap == pd.Timestamp("2025-01-02T13:01:00Z")
 
 
+def test_bad_minute_containing_an_intraminute_entry_never_predates_entry(tmp_path) -> None:
+    coverage = _coverage(tmp_path, [False, True, True])
+    start = pd.Timestamp("2025-01-02T13:00:30Z")
+    assert coverage.first_incomplete_minute(start, "2025-01-02T13:01:30Z") == start
+    assert (
+        coverage.first_incomplete_minute("2025-01-02T15:00:30+02:00", "2025-01-02T15:01:30+02:00")
+        == start
+    )
+    assert coverage.first_incomplete_minute(
+        "2025-01-02T12:59:30Z", "2025-01-02T13:00:30Z"
+    ) == pd.Timestamp("2025-01-02T12:59:30Z")
+
+
 def test_missing_minutes_and_out_of_range_data_fail_closed(tmp_path) -> None:
     path = tmp_path / "coverage.csv"
     pd.DataFrame(

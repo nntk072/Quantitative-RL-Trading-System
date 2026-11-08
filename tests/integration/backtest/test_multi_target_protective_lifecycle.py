@@ -36,6 +36,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         direction: int = 1,
         require_tick_execution: bool = False,
         randomized_fill_latency_ms: float = 0.0,
+        server_side_protective_orders: bool = False,
         breakeven_trigger_r: float = 0.0,
         breakeven_buffer_pts: float = 0.1,
     ) -> SimpleNamespace:
@@ -109,6 +110,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             fill_delay_ms=0,
             randomized_fill_latency_ms=randomized_fill_latency_ms,
             tick_execution_required=require_tick_execution,
+            server_side_protective_orders=server_side_protective_orders,
             _breakeven_trigger_r=breakeven_trigger_r,
             _breakeven_buffer_pts=breakeven_buffer_pts,
             _last_realized_close_pnl=None,
@@ -165,6 +167,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         low: float = 99.5,
         direction: int = 1,
         randomized_fill_latency_ms: float = 0.0,
+        server_side_protective_orders: bool = False,
     ) -> BacktestState:
         cost_model = CostModel(spread_points=0.0, commission_per_lot=2.0, point_size=0.01)
         broker = Broker(cost_model=cost_model, contract_size=1.0)
@@ -192,6 +195,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             randomized_fill_latency_ms=randomized_fill_latency_ms,
             max_tick_quote_wait_ms=1_000,
             tick_execution_required=tickbook is not None,
+            server_side_protective_orders=server_side_protective_orders,
             use_structure_sl_tp=True,
             risk_frac=0.01,
             policy_risk_frac_range=(0.01, 0.01),
@@ -417,6 +421,62 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
                 "actual_tick_time",
             ):
                 self.assertEqual(actual[field], reference[field])
+            for field in ("size", "pnl", "price", "net_pnl"):
+                self.assertAlmostEqual(actual[field], reference[field])
+        self.assertAlmostEqual(state.account.balance, env.account.balance)
+
+    def test_server_side_multi_target_fills_use_trigger_ticks_in_both_engines(self) -> None:
+        start = pd.Timestamp("2026-01-05T10:00:00Z")
+        tick_times = np.array(
+            [
+                (start + pd.Timedelta(seconds=10)).value,
+                (start + pd.Timedelta(seconds=20)).value,
+                (start + pd.Timedelta(seconds=30)).value,
+            ],
+            dtype=np.int64,
+        )
+        book = TickBook(
+            tick_times,
+            np.array([100.5, 101.0, 101.5]),
+            np.array([100.51, 101.01, 101.51]),
+        )
+
+        state = self._run(
+            tickbook=book,
+            randomized_fill_latency_ms=30.0,
+            server_side_protective_orders=True,
+        )
+        env = self._run_environment(
+            tickbook=book,
+            require_tick_execution=True,
+            randomized_fill_latency_ms=30.0,
+            server_side_protective_orders=True,
+        )
+        closes = [record for record in state.trade_log if record.get("type", "").startswith("tp_")]
+        env_closes = [
+            record for record in env.trade_log if record.get("type", "").startswith("tp_")
+        ]
+
+        self.assertEqual(len(closes), 3)
+        self.assertEqual(len(env_closes), 3)
+        for actual, reference, expected_time in zip(
+            closes,
+            env_closes,
+            pd.to_datetime(tick_times, unit="ns", utc=True),
+            strict=True,
+        ):
+            for field in (
+                "reason",
+                "tp_slot",
+                "position_complete",
+                "execution_latency_ns",
+                "execution_arrival_time",
+                "actual_tick_time",
+            ):
+                self.assertEqual(actual[field], reference[field])
+            self.assertEqual(actual["execution_latency_ns"], 0)
+            self.assertEqual(pd.Timestamp(actual["actual_tick_time"]), expected_time)
+            self.assertEqual(pd.Timestamp(actual["execution_arrival_time"]), expected_time)
             for field in ("size", "pnl", "price", "net_pnl"):
                 self.assertAlmostEqual(actual[field], reference[field])
         self.assertAlmostEqual(state.account.balance, env.account.balance)

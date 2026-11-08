@@ -68,6 +68,7 @@ class BacktestSettings:
     allow_multi_tp: bool = False
     allow_simplex: bool = False
     ema_runner_fraction: float = 0.0
+    server_side_protective_orders: bool = False
 
 
 @dataclass
@@ -77,6 +78,7 @@ class BacktestState:
     account: AccountState
     position: Position | None = None
     prev_session: int | None = None
+    prev_ftmo_day: object | None = None
     position_sequence: int = 0
     current_execution_meta: dict[str, Any] = field(default_factory=dict)
     pending_entry_order: dict[str, Any] | None = None

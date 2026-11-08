@@ -53,6 +53,7 @@ class AccountState:
             None,
             "session_net_equity",
             "legacy_gross_closed_losses",
+            "ftmo_midnight_balance",
         }:
             raise ValueError(
                 f"unsupported daily PnL basis override: {self.daily_pnl_basis_override!r}"
@@ -165,11 +166,13 @@ class AccountState:
         )
 
         basis = self.daily_pnl_basis
-        daily_pnl = (
-            float(self.equity) - float(self.session_start_equity)
-            if basis == RISK_DAILY_PNL_BASIS_SESSION_EQUITY
-            else -float(self.daily_loss)
-        )
+        if basis == RISK_DAILY_PNL_BASIS_SESSION_EQUITY:
+            daily_pnl = float(self.equity) - float(self.session_start_equity)
+        elif basis == "ftmo_midnight_balance":
+            # FTMO 2-Step: current equity versus the balance at Prague midnight.
+            daily_pnl = float(self.equity) - float(self.session_start_balance)
+        else:
+            daily_pnl = -float(self.daily_loss)
         return RiskState(
             equity=float(self.equity),
             daily_pnl=daily_pnl,
@@ -187,7 +190,12 @@ class AccountState:
         Returns:
             Numeric result returned by ``daily_floor``.
         """
-        return compute_daily_floor(self.session_start_equity, daily_loss_limit)
+        anchor = (
+            self.session_start_balance
+            if self.daily_pnl_basis == "ftmo_midnight_balance"
+            else self.session_start_equity
+        )
+        return compute_daily_floor(anchor, daily_loss_limit)
 
     def remaining_daily_capacity(self, daily_loss_limit: float) -> float:
         """Return the remaining capacity to the strict-below session floor.
@@ -198,9 +206,12 @@ class AccountState:
         Returns:
             Nonnegative remaining daily capacity.
         """
-        return compute_remaining_daily_capacity(
-            self.session_start_equity, self.equity, daily_loss_limit
+        anchor = (
+            self.session_start_balance
+            if self.daily_pnl_basis == "ftmo_midnight_balance"
+            else self.session_start_equity
         )
+        return compute_remaining_daily_capacity(anchor, self.equity, daily_loss_limit)
 
     def remaining_account_capacity(self, account_floor: float) -> float:
         """Return equity capacity above the account floor.

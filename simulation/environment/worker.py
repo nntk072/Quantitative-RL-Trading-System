@@ -298,6 +298,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         ),
         randomized_fill_latency_ms=float(execution.get("randomized_fill_latency_ms", 0.0)),
         max_tick_quote_wait_ms=int(execution.get("max_tick_quote_wait_ms", 60_000)),
+        server_side_protective_orders=bool(execution.get("server_side_protective_orders", False)),
         mtf=spec.arch
         in {
             "mtf",

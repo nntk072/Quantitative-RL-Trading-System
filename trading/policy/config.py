@@ -151,14 +151,20 @@ class TradingPolicyConfig:
         expected_open_pnl_by_basis = {
             "legacy_gross_closed_losses": False,
             "session_net_equity": True,
+            "ftmo_midnight_balance": True,
         }
         if self.daily_pnl_basis not in expected_open_pnl_by_basis:
             raise ValueError(f"unsupported daily PnL basis: {self.daily_pnl_basis!r}")
         expected_open_pnl = expected_open_pnl_by_basis[self.daily_pnl_basis]
         if self.daily_loss_includes_open_pnl is not expected_open_pnl:
             raise ValueError("open-PnL inclusion does not match the daily PnL basis")
-        if self.daily_loss_reset_source != "supplied_session_id_transition":
-            raise ValueError("daily-loss reset source must use supplied session_id transitions")
+        valid_reset_sources = {"supplied_session_id_transition", "prague_midnight"}
+        if self.daily_loss_reset_source not in valid_reset_sources:
+            raise ValueError("unsupported daily-loss reset source")
+        if (self.daily_loss_reset_source == "prague_midnight") != (
+            self.daily_pnl_basis == "ftmo_midnight_balance"
+        ):
+            raise ValueError("Prague-midnight reset requires the FTMO balance-based risk basis")
         if self.repeated_payout:
             if self.profit_target_balance <= self.operating_balance:
                 raise ValueError("repeated payout target must exceed operating balance")

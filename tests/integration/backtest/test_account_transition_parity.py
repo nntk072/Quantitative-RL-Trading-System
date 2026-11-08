@@ -17,6 +17,170 @@ from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
 from trading.execution import CostModel
 from trading.risk import RiskDailyPnlBasis
+from trading.risk.ftmo_clock import FTMOMidnightSnapshotUnavailable
+
+
+def _ftmo_midnight_fixture() -> tuple[
+    pd.DataFrame, pd.DataFrame, CostModel, dict[str, object], dict[str, float]
+]:
+    index = pd.date_range("2026-01-08T22:55:00Z", periods=11, freq="1min")
+    prices = np.asarray(
+        [100.0, 100.0, 101.0, 102.0, 102.0, 102.0, 102.0, 102.0, 102.0, 102.0, 102.0]
+    )
+    bars = pd.DataFrame(
+        {
+            "open": prices,
+            "high": prices + 0.1,
+            "low": prices - 0.1,
+            "close": prices,
+            "spread": 0.0,
+            "session_id": 7,
+            "session": "ny",
+        },
+        index=index,
+    )
+    features = pd.DataFrame(
+        {
+            "last_swing_low": np.full(len(index), 90.0),
+            "last_swing_high": np.full(len(index), 110.0),
+        },
+        index=index,
+    )
+    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=0.0)
+    policy = {
+        "mode": "legacy",
+        "daily_pnl_basis": "ftmo_midnight_balance",
+        "daily_loss_includes_open_pnl": True,
+        "daily_loss_reset_source": "prague_midnight",
+    }
+    guardrails = {
+        "daily_loss_limit": 5_000.0,
+        "max_loss_limit": 10_000.0,
+        "risk_per_trade_limit": 1_000.0,
+        "soft_daily_loss_limit": 0.0,
+        "soft_max_loss_limit": 0.0,
+    }
+    return bars, features, cost_model, policy, guardrails
+
+
+def test_prague_midnight_resets_flat_account_without_session_transition() -> None:
+    bars, features, cost_model, policy, guardrails = _ftmo_midnight_fixture()
+    actions = (1, 0, 19, 0, 0, 0, 0, 0, 0, 0)
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        cost_model=cost_model,
+        trading_policy=policy,
+        guardrail_kwargs=guardrails,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
+    )
+    env.reset(seed=7)
+    for action in actions:
+        env.step(action)
+
+    action_index = 0
+
+    def backtest_policy(_observation: np.ndarray[Any, Any]) -> int:
+        nonlocal action_index
+        action = actions[action_index] if action_index < len(actions) else 0
+        action_index += 1
+        return action
+
+    result = run_backtest(
+        bars,
+        features,
+        backtest_policy,
+        obs_window=1,
+        cost_model=cost_model,
+        trading_policy=policy,
+        guardrail_kwargs=guardrails,
+        risk_frac=0.001,
+        rr_ratio=1.0,
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        hold_on_zero=True,
+        block_overnight=False,
+        exit_action=19,
+    )
+
+    assert bars["session_id"].nunique() == 1
+    assert env.account.balance == pytest.approx(100_001.0)
+    assert result["account"].balance == pytest.approx(100_001.0)
+    assert env.account.session_start_balance == pytest.approx(100_001.0)
+    assert result["account"].session_start_balance == pytest.approx(100_001.0)
+    trace = result["account_state_trace"]
+    post_midnight = trace.loc[
+        pd.to_datetime(trace["decision_time"], utc=True) == pd.Timestamp("2026-01-08T23:00:00Z")
+    ]
+    assert len(post_midnight) == 1
+    assert float(post_midnight.iloc[0]["session_start_balance"]) == pytest.approx(100_001.0)
+    assert post_midnight.iloc[0]["daily_pnl_basis"] == "ftmo_midnight_balance"
+
+
+def test_open_position_crossing_prague_midnight_fails_closed_in_both_engines() -> None:
+    bars, features, cost_model, policy, guardrails = _ftmo_midnight_fixture()
+    actions = (1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        cost_model=cost_model,
+        trading_policy=policy,
+        guardrail_kwargs=guardrails,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
+    )
+    env.reset(seed=7)
+    with pytest.raises(
+        FTMOMidnightSnapshotUnavailable, match="open position crossed FTMO midnight"
+    ):
+        for action in actions:
+            env.step(action)
+
+    action_index = 0
+
+    def backtest_policy(_observation: np.ndarray[Any, Any]) -> int:
+        nonlocal action_index
+        action = actions[action_index] if action_index < len(actions) else 0
+        action_index += 1
+        return action
+
+    with pytest.raises(
+        FTMOMidnightSnapshotUnavailable,
+        match="open position crossed FTMO midnight",
+    ):
+        run_backtest(
+            bars,
+            features,
+            backtest_policy,
+            obs_window=1,
+            cost_model=cost_model,
+            trading_policy=policy,
+            guardrail_kwargs=guardrails,
+            risk_frac=0.001,
+            rr_ratio=1.0,
+            min_lot=0.01,
+            max_lot=1.0,
+            contract_size=1.0,
+            max_loss_per_trade_usd=100.0,
+            hold_on_zero=True,
+            block_overnight=False,
+            exit_action=19,
+        )
 
 
 @pytest.mark.parametrize("initial_balance", [50_000.0, 100_000.0])

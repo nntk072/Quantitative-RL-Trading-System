@@ -92,6 +92,7 @@ from trading.execution import (
 from trading.orders import limit_order_expiry, limit_price_from_atr_offset
 from trading.policy import TradingPolicyConfig, resolve_trading_policy_mapping
 from trading.risk import FTMOGuardrails, RiskDailyPnlBasis
+from trading.risk.ftmo_clock import FTMOMidnightSnapshotUnavailable, ftmo_trading_day
 
 if TYPE_CHECKING:
     from market_data.loading.ticks import TickBook
@@ -547,6 +548,7 @@ def run_backtest(
     randomized_fill_latency_ms: float = 0.0,
     max_tick_quote_wait_ms: int = 60_000,
     tick_execution_required: bool = False,
+    server_side_protective_orders: bool = False,
     execution_seed: int = 0,
     fill_latency_bars: int = 0,
     use_structure_sl_tp: bool = False,
@@ -623,6 +625,8 @@ def run_backtest(
         randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
         max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
         tick_execution_required: Whether to enable or require the tick execution required.
+        server_side_protective_orders: Execute attached SL/TP orders on their triggering
+            tick without sampling a new EA/network latency.
         execution_seed: Numeric value used for the execution seed.
         fill_latency_bars: Whole M1 bars added after the ordinary next-bar entry fill.
         use_structure_sl_tp: Whether to enable or require the use structure sl tp.
@@ -743,6 +747,8 @@ def run_backtest(
         raise ValueError("tick_fill_slippage_points must be finite and non-negative") from exc
     if not np.isfinite(resolved_market_slippage) or resolved_market_slippage < 0.0:
         raise ValueError("tick_fill_slippage_points must be finite and non-negative")
+    if server_side_protective_orders and not tick_execution_required:
+        raise ValueError("server-side protective fills require tick-only execution")
     if randomized_fill_latency_ms < 0.0 or randomized_fill_latency_ms > 30.0:
         raise ValueError("randomized_fill_latency_ms must be in [0, 30]")
     if not np.isfinite(limit_order_max_offset_atr) or limit_order_max_offset_atr <= 0.0:
@@ -1003,6 +1009,7 @@ def run_backtest(
         max_tick_quote_wait_ms=max_tick_quote_wait_ms,
         tick_execution_required=tick_execution_required,
         use_structure_sl_tp=bool(use_structure_sl_tp or apply_setup_geometry),
+        server_side_protective_orders=server_side_protective_orders,
         risk_frac=risk_frac,
         policy_risk_frac_range=resolved_policy_risk_frac_range,
         rr_ratio=rr_ratio,
@@ -1623,11 +1630,22 @@ def run_backtest(
         state.session_set.add(session)
         is_ny = "session" not in row.index or str(row["session"]) == "ny"
 
-        if state.prev_session is None:
-            state.prev_session = session
-        elif session != state.prev_session:
+        if (
+            resolved_trading_policy is not None
+            and resolved_trading_policy.daily_loss_reset_source == "prague_midnight"
+        ):
+            day = ftmo_trading_day(pd.Timestamp(bar_time))
+            if state.prev_ftmo_day is not None and day != state.prev_ftmo_day:
+                if state.position is not None:
+                    raise FTMOMidnightSnapshotUnavailable(
+                        "open position crossed FTMO midnight without a verified midnight "
+                        "balance/equity snapshot"
+                    )
+                state.account.reset_daily()
+            state.prev_ftmo_day = day
+        elif state.prev_session is not None and session != state.prev_session:
             state.account.reset_daily()
-            state.prev_session = session
+        state.prev_session = session
 
         bq = _bar_quote(row, cost_model)
         if state.position is not None:

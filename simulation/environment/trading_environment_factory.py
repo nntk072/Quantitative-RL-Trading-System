@@ -312,6 +312,9 @@ def build_eval_common(
         "tick_fill_slippage_points": float(resolved_market_slippage),
         "tick_execution_required": tick_execution_required(cfg),
         "max_tick_quote_wait_ms": max_tick_quote_wait_ms(cfg),
+        "server_side_protective_orders": bool(
+            cfg.execution.get("server_side_protective_orders", False)
+        ),
         "execution_seed": (
             int(getattr(args, "seed"))
             if args is not None and getattr(args, "seed", None) is not None
@@ -658,6 +661,9 @@ def make_env(
         fill_delay_ms=fill_delay_ms(cfg),
         randomized_fill_latency_ms=randomized_fill_latency_ms(cfg),
         max_tick_quote_wait_ms=max_tick_quote_wait_ms(cfg),
+        server_side_protective_orders=bool(
+            cfg.execution.get("server_side_protective_orders", False)
+        ),
         tick_fill_slippage_points=cost_model(cfg).slippage_points,
         use_vae=use_vae,
         vae=vae,

@@ -445,7 +445,17 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             )
             if stop_hit:
                 execution_meta: dict[str, Any] = {}
-                if (
+                if getattr(self, "server_side_protective_orders", False):
+                    execution_time = tick_time
+                    execution_meta = {
+                        "order_submission_time": tick_time,
+                        "execution_order_time": tick_time,
+                        "execution_arrival_time": tick_time,
+                        "execution_latency_ns": 0,
+                        "actual_tick_time": tick_time,
+                        "fill_quote_source": "tick",
+                    }
+                elif (
                     getattr(self, "tick_execution_required", False)
                     or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
                 ):
@@ -512,7 +522,17 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 if not target_hit:
                     continue
                 execution_meta = {}
-                if (
+                if getattr(self, "server_side_protective_orders", False):
+                    execution_time = tick_time
+                    execution_meta = {
+                        "order_submission_time": tick_time,
+                        "execution_order_time": tick_time,
+                        "execution_arrival_time": tick_time,
+                        "execution_latency_ns": 0,
+                        "actual_tick_time": tick_time,
+                        "fill_quote_source": "tick",
+                    }
+                elif (
                     getattr(self, "tick_execution_required", False)
                     or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
                 ):

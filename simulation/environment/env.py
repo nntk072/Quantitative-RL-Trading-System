@@ -114,6 +114,7 @@ class TradingEnv(
         fill_delay_ms: int = 0,
         randomized_fill_latency_ms: float = 0.0,
         max_tick_quote_wait_ms: int = 60_000,
+        server_side_protective_orders: bool = False,
         tick_fill_slippage_points: float = 0.0,
         agent_direction_control: bool = False,
         direction_override_threshold: float = 0.0,
@@ -226,6 +227,8 @@ class TradingEnv(
             fill_delay_ms: Numeric value used for the fill delay ms.
             randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
             max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
+            server_side_protective_orders: Execute attached SL/TP orders on their
+                triggering tick without sampling a new EA/network latency.
             tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
             agent_direction_control: Whether to enable or require the agent direction control.
             direction_override_threshold: Numeric value used for the direction override threshold.
@@ -324,6 +327,11 @@ class TradingEnv(
             max_tick_quote_wait_ms,
             tick_fill_slippage_points,
         )
+        if not isinstance(server_side_protective_orders, bool):
+            raise ValueError("server_side_protective_orders must be boolean")
+        if server_side_protective_orders and not tick_execution_required:
+            raise ValueError("server-side protective fills require tick-only execution")
+        self.server_side_protective_orders = server_side_protective_orders
         resolved_strategy_actions = self._initialize_reward_runtime(
             trader_actions,
             strategy_actions,

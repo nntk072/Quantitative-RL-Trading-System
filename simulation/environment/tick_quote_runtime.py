@@ -53,6 +53,7 @@ class TickQuoteRuntimeMixin(RuntimeMixinBase):
                     else pd.Timestamp(cast(Any, pos.entry_timestamp))
                 ),
                 event_seed=int(self.np_random_seed),
+                server_side_protective=bool(getattr(self, "server_side_protective_orders", False)),
             )
             if hit is None:
                 return None
