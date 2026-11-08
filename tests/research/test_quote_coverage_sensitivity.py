@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 from scripts.research.analysis.evaluation.compare_quote_coverage_sensitivity import (
     compare_frames,
+    load_packet,
+    sha256,
+    validate_paired_manifests,
 )
 from scripts.research.analysis.market_data.build_reconstructed_quote_coverage import (
     book_minute_counts,
@@ -119,3 +125,59 @@ def test_existing_completed_trade_cannot_change_economics() -> None:
     alternative.loc[0, "net_r"] = 0.2
     with pytest.raises(ValueError, match="already-completed outcome changed net_r"):
         compare_frames(strict, alternative)
+
+
+def _paired_manifest() -> dict[str, object]:
+    from scripts.research.analysis.evaluation.compare_quote_coverage_sensitivity import (
+        IDENTICAL_INPUTS,
+    )
+
+    manifest: dict[str, object] = {key: f"value:{key}" for key in IDENTICAL_INPUTS}
+    manifest["source_sha256"] = {"evaluation/candidate_execution.py": "abc123"}
+    return manifest
+
+
+def test_paired_manifest_rejects_noncoverage_input_mismatch() -> None:
+    strict = _paired_manifest()
+    alternative = _paired_manifest()
+    alternative["tickbook_sha256"] = "different"
+
+    with pytest.raises(ValueError, match="unmatched replay input tickbook_sha256"):
+        validate_paired_manifests(strict, alternative, packet_label="alternate")
+
+
+def test_paired_manifest_rejects_execution_source_mismatch() -> None:
+    strict = _paired_manifest()
+    alternative = _paired_manifest()
+    alternative["source_sha256"] = {"evaluation/candidate_execution.py": "different"}
+
+    with pytest.raises(ValueError, match="execution source changed"):
+        validate_paired_manifests(strict, alternative, packet_label="alternate")
+
+
+def test_status_comparison_rejects_changed_outcome_population() -> None:
+    strict = _outcomes(["filled_resolved", "unresolved_data"], [None, "gap"])
+    alternative = _outcomes(["filled_resolved", "unresolved_data"], [None, "gap"])
+    alternative.loc[1, "outcome_id"] = "different-id"
+
+    with pytest.raises(ValueError, match="proposal/bracket population"):
+        compare_frames(strict, alternative)
+
+
+def test_load_packet_retains_proposal_identity_for_audit(tmp_path: Path) -> None:
+    frame = _outcomes(["filled_resolved"], [None]).assign(proposal_id=["proposal-1"])
+    packet = tmp_path / "packet"
+    packet.mkdir()
+    data_path = packet / "conditional_outcomes.parquet"
+    frame.to_parquet(data_path, index=False)
+    manifest = {
+        "status": "training_conditional_outcomes_with_coverage_dispositions",
+        "conditional_outcome_rows": 1,
+        "outcome_status_counts": {"filled_resolved": 1},
+        "output_sha256": {data_path.name: sha256(data_path)},
+    }
+    (packet / "outcome_manifest.json").write_text(json.dumps(manifest))
+
+    loaded, _ = load_packet(packet)
+
+    assert loaded["proposal_id"].tolist() == ["proposal-1"]

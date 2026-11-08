@@ -585,3 +585,74 @@ def test_market_gap_past_target_is_unresolved_and_keeps_fill() -> None:
     assert outcome.status == "unresolved_data"
     assert outcome.fill_price == 101.5
     assert "not beyond" in _reason(outcome)
+
+
+@pytest.mark.parametrize(
+    (
+        "entry_type",
+        "direction",
+        "entry_price",
+        "stop_price",
+        "target_price",
+        "entry_quote",
+        "trigger_quote",
+        "expected_exit",
+    ),
+    [
+        ("market", 1, 100.5, 99.0, 101.0, (100.0, 100.5), (101.0, 101.5), 101.0),
+        ("limit", 1, 100.0, 99.0, 101.0, (99.75, 100.0), (101.0, 101.5), 101.0),
+        ("market", -1, 100.0, 101.5, 99.0, (100.0, 100.25), (98.75, 99.0), 99.0),
+        ("limit", -1, 100.0, 101.5, 99.0, (100.0, 100.25), (98.75, 99.0), 99.0),
+    ],
+)
+def test_fixed_brackets_execute_on_first_server_side_trigger_without_second_latency(
+    entry_type: str,
+    direction: int,
+    entry_price: float,
+    stop_price: float,
+    target_price: float,
+    entry_quote: tuple[float, float],
+    trigger_quote: tuple[float, float],
+    expected_exit: float,
+) -> None:
+    proposal = replace(
+        _proposal(entry_type=entry_type, entry=entry_price),
+        direction=direction,
+        permissible_stop_choices=(("protective_stop", stop_price),),
+        permissible_target_choices=(("protective_target", target_price),),
+        proposal_id="",
+    )
+    if entry_type == "limit":
+        proposal = replace(
+            proposal,
+            source_zone_low=min(entry_price, entry_price - 0.25),
+            source_zone_high=max(entry_price, entry_price + 0.25),
+            proposal_id="",
+        )
+    book = _book(
+        [
+            ("2025-01-02T10:01:00.500Z", *entry_quote),
+            ("2025-01-02T10:01:10.000Z", *trigger_quote),
+            (
+                "2025-01-02T10:01:10.400Z",
+                trigger_quote[0] + (0.25 if direction == 1 else -0.25),
+                trigger_quote[1] + (0.25 if direction == 1 else -0.25),
+            ),
+        ]
+    )
+
+    outcome = replay_candidate_proposal(
+        proposal,
+        book,
+        stop_choice="protective_stop",
+        target_choice="protective_target",
+        observed_until="2025-01-02T10:04:00Z",
+        exit_horizon="2025-01-02T10:03:00Z",
+        randomized_fill_latency_ms=500.0,
+        execution_seed=19,
+    )
+
+    assert outcome.status == "filled_resolved"
+    assert outcome.exit_reason == "tp"
+    assert outcome.exit_time == "2025-01-02T10:01:10+00:00"
+    assert outcome.exit_price == expected_exit

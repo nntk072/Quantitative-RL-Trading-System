@@ -23,6 +23,7 @@ from configuration.paths import repository_root
 ROOT = repository_root(__file__)
 FIELDS = (
     "outcome_id",
+    "proposal_id",
     "status",
     "unresolved_reason",
     "fill_time",
@@ -74,6 +75,24 @@ def load_packet(packet_dir: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
     if observed_counts != manifest["outcome_status_counts"]:
         raise ValueError("outcome status totals do not match the replay manifest")
     return frame, manifest
+
+
+def validate_paired_manifests(
+    strict_manifest: dict[str, Any],
+    alternative_manifest: dict[str, Any],
+    *,
+    packet_label: str,
+) -> None:
+    """Require every non-coverage replay input to match exactly."""
+    for key in IDENTICAL_INPUTS:
+        if key not in strict_manifest or key not in alternative_manifest:
+            raise ValueError(f"paired replay manifest lacks required input {key}: {packet_label}")
+        if strict_manifest[key] != alternative_manifest[key]:
+            raise ValueError(f"unmatched replay input {key}: {packet_label}")
+    if "source_sha256" not in strict_manifest or "source_sha256" not in alternative_manifest:
+        raise ValueError(f"paired replay manifest lacks source_sha256: {packet_label}")
+    if strict_manifest["source_sha256"] != alternative_manifest["source_sha256"]:
+        raise ValueError("execution source changed; experiment is not paired")
 
 
 def compare_frames(strict: pd.DataFrame, alternative: pd.DataFrame) -> dict[str, Any]:
@@ -167,13 +186,11 @@ def compare_packets(
     comparisons: dict[str, Any] = {}
     for packet_dir in alternative_dirs:
         other, other_manifest = load_packet(packet_dir)
-        for key in IDENTICAL_INPUTS:
-            if strict_manifest[key] != other_manifest[key]:
-                raise ValueError(f"unmatched replay input {key}: {packet_dir}")
-        # Strict and alternative must use identical production code; only the
-        # coverage packet/assumption may differ.
-        if strict_manifest["source_sha256"] != other_manifest["source_sha256"]:
-            raise ValueError("execution source changed; experiment is not paired")
+        validate_paired_manifests(
+            strict_manifest,
+            other_manifest,
+            packet_label=str(packet_dir),
+        )
         profile = packet_dir.name
         if profile in comparisons:
             raise ValueError(f"duplicate profile: {profile}")

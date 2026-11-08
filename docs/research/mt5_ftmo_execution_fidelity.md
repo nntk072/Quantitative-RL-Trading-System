@@ -10,7 +10,7 @@ before making any broker-equivalence or performance assertion.
 
 - MT5 market entry buys at Ask/sells at Bid; closes reverse the transacted side.
 - Already accepted server-side protective stops/targets do **not** incur EA
-  order-submission network delay again. The opt-in mode matches them to the
+  order-submission network delay again. The opt-in simulator and candidate conditional replay match them to the
   first source-ordered triggering quote (including duplicate millisecond ties).
   It remains an idealized quote-based execution: stop gap/slippage, TP order
   queue priority, fill policy, rejects and partial fills require broker traces.

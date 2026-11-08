@@ -238,8 +238,10 @@ def replay_candidate_proposal(
     """Replay one order and one selected bracket through the current TickBook.
 
     Order censoring is determined against the observed cutoff and proposal TTL.
-    Filled trades use the first tick-triggered stop/target, with stop precedence
-    on a tick that crosses both and configured latency/quote-wait semantics.
+    Filled trades use the first source-ordered tick-triggered attached stop/target,
+    with stop precedence on a tick that crosses both. Entry requests use configured
+    latency/quote-wait semantics; accepted protective levels execute server-side
+    on their triggering source quote without a second EA/network delay.
     ``quote_coverage_cutoff`` is the first locally audited incomplete quote
     minute after the eligible action time. Horizons truncated by that boundary
     become unresolved data, while earlier administrative censoring stays
@@ -427,6 +429,7 @@ def replay_candidate_proposal(
             max_latency_ns_exclusive=int(randomized_fill_latency_ms * 1_000_000),
             max_quote_wait_ns=int(max_quote_wait_ms * 1_000_000),
             event_seed=execution_seed,
+            server_side_protective=True,
         )
     except TickExecutionUnavailable as exc:
         return CandidateConditionalOutcome(

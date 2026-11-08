@@ -245,6 +245,9 @@ def build_outcome_ledger(
         "execution_parameters": {
             "max_quote_wait_ms": max_quote_wait_ms,
             "randomized_fill_latency_ms": randomized_latency_ms,
+            "randomized_fill_latency_scope": "entry_requests_only",
+            "protective_exit_execution": "server_side_attached_first_trigger_quote",
+            "protective_exit_network_latency_ms": 0.0,
             "limit_require_trade_through": limit_require_trade_through,
             "limit_fill_assumption": (
                 "strict_trade_through" if limit_require_trade_through else "exact_touch"
@@ -268,7 +271,7 @@ def build_outcome_ledger(
     readme_path.write_text(
         "# Candidate conditional outcomes\n\n"
         "This training-only packet replays each statically eligible candidate proposal independently for every permitted stop/target pair. It is a conditional fixed-entry estimand and excludes account state, portfolio contention, policy action, and closed-loop policy value. Incomplete local quote coverage truncates the replay; those records are unresolved rather than labeled as no-touch or no-exit. Administrative censoring at the training cutoff remains right-censored.\n\n"
-        "Limit fills respect the submitted price bound and record the configured exact-touch or strict trade-through assumption in the execution parameters. Market slippage applies only to market entries.\n\n"
+        "Limit fills respect the submitted price bound and record the configured exact-touch or strict trade-through assumption in the execution parameters. Market slippage applies only to market entries. Fixed Stop Loss and Take Profit levels are treated as already attached server-side protective orders and execute on the first source-ordered triggering quote without a second EA/network latency draw.\n\n"
         "`outcome_manifest.json` identifies the proposal, coverage, config, TickBook, source, execution parameters, outcome counts, and output hash.\n",
         encoding="utf-8",
     )
