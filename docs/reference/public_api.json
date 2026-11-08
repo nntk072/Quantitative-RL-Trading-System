@@ -3562,7 +3562,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 585,
+      "source_line": 588,
       "source_module": "evaluation.candidate_execution",
       "source_path": "evaluation/candidate_execution.py"
     },
@@ -3586,7 +3586,7 @@
       "name": "_coverage_unresolved",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 556,
+      "source_line": 559,
       "source_module": "evaluation.candidate_execution",
       "source_path": "evaluation/candidate_execution.py"
     },

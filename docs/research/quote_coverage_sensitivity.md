@@ -222,7 +222,7 @@ equivalence.
 
 No RL agent was trained as part of this study.
 
-## Thesis-safe interpretation
+## Publication-safe interpretation
 
 > The historical ~72% unresolved conditional-outcome rate should not be
 > interpreted as evidence that 72% of candidate trades were intrinsically
