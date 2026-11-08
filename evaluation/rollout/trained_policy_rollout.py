@@ -270,6 +270,7 @@ def evaluate_model(
     limit_order_max_offset_atr: float = 1.0,
     limit_order_max_ttl_bars: int = 60,
     limit_order_require_trade_through: bool = False,
+    server_side_protective_orders: bool = False,
 ) -> dict[str, Any]:
     """Walk a trained RL ``model`` over *bars*/*features* and collect trades.
 
@@ -382,6 +383,7 @@ def evaluate_model(
         limit_order_max_offset_atr: Maximum policy limit distance in ATR units.
         limit_order_max_ttl_bars: Maximum pending-limit lifetime in M1 bars.
         limit_order_require_trade_through: Whether limit fills require a trade through the price.
+        server_side_protective_orders: Resolve attached SL/TP orders on triggering ticks.
 
     Returns:
         dict with keys ``equity``, ``trades``, ``account``, ``breaches``,:
@@ -510,6 +512,7 @@ def evaluate_model(
             limit_order_max_offset_atr=limit_order_max_offset_atr,
             limit_order_max_ttl_bars=limit_order_max_ttl_bars,
             limit_order_require_trade_through=limit_order_require_trade_through,
+            server_side_protective_orders=server_side_protective_orders,
         )
 
     if execution_seed is None:

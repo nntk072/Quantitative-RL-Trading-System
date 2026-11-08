@@ -3358,7 +3358,7 @@
       "name": "evaluate_provider",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 950,
+      "source_line": 953,
       "source_module": "evaluation.rollout.trained_policy_rollout",
       "source_path": "evaluation/rollout/trained_policy_rollout.py"
     },
@@ -9298,7 +9298,7 @@
       "name": "evaluate_provider",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 950,
+      "source_line": 953,
       "source_module": "evaluation.rollout.trained_policy_rollout",
       "source_path": "evaluation/rollout/trained_policy_rollout.py"
     },

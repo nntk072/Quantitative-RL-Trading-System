@@ -196,7 +196,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `compute_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L553) | stable |
 | `conditional_pnl_distributions` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L157) | stable |
 | `conditional_pnl_groups` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L136) | stable |
-| `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L950) | stable |
+| `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L953) | stable |
 | `evaluation_periods_per_year` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L759) | stable |
 | `holding_time_distribution` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L63) | stable |
 | `max_drawdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L450) | stable |
@@ -244,7 +244,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `StructurePrioritySetupRolloutModel` | class | [evaluation.rollout.structure_priority_setup](../../evaluation/rollout/structure_priority_setup.py#L161) | stable |
 | `discrete_actions_for_position_targets` | function | [evaluation.rollout.baseline_signal_actions](../../evaluation/rollout/baseline_signal_actions.py#L11) | stable |
 | `evaluate_model` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L176) | stable |
-| `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L950) | stable |
+| `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L953) | stable |
 | `make_action_fn` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L117) | stable |
 | `run_episode` | function | [evaluation.rollout.episode_rollout](../../evaluation/rollout/episode_rollout.py#L26) | stable |
 | `AlwaysNoTradePolicy.metadata` | method | [evaluation.rollout.random_eligible_setup](../../evaluation/rollout/random_eligible_setup.py#L232) | stable |

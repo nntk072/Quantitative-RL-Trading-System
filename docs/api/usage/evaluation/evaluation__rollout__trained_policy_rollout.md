@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:950](../../../../evaluation/rollout/trained_policy_rollout.py#L950)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:953](../../../../evaluation/rollout/trained_policy_rollout.py#L953)
 
 **Inputs and outputs:**
 
@@ -195,6 +195,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   limit_order_max_offset_atr: Maximum policy limit distance in ATR units.
   limit_order_max_ttl_bars: Maximum pending-limit lifetime in M1 bars.
   limit_order_require_trade_through: Whether limit fills require a trade through the price.
+  server_side_protective_orders: Resolve attached SL/TP orders on triggering ticks.
   ```
 
 - **Returns:**
@@ -275,7 +276,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:950](../../../../evaluation/rollout/trained_policy_rollout.py#L950)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:953](../../../../evaluation/rollout/trained_policy_rollout.py#L953)
 
 **Inputs and outputs:**
 
