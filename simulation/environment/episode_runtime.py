@@ -21,7 +21,7 @@ from market_data.transforms.sessions import ny_session_mask
 from simulation.contracts import SimulationTransition
 from trading.execution import Position
 from trading.policy import build_payout_reset_event
-from trading.risk.ftmo_clock import FTMOMidnightSnapshotUnavailable, ftmo_trading_day
+from trading.risk import FTMOMidnightSnapshotUnavailable, ftmo_trading_day
 
 from .action_diagnostics import _empty_decision
 from .entry_diagnostics import _empty_entry_diag

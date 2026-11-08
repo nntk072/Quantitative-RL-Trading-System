@@ -10,11 +10,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Classification | Exported names |
 |---|---:|
-| stable | 704 |
+| stable | 706 |
 | experimental | 0 |
 | compatibility-only | 10 |
-| cross-package internal | 432 |
-| private implementation | 943 |
+| cross-package internal | 434 |
+| private implementation | 945 |
 
 ## Public package exports
 
@@ -438,7 +438,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L43) | stable |
-| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L460) | stable |
+| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L476) | stable |
 | `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L20) | stable |
 | `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L98) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L22) | stable |
@@ -469,22 +469,22 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `write_parquet_cache` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L184) | stable |
 | `write_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L119) | stable |
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L43) | stable |
-| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L460) | stable |
-| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L896) | stable |
+| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L476) | stable |
+| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L912) | stable |
 | `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L20) | stable |
 | `iter_ticks_chunks` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L108) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L22) | stable |
 | `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L46) | stable |
-| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L662) | stable |
-| `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L625) | stable |
-| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L721) | stable |
-| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L685) | stable |
-| `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L534) | stable |
-| `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L561) | stable |
-| `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L645) | stable |
-| `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L488) | stable |
-| `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L507) | stable |
-| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L785) | stable |
+| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L678) | stable |
+| `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L641) | stable |
+| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L737) | stable |
+| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L701) | stable |
+| `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L550) | stable |
+| `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L577) | stable |
+| `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L661) | stable |
+| `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L504) | stable |
+| `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L523) | stable |
+| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L801) | stable |
 | `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L98) | stable |
 | `get_train_start_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L118) | stable |
 | `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L134) | stable |
@@ -548,7 +548,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 |---|---|---|---|
 | `SimulationTransition` | class | [simulation.contracts.transition](../../simulation/contracts/transition.py#L13) | stable |
 | `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L33) | stable |
-| `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L533) | stable |
+| `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L538) | stable |
 | `CrossOverStrategy` | class | [simulation.backtest.cross_validation.strategies.cross_over](../../simulation/backtest/cross_validation/strategies/cross_over.py#L4) | stable |
 | `EMAMACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L130) | stable |
 | `MACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L6) | stable |
@@ -573,24 +573,24 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `SimulationTransition.as_gymnasium` | method | [simulation.contracts.transition](../../simulation/contracts/transition.py#L22) | stable |
 | `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L33) | stable |
 | `build_eval_common` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L216) | stable |
-| `cost_model` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L511) | stable |
+| `cost_model` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L514) | stable |
 | `eval_guardrail_kwargs` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L111) | stable |
-| `fill_delay_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L349) | stable |
+| `fill_delay_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L352) | stable |
 | `guardrail_kwargs` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L70) | stable |
-| `make_env` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L538) | stable |
+| `make_env` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L541) | stable |
 | `max_episode_steps` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L126) | stable |
 | `max_loss_per_trade` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L53) | stable |
-| `max_tick_quote_wait_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L446) | stable |
-| `mtf_settings` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L464) | stable |
-| `randomized_fill_latency_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L391) | stable |
-| `regime_observation_enabled` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L422) | stable |
-| `scheduled_session_closes` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L497) | stable |
+| `max_tick_quote_wait_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L449) | stable |
+| `mtf_settings` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L467) | stable |
+| `randomized_fill_latency_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L394) | stable |
+| `regime_observation_enabled` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L425) | stable |
+| `scheduled_session_closes` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L500) | stable |
 | `strategy_from_cfg` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L143) | stable |
 | `strategy_risk_ranges` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L23) | stable |
-| `tick_execution_required` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L409) | stable |
-| `TradingEnv.from_bundle` | method | [simulation.environment.env](../../simulation/environment/env.py#L386) | stable |
-| `TradingEnv.step` | method | [simulation.environment.env](../../simulation/environment/env.py#L418) | stable |
-| `TradingEnv.transition` | method | [simulation.environment.env](../../simulation/environment/env.py#L432) | stable |
+| `tick_execution_required` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L412) | stable |
+| `TradingEnv.from_bundle` | method | [simulation.environment.env](../../simulation/environment/env.py#L394) | stable |
+| `TradingEnv.step` | method | [simulation.environment.env](../../simulation/environment/env.py#L426) | stable |
+| `TradingEnv.transition` | method | [simulation.environment.env](../../simulation/environment/env.py#L440) | stable |
 
 ### `trading`
 
@@ -598,7 +598,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 |---|---|---|---|
 | `AccountState` | class | [trading.account.account_state](../../trading/account/account_state.py#L28) | stable |
 | `TradingPolicyConfig` | class | [trading.policy.config](../../trading/policy/config.py#L24) | stable |
-| `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L194) | stable |
+| `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L200) | stable |
 | `ACCOUNT_STATE_TRACE_SCHEMA` | value | [trading.account.snapshots](../../trading/account/snapshots.py#L9) | stable |
 | `AccountState` | class | [trading.account.account_state](../../trading/account/account_state.py#L28) | stable |
 | `account_state_snapshot` | function | [trading.account.snapshots](../../trading/account/snapshots.py#L12) | stable |
@@ -608,22 +608,22 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `payout_due` | function | [trading.account.accounting](../../trading/account/accounting.py#L6) | stable |
 | `remaining_account_capacity` | function | [trading.account.limits](../../trading/account/limits.py#L48) | stable |
 | `remaining_daily_capacity` | function | [trading.account.limits](../../trading/account/limits.py#L32) | stable |
-| `AccountState.canonical_daily_loss` | method | [trading.account.account_state](../../trading/account/account_state.py#L122) | stable |
-| `AccountState.close_trade` | method | [trading.account.account_state](../../trading/account/account_state.py#L94) | stable |
-| `AccountState.daily_floor` | method | [trading.account.account_state](../../trading/account/account_state.py#L181) | stable |
-| `AccountState.daily_pnl_basis` | method | [trading.account.account_state](../../trading/account/account_state.py#L132) | stable |
-| `AccountState.drawdown_pct` | method | [trading.account.account_state](../../trading/account/account_state.py#L273) | stable |
-| `AccountState.loss_from_initial` | method | [trading.account.account_state](../../trading/account/account_state.py#L265) | stable |
-| `AccountState.peak_eod_drawdown_usd` | method | [trading.account.account_state](../../trading/account/account_state.py#L303) | stable |
-| `AccountState.record_eod_equity` | method | [trading.account.account_state](../../trading/account/account_state.py#L291) | stable |
-| `AccountState.remaining_account_capacity` | method | [trading.account.account_state](../../trading/account/account_state.py#L205) | stable |
-| `AccountState.remaining_daily_capacity` | method | [trading.account.account_state](../../trading/account/account_state.py#L192) | stable |
-| `AccountState.reset_daily` | method | [trading.account.account_state](../../trading/account/account_state.py#L116) | stable |
-| `AccountState.reset_operating_balance` | method | [trading.account.account_state](../../trading/account/account_state.py#L216) | stable |
-| `AccountState.to_array` | method | [trading.account.account_state](../../trading/account/account_state.py#L311) | stable |
-| `AccountState.to_risk_state` | method | [trading.account.account_state](../../trading/account/account_state.py#L148) | stable |
-| `AccountState.trailing_drawdown_pct` | method | [trading.account.account_state](../../trading/account/account_state.py#L281) | stable |
-| `AccountState.update_equity` | method | [trading.account.account_state](../../trading/account/account_state.py#L80) | stable |
+| `AccountState.canonical_daily_loss` | method | [trading.account.account_state](../../trading/account/account_state.py#L123) | stable |
+| `AccountState.close_trade` | method | [trading.account.account_state](../../trading/account/account_state.py#L95) | stable |
+| `AccountState.daily_floor` | method | [trading.account.account_state](../../trading/account/account_state.py#L184) | stable |
+| `AccountState.daily_pnl_basis` | method | [trading.account.account_state](../../trading/account/account_state.py#L133) | stable |
+| `AccountState.drawdown_pct` | method | [trading.account.account_state](../../trading/account/account_state.py#L284) | stable |
+| `AccountState.loss_from_initial` | method | [trading.account.account_state](../../trading/account/account_state.py#L276) | stable |
+| `AccountState.peak_eod_drawdown_usd` | method | [trading.account.account_state](../../trading/account/account_state.py#L314) | stable |
+| `AccountState.record_eod_equity` | method | [trading.account.account_state](../../trading/account/account_state.py#L302) | stable |
+| `AccountState.remaining_account_capacity` | method | [trading.account.account_state](../../trading/account/account_state.py#L216) | stable |
+| `AccountState.remaining_daily_capacity` | method | [trading.account.account_state](../../trading/account/account_state.py#L200) | stable |
+| `AccountState.reset_daily` | method | [trading.account.account_state](../../trading/account/account_state.py#L117) | stable |
+| `AccountState.reset_operating_balance` | method | [trading.account.account_state](../../trading/account/account_state.py#L227) | stable |
+| `AccountState.to_array` | method | [trading.account.account_state](../../trading/account/account_state.py#L322) | stable |
+| `AccountState.to_risk_state` | method | [trading.account.account_state](../../trading/account/account_state.py#L149) | stable |
+| `AccountState.trailing_drawdown_pct` | method | [trading.account.account_state](../../trading/account/account_state.py#L292) | stable |
+| `AccountState.update_equity` | method | [trading.account.account_state](../../trading/account/account_state.py#L81) | stable |
 | `BaseStrategy` | class | [trading.baselines.step_indexed_strategy](../../trading/baselines/step_indexed_strategy.py#L16) | stable |
 | `BuyAndHoldStrategy` | class | [trading.baselines.classical](../../trading/baselines/classical.py#L34) | stable |
 | `EMAMACDRSIStrategy` | class | [trading.baselines.classical](../../trading/baselines/classical.py#L102) | stable |
@@ -698,27 +698,28 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `TradingPolicyConfig` | class | [trading.policy.config](../../trading/policy/config.py#L24) | stable |
 | `build_payout_reset_event` | function | [trading.policy.repeated_payout](../../trading/policy/repeated_payout.py#L51) | stable |
 | `evaluate_payout` | function | [trading.policy.repeated_payout](../../trading/policy/repeated_payout.py#L25) | stable |
-| `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L194) | stable |
-| `resolve_trading_policy_mapping` | function | [trading.policy.config](../../trading/policy/config.py#L277) | stable |
+| `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L200) | stable |
+| `resolve_trading_policy_mapping` | function | [trading.policy.config](../../trading/policy/config.py#L283) | stable |
 | `uses_fixed_risk_budget` | function | [trading.policy.legacy](../../trading/policy/legacy.py#L8) | stable |
 | `TradingPolicyConfig.daily_loss_limit` | method | [trading.policy.config](../../trading/policy/config.py#L72) | stable |
 | `TradingPolicyConfig.from_mapping` | method | [trading.policy.config](../../trading/policy/config.py#L81) | stable |
 | `TradingPolicyConfig.repeated_payout` | method | [trading.policy.config](../../trading/policy/config.py#L63) | stable |
-| `TradingPolicyConfig.to_dict` | method | [trading.policy.config](../../trading/policy/config.py#L185) | stable |
+| `TradingPolicyConfig.to_dict` | method | [trading.policy.config](../../trading/policy/config.py#L191) | stable |
 | `TradingPolicyConfig.validate` | method | [trading.policy.config](../../trading/policy/config.py#L134) | stable |
 | `reorder_remaining_targets` | function | [trading.positions.multi_tp](../../trading/positions/multi_tp.py#L47) | stable |
 | `target_close_size` | function | [trading.positions.multi_tp](../../trading/positions/multi_tp.py#L10) | stable |
 | `FTMOGuardrails` | class | [trading.risk.guardrails](../../trading/risk/guardrails.py#L83) | stable |
-| `RISK_BREACH_EVENT_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L12) | stable |
-| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L14) | compatibility-only |
-| `RISK_DAILY_PNL_BASIS_SESSION_EQUITY` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L13) | stable |
-| `RISK_DECISION_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L11) | stable |
-| `RISK_STATE_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L10) | stable |
+| `FTMOMidnightSnapshotUnavailable` | class | [trading.risk.ftmo_clock](../../trading/risk/ftmo_clock.py#L16) | stable |
+| `RISK_BREACH_EVENT_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L14) | stable |
+| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L16) | compatibility-only |
+| `RISK_DAILY_PNL_BASIS_SESSION_EQUITY` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L15) | stable |
+| `RISK_DECISION_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L13) | stable |
+| `RISK_STATE_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L12) | stable |
 | `RiskBudgetDecision` | class | [trading.risk.budget](../../trading/risk/budget.py#L9) | stable |
 | `RiskDailyPnlBasis` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L9) | stable |
-| `RiskDecision` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L53) | stable |
-| `RiskPolicy` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L76) | stable |
-| `RiskState` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L18) | stable |
+| `RiskDecision` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L57) | stable |
+| `RiskPolicy` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L80) | stable |
+| `RiskState` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L21) | stable |
 | `adverse_position_loss_limit_usd` | function | [trading.risk.guardrails](../../trading/risk/guardrails.py#L49) | stable |
 | `approve_dynamic_risk` | function | [trading.risk.budget](../../trading/risk/budget.py#L36) | stable |
 | `breakeven_stop_price` | function | [trading.risk.stop_management](../../trading/risk/stop_management.py#L117) | stable |
@@ -727,13 +728,14 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `compute_sl_tp_long` | function | [trading.risk.sizing](../../trading/risk/sizing.py#L33) | stable |
 | `compute_sl_tp_short` | function | [trading.risk.sizing](../../trading/risk/sizing.py#L63) | stable |
 | `confirmed_swing_trailing_stop_price` | function | [trading.risk.stop_management](../../trading/risk/stop_management.py#L8) | stable |
+| `ftmo_trading_day` | function | [trading.risk.ftmo_clock](../../trading/risk/ftmo_clock.py#L20) | stable |
 | `guardrail_breach_scope` | function | [trading.risk.guardrails](../../trading/risk/guardrails.py#L25) | stable |
 | `modeled_execution_reserve_usd` | function | [trading.risk.execution_reserve](../../trading/risk/execution_reserve.py#L6) | stable |
 | `risk_budget_from_equity` | function | [trading.risk.budget](../../trading/risk/budget.py#L23) | stable |
 | `stop_loss_risk_usd` | function | [trading.risk.sizing](../../trading/risk/sizing.py#L13) | stable |
 | `tightened_breakeven_stop_price` | function | [trading.risk.stop_management](../../trading/risk/stop_management.py#L67) | stable |
-| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L14) | compatibility-only |
-| `RiskPolicy.decide` | method | [trading.risk.contracts](../../trading/risk/contracts.py#L79) | stable |
+| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L16) | compatibility-only |
+| `RiskPolicy.decide` | method | [trading.risk.contracts](../../trading/risk/contracts.py#L83) | stable |
 | `FTMOGuardrails.any_breach` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L316) | stable |
 | `FTMOGuardrails.breach_reason` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L327) | stable |
 | `FTMOGuardrails.check_daily` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L229) | stable |
@@ -805,7 +807,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `save_dashboard_plots` | function | [training.reporting.training_curves](../../training/reporting/training_curves.py#L738) | stable |
 | `save_training_plots` | function | [training.reporting.training_curves](../../training/reporting/training_curves.py#L515) | stable |
 | `main` | function | [training.runner](../../training/runner/__init__.py#L1) | stable |
-| `make_env` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L538) | stable |
+| `make_env` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L541) | stable |
 
 ## Installed commands
 

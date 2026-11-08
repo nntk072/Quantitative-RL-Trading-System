@@ -3826,7 +3826,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 91,
+      "source_line": 93,
       "source_module": "evaluation.candidate_quote_coverage",
       "source_path": "evaluation/candidate_quote_coverage.py"
     },
@@ -7882,7 +7882,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 1144,
+      "source_line": 1169,
       "source_module": "evaluation.reporting.account_state_trace_reconciliation",
       "source_path": "evaluation/reporting/account_state_trace_reconciliation.py"
     },
@@ -15022,7 +15022,7 @@
       "name": "TickBook",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 460,
+      "source_line": 476,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15550,7 +15550,7 @@
       "name": "TickBook",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 460,
+      "source_line": 476,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15574,7 +15574,7 @@
       "name": "build_tick_book",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 896,
+      "source_line": 912,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15670,7 +15670,7 @@
       "name": "TickBook.bar_quotes",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 662,
+      "source_line": 678,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15682,7 +15682,7 @@
       "name": "TickBook.content_sha256",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 625,
+      "source_line": 641,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15694,7 +15694,7 @@
       "name": "TickBook.delayed_exit_event",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 721,
+      "source_line": 737,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15706,7 +15706,7 @@
       "name": "TickBook.delayed_exit_quote",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 685,
+      "source_line": 701,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15718,7 +15718,7 @@
       "name": "TickBook.execution_quote_event_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 534,
+      "source_line": 550,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15730,7 +15730,7 @@
       "name": "TickBook.first_limit_execution_event",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 561,
+      "source_line": 577,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15742,7 +15742,7 @@
       "name": "TickBook.has_ticks_between",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 645,
+      "source_line": 661,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15754,7 +15754,7 @@
       "name": "TickBook.quote_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 488,
+      "source_line": 504,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15766,7 +15766,7 @@
       "name": "TickBook.quote_event_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 507,
+      "source_line": 523,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15778,7 +15778,7 @@
       "name": "TickBook.slice",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 785,
+      "source_line": 801,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15790,7 +15790,7 @@
       "name": "_ffill_inplace",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 446,
+      "source_line": 462,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -17986,7 +17986,7 @@
       "name": "run_backtest",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 533,
+      "source_line": 538,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18334,7 +18334,7 @@
       "name": "_bar_duration",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 347,
+      "source_line": 352,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18346,7 +18346,7 @@
       "name": "_bar_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 333,
+      "source_line": 338,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18358,7 +18358,7 @@
       "name": "_bar_spread_price_units",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 289,
+      "source_line": 294,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18370,7 +18370,7 @@
       "name": "_entry_state_diagnostics",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 128,
+      "source_line": 133,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18382,7 +18382,7 @@
       "name": "_fill_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 365,
+      "source_line": 370,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18394,7 +18394,7 @@
       "name": "_fill_quote_event",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 396,
+      "source_line": 401,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18406,7 +18406,7 @@
       "name": "_geometry_action_record",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 165,
+      "source_line": 170,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18418,7 +18418,7 @@
       "name": "_is_last_ny_bar",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 490,
+      "source_line": 495,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18430,7 +18430,7 @@
       "name": "_ny_gap_guard_mask",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 512,
+      "source_line": 517,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18442,7 +18442,7 @@
       "name": "_policy_action",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 193,
+      "source_line": 198,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18454,7 +18454,7 @@
       "name": "_scalar_policy_action",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 106,
+      "source_line": 111,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18466,7 +18466,7 @@
       "name": "_sl_tp_fill_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 311,
+      "source_line": 316,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18694,7 +18694,7 @@
       "name": "cost_model",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 511,
+      "source_line": 514,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18718,7 +18718,7 @@
       "name": "fill_delay_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 349,
+      "source_line": 352,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18742,7 +18742,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 538,
+      "source_line": 541,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18778,7 +18778,7 @@
       "name": "max_tick_quote_wait_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 446,
+      "source_line": 449,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18790,7 +18790,7 @@
       "name": "mtf_settings",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 464,
+      "source_line": 467,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18802,7 +18802,7 @@
       "name": "randomized_fill_latency_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 391,
+      "source_line": 394,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18814,7 +18814,7 @@
       "name": "regime_observation_enabled",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 422,
+      "source_line": 425,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18826,7 +18826,7 @@
       "name": "scheduled_session_closes",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 497,
+      "source_line": 500,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18862,7 +18862,7 @@
       "name": "tick_execution_required",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 409,
+      "source_line": 412,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19246,7 +19246,7 @@
       "name": "TradingEnv.from_bundle",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 386,
+      "source_line": 394,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19258,7 +19258,7 @@
       "name": "TradingEnv.step",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 418,
+      "source_line": 426,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19270,7 +19270,7 @@
       "name": "TradingEnv.transition",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 432,
+      "source_line": 440,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -20002,7 +20002,7 @@
       "name": "resolve_trading_policy",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 194,
+      "source_line": 200,
       "source_module": "trading.policy.config",
       "source_path": "trading/policy/config.py"
     },
@@ -20134,7 +20134,7 @@
       "name": "AccountState.canonical_daily_loss",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 122,
+      "source_line": 123,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20146,7 +20146,7 @@
       "name": "AccountState.close_trade",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 94,
+      "source_line": 95,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20158,7 +20158,7 @@
       "name": "AccountState.daily_floor",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 181,
+      "source_line": 184,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20170,7 +20170,7 @@
       "name": "AccountState.daily_pnl_basis",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 132,
+      "source_line": 133,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20182,7 +20182,7 @@
       "name": "AccountState.drawdown_pct",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 273,
+      "source_line": 284,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20194,7 +20194,7 @@
       "name": "AccountState.loss_from_initial",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 265,
+      "source_line": 276,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20206,7 +20206,7 @@
       "name": "AccountState.peak_eod_drawdown_usd",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 303,
+      "source_line": 314,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20218,7 +20218,7 @@
       "name": "AccountState.record_eod_equity",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 291,
+      "source_line": 302,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20230,7 +20230,7 @@
       "name": "AccountState.remaining_account_capacity",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 205,
+      "source_line": 216,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20242,7 +20242,7 @@
       "name": "AccountState.remaining_daily_capacity",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 192,
+      "source_line": 200,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20254,7 +20254,7 @@
       "name": "AccountState.reset_daily",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 116,
+      "source_line": 117,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20266,7 +20266,7 @@
       "name": "AccountState.reset_operating_balance",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 216,
+      "source_line": 227,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20278,7 +20278,7 @@
       "name": "AccountState.to_array",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 311,
+      "source_line": 322,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20290,7 +20290,7 @@
       "name": "AccountState.to_risk_state",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 148,
+      "source_line": 149,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20302,7 +20302,7 @@
       "name": "AccountState.trailing_drawdown_pct",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 281,
+      "source_line": 292,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -20314,7 +20314,7 @@
       "name": "AccountState.update_equity",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 80,
+      "source_line": 81,
       "source_module": "trading.account.account_state",
       "source_path": "trading/account/account_state.py"
     },
@@ -21790,7 +21790,7 @@
       "name": "resolve_trading_policy",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 194,
+      "source_line": 200,
       "source_module": "trading.policy.config",
       "source_path": "trading/policy/config.py"
     },
@@ -21802,7 +21802,7 @@
       "name": "resolve_trading_policy_mapping",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 277,
+      "source_line": 283,
       "source_module": "trading.policy.config",
       "source_path": "trading/policy/config.py"
     },
@@ -21862,7 +21862,7 @@
       "name": "TradingPolicyConfig.to_dict",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 185,
+      "source_line": 191,
       "source_module": "trading.policy.config",
       "source_path": "trading/policy/config.py"
     },
@@ -21940,13 +21940,25 @@
     },
     {
       "classification": "stable",
+      "documented": true,
+      "exported_from": "trading.risk",
+      "kind": "class",
+      "name": "FTMOMidnightSnapshotUnavailable",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 16,
+      "source_module": "trading.risk.ftmo_clock",
+      "source_path": "trading/risk/ftmo_clock.py"
+    },
+    {
+      "classification": "stable",
       "documented": false,
       "exported_from": "trading.risk",
       "kind": "value",
       "name": "RISK_BREACH_EVENT_SCHEMA_V1",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 12,
+      "source_line": 14,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -21958,7 +21970,7 @@
       "name": "RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 14,
+      "source_line": 16,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -21970,7 +21982,7 @@
       "name": "RISK_DAILY_PNL_BASIS_SESSION_EQUITY",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 13,
+      "source_line": 15,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -21982,7 +21994,7 @@
       "name": "RISK_DECISION_SCHEMA_V1",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 11,
+      "source_line": 13,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -21994,7 +22006,7 @@
       "name": "RISK_STATE_SCHEMA_V1",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 10,
+      "source_line": 12,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22030,7 +22042,7 @@
       "name": "RiskDecision",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 53,
+      "source_line": 57,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22042,7 +22054,7 @@
       "name": "RiskPolicy",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 76,
+      "source_line": 80,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22054,7 +22066,7 @@
       "name": "RiskState",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 18,
+      "source_line": 21,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22066,7 +22078,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 34,
+      "source_line": 35,
       "source_module": "trading.risk",
       "source_path": "trading/risk/__init__.py"
     },
@@ -22171,6 +22183,18 @@
       "documented": true,
       "exported_from": "trading.risk",
       "kind": "function",
+      "name": "ftmo_trading_day",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 20,
+      "source_module": "trading.risk.ftmo_clock",
+      "source_path": "trading/risk/ftmo_clock.py"
+    },
+    {
+      "classification": "stable",
+      "documented": true,
+      "exported_from": "trading.risk",
+      "kind": "function",
       "name": "guardrail_breach_scope",
       "numpy_style": false,
       "package": "trading",
@@ -22234,7 +22258,7 @@
       "name": "RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 14,
+      "source_line": 16,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22246,7 +22270,7 @@
       "name": "RISK_DAILY_PNL_BASIS_SESSION_EQUITY",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 13,
+      "source_line": 15,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22258,7 +22282,7 @@
       "name": "RISK_DECISION_SCHEMA_V1",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 11,
+      "source_line": 13,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22270,7 +22294,7 @@
       "name": "RISK_STATE_SCHEMA_V1",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 10,
+      "source_line": 12,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22294,7 +22318,7 @@
       "name": "RiskDecision",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 53,
+      "source_line": 57,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22306,7 +22330,7 @@
       "name": "RiskPolicy",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 76,
+      "source_line": 80,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22318,7 +22342,7 @@
       "name": "RiskPolicy.decide",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 79,
+      "source_line": 83,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22330,7 +22354,7 @@
       "name": "RiskState",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 18,
+      "source_line": 21,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22342,9 +22366,57 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 92,
+      "source_line": 96,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "trading.risk.ftmo_clock",
+      "kind": "class",
+      "name": "FTMOMidnightSnapshotUnavailable",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 16,
+      "source_module": "trading.risk.ftmo_clock",
+      "source_path": "trading/risk/ftmo_clock.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "trading.risk.ftmo_clock",
+      "kind": "value",
+      "name": "_PRAGUE",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 13,
+      "source_module": "trading.risk.ftmo_clock",
+      "source_path": "trading/risk/ftmo_clock.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "trading.risk.ftmo_clock",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 39,
+      "source_module": "trading.risk.ftmo_clock",
+      "source_path": "trading/risk/ftmo_clock.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "trading.risk.ftmo_clock",
+      "kind": "function",
+      "name": "ftmo_trading_day",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 20,
+      "source_module": "trading.risk.ftmo_clock",
+      "source_path": "trading/risk/ftmo_clock.py"
     },
     {
       "classification": "stable",
@@ -24730,7 +24802,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "training",
-      "source_line": 538,
+      "source_line": 541,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24862,7 +24934,7 @@
       "name": "cost_model",
       "numpy_style": false,
       "package": "training",
-      "source_line": 511,
+      "source_line": 514,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24886,7 +24958,7 @@
       "name": "fill_delay_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 349,
+      "source_line": 352,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24922,7 +24994,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "training",
-      "source_line": 538,
+      "source_line": 541,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24958,7 +25030,7 @@
       "name": "max_tick_quote_wait_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 446,
+      "source_line": 449,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24970,7 +25042,7 @@
       "name": "mtf_settings",
       "numpy_style": false,
       "package": "training",
-      "source_line": 464,
+      "source_line": 467,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24982,7 +25054,7 @@
       "name": "randomized_fill_latency_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 391,
+      "source_line": 394,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -25018,7 +25090,7 @@
       "name": "tick_execution_required",
       "numpy_style": false,
       "package": "training",
-      "source_line": 409,
+      "source_line": 412,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },

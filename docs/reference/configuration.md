@@ -242,6 +242,7 @@ is read by every listed package.
 | `execution.limit_order_require_trade_through` | `boolean` | `false` | `trading/execution and simulation` |
 | `execution.max_tick_quote_wait_ms` | `integer` | `60000` | `trading/execution and simulation` |
 | `execution.randomized_fill_latency_ms` | `number` | `0.0` | `trading/execution and simulation` |
+| `execution.server_side_protective_orders` | `boolean` | `false` | `trading/execution and simulation` |
 | `features.adx_period` | `integer` | `14` | `features` |
 | `features.atr_period` | `integer` | `14` | `features` |
 | `features.bb_period` | `integer` | `20` | `features` |

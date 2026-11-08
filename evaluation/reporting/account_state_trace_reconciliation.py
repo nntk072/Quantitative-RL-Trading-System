@@ -12,8 +12,7 @@ from trading.execution import (
     FILL_COST_PROVENANCE_SCHEMA_VERSION,
     TRADE_CASHFLOW_SCHEMA_VERSION,
 )
-from trading.risk import RISK_BREACH_EVENT_SCHEMA_V1
-from trading.risk.ftmo_clock import ftmo_trading_day
+from trading.risk import RISK_BREACH_EVENT_SCHEMA_V1, ftmo_trading_day
 
 ACCOUNT_STATE_RECONCILIATION_SCHEMA = "account_state_reconciliation.v2"
 _TRACE_SCHEMA = "account_state_trace.v2"

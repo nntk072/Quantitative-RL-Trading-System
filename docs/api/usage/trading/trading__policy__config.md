@@ -81,7 +81,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve trading policy settings from an attribute-based configuration.
 
-**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy` · **Source:** [trading/policy/config.py:194](../../../../trading/policy/config.py#L194)
+**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy` · **Source:** [trading/policy/config.py:200](../../../../trading/policy/config.py#L200)
 
 **Inputs and outputs:**
 
@@ -226,7 +226,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve trading policy settings from an attribute-based configuration.
 
-**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy` · **Source:** [trading/policy/config.py:194](../../../../trading/policy/config.py#L194)
+**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy` · **Source:** [trading/policy/config.py:200](../../../../trading/policy/config.py#L200)
 
 **Inputs and outputs:**
 
@@ -298,7 +298,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve trading policy settings from a mapping configuration.
 
-**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy_mapping` · **Source:** [trading/policy/config.py:277](../../../../trading/policy/config.py#L277)
+**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy_mapping` · **Source:** [trading/policy/config.py:283](../../../../trading/policy/config.py#L283)
 
 **Inputs and outputs:**
 
@@ -531,7 +531,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the policy settings as a JSON-compatible mapping.
 
-**Exact API:** {py:obj}`trading.policy.config.TradingPolicyConfig.to_dict` · **Source:** [trading/policy/config.py:185](../../../../trading/policy/config.py#L185)
+**Exact API:** {py:obj}`trading.policy.config.TradingPolicyConfig.to_dict` · **Source:** [trading/policy/config.py:191](../../../../trading/policy/config.py#L191)
 
 **Inputs and outputs:**
 

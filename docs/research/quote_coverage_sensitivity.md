@@ -1,6 +1,6 @@
 # MT5 tick-quote coverage: strict audit versus reconstructed execution sensitivity
 
-**Status:** experimental method. This document intentionally contains **no claimed new measurements**. The agent must run the full protocol and attach hash-verified evidence before any results enter the thesis.
+**Status:** experimental method. This document intentionally contains **no claimed new measurements**. The agent must run the full protocol and attach hash-verified evidence before any results enter the archived study.
 
 ## Research question
 
@@ -43,7 +43,7 @@ The comparator `scripts/research/analysis/evaluation/compare_quote_coverage_sens
 - A further reduction in the **TickBook-only** protocol would identify dependence on M1 tick-count parity, **not** prove that count mismatches are harmless.
 - Persistently unresolved rows in all protocols can reflect unquotable market entries, out-of-session submission, actual feed gaps, invalid stop/target geometry, or administrative cutoffs; inspect reason codes and a stratified raw-tick trace.
 - The comparison cannot establish broker-equivalent MT5 execution, queue priority, partial fills, stop/limit behavior under actual liquidity, DST correctness, or independent data completeness.
-- A drop in unresolved outcomes does **not** automatically justify changing the simulator, reward, training policy, historical labels or thesis conclusions.
+- A drop in unresolved outcomes does **not** automatically justify changing the simulator, reward, training policy, historical labels or historical conclusions.
 
 ## Mandatory follow-up gates before promoting a result
 
@@ -51,12 +51,12 @@ The comparator `scripts/research/analysis/evaluation/compare_quote_coverage_sens
 2. Explain the 40,330 training-minute raw tick-count mismatches using source files and actual M1 `tickvol` semantics, including examples where count is greater and smaller. Do **not** assume rows equal one MT5 tick-volume unit.
 3. Cross-check at least 20 stratified changed outcomes and 20 unchanged outcomes against raw source events and production book events. Include both limit and market orders, missing-side patterns, count mismatches, source ties, session boundaries, and early/late months.
 4. Run current repository unit tests, full-tree Ruff format/lint and full-tree Mypy before committing, per `AGENTS.md` and `.agents/rules/`.
-5. Publish the three exact profile names, input hashes, candidate counts, unresolved status/reason counts, pairing invariants, and the limits of each interpretation. Check the historical PDF's **72.0%** against the current manifest's **71.6%** and do not silently replace a result from a different source snapshot.
+5. Publish the three exact profile names, input hashes, candidate counts, unresolved status/reason counts, pairing invariants, and the limits of each interpretation. Check the archived report's **72.0%** against the current manifest's **71.6%** and do not silently replace a result from a different source snapshot.
 6. Only if a **reproducible MT5-semantic contradiction in production execution** is found, create a separately justified simulator correction with deterministic before/after traces and both long/short and market/limit test coverage. Do not infer a simulator bug from quote-audit censorship alone.
 
 ## Output discipline
 
-Write full Parquet and alternate coverage CSV packets in an isolated scratch directory, not in the tracked historical evidence directories. Keep every packet's `OUTPUT_SHA256SUMS`, `coverage_manifest.json`, `outcome_manifest.json`, and comparison report. If promoted into the repository after review, use a new versioned evidence directory and record the exact generating commit; preserve the original strict outputs, the original PDF number, and the historical report until a new thesis version explicitly supersedes them.
+Write full Parquet and alternate coverage CSV packets in an isolated scratch directory, not in the tracked historical evidence directories. Keep every packet's `OUTPUT_SHA256SUMS`, `coverage_manifest.json`, `outcome_manifest.json`, and comparison report. If promoted into the repository after review, use a new versioned evidence directory and record the exact generating commit; preserve the original strict outputs, the original PDF number, and the historical report until a new report version version explicitly supersedes them.
 
 
 ## 2026-11-08 full training-window sensitivity
@@ -69,7 +69,7 @@ A paired rerun from base 9c3b80d9e456930fd833c5e6b23a4935dfba453a used the same 
 | reconstructed count checked | 579,259 | 75,617 | 412,855 |
 | reconstructed TickBook only | 930,453 | 129,299 | 7,979 |
 
-The comparison invariant held: all 303,051 outcomes already completed by the strict current-source replay kept status, fill/exit times, prices, exit reason, and net R. Under count-checked reconstruction, 305,909 strict-unresolved rows became fill-resolved and 45,916 became expired unfilled. Under TickBook-only reconstruction, 657,103 became fill-resolved and 99,598 became expired unfilled. These are conditional fixed-entry censoring sensitivities, not policy value; resolved-only R is selection-biased. Strict unresolved rate is 71.617% (the frozen thesis value remains 72.0% until its source snapshot/protocol is reconciled).
+The comparison invariant held: all 303,051 outcomes already completed by the strict current-source replay kept status, fill/exit times, prices, exit reason, and net R. Under count-checked reconstruction, 305,909 strict-unresolved rows became fill-resolved and 45,916 became expired unfilled. Under TickBook-only reconstruction, 657,103 became fill-resolved and 99,598 became expired unfilled. These are conditional fixed-entry censoring sensitivities, not policy value; resolved-only R is selection-biased. Strict unresolved rate is 71.617% (the frozen published value remains 72.0% until its source snapshot/protocol is reconciled).
 
 Minute totals over 351,432 M1 rows: strict raw 258,106; count-checked reconstruction 311,102; TickBook-only 351,409. Raw tick-row versus M1 tickvol mismatches remain 40,330 minutes; tickvol is not assumed to equal exported tick rows.
 

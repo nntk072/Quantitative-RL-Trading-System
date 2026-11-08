@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `simulation.backtest.event
 
 **Purpose:** Run a full backtest over aligned bars + features.
 
-**Exact API:** {py:obj}`simulation.backtest.event_driven_backtest.run_backtest` · **Source:** [simulation/backtest/event_driven_backtest.py:533](../../../../simulation/backtest/event_driven_backtest.py#L533)
+**Exact API:** {py:obj}`simulation.backtest.event_driven_backtest.run_backtest` · **Source:** [simulation/backtest/event_driven_backtest.py:538](../../../../simulation/backtest/event_driven_backtest.py#L538)
 
 **Inputs and outputs:**
 
@@ -31,6 +31,8 @@ This page contains 1 public callable records owned by `simulation.backtest.event
   randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
   max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
   tick_execution_required: Whether to enable or require the tick execution required.
+  server_side_protective_orders: Execute attached SL/TP orders on their triggering
+      tick without sampling a new EA/network latency.
   execution_seed: Numeric value used for the execution seed.
   fill_latency_bars: Whole M1 bars added after the ordinary next-bar entry fill.
   use_structure_sl_tp: Whether to enable or require the use structure sl tp.
@@ -129,7 +131,7 @@ This page contains 1 public callable records owned by `simulation.backtest.event
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = run_backtest(bars=..., features=..., policy=..., obs_window=..., cost_model=..., broker_kwargs=..., guardrail_kwargs=..., initial_balance=..., lots=..., max_loss_per_trade_usd=..., take_profit_per_trade_usd=..., tickbook=..., fill_delay_ms=..., randomized_fill_latency_ms=..., max_tick_quote_wait_ms=..., tick_execution_required=..., execution_seed=..., fill_latency_bars=..., use_structure_sl_tp=..., risk_frac=..., policy_risk_frac_range=..., rr_ratio=..., swing_buffer_pts=..., sl_buffer_pts=..., min_lot=..., max_lot=..., contract_size=..., hold_on_zero=..., exit_action=..., block_overnight=..., eod_risk=..., sl_mode=..., daily_pnl_basis=..., trading_policy=..., tick_fill_slippage_points=..., trade_setup_actions=..., trade_setup_action_schema=..., allow_ema_exit=..., trade_setup_geometry=..., strategy=..., min_sl_atr_mult=..., min_sl_points=..., policy_rr_ratio_range=..., target_timeframes=..., ema_runner_fraction=..., limit_order_max_offset_atr=..., limit_order_max_ttl_bars=..., limit_order_require_trade_through=..., lot_step=..., tp_mode=..., sl_mode_defer_threshold=..., tp_mode_defer_threshold=..., tp_breakeven_alpha=..., observation_schema=..., normalize_account=..., observation_age_scale_bars=..., entry_state_machine=..., candidate_max_age_bars=..., arm_requires_retest=..., regime_observation=..., mtf_observation=..., mtf_windows=..., feature_validity_channels=..., scheduled_session_closes=..., session_start=..., vae=..., pre_ny_by_date=..., pre_ny_data=...)
+result = run_backtest(bars=..., features=..., policy=..., obs_window=..., cost_model=..., broker_kwargs=..., guardrail_kwargs=..., initial_balance=..., lots=..., max_loss_per_trade_usd=..., take_profit_per_trade_usd=..., tickbook=..., fill_delay_ms=..., randomized_fill_latency_ms=..., max_tick_quote_wait_ms=..., tick_execution_required=..., server_side_protective_orders=..., execution_seed=..., fill_latency_bars=..., use_structure_sl_tp=..., risk_frac=..., policy_risk_frac_range=..., rr_ratio=..., swing_buffer_pts=..., sl_buffer_pts=..., min_lot=..., max_lot=..., contract_size=..., hold_on_zero=..., exit_action=..., block_overnight=..., eod_risk=..., sl_mode=..., daily_pnl_basis=..., trading_policy=..., tick_fill_slippage_points=..., trade_setup_actions=..., trade_setup_action_schema=..., allow_ema_exit=..., trade_setup_geometry=..., strategy=..., min_sl_atr_mult=..., min_sl_points=..., policy_rr_ratio_range=..., target_timeframes=..., ema_runner_fraction=..., limit_order_max_offset_atr=..., limit_order_max_ttl_bars=..., limit_order_require_trade_through=..., lot_step=..., tp_mode=..., sl_mode_defer_threshold=..., tp_mode_defer_threshold=..., tp_breakeven_alpha=..., observation_schema=..., normalize_account=..., observation_age_scale_bars=..., entry_state_machine=..., candidate_max_age_bars=..., arm_requires_retest=..., regime_observation=..., mtf_observation=..., mtf_windows=..., feature_validity_channels=..., scheduled_session_closes=..., session_start=..., vae=..., pre_ny_by_date=..., pre_ny_data=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.

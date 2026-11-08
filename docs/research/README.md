@@ -64,6 +64,8 @@ entry_idea_opportunity_counts
 multitimeframe_data_alignment
 feature_causality_and_availability
 model_observation_and_action_semantics
+mt5_ftmo_execution_fidelity
+quote_coverage_sensitivity
 fill_quote_availability
 result_identity_and_evidence
 ```

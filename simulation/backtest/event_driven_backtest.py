@@ -91,8 +91,12 @@ from trading.execution import (
 )
 from trading.orders import limit_order_expiry, limit_price_from_atr_offset
 from trading.policy import TradingPolicyConfig, resolve_trading_policy_mapping
-from trading.risk import FTMOGuardrails, RiskDailyPnlBasis
-from trading.risk.ftmo_clock import FTMOMidnightSnapshotUnavailable, ftmo_trading_day
+from trading.risk import (
+    FTMOGuardrails,
+    FTMOMidnightSnapshotUnavailable,
+    RiskDailyPnlBasis,
+    ftmo_trading_day,
+)
 
 if TYPE_CHECKING:
     from market_data.loading.ticks import TickBook

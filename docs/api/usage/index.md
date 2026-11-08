@@ -2,7 +2,7 @@
 
 This guide connects every exported callable to its owner, workflow context, and the strongest source-backed usage evidence available. Examples are real call-site excerpts from implementation code, tutorials, or tests; fixture-dependent excerpts link to their source test. An explicit no-call-site label means repository analysis found no direct invocation, so the page gives the owning lifecycle and complete contract without inventing a recipe.
 
-Current source call-site coverage: 464 of 663 callable records.
+Current source call-site coverage: 465 of 665 callable records.
 
 ```{toctree}
 :maxdepth: 1
@@ -26,4 +26,4 @@ training/index
 
 ## Coverage
 
-This generated index contains 663 callable records. Rebuild and verify it with `python -m tools.documentation.api_usage --write` and `--check`.
+This generated index contains 665 callable records. Rebuild and verify it with `python -m tools.documentation.api_usage --write` and `--check`.

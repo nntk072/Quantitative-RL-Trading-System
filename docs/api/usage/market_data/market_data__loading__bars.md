@@ -98,7 +98,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L991)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1007)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

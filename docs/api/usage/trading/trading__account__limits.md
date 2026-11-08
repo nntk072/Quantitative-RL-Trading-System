@@ -69,13 +69,18 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L190)
+1. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L198)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 def daily_floor(self, daily_loss_limit: float) -> float:
-    return compute_daily_floor(self.session_start_equity, daily_loss_limit)
+    anchor = (
+        self.session_start_balance
+        if self.daily_pnl_basis == "ftmo_midnight_balance"
+        else self.session_start_equity
+    )
+    return compute_daily_floor(anchor, daily_loss_limit)
 ```
 
 2. [production caller: `remaining_daily_capacity`](../../../../trading/account/limits.py#L45)
@@ -119,7 +124,7 @@ def remaining_daily_capacity(
 
 **Observed usage:**
 
-1. [production caller: `remaining_account_capacity`](../../../../trading/account/account_state.py#L214)
+1. [production caller: `remaining_account_capacity`](../../../../trading/account/account_state.py#L225)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -159,15 +164,18 @@ def remaining_account_capacity(self, account_floor: float) -> float:
 
 **Observed usage:**
 
-1. [production caller: `remaining_daily_capacity`](../../../../trading/account/account_state.py#L201)
+1. [production caller: `remaining_daily_capacity`](../../../../trading/account/account_state.py#L214)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 def remaining_daily_capacity(self, daily_loss_limit: float) -> float:
-    return compute_remaining_daily_capacity(
-        self.session_start_equity, self.equity, daily_loss_limit
+    anchor = (
+        self.session_start_balance
+        if self.daily_pnl_basis == "ftmo_midnight_balance"
+        else self.session_start_equity
     )
+    return compute_remaining_daily_capacity(anchor, self.equity, daily_loss_limit)
 ```
 
 **Workflow context:**

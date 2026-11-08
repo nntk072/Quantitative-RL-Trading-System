@@ -98,7 +98,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Daily loss used by the selected policy.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.canonical_daily_loss` · **Source:** [trading/account/account_state.py:122](../../../../trading/account/account_state.py#L122)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.canonical_daily_loss` · **Source:** [trading/account/account_state.py:123](../../../../trading/account/account_state.py#L123)
 
 **Inputs and outputs:**
 
@@ -158,7 +158,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Realise P&L from a closed trade.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.close_trade` · **Source:** [trading/account/account_state.py:94](../../../../trading/account/account_state.py#L94)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.close_trade` · **Source:** [trading/account/account_state.py:95](../../../../trading/account/account_state.py#L95)
 
 **Inputs and outputs:**
 
@@ -215,7 +215,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the session equity anchor minus its fixed loss allowance.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.daily_floor` · **Source:** [trading/account/account_state.py:181](../../../../trading/account/account_state.py#L181)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.daily_floor` · **Source:** [trading/account/account_state.py:184](../../../../trading/account/account_state.py#L184)
 
 **Inputs and outputs:**
 
@@ -280,7 +280,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the versioned daily-PnL basis used for daily risk.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.daily_pnl_basis` · **Source:** [trading/account/account_state.py:132](../../../../trading/account/account_state.py#L132)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.daily_pnl_basis` · **Source:** [trading/account/account_state.py:133](../../../../trading/account/account_state.py#L133)
 
 **Inputs and outputs:**
 
@@ -292,7 +292,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `to_risk_state`](../../../../trading/account/account_state.py#L167)
+1. [production caller: `to_risk_state`](../../../../trading/account/account_state.py#L168)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -303,32 +303,26 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         )
 
         basis = self.daily_pnl_basis
-        daily_pnl = (
-            float(self.equity) - float(self.session_start_equity)
-            if basis == RISK_DAILY_PNL_BASIS_SESSION_EQUITY
-            else -float(self.daily_loss)
-        )
+        if basis == RISK_DAILY_PNL_BASIS_SESSION_EQUITY:
+            daily_pnl = float(self.equity) - float(self.session_start_equity)
+        elif basis == "ftmo_midnight_balance":
+            # FTMO 2-Step: current equity versus the balance at Prague midnight.
+            daily_pnl = float(self.equity) - float(self.session_start_balance)
 # … caller assertions omitted …
 ```
 
-2. [production caller: `account_state_snapshot`](../../../../trading/account/snapshots.py#L90)
+2. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L195)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        "balance": float(account.balance),
-        "equity": float(account.equity),
-        "open_pnl": float(account.open_pnl),
-        "session_start_balance": float(account.session_start_balance),
-        "session_start_equity": float(account.session_start_equity),
-        "daily_pnl_basis": str(account.daily_pnl_basis),
-        "daily_loss": float(account.canonical_daily_loss()),
-        "daily_loss_limit_usd": float(daily_loss_limit_usd),
-        "soft_daily_loss_limit_usd": float(soft_daily_loss_limit_usd),
-        "daily_floor_equity": float(account.daily_floor(daily_loss_limit_usd)),
-        "loss_from_initial_usd": float(account.loss_from_initial()),
-# … caller assertions omitted …
+def daily_floor(self, daily_loss_limit: float) -> float:
+    anchor = (
+        self.session_start_balance
+        if self.daily_pnl_basis == "ftmo_midnight_balance"
+        else self.session_start_equity
+    )
+    return compute_daily_floor(anchor, daily_loss_limit)
 ```
 
 **Workflow context:**
@@ -342,7 +336,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Peak loss from initial as a fraction of initial balance.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.drawdown_pct` · **Source:** [trading/account/account_state.py:273](../../../../trading/account/account_state.py#L273)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.drawdown_pct` · **Source:** [trading/account/account_state.py:284](../../../../trading/account/account_state.py#L284)
 
 **Inputs and outputs:**
 
@@ -378,7 +372,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Current absolute loss vs initial balance (0 if equity ≥ initial).
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.loss_from_initial` · **Source:** [trading/account/account_state.py:265](../../../../trading/account/account_state.py#L265)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.loss_from_initial` · **Source:** [trading/account/account_state.py:276](../../../../trading/account/account_state.py#L276)
 
 **Inputs and outputs:**
 
@@ -390,7 +384,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `_update_loss_from_initial`](../../../../trading/account/account_state.py#L76)
+1. [production caller: `_update_loss_from_initial`](../../../../trading/account/account_state.py#L77)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -434,7 +428,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Current dollar drawdown from the last completed-session equity peak.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.peak_eod_drawdown_usd` · **Source:** [trading/account/account_state.py:303](../../../../trading/account/account_state.py#L303)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.peak_eod_drawdown_usd` · **Source:** [trading/account/account_state.py:314](../../../../trading/account/account_state.py#L314)
 
 **Inputs and outputs:**
 
@@ -467,7 +461,7 @@ def test_account_state_records_drawdown_from_prior_eod_peak_once() -> None:
     assert acc.peak_eod_equity == 111_000.0
 ```
 
-2. [production caller: `record_eod_equity`](../../../../trading/account/account_state.py#L297)
+2. [production caller: `record_eod_equity`](../../../../trading/account/account_state.py#L308)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -492,7 +486,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Record end-of-session equity and return drawdown from the prior EOD peak.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.record_eod_equity` · **Source:** [trading/account/account_state.py:291](../../../../trading/account/account_state.py#L291)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.record_eod_equity` · **Source:** [trading/account/account_state.py:302](../../../../trading/account/account_state.py#L302)
 
 **Inputs and outputs:**
 
@@ -538,7 +532,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return equity capacity above the account floor.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.remaining_account_capacity` · **Source:** [trading/account/account_state.py:205](../../../../trading/account/account_state.py#L205)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.remaining_account_capacity` · **Source:** [trading/account/account_state.py:216](../../../../trading/account/account_state.py#L216)
 
 **Inputs and outputs:**
 
@@ -585,7 +579,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the remaining capacity to the strict-below session floor.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.remaining_daily_capacity` · **Source:** [trading/account/account_state.py:192](../../../../trading/account/account_state.py#L192)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.remaining_daily_capacity` · **Source:** [trading/account/account_state.py:200](../../../../trading/account/account_state.py#L200)
 
 **Inputs and outputs:**
 
@@ -635,7 +629,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Set a new session equity anchor and clear the prior loss counter.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.reset_daily` · **Source:** [trading/account/account_state.py:116](../../../../trading/account/account_state.py#L116)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.reset_daily` · **Source:** [trading/account/account_state.py:117](../../../../trading/account/account_state.py#L117)
 
 **Observed usage:**
 
@@ -691,7 +685,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Reset account anchors after payout while preserving retained profit.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.reset_operating_balance` · **Source:** [trading/account/account_state.py:216](../../../../trading/account/account_state.py#L216)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.reset_operating_balance` · **Source:** [trading/account/account_state.py:227](../../../../trading/account/account_state.py#L227)
 
 **Inputs and outputs:**
 
@@ -755,7 +749,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a fixed-length array for the env observation.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.to_array` · **Source:** [trading/account/account_state.py:311](../../../../trading/account/account_state.py#L311)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.to_array` · **Source:** [trading/account/account_state.py:322](../../../../trading/account/account_state.py#L322)
 
 **Inputs and outputs:**
 
@@ -791,7 +785,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build the versioned risk-policy view of the current account.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.to_risk_state` · **Source:** [trading/account/account_state.py:148](../../../../trading/account/account_state.py#L148)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.to_risk_state` · **Source:** [trading/account/account_state.py:149](../../../../trading/account/account_state.py#L149)
 
 **Inputs and outputs:**
 
@@ -856,7 +850,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Current drawdown from peak equity (HWM) as a fraction of peak.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.trailing_drawdown_pct` · **Source:** [trading/account/account_state.py:281](../../../../trading/account/account_state.py#L281)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.trailing_drawdown_pct` · **Source:** [trading/account/account_state.py:292](../../../../trading/account/account_state.py#L292)
 
 **Inputs and outputs:**
 
@@ -899,7 +893,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Recompute equity from balance + unrealised P&L.
 
-**Exact API:** {py:obj}`trading.account.account_state.AccountState.update_equity` · **Source:** [trading/account/account_state.py:80](../../../../trading/account/account_state.py#L80)
+**Exact API:** {py:obj}`trading.account.account_state.AccountState.update_equity` · **Source:** [trading/account/account_state.py:81](../../../../trading/account/account_state.py#L81)
 
 **Inputs and outputs:**
 

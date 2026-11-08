@@ -32,7 +32,7 @@ This page contains 5 public callable records owned by `market_data.cache.ticks`.
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L957)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L973)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -90,7 +90,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L966)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L982)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -255,7 +255,7 @@ def test_tick_cache_writer_rejects_empty_cache(tmp_path: Path) -> None:
     assert not cache_path.exists()
 ```
 
-2. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1110)
+2. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1126)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

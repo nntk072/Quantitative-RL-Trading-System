@@ -12,23 +12,20 @@ This page contains 5 public callable records owned by `simulation.environment.en
 
 **Observed usage:**
 
-1. [test fixture: `test_environment_and_backtest_reconcile_realized_and_open_account_transitions`](../../../../tests/integration/backtest/test_account_transition_parity.py#L70)
+1. [test fixture: `test_prague_midnight_resets_flat_account_without_session_transition`](../../../../tests/integration/backtest/test_account_transition_parity.py#L69)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        "soft_daily_loss_limit_pct": 0.0,
-        "soft_max_loss_limit_initial_pct": 0.0,
-    }
-    actions = [1, 0, 19, 0, 1, 0, 0, 19, 1, 0, 19]
-
+def test_prague_midnight_resets_flat_account_without_session_transition() -> None:
+    bars, features, cost_model, policy, guardrails = _ftmo_midnight_fixture()
+    actions = (1, 0, 19, 0, 0, 0, 0, 0, 0, 0)
     env = TradingEnv(
         bars=bars,
         features=features,
         obs_window=1,
-        initial_balance=initial_balance,
         cost_model=cost_model,
+        trading_policy=policy,
         guardrail_kwargs=guardrails,
         risk_frac_range=(0.001, 0.001),
         rr_ratio_range=(1.0, 1.0),
@@ -39,30 +36,28 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         block_overnight=False,
     )
     env.reset(seed=7)
-    env_open_pnl_at_mark: float | None = None
-    env_account_trace_rows: list[dict[str, Any]] = []
-    for action_index, action in enumerate(actions):
-        _, _, _, _, info = env.step(action)
+    for action in actions:
+        env.step(action)
+
+    action_index = 0
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L291)
+2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L132)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        tick_times,
-        np.asarray([100.0, 99.5]),
-        np.asarray([100.2, 99.7]),
-    )
-    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=2.0)
+def test_open_position_crossing_prague_midnight_fails_closed_in_both_engines() -> None:
+    bars, features, cost_model, policy, guardrails = _ftmo_midnight_fixture()
+    actions = (1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     env = TradingEnv(
-        bars,
-        features,
+        bars=bars,
+        features=features,
         obs_window=1,
-        initial_balance=50_000.0,
         cost_model=cost_model,
+        trading_policy=policy,
+        guardrail_kwargs=guardrails,
         risk_frac_range=(0.001, 0.001),
         rr_ratio_range=(1.0, 1.0),
         min_lot=0.01,
@@ -70,17 +65,12 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         contract_size=1.0,
         max_loss_per_trade_usd=100.0,
         block_overnight=False,
-        reward_mode="pnl",
-        tickbook=tickbook,
-        tick_execution_required=tick_execution_required,
-        randomized_fill_latency_ms=randomized_fill_latency_ms,
-        tick_fill_slippage_points=tick_slippage,
     )
     env.reset(seed=7)
-    env.step(env_action)
-    env.step(19)
-
-    actions = iter((direction, 19))
+    with pytest.raises(
+        FTMOMidnightSnapshotUnavailable, match="open position crossed FTMO midnight"
+    ):
+        for action in actions:
 # … caller assertions omitted …
 ```
 
@@ -101,23 +91,20 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_environment_and_backtest_reconcile_realized_and_open_account_transitions`](../../../../tests/integration/backtest/test_account_transition_parity.py#L70)
+1. [test fixture: `test_prague_midnight_resets_flat_account_without_session_transition`](../../../../tests/integration/backtest/test_account_transition_parity.py#L69)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        "soft_daily_loss_limit_pct": 0.0,
-        "soft_max_loss_limit_initial_pct": 0.0,
-    }
-    actions = [1, 0, 19, 0, 1, 0, 0, 19, 1, 0, 19]
-
+def test_prague_midnight_resets_flat_account_without_session_transition() -> None:
+    bars, features, cost_model, policy, guardrails = _ftmo_midnight_fixture()
+    actions = (1, 0, 19, 0, 0, 0, 0, 0, 0, 0)
     env = TradingEnv(
         bars=bars,
         features=features,
         obs_window=1,
-        initial_balance=initial_balance,
         cost_model=cost_model,
+        trading_policy=policy,
         guardrail_kwargs=guardrails,
         risk_frac_range=(0.001, 0.001),
         rr_ratio_range=(1.0, 1.0),
@@ -128,30 +115,28 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         block_overnight=False,
     )
     env.reset(seed=7)
-    env_open_pnl_at_mark: float | None = None
-    env_account_trace_rows: list[dict[str, Any]] = []
-    for action_index, action in enumerate(actions):
-        _, _, _, _, info = env.step(action)
+    for action in actions:
+        env.step(action)
+
+    action_index = 0
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L291)
+2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L132)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        tick_times,
-        np.asarray([100.0, 99.5]),
-        np.asarray([100.2, 99.7]),
-    )
-    cost_model = CostModel(spread_points=0.0, point_size=0.01, commission_per_lot=2.0)
+def test_open_position_crossing_prague_midnight_fails_closed_in_both_engines() -> None:
+    bars, features, cost_model, policy, guardrails = _ftmo_midnight_fixture()
+    actions = (1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     env = TradingEnv(
-        bars,
-        features,
+        bars=bars,
+        features=features,
         obs_window=1,
-        initial_balance=50_000.0,
         cost_model=cost_model,
+        trading_policy=policy,
+        guardrail_kwargs=guardrails,
         risk_frac_range=(0.001, 0.001),
         rr_ratio_range=(1.0, 1.0),
         min_lot=0.01,
@@ -159,17 +144,12 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         contract_size=1.0,
         max_loss_per_trade_usd=100.0,
         block_overnight=False,
-        reward_mode="pnl",
-        tickbook=tickbook,
-        tick_execution_required=tick_execution_required,
-        randomized_fill_latency_ms=randomized_fill_latency_ms,
-        tick_fill_slippage_points=tick_slippage,
     )
     env.reset(seed=7)
-    env.step(env_action)
-    env.step(19)
-
-    actions = iter((direction, 19))
+    with pytest.raises(
+        FTMOMidnightSnapshotUnavailable, match="open position crossed FTMO midnight"
+    ):
+        for action in actions:
 # … caller assertions omitted …
 ```
 
@@ -186,7 +166,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Create an environment whose persistent market arrays are read-only mmaps.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.from_bundle` · **Source:** [simulation/environment/env.py:386](../../../../simulation/environment/env.py#L386)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.from_bundle` · **Source:** [simulation/environment/env.py:394](../../../../simulation/environment/env.py#L394)
 
 **Inputs and outputs:**
 
@@ -258,7 +238,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Gymnasium adapter for :meth:`transition`.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.step` · **Source:** [simulation/environment/env.py:418](../../../../simulation/environment/env.py#L418)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.step` · **Source:** [simulation/environment/env.py:426](../../../../simulation/environment/env.py#L426)
 
 **Inputs and outputs:**
 
@@ -276,43 +256,43 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_environment_and_backtest_reconcile_realized_and_open_account_transitions`](../../../../tests/integration/backtest/test_account_transition_parity.py#L89)
+1. [test fixture: `test_prague_midnight_resets_flat_account_without_session_transition`](../../../../tests/integration/backtest/test_account_transition_parity.py#L86)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
     )
     env.reset(seed=7)
-    env_open_pnl_at_mark: float | None = None
-    env_account_trace_rows: list[dict[str, Any]] = []
-    for action_index, action in enumerate(actions):
-        _, _, _, _, info = env.step(action)
-        env_account_trace_rows.append(info["account_state_snapshot"])
-        if action_index == 6:
-            env_open_pnl_at_mark = float(env.account.open_pnl)
+    for action in actions:
+        env.step(action)
 
-    env_opens = [event for event in env.trade_log if event["type"] == "open"]
+    action_index = 0
+
+    def backtest_policy(_observation: np.ndarray[Any, Any]) -> int:
+        nonlocal action_index
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L311)
+2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L152)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        tick_execution_required=tick_execution_required,
-        randomized_fill_latency_ms=randomized_fill_latency_ms,
-        tick_fill_slippage_points=tick_slippage,
-    )
     env.reset(seed=7)
-    env.step(env_action)
-    env.step(19)
+    with pytest.raises(
+        FTMOMidnightSnapshotUnavailable, match="open position crossed FTMO midnight"
+    ):
+        for action in actions:
+            env.step(action)
 
-    actions = iter((direction, 19))
+    action_index = 0
 
-    def policy(_observation: np.ndarray[Any, Any]) -> int:
+    def backtest_policy(_observation: np.ndarray[Any, Any]) -> int:
+        nonlocal action_index
 # … caller assertions omitted …
 ```
 
@@ -329,7 +309,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Advance the simulator through its framework-neutral transition API.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.transition` · **Source:** [simulation/environment/env.py:432](../../../../simulation/environment/env.py#L432)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.transition` · **Source:** [simulation/environment/env.py:440](../../../../simulation/environment/env.py#L440)
 
 **Inputs and outputs:**
 
@@ -366,7 +346,7 @@ def test_native_transition_matches_gymnasium_step() -> None:
     _assert_same(native.as_gymnasium(), gym_result)
 ```
 
-2. [production caller: `step`](../../../../simulation/environment/env.py#L430)
+2. [production caller: `step`](../../../../simulation/environment/env.py#L438)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
