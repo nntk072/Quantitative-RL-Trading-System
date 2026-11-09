@@ -1,6 +1,6 @@
 # Decisioning · `trade_setup`
 
-This page contains 22 public callable records owned by `decisioning.trade_setup`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 23 public callable records owned by `decisioning.trade_setup`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `TradeSetupActionSchema`
 
@@ -250,6 +250,23 @@ def test_candidate_geometry_observation_schema_versions_fixed_slot_contract() ->
     assert schema["candidate_mask_key"] == "candidate_mask"
 ```
 
+2. [test fixture: `test_candidate_geometry_observation_schema_round_trip_and_mismatch`](../../../../tests/unit/decisioning/test_candidate_geometry_schema_validation.py#L12)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_candidate_geometry_observation_schema_round_trip_and_mismatch() -> None:
+    expected = candidate_geometry_observation_schema()
+    validate_candidate_geometry_observation_schema(expected, expected)
+
+    mutated = dict(expected)
+    candidate_count = expected["candidate_count"]
+    assert isinstance(candidate_count, int)
+    mutated["candidate_count"] = candidate_count - 1
+    with pytest.raises(ValueError, match="candidate geometry observation schema"):
+        validate_candidate_geometry_observation_schema(mutated, expected)
+```
+
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
@@ -347,20 +364,22 @@ def test_candidate_geometry_slots_round_trip_the_full_setup_entry_pair() -> None
             assert candidate_geometry_slot_semantics(slot) == (candidate_id, entry_type)
 ```
 
-2. [production caller: `candidate_geometry_slot_semantics`](../../../../decisioning/trade_setup.py#L94)
+2. [test fixture: `__init__`](../../../../tests/unit/learning/test_candidate_geometry_agent.py#L31)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def candidate_geometry_slot_semantics(slot: int | float) -> tuple[int, str]:
-    slot_count = candidate_geometry_slot_count()
-    if isinstance(slot, bool) or int(slot) != slot or not 0 <= int(slot) < slot_count:
-        raise ValueError("candidate slot is outside the candidate-geometry observation")
-    if int(slot) == 0:
-        return NO_TRADE_ID, "market"
-    setup_offset, entry_index = divmod(int(slot) - 1, len(CANDIDATE_GEOMETRY_ENTRY_TYPES))
-    return setup_offset + 1, CANDIDATE_GEOMETRY_ENTRY_TYPES[entry_index]
+    def __init__(self) -> None:
+        count = candidate_geometry_slot_count()
+        self.observation_space = spaces.Dict(
+            {
+                "seq": spaces.Box(-1.0, 1.0, (10, 4), dtype=np.float32),
+                "seq_mask": spaces.Box(0.0, 1.0, (10,), dtype=np.float32),
+                "account": spaces.Box(-10.0, 10.0, (6,), dtype=np.float32),
+# … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -403,6 +422,25 @@ def test_candidate_geometry_slots_round_trip_the_full_setup_entry_pair() -> None
         for entry_type in CANDIDATE_GEOMETRY_ENTRY_TYPES:
             slot = candidate_geometry_slot(candidate_id, entry_type)
             assert candidate_geometry_slot_semantics(slot) == (candidate_id, entry_type)
+```
+
+2. [test fixture: `_observation`](../../../../tests/unit/learning/test_candidate_geometry_agent.py#L92)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+            "seq": np.zeros((10, 4), dtype=np.float32),
+            "seq_mask": np.ones(10, dtype=np.float32),
+            "account": np.zeros(6, dtype=np.float32),
+            "trade_setup_mask": trade_mask,
+            "candidate_ids": np.asarray(
+                [candidate_geometry_slot_semantics(slot)[0] for slot in range(count)],
+                dtype=np.int64,
+            ),
+            "candidate_features": candidate_features,
+            "candidate_mask": candidate_mask,
+        }
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -879,18 +917,75 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert trade_setup_observation_schema()["mask_key"] == "trade_setup_mask"
 ```
 
-2. [test fixture: `__init__`](../../../../tests/unit/models/test_mtf_encoder_registration.py#L70)
+2. [test fixture: `__init__`](../../../../tests/unit/learning/test_candidate_geometry_agent.py#L65)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        self.observation_space = spaces.Dict(schema)
-        self.action_space = spaces.Box(-1.0, 1.0, (5,), dtype=np.float32)
-        self.action_schema = build_trade_setup_action_schema()
+        )
+        self.action_space = spaces.Box(-1.0, 1.0, (self.action_schema.width,), dtype=np.float32)
         self.trade_setup_actions = True
+        self.candidate_geometry_actions = True
         self.strategy_actions = True
         self.trade_setup_observation_schema = trade_setup_observation_schema()
+        self.candidate_geometry_observation_schema = candidate_geometry_observation_schema()
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/decisioning/index`
+
+## `validate_candidate_geometry_observation_schema`
+
+**Kind:** function · **Status:** stable · **Owner:** `decisioning.trade_setup`
+
+**Purpose:** Reject checkpoints whose price-aware candidate tensor semantics differ.
+
+**Exact API:** {py:obj}`decisioning.trade_setup.validate_candidate_geometry_observation_schema` · **Source:** [decisioning/trade_setup.py:583](../../../../decisioning/trade_setup.py#L583)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  actual_schema: Candidate-geometry schema recorded on the checkpoint.
+  expected_schema: Candidate-geometry schema required by the configured environment.
+  ```
+
+**Observed usage:**
+
+1. [test fixture: `test_candidate_geometry_observation_schema_round_trip_and_mismatch`](../../../../tests/unit/decisioning/test_candidate_geometry_schema_validation.py#L13)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_candidate_geometry_observation_schema_round_trip_and_mismatch() -> None:
+    expected = candidate_geometry_observation_schema()
+    validate_candidate_geometry_observation_schema(expected, expected)
+
+    mutated = dict(expected)
+    candidate_count = expected["candidate_count"]
+    assert isinstance(candidate_count, int)
+    mutated["candidate_count"] = candidate_count - 1
+    with pytest.raises(ValueError, match="candidate geometry observation schema"):
+        validate_candidate_geometry_observation_schema(mutated, expected)
+```
+
+2. [test fixture: `test_candidate_geometry_schema_is_absent_for_non_price_aware_checkpoint`](../../../../tests/unit/decisioning/test_candidate_geometry_schema_validation.py#L24)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_candidate_geometry_schema_is_absent_for_non_price_aware_checkpoint() -> None:
+    validate_candidate_geometry_observation_schema(None, None)
+    with pytest.raises(ValueError, match="candidate geometry observation schema"):
+        validate_candidate_geometry_observation_schema(
+            None, candidate_geometry_observation_schema()
+        )
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -936,7 +1031,7 @@ def test_trade_setup_observation_schema_is_checkpoint_checked() -> None:
         validate_trade_setup_observation_schema(model._trade_setup_observation_schema, None)
 ```
 
-2. [production caller: `validate_model_trade_setup_observation_schema`](../../../../learning/rl/agent.py#L320)
+2. [production caller: `validate_model_trade_setup_observation_schema`](../../../../learning/rl/agent.py#L321)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

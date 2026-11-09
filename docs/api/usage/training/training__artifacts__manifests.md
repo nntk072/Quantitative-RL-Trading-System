@@ -232,7 +232,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return the account observation dimension from the env's observation space.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_account_dim` · **Source:** [training/artifacts/manifests.py:365](../../../../training/artifacts/manifests.py#L365)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_account_dim` · **Source:** [training/artifacts/manifests.py:368](../../../../training/artifacts/manifests.py#L368)
 
 **Inputs and outputs:**
 
@@ -324,7 +324,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return every observation branch shape for the run manifest.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_space_shapes` · **Source:** [training/artifacts/manifests.py:383](../../../../training/artifacts/manifests.py#L383)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_space_shapes` · **Source:** [training/artifacts/manifests.py:386](../../../../training/artifacts/manifests.py#L386)
 
 **Inputs and outputs:**
 
@@ -365,7 +365,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return ordered model sequence coordinates from the effective environment.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.sequence_feature_schema_manifest` · **Source:** [training/artifacts/manifests.py:202](../../../../training/artifacts/manifests.py#L202)
+**Exact API:** {py:obj}`training.artifacts.manifests.sequence_feature_schema_manifest` · **Source:** [training/artifacts/manifests.py:205](../../../../training/artifacts/manifests.py#L205)
 
 **Inputs and outputs:**
 
@@ -406,7 +406,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Persist the effective optimizer/reward/risk protocol for later reproduction.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.training_protocol_manifest` · **Source:** [training/artifacts/manifests.py:220](../../../../training/artifacts/manifests.py#L220)
+**Exact API:** {py:obj}`training.artifacts.manifests.training_protocol_manifest` · **Source:** [training/artifacts/manifests.py:223](../../../../training/artifacts/manifests.py#L223)
 
 **Inputs and outputs:**
 

@@ -166,7 +166,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Create an environment whose persistent market arrays are read-only mmaps.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.from_bundle` · **Source:** [simulation/environment/env.py:394](../../../../simulation/environment/env.py#L394)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.from_bundle` · **Source:** [simulation/environment/env.py:401](../../../../simulation/environment/env.py#L401)
 
 **Inputs and outputs:**
 
@@ -238,7 +238,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Gymnasium adapter for :meth:`transition`.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.step` · **Source:** [simulation/environment/env.py:426](../../../../simulation/environment/env.py#L426)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.step` · **Source:** [simulation/environment/env.py:433](../../../../simulation/environment/env.py#L433)
 
 **Inputs and outputs:**
 
@@ -309,7 +309,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Advance the simulator through its framework-neutral transition API.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.transition` · **Source:** [simulation/environment/env.py:440](../../../../simulation/environment/env.py#L440)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.transition` · **Source:** [simulation/environment/env.py:447](../../../../simulation/environment/env.py#L447)
 
 **Inputs and outputs:**
 
@@ -346,7 +346,7 @@ def test_native_transition_matches_gymnasium_step() -> None:
     _assert_same(native.as_gymnasium(), gym_result)
 ```
 
-2. [production caller: `step`](../../../../simulation/environment/env.py#L438)
+2. [production caller: `step`](../../../../simulation/environment/env.py#L445)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

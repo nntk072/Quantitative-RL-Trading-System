@@ -324,7 +324,12 @@ def validate_model_trade_setup_observation_schema(
 def validate_model_candidate_geometry_observation_schema(
     model: Any, expected_schema: dict[str, Any] | None
 ) -> None:
-    """Validate the checkpoint's price-aware candidate observation metadata."""
+    """Validate checkpoint metadata for the price-aware candidate observation.
+
+    Args:
+        model: Loaded model carrying the persisted candidate schema.
+        expected_schema: Candidate schema required by the configured environment.
+    """
     actual = getattr(model, "_candidate_geometry_observation_schema", None)
     validate_candidate_geometry_observation_schema(actual, expected_schema)
 

@@ -18,7 +18,15 @@ EXPECTED_TIMEFRAMES = ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
 
 
 def _mapping(value: Any, name: str) -> Mapping[str, Any]:
-    """Normalize an OmegaConf/mapping node and reject scalar/list nodes."""
+    """Normalize a configuration node and reject scalar or list values.
+
+    Args:
+        value: Configuration value to validate as a mapping.
+        name: Field name used in any validation error.
+
+    Returns:
+        Mapping view of the value.
+    """
     if isinstance(value, DictConfig):
         value = OmegaConf.to_container(value, resolve=True)
     if isinstance(value, Mapping):
@@ -27,7 +35,14 @@ def _mapping(value: Any, name: str) -> Mapping[str, Any]:
 
 
 def load_research_protocol(path: str | Path) -> dict[str, Any]:
-    """Load and validate the frozen prospective protocol."""
+    """Load and validate the frozen prospective protocol.
+
+    Args:
+        path: YAML path containing the protocol contract.
+
+    Returns:
+        Validated protocol mapping with resolved configuration values.
+    """
     raw = OmegaConf.load(Path(path))
     value = OmegaConf.to_container(raw, resolve=True)
     if not isinstance(value, Mapping):
@@ -38,7 +53,11 @@ def load_research_protocol(path: str | Path) -> dict[str, Any]:
 
 
 def validate_research_protocol(protocol: Mapping[str, Any]) -> None:
-    """Fail closed if a predeclared scientific choice changes."""
+    """Fail closed if a predeclared scientific choice changes.
+
+    Args:
+        protocol: Protocol mapping to validate against frozen study invariants.
+    """
     if protocol.get("schema_version") != PROTOCOL_SCHEMA_VERSION:
         raise ValueError("unsupported research protocol schema version")
 
@@ -161,7 +180,14 @@ def validate_research_protocol(protocol: Mapping[str, Any]) -> None:
 
 
 def research_protocol_sha256(protocol: Mapping[str, Any]) -> str:
-    """Return a stable semantic digest of a validated protocol."""
+    """Return a stable semantic digest of a validated protocol.
+
+    Args:
+        protocol: Protocol mapping to hash after invariant validation.
+
+    Returns:
+        SHA-256 digest of its canonical semantic representation.
+    """
     validate_research_protocol(protocol)
     payload = json.dumps(protocol, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()

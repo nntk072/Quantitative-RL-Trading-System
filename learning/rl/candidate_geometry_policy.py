@@ -50,6 +50,15 @@ class CandidateGeometryConditionedActorHeads(nn.Module):
         embedding_dim: int = 32,
         hidden_dim: int = 128,
     ) -> None:
+        """Initialize candidate scoring and selected-candidate execution heads.
+
+        Args:
+            latent_dim: Width of the encoded market state.
+            coordinates: Ordered continuous and categorical action coordinates.
+            thresholds: Categorical defer thresholds keyed by coordinate name.
+            embedding_dim: Width of setup and geometry embeddings.
+            hidden_dim: Width of candidate and execution hidden layers.
+        """
         super().__init__()
         self.coordinates = tuple(str(value) for value in coordinates)
         required = {
@@ -110,6 +119,7 @@ class CandidateGeometryConditionedActorHeads(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
+        """Initialize execution heads with stable orthogonal weights."""
         for module in self.execution_body:
             if isinstance(module, nn.Linear):
                 nn.init.orthogonal_(module.weight, gain=1.0)
@@ -128,7 +138,16 @@ class CandidateGeometryConditionedActorHeads(nn.Module):
         candidate_ids: torch.Tensor,
         candidate_features: torch.Tensor,
     ) -> torch.Tensor:
-        """Score all entry hypotheses with market state plus causal price geometry."""
+        """Score entry hypotheses with market state and causal price geometry.
+
+        Args:
+            market_latent: Encoded market state for each batch row.
+            candidate_ids: Stable semantic IDs for all fixed candidate slots.
+            candidate_features: Causal geometry features for every slot.
+
+        Returns:
+            Unmasked selector logits for each candidate slot.
+        """
         scores, _ = self.selector(
             market_latent,
             candidate_ids.long(),
@@ -143,7 +162,17 @@ class CandidateGeometryConditionedActorHeads(nn.Module):
         candidate_features: torch.Tensor,
         selected_slots: torch.Tensor,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """Condition execution controls on the selected candidate geometry."""
+        """Condition execution controls on the selected candidate geometry.
+
+        Args:
+            market_latent: Encoded market state for each batch row.
+            candidate_ids: Stable semantic IDs for all fixed candidate slots.
+            candidate_features: Causal geometry features for every slot.
+            selected_slots: Chosen candidate slot for each batch row.
+
+        Returns:
+            Continuous means and named categorical logits for execution controls.
+        """
         encoded = self.selector.encode_candidates(
             market_latent,
             candidate_ids.long(),
@@ -172,6 +201,14 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         max_limit_offset_atr: float,
         max_limit_ttl_bars: int,
     ) -> None:
+        """Create a hierarchical candidate and execution distribution.
+
+        Args:
+            actor: Network that scores candidates and parameterizes execution.
+            action_width: Width of the environment's hybrid Box action.
+            max_limit_offset_atr: Maximum encoded passive-entry offset in ATRs.
+            max_limit_ttl_bars: Maximum encoded limit-order lifetime in bars.
+        """
         super().__init__()  # type: ignore[no-untyped-call]
         if max_limit_offset_atr <= 0.0:
             raise ValueError("max_limit_offset_atr must be positive")
@@ -190,6 +227,15 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         self.categorical: dict[str, Categorical] = {}
 
     def proba_distribution_net(self, *args: Any, **kwargs: Any) -> nn.Module:
+        """Reject SB3's flat-head construction path for this hierarchical policy.
+
+        Args:
+            *args: Positional arguments supplied by the SB3 distribution API.
+            **kwargs: Keyword arguments supplied by the SB3 distribution API.
+
+        Returns:
+            A neural module; this implementation raises because heads are policy-owned.
+        """
         del args, kwargs
         raise NotImplementedError("candidate-geometry hierarchical heads are built by the policy")
 
@@ -201,6 +247,18 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         candidate_features: torch.Tensor,
         candidate_mask: torch.Tensor,
     ) -> CandidateGeometryHybridBoxDistribution:
+        """Bind current policy inputs and create the masked candidate selector.
+
+        Args:
+            market_latent: Encoded market state for each batch row.
+            log_std: Log standard deviation for stochastic continuous controls.
+            candidate_ids: Stable semantic IDs for the fixed candidate slots.
+            candidate_features: Causal geometry features for each slot.
+            candidate_mask: Boolean eligibility mask with no-trade enabled.
+
+        Returns:
+            This distribution with selector probabilities bound to the inputs.
+        """
         if candidate_ids.ndim != 2 or candidate_ids.shape[1] != candidate_geometry_slot_count():
             raise ValueError("candidate_ids must have the versioned [batch, 217] layout")
         if candidate_ids.dtype not in (torch.int32, torch.int64):
@@ -246,6 +304,11 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
     def _require_context(
         self,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Return bound market and candidate tensors or raise before use.
+
+        Returns:
+            Market latent, log standard deviation, candidate IDs, and features.
+        """
         if (
             self.market_latent is None
             or self.log_std is None
@@ -263,6 +326,14 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
     def _selected_distributions(
         self, selected_slots: torch.Tensor
     ) -> tuple[Normal, dict[str, Categorical]]:
+        """Build execution distributions conditioned on each selected slot.
+
+        Args:
+            selected_slots: Candidate slot index for each batch row.
+
+        Returns:
+            Continuous control distribution and named categorical distributions.
+        """
         market, log_std, candidate_ids, candidate_features = self._require_context()
         means, logits = self.actor.execution(
             market, candidate_ids, candidate_features, selected_slots
@@ -274,6 +345,14 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
 
     @staticmethod
     def _setup_and_entry_ids(selected_slots: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Decode candidate slot indices into stable setup and entry IDs.
+
+        Args:
+            selected_slots: Fixed candidate slot indices, including no-trade zero.
+
+        Returns:
+            Setup IDs and market/limit entry IDs as integer tensors.
+        """
         nonzero = selected_slots > 0
         setup_ids = torch.where(
             nonzero,
@@ -288,6 +367,14 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         return setup_ids.long(), entry_ids.long()
 
     def _slot_ids_from_actions(self, actions: torch.Tensor) -> torch.Tensor:
+        """Recover selected slots from encoded setup and entry coordinates.
+
+        Args:
+            actions: Packed hybrid action tensor.
+
+        Returns:
+            Candidate slot index for each action row.
+        """
         setup_index = self.actor.coordinate_indices["trade_setup"]
         entry_index = self.actor.coordinate_indices["entry_execution"]
         setup_centers = actions.new_tensor(
@@ -307,6 +394,14 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         ).long()
 
     def _execution_class_ids(self, actions: torch.Tensor) -> dict[str, torch.Tensor]:
+        """Decode categorical execution coordinates to their nearest class IDs.
+
+        Args:
+            actions: Packed hybrid action tensor.
+
+        Returns:
+            Categorical class IDs keyed by execution coordinate name.
+        """
         result: dict[str, torch.Tensor] = {}
         for name, index in self.actor.execution_categorical_indices.items():
             centers = actions.new_tensor(self.actor.centers[name])
@@ -319,6 +414,16 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         continuous: torch.Tensor,
         classes: dict[str, torch.Tensor],
     ) -> torch.Tensor:
+        """Pack selected candidate and conditional controls into Box actions.
+
+        Args:
+            selected_slots: Candidate slot index for each batch row.
+            continuous: Sampled or modal continuous execution controls.
+            classes: Categorical execution class IDs keyed by coordinate.
+
+        Returns:
+            Environment action tensor with deterministic slot values encoded.
+        """
         market, _, _, candidate_features = self._require_context()
         output = market.new_zeros((market.shape[0], self.action_width))
         continuous_index = torch.as_tensor(
@@ -369,6 +474,11 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         return output
 
     def sample(self) -> torch.Tensor:
+        """Sample a candidate and its conditional stochastic execution controls.
+
+        Returns:
+            Packed stochastic action tensor.
+        """
         if self.candidate is None:
             raise RuntimeError("call proba_distribution before sampling")
         slots = cast(torch.Tensor, self.candidate.sample())  # type: ignore[no-untyped-call]
@@ -380,6 +490,11 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         return self._pack(slots, normal.rsample(), classes)
 
     def mode(self) -> torch.Tensor:
+        """Select selector and conditional execution modes deterministically.
+
+        Returns:
+            Packed deterministic action tensor.
+        """
         if self.candidate is None:
             raise RuntimeError("call proba_distribution before selecting a mode")
         slots = self.candidate.logits.argmax(dim=-1)
@@ -390,6 +505,14 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         return self._pack(slots, normal.mean, classes)
 
     def get_actions(self, deterministic: bool = False) -> torch.Tensor:
+        """Choose deterministic mode or stochastic sample according to the flag.
+
+        Args:
+            deterministic: Whether to return the distribution mode.
+
+        Returns:
+            Packed hybrid action tensor.
+        """
         return self.mode() if deterministic else self.sample()
 
     def actions_from_params(
@@ -401,6 +524,19 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         candidate_mask: torch.Tensor,
         deterministic: bool = False,
     ) -> torch.Tensor:
+        """Bind distribution parameters and produce an action.
+
+        Args:
+            market_latent: Encoded market state for each batch row.
+            log_std: Log standard deviation for continuous execution controls.
+            candidate_ids: Stable semantic IDs for the fixed candidate slots.
+            candidate_features: Causal geometry features for each candidate.
+            candidate_mask: Boolean candidate eligibility mask.
+            deterministic: Whether to choose distribution modes.
+
+        Returns:
+            Packed hybrid action tensor.
+        """
         self.proba_distribution(
             market_latent,
             log_std,
@@ -418,6 +554,18 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         candidate_features: torch.Tensor,
         candidate_mask: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Sample from supplied parameters and compute the joint action log probability.
+
+        Args:
+            market_latent: Encoded market state for each batch row.
+            log_std: Log standard deviation for continuous execution controls.
+            candidate_ids: Stable semantic IDs for the fixed candidate slots.
+            candidate_features: Causal geometry features for each candidate.
+            candidate_mask: Boolean candidate eligibility mask.
+
+        Returns:
+            Sampled action and its joint log probability.
+        """
         actions = self.actions_from_params(
             market_latent,
             log_std,
@@ -428,6 +576,14 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         return actions, self.log_prob(actions)
 
     def log_prob(self, actions: torch.Tensor) -> torch.Tensor:
+        """Evaluate selector and active conditional-control log probabilities.
+
+        Args:
+            actions: Packed actions whose joint likelihood is evaluated.
+
+        Returns:
+            One joint log probability per batch row.
+        """
         if self.candidate is None:
             raise RuntimeError("call proba_distribution before evaluating actions")
         slots = self._slot_ids_from_actions(actions)
@@ -454,13 +610,21 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         return result + torch.where(slots > 0, conditional_log_prob, 0.0)
 
     def trade_setup_entropy(self) -> torch.Tensor:
-        """Compatibility metric: entropy of the joint setup+entry candidate selector."""
+        """Return entropy of the joint setup and entry candidate selector.
+
+        Returns:
+            Selector entropy for each batch row.
+        """
         if self.candidate is None:
             raise RuntimeError("call proba_distribution before reading entropy")
         return cast(torch.Tensor, self.candidate.entropy())  # type: ignore[no-untyped-call]
 
     def trade_setup_probabilities(self) -> torch.Tensor:
-        """Aggregate joint candidate probabilities back to the stable 109 setup IDs."""
+        """Aggregate joint candidate probabilities to stable setup IDs.
+
+        Returns:
+            Probability for each of the 109 setup IDs, including no-trade.
+        """
         if self.candidate is None:
             raise RuntimeError("call proba_distribution before reading probabilities")
         probabilities = self.candidate.probs
@@ -473,6 +637,14 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         return result
 
     def categorical_coordinate_entropy(self, name: str) -> torch.Tensor | None:
+        """Return entropy for an action categorical coordinate when available.
+
+        Args:
+            name: Categorical action coordinate name.
+
+        Returns:
+            Coordinate entropy, or ``None`` when the coordinate is not tracked.
+        """
         if name == "entry_execution":
             if self.candidate is None:
                 return None
@@ -490,6 +662,11 @@ class CandidateGeometryHybridBoxDistribution(SB3Distribution):
         return cast(torch.Tensor, distribution.entropy())  # type: ignore[no-untyped-call]
 
     def entropy(self) -> torch.Tensor:
+        """Compute joint selector and candidate-weighted conditional entropy.
+
+        Returns:
+            One hierarchical entropy value per batch row.
+        """
         if (
             self.candidate is None
             or self.candidate_mask is None
@@ -536,6 +713,19 @@ class CandidateGeometryClampedStdMultiInputPolicy(HybridClampedStdMultiInputPoli
         max_limit_ttl_bars: int = 60,
         **kwargs: Any,
     ) -> None:
+        """Configure PPO with candidate observation keys and geometry bounds.
+
+        Args:
+            *args: Positional constructor arguments forwarded to the base policy.
+            candidate_ids_key: Observation key for stable candidate IDs.
+            candidate_features_key: Observation key for candidate geometry vectors.
+            candidate_mask_key: Observation key for boolean candidate eligibility.
+            candidate_embedding_dim: Width of candidate semantic embeddings.
+            candidate_execution_hidden_dim: Hidden width of conditional execution heads.
+            max_limit_offset_atr: Maximum passive-entry offset encoded in ATRs.
+            max_limit_ttl_bars: Maximum passive-entry lifetime encoded in bars.
+            **kwargs: Additional base-policy constructor options.
+        """
         self.candidate_ids_key = str(candidate_ids_key)
         self.candidate_features_key = str(candidate_features_key)
         self.candidate_mask_key = str(candidate_mask_key)
@@ -548,6 +738,11 @@ class CandidateGeometryClampedStdMultiInputPolicy(HybridClampedStdMultiInputPoli
         super().__init__(*args, **kwargs)
 
     def _build(self, lr_schedule: Any) -> None:
+        """Build candidate-conditioned heads and register optimizer parameters.
+
+        Args:
+            lr_schedule: Callable producing the learning rate at a progress value.
+        """
         super(HybridClampedStdMultiInputPolicy, self)._build(lr_schedule)
         action_shape = getattr(self.action_space, "shape", None)
         if action_shape is None or len(action_shape) != 1:
@@ -586,6 +781,11 @@ class CandidateGeometryClampedStdMultiInputPolicy(HybridClampedStdMultiInputPoli
         )
 
     def _set_distribution_mask(self, obs: Any) -> None:
+        """Bind candidate IDs, features, and eligibility from observations.
+
+        Args:
+            obs: Dict observation containing the configured candidate keys.
+        """
         if not isinstance(obs, dict):
             raise ValueError("candidate-geometry policy requires Dict observations")
         required = (
@@ -605,6 +805,14 @@ class CandidateGeometryClampedStdMultiInputPolicy(HybridClampedStdMultiInputPoli
     def _get_action_dist_from_latent(
         self, latent_pi: torch.Tensor
     ) -> CandidateGeometryHybridBoxDistribution:
+        """Build the hierarchical action distribution for encoded observations.
+
+        Args:
+            latent_pi: Policy latent representing the current market state.
+
+        Returns:
+            Candidate selector and conditional execution distribution.
+        """
         clip_policy_log_std(self, self.log_std_min, self.log_std_max)
         if self.candidate_actor is None or self.candidate_distribution is None:
             raise RuntimeError("candidate-geometry policy was not built")
@@ -622,6 +830,11 @@ class CandidateGeometryClampedStdMultiInputPolicy(HybridClampedStdMultiInputPoli
         return distribution
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
+        """Return constructor settings needed to reconstruct a saved policy.
+
+        Returns:
+            Base-policy and candidate-geometry constructor parameters.
+        """
         data = super(HybridClampedStdMultiInputPolicy, self)._get_constructor_parameters()
         data.update(
             hybrid_action_coordinates=self.hybrid_action_coordinates,

@@ -23,6 +23,14 @@ _FEATURE_INDEX = {name: index for index, name in enumerate(CANDIDATE_GEOMETRY_FE
 
 
 def _finite(value: Any) -> float | None:
+    """Convert a scalar to a finite float when possible.
+
+    Args:
+        value: Scalar-like value to convert.
+
+    Returns:
+        A finite float, or ``None`` for invalid and non-finite values.
+    """
     try:
         numeric = float(value)
     except (TypeError, ValueError):
@@ -33,7 +41,16 @@ def _finite(value: Any) -> float | None:
 def _source_zone(
     row: Any, candidate: Any, context: dict[str, Any] | None = None
 ) -> tuple[float, float] | None:
-    """Resolve the same causal source-zone geometry used by candidate proposal audits."""
+    """Resolve causal source-zone geometry used by candidate proposal audits.
+
+    Args:
+        row: Causal feature row containing source-zone values.
+        candidate: Setup definition identifying the source idea and timeframe.
+        context: Optional precomputed entry-idea context for the candidate direction.
+
+    Returns:
+        Source-zone low and high bounds, or ``None`` when unavailable.
+    """
     if candidate.idea == "standard_deviation":
         timeframe = str(candidate.setup_timeframe).upper()
         prefix = "" if timeframe == "M1" else f"{timeframe}_"
@@ -76,7 +93,15 @@ def _source_zone(
 
 
 def _reference_quote(env: Any, index: int) -> tuple[float, float] | None:
-    """Use the last causal tick in the completed decision bar, with bar fallback."""
+    """Use the last causal tick in the decision bar, with bar-price fallback.
+
+    Args:
+        env: Environment providing the tick book and bar quote.
+        index: Completed decision-bar index.
+
+    Returns:
+        Valid bid and ask values, or ``None`` when a required quote is absent.
+    """
     bar = env._bar_at(index)
     if getattr(env, "_tickbook", None) is not None:
         bar_time = pd.Timestamp(env._bar_time(index))
@@ -97,7 +122,15 @@ def _reference_quote(env: Any, index: int) -> tuple[float, float] | None:
 
 
 def _session_remaining(env: Any, index: int) -> tuple[int, float] | None:
-    """Return time to the configured local session close without reading future rows."""
+    """Measure time to configured session close without reading future rows.
+
+    Args:
+        env: Environment providing session times and bar duration.
+        index: Completed decision-bar index.
+
+    Returns:
+        Remaining bar count and normalized session time, or ``None`` if closed.
+    """
     now = pd.Timestamp(env._bar_time(index))
     closes = getattr(env, "_scheduled_session_closes", {})
     close_text = closes.get(now.date().isoformat()) if isinstance(closes, dict) else None
@@ -120,6 +153,17 @@ def _session_remaining(env: Any, index: int) -> tuple[int, float] | None:
 
 
 def _candidate_age_fraction(env: Any, row: Any, candidate_id: int, index: int) -> float | None:
+    """Measure candidate age from its latest identified source event.
+
+    Args:
+        env: Environment supplying the decision timestamp and age limit.
+        row: Causal feature row containing candidate event identities.
+        candidate_id: Stable trade-setup identifier.
+        index: Completed bar index used for the decision.
+
+    Returns:
+        Age as a fraction of the configured limit, or ``None`` when invalid.
+    """
     identities = trade_setup_candidate_event_identities(row, [candidate_id])
     if len(identities) != 1 or identities[0].status != "identified":
         return None
@@ -145,6 +189,18 @@ def _geometry_distances(
     entry_price: float,
     atr: float,
 ) -> tuple[float, float, float, float] | None:
+    """Calculate executable stop and target distance ranges in ATR units.
+
+    Args:
+        env: Environment providing strategy, risk, and instrument settings.
+        row: Causal feature row used to construct protective levels.
+        candidate: Stable setup proposal whose geometry is being measured.
+        entry_price: Proposed executable entry price.
+        atr: Positive average true range used for normalization.
+
+    Returns:
+        Minimum and maximum stop and target distances, or ``None`` if unavailable.
+    """
     placed = place_strategy_order(
         env.strategy,
         direction=int(candidate.direction),
@@ -198,6 +254,26 @@ def _feature_vector(
     session_fraction: float,
     source_zone_width_atr: float,
 ) -> np.ndarray[Any, np.dtype[np.float32]]:
+    """Encode one proposal's causal geometry using the versioned feature order.
+
+    Args:
+        candidate: Stable setup semantics for the proposal.
+        entry_type: Either ``market`` or ``limit``.
+        entry_price: Proposed entry price.
+        reference_price: Causal market price used for relative offsets.
+        zone: Low and high bounds of the source zone.
+        atr: Positive average true range.
+        spread: Current bid-ask spread in price units.
+        round_trip_cost: Estimated round-trip execution cost in price units.
+        distances: Stop and target distance bounds in ATR units.
+        ttl_fraction: Limit lifetime as a fraction of its configured maximum.
+        age_fraction: Candidate age as a fraction of its configured maximum.
+        session_fraction: Time until session close as a fraction of session length.
+        source_zone_width_atr: Source-zone width divided by ATR.
+
+    Returns:
+        Float32 candidate feature vector in schema order.
+    """
     values = np.zeros(len(CANDIDATE_GEOMETRY_FEATURE_NAMES), dtype=np.float32)
     low, high = zone
     values[_FEATURE_INDEX["direction"]] = float(candidate.direction)
@@ -227,6 +303,13 @@ def build_candidate_geometry_observation(
     Only information available by the decision boundary is used. Candidate
     outcome replay, future fills, future protective triggers, and realized
     returns are intentionally absent.
+
+    Args:
+        env: Trading environment supplying causal market and execution state.
+        step_idx: Optional completed bar index; defaults to the current index.
+
+    Returns:
+        Fixed-width candidate IDs, geometry features, and boolean eligibility mask.
     """
     index = int(env.step_idx if step_idx is None else step_idx)
     count = candidate_geometry_slot_count()

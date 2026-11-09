@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `training.configuration.va
 
 **Purpose:** Resolve one variant into a fully explicit, validated configuration.
 
-**Exact API:** {py:obj}`training.configuration.variant_resolution.resolve_variant` · **Source:** [training/configuration/variant_resolution.py:139](../../../../training/configuration/variant_resolution.py#L139)
+**Exact API:** {py:obj}`training.configuration.variant_resolution.resolve_variant` · **Source:** [training/configuration/variant_resolution.py:140](../../../../training/configuration/variant_resolution.py#L140)
 
 **Inputs and outputs:**
 
@@ -75,7 +75,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Arguments for ``python -m training.runner.training`` for one seed.
 
-**Exact API:** {py:obj}`training.configuration.variant_resolution.train_args` · **Source:** [training/configuration/variant_resolution.py:330](../../../../training/configuration/variant_resolution.py#L330)
+**Exact API:** {py:obj}`training.configuration.variant_resolution.train_args` · **Source:** [training/configuration/variant_resolution.py:356](../../../../training/configuration/variant_resolution.py#L356)
 
 **Inputs and outputs:**
 

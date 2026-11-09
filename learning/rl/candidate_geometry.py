@@ -105,6 +105,14 @@ class CandidateGeometryActorHeads(nn.Module):
         hierarchical distribution can use exactly the same candidate
         representation for selection and for selected-candidate execution
         controls instead of rebuilding a second geometry network.
+
+        Args:
+            market_latent: Encoded market state for each batch row.
+            candidate_ids: Stable setup IDs with shape ``[batch, candidates]``.
+            candidate_features: Geometry tensor with shape ``[batch, candidates, features]``.
+
+        Returns:
+            Hidden state for every candidate slot.
         """
         if market_latent.ndim != 2:
             raise ValueError("market_latent must have shape [batch, latent]")
@@ -144,7 +152,16 @@ class CandidateGeometryActorHeads(nn.Module):
         candidate_ids: torch.Tensor,
         candidate_features: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Return one shared score and action-parameter vector per candidate."""
+        """Score candidates and produce candidate-conditional action parameters.
+
+        Args:
+            market_latent: Encoded market state for each batch row.
+            candidate_ids: Stable setup IDs with shape ``[batch, candidates]``.
+            candidate_features: Geometry tensor with shape ``[batch, candidates, features]``.
+
+        Returns:
+            Candidate scores and conditional action parameters.
+        """
         hidden = self.encode_candidates(market_latent, candidate_ids, candidate_features)
         return self.score(hidden).squeeze(-1), self.conditional_action(hidden)
 
