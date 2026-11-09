@@ -496,7 +496,7 @@ def test_randomized_tick_evaluation_requires_execution_seed() -> None:
         )
 
 
-def test_q5_evaluation_reports_discounted_constraint_costs() -> None:
+def test_constrained_evaluation_reports_discounted_constraint_costs() -> None:
     model = _ScriptedModel({})
     setattr(model, "_constrained_rl_state", {"version": 2, "gamma": 0.9})
     result = evaluate_model(
@@ -507,7 +507,7 @@ def test_q5_evaluation_reports_discounted_constraint_costs() -> None:
     )
 
     summary = result["constraint_cost_summary"]
-    assert summary["schema"] == "q5_discounted_constraint_cost_v1"
+    assert summary["schema"] == "discounted_constraint_cost_v1"
     assert summary["n_steps"] == 3
     assert summary["undiscounted_total"] == pytest.approx(0.4)
     assert summary["discounted_total"] == pytest.approx(0.361)
@@ -515,7 +515,7 @@ def test_q5_evaluation_reports_discounted_constraint_costs() -> None:
     assert result["constraint_costs"]["discount_factor"].tolist() == pytest.approx([1.0, 0.9, 0.81])
 
 
-def test_q5_v3_evaluation_reports_undiscounted_max_loss_fraction_costs() -> None:
+def test_evaluate_model_reports_max_loss_fraction_normalized_constraint_costs() -> None:
     model = _ScriptedModel({})
     setattr(
         model,
@@ -536,7 +536,7 @@ def test_q5_v3_evaluation_reports_undiscounted_max_loss_fraction_costs() -> None
     )
 
     summary = result["constraint_cost_summary"]
-    assert summary["schema"] == "q5_max_loss_fraction_cost_v1"
+    assert summary["schema"] == "max_loss_fraction_constraint_cost_v1"
     assert summary["cost_unit"] == "fraction_of_max_loss_limit"
     assert summary["discount_gamma"] == pytest.approx(1.0)
     assert summary["undiscounted_total"] == pytest.approx(0.15)

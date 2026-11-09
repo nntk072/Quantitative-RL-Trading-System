@@ -201,7 +201,7 @@ def _hard_breach_events(
 
 
 def _constraint_cost_errors(split_dir: Path, diagnostics: dict[str, Any]) -> list[str]:
-    """Reconcile optional Q5 cost summaries against their per-step source rows."""
+    """Reconcile supported constraint-cost summaries against their per-step rows."""
     errors: list[str] = []
     artifact_path = split_dir / "constraint_costs.csv"
     summary = diagnostics.get("constraint_cost_summary")
@@ -211,12 +211,34 @@ def _constraint_cost_errors(split_dir: Path, diagnostics: dict[str, Any]) -> lis
         return errors
     if not isinstance(summary, dict):
         return [f"{split_dir.name}: constraint_cost_summary must be an object"]
-    if summary.get("schema") != "q5_discounted_constraint_cost_v1":
+    schema_contracts = {
+        "discounted_constraint_cost_v1": (
+            "per_step_max_of_normalized_daily_max_loss_trailing_costs_and_breach_indicator",
+            "max_of_original_normalized_constraint_units",
+        ),
+        "max_loss_fraction_constraint_cost_v1": (
+            "per_step_max_limit_increase_normalized_to_max_loss_limit_and_breach_indicator",
+            "fraction_of_max_loss_limit",
+        ),
+        # Retain read compatibility with reports written before the schema was
+        # named for its cost definition instead of its research phase.
+        "q5_discounted_constraint_cost_v1": (
+            "per_step_max_of_normalized_daily_max_loss_trailing_costs_and_breach_indicator",
+            "max_of_original_normalized_constraint_units",
+        ),
+        "q5_max_loss_fraction_cost_v1": (
+            "per_step_max_limit_increase_normalized_to_max_loss_limit_and_breach_indicator",
+            "fraction_of_max_loss_limit",
+        ),
+    }
+    schema_id = summary.get("schema")
+    schema_contract = schema_contracts.get(schema_id) if isinstance(schema_id, str) else None
+    if schema_contract is None:
         errors.append(f"{split_dir.name}: constraint-cost schema is unsupported")
-    if summary.get("definition") != (
-        "per_step_max_of_normalized_daily_max_loss_trailing_costs_and_breach_indicator"
-    ):
+    elif summary.get("definition") != schema_contract[0]:
         errors.append(f"{split_dir.name}: constraint-cost definition is unsupported")
+    if schema_contract is not None and summary.get("cost_unit") != schema_contract[1]:
+        errors.append(f"{split_dir.name}: constraint-cost unit does not match its schema")
     if not artifact_path.is_file():
         return [f"{split_dir.name}: constraint_costs.csv is missing"]
 

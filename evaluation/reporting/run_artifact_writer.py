@@ -395,7 +395,7 @@ def _write_split(
         if constraint_cost_summary is not None:
             constraint_costs = result.get("constraint_costs")
             if not isinstance(constraint_costs, pd.DataFrame):
-                raise ValueError("Q5 evaluation summary requires constraint_costs DataFrame")
+                raise ValueError("Constraint-cost summary requires a constraint_costs DataFrame")
             constraint_costs.to_csv(split_dir / "constraint_costs.csv", index=False)
         session_diag = {
             "n_sessions": n_sessions,

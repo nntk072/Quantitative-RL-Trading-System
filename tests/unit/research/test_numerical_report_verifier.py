@@ -464,7 +464,7 @@ def _write_complete_trace_split(tmp_path: Path, *, breach_events_supplied: bool 
     return run_dir / "training"
 
 
-def _add_q5_cost_evidence(split_dir: Path) -> None:
+def _add_legacy_constraint_cost_evidence(split_dir: Path) -> None:
     rows = pd.DataFrame(
         [
             {
@@ -496,6 +496,7 @@ def _add_q5_cost_evidence(split_dir: Path) -> None:
     diagnostics = json.loads(diagnostics_path.read_text(encoding="utf-8"))
     diagnostics["constraint_cost_summary"] = {
         "schema": "q5_discounted_constraint_cost_v1",
+        "cost_unit": "max_of_original_normalized_constraint_units",
         "definition": "per_step_max_of_normalized_daily_max_loss_trailing_costs_and_breach_indicator",
         "discount_gamma": 0.9,
         "n_steps": 2,
@@ -590,9 +591,9 @@ def test_verify_split_accepts_historical_v3_metric_schema(tmp_path: Path) -> Non
     assert verify_split(split_dir, initial_balance=100.0, periods_per_year=10) == []
 
 
-def test_verify_split_reconciles_q5_discounted_constraint_costs(tmp_path: Path) -> None:
+def test_verify_split_reconciles_legacy_discounted_constraint_costs(tmp_path: Path) -> None:
     split_dir = _write_split(tmp_path)
-    _add_q5_cost_evidence(split_dir)
+    _add_legacy_constraint_cost_evidence(split_dir)
 
     errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
 
@@ -602,6 +603,47 @@ def test_verify_split_reconciles_q5_discounted_constraint_costs(tmp_path: Path) 
     costs.to_csv(split_dir / "constraint_costs.csv", index=False)
     errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
     assert any("discount factors do not reconcile" in error for error in errors)
+
+
+def test_verify_split_reconciles_purpose_named_constraint_costs(tmp_path: Path) -> None:
+    split_dir = _write_split(tmp_path)
+    _add_legacy_constraint_cost_evidence(split_dir)
+    diagnostics_path = split_dir / "evaluation_diagnostics.json"
+    diagnostics = json.loads(diagnostics_path.read_text(encoding="utf-8"))
+    diagnostics["constraint_cost_summary"]["schema"] = "discounted_constraint_cost_v1"
+    diagnostics_path.write_text(json.dumps(diagnostics), encoding="utf-8")
+
+    assert verify_split(split_dir, initial_balance=100.0, periods_per_year=10) == []
+
+
+def test_verify_split_reconciles_max_loss_normalized_constraint_costs(tmp_path: Path) -> None:
+    split_dir = _write_split(tmp_path)
+    _add_legacy_constraint_cost_evidence(split_dir)
+    diagnostics_path = split_dir / "evaluation_diagnostics.json"
+    diagnostics = json.loads(diagnostics_path.read_text(encoding="utf-8"))
+    diagnostics["constraint_cost_summary"].update(
+        {
+            "schema": "max_loss_fraction_constraint_cost_v1",
+            "definition": "per_step_max_limit_increase_normalized_to_max_loss_limit_and_breach_indicator",
+            "cost_unit": "fraction_of_max_loss_limit",
+        }
+    )
+    diagnostics_path.write_text(json.dumps(diagnostics), encoding="utf-8")
+
+    assert verify_split(split_dir, initial_balance=100.0, periods_per_year=10) == []
+
+
+def test_verify_split_rejects_constraint_cost_schema_definition_mismatch(tmp_path: Path) -> None:
+    split_dir = _write_split(tmp_path)
+    _add_legacy_constraint_cost_evidence(split_dir)
+    diagnostics_path = split_dir / "evaluation_diagnostics.json"
+    diagnostics = json.loads(diagnostics_path.read_text(encoding="utf-8"))
+    diagnostics["constraint_cost_summary"]["schema"] = "max_loss_fraction_constraint_cost_v1"
+    diagnostics_path.write_text(json.dumps(diagnostics), encoding="utf-8")
+
+    errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
+
+    assert any("constraint-cost definition is unsupported" in error for error in errors)
 
 
 def test_verify_split_reconciles_fill_quote_source_counts(tmp_path: Path) -> None:
