@@ -89,8 +89,11 @@ run_gate "scoped unit, integration, and research tests" "$PYTHON_BIN" -m pytest 
   tests/unit/learning/test_candidate_geometry_agent.py \
   tests/unit/learning/test_candidate_geometry_policy.py \
   tests/unit/research/test_pretraining_research_contract.py \
+  tests/unit/research/test_pretraining_parallel_readiness.py \
+  tests/unit/research/test_observation_warmup_validity_audit.py \
   tests/unit/research/test_survival_compute_budget.py \
   tests/unit/research/test_survival_launch_plan.py \
+  tests/unit/research/test_survival_launch_readiness.py \
   tests/unit/simulation/test_environment/test_candidate_geometry_observation.py \
   tests/unit/training/test_research_protocol.py \
   tests/unit/learning/test_checkpoint_resume.py \

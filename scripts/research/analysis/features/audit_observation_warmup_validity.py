@@ -12,6 +12,7 @@ import argparse
 import csv
 import hashlib
 import json
+import shlex
 from pathlib import Path
 from typing import Any
 
@@ -143,17 +144,25 @@ def _summarize_stream(
 def build_audit(config_path: Path, output_dir: Path, cache_dir: Path) -> dict[str, Any]:
     """Build the configured training-only feature matrix and audit its model inputs."""
     cfg = load_config(config_path=str(config_path))
+    regeneration_command = shlex.join(
+        [
+            ".venv/bin/python",
+            str(Path(__file__).relative_to(ROOT)),
+            "--config",
+            str(config_path.relative_to(ROOT)),
+            "--output-dir",
+            str(output_dir),
+            "--cache-dir",
+            str(cache_dir),
+        ]
+    )
     return build_audit_from_config(
         cfg,
         config_label=str(config_path.relative_to(ROOT)),
         config_sha256=_sha256(config_path),
         output_dir=output_dir,
         cache_dir=cache_dir,
-        regeneration_command=(
-            f".venv/bin/python {Path(__file__).relative_to(ROOT)} "
-            f"--config {config_path.relative_to(ROOT)} "
-            f"--output-dir {output_dir.relative_to(ROOT)} --cache-dir {cache_dir}"
-        ),
+        regeneration_command=regeneration_command,
     )
 
 

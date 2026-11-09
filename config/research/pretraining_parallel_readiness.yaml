@@ -1,0 +1,111 @@
+schema_version: pretraining-parallel-readiness-v1
+scientific_training_authorization: never_from_this_plan_alone
+
+tasks:
+  - id: static_contract
+    lane: A
+    description: Validate the frozen survival/config/protocol contract.
+    depends_on: []
+    resource_lock: null
+    command: ["{python}", -m, scripts.research.audits.verify_pretraining_research_contract, --output, "{run_root}/static/static_contract.json"]
+    artifact_roots: ["{run_root}/static/static_contract.json"]
+
+  - id: prospective_protocol
+    lane: A
+    description: Bind the prospective protocol and matched configs to current source.
+    depends_on: []
+    resource_lock: null
+    command: ["{python}", -m, scripts.research.analysis.evidence.build_prospective_execution_protocol, --output, "{run_root}/static/prospective_execution_protocol.json"]
+    artifact_roots: ["{run_root}/static/prospective_execution_protocol.json"]
+
+  - id: candidate_policy_contract
+    lane: A
+    description: Exercise the 217-slot policy/environment/checkpoint contract.
+    depends_on: [static_contract, prospective_protocol]
+    resource_lock: null
+    command:
+      - "{python}"
+      - -m
+      - pytest
+      - tests/unit/configuration/test_survival_candidate_geometry_config.py
+      - tests/unit/decisioning/test_candidate_geometry_schema_validation.py
+      - tests/unit/learning/test_candidate_geometry_agent.py
+      - tests/unit/learning/test_candidate_geometry_policy.py
+      - tests/unit/simulation/test_environment/test_candidate_geometry_observation.py
+      - -q
+    artifact_roots: []
+
+  - id: observation_validity
+    lane: B
+    description: Rebuild current-source model-input warmup and missingness evidence.
+    depends_on: [static_contract, prospective_protocol]
+    resource_lock: feature_build_memory
+    command: ["{python}", -m, scripts.research.analysis.features.audit_observation_warmup_validity, --config, config/research/survival_trade_setup_mtf_conditioned.yaml, --output-dir, "{run_root}/features/observation_validity", --cache-dir, "{run_root}/cache/observation_validity"]
+    artifact_roots: ["{run_root}/features/observation_validity"]
+
+  - id: opportunity_census
+    lane: B
+    description: Rebuild the all-setup training-only opportunity and event-identity census.
+    depends_on: [static_contract, prospective_protocol]
+    resource_lock: feature_build_memory
+    command: ["{python}", -m, scripts.research.analysis.features.entry_idea_opportunity_census, --config, config/research/survival_trade_setup_mtf_conditioned.yaml, --output-dir, "{run_root}/features/opportunity_census"]
+    artifact_roots: ["{run_root}/features/opportunity_census"]
+
+  - id: candidate_geometry_support
+    lane: B
+    description: Rebuild training-only causal source-geometry support for PRICE.
+    depends_on: [static_contract, prospective_protocol]
+    resource_lock: feature_build_memory
+    command: ["{python}", -m, scripts.research.analysis.features.candidate_geometry_support, --config, config/research/survival_trade_setup_candidate_geometry.yaml, --output-dir, "{run_root}/features/candidate_geometry_support"]
+    artifact_roots: ["{run_root}/features/candidate_geometry_support"]
+
+  - id: simulator_accounting_contract
+    lane: C
+    description: Run focused account, risk, quote, and execution parity regressions.
+    depends_on: [static_contract, prospective_protocol]
+    resource_lock: null
+    command:
+      - "{python}"
+      - -m
+      - pytest
+      - tests/unit/trading/test_guardrails.py
+      - tests/unit/trading/test_risk.py
+      - tests/unit/evaluation/test_account_state_trace_reconciliation.py
+      - tests/unit/evaluation/test_policy_decision_reconciliation.py
+      - tests/integration/backtest/test_account_transition_parity.py
+      - tests/integration/backtest/test_broker_quote_parity.py
+      - tests/integration/backtest/test_engine_execution_contract.py
+      - tests/integration/backtest/test_local_tick_action_trace.py
+      - -q
+    artifact_roots: []
+
+  - id: implementation_release_gate
+    lane: F
+    description: Run the canonical implementation/release gate after prerequisite lanes pass.
+    depends_on: [candidate_policy_contract, observation_validity, opportunity_census, candidate_geometry_support, simulator_accounting_contract]
+    resource_lock: release_gate
+    command: [bash, scripts/research/audits/verify_release_quality.sh]
+    artifact_roots: []
+
+barriers:
+  - id: B0
+    description: Frozen source, config, and prospective protocol implementation contract.
+    requires: [static_contract, prospective_protocol]
+  - id: B2_IMPLEMENTATION_EVIDENCE
+    description: Current-source feature and simulator evidence generation completed.
+    requires: [observation_validity, opportunity_census, simulator_accounting_contract]
+  - id: B3_PRICE_IMPLEMENTATION
+    description: PRICE implementation and source-geometry evidence generation completed.
+    requires: [candidate_policy_contract, candidate_geometry_support]
+  - id: B4_IMPLEMENTATION_RELEASE
+    description: Canonical implementation release gate passed.
+    requires: [implementation_release_gate]
+
+external_scientific_gates:
+  - raw_data_identity_and_denominator_register_current_source
+  - current_v43_real_market_prefix_invariance
+  - producer_level_feature_causality_review
+  - candidate_geometry_empirical_acceptance_review
+  - matched_baseline_current_source_results
+  - semantic_full_path_compute_budget_from_current_decision_count
+  - scientific_protocol_review_and_freeze
