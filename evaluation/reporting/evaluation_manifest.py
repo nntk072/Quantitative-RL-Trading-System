@@ -47,6 +47,7 @@ def build_evaluation_manifest(
             "cost_decomposition.json",
             "account_state_reconciliation.json",
             "account_state_trace.csv",
+            "policy_decisions.csv",
             "trade_setup_decisions.csv",
         ):
             artifact_path = root / partition / filename

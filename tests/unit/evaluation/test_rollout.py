@@ -24,6 +24,7 @@ from decisioning.observations import OBSERVATION_SCHEMA_V1
 from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CATEGORY_COUNT
 from evaluation.reporting.policy_decision_reconciliation import reconcile_policy_decisions
 from evaluation.rollout.trained_policy_rollout import (
+    _candidate_geometry_action_trace,
     _setup_choice_probability_summary,
     evaluate_model,
     evaluate_provider,
@@ -107,6 +108,128 @@ def test_setup_probability_summary_rejects_invalid_distribution(
 
     with pytest.raises(RuntimeError, match=message):
         _setup_choice_probability_summary(probabilities, mask, NO_TRADE_ID)
+
+
+def test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_action() -> None:
+    from decisioning.trade_setup import (
+        CANDIDATE_GEOMETRY_FEATURE_NAMES,
+        candidate_geometry_slot,
+        candidate_geometry_slot_count,
+        candidate_geometry_slot_semantics,
+    )
+
+    selected_id = 5
+    slot = candidate_geometry_slot(selected_id, "limit")
+    count = candidate_geometry_slot_count()
+    candidate_ids = np.asarray(
+        [candidate_geometry_slot_semantics(index)[0] for index in range(count)],
+        dtype=np.int64,
+    )
+    features = np.zeros((count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES)), dtype=np.float32)
+    features[slot] = np.arange(len(CANDIDATE_GEOMETRY_FEATURE_NAMES), dtype=np.float32) + 0.5
+    mask = np.zeros(count, dtype=np.bool_)
+    mask[[NO_TRADE_ID, slot]] = True
+    info = {
+        "execution_type": "limit",
+        "action": 1,
+        "trade_setup_selected_direction": 1,
+        "trade_setup_action_schema_version": "trade-setup-entry-execution-action-v2",
+        "limit_offset_atr": 0.25,
+        "limit_ttl_bars": 3,
+        "action_trade_setup": 0.01,
+        "trade_setup_u": 0.505,
+        "risk_u": 0.5,
+    }
+
+    trace = _candidate_geometry_action_trace(
+        {
+            "candidate_ids": candidate_ids,
+            "candidate_features": features,
+            "candidate_mask": mask,
+        },
+        selected_id,
+        info,
+    )
+
+    import json
+
+    snapshot = json.loads(trace["candidate_geometry_snapshot_json"])
+    decoded = json.loads(trace["candidate_geometry_decoded_action_json"])
+    assert trace["candidate_geometry_trace_schema_version"] == "candidate-geometry-action-trace-v1"
+    assert trace["candidate_geometry_slot"] == slot
+    assert trace["candidate_geometry_setup_id"] == selected_id
+    assert trace["candidate_geometry_entry_type"] == "limit"
+    assert snapshot["entry_price_offset_atr"] == pytest.approx(2.5)
+    assert decoded["candidate_id"] == selected_id
+    assert decoded["action_schema_version"] == "trade-setup-entry-execution-action-v2"
+    assert decoded["entry_type"] == "limit"
+    assert decoded["limit_ttl_bars"] == 3
+    assert decoded["action_coordinates"]["risk_u"] == pytest.approx(0.5)
+    invalid_mask = np.zeros(count, dtype=np.bool_)
+    invalid_mask[NO_TRADE_ID] = True
+    with pytest.raises(RuntimeError, match="slot that was masked"):
+        _candidate_geometry_action_trace(
+            {
+                "candidate_ids": candidate_ids,
+                "candidate_features": features,
+                "candidate_mask": invalid_mask,
+            },
+            selected_id,
+            info,
+        )
+
+
+def test_evaluate_model_exports_candidate_geometry_trace_for_no_trade() -> None:
+    from types import SimpleNamespace
+
+    from decisioning.trade_setup import build_trade_setup_action_schema, trade_setup_center
+
+    schema = build_trade_setup_action_schema(has_sl_mode=True, has_entry_execution=True)
+    action = np.zeros(schema.width, dtype=np.float32)
+    action[schema.indices["trade_setup"]] = trade_setup_center(NO_TRADE_ID)
+    action[schema.indices["entry_execution"]] = -0.5
+
+    class _CandidateGeometryModel:
+        policy = SimpleNamespace(hybrid_action_coordinates=schema.names)
+
+        def predict(self, obs: dict[str, Any], deterministic: bool = True):
+            assert "candidate_ids" in obs
+            assert "candidate_features" in obs
+            assert "candidate_mask" in obs
+            return action, None
+
+    bars = _make_bars(24)
+    features = _make_features(bars).copy()
+    from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
+
+    setup_features = pd.DataFrame(
+        0.0,
+        index=features.index,
+        columns=[name for _, name in trade_setup_candidate_feature_columns()],
+    )
+    features = pd.concat((features, setup_features), axis=1)
+    result = evaluate_model(
+        _CandidateGeometryModel(),
+        bars=bars,
+        features=features,
+        obs_window=10,
+        strategy_actions=True,
+        trade_setup_actions=True,
+        candidate_geometry_actions=True,
+        agent_entry_execution=True,
+    )
+
+    setup_decisions = result["trade_setup_decisions"]
+    policy_decisions = result["policy_decisions"]
+    assert not setup_decisions.empty
+    assert not policy_decisions.empty
+    for frame in (setup_decisions, policy_decisions):
+        assert set(frame["candidate_geometry_trace_schema_version"]) == {
+            "candidate-geometry-action-trace-v1"
+        }
+        assert set(frame["candidate_geometry_slot"]) == {NO_TRADE_ID}
+        assert set(frame["candidate_geometry_setup_id"]) == {NO_TRADE_ID}
+        assert set(frame["candidate_geometry_entry_type"]) == {"market"}
 
 
 def _make_features(bars: pd.DataFrame) -> pd.DataFrame:

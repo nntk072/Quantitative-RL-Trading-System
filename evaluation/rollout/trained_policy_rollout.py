@@ -21,6 +21,7 @@ passed straight into ``evaluation.calculate_metrics`` and
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from typing import Any, cast
 
@@ -111,6 +112,119 @@ def _setup_choice_probability_summary(
         "trade_setup_no_trade_probability": float(probabilities[NO_TRADE_ID]),
         "trade_setup_max_trade_probability": max_probability,
         "trade_setup_max_trade_candidate_id": max_candidate_id,
+    }
+
+
+def _candidate_geometry_action_trace(
+    observation: dict[str, Any], selected_id: int, info: dict[str, Any]
+) -> dict[str, Any]:
+    """Serialize the selected candidate geometry and decoded action for one decision.
+
+    Args:
+        observation: The exact pre-step observation supplied to the policy.
+        selected_id: Setup ID decoded from the policy action.
+        info: Environment transition record for the same action.
+
+    Returns:
+        Versioned, JSON-safe candidate slot, geometry snapshot, and decoded intent.
+    """
+    from decisioning.trade_setup import (
+        CANDIDATE_GEOMETRY_FEATURE_NAMES,
+        CANDIDATE_GEOMETRY_FEATURE_VERSION,
+        NO_TRADE_ID,
+        TRADE_SETUP_SCHEMA_VERSION,
+        candidate_geometry_observation_schema,
+        candidate_geometry_slot,
+        candidate_geometry_slot_count,
+        candidate_geometry_slot_semantics,
+    )
+
+    required = ("candidate_ids", "candidate_features", "candidate_mask")
+    missing = [key for key in required if key not in observation]
+    if missing:
+        raise RuntimeError(f"candidate-geometry rollout observation is missing keys: {missing}")
+    schema = candidate_geometry_observation_schema()
+    raw_candidate_ids = np.asarray(observation["candidate_ids"])
+    if raw_candidate_ids.dtype not in (np.dtype(np.int32), np.dtype(np.int64)):
+        raise RuntimeError("candidate-geometry rollout IDs must use an integer dtype")
+    candidate_ids = raw_candidate_ids.astype(np.int64, copy=False).reshape(-1)
+    candidate_features = np.asarray(observation["candidate_features"], dtype=np.float64)
+    raw_candidate_mask = np.asarray(observation["candidate_mask"])
+    if raw_candidate_mask.dtype != np.dtype(np.bool_):
+        raise RuntimeError("candidate-geometry rollout mask must use boolean values")
+    candidate_mask = raw_candidate_mask.reshape(-1)
+    slot_count = candidate_geometry_slot_count()
+    expected_shape = (slot_count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES))
+    if candidate_ids.shape != (slot_count,):
+        raise RuntimeError("candidate-geometry rollout IDs do not match the fixed slot schema")
+    expected_ids = np.asarray(
+        [candidate_geometry_slot_semantics(index)[0] for index in range(slot_count)],
+        dtype=np.int64,
+    )
+    if not np.array_equal(candidate_ids, expected_ids):
+        raise RuntimeError("candidate-geometry rollout IDs disagree with fixed slot semantics")
+    if candidate_features.shape != expected_shape:
+        raise RuntimeError("candidate-geometry rollout features do not match the fixed schema")
+    if candidate_mask.shape != (slot_count,):
+        raise RuntimeError("candidate-geometry rollout mask does not match the fixed slot schema")
+    if not np.isfinite(candidate_features).all():
+        raise RuntimeError("candidate-geometry rollout features must be finite")
+
+    execution_type = str(info.get("execution_type", "market"))
+    slot = (
+        int(NO_TRADE_ID)
+        if selected_id == NO_TRADE_ID
+        else candidate_geometry_slot(selected_id, execution_type)
+    )
+    if not bool(candidate_mask[slot]):
+        raise RuntimeError(
+            "environment selected a candidate-geometry slot that was masked in the policy observation "
+            f"(slot={slot})"
+        )
+    candidate_id_at_slot = int(candidate_ids[slot])
+    if candidate_id_at_slot != selected_id:
+        raise RuntimeError(
+            "candidate-geometry slot semantics disagree with the selected setup "
+            f"(slot={slot}, selected_id={selected_id}, slot_id={candidate_id_at_slot})"
+        )
+    entry_type = "market" if selected_id == NO_TRADE_ID else execution_type
+    selected = candidate_features[slot]
+    geometry_snapshot = {
+        name: float(selected[index]) for index, name in enumerate(CANDIDATE_GEOMETRY_FEATURE_NAMES)
+    }
+    action_coordinates = {
+        key: float(value)
+        for key, value in info.items()
+        if (key.startswith("action_") or key.endswith("_u"))
+        and isinstance(value, (int, float, np.integer, np.floating))
+        and np.isfinite(float(value))
+    }
+    decoded_action = {
+        "schema_version": "candidate-geometry-decoded-action-v1",
+        "action_schema_version": str(info.get("trade_setup_action_schema_version", "")),
+        "candidate_id": selected_id,
+        "entry_type": entry_type,
+        "direction": int(info.get("trade_setup_selected_direction", 0)),
+        "environment_action": int(info.get("action", 0)),
+        "environment_execution_type": execution_type,
+        "limit_offset_atr": float(info.get("limit_offset_atr", 0.0)),
+        "limit_ttl_bars": int(info.get("limit_ttl_bars", 1)),
+        "action_coordinates": action_coordinates,
+    }
+    return {
+        "candidate_geometry_trace_schema_version": "candidate-geometry-action-trace-v1",
+        "candidate_schema_version": TRADE_SETUP_SCHEMA_VERSION,
+        "candidate_geometry_schema_version": str(schema["version"]),
+        "candidate_geometry_feature_schema_version": CANDIDATE_GEOMETRY_FEATURE_VERSION,
+        "candidate_geometry_slot": slot,
+        "candidate_geometry_setup_id": selected_id,
+        "candidate_geometry_entry_type": entry_type,
+        "candidate_geometry_snapshot_json": json.dumps(
+            geometry_snapshot, sort_keys=True, separators=(",", ":")
+        ),
+        "candidate_geometry_decoded_action_json": json.dumps(
+            decoded_action, sort_keys=True, separators=(",", ":")
+        ),
     }
 
 
@@ -654,9 +768,21 @@ def evaluate_model(
         decision_bar_index = int(env.step_idx)
         session_ids = getattr(env, "_session_ids_arr", None)
         decision_session_id = int(session_ids[decision_bar_index]) if session_ids is not None else 0
+        decision_observation = obs
         if trade_setup_record is not None:
             decision_bar_index = int(env.step_idx)
         obs, reward, done, truncated, info = env.step(action)
+        candidate_geometry_trace: dict[str, Any] = {}
+        if candidate_geometry_actions:
+            if trade_setup_record is None or not isinstance(decision_observation, dict):
+                raise RuntimeError(
+                    "candidate-geometry rollout requires a trade-setup action and Dict observation"
+                )
+            candidate_geometry_trace = _candidate_geometry_action_trace(
+                decision_observation,
+                int(trade_setup_record["trade_setup_candidate_id"]),
+                info,
+            )
         decision_id = str(info.get("decision_id", ""))
         decision_row: dict[str, Any] = {
             "schema_version": "environment_policy_decision.v2",
@@ -693,6 +819,7 @@ def evaluate_model(
         if decision_candidate_count is not None:
             decision_row["eligible_candidate_count"] = decision_candidate_count
             decision_row["eligible_trade_setup_ids"] = eligible_candidate_ids
+        decision_row.update(candidate_geometry_trace)
         policy_decision_rows.append(decision_row)
         account_snapshot = info.get("account_state_snapshot")
         if isinstance(account_snapshot, dict):
@@ -715,6 +842,7 @@ def evaluate_model(
                     f"recorded={recorded_eligible!r}, "
                     f"observation_mask={trade_setup_record['selection_valid']!r})"
                 )
+            trade_setup_record.update(candidate_geometry_trace)
             trade_setup_record["trade_setup_action_schema_version"] = str(
                 info.get("trade_setup_action_schema_version", "")
             )

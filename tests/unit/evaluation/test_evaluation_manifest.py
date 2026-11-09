@@ -20,6 +20,12 @@ def test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest(
     training.mkdir()
     metrics_path = training / "metrics.json"
     metrics_path.write_text('{"total_return_pct": 2.5}\n', encoding="utf-8")
+    policy_decisions_path = training / "policy_decisions.csv"
+    policy_decisions_path.write_text(
+        "candidate_geometry_trace_schema_version,candidate_geometry_slot\n"
+        "candidate-geometry-action-trace-v1,0\n",
+        encoding="utf-8",
+    )
     parent_path = tmp_path / "run_manifest.json"
     parent_path.write_text('{"schema_version": 1}\n', encoding="utf-8")
 
@@ -33,7 +39,11 @@ def test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest(
     assert manifest["partitions"] == ["training"]
     assert manifest["parent_manifests"]["run_manifest"]["sha256"] == file_sha256(parent_path)
     assert manifest["numerical_artifacts"] == [
-        {"path": "training/metrics.json", "sha256": file_sha256(metrics_path)}
+        {"path": "training/metrics.json", "sha256": file_sha256(metrics_path)},
+        {
+            "path": "training/policy_decisions.csv",
+            "sha256": file_sha256(policy_decisions_path),
+        },
     ]
     assert manifest["lineage"] == {
         "checkpoint_sha256": "abc123",
