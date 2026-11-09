@@ -7279,7 +7279,10 @@
       "type": "research"
     },
     {
-      "links": [],
+      "links": [
+        "https://www.mql5.com/en/docs/constants/structures/mqltick",
+        "https://www.mql5.com/en/docs/series/copyticks"
+      ],
       "orphan_status": "in toctree",
       "path": "docs/research/quote_coverage_sensitivity.md",
       "primary_navigation_owner": [],

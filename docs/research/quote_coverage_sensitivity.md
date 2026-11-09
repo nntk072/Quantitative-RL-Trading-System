@@ -350,7 +350,7 @@ candidate-outcome percentages. No RL agents were trained, and no broker
 completeness, broker-equivalent execution, profitability, or policy-value
 claim follows from these results.
 
-For thesis wording, report the verified strict result as **71.6173% unresolved
+For publication wording, report the verified strict result as **71.6173% unresolved
 under the strict raw coverage rule**. Present Q1 (38.6666%) as a count-parity
 reconstruction sensitivity and Q2 (0.7473%) as an exploratory local TickBook
 sensitivity, with the 7,979 residual causes and the source-completeness limits
