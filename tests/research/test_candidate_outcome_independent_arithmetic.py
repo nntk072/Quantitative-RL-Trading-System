@@ -554,3 +554,127 @@ def test_independently_checks_long_and_short_limit_price_bounds() -> None:
     assert valid["price_bound_violations"] == 0
     assert invalid["price_bound_violations"] == 2
     assert len(invalid["examples"]) == 2
+
+
+def test_server_side_reference_uses_exact_triggering_source_row_on_timestamp_tie() -> None:
+    times = pd.to_datetime(
+        [
+            "2025-01-02T10:00:00Z",
+            "2025-01-02T10:01:00Z",
+            "2025-01-02T10:01:00Z",
+            "2025-01-02T10:02:00Z",
+        ],
+        utc=True,
+    )
+    proposal = pd.DataFrame(
+        [
+            {
+                "proposal_id": "long",
+                "direction": 1,
+                "entry_type": "market",
+                "proposed_entry_price": 100.0,
+                "valid_from": times[0].isoformat(),
+                "eligible_action_fill_time": times[0].isoformat(),
+                "expires_at": times[2].isoformat(),
+                "session_close_time": times[3].isoformat(),
+                "permissible_stop_choices": '[["s", 99.0]]',
+                "permissible_target_choices": '[["t", 101.0]]',
+            }
+        ]
+    )
+    outcomes = pd.DataFrame(
+        [
+            {
+                "proposal_id": "long",
+                "stop_choice": "s",
+                "target_choice": "t",
+                "status": "filled_resolved",
+                "evaluated_until": times[2].isoformat(),
+                "order_expires_at": times[2].isoformat(),
+                "fill_time": times[0].isoformat(),
+                "fill_price": 100.1,
+                "exit_time": times[2].isoformat(),
+                "exit_price": 101.2,
+                "exit_reason": "tp",
+                "net_r": 1.0,
+                "unresolved_reason": None,
+                "outcome_id": _outcome_id("long", "s", "t"),
+                "schema_version": "candidate-conditional-outcome-v2",
+                "estimand": "conditional_fixed_entry",
+            }
+        ]
+    )
+    bids = np.array([99.9, 100.5, 101.2, 100.0])
+    asks = bids + 0.2
+
+    result = independently_replay_outcomes(
+        proposal,
+        outcomes,
+        times.view("int64"),
+        bids,
+        asks,
+        coverage_cutoffs={"long": None},
+        training_cutoff=times[3],
+        slippage_points=0.0,
+        commission_per_lot=0.0,
+        contract_size=1.0,
+        max_quote_wait_ms=60_000,
+        randomized_fill_latency_ms=0.0,
+        limit_require_trade_through=False,
+        server_side_protective_orders=True,
+    )
+
+    assert result["status"] == "verified"
+    assert result["rows_checked"] == 1
+
+
+def test_server_side_arithmetic_uses_first_trigger_row_in_timestamp_tie() -> None:
+    times = pd.to_datetime(
+        [
+            "2025-01-02T10:00:00Z",
+            "2025-01-02T10:01:00Z",
+            "2025-01-02T10:01:00Z",
+        ],
+        utc=True,
+    ).view("int64")
+    proposals = pd.DataFrame(
+        {
+            "proposal_id": ["long"],
+            "direction": [1],
+            "entry_type": ["market"],
+            "proposed_entry_price": [100.0],
+            "permissible_stop_choices": ['[["s", 99.2]]'],
+            "permissible_target_choices": ['[["t", 101.0]]'],
+        }
+    )
+    outcomes = pd.DataFrame(
+        {
+            "proposal_id": ["long"],
+            "status": ["filled_resolved"],
+            "stop_choice": ["s"],
+            "target_choice": ["t"],
+            "fill_time": ["2025-01-02T10:00:00Z"],
+            "exit_time": ["2025-01-02T10:01:00Z"],
+            "exit_reason": ["tp"],
+            "fill_price": [100.2],
+            "exit_price": [101.2],
+            "net_r": [1.0],
+            "outcome_id": ["server-side-tie"],
+        }
+    )
+
+    result = _independently_recompute_resolved_values(
+        proposals,
+        outcomes,
+        times,
+        np.array([100.0, 100.5, 101.2]),
+        np.array([100.2, 100.7, 101.4]),
+        tickbook_sha256="fixture",
+        slippage_points=0.0,
+        commission_per_lot=0.0,
+        contract_size=1.0,
+        server_side_protective_orders=True,
+    )
+
+    assert result["status"] == "verified"
+    assert result["exit_source_quote_matches"] == 1

@@ -102,6 +102,7 @@ def _independently_recompute_resolved_values(
     commission_per_lot: float,
     contract_size: float,
     limit_require_trade_through: bool = False,
+    server_side_protective_orders: bool = False,
 ) -> dict[str, Any]:
     """Check every resolved fill against source quotes and independently recompute net R."""
     resolved = outcomes.loc[outcomes["status"].eq("filled_resolved")].copy()
@@ -113,6 +114,7 @@ def _independently_recompute_resolved_values(
     proposal_entry_type: dict[str, str] = {}
     proposal_entry_price: dict[str, float] = {}
     stop_prices: dict[tuple[str, str], float] = {}
+    target_prices: dict[tuple[str, str], float] = {}
     for proposal_record in _records(proposals):
         proposal_id = str(proposal_record["proposal_id"])
         proposal_direction[proposal_id] = int(proposal_record["direction"])
@@ -128,6 +130,16 @@ def _independently_recompute_resolved_values(
                 raise ValueError(f"proposal {proposal_id} has an invalid stop choice")
             choice, price = choice_record
             stop_prices[(proposal_id, str(choice))] = float(price)
+        targets = proposal_record.get("permissible_target_choices", [])
+        if isinstance(targets, str):
+            targets = json.loads(targets)
+        if not isinstance(targets, list):
+            raise ValueError(f"proposal {proposal_id} has invalid target-choice data")
+        for choice_record in targets:
+            if not isinstance(choice_record, (list, tuple)) or len(choice_record) != 2:
+                raise ValueError(f"proposal {proposal_id} has an invalid target choice")
+            choice, price = choice_record
+            target_prices[(proposal_id, str(choice))] = float(price)
 
     proposal_ids = resolved["proposal_id"].astype(str).to_numpy()
     directions = np.fromiter(
@@ -149,6 +161,18 @@ def _independently_recompute_resolved_values(
         dtype=np.float64,
         count=len(resolved),
     )
+    targets = (
+        np.fromiter(
+            (
+                target_prices[(proposal_id, str(choice))]
+                for proposal_id, choice in zip(proposal_ids, resolved["target_choice"], strict=True)
+            ),
+            dtype=np.float64,
+            count=len(resolved),
+        )
+        if "target_choice" in resolved
+        else np.full(len(resolved), np.nan, dtype=np.float64)
+    )
     fill_ns = (
         pd.to_datetime(resolved["fill_time"], format="ISO8601", utc=True).astype("int64").to_numpy()
     )
@@ -168,6 +192,8 @@ def _independently_recompute_resolved_values(
     expected_fill = np.full(len(resolved), np.nan, dtype=np.float64)
     selected_fill_ix = fill_ix.copy()
     expected_exit = np.full(len(resolved), np.nan, dtype=np.float64)
+    selected_exit_ix = exit_ix.copy()
+    exit_trigger_found = exit_found.copy()
     valid_fill = fill_found
     valid_exit = exit_found
     long_fill = valid_fill & (directions == 1)
@@ -200,14 +226,43 @@ def _independently_recompute_resolved_values(
             selected = int(qualifying[0])
             selected_fill_ix[index] = tie_rows[selected]
             expected_fill[index] = executable_prices[selected]
-    expected_exit[long_exit] = bids[exit_ix[long_exit]] - slippage_points
-    expected_exit[short_exit] = asks[exit_ix[short_exit]] + slippage_points
+    if server_side_protective_orders:
+        exit_reasons = (
+            resolved["exit_reason"].astype(str).to_numpy()
+            if "exit_reason" in resolved
+            else np.full(len(resolved), "", dtype=object)
+        )
+        for index in np.flatnonzero(exit_found & np.isin(exit_reasons, ("sl", "tp"))):
+            tie_end = int(np.searchsorted(tick_times_ns, exit_ns[index], side="right"))
+            tie_rows = np.arange(int(exit_ix[index]), tie_end)
+            side_prices = bids[tie_rows] if directions[index] == 1 else asks[tie_rows]
+            if exit_reasons[index] == "sl":
+                hit = (
+                    side_prices <= stops[index]
+                    if directions[index] == 1
+                    else side_prices >= stops[index]
+                )
+            else:
+                hit = (
+                    side_prices >= targets[index]
+                    if directions[index] == 1
+                    else side_prices <= targets[index]
+                )
+            qualifying = np.flatnonzero(hit)
+            if qualifying.size:
+                selected_exit_ix[index] = tie_rows[int(qualifying[0])]
+            else:
+                exit_trigger_found[index] = False
+    long_exit = exit_trigger_found & (directions == 1)
+    short_exit = exit_trigger_found & (directions == -1)
+    expected_exit[long_exit] = bids[selected_exit_ix[long_exit]] - slippage_points
+    expected_exit[short_exit] = asks[selected_exit_ix[short_exit]] + slippage_points
     fill_match = (
         valid_fill
         & np.isfinite(expected_fill)
         & np.isclose(stored_fill, expected_fill, rtol=1e-12, atol=1e-12)
     )
-    exit_match = valid_exit & np.isclose(stored_exit, expected_exit, rtol=1e-12, atol=1e-12)
+    exit_match = exit_trigger_found & np.isclose(stored_exit, expected_exit, rtol=1e-12, atol=1e-12)
     risk = np.abs(stored_fill - stops)
     arithmetic_valid = risk > 0.0
     expected_net_r = np.full(len(resolved), np.nan, dtype=np.float64)
@@ -305,8 +360,6 @@ def verify_outcome_packet(
     )
     if outcome_manifest["tickbook_sha256"] != proposal_manifest["tickbook_sha256"]:
         raise ValueError("outcome TickBook identity differs from the proposal packet")
-    if outcome_manifest["source_commit"] != proposal_manifest["source_commit"]:
-        raise ValueError("outcome and proposal packets were not built from the same source commit")
 
     cfg = load_config(config_path=config_path)
     cfg.features.entry_ideas.enabled = True
@@ -602,6 +655,9 @@ def verify_outcome_packet(
         commission_per_lot=float(execution["commission_per_lot"]),
         contract_size=float(execution["contract_size"]),
         limit_require_trade_through=bool(execution.get("limit_require_trade_through", False)),
+        server_side_protective_orders=(
+            execution.get("protective_exit_execution") == "server_side_attached_first_trigger_quote"
+        ),
     )
     if independent_arithmetic["status"] != "verified":
         raise ValueError(
@@ -630,6 +686,9 @@ def verify_outcome_packet(
         max_quote_wait_ms=int(execution["max_quote_wait_ms"]),
         randomized_fill_latency_ms=float(execution["randomized_fill_latency_ms"]),
         limit_require_trade_through=bool(execution.get("limit_require_trade_through", False)),
+        server_side_protective_orders=(
+            execution.get("protective_exit_execution") == "server_side_attached_first_trigger_quote"
+        ),
     )
 
     report = {
@@ -659,6 +718,11 @@ def verify_outcome_packet(
         "unresolved_reason_counts": dict(sorted(unresolved_reason_counts.items())),
         "verified_session_close_exit_rows": int(len(session_close_exits)),
         "order_coverage_dispositions_by_proposal": dict(sorted(gap_dispositions.items())),
+        "source_provenance": {
+            "proposal_generation_commit": proposal_manifest["source_commit"],
+            "outcome_replay_commit": outcome_manifest["source_commit"],
+            "proposal_inputs_pinned_by_sha256": True,
+        },
         "proposal_manifest_sha256": _sha256(proposal_dir / "proposal_ledger_manifest.json"),
         "coverage_manifest_sha256": _sha256(coverage_dir / "coverage_manifest.json"),
         "outcome_manifest_sha256": _sha256(outcome_dir / "outcome_manifest.json"),

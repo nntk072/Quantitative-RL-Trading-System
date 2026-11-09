@@ -158,6 +158,7 @@ def independently_replay_outcomes(
     max_quote_wait_ms: int,
     randomized_fill_latency_ms: float,
     limit_require_trade_through: bool,
+    server_side_protective_orders: bool = False,
 ) -> dict[str, Any]:
     """Recompute every outcome row with a separate array-level event model.
 
@@ -400,10 +401,12 @@ def independently_replay_outcomes(
                             trigger_index = left + trigger_local
                             trigger_kind = "sl" if stop_hit[trigger_local] else "tp"
                             trigger_ns = int(tick_times_ns[trigger_index])
-                            # A zero-latency execution quote is the first source row
-                            # at this timestamp, including stable duplicate-time rows.
-                            quote_index = int(
-                                np.searchsorted(tick_times_ns, trigger_ns, side="left")
+                            # Attached server-side protection triggers on the exact
+                            # source-ordered quote that first crosses its level.
+                            quote_index = (
+                                trigger_index
+                                if server_side_protective_orders
+                                else int(np.searchsorted(tick_times_ns, trigger_ns, side="left"))
                             )
                             if (
                                 quote_index >= len(tick_times_ns)

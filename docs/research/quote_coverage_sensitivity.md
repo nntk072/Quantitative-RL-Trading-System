@@ -243,3 +243,116 @@ Separately:
 > triggering quote. This changes 2,037 strict-replay exit prices/net-R values
 > under duplicate-millisecond source events while leaving outcome-status counts
 > unchanged.
+
+## Independent recheck and historical-count caveat (2026-11-09)
+
+A second, full-data recheck independently verified all three copied profile
+packets against the frozen 54,638-proposal universe and 1,067,731 stable outcome
+IDs. No historical evidence packet was rewritten. The copied recheck packets
+and their verifier outputs are under
+`/home/nguyenl37/mt5_ftmo_fidelity_independent_recheck_20261109/`.
+
+| Profile | Filled resolved | Unfilled expired | Unresolved data | Unresolved |
+|---|---:|---:|---:|---:|
+| Q0 strict raw | 273,350 | 29,701 | 764,680 | 71.617289% |
+| Q1 reconstructed, count parity retained | 579,259 | 75,617 | 412,855 | 38.666574% |
+| Q2 reconstructed TickBook, no M1 parity | 930,453 | 129,299 | 7,979 | 0.747286% |
+
+The exact current strict rate is `764,680 / 1,067,731 = 71.617289%`. It rounds
+to **72% at whole-percent precision**, but to **71.6% at one decimal**. It does
+not mean 71.6% of source data is missing, nor that only 30% of trades are
+valid. These are conditional proposal/bracket rows, not trades; 273,350 rows
+(25.60%) resolved to a fill and exit, 29,701 (2.78%) were valid no-fill expiry
+dispositions, and 764,680 (71.62%) were censored under Q0's conservative local
+coverage rule.
+
+### Historical “72.0%” discrepancy
+
+The historical release narrative on `origin/main` cites `769,187 / 1,067,731`
+(about 72.0%, with a different filled/expired split). The historical
+`evidence/research/candidate_outcomes/outcome_manifest.json` and its hashed
+Parquet, however, record `764,680` unresolved, `273,350` filled, and `29,701`
+expired; the packet checksum verifies. The Git history does not contain a
+matching 769,187-row outcome packet or its hashes. Therefore the old release
+text is preserved as historical narrative, but its exact underlying snapshot
+cannot be identified from versioned evidence and it is not an independently
+reproducible exact result. Use 71.617289% for the checked strict packet; retain
+“about 72%” only when explicitly referring to the older narrative/whole-percent
+rounding and note the provenance mismatch.
+
+### Where the Q0 unresolved rows go
+
+| Q0 unresolved disposition | Q1 filled | Q1 expired | Q1 unresolved | Q2 filled | Q2 expired | Q2 unresolved |
+|---|---:|---:|---:|---:|---:|---:|
+| All original unresolved rows | 305,909 | 45,916 | 412,855 | 657,103 | 99,598 | 7,979 |
+
+All 303,051 outcomes already filled or expired in Q0 retain their status and
+reported fill/exit fields under both coverage relaxations. These transitions
+measure changed coverage eligibility, not a strategy-performance gain.
+
+The remaining Q2 unresolved rows are completely accounted for:
+
+| Q2 unresolved cause | Outcomes | Unique proposals | Share of 7,979 |
+|---|---:|---:|---:|
+| Entry fill at/after configured session close | 4,609 | 194 | 57.76% |
+| Session-close quote predates entry fill | 1,653 | 74 | 20.72% |
+| Incomplete quote coverage before exit | 688 | 51 | 8.62% |
+| Selected target not beyond realized fill | 552 | 77 | 6.92% |
+| Selected stop not protective vs realized fill | 273 | 49 | 3.42% |
+| Incomplete quote coverage before order expiry | 204 | 15 | 2.56% |
+
+The 892 actual quote-gap rows are 11.18% of Q2's remaining unresolved rows;
+6,262 (78.48%) are session-boundary conditions and 825 (10.34%) are invalid
+selected stop/target geometry. Proposal counts overlap across reasons.
+
+### Recheck of M1 count parity and quote semantics
+
+A fresh source-row recount of the 56,245,046 raw training events reproduced the
+coverage CSV exactly: 351,409 nonempty M1 minutes, 23 positive-`tickvol`
+minutes with no raw rows, and 40,330 minutes where raw-row count differs from
+M1 `tickvol` (40,303 raw greater, 27 raw lower). The absolute difference has
+median 1, 90th percentile 3, 99th percentile 5, and maximum 183 rows. In the
+351,409 nonempty minutes, raw row count equals M1 `tickvol` in 311,102 minutes.
+Mismatch examples and the complete minute-level mismatch list are in the
+recheck analysis directory.
+
+Flags 2 and 4 account for 99,960 bid-only and 61,342 ask-only exported rows;
+flag 6 accounts for 56,083,744 two-sided rows. The local loader processes
+source order and causally carries the unchanged side from earlier rows, never
+backward-filling. Its logic rejects nonpositive sides and does not expose
+crossed reconstructed pairs. Forty traces (20 reclassified, 20 unchanged)
+include raw Bid/Ask/flags, carried quote values, TickBook source context, and
+Q0/Q1/Q2 outcomes. This validates behavior against this local export. MT5's
+`MqlTick` structure and `CopyTicks` documentation describe flags as identifying
+changed fields and explain that unchanged fields carry their previous values
+in returned tick structures ([MqlTick](https://www.mql5.com/en/docs/constants/structures/mqltick),
+[CopyTicks](https://www.mql5.com/en/docs/series/copyticks)). The local CSV's
+blank unchanged-side fields are consistent with that representation, but do
+not establish the CSV's export mode, full broker history, or source completeness.
+M1 `tickvol` is a bar field; available evidence does not prove it must equal
+the row count of this export.
+
+### Execution and account-risk separation
+
+Q0/Q1/Q2 use the same current attached-protective execution profile; therefore
+the coverage comparison does not mix execution changes into the censorship
+effect. A separate strict-coverage E0/E1 reconciliation found status counts
+unchanged but exit price/net-R changed for 2,037 filled rows when server-side
+attached protection used the exact first triggering source row. This is a
+separate simulator-fidelity sensitivity, not a coverage effect or broker
+validation. The independent arithmetic and full-array verifier were corrected
+to respect this recorded trigger-row contract; exact equal-millisecond
+regressions pass.
+
+The candidate packet records `account_state_evaluated=false`. FTMO Prague
+midnight and daily-loss state therefore cannot explain or change these
+candidate-outcome percentages. No RL agents were trained, and no broker
+completeness, broker-equivalent execution, profitability, or policy-value
+claim follows from these results.
+
+For thesis wording, report the verified strict result as **71.6173% unresolved
+under the strict raw coverage rule**. Present Q1 (38.6666%) as a count-parity
+reconstruction sensitivity and Q2 (0.7473%) as an exploratory local TickBook
+sensitivity, with the 7,979 residual causes and the source-completeness limits
+above. Do not replace the strict finding with Q2 or call Q2 the broker-valid
+rate.
