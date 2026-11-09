@@ -373,18 +373,30 @@ geometry, checkpoint-resume, and local tick-trace verifier tests. A static
 coverage check confirmed all 154 listed test paths exist and all changed test
 modules are represented; this does not replace running the consolidated gate.
 
-The candidate-geometry implementation remains open and gated on the C/D/E
-acceptance work below. Current source defines the versioned 217-slot schema,
-the 16 named geometry features, and a standalone shared scorer/head with an
-eligibility-mask helper. The scorer is not connected to environment
-observations or PPO collection/update: causal per-candidate geometry
-construction, the 217-slot masked action distribution and its matching
-likelihood/entropy, action decoding and execution parity, checkpoint metadata,
-and evaluation/backtest wiring are still absent. Existing PPO masking covers
-the 109-slot setup action only. Contract and scorer tests are present but remain
-in the consolidated implementation-validation batch. Do not start the
-price-aware challenger before C/D/E gates pass; no experiment or training run
-is authorized by this implementation groundwork.
+The candidate-geometry implementation is now wired through the environment,
+PPO policy/distribution contract, action decoding, checkpoint metadata, and
+evaluation/backtest paths. The fixed observation contract remains 217 slots
+(NO_TRADE plus 108 setup IDs by market/limit execution) with versioned causal
+geometry features and explicit candidate masks.
+
+The full V3 TODO 1–162 contract is represented by the machine-readable catalog
+and validated as an exact dependency DAG. Critical TODOs must reference a real
+repository tool, not merely appear in a checklist. Current-source pre-training
+work now includes an explicit synthetic terminal-survival-to-PPO-gradient
+reachability proof plus one semantic compute contract covering full-path counts,
+rollout rounding, walk-forward terminal exposure, vector-environment geometry,
+and measured end-to-end wall-time estimates.
+
+Post-survival work is source-complete as an execution framework: reviewed phase
+records can freeze exact direct-child commands for checkpoint replay, portfolio
+continuation, robustness, and the one-time exposed report period; a source-bound
+bundle/executor runs them without embedding Slurm allocation/cancellation
+commands. Portfolio hard risk, the six-seed primary v2 treatment-vs-no-trade
+payload, v4 metrics, final research tables/narrative/limitations/figure index,
+checkpoint registry, provenance, old-open-box dispositions, release package,
+final handoff, and TODO 162 FINISHED all have explicit validators. Actual
+checkpoints and measured numerical outcomes remain runtime evidence rather than
+source-code assumptions.
 
 The latest recorded selected-pair evaluation is the seed-50 P6 reanalysis
 completed on 2026-10-24. The treatment recorded 987 positions and −2.154%,

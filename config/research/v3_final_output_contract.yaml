@@ -1,0 +1,77 @@
+schema_version: v3-final-output-contract-v1
+
+required_tables:
+  survival:
+    required_columns:
+      - seed
+      - main_path_complete
+      - main_breach
+      - walk_forward_status
+      - episode_end_reason
+      - trade_count
+      - return_pct
+  model_baseline:
+    required_columns:
+      - evidence_grade
+      - policy
+      - comparator
+      - seed_or_scope
+      - survival_status
+      - net_return_pct
+      - claim_role
+  cost_execution:
+    required_columns:
+      - scope
+      - spread
+      - slippage
+      - commission
+      - quote_coverage
+      - fill_count
+      - rejection_count
+      - financing_status
+  action_funnel:
+    required_columns:
+      - scope
+      - eligible_decisions
+      - no_trade
+      - requested_entries
+      - risk_rejects
+      - quote_rejects
+      - filled_entries
+      - completed_positions
+      - exits
+  feature_causality:
+    required_columns:
+      - family
+      - timing
+      - validity
+      - prefix_result
+      - fit_scope
+      - setup_timeframe_support
+  robustness:
+    optional_when_no_finalist: true
+    required_columns:
+      - scenario
+      - seed
+      - survival_status
+      - breach_count
+      - net_return_pct
+      - floor_trajectory_status
+
+required_limitations:
+  - exposed_2026
+  - no_untouched_current_local_confirmatory_period
+  - local_quote_export_limitations
+  - broker_live_parity_boundary
+  - historical_artifact_no_gos
+  - unresolved_candidate_labels
+  - development_vs_confirmatory_claim_grade
+
+figure_requirements:
+  required_fields:
+    - figure_id
+    - path
+    - source_artifacts
+    - generation_command
+    - claim_role
+  source_artifacts_must_be_hashed: true

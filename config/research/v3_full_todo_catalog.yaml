@@ -1,0 +1,2943 @@
+schema_version: v3-full-todo-catalog-v1
+source_plan: luna6_deep_research_completion_plan_v3_parallel.md
+todo_count: 162
+barriers:
+  B0:
+    requires:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+  B1:
+    requires:
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    - 23
+    - 24
+  B2:
+    requires:
+    - 25
+    - 26
+    - 27
+    - 28
+    - 29
+    - 30
+    - 31
+    - 32
+    - 33
+    - 34
+    - 35
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    - 44
+    - 45
+    - 46
+    - 47
+    - 48
+    - 49
+    - 50
+    - 51
+    - 52
+    - 53
+    - 54
+    - 55
+    - 56
+    - 57
+    - 58
+    - 59
+    - 60
+    - 61
+    - 62
+  B3:
+    requires:
+    - 63
+    - 64
+    - 65
+    - 66
+    - 67
+    - 68
+    - 69
+    - 70
+    - 71
+    - 72
+    - 73
+    - 74
+    - 75
+    - 76
+    - 77
+    - 78
+    - 79
+    - 80
+    - 81
+    - 82
+    price_only: true
+  B4:
+    requires:
+    - 83
+    - 84
+  B5:
+    requires:
+    - 85
+    - 86
+    - 87
+    - 88
+    - 89
+    - 90
+    - 91
+    - 92
+    - 93
+    - 94
+    - 95
+    - 96
+    - 97
+    - 98
+    - 99
+    - 100
+    - 101
+    - 102
+    - 103
+    - 104
+    - 105
+    - 106
+  B6:
+    requires:
+    - 107
+    - 108
+    - 109
+    - 110
+    - 111
+    - 112
+    - 113
+    - 114
+  B7:
+    requires:
+    - 119
+    - 120
+    - 121
+    - 122
+    - 123
+    - 124
+    - 125
+    - 126
+  B8:
+    requires:
+    - 127
+    - 128
+    - 129
+    - 130
+    - 131
+    - 132
+    - 133
+    - 134
+    - 135
+    - 136
+    - 137
+    - 138
+    - 139
+    - 140
+    - 141
+    - 142
+    - 143
+    - 144
+    - 145
+    - 146
+    - 147
+    - 148
+    - 149
+    - 150
+    - 151
+resource_locks:
+- SOURCE_LOCK
+- SCHEMA_LOCK
+- GPU_TRAIN_LOCK
+- EVIDENCE_WRITE_LOCK
+- RELEASE_LOCK
+tasks:
+- id: 1
+  title: Read execution rules and reconcile the active in-repo queue once
+  phase: A
+  lane: A
+  barrier: B0
+  kind: operational
+  experiment_dependent: false
+  dependencies: []
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: agent rules and the current in-repo operational gate are reconciled before implementation/experiments
+    begin.
+  pass_criterion: agent rules and the current in-repo operational gate are reconciled before implementation/experiments
+    begin.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 2
+  title: Fetch and record actual upstream state
+  phase: A
+  lane: A
+  barrier: B0
+  kind: operational
+  experiment_dependent: false
+  dependencies:
+  - 1
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: exact source baseline and worktree state recorded.
+  pass_criterion: exact source baseline and worktree state recorded.
+  plan_commands:
+  - 'git fetch --all --prune
+
+    git status --short
+
+    git branch --show-current
+
+    git rev-parse HEAD
+
+    git rev-parse origin/main
+
+    git log -8 --oneline --decorate'
+  execution_mode: operator_or_review
+- id: 3
+  title: Preserve local work before any merge/sync
+  phase: A
+  lane: A
+  barrier: B0
+  kind: operational
+  experiment_dependent: false
+  dependencies:
+  - 1
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: no user work lost.
+  pass_criterion: no user work lost.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 4
+  title: Inspect current tmux/job state
+  phase: A
+  lane: A
+  barrier: B0
+  kind: operational
+  experiment_dependent: false
+  dependencies:
+  - 1
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: one-line active compute/CI state in tracker.
+  pass_criterion: one-line active compute/CI state in tracker.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 5
+  title: Disposition retry20 correctly
+  phase: A
+  lane: A
+  barrier: B0
+  kind: operational
+  experiment_dependent: false
+  dependencies:
+  - 1
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: historical failure linked to the later fixing commit, no duplicate retry.
+  pass_criterion: historical failure linked to the later fixing commit, no duplicate retry.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 6
+  title: Resolve CI status of the actual current SHA
+  phase: A
+  lane: A
+  barrier: B0
+  kind: operational
+  experiment_dependent: false
+  dependencies:
+  - 1
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: no known unresolved current-source CI failure.
+  pass_criterion: no known unresolved current-source CI failure.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 7
+  title: Create an execution-baseline manifest
+  phase: A
+  lane: A
+  barrier: B0
+  kind: operational
+  experiment_dependent: false
+  dependencies:
+  - 1
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: every later result can name its source baseline.
+  pass_criterion: every later result can name its source baseline.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 8
+  title: Reverify the current release package structure
+  phase: A
+  lane: B
+  barrier: null
+  kind: provenance
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: refresh list is explicit.
+  pass_criterion: refresh list is explicit.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 9
+  title: Refresh selected historical campaign inventory only where needed
+  phase: A
+  lane: B
+  barrier: null
+  kind: provenance
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: 'every historical result still referenced in thesis/research docs has: - run identity; - source/config
+    identity; - artifact path; - hash status; - explicit historical/current status.'
+  pass_criterion: 'every historical result still referenced in thesis/research docs has: - run identity; - source/config
+    identity; - artifact path; - hash status; - explicit historical/current status.'
+  plan_commands: []
+  execution_mode: review_decision
+- id: 10
+  title: Close external scratch recovery as a bounded result
+  phase: A
+  lane: B
+  barrier: null
+  kind: provenance
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 11
+  title: Refresh the research provenance DAG after source settles
+  phase: A
+  lane: B
+  barrier: null
+  kind: provenance
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_research_provenance_dag.py
+  completion_control: zero unexplained referenced-byte mismatches.
+  pass_criterion: zero unexplained referenced-byte mismatches.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 12
+  title: Freeze the outcome/claim contract
+  phase: A
+  lane: B
+  barrier: null
+  kind: provenance
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: final thesis claims cannot silently outrun evidence.
+  pass_criterion: final thesis claims cannot silently outrun evidence.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 13
+  title: Freeze the primary question
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: one primary question.
+  pass_criterion: one primary question.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 14
+  title: Freeze secondary questions
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: no uncontrolled architecture zoo.
+  pass_criterion: no uncontrolled architecture zoo.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 15
+  title: Freeze period roles
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: code/report metadata use the same period role names.
+  pass_criterion: code/report metadata use the same period role names.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 16
+  title: Freeze hard survival semantics
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: scientific protocol and code agree.
+  pass_criterion: scientific protocol and code agree.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 17
+  title: Freeze EOD/intraday semantics as robustness contracts
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: later stress runs cannot change semantics ad hoc.
+  pass_criterion: later stress runs cannot change semantics ad hoc.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 18
+  title: Freeze canonical learned policy family
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: no accidental fallback to base TCN/discrete policy.
+  pass_criterion: no accidental fallback to base TCN/discrete policy.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 19
+  title: Freeze seed IDs
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: immutable expected seed list.
+  pass_criterion: immutable expected seed list.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 20
+  title: Run prospective seed-count planning if defensible
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/plan_paired_seed_count.py
+  completion_control: seed-count rationale recorded.
+  pass_criterion: seed-count rationale recorded.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 21
+  title: Freeze walk-forward geometry
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: fold manifest exists before training.
+  pass_criterion: fold manifest exists before training.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 22
+  title: Freeze selection and multiplicity rules
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: matches `docs/research/validation_protocol.md` and paired-stat tool schema.
+  pass_criterion: matches `docs/research/validation_protocol.md` and paired-stat tool schema.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 23
+  title: Freeze stopping rule
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 24
+  title: Write one prospective execution protocol artifact
+  phase: B
+  lane: F
+  barrier: B1
+  kind: protocol
+  experiment_dependent: false
+  dependencies:
+  - 7
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_prospective_execution_protocol.py
+  completion_control: immutable protocol identity.
+  pass_criterion: immutable protocol identity.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 25
+  title: Verify local input manifest
+  phase: D
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/market_data/hash_local_data_inventory.py
+  - scripts/research/analysis/market_data/scan_local_market_data_quality.py
+  completion_control: exact input hashes for the new experiment.
+  pass_criterion: exact input hashes for the new experiment.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 26
+  title: Verify current parser/config identity
+  phase: D
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: no stale parser claim.
+  pass_criterion: no stale parser claim.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 27
+  title: Reconcile configured timeframe parity
+  phase: D
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/market_data/compare_configured_timeframe_bars.py
+  completion_control: local configured-bar parity disposition current.
+  pass_criterion: local configured-bar parity disposition current.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 28
+  title: Verify tick execution coverage for intended run
+  phase: D
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/audit_tick_execution_coverage.py
+  completion_control: intended path's local quote limitations quantified.
+  pass_criterion: intended path's local quote limitations quantified.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 29
+  title: Refresh denominator register
+  phase: D
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/market_data/build_pipeline_denominator_register.py
+  completion_control: later percentages cannot use ambiguous denominators.
+  pass_criterion: later percentages cannot use ambiguous denominators.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 30
+  title: Close external data/provider items as out of scope
+  phase: D
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Stage C is not blocked by user-excluded external research.
+  pass_criterion: Stage C is not blocked by user-excluded external research.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 31
+  title: Resolve and hash the exact survival config
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: one canonical effective config.
+  pass_criterion: one canonical effective config.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 32
+  title: Build the current v43 feature cache
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: content-addressed v43 cache path/hash stored.
+  pass_criterion: content-addressed v43 cache path/hash stored.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 33
+  title: Verify normalization mask contract
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: fitting scope is fail-closed.
+  pass_criterion: fitting scope is fail-closed.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 34
+  title: Sweep all production feature-building call sites
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: no model-facing unmasked fit path.
+  pass_criterion: no model-facing unmasked fit path.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 35
+  title: Refresh full-profile observation missingness
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/features/audit_observation_warmup_validity.py
+  completion_control: no silent missing=zero ambiguity for active model inputs.
+  pass_criterion: no silent missing=zero ambiguity for active model inputs.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 36
+  title: Refresh observation-validity crosswalk
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/features/reconcile_observation_validity_semantics.py
+  completion_control: current generated crosswalk reflects source.
+  pass_criterion: current generated crosswalk reflects source.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 37
+  title: Refresh all-profile real-market prefix invariance
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/features/run_real_market_feature_prefix_audit.sh
+  - scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py
+  completion_control: all current-profile comparisons pass or a precise violating producer is fixed.
+  pass_criterion: all current-profile comparisons pass or a precise violating producer is fixed.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 38
+  title: Refresh feature causality matrix
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/features/build_feature_causality_matrix.py
+  completion_control: every active model-facing family has a causal contract.
+  pass_criterion: every active model-facing family has a causal contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 39
+  title: Reverify SMT/two-symbol timing
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: cross-symbol input is causal.
+  pass_criterion: cross-symbol input is causal.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 40
+  title: Reverify active event-family semantics
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/features/fvg_timeframe_event_ledger.py
+  - scripts/research/analysis/features/ifvg_zone_event_ledger.py
+  - scripts/research/analysis/features/build_po3_setup_lifecycle_ledger.py
+  - scripts/research/analysis/features/order_block_zone_event_ledger.py
+  - scripts/research/analysis/features/standard_deviation_swing_ledger.py
+  completion_control: "no false \u201Cevent count\u201D claims."
+  pass_criterion: "no false \u201Cevent count\u201D claims."
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 41
+  title: Generate survival-overlay 108-setup census
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/features/entry_idea_opportunity_census.py
+  completion_control: gate requirement is proven by model-facing schema, not YAML only.
+  pass_criterion: gate requirement is proven by model-facing schema, not YAML only.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 42
+  title: Verify `reachable_r_valid`
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: unknown reachability is distinguishable from real zero.
+  pass_criterion: unknown reachability is distinguishable from real zero.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 43
+  title: Run candidate source-geometry support audit
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/features/candidate_geometry_support.py
+  completion_control: input feasibility known for every supported setup.
+  pass_criterion: input feasibility known for every supported setup.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 44
+  title: Keep VAE path blocked unless its gate is actually repaired
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 45
+  title: Stage D verdict
+  phase: E
+  lane: B
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: 'scientific gate record: producer/data feature contract'
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 46
+  title: Run risk/account unit contract set
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 47
+  title: Verify daily-loss floor boundaries
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 48
+  title: Verify all maximum-loss modes
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 49
+  title: Verify payout effects in all drawdown modes
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 50
+  title: Verify `$900` sizing ceiling end-to-end
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: no path silently sizes at `$1,000` when research budget is `$900`.
+  pass_criterion: no path silently sizes at `$1,000` when research budget is `$900`.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 51
+  title: Keep real-order mode fail-closed
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: safe no-go, not a lingering ambiguous TODO.
+  pass_criterion: safe no-go, not a lingering ambiguous TODO.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 52
+  title: Verify decision-row / returned-observation alignment
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 53
+  title: "Verify source event \u2192 action \u2192 order lineage"
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evaluation/audit_candidate_action_linkage.py
+  completion_control: future experiment writer carries complete linkage.
+  pass_criterion: future experiment writer carries complete linkage.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 54
+  title: Verify market-entry execution parity
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evaluation/verify_simulator_local_tick_trace_set.py
+  - scripts/research/analysis/evaluation/compare_simulator_local_tick_trace.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 55
+  title: Verify pending limit-entry lifecycle
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 56
+  title: Verify protective lifecycle
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 57
+  title: Verify margin and rejection semantics
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 58
+  title: Verify cashflow and cost provenance
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 59
+  title: Verify account-state reconciliation
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - evaluation/reporting/account_state_trace_reconciliation.py
+  - scripts/research/analysis/evaluation/reconcile_saved_equity_to_fills.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 60
+  title: Verify policy-decision reconciliation
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - evaluation/reporting/policy_decision_reconciliation.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 61
+  title: Financing disposition
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 62
+  title: Pre-training Stage E verdict
+  phase: F
+  lane: C
+  barrier: B2
+  kind: runtime_evidence
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: 'scientific gate record: execution/accounting contract'
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 63
+  title: Freeze candidate-geometry semantics before writing runtime code
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 64
+  title: Resolve 217-slot proposal semantics
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands:
+  - "NO_TRADE\n+\n108 setup IDs \xD7 {market, limit}"
+  execution_mode: review_decision
+- id: 65
+  title: Implement shared causal candidate builder
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 66
+  title: Build source geometry from current feature producers
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 67
+  title: Define execution-cost geometry
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 68
+  title: Define candidate age / TTL / session-time features
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 69
+  title: Define `signal_quality` or version it out
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 70
+  title: Add candidate observations to environment schema
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 71
+  title: Decide compatibility with 109 setup mask
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 72
+  title: Integrate candidate actor with PPO policy factory
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 73
+  title: Implement masked 217-way categorical distribution
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 74
+  title: Implement conditional execution distribution
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 75
+  title: Implement exact joint log-probability
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 76
+  title: Implement entropy correctly
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 77
+  title: Ensure rollout buffer preserves required observations
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 78
+  title: Wire selected slot into shared action decode
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands:
+  - "slot \u2192 setup_id + entry_type"
+  execution_mode: review_decision
+- id: 79
+  title: Wire evaluation provider/rollout
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 80
+  title: Wire event backtest only where policy parity requires it
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 81
+  title: Add checkpoint metadata and fail-closed compatibility
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 82
+  title: Complete price-aware acceptance test matrix
+  phase: G
+  lane: A
+  barrier: B3
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 24
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: candidate geometry empirical acceptance review
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 83
+  title: Run command-boundary regressions
+  phase: H
+  lane: A
+  barrier: B4
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 62
+  - 82
+  conditional_gate: null
+  resource_lock: SOURCE_LOCK
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 84
+  title: Run the canonical consolidated implementation gate
+  phase: H
+  lane: A
+  barrier: B4
+  kind: implementation
+  experiment_dependent: false
+  dependencies:
+  - 83
+  conditional_gate: null
+  resource_lock: RELEASE_LOCK
+  canonical_tools:
+  - scripts/research/audits/verify_release_quality.sh
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 85
+  title: Refresh historical failure-mechanism registry
+  phase: I
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - evidence/research/failure_mechanisms/failure_mechanisms.json
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 86
+  title: Rebuild/verify action funnel
+  phase: I
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/analyze_entry_action_funnel.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 87
+  title: Diagnose rare/no-trade behavior
+  phase: I
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 88
+  title: Refresh lifecycle/exit cohorts
+  phase: I
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evaluation/summarize_trade_exit_cohorts.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 89
+  title: Inspect learner health
+  phase: I
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/analyze_training_policy_dynamics_and_rule_control.py
+  - scripts/research/analysis/evaluation/summarize_ppo_training_dynamics.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 90
+  title: Verify survival objective reaches the learner
+  phase: I
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/verify_survival_learning_signal_reachability.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 91
+  title: Freeze mechanism-based successor logic
+  phase: I
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: failure_mechanism_and_successor_logic_review
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 92
+  title: Refresh Tier 0 always-no-trade under the exact research contract
+  phase: J
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evaluation/run_matched_setup_baselines.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 93
+  title: Refresh random-eligible setup baseline
+  phase: J
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evaluation/run_matched_setup_baselines.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 94
+  title: Refresh structure-priority baseline
+  phase: J
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evaluation/run_matched_setup_baselines.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 95
+  title: Put simple rules on a genuinely matched path
+  phase: J
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evaluation/run_matched_setup_baselines.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 96
+  title: Establish baseline information-set equivalence
+  phase: J
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: baseline_ladder_and_information_set_review
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 97
+  title: Tier 2 supervised decision
+  phase: J
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - learning/supervised/reference.py
+  - training/runner/lstm_baseline.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 98
+  title: Tier 3 RL controls
+  phase: J
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_decision
+- id: 99
+  title: Tier 4 oracle/theoretical bound decision
+  phase: J
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/strategy_checks/ema_tp_replay.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 100
+  title: Measure current end-to-end path, not only PPO core
+  phase: K
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/benchmarks/measure_ppo_throughput.py
+  - scripts/research/benchmarks/measure_env_memory.py
+  - scripts/research/benchmarks/build_v3_compute_contract.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 101
+  title: Recompute current full-path decision count
+  phase: K
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/market_data/build_pipeline_denominator_register.py
+  - scripts/research/benchmarks/build_v3_compute_contract.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 102
+  title: Freeze minimum terminal-signal budget
+  phase: K
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/benchmarks/plan_survival_compute_budget.py
+  - scripts/research/benchmarks/build_v3_compute_contract.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands:
+  - "minimum aggregate steps\n\u2248 desired_full_paths_per_env \xD7 n_envs \xD7 current_full_path_decisions"
+  execution_mode: tool_or_existing_implementation
+- id: 103
+  title: Benchmark n_envs semantically
+  phase: K
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/benchmarks/measure_ppo_throughput.py
+  - scripts/research/benchmarks/build_v3_compute_contract.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 104
+  title: Freeze PPO geometry
+  phase: K
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/benchmarks/build_v3_compute_contract.py
+  completion_control: scientific_protocol_review_and_freeze
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 105
+  title: Freeze WF training budget
+  phase: K
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/benchmarks/build_v3_compute_contract.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 106
+  title: Compute one-allocation execution estimate
+  phase: K
+  lane: D
+  barrier: B5
+  kind: diagnostic_or_benchmark
+  experiment_dependent: false
+  dependencies:
+  - 84
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/benchmarks/build_v3_compute_contract.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 107
+  title: Run a correctness-only bounded smoke
+  phase: L
+  lane: E
+  barrier: B6
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 106
+  conditional_gate: null
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_survival_launch_plan.py
+  - scripts/research/audits/build_v3_survival_command_bundle.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 108
+  title: Freeze smoke-to-main promotion
+  phase: L
+  lane: E
+  barrier: B6
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 106
+  conditional_gate: null
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/record_v3_phase_review.py
+  completion_control: 'phase review: smoke-to-main promotion'
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 109
+  title: Run canonical D survival qualification
+  phase: L
+  lane: E
+  barrier: B6
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 106
+  conditional_gate: null
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_survival_launch_plan.py
+  - scripts/research/audits/build_v3_survival_command_bundle.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands:
+  - ".venv/bin/python -m training.runner.training \\\n  --config config/research/survival_trade_setup_mtf_conditioned.yaml\
+    \ \\\n  --seeds 42 43 44 45 46 47 \\\n  --algo ppo \\\n  --arch mtf_reasoning \\\n  --strategy baseline \\\n \
+    \ --walk-forward \\\n  --wf-splits 5 \\\n  --purge-bars <frozen> \\\n  --embargo-bars <frozen> \\\n  --wf-steps\
+    \ <frozen> \\\n  --out outputs/<concept-name>"
+  execution_mode: tool_plus_runtime_experiment
+- id: 110
+  title: Verify every seed artifact
+  phase: L
+  lane: E
+  barrier: B6
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 106
+  conditional_gate: null
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/analysis/evidence/verify_selected_campaign_artifacts.py
+  - scripts/research/analysis/evidence/build_v3_checkpoint_registry.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 111
+  title: Apply the survival phase gate exactly
+  phase: L
+  lane: E
+  barrier: B6
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 106
+  conditional_gate: null
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - training/configuration/survival_gate.py
+  completion_control: training/configuration/survival_gate.py output
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 112
+  title: If qualification fails, stop portfolio optimization
+  phase: L
+  lane: E
+  barrier: B6
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 106
+  conditional_gate: null
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/v3_campaign_gatekeeper.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 113
+  title: If C/D factor is scientifically required, run C under the same survival protocol
+  phase: L
+  lane: E
+  barrier: B6
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 106
+  conditional_gate: null
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/build_v3_survival_command_bundle.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 114
+  title: If geometry challenger is preregistered and fully implemented, run it as one-factor PRICE treatment
+  phase: L
+  lane: E
+  barrier: B6
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 106
+  - 82
+  conditional_gate: price_authorized
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/build_v3_survival_command_bundle.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 115
+  title: Select replay seed prospectively
+  phase: M
+  lane: E
+  barrier: null
+  kind: post_experiment_validation
+  experiment_dependent: false
+  dependencies:
+  - 111
+  conditional_gate: survival_pass
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/record_v3_phase_review.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 116
+  title: Replay new current-source checkpoint twice deterministically
+  phase: M
+  lane: E
+  barrier: null
+  kind: post_experiment_validation
+  experiment_dependent: false
+  dependencies:
+  - 111
+  conditional_gate: survival_pass
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - evaluation/reanalysis/checkpoint_reanalysis.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 117
+  title: Compare replay artifacts
+  phase: M
+  lane: E
+  barrier: null
+  kind: post_experiment_validation
+  experiment_dependent: false
+  dependencies:
+  - 111
+  conditional_gate: survival_pass
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/compare_deterministic_reanalysis.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 118
+  title: Close historical repeatability item with new-current evidence
+  phase: M
+  lane: E
+  barrier: null
+  kind: post_experiment_validation
+  experiment_dependent: false
+  dependencies:
+  - 111
+  conditional_gate: survival_pass
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/record_v3_phase_review.py
+  completion_control: checkpoint_repeatability_review
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 119
+  title: Freeze portfolio objective before resuming
+  phase: N
+  lane: E
+  barrier: B7
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 111
+  - 118
+  conditional_gate: survival_pass
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/record_v3_phase_review.py
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  completion_control: portfolio_objective_freeze_review
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 120
+  title: Resume exact qualified checkpoint
+  phase: N
+  lane: E
+  barrier: B7
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 111
+  - 118
+  conditional_gate: survival_pass
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 121
+  title: Train portfolio phase per seed
+  phase: N
+  lane: E
+  barrier: B7
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 111
+  - 118
+  conditional_gate: survival_pass
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 122
+  title: Re-evaluate hard risk after portfolio training
+  phase: N
+  lane: E
+  barrier: B7
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 111
+  - 118
+  conditional_gate: survival_pass
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/verify_v3_portfolio_hard_risk.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 123
+  title: Build primary paired treatment-vs-no-trade payload
+  phase: N
+  lane: E
+  barrier: B7
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 111
+  - 118
+  conditional_gate: survival_pass
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_primary_paired_seed_payload.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 124
+  title: Run paired-seed statistics
+  phase: N
+  lane: E
+  barrier: B7
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 111
+  - 118
+  conditional_gate: survival_pass
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/analyze_paired_seed_results.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 125
+  title: Run only preregistered secondary contrasts
+  phase: N
+  lane: E
+  barrier: B7
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 111
+  - 118
+  conditional_gate: survival_pass
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/record_v3_phase_review.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 126
+  title: Freeze finalist before opening exposed 2026
+  phase: N
+  lane: E
+  barrier: B7
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 111
+  - 118
+  conditional_gate: survival_pass
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/record_v3_phase_review.py
+  completion_control: finalist_freeze_review
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 127
+  title: Static/EOD/intraday account robustness
+  phase: O
+  lane: E
+  barrier: B8
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 126
+  conditional_gate: finalist_frozen
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 128
+  title: Cost stress
+  phase: O
+  lane: E
+  barrier: B8
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 126
+  conditional_gate: finalist_frozen
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/analysis/evidence/replay_tick_cost_stress.py
+  - scripts/research/analysis/evidence/build_tick_cost_stress_reports.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 129
+  title: Missing-tick/quote stress
+  phase: O
+  lane: E
+  barrier: B8
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 126
+  conditional_gate: finalist_frozen
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/analysis/evaluation/audit_quote_coverage_sensitivity.py
+  - scripts/research/analysis/evaluation/compare_quote_coverage_sensitivity.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 130
+  title: Regime/TTL/risk sensitivity
+  phase: O
+  lane: E
+  barrier: B8
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 126
+  conditional_gate: finalist_frozen
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/strategy_checks/edge_harness.py
+  - scripts/research/analysis/regime_attribution.py
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 131
+  title: Open exposed 2026 once
+  phase: O
+  lane: E
+  barrier: B8
+  kind: experiment
+  experiment_dependent: true
+  dependencies:
+  - 126
+  conditional_gate: finalist_frozen_and_report_not_previously_opened
+  resource_lock: GPU_TRAIN_LOCK
+  canonical_tools:
+  - scripts/research/audits/execute_v3_frozen_commands.py
+  - scripts/research/audits/build_v3_phase_command_bundle.py
+  completion_control: exposed_report_once_review
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_plus_runtime_experiment
+- id: 132
+  title: Regenerate metrics under v4
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/verify_v3_metrics_v4.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 133
+  title: Regenerate cost decomposition
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - evaluation/reporting/cost_decomposition.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 134
+  title: Independently verify numerical reports
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/verify_numerical_report.py
+  completion_control: zero unexplained numerical mismatch.
+  pass_criterion: zero unexplained numerical mismatch.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 135
+  title: Refresh account and policy reconciliation artifacts
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - evaluation/reporting/account_state_trace_reconciliation.py
+  - evaluation/reporting/policy_decision_reconciliation.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 136
+  title: Refresh experiment/attempt ledger
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_experiment_run_evidence_index.py
+  - scripts/research/analysis/evidence/build_experiment_run_trial_ledger.py
+  - scripts/research/analysis/evidence/reconcile_experiment_run_attempts.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 137
+  title: Refresh checkpoint registry
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_checkpoint_registry.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 138
+  title: Refresh function-to-test map
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_function_test_reference_map.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 139
+  title: Review P0 uncovered symbols manually
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools: []
+  completion_control: manual P0 coverage disposition
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: review_or_generated_output
+- id: 140
+  title: Refresh provenance DAG and byte verification
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_research_provenance_dag.py
+  - scripts/research/analysis/evidence/verify_research_provenance_bytes.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 141
+  title: Refresh release manifest
+  phase: P
+  lane: F
+  barrier: B8
+  kind: post_result_evidence
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: RELEASE_LOCK
+  canonical_tools:
+  - scripts/research/audits/update_release_manifest_hashes.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 142
+  title: Rewrite final consolidated research results
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: final canonical result narrative
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 143
+  title: Generate survival table
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 144
+  title: Generate model/baseline comparison table
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 145
+  title: Generate cost/execution table
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 146
+  title: Generate action/funnel table
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 147
+  title: Generate feature causality/availability table
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 148
+  title: Generate robustness table if a finalist exists
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 149
+  title: Regenerate thesis figures only from canonical data
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 150
+  title: Refresh thesis figure/table index
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: THESIS_FIGURE_TABLE_INDEX.md
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 151
+  title: Refresh known limitations
+  phase: Q
+  lane: F
+  barrier: B8
+  kind: reporting
+  experiment_dependent: true
+  dependencies:
+  - 111
+  conditional_gate: scientific_outcomes_frozen
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: KNOWN_LIMITATIONS.md
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 152
+  title: Update concept docs, not diary docs
+  phase: R
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 151
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 153
+  title: Perform only evidence-supported refactors
+  phase: R
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 151
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 154
+  title: Clean only confirmed unnecessary files
+  phase: R
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 151
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 155
+  title: Run final exact-tree implementation gate
+  phase: S
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 154
+  conditional_gate: null
+  resource_lock: RELEASE_LOCK
+  canonical_tools:
+  - scripts/research/audits/verify_release_quality.sh
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 156
+  title: Run final docs/evidence gates
+  phase: S
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 154
+  conditional_gate: null
+  resource_lock: RELEASE_LOCK
+  canonical_tools:
+  - scripts/research/audits/verify_release_quality.sh
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 157
+  title: Observe final GitHub CI for the pushed/current release tree
+  phase: S
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 154
+  conditional_gate: pushed_current_release_sha
+  resource_lock: null
+  canonical_tools: []
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: operator_or_review
+- id: 158
+  title: Write final readiness verdict
+  phase: S
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 154
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/analysis/evidence/build_v3_final_research_outputs.py
+  - scripts/research/audits/verify_v3_final_research_outputs.py
+  completion_control: final readiness verdict
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 159
+  title: Refresh final release package
+  phase: S
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 154
+  conditional_gate: null
+  resource_lock: RELEASE_LOCK
+  canonical_tools:
+  - scripts/research/audits/build_v3_release_bundle_manifest.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 160
+  title: Map all old 70 open boxes to final dispositions
+  phase: S
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 154
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/build_v3_old_open_box_disposition.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 161
+  title: Final handoff
+  phase: S
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 154
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/build_v3_final_handoff.py
+  completion_control: Complete this TODO exactly as specified by the V3 execution contract.
+  pass_criterion: Complete this TODO exactly as specified by the V3 execution contract.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+- id: 162
+  title: FINISHED condition
+  phase: S
+  lane: F
+  barrier: null
+  kind: release
+  experiment_dependent: false
+  dependencies:
+  - 154
+  conditional_gate: null
+  resource_lock: null
+  canonical_tools:
+  - scripts/research/audits/verify_v3_finished.py
+  completion_control: All sixteen FINISHED conditions must be satisfied and independently represented by current-source
+    evidence.
+  pass_criterion: All sixteen FINISHED conditions must be satisfied and independently represented by current-source
+    evidence.
+  plan_commands: []
+  execution_mode: tool_or_existing_implementation
+coverage_policy:
+  all_todos_must_be_present_exactly_once: true
+  critical_tool_todos_must_have_repository_tool: true
+  runtime_results_are_not_source_artifacts: true
+  manual_or_review_tasks_must_have_nonempty_completion_control: true

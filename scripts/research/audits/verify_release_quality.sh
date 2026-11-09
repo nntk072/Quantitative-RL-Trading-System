@@ -90,6 +90,23 @@ run_gate "scoped unit, integration, and research tests" "$PYTHON_BIN" -m pytest 
   tests/unit/learning/test_candidate_geometry_policy.py \
   tests/unit/research/test_pretraining_research_contract.py \
   tests/unit/research/test_pretraining_parallel_readiness.py \
+  tests/unit/research/test_pretraining_scientific_readiness.py \
+  tests/unit/research/test_survival_learning_signal_reachability.py \
+  tests/unit/research/test_v3_compute_contract.py \
+  tests/unit/research/test_v3_campaign_gatekeeper.py \
+  tests/unit/research/test_v3_full_plan_registry.py \
+  tests/unit/research/test_v3_full_plan_runner.py \
+  tests/unit/research/test_v3_phase_review.py \
+  tests/unit/research/test_v3_phase_command_bundle.py \
+  tests/unit/research/test_v3_survival_command_bundle.py \
+  tests/unit/research/test_v3_frozen_command_executor.py \
+  tests/unit/research/test_v3_portfolio_hard_risk.py \
+  tests/unit/research/test_v3_primary_paired_seed_payload.py \
+  tests/unit/research/test_v3_metrics_v4.py \
+  tests/unit/research/test_v3_final_research_outputs.py \
+  tests/unit/research/test_v3_old_open_box_disposition.py \
+  tests/unit/research/test_v3_release_bundle.py \
+  tests/unit/research/test_v3_finished.py \
   tests/unit/research/test_observation_warmup_validity_audit.py \
   tests/unit/research/test_survival_compute_budget.py \
   tests/unit/research/test_survival_launch_plan.py \

@@ -1,0 +1,81 @@
+schema_version: v3-remaining-execution-plan-v3
+
+pretraining_scientific_readiness:
+  plan: config/research/pretraining_scientific_readiness.yaml
+  execution_manifest_schema: pretraining-parallel-readiness-run-v1
+  scientific_manifest_schema: pretraining-scientific-readiness-v1
+
+survival_qualification:
+  required_seeds: [42, 43, 44, 45, 46, 47]
+  minimum_unique_seeds: 6
+  minimum_walk_forward_splits: 5
+  control_role: control
+  canonical_role: canonical
+  price_role: price_geometry
+  price_requires_independent_authorization: true
+  default_gpu_train_workers: 1
+
+post_survival_review_gates:
+  - checkpoint_repeatability_review
+  - portfolio_objective_freeze_review
+  - primary_statistical_selection_review
+  - finalist_robustness_review
+  - finalist_freeze_review
+  - exposed_report_once_review
+  - metrics_evidence_refresh_review
+  - thesis_outputs_review
+  - documentation_cleanup_review
+  - final_release_review
+  - negative_result_release_review
+
+phase_dependencies:
+  checkpoint_repeatability:
+    requires: [scientific_readiness, survival_phase_gate]
+  portfolio_objective_freeze:
+    requires: [checkpoint_repeatability_review]
+  portfolio_phase:
+    requires:
+      - scientific_readiness
+      - survival_phase_gate
+      - checkpoint_repeatability_review
+      - portfolio_objective_freeze_review
+  primary_statistical_selection:
+    requires:
+      - portfolio_phase
+      - primary_statistical_selection_review
+  finalist_robustness:
+    requires:
+      - primary_statistical_selection_review
+      - finalist_robustness_review
+  finalist_freeze:
+    requires:
+      - finalist_robustness_review
+      - finalist_freeze_review
+  exposed_report_once:
+    requires: [finalist_freeze]
+  positive_result_release:
+    requires:
+      - exposed_report_once_review
+      - metrics_evidence_refresh_review
+      - thesis_outputs_review
+      - documentation_cleanup_review
+      - final_release_review
+  negative_result_release:
+    requires:
+      - failed_survival_phase_gate
+      - negative_result_release_review
+      - metrics_evidence_refresh_review
+      - thesis_outputs_review
+      - documentation_cleanup_review
+      - final_release_review
+
+scientific_invariants:
+  development_period: ['2024-12-30', '2025-12-31']
+  exposed_report_only_period: ['2026-01-01', '2026-10-16']
+  exposed_report_period_selectable: false
+  primary_comparator: always_no_trade
+  survival_lexicographically_first: true
+  negative_result_is_valid: true
+  portfolio_before_survival_pass: false
+  portfolio_before_checkpoint_repeatability: false
+  portfolio_before_objective_freeze: false

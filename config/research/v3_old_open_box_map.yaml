@@ -1,0 +1,758 @@
+schema_version: v3-old-open-box-map-v1
+item_count: 70
+items:
+- old_open_id: 1
+  checklist_line: 427
+  summary: '**0. Outcome contract:** final thesis claims, evidence grade, reproducible'
+  disposition_path: "TODO 12, 142\u2013151, 158\u2013162"
+  todo_refs:
+  - 12
+- old_open_id: 2
+  checklist_line: 429
+  summary: '**1/A. Live baseline and inventory:** freeze current Git/tree/config/env,'
+  disposition_path: "TODO 2\u20137"
+  todo_refs:
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+- old_open_id: 3
+  checklist_line: 433
+  summary: '**1/A. External scratch recovery:** complete the planned search of relevant'
+  disposition_path: TODO 10
+  todo_refs:
+  - 10
+- old_open_id: 4
+  checklist_line: 550
+  summary: '**Campaign evidence inventory:** verify every selected historical result,'
+  disposition_path: "TODO 9, 11, 136\u2013141"
+  todo_refs:
+  - 9
+- old_open_id: 5
+  checklist_line: 634
+  summary: '**4/D. Feature causality:** verify all active indicators, two-symbol'
+  disposition_path: "TODO 31\u201345"
+  todo_refs:
+  - 31
+  - 32
+  - 33
+  - 34
+  - 35
+  - 36
+  - 37
+  - 38
+  - 39
+  - 40
+  - 41
+  - 42
+  - 43
+  - 44
+  - 45
+- old_open_id: 6
+  checklist_line: 644
+  summary: Test fitting scope for normalizers, thresholds, selectors, imputers, and
+  disposition_path: "TODO 33\u201334, 44"
+  todo_refs:
+  - 33
+  - 34
+- old_open_id: 7
+  checklist_line: 842
+  summary: '**5/E. Deterministic parity:** complete controlled environment/backtest'
+  disposition_path: "TODO 46\u201362, 115\u2013118"
+  todo_refs:
+  - 46
+  - 47
+  - 48
+  - 49
+  - 50
+  - 51
+  - 52
+  - 53
+  - 54
+  - 55
+  - 56
+  - 57
+  - 58
+  - 59
+  - 60
+  - 61
+  - 62
+- old_open_id: 8
+  checklist_line: 1031
+  summary: Characterize daily breach/reset, hard-loss terminal, no later opens after
+  disposition_path: "TODO 47\u201349, 56, 59\u201360"
+  todo_refs:
+  - 47
+  - 48
+  - 49
+- old_open_id: 9
+  checklist_line: 1068
+  summary: Full-ledger/daily-risk reconciliation and checkpoint-backed replay
+  disposition_path: "TODO 53, 58\u201360, 115\u2013118"
+  todo_refs:
+  - 53
+- old_open_id: 10
+  checklist_line: 1213
+  summary: 'Reconcile remaining Stage E account and report semantics: daily-risk state'
+  disposition_path: "TODO 47\u201361, 132\u2013135"
+  todo_refs:
+  - 47
+  - 48
+  - 49
+  - 50
+  - 51
+  - 52
+  - 53
+  - 54
+  - 55
+  - 56
+  - 57
+  - 58
+  - 59
+  - 60
+  - 61
+- old_open_id: 11
+  checklist_line: 1303
+  summary: '**5/E. Accounting and eligibility:** zero unresolved material'
+  disposition_path: "TODO 46\u201362"
+  todo_refs:
+  - 46
+  - 47
+  - 48
+  - 49
+  - 50
+  - 51
+  - 52
+  - 53
+  - 54
+  - 55
+  - 56
+  - 57
+  - 58
+  - 59
+  - 60
+  - 61
+  - 62
+- old_open_id: 12
+  checklist_line: 1375
+  summary: '**8/9. Price-aware challenger:** only after C/D/E gates, build causal'
+  disposition_path: "TODO 63\u201382, 114"
+  todo_refs:
+  - 63
+  - 64
+  - 65
+  - 66
+  - 67
+  - 68
+  - 69
+  - 70
+  - 71
+  - 72
+  - 73
+  - 74
+  - 75
+  - 76
+  - 77
+  - 78
+  - 79
+  - 80
+  - 81
+  - 82
+- old_open_id: 13
+  checklist_line: 1379
+  summary: '**9. Model-design acceptance:** compare M0/M1 controls and only justified'
+  disposition_path: "TODO 18, 72\u201382, 98, 113\u2013125"
+  todo_refs:
+  - 18
+- old_open_id: 14
+  checklist_line: 1383
+  summary: '**9. Optional outcome model:** do not start until label, censoring,'
+  disposition_path: TODO 22, 97; default DEFERRED-NO-GO unless label gate is repaired
+  todo_refs:
+  - 22
+- old_open_id: 15
+  checklist_line: 1401
+  summary: '**10/F. Tier 1 baselines:** reconcile reusable rules (EMA, RSI, MACD,'
+  disposition_path: "TODO 92\u201399"
+  todo_refs:
+  - 92
+  - 93
+  - 94
+  - 95
+  - 96
+  - 97
+  - 98
+  - 99
+- old_open_id: 16
+  checklist_line: 1416
+  summary: Establish matched-complexity and matched-risk comparisons, and record
+  disposition_path: "TODO 96, 123\u2013125"
+  todo_refs:
+  - 96
+- old_open_id: 17
+  checklist_line: 1419
+  summary: '**10/F. Tier 2 baselines:** register supervised/candidate ranking models'
+  disposition_path: TODO 97
+  todo_refs:
+  - 97
+- old_open_id: 18
+  checklist_line: 1421
+  summary: '**10/F. Tier 3/4 baselines:** define RL controls, compatible architecture'
+  disposition_path: "TODO 98\u201399, 125"
+  todo_refs:
+  - 98
+  - 99
+- old_open_id: 19
+  checklist_line: 1424
+  summary: '**11/G. Failure mechanisms:** use recovered ledgers to locate losses and'
+  disposition_path: "TODO 85\u201391"
+  todo_refs:
+  - 85
+  - 86
+  - 87
+  - 88
+  - 89
+  - 90
+  - 91
+- old_open_id: 20
+  checklist_line: 1427
+  summary: Determine whether rare/no trades arise from feature support, bad masks,
+  disposition_path: "TODO 86\u201387"
+  todo_refs:
+  - 86
+  - 87
+- old_open_id: 21
+  checklist_line: 1430
+  summary: Separate entry/exit, slippage/cost, risk size, EOD, target misses, regime,
+  disposition_path: "TODO 88, 128\u2013130"
+  todo_refs:
+  - 88
+- old_open_id: 22
+  checklist_line: 1433
+  summary: Inspect learner health and counterfactual validity only when the original
+  disposition_path: "TODO 89\u201390, 115\u2013118"
+  todo_refs:
+  - 89
+  - 90
+- old_open_id: 23
+  checklist_line: 1435
+  summary: '**12/H. Protocol:** define purged chronological folds, training-only'
+  disposition_path: "TODO 19\u201324"
+  todo_refs:
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+- old_open_id: 24
+  checklist_line: 1457
+  summary: Predeclare control/treatment, one intended factor, primary outcome,
+  disposition_path: "TODO 13\u201324, 91"
+  todo_refs:
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+- old_open_id: 25
+  checklist_line: 1460
+  summary: Purge by shared future price path/event horizon and TTL across candidates;
+  disposition_path: "TODO 21\u201322, 97, 105"
+  todo_refs:
+  - 21
+  - 22
+- old_open_id: 26
+  checklist_line: 1469
+  summary: If secondary temporal uncertainty is later needed, predeclare a
+  disposition_path: "TODO 22, 124\u2013125"
+  todo_refs:
+  - 22
+- old_open_id: 27
+  checklist_line: 1472
+  summary: '**13/I. Compute ladder:** benchmark preflight, bounded smoke, small screen,'
+  disposition_path: "TODO 100\u2013108"
+  todo_refs:
+  - 100
+  - 101
+  - 102
+  - 103
+  - 104
+  - 105
+  - 106
+  - 107
+  - 108
+- old_open_id: 28
+  checklist_line: 1475
+  summary: Record effective versus configured steps, samples/update, rollout size,
+  disposition_path: "TODO 100\u2013106"
+  todo_refs:
+  - 100
+  - 101
+  - 102
+  - 103
+  - 104
+  - 105
+  - 106
+- old_open_id: 29
+  checklist_line: 1479
+  summary: '**14/J. Search/ablations:** register small bounded search and one-factor'
+  disposition_path: "TODO 14, 23, 91, 113\u2013125"
+  todo_refs:
+  - 14
+- old_open_id: 30
+  checklist_line: 1482
+  summary: '**15/K. Robustness:** only viable candidates get paired independent seeds,'
+  disposition_path: "TODO 127\u2013131"
+  todo_refs:
+  - 127
+  - 128
+  - 129
+  - 130
+  - 131
+- old_open_id: 31
+  checklist_line: 1486
+  summary: Include baseline/adverse spread, latency/slippage, missing-tick, regime,
+  disposition_path: "TODO 127\u2013130"
+  todo_refs:
+  - 127
+  - 128
+  - 129
+  - 130
+- old_open_id: 32
+  checklist_line: 1510
+  summary: '**16/L. Resource/performance:** reuse one compatible GH200 allocation;'
+  disposition_path: "TODO 100\u2013106 and Triton rules"
+  todo_refs:
+  - 100
+  - 101
+  - 102
+  - 103
+  - 104
+  - 105
+  - 106
+- old_open_id: 33
+  checklist_line: 1514
+  summary: Measure load/validation, feature/cache, observation, environment/IPC,
+  disposition_path: TODO 100, 106
+  todo_refs:
+  - 100
+- old_open_id: 34
+  checklist_line: 1518
+  summary: '**17/M. Evidence model:** one versioned manifest/registry with source,'
+  disposition_path: "TODO 7, 11\u201312, 136\u2013141"
+  todo_refs:
+  - 7
+- old_open_id: 35
+  checklist_line: 1521
+  summary: '**18/N. Function coverage:** derive inventory from current AST/graph,'
+  disposition_path: "TODO 138\u2013139"
+  todo_refs:
+  - 138
+  - 139
+- old_open_id: 36
+  checklist_line: 1525
+  summary: '**19/O. Metric/report definitions:** one authoritative versioned metric'
+  disposition_path: "TODO 132\u2013135, 142\u2013151"
+  todo_refs:
+  - 132
+  - 133
+  - 134
+  - 135
+- old_open_id: 37
+  checklist_line: 1534
+  summary: '**21/Q. Research documentation:** write conceptual package/topic docs'
+  disposition_path: TODO 152
+  todo_refs:
+  - 152
+- old_open_id: 38
+  checklist_line: 1536
+  summary: '**22/R. Refactor:** perform coherent package/config/API cleanup only'
+  disposition_path: "TODO 153\u2013154"
+  todo_refs:
+  - 153
+  - 154
+- old_open_id: 39
+  checklist_line: 1539
+  summary: '**23/S. Thesis deliverables:** final figures, tables, evidence map,'
+  disposition_path: "TODO 142\u2013151, 159"
+  todo_refs:
+  - 142
+  - 143
+  - 144
+  - 145
+  - 146
+  - 147
+  - 148
+  - 149
+  - 150
+  - 151
+- old_open_id: 40
+  checklist_line: 1541
+  summary: '**24/T. Release:** exact-tree checks, manifest hashes, scoped/full'
+  disposition_path: "TODO 155\u2013159"
+  todo_refs:
+  - 155
+  - 156
+  - 157
+  - 158
+  - 159
+- old_open_id: 41
+  checklist_line: 1550
+  summary: Release verdict distinguishes READY, READY WITH SCIENTIFIC LIMITATIONS,
+  disposition_path: TODO 158
+  todo_refs:
+  - 158
+- old_open_id: 42
+  checklist_line: 1553
+  summary: Release checks cover claim/data/causality/trading/model/baseline/
+  disposition_path: "TODO 155\u2013159"
+  todo_refs:
+  - 155
+  - 156
+  - 157
+  - 158
+  - 159
+- old_open_id: 43
+  checklist_line: 1555
+  summary: '**26. Resource safety:** use live node inventory and matching ARM64 tools;'
+  disposition_path: "Triton rules, TODO 4, 100\u2013106"
+  todo_refs:
+  - 4
+- old_open_id: 44
+  checklist_line: 1558
+  summary: '**27. Final handoff:** deliver report, code/evidence locations, exact'
+  disposition_path: "TODO 161\u2013162"
+  todo_refs:
+  - 161
+  - 162
+- old_open_id: 45
+  checklist_line: 1564
+  summary: "**Phase 0 \u2014 Freeze (partial):** current branch, HEAD, tracked/untracked"
+  disposition_path: "TODO 1\u20137"
+  todo_refs:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+- old_open_id: 46
+  checklist_line: 1568
+  summary: "**Phase 1 \u2014 Forensics:** finish provenance DAG and evidence-gap register;"
+  disposition_path: "TODO 8\u201312"
+  todo_refs:
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+- old_open_id: 47
+  checklist_line: 1570
+  summary: "**Phase 2 \u2014 Science:** freeze final questions, estimands, and selection"
+  disposition_path: "TODO 13\u201324"
+  todo_refs:
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+- old_open_id: 48
+  checklist_line: 1572
+  summary: "**Phase 3 \u2014 Data:** finish local identity/quality/split dossier; record"
+  disposition_path: "TODO 25\u201330"
+  todo_refs:
+  - 25
+  - 26
+  - 27
+  - 28
+  - 29
+  - 30
+- old_open_id: 49
+  checklist_line: 1574
+  summary: "**Phase 4 \u2014 Features:** close active-family causal, event and 108-mask"
+  disposition_path: "TODO 31\u201345"
+  todo_refs:
+  - 31
+  - 32
+  - 33
+  - 34
+  - 35
+  - 36
+  - 37
+  - 38
+  - 39
+  - 40
+  - 41
+  - 42
+  - 43
+  - 44
+  - 45
+- old_open_id: 50
+  checklist_line: 1576
+  summary: "**Phase 5 \u2014 Trading:** close simulator/account/risk/fill parity."
+  disposition_path: "TODO 46\u201362"
+  todo_refs:
+  - 46
+  - 47
+  - 48
+  - 49
+  - 50
+  - 51
+  - 52
+  - 53
+  - 54
+  - 55
+  - 56
+  - 57
+  - 58
+  - 59
+  - 60
+  - 61
+  - 62
+- old_open_id: 51
+  checklist_line: 1577
+  summary: "**Phase 6 \u2014 Failure:** complete measured P6/zero-trade/exit/reward"
+  disposition_path: "TODO 85\u201391"
+  todo_refs:
+  - 85
+  - 86
+  - 87
+  - 88
+  - 89
+  - 90
+  - 91
+- old_open_id: 52
+  checklist_line: 1579
+  summary: "**Phase 7 \u2014 Models:** finish existing MTF model audit; implement only"
+  disposition_path: "TODO 18, 63\u201382, 98"
+  todo_refs:
+  - 18
+- old_open_id: 53
+  checklist_line: 1581
+  summary: "**Phase 8 \u2014 Baselines:** complete comparable flat/random/rule/supervised/RL"
+  disposition_path: "TODO 92\u201399"
+  todo_refs:
+  - 92
+  - 93
+  - 94
+  - 95
+  - 96
+  - 97
+  - 98
+  - 99
+- old_open_id: 54
+  checklist_line: 1583
+  summary: "**Phase 9 \u2014 Benchmarks:** run bounded complete training/evaluation blocks"
+  disposition_path: "TODO 100\u2013118"
+  todo_refs:
+  - 100
+  - 101
+  - 102
+  - 103
+  - 104
+  - 105
+  - 106
+  - 107
+  - 108
+  - 109
+  - 110
+  - 111
+  - 112
+  - 113
+  - 114
+  - 115
+  - 116
+  - 117
+  - 118
+- old_open_id: 55
+  checklist_line: 1585
+  summary: "**Phase 10 \u2014 Tuning:** run preregistered bounded single-factor tests only"
+  disposition_path: "TODO 23, 91, 113\u2013125"
+  todo_refs:
+  - 23
+- old_open_id: 56
+  checklist_line: 1587
+  summary: "**Phase 11 \u2014 Finalists:** independent seeds/full development paths/stress,"
+  disposition_path: "TODO 119\u2013131"
+  todo_refs:
+  - 119
+  - 120
+  - 121
+  - 122
+  - 123
+  - 124
+  - 125
+  - 126
+  - 127
+  - 128
+  - 129
+  - 130
+  - 131
+- old_open_id: 57
+  checklist_line: 1589
+  summary: "**Phase 12 \u2014 Evidence:** automatic release registry and figures/tables;"
+  disposition_path: "TODO 132\u2013151"
+  todo_refs:
+  - 132
+  - 133
+  - 134
+  - 135
+  - 136
+  - 137
+  - 138
+  - 139
+  - 140
+  - 141
+  - 142
+  - 143
+  - 144
+  - 145
+  - 146
+  - 147
+  - 148
+  - 149
+  - 150
+  - 151
+- old_open_id: 58
+  checklist_line: 1591
+  summary: "**Phase 13 \u2014 Documentation:** conceptual subject docs and thesis pack"
+  disposition_path: "TODO 152\u2013154"
+  todo_refs:
+  - 152
+  - 153
+  - 154
+- old_open_id: 59
+  checklist_line: 1593
+  summary: "**Phase 14 \u2014 Release:** full release verification, retention, manifest,"
+  disposition_path: "TODO 155\u2013162"
+  todo_refs:
+  - 155
+  - 156
+  - 157
+  - 158
+  - 159
+  - 160
+  - 161
+  - 162
+- old_open_id: 60
+  checklist_line: 1598
+  summary: Release README and `RELEASE_MANIFEST.json` with exact source/data/config/
+  disposition_path: TODO 141, 159
+  todo_refs:
+  - 141
+- old_open_id: 61
+  checklist_line: 1600
+  summary: Final readiness report and research questions/methods.
+  disposition_path: "TODO 12, 142, 158\u2013159"
+  todo_refs:
+  - 12
+- old_open_id: 62
+  checklist_line: 1601
+  summary: Data provenance/access, model/baseline catalog, and consolidated results.
+  disposition_path: "TODO 25\u201330, 92\u201399, 142"
+  todo_refs:
+  - 25
+  - 26
+  - 27
+  - 28
+  - 29
+  - 30
+- old_open_id: 63
+  checklist_line: 1602
+  summary: Experiment/attempt ledger, function-to-test evidence index, and
+  disposition_path: "TODO 136, 138\u2013140, 159"
+  todo_refs:
+  - 136
+- old_open_id: 64
+  checklist_line: 1604
+  summary: Final training/evaluation configs and generated tables/figures.
+  disposition_path: "TODO 18, 24, 109\u2013131, 142\u2013150"
+  todo_refs:
+  - 18
+- old_open_id: 65
+  checklist_line: 1605
+  summary: Regeneration commands and environment/compute profile.
+  disposition_path: TODO 159, 161
+  todo_refs:
+  - 159
+- old_open_id: 66
+  checklist_line: 1606
+  summary: Checkpoint registry and thesis figure/table index.
+  disposition_path: TODO 137, 150, 159
+  todo_refs:
+  - 137
+- old_open_id: 67
+  checklist_line: 1607
+  summary: Known limitations and scientific verdict.
+  disposition_path: "TODO 151, 158\u2013159"
+  todo_refs:
+  - 151
+- old_open_id: 68
+  checklist_line: 1651
+  summary: Align live per-symbol sizing with the configured training ceiling. The RL
+  disposition_path: "TODO 50\u201351, 84"
+  todo_refs:
+  - 50
+  - 51
+- old_open_id: 69
+  checklist_line: 1792
+  summary: 'Remaining: continue the Stage C/D/E evidence gates, prioritizing missing'
+  disposition_path: "TODO 31\u201362, especially 41\u201345 and 53\u201360"
+  todo_refs:
+  - 31
+  - 32
+  - 33
+  - 34
+  - 35
+  - 36
+  - 37
+  - 38
+  - 39
+  - 40
+  - 41
+  - 42
+  - 43
+  - 44
+  - 45
+  - 46
+  - 47
+  - 48
+  - 49
+  - 50
+  - 51
+  - 52
+  - 53
+  - 54
+  - 55
+  - 56
+  - 57
+  - 58
+  - 59
+  - 60
+  - 61
+  - 62
+- old_open_id: 70
+  checklist_line: 2292
+  summary: Run the command-boundary regression and consolidated implementation gate
+  disposition_path: "TODO 83\u201384, 155\u2013157"
+  todo_refs:
+  - 83
+  - 84

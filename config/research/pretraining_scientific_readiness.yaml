@@ -1,0 +1,25 @@
+schema_version: pretraining-scientific-readiness-plan-v1
+
+common_gates:
+  - raw_data_identity_and_denominator_register_current_source
+  - current_v43_real_market_prefix_invariance
+  - producer_level_feature_causality_review
+  - failure_mechanism_and_successor_logic_review
+  - matched_baseline_current_source_results
+  - baseline_ladder_and_information_set_review
+  - semantic_full_path_compute_budget_from_current_decision_count
+  - scientific_protocol_review_and_freeze
+
+price_gates:
+  - candidate_geometry_empirical_acceptance_review
+
+required_execution_barriers:
+  - B0
+  - B2_IMPLEMENTATION_EVIDENCE
+  - B3_PRICE_IMPLEMENTATION
+  - B4_IMPLEMENTATION_RELEASE
+
+forbidden_review_states:
+  exposed_report_period_used_for_selection: true
+  candidate_realized_outcomes_used_as_policy_inputs: true
+  preregistered_thresholds_changed_post_hoc: true
