@@ -196,6 +196,9 @@ def observation_schema_manifest(env: Any) -> dict[str, Any] | None:
     setup_schema = getattr(env, "trade_setup_observation_schema", None)
     if isinstance(setup_schema, dict):
         result["trade_setup_observation"] = setup_schema
+    candidate_schema = getattr(env, "candidate_geometry_observation_schema", None)
+    if isinstance(candidate_schema, dict):
+        result["candidate_geometry_observation"] = candidate_schema
     return result
 
 

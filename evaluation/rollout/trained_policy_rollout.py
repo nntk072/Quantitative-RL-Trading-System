@@ -206,6 +206,7 @@ def evaluate_model(
     strategy: Any = None,
     strategy_actions: bool = False,
     trade_setup_actions: bool = False,
+    candidate_geometry_actions: bool = False,
     agent_entry_execution: bool = False,
     entry_state_machine: bool = False,
     candidate_max_age_bars: int = 5,
@@ -318,6 +319,8 @@ def evaluate_model(
         strategy: Strategy used to select or evaluate trades.
         strategy_actions: Whether to enable or require the strategy actions.
         trade_setup_actions: Whether to enable or require the trade setup actions.
+        candidate_geometry_actions: Whether the policy consumes the fixed candidate
+            price-geometry observation tensor.
         agent_entry_execution: Whether the policy selects market or limit execution.
         entry_state_machine: Whether to enable or require the entry state machine.
         candidate_max_age_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
@@ -447,6 +450,7 @@ def evaluate_model(
             strategy=strategy,
             strategy_actions=strategy_actions,
             trade_setup_actions=trade_setup_actions,
+            candidate_geometry_actions=candidate_geometry_actions,
             agent_entry_execution=agent_entry_execution,
             entry_state_machine=entry_state_machine,
             candidate_max_age_bars=candidate_max_age_bars,

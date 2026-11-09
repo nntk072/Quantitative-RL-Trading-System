@@ -295,6 +295,7 @@ class SeedRunner:
             )
             validate_model_architecture(model, args.arch, use_vae=args.use_vae)
             from learning.rl.agent import (
+                validate_model_candidate_geometry_observation_schema,
                 validate_model_observation_schema,
                 validate_model_trade_setup_observation_schema,
             )
@@ -307,6 +308,14 @@ class SeedRunner:
             validate_model_trade_setup_observation_schema(
                 model,
                 train_env.trade_setup_observation_schema,
+            )
+            from decisioning.trade_setup import candidate_geometry_observation_schema
+
+            validate_model_candidate_geometry_observation_schema(
+                model,
+                candidate_geometry_observation_schema()
+                if bool(getattr(train_env, "candidate_geometry_actions", False))
+                else None,
             )
             if int(model.num_timesteps) > int(timesteps):
                 raise ValueError(

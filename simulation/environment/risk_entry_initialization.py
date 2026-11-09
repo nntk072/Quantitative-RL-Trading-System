@@ -147,8 +147,11 @@ class RiskEntryInitializationMixin(RuntimeMixinBase):
         self.allow_multi_tp = bool(allow_multi_tp)
         self.tp_breakeven_alpha = float(tp_breakeven_alpha)
         self.allow_simplex = bool(allow_simplex)
+        if isinstance(candidate_max_age_bars, bool) or int(candidate_max_age_bars) < 1:
+            raise ValueError("candidate_max_age_bars must be a positive integer")
+        self.candidate_max_age_bars = int(candidate_max_age_bars)
         self.entry_state_machine = (
-            EntryStateMachine(candidate_max_age_bars, arm_requires_retest)
+            EntryStateMachine(self.candidate_max_age_bars, arm_requires_retest)
             if entry_state_machine
             else None
         )

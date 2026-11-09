@@ -259,6 +259,8 @@ if _SB3_AVAILABLE:
             execution_distribution = getattr(policy, "hybrid_distribution", None)
             if execution_distribution is None:
                 execution_distribution = getattr(policy, "conditioned_distribution", None)
+            if execution_distribution is None:
+                execution_distribution = getattr(policy, "candidate_distribution", None)
             entropy_fn = getattr(execution_distribution, "categorical_coordinate_entropy", None)
             execution_entropy = entropy_fn("entry_execution") if callable(entropy_fn) else None
             if execution_entropy is not None:

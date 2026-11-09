@@ -244,6 +244,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         strategy=strategy,
         strategy_actions=strategy_actions,
         trade_setup_actions=bool(env.get("trade_setup_actions", False)),
+        candidate_geometry_actions=bool(env.get("candidate_geometry_actions", False)),
         agent_entry_execution=bool(env.get("agent_entry_execution", False)),
         entry_state_machine=bool(env.get("entry_state_machine", False)),
         candidate_max_age_bars=int(env.get("candidate_max_age_bars", 5)),

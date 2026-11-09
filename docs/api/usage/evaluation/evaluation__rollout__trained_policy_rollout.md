@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:953](../../../../evaluation/rollout/trained_policy_rollout.py#L953)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:957](../../../../evaluation/rollout/trained_policy_rollout.py#L957)
 
 **Inputs and outputs:**
 
@@ -130,6 +130,8 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   strategy: Strategy used to select or evaluate trades.
   strategy_actions: Whether to enable or require the strategy actions.
   trade_setup_actions: Whether to enable or require the trade setup actions.
+  candidate_geometry_actions: Whether the policy consumes the fixed candidate
+      price-geometry observation tensor.
   agent_entry_execution: Whether the policy selects market or limit execution.
   entry_state_machine: Whether to enable or require the entry state machine.
   candidate_max_age_bars: Market bar or price data used for walk a trained RL ``model`` over *bars*/*features* and collect trades.
@@ -276,7 +278,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:953](../../../../evaluation/rollout/trained_policy_rollout.py#L953)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:957](../../../../evaluation/rollout/trained_policy_rollout.py#L957)
 
 **Inputs and outputs:**
 

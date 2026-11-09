@@ -87,6 +87,7 @@ class TradingEnv(
         strategy: TradingStrategy | None = None,
         strategy_actions: bool = False,
         trade_setup_actions: bool = False,
+        candidate_geometry_actions: bool = False,
         trader_actions: bool | None = None,
         sl_buffer_pts: float = 0.0,
         strategy_reward: Any = None,
@@ -200,6 +201,7 @@ class TradingEnv(
             strategy: Strategy used to select or evaluate trades.
             strategy_actions: Whether to enable or require the strategy actions.
             trade_setup_actions: Whether to enable or require the trade setup actions.
+            candidate_geometry_actions: Whether to expose causal candidate-geometry observations.
             trader_actions: Trader actions used by the operation described above.
             sl_buffer_pts: Numeric value used for the sl buffer pts.
             strategy_reward: Strategy reward used by the operation described above.
@@ -348,7 +350,12 @@ class TradingEnv(
         )
         if trade_setup_actions and not resolved_strategy_actions:
             raise ValueError("trade setup actions require strategy_actions=true")
+        if candidate_geometry_actions and not trade_setup_actions:
+            raise ValueError("candidate_geometry_actions requires trade_setup_actions=true")
+        if candidate_geometry_actions and not agent_entry_execution:
+            raise ValueError("candidate_geometry_actions requires agent_entry_execution=true")
         self.trade_setup_actions = bool(trade_setup_actions)
+        self.candidate_geometry_actions = bool(candidate_geometry_actions)
         self._initialize_strategy_runtime(
             strategy, resolved_strategy_actions, sl_buffer_pts, bundle_data, bars, features
         )

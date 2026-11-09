@@ -112,7 +112,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `main`](../../../../evaluation/reanalysis/checkpoint_reanalysis.py#L1073)
+2. [production caller: `main`](../../../../evaluation/reanalysis/checkpoint_reanalysis.py#L1082)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

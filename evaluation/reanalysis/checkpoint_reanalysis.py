@@ -36,6 +36,7 @@ from evaluation.reanalysis.legacy_sb3 import (
     is_sb3_discrete_model,
     load_sb3_checkpoint,
     seed_sb3,
+    validate_model_candidate_geometry_observation_schema,
     validate_model_trade_setup_observation_schema,
     validate_sb3_discrete_action_schema,
     validate_sb3_observation_schema,
@@ -600,6 +601,14 @@ def main() -> None:
     validate_model_trade_setup_observation_schema(
         model,
         trade_setup_observation_schema() if canonical_setup else None,
+    )
+    from decisioning.trade_setup import candidate_geometry_observation_schema
+
+    validate_model_candidate_geometry_observation_schema(
+        model,
+        candidate_geometry_observation_schema()
+        if bool(cfg.env.get("candidate_geometry_actions", False))
+        else None,
     )
     is_overlay = bool(cfg.env.get("strategy_actions", False))
     if is_overlay:

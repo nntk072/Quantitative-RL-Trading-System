@@ -164,6 +164,7 @@ is read by every listed package.
 | `env.allow_simplex` | `boolean` | `true` | `simulation/environment and decisioning` |
 | `env.arm_requires_retest` | `boolean` | `false` | `simulation/environment and decisioning` |
 | `env.block_overnight` | `boolean` | `true` | `simulation/environment and decisioning` |
+| `env.candidate_geometry_actions` | `boolean` | `false` | `simulation/environment and decisioning` |
 | `env.candidate_max_age_bars` | `integer` | `5` | `simulation/environment and decisioning` |
 | `env.data_source` | `string` | `"frames"` | `simulation/environment and decisioning` |
 | `env.direction_override_threshold` | `number` | `0.0` | `simulation/environment and decisioning` |
@@ -338,6 +339,8 @@ is read by every listed package.
 | `output.trade_chart_show_sl_tp` | `boolean` | `true` | `artifacts and evaluation/reporting` |
 | `ppo.actor_arch` | `string` | `"shared"` | `learning/rl` |
 | `ppo.batch_size` | `integer` | `512` | `learning/rl` |
+| `ppo.candidate_geometry.embedding_dim` | `integer` | `32` | `learning/rl` |
+| `ppo.candidate_geometry.execution_hidden_dim` | `integer` | `128` | `learning/rl` |
 | `ppo.checkpoint_freq` | `integer` | `1000000` | `learning/rl` |
 | `ppo.clip_range` | `number` | `0.2` | `learning/rl` |
 | `ppo.ent_coef` | `number` | `0.01` | `learning/rl` |

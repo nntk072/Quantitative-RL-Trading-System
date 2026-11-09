@@ -2026,7 +2026,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "decisioning",
-      "source_line": 68,
+      "source_line": 69,
       "source_module": "decisioning",
       "source_path": "decisioning/__init__.py"
     },
@@ -2267,6 +2267,18 @@
       "numpy_style": false,
       "package": "decisioning",
       "source_line": 552,
+      "source_module": "decisioning.trade_setup",
+      "source_path": "decisioning/trade_setup.py"
+    },
+    {
+      "classification": "stable",
+      "documented": true,
+      "exported_from": "decisioning",
+      "kind": "function",
+      "name": "validate_candidate_geometry_observation_schema",
+      "numpy_style": false,
+      "package": "decisioning",
+      "source_line": 583,
       "source_module": "decisioning.trade_setup",
       "source_path": "decisioning/trade_setup.py"
     },
@@ -2890,7 +2902,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "decisioning",
-      "source_line": 583,
+      "source_line": 604,
       "source_module": "decisioning.trade_setup",
       "source_path": "decisioning/trade_setup.py"
     },
@@ -3047,6 +3059,18 @@
       "numpy_style": false,
       "package": "decisioning",
       "source_line": 552,
+      "source_module": "decisioning.trade_setup",
+      "source_path": "decisioning/trade_setup.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "decisioning.trade_setup",
+      "kind": "function",
+      "name": "validate_candidate_geometry_observation_schema",
+      "numpy_style": false,
+      "package": "decisioning",
+      "source_line": 583,
       "source_module": "decisioning.trade_setup",
       "source_path": "decisioning/trade_setup.py"
     },
@@ -3358,7 +3382,7 @@
       "name": "evaluate_provider",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 953,
+      "source_line": 957,
       "source_module": "evaluation.rollout.trained_policy_rollout",
       "source_path": "evaluation/rollout/trained_policy_rollout.py"
     },
@@ -7162,7 +7186,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 83,
+      "source_line": 84,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7174,7 +7198,7 @@
       "name": "_reconciliation_is_clean",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 290,
+      "source_line": 291,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7186,7 +7210,7 @@
       "name": "_replay_ledger_frame",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 270,
+      "source_line": 271,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7198,7 +7222,7 @@
       "name": "_source_final_evaluation_metadata",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 112,
+      "source_line": 113,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7210,7 +7234,7 @@
       "name": "_write_train_only_replay_ledger",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 310,
+      "source_line": 311,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7234,7 +7258,7 @@
       "name": "evaluate_checkpoint_split",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 182,
+      "source_line": 183,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7246,7 +7270,7 @@
       "name": "evaluate_train_split",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 216,
+      "source_line": 217,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7258,7 +7282,7 @@
       "name": "load_checkpoint",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 98,
+      "source_line": 99,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7270,7 +7294,7 @@
       "name": "main",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 462,
+      "source_line": 463,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7342,7 +7366,7 @@
       "name": "write_train_only_screen_report",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 437,
+      "source_line": 438,
       "source_module": "evaluation.reanalysis.checkpoint_reanalysis",
       "source_path": "evaluation/reanalysis/checkpoint_reanalysis.py"
     },
@@ -7402,7 +7426,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 14,
+      "source_line": 17,
       "source_module": "evaluation.reanalysis.legacy_sb3",
       "source_path": "evaluation/reanalysis/legacy_sb3.py"
     },
@@ -7459,10 +7483,22 @@
       "documented": true,
       "exported_from": "evaluation.reanalysis.legacy_sb3",
       "kind": "function",
+      "name": "validate_model_candidate_geometry_observation_schema",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 324,
+      "source_module": "learning.rl.agent",
+      "source_path": "learning/rl/agent.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.legacy_sb3",
+      "kind": "function",
       "name": "validate_model_trade_setup_observation_schema",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 310,
+      "source_line": 311,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -9298,7 +9334,7 @@
       "name": "evaluate_provider",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 953,
+      "source_line": 957,
       "source_module": "evaluation.rollout.trained_policy_rollout",
       "source_path": "evaluation/rollout/trained_policy_rollout.py"
     },
@@ -14014,7 +14050,7 @@
       "name": "_finalize_cuda_policy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 888,
+      "source_line": 959,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -14026,7 +14062,7 @@
       "name": "_ppo_policy_and_ent_coef",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 785,
+      "source_line": 820,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -14038,7 +14074,7 @@
       "name": "_validate_survival_objective_config",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 762,
+      "source_line": 797,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -14098,7 +14134,7 @@
       "name": "CANDIDATE_GEOMETRY_FEATURE_SCHEMA_VERSION",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 15,
+      "source_line": 16,
       "source_module": "learning.rl.candidate_geometry",
       "source_path": "learning/rl/candidate_geometry.py"
     },
@@ -14110,7 +14146,7 @@
       "name": "CandidateGeometryActorHeads",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 18,
+      "source_line": 19,
       "source_module": "learning.rl.candidate_geometry",
       "source_path": "learning/rl/candidate_geometry.py"
     },
@@ -14122,7 +14158,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 173,
+      "source_line": 198,
       "source_module": "learning.rl.candidate_geometry",
       "source_path": "learning/rl/candidate_geometry.py"
     },
@@ -14134,9 +14170,81 @@
       "name": "apply_candidate_eligibility_mask",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 144,
+      "source_line": 169,
       "source_module": "learning.rl.candidate_geometry",
       "source_path": "learning/rl/candidate_geometry.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.candidate_geometry_policy",
+      "kind": "class",
+      "name": "CandidateGeometryClampedStdMultiInputPolicy",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 701,
+      "source_module": "learning.rl.candidate_geometry_policy",
+      "source_path": "learning/rl/candidate_geometry_policy.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.candidate_geometry_policy",
+      "kind": "class",
+      "name": "CandidateGeometryConditionedActorHeads",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 41,
+      "source_module": "learning.rl.candidate_geometry_policy",
+      "source_path": "learning/rl/candidate_geometry_policy.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.candidate_geometry_policy",
+      "kind": "class",
+      "name": "CandidateGeometryHybridBoxDistribution",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 193,
+      "source_module": "learning.rl.candidate_geometry_policy",
+      "source_path": "learning/rl/candidate_geometry_policy.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.candidate_geometry_policy",
+      "kind": "value",
+      "name": "_DETERMINISTIC_SLOT_COORDINATES",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 32,
+      "source_module": "learning.rl.candidate_geometry_policy",
+      "source_path": "learning/rl/candidate_geometry_policy.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.candidate_geometry_policy",
+      "kind": "value",
+      "name": "_EXECUTION_CATEGORICAL_COORDINATES",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 38,
+      "source_module": "learning.rl.candidate_geometry_policy",
+      "source_path": "learning/rl/candidate_geometry_policy.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.candidate_geometry_policy",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 855,
+      "source_module": "learning.rl.candidate_geometry_policy",
+      "source_path": "learning/rl/candidate_geometry_policy.py"
     },
     {
       "classification": "private implementation",
@@ -18694,7 +18802,7 @@
       "name": "cost_model",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 514,
+      "source_line": 515,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18718,7 +18826,7 @@
       "name": "fill_delay_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 352,
+      "source_line": 353,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18742,7 +18850,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 541,
+      "source_line": 542,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18778,7 +18886,7 @@
       "name": "max_tick_quote_wait_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 449,
+      "source_line": 450,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18790,7 +18898,7 @@
       "name": "mtf_settings",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 467,
+      "source_line": 468,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18802,7 +18910,7 @@
       "name": "randomized_fill_latency_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 394,
+      "source_line": 395,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18814,7 +18922,7 @@
       "name": "regime_observation_enabled",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 425,
+      "source_line": 426,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18826,7 +18934,7 @@
       "name": "scheduled_session_closes",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 500,
+      "source_line": 501,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -18862,7 +18970,7 @@
       "name": "tick_execution_required",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 412,
+      "source_line": 413,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19084,6 +19192,126 @@
     },
     {
       "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "value",
+      "name": "_FEATURE_INDEX",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 22,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 487,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "function",
+      "name": "_candidate_age_fraction",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 155,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "function",
+      "name": "_feature_vector",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 241,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "function",
+      "name": "_finite",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 25,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "function",
+      "name": "_geometry_distances",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 185,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "function",
+      "name": "_reference_quote",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 95,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "function",
+      "name": "_session_remaining",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 124,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "function",
+      "name": "_source_zone",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 41,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "simulation.environment.candidate_geometry_observation",
+      "kind": "function",
+      "name": "build_candidate_geometry_observation",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 298,
+      "source_module": "simulation.environment.candidate_geometry_observation",
+      "source_path": "simulation/environment/candidate_geometry_observation.py"
+    },
+    {
+      "classification": "private implementation",
       "documented": true,
       "exported_from": "simulation.environment.diagnostics",
       "kind": "function",
@@ -19246,7 +19474,7 @@
       "name": "TradingEnv.from_bundle",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 394,
+      "source_line": 401,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19258,7 +19486,7 @@
       "name": "TradingEnv.step",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 426,
+      "source_line": 433,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19270,7 +19498,7 @@
       "name": "TradingEnv.transition",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 440,
+      "source_line": 447,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19306,7 +19534,7 @@
       "name": "EpisodeSpacesInitializationMixin",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 19,
+      "source_line": 23,
       "source_module": "simulation.environment.episode_spaces_initialization",
       "source_path": "simulation/environment/episode_spaces_initialization.py"
     },
@@ -19318,7 +19546,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 155,
+      "source_line": 179,
       "source_module": "simulation.environment.episode_spaces_initialization",
       "source_path": "simulation/environment/episode_spaces_initialization.py"
     },
@@ -19450,7 +19678,7 @@
       "name": "ObservationArraysInitializationMixin",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 27,
+      "source_line": 28,
       "source_module": "simulation.environment.observation_arrays_initialization",
       "source_path": "simulation/environment/observation_arrays_initialization.py"
     },
@@ -19462,7 +19690,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 272,
+      "source_line": 280,
       "source_module": "simulation.environment.observation_arrays_initialization",
       "source_path": "simulation/environment/observation_arrays_initialization.py"
     },
@@ -19594,7 +19822,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 166,
+      "source_line": 169,
       "source_module": "simulation.environment.risk_entry_initialization",
       "source_path": "simulation/environment/risk_entry_initialization.py"
     },
@@ -23230,7 +23458,7 @@
       "name": "observation_account_dim",
       "numpy_style": false,
       "package": "training",
-      "source_line": 365,
+      "source_line": 368,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23254,7 +23482,7 @@
       "name": "observation_space_shapes",
       "numpy_style": false,
       "package": "training",
-      "source_line": 383,
+      "source_line": 386,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23278,7 +23506,7 @@
       "name": "sequence_feature_schema_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 202,
+      "source_line": 205,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23290,7 +23518,7 @@
       "name": "training_protocol_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 220,
+      "source_line": 223,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23602,7 +23830,7 @@
       "name": "resolve_variant",
       "numpy_style": false,
       "package": "training",
-      "source_line": 139,
+      "source_line": 140,
       "source_module": "training.configuration.variant_resolution",
       "source_path": "training/configuration/variant_resolution.py"
     },
@@ -23614,7 +23842,7 @@
       "name": "train_args",
       "numpy_style": false,
       "package": "training",
-      "source_line": 330,
+      "source_line": 356,
       "source_module": "training.configuration.variant_resolution",
       "source_path": "training/configuration/variant_resolution.py"
     },
@@ -23761,6 +23989,126 @@
       "source_line": 220,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "value",
+      "name": "EXPECTED_DEVELOPMENT",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 14,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "value",
+      "name": "EXPECTED_EXPOSED",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 15,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "value",
+      "name": "EXPECTED_SEEDS",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 16,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "value",
+      "name": "EXPECTED_TIMEFRAMES",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 17,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "value",
+      "name": "PROTOCOL_SCHEMA_VERSION",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 13,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 196,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "function",
+      "name": "_mapping",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 20,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "function",
+      "name": "load_research_protocol",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 37,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "function",
+      "name": "research_protocol_sha256",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 182,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "training.configuration.research_protocol",
+      "kind": "function",
+      "name": "validate_research_protocol",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 55,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
     },
     {
       "classification": "private implementation",
@@ -23950,7 +24298,7 @@
       "name": "_data_price_grid_overrides",
       "numpy_style": false,
       "package": "training",
-      "source_line": 114,
+      "source_line": 115,
       "source_module": "training.configuration.variant_resolution",
       "source_path": "training/configuration/variant_resolution.py"
     },
@@ -23962,7 +24310,7 @@
       "name": "_fmt",
       "numpy_style": false,
       "package": "training",
-      "source_line": 100,
+      "source_line": 101,
       "source_module": "training.configuration.variant_resolution",
       "source_path": "training/configuration/variant_resolution.py"
     },
@@ -23974,7 +24322,7 @@
       "name": "_main",
       "numpy_style": false,
       "package": "training",
-      "source_line": 401,
+      "source_line": 428,
       "source_module": "training.configuration.variant_resolution",
       "source_path": "training/configuration/variant_resolution.py"
     },
@@ -24802,7 +25150,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "training",
-      "source_line": 541,
+      "source_line": 542,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24934,7 +25282,7 @@
       "name": "cost_model",
       "numpy_style": false,
       "package": "training",
-      "source_line": 514,
+      "source_line": 515,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24958,7 +25306,7 @@
       "name": "fill_delay_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 352,
+      "source_line": 353,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -24994,7 +25342,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "training",
-      "source_line": 541,
+      "source_line": 542,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -25030,7 +25378,7 @@
       "name": "max_tick_quote_wait_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 449,
+      "source_line": 450,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -25042,7 +25390,7 @@
       "name": "mtf_settings",
       "numpy_style": false,
       "package": "training",
-      "source_line": 467,
+      "source_line": 468,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -25054,7 +25402,7 @@
       "name": "randomized_fill_latency_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 394,
+      "source_line": 395,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -25090,7 +25438,7 @@
       "name": "tick_execution_required",
       "numpy_style": false,
       "package": "training",
-      "source_line": 412,
+      "source_line": 413,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },

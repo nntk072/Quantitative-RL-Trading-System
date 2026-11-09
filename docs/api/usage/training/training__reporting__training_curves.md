@@ -43,7 +43,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `evaluate_test_split`](../../../../training/runner/seed_runtime.py#L749)
+2. [production caller: `evaluate_test_split`](../../../../training/runner/seed_runtime.py#L758)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

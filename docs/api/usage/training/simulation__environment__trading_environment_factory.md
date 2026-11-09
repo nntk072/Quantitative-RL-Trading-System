@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `simulation.environment.tr
 
 **Purpose:** Construct a configured trading environment and its feature/observation adapters.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.make_env` · **Source:** [simulation/environment/trading_environment_factory.py:541](../../../../simulation/environment/trading_environment_factory.py#L541)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.make_env` · **Source:** [simulation/environment/trading_environment_factory.py:542](../../../../simulation/environment/trading_environment_factory.py#L542)
 
 **Inputs and outputs:**
 

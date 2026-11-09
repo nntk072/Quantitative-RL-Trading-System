@@ -8,7 +8,11 @@ import numpy as np
 import pandas as pd
 from gymnasium import spaces
 
-from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT
+from decisioning.trade_setup import (
+    CANDIDATE_GEOMETRY_FEATURE_NAMES,
+    TRADE_SETUP_CATEGORY_COUNT,
+    candidate_geometry_slot_count,
+)
 
 from .entry_diagnostics import _empty_entry_diag
 from .mixin_base import RuntimeMixinBase
@@ -140,6 +144,26 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
                 high=1.0,
                 shape=(TRADE_SETUP_CATEGORY_COUNT,),
                 dtype=np.float32,
+            )
+        if bool(getattr(self, "candidate_geometry_actions", False)):
+            candidate_count = candidate_geometry_slot_count()
+            observation_space.spaces["candidate_ids"] = spaces.Box(
+                low=0,
+                high=TRADE_SETUP_CATEGORY_COUNT - 1,
+                shape=(candidate_count,),
+                dtype=np.int64,
+            )
+            observation_space.spaces["candidate_features"] = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(candidate_count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES)),
+                dtype=np.float32,
+            )
+            observation_space.spaces["candidate_mask"] = spaces.Box(
+                low=np.zeros(candidate_count, dtype=np.bool_),
+                high=np.ones(candidate_count, dtype=np.bool_),
+                shape=(candidate_count,),
+                dtype=np.bool_,  # type: ignore[arg-type]  # Gymnasium accepts bool Boxes.
             )
             # Add VAE latent to observation space if enabled
         if use_vae and vae_latent_dim > 0:
