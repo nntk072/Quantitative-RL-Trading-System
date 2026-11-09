@@ -3,7 +3,7 @@ item_count: 70
 items:
 - old_open_id: 1
   checklist_line: 427
-  summary: '**0. Outcome contract:** final thesis claims, evidence grade, reproducible'
+  summary: '**0. Outcome contract:** final research claims, evidence grade, reproducible'
   disposition_path: "TODO 12, 142\u2013151, 158\u2013162"
   todo_refs:
   - 12
@@ -383,7 +383,7 @@ items:
   - 154
 - old_open_id: 39
   checklist_line: 1539
-  summary: '**23/S. Thesis deliverables:** final figures, tables, evidence map,'
+  summary: '**23/S. Research deliverables:** final figures, tables, evidence map,'
   disposition_path: "TODO 142\u2013151, 159"
   todo_refs:
   - 142
@@ -633,7 +633,7 @@ items:
   - 151
 - old_open_id: 58
   checklist_line: 1591
-  summary: "**Phase 13 \u2014 Documentation:** conceptual subject docs and thesis pack"
+  summary: "**Phase 13 \u2014 Documentation:** conceptual subject docs and report pack"
   disposition_path: "TODO 152\u2013154"
   todo_refs:
   - 152
@@ -695,7 +695,7 @@ items:
   - 159
 - old_open_id: 66
   checklist_line: 1606
-  summary: Checkpoint registry and thesis figure/table index.
+  summary: Checkpoint registry and research figure/table index.
   disposition_path: TODO 137, 150, 159
   todo_refs:
   - 137

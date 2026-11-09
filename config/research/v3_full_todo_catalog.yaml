@@ -322,9 +322,9 @@ tasks:
   conditional_gate: null
   resource_lock: null
   canonical_tools: []
-  completion_control: 'every historical result still referenced in thesis/research docs has: - run identity; - source/config
+  completion_control: 'every historical result still referenced in research/report docs has: - run identity; - source/config
     identity; - artifact path; - hash status; - explicit historical/current status.'
-  pass_criterion: 'every historical result still referenced in thesis/research docs has: - run identity; - source/config
+  pass_criterion: 'every historical result still referenced in research/report docs has: - run identity; - source/config
     identity; - artifact path; - hash status; - explicit historical/current status.'
   plan_commands: []
   execution_mode: review_decision
@@ -373,8 +373,8 @@ tasks:
   conditional_gate: null
   resource_lock: null
   canonical_tools: []
-  completion_control: final thesis claims cannot silently outrun evidence.
-  pass_criterion: final thesis claims cannot silently outrun evidence.
+  completion_control: final research claims cannot silently outrun evidence.
+  pass_criterion: final research claims cannot silently outrun evidence.
   plan_commands: []
   execution_mode: review_decision
 - id: 13
@@ -2697,7 +2697,7 @@ tasks:
   plan_commands: []
   execution_mode: tool_or_existing_implementation
 - id: 149
-  title: Regenerate thesis figures only from canonical data
+  title: Regenerate research figures only from canonical data
   phase: Q
   lane: F
   barrier: B8
@@ -2715,7 +2715,7 @@ tasks:
   plan_commands: []
   execution_mode: tool_or_existing_implementation
 - id: 150
-  title: Refresh thesis figure/table index
+  title: Refresh research figure/table index
   phase: Q
   lane: F
   barrier: B8

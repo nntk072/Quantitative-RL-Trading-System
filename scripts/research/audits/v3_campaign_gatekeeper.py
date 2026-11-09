@@ -339,7 +339,7 @@ def build_campaign_state(
     finalist_freeze = passed("finalist_freeze_review")
     report_once = passed("exposed_report_once_review")
     metrics = passed("metrics_evidence_refresh_review")
-    thesis = passed("thesis_outputs_review")
+    research_outputs = passed("thesis_outputs_review")
     docs = passed("documentation_cleanup_review")
     final_release = passed("final_release_review")
     negative = passed("negative_result_release_review")
@@ -348,7 +348,7 @@ def build_campaign_state(
     robustness_authorized = portfolio_authorized and primary
     finalist_frozen = robustness_authorized and robustness and finalist_freeze
     report_only_authorized = finalist_frozen
-    release_tail = metrics and thesis and docs and final_release
+    release_tail = metrics and research_outputs and docs and final_release
     positive_release_ready = report_only_authorized and report_once and release_tail
     negative_release_ready = survival_fail and negative and release_tail
 
@@ -362,7 +362,7 @@ def build_campaign_state(
         phase = "negative_result_release_review"
     elif survival_fail and not metrics:
         phase = "metrics_evidence_refresh"
-    elif survival_fail and not thesis:
+    elif survival_fail and not research_outputs:
         phase = "thesis_outputs"
     elif survival_fail and not docs:
         phase = "documentation_cleanup"
@@ -384,7 +384,7 @@ def build_campaign_state(
         phase = "exposed_report_once"
     elif not metrics:
         phase = "metrics_evidence_refresh"
-    elif not thesis:
+    elif not research_outputs:
         phase = "thesis_outputs"
     elif not docs:
         phase = "documentation_cleanup"
@@ -412,7 +412,7 @@ def build_campaign_state(
         "finalist_frozen": finalist_frozen,
         "exposed_report_once_authorized": report_only_authorized,
         "metrics_evidence_refresh_complete": metrics,
-        "thesis_outputs_complete": thesis,
+        "thesis_outputs_complete": research_outputs,
         "documentation_cleanup_complete": docs,
         "final_release_review_complete": final_release,
         "positive_result_release_ready": positive_release_ready,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the final V3 research/thesis result package from verified canonical inputs.
+"""Generate the final V3 research/report result package from verified canonical inputs.
 
 The input manifest contains measured rows and source-artifact identities. This
 tool does not invent metrics and refuses source files whose bytes changed.
@@ -228,7 +228,7 @@ def build_outputs(
     (output_dir / "KNOWN_LIMITATIONS.md").write_text("\n".join(limitations_lines), encoding="utf-8")
 
     index_lines = [
-        "# Thesis figure/table index",
+        "# Research figure/table index",
         "",
         "## Tables",
         "",
