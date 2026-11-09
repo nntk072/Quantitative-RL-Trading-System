@@ -89,8 +89,19 @@ def add_stage(
     )
 
 
-def collect(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    market_path = root / MARKET_QUALITY
+def display_path(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
+def collect(
+    root: Path, market_quality_path: Path = MARKET_QUALITY
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    market_path = (
+        market_quality_path if market_quality_path.is_absolute() else root / market_quality_path
+    )
     census_path = root / CENSUS
     cardinality_path = root / CARDINALITY
     carry_path = root / CARRY_FORWARD
@@ -136,7 +147,7 @@ def collect(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
             value=rows,
             unit="rows",
             state="measured",
-            source=str(MARKET_QUALITY),
+            source=display_path(market_path, root),
             note="Source-file rows; wall-clock timestamps have no external clock claim.",
         )
         if kind == "tick":
@@ -176,7 +187,7 @@ def collect(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
             value=usable,
             unit="rows",
             state="measured",
-            source=str(MARKET_QUALITY),
+            source=display_path(market_path, root),
             note=(
                 f"Raw rows {rows}; rows missing/nonfinite on either side {missing_any_side}; "
                 "nonpositive and inverted counts are both zero in this scan."
@@ -192,7 +203,7 @@ def collect(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         value=tick_rows_total,
         unit="rows",
         state="measured",
-        source=str(MARKET_QUALITY),
+        source=display_path(market_path, root),
         note="Sum of four role/instrument tick streams; not a unique-market-time count.",
     )
     add_stage(
@@ -204,7 +215,7 @@ def collect(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         value=usable_quotes_total,
         unit="rows",
         state="measured",
-        source=str(MARKET_QUALITY),
+        source=display_path(market_path, root),
         note=f"{missing_side_total} source rows lacked at least one finite side.",
     )
 
@@ -482,14 +493,14 @@ def collect(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
             }
         )
 
-    source_hashes = {str(path.relative_to(root)): sha256(path) for path in sorted(source_paths)}
+    source_hashes = {display_path(path, root): sha256(path) for path in sorted(source_paths)}
     report = {
         "schema": "qrl.pipeline_denominator_register.v1",
         "status": "verified_marginal_denominators_with_unavailable_links_explicit",
         "repository_head": market.get("repository_head"),
         "generated_from_current_worktree": True,
         "market_data_quality_scan": {
-            "path": str(MARKET_QUALITY),
+            "path": display_path(market_path, root),
             "sha256": sha256(market_path),
             "input_count": int(market["input_count"]),
             "input_bytes_scanned": int(market["input_bytes_scanned"]),
@@ -554,8 +565,8 @@ def collect(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     return report, stage_rows
 
 
-def write_packet(root: Path, out_dir: Path) -> None:
-    report, stage_rows = collect(root)
+def write_packet(root: Path, out_dir: Path, market_quality_path: Path = MARKET_QUALITY) -> None:
+    report, stage_rows = collect(root, market_quality_path)
     out_dir.mkdir(parents=True, exist_ok=True)
     register_path = out_dir / "pipeline_denominator_register.json"
     csv_path = out_dir / "pipeline_stage_counts.csv"
@@ -649,6 +660,7 @@ def write_packet(root: Path, out_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--market-quality", type=Path, default=MARKET_QUALITY)
     parser.add_argument(
         "--out-dir",
         type=Path,
@@ -657,7 +669,7 @@ def main() -> None:
     args = parser.parse_args()
     root = args.root.resolve()
     out_dir = args.out_dir if args.out_dir.is_absolute() else root / args.out_dir
-    write_packet(root, out_dir)
+    write_packet(root, out_dir, args.market_quality)
 
 
 if __name__ == "__main__":

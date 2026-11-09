@@ -252,9 +252,13 @@ def _run_group(
         encoding="utf-8",
     )
     summary_path = group_dir / "warmup_validity_summary.json"
+    try:
+        group_directory = str(group_dir.relative_to(ROOT))
+    except ValueError:
+        group_directory = str(group_dir)
     result: dict[str, Any] = {
         "group_key": group["group_key"],
-        "directory": str(group_dir.relative_to(ROOT)),
+        "directory": group_directory,
         "representative_profile": group["representative_profile"],
         "profile_ids": group["profile_ids"],
         "return_code": 0,

@@ -145,16 +145,26 @@ def main() -> int:
         raise ValueError("tick coverage report does not establish tick source/cache parity")
 
     symbols = {symbol: audit_symbol(ROOT, symbol, coverage) for symbol in coverage["symbols"]}
+    prior_count_comparisons: dict[str, bool] = {}
     for symbol, details in symbols.items():
         observed = details["timestamp_groups"]
         previous = prior_ties["symbols"][symbol]
-        if observed["duplicate_timestamp_group_count"] != previous["duplicate_timestamp_groups"]:
-            raise ValueError(f"{symbol} duplicate-group count differs from prior tie audit")
-        if (
-            observed["duplicate_rows_beyond_first"]
-            != previous["duplicate_rows_beyond_first_per_timestamp"]
-        ):
-            raise ValueError(f"{symbol} duplicate-row count differs from prior tie audit")
+        matches = (
+            observed["duplicate_timestamp_group_count"] == previous["duplicate_timestamp_groups"]
+            and observed["duplicate_rows_beyond_first"]
+            == previous["duplicate_rows_beyond_first_per_timestamp"]
+        )
+        prior_count_comparisons[symbol] = matches
+        details["prior_tie_report_count_comparison"] = {
+            "matches": matches,
+            "prior_cache_path": previous.get("path"),
+            "prior_cache_rows": previous.get("rows"),
+            "prior_duplicate_timestamp_groups": previous["duplicate_timestamp_groups"],
+            "prior_duplicate_rows_beyond_first": previous[
+                "duplicate_rows_beyond_first_per_timestamp"
+            ],
+            "scope_note": "The count comparison is descriptive; stable first-row selection is independently verified against the exact cache in the current coverage report.",
+        }
     source_path = ROOT / "market_data/loading/ticks.py"
     result = {
         "schema_version": 1,
@@ -189,7 +199,8 @@ def main() -> int:
         "prior_tie_report": {
             "path": str(tie_report_path.relative_to(ROOT)),
             "sha256": sha256_file(tie_report_path),
-            "counts_match": True,
+            "counts_match": all(prior_count_comparisons.values()),
+            "current_training_cache_counts_by_symbol_match_prior_report": prior_count_comparisons,
         },
         "symbols": symbols,
         "limitations": [

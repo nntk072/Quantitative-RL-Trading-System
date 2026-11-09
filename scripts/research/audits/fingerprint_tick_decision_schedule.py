@@ -28,6 +28,7 @@ from configuration.paths import repository_root
 ROOT = repository_root(__file__)
 
 from configuration import load_config  # noqa: E402
+from market_data.loading import BAR_CACHE_VERSION  # noqa: E402
 from market_data.splits.definitions import (  # noqa: E402
     get_split_config,
     get_train_start_config,
@@ -101,10 +102,13 @@ def main() -> int:
     config_path = ROOT / "config/base/default.yaml"
     schedule_rows: dict[str, Any] = {}
     source_rows: dict[str, Any] = {}
+    training_data = cfg.data.datasets.training
 
     for symbol in [str(value) for value in cfg.data.symbols]:
-        cache_path = ROOT / str(cfg.data.cache_dir) / f"{symbol}_M1_v2-full-day.parquet"
-        source_path = ROOT / str(cfg.data.raw_dir) / str(cfg.data.m1_files[symbol])
+        cache_path = (
+            ROOT / str(cfg.data.cache_dir) / "training" / f"{symbol}_M1_{BAR_CACHE_VERSION}.parquet"
+        )
+        source_path = ROOT / str(training_data.raw_dir) / str(training_data.m1_files[symbol])
         cache_path = cache_path.resolve()
         source_path = source_path.resolve()
         cache_path.relative_to(ROOT)
