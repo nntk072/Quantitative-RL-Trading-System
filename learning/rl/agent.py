@@ -27,6 +27,7 @@ from compute.environment.precision import get_autocast_dtype
 from decisioning.actions import SCHEMA_VERSION, ActionSchema, DiscreteActionSchema
 from decisioning.trade_setup import (
     TradeSetupActionSchema,
+    validate_candidate_geometry_observation_schema,
     validate_trade_setup_observation_schema,
 )
 from learning.rl.ppo import ClampedStdMultiInputPolicy, _layout_key
@@ -320,6 +321,14 @@ def validate_model_trade_setup_observation_schema(
     validate_trade_setup_observation_schema(actual, expected_schema)
 
 
+def validate_model_candidate_geometry_observation_schema(
+    model: Any, expected_schema: dict[str, Any] | None
+) -> None:
+    """Validate the checkpoint's price-aware candidate observation metadata."""
+    actual = getattr(model, "_candidate_geometry_observation_schema", None)
+    validate_candidate_geometry_observation_schema(actual, expected_schema)
+
+
 def build_vector_env(
     env: Any,
     cfg: DictConfig,
@@ -546,11 +555,13 @@ def build_agent(
     account_dim: int = int(env.observation_space["account"].shape[0])
     agent_cfg = cfg.get("agent", {})
     trade_setup_enabled = bool(getattr(env, "trade_setup_actions", False))
+    candidate_geometry_enabled = bool(getattr(env, "candidate_geometry_actions", False))
     ppo_cfg = cfg.get("ppo", {})
     configured_distribution = str(ppo_cfg.get("policy_distribution", "clamped_diagonal_gaussian"))
     setup_distributions = {
         "trade_setup_hybrid_v1",
         "trade_setup_conditioned_v1",
+        "trade_setup_candidate_geometry_v1",
     }
     if trade_setup_enabled and algo != "ppo":
         raise ValueError(
@@ -560,6 +571,21 @@ def build_agent(
         raise ValueError("trade setup actions require a masked trade-setup PPO distribution")
     if configured_distribution in setup_distributions and not trade_setup_enabled:
         raise ValueError(f"{configured_distribution} requires trade setup actions to be enabled")
+    if (
+        candidate_geometry_enabled
+        and configured_distribution != "trade_setup_candidate_geometry_v1"
+    ):
+        raise ValueError(
+            "env.candidate_geometry_actions requires "
+            "ppo.policy_distribution=trade_setup_candidate_geometry_v1"
+        )
+    if (
+        configured_distribution == "trade_setup_candidate_geometry_v1"
+        and not candidate_geometry_enabled
+    ):
+        raise ValueError(
+            "trade_setup_candidate_geometry_v1 requires env.candidate_geometry_actions=true"
+        )
 
         # Choose feature extractor based on architecture / VAE use
     extractor_cls: Any
@@ -752,6 +778,10 @@ def build_agent(
     setup_schema = getattr(env, "trade_setup_observation_schema", None)
     if isinstance(setup_schema, dict):
         setattr(ppo_model, "_trade_setup_observation_schema", setup_schema)
+    candidate_schema = getattr(env, "candidate_geometry_observation_schema", None)
+    if isinstance(candidate_schema, dict):
+        setattr(ppo_model, "_candidate_geometry_observation_schema", candidate_schema)
+        setattr(ppo_model.policy, "_candidate_geometry_observation_schema", candidate_schema)
     persist_action_schema(ppo_model, env)
     from learning.rl.rollout_buffer import install_single_copy_add
 
@@ -814,22 +844,41 @@ def _ppo_policy_and_ent_coef(
         "hybrid_v1",
         "trade_setup_hybrid_v1",
         "trade_setup_conditioned_v1",
+        "trade_setup_candidate_geometry_v1",
     }:
         if actor_arch != "shared":
             raise ValueError("hybrid PPO distributions require ppo.actor_arch='shared'")
         setup_distribution = policy_distribution in {
             "trade_setup_hybrid_v1",
             "trade_setup_conditioned_v1",
+            "trade_setup_candidate_geometry_v1",
         }
-        conditioned_distribution = policy_distribution in {
-            "trade_setup_conditioned_v1",
-        }
+        conditioned_distribution = policy_distribution == "trade_setup_conditioned_v1"
+        candidate_geometry_distribution = policy_distribution == "trade_setup_candidate_geometry_v1"
         if setup_distribution:
             if not isinstance(action_schema, TradeSetupActionSchema):
                 raise ValueError(f"{policy_distribution} requires its matching action schema")
             observation_spaces = getattr(observation_space, "spaces", {})
             if "trade_setup_mask" not in observation_spaces:
                 raise ValueError(f"{policy_distribution} requires the trade_setup_mask observation")
+            if candidate_geometry_distribution:
+                required_candidate_keys = {
+                    "candidate_ids",
+                    "candidate_features",
+                    "candidate_mask",
+                }
+                missing_candidate_keys = sorted(
+                    required_candidate_keys.difference(observation_spaces)
+                )
+                if missing_candidate_keys:
+                    raise ValueError(
+                        "trade_setup_candidate_geometry_v1 requires candidate observations: "
+                        f"{missing_candidate_keys}"
+                    )
+                if not action_schema.has_entry_execution:
+                    raise ValueError(
+                        "trade_setup_candidate_geometry_v1 requires entry-execution coordinates"
+                    )
         elif not isinstance(action_schema, ActionSchema):
             raise ValueError("hybrid_v1 requires a declared legacy strategy ActionSchema")
         if not setup_distribution and not isinstance(action_schema, ActionSchema):
@@ -852,22 +901,39 @@ def _ppo_policy_and_ent_coef(
         kwargs["log_std_min"] = float(cfg.ppo.get("log_std_min", -0.7))
         kwargs["log_std_max"] = float(cfg.ppo.get("log_std_max", 0.0))
         kwargs["mode_prior_coef"] = float(cfg.ppo.get("mode_prior_coef", 1e-3))
+        policy_cls: Any = HybridClampedStdMultiInputPolicy
         if conditioned_distribution:
             conditioned_cfg = cfg.ppo.get("trade_setup_conditioned", {})
             kwargs["trade_setup_embedding_dim"] = int(conditioned_cfg.get("embedding_dim", 32))
             kwargs["trade_setup_execution_hidden_dim"] = int(
                 conditioned_cfg.get("execution_hidden_dim", 128)
             )
+            policy_cls = TradeSetupConditionedClampedStdMultiInputPolicy
+        elif candidate_geometry_distribution:
+            from learning.rl.candidate_geometry_policy import (
+                CandidateGeometryClampedStdMultiInputPolicy,
+            )
+
+            candidate_cfg = cfg.ppo.get("candidate_geometry", {})
+            kwargs["candidate_ids_key"] = "candidate_ids"
+            kwargs["candidate_features_key"] = "candidate_features"
+            kwargs["candidate_mask_key"] = "candidate_mask"
+            kwargs["candidate_embedding_dim"] = int(candidate_cfg.get("embedding_dim", 32))
+            kwargs["candidate_execution_hidden_dim"] = int(
+                candidate_cfg.get("execution_hidden_dim", 128)
+            )
+            kwargs["max_limit_offset_atr"] = float(
+                cfg.execution.get("limit_order_max_offset_atr", 1.0)
+            )
+            kwargs["max_limit_ttl_bars"] = int(cfg.execution.get("limit_order_max_ttl_bars", 60))
+            policy_cls = CandidateGeometryClampedStdMultiInputPolicy
         return (
-            TradeSetupConditionedClampedStdMultiInputPolicy
-            if conditioned_distribution
-            else HybridClampedStdMultiInputPolicy,
+            policy_cls,
             kwargs,
             float(cfg.ppo.get("ent_coef_continuous", 0.001)),
         )
     if policy_distribution != "clamped_diagonal_gaussian":
         raise ValueError(f"unknown PPO policy_distribution: {policy_distribution!r}")
-    policy_cls: Any
     if actor_arch == "semantic_heads":
         from learning.rl.semantic import SemanticClampedStdMultiInputPolicy
 

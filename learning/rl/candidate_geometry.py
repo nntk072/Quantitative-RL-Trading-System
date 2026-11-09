@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import cast
 
 import torch
 from torch import nn
@@ -67,6 +68,7 @@ class CandidateGeometryActorHeads(nn.Module):
         self.candidate_count = int(candidate_count)
         self.candidate_feature_dim = int(candidate_feature_dim)
         self.action_dim = int(action_dim)
+        self.hidden_dim = int(hidden_dim)
         self.candidate_feature_names = feature_names
         self.candidate_feature_schema_version = candidate_feature_schema_version
         self.candidate_embedding = nn.Embedding(self.candidate_count, embedding_dim)
@@ -78,9 +80,9 @@ class CandidateGeometryActorHeads(nn.Module):
         )
         joint_dim = int(market_latent_dim) + 2 * embedding_dim
         self.shared_candidate_body = nn.Sequential(
-            nn.Linear(joint_dim, hidden_dim),
+            nn.Linear(joint_dim, self.hidden_dim),
             nn.Tanh(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(self.hidden_dim, self.hidden_dim),
             nn.Tanh(),
         )
         self.score = nn.Linear(hidden_dim, 1)
@@ -91,21 +93,18 @@ class CandidateGeometryActorHeads(nn.Module):
         nn.init.orthogonal_(self.conditional_action.weight, gain=0.01)
         nn.init.zeros_(self.conditional_action.bias)
 
-    def forward(
+    def encode_candidates(
         self,
         market_latent: torch.Tensor,
         candidate_ids: torch.Tensor,
         candidate_features: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Return one shared score and action-parameter vector per candidate.
+    ) -> torch.Tensor:
+        """Return the shared hidden representation for every candidate slot.
 
-        Args:
-            market_latent: Encoded market context for each batch item.
-            candidate_ids: Semantic candidate IDs with shape ``[batch, slots]``.
-            candidate_features: Per-candidate geometry with shape ``[batch, slots, features]``.
-
-        Returns:
-            Candidate scores and conditional action parameters for each slot.
+        This is intentionally public inside the learning package so a
+        hierarchical distribution can use exactly the same candidate
+        representation for selection and for selected-candidate execution
+        controls instead of rebuilding a second geometry network.
         """
         if market_latent.ndim != 2:
             raise ValueError("market_latent must have shape [batch, latent]")
@@ -137,7 +136,16 @@ class CandidateGeometryActorHeads(nn.Module):
         geometry = self.geometry_encoder(candidate_features)
         context = market_latent[:, None, :].expand(-1, candidate_slots, -1)
         joint = torch.cat((context, semantic, geometry), dim=-1)
-        hidden = self.shared_candidate_body(joint)
+        return cast(torch.Tensor, self.shared_candidate_body(joint))
+
+    def forward(
+        self,
+        market_latent: torch.Tensor,
+        candidate_ids: torch.Tensor,
+        candidate_features: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return one shared score and action-parameter vector per candidate."""
+        hidden = self.encode_candidates(market_latent, candidate_ids, candidate_features)
         return self.score(hidden).squeeze(-1), self.conditional_action(hidden)
 
 

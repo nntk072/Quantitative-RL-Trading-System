@@ -1,6 +1,9 @@
 """Composition boundary for historical SB3 checkpoint reanalysis."""
 
-from learning.rl.agent import validate_model_trade_setup_observation_schema
+from learning.rl.agent import (
+    validate_model_candidate_geometry_observation_schema,
+    validate_model_trade_setup_observation_schema,
+)
 from learning.rl.checkpoint import (
     is_sb3_box_model,
     is_sb3_discrete_model,
@@ -19,5 +22,6 @@ __all__ = [
     "validate_sb3_discrete_action_schema",
     "validate_sb3_observation_schema",
     "validate_sb3_overlay_action_schema",
+    "validate_model_candidate_geometry_observation_schema",
     "validate_model_trade_setup_observation_schema",
 ]

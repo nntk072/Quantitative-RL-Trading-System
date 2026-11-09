@@ -10,8 +10,8 @@ TRADE_SETUP_SCHEMA_VERSION = "trade-setup-candidate-v1"
 TRADE_SETUP_OBSERVATION_VERSION = "trade-setup-observation-v1"
 TRADE_SETUP_ACTION_VERSION = "trade-setup-overlay-action-v1"
 TRADE_SETUP_EXECUTION_ACTION_VERSION = "trade-setup-entry-execution-action-v2"
-CANDIDATE_GEOMETRY_OBSERVATION_VERSION = "candidate-geometry-observation-v1"
-CANDIDATE_GEOMETRY_FEATURE_VERSION = "candidate-geometry-features-v1"
+CANDIDATE_GEOMETRY_OBSERVATION_VERSION = "candidate-geometry-observation-v2"
+CANDIDATE_GEOMETRY_FEATURE_VERSION = "candidate-geometry-features-v2"
 CANDIDATE_GEOMETRY_ENTRY_TYPES = ("market", "limit")
 CANDIDATE_GEOMETRY_FEATURE_NAMES = (
     "direction",
@@ -29,7 +29,7 @@ CANDIDATE_GEOMETRY_FEATURE_NAMES = (
     "limit_ttl_fraction",
     "candidate_age_fraction",
     "session_close_time_fraction",
-    "signal_quality",
+    "source_zone_width_atr",
 )
 
 TRADE_SETUP_IDEAS = (
@@ -117,7 +117,7 @@ def candidate_geometry_observation_schema() -> dict[str, object]:
         "feature_names": list(CANDIDATE_GEOMETRY_FEATURE_NAMES),
         "entry_types": list(CANDIDATE_GEOMETRY_ENTRY_TYPES),
         "no_trade_slot": 0,
-        "mask_semantics": "1 means eligible; no-trade slot 0 is always eligible",
+        "mask_semantics": "true means eligible; no-trade slot 0 is always eligible",
     }
 
 
@@ -580,6 +580,27 @@ def validate_trade_setup_observation_schema(
         )
 
 
+def validate_candidate_geometry_observation_schema(
+    actual_schema: object, expected_schema: dict[str, object] | None
+) -> None:
+    """Reject checkpoints whose price-aware candidate tensor semantics differ.
+
+    The candidate tensor is part of the policy input contract even though it is
+    consumed by the hierarchical action head rather than by the market encoder.
+    A checkpoint trained without this exact slot/feature layout must therefore
+    never be loaded as a price-aware candidate policy.
+
+    Args:
+        actual_schema: Candidate-geometry schema recorded on the checkpoint.
+        expected_schema: Candidate-geometry schema required by the configured environment.
+    """
+    if actual_schema != expected_schema:
+        raise ValueError(
+            "checkpoint candidate geometry observation schema differs from the configured "
+            "candidate geometry contract"
+        )
+
+
 __all__ = [
     "CANDIDATE_GEOMETRY_ENTRY_TYPES",
     "CANDIDATE_GEOMETRY_FEATURE_NAMES",
@@ -609,5 +630,6 @@ __all__ = [
     "trade_setup_center",
     "trade_setup_id_from_box",
     "trade_setup_observation_schema",
+    "validate_candidate_geometry_observation_schema",
     "validate_trade_setup_observation_schema",
 ]

@@ -1,5 +1,5 @@
 {
-  "page_count": 369,
+  "page_count": 370,
   "pages": [
     {
       "links": [
@@ -7050,6 +7050,7 @@
         "multitimeframe_data_alignment",
         "feature_causality_and_availability",
         "gh200_throughput_audit",
+        "candidate_geometry_feature_contract",
         "result_identity_and_evidence",
         "evaluation_methodology",
         "validation_protocol",
@@ -7067,6 +7068,16 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Research results and methods",
+      "type": "research"
+    },
+    {
+      "links": [],
+      "orphan_status": "in toctree",
+      "path": "docs/research/candidate_geometry_feature_contract.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Candidate geometry feature contract",
       "type": "research"
     },
     {

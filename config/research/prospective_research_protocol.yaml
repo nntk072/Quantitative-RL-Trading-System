@@ -1,0 +1,111 @@
+schema_version: research-execution-protocol-v1
+
+questions:
+  primary: >-
+    Can a policy trained under the hard account-survival objective complete all
+    predeclared development paths without hard breach and, after survival
+    qualification, demonstrate positive net value over always-no-trade?
+  primary_comparator: always_no_trade
+  secondary:
+    - setup_conditioned_execution_vs_unconditioned
+    - price_geometry_vs_setup_id
+    - encoder_runtime_treatments
+    - deterministic_rule_controls
+    - account_and_execution_robustness
+
+periods:
+  development:
+    start: '2024-12-30'
+    end_inclusive: '2025-12-31'
+    role: training_validation_and_model_selection
+  exposed_report_only:
+    start: '2026-01-01'
+    end_inclusive: '2026-10-16'
+    role: one_time_final_report_only
+    selectable: false
+
+survival_contract:
+  initial_balance_usd: 100000.0
+  daily_loss_limit_fraction: 0.05
+  max_loss_limit_fraction: 0.10
+  max_loss_mode: static
+  risk_fraction_ceiling: 0.01
+  risk_sizing_ceiling_usd: 900.0
+  compatibility_risk_per_trade_limit_usd: 1000.0
+  payout_enabled: false
+  daily_pnl_basis: session_net_equity
+  daily_loss_includes_open_pnl: true
+  daily_loss_reset_source: supplied_session_id_transition
+  equality_at_floor_is_breach: false
+  breach_below_floor_is_breach: true
+  hard_breach_latches_full_evaluation: true
+  reward_mode: survival
+  intermediate_reward: 0.0
+  breach_terminal_reward: -1.0
+  complete_breach_free_split_reward: 1.0
+  ppo_gamma: 1.0
+  ppo_gae_lambda: 1.0
+
+policy:
+  canonical_survival_config: config/research/survival_trade_setup_mtf_conditioned.yaml
+  control_config: config/research/survival_trade_setup_mtf_control.yaml
+  price_geometry_config: config/research/survival_trade_setup_candidate_geometry.yaml
+  canonical_architecture: mtf_reasoning
+  policy_family: PPO
+  default_n_envs: 8
+  all_setup_timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
+
+replication:
+  seeds: [42, 43, 44, 45, 46, 47]
+  minimum_unique_seed_count: 6
+  walk_forward:
+    splits: 5
+    purge_bars: 60
+    embargo_bars: 20
+    label_horizon_bars: 0
+    test_size_fraction: 0.2
+  mvp_allowed: false
+  locked_oos_selection_allowed: false
+
+primary_statistics:
+  unit: paired_independent_training_seed
+  treatment: qualified_policy
+  comparator: always_no_trade
+  outcome: full_path_net_return_on_initial_operating_equity
+  survival_lexicographically_first: true
+  sign_flip:
+    alternative: greater
+    alpha: 0.05
+    exact_max_pairs: 15
+    monte_carlo_assignments: 100000
+    rng_seed: 42
+  paired_bootstrap:
+    samples: 10000
+    rng_seed: 42
+    lower_confidence_bound_must_exceed: 0.0
+  required_for_positive_claim:
+    all_paths_hard_risk_safe: true
+    sign_flip_rejects_null: true
+    bootstrap_lower_bound_positive: true
+
+stopping:
+  if_survival_qualification_fails:
+    portfolio_optimization_allowed: false
+    action: diagnose_failure_mechanism
+  if_survival_qualification_passes:
+    portfolio_optimization_allowed: true
+    action: resume_exact_qualified_checkpoint
+  negative_result_is_valid_outcome: true
+
+compute:
+  budget_unit: aggregate_environment_steps
+  comparison_unit: full_path_equivalents_per_environment
+  minimum_full_path_equivalents_per_environment: 2.0
+  default_n_envs: 8
+  raw_fps_is_not_a_semantic_budget: true
+
+robustness:
+  max_loss_modes: [static, eod, intraday_trailing]
+  cost_stress_required_for_finalist: true
+  missing_quote_stress_required_for_finalist: true
+  exposed_period_opened_once_after_finalist_freeze: true

@@ -10,6 +10,7 @@ import pandas as pd
 from decisioning.regime_observations import REGIME_FEATURES, regime_observation_schema
 from decisioning.trade_setup import (
     TRADE_SETUP_CATEGORY_COUNT,
+    candidate_geometry_observation_schema,
     trade_setup_observation_schema,
 )
 from features import attach_reachable_r, select_legacy_obs_columns, select_obs_columns
@@ -223,6 +224,13 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         self.trade_setup_observation_schema = (
             trade_setup_observation_schema() if self.trade_setup_actions else None
         )
+        self.candidate_geometry_observation_schema = (
+            candidate_geometry_observation_schema()
+            if bool(getattr(self, "candidate_geometry_actions", False))
+            else None
+        )
+        self._scheduled_session_closes = dict(scheduled_session_closes or {})
+        self._session_start = str(session_start)
         self._trade_setup_mask_key = "trade_setup_mask"
         self._trade_setup_candidate_ids: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
         self._trade_setup_feature_indices: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)

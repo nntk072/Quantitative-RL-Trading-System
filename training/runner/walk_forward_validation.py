@@ -202,6 +202,8 @@ def run_walk_forward_validation(
             strategy=strategy_from_cfg(cfg)[0],
             strategy_actions=bool(cfg.env.get("strategy_actions", False)),
             trade_setup_actions=bool(cfg.env.get("trade_setup_actions", False)),
+            candidate_geometry_actions=bool(cfg.env.get("candidate_geometry_actions", False)),
+            agent_entry_execution=bool(cfg.env.get("agent_entry_execution", False)),
             entry_state_machine=bool(cfg.env.get("entry_state_machine", False)),
             candidate_max_age_bars=int(cfg.env.get("candidate_max_age_bars", 5)),
             arm_requires_retest=bool(cfg.env.get("arm_requires_retest", False)),

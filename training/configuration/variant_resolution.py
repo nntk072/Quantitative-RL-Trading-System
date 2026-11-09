@@ -46,6 +46,7 @@ LADDER_FLAGS: tuple[str, ...] = (
     "agent_direction_control",
     "strategy_actions",
     "trade_setup_actions",
+    "candidate_geometry_actions",
     "agent_entry_execution",
     "arm_requires_retest",
     "candidate_max_age_bars",
@@ -210,6 +211,7 @@ def resolve_variant(
         matches[0].get("strategy_actions", declared.get("strategy_actions", False))
     )
     trade_setup_actions = bool(declared.get("trade_setup_actions", False))
+    candidate_geometry_actions = bool(declared.get("candidate_geometry_actions", False))
     agent_entry_execution = bool(declared.get("agent_entry_execution", False))
 
     def configured_flag(key: str, fallback: bool) -> bool:
@@ -240,6 +242,12 @@ def resolve_variant(
         raise VariantError(f"{name}: trade_setup_actions requires strategy_actions=true")
     if agent_entry_execution and not trade_setup_actions:
         raise VariantError(f"{name}: agent_entry_execution requires trade_setup_actions=true")
+    if candidate_geometry_actions and not trade_setup_actions:
+        raise VariantError(f"{name}: candidate_geometry_actions requires trade_setup_actions=true")
+    if candidate_geometry_actions and not agent_entry_execution:
+        raise VariantError(
+            f"{name}: candidate_geometry_actions requires agent_entry_execution=true"
+        )
     include_pd = bool(declared.get("include_pd_context", False))
     full_po3 = strategy != "baseline" or strategy_actions
     base_config = FULL_PO3_BASE if full_po3 else DEFAULT_BASE
@@ -294,10 +302,27 @@ def resolve_variant(
         if policy_distribution not in {
             "trade_setup_hybrid_v1",
             "trade_setup_conditioned_v1",
+            "trade_setup_candidate_geometry_v1",
         }:
             raise VariantError(
                 f"{name}: trade_setup_actions requires ppo.policy_distribution to be "
-                "'trade_setup_hybrid_v1' or 'trade_setup_conditioned_v1'"
+                "a supported masked setup distribution"
+            )
+        if (
+            candidate_geometry_actions
+            and policy_distribution != "trade_setup_candidate_geometry_v1"
+        ):
+            raise VariantError(
+                f"{name}: candidate_geometry_actions requires "
+                "ppo.policy_distribution=trade_setup_candidate_geometry_v1"
+            )
+        if (
+            not candidate_geometry_actions
+            and policy_distribution == "trade_setup_candidate_geometry_v1"
+        ):
+            raise VariantError(
+                f"{name}: trade_setup_candidate_geometry_v1 requires "
+                "env.candidate_geometry_actions=true"
             )
         if not distribution_values:
             overrides.append("ppo.policy_distribution=trade_setup_hybrid_v1")
@@ -311,6 +336,7 @@ def resolve_variant(
         "strategy": strategy,
         "strategy_actions": strategy_actions,
         "trade_setup_actions": trade_setup_actions,
+        "candidate_geometry_actions": candidate_geometry_actions,
         "agent_entry_execution": agent_entry_execution,
         "policy_distribution": (
             distribution_values[-1]
@@ -383,6 +409,7 @@ def consistency_table(names: list[str], **kwargs: Any) -> list[dict[str, Any]]:
                     "strategy",
                     "strategy_actions",
                     "trade_setup_actions",
+                    "candidate_geometry_actions",
                     "agent_entry_execution",
                     "policy_distribution",
                     "reward_mode",

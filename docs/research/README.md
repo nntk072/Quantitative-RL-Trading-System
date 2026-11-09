@@ -39,6 +39,10 @@ explicit; it is not a release verdict.
 
 Training throughput is an engineering measurement, not trading performance. See [GH200 throughput audit](gh200_throughput_audit) for measured rates, hardware conditions, and bottlenecks.
 
+The [candidate-geometry feature contract](candidate_geometry_feature_contract)
+defines the causal formula, unit, source, decision-time availability, and
+missingness behavior for every model-facing geometry feature.
+
 ## Methods and claim boundaries
 
 - [Result identity and evidence](result_identity_and_evidence): versioned
@@ -63,6 +67,7 @@ selected_policy_trade_lifecycle
 entry_idea_opportunity_counts
 multitimeframe_data_alignment
 feature_causality_and_availability
+candidate_geometry_feature_contract
 model_observation_and_action_semantics
 mt5_ftmo_execution_fidelity
 quote_coverage_sensitivity

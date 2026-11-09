@@ -6,10 +6,12 @@ import pytest
 from gymnasium import spaces
 
 from decisioning.trade_setup import (
+    CANDIDATE_GEOMETRY_FEATURE_NAMES,
     NO_TRADE_ID,
     TRADE_SETUP_CATEGORY_COUNT,
     TRADE_SETUP_OBSERVATION_VERSION,
     TradeSetupActionSchema,
+    candidate_geometry_slot_count,
     trade_setup_candidate,
     trade_setup_candidate_id,
     trade_setup_center,
@@ -75,6 +77,38 @@ def test_trade_setup_observation_mask_is_exact_and_optional() -> None:
     assert isinstance(env_without_trade_setup.observation_space, spaces.Dict)
     assert "trade_setup_mask" not in env_without_trade_setup.observation_space
     assert env_without_trade_setup.trade_setup_observation_schema is None
+
+
+def test_candidate_geometry_is_wired_into_real_environment_observations() -> None:
+    bars, features = _features_with_trade_setup_columns()
+    close_date = bars.index[50].date().isoformat()
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=10,
+        strategy_actions=True,
+        trade_setup_actions=True,
+        candidate_geometry_actions=True,
+        agent_entry_execution=True,
+        scheduled_session_closes={close_date: "23:59"},
+        session_start="00:00",
+    )
+    env.step_idx = 50
+
+    observation = env._get_observation()
+
+    count = candidate_geometry_slot_count()
+    assert observation["candidate_ids"].shape == (count,)
+    assert observation["candidate_features"].shape == (
+        count,
+        len(CANDIDATE_GEOMETRY_FEATURE_NAMES),
+    )
+    assert observation["candidate_mask"].dtype == np.bool_
+    assert observation["candidate_mask"][0]
+    assert isinstance(env.observation_space, spaces.Dict)
+    candidate_mask_space = env.observation_space.spaces["candidate_mask"]
+    assert isinstance(candidate_mask_space, spaces.Box)
+    assert candidate_mask_space.dtype == np.bool_
 
 
 def test_step_returns_candidate_mask_for_next_decision_row() -> None:

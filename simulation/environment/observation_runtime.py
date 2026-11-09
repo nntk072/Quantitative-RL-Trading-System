@@ -207,6 +207,10 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             obs["regime"] = np.nan_to_num(raw_regime, nan=0.0, posinf=0.0, neginf=0.0)
         if self.trade_setup_actions:
             obs[self._trade_setup_mask_key] = self._trade_setup_mask_for_step()
+        if bool(getattr(self, "candidate_geometry_actions", False)):
+            from .candidate_geometry_observation import build_candidate_geometry_observation
+
+            obs.update(build_candidate_geometry_observation(self))
         if self.mtf:
             decision = int(self.step_idx)
             for key, _, seq_key in HTF_BRANCHES:

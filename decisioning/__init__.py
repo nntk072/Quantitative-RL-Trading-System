@@ -62,6 +62,7 @@ from decisioning.trade_setup import (
     trade_setup_center,
     trade_setup_id_from_box,
     trade_setup_observation_schema,
+    validate_candidate_geometry_observation_schema,
     validate_trade_setup_observation_schema,
 )
 
@@ -119,5 +120,6 @@ __all__ = [
     "trade_setup_center",
     "trade_setup_id_from_box",
     "trade_setup_observation_schema",
+    "validate_candidate_geometry_observation_schema",
     "validate_trade_setup_observation_schema",
 ]
