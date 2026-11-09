@@ -1,0 +1,10 @@
+{
+  "breach_events": [],
+  "completed_data_split": true,
+  "episode_end_reason": "data_end_survived",
+  "exposure_bars": 0,
+  "exposure_fraction": 0.0,
+  "n_breach_sessions": 0,
+  "n_sessions": 259,
+  "n_steps": 99492
+}

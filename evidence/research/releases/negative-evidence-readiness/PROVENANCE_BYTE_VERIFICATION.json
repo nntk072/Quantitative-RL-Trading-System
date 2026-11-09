@@ -1186,8 +1186,8 @@
       "id": "source_file:f8ff94b95e4f1da31efc",
       "kind": "source_file",
       "path": "config/experiments.yaml",
-      "sha256": "264e2de42d9759db5f898e6038714392e231e927ed787ef92b4d00183bb6f0d3",
-      "size_bytes": 18744,
+      "sha256": "21a0584cc5bf99a865831f67453d804010b8e7a81799dcf528e5a15f36aa1929",
+      "size_bytes": 19899,
       "status": "historical_source_unavailable"
     }
   ],
@@ -1615,5 +1615,5 @@
   "source_snapshot_embedded_uncompressed_bytes": 182907747,
   "status": "incomplete",
   "verifier_path": "scripts/research/analysis/evidence/verify_research_provenance_bytes.py",
-  "verifier_sha256": "58b8d7b6f68f1b8d01d12482c685221ca6d84efd250da1d5df1818384b3448aa"
+  "verifier_sha256": "57520efe9f2534fc3593c0da52a9f2da69dd1864e6dcc1bee378b282e2a144be"
 }

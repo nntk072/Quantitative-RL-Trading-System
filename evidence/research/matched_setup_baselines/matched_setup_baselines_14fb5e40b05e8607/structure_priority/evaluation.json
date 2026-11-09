@@ -1,0 +1,22 @@
+{
+  "breach_events": [
+    {
+      "daily_loss": 6218.8089999999775,
+      "detection_time": "2024-12-30T19:29:00+03:00",
+      "equity": 94992.885,
+      "fill_time": "2024-12-30T16:29:00.083000+00:00",
+      "reason": "daily_loss",
+      "schema_version": "risk-breach-event-v1",
+      "session_id": 0,
+      "time": "2024-12-30T19:28:00+03:00",
+      "trade_event_count": 243
+    }
+  ],
+  "completed_data_split": false,
+  "episode_end_reason": "risk_breach",
+  "exposure_bars": 136,
+  "exposure_fraction": 0.7597765363128491,
+  "n_breach_sessions": 1,
+  "n_sessions": 1,
+  "n_steps": 179
+}
