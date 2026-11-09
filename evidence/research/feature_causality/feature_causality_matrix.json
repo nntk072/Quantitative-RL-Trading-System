@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
   "function_inventory_scope": "public top-level functions under features/ plus upstream time/session transforms; scope review required",
-  "public_feature_function_count": 97,
+  "public_feature_function_count": 99,
   "upstream_time_session_function_count": 11,
   "setup_entry_idea_flag_count": 108,
   "supported_setup_entry_idea_flag_count": 24,
-  "reviewed_function_metadata_count": 108,
+  "reviewed_function_metadata_count": 110,
   "unassessed_function_metadata_count": 0,
   "reviewed_setup_flag_output_availability_count": 108,
   "unassessed_setup_flag_source_event_count": 0,
@@ -24,7 +24,7 @@
   "adjacent_active_identity_changes": 13758,
   "distinct_ids_reused_across_active_episodes": 5719,
   "row_weighted_identity_coverage_fraction": 1.0,
-  "matrix_row_count": 216,
+  "matrix_row_count": 218,
   "acceptance_status": "incomplete; event cardinality and configurations outside selected checks remain open",
-  "matrix_sha256": "7c2b8488f80acff954d2b13fc5a5617bd20bc780ddd39662c7a3a30c841b6e58"
+  "matrix_sha256": "922cebca5f4fe03148a1291327183c96a2c4c16038f0f87c88aab2a6c10c67c7"
 }

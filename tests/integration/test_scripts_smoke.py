@@ -220,15 +220,12 @@ class TestTrainingScriptSmoke:
             str(out),
         ]
 
-        # Act
-        compare_encoders_main()
+        # Act / Assert: direct architecture training is intentionally disabled because it
+        # bypasses the survival-first qualification workflow.
+        with pytest.raises(SystemExit, match="bypasses survival-first qualification"):
+            compare_encoders_main()
 
-        # Assert
-        report = json.loads(out.read_text())
-        assert "gru" in report
-        assert np.isfinite(report["gru"]["out_of_sample"]["sharpe"])
-        assert report["_meta"]["architecture_selection_authority"] is False
-        assert report["_meta"]["held_out_role"] == "descriptive_only"
+        assert not out.exists()
 
 
 def test_smoke_fixture_spans_default_split(tmp_path: Path) -> None:

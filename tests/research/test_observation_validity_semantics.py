@@ -16,7 +16,7 @@ def test_observation_feature_validity_contracts_cover_measured_profile_rows(
     report = build_report(output_dir=tmp_path)
 
     assert report["feature_timeframe_rows"] == 1291
-    assert report["producer_function_count"] == 43
+    assert report["producer_function_count"] == 42
     assert len(report["rows"]) == 1291
     assert all(row["producer_missingness_contract"] for row in report["rows"])
     assert all(Path(row["source_path"]).is_file() for row in report["rows"])

@@ -19,11 +19,11 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags() -> None:
     flag_rows = [row for row in rows if row["record_type"] == "setup_entry_idea_flag"]
 
     assert summary["schema_version"] == 2
-    assert summary["public_feature_function_count"] == 97
+    assert summary["public_feature_function_count"] == 99
     assert summary["upstream_time_session_function_count"] == 11
     assert summary["setup_entry_idea_flag_count"] == 108
     assert summary["supported_setup_entry_idea_flag_count"] == 24
-    assert len(function_rows) == 97
+    assert len(function_rows) == 99
     assert len(upstream_rows) == 11
     assert len(flag_rows) == 108
     assert len({row["feature_or_flag"] for row in flag_rows}) == 108
@@ -146,13 +146,15 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags() -> None:
         ("market_data/transforms/sessions.py", "add_session_id"),
         ("market_data/transforms/session_schedule.py", "scheduled_session_close_map"),
         ("market_data/transforms/align.py", "align_timeframes"),
+        ("features/pipeline/normalization.py", "fit_rolling_zscore_state"),
+        ("features/pipeline/normalization.py", "apply_rolling_zscore_state"),
         ("features/pipeline/normalization.py", "rolling_zscore"),
         ("market_data/transforms/align.py", "timeframe_close_times"),
         ("market_data/transforms/align.py", "join_symbols"),
         ("market_data/transforms/resample.py", "resample"),
         ("market_data/transforms/resample.py", "build_all_timeframes"),
     }
-    assert summary["reviewed_function_metadata_count"] == 108
+    assert summary["reviewed_function_metadata_count"] == 110
     assert summary["unassessed_function_metadata_count"] == 0
     reachability_adapter = reviewed[("features/context/reachability.py", "attach_reachable_r")]
     assert "optional reachable_r_valid" in reachability_adapter["output_features"]

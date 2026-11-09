@@ -152,7 +152,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L32)
+1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L34)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -216,7 +216,7 @@ def load_config(
 
 **Observed usage:**
 
-1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L35)
+1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L37)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

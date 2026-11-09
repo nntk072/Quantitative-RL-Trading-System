@@ -330,6 +330,12 @@ def verify_split(
     metrics_report = _read_json(split_dir / "metrics.json")
     diagnostics = _read_json(split_dir / "evaluation_diagnostics.json")
     session_activity = _read_json(split_dir / "session_activity.json")
+    breach_event_ledger_supplied = diagnostics.get("breach_event_ledger_supplied")
+    if not isinstance(breach_event_ledger_supplied, bool):
+        errors.append(f"{split_dir.name}: breach_event_ledger_supplied must be a boolean")
+    breach_events_for_reconciliation = (
+        breach_events if breach_event_ledger_supplied is True else None
+    )
     account_trace_path = split_dir / "account_state_trace.csv"
     trace_complete = diagnostics.get("account_state_trace_complete") is True
     if trace_complete and not account_trace_path.is_file():
@@ -353,8 +359,8 @@ def verify_split(
             reported_account_reconciliation = _read_json(account_reconciliation_path)
             recomputed_account_reconciliation = reconcile_account_state_trace(
                 account_trace,
-                pd.read_csv(split_dir / "trades.csv"),
-                breach_events=pd.read_csv(split_dir / "breach_events.csv"),
+                trades,
+                breach_events=breach_events_for_reconciliation,
             )
             if not _same_report_value(
                 reported_account_reconciliation, recomputed_account_reconciliation
@@ -363,8 +369,21 @@ def verify_split(
                     f"{split_dir.name}: account state reconciliation does not reproduce "
                     "from exported trace and trade events"
                 )
-            if recomputed_account_reconciliation.get("status") != "matched":
-                errors.append(f"{split_dir.name}: account state reconciliation is not matched")
+            reconciliation_status = recomputed_account_reconciliation.get("status")
+            if breach_event_ledger_supplied is True:
+                if reconciliation_status != "matched":
+                    errors.append(f"{split_dir.name}: account state reconciliation is not matched")
+            elif breach_event_ledger_supplied is False:
+                incomplete_reasons = recomputed_account_reconciliation.get("incomplete_reasons", [])
+                if (
+                    reconciliation_status != "incomplete"
+                    or not isinstance(incomplete_reasons, list)
+                    or "breach_event_ledger_not_supplied" not in incomplete_reasons
+                ):
+                    errors.append(
+                        f"{split_dir.name}: account reconciliation does not preserve missing "
+                        "breach-event provenance"
+                    )
             expected_checks = recomputed_account_reconciliation.get("checks", {})
             expected_check_count = (
                 sum(expected_checks.values()) if isinstance(expected_checks, dict) else -1
@@ -403,6 +422,7 @@ def verify_split(
         "exposure_measure",
         "n_sessions",
         "n_breach_sessions",
+        "breach_event_ledger_supplied",
         "survived_full_year",
         "completed_data_split",
         "episode_end_reason",
@@ -477,7 +497,12 @@ def verify_split(
         "fill_time",
     ]:
         errors.append(f"{split_dir.name}: breach_events.csv has an unexpected schema")
-    elif not breach_events.empty:
+    elif breach_event_ledger_supplied is False and not breach_events.empty:
+        errors.append(
+            f"{split_dir.name}: breach_events.csv contains rows although no breach-event ledger "
+            "was supplied"
+        )
+    elif breach_event_ledger_supplied is True and not breach_events.empty:
         if breach_events["session_id"].isna().any():
             errors.append(f"{split_dir.name}: breach event is missing session_id")
         if (
@@ -498,15 +523,16 @@ def verify_split(
         expected_fail_time = str(hard_events.iloc[0]["time"]) if not hard_events.empty else None
         if diagnostics["fail_time"] != expected_fail_time:
             errors.append(f"{split_dir.name}: fail_time differs from first hard breach event")
-    else:
+    elif breach_event_ledger_supplied is True:
         hard_events = breach_events
-    expected_survival = hard_events.empty and diagnostics["completed_data_split"]
-    if diagnostics["survived_full_year"] != expected_survival:
-        errors.append(
-            f"{split_dir.name}: survival flag disagrees with breach events and split completion"
-        )
-    if (diagnostics["fail_time"] is None) != hard_events.empty:
-        errors.append(f"{split_dir.name}: fail_time presence disagrees with hard breach events")
+    if breach_event_ledger_supplied is True:
+        expected_survival = hard_events.empty and diagnostics["completed_data_split"]
+        if diagnostics["survived_full_year"] != expected_survival:
+            errors.append(
+                f"{split_dir.name}: survival flag disagrees with breach events and split completion"
+            )
+        if (diagnostics["fail_time"] is None) != hard_events.empty:
+            errors.append(f"{split_dir.name}: fail_time presence disagrees with hard breach events")
     action_counts = diagnostics["action_counts"]
     if not isinstance(action_counts, dict) or any(
         not isinstance(key, str) or not _is_nonnegative_int(count)
@@ -519,7 +545,9 @@ def verify_split(
     if errors:
         return errors
 
-    if int(breach_events["session_id"].nunique()) != diagnostics["n_breach_sessions"]:
+    if breach_event_ledger_supplied is True and (
+        int(breach_events["session_id"].nunique()) != diagnostics["n_breach_sessions"]
+    ):
         errors.append(f"{split_dir.name}: breach-session count does not match breach_events.csv")
     for key in (
         "n_sessions",
@@ -710,11 +738,19 @@ def verify_split(
         equity,
         trades=trades,
         n_sessions=int(diagnostics.get("n_sessions", 0)),
-        n_breach_sessions=int(diagnostics.get("n_breach_sessions", 0)),
+        n_breach_sessions=(
+            int(diagnostics.get("n_breach_sessions", 0))
+            if breach_event_ledger_supplied is True
+            else None
+        ),
         initial_balance=initial_balance,
         periods_per_year=periods_per_year,
         account_state_trace=account_trace,
-        breach_events=cast(Sequence[Mapping[str, Any]], breach_events.to_dict(orient="records")),
+        breach_events=(
+            cast(Sequence[Mapping[str, Any]], breach_events.to_dict(orient="records"))
+            if breach_events_for_reconciliation is not None
+            else None
+        ),
         completed_data_split=(
             diagnostics.get("completed_data_split")
             if isinstance(diagnostics.get("completed_data_split"), bool)
@@ -782,6 +818,15 @@ def verify_split(
         "breach_rate_availability",
     }
     for key, expected_metric in expected_metrics.items():
+        if recomputed.n_trades == 0 and key in {
+            "profit_factor",
+            "win_rate",
+            "expectancy",
+            "avg_trade",
+        }:
+            # metrics.json intentionally serializes trade-only statistics as
+            # unavailable when there are no completed positions.
+            expected_metric = None
         if metric_version == "qrl.performance_metrics.v2" and key in v3_path_fields:
             continue
         if metric_version in historical_metric_versions and key in v4_path_fields:
@@ -799,6 +844,8 @@ def verify_split(
                 errors.append(f"{split_dir.name}: metrics.json missing {key}")
         elif (
             key == "profit_factor"
+            and isinstance(expected_metric, (int, float))
+            and not isinstance(expected_metric, bool)
             and math.isinf(float(expected_metric))
             and metrics_report[key] is None
             and isinstance(metrics_report.get("metric_availability"), dict)

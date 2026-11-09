@@ -2,11 +2,6 @@ FROM python:3.12-slim AS builder
 
 ARG TORCH_DEVICE=cpu
 
-COPY zscaler.crt /usr/local/share/ca-certificates/zscaler.crt
-RUN update-ca-certificates \
-    && sed -i 's|http://|https://|g' /etc/apt/sources.list.d/*.sources 2>/dev/null || true \
-    && sed -i 's|http://|https://|g' /etc/apt/sources.list 2>/dev/null || true
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
@@ -23,7 +18,7 @@ WORKDIR /build
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-RUN curl -k -fsSL https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-src.tar.gz \
+RUN curl -fsSL https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-src.tar.gz \
     | tar -xz -C /tmp \
     && cd /tmp/ta-lib-0.6.4 \
     && ./configure --prefix=/usr/local \
@@ -37,11 +32,6 @@ RUN uv sync --frozen --no-dev
 RUN pip install rtk code-review-graph
 
 FROM python:3.12-slim AS runtime
-
-COPY zscaler.crt /usr/local/share/ca-certificates/zscaler.crt
-RUN update-ca-certificates \
-    && sed -i 's|http://|https://|g' /etc/apt/sources.list.d/*.sources 2>/dev/null || true \
-    && sed -i 's|http://|https://|g' /etc/apt/sources.list 2>/dev/null || true
 
 RUN groupadd -g 1001 appgroup && useradd -u 1001 -g appgroup -m -d /app appuser
 

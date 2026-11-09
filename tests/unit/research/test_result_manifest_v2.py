@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from scripts.research.analysis.evidence.verify_result_manifest import (
+    _contained_path,
     validate_result_manifest,
 )
 
@@ -66,4 +67,27 @@ def test_v2_requires_explicit_archive_scope_for_moved_run_outputs() -> None:
 
     errors = validate_result_manifest(manifest, _schema(), repo_root=ROOT)
 
-    assert any("escapes repository root" in error for error in errors)
+    assert any("artifact is missing or not a file" in error for error in errors)
+
+
+def test_archive_scope_resolves_relative_paths_under_sibling_archive(tmp_path: Path) -> None:
+    repo_root = tmp_path / "project"
+    archive_root = tmp_path / "project-research-archive"
+    repo_root.mkdir()
+    archive_root.mkdir()
+
+    resolved = _contained_path(
+        "outputs/run.json",
+        repo_root,
+        research_archive_root=archive_root,
+    )
+
+    assert resolved == (archive_root / "outputs/run.json").resolve()
+    assert (
+        _contained_path(
+            "../outside.json",
+            repo_root,
+            research_archive_root=archive_root,
+        )
+        is None
+    )

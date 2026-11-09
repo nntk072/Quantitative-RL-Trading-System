@@ -47,7 +47,7 @@ This page contains 1 public callable records owned by `trading.account.snapshots
 
 **Observed usage:**
 
-1. [test fixture: `_write_complete_trace_split`](../../../../tests/unit/research/test_numerical_report_verifier.py#L396)
+1. [test fixture: `_write_complete_trace_split`](../../../../tests/unit/research/test_numerical_report_verifier.py#L401)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

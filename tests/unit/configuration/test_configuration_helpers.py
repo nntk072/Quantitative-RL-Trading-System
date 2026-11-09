@@ -22,7 +22,9 @@ def test_configuration_serialization_and_repository_path_helpers(tmp_path) -> No
 
 
 def test_repository_root_accepts_file_anchor() -> None:
-    assert repository_root(__file__).name == "Quantitative-RL-Trading-System"
+    root = repository_root(__file__)
+    assert (root / "pyproject.toml").is_file()
+    assert repository_root(root) == root
 
 
 def test_configuration_overlay_and_override_reject_invalid_roots(tmp_path) -> None:

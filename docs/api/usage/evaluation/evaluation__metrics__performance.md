@@ -114,7 +114,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
   ```text
   equity: Bar-level equity curve (``pd.Series`` or sequence).
-  trades: Trade records (``pd.DataFrame`` with a ``pnl`` column) or None.
+  trades: Trade records or lifecycle event ledger (typically a ``pd.DataFrame``), or None.
   n_sessions: Number of trading sessions, for ``breach_rate``.
   n_breach_sessions: Sessions in which a guardrail breach occurred.
   periods_per_year: Bars per year for annualisation.  Defaults to M1
@@ -546,7 +546,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
   ```text
   equity: Bar-level equity curve (``pd.Series`` or sequence).
-  trades: Trade records (``pd.DataFrame`` with a ``pnl`` column) or None.
+  trades: Trade records or lifecycle event ledger (typically a ``pd.DataFrame``), or None.
   n_sessions: Number of trading sessions, for ``breach_rate``.
   n_breach_sessions: Sessions in which a guardrail breach occurred.
   periods_per_year: Bars per year for annualisation.  Defaults to M1

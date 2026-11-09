@@ -76,17 +76,12 @@ def _contained_path(
     if relative.is_absolute():
         return None
     root = repo_root.resolve()
-    path = (root / relative).resolve()
+    base = research_archive_root.resolve() if research_archive_root is not None else root
+    path = (base / relative).resolve()
     try:
-        path.relative_to(root)
+        path.relative_to(base)
     except ValueError:
-        if research_archive_root is None:
-            return None
-        archive_root = research_archive_root.resolve()
-        try:
-            path.relative_to(archive_root)
-        except ValueError:
-            return None
+        return None
     return path
 
 
@@ -214,7 +209,17 @@ def validate_result_manifest(
                 research_archive_root=research_archive_root if allow_archive else None,
             )
             if path is None:
-                errors.append(f"artifact path is absolute or escapes repository root: {relative}")
+                scope_name = "research archive" if allow_archive else "repository root"
+                errors.append(f"artifact path is absolute or escapes {scope_name}: {relative}")
+                continue
+            if (
+                allow_archive
+                and research_archive_root is not None
+                and not research_archive_root.is_dir()
+            ):
+                # Archive-scoped artifacts are intentionally external to a clean repository checkout.
+                # Verify their declared hash when the sibling archive is mounted; otherwise preserve
+                # the manifest reference without pretending the bytes were locally rehashed.
                 continue
             if not path.is_file():
                 errors.append(f"artifact is missing or not a file: {relative}")

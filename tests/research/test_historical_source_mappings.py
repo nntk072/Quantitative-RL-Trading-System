@@ -122,24 +122,24 @@ def test_frozen_p6_analysis_source_hashes_remain_verifiable(
 
 
 def test_frozen_paired_seed_source_hash_is_still_verifiable() -> None:
-    manifest_path = (
-        REPOSITORY_ROOT
-        / "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed101_105_train2025_test2026_20261021_scratch1"
-        / "reports/p7_tick_cost_stress_20261022/baseline_5pt/replay1/control_seed101"
-        / "reanalysis_manifest.json"
+    source_record = _historical_source_record("build_p7_paired_seed_payload.py")
+    provenance_dag = json.loads(
+        (
+            REPOSITORY_ROOT
+            / "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json"
+        ).read_text(encoding="utf-8")
     )
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    provenance = manifest["evaluation_provenance"]["source"]
-    historical_relative_path = _historical_source_record("build_p7_paired_seed_payload.py")[
-        "historical_path"
-    ]
-    matching_records = [
-        record for record in provenance["dirty_files"] if record["path"] == historical_relative_path
+    source_nodes = [
+        node
+        for node in provenance_dag["nodes"]
+        if node.get("kind") == "source_file"
+        and node.get("path") == source_record["historical_path"]
     ]
 
-    assert len(matching_records) == 1
-    source_record = _historical_source_record(Path(historical_relative_path).name)
-    assert source_record["sha256"] == matching_records[0]["sha256"]
+    assert len(source_nodes) == 1
+    assert source_nodes[0]["sha256"] == source_record["sha256"]
+    snapshot_path = _recorded_path(source_record["historical_source_snapshot"])
+    assert hashlib.sha256(snapshot_path.read_bytes()).hexdigest() == source_record["sha256"]
 
 
 @pytest.mark.parametrize(

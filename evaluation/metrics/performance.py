@@ -825,14 +825,14 @@ def calculate_metrics(
     """Pandas-friendly adapter matching the legacy ``eval.metrics`` signature.
 
     Accepts a ``pd.Series`` (or any sequence) equity curve and an optional
-    ``pd.DataFrame`` of trades with a ``pnl`` column, and delegates to
-    :func:`compute_metrics`.  The initial balance is taken from the first
+    trade/event ledger. Position-aware lifecycle records are reduced to completed-position
+    PnL before delegating to :func:`compute_metrics`. The initial balance is taken from the first
     equity value when ``initial_balance`` is ``None``, matching the legacy
     behaviour of the migrated training runners.
 
     Args:
         equity: Bar-level equity curve (``pd.Series`` or sequence).
-        trades: Trade records (``pd.DataFrame`` with a ``pnl`` column) or None.
+        trades: Trade records or lifecycle event ledger (typically a ``pd.DataFrame``), or None.
         n_sessions: Number of trading sessions, for ``breach_rate``.
         n_breach_sessions: Sessions in which a guardrail breach occurred.
         periods_per_year: Bars per year for annualisation.  Defaults to M1

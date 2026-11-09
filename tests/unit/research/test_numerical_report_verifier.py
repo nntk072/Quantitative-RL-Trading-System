@@ -328,7 +328,7 @@ def test_evaluation_provenance_requires_source_hashes_and_runtime_versions() -> 
     assert any("dirty-source records are malformed" in error for error in errors)
 
 
-def _write_split(tmp_path: Path) -> Path:
+def _write_split(tmp_path: Path, *, breach_events_supplied: bool = True) -> Path:
     equity = pd.Series([100.0, 110.0, 115.0], index=pd.RangeIndex(3))
     trades = pd.DataFrame(
         [
@@ -368,12 +368,17 @@ def _write_split(tmp_path: Path) -> Path:
         "fail_time": None,
         "action_counts": {"hold": 2},
     }
+    if breach_events_supplied:
+        result["breach_events"] = []
     metrics = calculate_metrics(
         equity,
         trades=trades,
         n_sessions=1,
+        n_breach_sessions=0 if breach_events_supplied else None,
         initial_balance=100.0,
         periods_per_year=10,
+        breach_events=[] if breach_events_supplied else None,
+        completed_data_split=True,
     )
     run_dir = save_run(
         run_dir=tmp_path / "report",
@@ -386,7 +391,7 @@ def _write_split(tmp_path: Path) -> Path:
     return run_dir / "training"
 
 
-def _write_complete_trace_split(tmp_path: Path) -> Path:
+def _write_complete_trace_split(tmp_path: Path, *, breach_events_supplied: bool = True) -> Path:
     from trading.account.account_state import AccountState
     from trading.account.snapshots import account_state_snapshot
 
@@ -435,13 +440,17 @@ def _write_complete_trace_split(tmp_path: Path) -> Path:
         "fail_time": None,
         "action_counts": {"hold": 2},
     }
+    if breach_events_supplied:
+        result["breach_events"] = []
     metrics = calculate_metrics(
         equity,
         trades=trades,
         n_sessions=1,
+        n_breach_sessions=0 if breach_events_supplied else None,
         initial_balance=100.0,
         periods_per_year=10,
         account_state_trace=trace,
+        breach_events=[] if breach_events_supplied else None,
         completed_data_split=True,
     )
     run_dir = save_run(
@@ -519,6 +528,34 @@ def test_verify_split_reconciles_exported_raw_artifacts(tmp_path):
         "fill_time",
     ]
     assert breach_events.empty
+
+
+def test_verify_split_preserves_missing_breach_event_provenance(tmp_path: Path) -> None:
+    split_dir = _write_split(tmp_path, breach_events_supplied=False)
+    diagnostics = json.loads(
+        (split_dir / "evaluation_diagnostics.json").read_text(encoding="utf-8")
+    )
+    metrics = json.loads((split_dir / "metrics.json").read_text(encoding="utf-8"))
+
+    assert diagnostics["breach_event_ledger_supplied"] is False
+    assert metrics["breach_rate"] is None
+    assert metrics["metric_availability"]["breach_rate"] == (
+        "distinct_breach_session_count_unavailable"
+    )
+    assert verify_split(split_dir, initial_balance=100.0, periods_per_year=10) == []
+
+
+def test_verify_split_accepts_complete_trace_with_missing_breach_ledger(
+    tmp_path: Path,
+) -> None:
+    split_dir = _write_complete_trace_split(tmp_path, breach_events_supplied=False)
+    reconciliation = json.loads(
+        (split_dir / "account_state_reconciliation.json").read_text(encoding="utf-8")
+    )
+
+    assert reconciliation["status"] == "incomplete"
+    assert "breach_event_ledger_not_supplied" in reconciliation["incomplete_reasons"]
+    assert verify_split(split_dir, initial_balance=100.0, periods_per_year=10) == []
 
 
 def test_verify_split_rejects_false_availability_for_breach_metrics(tmp_path: Path) -> None:
@@ -616,6 +653,7 @@ def test_verify_split_recomputes_cost_decomposition_from_trade_events(tmp_path: 
 
 def test_verify_split_requires_account_reconciliation_for_complete_trace(tmp_path: Path) -> None:
     split_dir = _write_split(tmp_path)
+    (split_dir / "account_state_reconciliation.json").unlink()
     diagnostics_path = split_dir / "evaluation_diagnostics.json"
     diagnostics = json.loads(diagnostics_path.read_text(encoding="utf-8"))
     diagnostics["account_state_trace_complete"] = True

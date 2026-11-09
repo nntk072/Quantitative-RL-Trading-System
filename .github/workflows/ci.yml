@@ -72,7 +72,7 @@ jobs:
       - name: Install graph analyzer
         run: |
           uv tool install code-review-graph==2.3.9
-          echo "$(uv tool dir --bin)" >> "$GITHUB_PATH"
+          uv tool dir --bin >> "$GITHUB_PATH"
       - run: ./tools/check graph-quality
 
   contracts:

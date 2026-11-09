@@ -163,7 +163,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_smoke_fixture_spans_default_split`](../../../../tests/integration/test_scripts_smoke.py#L240)
+1. [test fixture: `test_smoke_fixture_spans_default_split`](../../../../tests/integration/test_scripts_smoke.py#L237)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -487,7 +487,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_smoke_fixture_spans_default_split`](../../../../tests/integration/test_scripts_smoke.py#L240)
+1. [test fixture: `test_smoke_fixture_spans_default_split`](../../../../tests/integration/test_scripts_smoke.py#L237)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

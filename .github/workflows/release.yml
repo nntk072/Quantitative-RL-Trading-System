@@ -28,7 +28,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
       - name: Sync deps
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra docs
       - name: Validate with canonical repository gates
         run: ./tools/check full
 
@@ -45,18 +45,43 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Prepare image coordinates
+        id: image
+        shell: bash
+        run: |
+          repository="${GITHUB_REPOSITORY,,}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME}"
+          else
+            version="sha-${GITHUB_SHA::12}"
+          fi
+          {
+            echo "runtime_tags<<EOF"
+            echo "ghcr.io/${repository}:${version}"
+            if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+              echo "ghcr.io/${repository}:latest"
+            fi
+            echo "EOF"
+            echo "dev_tags<<EOF"
+            echo "ghcr.io/${repository}:dev-${version}"
+            if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+              echo "ghcr.io/${repository}:dev-latest"
+            fi
+            echo "EOF"
+            echo "test_tags<<EOF"
+            echo "ghcr.io/${repository}:test-${version}"
+            if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+              echo "ghcr.io/${repository}:test-latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
       - name: Build and push base image
         uses: docker/build-push-action@v5
         with:
           context: .
           target: runtime
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.VERSION }}
+          tags: ${{ steps.image.outputs.runtime_tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Build and push dev image
@@ -65,9 +90,7 @@ jobs:
           context: .
           target: dev
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:dev-latest
-            ghcr.io/${{ github.repository }}:dev-${{ steps.version.outputs.VERSION }}
+          tags: ${{ steps.image.outputs.dev_tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Build and push test image
@@ -76,9 +99,7 @@ jobs:
           context: .
           target: test
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:test-latest
-            ghcr.io/${{ github.repository }}:test-${{ steps.version.outputs.VERSION }}
+          tags: ${{ steps.image.outputs.test_tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

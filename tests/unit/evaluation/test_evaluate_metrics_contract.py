@@ -8,8 +8,8 @@ point the run is already long and the operator has lost time.
 
 This test pins the contract:
 
-- ``evaluate_model`` returns a ``trades`` DataFrame with a ``"pnl"`` column
-  (consumed by ``calculate_metrics``).
+- ``evaluate_model`` returns an auditable trade/event ledger DataFrame.
+  ``calculate_metrics`` accepts lifecycle rows and extracts completed-position PnL.
 - It returns an ``equity`` object with ``.to_numpy()`` (a ``pd.Series``) so
   the metrics layer can convert to a float array.
 - The first equity value is positive (the metrics layer raises
@@ -118,14 +118,11 @@ def test_evaluate_model_output_satisfies_metrics_contract() -> None:
     assert eq.size > 0
     assert eq[0] > 0, "initial equity must be positive (calculate_metrics rejects <= 0)"
 
-    # --- Contract: trades DataFrame has a 'pnl' column ---
+    # --- Contract: trades is the auditable lifecycle event ledger ---
     trades = result["trades"]
     assert isinstance(trades, pd.DataFrame)
     if len(trades) > 0:
-        assert "pnl" in trades.columns, (
-            "calculate_metrics reads trades['pnl'] — a missing column "
-            "crashes the metrics layer. columns=" + str(trades.columns.tolist())
-        )
+        assert "type" in trades.columns
 
     # --- Contract: session-count keys are present (train_rl.py uses them) ---
     for key in ("n_sessions", "n_breach_sessions"):
