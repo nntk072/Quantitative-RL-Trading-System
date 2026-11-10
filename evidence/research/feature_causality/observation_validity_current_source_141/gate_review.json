@@ -1,0 +1,144 @@
+{
+  "crosswalk": {
+    "feature_timeframe_rows": 1293,
+    "measured_missingness_classes": {
+      "interior_missing_values_observed": 207,
+      "leading_missing_values_only": 463,
+      "no_missing_values_observed": 621,
+      "unavailable_in_every_profile_group": 2
+    },
+    "producer_function_count": 42
+  },
+  "evidence": [
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/observation_warmup_validity_all_profiles.json",
+      "sha256": "6ad01d9c9581acbd1d468a927285495a766fa9d8ad9e675622722e33f079e217"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/run_plan.json",
+      "sha256": "75c3a42d8c71cd8e9e9f94f4ae5675a6281ab62a6641b6285de7ae26df153b4e"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/column_warmup_all_profiles.csv",
+      "sha256": "1c8699f51db8f403ea8cb8c9b79fab11a28e970f48f9937038cbed04644aa888"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/README.md",
+      "sha256": "e4433fac15c96e3fef4cb997fc9c39331c69775f25d9925b9efeca0040e8c819"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/ARCHIVE.md",
+      "sha256": "9bafabda9c674c251c9dffc187f7adc1de5b4ef8e424e6dfb8800632c84b63b3"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/RAW_RUN_SHA256SUMS.txt",
+      "sha256": "5e91cfab829f1248ea1fff152ccc17153ebd81980861da89f54dc9990ed285a3"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/audit_launcher.log",
+      "sha256": "436d9ee364a580a41cce40ed3a702c889b58b760c26bc5e86c729326b97c5220"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/audit_launcher.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/crosswalk_first_attempt_fail_closed.log",
+      "sha256": "dc69cbbde2a60133b31d853fc58d8352b00fcb7fdc33dbd0adb20a943c562d43"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/crosswalk_refresh.log",
+      "sha256": "f9d33ac76f77d2843eb00f95dd16cd7d42b8cdf0a12bd82d4ea85fec1fa0fa7e"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/crosswalk_refresh_results.json",
+      "sha256": "f3738f1fdd9fcde75d9e7322476659b73072da73d0cca61cdf20086ed44a5fe0"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/targeted_tests.log",
+      "sha256": "e6f886b823b39f56ed8c3012b0b43e6c4c49aeb10132ef938044a77db4cc6693"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/targeted_test_results.json",
+      "sha256": "8813171d43d8bf63e65b3587be8c3dd5a75fb32802d8cd00e216864b43ef8b2b"
+    },
+    {
+      "path": "evidence/research/feature_causality/feature_configuration_inventory.json",
+      "sha256": "555e9814a0114cff7f9733b6dcf7dcae076ab785a19d8a4fb203b501a7c3f541"
+    },
+    {
+      "path": "evidence/research/feature_causality/feature_causality_matrix.csv",
+      "sha256": "922cebca5f4fe03148a1291327183c96a2c4c16038f0f87c88aab2a6c10c67c7"
+    },
+    {
+      "path": "evidence/research/feature_causality/feature_causality_matrix.json",
+      "sha256": "2d4f2e4fd39215d5fc5529db2343407b81f341594a89fc0ada558fcb5d8374b4"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_priorities_current_source_141/feature_validity_priorities.csv",
+      "sha256": "dd7642c84fd45c99dd28fe3f4e47c657fc8f9da8af972b90ccab60645c0514fa"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_priorities_current_source_141/feature_validity_priorities.json",
+      "sha256": "b920f320f02a5a3f2935dca9f86fa9ccf96c0447608dd7d088356fa31191d2de"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_semantics_current_source_141/observation_validity_semantics.csv",
+      "sha256": "0ca7ca36ad2abf63a5a38eff79735eb20e4b41d3d100412b2fc12d12d6d6d8ba"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_semantics_current_source_141/observation_validity_semantics.json",
+      "sha256": "10f008dc0481b5111c5f51ff65edbae53fefad0bcf431816963bcce569fbdbca"
+    },
+    {
+      "path": "scripts/research/analysis/features/reconcile_observation_validity_semantics.py",
+      "sha256": "6f7d54627e018693593efad91812bfdc6cc07d8a1e198a7d4b9accf6dc84d4af"
+    },
+    {
+      "path": "tests/research/test_observation_validity_semantics.py",
+      "sha256": "8e7dcfd6fd4e7edf70a6e54dc674fa81b3ce70f2bd51b066e33f7407edd551b4"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/reachability_validity_runtime_tests.log",
+      "sha256": "69965f6f4ad1232cb38d20117390baa2ec5f0b5a2895f75888e1604f7c0f0a6a"
+    },
+    {
+      "path": "evidence/research/feature_causality/observation_validity_current_source_141/reachability_validity_runtime_tests.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    }
+  ],
+  "focused_tests": {
+    "candidate_geometry_contract": "27 passed",
+    "inventory_causality_crosswalk": "7 passed",
+    "reachability_validity_runtime": "12 passed"
+  },
+  "gate_id": "all_profile_observation_validity_inventory_141",
+  "note": "The audit measured configured training observations for all 141 runtime profiles grouped into 28 effective contracts. It is feature-validity evidence only, not learned-policy or economic evidence. The initial producer crosswalk correctly failed closed on reachable_r_valid; the missing opt-in producer mapping was added and covered by focused tests before the successful regenerated crosswalk. No outcomes or exposed report-period rows were used for selection, training, or threshold changes.",
+  "prohibited_states": {
+    "candidate_realized_outcomes_used_as_policy_inputs": false,
+    "exposed_report_period_used_for_selection": false,
+    "preregistered_thresholds_changed_post_hoc": false
+  },
+  "reviewed_at_utc": "2026-11-10T05:11:29Z",
+  "reviewed_by": "Codex",
+  "schema_version": "pretraining-scientific-gate-review-v1",
+  "source_commit": "332ba0f17b4efc6f7b5908f09b6ca2be739d2e63",
+  "sources_unchanged_during_run": true,
+  "status": "pass",
+  "summary": {
+    "completed_group_count": 28,
+    "failed_group_count": 0,
+    "feature_timeframe_rows": 19350,
+    "profile_count": 141,
+    "profile_group_count": 28
+  },
+  "triage": {
+    "all_groups_fully_nonfinite_count": 2,
+    "feature_timeframe_count": 1293,
+    "finite_zero_collision_count": 220,
+    "interior_missing_count": 207,
+    "profile_group_count": 28
+  },
+  "verified_profile_inventory_sha256": "555e9814a0114cff7f9733b6dcf7dcae076ab785a19d8a4fb203b501a7c3f541",
+  "verified_source_file_count": 4
+}

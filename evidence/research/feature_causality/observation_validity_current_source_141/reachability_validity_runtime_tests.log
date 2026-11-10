@@ -1,0 +1,15 @@
+COMMAND: ['/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python', '-m', 'pytest', 'tests/unit/features/test_stage_a_observation.py::test_reachable_r_validity_separates_unknown_from_valid_zero', 'tests/unit/simulation/test_environment/test_bundle_env_equivalence.py::test_bundle_env_step_trace_matches_frames', 'tests/unit/training/test_survival_gate.py::test_survival_qualification_overlay_resolves_to_the_required_training_contract', 'tests/unit/training/test_survival_gate.py::test_survival_phases_require_feature_validity_channels', '-q']
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 12 items
+
+tests/unit/features/test_stage_a_observation.py .                        [  8%]
+tests/unit/simulation/test_environment/test_bundle_env_equivalence.py .. [ 25%]
+......                                                                   [ 75%]
+tests/unit/training/test_survival_gate.py ...                            [100%]
+
+============================== 12 passed in 3.18s ==============================
+RETURN_CODE: 0

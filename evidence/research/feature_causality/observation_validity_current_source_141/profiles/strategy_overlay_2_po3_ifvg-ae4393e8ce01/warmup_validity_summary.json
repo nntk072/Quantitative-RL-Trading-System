@@ -1,0 +1,144 @@
+{
+  "config_path": "strategy_overlay/2_po3_ifvg",
+  "config_sha256": "441d82392874e498322b0d77ef9d555409d7b156e36994034762be31bc3186a8",
+  "limitations": [
+    "This measures feature-level nonfinite and finite-zero overlap; it does not assign every missing value a semantic cause without producer-specific review.",
+    "It is not a learned-policy or economic result.",
+    "A missing value can be an intentional inactive event, source warmup, unavailable market context, or another producer-specific state."
+  ],
+  "mtf_enabled": false,
+  "observation_feature_count": 613,
+  "primary_symbol": "US100.cash",
+  "raw_data_manifest": "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json",
+  "raw_data_manifest_sha256": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
+  "raw_input_scope": "Configured training dataset; run_pipeline and TickBook cache identities are content-derived.",
+  "resolved_config_sha256": "db5f475974e514fa9e7f33e19564dd98917be8c1002df7a2bc92351e4f4b7894",
+  "schema_version": 1,
+  "secondary_symbol": "US500.cash",
+  "semantics": {
+    "finite_zero_collision": "at least one nonfinite value and one genuine finite zero in the same stream feature",
+    "htf_sampling": "one value row at each environment timeframe_starts boundary within the training split",
+    "m1_sampling": "all configured training rows; the environment later clips sequence history to session rows",
+    "nonfinite_values": "remaining unavailable values after feature construction and normalization; the observation constructor converts them to zero",
+    "zero_variance_normalization": "finite values in a fitted zero-variance window normalize to zero; missing fit statistics and missing source values remain nonfinite"
+  },
+  "source_sha256": {
+    "features/context/policy_market.py": "83759b5c7a78470243789539724199766787fcece1ec8e448823c547e3a972b4",
+    "features/context/reachability.py": "e42bda72745e1eb93c7dd1ea7e50c20781af3b4088baa7ceeaa367c6493775f3",
+    "features/pipeline/feature_cache_identity.py": "93f1b2972c5088f447142cfb8538d232e67a34b52f2ccc3429cc6298aa3708ec",
+    "features/pipeline/feature_matrix_builder.py": "7b95591c127b880292a0e3bf3d079ecd1624b0d5a09d59c6cb6d6767922a52fd",
+    "features/pipeline/normalization.py": "aaa62a52abd5cbad905a73a404c6c210a204dcb297b1a99f321668937cce807d",
+    "features/pipeline/schema.py": "38c22525cf0912c430e40870cf0e04236454f24f41a4fd3250d49b6131321c91",
+    "market_data/loading/market_data_ingestion.py": "10ba92be70f1d6111307d369a05dff1dedc4f59d70c44a2661777c6cf12b7e13",
+    "market_data/loading/tick_book_pipeline.py": "466ec8ce8d59b86f599d56e448cd392626c1da7f4c64105cf9efe57d7a320746",
+    "scripts/research/analysis/features/audit_observation_warmup_validity.py": "dbd81f4b44f73bb92f318c37a76696a064df8dd56e85e8158e2ce82afb170d08",
+    "simulation/environment/observation_arrays_initialization.py": "20a65866347a0263b9d194f2b9ace5d28b6920f913bed1c0af12a7d7a0476c3d",
+    "simulation/environment/observation_runtime.py": "5134f6a0d980a8ad080ff3386f0b6cb2ab674346d74b9b54675b6f40dd44a0e0",
+    "simulation/environment/observations.py": "2d957a479732678d924501e92381f921e715c766f2425dc4d4033bdd8f3d1308"
+  },
+  "status": "measured_training_split",
+  "stream_summaries": [
+    {
+      "feature_count": 149,
+      "features_where_missing_collides_with_finite_zero": 33,
+      "features_with_nonfinite_values": 71,
+      "nonfinite_cells": 1978220,
+      "nonfinite_fraction": 0.03777870056028482,
+      "sampled_cells": 52363368,
+      "sampled_rows": 351432,
+      "source_rows": 351432,
+      "timeframe": "M1"
+    },
+    {
+      "feature_count": 58,
+      "features_where_missing_collides_with_finite_zero": 10,
+      "features_with_nonfinite_values": 42,
+      "nonfinite_cells": 388,
+      "nonfinite_fraction": 5.697056941496805e-05,
+      "sampled_cells": 6810534,
+      "sampled_rows": 117423,
+      "source_rows": 117423,
+      "timeframe": "M3"
+    },
+    {
+      "feature_count": 58,
+      "features_where_missing_collides_with_finite_zero": 9,
+      "features_with_nonfinite_values": 41,
+      "nonfinite_cells": 356,
+      "nonfinite_fraction": 8.730184810165074e-05,
+      "sampled_cells": 4077806,
+      "sampled_rows": 70307,
+      "source_rows": 70307,
+      "timeframe": "M5"
+    },
+    {
+      "feature_count": 58,
+      "features_where_missing_collides_with_finite_zero": 11,
+      "features_with_nonfinite_values": 42,
+      "nonfinite_cells": 284,
+      "nonfinite_fraction": 0.0001387478882473699,
+      "sampled_cells": 2046878,
+      "sampled_rows": 35291,
+      "source_rows": 35291,
+      "timeframe": "M10"
+    },
+    {
+      "feature_count": 58,
+      "features_where_missing_collides_with_finite_zero": 10,
+      "features_with_nonfinite_values": 42,
+      "nonfinite_cells": 301,
+      "nonfinite_fraction": 0.00021903748670129545,
+      "sampled_cells": 1374194,
+      "sampled_rows": 23693,
+      "source_rows": 23693,
+      "timeframe": "M15"
+    },
+    {
+      "feature_count": 58,
+      "features_where_missing_collides_with_finite_zero": 8,
+      "features_with_nonfinite_values": 42,
+      "nonfinite_cells": 340,
+      "nonfinite_fraction": 0.0004946476217633314,
+      "sampled_cells": 687358,
+      "sampled_rows": 11851,
+      "source_rows": 11851,
+      "timeframe": "M30"
+    },
+    {
+      "feature_count": 58,
+      "features_where_missing_collides_with_finite_zero": 7,
+      "features_with_nonfinite_values": 42,
+      "nonfinite_cells": 280,
+      "nonfinite_fraction": 0.0008143701428637908,
+      "sampled_cells": 343824,
+      "sampled_rows": 5928,
+      "source_rows": 5928,
+      "timeframe": "H1"
+    },
+    {
+      "feature_count": 58,
+      "features_where_missing_collides_with_finite_zero": 8,
+      "features_with_nonfinite_values": 42,
+      "nonfinite_cells": 283,
+      "nonfinite_fraction": 0.0031459125369616933,
+      "sampled_cells": 89958,
+      "sampled_rows": 1551,
+      "source_rows": 1551,
+      "timeframe": "H4"
+    },
+    {
+      "feature_count": 58,
+      "features_where_missing_collides_with_finite_zero": 6,
+      "features_with_nonfinite_values": 42,
+      "nonfinite_cells": 785,
+      "nonfinite_fraction": 0.05225669018772467,
+      "sampled_cells": 15022,
+      "sampled_rows": 259,
+      "source_rows": 259,
+      "timeframe": "D1"
+    }
+  ],
+  "training_end": "2025-12-31",
+  "training_m1_rows": 351432,
+  "training_start": "2024-12-30"
+}

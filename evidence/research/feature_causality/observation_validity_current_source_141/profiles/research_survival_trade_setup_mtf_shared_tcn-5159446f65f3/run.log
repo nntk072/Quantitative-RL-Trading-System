@@ -1,0 +1,8 @@
+{
+  "group_key": "5159446f65f390d6a484834e5102186f4f5f3be6f39f15b678d553b58c3c9dda",
+  "profile_ids": [
+    "research/survival_trade_setup_mtf_shared_tcn"
+  ],
+  "representative_profile": "research/survival_trade_setup_mtf_shared_tcn",
+  "status": "measured_training_split"
+}

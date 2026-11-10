@@ -1,0 +1,35 @@
+{
+  "suites": [
+    {
+      "name": "inventory-and-causality",
+      "command": [
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/research/test_feature_configuration_inventory.py",
+        "tests/research/test_feature_causality_matrix.py",
+        "tests/research/test_observation_validity_semantics.py",
+        "-q"
+      ],
+      "return_code": 0
+    },
+    {
+      "name": "candidate-geometry-contract",
+      "command": [
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/unit/simulation/test_environment/test_candidate_geometry_observation.py",
+        "tests/unit/simulation/test_environment/test_trade_setup_observation.py",
+        "tests/unit/learning/test_candidate_geometry_policy.py",
+        "tests/unit/learning/test_candidate_geometry_agent.py",
+        "tests/unit/learning/test_candidate_geometry_actor.py",
+        "tests/unit/decisioning/test_candidate_geometry_schema_validation.py",
+        "tests/unit/decisioning/test_candidate_geometry_contract.py",
+        "-q"
+      ],
+      "return_code": 0
+    }
+  ],
+  "complete": true
+}

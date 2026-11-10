@@ -1,0 +1,806 @@
+data:
+  raw_dir: data
+  cache_dir: /tmp/qrl-observation-warmup-cache/b5fac6a0562d1cca8e52c330ec63d3fbb9d8ed9078a437e3f1d810a2d07ecd6b
+  price_discretization:
+    enabled: false
+    increment: 0.25
+    rounding: nearest_half_away_from_zero
+  prebuilt_feature_cache: null
+  session_schedule_file: config/ny_session_schedule.csv
+  tz: Etc/GMT-3
+  timestamp_clock: ftmo_mt5_us_dst
+  bar_timestamp_convention: open
+  require_native_timeframes: true
+  symbols:
+  - US100.cash
+  - US500.cash
+  primary: US100.cash
+  secondary: US500.cash
+  timeframes:
+  - M1
+  - M3
+  - M5
+  - M10
+  - M15
+  - M30
+  - H1
+  - H4
+  - D1
+  derived_timeframes:
+    US100.cash:
+    - D1
+  split:
+    train_start: '2024-12-30'
+    train_end: '2025-12-31'
+    test_start: '2026-01-01'
+  datasets:
+    training:
+      raw_dir: data/training
+      m1_files:
+        US100.cash: US100.cash_M1_202412300105_202610162349.csv
+        US500.cash: US500.cash_M1_202412300105_202610162349.csv
+      timeframe_files:
+        M3:
+          US100.cash: US100.cash_M3_202412300103_202610162348.csv
+          US500.cash: US500.cash_M3_202412300103_202610162348.csv
+        M5:
+          US100.cash: US100.cash_M5_202412300105_202610162345.csv
+          US500.cash: US500.cash_M5_202412300105_202610162345.csv
+        M10:
+          US100.cash: US100.cash_M10_202412300100_202610162340.csv
+          US500.cash: US500.cash_M10_202412300100_202610162340.csv
+        M15:
+          US100.cash: US100.cash_M15_202412300100_202610162345.csv
+          US500.cash: US500.cash_M15_202412300100_202610162345.csv
+        M30:
+          US100.cash: US100.cash_M30_202412300100_202610162330.csv
+          US500.cash: US500.cash_M30_202412300100_202610162330.csv
+        H1:
+          US100.cash: US100.cash_H1_202412300100_202610162300.csv
+          US500.cash: US500.cash_H1_202412300100_202610162300.csv
+        H4:
+          US100.cash: US100.cash_H4_202412300000_202610162000.csv
+          US500.cash: US500.cash_H4_202412300000_202610162000.csv
+        D1:
+          US500.cash: US500.cash_D1_202412300000_202610160000.csv
+      tick_files:
+        US100.cash: US100.cash_202412300105_202610162349.csv
+        US500.cash: US500.cash_202412300105_202610162349.csv
+    testing:
+      raw_dir: data/testing
+      m1_files:
+        US100.cash: US100.cash_M1_202412300105_202610162349.csv
+        US500.cash: US500.cash_M1_202412300105_202610162349.csv
+      timeframe_files:
+        M3:
+          US100.cash: US100.cash_M3_202412300103_202610162348.csv
+          US500.cash: US500.cash_M3_202412300103_202610162348.csv
+        M5:
+          US100.cash: US100.cash_M5_202412300105_202610162345.csv
+          US500.cash: US500.cash_M5_202412300105_202610162345.csv
+        M10:
+          US100.cash: US100.cash_M10_202412300100_202610162340.csv
+          US500.cash: US500.cash_M10_202412300100_202610162340.csv
+        M15:
+          US100.cash: US100.cash_M15_202412300100_202610162345.csv
+          US500.cash: US500.cash_M15_202412300100_202610162345.csv
+        M30:
+          US100.cash: US100.cash_M30_202412300100_202610162330.csv
+          US500.cash: US500.cash_M30_202412300100_202610162330.csv
+        H1:
+          US100.cash: US100.cash_H1_202412300100_202610162300.csv
+          US500.cash: US500.cash_H1_202412300100_202610162300.csv
+        H4:
+          US100.cash: US100.cash_H4_202412300000_202610162000.csv
+          US500.cash: US500.cash_H4_202412300000_202610162000.csv
+        D1:
+          US500.cash: US500.cash_D1_202412300000_202610160000.csv
+      tick_files:
+        US100.cash: US100.cash_202412300105_202610162349.csv
+        US500.cash: US500.cash_202412300105_202610162349.csv
+session:
+  tz: Etc/GMT-3
+  start: '16:30'
+  end: '23:00'
+  dst_flag: true
+account:
+  initial_balance: 100000.0
+  currency: USD
+  leverage: 50
+  margin_pct: 0.02
+  contract_size: 1.0
+evaluation:
+  deterministic: false
+  periods_per_year: 98280
+  annualization_convention: 252 sessions/year x 390 NY-session M1 bars/session
+  trade_idea_plots:
+    po3:
+      enabled: true
+      timeframes:
+      - M1
+      - M3
+      - M5
+      - M10
+      - M15
+      - M30
+      - H1
+      - H4
+      - D1
+      show_manipulation: true
+      show_distribution: true
+      show_fvg: true
+      show_ifvg: true
+    order_block:
+      enabled: true
+      timeframes:
+      - M1
+      - M3
+      - M5
+      - M10
+      - M15
+      - M30
+      - H1
+      - H4
+      - D1
+      show_zone: true
+    fvg_retest:
+      enabled: true
+      timeframes:
+      - M1
+      - M3
+      - M5
+      - M10
+      - M15
+      - M30
+      - H1
+      - H4
+      - D1
+      show_fvg: true
+      show_ifvg: false
+    ifvg_retest:
+      enabled: true
+      timeframes:
+      - M1
+      - M3
+      - M5
+      - M10
+      - M15
+      - M30
+      - H1
+      - H4
+      - D1
+      show_ifvg: true
+    ifvg_unretested:
+      enabled: true
+      timeframes:
+      - M1
+      - M3
+      - M5
+      - M10
+      - M15
+      - M30
+      - H1
+      - H4
+      - D1
+      show_ifvg: true
+    standard_deviation:
+      enabled: true
+      timeframes:
+      - M1
+      - M3
+      - M5
+      - M10
+      - M15
+      - M30
+      - H1
+      - H4
+      - D1
+      levels:
+      - 1.0
+      - 0.786
+      - 0.707
+      - 0.5
+      - 0.0
+      - -0.5
+      - -1.0
+      - -1.5
+      - -2.0
+      - -2.25
+      - -2.5
+      - -3.0
+      - -4.0
+      - -6.0
+      - -8.0
+      max_chart_range_fraction: 0.15
+costs:
+  spread_us100: 0.6
+  spread_us500: 1.53
+  slippage_points: 5.0
+  commission_per_lot: 0.0
+  point_size: 0.01
+  use_tick_execution: true
+execution:
+  fill_delay_ms: 0
+  fill_latency_bars: 0
+  randomized_fill_latency_ms: 0.0
+  max_tick_quote_wait_ms: 60000
+  server_side_protective_orders: false
+  limit_order_max_offset_atr: 1.0
+  limit_order_max_ttl_bars: 60
+  limit_order_require_trade_through: false
+trading_policy:
+  mode: legacy
+  daily_pnl_basis: session_net_equity
+  daily_loss_includes_open_pnl: true
+  daily_loss_reset_source: supplied_session_id_transition
+  repeated_payout:
+    operating_balance: 100000.0
+    payout_target_balance: 110000.0
+    max_loss_limit_initial_pct: 0.1
+    daily_loss_limit_pct: 0.05
+    trailing_dd_limit: 0.0
+    payout_trigger: realized_balance_flat
+    continue_after_payout: true
+    agent_risk_min_frac: 0.0
+    agent_risk_max_frac: 0.009
+    min_agent_risk_frac: null
+    max_agent_risk_frac: null
+    risk_floor: 0.0
+    reserve_cost_buffer_usd: 0.0
+    execution_reserve_usd: null
+    enforce_remaining_daily_capacity: true
+    enforce_remaining_account_capacity: true
+    repeated_eval: true
+ftmo:
+  limit_value_mode: percent_equity
+  max_drawdown_mode: static
+  trailing_dd_limit: 0.0
+  soft_trailing_dd_limit: 0.0
+  risk_per_trade_limit: 1000.0
+  risk_sizing_limit_usd: 900.0
+  risk_per_trade_limit_pct: 0.01
+  daily_loss_limit_pct: 0.05
+  soft_daily_loss_limit_pct: 0.05
+  max_loss_limit_initial_pct: 0.1
+  soft_max_loss_limit_initial_pct: 0.1
+  profit_target: 10000.0
+live_risk_overrides:
+  risk_per_symbol: 0.01
+  max_total_risk: 0.02
+  stop_loss_pips: 50.0
+  interval_minutes: 1
+features:
+  window: 60
+  ema_periods:
+  - 9
+  - 21
+  - 50
+  - 200
+  rsi_period: 14
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  atr_period: 14
+  adx_period: 14
+  bb_period: 20
+  bb_std: 2.0
+  stoch_k: 14
+  stoch_d: 3
+  vwap_session: true
+  return_horizons:
+  - 1
+  - 5
+  - 15
+  - 30
+  realized_vol_period: 20
+  smt_swing_period: 5
+  smt_corr_window: 20
+  zscore_window: 252
+  normalize_d1_technical_on_source: false
+  htf_timeframes:
+  - M3
+  - M5
+  - M10
+  - M15
+  - M30
+  - H1
+  - H4
+  - D1
+  include_po3: false
+  include_fvg_ifvg: false
+  gap_reaction_buffer_enabled: true
+  gap_reaction_buffer_fraction: 0.1
+  include_po3_full: false
+  include_strategy_state: true
+  po3_reference_mode: m1_legacy
+  po3_reference_timeframes:
+  - M3
+  - M5
+  - M10
+  - M15
+  - M30
+  - H1
+  - H4
+  - D1
+  po3_phase_mode: legacy
+  include_pd_context: false
+  include_previous_session_pd: false
+  po3_htf: M15
+  po3_ltf: M5
+  smt:
+    enabled: false
+    timeframes:
+    - M3
+    - M5
+    - M10
+    - M15
+    - M30
+    - H1
+    - H4
+    - D1
+  structure:
+    enabled: true
+    timeframes:
+    - M3
+    - M5
+    - M10
+    - M15
+    - M30
+    - H1
+    - H4
+    - D1
+    swing_candidate_count: 1
+    candidate_price_increment: null
+  liquidity:
+    enabled: false
+    timeframes:
+    - M3
+    - M5
+    - M10
+    - M15
+    - M30
+    - H1
+    - H4
+    - D1
+  order_blocks:
+    enabled: false
+    timeframes:
+    - M1
+    - M3
+    - M5
+    - M10
+    - M15
+    - M30
+    - H1
+    - H4
+    - D1
+    swing_period: 5
+    impulse_atr: 0.5
+    search_bars: 10
+    max_age_bars: 240
+  entry_ideas:
+    enabled: true
+    timeframes:
+    - M1
+    - M3
+    - M5
+    - M10
+    - M15
+    - M30
+    - H1
+    - H4
+    - D1
+    retracement_low: 0.5
+    retracement_high: 0.786
+    levels:
+    - 1.0
+    - 0.786
+    - 0.707
+    - 0.5
+    - 0.0
+    - -0.5
+    - -1.0
+    - -1.5
+    - -2.0
+    - -2.25
+    - -2.5
+    - -3.0
+    - -4.0
+    - -6.0
+    - -8.0
+  po3_state_mtf:
+    enabled: false
+    timeframes:
+    - M1
+    - M3
+    - M5
+    - M10
+    - M15
+    - M30
+    - H1
+    - H4
+    - D1
+  ifvg_mtf:
+    enabled: false
+    timeframes:
+    - M1
+    - M3
+    - M5
+    - M10
+    - M15
+    - M30
+    - H1
+    - H4
+    - D1
+  include_session_ohlc: false
+  sessions:
+    tz: America/Chicago
+    asian:
+      start: '19:00'
+      end: '23:00'
+    london:
+      start: 02:00
+      end: 05:00
+    ny:
+      start: 08:30
+      end: '15:00'
+    week_start: MON
+    quadrant_ranges:
+    - yesterday
+    - lastweek
+env:
+  obs_window: 60
+  feature_validity_channels: true
+  regime_observation: false
+  observation_schema_version: account-state-v2
+  observation_age_scale_bars: 60
+  reachable_r_validity_mask: true
+  data_source: frames
+  n_envs: 8
+  vector_backend: subproc
+  vector_shards: 0
+  action_type: discrete
+  max_episode_steps: null
+  reward_dsr_eta: 0.01
+  strategy_actions: true
+  trade_setup_actions: true
+  candidate_geometry_actions: false
+  agent_entry_execution: false
+  entry_state_machine: false
+  candidate_max_age_bars: 5
+  arm_requires_retest: false
+  entry_state_observation: true
+  strict_research_eligibility: true
+  entry_intensity_threshold: 0.0
+  reward_mode: survival
+  equity_log_growth_scale: 100.0
+  fixed_risk_usd: 0.0
+  risk_band_max_usd: 0.0
+  risk_band_hold_below_usd: 0.0
+  risk_mode: dynamic
+  risk_floor: 0.0005
+  allow_ema_exit: true
+  allow_agent_sl_mode: true
+  sl_mode_defer_threshold: 0.1
+  allow_agent_tp_mode: false
+  tp_mode_defer_threshold: 0.1
+  allow_multi_tp: false
+  allow_simplex: true
+  ema_runner_fraction: 0.25
+  tp_breakeven_alpha: 0.5
+  peak_trailing_dd_limit: 0.0
+  max_entries_per_session: 0
+  open_manipulation_bars: 10
+  entry_cooldown_bars: 0
+  sl_buffer_pts: 0.0
+  block_overnight: true
+  eod_risk:
+    max_loss_usd: 1100.0
+    respect_planned_risk: true
+    planned_risk_mult: 1.1
+    max_age_hours: 8
+    stale_bars: 60
+    progress_threshold_atr: 0.25
+    peak_trailing_dd_limit_usd: 0.0
+    breakeven_trigger_r: 1.0
+    breakeven_buffer_pts: 2.0
+  agent_direction_control: false
+  direction_override_threshold: 0.0
+ppo:
+  actor_arch: shared
+  policy_distribution: trade_setup_conditioned_v1
+  trade_setup_conditioned:
+    embedding_dim: 32
+    execution_hidden_dim: 128
+  candidate_geometry:
+    embedding_dim: 32
+    execution_hidden_dim: 128
+  semantic_head_width: 64
+  n_steps: 2048
+  batch_size: 512
+  n_epochs: 15
+  rollout_buffer_on_device: true
+  learning_rate: 0.0003
+  gamma: 1.0
+  gae_lambda: 1.0
+  clip_range: 0.2
+  ent_coef: 0.01
+  ent_coef_continuous: 0.001
+  log_std_init: 0.0
+  log_std_min: -0.7
+  log_std_max: 0.0
+  mode_prior_coef: 0.001
+  checkpoint_freq: 250000
+  total_timesteps: 2000000
+constrained_rl:
+  enabled: false
+  episode_cost_budget: 1.0
+  dual_learning_rate: 0.1
+  lambda_initial: 0.0
+  lambda_max: 100.0
+  cost_discount_gamma: 1.0
+quality_execution:
+  requested_n_envs: 8
+  effective_n_envs: null
+  exact_n_envs: true
+sac:
+  learning_rate: 0.0003
+  buffer_size: 100000
+  batch_size: 512
+  tau: 0.005
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  ent_coef: 0.01
+  learning_starts: 500
+encoder:
+  windows:
+    m3: 20
+    m5: 24
+    m10: 12
+    m15: 16
+    m30: 8
+    h1: 12
+    h4: 6
+    d1: 5
+agent:
+  type: ppo
+  arch: mtf_m1_tcn_htf_snapshot_reasoning
+  lite_tcn:
+    channels: 96
+    dilations:
+    - 1
+    - 4
+    - 10
+    kernel_size: 3
+    dropout: 0.1
+    latent_dim: 128
+  mtf_reasoning:
+    latent_dim: 128
+    attention_heads: 4
+    feedforward_dim: 256
+    dropout: 0.1
+  mtf_shared_tcn_reasoning:
+    latent_dim: 128
+    channels:
+    - 128
+    - 128
+    - 256
+    - 256
+    kernel_size: 3
+    dropout: 0.1
+    adapter_dim: 64
+    attention_heads: 4
+    feedforward_dim: 256
+  mtf_empty_stream_masked_v1:
+    latent_dim: 128
+    channels:
+    - 128
+    - 128
+    - 256
+    - 256
+    kernel_size: 3
+    dropout: 0.1
+  mtf_m1_tcn_htf_lite_reasoning:
+    latent_dim: 128
+    channels:
+    - 128
+    - 128
+    - 256
+    - 256
+    kernel_size: 3
+    dropout: 0.1
+    adapter_dim: 32
+    attention_heads: 4
+    feedforward_dim: 256
+  mtf_m1_tcn_htf_snapshot_reasoning:
+    latent_dim: 128
+    channels:
+    - 128
+    - 128
+    - 256
+    - 256
+    kernel_size: 3
+    dropout: 0.1
+    adapter_dim: 32
+    attention_heads: 4
+    feedforward_dim: 256
+  head_arch:
+    tcn:
+    - 256
+    - 128
+    lite_tcn:
+    - 128
+    - 64
+    gru:
+    - 256
+    - 128
+    transformer:
+    - 256
+    - 128
+    mtf:
+    - 256
+    - 128
+    mtf_empty_stream_masked_v1:
+    - 256
+    - 128
+    mtf_reasoning:
+    - 256
+    - 128
+    mtf_shared_tcn_reasoning:
+    - 256
+    - 128
+    mtf_m1_tcn_htf_lite_reasoning:
+    - 256
+    - 128
+    mtf_m1_tcn_htf_snapshot_reasoning:
+    - 256
+    - 128
+  use_narrative: false
+compute:
+  cudnn_benchmark: false
+device: auto
+quality_diagnostics:
+  enabled: false
+output:
+  report_profile: full
+  dir: outputs
+  save_plots: true
+  save_html: false
+  save_csv: true
+  max_order_charts: 0
+  dpi: 150
+  candle_tf: 15min
+  price_plot_max_points: 3000
+  trade_chart_show_mae_mfe: true
+  trade_chart_show_sl_tp: true
+backtest:
+  validation:
+    max_loss_per_trade_usd: 900.0
+    take_profit_per_trade_usd: null
+    include_costs_in_trade_risk: true
+    validation_mode: false
+risk:
+  target_timeframes:
+  - M3
+  - M5
+  - M10
+  - M15
+  - M30
+  - H1
+  - H4
+  - D1
+  min_lot: 0.01
+  max_lot: 100.0
+  lot_step: 0.01
+  default_risk_frac: 0.01
+  sl_mode: fixed
+  tp_mode: fixed
+  tp_reference: structural
+  min_sl_atr_mult: 0.5
+  min_sl_points: 0.0
+  swing_buffer_pts: 1.0
+  rr_ratio_default: 2.0
+training:
+  survival_gate_manifest: null
+  mode: full
+  progress_log_every: 0
+  episode_mode: full_split
+  use_m1_only: false
+  primary_only: false
+  max_days: null
+  total_timesteps_mvp: 8192
+  early_abort:
+    enabled: true
+    min_timesteps: 5000000
+    window: 4
+    stop_on_nonfinite: true
+    stop_on_no_trades: false
+    stop_on_equity_gate: false
+  dashboard:
+    enabled: true
+    eval_every: 100000
+    eval_bars: 20000
+    log_every: 100000
+    prior_every: 100000
+    isolate_eval_rng: false
+    diversity:
+      sl_top_share: 0.8
+      tp_top_share: 0.8
+      rr_p75: 1.25
+      ema_lo: 0.02
+      ema_hi: 0.98
+      action_std: 0.05
+      min_prior_trades: 50
+      min_prior_sl_choices: 30
+      min_prior_tp_choices: 30
+      min_prior_direction_choices: 30
+      rank_edge: 0.05
+      direction_min_share: 0.9
+      min_prior_risk_steps: 1000
+      risk_u_max: 0.05
+  debug:
+    enabled: true
+    ring_size: 5
+    ev_floor: 0.2
+    ev_windows: 5
+    std_min: 0.497
+    std_max: 1.0
+    part_vs_pnl: 10.0
+    corr_floor: 0.3
+    corr_windows: 3
+auxiliary:
+  aux_weight: 0.0
+  prediction_horizon: 5
+  lr: 0.0001
+  grad_steps: 4
+strategy:
+  name: po3_ifvg
+  variant_id: null
+  manipulation_filter: against
+  session:
+    timezone: Etc/GMT-3
+  liquidity:
+    swing_period: 5
+    require_reclaim: true
+    max_age_bars: 120
+  po3:
+    require_manipulation_sweep: true
+    require_distribution_confirmation: true
+  ifvg:
+    enabled: true
+    max_age_bars: 50
+    require_price_retest: true
+    close_through_threshold: 0.1
+    require_opposing_fvg: false
+  risk:
+    sl_mode: fixed
+    tp_mode: fixed
+    tp_reference: structural
+    sl_buffer_pts: 1.0
+    risk_frac_range:
+    - 0.0
+    - 0.01
+    rr_range:
+    - 1.5
+    - 5.0
+  tp:
+    mode: agent
+    allowed_targets:
+    - rr
+    - buyside_liquidity
+    - sellside_liquidity
+    - previous_day_high_low
+    invalid_target_policy: rr_fallback
+  entry:
+    mode: legacy
+    enforce_gate: false
+    previous_session_pd_gate: false
+  reward:
+    entry_bonus: 0.01
+    manipulation_penalty: 0.02
+    invalid_ifvg_penalty: 0.01
+    distribution_bonus: 0.005
+    sweep_penalty: 0.02
+    strategy_weight: 0.01
+  batch_windows: 256

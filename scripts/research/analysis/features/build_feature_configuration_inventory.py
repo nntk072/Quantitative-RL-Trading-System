@@ -131,6 +131,18 @@ def _profile_sources() -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
         ("research", "research_overlay"),
     ):
         for path in sorted((ROOT / "config" / directory).glob("*.yaml")):
+            raw = OmegaConf.load(path)
+            if not isinstance(raw, DictConfig):
+                raise ValueError(f"feature/research profile must be a mapping: {path}")
+            if "schema_version" in raw:
+                excluded.append(
+                    {
+                        "path": _relative(path),
+                        "sha256": _sha256_file(path),
+                        "reason": "versioned research contract; not a runtime configuration overlay",
+                    }
+                )
+                continue
             cfg = load_config(config_path=path)
             profiles.append(
                 _record(

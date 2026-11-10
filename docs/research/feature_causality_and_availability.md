@@ -6,17 +6,26 @@ a passing synthetic example does not establish when a value becomes
 observable. The evidence matrix records source event time separately from the
 time at which the policy may use the value.
 
-The current generated inventory lists 96 public top-level function candidates
+The current generated inventory lists 99 public top-level function candidates
 under `features/`, 11 upstream time/session transformation candidates, and all
 108 setup-entry idea flags. Twenty-four flags are supported by the registered
 opportunity-census configuration. The matrix now has explicit source-contract
-metadata for all 107 function candidates. These records distinguish reviewed
+metadata for all 110 function candidates. These records distinguish reviewed
 source behavior from remaining fixture, prefix, configuration, and timing
 gaps; metadata presence does not mean every function has a passing direct
 test. Selected component fixtures and real-market prefix checks establish
-bounded behavior, while external feed-publication timing and exhaustive
-full-pipeline coverage remain unverified. This evidence uses current local
-data only.
+bounded behavior. The exact-source 2026-11-10 audit now covers all 141 runtime
+profiles, including the valid research overlays and survival qualification
+profile. All 57 registered cutoff comparisons across 19 feature profiles
+passed, covering 21,749,324,775 values with zero changed values and zero
+maximum absolute delta. The merged report verifies all 78 source hashes, four
+local M1 input hashes, and the runtime inventory identity. The corrected
+inventory and review are recorded under
+`evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/`;
+the earlier incomplete 130-profile run remains preserved there as superseded
+evidence. The 2026 interval was used only for report-only prefix auditing, not
+candidate selection. Prefix invariance does not establish external feed
+publication timing or exhaustive full-pipeline causality. The paired observation-validity audit covers the same 141 runtime profiles in 28 effective observation groups and records 19,350 feature/timeframe rows. Its source-scoped packet is `evidence/research/feature_causality/observation_validity_current_source_141/ARCHIVE.md`; the corresponding `evidence/research/feature_causality/observation_validity_semantics_current_source_141/README.md` keeps observed missingness separate from cause attribution and policy use.
 
 The synthetic assembled-matrix prefix property also passes for its selected
 configuration: `tests/unit/features/test_assembled_causality.py::test_assembled_matrix_truncation_causality`

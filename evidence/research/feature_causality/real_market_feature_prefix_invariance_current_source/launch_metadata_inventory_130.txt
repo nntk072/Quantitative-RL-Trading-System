@@ -1,0 +1,9 @@
+launcher=/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/run-prefix-current-source-332ba0f1.sh
+launcher_sha256=f4267fa01fc3318ac8e745c653e5c627d2fb5293d4dcf6d4f5e85e5b9377e4fa
+slurm_job_id=21492849
+host=gpuarm2
+started_at_utc=2026-11-10T02:26:42Z
+shard_count=4
+feature_inventory=/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/feature_configuration_inventory.json
+Python 3.12.15
+finished_at_utc=2026-11-10T03:28:02Z

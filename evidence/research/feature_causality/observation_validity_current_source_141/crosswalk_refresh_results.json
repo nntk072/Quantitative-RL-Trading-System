@@ -1,0 +1,50 @@
+{
+  "commands": [
+    {
+      "name": "build-feature-causality-matrix",
+      "command": [
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+        "scripts/research/analysis/features/build_feature_causality_matrix.py"
+      ],
+      "return_code": 0
+    },
+    {
+      "name": "summarize-observation-validity",
+      "command": [
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+        "scripts/research/analysis/features/summarize_observation_validity.py",
+        "--input",
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_current_source_141/column_warmup_all_profiles.csv",
+        "--output-dir",
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_priorities_current_source_141"
+      ],
+      "return_code": 0
+    },
+    {
+      "name": "reconcile-producer-semantics",
+      "command": [
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+        "scripts/research/analysis/features/reconcile_observation_validity_semantics.py",
+        "--triage",
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_priorities_current_source_141/feature_validity_priorities.csv",
+        "--feature-matrix",
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/feature_causality_matrix.csv",
+        "--output-dir",
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_semantics_current_source_141"
+      ],
+      "return_code": 0
+    },
+    {
+      "name": "focused-crosswalk-tests",
+      "command": [
+        "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/research/test_observation_validity_semantics.py",
+        "-q"
+      ],
+      "return_code": 0
+    }
+  ],
+  "complete": true
+}

@@ -35,13 +35,17 @@ def _git_state() -> tuple[str, bool]:
 def build_bundle(
     *,
     protocol: dict[str, Any],
-    readiness: dict[str, Any],
+    readiness: dict[str, Any] | None,
     source_sha: str,
     source_clean: bool,
     output_root: str,
     roles: list[str],
 ) -> dict[str, Any]:
     """Build a direct-command bundle for requested authorized survival roles."""
+    if not source_sha or not source_clean:
+        raise ValueError("survival command freezing requires a clean source tree")
+    if len(roles) != len(set(roles)):
+        raise ValueError("survival roles must be unique")
     plan = build_launch_plan(
         protocol,
         output_root,
@@ -53,6 +57,30 @@ def build_bundle(
     commands: list[dict[str, Any]] = []
     previous: str | None = None
     for role in roles:
+        if role == "correctness_smoke":
+            command_id = "survival_correctness_smoke"
+            commands.append(
+                {
+                    "id": command_id,
+                    "argv": [
+                        ".venv/bin/python",
+                        "-m",
+                        "scripts.research.audits.run_survival_correctness_smoke",
+                        "--config",
+                        "config/research/survival_trade_setup_mtf_conditioned.yaml",
+                        "--output-dir",
+                        f"{output_root}/correctness_smoke",
+                    ],
+                    "depends_on": [],
+                    "resource_lock": "GPU_TRAIN_LOCK",
+                    "artifact_roots": [f"{output_root}/correctness_smoke"],
+                    "experiment": True,
+                    "scientific_training_authorization_required": False,
+                    "claim_scope": "synthetic_implementation_correctness_only",
+                    "selection_allowed": False,
+                }
+            )
+            continue
         if role not in rows_by_role:
             raise ValueError(f"unsupported survival role: {role}")
         row = rows_by_role[role]
@@ -74,7 +102,14 @@ def build_bundle(
         "schema_version": "v3-frozen-command-bundle-v1",
         "source_commit": source_sha,
         "source_clean": source_clean,
-        "phase": "survival_qualification",
+        "phase": (
+            "survival_correctness_smoke"
+            if roles == ["correctness_smoke"]
+            else "survival_qualification"
+        ),
+        "scientific_training_authorized": plan["scientific_training_authorized"],
+        "scientific_result": roles != ["correctness_smoke"],
+        "selection_allowed": roles != ["correctness_smoke"],
         "commands": commands,
         "allocates_compute": False,
         "executes_commands": False,
@@ -84,12 +119,12 @@ def build_bundle(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--protocol", type=Path, default=DEFAULT_PROTOCOL)
-    parser.add_argument("--scientific-readiness", type=Path, required=True)
+    parser.add_argument("--scientific-readiness", type=Path)
     parser.add_argument("--output-root", required=True)
     parser.add_argument(
         "--role",
         action="append",
-        choices=("canonical", "control", "price_geometry"),
+        choices=("canonical", "control", "price_geometry", "correctness_smoke"),
         required=True,
     )
     parser.add_argument("--output", type=Path, required=True)
@@ -100,7 +135,11 @@ def main() -> int:
     protocol_path = args.protocol if args.protocol.is_absolute() else ROOT / args.protocol
     bundle = build_bundle(
         protocol=load_research_protocol(protocol_path),
-        readiness=_object(args.scientific_readiness.expanduser().resolve()),
+        readiness=(
+            _object(args.scientific_readiness.expanduser().resolve())
+            if args.scientific_readiness is not None
+            else None
+        ),
         source_sha=source_sha,
         source_clean=clean,
         output_root=args.output_root,

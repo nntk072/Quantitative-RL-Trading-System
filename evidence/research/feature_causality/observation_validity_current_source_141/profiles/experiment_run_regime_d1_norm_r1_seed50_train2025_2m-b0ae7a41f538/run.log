@@ -1,0 +1,11 @@
+{
+  "group_key": "b0ae7a41f53802fc17553171d3d4b357bdeb635204509a6d73751fdafd84300c",
+  "profile_ids": [
+    "experiment_run/regime_d1_norm_r1_seed50_train2025_2m",
+    "experiment_run/regime_d1_norm_r1_seed50_train2025_2m_retry1",
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m",
+    "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_ema_nextbar_fix1"
+  ],
+  "representative_profile": "experiment_run/regime_d1_norm_r1_seed50_train2025_2m",
+  "status": "measured_training_split"
+}

@@ -1,0 +1,8 @@
+{
+  "group_key": "9c94820098138f2e9bb2bbe1b3a78aef5696fe294f8241e933ba5b44fea57510",
+  "profile_ids": [
+    "features/full_po3_mtf"
+  ],
+  "representative_profile": "features/full_po3_mtf",
+  "status": "measured_training_split"
+}

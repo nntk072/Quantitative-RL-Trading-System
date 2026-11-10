@@ -1,0 +1,34 @@
+COMMAND inventory-and-causality: ['/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python', '-m', 'pytest', 'tests/research/test_feature_configuration_inventory.py', 'tests/research/test_feature_causality_matrix.py', 'tests/research/test_observation_validity_semantics.py', '-q']
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 7 items
+
+tests/research/test_feature_configuration_inventory.py ...               [ 42%]
+tests/research/test_feature_causality_matrix.py .                        [ 57%]
+tests/research/test_observation_validity_semantics.py ...                [100%]
+
+============================== 7 passed in 19.13s ==============================
+RETURN_CODE 0
+COMMAND candidate-geometry-contract: ['/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python', '-m', 'pytest', 'tests/unit/simulation/test_environment/test_candidate_geometry_observation.py', 'tests/unit/simulation/test_environment/test_trade_setup_observation.py', 'tests/unit/learning/test_candidate_geometry_policy.py', 'tests/unit/learning/test_candidate_geometry_agent.py', 'tests/unit/learning/test_candidate_geometry_actor.py', 'tests/unit/decisioning/test_candidate_geometry_schema_validation.py', 'tests/unit/decisioning/test_candidate_geometry_contract.py', '-q']
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 27 items
+
+tests/unit/simulation/test_environment/test_candidate_geometry_observation.py . [  3%]
+..                                                                       [ 11%]
+tests/unit/simulation/test_environment/test_trade_setup_observation.py . [ 14%]
+.....                                                                    [ 33%]
+tests/unit/learning/test_candidate_geometry_policy.py ...                [ 44%]
+tests/unit/learning/test_candidate_geometry_agent.py .                   [ 48%]
+tests/unit/learning/test_candidate_geometry_actor.py ......              [ 70%]
+tests/unit/decisioning/test_candidate_geometry_schema_validation.py ..   [ 77%]
+tests/unit/decisioning/test_candidate_geometry_contract.py ......        [100%]
+
+============================= 27 passed in 24.58s ==============================
+RETURN_CODE 0

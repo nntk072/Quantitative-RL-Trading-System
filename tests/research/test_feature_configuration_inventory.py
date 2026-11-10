@@ -35,9 +35,19 @@ def test_feature_configuration_inventory_covers_runtime_profile_sources(
     assert {
         f"features/{path.stem}" for path in (ROOT / "config" / "features").glob("*.yaml")
     } <= profile_ids
-    assert {
-        f"research/{path.stem}" for path in (ROOT / "config" / "research").glob("*.yaml")
-    } <= profile_ids
+    research_paths = sorted((ROOT / "config" / "research").glob("*.yaml"))
+    runtime_research_paths = [
+        path for path in research_paths if "schema_version" not in OmegaConf.load(path)
+    ]
+    versioned_research_contracts = [
+        path for path in research_paths if "schema_version" in OmegaConf.load(path)
+    ]
+    assert {f"research/{path.stem}" for path in runtime_research_paths} <= profile_ids
+    excluded_paths = {item["path"] for item in inventory["excluded_sources"]}
+    assert {path.relative_to(ROOT).as_posix() for path in versioned_research_contracts} <= (
+        excluded_paths
+    )
+    assert "research/survival_qualification" in profile_ids
     assert {
         f"strategy_overlay/{path.stem}" for path in (ROOT / "config").glob("[123]_*.yaml")
     } <= profile_ids

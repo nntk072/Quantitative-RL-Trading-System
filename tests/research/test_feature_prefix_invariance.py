@@ -198,7 +198,8 @@ def test_inventory_profiles_resolve_to_effective_feature_builder_groups(
     groups = {AUDIT.feature_config_key(cfg) for _, cfg, _ in profiles}
 
     assert inventory_hash
-    assert len(profiles) == 130
+    assert len(profiles) == 141
+    assert "research/survival_qualification" in {profile_id for profile_id, _, _ in profiles}
     assert len({meta["feature_config_sha256"] for _, _, meta in profiles}) == 18
     # The same feature tree can still require separate builds when the
     # effective price-grid configuration differs.

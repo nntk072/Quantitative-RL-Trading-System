@@ -1,0 +1,56 @@
+{
+  "compared_values": 21749324775,
+  "evidence": [
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/merged.json",
+      "sha256": "8d5ba27974c1ec1244244e8808a2efc7fb7d378407d1670513cfc18f670209d4"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/launch_metadata.txt",
+      "sha256": "623a8ee122847066d739cf782a901af402d0517fb7d3e7e4d4a00982e439f3a6"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/shard_0.json",
+      "sha256": "f825ad47ebf27e17bda0fbffebdfcfe6e8df0226740dc933630a5c938fcf2f31"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/shard_1.json",
+      "sha256": "6e4eda95679bc52fbc5ed4c800a1c0f8a919cc2d7bb3ca261464c293bdc1aeda"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/shard_2.json",
+      "sha256": "c9ce1b8faeca2a5f9b0cc15f741c265317c6a6c4a4e54df21be619fca9997da8"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/shard_3.json",
+      "sha256": "5762f17eea760599b34ad36080a3dd985ae638192ee410820d0f2f8e4d6be24f"
+    }
+  ],
+  "gate_id": "preliminary_v43_real_market_prefix_inventory_130",
+  "maximum_absolute_delta": 0.0,
+  "note": "This report passed for the 130 profiles in the inventory used at run time, but that inventory omitted nine valid runtime research overlays, including survival_qualification. It is preserved as bounded preliminary evidence and does not close the current-source prefix gate; the expanded 141-profile audit is in progress. No outcomes or 2026 rows were used for selection, training, or threshold changes.",
+  "prohibited_states": {
+    "candidate_realized_outcomes_used_as_policy_inputs": false,
+    "exposed_report_period_used_for_selection": false,
+    "preregistered_thresholds_changed_post_hoc": false
+  },
+  "reviewed_at_utc": "2026-11-10T03:36:04+00:00",
+  "reviewed_by": "Codex",
+  "schema_version": "pretraining-scientific-gate-review-v1",
+  "source_commit": "332ba0f17b4efc6f7b5908f09b6ca2be739d2e63",
+  "status": "superseded",
+  "summary": {
+    "cutoffs": 57,
+    "failed": 0,
+    "feature_profiles": 19,
+    "passed": 57
+  },
+  "verified_data_inputs": {
+    "data/testing/US100.cash_M1_202412300105_202610162349.csv": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+    "data/testing/US500.cash_M1_202412300105_202610162349.csv": "94f3674d303bd8430a6882c90b508a4a61c6c173a943b3c6d17b8884e66cd8d0",
+    "data/training/US100.cash_M1_202412300105_202610162349.csv": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+    "data/training/US500.cash_M1_202412300105_202610162349.csv": "8ee4ef65d952974dadb3ba0f5e39536060a1563665dd5ad509404355b888d41e"
+  },
+  "verified_profile_inventory_sha256": "f42df9e3e12116d9de47bff5281fa854756f0a0da517d1d2c42817ce45c1eb2a",
+  "verified_source_file_count": 78
+}

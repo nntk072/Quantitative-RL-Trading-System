@@ -1,0 +1,50 @@
+COMMAND build-feature-causality-matrix: ['/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python', 'scripts/research/analysis/features/build_feature_causality_matrix.py']
+{
+  "schema_version": 2,
+  "function_inventory_scope": "public top-level functions under features/ plus upstream time/session transforms; scope review required",
+  "public_feature_function_count": 99,
+  "upstream_time_session_function_count": 11,
+  "setup_entry_idea_flag_count": 108,
+  "supported_setup_entry_idea_flag_count": 24,
+  "reviewed_function_metadata_count": 110,
+  "unassessed_function_metadata_count": 0,
+  "reviewed_setup_flag_output_availability_count": 108,
+  "unassessed_setup_flag_source_event_count": 0,
+  "reviewed_inactive_setup_flag_source_event_count": 84,
+  "reviewed_supported_setup_flag_source_event_count": 24,
+  "candidate_summary_path": "evidence/research/trade_setup_opportunity_census/candidate_summary.csv",
+  "candidate_summary_sha256": "94732376645a897c686bc8143dbb6c79652b6e76eea724f1155d596e533d217b",
+  "candidate_identity_summary_path": "evidence/research/trade_setup_opportunity_census/candidate_event_identity_summary.csv",
+  "candidate_identity_summary_sha256": "e8d8b095f07a296541d1689305f1eaab295fffd912f2d7ac34273a88385cc3ab",
+  "candidate_identity_lifecycle_semantics": "tuple and active-mask descriptive counters; not logical market-event cardinality",
+  "active_candidate_rows": 488008,
+  "identified_source_event_rows": 488008,
+  "missing_source_event_time_rows": 0,
+  "distinct_candidate_scoped_event_ids": 109391,
+  "identified_identity_episode_starts": 115863,
+  "adjacent_active_identity_changes": 13758,
+  "distinct_ids_reused_across_active_episodes": 5719,
+  "row_weighted_identity_coverage_fraction": 1.0,
+  "matrix_row_count": 218,
+  "acceptance_status": "incomplete; event cardinality and configurations outside selected checks remain open",
+  "matrix_sha256": "922cebca5f4fe03148a1291327183c96a2c4c16038f0f87c88aab2a6c10c67c7"
+}
+RETURN_CODE 0
+COMMAND summarize-observation-validity: ['/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python', 'scripts/research/analysis/features/summarize_observation_validity.py', '--input', '/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_current_source_141/column_warmup_all_profiles.csv', '--output-dir', '/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_priorities_current_source_141']
+{"all_groups_fully_nonfinite_count": 2, "feature_timeframe_count": 1293, "finite_zero_collision_count": 220, "interior_missing_count": 207, "profile_group_count": 28}
+RETURN_CODE 0
+COMMAND reconcile-producer-semantics: ['/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python', 'scripts/research/analysis/features/reconcile_observation_validity_semantics.py', '--triage', '/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_priorities_current_source_141/feature_validity_priorities.csv', '--feature-matrix', '/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/feature_causality_matrix.csv', '--output-dir', '/scratch/work/nguyenl37/Quantitative-RL-Trading-System/evidence/research/feature_causality/observation_validity_semantics_current_source_141']
+{"feature_timeframe_rows": 1293, "measured_missingness_classes": {"interior_missing_values_observed": 207, "leading_missing_values_only": 463, "no_missing_values_observed": 621, "unavailable_in_every_profile_group": 2}, "producer_function_count": 42}
+RETURN_CODE 0
+COMMAND focused-crosswalk-tests: ['/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv/bin/python', '-m', 'pytest', 'tests/research/test_observation_validity_semantics.py', '-q']
+============================= test session starts ==============================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /scratch/work/nguyenl37/Quantitative-RL-Trading-System
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, xdist-3.8.0, anyio-4.14.2, hypothesis-6.170.14
+collected 3 items
+
+tests/research/test_observation_validity_semantics.py ...                [100%]
+
+============================== 3 passed in 0.81s ===============================
+RETURN_CODE 0

@@ -39,6 +39,7 @@ def test_observation_validity_contracts_preserve_known_state_limits() -> None:
     session_progress = resolve_feature_contract("session_progress")
     wick_ratio = resolve_feature_contract("wick_ratio")
     tick_quote = resolve_feature_contract("tick_quote_age_fraction")
+    reachable_r_valid = resolve_feature_contract("reachable_r_valid")
 
     assert daily_session is not None
     assert "unsupported on daily bars" in daily_session["validity_signal"]
@@ -69,6 +70,10 @@ def test_observation_validity_contracts_preserve_known_state_limits() -> None:
     assert "defined zero upper-wick ratio" in wick_ratio["reviewed_missingness_semantics"]
     assert tick_quote is not None
     assert "tick_quote_available" in tick_quote["validity_signal"]
+    assert reachable_r_valid is not None
+    assert reachable_r_valid["producer_function"] == "attach_reachable_r"
+    assert reachable_r_valid["source_path"] == "features/context/reachability.py"
+    assert "unknown reachable_r from a valid zero" in reachable_r_valid["validity_signal"]
 
 
 def test_unknown_observation_feature_fails_closed() -> None:

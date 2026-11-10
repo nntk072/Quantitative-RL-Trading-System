@@ -1,0 +1,8 @@
+{
+  "group_key": "987612cfb9c18425222df77708ec8e9908e8fc9ee4c065039e2772094feff2e1",
+  "profile_ids": [
+    "research/survival_trade_setup_mtf_m1_htf_snapshot"
+  ],
+  "representative_profile": "research/survival_trade_setup_mtf_m1_htf_snapshot",
+  "status": "measured_training_split"
+}

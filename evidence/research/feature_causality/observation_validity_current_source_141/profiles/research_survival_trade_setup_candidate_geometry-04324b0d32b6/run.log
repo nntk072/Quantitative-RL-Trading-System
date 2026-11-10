@@ -1,0 +1,10 @@
+{
+  "group_key": "04324b0d32b6fa6b152c8582e92931af20adbdab256ac1e04e771d877e107229",
+  "profile_ids": [
+    "research/survival_trade_setup_candidate_geometry",
+    "research/survival_trade_setup_mtf_conditioned",
+    "research/survival_trade_setup_mtf_control"
+  ],
+  "representative_profile": "research/survival_trade_setup_candidate_geometry",
+  "status": "measured_training_split"
+}

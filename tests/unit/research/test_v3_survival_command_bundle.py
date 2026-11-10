@@ -34,3 +34,73 @@ def test_survival_bundle_serializes_requested_roles_and_keeps_price_separate() -
         "survival_control",
     ]
     assert bundle["commands"][1]["depends_on"] == ["survival_canonical"]
+
+
+def test_correctness_smoke_is_separate_from_scientific_training_authorization() -> None:
+    protocol = load_research_protocol(ROOT / "config/research/prospective_research_protocol.yaml")
+    bundle = build_bundle(
+        protocol=protocol,
+        readiness=None,
+        source_sha=SOURCE,
+        source_clean=True,
+        output_root="/scratch/survival-smoke",
+        roles=["correctness_smoke"],
+    )
+
+    assert bundle["phase"] == "survival_correctness_smoke"
+    assert bundle["scientific_training_authorized"] is False
+    assert bundle["commands"] == [
+        {
+            "id": "survival_correctness_smoke",
+            "argv": [
+                ".venv/bin/python",
+                "-m",
+                "scripts.research.audits.run_survival_correctness_smoke",
+                "--config",
+                "config/research/survival_trade_setup_mtf_conditioned.yaml",
+                "--output-dir",
+                "/scratch/survival-smoke/correctness_smoke",
+            ],
+            "depends_on": [],
+            "resource_lock": "GPU_TRAIN_LOCK",
+            "artifact_roots": ["/scratch/survival-smoke/correctness_smoke"],
+            "experiment": True,
+            "scientific_training_authorization_required": False,
+            "claim_scope": "synthetic_implementation_correctness_only",
+            "selection_allowed": False,
+        }
+    ]
+
+
+def test_correctness_smoke_does_not_authorize_training_roles() -> None:
+    protocol = load_research_protocol(ROOT / "config/research/prospective_research_protocol.yaml")
+    try:
+        build_bundle(
+            protocol=protocol,
+            readiness=None,
+            source_sha=SOURCE,
+            source_clean=True,
+            output_root="/scratch/survival-smoke",
+            roles=["correctness_smoke", "canonical"],
+        )
+    except ValueError as error:
+        assert "not scientifically authorized: canonical" in str(error)
+    else:
+        raise AssertionError("correctness smoke must not authorize canonical training")
+
+
+def test_survival_bundle_requires_clean_source_even_for_smoke() -> None:
+    protocol = load_research_protocol(ROOT / "config/research/prospective_research_protocol.yaml")
+    try:
+        build_bundle(
+            protocol=protocol,
+            readiness=None,
+            source_sha=SOURCE,
+            source_clean=False,
+            output_root="/scratch/survival-smoke",
+            roles=["correctness_smoke"],
+        )
+    except ValueError as error:
+        assert "clean source tree" in str(error)
+    else:
+        raise AssertionError("survival bundle must require a clean source tree")

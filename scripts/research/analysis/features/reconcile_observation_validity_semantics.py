@@ -344,6 +344,13 @@ FEATURE_RULES: tuple[tuple[str, str, str | None, str, str], ...] = (
         "reachable_r_valid is an opt-in companion and is disabled in the selected historical configuration.",
     ),
     (
+        r"^reachable_r_valid$",
+        "attach_reachable_r",
+        "features/context/reachability.py",
+        "This finite 0/1 companion is true only when the reachable TP room and selected risk are finite and the risk is positive; false marks unavailable reachability without identifying which input caused it.",
+        "Appended only when env.reachable_r_validity_mask is enabled; it distinguishes unknown reachable_r from a valid zero but is not a per-cause validity mask.",
+    ),
+    (
         r"^active_session_",
         "session_mask",
         "features/context/session_levels.py",

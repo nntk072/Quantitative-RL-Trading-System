@@ -1,0 +1,69 @@
+{
+  "compared_values": 21749324775,
+  "evidence": [
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/merged_inventory_141.json",
+      "sha256": "b46c847ff98d6150c3110986a8035076eded059e52a28aee0089298017284c3d"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/launch_metadata_inventory_141.txt",
+      "sha256": "e690c300d646b78be04f0cc44d3ba99e942f3e349e28d757b9937cd09690e2c1"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/shard_0_inventory_141.json",
+      "sha256": "a963aace1a3b752eb5a9f437b262574089612e16b3d4070d5af428633f16ca85"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/shard_1_inventory_141.json",
+      "sha256": "2ba5f4e03164b90728ff33d773e24e3bd67a657247a7df622b4c63948f486914"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/shard_2_inventory_141.json",
+      "sha256": "3d3b2bec951dc42d31c5410c153500a74f5987e9b67657e7b010906c298841c7"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/shard_3_inventory_141.json",
+      "sha256": "920e960cf6a3f4cca33d559a4d7d8dd7ae31ba9701ae4a96cff90940509434f7"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/feature_configuration_inventory_141.json",
+      "sha256": "555e9814a0114cff7f9733b6dcf7dcae076ab785a19d8a4fb203b501a7c3f541"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/SOURCE_SHA256SUMS_inventory_141.txt",
+      "sha256": "bc05cd387ed65a5dd1c5091b22f4c057f046f70b6a514ff8ccf462fad0a3f65d"
+    },
+    {
+      "path": "evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/CURRENT_INPUT_SHA256SUMS",
+      "sha256": "aac40bef710044df6a0b8560f3ff50dbb72ae1504644073f03863f7087aae123"
+    }
+  ],
+  "gate_id": "current_source_real_market_prefix_inventory_141",
+  "maximum_absolute_delta": 0.0,
+  "note": "The expanded runtime inventory contains 141 profiles. All 57 registered prefix comparisons across 19 feature profiles passed with zero changed values and zero maximum absolute delta. The 2026 interval was used only for report-only prefix auditing; no outcomes or exposed rows were used for selection, training, or threshold changes. This establishes bounded prefix invariance for the listed source snapshot, profiles, local inputs, and cutoffs, not exhaustive external feed timing or every label, execution, and model-selection path.",
+  "prohibited_states": {
+    "candidate_realized_outcomes_used_as_policy_inputs": false,
+    "exposed_report_period_used_for_selection": false,
+    "preregistered_thresholds_changed_post_hoc": false
+  },
+  "reviewed_at_utc": "2026-11-10T04:50:36Z",
+  "reviewed_by": "Codex",
+  "schema_version": "pretraining-scientific-gate-review-v1",
+  "source_commit": "332ba0f17b4efc6f7b5908f09b6ca2be739d2e63",
+  "status": "pass",
+  "summary": {
+    "cutoffs": 57,
+    "failed": 0,
+    "feature_profiles": 19,
+    "passed": 57
+  },
+  "verified_data_inputs": {
+    "data/testing/US100.cash_M1_202412300105_202610162349.csv": "0a8268734f6b6564dd48836c5a86b074748487538ca5b640fcd13fe11c23e08e",
+    "data/testing/US500.cash_M1_202412300105_202610162349.csv": "94f3674d303bd8430a6882c90b508a4a61c6c173a943b3c6d17b8884e66cd8d0",
+    "data/training/US100.cash_M1_202412300105_202610162349.csv": "c0ad7d79a8769fa93323e630fd27ff73de32eac3882c252994d0a426b93137e0",
+    "data/training/US500.cash_M1_202412300105_202610162349.csv": "8ee4ef65d952974dadb3ba0f5e39536060a1563665dd5ad509404355b888d41e"
+  },
+  "verified_profile_count": 141,
+  "verified_profile_inventory_sha256": "555e9814a0114cff7f9733b6dcf7dcae076ab785a19d8a4fb203b501a7c3f541",
+  "verified_source_file_count": 78
+}

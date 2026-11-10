@@ -298,7 +298,7 @@ def _feature_vector(
 def build_candidate_geometry_observation(
     env: Any, step_idx: int | None = None
 ) -> dict[str, np.ndarray[Any, Any]]:
-    """Build the 217-slot causal geometry tensor used by the PRICE policy.
+    """Build the causal candidate-geometry observation for policy selection.
 
     Only information available by the decision boundary is used. Candidate
     outcome replay, future fills, future protective triggers, and realized
