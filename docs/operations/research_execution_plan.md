@@ -109,6 +109,20 @@ results lack the quote provenance. Stage O still requires the consolidated
 regressions to run, live-result regeneration, full fill-path provenance
 coverage confirmation, and a bounded historical disposition.
 
+## Bounded survival runtime correctness smoke — 2026-11-10
+
+The purpose-named runtime smoke passed on source
+`11aebfca7a694430be1bc149112f272e4ee108ba`. It exercised the configured
+tick-backed environment, six-coordinate setup action, bounded PPO update,
+checkpoint round trip, evaluator replay, 60 legal masked actions, and terminal
+survival reward using synthetic data. Peak host RSS was 3,228,824 KiB and
+elapsed time was 30.65 seconds. This is implementation correctness evidence
+only; it does not authorize scientific training or selection. The promotion
+review records no-go because the available readiness manifest is tied to an
+older source and denies authorization. See
+[`survival_runtime_correctness_smoke_20261110.md`](../research/survival_runtime_correctness_smoke_20261110.md)
+for the exact contracts, results, and artifact hashes.
+
 ## Survival-first model selection
 
 Per the user's direction on 2026-11-06, survival is the first feasibility gate,
