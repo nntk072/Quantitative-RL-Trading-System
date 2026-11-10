@@ -89,8 +89,8 @@ def mark_todo(
     progress["source_sha"] = source_sha
 
 
-def ready_todos(catalog: dict[str, Any], progress: dict[str, Any]) -> list[int]:
-    """Return TODOs whose hard dependencies have passed."""
+def dependency_ready_todos(catalog: dict[str, Any], progress: dict[str, Any]) -> list[int]:
+    """Return TODOs whose hard dependencies have passed, regardless of authorization."""
     tasks = progress["tasks"]
     ready: list[int] = []
     for row in catalog["tasks"]:
@@ -100,6 +100,32 @@ def ready_todos(catalog: dict[str, Any], progress: dict[str, Any]) -> list[int]:
         if all(tasks[str(dep)]["status"] == "PASS" for dep in row["dependencies"]):
             ready.append(int(row["id"]))
     return ready
+
+
+def ready_todos(catalog: dict[str, Any], progress: dict[str, Any]) -> list[int]:
+    """Compatibility alias for :func:`dependency_ready_todos`."""
+    return dependency_ready_todos(catalog, progress)
+
+
+def dependency_readiness_report(
+    catalog: dict[str, Any], progress: dict[str, Any]
+) -> dict[str, Any]:
+    """Describe dependency readiness without implying conditional gate approval."""
+    ready = dependency_ready_todos(catalog, progress)
+    conditional_gates = [
+        int(row["id"])
+        for row in catalog["tasks"]
+        if int(row["id"]) in ready and row.get("conditional_gate") is not None
+    ]
+    return {
+        "dependency_ready_todos": ready,
+        "conditional_gate_todos_not_evaluated": conditional_gates,
+        "authorization_checked": False,
+        "resource_availability_checked": False,
+        # Retained for consumers of the previous report shape. This is only
+        # hard-dependency readiness, never permission to execute a task.
+        "ready": ready,
+    }
 
 
 def barrier_states(catalog: dict[str, Any], progress: dict[str, Any]) -> dict[str, str]:
@@ -138,7 +164,11 @@ def main() -> int:
     mark.add_argument("--result", default="")
     mark.add_argument("--evidence", type=Path, action="append", default=[])
 
-    ready = sub.add_parser("ready")
+    ready = sub.add_parser(
+        "dependency-ready",
+        aliases=["ready"],
+        help="List TODOs whose hard dependencies passed; authorization is not evaluated.",
+    )
     ready.add_argument("--progress", type=Path, required=True)
 
     summary = sub.add_parser("summary")
@@ -178,8 +208,8 @@ def main() -> int:
         print(json.dumps(progress["tasks"][str(args.todo)], indent=2, sort_keys=True))
         return 0
 
-    if args.command == "ready":
-        print(json.dumps({"ready": ready_todos(catalog, progress)}, indent=2))
+    if args.command in {"ready", "dependency-ready"}:
+        print(json.dumps(dependency_readiness_report(catalog, progress), indent=2))
         return 0
 
     if args.command == "summary":
@@ -192,7 +222,7 @@ def main() -> int:
                     "source_sha": progress["source_sha"],
                     "counts": counts,
                     "barriers": barrier_states(catalog, progress),
-                    "ready": ready_todos(catalog, progress),
+                    **dependency_readiness_report(catalog, progress),
                 },
                 indent=2,
                 sort_keys=True,

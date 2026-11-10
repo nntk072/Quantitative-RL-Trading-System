@@ -123,6 +123,12 @@ older source and denies authorization. See
 [`survival_runtime_correctness_smoke_20261110.md`](../research/survival_runtime_correctness_smoke_20261110.md)
 for the exact contracts, results, and artifact hashes.
 
+The research TODO tracker now labels its list as dependency-ready. Passing
+those hard dependencies does not evaluate conditional gates, scientific
+authorization, resource availability, or permission to execute an experiment.
+The survival command builder and current-source authorization record remain
+the execution controls.
+
 ## Survival-first model selection
 
 Per the user's direction on 2026-11-06, survival is the first feasibility gate,
