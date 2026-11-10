@@ -1,5 +1,5 @@
 {
-  "page_count": 370,
+  "page_count": 371,
   "pages": [
     {
       "links": [
@@ -5769,6 +5769,7 @@
     },
     {
       "links": [
+        "../research/survival_runtime_correctness_smoke_20261110.md",
         "../research/selected_policy_trade_lifecycle.md",
         "../research/validation_protocol.md",
         "../research/entry_and_exit_attribution.md",
@@ -7059,6 +7060,7 @@
         "multitimeframe_data_alignment",
         "feature_causality_and_availability",
         "gh200_throughput_audit",
+        "survival_runtime_correctness_smoke_20261110",
         "candidate_geometry_feature_contract",
         "result_identity_and_evidence",
         "evaluation_methodology",
@@ -7436,6 +7438,16 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Setup-conditioned reasoning benchmark protocol",
+      "type": "research"
+    },
+    {
+      "links": [],
+      "orphan_status": "in toctree",
+      "path": "docs/research/survival_runtime_correctness_smoke_20261110.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Survival runtime correctness smoke \u2014 2026-11-10",
       "type": "research"
     },
     {

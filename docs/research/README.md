@@ -39,6 +39,11 @@ explicit; it is not a release verdict.
 
 Training throughput is an engineering measurement, not trading performance. See [GH200 throughput audit](gh200_throughput_audit) for measured rates, hardware conditions, and bottlenecks.
 
+The [survival runtime correctness smoke](survival_runtime_correctness_smoke_20261110)
+records a bounded synthetic check of the configured policy, checkpoint, and
+evaluation path. It is implementation evidence, not an economic result or
+scientific-training authorization.
+
 The [candidate-geometry feature contract](candidate_geometry_feature_contract)
 defines the causal formula, unit, source, decision-time availability, and
 missingness behavior for every model-facing geometry feature.
@@ -68,6 +73,7 @@ entry_idea_opportunity_counts
 multitimeframe_data_alignment
 feature_causality_and_availability
 candidate_geometry_feature_contract
+survival_runtime_correctness_smoke_20261110
 model_observation_and_action_semantics
 mt5_ftmo_execution_fidelity
 quote_coverage_sensitivity
