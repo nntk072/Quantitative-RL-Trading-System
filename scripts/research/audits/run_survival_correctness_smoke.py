@@ -26,6 +26,7 @@ from evaluation.rollout.trained_policy_rollout import evaluate_model
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
 from learning.rl.agent import build_agent, validate_model_trade_setup_observation_schema
 from learning.rl.checkpoint import load_sb3_training_checkpoint
+from market_data.loading.ticks import TickBook
 from market_data.transforms.sessions import add_session_id, add_session_labels
 from simulation.environment import make_env
 
@@ -66,12 +67,40 @@ def _synthetic_inputs() -> tuple[pd.DataFrame, pd.DataFrame]:
     setup_columns = [column for _, column in trade_setup_candidate_feature_columns()]
     features = pd.DataFrame(0.0, index=index, columns=setup_columns)
     features["reachable_r"] = np.nan
+    # The fixture has no genuine market structure. Supply causal, bar-local
+    # envelope values so configured strategy wiring receives its full schema;
+    # phase flags stay inactive and the smoke policy takes no trades.
+    for column in (
+        "asian_high",
+        "sweep_high",
+        "po3_manipulation_high",
+        "ifvg_bull_high",
+        "ifvg_bear_high",
+    ):
+        features[column] = bars["high"]
+    for column in (
+        "asian_low",
+        "sweep_low",
+        "po3_manipulation_low",
+        "ifvg_bull_low",
+        "ifvg_bear_low",
+    ):
+        features[column] = bars["low"]
+    features["po3_manipulation_end"] = 0.0
+    features["po3_distribution"] = 0.0
     for timeframe in ("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"):
         features[f"{timeframe}_smoke_context"] = 0.0
     return bars, features
 
 
 def _build_environment(bars: pd.DataFrame, features: pd.DataFrame, cfg: Any) -> Any:
+    mid = bars["close"].to_numpy(dtype=np.float64)
+    half_spread = bars["spread"].to_numpy(dtype=np.float64) / 2.0
+    tickbook = TickBook(
+        pd.DatetimeIndex(bars.index).astype("int64").to_numpy(copy=True),
+        mid - half_spread,
+        mid + half_spread,
+    )
     return make_env(
         bars,
         features,
@@ -79,6 +108,7 @@ def _build_environment(bars: pd.DataFrame, features: pd.DataFrame, cfg: Any) -> 
         algo="ppo",
         reward="survival",
         episodic=False,
+        tickbook=tickbook,
         arch=str(cfg.agent.arch),
     )
 
@@ -87,6 +117,29 @@ def _assert_finite_observation(observation: dict[str, np.ndarray[Any, Any]]) -> 
     for key, value in observation.items():
         if not np.isfinite(np.asarray(value, dtype=np.float64)).all():
             raise RuntimeError(f"smoke observation contains nonfinite values in {key}")
+
+
+def _validate_replay_action_mask(replay: dict[str, Any]) -> int:
+    """Require every replay choice to be eligible under its observed mask."""
+    decisions = replay.get("trade_setup_decisions")
+    if not isinstance(decisions, pd.DataFrame) or decisions.empty:
+        raise RuntimeError("evaluator did not return trade-setup mask decisions")
+    required = {"trade_setup_candidate_id", "selection_valid", "eligible_trade_setup_ids"}
+    if not required.issubset(decisions.columns):
+        raise RuntimeError("evaluator trade-setup decisions omit mask-validation fields")
+    for row in decisions.to_dict(orient="records"):
+        selected_id = row["trade_setup_candidate_id"]
+        eligible_ids = row["eligible_trade_setup_ids"]
+        if (
+            not bool(row["selection_valid"])
+            or not isinstance(eligible_ids, list)
+            or selected_id not in eligible_ids
+            or NO_TRADE_ID not in eligible_ids
+        ):
+            raise RuntimeError("evaluator selected an ineligible setup or masked NO_TRADE")
+    if len(decisions) != int(replay.get("n_steps", -1)):
+        raise RuntimeError("evaluator omitted one or more trade-setup mask decisions")
+    return len(decisions)
 
 
 def _terminal_reward_check(bars: pd.DataFrame, features: pd.DataFrame, cfg: Any) -> float:
@@ -154,10 +207,22 @@ def run_smoke(config_path: Path, output_dir: Path) -> dict[str, Any]:
     model.save(checkpoint)
     loaded = load_sb3_training_checkpoint(checkpoint, env=env, device=device, algo="ppo")
     validate_model_trade_setup_observation_schema(loaded, schema)
+    # Compare the same checkpoint weights on CPU so accelerator kernel
+    # roundoff does not obscure save/load inference parity.
+    device = "cpu"
+    model.policy.to(device)
+    loaded.policy.to(device)
+    model.device = torch.device(device)
+    loaded.device = torch.device(device)
     before, _ = model.predict(observation, deterministic=True)
     after, _ = loaded.predict(observation, deterministic=True)
-    if not np.allclose(before, after, rtol=0.0, atol=1e-6):
-        raise RuntimeError("deterministic policy output changed after checkpoint reload")
+    max_action_delta = float(np.max(np.abs(np.asarray(before) - np.asarray(after))))
+    if not np.array_equal(before, after):
+        raise RuntimeError(
+            "deterministic policy output changed after checkpoint reload: "
+            f"before={np.asarray(before).tolist()}, after={np.asarray(after).tolist()}, "
+            f"max_delta={max_action_delta:.9g}"
+        )
 
     evaluation_env = _build_environment(bars, features, cfg)
     replay = evaluate_model(
@@ -166,7 +231,10 @@ def run_smoke(config_path: Path, output_dir: Path) -> dict[str, Any]:
         features,
         env=evaluation_env,
         deterministic=True,
+        strategy_actions=bool(cfg.env.strategy_actions),
+        trade_setup_actions=bool(cfg.env.trade_setup_actions),
     )
+    legal_action_decisions = _validate_replay_action_mask(replay)
     equity = np.asarray(replay["equity"], dtype=np.float64)
     if equity.size == 0 or not np.isfinite(equity).all():
         raise RuntimeError("evaluator returned empty or nonfinite account equity")
@@ -200,6 +268,8 @@ def run_smoke(config_path: Path, output_dir: Path) -> dict[str, Any]:
         "evaluator_completed_split": True,
         "evaluator_steps": int(replay["n_steps"]),
         "evaluator_equity_finite": True,
+        "evaluator_action_mask_legal": True,
+        "evaluator_action_mask_decisions": legal_action_decisions,
         "terminal_breach_free_reward": terminal_reward,
         "runtime_overrides": {
             "env.n_envs": 1,
