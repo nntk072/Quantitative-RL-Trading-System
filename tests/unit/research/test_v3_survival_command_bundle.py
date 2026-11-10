@@ -30,12 +30,20 @@ def test_survival_bundle_serializes_requested_roles_and_keeps_price_separate() -
         roles=["canonical", "control"],
     )
     commands = bundle["commands"]
-    assert len(commands) == 38
+    assert len(commands) == 74
     assert commands[0]["id"] == "survival_train_seed_42"
     assert commands[1]["id"] == "survival_walk_forward_fold_42_0"
     assert commands[36]["id"] == "survival_finalize"
-    assert commands[37]["id"] == "survival_control"
-    assert commands[37]["depends_on"] == ["survival_finalize"]
+    assert commands[37]["id"] == "survival_control_train_seed_42"
+    assert commands[-1]["id"] == "survival_control_finalize"
+    assert len([item for item in commands if "walk_forward_fold" in item["id"]]) == 60
+    assert all(
+        "/walk_forward_folds/fold_" in item["artifact_roots"][0]
+        for item in commands
+        if "walk_forward_fold" in item["id"]
+    )
+    control_train = commands[37]
+    assert "run_manifest.json" in control_train["artifact_roots"][0]
     assert bundle["selection_allowed"] is False
     assert all(command.get("selection_allowed") is False for command in commands[:-1])
     assert all(command["resource_lock"] == "GPU_TRAIN_LOCK" for command in commands)

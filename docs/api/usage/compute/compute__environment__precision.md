@@ -32,7 +32,7 @@ def configure_cuda_for_training(
     configure_accelerator_for_training(device_hint, cudnn_benchmark=cudnn_benchmark)
 ```
 
-2. [production caller: `_prepare_training_configuration`](../../../../training/runner/configuration_stage.py#L39)
+2. [production caller: `_prepare_training_configuration`](../../../../training/runner/configuration_stage.py#L43)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

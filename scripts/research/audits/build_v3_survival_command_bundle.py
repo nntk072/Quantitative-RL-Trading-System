@@ -86,10 +86,10 @@ def build_bundle(
         row = rows_by_role[role]
         if row["authorized_now"] is not True:
             raise ValueError(f"survival role is not scientifically authorized: {role}")
-        if role == "canonical":
+        if role in {"canonical", "control"}:
             replication = protocol["replication"]
             walk_forward = replication["walk_forward"]
-            campaign_root = f"{output_root}/canonical"
+            campaign_root = f"{output_root}/{role}"
             base_argv = list(row["command_argv"])
             common = ["--survival-campaign-dir", campaign_root]
             previous = None
@@ -99,10 +99,11 @@ def build_bundle(
                     ("train_seed", None),
                     *[("walk_forward_fold", fold_id) for fold_id in range(walk_forward["splits"])],
                 ]:
+                    role_prefix = "survival_" if role == "canonical" else "survival_control_"
                     command_id = (
-                        f"survival_{phase}_{seed}"
+                        f"{role_prefix}{phase}_{seed}"
                         if fold is None
-                        else f"survival_walk_forward_fold_{seed}_{fold}"
+                        else f"{role_prefix}walk_forward_fold_{seed}_{fold}"
                     )
                     phase_argv = [
                         *base_argv,
@@ -120,19 +121,33 @@ def build_bundle(
                             "argv": phase_argv,
                             "depends_on": [] if previous is None else [previous],
                             "resource_lock": "GPU_TRAIN_LOCK",
-                            "artifact_roots": [
-                                f"{campaign_root}/seeds/seed{seed}"
+                            "artifact_roots": (
+                                [
+                                    f"{campaign_root}/seeds/seed{seed}/{name}"
+                                    for name in (
+                                        "run_manifest.json",
+                                        "train_equity_gate.json",
+                                        "train_path_outcome.json",
+                                        "train_activity_gate.json",
+                                        "config.yaml",
+                                        "feature_normalization_state.json",
+                                        "evaluation_manifest.json",
+                                        "model/ppo_final.zip",
+                                    )
+                                ]
                                 if phase == "train_seed"
-                                else f"{campaign_root}/seeds/seed{seed}/walk_forward.json"
-                            ],
+                                else [
+                                    f"{campaign_root}/seeds/seed{seed}/walk_forward_folds/fold_{fold}.json"
+                                ]
+                            ),
                             "experiment": True,
-                            "claim_scope": "canonical_survival_qualification",
+                            "claim_scope": f"{role}_survival_qualification",
                             "selection_allowed": False,
-                            "estimated_seconds": 21_000,
+                            "estimated_seconds": 24_000,
                         }
                     )
                     previous = command_id
-            command_id = "survival_finalize"
+            command_id = "survival_finalize" if role == "canonical" else "survival_control_finalize"
             commands.append(
                 {
                     "id": command_id,
@@ -146,7 +161,7 @@ def build_bundle(
                     "resource_lock": "GPU_TRAIN_LOCK",
                     "artifact_roots": [f"{campaign_root}/survival_phase_gate.json"],
                     "experiment": True,
-                    "claim_scope": "canonical_survival_qualification",
+                    "claim_scope": f"{role}_survival_qualification",
                     "selection_allowed": False,
                     "estimated_seconds": 120,
                     "run_after_failed_dependencies": True,

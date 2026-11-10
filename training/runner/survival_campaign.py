@@ -21,7 +21,17 @@ def validate_survival_campaign(
     args: Any,
     create: bool,
 ) -> dict[str, Any]:
-    """Create or verify the immutable source and protocol identity for a campaign."""
+    """Create or verify the immutable source and protocol identity for a campaign.
+
+    Args:
+        run_dir: Directory containing campaign identity metadata.
+        cfg: Loaded configuration used by the campaign.
+        args: Parsed arguments defining seeds and validation protocol.
+        create: Whether a missing identity may be created.
+
+    Returns:
+        Validated campaign identity mapping.
+    """
     current_source = source_state(ROOT)
     if not current_source.get("available") or current_source.get("dirty_files"):
         raise ValueError("survival campaign requires a clean, identifiable source tree")

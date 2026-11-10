@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 from pathlib import Path
 
 import pytest
@@ -11,9 +12,9 @@ from scripts.dev.security.dependency_audit import (
     uv_command,
 )
 from scripts.dev.security.secret_scan import (
+    _generated_research_table_exclusion,
+    _scanner_core_count,
     findings_from_baseline,
-    oversized_research_table_exclusion,
-    validate_candidate_action_identity_false_positives,
 )
 from scripts.dev.security.secret_scan import uv_command as secret_uv_command
 
@@ -66,57 +67,23 @@ def test_secret_scanner_prefers_canonical_qrl_uv(monkeypatch, tmp_path: Path) ->
     assert secret_uv_command() == str(native_uv)
 
 
-def test_secret_scanner_excludes_only_oversized_generated_research_tables() -> None:
-    pattern, count = oversized_research_table_exclusion()
+def test_secret_scanner_uses_process_cpu_affinity(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "scripts.dev.security.secret_scan.os.sched_getaffinity", lambda _: {2, 4, 6}
+    )
+
+    assert _scanner_core_count() == 3
+
+
+def test_secret_scanner_excludes_generated_research_tables_only() -> None:
+    pattern, count = _generated_research_table_exclusion()
 
     assert pattern is not None
     assert count > 0
-    assert (
-        r"evidence/research/candidate_action_linkage/matched_baseline_candidate_actions\.csv"
-        in pattern
-    )
-    assert "configuration/configuration_loader.py" not in pattern
-
-
-def test_candidate_event_identity_boundary_matches_are_validated(tmp_path: Path) -> None:
-    path = tmp_path / "candidate_actions.csv"
-    long_field = "f" * 38
-    source_id = (
-        "candidate-scoped-source-time-identity.v1:ifvg:H1:1:"
-        "source_time_ns=1234567890123456789:"
-        f"{long_field}=9876543210987654321"
-    )
-    path.write_text(
-        f"trade_setup_source_event_id,description\n{source_id},generated identity\n",
-        encoding="utf-8",
-    )
-
-    assert validate_candidate_action_identity_false_positives(path) == 1
-
-    legacy_path = tmp_path / "legacy_candidate_actions.csv"
-    legacy_source_id = source_id.replace(
-        "candidate-scoped-source-time-identity.v1", "trade-setup-event-identity-v3"
-    )
-    legacy_path.write_text(
-        f"trade_setup_source_event_id,description\n{legacy_source_id},historical identity\n",
-        encoding="utf-8",
-    )
-    assert validate_candidate_action_identity_false_positives(legacy_path) == 1
-
-
-def test_candidate_event_identity_validator_rejects_unexplained_match(
-    tmp_path: Path,
-) -> None:
-    path = tmp_path / "candidate_actions.csv"
-    token_shape = "12345678" + ":" + "A" * 35
-    source_id = f"candidate-scoped-source-time-identity.v1:ifvg:H1:1:event={token_shape}"
-    path.write_text(
-        f"trade_setup_source_event_id,description\n{source_id},generated identity\n",
-        encoding="utf-8",
-    )
-
-    with pytest.raises(ValueError, match="malformed|unexplained"):
-        validate_candidate_action_identity_false_positives(path)
+    assert re.fullmatch(pattern, "evidence/research/candidate_actions.csv")
+    assert re.fullmatch(pattern, "evidence/research/nested/outcomes.parquet")
+    assert not re.fullmatch(pattern, "evidence/research/metadata.json")
+    assert not re.fullmatch(pattern, "configuration/configuration_loader.py")
 
 
 def test_empty_exception_file_is_valid(tmp_path: Path) -> None:

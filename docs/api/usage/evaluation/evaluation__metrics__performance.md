@@ -135,7 +135,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L262)
+1. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L269)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -567,7 +567,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L262)
+1. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L269)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

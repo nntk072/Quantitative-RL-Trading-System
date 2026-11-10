@@ -352,7 +352,7 @@ COMPOSITION_ROOT_BUDGETS = {
     "training/runner/baselines.py": 8,
     "training/runner/lstm_baseline.py": 8,
     "training/runner/backtest.py": 8,
-    "training/runner/walk_forward_validation.py": 5,
+    "training/runner/walk_forward_validation.py": 6,
     # Survival admission composes config, observation and feature schemas,
     # source provenance, and atomic evidence publication before learning.
     "training/configuration/survival_gate.py": 6,

@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1089](../../../../evaluation/rollout/trained_policy_rollout.py#L1089)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1094](../../../../evaluation/rollout/trained_policy_rollout.py#L1094)
 
 **Inputs and outputs:**
 
@@ -238,7 +238,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L251)
+2. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L258)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -278,7 +278,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1089](../../../../evaluation/rollout/trained_policy_rollout.py#L1089)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1094](../../../../evaluation/rollout/trained_policy_rollout.py#L1094)
 
 **Inputs and outputs:**
 

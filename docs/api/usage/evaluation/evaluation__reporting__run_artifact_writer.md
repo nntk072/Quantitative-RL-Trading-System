@@ -47,7 +47,7 @@ This page contains 1 public callable records owned by `evaluation.reporting.run_
 
 **Observed usage:**
 
-1. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L259)
+1. [test fixture: `test_model_choice_probabilities_survive_rollout_and_artifact_export`](../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L266)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

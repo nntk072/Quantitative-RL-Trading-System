@@ -9,6 +9,7 @@ import pytest
 from omegaconf import OmegaConf
 
 from training.artifacts.walk_forward import (
+    _write_walk_forward_fold_receipt,
     build_walk_forward_identity,
     build_walk_forward_progress,
     fold_identity_sha256,
@@ -115,6 +116,64 @@ def test_walk_forward_progress_resumes_exact_completed_folds(tmp_path: Path) -> 
         folds={**resumed, 1: second},
     )
     assert complete["status"] == "complete"
+
+
+def test_walk_forward_receipts_validate_and_recover_aggregate_write_gap(tmp_path: Path) -> None:
+    identity = {
+        "schema_version": "walk-forward-progress-v1",
+        "seed": 42,
+        "run_manifest_sha256": "a" * 64,
+        "wf_splits": 2,
+        "purge_bars": 60,
+        "embargo_bars": 20,
+        "wf_steps": 2000,
+    }
+    split_sha = fold_split_sha256([0, 1], [2])
+    record = {
+        "fold": 0,
+        "split_sha256": split_sha,
+        "fold_identity_sha256": fold_identity_sha256(identity, 0, split_sha),
+        "sharpe": 0.0,
+    }
+    progress_path = tmp_path / "walk_forward.json"
+    receipts_dir = tmp_path / "walk_forward_folds"
+
+    _write_walk_forward_fold_receipt(receipts_dir, identity=identity, record=record)
+    recovered = load_walk_forward_progress(
+        progress_path,
+        identity=identity,
+        expected_fold_ids={0, 1},
+        receipts_dir=receipts_dir,
+    )
+    assert recovered == {0: record}
+
+    progress_path.write_text(
+        json.dumps(
+            build_walk_forward_progress(
+                identity=identity,
+                expected_fold_ids={0, 1},
+                purge_bars=60,
+                embargo_bars=20,
+                folds=recovered,
+            )
+        ),
+        encoding="utf-8",
+    )
+    assert load_walk_forward_progress(
+        progress_path,
+        identity=identity,
+        expected_fold_ids={0, 1},
+        receipts_dir=receipts_dir,
+    ) == {0: record}
+
+    receipts_dir.joinpath("fold_0.json").unlink()
+    with pytest.raises(ValueError, match="receipt is missing or changed"):
+        load_walk_forward_progress(
+            progress_path,
+            identity=identity,
+            expected_fold_ids={0, 1},
+            receipts_dir=receipts_dir,
+        )
 
 
 def test_survival_campaign_rejects_source_or_protocol_changes(

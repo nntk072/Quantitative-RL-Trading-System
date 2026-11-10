@@ -19,6 +19,7 @@ from market_data.loading.ticks import ticks_covering
 from market_data.splits.walkforward import purged_walk_forward
 from training.artifacts.flags import strict_nonnegative_int
 from training.artifacts.walk_forward import (
+    _write_walk_forward_fold_receipt,
     build_walk_forward_identity,
     build_walk_forward_progress,
     fold_identity_sha256,
@@ -106,6 +107,7 @@ def run_walk_forward_validation(
         wf_steps=wf_steps,
     )
     wf_path = run_dir / "walk_forward.json"
+    receipts_dir = run_dir / "walk_forward_folds"
     splits = list(
         purged_walk_forward(
             len(train_bars),
@@ -119,11 +121,13 @@ def run_walk_forward_validation(
         wf_path,
         identity=identity,
         expected_fold_ids=expected_fold_ids,
+        receipts_dir=receipts_dir,
     )
     if only_fold is not None and int(only_fold) not in expected_fold_ids:
         raise ValueError(f"walk-forward fold {only_fold} is outside the configured split set")
 
     def persist_progress() -> None:
+        """Atomically refresh the aggregate view of completed folds."""
         payload = build_walk_forward_progress(
             identity=identity,
             expected_fold_ids=expected_fold_ids,
@@ -326,6 +330,11 @@ def run_walk_forward_validation(
         }
         if not deterministic_eval:
             fold_record["action_rng_seed"] = int(seed)
+        _write_walk_forward_fold_receipt(
+            receipts_dir,
+            identity=identity,
+            record=fold_record,
+        )
         previous_folds[fold_id] = fold_record
         persist_progress()
 

@@ -213,6 +213,12 @@ def _canonicalize_saved_observation_schema_id(schema_id: str) -> str:
 
     This mapping is limited to persisted metadata. New configs and runtime
     schemas must use the current identifier directly.
+
+    Args:
+        schema_id: Identifier read from persisted observation metadata.
+
+    Returns:
+        Current observation schema identifier.
     """
     if schema_id == _LEGACY_REPEATED_PAYOUT_SCHEMA_ID:
         return OBSERVATION_SCHEMA_REPEATED_PAYOUT
@@ -220,7 +226,14 @@ def _canonicalize_saved_observation_schema_id(schema_id: str) -> str:
 
 
 def requires_normalized_account_observation(version: str) -> bool:
-    """Whether an account observation schema requires normalized account values."""
+    """Whether an account observation schema requires normalized account values.
+
+    Args:
+        version: Observation schema version to inspect.
+
+    Returns:
+        Whether the schema requires normalized account values.
+    """
     return version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_REPEATED_PAYOUT)
 
 

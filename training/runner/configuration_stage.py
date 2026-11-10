@@ -24,8 +24,11 @@ log = logging.getLogger(__name__)
 def _prepare_training_configuration(args: Any | None = None) -> TrainingConfigurationStage:
     """Prepare training configuration.
 
+    Args:
+        args: Optional parsed training arguments; parse process arguments when omitted.
+
     Returns:
-        Result of prepare training configuration.
+        Configuration, device, and runtime settings for the training run.
     """
     args = args or parse_train_args()
 

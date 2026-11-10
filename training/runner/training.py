@@ -34,7 +34,11 @@ log = logging.getLogger(__name__)
 
 
 def _verify_completed_campaign_seed(seed_dir: Path) -> None:
-    """Fail closed unless a previously completed seed has its exact artifacts."""
+    """Fail closed unless a previously completed seed has its exact artifacts.
+
+    Args:
+        seed_dir: Directory containing the completed seed run artifacts.
+    """
     manifest_path = seed_dir / "run_manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     checkpoint_path = seed_dir / str(manifest["artifact_paths"]["checkpoint"])

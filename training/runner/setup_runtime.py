@@ -19,8 +19,11 @@ __all__ = ["TrainingPreparation", "prepare_training_run"]
 def prepare_training_run(args: Any | None = None) -> TrainingPreparation:
     """Resolve config, data/features, and run assets before any policy learning starts.
 
+    Args:
+        args: Optional parsed training arguments; parse process arguments when omitted.
+
     Returns:
-        Result of resolve config, data/features, and run assets before any policy learning starts.
+        Prepared training configuration, data, and run assets.
     """
     config_stage = _prepare_training_configuration(args)
     data_stage = _prepare_training_data(config_stage)

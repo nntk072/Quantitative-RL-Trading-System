@@ -261,7 +261,21 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Whether an account observation schema requires normalized account values.
 
-**Exact API:** {py:obj}`decisioning.observations.requires_normalized_account_observation` · **Source:** [decisioning/observations.py:222](../../../../decisioning/observations.py#L222)
+**Exact API:** {py:obj}`decisioning.observations.requires_normalized_account_observation` · **Source:** [decisioning/observations.py:228](../../../../decisioning/observations.py#L228)
+
+**Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  version: Observation schema version to inspect.
+  ```
+
+- **Returns:**
+
+  ```text
+  Whether the schema requires normalized account values.
+  ```
 
 **Observed usage:**
 
