@@ -129,9 +129,12 @@ and the release gate on source
 historical. A later scientific-readiness manifest for source
 `516674303ec4e3654aa0bf4b3501882f34a35838` passes with D survival training
 authorized and PRICE training unauthorized. The resumable campaign integration
-now being completed changes source identity, so its exact-source readiness gate
-must pass again before training starts. Neither record authorizes portfolio
-optimization or selection. See
+is committed at `aab89add6ec0569f887ab4f11a3bab0d0faaf6ce`. Its exact-source
+implementation readiness run passed all eight tasks and barriers. The frozen
+command bundle contains 36 seed/fold units, a fail-closed finalizer, and the
+serialized control run. This plan edit changes source identity, so regenerate
+exact-source readiness after this documentation update and before launch.
+Neither record authorizes portfolio optimization or selection. See
 [`pretraining_implementation_readiness_20261110.md`](../research/pretraining_implementation_readiness_20261110.md)
 for the implementation gate; use the separately stored exact-source scientific
 readiness manifest for training authorization.
