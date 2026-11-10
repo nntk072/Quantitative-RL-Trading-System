@@ -48,6 +48,10 @@ The [candidate-geometry feature contract](candidate_geometry_feature_contract)
 defines the causal formula, unit, source, decision-time availability, and
 missingness behavior for every model-facing geometry feature.
 
+The [pretraining implementation readiness report](pretraining_implementation_readiness_20261110)
+records the current-source contract, feature-evidence, and release gates. Its
+passing implementation checks do not authorize scientific training.
+
 ## Methods and claim boundaries
 
 - [Result identity and evidence](result_identity_and_evidence): versioned
@@ -74,6 +78,7 @@ multitimeframe_data_alignment
 feature_causality_and_availability
 candidate_geometry_feature_contract
 survival_runtime_correctness_smoke_20261110
+pretraining_implementation_readiness_20261110
 model_observation_and_action_semantics
 mt5_ftmo_execution_fidelity
 quote_coverage_sensitivity

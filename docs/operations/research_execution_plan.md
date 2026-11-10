@@ -118,10 +118,19 @@ checkpoint round trip, evaluator replay, 60 legal masked actions, and terminal
 survival reward using synthetic data. Peak host RSS was 3,228,824 KiB and
 elapsed time was 30.65 seconds. This is implementation correctness evidence
 only; it does not authorize scientific training or selection. The promotion
-review records no-go because the available readiness manifest is tied to an
-older source and denies authorization. See
+review records no-go because the current-source readiness manifest still
+denies scientific training authorization. See
 [`survival_runtime_correctness_smoke_20261110.md`](../research/survival_runtime_correctness_smoke_20261110.md)
 for the exact contracts, results, and artifact hashes.
+
+The bounded pretraining implementation readiness run passed all eight tasks
+and the release gate on source
+`205026102dd09abe5898a066ea962c8f4c22e02f`. Its current-source manifest keeps
+`scientific_training_authorized` and `price_training_authorized` false. The
+dependency-ready TODO list therefore does not permit canonical D qualification,
+portfolio optimization, or selection. See
+[`pretraining_implementation_readiness_20261110.md`](../research/pretraining_implementation_readiness_20261110.md)
+for the exact gate results and evidence identity.
 
 The research TODO tracker now labels its list as dependency-ready. Passing
 those hard dependencies does not evaluate conditional gates, scientific

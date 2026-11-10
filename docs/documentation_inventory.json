@@ -1,5 +1,5 @@
 {
-  "page_count": 371,
+  "page_count": 372,
   "pages": [
     {
       "links": [
@@ -5770,6 +5770,7 @@
     {
       "links": [
         "../research/survival_runtime_correctness_smoke_20261110.md",
+        "../research/pretraining_implementation_readiness_20261110.md",
         "../research/selected_policy_trade_lifecycle.md",
         "../research/validation_protocol.md",
         "../research/entry_and_exit_attribution.md",
@@ -7062,6 +7063,7 @@
         "gh200_throughput_audit",
         "survival_runtime_correctness_smoke_20261110",
         "candidate_geometry_feature_contract",
+        "pretraining_implementation_readiness_20261110",
         "result_identity_and_evidence",
         "evaluation_methodology",
         "validation_protocol",
@@ -7298,6 +7300,16 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Multi-timeframe market context and entry ideas",
+      "type": "research"
+    },
+    {
+      "links": [],
+      "orphan_status": "in toctree",
+      "path": "docs/research/pretraining_implementation_readiness_20261110.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Pretraining implementation readiness \u2014 2026-11-10",
       "type": "research"
     },
     {
