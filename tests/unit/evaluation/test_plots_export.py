@@ -1175,7 +1175,7 @@ def test_position_export_preserves_trade_setup_and_structural_provenance(
                 "trade_setup_candidate_id": 17,
                 "trade_setup_schema_version": "trade_setup-action-v1",
                 "decision_id": "episode-0-step-10",
-                "trade_setup_event_identity_version": "trade-setup-event-identity-v3",
+                "trade_setup_event_identity_version": "candidate-scoped-source-time-identity.v1",
                 "trade_setup_source_event_id": "fvg_retest:M5:1:1735812000000000000",
                 "trade_setup_source_event_identity_status": "identified",
                 "trade_setup_source_event_times_ns": [
@@ -1218,7 +1218,9 @@ def test_position_export_preserves_trade_setup_and_structural_provenance(
     assert position["trade_setup_candidate_id"] == 17
     assert position["trade_setup_schema_version"] == "trade_setup-action-v1"
     assert position["decision_id"] == "episode-0-step-10"
-    assert position["trade_setup_event_identity_version"] == "trade-setup-event-identity-v3"
+    assert position["trade_setup_event_identity_version"] == (
+        "candidate-scoped-source-time-identity.v1"
+    )
     assert position["trade_setup_source_event_id"] == "fvg_retest:M5:1:1735812000000000000"
     assert position["trade_setup_source_event_identity_status"] == "identified"
     assert position["trade_setup_source_event_times_ns"] == [

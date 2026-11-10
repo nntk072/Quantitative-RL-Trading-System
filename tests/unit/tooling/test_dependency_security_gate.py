@@ -82,7 +82,7 @@ def test_candidate_event_identity_boundary_matches_are_validated(tmp_path: Path)
     path = tmp_path / "candidate_actions.csv"
     long_field = "f" * 38
     source_id = (
-        "trade-setup-event-identity-v3:ifvg:H1:1:"
+        "candidate-scoped-source-time-identity.v1:ifvg:H1:1:"
         "source_time_ns=1234567890123456789:"
         f"{long_field}=9876543210987654321"
     )
@@ -93,13 +93,23 @@ def test_candidate_event_identity_boundary_matches_are_validated(tmp_path: Path)
 
     assert validate_candidate_action_identity_false_positives(path) == 1
 
+    legacy_path = tmp_path / "legacy_candidate_actions.csv"
+    legacy_source_id = source_id.replace(
+        "candidate-scoped-source-time-identity.v1", "trade-setup-event-identity-v3"
+    )
+    legacy_path.write_text(
+        f"trade_setup_source_event_id,description\n{legacy_source_id},historical identity\n",
+        encoding="utf-8",
+    )
+    assert validate_candidate_action_identity_false_positives(legacy_path) == 1
+
 
 def test_candidate_event_identity_validator_rejects_unexplained_match(
     tmp_path: Path,
 ) -> None:
     path = tmp_path / "candidate_actions.csv"
     token_shape = "12345678" + ":" + "A" * 35
-    source_id = f"trade-setup-event-identity-v3:ifvg:H1:1:event={token_shape}"
+    source_id = f"candidate-scoped-source-time-identity.v1:ifvg:H1:1:event={token_shape}"
     path.write_text(
         f"trade_setup_source_event_id,description\n{source_id},generated identity\n",
         encoding="utf-8",

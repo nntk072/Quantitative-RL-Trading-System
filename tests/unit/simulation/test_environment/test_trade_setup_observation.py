@@ -244,8 +244,10 @@ def test_delayed_entry_keeps_the_selected_primary_trade_setup(
     assert env.trade_log[-1]["trade_setup_candidate_id"] == primary.candidate_id
     assert env.trade_log[-1]["primary_setup_timeframe"] == "M5"
     assert env.trade_log[-1]["decision_bar_time"] == when
-    assert env.trade_log[-1]["decision_time"] == env.trade_log[-1]["signal_time"]
-    assert env.trade_log[-1]["decision_time"] == env.trade_log[-1]["order_submission_time"]
+    completed_bar_time = when + pd.Timedelta(minutes=env._minutes_per_step)
+    assert env.trade_log[-1]["decision_time"] == completed_bar_time
+    assert env.trade_log[-1]["signal_time"] == completed_bar_time
+    assert env.trade_log[-1]["order_submission_time"] == completed_bar_time
 
     entered_trade_setups: list[int | None] = []
 

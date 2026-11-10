@@ -101,9 +101,11 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
                     **self._decision_action,
                 }
             )
+        decision_time = pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step)
         info: dict[str, Any] = {
             "decision_id": self._current_decision_id,
-            "decision_time": bar_time,
+            "decision_time": decision_time,
+            "decision_bar_time": bar_time,
             "action": int(action),
             "execution_type": str(self._selected_entry_execution),
             "limit_offset_atr": float(self._selected_limit_offset_atr),
@@ -244,7 +246,7 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
         info["account_state_snapshot"] = account_state_snapshot(
             self.account,
             valuation_time=valuation_time,
-            decision_time=bar_time,
+            decision_time=decision_time,
             session_id=session_id,
             daily_loss_limit_usd=self.guardrails.daily_limit_for(self.account),
             soft_daily_loss_limit_usd=self.guardrails.soft_daily_limit_for(self.account),

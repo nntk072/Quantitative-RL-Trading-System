@@ -15,13 +15,20 @@ POLICY_DECISION_RECONCILIATION_SCHEMA = "policy_decision_reconciliation.v1"
 _DECISION_SCHEMA_V1 = "event_backtest_policy_decision.v1"
 _DECISION_SCHEMA = "event_backtest_policy_decision.v2"
 _ENVIRONMENT_DECISION_SCHEMA_V1 = "environment_policy_decision.v1"
-_ENVIRONMENT_DECISION_SCHEMA = "environment_policy_decision.v2"
+_ENVIRONMENT_DECISION_SCHEMA_BAR_LABEL = "environment_policy_decision.v2"
+_ENVIRONMENT_DECISION_SCHEMA_COMPLETED_BAR = "environment_policy_decision.completed_bar.v1"
+_ENVIRONMENT_DECISION_SCHEMAS = frozenset(
+    {
+        _ENVIRONMENT_DECISION_SCHEMA_BAR_LABEL,
+        _ENVIRONMENT_DECISION_SCHEMA_COMPLETED_BAR,
+    }
+)
 _SUPPORTED_DECISION_SCHEMAS = frozenset(
     {
         _DECISION_SCHEMA_V1,
         _DECISION_SCHEMA,
         _ENVIRONMENT_DECISION_SCHEMA_V1,
-        _ENVIRONMENT_DECISION_SCHEMA,
+        *_ENVIRONMENT_DECISION_SCHEMAS,
     }
 )
 _OPEN_TYPES = frozenset({"open"})
@@ -233,7 +240,7 @@ def reconcile_policy_decisions(
         report["decision_schema_versions"] = sorted(schema_versions)
         if not schema_versions or not schema_versions.issubset(_SUPPORTED_DECISION_SCHEMAS):
             report["incomplete_reasons"].append("unsupported_or_mixed_decision_schema")
-        if schema_versions.intersection({_DECISION_SCHEMA, _ENVIRONMENT_DECISION_SCHEMA}):
+        if schema_versions.intersection({_DECISION_SCHEMA, *_ENVIRONMENT_DECISION_SCHEMAS}):
             v2_required = {
                 "decision_time",
                 "position_direction_at_decision",
@@ -256,7 +263,7 @@ def reconcile_policy_decisions(
             )
             if has_selected_candidates and (
                 _DECISION_SCHEMA in schema_versions
-                or _ENVIRONMENT_DECISION_SCHEMA in schema_versions
+                or bool(schema_versions.intersection(_ENVIRONMENT_DECISION_SCHEMAS))
             ):
                 v2_required.update(
                     {
@@ -267,7 +274,7 @@ def reconcile_policy_decisions(
                 )
             if has_selected_eligible_candidates and (
                 _DECISION_SCHEMA in schema_versions
-                or _ENVIRONMENT_DECISION_SCHEMA in schema_versions
+                or bool(schema_versions.intersection(_ENVIRONMENT_DECISION_SCHEMAS))
             ):
                 v2_required.update(
                     {
@@ -428,7 +435,7 @@ def reconcile_policy_decisions(
                 )
                 is_immediate_market_open = (
                     decision is not None
-                    and str(decision.get("schema_version", "")) == _ENVIRONMENT_DECISION_SCHEMA
+                    and str(decision.get("schema_version", "")) in _ENVIRONMENT_DECISION_SCHEMAS
                     and str(decision.get("execution_type", "market")) == "market"
                 )
                 if not is_immediate_market_open:
@@ -527,7 +534,7 @@ def reconcile_policy_decisions(
         candidate_id = _integer(decision.get("trade_setup_candidate_id"))
         eligible = decision.get("trade_setup_eligible")
         schema_version = str(decision.get("schema_version", ""))
-        mask_required = schema_version in {_DECISION_SCHEMA, _ENVIRONMENT_DECISION_SCHEMA}
+        mask_required = schema_version in {_DECISION_SCHEMA, *_ENVIRONMENT_DECISION_SCHEMAS}
         eligibility_required = mask_required and candidate_id is not None
         if (eligibility_required or not _is_missing(eligible)) and _boolean(eligible) is None:
             report["incomplete_reasons"].append("decision_eligibility_flag_is_invalid")
@@ -1021,7 +1028,7 @@ def reconcile_policy_decisions(
     for record in _records(decisions):
         if str(record.get("schema_version", "")) not in {
             _DECISION_SCHEMA,
-            _ENVIRONMENT_DECISION_SCHEMA,
+            *_ENVIRONMENT_DECISION_SCHEMAS,
         }:
             continue
         decision_id = str(record.get("decision_id", ""))
@@ -1051,14 +1058,20 @@ def reconcile_policy_decisions(
                 for event in position_terminal_events.get(decision_position_id or "", [])
                 if _position_complete(event) is True
             ]
-            if schema_version == _ENVIRONMENT_DECISION_SCHEMA and decision_event_prefix is not None:
-                # Environment decision timestamps name the M1 source bar. The
-                # decision observes the state after that bar's prior event
-                # sequence, so a tick fill a few milliseconds after the label
-                # can still be live. Use the recorded event prefix for phase
-                # ordering and bound its fill timestamp by the next M1 label.
+            if (
+                schema_version in _ENVIRONMENT_DECISION_SCHEMAS
+                and decision_event_prefix is not None
+            ):
+                # Older environment traces timestamp decisions at the bar label;
+                # the completed-bar contract records the actual decision boundary.
                 decision_phase_time = (
-                    None if decision_time is None else decision_time + pd.Timedelta(minutes=1)
+                    None
+                    if decision_time is None
+                    else (
+                        decision_time + pd.Timedelta(minutes=1)
+                        if schema_version == _ENVIRONMENT_DECISION_SCHEMA_BAR_LABEL
+                        else decision_time
+                    )
                 )
                 open_event_index = position_open_event_indices.get(decision_position_id or "")
                 terminal_indices = position_terminal_event_indices.get(
@@ -1109,8 +1122,11 @@ def reconcile_policy_decisions(
                 "decision pending order context has no order submission",
             )
             if pending_submit is not None:
-                decision_time = _timestamp(
-                    record.get("decision_bar_time", record.get("decision_time"))
+                decision_time = (
+                    _timestamp(record.get("decision_time"))
+                    if str(record.get("schema_version", ""))
+                    == _ENVIRONMENT_DECISION_SCHEMA_COMPLETED_BAR
+                    else _timestamp(record.get("decision_bar_time", record.get("decision_time")))
                 )
                 submission_time = _timestamp(
                     pending_submit.get("order_submission_time", pending_submit.get("decision_time"))
@@ -1271,7 +1287,12 @@ def reconcile_policy_decisions(
         linked_orders = order_submits_by_decision.get(decision_id, [])
         if linked_orders or linked_rejections or opens_by_decision.get(decision_id):
             continue
-        decision_time = _first_timestamp(record, "decision_bar_time", "decision_time")
+        schema_version = str(record.get("schema_version", ""))
+        decision_time = (
+            _timestamp(record.get("decision_time"))
+            if schema_version == _ENVIRONMENT_DECISION_SCHEMA_COMPLETED_BAR
+            else _first_timestamp(record, "decision_bar_time", "decision_time")
+        )
         if decision_time is not None and any(
             decision_time >= breach_time for breach_time in hard_breach_times
         ):
@@ -1281,7 +1302,7 @@ def reconcile_policy_decisions(
             continue
         if str(record.get("schema_version", "")) not in {
             _DECISION_SCHEMA,
-            _ENVIRONMENT_DECISION_SCHEMA,
+            *_ENVIRONMENT_DECISION_SCHEMAS,
         }:
             report["incomplete_reasons"].append(
                 "entry_action_outcome_context_missing_for_v1_decision"

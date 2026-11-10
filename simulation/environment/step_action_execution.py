@@ -452,7 +452,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                                 "direction": discrete_action,
                                 **market_setup_identity,
                                 "time": bar_time,
-                                "decision_time": bar_time,
+                                "decision_time": order_submission_time,
                                 "decision_bar_time": bar_time,
                                 "order_submission_time": order_submission_time,
                                 "expected_fill_time": entry_fill_time,

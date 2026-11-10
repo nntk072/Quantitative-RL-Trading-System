@@ -316,7 +316,7 @@ def test_evaluate_model_produces_trades_and_valid_equity():
     assert "pending_order_limit_price" in account_trace.columns
     decisions = result["policy_decisions"]
     assert len(decisions) == result["n_steps"]
-    assert decisions["schema_version"].eq("environment_policy_decision.v2").all()
+    assert decisions["schema_version"].eq("environment_policy_decision.completed_bar.v1").all()
     assert decisions["decision_id"].is_unique
     assert result["policy_decisions_complete"] is True
     policy_reconciliation = reconcile_policy_decisions(

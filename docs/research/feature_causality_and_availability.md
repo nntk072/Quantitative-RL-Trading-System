@@ -55,14 +55,14 @@ cardinality or one-ID-per-setup semantics. Exact feature-state lifetime, feed
 publication latency, and configurations outside this selected profile remain
 open.
 
-The environment builds `trade_setup_mask` from the current `step_idx` feature
-row, and the transition applies the action using that same row before the
-next-index fill. The M1 sequence window excludes the current row while the
-candidate mask may reflect it. This is safe only if the current bar's source
-values are available before the policy decision; the local timestamp
-convention does not establish that boundary, and no all-family test proves it.
-The audit found no definite future-leak defect, but current-row eligibility is
-not promoted as causal evidence.
+The declared policy boundary is after the current M1 bar closes. The environment
+builds `trade_setup_mask` from that completed `step_idx` feature row, then applies
+the action before a next-bar-open fill. The M1 sequence window excludes the
+current row while the candidate mask may reflect it. Runtime traces therefore
+record the completed-bar decision time separately from the raw bar-open label.
+Prefix-invariance and producer reviews address whether feature values depend on
+future rows; they do not measure external feed publication latency. The local
+bar timestamp convention alone does not establish that latency.
 
 The entry-idea projection creates overlapping binary context flags. A separate
 resolver composes retained family timestamps for active candidates without

@@ -130,7 +130,7 @@ def test_delayed_setup_order_and_open_keep_the_originating_decision_id(
     expected_event_time = int(features["M5_fvg_bull_retest_confirmed_at_time_ns"].iloc[0])
     expected_origin_time = int(features["M5_fvg_bull_retest_origin_time_ns"].iloc[0])
     assert first_info["trade_setup_source_event_id"] == (
-        "trade-setup-event-identity-v3:fvg_retest:M5:1:"
+        "candidate-scoped-source-time-identity.v1:fvg_retest:M5:1:"
         f"M5_fvg_bull_retest_confirmed_at_time_ns={expected_event_time}:"
         f"M5_fvg_bull_retest_origin_time_ns={expected_origin_time}"
     )

@@ -134,10 +134,15 @@ def test_random_setup_baseline_uses_shared_rollout_decision_trace() -> None:
     assert decisions["trade_setup_source_event_id"].nunique() == 1
     assert decisions["decision_bar_index"].notna().all()
     for _, row in decisions.iterrows():
-        decision_time = bars.index[int(row["decision_bar_index"])]
+        decision_bar_time = bars.index[int(row["decision_bar_index"])]
+        decision_time = decision_bar_time + pd.Timedelta(minutes=env._minutes_per_step)
+        assert pd.Timestamp(row["decision_bar_time"]) == decision_bar_time
         assert pd.Timestamp(row["decision_time"]) == decision_time
         assert pd.Timestamp(row["time"]) == decision_time
         assert pd.Timestamp(row["valuation_time"]) >= decision_time
+    assert result["account_state_trace"]["decision_time"].tolist() == (
+        result["policy_decisions"]["decision_time"].tolist()
+    )
     assert decisions["trade_event_start_index"].iloc[0] == 0
     assert decisions["trade_event_end_index_exclusive"].iloc[-1] == len(result["trades"])
     previous_event_end = 0
@@ -174,7 +179,9 @@ def test_random_setup_baseline_uses_shared_rollout_decision_trace() -> None:
     ).all()
     policy_decisions = result["policy_decisions"]
     assert len(policy_decisions) == len(decisions)
-    assert policy_decisions["schema_version"].eq("environment_policy_decision.v2").all()
+    assert (
+        policy_decisions["schema_version"].eq("environment_policy_decision.completed_bar.v1").all()
+    )
     assert (
         policy_decisions["eligible_candidate_count"].tolist()
         == decisions["eligible_trade_setup_count"].tolist()

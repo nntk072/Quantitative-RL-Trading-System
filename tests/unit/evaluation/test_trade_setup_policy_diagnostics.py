@@ -15,7 +15,7 @@ def test_trade_setup_policy_report_counts_abstention_diversity_and_invalid_choic
         [
             {
                 "trade_setup_candidate_id": 0,
-                "trade_setup_event_identity_version": "trade-setup-event-identity-v3",
+                "trade_setup_event_identity_version": "candidate-scoped-source-time-identity.v1",
                 "trade_setup_source_event_id": None,
                 "trade_setup_source_event_identity_status": "not_applicable",
                 "trade_setup_source_event_times_ns": [],
@@ -357,7 +357,7 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
                 "step": 1,
                 "time": "2025-01-01T00:01:00Z",
                 "trade_setup_candidate_id": 0,
-                "trade_setup_event_identity_version": "trade-setup-event-identity-v3",
+                "trade_setup_event_identity_version": "candidate-scoped-source-time-identity.v1",
                 "trade_setup_source_event_id": None,
                 "trade_setup_source_event_identity_status": "not_applicable",
                 "trade_setup_source_event_times_ns": [],
@@ -380,9 +380,9 @@ def test_trade_setup_decision_diagnostics_export_to_split_artifacts(tmp_path) ->
                 "step": 2,
                 "time": "2025-01-01T00:02:00Z",
                 "trade_setup_candidate_id": selected_id,
-                "trade_setup_event_identity_version": "trade-setup-event-identity-v3",
+                "trade_setup_event_identity_version": "candidate-scoped-source-time-identity.v1",
                 "trade_setup_source_event_id": (
-                    "trade-setup-event-identity-v3:fvg_retest:M5:1:"
+                    "candidate-scoped-source-time-identity.v1:fvg_retest:M5:1:"
                     "M5_fvg_bull_retest_confirmed_at_time_ns=1735689660000000000:"
                     "M5_fvg_bull_retest_origin_time_ns=1735689360000000000"
                 ),

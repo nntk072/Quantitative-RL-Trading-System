@@ -789,11 +789,13 @@ def evaluate_model(
             )
         decision_id = str(info.get("decision_id", ""))
         decision_row: dict[str, Any] = {
-            "schema_version": "environment_policy_decision.v2",
+            "schema_version": "environment_policy_decision.completed_bar.v1",
             "decision_id": decision_id,
             "decision_index": decision_bar_index,
             "decision_bar_index": decision_bar_index,
-            "decision_bar_time": str(env._bar_time(decision_bar_index)),
+            "decision_bar_time": str(
+                info.get("decision_bar_time", env._bar_time(decision_bar_index))
+            ),
             "decision_time": str(info.get("decision_time", "")),
             "session_id": decision_session_id,
             "action": int(info.get("action", 0)),
@@ -866,6 +868,9 @@ def evaluate_model(
             # decision time. Valuation/fill timing is recorded separately.
             trade_setup_record["time"] = str(decision_time)
             trade_setup_record["decision_time"] = str(decision_time)
+            trade_setup_record["decision_bar_time"] = str(
+                info.get("decision_bar_time", env._bar_time(decision_bar_index))
+            )
             trade_setup_record["valuation_time"] = str(valuation_time)
             trade_setup_record["decision_id"] = str(info.get("decision_id", ""))
             for key in (

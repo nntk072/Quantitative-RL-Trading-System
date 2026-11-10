@@ -17,7 +17,7 @@ from decisioning.trade_setup import (
     trade_setup_candidate_id,
 )
 
-TRADE_SETUP_EVENT_IDENTITY_VERSION = "trade-setup-event-identity-v3"
+TRADE_SETUP_EVENT_IDENTITY_VERSION = "candidate-scoped-source-time-identity.v1"
 TradeSetupEventIdentityStatus = Literal[
     "identified",
     "missing_source_event_time",

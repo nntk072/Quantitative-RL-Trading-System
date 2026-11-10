@@ -20,7 +20,12 @@ MAX_RESEARCH_TABLE_BYTES = 8 * 1024 * 1024
 CANDIDATE_ACTION_IDENTITY_PATH = (
     "evidence/research/candidate_action_linkage/unmatched_baseline_candidate_actions.csv"
 )
-CANDIDATE_EVENT_ID_VERSION = "trade-setup-event-identity-v3"
+CANDIDATE_EVENT_ID_VERSIONS = frozenset(
+    {
+        "candidate-scoped-source-time-identity.v1",
+        "trade-setup-event-identity-v3",  # Historical evidence compatibility.
+    }
+)
 TELEGRAM_TOKEN_PATTERN = re.compile(r"\d{8,10}:[0-9A-Za-z_-]{35}")
 EVENT_FIELD_PATTERN = re.compile(r"[A-Za-z0-9_-]+\Z")
 
@@ -83,7 +88,7 @@ def validate_candidate_action_identity_false_positives(path: Path) -> int:
             if not matches:
                 continue
             parts = source.split(":", maxsplit=4)
-            if len(parts) != 5 or parts[0] != CANDIDATE_EVENT_ID_VERSION:
+            if len(parts) != 5 or parts[0] not in CANDIDATE_EVENT_ID_VERSIONS:
                 raise ValueError(f"unrecognized generated event identity at {path}:{line}")
             pairs = []
             cursor = len(":".join(parts[:4])) + 1
