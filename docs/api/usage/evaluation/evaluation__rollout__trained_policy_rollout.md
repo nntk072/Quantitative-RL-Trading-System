@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:957](../../../../evaluation/rollout/trained_policy_rollout.py#L957)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1089](../../../../evaluation/rollout/trained_policy_rollout.py#L1089)
 
 **Inputs and outputs:**
 
@@ -29,7 +29,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L225)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L348)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -90,7 +90,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Walk a trained RL ``model`` over *bars*/*features* and collect trades.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_model` · **Source:** [evaluation/rollout/trained_policy_rollout.py:176](../../../../evaluation/rollout/trained_policy_rollout.py#L176)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_model` · **Source:** [evaluation/rollout/trained_policy_rollout.py:290](../../../../evaluation/rollout/trained_policy_rollout.py#L290)
 
 **Inputs and outputs:**
 
@@ -278,7 +278,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:957](../../../../evaluation/rollout/trained_policy_rollout.py#L957)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1089](../../../../evaluation/rollout/trained_policy_rollout.py#L1089)
 
 **Inputs and outputs:**
 
@@ -299,7 +299,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L225)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L348)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -360,7 +360,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return an observation → action callable with explicit action typing.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.make_action_fn` · **Source:** [evaluation/rollout/trained_policy_rollout.py:117](../../../../evaluation/rollout/trained_policy_rollout.py#L117)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.make_action_fn` · **Source:** [evaluation/rollout/trained_policy_rollout.py:231](../../../../evaluation/rollout/trained_policy_rollout.py#L231)
 
 **Inputs and outputs:**
 

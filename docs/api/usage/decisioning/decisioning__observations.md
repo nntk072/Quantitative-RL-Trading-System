@@ -1,6 +1,6 @@
 # Decisioning · `observations`
 
-This page contains 6 public callable records owned by `decisioning.observations`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 7 public callable records owned by `decisioning.observations`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `ObservationSchema`
 
@@ -8,11 +8,11 @@ This page contains 6 public callable records owned by `decisioning.observations`
 
 **Purpose:** Explicit coordinate names and version for the account branch.
 
-**Exact API:** {py:obj}`decisioning.observations.ObservationSchema` · **Source:** [decisioning/observations.py:154](../../../../decisioning/observations.py#L154)
+**Exact API:** {py:obj}`decisioning.observations.ObservationSchema` · **Source:** [decisioning/observations.py:155](../../../../decisioning/observations.py#L155)
 
 **Observed usage:**
 
-1. [production caller: `build_observation_schema`](../../../../decisioning/observations.py#L207)
+1. [production caller: `build_observation_schema`](../../../../decisioning/observations.py#L208)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -25,7 +25,7 @@ def build_observation_schema(
     coordinates: tuple[str, ...]
     if version == OBSERVATION_SCHEMA_V1:
         coordinates = V1_COORDINATES
-    elif version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3):
+    elif version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_REPEATED_PAYOUT):
         coordinates = V2_COORDINATES
     else:
         raise ValueError(f"unknown observation schema version: {version!r}")
@@ -45,7 +45,7 @@ def build_observation_schema(
 
 **Purpose:** Return a named schema; never infer semantics from a vector width.
 
-**Exact API:** {py:obj}`decisioning.observations.build_observation_schema` · **Source:** [decisioning/observations.py:184](../../../../decisioning/observations.py#L184)
+**Exact API:** {py:obj}`decisioning.observations.build_observation_schema` · **Source:** [decisioning/observations.py:185](../../../../decisioning/observations.py#L185)
 
 **Inputs and outputs:**
 
@@ -64,7 +64,7 @@ def build_observation_schema(
 
 **Observed usage:**
 
-1. [test fixture: `test_setup_backtest_emits_versioned_account_state`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L759)
+1. [test fixture: `test_setup_backtest_emits_versioned_account_state`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L761)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -84,7 +84,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_scalar_backtest_entry_state_tracks_causal_candidate_and_arming`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L914)
+2. [test fixture: `test_scalar_backtest_entry_state_tracks_causal_candidate_and_arming`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L916)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -144,7 +144,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_normalized_account_vector_preserves_valid_legacy_coordinates`](../../../../tests/unit/decisioning/test_observations.py#L12)
+1. [test fixture: `test_normalized_account_vector_preserves_valid_legacy_coordinates`](../../../../tests/unit/decisioning/test_observations.py#L42)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -168,7 +168,7 @@ def test_normalized_account_vector_preserves_valid_legacy_coordinates() -> None:
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_normalized_account_vector_rejects_nonfinite_inputs`](../../../../tests/unit/decisioning/test_observations.py#L48)
+2. [test fixture: `test_normalized_account_vector_rejects_nonfinite_inputs`](../../../../tests/unit/decisioning/test_observations.py#L78)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -223,7 +223,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_pad_observation_window_left_pads_two_dimensional_values_and_mask`](../../../../tests/unit/decisioning/test_observations.py#L87)
+1. [test fixture: `test_pad_observation_window_left_pads_two_dimensional_values_and_mask`](../../../../tests/unit/decisioning/test_observations.py#L117)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -236,7 +236,7 @@ def test_pad_observation_window_left_pads_two_dimensional_values_and_mask() -> N
     assert values.dtype == np.float32
 ```
 
-2. [test fixture: `test_pad_observation_window_keeps_only_the_latest_rows_when_sequence_is_long`](../../../../tests/unit/decisioning/test_observations.py#L95)
+2. [test fixture: `test_pad_observation_window_keeps_only_the_latest_rows_when_sequence_is_long`](../../../../tests/unit/decisioning/test_observations.py#L125)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -255,13 +255,67 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 - Semantic domain guide: {doc}`../../domains/trading`
 - Generated package reference: {doc}`../../generated/decisioning/index`
 
+## `requires_normalized_account_observation`
+
+**Kind:** function · **Status:** stable · **Owner:** `decisioning.observations`
+
+**Purpose:** Whether an account observation schema requires normalized account values.
+
+**Exact API:** {py:obj}`decisioning.observations.requires_normalized_account_observation` · **Source:** [decisioning/observations.py:222](../../../../decisioning/observations.py#L222)
+
+**Observed usage:**
+
+1. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L33)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        == expected.version
+    )
+    with pytest.raises(ValueError, match="unknown observation schema version"):
+        build_observation_schema(_LEGACY_REPEATED_PAYOUT_SCHEMA_ID)
+    assert expected.width == 28
+    assert requires_normalized_account_observation(expected.version)
+    validate_observation_schema(legacy_checkpoint, expected)
+
+    legacy_checkpoint["observation_coordinates"] = ["equity"]
+    with pytest.raises(ValueError, match="differs from requested environment schema"):
+        validate_observation_schema(legacy_checkpoint, expected)
+```
+
+2. [production caller: `build_observation`](../../../../live/runtime/strategy.py#L252)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        pos_dir = float(st.get("position_direction", 0.0))
+        open_pnl = float(st.get("open_pnl", 0.0))
+        dist_to_sl = float(st.get("dist_to_sl", 0.0))
+        trailing_dd = float(st.get("trailing_dd", 0.0))
+        close = float(st.get("close", self._last_close))
+        if requires_normalized_account_observation(self._observation_schema.version):
+            required = {
+                "planned_risk_usd",
+                "trailing_drawdown_limit",
+                "daily_loss",
+                "daily_loss_limit",
+# … caller assertions omitted …
+```
+
+**Workflow context:**
+
+- Semantic domain guide: {doc}`../../domains/trading`
+- Generated package reference: {doc}`../../generated/decisioning/index`
+
 ## `ObservationSchema.to_dict`
 
 **Kind:** method · **Status:** stable · **Owner:** `decisioning.observations`
 
 **Purpose:** Return the ordered observation contract as JSON-compatible data.
 
-**Exact API:** {py:obj}`decisioning.observations.ObservationSchema.to_dict` · **Source:** [decisioning/observations.py:170](../../../../decisioning/observations.py#L170)
+**Exact API:** {py:obj}`decisioning.observations.ObservationSchema.to_dict` · **Source:** [decisioning/observations.py:171](../../../../decisioning/observations.py#L171)
 
 **Inputs and outputs:**
 
@@ -273,7 +327,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_setup_backtest_emits_versioned_account_state`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L798)
+1. [test fixture: `test_setup_backtest_emits_versioned_account_state`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L800)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -293,18 +347,20 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `_StubModel`](../../../../tests/unit/features/test_stage_a_observation.py#L24)
+2. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L22)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-class _StubModel:
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
-    _action_schema = build_discrete_trading_action_schema().to_dict()
-    action_space: Any = spaces.Discrete(20)
+def test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint() -> None:
+    expected = build_observation_schema(OBSERVATION_SCHEMA_REPEATED_PAYOUT)
+    legacy_checkpoint = expected.to_dict()
+    legacy_checkpoint["version"] = _LEGACY_REPEATED_PAYOUT_SCHEMA_ID
 
-    def predict(self, obs: dict[str, Any], deterministic: bool = True) -> np.ndarray[Any, Any]:  # noqa: ARG002
-        return np.array([1])
+    assert expected.version == OBSERVATION_SCHEMA_REPEATED_PAYOUT
+    assert (
+        _canonicalize_saved_observation_schema_id(_LEGACY_REPEATED_PAYOUT_SCHEMA_ID)
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -320,7 +376,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the total number of flattened observation coordinates.
 
-**Exact API:** {py:obj}`decisioning.observations.ObservationSchema.width` · **Source:** [decisioning/observations.py:162](../../../../decisioning/observations.py#L162)
+**Exact API:** {py:obj}`decisioning.observations.ObservationSchema.width` · **Source:** [decisioning/observations.py:163](../../../../decisioning/observations.py#L163)
 
 **Inputs and outputs:**
 
@@ -332,7 +388,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_v2_schema_has_exact_named_width`](../../../../tests/unit/simulation/test_environment/test_observation_schema.py#L61)
+1. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L32)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        _canonicalize_saved_observation_schema_id(_LEGACY_REPEATED_PAYOUT_SCHEMA_ID)
+        == expected.version
+    )
+    with pytest.raises(ValueError, match="unknown observation schema version"):
+        build_observation_schema(_LEGACY_REPEATED_PAYOUT_SCHEMA_ID)
+    assert expected.width == 28
+    assert requires_normalized_account_observation(expected.version)
+    validate_observation_schema(legacy_checkpoint, expected)
+
+    legacy_checkpoint["observation_coordinates"] = ["equity"]
+    with pytest.raises(ValueError, match="differs from requested environment schema"):
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_v2_schema_has_exact_named_width`](../../../../tests/unit/simulation/test_environment/test_observation_schema.py#L61)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -343,19 +419,7 @@ def test_v2_schema_has_exact_named_width() -> None:
     assert schema.coordinates == V2_COORDINATES
 ```
 
-2. [production caller: `to_dict`](../../../../decisioning/observations.py#L178)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def to_dict(self) -> dict[str, Any]:
-    return {
-        "version": self.version,
-        "observation_width": self.width,
-        "observation_coordinates": list(self.coordinates),
-        "entry_state_visibility": self.entry_state_visibility,
-    }
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

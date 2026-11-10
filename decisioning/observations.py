@@ -107,7 +107,8 @@ def normalized_account_vector(
 
 OBSERVATION_SCHEMA_V1 = "account-state-v1"
 OBSERVATION_SCHEMA_V2 = "account-state-v2"
-OBSERVATION_SCHEMA_V3 = "account-state-v3-repeated-payout"
+OBSERVATION_SCHEMA_REPEATED_PAYOUT = "account-state-repeated-payout"
+_LEGACY_REPEATED_PAYOUT_SCHEMA_ID = "account-state-v3-repeated-payout"
 
 V1_COORDINATES = (
     "log_equity_over_initial",
@@ -198,13 +199,29 @@ def build_observation_schema(
     coordinates: tuple[str, ...]
     if version == OBSERVATION_SCHEMA_V1:
         coordinates = V1_COORDINATES
-    elif version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3):
+    elif version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_REPEATED_PAYOUT):
         coordinates = V2_COORDINATES
     else:
         raise ValueError(f"unknown observation schema version: {version!r}")
     if entry_state_visibility:
         coordinates = (*coordinates, *(f"entry_state_{name.lower()}" for name in ENTRY_STATES))
     return ObservationSchema(version, coordinates, entry_state_visibility)
+
+
+def _canonicalize_saved_observation_schema_id(schema_id: str) -> str:
+    """Map the historical checkpoint identifier to its current domain name.
+
+    This mapping is limited to persisted metadata. New configs and runtime
+    schemas must use the current identifier directly.
+    """
+    if schema_id == _LEGACY_REPEATED_PAYOUT_SCHEMA_ID:
+        return OBSERVATION_SCHEMA_REPEATED_PAYOUT
+    return schema_id
+
+
+def requires_normalized_account_observation(version: str) -> bool:
+    """Whether an account observation schema requires normalized account values."""
+    return version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_REPEATED_PAYOUT)
 
 
 def validate_observation_schema(
@@ -228,7 +245,7 @@ def validate_observation_schema(
             f"required for {expected.version}"
         )
     saved = {
-        "version": actual.get("version"),
+        "version": _canonicalize_saved_observation_schema_id(str(actual.get("version"))),
         "observation_width": actual.get("observation_width"),
         "observation_coordinates": actual.get("observation_coordinates"),
         "entry_state_visibility": actual.get("entry_state_visibility"),
@@ -285,8 +302,9 @@ def account_state_v2(
     """Build normalized v2 state without changing account or risk semantics.
 
     The caller supplies the policy-canonical ``daily_loss`` value. The current
-    account policy uses session-equity loss, including open PnL; v3 retains this
-    coordinate layout while versioning repeated-payout account semantics.
+    account policy uses session-equity loss, including open PnL; the
+    repeated-payout schema retains this coordinate layout while identifying its
+    account-policy semantics explicitly.
     ``active_sl_headroom_over_initial_risk`` is positive when the current price
     is on the safe side of the active stop.
 

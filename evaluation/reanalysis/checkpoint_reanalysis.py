@@ -26,7 +26,7 @@ from decisioning.actions import (
     build_discrete_trading_action_schema,
 )
 from decisioning.adapters.sb3 import SB3DecisionProvider
-from decisioning.observations import build_observation_schema
+from decisioning.observations import OBSERVATION_SCHEMA_REPEATED_PAYOUT, build_observation_schema
 from evaluation import account_path_metric_inputs, calculate_metrics, evaluation_periods_per_year
 from evaluation.reanalysis.checkpoint import resolve_checkpoint
 from evaluation.reanalysis.cli import build_reanalysis_parser
@@ -581,7 +581,7 @@ def main() -> None:
     policy = resolve_trading_policy(cfg)
     expected_observation_schema = build_observation_schema(
         (
-            "account-state-v3-repeated-payout"
+            OBSERVATION_SCHEMA_REPEATED_PAYOUT
             if policy.repeated_payout
             else str(cfg.env.get("observation_schema_version", "account-state-v1"))
         ),

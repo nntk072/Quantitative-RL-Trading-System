@@ -605,7 +605,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `__init__`](../../../../tests/unit/evaluation/test_rollout.py#L45)
+1. [test fixture: `__init__`](../../../../tests/unit/evaluation/test_rollout.py#L46)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

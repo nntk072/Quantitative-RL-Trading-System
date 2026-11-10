@@ -27,7 +27,7 @@ This page contains 2 public callable records owned by `evaluation.reporting.eval
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L42)
+1. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L52)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -44,7 +44,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     }
 ```
 
-2. [production caller: `write_evaluation_manifest`](../../../../evaluation/reporting/evaluation_manifest.py#L88)
+2. [production caller: `write_evaluation_manifest`](../../../../evaluation/reporting/evaluation_manifest.py#L89)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -70,7 +70,7 @@ def write_evaluation_manifest(
 
 **Purpose:** Atomically refresh the canonical evaluation provenance manifest.
 
-**Exact API:** {py:obj}`evaluation.reporting.evaluation_manifest.write_evaluation_manifest` · **Source:** [evaluation/reporting/evaluation_manifest.py:73](../../../../evaluation/reporting/evaluation_manifest.py#L73)
+**Exact API:** {py:obj}`evaluation.reporting.evaluation_manifest.write_evaluation_manifest` · **Source:** [evaluation/reporting/evaluation_manifest.py:74](../../../../evaluation/reporting/evaluation_manifest.py#L74)
 
 **Inputs and outputs:**
 
@@ -89,14 +89,14 @@ def write_evaluation_manifest(
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L26)
+1. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L32)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    metrics_path = training / "metrics.json"
-    metrics_path.write_text('{"total_return_pct": 2.5}\n', encoding="utf-8")
+        encoding="utf-8",
+    )
     parent_path = tmp_path / "run_manifest.json"
     parent_path.write_text('{"schema_version": 1}\n', encoding="utf-8")
 

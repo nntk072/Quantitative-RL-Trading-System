@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `simulation.backtest.event
 
 **Purpose:** Run a full backtest over aligned bars + features.
 
-**Exact API:** {py:obj}`simulation.backtest.event_driven_backtest.run_backtest` · **Source:** [simulation/backtest/event_driven_backtest.py:538](../../../../simulation/backtest/event_driven_backtest.py#L538)
+**Exact API:** {py:obj}`simulation.backtest.event_driven_backtest.run_backtest` · **Source:** [simulation/backtest/event_driven_backtest.py:537](../../../../simulation/backtest/event_driven_backtest.py#L537)
 
 **Inputs and outputs:**
 
@@ -66,8 +66,8 @@ This page contains 1 public callable records owned by `simulation.backtest.event
   tp_breakeven_alpha: Initial-risk fraction used to pull a TP toward entry.
   observation_schema: Explicit account observation contract. Supplying it
       requests the environment's structured observation for scalar or setup policies.
-  normalize_account: Emit the normalized v1 vector; v2/v3 require normalization.
-  observation_age_scale_bars: Position-age scale used by account-state-v2/v3.
+  normalize_account: Emit normalized account coordinates for schemas that require them.
+  observation_age_scale_bars: Position-age scale used by normalized account schemas.
   entry_state_machine: Track and gate persistent entry opportunities as in TradingEnv.
   candidate_max_age_bars: Maximum evidence age retained by the entry lifecycle.
   arm_requires_retest: Require a current directional retest before arming a candidate.

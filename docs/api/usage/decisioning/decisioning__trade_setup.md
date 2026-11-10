@@ -364,18 +364,23 @@ def test_candidate_geometry_slots_round_trip_the_full_setup_entry_pair() -> None
             assert candidate_geometry_slot_semantics(slot) == (candidate_id, entry_type)
 ```
 
-2. [test fixture: `__init__`](../../../../tests/unit/learning/test_candidate_geometry_agent.py#L31)
+2. [test fixture: `test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_action`](../../../../tests/unit/evaluation/test_rollout.py#L123)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-    def __init__(self) -> None:
-        count = candidate_geometry_slot_count()
-        self.observation_space = spaces.Dict(
-            {
-                "seq": spaces.Box(-1.0, 1.0, (10, 4), dtype=np.float32),
-                "seq_mask": spaces.Box(0.0, 1.0, (10,), dtype=np.float32),
-                "account": spaces.Box(-10.0, 10.0, (6,), dtype=np.float32),
+# … caller setup omitted …
+        candidate_geometry_slot_semantics,
+    )
+
+    selected_id = 5
+    slot = candidate_geometry_slot(selected_id, "limit")
+    count = candidate_geometry_slot_count()
+    candidate_ids = np.asarray(
+        [candidate_geometry_slot_semantics(index)[0] for index in range(count)],
+        dtype=np.int64,
+    )
+    features = np.zeros((count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES)), dtype=np.float32)
 # … caller assertions omitted …
 ```
 
@@ -424,23 +429,24 @@ def test_candidate_geometry_slots_round_trip_the_full_setup_entry_pair() -> None
             assert candidate_geometry_slot_semantics(slot) == (candidate_id, entry_type)
 ```
 
-2. [test fixture: `_observation`](../../../../tests/unit/learning/test_candidate_geometry_agent.py#L92)
+2. [test fixture: `test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_action`](../../../../tests/unit/evaluation/test_rollout.py#L125)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            "seq": np.zeros((10, 4), dtype=np.float32),
-            "seq_mask": np.ones(10, dtype=np.float32),
-            "account": np.zeros(6, dtype=np.float32),
-            "trade_setup_mask": trade_mask,
-            "candidate_ids": np.asarray(
-                [candidate_geometry_slot_semantics(slot)[0] for slot in range(count)],
-                dtype=np.int64,
-            ),
-            "candidate_features": candidate_features,
-            "candidate_mask": candidate_mask,
-        }
+
+    selected_id = 5
+    slot = candidate_geometry_slot(selected_id, "limit")
+    count = candidate_geometry_slot_count()
+    candidate_ids = np.asarray(
+        [candidate_geometry_slot_semantics(index)[0] for index in range(count)],
+        dtype=np.int64,
+    )
+    features = np.zeros((count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES)), dtype=np.float32)
+    features[slot] = np.arange(len(CANDIDATE_GEOMETRY_FEATURE_NAMES), dtype=np.float32) + 0.5
+    mask = np.zeros(count, dtype=np.bool_)
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

@@ -26,7 +26,7 @@ This page contains 1 public callable records owned by `decisioning.observation_s
 
 **Observed usage:**
 
-1. [test fixture: `test_scalar_backtest_entry_state_tracks_causal_candidate_and_arming`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L925)
+1. [test fixture: `test_scalar_backtest_entry_state_tracks_causal_candidate_and_arming`](../../../../tests/integration/backtest/test_setup_mask_backtest_boundary.py#L927)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

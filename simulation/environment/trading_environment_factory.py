@@ -6,6 +6,7 @@ from typing import Any
 
 import pandas as pd
 
+from decisioning.observations import OBSERVATION_SCHEMA_REPEATED_PAYOUT
 from market_data.loading.ticks import TickBook
 from simulation.environment.distribution_reward import DistributionReward
 from simulation.environment.env import TradingEnv
@@ -248,7 +249,7 @@ def build_eval_common(
     )
     use_mtf, mtf_windows = mtf_settings(cfg, arch)
     observation_schema_version = (
-        "account-state-v3-repeated-payout"
+        OBSERVATION_SCHEMA_REPEATED_PAYOUT
         if policy.repeated_payout
         else str(cfg.env.get("observation_schema_version", "account-state-v1"))
     )
@@ -580,7 +581,7 @@ def make_env(
     risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
     policy = resolve_trading_policy(cfg)
     observation_schema_version = (
-        "account-state-v3-repeated-payout"
+        OBSERVATION_SCHEMA_REPEATED_PAYOUT
         if policy.repeated_payout
         else str(cfg.env.get("observation_schema_version", "account-state-v1"))
     )

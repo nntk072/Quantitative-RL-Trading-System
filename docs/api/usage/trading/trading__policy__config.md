@@ -99,7 +99,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L16)
+1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L17)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -114,7 +114,7 @@ def test_repeated_policy_config_resolves_without_changing_default() -> None:
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L42)
+2. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L43)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -244,7 +244,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L16)
+1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L17)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -259,7 +259,7 @@ def test_repeated_policy_config_resolves_without_changing_default() -> None:
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L42)
+2. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L43)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -351,7 +351,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L31)
+1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L32)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -421,7 +421,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L58)
+1. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L59)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -543,7 +543,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L22)
+1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L23)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

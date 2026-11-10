@@ -32,8 +32,9 @@ The default policy API accepts one integer scalar signal per bar and remains in
 use by configured scalar backtests and rule-baseline runners. With
 `trade_setup_actions=True`, the engine accepts the versioned setup-action
 vector, candidate mask, and explicit `TradeSetupActionSchema`. Its optional
-`observation_schema` selects account-state-v1, v2, or repeated-payout v3 for
-that callback; entry-state visibility is rejected because this engine does not
+`observation_schema` selects the legacy account vector, normalized account
+state, or repeated-payout account schema for that callback; entry-state
+visibility is rejected because this engine does not
 run the environment's entry-state machine. Results include the resolved action
 and observation schema metadata. Checkpoint evaluation and matched setup-policy
 comparisons still use `evaluation.rollout.evaluate_model` with `TradingEnv`;
@@ -48,8 +49,8 @@ trace-level parity checks. Until such a bridge exists, results from the two
 engines are comparable only when a declared scalar policy and matched
 execution assumptions make the comparison meaningful.
 
-The schema-aware path supports account-state-v1/v2/v3, the current setup
-action coordinates, and opt-in parity for completed-D1 regime features,
+The schema-aware path supports the legacy and normalized account schemas, the
+current setup-action coordinates, and opt-in parity for completed-D1 regime features,
 closed multi-timeframe windows, and per-feature validity channels. Returned
 results record selected feature columns and observation inputs. Optional VAE
 embeddings accept the same frozen encoder plus per-date or legacy pre-NY inputs

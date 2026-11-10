@@ -28,12 +28,13 @@ from decisioning.contracts import (
     StructuredAction,
 )
 from decisioning.observations import (
-    OBSERVATION_SCHEMA_V2,
+    OBSERVATION_SCHEMA_REPEATED_PAYOUT,
     ObservationSchema,
     account_state_v2,
     build_observation_schema,
     normalized_account_vector,
     pad_observation_window,
+    requires_normalized_account_observation,
     validate_observation_schema,
 )
 from features import attach_reachable_r, select_obs_columns
@@ -54,7 +55,7 @@ def build_live_observation_schema(cfg: Any) -> ObservationSchema:
     """
     env_cfg = getattr(cfg, "env", None)
     version = (
-        "account-state-v3-repeated-payout"
+        OBSERVATION_SCHEMA_REPEATED_PAYOUT
         if resolve_trading_policy(cfg).repeated_payout
         else str(getattr(env_cfg, "observation_schema_version", "account-state-v1"))
     )
@@ -248,7 +249,7 @@ class RLStrategyAdapter:
         dist_to_sl = float(st.get("dist_to_sl", 0.0))
         trailing_dd = float(st.get("trailing_dd", 0.0))
         close = float(st.get("close", self._last_close))
-        if self._observation_schema.version == OBSERVATION_SCHEMA_V2:
+        if requires_normalized_account_observation(self._observation_schema.version):
             required = {
                 "planned_risk_usd",
                 "trailing_drawdown_limit",
@@ -276,7 +277,7 @@ class RLStrategyAdapter:
                 missing.append("entry_state")
             if missing:
                 raise ValueError(
-                    "account-state-v2 live inference requires complete account state; "
+                    "normalized account-schema inference requires complete account state; "
                     f"missing {missing}"
                 )
             account = account_state_v2(

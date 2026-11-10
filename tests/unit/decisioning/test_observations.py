@@ -5,7 +5,37 @@ from typing import Any
 import numpy as np
 import pytest
 
-from decisioning.observations import normalized_account_vector, pad_observation_window
+from decisioning.observations import (
+    _LEGACY_REPEATED_PAYOUT_SCHEMA_ID,
+    OBSERVATION_SCHEMA_REPEATED_PAYOUT,
+    _canonicalize_saved_observation_schema_id,
+    build_observation_schema,
+    normalized_account_vector,
+    pad_observation_window,
+    requires_normalized_account_observation,
+    validate_observation_schema,
+)
+
+
+def test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint() -> None:
+    expected = build_observation_schema(OBSERVATION_SCHEMA_REPEATED_PAYOUT)
+    legacy_checkpoint = expected.to_dict()
+    legacy_checkpoint["version"] = _LEGACY_REPEATED_PAYOUT_SCHEMA_ID
+
+    assert expected.version == OBSERVATION_SCHEMA_REPEATED_PAYOUT
+    assert (
+        _canonicalize_saved_observation_schema_id(_LEGACY_REPEATED_PAYOUT_SCHEMA_ID)
+        == expected.version
+    )
+    with pytest.raises(ValueError, match="unknown observation schema version"):
+        build_observation_schema(_LEGACY_REPEATED_PAYOUT_SCHEMA_ID)
+    assert expected.width == 28
+    assert requires_normalized_account_observation(expected.version)
+    validate_observation_schema(legacy_checkpoint, expected)
+
+    legacy_checkpoint["observation_coordinates"] = ["equity"]
+    with pytest.raises(ValueError, match="differs from requested environment schema"):
+        validate_observation_schema(legacy_checkpoint, expected)
 
 
 def test_normalized_account_vector_preserves_valid_legacy_coordinates() -> None:

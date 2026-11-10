@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from configuration import load_config
+from decisioning.observations import OBSERVATION_SCHEMA_REPEATED_PAYOUT
 from simulation.environment.env import TradingEnv
 from trading.account.account_state import AccountState
 from trading.execution.broker import Position
@@ -320,7 +321,7 @@ def test_dynamic_risk_budget_uses_locked_post_payout_floor(mode: str) -> None:
     assert TradingEnv._risk_budget_usd(env, 0.009) == pytest.approx(400.0)
 
 
-def test_repeated_training_and_eval_use_v3_schema_and_single_cycle_training() -> None:
+def test_repeated_training_and_eval_use_repeated_payout_schema_and_single_cycle_training() -> None:
     cfg = load_config(
         [
             "trading_policy.mode=repeated_payout",
@@ -330,7 +331,7 @@ def test_repeated_training_and_eval_use_v3_schema_and_single_cycle_training() ->
     )
     assert _training_episodic(cfg) is True
     common, *_ = build_eval_common(cfg)
-    assert common["observation_schema_version"] == "account-state-v3-repeated-payout"
+    assert common["observation_schema_version"] == OBSERVATION_SCHEMA_REPEATED_PAYOUT
     assert common["risk_frac_range"] == pytest.approx((0.0, 0.009))
     assert common["trading_policy"]["mode"] == "repeated_payout"
     assert common["guardrail_kwargs"]["trailing_dd_limit"] == 0.0
@@ -399,7 +400,7 @@ def test_repeated_policy_direct_and_bundle_worker_parity(tmp_path) -> None:
     assert (
         direct.observation_schema.version
         == bundled.observation_schema.version
-        == "account-state-v3-repeated-payout"
+        == OBSERVATION_SCHEMA_REPEATED_PAYOUT
     )
     assert direct.action_space == bundled.action_space
 

@@ -8,7 +8,7 @@ This page contains 5 public callable records owned by `live.runtime.strategy`. S
 
 **Purpose:** Wraps a trained SB3 model as a live-trading strategy.
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter` · **Source:** [live/runtime/strategy.py:70](../../../../live/runtime/strategy.py#L70)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter` · **Source:** [live/runtime/strategy.py:71](../../../../live/runtime/strategy.py#L71)
 
 **Observed usage:**
 
@@ -36,7 +36,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L194)
+2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L195)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -69,7 +69,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a duck-typed MT5 strategy that wraps this adapter.
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.as_strategy` · **Source:** [live/runtime/strategy.py:354](../../../../live/runtime/strategy.py#L354)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.as_strategy` · **Source:** [live/runtime/strategy.py:355](../../../../live/runtime/strategy.py#L355)
 
 **Inputs and outputs:**
 
@@ -90,7 +90,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_maps_actions_to_signals`](../../../../tests/unit/live/test_rl_bridge.py#L304)
+1. [test fixture: `test_rl_bridge_maps_actions_to_signals`](../../../../tests/unit/live/test_rl_bridge.py#L305)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -107,7 +107,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert sig.value == "buy"
 ```
 
-2. [test fixture: `test_account_state_v2_live_policy_fails_closed_without_snapshot`](../../../../tests/unit/live/test_rl_bridge.py#L328)
+2. [test fixture: `test_account_state_v2_live_policy_fails_closed_without_snapshot`](../../../../tests/unit/live/test_rl_bridge.py#L329)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -139,7 +139,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Construct the dict observation with the same contract as the env.
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.build_observation` · **Source:** [live/runtime/strategy.py:223](../../../../live/runtime/strategy.py#L223)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.build_observation` · **Source:** [live/runtime/strategy.py:224](../../../../live/runtime/strategy.py#L224)
 
 **Inputs and outputs:**
 
@@ -206,7 +206,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L224)
+2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L225)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -239,7 +239,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Run the provider and return its discrete id or scalar direction.
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.predict_signal` · **Source:** [live/runtime/strategy.py:328](../../../../live/runtime/strategy.py#L328)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.predict_signal` · **Source:** [live/runtime/strategy.py:329](../../../../live/runtime/strategy.py#L329)
 
 **Inputs and outputs:**
 
@@ -257,7 +257,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L229)
+1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L230)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -272,7 +272,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert action == 1
 ```
 
-2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L286)
+2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L287)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -299,7 +299,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Feed the latest M1 bars; rebuilds features (call once per new bar).
 
-**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.update_bars` · **Source:** [live/runtime/strategy.py:190](../../../../live/runtime/strategy.py#L190)
+**Exact API:** {py:obj}`live.runtime.strategy.RLStrategyAdapter.update_bars` · **Source:** [live/runtime/strategy.py:191](../../../../live/runtime/strategy.py#L191)
 
 **Inputs and outputs:**
 
@@ -312,7 +312,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L199)
+1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L200)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -332,7 +332,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L260)
+2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L261)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -110,7 +110,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_gross_closed_loss_counter_is_separate_from_net_daily_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L163)
+1. [test fixture: `test_gross_closed_loss_counter_is_separate_from_net_daily_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L164)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -126,7 +126,7 @@ def test_gross_closed_loss_counter_is_separate_from_net_daily_loss() -> None:
     assert acc.canonical_daily_loss() == pytest.approx(2_500.0)
 ```
 
-2. [test fixture: `test_fixed_session_equity_daily_floor_counts_unrealized_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L173)
+2. [test fixture: `test_fixed_session_equity_daily_floor_counts_unrealized_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L174)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -170,7 +170,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_gross_closed_loss_counter_is_separate_from_net_daily_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L157)
+1. [test fixture: `test_gross_closed_loss_counter_is_separate_from_net_daily_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L158)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -550,7 +550,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_payout_reset_reanchors_session_and_preserves_static_floor_capacity`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L202)
+1. [test fixture: `test_payout_reset_reanchors_session_and_preserves_static_floor_capacity`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L203)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -597,7 +597,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_fixed_session_equity_daily_floor_counts_unrealized_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L174)
+1. [test fixture: `test_fixed_session_equity_daily_floor_counts_unrealized_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L175)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -653,7 +653,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_fixed_session_equity_daily_floor_counts_unrealized_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L170)
+2. [test fixture: `test_fixed_session_equity_daily_floor_counts_unrealized_loss`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L171)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

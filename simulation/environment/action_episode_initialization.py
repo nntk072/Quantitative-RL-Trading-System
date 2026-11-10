@@ -14,7 +14,7 @@ from decisioning.actions import (
     build_action_schema,
     build_discrete_trading_action_schema,
 )
-from decisioning.observations import OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3
+from decisioning.observations import requires_normalized_account_observation
 from decisioning.trade_setup import (
     TradeSetupActionSchema,
     build_trade_setup_action_schema,
@@ -103,7 +103,7 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
         # are comparable with the z-scored seq features. See __init__ docstring.
         self.normalize_account = bool(normalize_account)
         if (
-            self.observation_schema.version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3)
+            requires_normalized_account_observation(self.observation_schema.version)
             and not self.normalize_account
         ):
             raise ValueError(f"{self.observation_schema.version} requires normalize_account=True")

@@ -9,9 +9,9 @@ import pytest
 
 from decisioning.observation_state import entry_state_one_hot
 from decisioning.observations import (
+    OBSERVATION_SCHEMA_REPEATED_PAYOUT,
     OBSERVATION_SCHEMA_V1,
     OBSERVATION_SCHEMA_V2,
-    OBSERVATION_SCHEMA_V3,
     account_state_v2,
     build_observation_schema,
 )
@@ -732,7 +732,9 @@ def test_management_mode_choices_survive_delayed_market_submission_and_fill() ->
     assert opened["tp_mode_overridden"] is True
 
 
-@pytest.mark.parametrize("schema_version", [OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3])
+@pytest.mark.parametrize(
+    "schema_version", [OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_REPEATED_PAYOUT]
+)
 def test_setup_backtest_emits_versioned_account_state(schema_version: str) -> None:
     index = pd.date_range("2025-01-06 14:30", periods=3, freq="1min", tz="UTC")
     close = np.full(len(index), 20_000.0)

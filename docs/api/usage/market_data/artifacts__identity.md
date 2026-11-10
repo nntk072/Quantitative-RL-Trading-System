@@ -44,7 +44,7 @@ def test_file_sha256_matches_standard_digest_for_empty_and_nonempty_files(
     assert file_sha256(empty) == hashlib.sha256(b"").hexdigest()
 ```
 
-2. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L34)
+2. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L40)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -57,10 +57,10 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert manifest["partitions"] == ["training"]
     assert manifest["parent_manifests"]["run_manifest"]["sha256"] == file_sha256(parent_path)
     assert manifest["numerical_artifacts"] == [
-        {"path": "training/metrics.json", "sha256": file_sha256(metrics_path)}
-    ]
-    assert manifest["lineage"] == {
-        "checkpoint_sha256": "abc123",
+        {"path": "training/metrics.json", "sha256": file_sha256(metrics_path)},
+        {
+            "path": "training/policy_decisions.csv",
+            "sha256": file_sha256(policy_decisions_path),
 # … caller assertions omitted …
 ```
 

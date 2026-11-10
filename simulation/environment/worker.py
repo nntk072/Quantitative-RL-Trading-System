@@ -6,6 +6,7 @@ from typing import Any
 
 from omegaconf import OmegaConf
 
+from decisioning.observations import OBSERVATION_SCHEMA_REPEATED_PAYOUT
 from trading.execution import CostModel
 from trading.policy import resolve_trading_policy_mapping
 from trading.strategies import BaselineStrategy, DistributionStrategy, PO3IFVGStrategy
@@ -251,7 +252,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         arm_requires_retest=bool(env.get("arm_requires_retest", False)),
         entry_state_observation=bool(env.get("entry_state_observation", True)),
         observation_schema_version=(
-            "account-state-v3-repeated-payout"
+            OBSERVATION_SCHEMA_REPEATED_PAYOUT
             if policy.repeated_payout
             else str(env.get("observation_schema_version", "account-state-v1"))
         ),

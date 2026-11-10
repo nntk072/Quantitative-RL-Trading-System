@@ -7,11 +7,10 @@ import pandas as pd
 
 from decisioning.observation_state import entry_state_one_hot
 from decisioning.observations import (
-    OBSERVATION_SCHEMA_V2,
-    OBSERVATION_SCHEMA_V3,
     account_state_v2,
     normalized_account_vector,
     pad_observation_window,
+    requires_normalized_account_observation,
 )
 from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CATEGORY_COUNT
 
@@ -111,9 +110,11 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             if self.entry_state_observation and self.entry_state_machine is not None
             else None
         )
-        if self.observation_schema.version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3):
+        if requires_normalized_account_observation(self.observation_schema.version):
             if not self.normalize_account:
-                raise ValueError("account-state-v2 requires normalize_account=True")
+                raise ValueError(
+                    "the selected account observation schema requires normalize_account=True"
+                )
             position = self.position
             position_age_bars = 0.0
             if position is not None and position.entry_timestamp is not None:

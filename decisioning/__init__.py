@@ -26,10 +26,12 @@ from decisioning.observation_state import (
     entry_state_one_hot,
 )
 from decisioning.observations import (
+    OBSERVATION_SCHEMA_REPEATED_PAYOUT,
     ObservationSchema,
     build_observation_schema,
     normalized_account_vector,
     pad_observation_window,
+    requires_normalized_account_observation,
 )
 from decisioning.trade_setup import (
     CANDIDATE_GEOMETRY_ENTRY_TYPES,
@@ -84,6 +86,7 @@ __all__ = [
     "ENTRY_STATE_DIM",
     "ENTRY_STATES",
     "ObservationSchema",
+    "OBSERVATION_SCHEMA_REPEATED_PAYOUT",
     "NO_TRADE_ID",
     "PredictorMetadata",
     "StructuredAction",
@@ -114,6 +117,7 @@ __all__ = [
     "entry_state_one_hot",
     "normalized_account_vector",
     "pad_observation_window",
+    "requires_normalized_account_observation",
     "to_policy_action",
     "trade_setup_candidate",
     "trade_setup_candidate_id",

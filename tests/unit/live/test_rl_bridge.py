@@ -22,6 +22,7 @@ from omegaconf import OmegaConf
 from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.observations import (
+    OBSERVATION_SCHEMA_REPEATED_PAYOUT,
     OBSERVATION_SCHEMA_V2,
     build_observation_schema,
 )
@@ -331,6 +332,61 @@ def test_account_state_v2_live_policy_fails_closed_without_snapshot(
 
     assert symbol == "US100.cash"
     assert signal.value == "none"
+
+
+def test_repeated_payout_live_policy_builds_its_full_account_schema(
+    trending_bars: pd.DataFrame, tmp_path: Path
+) -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+
+    cfg = OmegaConf.load("config/base/default.yaml")
+    cfg.trading_policy.mode = "repeated_payout"
+    config_path = tmp_path / "repeated_payout.yaml"
+    OmegaConf.save(cfg, config_path)
+
+    model = _StubModel()
+    model._observation_schema = build_observation_schema(
+        OBSERVATION_SCHEMA_REPEATED_PAYOUT
+    ).to_dict()
+    adapter = RLStrategyAdapter(
+        model=model,
+        config_path=config_path,
+        allow_runtime_normalization_fallback=True,
+    )
+    adapter.update_bars(trending_bars)
+    state = {
+        "equity": 99_500.0,
+        "planned_risk_usd": 900.0,
+        "trailing_drawdown": 0.005,
+        "trailing_drawdown_limit": 10_000.0,
+        "daily_loss": 500.0,
+        "daily_loss_limit": 5_000.0,
+        "loss_from_initial": 500.0,
+        "max_loss_limit": 10_000.0,
+        "risk_per_trade_limit": 900.0,
+        "entry_price": 20_000.0,
+        "initial_sl_price": 19_990.0,
+        "active_sl_price": 19_995.0,
+        "remaining_size": 1.0,
+        "initial_size": 1.0,
+        "position_age_bars": 3.0,
+        "tp_hit_mask": 0,
+        "tp1_price": 20_010.0,
+        "tp2_price": 20_020.0,
+        "tp3_price": 20_030.0,
+        "sl_mode": "fixed",
+        "tp_mode": "fixed",
+        "exit_mode": "structural",
+    }
+
+    observation = adapter.build_observation(state)
+
+    assert adapter._observation_schema.version == OBSERVATION_SCHEMA_REPEATED_PAYOUT
+    assert observation["account"].shape == (28,)
+    assert observation["account"][5] == pytest.approx(0.1)
+    assert adapter.predict_signal(state) == 1
+    with pytest.raises(ValueError, match="requires complete account state"):
+        adapter.build_observation({"equity": 100_000.0})
 
 
 def test_rl_bridge_too_few_bars_no_signal(trending_bars):

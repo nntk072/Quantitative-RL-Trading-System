@@ -53,13 +53,15 @@ When `entry_state_visibility` is enabled, the configured entry-state one-hot
 coordinates are appended. This changes the width and is therefore part of the
 checkpoint schema.
 
-### `account-state-v2` and `account-state-v3-repeated-payout`
+### `account-state-v2` and `account-state-repeated-payout`
 
-These versions use the ordered 28-coordinate base vector below. Entry-state
-one-hot coordinates may be appended. V3 retains the coordinate layout but uses
-the repeated-payout account policy when calculating canonical daily loss; it is
-not interchangeable with v2 merely because the coordinate names and widths
-match.
+These schemas use the ordered 28-coordinate base vector below. Entry-state
+one-hot coordinates may be appended. The repeated-payout schema uses the
+repeated-payout account policy when calculating canonical daily loss; it is not
+interchangeable with `account-state-v2` merely because the coordinate names and
+widths match. New artifacts use `account-state-repeated-payout`. The historical
+identifier `account-state-v3-repeated-payout` is accepted only as a checkpoint
+alias and only when its saved coordinates match the requested schema.
 
 | Index | Coordinate | Meaning |
 |---:|---|---|

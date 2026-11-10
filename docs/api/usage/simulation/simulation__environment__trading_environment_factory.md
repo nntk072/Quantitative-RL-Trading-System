@@ -8,7 +8,7 @@ This page contains 16 public callable records owned by `simulation.environment.t
 
 **Purpose:** Kwargs shared by the in-loop dashboard slice and the final eval.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.build_eval_common` · **Source:** [simulation/environment/trading_environment_factory.py:216](../../../../simulation/environment/trading_environment_factory.py#L216)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.build_eval_common` · **Source:** [simulation/environment/trading_environment_factory.py:217](../../../../simulation/environment/trading_environment_factory.py#L217)
 
 **Inputs and outputs:**
 
@@ -67,7 +67,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Build the broker ``CostModel`` from ``costs.*``.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.cost_model` · **Source:** [simulation/environment/trading_environment_factory.py:515](../../../../simulation/environment/trading_environment_factory.py#L515)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.cost_model` · **Source:** [simulation/environment/trading_environment_factory.py:516](../../../../simulation/environment/trading_environment_factory.py#L516)
 
 **Inputs and outputs:**
 
@@ -132,7 +132,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Resolve percentage-based daily and maximum-loss rules for evaluation.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.eval_guardrail_kwargs` · **Source:** [simulation/environment/trading_environment_factory.py:111](../../../../simulation/environment/trading_environment_factory.py#L111)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.eval_guardrail_kwargs` · **Source:** [simulation/environment/trading_environment_factory.py:112](../../../../simulation/environment/trading_environment_factory.py#L112)
 
 **Inputs and outputs:**
 
@@ -150,7 +150,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L259)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L260)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -201,7 +201,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Milliseconds between the crossing tick and the SL/TP fill.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.fill_delay_ms` · **Source:** [simulation/environment/trading_environment_factory.py:353](../../../../simulation/environment/trading_environment_factory.py#L353)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.fill_delay_ms` · **Source:** [simulation/environment/trading_environment_factory.py:354](../../../../simulation/environment/trading_environment_factory.py#L354)
 
 **Inputs and outputs:**
 
@@ -219,7 +219,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L311)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L312)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -239,7 +239,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L663)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L664)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -270,7 +270,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Resolve policy-specific hard/soft guardrails.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.guardrail_kwargs` · **Source:** [simulation/environment/trading_environment_factory.py:70](../../../../simulation/environment/trading_environment_factory.py#L70)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.guardrail_kwargs` · **Source:** [simulation/environment/trading_environment_factory.py:71](../../../../simulation/environment/trading_environment_factory.py#L71)
 
 **Inputs and outputs:**
 
@@ -288,7 +288,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `eval_guardrail_kwargs`](../../../../simulation/environment/trading_environment_factory.py#L120)
+1. [production caller: `eval_guardrail_kwargs`](../../../../simulation/environment/trading_environment_factory.py#L121)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -300,7 +300,7 @@ def eval_guardrail_kwargs(cfg: Any) -> dict[str, float]:
     return kwargs
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L602)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L603)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -331,7 +331,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Construct a configured trading environment and its feature/observation adapters.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.make_env` · **Source:** [simulation/environment/trading_environment_factory.py:542](../../../../simulation/environment/trading_environment_factory.py#L542)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.make_env` · **Source:** [simulation/environment/trading_environment_factory.py:543](../../../../simulation/environment/trading_environment_factory.py#L543)
 
 **Inputs and outputs:**
 
@@ -383,7 +383,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Parse ``env.max_episode_steps``; YAML ``null`` → full-year episode.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_episode_steps` · **Source:** [simulation/environment/trading_environment_factory.py:126](../../../../simulation/environment/trading_environment_factory.py#L126)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_episode_steps` · **Source:** [simulation/environment/trading_environment_factory.py:127](../../../../simulation/environment/trading_environment_factory.py#L127)
 
 **Inputs and outputs:**
 
@@ -401,7 +401,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L613)
+1. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L614)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -432,7 +432,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Static sizing ceiling; current-equity percentages are enforced at runtime.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_loss_per_trade` · **Source:** [simulation/environment/trading_environment_factory.py:53](../../../../simulation/environment/trading_environment_factory.py#L53)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_loss_per_trade` · **Source:** [simulation/environment/trading_environment_factory.py:54](../../../../simulation/environment/trading_environment_factory.py#L54)
 
 **Inputs and outputs:**
 
@@ -450,7 +450,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L270)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L271)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -470,7 +470,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L610)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L611)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -501,7 +501,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Maximum permitted delay from sampled arrival to the next tick quote.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_tick_quote_wait_ms` · **Source:** [simulation/environment/trading_environment_factory.py:450](../../../../simulation/environment/trading_environment_factory.py#L450)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.max_tick_quote_wait_ms` · **Source:** [simulation/environment/trading_environment_factory.py:451](../../../../simulation/environment/trading_environment_factory.py#L451)
 
 **Inputs and outputs:**
 
@@ -519,7 +519,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L315)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L316)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -539,7 +539,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L665)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L666)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -570,7 +570,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Enable multi-window observations for each architecture that consumes them.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.mtf_settings` · **Source:** [simulation/environment/trading_environment_factory.py:468](../../../../simulation/environment/trading_environment_factory.py#L468)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.mtf_settings` · **Source:** [simulation/environment/trading_environment_factory.py:469](../../../../simulation/environment/trading_environment_factory.py#L469)
 
 **Inputs and outputs:**
 
@@ -589,7 +589,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L249)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L250)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -602,14 +602,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     )
     use_mtf, mtf_windows = mtf_settings(cfg, arch)
     observation_schema_version = (
-        "account-state-v3-repeated-payout"
+        OBSERVATION_SCHEMA_REPEATED_PAYOUT
         if policy.repeated_payout
         else str(cfg.env.get("observation_schema_version", "account-state-v1"))
     )
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L578)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L579)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -621,7 +621,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
     policy = resolve_trading_policy(cfg)
     observation_schema_version = (
-        "account-state-v3-repeated-payout"
+        OBSERVATION_SCHEMA_REPEATED_PAYOUT
 # … caller assertions omitted …
 ```
 
@@ -636,7 +636,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Maximum exclusive randomized tick latency; zero means immediate tick.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.randomized_fill_latency_ms` · **Source:** [simulation/environment/trading_environment_factory.py:395](../../../../simulation/environment/trading_environment_factory.py#L395)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.randomized_fill_latency_ms` · **Source:** [simulation/environment/trading_environment_factory.py:396](../../../../simulation/environment/trading_environment_factory.py#L396)
 
 **Inputs and outputs:**
 
@@ -654,7 +654,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L312)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L313)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -674,7 +674,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L591)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L592)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -705,7 +705,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Resolve the opt-in D1 branch and require its train-only source scaling.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.regime_observation_enabled` · **Source:** [simulation/environment/trading_environment_factory.py:426](../../../../simulation/environment/trading_environment_factory.py#L426)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.regime_observation_enabled` · **Source:** [simulation/environment/trading_environment_factory.py:427](../../../../simulation/environment/trading_environment_factory.py#L427)
 
 **Inputs and outputs:**
 
@@ -723,7 +723,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L336)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L337)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -743,7 +743,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L676)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L677)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -774,7 +774,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Read the configured market-data session calendar.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.scheduled_session_closes` · **Source:** [simulation/environment/trading_environment_factory.py:501](../../../../simulation/environment/trading_environment_factory.py#L501)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.scheduled_session_closes` · **Source:** [simulation/environment/trading_environment_factory.py:502](../../../../simulation/environment/trading_environment_factory.py#L502)
 
 **Inputs and outputs:**
 
@@ -792,7 +792,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L340)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L341)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -812,7 +812,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L680)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L681)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -843,7 +843,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Build (strategy, strategy_reward, strategy_weight) from merged config.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.strategy_from_cfg` · **Source:** [simulation/environment/trading_environment_factory.py:143](../../../../simulation/environment/trading_environment_factory.py#L143)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.strategy_from_cfg` · **Source:** [simulation/environment/trading_environment_factory.py:144](../../../../simulation/environment/trading_environment_factory.py#L144)
 
 **Inputs and outputs:**
 
@@ -861,7 +861,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L238)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L239)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -875,7 +875,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L579)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L580)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -887,7 +887,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
     policy = resolve_trading_policy(cfg)
     observation_schema_version = (
-        "account-state-v3-repeated-payout"
+        OBSERVATION_SCHEMA_REPEATED_PAYOUT
         if policy.repeated_payout
 # … caller assertions omitted …
 ```
@@ -903,7 +903,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Risk/RR ranges for TradingEnv; repeated-payout owns the risk range.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.strategy_risk_ranges` · **Source:** [simulation/environment/trading_environment_factory.py:23](../../../../simulation/environment/trading_environment_factory.py#L23)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.strategy_risk_ranges` · **Source:** [simulation/environment/trading_environment_factory.py:24](../../../../simulation/environment/trading_environment_factory.py#L24)
 
 **Inputs and outputs:**
 
@@ -921,7 +921,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L241)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L242)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -938,7 +938,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L580)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L581)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -950,7 +950,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
     policy = resolve_trading_policy(cfg)
     observation_schema_version = (
-        "account-state-v3-repeated-payout"
+        OBSERVATION_SCHEMA_REPEATED_PAYOUT
         if policy.repeated_payout
         else str(cfg.env.get("observation_schema_version", "account-state-v1"))
 # … caller assertions omitted …
@@ -967,7 +967,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Whether the effective config forbids candle-priced execution fills.
 
-**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.tick_execution_required` · **Source:** [simulation/environment/trading_environment_factory.py:413](../../../../simulation/environment/trading_environment_factory.py#L413)
+**Exact API:** {py:obj}`simulation.environment.trading_environment_factory.tick_execution_required` · **Source:** [simulation/environment/trading_environment_factory.py:414](../../../../simulation/environment/trading_environment_factory.py#L414)
 
 **Inputs and outputs:**
 
@@ -985,7 +985,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L314)
+1. [production caller: `build_eval_common`](../../../../simulation/environment/trading_environment_factory.py#L315)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1005,7 +1005,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L590)
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L591)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

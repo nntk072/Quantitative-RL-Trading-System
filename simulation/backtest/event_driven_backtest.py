@@ -34,13 +34,12 @@ import pandas as pd
 from decisioning.observation_state import entry_state_one_hot
 from decisioning.observations import (
     OBSERVATION_SCHEMA_V1,
-    OBSERVATION_SCHEMA_V2,
-    OBSERVATION_SCHEMA_V3,
     ObservationSchema,
     account_state_v2,
     build_observation_schema,
     normalized_account_vector,
     pad_observation_window,
+    requires_normalized_account_observation,
 )
 from decisioning.regime_observations import REGIME_FEATURES, regime_observation_schema
 from decisioning.trade_setup import (
@@ -664,8 +663,8 @@ def run_backtest(
         tp_breakeven_alpha: Initial-risk fraction used to pull a TP toward entry.
         observation_schema: Explicit account observation contract. Supplying it
             requests the environment's structured observation for scalar or setup policies.
-        normalize_account: Emit the normalized v1 vector; v2/v3 require normalization.
-        observation_age_scale_bars: Position-age scale used by account-state-v2/v3.
+        normalize_account: Emit normalized account coordinates for schemas that require them.
+        observation_age_scale_bars: Position-age scale used by normalized account schemas.
         entry_state_machine: Track and gate persistent entry opportunities as in TradingEnv.
         candidate_max_age_bars: Maximum evidence age retained by the entry lifecycle.
         arm_requires_retest: Require a current directional retest before arming a candidate.
@@ -845,10 +844,12 @@ def run_backtest(
         if resolved_observation_schema != canonical_observation_schema:
             raise ValueError("observation_schema coordinates disagree with its version")
         if (
-            resolved_observation_schema.version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3)
+            requires_normalized_account_observation(resolved_observation_schema.version)
             and not normalize_account
         ):
-            raise ValueError("account-state-v2/v3 requires normalize_account=True")
+            raise ValueError(
+                "the selected account observation schema requires normalize_account=True"
+            )
         if not np.isfinite(observation_age_scale_bars) or float(observation_age_scale_bars) <= 0.0:
             raise ValueError("observation_age_scale_bars must be finite and positive")
     if not isinstance(arm_requires_retest, (bool, np.bool_)):
@@ -1243,7 +1244,7 @@ def run_backtest(
         assert resolved_observation_schema is not None
         current_close = float(bars.iloc[index]["close"])
         trailing_dd = float(state.account.trailing_drawdown_pct())
-        if resolved_observation_schema.version in (OBSERVATION_SCHEMA_V2, OBSERVATION_SCHEMA_V3):
+        if requires_normalized_account_observation(resolved_observation_schema.version):
             position_age_bars = 0.0
             if position is not None and position.entry_timestamp is not None:
                 position_age_bars = max(
