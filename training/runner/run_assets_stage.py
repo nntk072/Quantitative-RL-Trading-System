@@ -11,6 +11,7 @@ import pandas as pd
 from artifacts.layout import ArtifactLayout
 from market_data.loading.ticks import ticks_covering
 from training.artifacts import attach_run_log, write_run_config_snapshot
+from training.runner.survival_campaign import validate_survival_campaign
 from training.setup.callbacks import (
     _dashboard_block,
 )
@@ -54,9 +55,16 @@ def _prepare_run_assets(
     pre_ny_by_date = data_stage.pre_ny_by_date
     # Setup output directory for model
     seeds = list(args.seeds) if args.seeds else [args.seed]
-    if args.resume_checkpoint and (args.algo not in {"ppo", "sac"} or len(seeds) != 1):
+    resumable_campaign_seed = (
+        getattr(args, "survival_campaign_phase", None) == "train_seed"
+        and getattr(args, "survival_campaign_seed", None) in seeds
+    )
+    if args.resume_checkpoint and (
+        args.algo not in {"ppo", "sac"} or (len(seeds) != 1 and not resumable_campaign_seed)
+    ):
         raise SystemExit("--resume-checkpoint supports one PPO or SAC seed per run")
-    is_multi_seed = len(seeds) > 1
+    campaign_dir = getattr(args, "survival_campaign_dir", None)
+    is_multi_seed = len(seeds) > 1 or campaign_dir is not None
     quality_variant = str(cfg.get("quality_variant_id", ""))
     if quality_variant:
         run_name = (
@@ -68,7 +76,16 @@ def _prepare_run_assets(
         run_name = f"rl_train_seeds_{args.arch}"
     else:
         run_name = f"rl_train_seed{args.seed}_{args.arch}"
-    run_dir = ArtifactLayout(Path(args.out)).timestamped_run(run_name)
+    run_dir = (
+        Path(campaign_dir).expanduser().resolve()
+        if campaign_dir is not None
+        else ArtifactLayout(Path(args.out)).timestamped_run(run_name)
+    )
+    run_dir.mkdir(parents=True, exist_ok=True)
+    if campaign_dir is not None:
+        if str(cfg.env.get("reward_mode", "")).strip().lower() != "survival":
+            raise ValueError("bounded survival campaigns require env.reward_mode='survival'")
+        validate_survival_campaign(run_dir=run_dir, cfg=cfg, args=args, create=True)
     attach_run_log(run_dir)
     model_dir = run_dir / "model"
     model_dir.mkdir(parents=True, exist_ok=True)

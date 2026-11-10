@@ -86,6 +86,74 @@ def build_bundle(
         row = rows_by_role[role]
         if row["authorized_now"] is not True:
             raise ValueError(f"survival role is not scientifically authorized: {role}")
+        if role == "canonical":
+            replication = protocol["replication"]
+            walk_forward = replication["walk_forward"]
+            campaign_root = f"{output_root}/canonical"
+            base_argv = list(row["command_argv"])
+            common = ["--survival-campaign-dir", campaign_root]
+            previous = None
+            for seed in replication["seeds"]:
+                seed = int(seed)
+                for phase, fold in [
+                    ("train_seed", None),
+                    *[("walk_forward_fold", fold_id) for fold_id in range(walk_forward["splits"])],
+                ]:
+                    command_id = (
+                        f"survival_{phase}_{seed}"
+                        if fold is None
+                        else f"survival_walk_forward_fold_{seed}_{fold}"
+                    )
+                    phase_argv = [
+                        *base_argv,
+                        *common,
+                        "--survival-campaign-phase",
+                        phase,
+                        "--survival-campaign-seed",
+                        str(seed),
+                    ]
+                    if fold is not None:
+                        phase_argv.extend(["--survival-campaign-fold", str(fold)])
+                    commands.append(
+                        {
+                            "id": command_id,
+                            "argv": phase_argv,
+                            "depends_on": [] if previous is None else [previous],
+                            "resource_lock": "GPU_TRAIN_LOCK",
+                            "artifact_roots": [
+                                f"{campaign_root}/seeds/seed{seed}"
+                                if phase == "train_seed"
+                                else f"{campaign_root}/seeds/seed{seed}/walk_forward.json"
+                            ],
+                            "experiment": True,
+                            "claim_scope": "canonical_survival_qualification",
+                            "selection_allowed": False,
+                            "estimated_seconds": 21_000,
+                        }
+                    )
+                    previous = command_id
+            command_id = "survival_finalize"
+            commands.append(
+                {
+                    "id": command_id,
+                    "argv": [
+                        *base_argv,
+                        *common,
+                        "--survival-campaign-phase",
+                        "finalize",
+                    ],
+                    "depends_on": [] if previous is None else [previous],
+                    "resource_lock": "GPU_TRAIN_LOCK",
+                    "artifact_roots": [f"{campaign_root}/survival_phase_gate.json"],
+                    "experiment": True,
+                    "claim_scope": "canonical_survival_qualification",
+                    "selection_allowed": False,
+                    "estimated_seconds": 120,
+                    "run_after_failed_dependencies": True,
+                }
+            )
+            previous = command_id
+            continue
         command_id = f"survival_{role}"
         commands.append(
             {
@@ -109,7 +177,7 @@ def build_bundle(
         ),
         "scientific_training_authorized": plan["scientific_training_authorized"],
         "scientific_result": roles != ["correctness_smoke"],
-        "selection_allowed": roles != ["correctness_smoke"],
+        "selection_allowed": False,
         "commands": commands,
         "allocates_compute": False,
         "executes_commands": False,

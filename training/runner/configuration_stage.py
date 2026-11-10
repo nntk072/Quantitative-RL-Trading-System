@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from compute.environment.device import get_device, scale_training_cfg
 from compute.environment.precision import configure_accelerator_for_training
@@ -20,13 +21,13 @@ from .stages import TrainingConfigurationStage
 log = logging.getLogger(__name__)
 
 
-def _prepare_training_configuration() -> TrainingConfigurationStage:
+def _prepare_training_configuration(args: Any | None = None) -> TrainingConfigurationStage:
     """Prepare training configuration.
 
     Returns:
         Result of prepare training configuration.
     """
-    args = parse_train_args()
+    args = args or parse_train_args()
 
     try:
         require_vae_candidate_admissible(bool(args.use_vae))

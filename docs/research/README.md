@@ -50,7 +50,9 @@ missingness behavior for every model-facing geometry feature.
 
 The [pretraining implementation readiness report](pretraining_implementation_readiness_20261110)
 records the current-source contract, feature-evidence, and release gates. Its
-passing implementation checks do not authorize scientific training.
+passing implementation checks do not authorize scientific training. Training
+authorization comes from the separate scientific-readiness manifest bound to
+the exact source and protocol; regenerate it after any source change.
 
 ## Methods and claim boundaries
 

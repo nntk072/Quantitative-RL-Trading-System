@@ -1326,18 +1326,29 @@ class SeedRunner:
         return self.build_result()
 
 
-def run_seed_training(context: SeedRunContext) -> tuple[list[dict[str, Any]], int]:
+def run_seed_training(
+    context: SeedRunContext, *, selected_seeds: list[int] | None = None
+) -> tuple[list[dict[str, Any]], int]:
     """Run every configured seed and return aggregation payloads plus requested timesteps.
 
     Args:
-        context: Context values required to resolve the operation.
+        context: Preparation state shared by the configured seeds.
+        selected_seeds: Optional subset to execute as one bounded campaign unit.
 
     Returns:
         Mapping from ``str`` keys to ``Any]], int`` values.
     """
     results: list[dict[str, Any]] = []
     timesteps = 0
-    for seed in context.preparation.run_assets.seeds:
+    seeds = context.preparation.run_assets.seeds
+    if selected_seeds is not None:
+        requested = set(map(int, selected_seeds))
+        if not requested or requested - set(seeds):
+            raise ValueError(
+                "selected seed work must be a non-empty subset of the configured seeds"
+            )
+        seeds = [seed for seed in seeds if seed in requested]
+    for seed in seeds:
         runner = SeedRunner(context, seed)
         results.append(runner.run())
         timesteps = runner.timesteps

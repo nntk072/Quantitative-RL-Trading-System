@@ -52,20 +52,20 @@ class TestWalkForwardSourceContract(unittest.TestCase):
 
     def test_training_composition_passes_retained_sources_to_walk_forward(self) -> None:
         calls = _named_calls(TRAIN_MODULE, "run_walk_forward_validation")
-        self.assertEqual(len(calls), 1, "Expected one training composition call")
-        keywords = {kw.arg: kw.value for kw in calls[0].keywords if kw.arg is not None}
-
-        for keyword, attr in (("train_bars", "train_bars"), ("train_sec", "train_sec")):
-            value = keywords.get(keyword)
-            self.assertIsInstance(value, ast.Attribute)
-            assert isinstance(value, ast.Attribute)
-            self.assertIsInstance(value.value, ast.Name)
-            assert isinstance(value.value, ast.Name)
-            self.assertEqual(
-                (value.value.id, value.attr),
-                ("data", attr),
-                f"{keyword} must come from the prepared training dataset",
-            )
+        self.assertEqual(len(calls), 2, "Expected normal and bounded-campaign composition calls")
+        for call in calls:
+            keywords = {kw.arg: kw.value for kw in call.keywords if kw.arg is not None}
+            for keyword, attr in (("train_bars", "train_bars"), ("train_sec", "train_sec")):
+                value = keywords.get(keyword)
+                self.assertIsInstance(value, ast.Attribute)
+                assert isinstance(value, ast.Attribute)
+                self.assertIsInstance(value.value, ast.Name)
+                assert isinstance(value.value, ast.Name)
+                self.assertEqual(
+                    (value.value.id, value.attr),
+                    ("data", attr),
+                    f"{keyword} must come from the prepared training dataset",
+                )
 
 
 if __name__ == "__main__":

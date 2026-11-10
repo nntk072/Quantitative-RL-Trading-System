@@ -132,7 +132,47 @@ def parse_train_args() -> argparse.Namespace:
         default=None,
         help="Timesteps per WF fold (default: reuse main timesteps)",
     )
+    parser.add_argument(
+        "--survival-campaign-dir",
+        default=None,
+        help="Stable artifact root for bounded survival qualification work units",
+    )
+    parser.add_argument(
+        "--survival-campaign-phase",
+        choices=("train_seed", "walk_forward_fold", "finalize"),
+        default=None,
+        help="Run one resumable survival qualification work unit",
+    )
+    parser.add_argument(
+        "--survival-campaign-seed",
+        type=int,
+        default=None,
+        help="Seed selected by a train_seed or walk_forward_fold campaign phase",
+    )
+    parser.add_argument(
+        "--survival-campaign-fold",
+        type=int,
+        default=None,
+        help="Fold selected by the walk_forward_fold campaign phase",
+    )
     args = parser.parse_args()
+    campaign_phase = args.survival_campaign_phase
+    if (args.survival_campaign_dir is None) != (campaign_phase is None):
+        parser.error("--survival-campaign-dir and --survival-campaign-phase must be used together")
+    if campaign_phase in {"train_seed", "walk_forward_fold"}:
+        if not args.seeds or len(args.seeds) < 6 or len(set(args.seeds)) != len(args.seeds):
+            parser.error("bounded survival work requires the full set of unique --seeds")
+        if args.survival_campaign_seed is None:
+            parser.error(f"{campaign_phase} requires --survival-campaign-seed")
+    elif args.survival_campaign_seed is not None:
+        parser.error("--survival-campaign-seed is only valid for a seed or fold phase")
+    if campaign_phase == "walk_forward_fold":
+        if not args.walk_forward or args.wf_splits < 5:
+            parser.error("walk_forward_fold requires at least five configured walk-forward splits")
+        if args.survival_campaign_fold is None:
+            parser.error("walk_forward_fold requires --survival-campaign-fold")
+    elif args.survival_campaign_fold is not None:
+        parser.error("--survival-campaign-fold is only valid for walk_forward_fold")
     if args.variant:
         resolved = resolve_variant(args.variant, vae_path=args.vae_path)
         args.resolved_variant = resolved

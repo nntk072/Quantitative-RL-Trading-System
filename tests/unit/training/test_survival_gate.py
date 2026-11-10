@@ -11,6 +11,10 @@ from configuration import load_config
 from decisioning.observations import OBSERVATION_SCHEMA_V2, build_observation_schema
 from evaluation.reporting.run_manifest import build_sequence_feature_schema, file_sha256
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
+from training.artifacts.walk_forward import (
+    build_walk_forward_identity,
+    fold_identity_sha256,
+)
 from training.configuration.survival_gate import (
     _complete_breach_free_path,
     _has_full_split_cap_conflict,
@@ -577,15 +581,41 @@ def test_passing_survival_gate_revalidates_seed_evidence_and_portfolio_data(
             ),
             encoding="utf-8",
         )
-        folds = [
-            {
-                "completed_data_split": True,
-                "survived_full_year": True,
-                "n_breach_sessions": 0,
-            }
-            for _ in range(5)
-        ]
-        (seed_dir / "walk_forward.json").write_text(json.dumps({"folds": folds}), encoding="utf-8")
+        manifest_path = seed_dir / "run_manifest.json"
+        wf_identity = build_walk_forward_identity(
+            run_manifest_path=manifest_path,
+            seed=seed,
+            wf_splits=5,
+            purge_bars=60,
+            embargo_bars=20,
+            wf_steps=1000,
+        )
+        folds = []
+        for fold_id in range(5):
+            split_sha256 = f"{fold_id + 1:064x}"
+            folds.append(
+                {
+                    "fold": fold_id,
+                    "split_sha256": split_sha256,
+                    "fold_identity_sha256": fold_identity_sha256(
+                        wf_identity, fold_id, split_sha256
+                    ),
+                    "completed_data_split": True,
+                    "survived_full_year": True,
+                    "n_breach_sessions": 0,
+                }
+            )
+        (seed_dir / "walk_forward.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "walk-forward-progress-v1",
+                    "identity": wf_identity,
+                    "status": "complete",
+                    "folds": folds,
+                }
+            ),
+            encoding="utf-8",
+        )
 
     args = Namespace(
         algo="ppo",

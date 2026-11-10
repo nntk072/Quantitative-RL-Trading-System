@@ -26,6 +26,7 @@ from evaluation.reporting.run_manifest import (
     source_state,
 )
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
+from training.artifacts.walk_forward import build_walk_forward_identity, fold_identity_sha256
 
 MIN_SURVIVAL_SEEDS = 6
 MIN_SURVIVAL_WF_SPLITS = 5
@@ -488,6 +489,20 @@ def build_survival_gate(
             train_gate = _read_json(gate_path)
             outcome = _read_json(outcome_path)
             wf = _read_json(wf_path)
+            expected_wf_identity = build_walk_forward_identity(
+                run_manifest_path=manifest_path,
+                seed=seed,
+                wf_splits=int(args.wf_splits),
+                purge_bars=int(getattr(args, "purge_bars", 60)),
+                embargo_bars=int(getattr(args, "embargo_bars", 20)),
+                wf_steps=int(getattr(args, "wf_steps", None) or cfg.ppo.total_timesteps),
+            )
+            if (
+                wf.get("schema_version") != "walk-forward-progress-v1"
+                or wf.get("status") != "complete"
+                or wf.get("identity") != expected_wf_identity
+            ):
+                raise ValueError("walk-forward evidence identity is incomplete or incompatible")
             checkpoint = seed_dir / str(manifest["artifact_paths"]["checkpoint"])
             if not checkpoint.is_file():
                 raise ValueError("seed checkpoint is missing")
@@ -502,10 +517,19 @@ def build_survival_gate(
             if not _complete_breach_free_path(outcome, survival_key="survived_full_split"):
                 raise ValueError("full train-split survival gate failed")
             folds = wf.get("folds", [])
-            if len(folds) != int(args.wf_splits):
+            fold_ids = [fold.get("fold") for fold in folds if isinstance(fold, dict)]
+            if len(folds) != int(args.wf_splits) or set(fold_ids) != set(
+                range(int(args.wf_splits))
+            ):
                 raise ValueError("walk-forward fold count differs from required split count")
             if any(
                 not isinstance(fold, dict)
+                or fold.get("fold_identity_sha256")
+                != fold_identity_sha256(
+                    expected_wf_identity,
+                    int(fold["fold"]),
+                    str(fold.get("split_sha256", "")),
+                )
                 or not _complete_breach_free_path(fold, survival_key="survived_full_year")
                 for fold in folds
             ):

@@ -6,17 +6,25 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from artifacts.atomic import write_text_atomic
+from configuration.paths import repository_root
 from evaluation import account_path_metric_inputs, calculate_metrics, evaluation_periods_per_year
+from evaluation.reporting.run_manifest import source_state
 from features import build_walkforward_fold_features
 from features.context.policy_market import attach_policy_market_context
 from learning.rl.agent import build_agent
 from market_data.loading.ticks import ticks_covering
 from market_data.splits.walkforward import purged_walk_forward
 from training.artifacts.flags import strict_nonnegative_int
+from training.artifacts.walk_forward import (
+    build_walk_forward_identity,
+    build_walk_forward_progress,
+    fold_identity_sha256,
+    fold_split_sha256,
+    load_walk_forward_progress,
+)
 from training.runner.seed import _setup_rngs
 from training.setup.environments import (
     _evaluate_final_split,
@@ -53,6 +61,7 @@ def run_walk_forward_validation(
     device: Any,
     vae_model: Any,
     seed: int,
+    only_fold: int | None = None,
 ) -> None:
     """Run optional purged walk-forward validation without altering the main split flow.
 
@@ -73,6 +82,7 @@ def run_walk_forward_validation(
         device: Compute device on which to perform the operation.
         vae_model: Vae model used by the operation described above.
         seed: Random seed used to make sampling reproducible.
+        only_fold: Optional fold identifier selected for one bounded campaign work unit.
     """
     if not args.walk_forward:
         return
@@ -80,14 +90,64 @@ def run_walk_forward_validation(
     deterministic_eval = final_evaluation_deterministic(cfg)
     log.info("Running walk-forward validation with %d splits...", args.wf_splits)
     wf_steps = args.wf_steps or timesteps
-    wf_results: list[dict[str, float | int | str]] = []
+    wf_steps = int(wf_steps)
+    manifest_path = run_dir / "run_manifest.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"walk-forward seed run manifest is missing: {manifest_path}")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("source") != source_state(repository_root(__file__)):
+        raise ValueError("walk-forward source differs from the completed seed run")
+    identity = build_walk_forward_identity(
+        run_manifest_path=manifest_path,
+        seed=int(seed),
+        wf_splits=int(args.wf_splits),
+        purge_bars=int(args.purge_bars),
+        embargo_bars=int(args.embargo_bars),
+        wf_steps=wf_steps,
+    )
+    wf_path = run_dir / "walk_forward.json"
+    splits = list(
+        purged_walk_forward(
+            len(train_bars),
+            n_splits=args.wf_splits,
+            purge_bars=args.purge_bars,
+            embargo_bars=args.embargo_bars,
+        )
+    )
+    expected_fold_ids = {int(split.fold) for split in splits}
+    previous_folds = load_walk_forward_progress(
+        wf_path,
+        identity=identity,
+        expected_fold_ids=expected_fold_ids,
+    )
+    if only_fold is not None and int(only_fold) not in expected_fold_ids:
+        raise ValueError(f"walk-forward fold {only_fold} is outside the configured split set")
 
-    for split in purged_walk_forward(
-        len(train_bars),
-        n_splits=args.wf_splits,
-        purge_bars=args.purge_bars,
-        embargo_bars=args.embargo_bars,
-    ):
+    def persist_progress() -> None:
+        payload = build_walk_forward_progress(
+            identity=identity,
+            expected_fold_ids=expected_fold_ids,
+            purge_bars=int(args.purge_bars),
+            embargo_bars=int(args.embargo_bars),
+            folds=previous_folds,
+        )
+        write_text_atomic(wf_path, json.dumps(payload, indent=2))
+
+    persist_progress()
+    for split in splits:
+        fold_id = int(split.fold)
+        split_sha256 = fold_split_sha256(split.train_idx, split.test_idx)
+        fold_sha256 = fold_identity_sha256(identity, fold_id, split_sha256)
+        existing = previous_folds.get(fold_id)
+        if existing is not None:
+            if (
+                existing.get("split_sha256") != split_sha256
+                or existing.get("fold_identity_sha256") != fold_sha256
+            ):
+                raise ValueError(f"walk-forward fold {fold_id} identity differs on resume")
+            continue
+        if only_fold is not None and fold_id != int(only_fold):
+            continue
         fold_train_bars = train_bars.iloc[split.train_idx]
         fold_test_bars = train_bars.iloc[split.test_idx]
         fold_train_feat, fold_test_feat, fold_cache = build_walkforward_fold_features(
@@ -246,7 +306,9 @@ def run_walk_forward_validation(
             **account_path_metric_inputs(fold_result),
         )
         fold_record: dict[str, Any] = {
-            "fold": split.fold,
+            "fold": fold_id,
+            "split_sha256": split_sha256,
+            "fold_identity_sha256": fold_sha256,
             "train_bars": len(fold_train_bars),
             "test_bars": len(fold_test_bars),
             "sharpe": float(fold_m.sharpe),
@@ -264,21 +326,19 @@ def run_walk_forward_validation(
         }
         if not deterministic_eval:
             fold_record["action_rng_seed"] = int(seed)
-        wf_results.append(fold_record)
+        previous_folds[fold_id] = fold_record
+        persist_progress()
 
-    wf_sharpes = [float(result["sharpe"]) for result in wf_results]
-    wf_summary = {
-        "splits": args.wf_splits,
-        "purge_bars": args.purge_bars,
-        "embargo_bars": args.embargo_bars,
-        "wf_steps": wf_steps,
-        "folds": wf_results,
-        "mean_sharpe": float(np.mean(wf_sharpes)) if wf_sharpes else None,
-        "std_sharpe": float(np.std(wf_sharpes)) if wf_sharpes else None,
-    }
-    write_text_atomic(run_dir / "walk_forward.json", json.dumps(wf_summary, indent=2))
-    log.info(
-        "Walk-forward complete. Mean Sharpe=%.3f std=%.3f",
-        wf_summary["mean_sharpe"],
-        wf_summary["std_sharpe"],
-    )
+    wf_summary = json.loads(wf_path.read_text(encoding="utf-8"))
+    if wf_summary["status"] == "complete":
+        log.info(
+            "Walk-forward complete. Mean Sharpe=%.3f std=%.3f",
+            wf_summary["mean_sharpe"],
+            wf_summary["std_sharpe"],
+        )
+    else:
+        log.info(
+            "Walk-forward progress: %d/%d folds complete",
+            len(wf_summary["folds"]),
+            wf_summary["splits"],
+        )

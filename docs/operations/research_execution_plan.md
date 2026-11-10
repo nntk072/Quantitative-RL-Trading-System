@@ -125,12 +125,16 @@ for the exact contracts, results, and artifact hashes.
 
 The bounded pretraining implementation readiness run passed all eight tasks
 and the release gate on source
-`205026102dd09abe5898a066ea962c8f4c22e02f`. Its current-source manifest keeps
-`scientific_training_authorized` and `price_training_authorized` false. The
-dependency-ready TODO list therefore does not permit canonical D qualification,
-portfolio optimization, or selection. See
+`205026102dd09abe5898a066ea962c8f4c22e02f`; that run's authorization record is
+historical. A later scientific-readiness manifest for source
+`516674303ec4e3654aa0bf4b3501882f34a35838` passes with D survival training
+authorized and PRICE training unauthorized. The resumable campaign integration
+now being completed changes source identity, so its exact-source readiness gate
+must pass again before training starts. Neither record authorizes portfolio
+optimization or selection. See
 [`pretraining_implementation_readiness_20261110.md`](../research/pretraining_implementation_readiness_20261110.md)
-for the exact gate results and evidence identity.
+for the implementation gate; use the separately stored exact-source scientific
+readiness manifest for training authorization.
 
 The research TODO tracker now labels its list as dependency-ready. Passing
 those hard dependencies does not evaluate conditional gates, scientific

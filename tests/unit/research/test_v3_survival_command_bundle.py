@@ -29,11 +29,16 @@ def test_survival_bundle_serializes_requested_roles_and_keeps_price_separate() -
         output_root="/scratch/v3",
         roles=["canonical", "control"],
     )
-    assert [row["id"] for row in bundle["commands"]] == [
-        "survival_canonical",
-        "survival_control",
-    ]
-    assert bundle["commands"][1]["depends_on"] == ["survival_canonical"]
+    commands = bundle["commands"]
+    assert len(commands) == 38
+    assert commands[0]["id"] == "survival_train_seed_42"
+    assert commands[1]["id"] == "survival_walk_forward_fold_42_0"
+    assert commands[36]["id"] == "survival_finalize"
+    assert commands[37]["id"] == "survival_control"
+    assert commands[37]["depends_on"] == ["survival_finalize"]
+    assert bundle["selection_allowed"] is False
+    assert all(command.get("selection_allowed") is False for command in commands[:-1])
+    assert all(command["resource_lock"] == "GPU_TRAIN_LOCK" for command in commands)
 
 
 def test_correctness_smoke_is_separate_from_scientific_training_authorization() -> None:
