@@ -103,7 +103,7 @@ barriers:
 
 external_scientific_gates:
   - raw_data_identity_and_denominator_register_current_source
-  - current_v43_real_market_prefix_invariance
+  - current_v44_real_market_prefix_invariance
   - producer_level_feature_causality_review
   - candidate_geometry_empirical_acceptance_review
   - matched_baseline_current_source_results

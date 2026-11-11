@@ -185,6 +185,11 @@ class SeedRunner:
         self.fit_result: FitResult | None = None
         self.model_path: Path | None = None
         self.provider: DecisionProvider | None = None
+        self.development_only = (
+            context.preparation.configuration.cfg.evaluation.get("development_only", False) is True
+        )
+        self.test_result: dict[str, Any] | None = None
+        self.test_m: Any | None = None
         self.final_eval_deterministic = final_evaluation_deterministic(
             context.preparation.configuration.cfg
         )
@@ -712,27 +717,12 @@ class SeedRunner:
             abort_reason=abort_reason,
         )
 
-    def evaluate_test_split(self) -> None:
-        """Evaluate the fitted provider on the report-only test split."""
+    def _write_training_progress_artifacts(self) -> None:
+        """Write progress plots from learner logs without reading evaluation data."""
         ctx = self.context
         cfg = ctx.preparation.configuration.cfg
-        seed = self.seed
-        provider = self.provider
-        if provider is None:
-            raise RuntimeError("decision provider was not created for evaluation")
         seed_model_dir = self.seed_model_dir
         progress_log = self.progress_log
-        phase_timings_seconds = self.phase_timings_seconds
-        eval_common = self.eval_common
-        test_eval_spec = ctx.preparation.run_assets.test_eval_spec
-        test_bars = ctx.preparation.data.test_bars
-        test_feat = ctx.preparation.data.test_feat
-        primary_ticks = ctx.preparation.data.primary_ticks
-        model_path = self.model_path
-        if model_path is None:
-            raise RuntimeError("learner did not produce a final checkpoint path")
-        log.info("Model saved: %s", model_path)
-
         try:
             from training.reporting.training_curves import (
                 save_dashboard_plots,
@@ -764,8 +754,29 @@ class SeedRunner:
         except Exception as exc:
             log.warning("Training progress plots skipped: %s", exc)
 
-            # Final train/test replays use the configured policy action mode. Stochastic
-            # evaluations are reseeded so their sampled trajectories can be reproduced.
+    def evaluate_test_split(self) -> None:
+        """Evaluate the fitted provider on the report-only test split."""
+        if self.development_only:
+            raise RuntimeError("development-only runs must not evaluate the report-only split")
+        ctx = self.context
+        cfg = ctx.preparation.configuration.cfg
+        seed = self.seed
+        provider = self.provider
+        if provider is None:
+            raise RuntimeError("decision provider was not created for evaluation")
+        phase_timings_seconds = self.phase_timings_seconds
+        eval_common = self.eval_common
+        test_eval_spec = ctx.preparation.run_assets.test_eval_spec
+        test_bars = ctx.preparation.data.test_bars
+        test_feat = ctx.preparation.data.test_feat
+        primary_ticks = ctx.preparation.data.primary_ticks
+        model_path = self.model_path
+        if model_path is None:
+            raise RuntimeError("learner did not produce a final checkpoint path")
+        log.info("Model saved: %s", model_path)
+
+        # Final report-only replay uses the configured action mode; stochastic
+        # evaluation is reseeded so its trajectory can be reproduced.
         deterministic_eval = self.final_eval_deterministic
         _setup_rngs(seed)
         phase_started = time.perf_counter()
@@ -1175,6 +1186,10 @@ class SeedRunner:
             training_protocol=training_protocol,
             feature_normalization_state_path=normalization_state_path,
             metrics_protocol={
+                "evaluation_scope": "development_only"
+                if self.development_only
+                else "all_configured_splits",
+                "report_only_test_evaluation": "not_run" if self.development_only else "completed",
                 "annualization": {
                     "periods_per_year": evaluation_periods_per_year(cfg),
                     "convention": str(cfg.evaluation.annualization_convention),
@@ -1254,8 +1269,10 @@ class SeedRunner:
         phase_timings_seconds = self.phase_timings_seconds
         manifest_path = self.manifest_path
         run_dir = ctx.preparation.run_assets.run_dir
-        entry_diag = test_result.get("entry_diag", {})
-        entry_state_diag = test_result.get("entry_state_diagnostics", {})
+        entry_diag = test_result.get("entry_diag", {}) if test_result is not None else {}
+        entry_state_diag = (
+            test_result.get("entry_state_diagnostics", {}) if test_result is not None else {}
+        )
         action_space_width = get_action_space_width(train_env)
         action_schema = action_schema_manifest(train_env)
         account_dim = observation_account_dim(train_env)
@@ -1279,9 +1296,13 @@ class SeedRunner:
             )
         }
         oos_role = (
-            "selection_acknowledged"
-            if getattr(args, "allow_locked_oos_for_selection", False)
-            else "final_report_only"
+            "development_only"
+            if self.development_only
+            else (
+                "selection_acknowledged"
+                if getattr(args, "allow_locked_oos_for_selection", False)
+                else "final_report_only"
+            )
         )
         return {
             "seed": seed,
@@ -1320,7 +1341,11 @@ class SeedRunner:
         """
         self.prepared: PreparedSeedRun = self.prepare_training()
         self.trained: TrainedSeedRun = self.train_model()
-        self.evaluate_test_split()
+        self._write_training_progress_artifacts()
+        if self.development_only:
+            log.info("Skipping report-only test evaluation: development_only=true")
+        else:
+            self.evaluate_test_split()
         self.evaluated: EvaluatedSeedRun = self.evaluate_train_split()
         self.persisted: PersistedSeedRun = self.write_artifacts()
         return self.build_result()

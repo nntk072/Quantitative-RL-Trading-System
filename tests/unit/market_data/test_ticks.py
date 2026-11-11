@@ -754,6 +754,61 @@ def test_build_tick_books_uses_grid_specific_cache_and_quotes(tmp_path: Path) ->
     assert quote == pytest.approx((25633.75, 25634.0))
 
 
+def test_build_tick_books_development_cutoff_excludes_later_quotes(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    csv_path = tmp_path / f"{symbol}.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+            ("2025.12.31", "23:59:59.999", 100.5, 101.1),
+            ("2026.01.01", "00:00:00.000", 900_001.0, 900_001.6),
+        ],
+    )
+    cfg = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "raw_dir": str(tmp_path),
+                "cache_dir": str(tmp_path / "cache"),
+                "tick_files": {symbol: csv_path.name},
+                "symbols": [symbol],
+                "tz": "UTC",
+            },
+        }
+    )
+
+    book = build_tick_books(cfg, end_inclusive="2025-12-31")[symbol]
+
+    assert book is not None
+    assert len(book) == 2
+    assert book.quote_at(pd.Timestamp("2025-12-31T23:59:59.999Z")) == pytest.approx((100.5, 101.1))
+    assert book.quote_at(pd.Timestamp("2026-01-01", tz="UTC")) is None
+
+
+def test_build_tick_books_development_cutoff_before_first_quote_is_empty(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    csv_path = tmp_path / f"{symbol}.csv"
+    _write_tick_csv(csv_path, [("2026.01.01", "00:00:00.000", 100.0, 100.6)])
+    cfg = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "raw_dir": str(tmp_path),
+                "cache_dir": str(tmp_path / "cache"),
+                "tick_files": {symbol: csv_path.name},
+                "symbols": [symbol],
+                "tz": "UTC",
+            },
+        }
+    )
+
+    book = build_tick_books(cfg, end_inclusive="2025-12-31")[symbol]
+
+    assert book is not None
+    assert len(book) == 0
+
+
 def test_build_tick_books_bypasses_legacy_tick_cache(tmp_path: Path):
     symbol = "US100.cash"
     csv_path = tmp_path / "ticks.csv"

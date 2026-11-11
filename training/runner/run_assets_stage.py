@@ -45,6 +45,7 @@ def _prepare_run_assets(
     """
     args = config_stage.args
     cfg = config_stage.cfg
+    development_only = cfg.evaluation.get("development_only", False) is True
     primary_ticks = data_stage.primary_ticks
     cache_dir = data_stage.cache_dir
     feat_cache = data_stage.feat_cache
@@ -142,25 +143,26 @@ def _prepare_run_assets(
             episodic=False,
             evaluation=True,
         )
-        test_bundle_path = build_env_bundle(
-            cache_dir,
-            test_bars,
-            test_feat,
-            cfg,
-            raw_columns=list(strategy_from_cfg(cfg)[0].raw_columns),
-            feature_config_hash=feat_cache.stem,
-            tickbook=ticks_covering(primary_ticks, test_bars),
-            pre_ny_by_date=None,
-        )
-        test_eval_spec = EnvSpec.from_cfg(
-            cfg,
-            algo=args.algo,
-            reward=args.reward,
-            arch=args.arch,
-            bundle_dir=str(test_bundle_path),
-            episodic=False,
-            evaluation=True,
-        )
+        if not development_only:
+            test_bundle_path = build_env_bundle(
+                cache_dir,
+                test_bars,
+                test_feat,
+                cfg,
+                raw_columns=list(strategy_from_cfg(cfg)[0].raw_columns),
+                feature_config_hash=feat_cache.stem,
+                tickbook=ticks_covering(primary_ticks, test_bars),
+                pre_ny_by_date=None,
+            )
+            test_eval_spec = EnvSpec.from_cfg(
+                cfg,
+                algo=args.algo,
+                reward=args.reward,
+                arch=args.arch,
+                bundle_dir=str(test_bundle_path),
+                episodic=False,
+                evaluation=True,
+            )
         best_count = min(20_000, train_bar_count)
         # .copy() detaches these from the full train arrays so that the
         # `del train_bars, train_feat` below actually frees the base (a bare

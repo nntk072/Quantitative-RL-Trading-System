@@ -31,9 +31,9 @@ def save_seed_artifacts(
     seed: int,
     cfg: Any,
     train_result: dict[str, Any],
-    test_result: dict[str, Any],
+    test_result: dict[str, Any] | None,
     train_m: Any,
-    test_m: Any,
+    test_m: Any | None,
 ) -> None:
     """Write per-seed artifacts for multi-seed mode.
 
@@ -42,25 +42,30 @@ def save_seed_artifacts(
         seed: Random seed used to make sampling reproducible.
         cfg: Run configuration used by this operation.
         train_result: Key-value data used for the train result.
-        test_result: Key-value data used for the test result.
+        test_result: Report-only result, or ``None`` when not evaluated.
         train_m: Train m used by the operation described above.
-        test_m: Test m used by the operation described above.
+        test_m: Test metrics, or ``None`` when not evaluated.
     """
     train_trades = train_result.get("trades")
-    test_trades = test_result.get("trades")
+    if (test_result is None) != (test_m is None):
+        raise ValueError("test result and metrics must either both be present or both be absent")
+    test_trades = test_result.get("trades") if test_result is not None else None
     trade_log = {
         "train": train_trades.to_dict(orient="records") if train_trades is not None else [],
-        "test": test_trades.to_dict(orient="records") if test_trades is not None else [],
+        "test": test_trades.to_dict(orient="records") if test_trades is not None else None,
+        "test_evaluation_status": "completed" if test_result is not None else "not_run",
     }
     write_text_atomic(seed_dir / "trade_log.json", json.dumps(trade_log, indent=2, default=str))
     entry_diag = {
         "train": train_result.get("entry_diag", {}),
-        "test": test_result.get("entry_diag", {}),
+        "test": test_result.get("entry_diag", {}) if test_result is not None else None,
     }
     write_text_atomic(seed_dir / "entry_diag.json", json.dumps(entry_diag, indent=2, default=str))
     entry_state = {
         "train": train_result.get("entry_state_diagnostics", {}),
-        "test": test_result.get("entry_state_diagnostics", {}),
+        "test": (
+            test_result.get("entry_state_diagnostics", {}) if test_result is not None else None
+        ),
     }
     write_text_atomic(seed_dir / "entry_state.json", json.dumps(entry_state, indent=2, default=str))
     try:
@@ -108,7 +113,12 @@ def aggregate_seed_results(
     Returns:
         Mapping from ``str`` keys to ``Any`` values.
     """
-    ok_seeds = [r for r in seed_results if r["test_m"].n_trades > 0]
+    test_evaluation_states = [result.get("test_m") is not None for result in seed_results]
+    test_evaluated = bool(test_evaluation_states) and all(test_evaluation_states)
+    test_not_evaluated = not any(test_evaluation_states)
+    if not test_evaluated and not test_not_evaluated:
+        raise ValueError("multi-seed run cannot mix evaluated and unevaluated test splits")
+    ok_seeds = [r for r in seed_results if r["test_m"].n_trades > 0] if test_evaluated else []
     n_seeds_ok = len(ok_seeds)
 
     scalar_metrics = [
@@ -126,7 +136,13 @@ def aggregate_seed_results(
     aggregated: dict[str, Any] = {
         "seeds": [r["seed"] for r in seed_results],
         "n_seeds": len(seed_results),
-        "n_seeds_ok": n_seeds_ok,
+        "n_seeds_ok": n_seeds_ok if test_evaluated else None,
+        "evaluation_scope": (
+            "development_only"
+            if cfg.evaluation.get("development_only", False) is True
+            else "all_configured_splits"
+        ),
+        "test_evaluation_status": "completed" if test_evaluated else "not_run",
         "algo": algo,
         "arch": arch,
         "reward": reward,
@@ -144,7 +160,9 @@ def aggregate_seed_results(
     }
 
     for metric in scalar_metrics:
-        test_vals = [float(getattr(r["test_m"], metric)) for r in seed_results]
+        test_vals = (
+            [float(getattr(r["test_m"], metric)) for r in seed_results] if test_evaluated else []
+        )
         train_vals = [float(getattr(r["train_m"], metric)) for r in seed_results]
         if test_vals:
             aggregated[f"test_{metric}_mean"] = round(sum(test_vals) / len(test_vals), 4)
@@ -183,10 +201,20 @@ def aggregate_seed_results(
         first.get("train_result"), first.get("test_result")
     )
 
+    evaluation_cfg = getattr(cfg, "evaluation", None)
+    development_only = (
+        evaluation_cfg.get("development_only", False) is True
+        if evaluation_cfg is not None
+        else False
+    )
     aggregated["oos_role"] = (
-        "selection_acknowledged"
-        if getattr(args, "allow_locked_oos_for_selection", False)
-        else "final_report_only"
+        "development_only"
+        if development_only
+        else (
+            "selection_acknowledged"
+            if getattr(args, "allow_locked_oos_for_selection", False)
+            else "final_report_only"
+        )
     )
 
     env_flags = {

@@ -2,7 +2,12 @@
 compute:
   cudnn_benchmark: false
 
+evaluation:
+  deterministic: true
+  development_only: true
+
 env:
+  reward_mode: survival
   n_envs: 8
   strategy_actions: true
   trade_setup_actions: true
@@ -26,8 +31,8 @@ ppo:
   batch_size: 512
   n_epochs: 15
   learning_rate: 3.0e-4
-  gamma: 0.99
-  gae_lambda: 0.95
+  gamma: 1.0
+  gae_lambda: 1.0
   clip_range: 0.2
   ent_coef: 0.01
   ent_coef_continuous: 0.001

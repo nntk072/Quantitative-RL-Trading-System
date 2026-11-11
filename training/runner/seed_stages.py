@@ -32,12 +32,12 @@ class TrainedSeedRun:
 
 @dataclass(slots=True)
 class EvaluatedSeedRun:
-    """Train and report-only test evaluation results for one seed."""
+    """Training evaluation and optional report-only test results for one seed."""
 
     train_result: dict[str, Any]
-    test_result: dict[str, Any]
+    test_result: dict[str, Any] | None
     train_metrics: Any
-    test_metrics: Any
+    test_metrics: Any | None
     train_gate: dict[str, Any]
     train_activity_gate: dict[str, Any]
 

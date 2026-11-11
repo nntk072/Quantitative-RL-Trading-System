@@ -19,13 +19,14 @@ def write_evaluation_artifacts(
     seed: int,
     completed_timesteps: int,
     train_result: dict[str, Any],
-    test_result: dict[str, Any],
+    test_result: dict[str, Any] | None,
     train_metrics: Any,
-    test_metrics: Any,
+    test_metrics: Any | None,
     train_gate: dict[str, Any],
     train_activity_gate: dict[str, Any],
     account_currency: str,
     survival_objective: bool = False,
+    development_only: bool = False,
     training_completed: bool = True,
     training_incomplete_reason: str | None = None,
 ) -> None:
@@ -36,13 +37,14 @@ def write_evaluation_artifacts(
         seed: Random seed used to make sampling reproducible.
         completed_timesteps: Numeric value used for the completed timesteps.
         train_result: Key-value data used for the train result.
-        test_result: Key-value data used for the test result.
+        test_result: Report-only test result, or ``None`` when not evaluated.
         train_metrics: Train metrics used by the operation described above.
-        test_metrics: Test metrics used by the operation described above.
+        test_metrics: Test metrics, or ``None`` when not evaluated.
         train_gate: Key-value data used for the train gate.
         train_activity_gate: Key-value data used for the train activity gate.
         account_currency: Text or path value identifying the account currency.
         survival_objective: Whether this evaluation is part of survival qualification.
+        development_only: Whether the report-only split was intentionally excluded.
         training_completed: Whether learner fitting reached its requested endpoint.
         training_incomplete_reason: Reason provided when fitting stopped early.
     """
@@ -100,16 +102,24 @@ def write_evaluation_artifacts(
         train_metrics,
         activity_status=str(train_activity_gate["status"]),
     )
-    test_activity = assess_train_activity(int(test_metrics.n_trades))
-    test_payload = split_payload(
-        "report_only_test_evaluation",
-        test_result,
-        test_metrics,
-        activity_status=str(test_activity["status"]),
-    )
-    test_payload["oos_role"] = (
-        "previously_inspected_holdout; report-only; not pristine confirmation"
-    )
+    test_evaluated = test_result is not None and test_metrics is not None
+    if development_only and test_evaluated:
+        raise ValueError("development-only runs cannot write report-only test artifacts")
+    if (test_result is None) != (test_metrics is None):
+        raise ValueError("test result and metrics must either both be present or both be absent")
+    test_payload = None
+    if test_evaluated:
+        assert test_result is not None and test_metrics is not None
+        test_activity = assess_train_activity(int(test_metrics.n_trades))
+        test_payload = split_payload(
+            "report_only_test_evaluation",
+            test_result,
+            test_metrics,
+            activity_status=str(test_activity["status"]),
+        )
+        test_payload["oos_role"] = (
+            "previously_inspected_holdout; report-only; not pristine confirmation"
+        )
     train_payload["equity_gate"] = train_gate
     train_payload["activity_gate"] = train_activity_gate
     peak_dd_limit = float(train_gate.get("peak_trailing_dd_limit", 0.0))
@@ -173,37 +183,44 @@ def write_evaluation_artifacts(
         ),
     }
     train_payload["peak_eod_dd_policy_fit"] = eod_dd_policy_fit
-    test_eod_dd_limit = float(test_payload["peak_eod_trailing_dd_limit_usd"])
-    test_eod_dd_enabled = test_eod_dd_limit > 0.0
-    test_eod_dd_policy_fit = {
-        "enabled": test_eod_dd_enabled,
-        "status": "DISABLED"
-        if not test_eod_dd_enabled
-        else ("PASS" if test_payload["peak_eod_dd_policy_ok"] else "MISS"),
-        "limit_usd": test_eod_dd_limit,
-        "observed_usd": float(test_payload["max_peak_eod_trailing_dd_usd"]),
-    }
-    test_payload["peak_eod_dd_policy_fit"] = test_eod_dd_policy_fit
+    test_eod_dd_policy_fit = None
+    if test_payload is not None:
+        test_eod_dd_limit = float(test_payload["peak_eod_trailing_dd_limit_usd"])
+        test_eod_dd_enabled = test_eod_dd_limit > 0.0
+        test_eod_dd_policy_fit = {
+            "enabled": test_eod_dd_enabled,
+            "status": "DISABLED"
+            if not test_eod_dd_enabled
+            else ("PASS" if test_payload["peak_eod_dd_policy_ok"] else "MISS"),
+            "limit_usd": test_eod_dd_limit,
+            "observed_usd": float(test_payload["max_peak_eod_trailing_dd_usd"]),
+        }
+        test_payload["peak_eod_dd_policy_fit"] = test_eod_dd_policy_fit
     train_payload["zero_trade_diagnosis"] = classify_zero_trade_cause(
         int(train_metrics.n_trades),
         train_result.get("entry_state_diagnostics"),
         train_result.get("entry_diag"),
     )
-    test_payload["zero_trade_diagnosis"] = classify_zero_trade_cause(
-        int(test_metrics.n_trades),
-        test_result.get("entry_state_diagnostics"),
-        test_result.get("entry_diag"),
-    )
+    if test_payload is not None:
+        assert test_result is not None and test_metrics is not None
+        test_payload["zero_trade_diagnosis"] = classify_zero_trade_cause(
+            int(test_metrics.n_trades),
+            test_result.get("entry_state_diagnostics"),
+            test_result.get("entry_diag"),
+        )
     write_text_atomic(
         evaluation_dir / "train_in_sample.json",
         json.dumps(train_payload, indent=2, default=str, allow_nan=True),
     )
-    write_text_atomic(
-        evaluation_dir / "test_report_only.json",
-        json.dumps(test_payload, indent=2, default=str, allow_nan=True),
-    )
+    if test_payload is not None:
+        write_text_atomic(
+            evaluation_dir / "test_report_only.json",
+            json.dumps(test_payload, indent=2, default=str, allow_nan=True),
+        )
     summary = {
-        "schema_version": 3,
+        "schema_version": 4,
+        "evaluation_scope": "development_only" if development_only else "all_configured_splits",
+        "test_evaluation_status": "completed" if test_evaluated else "not_run",
         "seed": int(seed),
         "completed_training_timesteps": int(completed_timesteps),
         "training_in_sample": train_payload,
@@ -276,21 +293,15 @@ def write_evaluation_artifacts(
             f"{fmt('win_rate', '.1%')} | {metrics['n_trades']} |"
         )
 
-    report = [
-        "# Evaluation results",
-        "",
-        f"Seed: {seed}  ",
-        f"Training steps completed: {completed_timesteps:,}",
-        "",
-        "The dashboard's periodic train-prefix monitor is a progress check. These are the two final replays.",
-        (
+    if test_payload is not None and test_eod_dd_policy_fit is not None:
+        policy_action_mode_line = (
             "Policy action mode: "
             f"train={train_payload['policy_action_mode']}, "
             f"test={test_payload['policy_action_mode']}; "
             f"action RNG seeds: train={train_payload['action_rng_seed']}, "
             f"test={test_payload['action_rng_seed']}."
-        ),
-        (
+        )
+        eod_drawdown_line = (
             "Peak EOD drawdown rule: "
             f"train limit=${train_payload['peak_eod_trailing_dd_limit_usd']:,.0f}, "
             f"observed=${train_payload['max_peak_eod_trailing_dd_usd']:,.2f} "
@@ -298,23 +309,60 @@ def write_evaluation_artifacts(
             f"${test_payload['peak_eod_trailing_dd_limit_usd']:,.0f}, observed="
             f"${test_payload['max_peak_eod_trailing_dd_usd']:,.2f} "
             f"({test_eod_dd_policy_fit['status']})."
+        )
+        replay_action_mode_line = (
+            "Both final replays use stochastic policy actions, matching PPO training."
+            if train_payload["policy_action_mode"] == "stochastic"
+            and test_payload["policy_action_mode"] == "stochastic"
+            else "Final replay action mode is recorded separately for each split."
+        )
+    else:
+        policy_action_mode_line = "The configured report-only test evaluation was not run."
+        eod_drawdown_line = (
+            "Peak EOD drawdown rule: "
+            f"train limit=${train_payload['peak_eod_trailing_dd_limit_usd']:,.0f}, "
+            f"observed=${train_payload['max_peak_eod_trailing_dd_usd']:,.2f} "
+            f"({eod_dd_policy_fit['status']})."
+        )
+        replay_action_mode_line = "The development replay uses the configured policy action mode."
+    if development_only and not test_evaluated:
+        policy_action_mode_line = (
+            "Evaluation scope: development only; report-only test was not run."
+        )
+
+    report = [
+        "# Evaluation results",
+        "",
+        f"Seed: {seed}  ",
+        f"Training steps completed: {completed_timesteps:,}",
+        "",
+        (
+            "The dashboard's periodic train-prefix monitor is a progress check. "
+            "Only the development split was evaluated."
+            if development_only and not test_evaluated
+            else "The dashboard's periodic train-prefix monitor is a progress check. "
+            "The report-only test evaluation was not run."
+            if not test_evaluated
+            else "The dashboard's periodic train-prefix monitor is a progress check. "
+            "These are the two final replays."
         ),
+        eod_drawdown_line,
         (
             "A peak EOD drawdown breach closes any open position and blocks entries "
             "until a later EOD equity high; it does not terminate the replay. "
             "The separate configured hard-loss guardrail controls replay termination."
         ),
-        (
-            "Both final replays use stochastic policy actions, matching PPO training."
-            if train_payload["policy_action_mode"] == "stochastic"
-            and test_payload["policy_action_mode"] == "stochastic"
-            else "Final replay action mode is recorded separately for each split."
-        ),
+        policy_action_mode_line,
+        replay_action_mode_line,
         "",
         f"| Evaluation | Return | Net PnL ({account_currency}) | Max drawdown | Sharpe | Profit factor | Win rate | Trades |",
         "|---|---:|---:|---:|---:|---:|---:|---:|",
         line("Train (in-sample)", train_payload),
-        line("Test (report-only; previously inspected)", test_payload),
+        *(
+            [line("Test (report-only; previously inspected)", test_payload)]
+            if test_payload is not None
+            else []
+        ),
         "",
         f"Training phase: {'survival qualification' if survival_objective else 'portfolio training'}",
         f"Training complete: {'PASS' if training_completed else 'FAIL'}",
@@ -360,7 +408,13 @@ def write_evaluation_artifacts(
         ),
         f"Zero-trade diagnosis: {train_payload['zero_trade_diagnosis'] or 'none'}",
         "",
-        "The test split is report-only and must not be described as pristine confirmatory evidence.",
+        (
+            "The test split is report-only and must not be described as pristine confirmatory evidence."
+            if test_evaluated
+            else "The report-only test split was intentionally excluded for this development-only run."
+            if development_only
+            else "Report-only test evaluation was not run."
+        ),
         "",
     ]
     write_text_atomic(evaluation_dir / "summary.md", "\n".join(report))

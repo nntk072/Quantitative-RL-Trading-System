@@ -197,6 +197,29 @@ def test_tick_execution_schedule_freezes_observed_decisions_and_next_bar_quotes(
     assert schedule["test"]["quote_anchor_times"].equals(index[[8, 9, 10]])
 
 
+def test_development_only_tick_preflight_never_builds_report_only_schedule() -> None:
+    index = pd.DatetimeIndex(
+        [
+            pd.Timestamp("2025-12-31T14:30:00Z"),
+            pd.Timestamp("2025-12-31T14:31:00Z"),
+            pd.Timestamp("2026-01-02T14:30:00Z"),
+        ]
+    )
+    train_mask = pd.Series([True, True, False], index=index)
+    labels = pd.Series(["ny", "ny", "ny"], index=index)
+
+    schedule = tick_preflight.tick_execution_split_schedule(
+        index,
+        train_mask,
+        "invalid report-only timestamp is never parsed",
+        session_labels=labels,
+        include_report_only_split=False,
+    )
+
+    assert set(schedule) == {"train"}
+    assert schedule["train"]["decision_times"].equals(index[:2])
+
+
 def test_zero_latency_tick_preflight_checks_the_immediate_order_time() -> None:
     order_time = pd.Timestamp("2025-12-31T14:30:00Z")
     tickbook = TickBook(

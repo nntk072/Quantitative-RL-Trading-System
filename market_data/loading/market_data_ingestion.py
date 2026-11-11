@@ -28,6 +28,7 @@ from market_data.cache.bars import (
     write_bar_cache,
 )
 from market_data.loading.bars import load_bars
+from market_data.splits.definitions import inclusive_date_exclusive_end
 from market_data.transforms.cleaning import clean
 from market_data.transforms.price_grid import (
     configured_price_grid_increment,
@@ -47,6 +48,7 @@ def run_pipeline(
     cfg: DictConfig,
     force: bool = False,
     datasets: Sequence[str] | None = None,
+    end_inclusive: str | None = None,
 ) -> dict[str, dict[str, pd.DataFrame]]:
     """Load, resample, clean, label and cache all symbols / timeframes.
 
@@ -56,6 +58,7 @@ def run_pipeline(
         cfg: OmegaConf config (config/base/default.yaml).
         force: If True, ignore existing parquet cache and reprocess from CSV.
         datasets: Optional configured dataset names to process; None selects all datasets.
+        end_inclusive: Optional last local calendar date returned to the caller.
 
     Returns:
         Mapping from ``str`` keys to ``dict[str, pd.DataFrame]`` values.
@@ -98,6 +101,9 @@ def run_pipeline(
     parts: dict[str, dict[str, list[pd.DataFrame]]] = {
         str(symbol): {str(tf): [] for tf in cfg.data.timeframes} for symbol in cfg.data.symbols
     }
+    exclusive_end = (
+        inclusive_date_exclusive_end(end_inclusive, tz) if end_inclusive is not None else None
+    )
     for dataset_name, root, m1_files, timeframe_files in dataset_specs:
         part_cache = cache_dir / dataset_name
         part_cache.mkdir(parents=True, exist_ok=True)
@@ -106,6 +112,19 @@ def run_pipeline(
             m1_path = root / str(configured_m1 or m1_files[symbol])
             m1_raw = quantize_bar_prices(load_bars(m1_path), grid_increment)
             source_hashes = {m1_path: file_sha256(m1_path)}
+            raw_exclusive_end = (
+                pd.Timestamp(end_inclusive).normalize() + pd.DateOffset(days=1)
+                if end_inclusive is not None
+                else None
+            )
+            if raw_exclusive_end is not None:
+                m1_raw = m1_raw.loc[m1_raw.index < raw_exclusive_end]
+                if m1_raw.empty:
+                    for timeframe in cfg.data.timeframes:
+                        parts[str(symbol)][str(timeframe)].append(
+                            pd.DataFrame(index=pd.DatetimeIndex([], tz=tz, name="datetime"))
+                        )
+                    continue
 
             def input_hash(path: Path) -> str:
                 """Return a memoized content hash for a source file.
@@ -170,6 +189,8 @@ def run_pipeline(
                         df = m1_full.copy()
                     elif native_file:
                         tf_raw = quantize_bar_prices(load_bars(source_path), grid_increment)
+                        if raw_exclusive_end is not None:
+                            tf_raw = tf_raw.loc[tf_raw.index < raw_exclusive_end]
                         tf_clean = clean(tf_raw, tz=tz)
                         df = add_session_labels(tf_clean, tz=tz, ny_end=ny_end)
                         df = add_session_id(df)
@@ -181,7 +202,10 @@ def run_pipeline(
                         tf_clean = clean(tf_bars, tz=tz)
                         df = add_session_labels(tf_clean, tz=tz, ny_end=ny_end)
                         df = add_session_id(df)
-                    write_bar_cache(cp, df, cache_identity)
+                    if end_inclusive is None:
+                        write_bar_cache(cp, df, cache_identity)
+                if exclusive_end is not None:
+                    df = df.loc[df.index < exclusive_end]
                 parts[str(symbol)][str(tf)].append(df)
 
     result: dict[str, dict[str, pd.DataFrame]] = {}

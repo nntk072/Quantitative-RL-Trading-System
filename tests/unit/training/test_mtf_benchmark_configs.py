@@ -67,6 +67,36 @@ def test_exact_environment_config_preserves_resolved_ppo_geometry(monkeypatch) -
         assert resolved.ppo.n_epochs == 15
 
 
+def test_matched_2m_setup_arms_use_survival_and_development_only_protocol() -> None:
+    control = load_config(config_path="config/research/trade_setup_mtf_reasoning_2m.yaml")
+    treatment = load_config(
+        config_path="config/research/trade_setup_mtf_reasoning_conditioned_2m.yaml"
+    )
+
+    assert control.env.reward_mode == treatment.env.reward_mode == "survival"
+    assert control.evaluation.development_only is treatment.evaluation.development_only is True
+    assert control.evaluation.deterministic is treatment.evaluation.deterministic is True
+    assert control.ppo.gamma == treatment.ppo.gamma == 1.0
+    assert control.ppo.gae_lambda == treatment.ppo.gae_lambda == 1.0
+    assert control.ppo.total_timesteps == treatment.ppo.total_timesteps == 2_000_000
+    assert control.env.n_envs == treatment.env.n_envs == 8
+
+    control_fields = OmegaConf.to_container(control, resolve=True)
+    treatment_fields = OmegaConf.to_container(treatment, resolve=True)
+    assert isinstance(control_fields, dict) and isinstance(treatment_fields, dict)
+    control_fields["ppo"].pop("policy_distribution")
+    treatment_fields["ppo"].pop("policy_distribution")
+    assert control_fields == treatment_fields
+
+
+def test_canonical_survival_qualification_configs_are_development_only() -> None:
+    control = load_config(config_path="config/research/survival_trade_setup_mtf_control.yaml")
+    treatment = load_config(config_path="config/research/survival_trade_setup_mtf_conditioned.yaml")
+
+    assert control.evaluation.development_only is True
+    assert treatment.evaluation.development_only is True
+
+
 def test_efg_resolved_configs_match_variant_d_outside_encoder_identity() -> None:
     baseline = load_config(
         config_path="config/research/trade_setup_mtf_reasoning_conditioned_2m.yaml"

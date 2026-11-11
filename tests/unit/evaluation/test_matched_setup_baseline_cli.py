@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pandas as pd
 import pytest
+from scripts.research.analysis.evaluation import run_matched_setup_baselines as matched_baselines
 from scripts.research.analysis.evaluation.run_matched_setup_baselines import (
     _additional_policies,
+    _clip_frames_to_development_end,
     parse_args,
     select_period,
 )
@@ -35,6 +39,76 @@ def test_period_selection_uses_declared_development_bounds() -> None:
 
     assert selected_bars.index.equals(bars.index[1:4])
     assert selected_features.index.equals(selected_bars.index)
+
+
+def test_development_baseline_inputs_drop_report_only_rows_before_feature_build() -> None:
+    bars, _ = _inputs()
+
+    clipped = _clip_frames_to_development_end({"M1": bars}, train_end="2025-01-04")
+
+    assert clipped["M1"].index.equals(bars.index[:4])
+
+
+def test_development_baseline_input_path_clips_sentinel_before_features(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    cfg = load_config(config_path="config/research/trade_setup_mtf_reasoning_2m.yaml")
+    primary = str(cfg.data.primary)
+    secondary = str(cfg.data.secondary)
+    index = pd.DatetimeIndex(["2025-12-31 14:30", "2026-01-01 14:30"])
+    bars = pd.DataFrame({"close": [100.0, 900_001.0]}, index=index)
+    observed: dict[str, Any] = {}
+    tickbook = object()
+
+    def fake_run_pipeline(
+        _cfg, *, datasets: list[str], end_inclusive: str | None
+    ) -> dict[str, dict[str, pd.DataFrame]]:
+        observed["bar_cutoff"] = end_inclusive
+        assert datasets == ["training"]
+        return {
+            primary: {"M1": bars.copy()},
+            secondary: {"M1": bars.copy()},
+        }
+
+    def fake_build_features(primary_m1: pd.DataFrame, **_kwargs: object) -> pd.DataFrame:
+        observed["feature_input"] = primary_m1.copy()
+        return pd.DataFrame({"feature": primary_m1["close"]}, index=primary_m1.index)
+
+    def fake_tick_books(_cfg, **kwargs: object) -> dict[str, object]:
+        observed["tick_cutoff"] = kwargs.get("end_inclusive")
+        return {primary: tickbook}
+
+    monkeypatch.setattr(matched_baselines, "run_pipeline", fake_run_pipeline)
+    monkeypatch.setattr(matched_baselines, "build_features", fake_build_features)
+    monkeypatch.setattr(
+        matched_baselines,
+        "feature_cache_path",
+        lambda *_args, **_kwargs: tmp_path / "features.parquet",
+    )
+    monkeypatch.setattr(matched_baselines, "build_tick_books", fake_tick_books)
+    monkeypatch.setattr(
+        matched_baselines,
+        "attach_policy_market_context",
+        lambda _bars, features, *_args, **_kwargs: features,
+    )
+    monkeypatch.setattr(
+        matched_baselines, "_source_files", lambda *_args, **_kwargs: {"config": tmp_path}
+    )
+
+    selected_bars, selected_features, selected_ticks, _sources = matched_baselines._prepare_inputs(
+        cfg,
+        dataset_name="training",
+        period_role="development",
+        config_path=tmp_path / "config.yaml",
+    )
+
+    assert observed["bar_cutoff"] == "2025-12-31"
+    assert observed["tick_cutoff"] == "2025-12-31"
+    assert observed["feature_input"].index.equals(index[:1])
+    assert observed["feature_input"]["close"].tolist() == [100.0]
+    assert selected_bars.index.equals(index[:1])
+    assert selected_features.index.equals(index[:1])
+    assert selected_ticks is tickbook
 
 
 def test_period_selection_labels_exposed_report_split_explicitly() -> None:

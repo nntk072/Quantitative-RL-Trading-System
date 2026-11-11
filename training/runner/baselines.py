@@ -33,6 +33,7 @@ from market_data.loading.ticks import TickBook
 from market_data.splits.definitions import (
     get_split_config,
     get_train_start_config,
+    inclusive_date_exclusive_end,
     split_bars,
     split_train_test,
 )
@@ -162,21 +163,35 @@ def main() -> None:
     np.random.seed(args.seed)
 
     cfg = load_config(args.overrides)
+    development_only = cfg.evaluation.get("development_only", False) is True
     daily_pnl_basis_value = resolve_trading_policy(cfg).daily_pnl_basis
     if daily_pnl_basis_value is None:
         raise ValueError("resolved trading policy must define a daily PnL basis")
     daily_pnl_basis = cast(RiskDailyPnlBasis, daily_pnl_basis_value)
-    data = run_pipeline(cfg, force=args.force)
-
     primary_sym = cfg.data.primary
     secondary_sym = cfg.data.secondary
+    # Date-based train / test split
+    train_end, test_start = get_split_config(cfg)
+    train_start = get_train_start_config(cfg)
+    data = run_pipeline(
+        cfg,
+        force=args.force,
+        **({"end_inclusive": train_end} if development_only else {}),
+    )
+    if development_only:
+        data[primary_sym] = {
+            timeframe: split_bars(bars, train_end=train_end)[0]
+            for timeframe, bars in data[primary_sym].items()
+        }
+        if secondary_sym in data:
+            data[secondary_sym] = {
+                timeframe: split_bars(bars, train_end=train_end)[0]
+                for timeframe, bars in data[secondary_sym].items()
+            }
     primary_m1 = data[primary_sym]["M1"]
     secondary_m1 = data.get(secondary_sym, {}).get("M1")
 
     cache_dir = Path(cfg.data.cache_dir)
-    # Date-based train / test split
-    train_end, test_start = get_split_config(cfg)
-    train_start = get_train_start_config(cfg)
     features = build_split_scoped_features(
         primary_m1,
         secondary=secondary_m1,
@@ -202,12 +217,16 @@ def main() -> None:
     )
 
     # Tick books
-    tick_books = build_tick_books(cfg, force=args.force)
+    tick_books = build_tick_books(
+        cfg,
+        force=args.force,
+        end_inclusive=train_end if development_only else None,
+    )
     primary_ticks = tick_books.get(cfg.data.primary)
     train_ticks = (
         primary_ticks.slice(
             pd.Timestamp("2000-01-01", tz=cfg.data.tz),
-            pd.Timestamp(train_end + " 23:59:59", tz=cfg.data.tz),
+            inclusive_date_exclusive_end(train_end, str(cfg.data.tz)),
         )
         if primary_ticks is not None
         else None
@@ -217,7 +236,7 @@ def main() -> None:
             pd.Timestamp(test_start + " 00:00:00", tz=cfg.data.tz),
             pd.Timestamp("2099-01-01", tz=cfg.data.tz),
         )
-        if primary_ticks is not None
+        if primary_ticks is not None and not development_only
         else None
     )
 
@@ -244,22 +263,37 @@ def main() -> None:
     if args.strategy == "macd":
         # Precompute MACD actions (returns series with +1, -1, 0, 2)
         macd_train_actions = macd_ema50_baseline(train_bars)
-        macd_test_actions = macd_ema50_baseline(test_bars)
+        if not development_only:
+            macd_test_actions = macd_ema50_baseline(test_bars)
 
         # Disable SL/TP for MACD baseline
         max_loss_per_trade = None
 
-        log.info("MACD baseline: computed precomputed actions for train & test splits")
+        log.info(
+            "MACD baseline: computed precomputed actions for %s split%s",
+            "training" if development_only else "training and report-only test",
+            "" if development_only else "s",
+        )
     elif args.strategy == "ema":
         # Real EMA crossover: 9 vs 21 on close.
         ema_train_actions = ema_crossover(train_bars, fast=9, slow=21)
-        ema_test_actions = ema_crossover(test_bars, fast=9, slow=21)
-        log.info("EMA baseline: computed precomputed actions for train & test splits")
+        if not development_only:
+            ema_test_actions = ema_crossover(test_bars, fast=9, slow=21)
+        log.info(
+            "EMA baseline: computed precomputed actions for %s split%s",
+            "training" if development_only else "training and report-only test",
+            "" if development_only else "s",
+        )
     elif args.strategy == "rsi":
         # Real RSI mean-reversion: <30 long, >70 short, neutral=flat.
         rsi_train_actions = rsi_mean_reversion(train_bars, period=14)
-        rsi_test_actions = rsi_mean_reversion(test_bars, period=14)
-        log.info("RSI baseline: computed precomputed actions for train & test splits")
+        if not development_only:
+            rsi_test_actions = rsi_mean_reversion(test_bars, period=14)
+        log.info(
+            "RSI baseline: computed precomputed actions for %s split%s",
+            "training" if development_only else "training and report-only test",
+            "" if development_only else "s",
+        )
 
     def _create_macd_policy(
         actions_series: pd.Series | None, obs_window: int
@@ -304,19 +338,22 @@ def main() -> None:
     test_precomputed_policy = None
     if args.strategy == "macd":
         obs_window = cfg.env.obs_window if hasattr(cfg.env, "obs_window") else 60
-        assert macd_train_actions is not None and macd_test_actions is not None
+        assert macd_train_actions is not None
         train_precomputed_policy = _create_macd_policy(macd_train_actions, obs_window)
-        test_precomputed_policy = _create_macd_policy(macd_test_actions, obs_window)
+        if macd_test_actions is not None:
+            test_precomputed_policy = _create_macd_policy(macd_test_actions, obs_window)
     elif args.strategy == "ema":
         obs_window = cfg.env.obs_window if hasattr(cfg.env, "obs_window") else 60
-        assert ema_train_actions is not None and ema_test_actions is not None
+        assert ema_train_actions is not None
         train_precomputed_policy = _make_indexed_policy(ema_train_actions, obs_window)
-        test_precomputed_policy = _make_indexed_policy(ema_test_actions, obs_window)
+        if ema_test_actions is not None:
+            test_precomputed_policy = _make_indexed_policy(ema_test_actions, obs_window)
     elif args.strategy == "rsi":
         obs_window = cfg.env.obs_window if hasattr(cfg.env, "obs_window") else 60
-        assert rsi_train_actions is not None and rsi_test_actions is not None
+        assert rsi_train_actions is not None
         train_precomputed_policy = _make_indexed_policy(rsi_train_actions, obs_window)
-        test_precomputed_policy = _make_indexed_policy(rsi_test_actions, obs_window)
+        if rsi_test_actions is not None:
+            test_precomputed_policy = _make_indexed_policy(rsi_test_actions, obs_window)
 
     def _run(
         bars: pd.DataFrame,
@@ -405,7 +442,12 @@ def main() -> None:
     train_result, train_m = _run(
         train_bars, train_feat, train_ticks, "training", train_precomputed_policy
     )
-    test_result, test_m = _run(test_bars, test_feat, test_ticks, "testing", test_precomputed_policy)
+    test_result = None
+    test_m = None
+    if not development_only:
+        test_result, test_m = _run(
+            test_bars, test_feat, test_ticks, "testing", test_precomputed_policy
+        )
 
     if not args.no_save:
         run_dir = save_run(

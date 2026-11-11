@@ -27,7 +27,8 @@ def entry_funnel_by_split(
 
     result: dict[str, dict[str, Any]] = {}
     for split, split_result in (("train", train_result), ("test", test_result)):
-        split_result = split_result or {}
+        if split_result is None:
+            continue
         result[split] = compute_tier1_funnel(
             split_result.get("entry_diag"),
             split_result.get("entry_state_diagnostics"),
@@ -45,8 +46,8 @@ def build_training_log(
     timesteps: int,
     train_bars: int,
     test_bars: int,
-    test_m: Any,
-    test_result: dict[str, Any],
+    test_m: Any | None,
+    test_result: dict[str, Any] | None,
     environment_reward_mode: str = "dsr",
     equity_log_growth_scale: float = 100.0,
     train_result: dict[str, Any] | None = None,
@@ -71,8 +72,8 @@ def build_training_log(
         timesteps: Numeric value used for the timesteps.
         train_bars: Market bar or price data used for build the training_log.json dict from run results.
         test_bars: Market bar or price data used for build the training_log.json dict from run results.
-        test_m: Test m used by the operation described above.
-        test_result: Key-value data used for the test result.
+        test_m: Test metrics, or ``None`` when report-only evaluation was not run.
+        test_result: Report-only result, or ``None`` when it was not evaluated.
         environment_reward_mode: Text or path value identifying the environment reward mode.
         equity_log_growth_scale: Numeric value used for the equity log growth scale.
         train_result: Key-value data used for the train result.
@@ -89,6 +90,9 @@ def build_training_log(
     Returns:
         Mapping from ``str`` keys to ``Any`` values.
     """
+    if (test_m is None) != (test_result is None):
+        raise ValueError("test result and metrics must either both be present or both be absent")
+    test_evaluated = test_m is not None and test_result is not None
     log_dict: dict[str, Any] = {
         "seed": seed,
         "mvp": mvp,
@@ -104,19 +108,43 @@ def build_training_log(
         "timesteps": timesteps,
         "train_bars": train_bars,
         "test_bars": test_bars,
-        "test_sharpe": float(test_m.sharpe),
-        "test_max_dd": float(test_m.max_drawdown),
-        "test_trades": test_m.n_trades,
-        "test_return": float(test_m.total_return_pct),
-        "test_breaches": strict_nonnegative_int(test_result.get("n_breach_sessions", 0)),
-        "test_n_sessions": int(test_result.get("n_sessions", 0)),
-        "test_days_traded": int(test_result.get("days_traded", 0)),
-        "test_survived_full_year": test_result.get("survived_full_year") is True,
-        "test_completed_data_split": test_result.get("completed_data_split") is True,
-        "test_episode_end_reason": test_result.get("episode_end_reason"),
-        "test_max_trailing_dd": float(test_result.get("max_trailing_dd", test_m.max_drawdown)),
+        "evaluation_scope": (
+            "development_only" if oos_role == "development_only" else "all_configured_splits"
+        ),
+        "test_evaluation_status": "completed" if test_evaluated else "not_run",
+        "test_sharpe": float(test_m.sharpe) if test_m is not None else None,
+        "test_max_dd": float(test_m.max_drawdown) if test_m is not None else None,
+        "test_trades": test_m.n_trades if test_m is not None else None,
+        "test_return": float(test_m.total_return_pct) if test_m is not None else None,
+        "test_breaches": (
+            strict_nonnegative_int(test_result.get("n_breach_sessions", 0))
+            if test_result is not None
+            else None
+        ),
+        "test_n_sessions": int(test_result.get("n_sessions", 0))
+        if test_result is not None
+        else None,
+        "test_days_traded": int(test_result.get("days_traded", 0))
+        if test_result is not None
+        else None,
+        "test_survived_full_year": (
+            test_result.get("survived_full_year") is True if test_result is not None else None
+        ),
+        "test_completed_data_split": (
+            test_result.get("completed_data_split") is True if test_result is not None else None
+        ),
+        "test_episode_end_reason": (
+            test_result.get("episode_end_reason") if test_result is not None else None
+        ),
+        "test_max_trailing_dd": (
+            float(test_result.get("max_trailing_dd", test_m.max_drawdown))
+            if test_result is not None and test_m is not None
+            else None
+        ),
         "test_fail_time": (
-            str(test_result["fail_time"]) if test_result.get("fail_time") is not None else None
+            str(test_result["fail_time"])
+            if test_result is not None and test_result.get("fail_time") is not None
+            else None
         ),
         "timestamp": datetime.now().isoformat(),
     }

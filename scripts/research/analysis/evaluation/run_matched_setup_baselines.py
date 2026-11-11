@@ -49,6 +49,7 @@ from market_data.splits.definitions import (
     get_split_config,
     get_train_start_config,
     make_train_mask,
+    split_bars,
     split_train_test,
 )
 
@@ -56,6 +57,18 @@ _DEFAULT_PROTOCOL = (
     "evidence/research/releases/negative-evidence-readiness/RESEARCH_QUESTIONS_AND_METHODS.md"
 )
 _DEFAULT_ARTIFACT_ROOT = "evidence/research/matched_setup_baselines"
+
+
+def _clip_frames_to_development_end(
+    frames: Mapping[str, pd.DataFrame], *, train_end: str
+) -> dict[str, pd.DataFrame]:
+    """Drop report-only rows before feature construction for development runs."""
+    clipped: dict[str, pd.DataFrame] = {}
+    for timeframe, bars in frames.items():
+        if not isinstance(bars.index, pd.DatetimeIndex):
+            raise TypeError(f"{timeframe} bars require a DatetimeIndex")
+        clipped[timeframe] = split_bars(bars, train_end=train_end)[0]
+    return clipped
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -100,7 +113,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--artifact-root",
         type=Path,
         default=Path(_DEFAULT_ARTIFACT_ROOT),
-        help="Immutable bundle root inside the repository",
+        help="Immutable bundle root, including a scratch path outside the repository",
     )
     parser.add_argument(
         "--overrides",
@@ -219,17 +232,31 @@ def _prepare_inputs(
 ) -> tuple[pd.DataFrame, pd.DataFrame, Any, dict[str, Path]]:
     """Run the configured local data/features path with train-only fitting."""
     repository = repository_root()
-    data = run_pipeline(cfg, datasets=[dataset_name])
+    train_end, _ = get_split_config(cfg)
+    data = run_pipeline(
+        cfg,
+        datasets=[dataset_name],
+        end_inclusive=train_end if period_role == "development" else None,
+    )
     primary_symbol = str(cfg.data.primary)
     secondary_symbol = str(cfg.data.secondary)
     if primary_symbol not in data or "M1" not in data[primary_symbol]:
         raise ValueError(f"configured dataset has no M1 bars for {primary_symbol}")
     primary = data[primary_symbol]["M1"]
     secondary = data.get(secondary_symbol, {}).get("M1")
+    train_start = get_train_start_config(cfg)
+    if period_role == "development":
+        data[primary_symbol] = _clip_frames_to_development_end(
+            data[primary_symbol], train_end=train_end
+        )
+        if secondary_symbol in data:
+            data[secondary_symbol] = _clip_frames_to_development_end(
+                data[secondary_symbol], train_end=train_end
+            )
+        primary = data[primary_symbol]["M1"]
+        secondary = data.get(secondary_symbol, {}).get("M1")
     primary_timeframes = data[primary_symbol]
     secondary_timeframes = data.get(secondary_symbol, {})
-    train_end, _ = get_split_config(cfg)
-    train_start = get_train_start_config(cfg)
     train_mask = make_train_mask(cast(pd.DatetimeIndex, primary.index), train_end, train_start)
 
     cache_dir = Path(str(cfg.data.cache_dir)).expanduser()
@@ -258,6 +285,7 @@ def _prepare_inputs(
         cfg,
         symbols=[primary_symbol],
         datasets=[dataset_name],
+        end_inclusive=train_end if period_role == "development" else None,
     ).get(primary_symbol)
     if tickbook is None:
         raise ValueError("matched local-data setup baseline requires a configured TickBook")
@@ -327,10 +355,6 @@ def main(argv: Sequence[str] | None = None) -> Path:
     if not artifact_root.is_absolute():
         artifact_root = repo / artifact_root
     artifact_root = artifact_root.resolve()
-    try:
-        artifact_root.relative_to(repo.resolve())
-    except ValueError as exc:
-        raise ValueError("artifact-root must remain inside the repository") from exc
     regeneration_command = f"cd {shlex.quote(str(repo.resolve()))} && " + shlex.join(
         [
             sys.executable,

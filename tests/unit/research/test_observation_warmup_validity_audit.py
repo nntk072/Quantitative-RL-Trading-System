@@ -4,6 +4,8 @@ import shlex
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
+from omegaconf import OmegaConf
 from scripts.research.analysis.features import audit_observation_warmup_validity as audit
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -43,3 +45,43 @@ def test_build_audit_regeneration_command_supports_external_output_paths(
         "--cache-dir",
         str(cache_dir),
     ]
+
+
+def test_observation_audit_clips_later_rows_before_feature_inputs(
+    monkeypatch: Any,
+) -> None:
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "primary": "US100",
+                "split": {"train_start": "2024-12-30", "train_end": "2025-12-31"},
+            }
+        }
+    )
+    index = pd.DatetimeIndex(["2025-12-31 14:30", "2026-01-01 14:30"])
+    bars = pd.DataFrame({"close": [100.0, 900_001.0]}, index=index)
+    observed: dict[str, Any] = {}
+    tickbook = object()
+
+    def fake_run_pipeline(_cfg: Any, **kwargs: Any) -> dict[str, Any]:
+        observed["bar_cutoff"] = kwargs.get("end_inclusive")
+        return {
+            "US100": {"M1": bars.copy()},
+            "US500": {"M1": bars.copy()},
+        }
+
+    def fake_tick_books(_cfg: Any, **kwargs: Any) -> dict[str, object]:
+        observed["tick_cutoff"] = kwargs.get("end_inclusive")
+        return {"US100": tickbook}
+
+    monkeypatch.setattr(audit, "run_pipeline", fake_run_pipeline)
+    monkeypatch.setattr(audit, "build_tick_books", fake_tick_books)
+
+    datasets, ticks = audit._load_training_inputs(cfg)
+
+    assert observed["bar_cutoff"] == "2025-12-31"
+    assert observed["tick_cutoff"] == "2025-12-31"
+    assert datasets["US100"]["M1"]["close"].tolist() == [100.0]
+    assert datasets["US500"]["M1"]["close"].tolist() == [100.0]
+    assert 900_001.0 not in datasets["US100"]["M1"]["close"].tolist()
+    assert ticks is tickbook

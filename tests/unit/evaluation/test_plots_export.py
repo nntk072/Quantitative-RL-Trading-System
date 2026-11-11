@@ -19,6 +19,7 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
+from configuration import load_config
 from evaluation import PerformanceMetrics, calculate_metrics
 from evaluation.reporting.run_artifact_writer import save_run
 from evaluation.reporting.run_summary import (
@@ -719,6 +720,40 @@ def test_save_run_creates_files(synthetic_result, metrics, tmp_path):
     # Testing subfolder
     assert (run_dir / "testing" / "equity.csv").stat().st_size > 0
     assert (run_dir / "testing" / "metrics.json").stat().st_size > 0
+
+
+def test_save_run_records_development_only_scope_without_test_artifacts(
+    synthetic_result, metrics, tmp_path
+):
+    run_dir = save_run(
+        run_dir=tmp_path / "development_only",
+        train_result=synthetic_result,
+        train_metrics=metrics,
+        cfg=load_config(["evaluation.development_only=true"]),
+        save_plots=False,
+        save_html=False,
+        save_csv=False,
+    )
+
+    report = json.loads((run_dir / "report_export_timing.json").read_text())
+    evaluation_manifest = json.loads((run_dir / "evaluation_manifest.json").read_text())
+    assert report["evaluation_scope"] == "development_only"
+    assert report["test_evaluation_status"] == "not_run"
+    assert evaluation_manifest["partitions"] == ["training"]
+    assert not (run_dir / "testing").exists()
+
+    default_run = save_run(
+        run_dir=tmp_path / "default_scope",
+        train_result=synthetic_result,
+        train_metrics=metrics,
+        cfg=load_config(),
+        save_plots=False,
+        save_html=False,
+        save_csv=False,
+    )
+    default_report = json.loads((default_run / "report_export_timing.json").read_text())
+    assert default_report["evaluation_scope"] == "all_configured_splits"
+    assert default_report["test_evaluation_status"] == "not_run"
 
 
 def test_save_run_no_overwrite(synthetic_result, metrics, tmp_path):

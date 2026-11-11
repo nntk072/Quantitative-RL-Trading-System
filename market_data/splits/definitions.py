@@ -95,6 +95,17 @@ def split_bars(
     return train, test
 
 
+def inclusive_date_exclusive_end(end_date: str, timezone: str | None) -> pd.Timestamp:
+    """Return the next local midnight after an inclusive calendar date."""
+    boundary = pd.Timestamp(end_date)
+    if timezone is not None:
+        if boundary.tzinfo is None:
+            boundary = boundary.tz_localize(timezone)
+        else:
+            boundary = boundary.tz_convert(timezone)
+    return boundary.normalize() + pd.DateOffset(days=1)
+
+
 def get_split_config(cfg: Any) -> tuple[str, str]:
     """Extract *train_end* / *test_start* from config with fallback defaults.
 

@@ -17,6 +17,7 @@ def tick_execution_split_schedule(
     test_start: str,
     *,
     session_labels: pd.Series | None = None,
+    include_report_only_split: bool = True,
 ) -> dict[str, dict[str, Any]]:
     """Return NY decision bars and next-bar quote anchors for each split.
 
@@ -32,6 +33,7 @@ def tick_execution_split_schedule(
         train_mask: Boolean mask identifying rows available for fitting.
         test_start: Text or path value identifying the test start.
         session_labels: Tabular data used for the session labels.
+        include_report_only_split: Whether to produce a schedule for the report-only split.
 
     Returns:
         Mapping from ``str`` keys to ``dict[str, Any]`` values.
@@ -46,30 +48,31 @@ def tick_execution_split_schedule(
     train_mask_values = np.asarray(train_mask.to_numpy(), dtype=bool)
     if len(train_mask_values) != len(index) or not train_mask.index.equals(index):
         raise ValueError("train_mask index must match tick-preflight index")
-    test_start_ts = pd.Timestamp(test_start)
-    if index.tz is not None:
-        if test_start_ts.tzinfo is None:
-            test_start_ts = test_start_ts.tz_localize(index.tz)
-        else:
-            test_start_ts = test_start_ts.tz_convert(index.tz)
-
     next_market = np.minimum(np.arange(len(index), dtype=np.int64) + 1, len(index) - 1)
     train_positions = np.flatnonzero(train_mask_values & ny_mask)
-    test_positions = np.flatnonzero((index >= test_start_ts) & ny_mask)
-    return {
+    schedule = {
         "train": {
             "decision_positions": train_positions,
             "decision_times": index[train_positions],
             "quote_anchor_positions": next_market[train_positions],
             "quote_anchor_times": index[next_market[train_positions]],
         },
-        "test": {
+    }
+    if include_report_only_split:
+        test_start_ts = pd.Timestamp(test_start)
+        if index.tz is not None:
+            if test_start_ts.tzinfo is None:
+                test_start_ts = test_start_ts.tz_localize(index.tz)
+            else:
+                test_start_ts = test_start_ts.tz_convert(index.tz)
+        test_positions = np.flatnonzero((index >= test_start_ts) & ny_mask)
+        schedule["test"] = {
             "decision_positions": test_positions,
             "decision_times": index[test_positions],
             "quote_anchor_positions": next_market[test_positions],
             "quote_anchor_times": index[next_market[test_positions]],
-        },
-    }
+        }
+    return schedule
 
 
 def tick_execution_split_coverage(
@@ -81,6 +84,7 @@ def tick_execution_split_coverage(
     session_labels: pd.Series | None = None,
     max_latency_ns_exclusive: int,
     max_quote_wait_ms: int,
+    include_report_only_split: bool = True,
 ) -> dict[str, dict[str, Any]]:
     """Preflight tick quotes at timestamps used by NY environment steps.
 
@@ -92,12 +96,17 @@ def tick_execution_split_coverage(
         session_labels: Tabular data used for the session labels.
         max_latency_ns_exclusive: Numeric value used for the max latency ns exclusive.
         max_quote_wait_ms: Numeric value used for the max quote wait ms.
+        include_report_only_split: Whether to check coverage for the report-only split.
 
     Returns:
         Mapping from ``str`` keys to ``dict[str, Any]`` values.
     """
     schedule = tick_execution_split_schedule(
-        index, train_mask, test_start, session_labels=session_labels
+        index,
+        train_mask,
+        test_start,
+        session_labels=session_labels,
+        include_report_only_split=include_report_only_split,
     )
     options = {
         "max_latency_ns_exclusive": max_latency_ns_exclusive,

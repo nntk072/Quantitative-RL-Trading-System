@@ -14,9 +14,11 @@ from typing import Any
 from unittest.mock import patch
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 
+from configuration.configuration_loader import load_config
 from evaluation.metrics import PerformanceMetrics
 from training.artifacts import (
     action_space_width,
@@ -27,6 +29,7 @@ from training.artifacts import (
 from training.artifacts.aggregation import aggregate_seed_results
 from training.callbacks.activity import assess_train_activity
 from training.configuration.cli import load_merged_config, parse_train_args
+from training.runner.data_stage import _clip_data_to_development_end, _prepare_training_data
 from training.runner.reporting_runtime import (
     _hard_risk_pass,
     _peak_dd_policy_only_miss,
@@ -34,6 +37,7 @@ from training.runner.reporting_runtime import (
 )
 from training.runner.seed import _setup_rngs
 from training.runner.seed_runtime import SeedRunner, _log_train_survival_status
+from training.runner.stages import TrainingConfigurationStage
 from training.setup.environments import _training_episodic, cost_model
 from training.setup.model_state import _initialize_value_head
 
@@ -43,12 +47,173 @@ def test_training_runtime_hard_risk_flags_require_typed_consistent_values() -> N
     assert _hard_risk_pass({"breached": False}) is True
     assert _hard_risk_pass({"hard_risk_ok": True}) is True
     assert _hard_risk_pass({"hard_risk_ok": "true", "breached": False}) is False
+
+
+def test_development_only_runner_skips_report_only_replay(monkeypatch: pytest.MonkeyPatch) -> None:
+    runner = object.__new__(SeedRunner)
+    runner.development_only = True
+    calls: list[str] = []
+
+    monkeypatch.setattr(SeedRunner, "prepare_training", lambda self: calls.append("prepare"))
+    monkeypatch.setattr(SeedRunner, "train_model", lambda self: calls.append("train"))
+    monkeypatch.setattr(
+        SeedRunner, "_write_training_progress_artifacts", lambda self: calls.append("progress")
+    )
+    monkeypatch.setattr(
+        SeedRunner,
+        "evaluate_test_split",
+        lambda self: pytest.fail("development-only run invoked report-only evaluator"),
+    )
+    monkeypatch.setattr(
+        SeedRunner, "evaluate_train_split", lambda self: calls.append("train_evaluation")
+    )
+    monkeypatch.setattr(SeedRunner, "write_artifacts", lambda self: calls.append("persist"))
+    monkeypatch.setattr(SeedRunner, "build_result", lambda self: {"evaluation_scope": "dev"})
+
+    assert runner.run() == {"evaluation_scope": "dev"}
+    assert calls == ["prepare", "train", "progress", "train_evaluation", "persist"]
+
+
+def test_development_only_training_log_does_not_fabricate_test_metrics() -> None:
+    result = build_training_log(
+        seed=42,
+        mvp=False,
+        algo="ppo",
+        arch="tcn",
+        reward="dsr",
+        timesteps=2_000_000,
+        train_bars=100,
+        test_bars=10,
+        test_m=None,
+        test_result=None,
+        train_result={"entry_diag": {}, "entry_state_diagnostics": {}},
+        oos_role="development_only",
+    )
+
+    assert result["evaluation_scope"] == "development_only"
+    assert result["test_evaluation_status"] == "not_run"
+    assert result["test_sharpe"] is None
+    assert result["test_trades"] is None
+    assert set(result["entry_funnel_by_split"]) == {"train"}
+    assert result["oos_role"] == "development_only"
+
+
+def test_default_training_log_scope_is_not_relabelled_when_test_is_absent() -> None:
+    result = build_training_log(
+        seed=42,
+        mvp=False,
+        algo="ppo",
+        arch="mlp",
+        reward="survival",
+        timesteps=10,
+        train_bars=100,
+        test_bars=10,
+        test_m=None,
+        test_result=None,
+    )
+
+    assert result["evaluation_scope"] == "all_configured_splits"
+    assert result["test_evaluation_status"] == "not_run"
+    assert result["oos_role"] == "final_report_only"
+
+
+def test_development_only_data_is_clipped_before_feature_consumers() -> None:
+    index = pd.DatetimeIndex(
+        [
+            "2025-12-31 23:59:00+00:00",
+            "2025-12-31 23:59:59.500+00:00",
+            "2026-01-01 00:00:00+00:00",
+        ]
+    )
+    bars = pd.DataFrame({"close": [1.0, 2.0, 3.0]}, index=index)
+
+    clipped = _clip_data_to_development_end({"US100": {"M1": bars}}, train_end="2025-12-31")
+
+    assert clipped["US100"]["M1"].index.equals(index[:2])
+    assert clipped["US100"]["M1"]["close"].tolist() == [1.0, 2.0]
     assert _hard_risk_pass({"hard_risk_ok": True, "breached": True}) is False
     assert _hard_risk_pass({}) is False
     assert (
         _peak_dd_policy_only_miss({"ok": "false", "breached": False, "reason": "peak_trailing_dd"})
         is False
     )
+
+
+def test_training_data_stage_clips_sentinel_rows_before_feature_build(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    cfg = load_config(config_path="config/research/survival_qualification.yaml")
+    cfg.evaluation.development_only = True
+    cfg.costs.use_tick_execution = False
+    cfg.data.cache_dir = str(tmp_path / "cache")
+    index = pd.DatetimeIndex(["2025-12-31 14:30", "2026-01-01 14:30"])
+    bars = pd.DataFrame(
+        {
+            "open": [100.0, 900_001.0],
+            "high": [101.0, 900_002.0],
+            "low": [99.0, 900_000.0],
+            "close": [100.5, 900_001.5],
+        },
+        index=index,
+    )
+    timeframes = {timeframe: bars.copy() for timeframe in cfg.data.timeframes}
+    observed: dict[str, Any] = {}
+
+    def fake_run_pipeline(_cfg: Any, *, force: bool, **kwargs: Any) -> dict[str, Any]:
+        observed["bar_cutoff"] = kwargs.get("end_inclusive")
+        assert force is False
+        return {
+            symbol: {timeframe: frame.copy() for timeframe, frame in timeframes.items()}
+            for symbol in cfg.data.symbols
+        }
+
+    def fake_build_features(primary_m1: pd.DataFrame, **_kwargs: Any) -> pd.DataFrame:
+        observed["feature_input"] = primary_m1.copy()
+        return pd.DataFrame({"feature": primary_m1["close"]}, index=primary_m1.index)
+
+    def fake_tick_books(_cfg: Any, **kwargs: Any) -> dict[str, None]:
+        observed["tick_cutoff"] = kwargs.get("end_inclusive")
+        return {str(cfg.data.primary): None}
+
+    monkeypatch.setattr("training.runner.data_stage.run_pipeline", fake_run_pipeline)
+    monkeypatch.setattr("training.runner.data_stage.build_features", fake_build_features)
+    monkeypatch.setattr("training.runner.data_stage.build_tick_books", fake_tick_books)
+    monkeypatch.setattr(
+        "training.runner.data_stage.feature_cache_path",
+        lambda *_args, **_kwargs: tmp_path / "features.parquet",
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.attach_policy_market_context",
+        lambda _bars, features, *_args, **_kwargs: features,
+    )
+    stage = TrainingConfigurationStage(
+        args=SimpleNamespace(
+            force=False,
+            mvp=False,
+            use_vae=False,
+            algo="ppo",
+            arch="tcn",
+            strategy="baseline",
+            reward="dsr",
+            walk_forward=True,
+            wf_splits=5,
+            allow_locked_oos_for_selection=False,
+            seed=42,
+            seeds=[42, 43, 44, 45, 46, 47],
+        ),
+        cfg=cfg,
+        device="cpu",
+        lagrangian_cb=None,
+    )
+
+    prepared = _prepare_training_data(stage)
+
+    assert observed["bar_cutoff"] == "2025-12-31"
+    assert observed["tick_cutoff"] == "2025-12-31"
+    assert observed["feature_input"].index.equals(index[:1])
+    assert observed["feature_input"]["close"].tolist() == [100.5]
+    assert len(prepared.test_bars) == 0
+    assert len(prepared.test_feat) == 0
 
 
 def test_training_aggregation_requires_explicit_boolean_gate_passes() -> None:
@@ -90,7 +255,7 @@ def test_training_aggregation_requires_explicit_boolean_gate_passes() -> None:
         test_bars=10,
         strategy="baseline",
         strategy_actions=False,
-        cfg=SimpleNamespace(env={}),
+        cfg=SimpleNamespace(env={}, evaluation={}),
         args=SimpleNamespace(allow_locked_oos_for_selection=False),
         run_dir=Path("."),
     )
@@ -332,6 +497,42 @@ def test_evaluation_artifacts_separate_train_and_report_only_test(tmp_path: Path
     assert json.loads((evaluation_dir / "summary.json").read_text())["training_admissible"] is False
 
 
+def test_development_only_evaluation_writes_no_report_only_artifacts(tmp_path: Path) -> None:
+    metrics = PerformanceMetrics(
+        total_return_pct=0.0,
+        total_pnl=0.0,
+        max_drawdown=0.0,
+        sharpe=0.0,
+        profit_factor=0.0,
+        win_rate=0.0,
+        n_trades=0,
+    )
+    write_evaluation_artifacts(
+        run_dir=tmp_path,
+        seed=42,
+        completed_timesteps=2_000_000,
+        train_result={"completed_data_split": True, "survived_full_year": True},
+        test_result=None,
+        train_metrics=metrics,
+        test_metrics=None,
+        train_gate={"ok": True, "hard_risk_ok": True, "breached": False},
+        train_activity_gate=assess_train_activity(0),
+        account_currency="USD",
+        survival_objective=True,
+        development_only=True,
+    )
+
+    evaluation_dir = tmp_path / "evaluations"
+    summary = json.loads((evaluation_dir / "summary.json").read_text())
+    report = (evaluation_dir / "summary.md").read_text()
+    assert summary["evaluation_scope"] == "development_only"
+    assert summary["test_evaluation_status"] == "not_run"
+    assert summary["test_report_only"] is None
+    assert not (evaluation_dir / "test_report_only.json").exists()
+    assert "| Test (report-only" not in report
+    assert "report-only test split was intentionally excluded" in report
+
+
 @pytest.mark.parametrize("training_completed", [True, False])
 def test_survival_evaluation_summary_ignores_profit_and_activity(
     tmp_path: Path, training_completed: bool
@@ -380,7 +581,7 @@ def test_survival_evaluation_summary_ignores_profit_and_activity(
 
     summary_json = json.loads((tmp_path / "evaluations" / "summary.json").read_text())
     summary = (tmp_path / "evaluations" / "summary.md").read_text()
-    assert summary_json["schema_version"] == 3
+    assert summary_json["schema_version"] == 4
     assert summary_json["training_phase"] == "survival_qualification"
     assert summary_json["train_split_survival_ok"] is True
     assert summary_json["train_activity_ok"] is False

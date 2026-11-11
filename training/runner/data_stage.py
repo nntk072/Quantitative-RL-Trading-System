@@ -49,6 +49,20 @@ from .stages import TrainingConfigurationStage, TrainingDataStage
 log = logging.getLogger(__name__)
 
 
+def _clip_data_to_development_end(
+    data: dict[str, dict[str, pd.DataFrame]], *, train_end: str
+) -> dict[str, dict[str, pd.DataFrame]]:
+    """Remove report-only rows before feature construction in development-only mode."""
+    clipped: dict[str, dict[str, pd.DataFrame]] = {}
+    for symbol, timeframes in data.items():
+        clipped[symbol] = {}
+        for timeframe, bars in timeframes.items():
+            if not isinstance(bars.index, pd.DatetimeIndex):
+                raise TypeError(f"{symbol} {timeframe} bars require a DatetimeIndex")
+            clipped[symbol][timeframe] = split_bars(bars, train_end=train_end)[0]
+    return clipped
+
+
 def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataStage:
     """Prepare training data.
 
@@ -60,8 +74,20 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
     """
     args = stage.args
     cfg = stage.cfg
-    data = run_pipeline(cfg, force=args.force)
-    primary_ticks = build_tick_books(cfg).get(str(cfg.data.primary))
+    development_only = cfg.evaluation.get("development_only", False) is True
+    train_end, test_start = get_split_config(cfg)
+    train_start = get_train_start_config(cfg)
+    data = run_pipeline(
+        cfg,
+        force=args.force,
+        **({"end_inclusive": train_end} if development_only else {}),
+    )
+    if development_only:
+        data = _clip_data_to_development_end(data, train_end=train_end)
+    if development_only:
+        primary_ticks = build_tick_books(cfg, end_inclusive=train_end).get(str(cfg.data.primary))
+    else:
+        primary_ticks = build_tick_books(cfg).get(str(cfg.data.primary))
 
     primary_sym = cfg.data.primary
     secondary_sym = cfg.data.secondary
@@ -73,8 +99,6 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
     cache_dir = Path(cfg.data.cache_dir)
     # Split dates first so z-score fit can be train-scoped (TI-4) and the
     # content-hash cache key includes that mask (TI-3).
-    train_end, test_start = get_split_config(cfg)
-    train_start = get_train_start_config(cfg)
     train_mask = make_train_mask(
         cast(pd.DatetimeIndex, primary_m1.index),
         train_end,
@@ -91,6 +115,7 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
             session_labels=(primary_m1["session"] if "session" in primary_m1.columns else None),
             max_latency_ns_exclusive=int(randomized_fill_latency_ms * 1_000_000),
             max_quote_wait_ms=max_tick_quote_wait_ms(cfg),
+            include_report_only_split=not development_only,
         )
         for split_name, report in execution_coverage.items():
             log.info(

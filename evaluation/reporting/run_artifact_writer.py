@@ -902,6 +902,15 @@ def save_run(
     log.info("Saving run artifacts to %s", run_dir)
 
     daily_loss_limit, max_loss_limit, profit_target = _extract_ftmo_limits(cfg)
+    evaluation_cfg = getattr(cfg, "evaluation", None)
+    development_only = (
+        evaluation_cfg.get("development_only", False) is True
+        if evaluation_cfg is not None
+        else False
+    )
+    test_evaluated = test_result is not None and test_metrics is not None
+    if development_only and test_evaluated:
+        raise ValueError("development-only runs cannot write report-only test artifacts")
 
     if cfg is not None:
         write_config_snapshot(run_dir, cfg)
@@ -967,6 +976,8 @@ def save_run(
     phase_timings["total_export"] = time.perf_counter() - export_started
     report = {
         "schema_version": 1,
+        "evaluation_scope": "development_only" if development_only else "all_configured_splits",
+        "test_evaluation_status": "completed" if test_evaluated else "not_run",
         "action_schema": action_schema_manifest(cfg),
         "profile": report_profile,
         "deferred_artifacts": deferred,

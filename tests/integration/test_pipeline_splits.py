@@ -77,6 +77,41 @@ def test_pipeline_builds_independent_train_test_bar_caches(tmp_path: Path) -> No
         ).is_file()
 
 
+def test_pipeline_development_cutoff_excludes_later_bar_values(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    names = {symbol: f"{symbol}_M1.csv"}
+    for dataset, date, price in (
+        ("training", "2025.12.31", 100.0),
+        ("testing", "2026.01.01", 900_001.0),
+    ):
+        path = tmp_path / dataset / names[symbol]
+        _write_m1(path, date, "12:00:00", price)
+        with path.open("a", encoding="utf-8") as stream:
+            stream.write(
+                f"{date}\t12:01:00\t{price + 1}\t{price + 2}\t{price}\t{price + 1}\t10\t0\t2\n"
+            )
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "Etc/GMT-3",
+                "symbols": [symbol],
+                "timeframes": ["M1"],
+                "datasets": {
+                    name: {"raw_dir": str(tmp_path / name), "m1_files": names}
+                    for name in ("training", "testing")
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+
+    frames = run_pipeline(cfg, end_inclusive="2025-12-31")
+
+    assert frames[symbol]["M1"]["close"].tolist() == [100.0, 101.0]
+    assert not any(value >= 900_001.0 for value in frames[symbol]["M1"]["close"])
+
+
 def test_pipeline_can_load_only_training_dataset(tmp_path: Path) -> None:
     symbol = "US100.cash"
     names = {symbol: f"{symbol}_M1.csv"}

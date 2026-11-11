@@ -6,9 +6,11 @@ import logging
 from collections.abc import Sequence
 from pathlib import Path
 
+import pandas as pd
 from omegaconf import DictConfig
 
 from market_data.loading.ticks import TICK_CACHE_VERSION, TickBook, build_tick_book
+from market_data.splits.definitions import inclusive_date_exclusive_end
 from market_data.transforms.price_grid import (
     configured_price_grid_increment,
     tick_cache_filename,
@@ -22,6 +24,7 @@ def build_tick_books(
     force: bool = False,
     symbols: Sequence[str] | None = None,
     datasets: Sequence[str] | None = None,
+    end_inclusive: str | None = None,
 ) -> dict[str, TickBook | None]:
     """Build (or load from cache) a ``TickBook`` for each selected symbol.
 
@@ -36,6 +39,7 @@ def build_tick_books(
         force: Whether to enable or require the force.
         symbols: Items supplied for the symbols, in input order.
         datasets: Items supplied for the datasets, in input order.
+        end_inclusive: Optional last local calendar date returned to the caller.
 
     Returns:
         Mapping from ``str`` keys to ``TickBook | None`` values.
@@ -138,6 +142,11 @@ def build_tick_books(
                 np.concatenate([book._bid for book in books]),
                 np.concatenate([book._ask for book in books]),
             )
+            if end_inclusive is not None:
+                end = inclusive_date_exclusive_end(end_inclusive, str(cfg.data.tz))
+                if len(combined_book):
+                    start = pd.Timestamp(int(combined_book._ts[0]), unit="ns", tz="UTC")
+                    combined_book = combined_book.slice(start, end)
             result[sym] = combined_book
             log.info(
                 "TickBook ready: %s (%d ticks, %d partitions)", sym, len(combined_book), len(books)

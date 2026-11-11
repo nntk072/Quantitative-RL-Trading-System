@@ -2,7 +2,7 @@ schema_version: pretraining-scientific-readiness-plan-v1
 
 common_gates:
   - raw_data_identity_and_denominator_register_current_source
-  - current_v43_real_market_prefix_invariance
+  - current_v44_real_market_prefix_invariance
   - producer_level_feature_causality_review
   - failure_mechanism_and_successor_logic_review
   - matched_baseline_current_source_results

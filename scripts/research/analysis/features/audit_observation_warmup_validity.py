@@ -28,7 +28,7 @@ from features.context.policy_market import attach_policy_market_context
 from features.pipeline.feature_matrix_builder import build_features
 from market_data.loading.market_data_ingestion import run_pipeline
 from market_data.loading.tick_book_pipeline import build_tick_books
-from market_data.splits.definitions import make_train_mask
+from market_data.splits.definitions import make_train_mask, split_bars
 from simulation.environment.observations import split_obs_columns, timeframe_starts
 from simulation.environment.trading_environment_factory import scheduled_session_closes
 
@@ -71,6 +71,27 @@ def _source_hashes() -> dict[str, str]:
 def _training_mask(index: pd.DatetimeIndex, start: str, end: str) -> NDArray[np.bool_]:
     """Select configured training decision rows, inclusive of the end date."""
     return make_train_mask(index, end, start).to_numpy(dtype=bool)
+
+
+def _load_training_inputs(cfg: Any) -> tuple[dict[str, dict[str, pd.DataFrame]], Any]:
+    """Load and clip the configured training dataset before feature construction."""
+    train_end = str(cfg.data.split.train_end)
+    datasets = run_pipeline(cfg, datasets=["training"], end_inclusive=train_end)
+    clipped = {
+        symbol: {
+            timeframe: split_bars(frame, train_end=train_end)[0]
+            for timeframe, frame in frames.items()
+        }
+        for symbol, frames in datasets.items()
+    }
+    primary_symbol = str(cfg.data.primary)
+    ticks = build_tick_books(
+        cfg,
+        symbols=[primary_symbol],
+        datasets=["training"],
+        end_inclusive=train_end,
+    ).get(primary_symbol)
+    return clipped, ticks
 
 
 def _column_rows(
@@ -177,7 +198,7 @@ def build_audit_from_config(
 ) -> dict[str, Any]:
     """Audit a resolved runtime config without serializing it through YAML."""
     cfg.data.cache_dir = str(cache_dir)
-    datasets = run_pipeline(cfg, datasets=["training"])
+    datasets, ticks = _load_training_inputs(cfg)
     primary_symbol = str(cfg.data.primary)
     secondary_symbol = str(cfg.data.secondary)
     primary_frames = datasets[primary_symbol]
@@ -199,9 +220,6 @@ def build_audit_from_config(
         train_mask=mask_series,
         timeframe_bars=primary_frames,
         secondary_timeframe_bars=secondary_frames,
-    )
-    ticks = build_tick_books(cfg, symbols=[primary_symbol], datasets=["training"]).get(
-        primary_symbol
     )
     schedule_path = Path(str(cfg.data.session_schedule_file))
     if not schedule_path.is_absolute():
