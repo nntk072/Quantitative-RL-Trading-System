@@ -178,6 +178,55 @@ def test_tick_tp_partial_then_stop_reconciles_commissions_and_reward(direction: 
     assert {row["fill_quote_source"] for row in fills} == {"tick"}
 
 
+def test_multi_target_short_stop_matches_adjacent_float_quote() -> None:
+    start = pd.Timestamp("2026-01-12T12:00:00Z")
+    stop = 20670.15 + 1.2
+    ask = float(np.nextafter(stop, -np.inf))
+    tick = start + pd.Timedelta(seconds=5)
+    book = TickBook(np.array([tick.value]), np.array([ask - 0.2]), np.array([ask]))
+    account = AccountState(initial_balance=100_000.0)
+    broker = Broker(cost_model=CostModel(commission_per_lot=0.0))
+    position = broker.open_position(account, (ask - 0.2, ask), 0.1, -1)
+    assert position is not None
+    position.position_id = "trace:adjacent-float-stop"
+    position.entry_timestamp = start
+    position.sl_price = stop
+    position.tp3_price = 20_000.0
+    position.tp_initial_size = 0.1
+    position.tp_lot_fractions = (1.0,)
+    position.planned_risk_usd = 5.0
+    env: Any = SimpleNamespace(
+        _tickbook=book,
+        position=position,
+        account=account,
+        broker=broker,
+        fill_delay_ms=0,
+        tick_execution_required=True,
+        server_side_protective_orders=True,
+        tick_fill_slippage_points=0.0,
+        _breakeven_trigger_r=0.0,
+        _last_realized_close_pnl=None,
+        _last_realized_close_r=None,
+        _pending_realized_r=None,
+        strategy_actions=False,
+        trade_log=[{"type": "open", "position_id": position.position_id}],
+        sessions_with_trades=set(),
+        _current_session_id=lambda: 1,
+    )
+    for method in (
+        "_stamp_exit",
+        "_note_close",
+        "_adverse_tick_fill_quote",
+        "_close_at_quote",
+    ):
+        setattr(env, method, MethodType(getattr(TradingEnv, method), env))
+
+    assert TradingEnv._check_multi_tp_ticks(env, start, 0)
+    assert env.position is None
+    assert env.trade_log[-1]["type"] == "stop_close"
+    assert env.trade_log[-1]["actual_tick_time"] == tick
+
+
 def test_tick_crosses_three_tp_slots_once_with_exact_remaining_quantity() -> None:
     start = pd.Timestamp("2026-01-12T12:00:00Z")
     tick = start + pd.Timedelta(seconds=5)

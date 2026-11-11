@@ -546,6 +546,50 @@ def test_randomized_tick_exit_records_trigger_arrival_and_executable_quote():
     assert result.quote.bid in (94.0, 95.0, 96.0)
 
 
+def test_tick_exit_treats_one_ulp_as_the_same_protective_price():
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    level = 20670.15 + 1.2
+    equal_decimal_quote = float(np.nextafter(level, -np.inf))
+    book = TickBook(
+        np.array([(start + pd.Timedelta(seconds=1)).value], dtype=np.int64),
+        np.array([equal_decimal_quote - 0.2]),
+        np.array([equal_decimal_quote]),
+    )
+
+    result = resolve_tick_exit(
+        book,
+        start,
+        direction=-1,
+        sl=level,
+        tp=None,
+        rng=np.random.default_rng(7),
+        max_latency_ns_exclusive=0,
+    )
+
+    assert equal_decimal_quote == 20671.35
+    assert result is not None
+    assert result.kind == "sl"
+
+    two_ulps_below_level = float(np.nextafter(equal_decimal_quote, -np.inf))
+    untriggered_book = TickBook(
+        np.array([(start + pd.Timedelta(seconds=1)).value], dtype=np.int64),
+        np.array([two_ulps_below_level - 0.2]),
+        np.array([two_ulps_below_level]),
+    )
+    assert (
+        resolve_tick_exit(
+            untriggered_book,
+            start,
+            direction=-1,
+            sl=level,
+            tp=None,
+            rng=np.random.default_rng(7),
+            max_latency_ns_exclusive=0,
+        )
+        is None
+    )
+
+
 def test_tick_exit_respects_multi_minute_bar_window():
     start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
     trigger = start + pd.Timedelta(minutes=3)

@@ -88,6 +88,23 @@ class TickExecutionUnavailable(RuntimeError):
     """Raised when an order cannot be matched to an admissible later tick."""
 
 
+def tick_price_reaches_level(price: float, level: float, *, direction: int) -> bool:
+    """Compare a tick to a level while absorbing one binary-float ULP.
+
+    Args:
+        price: Executable tick price.
+        level: Protective price level.
+        direction: +1 for an upward crossing, -1 for a downward crossing.
+
+    Returns:
+        Whether the tick reaches or crosses the level.
+    """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or +1")
+    boundary = float(np.nextafter(float(level), -np.inf if direction == 1 else np.inf))
+    return float(price) >= boundary if direction == 1 else float(price) <= boundary
+
+
 @dataclass(slots=True)
 class TickBookBuildDiagnostics:
     """Optional counts for raw quote validity and TickBook carry-forward."""
@@ -413,12 +430,8 @@ def resolve_tick_exit(
     side = book._bid if direction == 1 else book._ask
     for i in range(i0, i1):
         price = float(side[i])
-        sl_cross = sl is not None and (
-            (direction == 1 and price <= sl) or (direction == -1 and price >= sl)
-        )
-        tp_cross = tp is not None and (
-            (direction == 1 and price >= tp) or (direction == -1 and price <= tp)
-        )
+        sl_cross = sl is not None and tick_price_reaches_level(price, sl, direction=-direction)
+        tp_cross = tp is not None and tick_price_reaches_level(price, tp, direction=direction)
         if not sl_cross and not tp_cross:
             continue
         kind = "sl" if sl_cross else "tp"

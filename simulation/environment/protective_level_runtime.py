@@ -8,6 +8,7 @@ import pandas as pd
 
 from market_data.loading.ticks import (
     TickExecutionUnavailable,
+    tick_price_reaches_level,
 )
 from trading.execution import Position, exit_side_bar_range, raw_spread_to_price
 from trading.positions import target_close_size
@@ -440,8 +441,7 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             exit_side = bid if pos.direction == 1 else ask
             sl = pos.sl_price
             stop_hit = sl is not None and (
-                (pos.direction == 1 and exit_side <= sl)
-                or (pos.direction == -1 and exit_side >= sl)
+                tick_price_reaches_level(exit_side, sl, direction=-int(pos.direction))
             )
             if stop_hit:
                 execution_meta: dict[str, Any] = {}
@@ -516,8 +516,8 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 slot_px = getattr(pos, f"tp{slot_num}_price")
                 if slot_px is None or pos.tp_hit_mask & bit:
                     continue
-                target_hit = (pos.direction == 1 and exit_side >= slot_px) or (
-                    pos.direction == -1 and exit_side <= slot_px
+                target_hit = tick_price_reaches_level(
+                    exit_side, slot_px, direction=int(pos.direction)
                 )
                 if not target_hit:
                     continue
