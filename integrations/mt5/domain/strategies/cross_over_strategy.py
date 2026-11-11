@@ -1,5 +1,4 @@
 import pandas as pd
-import talib
 from loguru import logger
 
 from integrations.mt5.adapters import TradingData, TradingStrategy
@@ -30,8 +29,6 @@ class CrossOverStrategy(TradingStrategy):
             return self.data.get_symbol(), Signal.NONE
         df["MA20"] = df["close"].rolling(window=20).mean()
         df["MA50"] = df["close"].rolling(window=50).mean()
-
-        df["macd"], df["signal"], _ = talib.MACD(df["close"].to_numpy(dtype=float))
 
         buy_condition = df["MA20"] > df["MA50"]
         sell_condition = df["MA20"] < df["MA50"]

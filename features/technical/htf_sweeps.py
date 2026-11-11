@@ -166,14 +166,23 @@ def detect_confirmed_htf_sweeps(
     qualification/selection status as a second frame.
 
     Args:
-        bars: Market bars to process.
-        timeframes: Items supplied for the timeframes, in input order.
-        max_sweep_distance_atr: Numeric value used for the max sweep distance atr.
-        atr_period: Numeric value used for the atr period.
-        return_audit: Whether to enable or require the return audit.
+        bars: M1 bars with high/low columns and a unique, increasing
+            ``DatetimeIndex``.
+        timeframes: Supported higher timeframes whose confirmed pivots are
+            checked for sweeps. Values must be unique.
+        max_sweep_distance_atr: Maximum wick overshoot in ATR units for a
+            crossed reference to qualify as a sweep.
+        atr_period: Number of M1 bars used to calculate ATR.
+        return_audit: Whether to return details for every crossed reference.
 
     Returns:
-        DataFrame returned by ``detect_confirmed_htf_sweeps``.
+        A feature frame aligned to ``bars``. When ``return_audit`` is true,
+        also returns a frame listing each crossed reference and its eligibility
+        and selection status.
+
+    Raises:
+        ValueError: If a timeframe is unsupported or duplicated, or if the
+            input index is not unique and increasing.
     """
     invalid = set(timeframes) - set(_TF_MINUTES)
     if invalid:

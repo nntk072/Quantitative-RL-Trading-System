@@ -1,8 +1,5 @@
 # Evaluation and artifacts
 
-![Rollout transition sequence: Every transition binds an observation, action, reward, and next state; episode boundaries end the sequence.](../_static/figures/rollout-geometry.svg)
-
-
 Evaluation applies a declared policy or inference provider to a defined market sequence and records the resulting transitions. Artifact storage preserves the inputs and outputs needed to inspect that run. These layers make results auditable; they do not make an evaluation statistically conclusive by themselves.
 
 ## Evaluation path
@@ -12,6 +9,25 @@ Evaluation applies a declared policy or inference provider to a defined market s
 3. Roll out transitions through the shared environment contract. Record actions, fills, equity, trade events, reward components, and risk events where available.
 4. Compute metrics from the recorded series with documented definitions. For example, drawdown is measured relative to the running equity peak; a scalar return does not describe path risk.
 5. Write the report, plots, logs, and manifest under one run identity.
+
+```{mermaid}
+flowchart LR
+    O[Observation t] --> P[Policy or provider]
+    P --> A[Action t]
+    A --> E[Environment transition]
+    E --> R[Reward t]
+    E --> N[Observation t+1]
+    E --> B{Episode ended?}
+    E --> L[Record transition, fills, and risk events]
+    L --> M[Run manifest and report]
+    B -->|no| N
+    N --> P
+    B -->|yes| M
+```
+
+Each recorded transition links the observation, proposed action, environment
+result, reward, and next observation. Episode termination ends that sequence;
+the manifest identifies the inputs used to produce it.
 
 The curated [workflow API guide](../api/domains/workflows) links to the backend-neutral episode rollout reference. The [trained policy rollout](../architecture/runtime/evaluation) adapts model/provider evaluation to TradingEnv. The [evaluation tutorial](../learn/tutorials/05_evaluation.ipynb) computes path metrics from a small deterministic curve.
 

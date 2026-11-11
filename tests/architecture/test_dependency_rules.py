@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -29,6 +30,27 @@ LEGACY_PREFIXES = (
     "simulation.envs",
     "training.train",
 )
+
+
+def test_development_tools_are_not_runtime_dependencies() -> None:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    runtime = {
+        requirement.split(">", maxsplit=1)[0].split("=", maxsplit=1)[0]
+        for requirement in project["dependencies"]
+    }
+    development = set(project["optional-dependencies"]["dev"])
+
+    assert not runtime.intersection(
+        {"build", "pandas-stubs", "pytest", "pytest-cov", "pytest-xdist"}
+    )
+    assert {
+        "build==1.3.0",
+        "pandas-stubs>=2.2.3",
+        "pytest>=8.0",
+        "pytest-cov>=5.0",
+        "pytest-xdist>=3.6",
+    } <= development
+    assert "uv sync --frozen --extra dev" in (ROOT / "Dockerfile").read_text(encoding="utf-8")
 
 
 def _imports(path: Path) -> list[str]:

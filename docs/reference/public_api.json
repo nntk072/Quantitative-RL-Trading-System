@@ -12682,7 +12682,7 @@
       "name": "atr",
       "numpy_style": false,
       "package": "features",
-      "source_line": 108,
+      "source_line": 109,
       "source_module": "features.technical.indicators",
       "source_path": "features/technical/indicators.py"
     },
@@ -12694,7 +12694,7 @@
       "name": "build_indicators",
       "numpy_style": false,
       "package": "features",
-      "source_line": 431,
+      "source_line": 468,
       "source_module": "features.technical.indicators",
       "source_path": "features/technical/indicators.py"
     },
@@ -13246,7 +13246,7 @@
       "name": "CrossOverStrategy",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 9,
+      "source_line": 8,
       "source_module": "integrations.mt5.domain.strategies.cross_over_strategy",
       "source_path": "integrations/mt5/domain/strategies/cross_over_strategy.py"
     },
@@ -13594,7 +13594,7 @@
       "name": "CrossOverStrategy",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 9,
+      "source_line": 8,
       "source_module": "integrations.mt5.domain.strategies.cross_over_strategy",
       "source_path": "integrations/mt5/domain/strategies/cross_over_strategy.py"
     },
@@ -13654,7 +13654,7 @@
       "name": "CrossOverStrategy.signal",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 20,
+      "source_line": 19,
       "source_module": "integrations.mt5.domain.strategies.cross_over_strategy",
       "source_path": "integrations/mt5/domain/strategies/cross_over_strategy.py"
     },
@@ -13774,7 +13774,7 @@
       "name": "TrendBreakoutStrategy.signal",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 163,
+      "source_line": 158,
       "source_module": "integrations.mt5.domain.strategies.trend_breakout_strategy",
       "source_path": "integrations/mt5/domain/strategies/trend_breakout_strategy.py"
     },
@@ -16138,7 +16138,7 @@
       "name": "resample",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 39,
+      "source_line": 35,
       "source_module": "market_data.transforms.resample",
       "source_path": "market_data/transforms/resample.py"
     },
@@ -16234,7 +16234,7 @@
       "name": "_OHLCV_AGG",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 27,
+      "source_line": 23,
       "source_module": "market_data.transforms.resample",
       "source_path": "market_data/transforms/resample.py"
     },
@@ -16246,7 +16246,7 @@
       "name": "_TF_TO_RULE",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 15,
+      "source_line": 11,
       "source_module": "market_data.transforms.resample",
       "source_path": "market_data/transforms/resample.py"
     },

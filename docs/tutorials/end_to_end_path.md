@@ -34,6 +34,8 @@ timestamped bars
    checkpoint, manifest, input identity, and evidence level required before a
    research claim.
 
+For focused follow-up examples, see [walk-forward splits](../learn/tutorials/06_walk_forward_validation.ipynb), [named action schemas](../learn/tutorials/07_action_schema_contract.ipynb), and the advanced [PPO rollout](../learn/tutorials/advanced/ppo_rollout_geometry.ipynb), [SAC policy](../learn/tutorials/advanced/sac_continuous_policy.ipynb), and [constrained reward](../learn/tutorials/advanced/constrained_reward_signals.ipynb) demos.
+
 ## Interpret the worked decision
 
 In the environment notebook, the action is a request. The environment first

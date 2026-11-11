@@ -18,18 +18,8 @@ WORKDIR /build
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-RUN curl -fsSL https://github.com/ta-lib/ta-lib/releases/download/v0.6.4/ta-lib-0.6.4-src.tar.gz \
-    | tar -xz -C /tmp \
-    && cd /tmp/ta-lib-0.6.4 \
-    && ./configure --prefix=/usr/local \
-    && make -j"$(nproc)" \
-    && make install \
-    && rm -rf /tmp/ta-lib-0.6.4
-
 COPY . .
 RUN uv sync --frozen --no-dev
-
-RUN pip install rtk code-review-graph
 
 FROM python:3.12-slim AS runtime
 
@@ -39,9 +29,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder --chown=1001:1001 /usr/local/lib/libta_lib* /usr/local/lib/
-RUN ldconfig /usr/local/lib
 
 COPY --from=builder --chown=1001:1001 /build /app
 COPY --from=builder --chown=1001:1001 /build/.venv /app/.venv
@@ -69,8 +56,11 @@ USER 1001
 FROM runtime AS test
 
 USER root
+COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
+RUN uv sync --frozen --extra dev \
+    && chown -R 1001:1001 /app/.venv
 USER 1001
 ENTRYPOINT ["python", "-m", "pytest"]

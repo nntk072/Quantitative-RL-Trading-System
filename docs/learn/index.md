@@ -20,6 +20,8 @@ tutorials/02_causal_features.ipynb
 tutorials/03_trading_and_risk.ipynb
 tutorials/04_environment.ipynb
 tutorials/05_evaluation.ipynb
+tutorials/06_walk_forward_validation.ipynb
+tutorials/07_action_schema_contract.ipynb
 ```
 
 The earlier command-line overview remains available in [Tutorials](../tutorials/README).
@@ -37,6 +39,9 @@ tutorials/advanced/trade_setup_policy.ipynb
 tutorials/advanced/tick_execution.ipynb
 tutorials/advanced/custom_encoder.ipynb
 tutorials/advanced/experiment_comparison.ipynb
+tutorials/advanced/ppo_rollout_geometry.ipynb
+tutorials/advanced/sac_continuous_policy.ipynb
+tutorials/advanced/constrained_reward_signals.ipynb
 ```
 
 ## Bounded training demonstration

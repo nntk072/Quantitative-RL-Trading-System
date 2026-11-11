@@ -8,7 +8,7 @@ This page contains 3 public callable records owned by `integrations.mt5.domain.s
 
 **Purpose:** Moving-average crossover strategy for broker-neutral execution.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.strategies.cross_over_strategy.CrossOverStrategy` · **Source:** [integrations/mt5/domain/strategies/cross_over_strategy.py:9](../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L9)
+**Exact API:** {py:obj}`integrations.mt5.domain.strategies.cross_over_strategy.CrossOverStrategy` · **Source:** [integrations/mt5/domain/strategies/cross_over_strategy.py:8](../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8)
 
 **Observed usage:**
 
@@ -62,7 +62,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Moving-average crossover strategy for broker-neutral execution.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.strategies.cross_over_strategy.CrossOverStrategy` · **Source:** [integrations/mt5/domain/strategies/cross_over_strategy.py:9](../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L9)
+**Exact API:** {py:obj}`integrations.mt5.domain.strategies.cross_over_strategy.CrossOverStrategy` · **Source:** [integrations/mt5/domain/strategies/cross_over_strategy.py:8](../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8)
 
 **Observed usage:**
 
@@ -116,7 +116,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Evaluate the latest bars and return the crossover signal.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.strategies.cross_over_strategy.CrossOverStrategy.signal` · **Source:** [integrations/mt5/domain/strategies/cross_over_strategy.py:20](../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L20)
+**Exact API:** {py:obj}`integrations.mt5.domain.strategies.cross_over_strategy.CrossOverStrategy.signal` · **Source:** [integrations/mt5/domain/strategies/cross_over_strategy.py:19](../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L19)
 
 **Inputs and outputs:**
 

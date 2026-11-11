@@ -7,7 +7,8 @@ serialized schema checks; they do not replace them.
 ## Feature cache
 
 `features.pipeline.feature_cache_identity.FEATURE_CACHE_VERSION` currently
-uses `v43-heldout-fit-state`. The feature cache identity also hashes the
+uses `v44-wilder-adx`, invalidating cached ADX values after switching to
+Wilder smoothing. The feature cache identity also hashes the
 resolved feature configuration, market input indexes and values, optional
 training mask, and other settings that affect feature output.
 

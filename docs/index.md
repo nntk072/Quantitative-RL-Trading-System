@@ -57,13 +57,15 @@ Find extension, testing, architecture, deployment, and operations guides.
 
 ```{mermaid}
 flowchart LR
-    C[Configuration] --> D[Market data]
+    C[Resolved configuration] --> D[Prepared market data]
     D --> F[Causal features]
-    F --> E[Trading environment]
-    E --> L[Learning and policy]
-    L --> V[Evaluation]
-    V --> A[Artifacts and evidence]
-    A --> R[Research and reproduction]
+    F --> S[Simulation environment]
+    S -->|observations and rewards| L[Policy training]
+    L -->|actions| S
+    L -->|saved policy| E[Evaluation replay]
+    F --> E
+    E --> A[Run artifacts and report]
+    A --> R[Research claims and reproduction]
 ```
 
 ## Choose a path

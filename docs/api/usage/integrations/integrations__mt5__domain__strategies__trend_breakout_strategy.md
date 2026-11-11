@@ -122,7 +122,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L186)
+1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L181)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -171,7 +171,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L197)
+1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L192)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -222,7 +222,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L183)
+1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L178)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -313,7 +313,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L176)
+1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L171)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -344,7 +344,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Generate trading signal based on trend breakouts.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.signal` · **Source:** [integrations/mt5/domain/strategies/trend_breakout_strategy.py:163](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L163)
+**Exact API:** {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.signal` · **Source:** [integrations/mt5/domain/strategies/trend_breakout_strategy.py:158](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L158)
 
 **Inputs and outputs:**
 

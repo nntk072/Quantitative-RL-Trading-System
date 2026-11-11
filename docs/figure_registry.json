@@ -6,7 +6,7 @@
       "kind": "mermaid",
       "source_page": "docs/index.md",
       "asset": null,
-      "description": "Configuration, market data, causal features, trading environment, learning, evaluation, artifacts, and evidence flow.",
+      "description": "Resolved inputs feed causal features and a simulation loop; the trained policy is replayed for evaluation and its evidence is recorded.",
       "provenance": "Authored in this repository from the current architecture map.",
       "rights": "project-authored"
     },
@@ -15,7 +15,7 @@
       "kind": "mermaid",
       "source_page": "docs/concepts/observations_and_actions.md",
       "asset": null,
-      "description": "Market data and account state feed observations; policy action passes through intent and risk validation.",
+      "description": "Market and account state form the observation; the policy proposes an action that is decoded and either rejected with a reason or executed through the risk and fill path.",
       "provenance": "Authored in this repository from decisioning contracts.",
       "rights": "project-authored"
     },
@@ -33,8 +33,35 @@
       "kind": "mermaid",
       "source_page": "docs/concepts/trade_lifecycle.md",
       "asset": null,
-      "description": "Observation through eligibility, risk approval, fill, open-position management, close, and next observation.",
+      "description": "An accepted fill opens a position; each later bar checks protection, updates partial exposure, or closes and reconciles the position.",
       "provenance": "Authored in this repository after checking environment runtime order.",
+      "rights": "project-authored"
+    },
+    {
+      "id": "feature-availability-timeline",
+      "kind": "mermaid",
+      "source_page": "docs/framework/market_data_and_features.md",
+      "asset": null,
+      "description": "A higher-timeframe candle contributes its final value only after close; earlier M1-close decisions retain the previous completed value.",
+      "provenance": "Authored in this repository from the timeframe alignment contract.",
+      "rights": "project-authored"
+    },
+    {
+      "id": "model-observation-path",
+      "kind": "mermaid",
+      "source_page": "docs/framework/models_and_learning.md",
+      "asset": null,
+      "description": "Observation values and validity masks enter the registered encoder; action eligibility masks constrain the policy distribution before action decoding.",
+      "provenance": "Authored in this repository from the observation and encoder contracts.",
+      "rights": "project-authored"
+    },
+    {
+      "id": "evaluation-transition-record",
+      "kind": "mermaid",
+      "source_page": "docs/framework/evaluation_and_artifacts.md",
+      "asset": null,
+      "description": "Each evaluation transition connects an observation, action, environment result, reward, next observation, and run record.",
+      "provenance": "Authored in this repository from the rollout and artifact contracts.",
       "rights": "project-authored"
     },
     {
@@ -65,66 +92,12 @@
       "rights": "project-evidence"
     },
     {
-      "id": "feature-availability",
-      "kind": "image",
-      "source_page": "docs/framework/market_data_and_features.md",
-      "asset": "docs/_static/figures/feature-availability.svg",
-      "description": "Feature availability follows candle close. A higher-timeframe value becomes visible only after its source interval completes.",
-      "provenance": "Original project-authored vector teaching figure, created for Documentation V3 from verified contracts in the linked framework/concept source.",
-      "rights": "project-authored"
-    },
-    {
-      "id": "policy-action-contract",
-      "kind": "image",
-      "source_page": "docs/concepts/observations_and_actions.md",
-      "asset": "docs/_static/figures/policy-action-contract.svg",
-      "description": "Policy actions pass through explicit contracts. The policy proposes an intent; environment rules validate and execute it.",
-      "provenance": "Original project-authored vector teaching figure, created for Documentation V3 from verified contracts in the linked framework/concept source.",
-      "rights": "project-authored"
-    },
-    {
       "id": "trade-geometry",
       "kind": "image",
       "source_page": "docs/concepts/risk_and_account_limits.md",
       "asset": "docs/_static/figures/trade-geometry.svg",
-      "description": "Trade geometry determines planned risk. For a long position, stop distance drives size and target distance defines planned reward.",
-      "provenance": "Original project-authored vector teaching figure, created for Documentation V3 from verified contracts in the linked framework/concept source.",
-      "rights": "project-authored"
-    },
-    {
-      "id": "stop-target-lifecycle",
-      "kind": "image",
-      "source_page": "docs/concepts/trade_lifecycle.md",
-      "asset": "docs/_static/figures/stop-target-lifecycle.svg",
-      "description": "Protection is checked throughout the open trade. Each new bar advances market state, checks protection, updates accounting, and returns diagnostics.",
-      "provenance": "Original project-authored vector teaching figure, created for Documentation V3 from verified contracts in the linked framework/concept source.",
-      "rights": "project-authored"
-    },
-    {
-      "id": "encoder-composition",
-      "kind": "image",
-      "source_page": "docs/framework/models_and_learning.md",
-      "asset": "docs/_static/figures/encoder-composition.svg",
-      "description": "Encoders combine typed observation components. Representation layers process structured inputs before the learner policy head.",
-      "provenance": "Original project-authored vector teaching figure, created for Documentation V3 from verified contracts in the linked framework/concept source.",
-      "rights": "project-authored"
-    },
-    {
-      "id": "rollout-geometry",
-      "kind": "image",
-      "source_page": "docs/framework/evaluation_and_artifacts.md",
-      "asset": "docs/_static/figures/rollout-geometry.svg",
-      "description": "A rollout is a sequence of transitions. Every transition binds an observation, action, reward, and next state; episode boundaries end the sequence.",
-      "provenance": "Original project-authored vector teaching figure, created for Documentation V3 from verified contracts in the linked framework/concept source.",
-      "rights": "project-authored"
-    },
-    {
-      "id": "evidence-lineage",
-      "kind": "image",
-      "source_page": "docs/reproduce/result_registry.md",
-      "asset": "docs/_static/figures/evidence-lineage.svg",
-      "description": "Reproducibility levels describe evidence completeness. A higher level requires more complete, independently checkable inputs and outputs.",
-      "provenance": "Original project-authored vector teaching figure, created for Documentation V3 from verified contracts in the linked framework/concept source.",
+      "description": "A price ladder for a long position: stop below entry defines planned risk per unit, and target above entry defines planned reward per unit.",
+      "provenance": "Project-authored vector figure based on the current contract or method explained on its source page.",
       "rights": "project-authored"
     }
   ]

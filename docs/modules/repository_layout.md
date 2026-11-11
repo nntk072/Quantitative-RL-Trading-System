@@ -35,50 +35,10 @@ source folders. See the local [configuration](https://github.com/nntk072/Quantit
 [scripts](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/scripts/README.md), [tools](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/tools/README.md), and
 [baseline](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/baseline/README.md) guides for those non-package areas.
 
-## UML
+## Package and runtime architecture
 
-This package-level UML shows the repository’s stable source and evidence
-boundaries. It is a responsibility map, not a deployment diagram.
-
-```mermaid
-classDiagram
-    class Configuration
-    class MarketData
-    class Features
-    class Decisioning
-    class Models
-    class Learning
-    class Trading
-    class Simulation
-    class Training
-    class Evaluation
-    class Experiments
-    class Artifacts
-    class Compute
-    class Integrations
-    class LiveRuntime
-    class Tests
-    class Documentation
-    Configuration --> MarketData : selects inputs
-    MarketData --> Features : supplies histories
-    Features --> Decisioning : forms observations
-    Decisioning --> Models : defines input/output contract
-    Models --> Learning : policy is optimized by
-    Learning --> Simulation : interacts with
-    Trading --> Simulation : domain rules used by
-    Training --> Learning : runs
-    Training --> Artifacts : writes
-    Experiments --> Training : selects runs
-    Evaluation --> Artifacts : reads and writes
-    Compute --> Training : supplies resources
-    LiveRuntime --> Integrations : submits through
-    Tests --> Configuration : verifies
-    Tests --> MarketData : verifies
-    Tests --> Features : verifies
-    Tests --> Decisioning : verifies
-    Tests --> Simulation : verifies
-    Documentation ..> Configuration : explains
-    Documentation ..> MarketData : explains
-    Documentation ..> Features : explains
-    Documentation ..> Learning : explains
-```
+This page describes folder ownership and retention. The
+[dependency model](../architecture/dependency_model.md) shows allowed package
+relationships, and [data flow](../architecture/data_flow.md) follows runtime
+inputs through evaluation. Those maps are separate from this storage guide so
+folder lifecycle is not mistaken for a class relationship.

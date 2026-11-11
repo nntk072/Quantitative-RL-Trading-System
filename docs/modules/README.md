@@ -30,41 +30,9 @@ be able to understand the module before opening its implementation.
 Non-package folders such as `config/`, `data/`, `cache/`, `outputs/`,
 `scripts/`, and `tools/` are described in [Repository layout](repository_layout.md).
 
-## UML
-
-The package-level diagram is a navigation map. Detailed UML for each domain
-is embedded in its module guide below.
-
-```mermaid
-classDiagram
-    class Configuration
-    class MarketData
-    class Features
-    class Decisioning
-    class Simulation
-    class Trading
-    class Models
-    class Learning
-    class Training
-    class Evaluation
-    class Experiments
-    class Artifacts
-    class Compute
-    class LiveRuntime
-    class Integrations
-    Configuration --> MarketData
-    MarketData --> Features
-    Features --> Decisioning
-    Decisioning --> Models
-    Models --> Learning
-    Learning --> Simulation
-    Trading --> Simulation
-    Training --> Learning
-    Experiments --> Training
-    Evaluation --> Artifacts
-    Compute --> Training
-    LiveRuntime --> Integrations
-```
+Package dependencies and runtime data flow are maintained in the
+[architecture guides](../architecture/README.md). The table above owns package
+responsibilities; the domain model describes stable trading concepts.
 
 ## Reading order
 

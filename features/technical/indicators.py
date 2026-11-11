@@ -26,13 +26,13 @@ def ema(s: pd.Series, span: int) -> pd.Series:
 
 
 def _true_range(df: pd.DataFrame) -> pd.Series:
-    """Process range.
+    """Calculate each bar's true range against the previous close.
 
     Args:
-        df: Input DataFrame supplying the rows used by this calculation.
+        df: Bars containing ``high``, ``low``, and ``close`` columns.
 
     Returns:
-        Result of process range.
+        True-range values aligned to the input index.
     """
     prev_close = df["close"].shift(1)
     tr = pd.concat(
@@ -87,14 +87,15 @@ def macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> p
 
 
 def ema_features(close: pd.Series, periods: list[int]) -> pd.DataFrame:
-    """EMA values + slopes (1-bar diff) for each period.
+    """Build EMA, one-bar slope, and normalized-distance features.
 
     Args:
-        close: Tabular data used for the close.
-        periods: Items supplied for the periods, in input order.
+        close: Closing prices in chronological order.
+        periods: EMA spans to calculate; each span becomes three columns.
 
     Returns:
-        DataFrame returned by ``ema_features``.
+        Frame with ``ema_{period}``, ``ema_{period}_slope``, and
+        ``ema_{period}_dist`` columns for each requested span.
     """
     out: dict[str, pd.Series] = {}
     for p in periods:
@@ -123,38 +124,74 @@ def volume_spike(volume: pd.Series, window: int = 20) -> pd.Series:
     """Compute volume spike as ratio to rolling median.
 
     Args:
-        volume (pd.Series): Volume series
-        window (int): Rolling window for median calculation (default: 20)
+        volume: Volume observations in chronological order.
+        window: Number of observations in the rolling median.
 
     Returns:
-        pd.Series: Volume spike ratio (volume / median_volume)
+        Volume divided by its rolling median, aligned to the input index.
+        Positions with a zero median are ``NaN``.
     """
     median_vol = volume.rolling(window, min_periods=1).median()
     return volume / median_vol.replace(0, np.nan)
 
 
 def adx(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
-    """Compute ADX and positive/negative directional indicators.
+    """Compute Wilder ADX and directional indicators with causal warmup.
 
     Args:
         df: OHLC bars with high, low, and close columns.
-        period: Exponential smoothing period for directional movement.
+        period: Wilder smoothing period for directional movement.
 
     Returns:
         A frame containing ``adx``, ``plus_di``, and ``minus_di``.
     """
-    tr = _true_range(df)
+    if period < 1:
+        raise ValueError("period must be positive")
+
+    length = len(df)
+    tr = _true_range(df).copy()
+    tr.iloc[0:1] = np.nan
     up = df["high"].diff()
     down = -df["low"].diff()
     plus_dm = up.where((up > down) & (up > 0), 0.0)
     minus_dm = down.where((down > up) & (down > 0), 0.0)
-    atr_s = tr.ewm(alpha=1 / period, adjust=False).mean()
-    plus_di = 100 * plus_dm.ewm(alpha=1 / period, adjust=False).mean() / atr_s.replace(0, np.nan)
-    minus_di = 100 * minus_dm.ewm(alpha=1 / period, adjust=False).mean() / atr_s.replace(0, np.nan)
-    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, np.nan)
-    adx_line = dx.ewm(alpha=1 / period, adjust=False).mean()
+
+    def smooth(values: pd.Series) -> pd.Series:
+        """Apply Wilder smoothing after a period-length seed.
+
+        Args:
+            values: Input directional-movement or true-range series.
+
+        Returns:
+            Wilder-smoothed values aligned to the input index.
+        """
+        result = values.astype(float).copy()
+        result.iloc[:period] = np.nan
+        if length > period:
+            seed = values.iloc[1:period].sum()
+            result.iloc[period] = (seed - seed / period + values.iloc[period]) / period
+        return result.ewm(alpha=1 / period, adjust=False, ignore_na=True).mean()
+
+    smooth_tr = smooth(tr)
+    smooth_plus = smooth(plus_dm)
+    smooth_minus = smooth(minus_dm)
+    plus_di = (100 * smooth_plus / smooth_tr).where(smooth_tr != 0, 0.0)
+    minus_di = (100 * smooth_minus / smooth_tr).where(smooth_tr != 0, 0.0)
+    directional_sum = plus_di + minus_di
+    dx = (100 * (plus_di - minus_di).abs() / directional_sum).where(directional_sum != 0, 0.0)
+    first_adx = 2 * period - 1
+    adx_seed = dx.copy()
+    adx_seed.iloc[:first_adx] = np.nan
+    if length > first_adx:
+        adx_seed.iloc[first_adx] = dx.iloc[period : first_adx + 1].mean()
+    adx_values = adx_seed.ewm(alpha=1 / period, adjust=False, ignore_na=True).mean()
+
     return pd.DataFrame(
-        {"adx": adx_line, "plus_di": plus_di, "minus_di": minus_di},
+        {
+            "adx": adx_values,
+            "plus_di": plus_di,
+            "minus_di": minus_di,
+        },
         index=df.index,
     )
 

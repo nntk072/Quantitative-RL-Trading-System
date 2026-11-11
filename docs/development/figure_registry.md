@@ -13,9 +13,11 @@ explanation. A copied bitmap without a recorded source is not acceptable.
 | Figure | Source | Provenance | Accessibility/context |
 |---|---|---|---|
 | Data-to-policy-to-evidence flow | `../index.md` Mermaid source | Newly authored from current architecture | The adjacent text names each stage and links the reader paths. |
-| Observation to intent flow | `../concepts/observations_and_actions.md` | Newly authored from decisioning contracts | Flow labels distinguish policy proposal from execution checks. |
-| PPO rollout/update geometry | `../concepts/ppo_rollout_geometry.md` prose/equations | Newly authored from agent builder and manifests | Text gives equations and the source fields for non-visual readers. |
-| Trade lifecycle | `../concepts/trade_lifecycle.md` Mermaid source | Newly authored after checking environment/runtime order | The nearby stage-by-stage text and symptom table explain each node. |
+| Observation to order decision | `../concepts/observations_and_actions.md` | Mermaid flow based on decisioning contracts | Shows rejection and approved execution paths and where account state changes. |
+| Feature availability at candle close | `../framework/market_data_and_features.md` | Mermaid sequence based on timeframe alignment | Distinguishes a forming source candle from the latest completed value. |
+| Trade lifecycle | `../concepts/trade_lifecycle.md` Mermaid source | Reconciled with environment/runtime order | Shows the open-position loop and its partial and final exit paths. |
+| Observation encoding and policy outputs | `../framework/models_and_learning.md` | Mermaid flow based on the observation and encoder contracts | Separates structured inputs, shared representation, and algorithm outputs. |
+| Evaluation transition record | `../framework/evaluation_and_artifacts.md` | Mermaid flow based on the rollout contract | Connects each transition to the ledger and run manifest. |
 | Environment step sequence | `../architecture/runtime/environment_step.md` Mermaid source | Existing project-authored diagram | Chronology is followed by an explicit explanation of fill timing. |
 
 ## Binary research figures already tracked
@@ -26,8 +28,8 @@ explanation. A copied bitmap without a recorded source is not acceptable.
 
 ## Supplementary archive exclusions
 
-No binary figure from the supplementary archive is copied into this portal by
-this documentation pass.
+No binary figure from the supplementary archive is currently used in this
+portal.
 The archive includes publication-derived figures whose reuse permission is not
 established by the ZIP, plus custom project figures with differing source
 histories. See the [source map](supplementary_source_map.md). The archive's
@@ -38,21 +40,16 @@ creator/generator, input/source commit, license or permission, citation, and
 the page that explains it. Remove or redirect a page only after checking for
 references to its assets.
 
-## V3 vector teaching figures
+## Standalone SVG illustration
 
-The following original SVGs supplement the source diagrams with labeled visual
-sequences. Each is registered in `figure_registry.json`, has an accessible
-caption on its source page, and is project-authored:
+The price ladder uses an SVG because aligned levels and measured distances are
+clearer in a plotted scale. Workflow and lifecycle diagrams stay inline with
+their source pages, where their explanation and accessible text remain close:
 
 | Figure | Source | Teaching purpose |
 |---|---|---|
-| Feature availability | `../framework/market_data_and_features.md` | Shows why a higher-timeframe value is unavailable before candle close. |
-| Policy action contract | `../concepts/observations_and_actions.md` | Separates policy intent, schema decoding, risk checks, and execution. |
-| Trade geometry | `../concepts/risk_and_account_limits.md` | Connects stop distance, entry, and target for a long position. |
-| Stop/target lifecycle | `../concepts/trade_lifecycle.md` | Shows recurring protection checks while a position is open. |
-| Encoder composition | `../framework/models_and_learning.md` | Shows structured inputs flowing through encoders and policy head. |
-| Rollout transitions | `../framework/evaluation_and_artifacts.md` | Shows observation/action/reward sequencing and episode boundary. |
-| Evidence lineage | `../reproduce/result_registry.md` | Summarizes the increasing evidence needed at each reproduction level. |
+| Long-position price geometry | `../concepts/risk_and_account_limits.md` | Shows stop/entry/target levels and labels planned risk and reward distances. |
 
-These figures explain contracts and workflows. They are not empirical results;
-research plots remain linked to their evidence packets and claim scopes.
+The standalone illustration explains a contract and is not an empirical
+result; research plots remain linked to their evidence packets and claim
+scopes.

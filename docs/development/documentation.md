@@ -33,11 +33,13 @@ logs. Put project history in `CHANGELOG.md` or Git history.
 
 ## Diagrams
 
-Add a diagram when it makes a real relationship or sequence easier to
-understand. Use flowcharts for dependencies and data movement, sequence
-diagrams for runtime chronology, and state diagrams for lifecycle rules. Use
-class diagrams only for stable object relationships. A guide does not need a
-diagram when prose or a short table communicates the subsystem more clearly.
+Add a diagram only when it answers a reader's question better than prose or a
+short table. Give each node a concrete role and each arrow a clear meaning;
+avoid rows of unlabeled boxes that only repeat section headings. Use flowcharts
+for dependencies and decisions, sequence diagrams for runtime chronology, and
+state diagrams for lifecycle rules. Use class diagrams only for stable object
+relationships, not to draw a workflow or list packages. Place the diagram next
+to the explanation it supports.
 
 ## Reader paths and API reference
 

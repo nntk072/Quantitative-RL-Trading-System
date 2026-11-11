@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-import talib
 
+from features.technical.indicators import adx as calculate_adx
 from integrations.mt5.adapters import TradingData, TradingStrategy
 from integrations.mt5.domain.signal import Signal
 
@@ -146,17 +146,12 @@ class TrendBreakoutStrategy(TradingStrategy):
         Returns:
             ADX value (0-100, higher = stronger trend)
         """
-        if len(df) < 14:
+        if len(df) < 27:
             return 0.0
 
         try:
-            adx = talib.ADX(
-                df["high"].to_numpy(dtype=float),
-                df["low"].to_numpy(dtype=float),
-                df["close"].to_numpy(dtype=float),
-                timeperiod=14,
-            )
-            return adx[-1] if not np.isnan(adx[-1]) else 0.0
+            value = calculate_adx(df, period=14)["adx"].iloc[-1]
+            return float(value) if not np.isnan(value) else 0.0
         except Exception:
             return 0.0
 

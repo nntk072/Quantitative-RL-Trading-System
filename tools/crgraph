@@ -37,7 +37,7 @@ fi
 
 if [[ -z "$CRGRAPH_BIN" ]]; then
   echo "ERROR: code-review-graph is not installed." >&2
-  echo "  uv sync --extra dev" >&2
+  echo "  uv tool install code-review-graph" >&2
   exit 1
 fi
 

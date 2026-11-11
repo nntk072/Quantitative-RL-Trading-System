@@ -327,8 +327,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `detect_ifvg_confirmation` | function | [features.po3.ifvg_detection](../../features/po3/ifvg_detection.py#L251) | stable |
 | `detect_ltf_ifvg` | function | [features.po3.trigger_rules](../../features/po3/trigger_rules.py#L289) | stable |
 | `detect_po3_entries` | function | [features.po3.trigger_rules](../../features/po3/trigger_rules.py#L372) | stable |
-| `atr` | function | [features.technical.indicators](../../features/technical/indicators.py#L108) | stable |
-| `build_indicators` | function | [features.technical.indicators](../../features/technical/indicators.py#L431) | stable |
+| `atr` | function | [features.technical.indicators](../../features/technical/indicators.py#L109) | stable |
+| `build_indicators` | function | [features.technical.indicators](../../features/technical/indicators.py#L468) | stable |
 | `classify_structure` | function | [features.technical.swings](../../features/technical/swings.py#L222) | stable |
 | `detect_pivots` | function | [features.technical.swings](../../features/technical/swings.py#L26) | stable |
 | `detect_swings` | function | [features.technical.swings](../../features/technical/swings.py#L86) | stable |
@@ -354,7 +354,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `Trader.open_position` | method | [integrations.mt5.adapters.trader](../../integrations/mt5/adapters/trader.py#L9) | stable |
 | `Trader.send_to_break_even` | method | [integrations.mt5.adapters.trader](../../integrations/mt5/adapters/trader.py#L61) | stable |
 | `CombinedStrategy` | class | [integrations.mt5.domain.strategies.combined_strategy](../../integrations/mt5/domain/strategies/combined_strategy.py#L10) | stable |
-| `CrossOverStrategy` | class | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L9) | stable |
+| `CrossOverStrategy` | class | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8) | stable |
 | `MT5Data` | class | [integrations.mt5.domain.data_sources.mt5_data](../../integrations/mt5/domain/data_sources/mt5_data.py#L7) | stable |
 | `MT5Trader` | class | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L8) | stable |
 | `MultiSymbolManager` | class | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L11) | stable |
@@ -382,11 +382,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `RiskManager.get_volatility_multiplier` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L639) | stable |
 | `RiskManager.supports_training_account_loss_guardrails` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L18) | stable |
 | `CombinedStrategy` | class | [integrations.mt5.domain.strategies.combined_strategy](../../integrations/mt5/domain/strategies/combined_strategy.py#L10) | stable |
-| `CrossOverStrategy` | class | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L9) | stable |
+| `CrossOverStrategy` | class | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8) | stable |
 | `SMCStrategy` | class | [integrations.mt5.domain.strategies.smc_strategy](../../integrations/mt5/domain/strategies/smc_strategy.py#L7) | stable |
 | `TrendBreakoutStrategy` | class | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L9) | stable |
 | `CombinedStrategy.signal` | method | [integrations.mt5.domain.strategies.combined_strategy](../../integrations/mt5/domain/strategies/combined_strategy.py#L51) | stable |
-| `CrossOverStrategy.signal` | method | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L20) | stable |
+| `CrossOverStrategy.signal` | method | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L19) | stable |
 | `SMCStrategy.identify_fair_value_gaps` | method | [integrations.mt5.domain.strategies.smc_strategy](../../integrations/mt5/domain/strategies/smc_strategy.py#L76) | stable |
 | `SMCStrategy.identify_market_structure` | method | [integrations.mt5.domain.strategies.smc_strategy](../../integrations/mt5/domain/strategies/smc_strategy.py#L110) | stable |
 | `SMCStrategy.identify_order_blocks` | method | [integrations.mt5.domain.strategies.smc_strategy](../../integrations/mt5/domain/strategies/smc_strategy.py#L31) | stable |
@@ -396,7 +396,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `TrendBreakoutStrategy.detect_breakout` | method | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L105) | stable |
 | `TrendBreakoutStrategy.identify_consolidation` | method | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L58) | stable |
 | `TrendBreakoutStrategy.identify_support_resistance` | method | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L36) | stable |
-| `TrendBreakoutStrategy.signal` | method | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L163) | stable |
+| `TrendBreakoutStrategy.signal` | method | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L158) | stable |
 | `MT5Trader.calculate_position_size` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L227) | stable |
 | `MT5Trader.close_positions` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L64) | stable |
 | `MT5Trader.get_all_positions` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L163) | stable |
@@ -498,7 +498,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `align_timeframes` | function | [market_data.transforms.align](../../market_data/transforms/align.py#L83) | stable |
 | `clean` | function | [market_data.transforms.cleaning](../../market_data/transforms/cleaning.py#L10) | stable |
 | `ny_session_mask` | function | [market_data.transforms.sessions](../../market_data/transforms/sessions.py#L83) | stable |
-| `resample` | function | [market_data.transforms.resample](../../market_data/transforms/resample.py#L39) | stable |
+| `resample` | function | [market_data.transforms.resample](../../market_data/transforms/resample.py#L35) | stable |
 | `scheduled_session_close_map` | function | [market_data.transforms.session_schedule](../../market_data/transforms/session_schedule.py#L13) | stable |
 | `timeframe_close_times` | function | [market_data.transforms.align](../../market_data/transforms/align.py#L25) | stable |
 

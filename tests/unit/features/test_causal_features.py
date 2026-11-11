@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import pandas as pd
+import pytest
 import torch
 
 from features.technical.indicators import (
+    adx,
     ema_features,
     macd,
     returns,
@@ -17,6 +20,29 @@ from features.technical.indicators import (
     volume_spike,
     wick_ratio,
 )
+
+
+def test_adx_matches_wilder_reference_and_has_talib_warmup() -> None:
+    position = pd.Series(range(80), dtype=float)
+    close = 100 + 0.15 * position + 2 * (position / 4).map(math.sin)
+    close += 0.5 * (position / 9).map(math.cos)
+    bars = pd.DataFrame(
+        {
+            "high": close + 0.8 + 0.2 * (position / 3).map(math.sin),
+            "low": close - 0.7 - 0.15 * (position / 5).map(math.cos),
+            "close": close,
+        }
+    )
+
+    result = adx(bars, period=14)["adx"]
+
+    assert result.iloc[:27].isna().all()
+    assert result.iloc[27] == pytest.approx(26.090210118856724)
+    assert result.iloc[28] == pytest.approx(28.853374302774302)
+    assert result.iloc[40] == pytest.approx(42.1514856204139)
+    assert result.iloc[79] == pytest.approx(41.324054589864645)
+    prefix = adx(bars.iloc[:41], period=14)["adx"]
+    pd.testing.assert_series_equal(result.iloc[:41], prefix)
 
 
 def test_time_features_use_the_supplied_index_and_are_prefix_invariant() -> None:

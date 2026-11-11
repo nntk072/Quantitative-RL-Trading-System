@@ -1,8 +1,5 @@
 # Models and learning
 
-![Encoder composition: Representation layers process structured inputs before the learner policy head.](../_static/figures/encoder-composition.svg)
-
-
 A model turns the environment's observation into a policy distribution. The learning domain builds and trains that policy; the model domain supplies reusable encoders; decisioning defines the versioned observation and action contracts shared with evaluation and live runtimes.
 
 ## Data path and ownership
@@ -12,6 +9,23 @@ A model turns the environment's observation into a policy distribution. The lear
 3. `models/encoders/` combines modality-specific representations. Encoders own representation only; they do not own order validation, position sizing, fills, or reward.
 4. `learning/rl/agent.py` adapts PPO/SAC construction and checkpoint loading to the supported backend. The adapter owns algorithm-specific policy construction, not market semantics.
 5. Training persists the resolved configuration and artifact identity; evaluation loads a policy through the same declared schema.
+
+```{mermaid}
+flowchart LR
+    M[Market sequences] -->|values| E[Observation encoder]
+    A[Account and position state] -->|values| E
+    K[Observation validity mask] -->|validity| E
+    E --> R[Shared representation]
+    R --> D[Policy distribution]
+    Q[Action eligibility mask] -->|masks choices| D
+    R --> V[Value or Q estimate, when required]
+    D --> S[Sampled action]
+    S --> C[Versioned action schema]
+```
+
+The observation mask describes which input values are valid; the action mask
+limits which choices are eligible. The diagram shows where those contracts
+enter inference without prescribing one encoder architecture or policy head.
 
 ## Contract and compatibility
 

@@ -1,12 +1,15 @@
 # Trade lifecycle: from policy output to account state
 
-![Stop and target lifecycle: Each new bar advances market state, checks protection, updates accounting, and returns diagnostics.](../_static/figures/stop-target-lifecycle.svg)
-
-
 A policy action is an intent proposal. The simulator processes it through
 eligibility, strategy references, risk sizing, order construction, fills, and
 position management. The path is intentionally explicit so a recorded action
 is not confused with an accepted or filled order.
+
+At each step, the environment advances market state and processes protective
+conditions before executing the newly supplied action. This prevents a new
+position from being hit by price movement that occurred before its fill. For
+bar data, intrabar ordering has limits; tick execution, latency, quote choice,
+and ambiguous high/low hits are configuration-specific.
 
 ```mermaid
 flowchart TD
@@ -17,17 +20,18 @@ flowchart TD
     S --> G[Account and risk guardrails]
     G -->|rejected| R
     G -->|approved| F[Quote and fill]
-    F --> P[Open position]
-    P --> M[Mark, stop/target, partial exit, management]
-    M --> C[Close and reconcile costs/PnL]
-    C --> N[Next observation, reward, diagnostics]
+    R --> N[Return next observation, reward, diagnostics]
+    F --> P[Position open]
+    P --> B[Advance market to next decision bar]
+    B --> H{Stop or target reached?}
+    H -->|no| U[Update protection and remaining size]
+    U --> O[Return next observation]
+    O --> A
+    H -->|partial target| Q[Reduce size and realize partial PnL]
+    Q --> U
+    H -->|full exit| C[Close position and reconcile costs/PnL]
+    C --> N[Return next observation, reward, diagnostics]
 ```
-
-At each step, the environment advances market state and processes protective
-conditions before executing the newly supplied action. This prevents a new
-position from being hit by price movement that occurred before its fill. For
-bar data, intrabar ordering has limits; tick execution, latency, quote choice,
-and ambiguous high/low hits are configuration-specific.
 
 ## Entry and risk
 

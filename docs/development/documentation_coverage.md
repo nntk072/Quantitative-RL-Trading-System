@@ -1,11 +1,10 @@
 # Documentation coverage audit
 
-This is a reviewed snapshot of the reader paths at the V2 documentation pass.
-It distinguishes material that helps a reader **learn** a subject, **use** it,
-and **verify** exact behavior. An existing link is not automatically a full
-explanation. `●` means a maintained, subject-specific page exists; `◒` means
-coverage is present but relies on a broad/shared guide or has known limits;
-`—` means no dedicated path was identified in this audit. Research and
+This reviewed matrix records reader paths that help someone **learn** a
+subject, **use** it, and **verify** exact behavior. A link alone does not mean
+the subject is fully explained. `●` means a maintained, subject-specific page
+exists; `◒` means coverage relies on a broad/shared guide or has known limits;
+`—` means no dedicated path was identified in the review. Research and
 reproduction cells indicate evidence relevance, not evidence strength.
 
 | Subject | Concept | Architecture | Tutorial | How-to | Reference/API | Troubleshooting | Research | Reproduction |
@@ -13,7 +12,7 @@ reproduction cells indicate evidence relevance, not evidence strength.
 | Product overview | ● | ● | ◒ | ◒ | ◒ | — | ◒ | — |
 | Market data and sessions | ◒ | ● | ● | ● | ● | ◒ | ◒ | ● |
 | Ticks and resampling | ◒ | ◒ | ● | ◒ | ● | ◒ | ◒ | ◒ |
-| Splits and walk-forward | ● | ● | ◒ | ◒ | ● | ◒ | ● | ◒ |
+| Splits and walk-forward | ● | ● | ● | ◒ | ● | ◒ | ● | ◒ |
 | Feature causality/normalization | ● | ● | ● | ● | ● | ◒ | ◒ | ● |
 | Cache identity | ◒ | ◒ | ◒ | ● | ● | ● | ◒ | ◒ |
 | Technical indicators | ◒ | ● | ● | ● | ● | ◒ | ◒ | ◒ |
@@ -23,9 +22,9 @@ reproduction cells indicate evidence relevance, not evidence strength.
 | Observations and masks | ● | ● | ● | ◒ | ● | ◒ | ◒ | ● |
 | Action schemas and parameterization | ● | ◒ | ● | ● | ● | ◒ | ◒ | ● |
 | MDP/POMDP | ● | ◒ | ◒ | — | ◒ | — | ◒ | — |
-| PPO and rollout geometry | ● | ● | ◒ | ● | ● | ◒ | ● | ◒ |
-| SAC | ● | ◒ | ◒ | ◒ | ● | ◒ | ◒ | ◒ |
-| Constrained RL | ● | ◒ | ◒ | ◒ | ◒ | ◒ | ◒ | ◒ |
+| PPO and rollout geometry | ● | ● | ● | ● | ● | ◒ | ● | ◒ |
+| SAC | ● | ◒ | ● | ◒ | ● | ◒ | ◒ | ◒ |
+| Constrained RL | ● | ◒ | ● | ◒ | ◒ | ◒ | ◒ | ◒ |
 | TCN/GRU/Transformer/MTF | ● | ● | ● | ● | ● | ◒ | ● | ◒ |
 | Stops, targets, multi-TP, exits | ● | ● | ● | ◒ | ● | ● | ● | ● |
 | Account state, risk, prop constraints | ● | ◒ | ● | ◒ | ● | ● | ◒ | ◒ |
@@ -46,9 +45,9 @@ reproduction cells indicate evidence relevance, not evidence strength.
 
 - The site has dedicated curated API domains and generated AutoAPI. API
   existence does not replace concept explanations or executable examples.
-- The five beginner notebooks and advanced notebooks form a useful path, but
-  not every theory topic has its own notebook. Notebook links should remain
-  bounded and labeled by evidence tier.
+- The beginner and advanced notebooks provide focused runnable examples for
+  core workflow and algorithm concepts. Notebook links should remain bounded
+  and labeled by evidence tier.
 - Several research pages explain exploratory/negative findings. Those pages
   do not imply that all planned research questions have results.
 - Troubleshooting is now consolidated by symptom; subsystem package guides

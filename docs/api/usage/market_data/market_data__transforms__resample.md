@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `market_data.transforms.re
 
 **Purpose:** Return *tf* bars built from *m1* (1-minute) bars.
 
-**Exact API:** {py:obj}`market_data.transforms.resample.resample` · **Source:** [market_data/transforms/resample.py:39](../../../../market_data/transforms/resample.py#L39)
+**Exact API:** {py:obj}`market_data.transforms.resample.resample` · **Source:** [market_data/transforms/resample.py:35](../../../../market_data/transforms/resample.py#L35)
 
 **Inputs and outputs:**
 
@@ -23,7 +23,8 @@ This page contains 1 public callable records owned by `market_data.transforms.re
 - **Returns:**
 
   ```text
-  DataFrame returned by ``resample``.
+  Bars aggregated to ``tf``. Requesting ``M1`` returns a copy of the
+  input data.
   ```
 
 **Observed usage:**

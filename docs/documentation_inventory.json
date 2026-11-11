@@ -1,5 +1,5 @@
 {
-  "page_count": 372,
+  "page_count": 377,
   "pages": [
     {
       "links": [
@@ -1602,10 +1602,10 @@
     },
     {
       "links": [
-        "../../../../features/technical/indicators.py#L108",
+        "../../../../features/technical/indicators.py#L109",
         "../../../../tests/integration/test_session_levels_integration.py#L78",
         "../../../../features/context/liquidity.py#L132",
-        "../../../../features/technical/indicators.py#L431",
+        "../../../../features/technical/indicators.py#L468",
         "../../../../tests/unit/features/test_htf_alignment.py#L52",
         "../../../../tests/unit/features/test_htf_alignment.py#L251"
       ],
@@ -1848,13 +1848,13 @@
     },
     {
       "links": [
-        "../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L9",
+        "../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8",
         "../../../../integrations/mt5/cli/multi_symbol_trading.py#L139",
         "../../../../integrations/mt5/domain/strategies/combined_strategy.py#L43",
-        "../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L9",
+        "../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8",
         "../../../../integrations/mt5/cli/multi_symbol_trading.py#L139",
         "../../../../integrations/mt5/domain/strategies/combined_strategy.py#L43",
-        "../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L20"
+        "../../../../integrations/mt5/domain/strategies/cross_over_strategy.py#L19"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/integrations/integrations__mt5__domain__strategies__cross_over_strategy.md",
@@ -1901,15 +1901,15 @@
         "../../../../integrations/mt5/cli/multi_symbol_trading.py#L143",
         "../../../../integrations/mt5/domain/strategies/combined_strategy.py#L49",
         "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L140",
-        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L186",
+        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L181",
         "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L82",
-        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L197",
+        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L192",
         "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L105",
-        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L183",
+        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L178",
         "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L58",
         "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L36",
-        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L176",
-        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L163"
+        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L171",
+        "../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L158"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/integrations/integrations__mt5__domain__strategies__trend_breakout_strategy.md",
@@ -2381,7 +2381,7 @@
     },
     {
       "links": [
-        "../../../../market_data/transforms/resample.py#L39",
+        "../../../../market_data/transforms/resample.py#L35",
         "../../../../tests/integration/test_resample_m10.py#L24",
         "../../../../tests/integration/test_resample_m10.py#L64"
       ],
@@ -4353,7 +4353,6 @@
     },
     {
       "links": [
-        "../_static/figures/policy-action-contract.svg",
         "../reference/observation_schemas.md",
         "../reference/action_schemas.md"
       ],
@@ -4570,7 +4569,6 @@
     },
     {
       "links": [
-        "../_static/figures/stop-target-lifecycle.svg",
         "../architecture/runtime/environment_step.md",
         "../reference/risk_and_execution.md",
         "../reference/trade_setup_catalog.md",
@@ -4774,7 +4772,6 @@
     },
     {
       "links": [
-        "../_static/figures/rollout-geometry.svg",
         "../api/domains/workflows",
         "../architecture/runtime/evaluation",
         "../learn/tutorials/05_evaluation.ipynb",
@@ -4828,7 +4825,6 @@
     },
     {
       "links": [
-        "../_static/figures/feature-availability.svg",
         "../learn/tutorials/02_causal_features.ipynb",
         "../modules/market_data",
         "../modules/features",
@@ -4850,7 +4846,6 @@
     },
     {
       "links": [
-        "../_static/figures/encoder-composition.svg",
         "../learn/tutorials/advanced/custom_encoder.ipynb",
         "../architecture/model_and_policy_architecture",
         "../concepts/observations_and_actions",
@@ -5218,6 +5213,8 @@
         "tutorials/03_trading_and_risk.ipynb",
         "tutorials/04_environment.ipynb",
         "tutorials/05_evaluation.ipynb",
+        "tutorials/06_walk_forward_validation.ipynb",
+        "tutorials/07_action_schema_contract.ipynb",
         "../reproduce/index.md"
       ],
       "orphan_status": "in toctree",
@@ -5330,6 +5327,44 @@
       "type": "tutorial"
     },
     {
+      "links": [],
+      "orphan_status": "in toctree",
+      "path": "docs/learn/tutorials/06_walk_forward_validation.ipynb",
+      "primary_navigation_owner": [
+        "Learn"
+      ],
+      "section": "learn",
+      "status": "current",
+      "title": "Purged walk-forward validation",
+      "type": "tutorial"
+    },
+    {
+      "links": [
+        "../../reference/action_schemas.md"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/learn/tutorials/07_action_schema_contract.ipynb",
+      "primary_navigation_owner": [
+        "Learn"
+      ],
+      "section": "learn",
+      "status": "current",
+      "title": "Named actions and schema order",
+      "type": "tutorial"
+    },
+    {
+      "links": [],
+      "orphan_status": "in toctree",
+      "path": "docs/learn/tutorials/advanced/constrained_reward_signals.ipynb",
+      "primary_navigation_owner": [
+        "Learn"
+      ],
+      "section": "learn",
+      "status": "current",
+      "title": "Reward and cost signals",
+      "type": "tutorial"
+    },
+    {
       "links": [
         "../../../how-to/add_encoder",
         "../../../api/domains/models",
@@ -5375,6 +5410,32 @@
       "section": "learn",
       "status": "current",
       "title": "Multi-timeframe causal alignment",
+      "type": "tutorial"
+    },
+    {
+      "links": [],
+      "orphan_status": "in toctree",
+      "path": "docs/learn/tutorials/advanced/ppo_rollout_geometry.ipynb",
+      "primary_navigation_owner": [
+        "Learn"
+      ],
+      "section": "learn",
+      "status": "current",
+      "title": "PPO rollout geometry",
+      "type": "tutorial"
+    },
+    {
+      "links": [
+        "../../../concepts/sac.md"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/learn/tutorials/advanced/sac_continuous_policy.ipynb",
+      "primary_navigation_owner": [
+        "Learn"
+      ],
+      "section": "learn",
+      "status": "current",
+      "title": "SAC continuous-action policy smoke",
       "type": "tutorial"
     },
     {
@@ -5439,6 +5500,7 @@
         "orchestra.md",
         "testing.md",
         "repository_layout.md",
+        "../architecture/README.md",
         "../architecture/README.md",
         "../concepts/README.md",
         "../reference/README.md",
@@ -5602,7 +5664,9 @@
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/config/README.md",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/scripts/README.md",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/tools/README.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/baseline/README.md"
+        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/baseline/README.md",
+        "../architecture/dependency_model.md",
+        "../architecture/data_flow.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/modules/repository_layout.md",
@@ -6328,8 +6392,8 @@
         "../../features/po3/ifvg_detection.py#L251",
         "../../features/po3/trigger_rules.py#L289",
         "../../features/po3/trigger_rules.py#L372",
-        "../../features/technical/indicators.py#L108",
-        "../../features/technical/indicators.py#L431",
+        "../../features/technical/indicators.py#L109",
+        "../../features/technical/indicators.py#L468",
         "../../features/technical/swings.py#L222",
         "../../features/technical/swings.py#L26",
         "../../features/technical/swings.py#L86",
@@ -6350,7 +6414,7 @@
         "../../integrations/mt5/adapters/trader.py#L9",
         "../../integrations/mt5/adapters/trader.py#L61",
         "../../integrations/mt5/domain/strategies/combined_strategy.py#L10",
-        "../../integrations/mt5/domain/strategies/cross_over_strategy.py#L9",
+        "../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8",
         "../../integrations/mt5/domain/data_sources/mt5_data.py#L7",
         "../../integrations/mt5/domain/trader.py#L8",
         "../../integrations/mt5/domain/multi_symbol_manager.py#L11",
@@ -6378,11 +6442,11 @@
         "../../integrations/mt5/domain/risk_manager.py#L639",
         "../../integrations/mt5/domain/risk_manager.py#L18",
         "../../integrations/mt5/domain/strategies/combined_strategy.py#L10",
-        "../../integrations/mt5/domain/strategies/cross_over_strategy.py#L9",
+        "../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8",
         "../../integrations/mt5/domain/strategies/smc_strategy.py#L7",
         "../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L9",
         "../../integrations/mt5/domain/strategies/combined_strategy.py#L51",
-        "../../integrations/mt5/domain/strategies/cross_over_strategy.py#L20",
+        "../../integrations/mt5/domain/strategies/cross_over_strategy.py#L19",
         "../../integrations/mt5/domain/strategies/smc_strategy.py#L76",
         "../../integrations/mt5/domain/strategies/smc_strategy.py#L110",
         "../../integrations/mt5/domain/strategies/smc_strategy.py#L31",
@@ -6392,7 +6456,7 @@
         "../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L105",
         "../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L58",
         "../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L36",
-        "../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L163",
+        "../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L158",
         "../../integrations/mt5/domain/trader.py#L227",
         "../../integrations/mt5/domain/trader.py#L64",
         "../../integrations/mt5/domain/trader.py#L163",
@@ -6479,7 +6543,7 @@
         "../../market_data/transforms/align.py#L83",
         "../../market_data/transforms/cleaning.py#L10",
         "../../market_data/transforms/sessions.py#L83",
-        "../../market_data/transforms/resample.py#L39",
+        "../../market_data/transforms/resample.py#L35",
         "../../market_data/transforms/session_schedule.py#L13",
         "../../market_data/transforms/align.py#L25",
         "../../models/auxiliary/vae.py#L250",
@@ -6966,7 +7030,6 @@
     },
     {
       "links": [
-        "../_static/figures/evidence-lineage.svg",
         "../research/README.md",
         "../research/exit_action_semantics.md",
         "exit_action_semantics.ipynb",
@@ -7542,6 +7605,11 @@
         "../learn/tutorials/05_evaluation.ipynb",
         "../reproduce/environment_trace.ipynb",
         "../reproduce/result_registry.md",
+        "../learn/tutorials/06_walk_forward_validation.ipynb",
+        "../learn/tutorials/07_action_schema_contract.ipynb",
+        "../learn/tutorials/advanced/ppo_rollout_geometry.ipynb",
+        "../learn/tutorials/advanced/sac_continuous_policy.ipynb",
+        "../learn/tutorials/advanced/constrained_reward_signals.ipynb",
         "../concepts/execution_and_costs.md",
         "../concepts/reproducibility.md"
       ],

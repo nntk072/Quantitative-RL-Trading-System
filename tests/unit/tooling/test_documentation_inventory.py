@@ -49,7 +49,7 @@ def test_tutorial_notebooks_have_valid_tier_metadata_and_local_links() -> None:
         if validate_notebook(path)
     }
     assert failures == {}
-    assert len(notebook_paths()) == 14
+    assert len(notebook_paths()) == 19
 
 
 def test_notebook_runner_marks_only_cpu_tier_a_for_execution() -> None:

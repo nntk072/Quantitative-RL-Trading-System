@@ -1,8 +1,5 @@
 # Research result registry
 
-![Evidence lineage: A higher level requires more complete, independently checkable inputs and outputs.](../_static/figures/evidence-lineage.svg)
-
-
 This registry covers the meaningful findings linked by the
 [research index](../research/README.md), the monthly entry and exit
 attribution, and the tracked entry-idea count report. It records the strongest

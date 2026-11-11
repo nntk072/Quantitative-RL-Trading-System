@@ -14,9 +14,10 @@ unavailable. `build_pd_context_features` now preserves those active-but-unknown
 distances as nonfinite, while known-inactive ranges remain zero; the survival
 policy's versioned finite-value channels can then distinguish the states. A
 follow-up adds `htf_day_bias_available`, preserving the neutral zero bias while
-exposing whether its selected composite range exists. The feature cache
-identity is now `v43-heldout-fit-state` after held-out rows were corrected to use
-the last preceding training fit. Focused regressions cover missing
+exposing whether its selected composite range exists. The cache identity was
+advanced to `v43-heldout-fit-state` for the held-out train-only fit correction;
+it is now `v44-wilder-adx` after the ADX implementation changed to Wilder
+smoothing. Focused regressions cover missing
 ATR, missing prior-session ranges, and neutral-versus-unavailable bias; they
 are included in the consolidated suite but have not run. The v40 all-profile
 prefix and validity packets are historical for these source changes. Refresh

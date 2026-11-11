@@ -1,8 +1,4 @@
-"""Resample M1 bars to higher timeframes.
-
-All mislabeled multi-TF CSV files in the raw data folder are IGNORED.
-Every timeframe is built from the true M1 source via pandas resample().
-"""
+"""Build higher-timeframe bars from one-minute market data."""
 
 from __future__ import annotations
 
@@ -49,12 +45,12 @@ def resample(m1: pd.DataFrame, tf: TF) -> pd.DataFrame:
         tf: Target timeframe string.
 
     Returns:
-        DataFrame returned by ``resample``.
+        Bars aggregated to ``tf``. Requesting ``M1`` returns a copy of the
+        input data.
     """
     if tf == "M1":
         return m1.copy()
     rule = _TF_TO_RULE[tf]
-    # Only aggregate columns that exist in the input DataFrame
     agg_spec = {k: v for k, v in _OHLCV_AGG.items() if k in m1.columns}
     resampled = m1.resample(rule, label="left", closed="left").agg(cast(Any, agg_spec))
     resampled = resampled.dropna(subset=["open"])
@@ -65,9 +61,10 @@ def build_all_timeframes(m1: pd.DataFrame) -> dict[TF, pd.DataFrame]:
     """Build all standard timeframes from M1 data.
 
     Args:
-        m1: Tabular data used for the m1.
+        m1: One-minute bars with a :class:`~pandas.DatetimeIndex`.
 
     Returns:
-        Mapping from ``TF`` keys to ``pd.DataFrame`` values.
+        Mapping from each supported timeframe to its resampled bars. The
+        ``M1`` entry is a copy of the input data.
     """
     return {tf: resample(m1, tf) for tf in _TF_TO_RULE}

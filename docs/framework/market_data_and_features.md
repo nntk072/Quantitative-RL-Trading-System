@@ -1,8 +1,5 @@
 # Market data and features
 
-![Market-data feature flow: A higher-timeframe value becomes visible only after its source interval completes.](../_static/figures/feature-availability.svg)
-
-
 ## Overview
 
 Configured bar ingestion feeds the feature pipeline. Feature rows retain their market timestamps and session eligibility; higher-timeframe inputs become visible only after their source candles close.
@@ -21,6 +18,20 @@ flowchart LR
 ## Causality and normalization
 
 The alignment contract forward-fills the latest completed higher-timeframe candle. It never backfills from a future close. Normalization is fitted on training rows only, then applies the last known training statistics to later rows.
+
+```{mermaid}
+sequenceDiagram
+    participant H as Higher-timeframe candle
+    participant F as Aligned feature row
+    participant P as M1-close decision
+    Note over H: The candle is still forming; its final values are unknown.
+    F->>P: Before H1 close: latest completed candle
+    H-->>F: H1 closes; final values become available
+    F->>P: Next M1-close decision: completed H1 value
+```
+
+The timestamp marks a bar interval; it does not make an unfinished bar
+observable. Feature alignment changes only after the source interval closes.
 
 See the [causal features tutorial](../learn/tutorials/02_causal_features.ipynb), [market data guide](../modules/market_data), [feature guide](../modules/features), and [feature catalog](../reference/feature_catalog).
 

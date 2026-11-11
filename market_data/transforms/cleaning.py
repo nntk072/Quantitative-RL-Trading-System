@@ -1,4 +1,4 @@
-"""Clean raw bar DataFrames: dedup, sort, gap flag."""
+"""Normalize raw bar timestamps and flag gaps between bars."""
 
 from __future__ import annotations
 
@@ -16,17 +16,17 @@ def clean(df: pd.DataFrame, tz: str = "Etc/GMT-3") -> pd.DataFrame:
             It is not an absolute-timezone claim when the source clock observes DST.
 
     Returns:
-        DataFrame returned by ``clean``.
+        A sorted copy with duplicate timestamps removed (keeping the last),
+        a ``gap_flag`` column, and a timezone-aware index when the input index
+        was naive. A gap is larger than twice the modal bar interval.
     """
     df = df.copy()
-    # Remove duplicate timestamps (keep last – most recent update wins)
     df = df[~df.index.duplicated(keep="last")]
     df = df.sort_index()
-    # Localise (timestamps are naive broker-local)
     index = cast(pd.DatetimeIndex, df.index)
     if index.tz is None:
         df.index = index.tz_localize(tz, ambiguous="infer", nonexistent="shift_forward")
-        # Gap flag: True when gap to previous bar is > 2× the modal bar duration
+    # A gap is larger than twice the modal interval between bars.
     delta = cast(pd.DatetimeIndex, df.index).to_series().diff()
     modal = delta.mode().iloc[0]
     df["gap_flag"] = delta > (2 * modal)

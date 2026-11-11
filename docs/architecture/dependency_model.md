@@ -81,6 +81,7 @@ flowchart LR
     live -->|imports| decisioning
     live -->|imports| features
     live -->|imports| trading
+    integrations -->|imports| features
     integrations -->|imports| live
     compute -->|imports| artifacts
     orchestra -->|imports| artifacts
@@ -101,7 +102,7 @@ flowchart LR
 | `evaluation` | `artifacts`, `configuration`, `decisioning`, `features`, `learning`, `market_data`, `simulation`, `trading` |
 | `experiments` | `artifacts`, `compute`, `configuration`, `evaluation`, `features`, `learning`, `market_data`, `models`, `training` |
 | `live` | `configuration`, `decisioning`, `features`, `trading` |
-| `integrations` | `live` |
+| `integrations` | `features`, `live` |
 | `compute` | `artifacts` |
 | `orchestra` | `artifacts` |
 

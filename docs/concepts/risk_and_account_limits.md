@@ -1,8 +1,5 @@
 # Risk and account limits
 
-![Trade geometry: For a long position, stop distance drives size and target distance defines planned reward.](../_static/figures/trade-geometry.svg)
-
-
 Risk management has two layers. The policy can choose or react to position
 risk, while the environment enforces hard account and order guardrails. A
 learned penalty or observation feature is not a substitute for those hard
@@ -22,6 +19,13 @@ checks.
 The account observation exposes normalized ratios where the selected schema
 supports them. The guardrail implementation remains authoritative for
 accept/reject and termination decisions.
+
+For a long position, the distance from entry to stop is planned risk per unit;
+the distance from entry to target is planned reward per unit. Size and
+instrument value scale both amounts, while costs and actual fills determine
+realized outcomes.
+
+![Long-position price geometry: stop below entry defines planned risk per unit, and target above entry defines planned reward per unit.](../_static/figures/trade-geometry.svg)
 
 ## Decision flow
 

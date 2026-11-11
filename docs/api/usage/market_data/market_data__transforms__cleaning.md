@@ -23,7 +23,9 @@ This page contains 1 public callable records owned by `market_data.transforms.cl
 - **Returns:**
 
   ```text
-  DataFrame returned by ``clean``.
+  A sorted copy with duplicate timestamps removed (keeping the last),
+  a ``gap_flag`` column, and a timezone-aware index when the input index
+  was naive. A gap is larger than twice the modal bar interval.
   ```
 
 **Observed usage:**

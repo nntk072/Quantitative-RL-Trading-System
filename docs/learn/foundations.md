@@ -115,7 +115,9 @@ R1 or incomplete; it records no R3/R4 result. Read the
 3. [Trading and risk tutorial](tutorials/03_trading_and_risk.ipynb)
 4. [Environment tutorial](tutorials/04_environment.ipynb)
 5. [Evaluation tutorial](tutorials/05_evaluation.ipynb)
-6. [Reproduce a recorded result](../reproduce/index.md)
+6. [Walk-forward validation](tutorials/06_walk_forward_validation.ipynb)
+7. [Action schema contract](tutorials/07_action_schema_contract.ipynb)
+8. [Reproduce a recorded result](../reproduce/index.md)
 
 The tutorials use bounded examples; none requires GPU training or proprietary
 market data.
