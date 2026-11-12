@@ -135,6 +135,16 @@ to narrow scope before reading source.
 
 All process rules: `.agents/rules/README.md`
 
+## Shared agent roles
+
+The canonical role names, responsibilities, ownership boundaries, delegation
+protocol, and concurrency defaults live in
+`.agents/rules/agent-coordination.md`. Read it before delegating or starting
+parallel agent work. Platform-specific profiles are adapters to that shared
+contract: Codex uses `.codex/agents/`, Claude Code uses `.claude/agents/`, and
+Antigravity uses `.agents/agents/`. Keep role identity and ownership consistent
+across all three; update the shared contract first when a role changes.
+
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph
 

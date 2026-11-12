@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use for multi-file code review, impact analysis, or tracing callers and affected flows."
+---
+
 # Code-review-graph
 
 A structured review method: treat a change as a **graph** and walk it deliberately, reviewing by node priority — not by reading files top to bottom.

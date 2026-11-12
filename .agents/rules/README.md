@@ -1,8 +1,13 @@
+---
+trigger: model_decision
+description: "Rule index for choosing the applicable repository-wide agent, coding, review, CI, security, and compute instructions."
+---
+
 # Agent rules index & activation map (Quantitative-RL-Trading-System)
 
-Single source of truth for every coding agent, regardless of model or tool.
-Rules live here rather than in tool-specific folders. Entry points are root
-`AGENTS.md` and `.cursorrules`.
+Shared rule index for every coding agent, regardless of model or tool. Canonical
+engineering rules live in `AGENTS.md` and `.agents/rules/`; platform folders
+contain only native profile adapters.
 
 ## Rule files
 
@@ -28,7 +33,7 @@ Rules live here rather than in tool-specific folders. Entry points are root
 request
   ├─ ALWAYS: token-efficient-context-replies + RTK prefix (antigravity-rtk-rules)
   ├─ ALL tasks?               → agent-planning-implementation
-  ├─ delegating?              → agent-coordination + matching `.codex/agents/*.toml`
+  ├─ delegating?              → agent-coordination + matching platform profile
   ├─ running commands?        → token-efficient-shell (+ RTK)
   ├─ non-trivial feature?     → development-workflow
   │                             ├─ research/reuse first
@@ -65,3 +70,14 @@ Layered principle: **specific overrides general**.
    Stop polling after 60 seconds but leave pending jobs untouched; do not make
    overlapping requests or short diagnostic steps. Never call `scancel`.
 5. When two rules conflict, the more specific one for the current activity wins; when still ambiguous, ask before proceeding.
+
+## Platform adapters
+
+- Codex profiles: `.codex/agents/*.toml`
+- Claude Code profiles: `.claude/agents/*.md`
+- Antigravity profiles: `.agents/agents/*.md`
+
+All three use the canonical IDs in `agent-coordination.md`. Ownership changes
+belong in that shared rule first; keep platform profiles concise and aligned.
+Persistent subagent logs and handoffs belong in the Git-ignored
+`logs/agents/<canonical_role_id>/<YYYYMMDD>_<task_slug>/` directory.

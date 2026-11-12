@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use when invoking shell commands or controlling command output."
+---
+
 # Token-efficient shell and tool output
 
 Use compact commands so terminal output stays small.

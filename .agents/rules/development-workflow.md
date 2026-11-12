@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use before implementing a non-trivial feature or bug fix."
+---
+
 # Development workflow
 
 The full feature development process that happens before git operations: research, planning, TDD, code review, then committing.

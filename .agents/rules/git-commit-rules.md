@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use when staging or creating commits and following repository Git conventions."
+---
+
 # Git commit rules
 
 ## Commit message format

@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Python implementation and test conventions."
+---
+
 # Python coding standards
 
 - PEP 8 + Google-style docstrings + PEP 484 type hints.

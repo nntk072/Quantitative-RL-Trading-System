@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use when handling secrets, external inputs, sensitive code, or preparing a commit."
+---
+
 # Security rules
 
 

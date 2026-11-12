@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use when designing or changing tests and selecting test scope."
+---
+
 # Testing rules
 
 Applies to this repo's pytest setup (`tests/`).

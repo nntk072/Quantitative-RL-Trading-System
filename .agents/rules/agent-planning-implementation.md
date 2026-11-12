@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use for repository task planning, source inspection, implementation, validation, and handoff across all coding agents."
+---
+
 # Agent planning and implementation workflow
 
 These rules apply to every coding agent and model working in this repository.

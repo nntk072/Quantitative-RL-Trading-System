@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use for Triton Slurm allocation, compute-node work, training, evaluation, monitoring, or GPU/CPU resource operations."
+---
+
 # Triton / Slurm (GPU) — agent rules
 
 Triton cluster. **Canonical workdir:** `/scratch/work/nguyenl37/Quantitative-RL-Trading-System`.

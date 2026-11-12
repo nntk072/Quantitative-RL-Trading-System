@@ -1,3 +1,8 @@
+---
+trigger: always_on
+description: "Keep repository work and handoffs concise, evidence-based, and scoped."
+---
+
 # Token-efficient context and replies
 
 Rules add to every request — keep behavior tight; do not compensate with long chat.

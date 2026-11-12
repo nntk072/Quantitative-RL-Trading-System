@@ -14,24 +14,25 @@ source of truth is
 ├── README.md
 └── agents/
     ├── architect.toml
-    ├── configuration-engineer.toml
-    ├── data-engineer.toml
-    ├── rl-engineer.toml
-    ├── risk-engineer.toml
-    ├── ci-gate-engineer.toml
+    ├── ml-engineer.toml
+    ├── data-scientist-engineer.toml
+    ├── quantitative-trading-engineer.toml
+    ├── evidence-reporting-engineer.toml
+    ├── ci-operation-engineer.toml
     ├── qa-engineer.toml
     ├── independent-reviewer.toml
-    ├── experiment-compute-engineer.toml
-    ├── evidence-reporting-engineer.toml
-    └── campaign-monitor.toml
+    └── resource-monitoring-engineer.toml
 ```
 
+Use the canonical profile name as the spawned agent identity (`task_name`); put the work item in the assignment.
+
 Choose the Architect as the coordinator. It assigns only the specialist needed
-for the task: Configuration, Data, RL, Risk, Experiment & Compute, Evidence &
-Reporting, CI Gate, QA, or Independent Reviewer. The Campaign Monitor is a
-reusable one-check role for a concrete live handle; assign only one check at a
-time and reuse it after the prior result if the handle is still live. Profiles
-contain the role boundaries; see the coordination rule before delegating.
+for the task: ML, Data Scientist, Quantitative Trading, Evidence & Reporting,
+CI Operation, Resource Monitoring, QA, or Independent Reviewer. The Resource
+Monitoring Engineer owns resource/environment operations and scheduled polling;
+assign one timed check at a time and reuse the role after the prior result if
+the handle remains live. Profiles contain the role boundaries; see the shared
+coordination rule before delegating.
 
 The project default is two spawned agents plus the root (three concurrent
 agents). Reasoning effort is chosen per task at spawn time (`low`, `medium`,
@@ -46,6 +47,10 @@ Agent profiles inherit the parent session's permissions and tools. Their role
 boundaries are instructions, not access-control enforcement. Use separate Git
 worktrees for parallel writers and keep the independent reviewer read-only by
 workflow.
+
+Store persistent task logs and handoffs under the ignored
+`logs/agents/<canonical_role_id>/<YYYYMMDD>_<task_slug>/` path defined by the
+shared coordination rule.
 
 See [OpenAI's Codex custom-agent documentation](https://developers.openai.com/codex/subagents/)
 for the current profile format.

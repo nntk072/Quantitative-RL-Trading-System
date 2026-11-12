@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use when running shell commands through the Antigravity RTK CLI proxy."
+---
+
 # RTK - Rust Token Killer (Google Antigravity)
 
 **Usage**: Token-optimized CLI proxy for shell commands.

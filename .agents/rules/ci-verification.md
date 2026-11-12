@@ -1,3 +1,8 @@
+---
+trigger: model_decision
+description: "Use when selecting local checks, preparing a commit, diagnosing hosted CI, or validating repository changes."
+---
+
 # CI verification gate
 
 Applies to **all agents** (Cursor, Orchestra, Cline, Windsurf, Kilo, Vibe, etc.).
