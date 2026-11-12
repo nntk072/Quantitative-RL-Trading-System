@@ -1,199 +1,92 @@
 {
-  "arm_summaries": {
-    "a4a": {
-      "completed_positions": 987,
-      "mae_r_lower": {
-        "mean": 0.6702720696097618,
-        "median": 0.8148148148148148,
-        "n": 987,
-        "quantiles": {
-          "0.05": 0.04732406236831015,
-          "0.25": 0.2584629126731931,
-          "0.5": 0.8148148148148148,
-          "0.75": 1.0166666666666666,
-          "0.95": 1.104384328358209
-        }
-      },
-      "mae_r_upper": {
-        "mean": 0.670454527444599,
-        "median": 0.8148148148148148,
-        "n": 987,
-        "quantiles": {
-          "0.05": 0.04732406236831015,
-          "0.25": 0.2584629126731931,
-          "0.5": 0.8148148148148148,
-          "0.75": 1.0166666666666666,
-          "0.95": 1.104384328358209
-        }
-      },
-      "mfe_r_lower": {
-        "mean": 0.9596889509147317,
-        "median": 0.5694444444444444,
-        "n": 987,
-        "quantiles": {
-          "0.05": 0.0,
-          "0.25": 0.16516516516516516,
-          "0.5": 0.5694444444444444,
-          "0.75": 1.1337161175744623,
-          "0.95": 2.8712320200125077
-        }
-      },
-      "mfe_r_upper": {
-        "mean": 0.9596889509147317,
-        "median": 0.5694444444444444,
-        "n": 987,
-        "quantiles": {
-          "0.05": 0.0,
-          "0.25": 0.16516516516516516,
-          "0.5": 0.5694444444444444,
-          "0.75": 1.1337161175744623,
-          "0.95": 2.8712320200125077
-        }
-      },
-      "positions_with_entry_timestamp_ties": 5,
-      "positions_with_excursion_bounds": 2,
-      "positions_with_exit_timestamp_ties": 5,
-      "share_reaching_one_r": {
-        "definite_lower_bound": 0.3242147922998987,
-        "possible_upper_bound": 0.3242147922998987
-      }
-    },
-    "a4b": {
-      "completed_positions": 825,
-      "mae_r_lower": {
-        "mean": 0.6628575843521409,
-        "median": 0.7735849056603774,
-        "n": 825,
-        "quantiles": {
-          "0.05": 0.047196025971615235,
-          "0.25": 0.25675675675675674,
-          "0.5": 0.7735849056603774,
-          "0.75": 1.0161290322580645,
-          "0.95": 1.0934210526315788
-        }
-      },
-      "mae_r_upper": {
-        "mean": 0.6628663678391852,
-        "median": 0.7735849056603774,
-        "n": 825,
-        "quantiles": {
-          "0.05": 0.047196025971615235,
-          "0.25": 0.25675675675675674,
-          "0.5": 0.7735849056603774,
-          "0.75": 1.0161290322580645,
-          "0.95": 1.0934210526315788
-        }
-      },
-      "mfe_r_lower": {
-        "mean": 0.9443679117127995,
-        "median": 0.5516506922257721,
-        "n": 825,
-        "quantiles": {
-          "0.05": 0.0,
-          "0.25": 0.1388888888888889,
-          "0.5": 0.5516506922257721,
-          "0.75": 1.1383647798742138,
-          "0.95": 2.991613876319752
-        }
-      },
-      "mfe_r_upper": {
-        "mean": 0.9443679117127995,
-        "median": 0.5516506922257721,
-        "n": 825,
-        "quantiles": {
-          "0.05": 0.0,
-          "0.25": 0.1388888888888889,
-          "0.5": 0.5516506922257721,
-          "0.75": 1.1383647798742138,
-          "0.95": 2.991613876319752
-        }
-      },
-      "positions_with_entry_timestamp_ties": 3,
-      "positions_with_excursion_bounds": 1,
-      "positions_with_exit_timestamp_ties": 3,
-      "share_reaching_one_r": {
-        "definite_lower_bound": 0.3187878787878788,
-        "possible_upper_bound": 0.3187878787878788
-      }
-    }
+  "schema": "qrl.withdrawn_historical_result.v1",
+  "status": "withdrawn_historical_result",
+  "withdrawal": {
+    "classification": "withdrawn_historical_result",
+    "reason": "Withdrawn from current performance presentation; retained as provenance only.",
+    "original_summary_sha256": "eb1d495d6d23285b05815f1bff9c1291a405c9174288d43f30960b0f8e484f74",
+    "archived_provenance": [
+      "evidence/research/selected_policy_trade_lifecycle/trade_excursions/README.md",
+      "evidence/research/selected_policy_trade_lifecycle/trade_excursions/evidence_manifest.json"
+    ]
   },
-  "artifacts": {
-    "a4a_fills_source": {
-      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/fills.csv",
-      "sha256": "4917bc67eb7c38db16af8b69fa164f3e10cb07c3609d8288357cae39e6244357"
-    },
-    "a4a_positions_source": {
-      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/positions.csv",
-      "sha256": "bd01012fcaba7ca1959e68f7839a75ad0bea1e9b4c2ec53f449b3f28a9aa2c33"
-    },
-    "a4a_trade_excursions.csv": {
-      "role": "per_position_excursions",
-      "sha256": "0da67488141d4f00caffd1729c3f0fd36857cce8415fa9182f285b3ce5fb5ff2"
-    },
-    "a4b_fills_source": {
-      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/fills.csv",
-      "sha256": "2b82420235ffbf6d5ed4f1c8d88fcc72b40fb25e8c2af738b2ce85a6a615671c"
-    },
-    "a4b_positions_source": {
-      "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/positions.csv",
-      "sha256": "2606bea746a295bbbdeb740b381ec93ecde403141f29e76923802fe95a8b1e38"
-    },
-    "a4b_trade_excursions.csv": {
-      "role": "per_position_excursions",
-      "sha256": "c3856449ab73a635093911a40b439cca6af6ee6125bdd87f9b58624e913c7cd0"
-    }
-  },
-  "created_at_utc": "2026-11-02T16:30:47.986481+00:00",
-  "evidence_role": "descriptive per-position excursion bounds from current configured TickBook quotes; not policy replay, a cost intervention, or causal loss attribution",
-  "inputs": {
-    "arms": [
-      "a4a",
-      "a4b"
-    ],
-    "config": {
-      "arms": {
-        "a4a": {
-          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/config.yaml",
-          "price_grid_increment": 0.25,
-          "sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
-          "timezone": "Etc/GMT-3"
+  "source_identity": {
+    "created_at_utc": "2026-11-02T16:30:47.986481+00:00",
+    "period_role": "selected_pair_development_training_2024-12-30_to_2025-12-31",
+    "inputs": {
+      "arms": [
+        "a4a",
+        "a4b"
+      ],
+      "config": {
+        "arms": {
+          "a4a": {
+            "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/config.yaml",
+            "price_grid_increment": 0.25,
+            "sha256": "94d8c04ef8d600ff7d19bc6279713e6f1cd317cb7569409be9ca666c7281e411",
+            "timezone": "Etc/GMT-3"
+          },
+          "a4b": {
+            "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/config.yaml",
+            "price_grid_increment": 0.25,
+            "sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
+            "timezone": "Etc/GMT-3"
+          }
         },
-        "a4b": {
-          "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/config.yaml",
-          "price_grid_increment": 0.25,
-          "sha256": "aaf1a98bf4d5b99d17c0d77de57e3b3c7ed143ac42a6461f996692947ae875dc",
-          "timezone": "Etc/GMT-3"
-        }
+        "shared_price_grid_increment": 0.25,
+        "shared_timezone": "Etc/GMT-3"
       },
-      "shared_price_grid_increment": 0.25,
-      "shared_timezone": "Etc/GMT-3"
+      "tick_csv": {
+        "bytes": 2642226797,
+        "local_quality_report_path": "evidence/research/releases/negative-evidence-readiness/local_market_data_quality.json",
+        "local_quality_report_sha256": "591746df3966fd6f5ec980f4b826958c5abd63f4ca650ad0d5a1dd55cbb4ddf3",
+        "path": "data/training/US100.cash_202412300105_202610162349.csv",
+        "quality_report_source_sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23",
+        "sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23"
+      },
+      "tickbook_content_sha256": "e711df9823375c9d3a41ba7a4b58ac8c6f457d2d15522862baacf6ef7caa7477"
     },
-    "tick_csv": {
-      "bytes": 2642226797,
-      "local_quality_report_path": "evidence/research/releases/negative-evidence-readiness/local_market_data_quality.json",
-      "local_quality_report_sha256": "591746df3966fd6f5ec980f4b826958c5abd63f4ca650ad0d5a1dd55cbb4ddf3",
-      "path": "data/training/US100.cash_202412300105_202610162349.csv",
-      "quality_report_source_sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23",
-      "sha256": "631dbc13f17e6a974429cd00c87e9019b4f2c8f459fa9109e799c02863df5b23"
+    "artifacts": {
+      "a4a_fills_source": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/fills.csv",
+        "sha256": "4917bc67eb7c38db16af8b69fa164f3e10cb07c3609d8288357cae39e6244357"
+      },
+      "a4a_positions_source": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training/positions.csv",
+        "sha256": "bd01012fcaba7ca1959e68f7839a75ad0bea1e9b4c2ec53f449b3f28a9aa2c33"
+      },
+      "a4a_trade_excursions.csv": {
+        "role": "per_position_excursions",
+        "sha256": "0da67488141d4f00caffd1729c3f0fd36857cce8415fa9182f285b3ce5fb5ff2"
+      },
+      "a4b_fills_source": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/fills.csv",
+        "sha256": "2b82420235ffbf6d5ed4f1c8d88fcc72b40fb25e8c2af738b2ce85a6a615671c"
+      },
+      "a4b_positions_source": {
+        "path": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/training/positions.csv",
+        "sha256": "2606bea746a295bbbdeb740b381ec93ecde403141f29e76923802fe95a8b1e38"
+      },
+      "a4b_trade_excursions.csv": {
+        "role": "per_position_excursions",
+        "sha256": "c3856449ab73a635093911a40b439cca6af6ee6125bdd87f9b58624e913c7cd0"
+      }
     },
-    "tickbook_content_sha256": "e711df9823375c9d3a41ba7a4b58ac8c6f457d2d15522862baacf6ef7caa7477"
-  },
-  "measurement": {
-    "endpoint_ties": "source rows at entry/exit timestamps have unresolved sub-timestamp order; bounds include/exclude them",
-    "entry_baseline": "recorded opening fill price",
-    "excursion_units": "price points and price points divided by initial stop distance",
-    "interpretation_limits": [
-      "The export does not establish sub-timestamp chronology for tied rows.",
-      "The configured TickBook carries a missing quote side; these results measure that parser contract, not a no-carry sensitivity.",
-      "A price excursion is descriptive and does not prove a feasible alternative fill or exit policy.",
-      "The two policy arms have different trade cohorts and are summarized separately, not as a matched causal comparison.",
-      "Source clock and session labels use the selected run configuration and are not externally authoritative."
-    ],
-    "lower_bound": "strictly interior tick rows plus recorded entry and exit liquidation-side prices",
-    "price_side": "bid liquidation price for longs; ask liquidation price for shorts",
-    "tickbook_contract": "configured TickBook side carry-forward and price-grid behavior",
-    "upper_bound": "all source rows in the inclusive position interval plus recorded endpoint prices"
-  },
-  "period_role": "selected_pair_development_training_2024-12-30_to_2025-12-31",
-  "schema": "qrl.selected_policy_trade_excursions.v1"
+    "measurement": {
+      "endpoint_ties": "source rows at entry/exit timestamps have unresolved sub-timestamp order; bounds include/exclude them",
+      "entry_baseline": "recorded opening fill price",
+      "excursion_units": "price points and price points divided by initial stop distance",
+      "interpretation_limits": [
+        "The export does not establish sub-timestamp chronology for tied rows.",
+        "The configured TickBook carries a missing quote side; these results measure that parser contract, not a no-carry sensitivity.",
+        "A price excursion is descriptive and does not prove a feasible alternative fill or exit policy.",
+        "The two policy arms have different trade cohorts and are summarized separately, not as a matched causal comparison.",
+        "Source clock and session labels use the selected run configuration and are not externally authoritative."
+      ],
+      "lower_bound": "strictly interior tick rows plus recorded entry and exit liquidation-side prices",
+      "price_side": "bid liquidation price for longs; ask liquidation price for shorts",
+      "tickbook_contract": "configured TickBook side carry-forward and price-grid behavior",
+      "upper_bound": "all source rows in the inclusive position interval plus recorded endpoint prices"
+    }
+  }
 }

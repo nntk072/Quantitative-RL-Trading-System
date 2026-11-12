@@ -51,8 +51,8 @@
     }
   },
   "report_files": {
-    "selected_policy_trade_lifecycle.json": "3d7da2f871a19a13f4ad50e13a05d7d3a6df61fb5cf7075a19fab22daad34fe2",
-    "selected_policy_trade_lifecycle.md": "638677d2ce64f3bfc91e7c65cc1b96680f96461d81da68dcb37d90068b617046"
+    "selected_policy_trade_lifecycle.json": "3715ab36340ea18ecb50ebb8e0e15791c00544464b5ef765e8949baad97f78cb",
+    "selected_policy_trade_lifecycle.md": "5ea3d671d5c4b2c5693f9b7beb4f45c6b57de2e46fbe74afe3cec1110cc3fe25"
   },
   "reproduction": "python scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py --run-dir outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4b_entry_fsm_qgrid025/testing --output-dir evidence/research/selected_policy_trade_lifecycle/payout_profit_boundary/a4b_testing"
 }

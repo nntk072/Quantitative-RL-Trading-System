@@ -1,9 +1,9 @@
 {
   "assets": [
     {
-      "bytes": 2822,
+      "bytes": 813,
       "path": "README.md",
-      "sha256": "f32eca04d89e7f6dc234639f7f2f9dbc4518266561cdd9334c0ec49a7c7b656f"
+      "sha256": "a648df5dc15e9b6c2a03775707e94b05bc039f27a159ace763cc165a9a7ca813"
     },
     {
       "bytes": 3909,
@@ -11,24 +11,24 @@
       "sha256": "d88123feb637236da9a4bc58f710c82fecace29eb95ed6e7c2d2aaa7ee1dc918"
     },
     {
-      "bytes": 211403,
+      "bytes": 2051,
       "path": "a4a_testing.json",
-      "sha256": "2e782ebfe4e2086dce36c0d387e39ebce390813becec57ead0271d0e39425b65"
+      "sha256": "75557ba8d837372efb4147defad9e5faa62ab2999c59ec0565cbdad7d4b8fa36"
     },
     {
-      "bytes": 270667,
+      "bytes": 2054,
       "path": "a4a_training.json",
-      "sha256": "280cde34dd3d8d5d0123b5b25b012dfaa523b7eadef1854f141fbd96ec95137f"
+      "sha256": "a1b054104dc19442f973324a54f765b93737ece8944fda5059886a41ab60d02d"
     },
     {
-      "bytes": 211303,
+      "bytes": 2030,
       "path": "a4b_testing.json",
-      "sha256": "9fb6788ad3869bcbeee3ea6dc76c9fa4a5c42ebfbf327b8fbc655678be4522e2"
+      "sha256": "e5087ca101a0a5dcf0d027b41863dce0efc620c42fa51a36fc4814ed67cc22b1"
     },
     {
-      "bytes": 269584,
+      "bytes": 2033,
       "path": "a4b_training.json",
-      "sha256": "c3eb9996109abdc39adb01ab935d6371be982cfaccd9dee70321bffb649fbd47"
+      "sha256": "1a40786d8ae76d5c135049fa46fb5a7f5adaf1c694242d6217063098b44c55e8"
     },
     {
       "bytes": 497,
@@ -41,12 +41,21 @@
       "sha256": "9cd4e25a87885eb19ea892183a31ee6d5a0d739228b8efb76cedccdfb3a7f760"
     },
     {
-      "bytes": 4061,
+      "bytes": 1479,
       "path": "summary.json",
-      "sha256": "c7724b4c3608d86e2fe31d82f870444feb0a5307506961c668a726a336e0b12d"
+      "sha256": "abbba0d4f4ca14ac5863ed92965635724d86c6477054998a08f3b80fdce091d6"
     }
   ],
-  "claim_scope": "selected A4 recorded hard maximum-loss event reconciliation to the pinned initial-equity floor",
+  "claim_scope": "withdrawn_historical_result; source/run identity provenance only",
   "packet": "selected_run_max_loss_event_reconciliation",
-  "schema": "qrl.evidence_packet.v1"
+  "schema": "qrl.evidence_packet.v1",
+  "status": "withdrawn_historical_result",
+  "withdrawal": {
+    "classification": "withdrawn_historical_result",
+    "reason": "Withdrawn from current result presentation; source/run identity and original report digests retained as historical provenance.",
+    "archived_provenance": [
+      "evidence/research/simulator_execution_parity/max_loss_event_reconciliation/run_metadata.json",
+      "evidence/research/simulator_execution_parity/max_loss_event_reconciliation/SOURCE_SHA256SUMS"
+    ]
+  }
 }

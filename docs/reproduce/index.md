@@ -21,11 +21,20 @@ A YAML file alone does not establish R4. The [result registry](result_registry) 
 evidence_audit
 result_registry
 exit_action_semantics.ipynb
-entry_and_exit_attribution.ipynb
 entry_idea_opportunity_counts.ipynb
 environment_trace.ipynb
 setup_conditioned_evidence
 how_to_read_a_run
+```
+
+The monthly attribution notebook is retained as historical reproduction source
+but is withdrawn from the current result index. It remains in the hidden
+toctree only so the source stays part of the documentation inventory.
+
+```{toctree}
+:hidden:
+
+entry_and_exit_attribution.ipynb
 ```
 
 ## Method and evidence

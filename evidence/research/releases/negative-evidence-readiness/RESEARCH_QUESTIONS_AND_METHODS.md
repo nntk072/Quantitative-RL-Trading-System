@@ -4,9 +4,11 @@
 
 The scientific target is whether causally available multi-timeframe context and
 candidate-conditioned sequential decisions improve feasible trading outcomes
-under the configured execution costs and account-risk constraints. The active
-evidence is one negative seed-50 matched pair on 2024-12-30 through 2025-12-31,
-plus previously exposed 2026-01-01 through 2026-10-16 reporting data. That 2026
+under the configured execution costs and account-risk constraints. The archive
+includes a seed-50 matched pair on 2024-12-30 through 2025-12-31; its 2M
+performance outcomes are withdrawn from current results presentation. The
+associated 2026-01-01 through 2026-10-16 reporting data were previously
+exposed. That 2026
 interval is exploratory only; it is not a fresh holdout. Current campaign input
 hashes match their manifest, but missing/non-finite bid/ask rows and timestamp
 ties leave data-quality and execution-order gates unresolved. The configured
@@ -20,7 +22,7 @@ execution until the remaining gates pass.
 | ID | Question and estimand | Control / treatment; single factor | Unit and primary outcome | Safety, uncertainty, and multiplicity | Current disposition |
 |---|---|---|---|---|---|
 | DATA | Are synchronized bars, quotes, features, and candidate events valid at each decision time? Estimate required-field defect rates, coverage, and availability mismatches by instrument, timeframe, and period. | Exact local input and configured pipeline; compare native/resampled paths only where both are available. | Input row / decision timestamp. Primary gates: required quote completeness, causal availability, and zero unexplained material parity mismatches. | No model selection. Report denominators and exact missingness; stratify by instrument, session, month, and export period. A defect is not silently imputed or interpreted as a market closure. | **Partial for bars; failed/open overall:** 39 selected-campaign hashes match. All 30 native symbol/timeframe series have exact timestamp/OHLCV parity (532,350 development rows; 423,018 exposed-report rows). Native spread differs from M1 mean and last references. Tick exports contain missing/non-finite bid/ask rows and timestamp ties. Provider/license retrieval is outside local-data scope; authoritative schedule/DST remains unresolved. See `configured_timeframe_parity.json`. |
-| DECISION | Does exposing the entry-state machine to a setup-conditioned policy improve the risk-gated outcome? | A4A hides entry state; A4B exposes it. Preserved configs differ only in `env.entry_state_observation`; this is the declared single factor. | Independent training seed × full chronological account path. Passing the full-path hard-risk gate is a prerequisite; net return after costs is the account-level outcome. This A4A/A4B factor comparison is secondary to the primary policy-versus-no-trade selection contrast. | Paired seeds/configs; report every path, including stopped paths. Use run/seed as the replication unit; trades are not independent replicates. Do not select a model from this factor contrast alone. | **Negative, one seed:** both arms failed the historical strict zero-breach gate and completed the data split. March `daily_loss` means a historical gross realized-loss counter breach, not net daily-equity drawdown; this does not establish benefit or harm from visible state. This pair does not compare setup-conditioned against unconditioned policies. |
+| DECISION | Does exposing the entry-state machine to a setup-conditioned policy improve the risk-gated outcome? | A4A hides entry state; A4B exposes it. Preserved configs differ only in `env.entry_state_observation`; this is the declared single factor. | Independent training seed × full chronological account path. Passing the full-path hard-risk gate is a prerequisite; net return after costs is the account-level outcome. This A4A/A4B factor comparison is secondary to the primary policy-versus-no-trade selection contrast. | Paired seeds/configs; report every path, including stopped paths. Use run/seed as the replication unit; trades are not independent replicates. Do not select a model from this factor contrast alone. | **Withdrawn historical outcome:** the seed-50 A4A/A4B 2M result is excluded from current comparison and selection. Keep the declared configuration contrast and run identities for protocol/history only; no current performance claim is made. |
 | PRICE | Does explicit candidate price geometry and history improve decisions over class-ID conditioning? | M1 class-ID setup conditioning vs M3 shared candidate-geometry scorer/conditional actor; change candidate geometry input only. | Eligible candidate × decision time, with account path as economic unit. Candidate-ranking quality under calibrated labels is a representation diagnostic, not the primary account-level selection outcome; the candidate policy must still pass the no-trade economic selection gate. | Fit labels/calibration on training folds only; purge label horizons and embargo fold boundaries. Report calibration and decision utility separately. Reject the comparison if geometry or labels use future path information. | **Not tested:** candidate census, price-grid audit, current real-data causality, and label integrity are incomplete. |
 | LEARNING | Does RL outperform supervised candidate ranking as a secondary learning comparison, and do candidate policies demonstrate value over taking no trade? | Same candidate set, observation, costs, and risk semantics: always-no-trade is the primary policy-selection control; seeded random, simple rules, supervised ranker, and RL actor are secondary comparisons. RL vs supervised ranker is secondary. | Full chronological account path per independent seed. Primary selection outcome: paired treatment-minus-always-no-trade net return on initial operating equity, after the hard-risk gate. | Match tradability and exposure; random baseline uses recorded seeds. Require at least six paired seeds plus a prospectively powered fixed count; report every path. Use exact one-sided paired sign-flip for up to 15 pairs, or the prospectively selected 100,000-draw Monte Carlo sign-flip above 15; use a paired seed-level bootstrap. No candidate is selected on exposed 2026. | **Not comparable yet:** the complete matched baseline registry, label audit, and independent-seed runs do not exist. No model is selected. |
 | ROBUST | Does a selected improvement persist across independent seeds, chronological folds, regimes, and cost stress? | Frozen finalist vs its matched control across predeclared folds, seeds, and cost scenarios; change only the declared stress factor within each contrast. This is a secondary stress diagnostic; the primary policy-selection contrast remains treatment versus always-no-trade. | Seed × chronological fold × cost scenario, with full path retained. Hard-risk survival in every required scenario is a gate; paired net-return delta and drawdown are secondary summaries. | Require independent seeds and untouched future confirmation before confirmatory language. Do not create a second model-selection primary from stress results. The exposed 2026 interval is excluded from selection and confirmation. | **Not answerable with present data:** one seed, no untouched holdout; 2026 is exposed. Obtain new eligible data/period before claiming confirmation. |
@@ -112,16 +114,12 @@ execution until the remaining gates pass.
 
 ## Claims supported now
 
-- The selected seed-50 matched pair failed its strict zero-breach training
-  risk-survival gate. Both evaluations reached `data_end`; the March timestamps
-  are first breach events, not terminal episode stops. The March `daily_loss`
-  events use legacy semantics that sum losing closes without offsetting gains;
-  they are not net daily-equity breaches. A4B also had a later
-  maximum-drawdown event. The [trace dossier](gross_realized_loss_counter_breach_trace.md)
-  reconciles the counter to the close ledgers.
-- The March-to-April paired-trade decomposition and EMA21 reference are
-  descriptive arithmetic, not a causal intervention or portfolio
-  counterfactual.
+- The selected seed-50 matched-pair performance, risk-survival, breach-event,
+  and derived trade summaries are withdrawn from current claims. Legacy risk
+  semantics and the declared A4A/A4B configuration contrast remain protocol
+  and provenance only; they do not establish current daily-equity behavior.
+  See the withdrawal stub at
+  [gross realized-loss counter trace](gross_realized_loss_counter_breach_trace.md).
 - The prior 100k screens failed their maximum-loss gate. These are one-seed
   negative screens, not evidence that RL outperforms its controls.
 - The current training-only conditional candidate replay yielded 1,067,731

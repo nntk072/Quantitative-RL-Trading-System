@@ -1,12 +1,10 @@
 # Selected checkpoint training replay
 
-This packet records seeded stochastic, training-split-only replays of the two
-selected seed-50 A4 checkpoints. Both replay reports reproduce the saved
-training metrics for trade count, return, Sharpe, maximum drawdown, and breach
-count. Both paths failed the full-evaluation survival gate. This verifies the
-serialized checkpoint execution for the recorded training mode; it does not
-repair the failed candidate, authorize another training campaign, establish
-causal failure attribution, or evaluate the report-period split.
+**Status: withdrawn historical result.** The seed-50 A4A/A4B replay metrics and
+survival outcomes are removed from current performance presentation. The
+tracked JSON is a provenance stub preserving source, run, input, and replay
+report hashes. The prior result payload remains in Git history; external replay
+reports and raw logs remain archive provenance only.
 
 The reports use the pinned training source commit
 `0d056dcd3ab42165eec183a2f44cfe7e441edd39`. Its reanalysis CLI received one
@@ -17,10 +15,10 @@ are covered by the repository's reanalysis tests.
 
 The full JSON screens and raw logs remain outside the repository at
 `/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/checkpoint_replay_a4_pinned_0d056dc/`.
-Their output hashes, source run identities, input identities, and exact
-replayed metrics are summarized in `replay_verification.json`. The A4B raw log
-contains an interrupted duplicate process entry; the successful output JSON
-was separately validated against its source run and is the evidence artifact.
+Their output hashes and source run/input identities are retained in the
+withdrawal stub. Do not cite those reports as current performance evidence or
+model-selection results. The A4B raw log contains an interrupted duplicate
+process entry; that historical operational detail is retained in the archive.
 
 The replayed train interval contains 351,432 bars from 2024-12-30 through
 2025-12-31. Each output explicitly records `test_split_evaluated: false`.

@@ -9,45 +9,14 @@ exploratory evidence; they do not establish an untouched out-of-sample claim.
 
 ## Selected matched pair
 
-The recovered selected pair is seed 50, 2 million training steps, and 32
-environments on the 2024-12-30 through 2025-12-31 training interval. Both arms
-failed the campaign's strict zero-breach training risk-survival gate, but both
-evaluations reached `data_end` and completed the configured data split. The
-generic gate reason `max_loss_stopped_trading` does not name the underlying
-breach type.
-The A4A treatment recorded 987 positions and −2.154% net return. Its aggregate
-ledger endpoint, $97,845.69, is above the $90,000 floor. The A4B control
-recorded 825 positions and −10.056%, ending at $89,943.95, $56.05 below that
-floor. These total-ledger endpoints and the per-episode gate answer different
-questions; the campaign risk gate failed for both arms.
-
-The first breach events occurred on 2025-03-06 at 20:16 (A4A) and 20:32 (A4B),
-in broker wall-clock UTC+03. The campaign used `trading_policy.mode=legacy`:
-its `daily_loss` counter accumulated gross negative closed-trade P&L without
-offsetting profitable closes or measuring net daily equity. Through those
-events, the close ledgers show gross negative P&L of $5,017.66 / $5,399.25 and
-net realized close P&L of −$3,004.28 / −$3,389.32 for A4A / A4B. These are
-breaches of the configured historical counter, not evidence of a net
-FTMO-style daily-equity breach. A4B also had a separate `max_drawdown` event on
-2025-10-28. The stored `fail_time` is the first breach timestamp, not a
-terminal stop: both evaluations separately record that they reached the end
-of the configured data split. The trace explains how the gross realized-loss counter
-crossed its threshold, but not why the policy entered the stopped trades; see
-the [risk-gate trace](gross_realized_loss_counter_breach_trace.md).
-
-The training entry funnel adds a separate mechanism trace: 88.3% of treatment
-entry requests and 91.1% of control requests were rejected because the entry
-state machine was not armed. Downstream cooldown, stop, reward/risk, and
-session-boundary rejections are recorded separately. This localizes substantial
-action-interface attrition but does not explain the losing equity path or
-establish whether a different action mask would improve economics; see the
-[entry-action funnel diagnosis](entry_action_funnel_diagnosis/entry_action_funnel_diagnosis.md).
-
-The paired March-to-April gross-mean-R change was −0.2177 for A4A and −0.2238
-for A4B. The month-stratified 95% intervals were [−0.5837, 0.1429] and
-[−0.5656, 0.1118], respectively. Both include zero. The fixed-entry EMA21
-reference decomposes arithmetic across saved cohorts; it does not simulate a
-new policy or identify a causal entry/exit effect.
+The seed-50 A4A/A4B run identity is retained: two million requested training
+steps, 32 environments, and the 2024-12-30 through 2025-12-31 interval. The
+archived resolved configurations declare the `env.entry_state_observation`
+contrast. Performance, survival, and derived trade-outcome summaries from this
+pair are withdrawn from current results presentation. The original source
+snapshot, run manifests, configurations, and evidence packets remain for
+provenance and reproducibility only. No current performance comparison or
+policy-selection claim is made from this pair.
 
 ## Earlier policy screens
 
@@ -74,10 +43,9 @@ historical RL checkpoint, multi-seed estimates, or viable strategy claims.
 
 ## Exposed report period
 
-2026-01-01 through 2026-10-16 was already inspected and is report-only. The
-recovered pair's report-period replays ended at −10.0016% for A4A and −10.3679%
-for A4B; both failed the account floor. They cannot be relabeled as a fresh
-holdout by rerunning them.
+The 2026-01-01 through 2026-10-16 interval was previously inspected and is
+report-only. Seed-50 A4A/A4B replay outcomes are withdrawn from current results
+presentation and cannot be relabeled as a fresh holdout by rerunning them.
 
 ## Configured multi-timeframe data
 

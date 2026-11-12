@@ -196,13 +196,10 @@ Exact output and test/source hashes are included. This strengthens bounded
 contract coverage; it does not close the broader lifecycle/accounting gate or
 historical policy linkage.
 
-## Selected-run maximum-loss events
+## Selected-run maximum-loss events — withdrawn
 
-`max_loss_event_reconciliation/` independently checks hard maximum-loss breach
-rows against the four saved A4 equity series and the pinned initial-equity
-allowance. Three recorded events match both the first sampled crossing below
-$90,000 and an exact saved equity value; the A4A training partition has no
-crossing or event. The configs do not record `max_drawdown_mode`, so the packet
-verifies only the $90,000 initial-equity floor and does not infer EOD or
-intraday ratchets. It does not replay the historical policies or close the
-broader Stage E accounting gate.
+**Status: withdrawn historical result.** Seed-50 A4A/A4B 2M risk outcomes and
+event comparisons are excluded from current results, comparison, and selection.
+The report summaries are withdrawal stubs; run/source identities, original
+report digests, and source hash ledgers remain for historical provenance only.
+See `max_loss_event_reconciliation/README.md` for the packet scope.

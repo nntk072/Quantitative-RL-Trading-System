@@ -1,77 +1,53 @@
 {
   "claims": [
     {
-      "allowed_interpretation": "Bounded negative historical evidence for this selected pair under its recorded legacy risk semantics.",
-      "claim_id": "selected_pair_failed_declared_viability_gate",
+      "claim_id": "selected_seed50_pair_withdrawn_historical_result",
+      "statement": "The historical A4A/A4B 2M result is withdrawn; this record makes no current performance claim.",
       "comparison_ids": [
         "selected_seed50_training_pair"
       ],
+      "allowed_interpretation": "Run and source identity provenance only.",
       "forbidden_overclaims": [
-        "A net daily-equity or FTMO-style daily-loss breach was demonstrated.",
-        "Either arm was shown to be superior.",
-        "An untouched confirmation result exists.",
-        "The policies are universally nonviable."
+        "Treat as current performance evidence or as the forthcoming benchmark.",
+        "Use for model selection or confirmation."
       ],
       "limitations": [
-        "Both evaluations reached data_end; the failure does not mean that the data split was incomplete.",
-        "The recorded daily_loss events use a gross realized-loss counter that sums negative closed-trade PnL without offsetting winning closes.",
-        "The exposed 2026 report-period cannot be used as confirmation.",
-        "The pair is one seed; its 6-vs-10 account widths are the declared entry-state visibility treatment, and preserved resolved configs differ only at env.entry_state_observation."
-      ],
-      "statement": "The selected seed-50 treatment and control both failed the configured strict zero-breach training risk-survival gate."
+        "Historical outcomes are withdrawn from current presentation.",
+        "The run identities and source artifact hashes are preserved for provenance."
+      ]
     }
   ],
   "comparisons": [
     {
       "comparison_id": "selected_seed50_training_pair",
-      "evidence_role": "historical selected-pair descriptive comparison",
-      "metrics": [
-        {
-          "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4A/seed50",
-          "completed_positions": 987,
-          "net_return_pct": -2.154,
-          "aggregate_end_equity": 97845.69,
-          "breach_events": 1,
-          "survival_gate": "failed"
-        },
-        {
-          "run_id": "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4B/seed50",
-          "completed_positions": 825,
-          "net_return_pct": -10.056,
-          "aggregate_end_equity": 89943.95,
-          "breach_events": 2,
-          "survival_gate": "failed"
-        }
-      ],
+      "evidence_role": "withdrawn_historical_result; provenance only",
       "limitations": [
-        "One seed and one previously inspected selection pair.",
-        "The two policy arms have 6-versus-10 account-observation widths because env.entry_state_observation is the declared single-factor treatment; the inputs are not identical, and the single seed does not establish a robust benefit.",
-        "The historical gross realized-loss counter is not net daily-equity semantics."
+        "Historical derived outcomes are not current claims.",
+        "This record does not report comparative performance."
       ],
       "question": "Did either arm pass the predeclared strict zero-breach training survival gate on the configured 2025 training interval?",
-      "result": "Both arms reached data_end and completed the configured split; both failed the declared risk-survival gate. The A4A/A4B outcome difference is descriptive, not causal.",
+      "result": "Withdrawn from current performance presentation. Use only the preserved run and source identities for provenance.",
       "run_ids": [
         "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4A/seed50",
         "rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/A4B/seed50"
       ],
-      "status": "complete"
+      "status": "withdrawn_historical_result"
     }
   ],
   "created_at_utc": "2026-11-01T23:22:06Z",
-  "evidence_grade": "R2 with unresolved scientific gates; not confirmatory",
-  "finding_id": "selected_seed50_pair_did_not_establish_risk_viability",
-  "finding_status": "negative_exploratory_historical",
+  "evidence_grade": "withdrawn_historical_result; provenance identity only",
+  "finding_id": "selected_seed50_pair_withdrawn_historical_result",
+  "finding_status": "withdrawn_historical_result",
   "frozen_at_utc": null,
-  "hypothesis": "The selected treatment would complete the configured full training split without a risk-gate breach.",
+  "hypothesis": "Historical hypothesis retained for protocol lineage; no current result claim is made.",
   "limitations": [
-    "Draft result identity: unavailable historical fields remain explicit unknowns with reasons.",
-    "No raw tick/bar files are copied into this packet.",
-    "No new model training, checkpoint replay, or independent evaluation was performed.",
-    "Provider/license lookup remains excluded by user direction; no rights claim is made."
+    "Historical derived outcomes are withdrawn from current thesis/results presentation.",
+    "No current performance comparison, model-selection claim, or confirmatory claim is made from this record.",
+    "Run, configuration, checkpoint, campaign, and source artifact identities remain for provenance."
   ],
   "manifest_status": "draft",
   "protocol_path": "docs/operations/research_execution_plan.md",
-  "research_question": "Did the selected seed-50 entry-state treatment and control establish the declared full-split risk-survival gate under the historical execution/account contract?",
+  "research_question": "Historical seed-50 A4A/A4B run identity; outcomes are withdrawn from current performance presentation.",
   "runs": [
     {
       "artifacts": [
@@ -93,7 +69,7 @@
           "notes": "Shared interpretation of historical gross realized-loss counter breaches.",
           "path": "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
           "role": "risk_gate_trace",
-          "sha256": "ce4c93b971e124139a9b48add8cb2e2229d34246dc39920617c611be3e81a641"
+          "sha256": "23eed5437b514d823bcc6483d1217181295a26a380637e805c50a25ce02ec57b"
         }
       ],
       "identity": {
@@ -239,7 +215,7 @@
           "notes": "Shared interpretation of historical gross realized-loss counter breaches.",
           "path": "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
           "role": "risk_gate_trace",
-          "sha256": "ce4c93b971e124139a9b48add8cb2e2229d34246dc39920617c611be3e81a641"
+          "sha256": "23eed5437b514d823bcc6483d1217181295a26a380637e805c50a25ce02ec57b"
         }
       ],
       "identity": {
@@ -369,16 +345,16 @@
   "schema": "qrl.research_result_manifest.v2",
   "supporting_artifacts": [
     {
-      "notes": "Canonical bounded negative-result narrative.",
+      "notes": "Historical summary with current-content withdrawal notice; no current outcome claim.",
       "path": "evidence/research/releases/negative-evidence-readiness/CONSOLIDATED_RESEARCH_RESULTS.md",
       "role": "results_summary",
-      "sha256": "f8b4775198ecfe501af1402bb96d38d2553c54f3a41950655639f2bf239e8eed"
+      "sha256": "b3b14a25c0a19df39e93ff6e3051d8cd94ba8f517e14b4b3faa2bf7433217f56"
     },
     {
       "notes": "Historical gross realized-loss counter trace and interpretation.",
       "path": "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
       "role": "risk_gate_semantics",
-      "sha256": "ce4c93b971e124139a9b48add8cb2e2229d34246dc39920617c611be3e81a641"
+      "sha256": "23eed5437b514d823bcc6483d1217181295a26a380637e805c50a25ce02ec57b"
     }
   ]
 }

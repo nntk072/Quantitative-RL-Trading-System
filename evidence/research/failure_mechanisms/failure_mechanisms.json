@@ -1,191 +1,38 @@
 {
-  "schema_version": 1,
-  "evidence_class": "historical_development_not_confirmatory",
-  "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
-  "period": {
-    "role": "development_only",
-    "start": "2024-12-30",
-    "end": "2025-12-31",
-    "exposed_2026_used": false
+  "schema": "qrl.withdrawn_historical_result.v1",
+  "status": "withdrawn_historical_result",
+  "withdrawal": {
+    "classification": "withdrawn_historical_result",
+    "reason": "Withdrawn from current performance presentation; retained as provenance only.",
+    "original_summary_sha256": "af84e7d4533a84a78c086f393969c3bb574ab9426be559f314e6135279118b4f",
+    "archived_provenance": [
+      "evidence/research/failure_mechanisms/README.md"
+    ]
   },
-  "arms": {
-    "a4a_treatment": {
-      "positions": 987,
-      "recorded_bid_ask_net_usd": -2154.314881668255,
-      "ending_equity_usd": 97845.69,
-      "return_pct": -2.154,
-      "gross_negative_closes_to_first_gross_counter_crossing_usd": 5017.66,
-      "net_realized_close_pnl_to_first_gross_counter_crossing_usd": -3004.28,
-      "entry_requests": 47706,
-      "unarmed_entry_requests": 42126,
-      "unarmed_entry_request_share": 0.8830335806816753,
-      "candidates_created": 1969,
-      "candidates_invalidated": 978,
-      "midpoint_pnl_usd": 15936.722286683638,
-      "mean_midpoint_to_bid_ask_drag_r": 0.037388565425059056,
-      "march_april_gross_mean_r_change": -0.21772192245751512,
-      "march_april_gross_mean_r_change_ci95": [-0.5836972820559079, 0.14286408943295925],
-      "ppo_metrics_rows": 245,
-      "ppo_metrics_finite_rows": 244,
-      "median_approx_kl": 0.005018,
-      "median_explained_variance": 0.04393,
-      "median_dashboard_grad_norm_sample": 0.970,
-      "dashboard_grad_norm_samples": 21,
-      "ppo_metric_summaries": {
-        "entropy_loss": {"first_finite": -17.0193, "last": -15.6744, "p05": -16.9131, "median": -16.2758, "p95": -15.7282},
-        "policy_gradient_loss": {"first_finite": -0.003093, "last": -0.003432, "p05": -0.003396, "median": -0.002364, "p95": -0.001263},
-        "value_loss": {"first_finite": 6.5483, "last": 2.4010, "p05": 0.1470, "median": 3.2454, "p95": 7.9276},
-        "approx_kl": {"first_finite": 0.004356, "last": 0.005404, "p05": 0.003621, "median": 0.005018, "p95": 0.006608},
-        "clip_fraction": {"first_finite": 0.03881, "last": 0.08547, "p05": 0.02121, "median": 0.04021, "p95": 0.068999},
-        "loss": {"first_finite": 3.2739, "last": 1.1740, "p05": 0.04211, "median": 1.60086, "p95": 3.77698},
-        "explained_variance": {"first_finite": 0.0, "last": 0.10423, "p05": -0.00522, "median": 0.04393, "p95": 0.22868, "minimum": -0.2383, "maximum": 0.9278}
-      }
+  "source_identity": {
+    "schema_version": 1,
+    "campaign_fingerprint": "b37580606ca374326bce7207fb7eef118cede36cf0eaad25d37be9465bb4e1e4",
+    "period": {
+      "role": "development_only",
+      "start": "2024-12-30",
+      "end": "2025-12-31",
+      "exposed_2026_used": false
     },
-    "a4b_control": {
-      "positions": 825,
-      "recorded_bid_ask_net_usd": -10056.04901299791,
-      "ending_equity_usd": 89943.95,
-      "return_pct": -10.056,
-      "gross_negative_closes_to_first_gross_counter_crossing_usd": 5399.25,
-      "net_realized_close_pnl_to_first_gross_counter_crossing_usd": -3389.32,
-      "entry_requests": 52282,
-      "unarmed_entry_requests": 47612,
-      "unarmed_entry_request_share": 0.9106767147392985,
-      "candidates_created": 2412,
-      "candidates_invalidated": 1582,
-      "midpoint_pnl_usd": 4268.816063340764,
-      "mean_midpoint_to_bid_ask_drag_r": 0.03729518043780703,
-      "march_april_gross_mean_r_change": -0.22376042857902093,
-      "march_april_gross_mean_r_change_ci95": [-0.5655796837055083, 0.11180292302738001],
-      "ppo_metrics_rows": 245,
-      "ppo_metrics_finite_rows": 244,
-      "median_approx_kl": 0.005023,
-      "median_explained_variance": 0.04719,
-      "median_dashboard_grad_norm_sample": 1.108,
-      "dashboard_grad_norm_samples": 21,
-      "ppo_metric_summaries": {
-        "entropy_loss": {"first_finite": -17.0198, "last": -15.9037, "p05": -16.9200, "median": -16.4939, "p95": -15.9987},
-        "policy_gradient_loss": {"first_finite": -0.002959, "last": -0.002467, "p05": -0.003365, "median": -0.002284, "p95": -0.001324},
-        "value_loss": {"first_finite": 6.5047, "last": 2.5817, "p05": 0.14334, "median": 3.28079, "p95": 8.03713},
-        "approx_kl": {"first_finite": 0.006155, "last": 0.005925, "p05": 0.003747, "median": 0.005023, "p95": 0.006781},
-        "clip_fraction": {"first_finite": 0.04076, "last": 0.05534, "p05": 0.02104, "median": 0.03945, "p95": 0.06481},
-        "loss": {"first_finite": 3.2634, "last": 1.17875, "p05": 0.04195, "median": 1.58772, "p95": 3.89324},
-        "explained_variance": {"first_finite": 0.0, "last": 0.10331, "p05": -0.00480, "median": 0.04719, "p95": 0.23330, "minimum": -0.5195, "maximum": 0.9083}
-      }
+    "sources": [
+      "evidence/research/releases/negative-evidence-readiness/CONSOLIDATED_RESEARCH_RESULTS.md",
+      "evidence/research/releases/negative-evidence-readiness/entry_action_funnel_diagnosis/entry_action_funnel_diagnosis.json",
+      "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
+      "evidence/research/entry_and_exit_attribution/monthly_entry_exit_summary.json",
+      "evidence/research/fill_quote_source_alignment/selected_campaign_fill_quote_alignment.json",
+      "evidence/research/failure_mechanisms/ppo_training_dynamics.json",
+      "evidence/research/releases/negative-evidence-readiness/local_market_data_quality.json",
+      "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/*/model/training_log.csv",
+      "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/*/model/dashboard_log.csv"
+    ],
+    "scope_disposition": {
+      "provider_rights": "excluded at user direction; current local data only",
+      "external_calendar_or_clock_authority": "excluded at user direction; no authority claim",
+      "new_training_or_checkpoint_replay": "not performed; earlier scientific gates remain open"
     }
-  },
-  "findings": [
-    {
-      "id": "entry_fsm_attrition",
-      "status": "measured_not_causal",
-      "interpretation": "Most recorded entry requests were rejected while the entry state machine was not armed; candidates were nevertheless created in both arms.",
-      "limits": [
-        "The historical run does not preserve a complete candidate-to-policy-choice trace.",
-        "Counts do not distinguish mask, policy, decoder, candidate-lifetime, and FSM-contract causes.",
-        "Counts do not explain the economic outcome."
-      ]
-    },
-    {
-      "id": "midpoint_to_bid_ask_drag",
-      "status": "measured_quote_path_with_chronology_limits",
-      "interpretation": "At retained fill timestamps, midpoint PnL is positive for both arms while recorded executable bid/ask PnL is negative.",
-      "limits": [
-        "This is a fixed-fill accounting decomposition, not a cost intervention or a deployable midpoint result.",
-        "Fill-to-source alignment finds 16 changed-quote timestamp groups and 87 missing-side groups among 3,698 events; parser carry/grid match does not prove quote availability or broker execution.",
-        "Unknown provider clock and equal-timestamp row order limit interpretation of selected quote rows."
-      ]
-    },
-    {
-      "id": "march_april_entry_exit_change",
-      "status": "interval_includes_zero",
-      "interpretation": "The saved March-to-April gross mean-R change intervals include zero for both arms; entry-cohort and conditional EMA21-exit components do not identify a separated cause.",
-      "limits": [
-        "The EMA21 reference is conditional on historical entries and is not a causal policy or account-path counterfactual.",
-        "This is not a full-year mechanism analysis."
-      ]
-    },
-    {
-      "id": "ppo_learning_health",
-      "status": "partial_telemetry_no_nonfinite_ppo_metrics_observed",
-      "interpretation": "Recorded PPO metrics are finite after the first dashboard row; sampled losses, entropy, KL, clip fraction, and explained-variance values do not establish effective learning.",
-      "limits": [
-        "No gradient-norm or constrained-PPO dual/cost updates are recorded in training_log.csv.",
-        "Dashboard gradient norms and zero cost/breach values are 21 sampled snapshots, not continuous history.",
-        "No predeclared metric acceptance thresholds establish stability."
-      ]
-    },
-    {
-      "id": "fill_to_source_quote_alignment",
-      "status": "parser_consistency_verified_not_market_execution_verified",
-      "tick_backed_events": 3698,
-      "entries": 1812,
-      "exits": 1886,
-      "events_in_changed_quote_timestamp_groups": 16,
-      "events_in_groups_with_missing_required_side": 87,
-      "events_with_parser_carried_required_side": 87,
-      "fill_prices_matching_configured_grid_parser": 3698,
-      "fill_prices_matching_stable_parser_without_grid": 667,
-      "limits": [
-        "Parser reconstruction does not establish source row chronology, provider clock, order-arrival availability, or broker execution.",
-        "The 87 carried-side events and 16 changed-quote events retain source chronology uncertainty."
-      ]
-    },
-    {
-      "id": "local_tick_quality",
-      "status": "measured_with_execution_chronology_limits",
-      "tick_rows": 172290383,
-      "rows_missing_or_nonfinite_required_quote_side": 371390,
-      "adjacent_timestamp_ties": 329471,
-      "ties_with_changed_quotes": 328918,
-      "ties_with_missing_quote": 553,
-      "training_m1_minutes_without_ticks_per_instrument": 23,
-      "interpretation": "These counts limit executable-price interpretation but do not identify which prices a historical policy could have received."
-    }
-  ],
-  "rejected_interpretations": [
-    {
-      "claim": "The first fail_time means the evaluation stopped there.",
-      "disposition": "rejected",
-      "reason": "Both training evaluations recorded completion at the end of the configured split."
-    },
-    {
-      "claim": "The March daily_loss breach measures net daily-equity loss.",
-      "disposition": "rejected",
-      "reason": "The historical gross realized-loss counter accumulated gross negative closed-trade PnL without positive-close offsets or open PnL."
-    },
-    {
-      "claim": "2026 report-period replay is a fresh holdout.",
-      "disposition": "rejected",
-      "reason": "The period was already inspected and remains report-only."
-    }
-  ],
-  "unresolved_alternatives": [
-    "candidate scarcity versus mask, lifetime, or FSM behavior",
-    "policy choice versus decoder and order-validation attrition",
-    "signal quality versus exit policy and risk sizing",
-    "bid/ask drag versus same-timestamp quote-order ambiguity and missing-side carry",
-    "continuous optimizer health and any effect of training dynamics on policy behavior"
-  ],
-  "next_single_factor_candidate": {
-    "factor": "entry/FSM action-eligibility interface",
-    "prerequisites": ["Stage D feature/data acceptance", "Stage E execution/account acceptance", "predeclared eligible validation period"],
-    "hold_fixed": ["features", "candidate semantics", "execution", "costs", "risk", "training budget", "seed design"],
-    "authorization": "not authorized by this diagnosis"
-  },
-  "scope_disposition": {
-    "provider_rights": "excluded at user direction; current local data only",
-    "external_calendar_or_clock_authority": "excluded at user direction; no authority claim",
-    "new_training_or_checkpoint_replay": "not performed; earlier scientific gates remain open"
-  },
-  "sources": [
-    "evidence/research/releases/negative-evidence-readiness/CONSOLIDATED_RESEARCH_RESULTS.md",
-    "evidence/research/releases/negative-evidence-readiness/entry_action_funnel_diagnosis/entry_action_funnel_diagnosis.json",
-    "evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md",
-    "evidence/research/entry_and_exit_attribution/monthly_entry_exit_summary.json",
-    "evidence/research/fill_quote_source_alignment/selected_campaign_fill_quote_alignment.json",
-    "evidence/research/failure_mechanisms/ppo_training_dynamics.json",
-    "evidence/research/releases/negative-evidence-readiness/local_market_data_quality.json",
-    "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/*/model/training_log.csv",
-    "outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/runs/attempts/*/model/dashboard_log.csv"
-  ]
+  }
 }

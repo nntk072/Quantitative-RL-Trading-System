@@ -5836,7 +5836,6 @@
       "links": [
         "../research/survival_runtime_correctness_smoke_20261110.md",
         "../research/pretraining_implementation_readiness_20261110.md",
-        "../research/selected_policy_trade_lifecycle.md",
         "../research/validation_protocol.md",
         "../research/entry_and_exit_attribution.md",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/entry_and_exit_attribution/README.md",
@@ -6927,9 +6926,7 @@
       ],
       "orphan_status": "in toctree",
       "path": "docs/reproduce/entry_and_exit_attribution.ipynb",
-      "primary_navigation_owner": [
-        "Reproduce"
-      ],
+      "primary_navigation_owner": [],
       "section": "reproduce",
       "status": "current",
       "title": "Monthly entry and exit attribution",
@@ -7034,8 +7031,6 @@
         "../research/README.md",
         "../research/exit_action_semantics.md",
         "exit_action_semantics.ipynb",
-        "../research/entry_and_exit_attribution.md",
-        "entry_and_exit_attribution.ipynb",
         "../research/entry_idea_opportunity_counts.md",
         "entry_idea_opportunity_counts.ipynb",
         "../research/setup_conditioned_policy_replay.md",
@@ -7108,7 +7103,6 @@
         "limitations",
         "entry_and_exit_attribution",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/entry_and_exit_attribution",
-        "../reproduce/entry_and_exit_attribution.ipynb",
         "selected_policy_trade_lifecycle",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/selected_policy_trade_lifecycle",
         "fill_quote_availability",
@@ -7171,11 +7165,7 @@
     },
     {
       "links": [
-        "../reproduce/entry_and_exit_attribution.ipynb",
-        "../../evidence/research/entry_and_exit_attribution/monthly_entry_exit_attribution.png",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/entry_and_exit_attribution",
-        "../reproduce/result_registry.md",
-        "../operations/research_execution_plan.md"
+        "../../evidence/research/entry_and_exit_attribution/"
       ],
       "orphan_status": "in toctree",
       "path": "docs/research/entry_and_exit_attribution.md",
@@ -7439,16 +7429,12 @@
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/tick_quote_coverage/README.md",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/candidate_outcome_coverage/README.md",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/candidate_outcomes/README.md",
-        "../research/selected_policy_trade_lifecycle.md",
         "../research/model_observation_and_action_semantics.md",
-        "../research/entry_and_exit_attribution.md",
-        "../reproduce/entry_and_exit_attribution.ipynb",
         "../research/setup_conditioned_policy_replay.md",
         "../../evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/feature_causality/real_market_feature_prefix_invariance_current_source/README.md",
         "../research/feature_causality_and_availability.md",
         "../research/limitations.md",
-        "../reproduce/entry_and_exit_attribution.ipynb",
         "../research/README.md",
         "../research/multitimeframe_data_alignment.md",
         "../research/feature_causality_and_availability.md",
@@ -7486,7 +7472,7 @@
     },
     {
       "links": [
-        "../../scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py"
+        "../../evidence/research/selected_policy_trade_lifecycle/"
       ],
       "orphan_status": "in toctree",
       "path": "docs/research/selected_policy_trade_lifecycle.md",

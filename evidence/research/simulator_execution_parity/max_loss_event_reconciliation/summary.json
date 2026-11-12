@@ -1,109 +1,38 @@
 {
-  "breach_rule": "equity < initial equity floor; equality is allowed",
-  "initial_balance_usd": 100000.0,
-  "initial_equity_floor_usd": 90000.0,
-  "limitations": [
-    "Pinned source configs do not record ftmo.max_drawdown_mode; no current default is inferred.",
-    "Saved equity observations are sampled rather than tick complete.",
-    "The audit does not replay actions affected by the current full-evaluation failure rule.",
-    "The 2026 report-period outputs are exploratory and are not fresh holdout evidence."
-  ],
-  "matched_event_count": 3,
-  "maximum_loss_allowance_usd": 10000.0,
-  "partition_count": 4,
-  "partitions": [
-    {
-      "configured_floor": 90000.0,
-      "events": [],
-      "first_observed_crossing": null,
-      "name": "a4a_training",
-      "recorded_event_count": 0,
-      "report_bytes": 270667,
-      "report_path": "a4a_training.json",
-      "report_sha256": "280cde34dd3d8d5d0123b5b25b012dfaa523b7eadef1854f141fbd96ec95137f",
-      "report_status": "matched",
-      "risk_status": "no_events"
-    },
-    {
-      "configured_floor": 90000.0,
-      "events": [
-        {
-          "below_configured_initial_equity_floor": true,
-          "equity_observation_time_basis": "event_time",
-          "equity_observation_time_utc": "2025-10-28T16:31:00+00:00",
-          "equity_series_at_event": 89943.95098700203,
-          "event_equity": 89943.95098700203,
-          "event_matches_equity_sample": true,
-          "fill_time_utc": "2025-10-28T16:32:00.110000+00:00",
-          "time_utc": "2025-10-28T16:31:00+00:00"
-        }
-      ],
-      "first_observed_crossing": {
-        "equity": 89943.95098700203,
-        "time_utc": "2025-10-28T16:31:00+00:00"
-      },
-      "name": "a4b_training",
-      "recorded_event_count": 1,
-      "report_bytes": 269584,
-      "report_path": "a4b_training.json",
-      "report_sha256": "c3eb9996109abdc39adb01ab935d6371be982cfaccd9dee70321bffb649fbd47",
-      "report_status": "matched",
-      "risk_status": "matched"
-    },
-    {
-      "configured_floor": 90000.0,
-      "events": [
-        {
-          "below_configured_initial_equity_floor": true,
-          "equity_observation_time_basis": "fill_time",
-          "equity_observation_time_utc": "2026-03-30T14:44:00.212000+00:00",
-          "equity_series_at_event": 89998.38242865316,
-          "event_equity": 89998.38242865316,
-          "event_matches_equity_sample": true,
-          "fill_time_utc": "2026-03-30T14:44:00.212000+00:00",
-          "time_utc": "2026-03-30T14:43:00+00:00"
-        }
-      ],
-      "first_observed_crossing": {
-        "equity": 89998.38242865316,
-        "time_utc": "2026-03-30T14:44:00.212000+00:00"
-      },
-      "name": "a4a_testing",
-      "recorded_event_count": 1,
-      "report_bytes": 211403,
-      "report_path": "a4a_testing.json",
-      "report_sha256": "2e782ebfe4e2086dce36c0d387e39ebce390813becec57ead0271d0e39425b65",
-      "report_status": "matched",
-      "risk_status": "matched"
-    },
-    {
-      "configured_floor": 90000.0,
-      "events": [
-        {
-          "below_configured_initial_equity_floor": true,
-          "equity_observation_time_basis": "event_time",
-          "equity_observation_time_utc": "2026-03-30T14:20:00+00:00",
-          "equity_series_at_event": 89632.06425764649,
-          "event_equity": 89632.06425764649,
-          "event_matches_equity_sample": true,
-          "fill_time_utc": "2026-03-30T14:21:00.034000+00:00",
-          "time_utc": "2026-03-30T14:20:00+00:00"
-        }
-      ],
-      "first_observed_crossing": {
-        "equity": 89632.06425764649,
-        "time_utc": "2026-03-30T14:20:00+00:00"
-      },
-      "name": "a4b_testing",
-      "recorded_event_count": 1,
-      "report_bytes": 211303,
-      "report_path": "a4b_testing.json",
-      "report_sha256": "9fb6788ad3869bcbeee3ea6dc76c9fa4a5c42ebfbf327b8fbc655678be4522e2",
-      "report_status": "matched",
-      "risk_status": "matched"
-    }
-  ],
-  "partitions_without_event_or_crossing": 1,
   "schema": "qrl.selected_run_max_loss_event_reconciliation.v1",
-  "status": "matched"
+  "status": "withdrawn_historical_result",
+  "withdrawal": {
+    "classification": "withdrawn_historical_result",
+    "reason": "Withdrawn from current performance presentation; retained as provenance only.",
+    "original_summary_sha256": "c7724b4c3608d86e2fe31d82f870444feb0a5307506961c668a726a336e0b12d",
+    "archived_provenance": [
+      "evidence/research/simulator_execution_parity/max_loss_event_reconciliation/README.md"
+    ]
+  },
+  "source_identity": {
+    "breach_rule": "equity < initial equity floor; equality is allowed",
+    "source_reports": [
+      {
+        "partition": "a4a_training",
+        "report_path": "a4a_training.json",
+        "original_report_sha256": "280cde34dd3d8d5d0123b5b25b012dfaa523b7eadef1854f141fbd96ec95137f"
+      },
+      {
+        "partition": "a4b_training",
+        "report_path": "a4b_training.json",
+        "original_report_sha256": "c3eb9996109abdc39adb01ab935d6371be982cfaccd9dee70321bffb649fbd47"
+      },
+      {
+        "partition": "a4a_testing",
+        "report_path": "a4a_testing.json",
+        "original_report_sha256": "2e782ebfe4e2086dce36c0d387e39ebce390813becec57ead0271d0e39425b65"
+      },
+      {
+        "partition": "a4b_testing",
+        "report_path": "a4b_testing.json",
+        "original_report_sha256": "9fb6788ad3869bcbeee3ea6dc76c9fa4a5c42ebfbf327b8fbc655678be4522e2"
+      }
+    ],
+    "source_run_metadata": "run_metadata.json"
+  }
 }

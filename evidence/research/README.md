@@ -19,24 +19,23 @@ are not current research results or an active work queue.
   M1 FVG ledger retains overlapping detector confirmations separately from the
   scalar feature projection. These counts are not policy actions or trades.
 - [Monthly entry and exit attribution](entry_and_exit_attribution/README.md)
-  indexes the paired-trade evidence and its R2 reproduction scope.
+  is withdrawn historical evidence; its result summary is a provenance stub
+  and its paired-trade inputs are archive-only.
 - [Selected policy trade lifecycle](selected_policy_trade_lifecycle/README.md)
-  reconciles the recorded 2025 training-partition decision, fill, and position
-  rows by position ID. Its [trade excursion packet](selected_policy_trade_lifecycle/trade_excursions/README.md)
-  adds descriptive, timestamp-bounded MFE/MAE without establishing feasible
-  exits or causal attribution.
+  is withdrawn historical performance evidence. Its JSON reports are
+  provenance stubs; row-level records remain archived. The
+  [trade excursion packet](selected_policy_trade_lifecycle/trade_excursions/README.md)
+  follows the same withdrawn status.
 - [Daily-breach full-evaluation failure](simulator_execution_parity/daily_breach_full_evaluation_failure/README.md)
   verifies that a daily-floor breach blocks later-session entries in both the
   training environment and event backtest; the historical recovery trace is
   retained separately and marked superseded.
 - [Saved A4 equity reconciliation](simulator_execution_parity/equity_series_reconciliation/README.md)
-  reproduces all four preserved training/report equity series from verified
-  raw M1 bars and fill-derived cash; the report period remains exploratory and
-  the packet does not claim tick-level or policy-counterfactual parity.
+  is withdrawn historical risk/performance evidence; current summary JSONs are
+  provenance stubs and source identities remain archived.
 - [Selected checkpoint training replay](selected_checkpoint_train_replay/README.md)
-  records seeded, train-only reproductions of both selected A4 stochastic
-  training metrics. Both arms still fail full-evaluation survival; this is
-  diagnostic replay evidence and does not authorize a new training campaign.
+  is withdrawn historical evidence. Its JSON summary is a source/run identity
+  stub; external replay reports remain archive-only.
 - [Exit-action semantics](exit_action_semantics/README.md)
   preserves the frozen decoder comparison, selected cohort, and conditional
   fixed-entry shadow under a semantic packet with source checksums.
@@ -81,9 +80,8 @@ are not current research results or an active work queue.
   and software release gates. Provider/license research was excluded by user
   direction; the snapshot includes no raw market data or rights claim.
 - [Selected-pair result identity](releases/negative-evidence-readiness/selected_pair_viability_manifest.json):
-  v2 contract instance for both arms of the historical seed-50 negative
-  viability result, with archived run identities, claim limits, hashes, and
-  reasoned unknowns.
+  v2 withdrawal record retaining archived run identities and source hashes;
+  it contains no current outcome metrics or performance claim.
 - [Historical variant-screen artifact recoverability](historical_variant_screen_recoverability/README.md):
   report-pack availability for a superseded 18-variant screen, retained for
   retrospective disposition only and excluded from model selection.

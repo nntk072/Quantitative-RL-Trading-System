@@ -58,8 +58,8 @@ requested local-analysis scope.
    session-close, and checkpoint cases is not complete. The selected matched pair
    campaign used historical gross realized-loss counter semantics; this is not
    net daily-equity/FTMO semantics. The March events are therefore code-gate
-   failures, not verified FTMO daily-loss breaches. A4B separately breached
-   the configured maximum account loss. Both simulators now reset either
+   failures, not verified FTMO daily-loss breaches. Those historical A4A/A4B
+   risk outcomes are withdrawn from current presentation. Both simulators now reset either
    policy mode on the normalized source-date `session_id`, covered by a
    controlled cross-midnight test. Equivalence to 00:00 CE(S)T remains
    unverified.
@@ -97,19 +97,17 @@ requested local-analysis scope.
 
 ## Research interpretation limits
 
-- The selected pair result is one seed, on a development interval; its exposed 2026
-  replay cannot become a fresh holdout.
-- A4A's aggregate ledger endpoint was above the 2025 hard floor, but its
-  per-episode risk-survival gate failed early; the aggregate endpoint is not a
-  survival pass.
-- The monthly attribution is descriptive accounting over saved cohorts and does
-  not prove that entry or exit rules caused the changes.
+- The selected seed-50 A4A/A4B 2M result and its derived survival, monthly
+  attribution, and trade-lifecycle summaries are withdrawn from current
+  performance and selection claims. Their run identities and raw provenance
+  remain archived; the exposed 2026 interval cannot become a fresh holdout.
 - The selected policy's class-conditioned action head is not an explicit
   price-conditioned expected-outcome model.
-- The historical train logs show most entry requests occurred while the entry
-  state machine was unarmed. This is action-funnel attrition, not a causal
-  account of the losses; candidate-to-order-to-fill and exit attribution remain
-  incomplete. See the [train-only funnel diagnosis](entry_action_funnel_diagnosis/entry_action_funnel_diagnosis.md).
+- Historical action-funnel, candidate-linkage, and exit-attribution findings
+  for the selected A4A/A4B pair are withdrawn from current outcome claims.
+  Candidate-to-order-to-fill attribution remains incomplete. See the
+  [train-only funnel diagnosis](entry_action_funnel_diagnosis/entry_action_funnel_diagnosis.md)
+  for retained scope and provenance notes.
 - No real brokerage fill, market impact, or live profitability conclusion is
   supported.
 - The separate 20M scratch attempt has a distinct identity and is not evidence

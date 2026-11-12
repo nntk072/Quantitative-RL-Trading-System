@@ -41,13 +41,10 @@ closed-loop replay: per-arm full ledgers, raw ticks, and checkpoint files are
 not tracked. See [finding](../research/exit_action_semantics.md) and
 [notebook](exit_action_semantics.ipynb).
 
-**Matched policy pair — monthly entry and exit attribution.** The notebook
-recomputes monthly counts, means, medians, PnL sums, seeded bootstrap intervals,
-the March-to-April decomposition, and its plot from the two tracked paired
-trade CSVs. It does not independently replay fills from raw ticks or reload
-the policies. Both arms failed the account-survival gate. See
-[finding](../research/entry_and_exit_attribution.md) and
-[notebook](entry_and_exit_attribution.ipynb).
+**Matched policy pair — monthly entry and exit attribution.** The seed-50
+A4A/A4B 2M result is withdrawn from current research results. Its previous
+summary, notebook outputs, and figure are retained as historical provenance
+only and are not linked as current reproduction evidence.
 
 **Entry-idea opportunity counts — family-level aggregates.** The notebook
 recomputes annual episode totals and timeframe aggregates from the tracked
@@ -84,9 +81,10 @@ source. See [notebook](environment_trace.ipynb).
 No research finding in this registry meets R3 or R4. R3 is unavailable because
 the relevant frozen checkpoints and complete replay inputs are not tracked for
 these claim scopes. R4 is unavailable because full training data, artifacts,
-and execution identities are not all bundled. The current research execution
-plan also records a failed matched-pair viability gate and explicitly bars an
-expensive training run for documentation work. Do not infer that missing levels were
+and execution identities are not all bundled. The seed-50 matched-pair
+viability outcome is withdrawn from current results; its run/protocol identity
+remains archived. The current research execution plan explicitly bars a new
+training run for documentation work. Do not infer that missing levels were
 attempted and passed.
 
 The generated [evidence sufficiency audit](evidence_audit.md) lists the exact

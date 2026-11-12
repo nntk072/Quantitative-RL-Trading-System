@@ -29,7 +29,7 @@ python scripts/research/analysis/evidence/verify_result_manifest.py \
   evidence/research/releases/negative-evidence-readiness/selected_pair_viability_manifest.json
 ```
 
-The selected seed-50 pair record is intentionally draft and descriptive. It
-preserves both failed training risk-survival outcomes, the historical gross
-negative-close daily-loss semantics, exposed-period limitations, and explicit
-unknowns. It is not a promotion or confirmation record.
+The selected seed-50 pair record remains a draft identity record but is
+classified `withdrawn_historical_result`. It preserves run/config/checkpoint
+identities and source hashes without current outcome metrics. Do not use it as
+a promotion, selection, or confirmation record.

@@ -1,5 +1,10 @@
 # Payout profit-boundary verification
 
+**Archive status:** the A4A/A4B seed-50 2M account outcomes referenced by this
+packet are withdrawn from current performance claims. The existing ledgers and
+reports are retained as historical audit provenance; they are not current
+benchmark or policy-selection evidence.
+
 ## Result
 
 The selected-policy lifecycle summarizer now reports an explicit invariant for
@@ -23,7 +28,7 @@ tests pass 20/20, and touched-source Ruff format/lint checks pass.
 This verifies the payout accounting invariant and the preserved ledgers. It
 does not create an empirical payout result, reconstruct current-risk
 counterfactuals, or close the broader Stage E account/report reconciliation.
-The selected historical policy remains a failed survival result.
+The historical survival outcomes are not presented as current results.
 
 ## Reproduction
 

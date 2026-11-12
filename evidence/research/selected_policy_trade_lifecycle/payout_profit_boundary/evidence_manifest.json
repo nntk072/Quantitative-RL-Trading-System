@@ -10,9 +10,9 @@
     "a4b_training": "b14e210cf4e8fe4d634bcdcfb15be09c8571670bb20ec9057fdf372515d82e53"
   },
   "report_files": {
-    "README.md": "ebd1504a87a36b53d7a2eeada7797e4c6edd8d309654b9d7464a1a225dde628d",
-    "selected_policy_trade_lifecycle.json": "56b291649c6ae323500f7128bbed9fb6118c9a7db13a4a4a8a804d7869a4d952",
-    "selected_policy_trade_lifecycle.md": "faf6d308ef001cb3cf65e2405d8fbe5162ced6d43187bff8f0b9534e73eb4070"
+    "README.md": "dd8b9f509889ed6bfdcc335a2663015804e7d21363211a4de9b500e2fea76fbf",
+    "selected_policy_trade_lifecycle.json": "67de07d270e86888d3a4a28305490ab32edf0a16c1321653e505085bb464717e",
+    "selected_policy_trade_lifecycle.md": "26495590b0a0e9acd1b7f2d724dc26175969d89f44c7640f1b5aeac81587b068"
   },
   "schema": "qrl.selected_policy_trade_lifecycle_packet.v1",
   "source_evidence": {

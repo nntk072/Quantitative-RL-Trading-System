@@ -6,35 +6,20 @@ on `codex/final-research-evidence-release`)
 **Verdict:** **BLOCKED — preserve as a negative, exploratory research result;
 do not label this snapshot a final thesis or public release.**
 
+**Current-content status (2026-11-12):** The seed-50 A4A/A4B 2M performance
+outcomes summarized in this dated snapshot are withdrawn from current thesis
+and results presentation. Source identity and historical evidence remain
+preserved; do not cite the old outcomes as current comparative findings.
+
 ## Scientific verdict
 
-On the declared 2025 development interval, both arms of the selected matched
-selected campaign failed its strict zero-breach training risk-survival gate; both
-evaluations nevertheless reached the end of the configured data split
-(`completed_data_split=true`, `episode_end_reason=data_end`). The generic gate
-reason `max_loss_stopped_trading` does not identify the underlying breach type.
-The A4A treatment recorded 987 positions and −2.154%, with aggregate ledger
-equity ending at $97,845.69 (above the $90,000 floor). Its matched A4B control
-recorded 825 positions and −10.056%, with aggregate ledger equity ending at
-$89,943.95, $56.05 below that floor. These aggregate endpoints do not override
-the per-episode risk-gate failure. Exposed 2026 report-period replays also
-failed for both arms and are descriptive only. The evidence does not
-demonstrate that any tested policy has an economic edge, nor that the tested
-setup-conditioning factor caused the difference.
-
-The first breach event occurred on 2025-03-06 at 20:16 for A4A and 20:32 for
-A4B (broker wall clock, UTC+03). Both were `daily_loss` events under
-`trading_policy.mode=legacy`. At the pinned campaign source SHA, that mode
-accumulated gross negative closed-trade P&L without offsetting winning closes
-or using mark-to-market daily equity. The closes through the events sum to
-$5,017.66 gross losses / −$3,004.28 net for A4A and $5,399.25 / −$3,389.32
-for A4B. Thus the events establish failure of the configured historical
-counter, not a net FTMO-style daily-equity breach. A4B had a separate
-`max_drawdown` event on 2025-10-28. The stored `fail_time` is the first breach
-timestamp, not a terminal episode stop: the rollout separately records
-`episode_end_reason=data_end`. The trade trace identifies how the gross-loss
-counter tripped but does not explain the policy's stop-out sequence. See the
-[risk-gate trace](gross_realized_loss_counter_breach_trace.md).
+The historical seed-50 A4A/A4B comparison used the declared
+`env.entry_state_observation` contrast in the archived resolved configs. Its
+performance outcomes, survival classifications, and derived trade summaries
+are withdrawn from current thesis/results presentation. The campaign identity,
+source snapshot, configurations, run manifests, and risk-gate trace remain for
+provenance and reproducibility only. No current viability, visibility-effect,
+or policy-selection claim is made from this pair.
 
 ## Gate matrix
 
@@ -44,7 +29,7 @@ counter tripped but does not explain the policy's stop-out sequence. See the
 | Selected campaign lineage | Partial pass | The current artifact-integrity verifier rehashes the campaign fingerprint and source snapshot, its embedded 590-file manifest, both run manifests, both configs, and both final checkpoints. The campaign snapshot commit `b93642a` is an ancestor of both run-source commits `0d056dc`, which are ancestors of current HEAD. All 39 campaign input files were separately rehashed and matched; the result-manifest verifier passes. No checkpoint was loaded or replayed. Each run manifest records one dirty source file and the complete run source-tree hash remains unknown; the recorded feature cache is absent at its run-manifest path and was not rehashed. See [`CHECKPOINT_REGISTRY.json`](CHECKPOINT_REGISTRY.json) and [`selected_campaign_artifact_integrity.json`](selected_campaign_artifact_integrity.json). |
 | Evidence organization and preservation | Bounded pass | Dated/archive research outputs were moved only after external checksum verification: 255 historical files and 40 benchmark outputs have external manifests, and semantic findings remain in concept-named packets. Reusable analyzers are grouped under `scripts/research/analysis/` by evidence, feature, market-data, evaluation, or model domain. The [migration ledger](../../../../docs/architecture/migrations/research_evidence_moves.json) preserves original paths and hashes; the [release manifest](RELEASE_MANIFEST.json) records external locations. No unique source snapshots or experiment results were intentionally discarded. |
 | Research result identity | Partial pass | Added the v2 manifest contract and a hash-verified record for both arms of the selected seed-50 negative pair. All plan-required identity fields are present; unavailable historical values carry explicit reasons, so the result remains draft. Archived run manifests/configs resolve only through the designated sibling research archive. The focused verifier suite passes 14 tests. This does not upgrade the scientific evidence grade or make the pair confirmatory. |
-| Research result | Negative, bounded | Both full data splits completed and failed the predeclared strict zero-breach gate under historical gross realized-loss counter semantics. The March `daily_loss` labels are not FTMO-style net equity breaches; A4B also had an October max-drawdown event. The trace explains the gross realized-loss counter crossing, not the policy's stop-out sequence. One seed is not positive viability evidence. The fixed-entry EMA21 decomposition is accounting attribution, not a causal intervention. |
+| Research result | Withdrawn historical comparison | Seed-50 A4A/A4B 2M performance outcomes and derived summaries are excluded from current claims. Original run/source identities and risk semantics remain in archived provenance; no current selection or confirmatory claim is made from this pair. |
 | Failure diagnosis | Partial pass | The train-only entry funnel shows 88.3% of treatment and 91.1% of control entry requests were rejected while the entry state machine was unarmed. Selected fill-to-tick analysis matched all 3,698 tick-backed events; 16 shared changed-quote timestamp groups and 86 were in groups missing a required side, with the parser's first valid quote carrying that side. The saved alignment packet contains no quote prices, carried-side age, or within-timestamp ordering, so it identifies no no-carry/next-quote price or economic sensitivity. A bounded reread could report observed timestamp-group extrema, but those would not establish executable prices or fill validity. A separate historical fixed-entry v2 exit shadow on 1,062 eligible entries reports mean structural-minus-EMA ΔR 0.0070 with a 95% paired bootstrap interval [−0.0416, 0.0528]; it is not the selected A4 pair and does not identify its losses. The retained A4 training rows reconcile decision, order-submission, fill, and exit records by position ID, and a separate timestamp-bounded MFE/MAE analysis is descriptive rather than a feasible exit counterfactual. Candidate/event linkage is now measured only for the matched random and structure-priority baseline traces: 39,566 random and 43,974 structure-priority decision rows fall inside proposal validity windows, but historical A4 PPO proposal-to-action linkage remains unavailable. These results do not establish quote chronology or isolate a causal loss mechanism. See the [selected policy lifecycle packet](../../selected_policy_trade_lifecycle/README.md), [candidate action linkage](../../candidate_action_linkage/README.md), [fixed-entry shadow findings](../../exit_action_semantics/fixed_entry_shadow_findings.md), and [fill quote availability](../../../../docs/research/fill_quote_availability.md). |
 | Data source and quality | Blocked | The stable-source v2 profile hashes all 39 campaign inputs (8,162,529,858 bytes across 34 bars, four tick exports, and the configured schedule); all 39 are present and hash-matched. It accounts for 172,290,383 tick rows, 371,390 rows missing a required quote side, 329,471 adjacent timestamp ties (328,918 changed-quote pairs; 553 missing-quote pairs), zero timestamp parse failures or reversals, and 23 training M1 minutes per instrument without ticks; test M1 minutes all overlap at least one tick. These are source-quality counts, not order-arrival validity. The final 140-path check verifies every inventory entry with zero file differences, and the concept-named monthly quality CSV/figure are hash-linked to the profile. A separate candidate quote audit finds 40,330 raw-row count mismatches and 93,326 of 351,432 M1 minutes failing its conservative local completeness rule; only 24,064/28,787 market fill minutes and 5,543/25,851 full pending-limit windows pass. This is local export consistency, not tape completeness or executable-fill proof. The flag cross-tab does not establish provider flag semantics. The [configured timeframe parity report](configured_timeframe_parity.json) finds exact timestamp and OHLCV parity on all 532,350 training and 423,018 exposed-report native bar rows; native spread differs from both tested M1 references. Fifteen final higher-timeframe rows per period lack a later M1 observation. Schedule authority remains unestablished. Provider/license assessment is out of scope by user direction; no raw data or rights claim is included. See the [v2 profile](local_market_data_quality.json), [detailed tick diagnostic](current_market_input_diagnostic.json), [candidate quote coverage](../../candidate_outcome_coverage/README.md), [flag cross-tab](tick_quote_side_flag_cross_tab.json), [data checksum manifest](RAW_DATA_SHA256_MANIFEST.json), [data provenance dossier](DATA_PROVENANCE_AND_ACCESS.md), and [interpretation](../../../../docs/research/multitimeframe_data_alignment.md). |
 | Candidate conditional outcomes | Partial pass with bounded unresolved-data result | The full training replay contains 54,638 proposals and 1,067,731 conditional bracket rows: 259,358 filled/resolved, 39,186 unfilled/expired, and 769,187 unresolved. The packet verifier confirms IDs, the complete proposal/bracket grid, chronology, training cutoff, source/config/TickBook hashes, status totals, and 43,615 locally covered session-close exits. Most unresolved rows come from incomplete local quote intervals. The unresolved share is 84.8%–94.2% from 2024-12 through 2025-08, then 15.9% in 2025-12; this variation is coverage/trigger-horizon dependent and makes resolved-only outcomes time-selected. The verifier validates structure and recorded totals; it does not independently recompute each fill and return. A deterministic audit exactly reproduced 12 rows, one per observed entry-type/status/reason stratum, through the versioned production execution function; it is a replay sample, not a separate algorithm or full-row numeric recalculation. The disposition table and figure are in the [candidate outcome packet](../../candidate_outcomes/README.md). These rows are not policy outcomes, and no return or edge claim is promoted. |
@@ -58,15 +43,13 @@ counter tripped but does not explain the policy's stop-out sequence. See the
 | Software release and docs | Partial pass | The latest full-tree source gate after the shard tooling passed format and Ruff checks on 1,042 files, Mypy on 1,028 source files, and 931 scoped tests with two existing PyTorch warnings. The generated documentation inventory and evidence sufficiency audit have been refreshed; the final strict Sphinx build and release-hash checks are recorded in `RELEASE_MANIFEST.json`. Full GitHub CI and final thesis figure/table regeneration remain; this evidence package is an internal negative-result handoff, not a positive trading or public-release claim. |
 | Compute and allocation | No training | Existing allocation 21376798 on gpuarm2 provided one GH200, 48 CPUs, and 512 GB host RAM for the four parallel CPU-bound feature-audit processes; all 57 comparisons passed. The full-tree source gate also used this existing allocation. No training, checkpoint replay, new Slurm allocation, or extra Slurm step was launched. Earlier data jobs and diagnosed gate attempts remain recorded in the external progress ledger. |
 
-## Subsequent diagnostic checkpoint replay
+## Subsequent diagnostic checkpoint replay — withdrawn
 
-After this snapshot, both selected A4 seed-50 checkpoints were replayed on the
-2025 training split only, using stochastic actions and the recorded seed 50.
-The replay reports match their saved training metrics and both arms fail the
-survival gate. The 2026 report split was not evaluated, and no policy was
-trained. This later diagnostic does not change the snapshot's negative release
-verdict or authorize resuming the failed campaign. Evidence is indexed at
-[`selected_checkpoint_train_replay`](../../selected_checkpoint_train_replay/README.md).
+**Status: withdrawn historical result.** Seed-50 A4A/A4B checkpoint replay
+outcomes and survival classifications are excluded from current result
+presentation. The replay run identities, source/config/checkpoint provenance,
+and original report digests remain available in the designated evidence packet;
+no current performance claim is made from them.
 
 ## Verification run in this snapshot
 

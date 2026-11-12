@@ -2,8 +2,10 @@
 
 **Disposition: BLOCKED.** This is a provenance-backed readiness snapshot and
 honest negative research package, not a ready-to-publish thesis or software
-release. The evidence supports a failed selected matched policy pair and several tested
-software contracts. It does not establish a viable trading policy, fresh
+release. **Current-content status (2026-11-12):** Seed-50 A4A/A4B 2M
+performance outcomes are withdrawn from current thesis/results presentation.
+The paired run and derived records remain archived for provenance and
+reproducibility only. This snapshot does not establish a viable trading policy, fresh
 out-of-sample performance, or full reproducibility. It contains no raw market
 data and makes no data-rights or redistribution claim.
 
@@ -16,9 +18,8 @@ data and makes no data-rights or redistribution claim.
   scientific gates, not a final thesis verdict.
 - [Consolidated results](CONSOLIDATED_RESEARCH_RESULTS.md) states the bounded
   empirical conclusion and separates training from exposed report-period data.
-- [Gross realized-loss counter trace](gross_realized_loss_counter_breach_trace.md) documents
-  the historical gross realized-loss counter and reconciles the March events to
-  the close ledgers.
+- [Gross realized-loss counter trace](gross_realized_loss_counter_breach_trace.md) is a
+  withdrawal notice preserving historical protocol and source identity only.
 - [Data provenance and access](DATA_PROVENANCE_AND_ACCESS.md) records what was
   found in the checkout and scratch campaign, and what remains unverified.
 - [Local market data quality profile](local_market_data_quality.json) uses
@@ -79,11 +80,10 @@ data and makes no data-rights or redistribution claim.
   categories under the registered feature overlay. Only 24 are enabled there;
   the counts are not executable-trade evidence.
 - [Manifest](RELEASE_MANIFEST.json) pins source and evidence identities.
-- [Selected-pair result identity](selected_pair_viability_manifest.json) binds
-  both historical seed-50 arms to their recorded run manifests, configs,
-  claim boundaries, and exact artifact hashes. The v2 record remains draft
-  because several historical identity fields are unavailable; each is marked
-  unknown with a reason.
+- [Selected-pair result identity](selected_pair_viability_manifest.json) is a
+  v2 withdrawal record. It retains both historical seed-50 run/config/source
+  identities and reasoned unknowns, without outcome metrics or a current
+  performance claim.
 - [Selected campaign artifact integrity](selected_campaign_artifact_integrity.json)
   rehashes the campaign source ZIP and all 590 manifested files, plus both run
   manifests, configs, and final checkpoints. It does not replay the models or

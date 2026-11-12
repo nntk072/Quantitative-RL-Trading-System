@@ -51,8 +51,8 @@
     }
   },
   "report_files": {
-    "selected_policy_trade_lifecycle.json": "bd0cfc4fbef0c13b25cd491c15a6f16b3e831a99c2d135cedc20e47cf1e23621",
-    "selected_policy_trade_lifecycle.md": "a9758096bbf6b69d06a9375d3fb2cc85b9912ace157573c53721b4527afb1851"
+    "selected_policy_trade_lifecycle.json": "92b1a863bfe1f0e3420db848595d39ca00c5f150781139bf8e1194b4b117ccac",
+    "selected_policy_trade_lifecycle.md": "5ea3d671d5c4b2c5693f9b7beb4f45c6b57de2e46fbe74afe3cec1110cc3fe25"
   },
   "reproduction": "python scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py --run-dir /scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/reanalysis_daily_stop_semantics_20261024/ladder_a4a_entry_fsm_hidden_qgrid025/training --output-dir evidence/research/selected_policy_trade_lifecycle/a4a_training"
 }

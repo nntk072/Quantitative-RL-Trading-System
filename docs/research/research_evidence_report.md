@@ -1,8 +1,10 @@
 # Multi-timeframe context and setup-conditioned trading policies: an evidence report
 
-**Document status:** evidence-bounded research report. It summarizes the local
-evidence snapshot present in the checkout on 2026-11-03; its scientific claims remain bounded by the
-source, model, execution, and release gaps described below.
+**Document status:** evidence-bounded research report. Historical seed-50
+A4A/A4B 2M performance findings are withdrawn from this current synthesis;
+their records remain archived for provenance and reproducibility only. Other
+scientific claims remain bounded by the source, model, execution, and release
+gaps described below.
 
 ## Abstract
 
@@ -10,12 +12,9 @@ This report examines whether multi-timeframe market context and setup-conditione
 reinforcement-learning policies have demonstrated better decisions under the
 project's configured execution and account-risk rules. The repository defines
 a six-family, nine-timeframe, two-direction setup catalog and supplies a
-training-period matched policy pair, earlier short-budget screens, local
-market-data audits, and reproducible analyses of saved trade rows. The
-selected seed-50 pair completed its configured training-period evaluation but
-both arms failed the declared zero-breach survival gate. Its historical daily
-loss events came from a gross-negative-close counter and do not establish
-net-equity daily breaches. The opportunity census counts eligible feature
+training-period policy studies, earlier short-budget screens, local market-data
+audits, and reproducible analyses of saved trade rows. The seed-50 A4A/A4B 2M
+outcomes are withdrawn from current performance claims. The opportunity census counts eligible feature
 contexts, not executable trades. Configured native bars agree with their M1
 resampling on timestamps and OHLCV, but spread interpretation, tick quote
 chronology, authoritative source clock and schedule remain unresolved. No
@@ -65,7 +64,7 @@ prospective preregistration was completed before the historical runs.
 | Question | Hypothesis to test | Current status |
 |---|---|---|
 | **RQ1 — Data and timing:** Can the configured multi-timeframe observations be aligned and made available causally? | H1: Each feature and higher-timeframe value is available only after its source information could be observed. | Partially tested. Configured prefix and bar-parity checks pass within bounded scopes; source-event publication times, schedule authority, and exhaustive feature coverage remain open. |
-| **RQ2 — Entry-state visibility:** Does exposing the entry-state machine to a setup-conditioned policy improve risk-gated decisions? | H2: Visible FSM state improves policy outcomes over the same policy with state hidden, under matched data, action, cost, risk, and evaluation semantics. | Not established. The A4A/A4B pair differs only by the declared visibility treatment; both arms failed the survival gate and one seed supports descriptive results only. The pair does not compare setup-conditioned with unconditioned policies. |
+| **RQ2 — Entry-state visibility:** Does exposing the entry-state machine to a setup-conditioned policy improve risk-gated decisions? | H2: Visible FSM state improves policy outcomes over the same policy with state hidden, under matched data, action, cost, risk, and evaluation semantics. | Withdrawn historical comparison. No current performance claim is made from the seed-50 A4A/A4B 2M pair; the pair also does not compare setup-conditioned with unconditioned policies. |
 | **RQ3 — Price geometry:** Does representing an explicit candidate entry, stop, target, and lifetime improve decisions beyond a setup ID? | H3: Candidate-specific geometry and history provide useful information beyond categorical setup identity. | Not tested. Tick-based MFE/MAE now describes recorded position paths, but the current policy has no candidate-specific proposed-price or order-TTL inputs and the historical runs lack decision-level geometry traces. |
 | **RQ4 — Learning value:** Does RL improve over feasible flat, random, rule-based, and supervised controls under common execution and risk semantics? | H4: An RL policy improves net, risk-adjusted outcomes over matched non-RL policies. | Not established. One matched 2025 development bundle includes flat/random Tier 0 controls and a fixed structure-priority Tier 1 rule. The random reference returned -10.16%; the rule returned -10.03%; both had 25 breach events. These are negative sanity/reference results, not an RL comparison. A complete comparable baseline registry remains absent. |
 | **RQ5 — Robustness:** Does any observed advantage survive independent seeds, chronological development folds, costs, and regimes? | H5: A policy advantage is stable under the declared uncertainty and stress protocol. | Not tested to a confirmatory standard. There is one selected matched seed and the 2026 report interval is exposed. |
@@ -193,41 +192,14 @@ reconciles both engines' fills, PnL, and ending balance; it does not replay a
 historical policy. The external reset anchor, full training/live risk parity,
 and broad real-feed lifecycle coverage remain open.
 
-The selected matched policy pair used seed 50, 2 million training steps, 32
-environments, and the 2024-12-30 through 2025-12-31 interval. Its declarations
-include the declared `env.entry_state_observation` treatment: A4A used the
-six-coordinate account vector without entry-state one-hot values, and A4B
-used the ten-coordinate vector with them. The preserved resolved configs
-differ only in this setting, so the widths are an intentional single-factor
-visibility contrast rather than an unexplained configuration discrepancy.
-This does not make the arms input-identical or establish matched economics.
-The policy's 2026 evaluation-period action trace is incomplete. The stored
-`fail_time` is the first breach time, while both evaluations reached the end
-of the configured data split. Retained 2025 training-partition records now
-reconcile all 987 A4A and 825 A4B positions to fill events and ordered
-decision/submission/fill/exit timestamps, including recorded holding times. A
-separate local TickBook analysis derives timestamp-bounded liquidation-side
-MFE/MAE for these positions: median MFE is 0.569R/0.552R and median MAE is
-0.815R/0.774R for A4A/A4B. The arms have different trade cohorts; these
-observations are not feasible exit counterfactuals and do not establish
-authoritative quote chronology. Historical candidate-proposal and eligibility
-state is not linked to each selected action. See the
-[`selected policy trade lifecycle`](../research/selected_policy_trade_lifecycle.md)
-report, the trade excursion results at
-`evidence/research/selected_policy_trade_lifecycle/trade_excursions/README.md`,
-and the paired evidence packet at
-`evidence/research/selected_policy_trade_lifecycle/`.
-
-| Training arm | Positions | Median MFE (R) | Mean MFE (R) | Median MAE (R) | Mean MAE (R) | Paths reaching 1R MFE |
-|---|---:|---:|---:|---:|---:|---:|
-| A4A | 987 | 0.569 | 0.960 | 0.815 | 0.670 | 32.4% |
-| A4B | 825 | 0.552 | 0.944 | 0.774 | 0.663 | 31.9% |
-
-R here is price excursion divided by the recorded initial stop distance.
-Liquidation-side bid/ask prices are used, but commissions are not deducted.
-The cohorts differ and timestamp-tie bounds affect 2 A4A and 1 A4B position;
-these descriptive values are not a matched treatment estimate or feasible
-exit counterfactual.
+The seed-50 A4A/A4B comparison used 2 million requested steps, 32 environments,
+and the 2024-12-30 through 2025-12-31 interval. Its archived configuration
+identities preserve the declared `env.entry_state_observation` contrast and
+observation schemas. Performance and derived trade-outcome summaries from this
+pair are withdrawn from the current report. Resolved configs, source ledgers,
+and technical reconciliation packets remain under
+`evidence/research/selected_policy_trade_lifecycle/` for provenance and
+reproducibility only; they do not support a current policy comparison.
 
 The current setup catalog contains six idea families crossed with nine
 timeframes and two directions: 108 setup IDs plus `NO_TRADE`. The supported
@@ -261,43 +233,11 @@ within-window rows at
 
 ### 5.1 Selected matched policy pair
 
-Both arms failed the predeclared strict zero-breach training risk-survival
-gate, although both evaluations completed the configured data split. The
-treatment recorded 987 positions and −2.154% net return, ending at $97,845.69.
-The control recorded 825 positions and −10.056%, ending at $89,943.95, which
-was $56.05 below the $90,000 floor. Aggregate ending equity does not erase a
-per-episode gate failure.
-
-The first recorded `daily_loss` events occurred on 2025-03-06 under a historical
-gross realized-loss counter configured by `trading_policy.mode=legacy`. That
-counter accumulated gross losing closed-trade PnL without offsetting winning
-closes or measuring net daily equity. Through the events, gross negative closes were $5,017.66 for the
-treatment and $5,399.25 for the control, while net realized close PnL was
-−$3,004.28 and −$3,389.32, respectively. These events establish failure of
-the configured historical counter; they do not establish an FTMO-style
-net-equity daily-loss breach. The control also recorded a later maximum
-drawdown event on 2025-10-28. The detailed trace is recorded in
-`evidence/research/releases/negative-evidence-readiness/gross_realized_loss_counter_breach_trace.md`;
-see also [`entry/exit attribution`](../research/entry_and_exit_attribution.md)
-for the paired-row analysis. These counts preserve the distinction between the
-historical gross-loss counter and net realized close PnL.
-
-The training entry-funnel diagnosis found that 88.3% of treatment entry
-requests and 91.1% of control requests were rejected because the entry state
-machine was not armed. This indicates substantial action-interface attrition;
-it does not show that changing the mask would improve economic results or
-explain the losing equity paths.
-
-The March-to-April actual gross mean-R change was −0.2177 for the treatment
-and −0.2238 for the control. The month-stratified 95% intervals were
-[−0.5837, 0.1429] and [−0.5656, 0.1118], both including zero. The frozen-entry
-EMA21 reference decomposes saved monthly outcomes arithmetically; it is not a
-new policy rollout, causal intervention, or compounded portfolio
-counterfactual. This paired-row recomputation is R2 evidence, not a raw-tick
-replay or checkpoint reproduction. See the
-[`entry/exit reproduction notebook`](../reproduce/entry_and_exit_attribution.ipynb)
-and canonical paired rows in
-`evidence/research/entry_and_exit_attribution/`.
+The seed-50 A4A/A4B 2M performance comparison and its derived training-period
+outcome analyses are withdrawn from current results presentation. Do not use
+this pair to claim viability, compare the visibility treatment, or select a
+policy. Historical risk semantics, trade rows, and analysis outputs remain in
+the linked evidence packets as provenance and reproducibility material only.
 
 ### 5.2 Earlier short-budget screen and exposed interval
 
@@ -309,10 +249,9 @@ not a 2-million-step result and not confirmation of comparative performance.
 The registered equity figure and its limitations are in
 [`the full training-period screen`](../research/setup_conditioned_policy_replay.md).
 
-The exposed 2026 report-period replay ended at −10.0016% for the treatment
-and −10.3679% for the control; both breached the account floor. Because those
-dates were already inspected, these outcomes are descriptive stress evidence,
-not holdout results.
+The seed-50 A4A/A4B exposed-period performance outcomes are withdrawn from this
+current report. The period had already been inspected and remains ineligible
+for holdout claims; its archived records are retained for provenance only.
 
 The prior one-seed, 2-million-step MTF architecture screen and exposed replays
 are withdrawn from current performance comparison. Its metric packet remains
@@ -420,14 +359,10 @@ candidate-level fill probabilities, or candidate-geometry sensitivity
 results are established. Ablation, calibration, and price-sensitivity figures
 therefore have no empirical result in this report.
 
-The selected pair contains one training seed. Its paired monthly bootstrap
-intervals describe the saved monthly paired rows and include zero; they do not
-capture training-seed variation, model-selection uncertainty, missing-source
-clock uncertainty, tick-tie ordering, or generalization to an independent
-period. No independent paired-seed study, purged chronological model-selection
-result, multiplicity-adjusted superiority estimate, or untouched holdout is
-available. The complete 2026 report interval is exposed. Accordingly, no
-claim of statistical superiority or robust economic value is supported.
+No current statistical or performance claim is made from the withdrawn A4A/A4B
+pair. Independent paired-seed, purged chronological model-selection,
+multiplicity-adjusted superiority, and untouched-holdout evidence remain
+unavailable; the complete 2026 report interval is exposed.
 
 ## 7. Limitations and threats to validity
 
@@ -497,30 +432,24 @@ the evaluated overlay. Those findings do not resolve source-clock,
 within-timestamp quote, end-to-end feature timing, account-semantic, or
 baseline-comparability questions.
 
-The defensible conclusion is therefore negative and limited: the available
-historical policies did not establish viability, and the one-seed A4A/A4B
-evidence does not establish a benefit from exposing entry-state information.
-That pair does not estimate the effect of setup conditioning itself. These
-results do not imply that setup-conditioned or reinforcement-learning methods
-are generally ineffective. A stronger claim requires the open data, timing,
-risk, matched-baseline, multi-seed, and independent-validation gates to pass.
+The A4A/A4B pair is withdrawn from this report's current performance
+conclusions. No current evidence establishes viability or a benefit from entry-
+state visibility or setup conditioning. These withdrawals do not imply that
+setup-conditioned or reinforcement-learning methods are generally ineffective.
+A stronger claim requires the open data, timing, risk, matched-baseline,
+multi-seed, and independent-validation gates to pass.
 
 ## 9. Reproducibility and data availability
 
-The current result package distinguishes inspectable records from
-independently recomputable evidence. The selected monthly attribution is R2
-for the tracked paired-trade rows and summary; the underlying full run ledgers,
-raw tick data, checkpoints, and training environment are not bundled in that
-packet. Earlier 100k policy screens are reported at the evidence grade in the
-result registry; they are not full retraining reproductions. The repository
-does not claim research R3 frozen-policy replay or R4 retraining for the
-selected attribution.
+The seed-50 A4A/A4B monthly attribution outputs and figure are withdrawn from
+current research results. Their notebook and generated artifacts remain in the
+archive for provenance; they are not linked as current reproduction evidence.
+Earlier 100k policy screens remain at the evidence grade stated in the result
+registry and are not full retraining reproductions. The repository does not
+claim research R3 frozen-policy replay or R4 retraining for the withdrawn
+attribution.
 
-Reproduce the tracked monthly tables, intervals, decomposition, and figure by
-executing all cells in the
-[`entry/exit attribution notebook`](../reproduce/entry_and_exit_attribution.ipynb).
-The documentation build also executes this notebook. Rebuild the candidate
-census and its heatmap using the commands in
+Rebuild the candidate census and its heatmap using the commands in
 `evidence/research/trade_setup_opportunity_census/README.md` and the
 corresponding scripts under
 `scripts/research/analysis/features/`. Recreate configured bar comparisons

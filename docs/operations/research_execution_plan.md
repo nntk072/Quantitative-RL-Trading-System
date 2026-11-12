@@ -10,6 +10,12 @@ protocols, and provenance remain below where needed for reproducibility, but
 those outcomes are not evidence for the registered forthcoming 18-arm
 benchmark and must not be used to select its variants.
 
+The seed-50 A4A/A4B 2M performance outcomes are also withdrawn from current
+thesis/results presentation. Historical numerical and derived outcome details
+below remain only as archived provenance; they are not current benchmark
+evidence or model-selection results. Campaign identity, technical contracts,
+and raw ledgers remain for reproducibility.
+
 ## Current gate disposition
 
 ### Feature missingness follow-up — implementation only
@@ -441,40 +447,11 @@ final handoff, and TODO 162 FINISHED all have explicit validators. Actual
 checkpoints and measured numerical outcomes remain runtime evidence rather than
 source-code assumptions.
 
-The latest recorded selected-pair evaluation is the seed-50 P6 reanalysis
-completed on 2026-10-24. The treatment recorded 987 positions and −2.154%,
-with aggregate ledger equity ending at $97,845.69. Its strict zero-breach
-risk-survival gate failed on one `daily_loss` event on 2025-03-06. The
-evaluation nevertheless completed the configured data split. Its matched
-control recorded 825 positions, −10.056%, aggregate equity $89,943.95, and two
-breach events: `daily_loss` on 2025-03-06 and `max_drawdown` on 2025-10-28.
-That evaluation also completed the data split; its aggregate endpoint was
-$56.05 below the $90,000 floor. Both arms failed the declared survival gate.
-At the pinned run source, `trading_policy.mode=legacy` accumulated gross
-negative closed-trade P&L without offsetting winning closes or measuring net
-daily equity. The March `daily_loss` events therefore establish failure of
-that configured gross realized-loss counter, not an FTMO-style net daily-equity breach. The
-close ledgers show gross negative closes of $5,017.66 / $5,399.25 and net
-realized close P&L of −$3,004.28 / −$3,389.32 for A4A / A4B through those
-events. A4B's later `max_drawdown` event is separate. The stored `fail_time` is
-the first breach timestamp, not the episode end. The report-period evaluation
-also breached the hard floor for both arms; that interval is exposed exploratory
-evidence, not a fresh confirmation period.
-
-The retained A4A/A4B training decision, fill, and position tables have now
-been reconciled by `position_id`: all 987/987 A4A and 825/825 A4B positions
-link to fill events, close-fill PnL matches each position, and aggregate PnL
-matches reported metrics and ending equity to under $1e-9. Every open has a
-recorded 60-second decision-to-submission gap, consistent with the documented
-bar-label/completed-bar boundary rather than measured inference latency. This
-does not add the missing candidate-proposal-to-action linkage or identify a
-causal loss mechanism. A separate TickBook analysis now derives descriptive,
-timestamp-bounded per-position MFE/MAE for both training arms; it does not
-resolve candidate linkage or make a feasible-exit claim. See the [paired
-lifecycle research topic](../research/selected_policy_trade_lifecycle.md),
-the evidence packet at
-`evidence/research/selected_policy_trade_lifecycle/trade_excursions/README.md`,
-and `evidence/research/failure_mechanisms/README.md`.
+**Withdrawal status:** the seed-50 P6 A4A/A4B 2M performance, survival, and
+trade-outcome summaries are excluded from current presentation. Retain only the
+campaign/run/config identities and analysis protocol for historical provenance;
+these reports do not support current model selection or confirmation. The
+paired lifecycle and failure-mechanism result packets are withdrawal stubs.
 
 Do not resume or duplicate the failed run, start a 20M-step continuation, or
 start a multi-seed comparison while P6 is failed. A successor needs
@@ -1688,30 +1665,19 @@ contract.
    strategy contract. The classical baseline module passes 21 focused tests,
    scoped Ruff, and scoped Mypy. This is configuration validation only; the
    Tier 1 market comparison remains gated.
-6. Stage G source diagnosis confirms that the selected A4A/A4B policies retain
+   6. Stage G source diagnosis confirms that the selected A4A/A4B policies retain
    the same continuous action schema; the observation-only A4B toggle adds
    state features but no dynamic ARMED-state action mask. An intensity-qualified
    request in `FLAT` or `CANDIDATE` is deliberately counted as
-   `entry_state_not_armed` and forced to no-entry, matching the measured 88.3%
-   / 91.1% funnel shares. A focused FSM test now verifies those state-specific
+   `entry_state_not_armed` and forced to no-entry. A focused FSM test now verifies those state-specific
    rejections and that the same action can trigger after ARMED. This rules out
    an action-mask change from the visibility toggle as the mechanism; it does
-   not explain historical policy choices or their economic effect. The paired
-   source-ledger reports reconcile 987/987 A4A and 825/825 A4B positions to
-   fill events and aggregate PnL. A separate current-TickBook analysis now
-   derives timestamp-bounded liquidation-side MFE/MAE for both training arms;
-   median MFE is 0.569R/0.552R and median MAE is 0.815R/0.774R. The arm cohorts
-   differ, endpoint bounds vary for 2/1 trades, and quote-side carry and source
-  chronology remain limitations. A new hash-linked description of those
-  existing rows groups results by recorded exit reason: structural stops have
-  median realized net R −1.000/−1.000 and lower-bound median MFE 0.396R/0.333R;
-  20.7%/19.4% reached 1R MFE. Session-end exits have median realized net R
-  0.058/0.037 despite median MFE 0.377R/0.347R. This is descriptive path
-  evidence, not a feasible-exit replay: MFE excludes costs, gross/cost R are
-  absent from this cohort source, the arms are distinct cohorts, and quote
-  chronology remains uncertain. See
-  `evidence/research/failure_mechanisms/exit_reason_cohorts.json`. The prior
-  run still lacks per-decision action/state joins. Current rollout rows are
+   not explain historical policy choices or their economic effect. All A4A/A4B
+   2M performance and derived outcome summaries are withdrawn from current
+   results presentation. The paired source ledgers and analysis outputs remain
+   archived for provenance and reproducibility; they do not establish causal
+   loss attribution or a feasible-exit counterfactual. The prior run still
+   lacks per-decision action/state joins. Current rollout rows are
   implemented to persist the eligible IDs, chosen action, source-event
   identity, FSM outcome, resulting trade-event index range, and compact
   selected/NO_TRADE/top-eligible probabilities for future diagnosis; they
@@ -1758,18 +1724,11 @@ As of 2026-11-01, the local scratch campaign
 `outputs/gpu_campaigns/rq1_entry_fsm_pair_seed50_train2025_20261024_policy2m_v1/`
 was found with its source snapshot, resolved configs, per-arm provenance,
 final checkpoints, and train/test trade ledgers. Its campaign fingerprint
-matches the paired-decomposition evidence. The recorded training outcomes are
-987 A4A positions at −2.154% and 825 A4B positions at −10.056%; both failed
-the strict zero-breach survival gate, and report-period replays remain
-exposed, report-only results. Both training evaluations reached `data_end`.
-A4A's sole recorded breach was the gross realized-loss counter, recorded under
-the `daily_loss` event label;
-A4B recorded that event and a later `max_drawdown`. The March events do not
-establish net daily-equity breaches. The stored `fail_time` is each arm's first
-breach, not its episode end. A4A's aggregate ledger ends above $90,000, but
-that does not erase its historical configured-gate failure. The semantics and
-close-level reconciliation are documented in the release snapshot's P6 risk
-gate trace. This scratch recovery does not change the tracked-packet
+matches the archived paired-decomposition provenance. The seed-50 A4A/A4B 2M
+numerical outcomes are withdrawn from current result presentation; the run
+identity, source snapshot, resolved configs, and raw ledgers remain available
+for archival reproducibility. No current policy-selection or confirmatory
+claim is made from these records. This scratch recovery does not change the tracked-packet
 R2 registry grade: 10/10 manifest-listed per-arm artifact hashes match, and
 all 39 manifest-listed input paths are present. The selected campaign input
 audit verified 8,162,529,858 bytes against its SHA-256 manifest. The separate
@@ -2901,67 +2860,18 @@ removed secondary checkout. The negative-result release manifest now declares
 the local-file report, scanner, and tests; its 26 content and 224 source/evidence
 hashes verify.
 
-## Reconciliation of recorded equity and historical gross-loss evidence
+## Reconciliation of recorded equity and historical gross-loss evidence — withdrawn
 
-The reusable
-`scripts/research/analysis/evaluation/audit_recorded_equity_series.py`
-independently recalculates endpoint return and maximum drawdown from the saved
-`equity.csv` series, validates strict timestamp order and finite rows, and
-compares the results with `metrics.json`. The four selected A4 training/testing
-reports all match: each training series has 99,493 observations and each
-testing series has 79,070, with no invalid rows or chronology failures. The
-reports preserve the source input hashes at
-`evidence/research/simulator_execution_parity/equity_series_reconciliation/`.
+**Status: withdrawn historical result.** Seed-50 A4A/A4B 2M equity, daily-risk,
+and gross-loss outcome summaries are excluded from current results, comparison,
+and selection. The report tables and derived numeric claims have been removed
+from this current plan. Source/run identities, audit methods, and original
+report digests remain in the evidence packet as historical provenance only;
+they are not evidence for the registered forthcoming 18-arm benchmark.
 
-This verifies numerical summaries against their serialized equity series only.
-It does not independently reconstruct mark-to-market equity from quotes,
-reconcile daily risk state or cashflows to fills, or validate policy value.
-No policy replay or training was performed. The equity verifier also compares
-each `daily_loss` breach row with its exact equity sample and reads the
-configured limit only when its source config hash matches the reanalysis
-manifest. In A4A/A4B training, both March 6 event rows equal the same-date
-equity minimum. The separate first-sample-to-daily-minimum screen records
-$3,004.28/$3,389.32 declines, but those are not gross realized-loss counter
-values. Its comparison now distinguishes equality from breach: an exactly
-$5,000 observed decline is at the floor and allowed; a strict decline greater
-than $5,000 is a crossing. A synthetic boundary regression covers both cases,
-and all four hash-linked A4 reports were regenerated; none has an observed
-calendar-date decline at or above $5,000.
-
-Source inspection confirms that the historical gross realized-loss counter
-accumulates the absolute negative realized PnL passed to
-`AccountState.close_trade`. The reusable
-`scripts/research/analysis/evaluation/audit_gross_realized_loss_counter.py`
-reconstructs this arithmetic from saved close-row `pnl` values and compares
-threshold crossings with recorded breach events. Both training ledgers cross
-the configured $5,000 gross-loss threshold on March 6: A4A at 17:15:29 UTC and
-A4B at 17:31:12 UTC. Their recorded events follow at 17:17:00.118 and
-17:33:00.078 UTC, respectively; gross realized loss through those event fills
-is $5,017.66 and $5,399.25. Each run has one source-session crossing (session
-47) and one matching event. The testing partitions contain no such events.
-
-The equity auditor now maps all saved timestamps to verified supplied M1 date
-labels and applies the current 5% initial-equity session-net rule to the
-preserved observations. The source row counts, unique timestamps, and bounds
-match the processed-bar manifests; all 357,126 equity observations resolve to
-session IDs. Exact M1 timestamp matches account for 354,661 observations; the
-remaining sub-bar execution times resolve by their verified local date, with
-zero unmatched dates. No sampled session reached the $5,000 floor across 259
-training sessions per arm and 205 report-period sessions per arm. The largest
-observed decline was $4,972.04 for A4A on 2025-04-04; on the gross-counter
-event session 47, observed declines were $3,004.28 / $3,389.32 for A4A / A4B.
-The dedicated report is
-`evidence/research/simulator_execution_parity/equity_series_reconciliation/session_equity_daily_loss_screen.md`.
-
-This is an observed-path screen of historical runs that blocked later entries
-under the gross realized-loss counter. It does not reconstruct the trades that
-the current session-net rule would have permitted, every tick-level equity
-excursion, cashflows against fills, or policy value. The current screen closes
-only this bounded historical daily-equity calculation; full Stage E accounting,
-cross-engine lifecycle parity, and determinism gates remain open. The equity
-audit tests pass 11/11 after adding strict-below boundary coverage, the ledger audit test passes 1/1, scoped Ruff and
-`git diff --check` pass, packet checksums verify, and the release registry
-verifies its current content and source/evidence hashes.
+The protocol and source identity records remain at
+`evidence/research/simulator_execution_parity/equity_series_reconciliation/`
+and `evidence/research/simulator_execution_parity/max_loss_event_reconciliation/`.
 
 ## Structural action and entry contract — 2026-11-04
 
@@ -3198,238 +3108,15 @@ historical action-to-eligibility linkage, external feed/calendar parity, and
 policy quality remain open. The pass ran in the existing GH200 allocation
 without a new Slurm job or step.
 
-## Daily-limit breach outcome — 2026-11-04
+## Historical A4 checkpoint diagnostics — withdrawn
 
-The user's daily-limit formula is fixed at 5% of initial equity, anchored to
-each supplied session's opening equity, and includes open PnL. The user decided
-that equality at the daily floor is allowed and a breach occurs only below it;
-any such breach permanently fails the full account/evaluation. Static maximum-
-loss equality is also allowed, and a breach occurs only below its floor. Payouts
-can withdraw only realized profit above initial operating balance.
-The shared guardrail scope now latches that failure in the environment and
-event backtest; new evaluation reports count daily breaches against survival.
-Focused guardrail, rollout, and paired risk-lifecycle checks pass 66/66. The
-two-session TickBook trace and independent verifier pass with matching engine
-events and zero same-session or later-session opens after breach. Evidence is
-at `evidence/research/simulator_execution_parity/daily_breach_full_evaluation_failure/`.
-The earlier recovery behavior remains preserved in its historical packet and
-is superseded for new evaluations. The saved A4 equity screen had zero 5%
-session-net floor crossings, but those historical runs used a gross
-realized-loss counter that blocked later actions; they do not settle the
-counterfactual.
-
-The saved-equity verifier has now been aligned with the equality-allowed
-boundary: a sampled value breaches only when it is strictly below the session
-floor. Its focused regression covers exact equality and a below-floor value;
-all four retained A4 path reports were regenerated from the same saved runs.
-Each still has zero sampled breaches. This corrects the audit boundary label;
-it does not change the historical policy or establish the current-rule
-counterfactual path.
-
-## Payout profit-boundary audit — 2026-11-04
-
-The selected-policy lifecycle summarizer now emits a separate check that each
-payout is positive and its pre-reset realized balance is above operating
-capital, in addition to verifying `payout = balance_before_reset -
-operating_balance`. Synthetic reports accept a valid positive withdrawal and
-fail closed for negative, zero, and below-operating-balance withdrawals. The
-summary and packet suite passes 20/20.
-
-The current-source summarizer was rerun from the four hash-linked A4 training
-and report-period partitions. The aggregate packet matches all four partition
-input/report manifests and cashflow reconciliations. Each partition has zero
-payout rows, so the selected historical policy supplies no observed payout
-cycle. Current-source reports and packet checksums verify at
-`evidence/research/selected_policy_trade_lifecycle/payout_profit_boundary/`.
-This closes only the payout-boundary audit slice; it does not establish an
-empirical payout outcome or close broader Stage E account/report reconciliation.
-
-## User-home recovery search — 2026-11-04
-
-The missing-artifact scanner also searched `/home/nguyenl37` for same-basename
-files matching the 132 currently unresolved run-artifact hashes. The read-only
-walk traversed 9,417 directories with zero traversal errors; it hashed one
-2,515-byte candidate and found zero exact matches. The report and metadata are
-in `evidence/research/historical_variant_screen_recoverability/missing_artifact_archive_reconciliation/`.
-This adds one bounded search root but does not establish global absence; the
-Stage A recovery gate remains open for differently named files, remaining
-roots, and the unreadable archive payloads.
-
-## Temporary-root recovery search — 2026-11-04
-
-The same-basename missing-artifact scanner also searched `/tmp` and `/var/tmp`
-for the 132 unresolved run-artifact hashes. It traversed 62 and 1 directories,
-respectively, without walk errors; six candidates totaling 10,740 bytes were
-hashed under `/tmp`, and `/var/tmp` had no candidates. Both reports contain zero
-exact matches, leaving all 132 targets unresolved. This is bounded coverage of
-two temporary roots only; Stage A recovery remains open.
-
-## Selected-run maximum-loss event reconciliation — 2026-11-04
-
-The reusable saved-equity auditor now reconciles each recorded `max_drawdown`
-event against the pinned $100,000 initial balance and $10,000 hard maximum-loss
-allowance. It accepts equality at the floor and requires the first breach below
-$90,000. Across four selected A4 partitions, all saved metrics and chronology
-match; three breach events match an exact equity observation and the first
-sampled floor crossing, while A4A training has no event or crossing. The
-reported post-close equity matches either the event bar timestamp or the
-liquidation `fill_time`, depending on the saved event. Focused tests pass 11/11,
-Ruff passes for the analyzer and test, and exact input/output hashes are in
-`evidence/research/simulator_execution_parity/max_loss_event_reconciliation/`.
-The pinned historical configs omit `max_drawdown_mode`, so this closes only the
-initial-equity floor/event slice; EOD/intraday peak references, full daily-risk
-state, and policy replay remain open.
-
-## Active feature event-family semantics — 2026-11-04
-
-The current-source synthetic event contracts were rechecked in the existing
-GH200 allocation. Nine focused suites passed 157/157 cases covering swing
-confirmation, order-block confirmation/retest, FVG/IFVG retest and invalidation,
-PO3 sweep/reclaim/readiness, completed higher-timeframe visibility, liquidity
-sweeps/BOS, and SMT secondary-symbol timing with missing bars. The packet maps
-each family to the tests and records exact source/test hashes at
-`evidence/research/feature_causality/active_event_family_semantics/`. This closes
-those synthetic event-order and state-transition subcases only. It does not
-establish market event prevalence, economic impact, all-profile validity and
-padding semantics, or historical PPO candidate linkage; overall Stage D stays
-open.
-
-## Versioned evaluation account-state trace — 2026-11-05
-
-`TradingEnv` and the event backtest now attach `account_state_trace.v1` rows to
-their valuation marks. Rows preserve decision and valuation times, an explicit
-pre-action/post-action phase, session anchors, hard/soft daily and maximum-loss
-limits, drawdown mode and floors, payout totals, position geometry, pending
-market/limit order lifecycle fields (including limit price and expiry), and
-breach reason. Terminal backtest liquidation refreshes the final trace row to
-match returned equity and payout-aware economic value. Evaluation writes traces
-to `account_state_trace.csv`;
-diagnostics record schema, row count, phases, and trace completeness. An
-alternate environment that omits snapshots produces no partial trace.
-
-A controlled account-transition fixture confirms shared equity marks, but not
-same-timestamp cash-ledger equality: `TradingEnv` reports post-action state and
-the event backtest reports pre-action state, so balance and open PnL may differ
-at their common mark time. The phase is explicit in each row and in diagnostics.
-The controlled fixture confirms matching close-fill timestamps and PnL, and
-that each observed balance delta equals the realized close cashflow at that
-boundary; its strengthened four-case regression passes. Per the user's
-decision, preserve both phases and reconcile through fill chronology rather
-than normalizing the reported states.
-The focused rollout, artifact-export, snapshot, account-transition,
-repeated-payout, and engine-execution batch passes 85/85; the full market/limit
-execution integration module passes 12/12. Both pass with scoped Ruff checks.
-Historical backfill, action-to-fill/reported-
-account reconciliation, cash-ledger timing, and Stage E acceptance remain
-open. No training or new experiment was started.
-
-## Event-backtest decision-to-order lineage — 2026-11-05
-
-The event backtest now returns `event_backtest_policy_decision.v2` rows in
-`policy_decisions`, including the selected action, setup identity and
-eligibility, eligible-candidate count, selected market/limit execution and
-limit parameters, risk fraction, and geometry choice. Stable decision IDs are
-carried onto market/limit order submissions, delayed limit fills and
-cancellations, selected-setup rejections, and opened positions. Setup identity
-is checked across rejection, submission, fill, cancellation, and open events.
-Rejection direction is reconciled to its selected action.
-Open-to-close attribution uses the position ID. Decision rows also snapshot
-the open-position direction and ID, pending-order ID, and decision timestamp
-so reconciliation can distinguish an
-intentional hold from a missing entry outcome and verify that the referenced
-position or pending order was live at that timestamp. Evaluation artifact
-output writes this ledger to
-`policy_decisions.csv` and records schema, row count, and completeness in
-`evaluation_diagnostics.json`.
-
-Focused backtest lifecycle, account-transition, payout, and report-export checks
-pass 60/60, with scoped
-Ruff checks. This closes the event-backtest decision-ID instrumentation slice;
-historical PPO decision linkage and full Stage E accounting/eligibility
-reconciliation remain open. The account snapshots keep their distinct
-pre-action and post-action phases and are reconciled through fill chronology.
-
-## Account-state trace reconciliation v2 — 2026-11-05
-
-The account-state trace now carries `account_state_trace.v2` rows with an exact
-trade-event prefix, contract size, and the position's actual mark price. The
-reusable verifier independently replays entry commissions, close cashflows,
-payout resets, and legacy gross closed-loss totals; it checks balance/equity,
-marked open PnL, payout-aware economic value, session-net daily loss, daily
-floor anchors, maximum-loss floors by mode, and peak-to-trough drawdown. Payout
-records must reconcile both to the replayed pre-reset cash balance and to the
-post-payout operating balance. Unsupported or mixed historical schemas are
-reported as incomplete rather than passing.
-
-The report writer exports `account_state_reconciliation.json` and adds status
-and check counts to evaluation diagnostics. The controlled synthetic account
-transition reconciles both environment post-action and event-backtest
-pre-action traces against their own event chronology. Shared equity marks,
-close fill timestamps/PnL, and timestamped realized cashflow deltas agree; the
-two reported phases remain distinct by design. The focused snapshot,
-reconciliation, rollout, report-export, account-transition, payout,
-setup-mask, and execution suites pass 83/83; a subsequent payout-corruption
-regression passes 4/4. Scoped Ruff and `git diff --check` pass. This closes
-trace reconstruction and this synthetic numeric reconciliation slice only;
-it does not establish historical backfill, financing/charge coverage, full
-action-to-eligibility replay, or overall Stage E acceptance. No training or new
-research run was started.
-
-## Current stop-menu checkpoint diagnostics — 2026-11-06
-
-The selected A4 checkpoints record a three-timeframe stop menu, while the
-current configuration selects M3/M5/M10/M15/M30/H1/H4/D1. The user chose to
-evaluate the current eight-timeframe menu as a changed-policy diagnostic.
-Reanalysis explicitly opts into that menu and labels its outputs
-`changed_policy_train_only_diagnostic`; report-period rows are not evaluated.
-
-Two A4A diagnostic replays completed. Both report matched account-state and
-policy-decision reconciliation, complete eight-artifact ledgers, identical
-artifact hashes across all eight artifacts, and identical training metrics:
-623 trades, -9.22% return, -21.16% maximum drawdown, and Sharpe -0.621. One
-A4B diagnostic replay `21439459` completed with exit 0 on 2026-11-06. Its
-99,492-step training-only ledger has matched account-state and policy-decision
-reconciliation, each with zero failures. Independently recalculated SHA-256
-and row counts for all eight artifacts; they match the report. It recorded 628
-trades, -10.06% return, 18.68% maximum drawdown, Sharpe -0.711, and full-period
-survival false at `2025-12-29 13:54:00.017 UTC`. The 2026 test split was not
-evaluated. This is a current-source, eight-frame changed-policy diagnostic,
-not a same-policy checkpoint replay, repeatability proof, selection result, or
-authorization to train.
-
-A4A job `21439662` has produced its first full-ledger output at
-`deterministic_replay_01/`. The saved report says action mode is stochastic,
-despite the worker's deterministic label; all eight ledger hashes and row
-counts match its report, and account-state and policy-decision reconciliation
-both have zero failures. It records 421 trades, -10.115% return, 16.24% maximum
-drawdown, Sharpe -0.897, and one static `max_drawdown` breach at equity
-$89,869.835 on `2025-09-05 14:15:00.205 UTC`; daily loss at that valuation is
-$73.72. The ledger's close-event accounting attributes -$67,883 to 209 stop
-closes and about +$57,987 to EOD, target, and EMA exits, plus a -$219 forced
-close. This explains the breach as accumulated negative realized value
-crossing the static floor in this replay; it is accounting decomposition, not
-a causal feature analysis or repair. The source A4A/A4B checkpoints were each
-trained for 2,000,000 steps with `env.reward_mode: dsr`, not the implemented
-survival objective. Their failed survival diagnostics therefore do not test
-whether survival-first training can qualify. Saved A4A/A4B configurations include the
-$900 sizing cap, $5,000 / 5% daily loss, and $10,000 / 10% static maximum loss,
-but still contain repeated-evaluation payout settings; these ledgers report no
-payout events. **Bounded no-go:** deterministic repeatability of the historical
-A4 checkpoints will not be established under the current user direction
-forbidding a rerun. A4A's first replay is stochastic and cannot count as a
-deterministic repeat; A4B has only one current-source diagnostic replay. Job
-`21439662` then FAILED with exit 2 after 27:49, before the second replay or
-comparator. I edited the worker file while it was executing; Bash reported a
-syntax error after the first output. No cancellation signal was sent. The
-corrected external worker now passes `bash -n`, passes `--deterministic`, and
-writes to fresh paths so it cannot overwrite this stochastic result. Preserve
-both A4 outputs and logs, and do not describe either checkpoint as
-repeatability-verified. This no-go does not close Stage E's broader full-ledger
-and daily-risk reconciliation or establish repeatability for a future
-survival-trained checkpoint; any such campaign must use the corrected worker
-and comparator. The previous interrupted A4B output and log also remain
-preserved. Evidence is under
-`/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/checkpoint_replay_a4_pinned_0d056dc/current_8frame_stop_menu_changed_policy_diagnostic/`.
+**Status: withdrawn historical result.** Seed-50 A4A/A4B checkpoint replay and
+risk-outcome summaries are excluded from current results and selection. The
+current plan retains only the user-defined risk semantics and the conclusion
+that those historical diagnostics do not qualify as same-policy repeatability
+or as the forthcoming benchmark. Raw run outputs and source/run identities
+remain in their preserved archive locations for provenance; no performance
+claim is made here.
 
 ## Date-split feature fitting scope — 2026-11-06
 
