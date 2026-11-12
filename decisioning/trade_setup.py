@@ -7,10 +7,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 TRADE_SETUP_SCHEMA_VERSION = "trade-setup-candidate-v1"
-TRADE_SETUP_OBSERVATION_VERSION = "trade-setup-observation-v1"
+TRADE_SETUP_OBSERVATION_VERSION = "trade-setup-observation-v2"
 TRADE_SETUP_ACTION_VERSION = "trade-setup-overlay-action-v1"
 TRADE_SETUP_EXECUTION_ACTION_VERSION = "trade-setup-entry-execution-action-v2"
-CANDIDATE_GEOMETRY_OBSERVATION_VERSION = "candidate-geometry-observation-v2"
+CANDIDATE_GEOMETRY_OBSERVATION_VERSION = "candidate-geometry-observation-v3"
 CANDIDATE_GEOMETRY_FEATURE_VERSION = "candidate-geometry-features-v2"
 CANDIDATE_GEOMETRY_ENTRY_TYPES = ("market", "limit")
 CANDIDATE_GEOMETRY_FEATURE_NAMES = (
@@ -100,8 +100,16 @@ def candidate_geometry_slot_semantics(slot: int | float) -> tuple[int, str]:
     return setup_offset + 1, CANDIDATE_GEOMETRY_ENTRY_TYPES[entry_index]
 
 
-def candidate_geometry_observation_schema() -> dict[str, object]:
+def candidate_geometry_observation_schema(
+    candidate_timeframes: Sequence[str] = TRADE_SETUP_TIMEFRAMES,
+    *,
+    completed_htf_history_enabled: bool = True,
+) -> dict[str, object]:
     """Describe the versioned fixed-width candidate geometry observations.
+
+    Args:
+        candidate_timeframes: Timeframes that contribute eligible setup candidates.
+        completed_htf_history_enabled: Whether completed HTF history is part of the policy input.
 
     Returns:
         Schema fields for candidate IDs, features, eligibility mask, and entry types.
@@ -110,6 +118,13 @@ def candidate_geometry_observation_schema() -> dict[str, object]:
         "version": CANDIDATE_GEOMETRY_OBSERVATION_VERSION,
         "feature_version": CANDIDATE_GEOMETRY_FEATURE_VERSION,
         "candidate_schema_version": TRADE_SETUP_SCHEMA_VERSION,
+        "candidate_timeframes": list(candidate_timeframes),
+        "completed_htf_history_enabled": bool(completed_htf_history_enabled),
+        "eligible_candidate_ids": [
+            candidate_id
+            for candidate_id in range(1, TRADE_SETUP_CATEGORY_COUNT)
+            if trade_setup_candidate(candidate_id).setup_timeframe in candidate_timeframes
+        ],
         "candidate_ids_key": "candidate_ids",
         "candidate_features_key": "candidate_features",
         "candidate_mask_key": "candidate_mask",
@@ -549,8 +564,16 @@ def trade_setup_id_from_box(value: float) -> int:
     return min(index, TRADE_SETUP_CATEGORY_COUNT - 1)
 
 
-def trade_setup_observation_schema() -> dict[str, object]:
+def trade_setup_observation_schema(
+    candidate_timeframes: Sequence[str] = TRADE_SETUP_TIMEFRAMES,
+    *,
+    completed_htf_history_enabled: bool = True,
+) -> dict[str, object]:
     """Describe the canonical eligibility mask recorded by new checkpoints.
+
+    Args:
+        candidate_timeframes: Timeframes that contribute eligible setup candidates.
+        completed_htf_history_enabled: Whether completed HTF history is part of the policy input.
 
     Returns:
         Mapping from ``str`` keys to ``object`` values.
@@ -558,6 +581,13 @@ def trade_setup_observation_schema() -> dict[str, object]:
     return {
         "version": TRADE_SETUP_OBSERVATION_VERSION,
         "candidate_schema_version": TRADE_SETUP_SCHEMA_VERSION,
+        "candidate_timeframes": list(candidate_timeframes),
+        "completed_htf_history_enabled": bool(completed_htf_history_enabled),
+        "eligible_candidate_ids": [
+            candidate_id
+            for candidate_id in range(1, TRADE_SETUP_CATEGORY_COUNT)
+            if trade_setup_candidate(candidate_id).setup_timeframe in candidate_timeframes
+        ],
         "mask_key": "trade_setup_mask",
         "candidate_count": TRADE_SETUP_CATEGORY_COUNT,
         "no_trade_id": NO_TRADE_ID,

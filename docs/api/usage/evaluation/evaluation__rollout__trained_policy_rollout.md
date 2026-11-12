@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1094](../../../../evaluation/rollout/trained_policy_rollout.py#L1094)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1110](../../../../evaluation/rollout/trained_policy_rollout.py#L1110)
 
 **Inputs and outputs:**
 
@@ -29,7 +29,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L348)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L359)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -130,6 +130,8 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   strategy: Strategy used to select or evaluate trades.
   strategy_actions: Whether to enable or require the strategy actions.
   trade_setup_actions: Whether to enable or require the trade setup actions.
+  trade_setup_candidate_timeframes: Timeframes that can contribute setup candidates.
+  completed_htf_history_enabled: Whether completed HTF history enters observations.
   candidate_geometry_actions: Whether the policy consumes the fixed candidate
       price-geometry observation tensor.
   agent_entry_execution: Whether the policy selects market or limit execution.
@@ -278,7 +280,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1094](../../../../evaluation/rollout/trained_policy_rollout.py#L1094)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1110](../../../../evaluation/rollout/trained_policy_rollout.py#L1110)
 
 **Inputs and outputs:**
 
@@ -299,7 +301,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L348)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L359)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -253,6 +253,15 @@ def test_evaluate_model_forwards_trade_setup_mode_to_the_environment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     received: dict[str, Any] = {}
+    from omegaconf import OmegaConf
+
+    from simulation.environment import build_eval_common
+
+    config = OmegaConf.load("config/base/default.yaml")
+    config.env.trade_setup_actions = True
+    config.env.trade_setup_candidate_timeframes = ["M1", "M5"]
+    config.env.completed_htf_history_enabled = False
+    eval_common, *_ = build_eval_common(config, arch="mtf_reasoning")
 
     class _CapturedEnvironmentConstruction(Exception):
         pass
@@ -269,10 +278,12 @@ def test_evaluate_model_forwards_trade_setup_mode_to_the_environment(
             _ScriptedModel({}),
             bars=bars,
             features=_make_features(bars),
-            trade_setup_actions=True,
+            **eval_common,
         )
 
     assert received["trade_setup_actions"] is True
+    assert received["trade_setup_candidate_timeframes"] == ("M1", "M5")
+    assert received["completed_htf_history_enabled"] is False
 
 
 def test_evaluate_model_produces_trades_and_valid_equity():

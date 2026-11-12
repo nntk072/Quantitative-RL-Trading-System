@@ -204,7 +204,12 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
                 else 0.0
             ),
         }
-        breach_reason = str(self.breach_log[-1]) if done and self.breach_log else ""
+        current_breach = (
+            self.breach_events[-1]
+            if self.breach_events and self.breach_events[-1].get("time") == bar_time
+            else None
+        )
+        breach_reason = "" if current_breach is None else str(current_breach.get("reason", ""))
         daily_breach = breach_reason == "daily_loss"
         max_loss_breach = breach_reason == "max_drawdown"
         trailing_breach = breach_reason == "trailing_dd"

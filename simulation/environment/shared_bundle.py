@@ -18,12 +18,14 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-BUNDLE_VERSION = 3
+BUNDLE_VERSION = 4
 _ARRAY_NAME = re.compile(r"^[A-Za-z0-9_]+$")
 _RELEVANT_CONFIG_PATHS = (
     "env.obs_window",
     "env.strategy_actions",
     "env.trade_setup_actions",
+    "env.trade_setup_candidate_timeframes",
+    "env.completed_htf_history_enabled",
     "env.reachable_r_validity_mask",
     "legacy_sequence_columns",
     "strategy.raw_columns",

@@ -12,7 +12,11 @@ from trading.execution import (
     FILL_COST_PROVENANCE_SCHEMA_VERSION,
     TRADE_CASHFLOW_SCHEMA_VERSION,
 )
-from trading.risk import RISK_BREACH_EVENT_SCHEMA_V1, ftmo_trading_day
+from trading.risk import (
+    RISK_BREACH_EVENT_SCHEMA_V1,
+    RISK_BREACH_EVENT_SCHEMA_V2,
+    ftmo_trading_day,
+)
 
 ACCOUNT_STATE_RECONCILIATION_SCHEMA = "account_state_reconciliation.v2"
 _TRACE_SCHEMA = "account_state_trace.v2"
@@ -1019,11 +1023,39 @@ def reconcile_account_state_trace(
             breach_records.append({str(key): value for key, value in raw_event.items()})
         hard_breaches = []
         for breach_record in breach_records:
-            if breach_record.get("schema_version") != RISK_BREACH_EVENT_SCHEMA_V1:
+            breach_schema = breach_record.get("schema_version")
+            if breach_schema not in {
+                RISK_BREACH_EVENT_SCHEMA_V1,
+                RISK_BREACH_EVENT_SCHEMA_V2,
+            }:
                 result["incomplete_reasons"].append(
                     "unsupported_or_missing_hard_breach_event_schema"
                 )
                 continue
+            if breach_schema == RISK_BREACH_EVENT_SCHEMA_V2:
+                event_daily_loss = _number(breach_record.get("daily_loss"))
+                event_daily_basis = breach_record.get("daily_pnl_basis")
+                if event_daily_loss is None or event_daily_loss < 0.0:
+                    result["incomplete_reasons"].append("hard_breach_daily_loss_is_invalid")
+                    continue
+                if event_daily_basis not in {
+                    "session_net_equity",
+                    "legacy_gross_closed_losses",
+                    "ftmo_midnight_balance",
+                }:
+                    result["incomplete_reasons"].append("hard_breach_daily_pnl_basis_is_invalid")
+                    continue
+                event_equity = _number(breach_record.get("equity"))
+                event_session_id = _number(breach_record.get("session_id"))
+                if (
+                    event_equity is None
+                    or event_session_id is None
+                    or not event_session_id.is_integer()
+                ):
+                    result["incomplete_reasons"].append("hard_breach_pre_close_identity_is_invalid")
+                    continue
+                breach_record["equity"] = event_equity
+                breach_record["session_id"] = int(event_session_id)
             if str(breach_record.get("reason", "")) not in {
                 "daily_loss",
                 "max_drawdown",
@@ -1053,6 +1085,13 @@ def reconcile_account_state_trace(
                 valid_prefix = False
             if event_time is None or not valid_prefix or raw_prefix is None:
                 continue
+            if breach_schema == RISK_BREACH_EVENT_SCHEMA_V2:
+                raw_label_time = breach_record.get("time")
+                label_time = pd.to_datetime(str(raw_label_time), utc=True, errors="coerce")
+                if pd.isna(label_time):
+                    result["incomplete_reasons"].append("hard_breach_decision_label_is_invalid")
+                    continue
+                breach_record["time"] = pd.Timestamp(label_time)
             hard_breaches.append(
                 {
                     **breach_record,
@@ -1061,6 +1100,60 @@ def reconcile_account_state_trace(
                 }
             )
         if hard_breaches:
+            v2_breaches = [
+                breach
+                for breach in hard_breaches
+                if breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V2
+            ]
+            if len(v2_breaches) > 1:
+                # Each v2 event has its own exact identity and pre-close prefix.
+                # Reconcile each independently so later events cannot inherit
+                # the first event's matching row or loss calculation.
+                first_record = min(
+                    hard_breaches,
+                    key=lambda breach: pd.Timestamp(breach["detection_time"]),
+                )
+                primary_v2 = (
+                    first_record
+                    if first_record["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V2
+                    else None
+                )
+                for breach in v2_breaches:
+                    if breach is primary_v2:
+                        # The main path below validates this event.
+                        continue
+                    single = reconcile_account_state_trace(
+                        trace,
+                        trade_events,
+                        tolerance=tolerance,
+                        breach_events=[breach],
+                    )
+                    for name, count in single["checks"].items():
+                        if name.startswith("hard_breach_"):
+                            checks[name] = checks.get(name, 0) + int(count)
+                    for reason in single["incomplete_reasons"]:
+                        if (
+                            reason.startswith("hard_breach_")
+                            and reason not in result["incomplete_reasons"]
+                        ):
+                            result["incomplete_reasons"].append(reason)
+                    for failure in single["failures"]:
+                        if str(failure.get("check", "")).startswith("hard_breach_"):
+                            failures.append(failure)
+                breach_identities = [
+                    (
+                        breach["time"],
+                        breach["detection_time"],
+                        breach["session_id"],
+                        breach["reason"],
+                        breach["trade_event_count"],
+                    )
+                    for breach in v2_breaches
+                ]
+                if len(set(breach_identities)) != len(breach_identities):
+                    result["incomplete_reasons"].append(
+                        "hard_breach_trace_match_missing_or_ambiguous"
+                    )
             for hard_breach in hard_breaches:
                 prefix = int(hard_breach["trade_event_count"])
                 if not trade_events.empty and "type" not in trade_events.columns:
@@ -1092,15 +1185,239 @@ def reconcile_account_state_trace(
             first_breach_time = pd.Timestamp(first_breach["detection_time"])
             if hard_breaches:
                 decision_times = pd.to_datetime(trace["decision_time"], utc=True, errors="coerce")
+                valuation_times = pd.to_datetime(trace["valuation_time"], utc=True, errors="coerce")
                 if decision_times.isna().any():
                     result["incomplete_reasons"].append(
                         "hard_breach_account_snapshot_time_is_invalid"
                     )
-                rows_after_breach = [
-                    index
-                    for index, decision_time in enumerate(decision_times)
-                    if not pd.isna(decision_time) and decision_time >= first_breach_time
-                ]
+                if first_breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V2:
+                    if "breach_reason" not in trace.columns:
+                        result["incomplete_reasons"].append("hard_breach_trace_reason_is_missing")
+                    candidates = []
+                    for index, trace_record in enumerate(trace.to_dict("records")):
+                        decision_time = decision_times.iloc[index]
+                        valuation_time = valuation_times.iloc[index]
+                        row_session = _number(trace_record.get("session_id"))
+                        detection_time = pd.Timestamp(first_breach["detection_time"])
+                        if (
+                            not pd.isna(decision_time)
+                            and not pd.isna(valuation_time)
+                            and decision_time == first_breach["time"]
+                            and row_session is not None
+                            and row_session.is_integer()
+                            and int(row_session) == first_breach["session_id"]
+                            and trace_record.get("breach_reason") == first_breach["reason"]
+                            and decision_time <= detection_time <= valuation_time
+                        ):
+                            candidates.append(index)
+                    rows_after_breach = candidates
+                    if len(rows_after_breach) != 1:
+                        result["incomplete_reasons"].append(
+                            "hard_breach_trace_match_missing_or_ambiguous"
+                        )
+                    else:
+                        breach_row_index = rows_after_breach[0]
+                        event_prefix = int(first_breach["trade_event_count"])
+                        snapshot_prefix = _number(trace.iloc[breach_row_index]["trade_event_count"])
+                        if (
+                            snapshot_prefix is None
+                            or not snapshot_prefix.is_integer()
+                            or snapshot_prefix < event_prefix
+                            or snapshot_prefix > len(trade_events)
+                        ):
+                            result["incomplete_reasons"].append(
+                                "hard_breach_trace_prefix_is_invalid"
+                            )
+                        else:
+                            matched = trace.iloc[breach_row_index]
+                            event_basis = first_breach["daily_pnl_basis"]
+                            if str(matched["daily_pnl_basis"]) != event_basis:
+                                result["incomplete_reasons"].append(
+                                    "hard_breach_daily_pnl_basis_mismatch"
+                                )
+                            else:
+                                event_equity = float(first_breach["equity"])
+                                if event_basis == "session_net_equity":
+                                    anchor = _number(matched["session_start_equity"])
+                                    expected_loss = (
+                                        None if anchor is None else max(0.0, anchor - event_equity)
+                                    )
+                                elif event_basis == "ftmo_midnight_balance":
+                                    anchor = _number(matched["session_start_balance"])
+                                    expected_loss = (
+                                        None if anchor is None else max(0.0, anchor - event_equity)
+                                    )
+                                else:
+                                    # Legacy loss resets at the supplied-session boundary.
+                                    start_prefix = 0
+                                    first_same_session = breach_row_index
+                                    while first_same_session > 0:
+                                        prior_session = _number(
+                                            trace.iloc[first_same_session - 1]["session_id"]
+                                        )
+                                        if (
+                                            prior_session is None
+                                            or int(prior_session) != first_breach["session_id"]
+                                        ):
+                                            break
+                                        first_same_session -= 1
+                                    if first_same_session > 0:
+                                        previous_prefix = _number(
+                                            trace.iloc[first_same_session - 1]["trade_event_count"]
+                                        )
+                                        if (
+                                            previous_prefix is None
+                                            or not previous_prefix.is_integer()
+                                        ):
+                                            result["incomplete_reasons"].append(
+                                                "hard_breach_legacy_reset_prefix_is_invalid"
+                                            )
+                                            expected_loss = None
+                                        else:
+                                            start_prefix = int(previous_prefix)
+                                            if start_prefix > event_prefix:
+                                                result["incomplete_reasons"].append(
+                                                    "hard_breach_legacy_reset_after_event_prefix"
+                                                )
+                                                expected_loss = None
+                                            else:
+                                                expected_loss = 0.0
+                                    elif (
+                                        _number(trace.iloc[first_same_session]["trade_event_count"])
+                                        != 0.0
+                                    ):
+                                        result["incomplete_reasons"].append(
+                                            "hard_breach_legacy_reset_coverage_is_incomplete"
+                                        )
+                                        expected_loss = None
+                                    else:
+                                        expected_loss = 0.0
+                                    if expected_loss is not None:
+                                        ledger_slice = trade_events.iloc[start_prefix:event_prefix]
+                                        if "type" not in ledger_slice.columns:
+                                            result["incomplete_reasons"].append(
+                                                "hard_breach_legacy_close_ledger_is_incomplete"
+                                            )
+                                            expected_loss = None
+                                        else:
+                                            for close_event in ledger_slice.to_dict("records"):
+                                                if str(close_event.get("type", "")) in _CLOSE_TYPES:
+                                                    pnl = _number(close_event.get("pnl"))
+                                                    if pnl is None:
+                                                        result["incomplete_reasons"].append(
+                                                            "hard_breach_legacy_close_pnl_"
+                                                            "is_invalid"
+                                                        )
+                                                        expected_loss = None
+                                                        break
+                                                    if pnl < 0.0:
+                                                        expected_loss += -pnl
+                                if expected_loss is None:
+                                    result["incomplete_reasons"].append(
+                                        "hard_breach_daily_loss_recompute_is_incomplete"
+                                    )
+                                else:
+                                    check(
+                                        trace.index[breach_row_index],
+                                        "hard_breach_pre_close_daily_loss",
+                                        first_breach["daily_loss"],
+                                        expected_loss,
+                                    )
+                            suffix = trade_events.iloc[event_prefix : int(snapshot_prefix)]
+                            for suffix_event in suffix.to_dict("records"):
+                                is_breach_forced_close = str(
+                                    suffix_event.get("type", "")
+                                ) == "forced_close" and str(suffix_event.get("reason", "")) == str(
+                                    first_breach["reason"]
+                                )
+                                is_breach_order_cancel = False
+                                if (
+                                    str(suffix_event.get("type", "")) == "order_cancel"
+                                    and str(suffix_event.get("reason", ""))
+                                    in {
+                                        "account_guardrail_before_limit_fill",
+                                        "account_guardrail_before_scheduled_fill",
+                                        "session_blocked_before_limit_fill",
+                                        "account_failed_before_limit_fill",
+                                    }
+                                    and suffix_event.get("order_id") is not None
+                                ):
+                                    order_id = str(suffix_event["order_id"])
+                                    prior_submissions = [
+                                        event
+                                        for event in trade_events.iloc[:event_prefix].to_dict(
+                                            "records"
+                                        )
+                                        if str(event.get("type", "")) == "order_submit"
+                                        and event.get("order_id") is not None
+                                        and str(event["order_id"]) == order_id
+                                    ]
+                                    submissions = []
+                                    for submission in prior_submissions:
+                                        submitted_session = _number(submission.get("session_id"))
+                                        if submitted_session is not None:
+                                            if (
+                                                submitted_session.is_integer()
+                                                and int(submitted_session)
+                                                == first_breach["session_id"]
+                                            ):
+                                                submissions.append(submission)
+                                            continue
+                                        submitted_session_raw = submission.get("session_id")
+                                        if submitted_session_raw is not None:
+                                            try:
+                                                if not pd.isna(submitted_session_raw):
+                                                    continue
+                                            except (TypeError, ValueError):
+                                                continue
+                                        submitted_bar_time = pd.to_datetime(
+                                            str(submission.get("decision_bar_time")),
+                                            utc=True,
+                                            errors="coerce",
+                                        )
+                                        if pd.isna(submitted_bar_time):
+                                            continue
+                                        sessions_at_submission = [
+                                            _number(trace.iloc[index]["session_id"])
+                                            for index, decision_time in enumerate(decision_times)
+                                            if decision_time == submitted_bar_time
+                                        ]
+                                        if sessions_at_submission and all(
+                                            session is not None
+                                            and session.is_integer()
+                                            and int(session) == first_breach["session_id"]
+                                            for session in sessions_at_submission
+                                        ):
+                                            submissions.append(submission)
+                                    cancel_session_raw = suffix_event.get("session_id")
+                                    cancel_session = _number(cancel_session_raw)
+                                    cancel_session_missing = cancel_session_raw is None
+                                    if not cancel_session_missing:
+                                        try:
+                                            cancel_session_missing = bool(
+                                                pd.isna(cancel_session_raw)
+                                            )
+                                        except (TypeError, ValueError):
+                                            pass
+                                    is_breach_order_cancel = len(submissions) == 1 and (
+                                        cancel_session_missing
+                                        or (
+                                            cancel_session is not None
+                                            and cancel_session.is_integer()
+                                            and int(cancel_session) == first_breach["session_id"]
+                                        )
+                                    )
+                                if not (is_breach_forced_close or is_breach_order_cancel):
+                                    result["incomplete_reasons"].append(
+                                        "hard_breach_prefix_suffix_has_unexpected_events"
+                                    )
+                                    break
+                else:
+                    rows_after_breach = [
+                        index
+                        for index, decision_time in enumerate(decision_times)
+                        if not pd.isna(decision_time) and decision_time >= first_breach_time
+                    ]
                 if not len(rows_after_breach):
                     result["incomplete_reasons"].append(
                         "hard_breach_has_no_matching_account_snapshot"

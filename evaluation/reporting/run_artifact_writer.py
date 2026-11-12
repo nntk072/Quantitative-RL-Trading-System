@@ -79,6 +79,8 @@ _BREACH_EVENT_COLUMNS = (
     "session_id",
     "reason",
     "equity",
+    "daily_loss",
+    "daily_pnl_basis",
     "fill_time",
 )
 

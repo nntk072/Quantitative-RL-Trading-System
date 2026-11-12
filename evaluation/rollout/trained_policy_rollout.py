@@ -320,6 +320,18 @@ def evaluate_model(
     strategy: Any = None,
     strategy_actions: bool = False,
     trade_setup_actions: bool = False,
+    trade_setup_candidate_timeframes: tuple[str, ...] = (
+        "M1",
+        "M3",
+        "M5",
+        "M10",
+        "M15",
+        "M30",
+        "H1",
+        "H4",
+        "D1",
+    ),
+    completed_htf_history_enabled: bool = True,
     candidate_geometry_actions: bool = False,
     agent_entry_execution: bool = False,
     entry_state_machine: bool = False,
@@ -433,6 +445,8 @@ def evaluate_model(
         strategy: Strategy used to select or evaluate trades.
         strategy_actions: Whether to enable or require the strategy actions.
         trade_setup_actions: Whether to enable or require the trade setup actions.
+        trade_setup_candidate_timeframes: Timeframes that can contribute setup candidates.
+        completed_htf_history_enabled: Whether completed HTF history enters observations.
         candidate_geometry_actions: Whether the policy consumes the fixed candidate
             price-geometry observation tensor.
         agent_entry_execution: Whether the policy selects market or limit execution.
@@ -564,6 +578,8 @@ def evaluate_model(
             strategy=strategy,
             strategy_actions=strategy_actions,
             trade_setup_actions=trade_setup_actions,
+            trade_setup_candidate_timeframes=trade_setup_candidate_timeframes,
+            completed_htf_history_enabled=completed_htf_history_enabled,
             candidate_geometry_actions=candidate_geometry_actions,
             agent_entry_execution=agent_entry_execution,
             entry_state_machine=entry_state_machine,

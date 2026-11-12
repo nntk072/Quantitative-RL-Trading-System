@@ -8,11 +8,11 @@ This page contains 23 public callable records owned by `decisioning.trade_setup`
 
 **Purpose:** Versioned Box action layout whose first coordinate selects a setup.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema` · **Source:** [decisioning/trade_setup.py:187](../../../../decisioning/trade_setup.py#L187)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema` · **Source:** [decisioning/trade_setup.py:202](../../../../decisioning/trade_setup.py#L202)
 
 **Observed usage:**
 
-1. [production caller: `build_trade_setup_action_schema`](../../../../decisioning/trade_setup.py#L308)
+1. [production caller: `build_trade_setup_action_schema`](../../../../decisioning/trade_setup.py#L323)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -49,11 +49,11 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** One stable policy choice: idea, setup timeframe, direction, or no-trade.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupCandidate` · **Source:** [decisioning/trade_setup.py:142](../../../../decisioning/trade_setup.py#L142)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupCandidate` · **Source:** [decisioning/trade_setup.py:157](../../../../decisioning/trade_setup.py#L157)
 
 **Observed usage:**
 
-1. [production caller: `_catalog`](../../../../decisioning/trade_setup.py#L471)
+1. [production caller: `_catalog`](../../../../decisioning/trade_setup.py#L486)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -78,11 +78,11 @@ def _catalog() -> tuple[TradeSetupCandidate, ...]:
 
 **Purpose:** Decoded market/limit choice and its conditional limit controls.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupExecutionChoice` · **Source:** [decisioning/trade_setup.py:161](../../../../decisioning/trade_setup.py#L161)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupExecutionChoice` · **Source:** [decisioning/trade_setup.py:176](../../../../decisioning/trade_setup.py#L176)
 
 **Observed usage:**
 
-1. [production caller: `decode_trade_setup_execution_choice`](../../../../decisioning/trade_setup.py#L365)
+1. [production caller: `decode_trade_setup_execution_choice`](../../../../decisioning/trade_setup.py#L380)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -111,11 +111,11 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Decoded stop/target geometry and position-management coordinates.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupGeometryChoice` · **Source:** [decisioning/trade_setup.py:170](../../../../decisioning/trade_setup.py#L170)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupGeometryChoice` · **Source:** [decisioning/trade_setup.py:185](../../../../decisioning/trade_setup.py#L185)
 
 **Observed usage:**
 
-1. [production caller: `decode_trade_setup_geometry_choice`](../../../../decisioning/trade_setup.py#L450)
+1. [production caller: `decode_trade_setup_geometry_choice`](../../../../decisioning/trade_setup.py#L465)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -152,7 +152,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Create the versioned action layout for primary trade-setup selection.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.build_trade_setup_action_schema` · **Source:** [decisioning/trade_setup.py:275](../../../../decisioning/trade_setup.py#L275)
+**Exact API:** {py:obj}`decisioning.trade_setup.build_trade_setup_action_schema` · **Source:** [decisioning/trade_setup.py:290](../../../../decisioning/trade_setup.py#L290)
 
 **Inputs and outputs:**
 
@@ -226,6 +226,13 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 **Exact API:** {py:obj}`decisioning.trade_setup.candidate_geometry_observation_schema` · **Source:** [decisioning/trade_setup.py:103](../../../../decisioning/trade_setup.py#L103)
 
 **Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  candidate_timeframes: Timeframes that contribute eligible setup candidates.
+  completed_htf_history_enabled: Whether completed HTF history is part of the policy input.
+  ```
 
 - **Returns:**
 
@@ -462,7 +469,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Decode policy coordinates into an order type, ATR offset, and TTL.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.decode_trade_setup_execution_choice` · **Source:** [decisioning/trade_setup.py:323](../../../../decisioning/trade_setup.py#L323)
+**Exact API:** {py:obj}`decisioning.trade_setup.decode_trade_setup_execution_choice` · **Source:** [decisioning/trade_setup.py:338](../../../../decisioning/trade_setup.py#L338)
 
 **Inputs and outputs:**
 
@@ -537,7 +544,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Decode the setup action's stop, target, and exit coordinates.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.decode_trade_setup_geometry_choice` · **Source:** [decisioning/trade_setup.py:372](../../../../decisioning/trade_setup.py#L372)
+**Exact API:** {py:obj}`decisioning.trade_setup.decode_trade_setup_geometry_choice` · **Source:** [decisioning/trade_setup.py:387](../../../../decisioning/trade_setup.py#L387)
 
 **Inputs and outputs:**
 
@@ -613,7 +620,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a setup entry by ID, rejecting unknown IDs.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_candidate` · **Source:** [decisioning/trade_setup.py:486](../../../../decisioning/trade_setup.py#L486)
+**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_candidate` · **Source:** [decisioning/trade_setup.py:501](../../../../decisioning/trade_setup.py#L501)
 
 **Inputs and outputs:**
 
@@ -684,7 +691,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve an exact idea/timeframe/direction tuple to its stable ID.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_candidate_id` · **Source:** [decisioning/trade_setup.py:502](../../../../decisioning/trade_setup.py#L502)
+**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_candidate_id` · **Source:** [decisioning/trade_setup.py:517](../../../../decisioning/trade_setup.py#L517)
 
 **Inputs and outputs:**
 
@@ -757,7 +764,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Encode an ID at the center of its equal-width Box interval.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_center` · **Source:** [decisioning/trade_setup.py:521](../../../../decisioning/trade_setup.py#L521)
+**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_center` · **Source:** [decisioning/trade_setup.py:536](../../../../decisioning/trade_setup.py#L536)
 
 **Inputs and outputs:**
 
@@ -825,7 +832,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Decode a finite normalized Box value to its stable category.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_id_from_box` · **Source:** [decisioning/trade_setup.py:534](../../../../decisioning/trade_setup.py#L534)
+**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_id_from_box` · **Source:** [decisioning/trade_setup.py:549](../../../../decisioning/trade_setup.py#L549)
 
 **Inputs and outputs:**
 
@@ -897,9 +904,16 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Describe the canonical eligibility mask recorded by new checkpoints.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_observation_schema` · **Source:** [decisioning/trade_setup.py:552](../../../../decisioning/trade_setup.py#L552)
+**Exact API:** {py:obj}`decisioning.trade_setup.trade_setup_observation_schema` · **Source:** [decisioning/trade_setup.py:567](../../../../decisioning/trade_setup.py#L567)
 
 **Inputs and outputs:**
+
+- **Args:**
+
+  ```text
+  candidate_timeframes: Timeframes that contribute eligible setup candidates.
+  completed_htf_history_enabled: Whether completed HTF history is part of the policy input.
+  ```
 
 - **Returns:**
 
@@ -951,7 +965,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Reject checkpoints whose price-aware candidate tensor semantics differ.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.validate_candidate_geometry_observation_schema` · **Source:** [decisioning/trade_setup.py:583](../../../../decisioning/trade_setup.py#L583)
+**Exact API:** {py:obj}`decisioning.trade_setup.validate_candidate_geometry_observation_schema` · **Source:** [decisioning/trade_setup.py:613](../../../../decisioning/trade_setup.py#L613)
 
 **Inputs and outputs:**
 
@@ -1007,7 +1021,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Reject checkpoints whose setup eligibility semantics differ from config.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.validate_trade_setup_observation_schema` · **Source:** [decisioning/trade_setup.py:568](../../../../decisioning/trade_setup.py#L568)
+**Exact API:** {py:obj}`decisioning.trade_setup.validate_trade_setup_observation_schema` · **Source:** [decisioning/trade_setup.py:598](../../../../decisioning/trade_setup.py#L598)
 
 **Inputs and outputs:**
 
@@ -1037,16 +1051,26 @@ def test_trade_setup_observation_schema_is_checkpoint_checked() -> None:
         validate_trade_setup_observation_schema(model._trade_setup_observation_schema, None)
 ```
 
-2. [production caller: `validate_model_trade_setup_observation_schema`](../../../../learning/rl/agent.py#L321)
+2. [test fixture: `test_candidate_masks_are_history_independent_and_timeframe_scoped`](../../../../tests/unit/simulation/test_environment/test_trade_setup_observation.py#L177)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def validate_model_trade_setup_observation_schema(
-    model: Any, expected_schema: dict[str, Any] | None
-) -> None:
-    actual = getattr(model, "_trade_setup_observation_schema", None)
-    validate_trade_setup_observation_schema(actual, expected_schema)
+# … caller setup omitted …
+        == c_env.trade_setup_observation_schema["eligible_candidate_ids"]
+    )
+    assert not b_env.trade_setup_observation_schema["completed_htf_history_enabled"]
+    assert c_env.trade_setup_observation_schema["completed_htf_history_enabled"]
+    with pytest.raises(ValueError, match="schema differs"):
+        validate_trade_setup_observation_schema(
+            b_env.trade_setup_observation_schema, c_env.trade_setup_observation_schema
+        )
+
+    b_env._obs_features_arr[:] = 0.0
+    np.testing.assert_array_equal(b_env._trade_setup_mask_for_step(), b_mask)
+
+    a_env = TradingEnv(**{**common, "trade_setup_candidate_timeframes": ("M1",), "mtf": False})
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -1062,7 +1086,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Map each action-coordinate name to its ordered index.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema.indices` · **Source:** [decisioning/trade_setup.py:208](../../../../decisioning/trade_setup.py#L208)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema.indices` · **Source:** [decisioning/trade_setup.py:223](../../../../decisioning/trade_setup.py#L223)
 
 **Inputs and outputs:**
 
@@ -1124,7 +1148,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the canonical key for the configured coordinate flags.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema.key` · **Source:** [decisioning/trade_setup.py:220](../../../../decisioning/trade_setup.py#L220)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema.key` · **Source:** [decisioning/trade_setup.py:235](../../../../decisioning/trade_setup.py#L235)
 
 **Inputs and outputs:**
 
@@ -1136,7 +1160,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `to_dict`](../../../../decisioning/trade_setup.py#L237)
+1. [production caller: `to_dict`](../../../../decisioning/trade_setup.py#L252)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1164,7 +1188,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return the versioned action contract as JSON-compatible data.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema.to_dict` · **Source:** [decisioning/trade_setup.py:228](../../../../decisioning/trade_setup.py#L228)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema.to_dict` · **Source:** [decisioning/trade_setup.py:243](../../../../decisioning/trade_setup.py#L243)
 
 **Inputs and outputs:**
 
@@ -1229,7 +1253,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the number of action coordinates.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema.width` · **Source:** [decisioning/trade_setup.py:199](../../../../decisioning/trade_setup.py#L199)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupActionSchema.width` · **Source:** [decisioning/trade_setup.py:214](../../../../decisioning/trade_setup.py#L214)
 
 **Inputs and outputs:**
 
@@ -1290,7 +1314,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return whether this candidate represents the no-trade choice.
 
-**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupCandidate.is_no_trade` · **Source:** [decisioning/trade_setup.py:151](../../../../decisioning/trade_setup.py#L151)
+**Exact API:** {py:obj}`decisioning.trade_setup.TradeSetupCandidate.is_no_trade` · **Source:** [decisioning/trade_setup.py:166](../../../../decisioning/trade_setup.py#L166)
 
 **Inputs and outputs:**
 

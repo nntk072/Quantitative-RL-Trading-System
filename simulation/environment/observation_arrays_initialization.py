@@ -9,8 +9,8 @@ import pandas as pd
 
 from decisioning.regime_observations import REGIME_FEATURES, regime_observation_schema
 from decisioning.trade_setup import (
-    TRADE_SETUP_CATEGORY_COUNT,
     candidate_geometry_observation_schema,
+    trade_setup_candidate,
     trade_setup_observation_schema,
 )
 from features import attach_reachable_r, select_legacy_obs_columns, select_obs_columns
@@ -44,6 +44,8 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         session_start: str,
         regime_observation: bool,
         trade_setup_actions: bool,
+        trade_setup_candidate_timeframes: tuple[str, ...],
+        completed_htf_history_enabled: bool,
         reachable_r_validity_mask: bool,
         feature_validity_channels: bool,
     ) -> None:
@@ -64,6 +66,8 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
             session_start: Local session start used for session identifiers.
             regime_observation: Whether regime fields are included in observations.
             trade_setup_actions: Whether setup masks are included in observations.
+            trade_setup_candidate_timeframes: Timeframes allowed to contribute candidates.
+            completed_htf_history_enabled: Whether completed HTF windows are policy inputs.
             reachable_r_validity_mask: Whether to add the reachability-validity feature.
             feature_validity_channels: Whether to append finite-value masks.
         """
@@ -83,6 +87,8 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         # be cast to float32 and are not part of the model's normalized observation.
         self._reachable_r_validity_mask = bool(reachable_r_validity_mask)
         self.feature_validity_channels = bool(feature_validity_channels)
+        self.completed_htf_history_enabled = bool(completed_htf_history_enabled)
+        setup_feature_names = {name for _, name in trade_setup_candidate_feature_columns()}
         if self._bundle_arrays is None:
             assert bars is not None and features is not None
             self._legacy_sequence_columns = bool(legacy_sequence_columns)
@@ -115,6 +121,12 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                         "sequence_columns_override must contain numeric feature columns: "
                         f"{non_numeric[:10]}"
                     )
+                if trade_setup_actions and setup_feature_names.intersection(
+                    sequence_columns_override
+                ):
+                    raise ValueError(
+                        "recorded sequence coordinates cannot include trade setup candidate features"
+                    )
                 selected = features.loc[
                     :, [name for name in sequence_columns_override if name in features.columns]
                 ]
@@ -136,6 +148,12 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                     features,
                     include_validity_mask=self._reachable_r_validity_mask,
                 )
+            if trade_setup_actions:
+                self._obs_features = self._obs_features.drop(
+                    columns=[
+                        name for name in self._obs_features.columns if name in setup_feature_names
+                    ]
+                )
             self._obs_columns = list(self._obs_features.columns)
         else:
             assert bundle_data is not None
@@ -143,6 +161,11 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                 raise ValueError("recorded sequence coordinates are unsupported for bundled envs")
             self._obs_features = cast(pd.DataFrame, None)
             self._obs_columns = list(bundle_data.manifest["column_names"]["obs_features"])
+            if trade_setup_actions and setup_feature_names.intersection(self._obs_columns):
+                raise ValueError(
+                    "env bundle observation columns contain trade setup candidate features; "
+                    "rebuild the bundle for the versioned candidate-history contract"
+                )
             saved_legacy_columns = bool(
                 bundle_data.manifest.get("config", {}).get("legacy_sequence_columns", False)
             )
@@ -161,6 +184,43 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                 raise ValueError(
                     "requested reachable-r validity-mask mode differs from the saved env bundle"
                 )
+            saved_completed_history = bool(
+                bundle_data.manifest.get("config", {})
+                .get("env", {})
+                .get("completed_htf_history_enabled", True)
+            )
+            if self.completed_htf_history_enabled != saved_completed_history:
+                raise ValueError(
+                    "requested completed HTF history mode differs from the saved env bundle"
+                )
+            if trade_setup_actions:
+                all_candidate_timeframes = (
+                    "M1",
+                    "M3",
+                    "M5",
+                    "M10",
+                    "M15",
+                    "M30",
+                    "H1",
+                    "H4",
+                    "D1",
+                )
+                saved_candidate_timeframes = tuple(
+                    str(tf).upper()
+                    for tf in bundle_data.manifest.get("config", {})
+                    .get("env", {})
+                    .get("trade_setup_candidate_timeframes", all_candidate_timeframes)
+                )
+                requested_candidate_timeframes = tuple(
+                    str(tf).upper() for tf in trade_setup_candidate_timeframes
+                )
+                if set(requested_candidate_timeframes) != set(saved_candidate_timeframes):
+                    raise ValueError(
+                        "requested trade setup candidate timeframes "
+                        f"{sorted(set(requested_candidate_timeframes))} differ from the saved "
+                        "env bundle contract "
+                        f"{sorted(set(saved_candidate_timeframes))}"
+                    )
             self._legacy_sequence_columns = saved_legacy_columns
         if self._legacy_sequence_columns and episodic:
             raise ValueError("legacy sequence columns are restricted to non-episodic replay")
@@ -221,11 +281,32 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         self.regime_observation = bool(regime_observation)
         self.regime_observation_schema = regime_observation_schema() if regime_observation else None
         self.trade_setup_actions = bool(trade_setup_actions)
+        allowed_timeframes = set(trade_setup_candidate_timeframes)
+        unknown_timeframes = allowed_timeframes - set(
+            ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
+        )
+        if unknown_timeframes or not allowed_timeframes:
+            raise ValueError(
+                f"invalid trade setup candidate timeframes: {sorted(allowed_timeframes)}"
+            )
+        self._trade_setup_candidate_timeframes = tuple(
+            tf
+            for tf in ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
+            if tf in allowed_timeframes
+        )
         self.trade_setup_observation_schema = (
-            trade_setup_observation_schema() if self.trade_setup_actions else None
+            trade_setup_observation_schema(
+                self._trade_setup_candidate_timeframes,
+                completed_htf_history_enabled=self.completed_htf_history_enabled,
+            )
+            if self.trade_setup_actions
+            else None
         )
         self.candidate_geometry_observation_schema = (
-            candidate_geometry_observation_schema()
+            candidate_geometry_observation_schema(
+                self._trade_setup_candidate_timeframes,
+                completed_htf_history_enabled=self.completed_htf_history_enabled,
+            )
             if bool(getattr(self, "candidate_geometry_actions", False))
             else None
         )
@@ -235,12 +316,16 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
         self._trade_setup_candidate_ids: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
         self._trade_setup_feature_indices: np.ndarray[Any, Any] = np.empty(0, dtype=np.int64)
         if self.trade_setup_actions:
-            columns = trade_setup_candidate_feature_columns()
-            column_indices = {name: index for index, name in enumerate(self._obs_columns)}
+            columns = [
+                (candidate_id, name)
+                for candidate_id, name in trade_setup_candidate_feature_columns()
+                if trade_setup_candidate(int(candidate_id)).setup_timeframe in allowed_timeframes
+            ]
+            column_indices = {name: index for index, name in enumerate(self._features_cols)}
             missing_setup_features = [name for _, name in columns if name not in column_indices]
             if missing_setup_features:
                 raise ValueError(
-                    "trade setup actions require all per-timeframe entry-idea observation features; "
+                    "trade setup actions require all per-timeframe entry-idea feature columns; "
                     f"missing {missing_setup_features[:5]}"
                 )
             self._trade_setup_candidate_ids = np.asarray(
@@ -249,7 +334,7 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
             self._trade_setup_feature_indices = np.asarray(
                 [column_indices[name] for _, name in columns], dtype=np.int64
             )
-            if self._trade_setup_candidate_ids.size != TRADE_SETUP_CATEGORY_COUNT - 1:
+            if not self._trade_setup_candidate_ids.size:
                 raise RuntimeError("trade setup candidate feature mapping is incomplete")
         missing_regime = [name for name in REGIME_FEATURES if name not in self._obs_columns]
         self._regime_idx = np.asarray(

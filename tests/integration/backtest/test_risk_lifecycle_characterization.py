@@ -13,7 +13,7 @@ from market_data.loading.ticks import TickBook
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
 from trading.execution import CostModel
-from trading.risk import RISK_BREACH_EVENT_SCHEMA_V1
+from trading.risk import RISK_BREACH_EVENT_SCHEMA_V2
 from trading.strategies.feature_row_contract import FeatureRow
 from trading.strategies.strategy_contract import TradingStrategy
 
@@ -955,14 +955,20 @@ def test_daily_loss_breach_fails_full_evaluation() -> None:
     assert len(env.breach_events) == 1
     env_breach = env.breach_events[0]
     assert env_breach["reason"] == "daily_loss"
-    assert env_breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V1
+    assert env_breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V2
+    assert env_breach["daily_pnl_basis"] == "session_net_equity"
+    assert env_breach["daily_loss"] == pytest.approx(max(0.0, 100_000.0 - env_breach["equity"]))
     assert pd.Timestamp(env_breach["detection_time"]) == bars.index[5]
     assert len([event for event in env.trade_log if event["type"] == "open"]) == 1
     assert len(result["breach_events"]) == 1
     backtest_breach = result["breach_events"][0]
     assert backtest_breach["session_id"] == 0
     assert backtest_breach["reason"] == "daily_loss"
-    assert backtest_breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V1
+    assert backtest_breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V2
+    assert backtest_breach["daily_pnl_basis"] == "session_net_equity"
+    assert backtest_breach["daily_loss"] == pytest.approx(
+        max(0.0, 100_000.0 - backtest_breach["equity"])
+    )
     assert pd.Timestamp(backtest_breach["detection_time"]) == bars.index[5]
     for breach, event_count, events in (
         (env_breach, len(env.trade_log), env.trade_log),

@@ -87,6 +87,18 @@ class TradingEnv(
         strategy: TradingStrategy | None = None,
         strategy_actions: bool = False,
         trade_setup_actions: bool = False,
+        trade_setup_candidate_timeframes: tuple[str, ...] = (
+            "M1",
+            "M3",
+            "M5",
+            "M10",
+            "M15",
+            "M30",
+            "H1",
+            "H4",
+            "D1",
+        ),
+        completed_htf_history_enabled: bool = True,
         candidate_geometry_actions: bool = False,
         trader_actions: bool | None = None,
         sl_buffer_pts: float = 0.0,
@@ -201,6 +213,8 @@ class TradingEnv(
             strategy: Strategy used to select or evaluate trades.
             strategy_actions: Whether to enable or require the strategy actions.
             trade_setup_actions: Whether to enable or require the trade setup actions.
+            trade_setup_candidate_timeframes: Timeframes allowed to contribute candidate IDs.
+            completed_htf_history_enabled: Whether completed HTF windows are exposed to the policy.
             candidate_geometry_actions: Whether to expose causal candidate-geometry observations.
             trader_actions: Trader actions used by the operation described above.
             sl_buffer_pts: Numeric value used for the sl buffer pts.
@@ -354,7 +368,14 @@ class TradingEnv(
             raise ValueError("candidate_geometry_actions requires trade_setup_actions=true")
         if candidate_geometry_actions and not agent_entry_execution:
             raise ValueError("candidate_geometry_actions requires agent_entry_execution=true")
+        if not completed_htf_history_enabled and not trade_setup_actions:
+            raise ValueError("disabling completed HTF history requires trade_setup_actions=true")
+        if not completed_htf_history_enabled and not mtf:
+            raise ValueError("disabling completed HTF history requires an MTF observation schema")
         self.trade_setup_actions = bool(trade_setup_actions)
+        self.trade_setup_candidate_timeframes = tuple(
+            str(tf).upper() for tf in trade_setup_candidate_timeframes
+        )
         self.candidate_geometry_actions = bool(candidate_geometry_actions)
         self._initialize_strategy_runtime(
             strategy, resolved_strategy_actions, sl_buffer_pts, bundle_data, bars, features
@@ -374,6 +395,8 @@ class TradingEnv(
             session_start,
             regime_observation,
             self.trade_setup_actions,
+            self.trade_setup_candidate_timeframes,
+            bool(completed_htf_history_enabled),
             reachable_r_validity_mask,
             feature_validity_channels,
         )

@@ -374,6 +374,40 @@ def test_eval_year_fail_latches_once() -> None:
 
 
 @pytest.mark.unit
+def test_nonterminal_breach_is_recorded_in_account_snapshot_for_that_step() -> None:
+    env = _multi_day_env(
+        n_days=2,
+        bars_per_day=80,
+        obs_window=10,
+        episodic=False,
+        max_episode_steps=None,
+        reward_mode="dsr",
+        guardrail_kwargs={
+            "daily_loss_limit": 5_000.0,
+            "max_loss_limit": 10_000.0,
+            "trailing_dd_limit": 0.0,
+        },
+    )
+    env.reset()
+    env.account.balance = 89_000.0
+    env.account.update_equity(0.0)
+
+    _, _, done, truncated, breach_info = env.step(0)
+
+    assert done is False
+    assert truncated is False
+    assert breach_info["constraints"]["breach_reason"] == "max_drawdown"
+    assert breach_info["account_state_snapshot"]["breach_reason"] == "max_drawdown"
+
+    _, _, done, truncated, later_info = env.step(0)
+
+    assert done is False
+    assert truncated is False
+    assert later_info["constraints"]["breach_reason"] == ""
+    assert later_info["account_state_snapshot"]["breach_reason"] == ""
+
+
+@pytest.mark.unit
 def test_full_split_training_mode_reaches_data_end_after_risk_breach() -> None:
     """A breached PPO year remains observable through the train split end."""
     episodic = _training_episodic(SimpleNamespace(training={"episode_mode": "full_split"}, env={}))

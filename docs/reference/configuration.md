@@ -166,6 +166,7 @@ is read by every listed package.
 | `env.block_overnight` | `boolean` | `true` | `simulation/environment and decisioning` |
 | `env.candidate_geometry_actions` | `boolean` | `false` | `simulation/environment and decisioning` |
 | `env.candidate_max_age_bars` | `integer` | `5` | `simulation/environment and decisioning` |
+| `env.completed_htf_history_enabled` | `boolean` | `true` | `simulation/environment and decisioning` |
 | `env.data_source` | `string` | `"frames"` | `simulation/environment and decisioning` |
 | `env.direction_override_threshold` | `number` | `0.0` | `simulation/environment and decisioning` |
 | `env.ema_runner_fraction` | `number` | `0.25` | `simulation/environment and decisioning` |
@@ -208,6 +209,7 @@ is read by every listed package.
 | `env.tp_breakeven_alpha` | `number` | `0.5` | `simulation/environment and decisioning` |
 | `env.tp_mode_defer_threshold` | `number` | `0.1` | `simulation/environment and decisioning` |
 | `env.trade_setup_actions` | `boolean` | `false` | `simulation/environment and decisioning` |
+| `env.trade_setup_candidate_timeframes` | `array` | `["M1","M3","M5","M10","M15","M30","H1","H4","D1"]` | `simulation/environment and decisioning` |
 | `env.vector_backend` | `string` | `"subproc"` | `simulation/environment and decisioning` |
 | `env.vector_shards` | `integer` | `0` | `simulation/environment and decisioning` |
 | `evaluation.annualization_convention` | `string` | `"252 sessions/year x 390 NY-session M1 bars/session"` | `evaluation` |

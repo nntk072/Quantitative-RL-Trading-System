@@ -672,8 +672,10 @@ def test_policy_reconciliation_rejects_position_open_after_daily_failure() -> No
     )
     breaches = [
         {
-            "schema_version": "risk-breach-event-v1",
+            "schema_version": "risk-breach-event-v2",
             "reason": "daily_loss",
+            "daily_loss": 1.0,
+            "daily_pnl_basis": "session_net_equity",
             "time": "2025-01-06T15:00:00Z",
             "detection_time": "2025-01-06T15:00:00Z",
             "trade_event_count": 0,

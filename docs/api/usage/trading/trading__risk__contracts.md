@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `trading.risk.contracts`. 
 
 **Purpose:** Risk-policy result for one requested trade.
 
-**Exact API:** {py:obj}`trading.risk.contracts.RiskDecision` · **Source:** [trading/risk/contracts.py:57](../../../../trading/risk/contracts.py#L57)
+**Exact API:** {py:obj}`trading.risk.contracts.RiskDecision` · **Source:** [trading/risk/contracts.py:59](../../../../trading/risk/contracts.py#L59)
 
 **Inputs and outputs:**
 
@@ -54,7 +54,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate requested risk without depending on a broker or policy model.
 
-**Exact API:** {py:obj}`trading.risk.contracts.RiskPolicy` · **Source:** [trading/risk/contracts.py:80](../../../../trading/risk/contracts.py#L80)
+**Exact API:** {py:obj}`trading.risk.contracts.RiskPolicy` · **Source:** [trading/risk/contracts.py:82](../../../../trading/risk/contracts.py#L82)
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
 
@@ -81,7 +81,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Account risk state provided to a risk policy.
 
-**Exact API:** {py:obj}`trading.risk.contracts.RiskState` · **Source:** [trading/risk/contracts.py:21](../../../../trading/risk/contracts.py#L21)
+**Exact API:** {py:obj}`trading.risk.contracts.RiskState` · **Source:** [trading/risk/contracts.py:23](../../../../trading/risk/contracts.py#L23)
 
 **Inputs and outputs:**
 
@@ -140,7 +140,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate requested risk against the current account state.
 
-**Exact API:** {py:obj}`trading.risk.contracts.RiskPolicy.decide` · **Source:** [trading/risk/contracts.py:83](../../../../trading/risk/contracts.py#L83)
+**Exact API:** {py:obj}`trading.risk.contracts.RiskPolicy.decide` · **Source:** [trading/risk/contracts.py:85](../../../../trading/risk/contracts.py#L85)
 
 **Inputs and outputs:**
 

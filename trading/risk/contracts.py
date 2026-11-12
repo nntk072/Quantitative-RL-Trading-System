@@ -12,6 +12,8 @@ RiskDailyPnlBasis = Literal[
 RISK_STATE_SCHEMA_V1 = "risk-state-v1"
 RISK_DECISION_SCHEMA_V1 = "risk-decision-v1"
 RISK_BREACH_EVENT_SCHEMA_V1 = "risk-breach-event-v1"
+# V2 records the daily-loss value and basis used by the guardrail decision.
+RISK_BREACH_EVENT_SCHEMA_V2 = "risk-breach-event-v2"
 RISK_DAILY_PNL_BASIS_SESSION_EQUITY: Final[RiskDailyPnlBasis] = "session_net_equity"
 RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES: Final[RiskDailyPnlBasis] = "legacy_gross_closed_losses"
 RISK_DAILY_PNL_BASIS_FTMO_MIDNIGHT: Final[RiskDailyPnlBasis] = "ftmo_midnight_balance"

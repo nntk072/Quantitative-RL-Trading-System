@@ -36,6 +36,32 @@ def test_trade_setup_mask_mode_changes_bundle_identity() -> None:
     assert bundle_key(config, sources) != bundle_key(trade_setup_config, sources)
 
 
+def test_trade_setup_timeframe_contract_changes_bundle_identity() -> None:
+    from simulation.environment.shared_bundle import bundle_key
+
+    _, config = _fixture_bundle_inputs()
+    sources = {"bars": {"size": 32}}
+    scoped_config = {
+        **config,
+        "env": {**config["env"], "trade_setup_candidate_timeframes": ["M1"]},
+    }
+
+    assert bundle_key(config, sources) != bundle_key(scoped_config, sources)
+
+
+def test_completed_htf_history_mode_changes_bundle_identity() -> None:
+    from simulation.environment.shared_bundle import bundle_key
+
+    _, config = _fixture_bundle_inputs()
+    sources = {"bars": {"size": 32}}
+    hidden_history = {
+        **config,
+        "env": {**config["env"], "completed_htf_history_enabled": False},
+    }
+
+    assert bundle_key(config, sources) != bundle_key(hidden_history, sources)
+
+
 def _fixture_bundle_inputs() -> tuple[dict[str, np.ndarray[Any, Any]], dict[str, Any]]:
     """Return deterministic source arrays and an observation-relevant config."""
     bars = _make_deterministic_bars(n=32)

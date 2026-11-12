@@ -279,6 +279,13 @@ def build_eval_common(
         "strategy": strategy,
         "strategy_actions": strategy_actions,
         "trade_setup_actions": bool(cfg.env.get("trade_setup_actions", False)),
+        "trade_setup_candidate_timeframes": tuple(
+            cfg.env.get(
+                "trade_setup_candidate_timeframes",
+                ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"),
+            )
+        ),
+        "completed_htf_history_enabled": bool(cfg.env.get("completed_htf_history_enabled", True)),
         "candidate_geometry_actions": bool(cfg.env.get("candidate_geometry_actions", False)),
         "agent_entry_execution": bool(cfg.env.get("agent_entry_execution", False)),
         "entry_state_machine": bool(cfg.env.get("entry_state_machine", False)),
@@ -618,6 +625,13 @@ def make_env(
         strategy=strategy,
         strategy_actions=bool(cfg.env.get("strategy_actions", False)),
         trade_setup_actions=bool(cfg.env.get("trade_setup_actions", False)),
+        trade_setup_candidate_timeframes=tuple(
+            cfg.env.get(
+                "trade_setup_candidate_timeframes",
+                ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"),
+            )
+        ),
+        completed_htf_history_enabled=bool(cfg.env.get("completed_htf_history_enabled", True)),
         candidate_geometry_actions=bool(cfg.env.get("candidate_geometry_actions", False)),
         agent_entry_execution=bool(cfg.env.get("agent_entry_execution", False)),
         entry_state_machine=bool(cfg.env.get("entry_state_machine", False)),

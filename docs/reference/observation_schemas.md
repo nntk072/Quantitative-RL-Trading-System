@@ -97,9 +97,14 @@ part of the observation semantics and are protected by causal-feature tests.
 ## Setup-candidate mask
 
 The setup-conditioned observation schema uses `trade_setup_mask` and the
-version `trade-setup-observation-v1`. The mask is stored with checkpoints and
-must match the 109-category order documented in the
-[candidate catalog](trade_setup_catalog.md).
+version `trade-setup-observation-v2`. Candidate eligibility is read from the
+full causal feature row, independently of the model's sequence/history. The
+saved schema records the allowed candidate timeframes and eligible candidate
+IDs; its mask still uses the stable 109-category order documented in the
+[candidate catalog](trade_setup_catalog.md). MTF sequence branches remain an
+independent observation choice and contain completed timeframe rows only. The
+schema also records `completed_htf_history_enabled`: when false, MTF branches
+retain their keys and shapes but their values and temporal masks are zeroed.
 
 ## Checkpoint validation
 

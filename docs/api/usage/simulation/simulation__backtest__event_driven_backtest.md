@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `simulation.backtest.event
 
 **Purpose:** Run a full backtest over aligned bars + features.
 
-**Exact API:** {py:obj}`simulation.backtest.event_driven_backtest.run_backtest` · **Source:** [simulation/backtest/event_driven_backtest.py:537](../../../../simulation/backtest/event_driven_backtest.py#L537)
+**Exact API:** {py:obj}`simulation.backtest.event_driven_backtest.run_backtest` · **Source:** [simulation/backtest/event_driven_backtest.py:538](../../../../simulation/backtest/event_driven_backtest.py#L538)
 
 **Inputs and outputs:**
 

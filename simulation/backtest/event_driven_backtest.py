@@ -57,6 +57,7 @@ from decisioning.trade_setup import (
 from features import attach_reachable_r, select_obs_columns
 from features.context.trade_setup_candidates import (
     trade_setup_candidate_event_identities,
+    trade_setup_candidate_feature_columns,
     trade_setup_candidate_mask,
     trade_setup_event_identity_record,
     trade_setup_event_is_current,
@@ -1137,6 +1138,10 @@ def run_backtest(
             select_obs_columns(features, getattr(resolved_strategy, "raw_columns", ())),
             bars,
             features,
+        )
+        setup_feature_names = {name for _, name in trade_setup_candidate_feature_columns()}
+        observation_features = observation_features.drop(
+            columns=[name for name in observation_features.columns if name in setup_feature_names]
         )
     observation_columns = list(observation_features.columns)
     observation_feature_array: np.ndarray[Any, Any] | None = None

@@ -245,6 +245,13 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         strategy=strategy,
         strategy_actions=strategy_actions,
         trade_setup_actions=bool(env.get("trade_setup_actions", False)),
+        trade_setup_candidate_timeframes=tuple(
+            env.get(
+                "trade_setup_candidate_timeframes",
+                ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"),
+            )
+        ),
+        completed_htf_history_enabled=bool(env.get("completed_htf_history_enabled", True)),
         candidate_geometry_actions=bool(env.get("candidate_geometry_actions", False)),
         agent_entry_execution=bool(env.get("agent_entry_execution", False)),
         entry_state_machine=bool(env.get("entry_state_machine", False)),

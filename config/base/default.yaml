@@ -356,6 +356,8 @@ env:
   reward_dsr_eta: 0.01                 # differential Sharpe damping
   strategy_actions: false              # legacy Idea 1/2 trader Box action interface
   trade_setup_actions: false           # canonical primary trade-setup choice and eligibility mask
+  trade_setup_candidate_timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
+  completed_htf_history_enabled: true  # MTF branches keep their shapes when history is ablated
   candidate_geometry_actions: false    # 217-slot setup+entry price-aware policy observation
   agent_entry_execution: false         # policy chooses market or limit entry; requires TickBook
   entry_state_machine: false           # A4 persistent opportunity lifecycle

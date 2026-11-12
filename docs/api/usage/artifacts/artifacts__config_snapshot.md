@@ -27,7 +27,7 @@ This page contains 1 public callable records owned by `artifacts.config_snapshot
 
 **Observed usage:**
 
-1. [production caller: `save_run`](../../../../evaluation/reporting/run_artifact_writer.py#L916)
+1. [production caller: `save_run`](../../../../evaluation/reporting/run_artifact_writer.py#L918)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -463,6 +463,8 @@ def test_account_trace_reconciles_hard_breach_with_empty_trade_ledger() -> None:
                 decision_time="2025-01-06T15:00:00Z",
                 valuation_time="2025-01-06T15:00:00Z",
                 trade_event_count=0,
+                daily_pnl_basis="session_net_equity",
+                breach_reason="daily_loss",
             )
         ]
     )
@@ -486,6 +488,258 @@ def test_account_trace_reconciles_hard_breach_with_empty_trade_ledger() -> None:
         failure["check"] == "no_order_submission_fill_or_open_after_hard_breach"
         for failure in result["failures"]
     )
+
+
+def _v2_breach(**overrides: object) -> dict[str, object]:
+    event: dict[str, object] = {
+        "schema_version": "risk-breach-event-v2",
+        "time": "2025-01-06T15:00:00Z",
+        "detection_time": "2025-01-06T15:00:00Z",
+        "trade_event_count": 0,
+        "session_id": 1,
+        "reason": "daily_loss",
+        "equity": 99_990.0,
+        "daily_loss": 10.0,
+        "daily_pnl_basis": "session_net_equity",
+    }
+    event.update(overrides)
+    return event
+
+
+def _v2_breach_trace(**overrides: object) -> pd.DataFrame:
+    row = _trace_row(
+        balance=99_990.0,
+        equity=99_990.0,
+        total_economic_value=99_990.0,
+        peak_equity=100_000.0,
+        session_start_equity=100_000.0,
+        session_start_balance=100_000.0,
+        daily_loss=10.0,
+        daily_pnl_basis="session_net_equity",
+        decision_time="2025-01-06T15:00:00Z",
+        valuation_time="2025-01-06T15:01:00Z",
+        breach_reason="daily_loss",
+        trade_event_count=0,
+    )
+    row.update(overrides)
+    return pd.DataFrame([row])
+
+
+def test_v2_breach_recomputes_pre_close_loss_from_basis_anchor() -> None:
+    result = reconcile_account_state_trace(
+        _v2_breach_trace(), pd.DataFrame(), breach_events=[_v2_breach()]
+    )
+
+    assert result["checks"]["hard_breach_pre_close_daily_loss"] == 1
+    assert not any(
+        failure["check"] == "hard_breach_pre_close_daily_loss" for failure in result["failures"]
+    )
+
+
+def test_v2_breach_accepts_only_linked_account_guardrail_order_cancel_suffix() -> None:
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                decision_time="2025-01-06T14:59:00Z",
+                valuation_time="2025-01-06T14:59:00Z",
+                trade_event_count=1,
+            ),
+            _v2_breach_trace(trade_event_count=2).iloc[0].to_dict(),
+        ]
+    )
+    ledger = pd.DataFrame(
+        [
+            {
+                "type": "order_submit",
+                "order_id": "bt:o1",
+                "order_type": "limit",
+                "decision_bar_time": "2025-01-06T14:59:00Z",
+                "order_submission_time": "2025-01-06T14:59:00Z",
+            },
+            {
+                "type": "order_cancel",
+                "order_id": "bt:o1",
+                "order_type": "limit",
+                "reason": "session_blocked_before_limit_fill",
+                "decision_id": "bt:d1",
+                "time": "2025-01-06T15:00:30Z",
+            },
+        ]
+    )
+    for reason in (
+        "session_blocked_before_limit_fill",
+        "account_failed_before_limit_fill",
+    ):
+        ledger.loc[1, "reason"] = reason
+        accepted = reconcile_account_state_trace(
+            trace,
+            ledger,
+            breach_events=[_v2_breach(trade_event_count=1)],
+        )
+        assert (
+            "hard_breach_prefix_suffix_has_unexpected_events" not in accepted["incomplete_reasons"]
+        )
+
+    unrelated = ledger.copy()
+    unrelated.loc[1, "reason"] = "session_changed_before_limit_fill"
+    rejected = reconcile_account_state_trace(
+        trace,
+        unrelated,
+        breach_events=[_v2_breach(trade_event_count=1)],
+    )
+    assert "hard_breach_prefix_suffix_has_unexpected_events" in rejected["incomplete_reasons"]
+
+
+def test_v2_breach_rejects_plausible_but_wrong_loss_and_basis() -> None:
+    wrong_loss = reconcile_account_state_trace(
+        _v2_breach_trace(),
+        pd.DataFrame(),
+        breach_events=[_v2_breach(daily_loss=9.0)],
+    )
+    assert any(
+        failure["check"] == "hard_breach_pre_close_daily_loss" for failure in wrong_loss["failures"]
+    )
+
+    wrong_basis = reconcile_account_state_trace(
+        _v2_breach_trace(),
+        pd.DataFrame(),
+        breach_events=[_v2_breach(daily_pnl_basis="ftmo_midnight_balance")],
+    )
+    assert "hard_breach_daily_pnl_basis_mismatch" in wrong_basis["incomplete_reasons"]
+
+
+def test_v2_breach_requires_one_exact_trace_match() -> None:
+    no_match = reconcile_account_state_trace(
+        _v2_breach_trace(breach_reason="max_drawdown"),
+        pd.DataFrame(),
+        breach_events=[_v2_breach()],
+    )
+    assert "hard_breach_trace_match_missing_or_ambiguous" in no_match["incomplete_reasons"]
+
+    duplicate_trace = pd.concat([_v2_breach_trace(), _v2_breach_trace()], ignore_index=True)
+    ambiguous = reconcile_account_state_trace(
+        duplicate_trace, pd.DataFrame(), breach_events=[_v2_breach()]
+    )
+    assert "hard_breach_trace_match_missing_or_ambiguous" in ambiguous["incomplete_reasons"]
+
+
+def test_v2_breach_recomputes_ftmo_and_legacy_loss_from_their_own_bases() -> None:
+    ftmo_trace = _v2_breach_trace(
+        balance=99_985.0,
+        equity=99_985.0,
+        total_economic_value=99_985.0,
+        daily_pnl_basis="ftmo_midnight_balance",
+        session_start_balance=100_000.0,
+        session_start_equity=99_995.0,
+        daily_loss=15.0,
+    )
+    ftmo = reconcile_account_state_trace(
+        ftmo_trace,
+        pd.DataFrame(),
+        breach_events=[
+            _v2_breach(
+                equity=99_985.0,
+                daily_loss=15.0,
+                daily_pnl_basis="ftmo_midnight_balance",
+            )
+        ],
+    )
+    assert ftmo["checks"]["hard_breach_pre_close_daily_loss"] == 1
+    assert not any(
+        failure["check"] == "hard_breach_pre_close_daily_loss" for failure in ftmo["failures"]
+    )
+
+    legacy_trace = pd.DataFrame(
+        [
+            _trace_row(
+                decision_time="2025-01-06T14:59:00Z",
+                valuation_time="2025-01-06T14:59:00Z",
+                daily_pnl_basis="legacy_gross_closed_losses",
+                trade_event_count=0,
+            ),
+            _trace_row(
+                decision_time="2025-01-06T15:00:00Z",
+                valuation_time="2025-01-06T15:01:00Z",
+                daily_pnl_basis="legacy_gross_closed_losses",
+                trade_event_count=1,
+                breach_reason="daily_loss",
+            ),
+        ]
+    )
+    legacy_events = pd.DataFrame([{"type": "stop_close", "pnl": -10.0}])
+    legacy = reconcile_account_state_trace(
+        legacy_trace,
+        legacy_events,
+        breach_events=[
+            _v2_breach(
+                trade_event_count=1,
+                daily_pnl_basis="legacy_gross_closed_losses",
+            )
+        ],
+    )
+    assert legacy["checks"]["hard_breach_pre_close_daily_loss"] == 1
+    assert not any(
+        failure["check"] == "hard_breach_pre_close_daily_loss" for failure in legacy["failures"]
+    )
+
+
+def test_v2_multiple_breaches_count_each_pre_close_reconciliation() -> None:
+    first = _v2_breach_trace()
+    second = _v2_breach_trace(
+        balance=99_980.0,
+        equity=99_980.0,
+        total_economic_value=99_980.0,
+        daily_loss=20.0,
+        decision_time="2025-01-06T15:02:00Z",
+        valuation_time="2025-01-06T15:03:00Z",
+    )
+    events = [
+        _v2_breach(),
+        _v2_breach(
+            time="2025-01-06T15:02:00Z",
+            detection_time="2025-01-06T15:02:00Z",
+            equity=99_980.0,
+            daily_loss=20.0,
+        ),
+    ]
+
+    result = reconcile_account_state_trace(
+        pd.concat([first, second], ignore_index=True), pd.DataFrame(), breach_events=events
+    )
+
+    assert result["checks"]["hard_breach_pre_close_daily_loss"] == 2
+    assert not any(
+        failure["check"] == "hard_breach_pre_close_daily_loss" for failure in result["failures"]
+    )
+
+
+def test_account_trace_rejects_v2_breach_without_daily_loss_basis() -> None:
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                decision_time="2025-01-06T15:00:00Z",
+                valuation_time="2025-01-06T15:00:00Z",
+                trade_event_count=0,
+            )
+        ]
+    )
+
+    result = reconcile_account_state_trace(
+        trace,
+        pd.DataFrame(),
+        breach_events=[
+            {
+                "schema_version": "risk-breach-event-v2",
+                "time": "2025-01-06T15:00:00Z",
+                "detection_time": "2025-01-06T15:00:00Z",
+                "trade_event_count": 0,
+                "reason": "daily_loss",
+                "daily_loss": 10.0,
+            }
+        ],
+    )
+
+    assert "hard_breach_daily_pnl_basis_is_invalid" in result["incomplete_reasons"]
 
 
 def test_account_trace_rejects_pending_order_fill_after_hard_breach() -> None:

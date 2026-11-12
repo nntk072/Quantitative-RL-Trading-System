@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -36,11 +38,13 @@ def test_trade_setup_observation_mode_flows_into_train_and_eval_env_kwargs() -> 
     config = OmegaConf.load("config/base/default.yaml")
     config.env.strategy_actions = True
     config.env.trade_setup_actions = True
+    config.env.trade_setup_candidate_timeframes = ["M1", "M5"]
 
     eval_common, *_ = build_eval_common(config, arch="tcn")
 
     assert eval_common["strategy_actions"] is True
     assert eval_common["trade_setup_actions"] is True
+    assert eval_common["trade_setup_candidate_timeframes"] == ("M1", "M5")
 
 
 def test_trade_setup_observation_mode_defaults_off() -> None:
@@ -49,6 +53,57 @@ def test_trade_setup_observation_mode_defaults_off() -> None:
     eval_common, *_ = build_eval_common(config, arch="tcn")
 
     assert eval_common["trade_setup_actions"] is False
+
+
+def test_gate_ii_overlays_isolate_opportunities_from_completed_history() -> None:
+    from learning.rl.agent import _ppo_policy_and_ent_coef
+    from simulation.environment.trading_environment_factory import mtf_settings
+
+    a = load_config(config_path="config/research/m1_opportunity_reference.yaml")
+    b = load_config(config_path="config/research/mtf_shared_opportunities_m1_history.yaml")
+    c = load_config(config_path="config/research/mtf_shared_opportunities_with_history.yaml")
+
+    assert list(a.env.trade_setup_candidate_timeframes) == ["M1"]
+    assert list(a.features.entry_ideas.timeframes) == ["M1"]
+    assert list(b.env.trade_setup_candidate_timeframes) == list(
+        c.env.trade_setup_candidate_timeframes
+    )
+    assert b.agent.arch == c.agent.arch == "mtf_reasoning"
+    assert b.env.completed_htf_history_enabled is False
+    assert c.env.completed_htf_history_enabled is True
+    assert b.ppo.policy_distribution == c.ppo.policy_distribution == "trade_setup_hybrid_v1"
+    assert mtf_settings(b, None)[0] is True
+    assert mtf_settings(c, None)[0] is True
+    b_env_kwargs, *_ = build_eval_common(b, arch=b.agent.arch)
+    c_env_kwargs, *_ = build_eval_common(c, arch=c.agent.arch)
+    assert b_env_kwargs["completed_htf_history_enabled"] is False
+    assert c_env_kwargs["completed_htf_history_enabled"] is True
+    b_values = cast(dict[str, Any], OmegaConf.to_container(b, resolve=True))
+    c_values = cast(dict[str, Any], OmegaConf.to_container(c, resolve=True))
+    b_values["env"]["completed_htf_history_enabled"] = c_values["env"][
+        "completed_htf_history_enabled"
+    ]
+    assert b_values == c_values
+    action_schema = build_trade_setup_action_schema(
+        has_sl_mode=bool(b.env.allow_agent_sl_mode),
+        has_tp_mode=bool(b.env.allow_agent_tp_mode),
+        has_multi_tp=bool(b.env.allow_multi_tp),
+        has_simplex=bool(b.env.allow_multi_tp and b.env.allow_simplex),
+    )
+    c_action_schema = build_trade_setup_action_schema(
+        has_sl_mode=bool(c.env.allow_agent_sl_mode),
+        has_tp_mode=bool(c.env.allow_agent_tp_mode),
+        has_multi_tp=bool(c.env.allow_multi_tp),
+        has_simplex=bool(c.env.allow_multi_tp and c.env.allow_simplex),
+    )
+    assert action_schema == c_action_schema
+    observation_space = spaces.Dict(
+        {"trade_setup_mask": spaces.Box(0.0, 1.0, (TRADE_SETUP_CATEGORY_COUNT,), dtype=np.float32)}
+    )
+    action_space = spaces.Box(-1.0, 1.0, (action_schema.width,), dtype=np.float32)
+    b_policy = _ppo_policy_and_ent_coef(b, {}, action_space, action_schema, observation_space)
+    c_policy = _ppo_policy_and_ent_coef(c, {}, action_space, c_action_schema, observation_space)
+    assert b_policy == c_policy
 
 
 def test_feature_validity_channels_are_opt_in_and_flow_to_eval_env_kwargs() -> None:

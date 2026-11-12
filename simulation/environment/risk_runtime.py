@@ -8,7 +8,7 @@ import pandas as pd
 from trading.execution import Position
 from trading.policy import uses_fixed_risk_budget
 from trading.risk import (
-    RISK_BREACH_EVENT_SCHEMA_V1,
+    RISK_BREACH_EVENT_SCHEMA_V2,
     adverse_position_loss_limit_usd,
     approve_dynamic_risk,
     compute_lots_with_execution_reserve,
@@ -79,7 +79,10 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             if guardrail_breach_scope(reason) == "rollout":
                 self._year_failed = True
             breach_equity = float(self.account.equity)
-            breach_daily_loss = float(self.account.daily_loss)
+            # Capture the same selected basis used by the decision, before any
+            # forced-close cashflow changes the account state.
+            breach_daily_loss = float(self.account.canonical_daily_loss())
+            breach_daily_pnl_basis = self.account.daily_pnl_basis
             # Preserve the precise valuation boundary separately from the
             # decision-bar label. The prefix lets replay distinguish a fill
             # that caused this breach from an entry recorded afterward.
@@ -129,7 +132,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             self.breach_log.append(reason)
             self.breach_events.append(
                 {
-                    "schema_version": RISK_BREACH_EVENT_SCHEMA_V1,
+                    "schema_version": RISK_BREACH_EVENT_SCHEMA_V2,
                     "time": bar_time,
                     "detection_time": detection_time,
                     "trade_event_count": breach_event_prefix,
@@ -137,6 +140,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                     "reason": reason,
                     "equity": breach_equity,
                     "daily_loss": breach_daily_loss,
+                    "daily_pnl_basis": breach_daily_pnl_basis,
                     "fill_time": fill_time if fill_time is not None else bar_time,
                 }
             )

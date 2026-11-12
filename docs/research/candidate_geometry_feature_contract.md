@@ -1,6 +1,6 @@
 # Candidate geometry feature contract
 
-Schema `candidate-geometry-observation-v2` uses 217 stable slots: slot 0 is
+Schema `candidate-geometry-observation-v3` uses 217 stable slots: slot 0 is
 no-trade, and each executable setup has one market and one limit hypothesis.
 Feature values are computed at the completed-bar decision boundary. Price
 distances use the current ATR; the mask is boolean, and a proposal with missing
@@ -30,3 +30,5 @@ Slot 0 remains eligible even when every executable proposal is invalid. The
 217-way eligibility mask is the authority for policy sampling; each executable
 slot is considered only when its corresponding setup is eligible under the
 existing 109-way setup mask and the proposal geometry passes these checks.
+The checkpoint schema records the allowed setup timeframes and eligible
+candidate IDs. Ineligible timeframe IDs are zeroed in the fixed-width ID array.

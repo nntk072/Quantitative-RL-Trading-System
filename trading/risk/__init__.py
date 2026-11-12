@@ -3,6 +3,7 @@
 from .budget import RiskBudgetDecision, approve_dynamic_risk, risk_budget_from_equity
 from .contracts import (
     RISK_BREACH_EVENT_SCHEMA_V1,
+    RISK_BREACH_EVENT_SCHEMA_V2,
     RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES,
     RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
     RISK_DECISION_SCHEMA_V1,
@@ -44,6 +45,7 @@ __all__ = [
     "RiskPolicy",
     "RiskState",
     "RISK_BREACH_EVENT_SCHEMA_V1",
+    "RISK_BREACH_EVENT_SCHEMA_V2",
     "RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES",
     "RISK_DAILY_PNL_BASIS_SESSION_EQUITY",
     "RISK_DECISION_SCHEMA_V1",

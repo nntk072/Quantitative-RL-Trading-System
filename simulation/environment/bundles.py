@@ -16,6 +16,7 @@ from features import (
     select_legacy_obs_columns,
     select_obs_columns,
 )
+from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
 from market_data.loading.ticks import TickBook
 
 from .shared_bundle import build_bundle, load_bundle
@@ -28,6 +29,7 @@ def observation_features(
     *,
     legacy_sequence_columns: bool = False,
     reachable_r_validity_mask: bool = False,
+    exclude_trade_setup_candidates: bool = False,
 ) -> tuple[NDArray[np.float32], list[str]]:
     """Build the same contiguous float32 observation matrix used by training.
 
@@ -37,6 +39,7 @@ def observation_features(
         raw_columns: Items supplied for the raw columns, in input order.
         legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
         reachable_r_validity_mask: Whether to append the reachability-validity sequence feature.
+        exclude_trade_setup_candidates: Whether candidate features are kept out of model history.
 
     Returns:
         Array returned by ``observation_features``.
@@ -48,6 +51,9 @@ def observation_features(
         features,
         include_validity_mask=reachable_r_validity_mask,
     )
+    if exclude_trade_setup_candidates:
+        candidate_columns = {name for _, name in trade_setup_candidate_feature_columns()}
+        frame = frame.drop(columns=[name for name in frame.columns if name in candidate_columns])
     array = np.ascontiguousarray(frame.to_numpy(dtype=np.float32))
     return array, [str(column) for column in frame.columns]
 
@@ -270,6 +276,7 @@ def build_env_bundle(
         raw_columns,
         legacy_sequence_columns=legacy_sequence_columns,
         reachable_r_validity_mask=bool(cfg.env.get("reachable_r_validity_mask", False)),
+        exclude_trade_setup_candidates=bool(cfg.env.get("trade_setup_actions", False)),
     )
     feature_values, feature_columns = _numeric_feature_array(features)
     session_codes, session_labels = _session_codes(bars)

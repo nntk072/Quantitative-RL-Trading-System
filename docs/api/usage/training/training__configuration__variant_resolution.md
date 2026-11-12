@@ -31,7 +31,7 @@ This page contains 2 public callable records owned by `training.configuration.va
 
 **Observed usage:**
 
-1. [test fixture: `test_resolved_reasoning_treatment_uses_canonical_trade_setup_contract`](../../../../tests/unit/simulation/test_environment/test_trade_setup_factory_config.py#L139)
+1. [test fixture: `test_resolved_reasoning_treatment_uses_canonical_trade_setup_contract`](../../../../tests/unit/simulation/test_environment/test_trade_setup_factory_config.py#L194)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

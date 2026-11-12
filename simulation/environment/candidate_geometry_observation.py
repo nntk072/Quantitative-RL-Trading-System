@@ -317,6 +317,9 @@ def build_candidate_geometry_observation(
         [candidate_geometry_slot_semantics(slot)[0] for slot in range(count)],
         dtype=np.int64,
     )
+    setup_ids = getattr(env, "_trade_setup_candidate_ids", None)
+    if setup_ids is not None:
+        candidate_ids[~np.isin(candidate_ids, [NO_TRADE_ID, *setup_ids])] = NO_TRADE_ID
     features = np.zeros((count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES)), dtype=np.float32)
     mask = np.zeros(count, dtype=np.bool_)
     mask[NO_TRADE_ID] = True

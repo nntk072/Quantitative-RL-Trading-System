@@ -3,7 +3,16 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from decisioning.trade_setup import build_trade_setup_action_schema
-from evaluation.reporting.run_artifact_writer import _extract_ftmo_limits, action_schema_manifest
+from evaluation.reporting.run_artifact_writer import (
+    _BREACH_EVENT_COLUMNS,
+    _extract_ftmo_limits,
+    action_schema_manifest,
+)
+
+
+def test_breach_export_preserves_versioned_daily_loss_semantics() -> None:
+    assert "daily_loss" in _BREACH_EVENT_COLUMNS
+    assert "daily_pnl_basis" in _BREACH_EVENT_COLUMNS
 
 
 def test_artifact_limits_use_percentages_in_fixed_other_limits_mode() -> None:

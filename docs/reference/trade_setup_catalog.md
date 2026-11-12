@@ -68,7 +68,7 @@ category ordering, and mask semantics unchanged for the legacy schema.
 | Domain concept | Current serialized identifier |
 |---|---|
 | Candidate catalog schema | `trade-setup-candidate-v1` |
-| Observation schema | `trade-setup-observation-v1` |
+| Observation schema | `trade-setup-observation-v2` |
 | Mask key | `trade_setup_mask` |
 | Action schema | `trade-setup-overlay-action-v1` |
 | Action coordinate | `trade_setup` |

@@ -25,7 +25,7 @@ from trading.execution import (
 )
 from trading.positions import reorder_remaining_targets, target_close_size
 from trading.risk import (
-    RISK_BREACH_EVENT_SCHEMA_V1,
+    RISK_BREACH_EVENT_SCHEMA_V2,
     FTMOGuardrails,
     adverse_position_loss_limit_usd,
     breakeven_stop_price,
@@ -1055,14 +1055,15 @@ def process_protective_and_account_events(
         state.breach_log.append(reason)
         state.breach_events.append(
             {
-                "schema_version": RISK_BREACH_EVENT_SCHEMA_V1,
+                "schema_version": RISK_BREACH_EVENT_SCHEMA_V2,
                 "time": bar_time,
                 "detection_time": pd.Timestamp(bar_time) + bar_duration,
                 "trade_event_count": len(state.trade_log),
                 "session_id": session,
                 "reason": reason,
                 "equity": state.account.equity,
-                "daily_loss": state.account.daily_loss,
+                "daily_loss": state.account.canonical_daily_loss(),
+                "daily_pnl_basis": state.account.daily_pnl_basis,
             }
         )
         if state.position is not None:

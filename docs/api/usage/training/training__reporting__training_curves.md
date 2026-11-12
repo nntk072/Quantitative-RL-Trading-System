@@ -43,7 +43,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_write_training_progress_artifacts`](../../../../training/runner/seed_runtime.py#L748)
+2. [production caller: `_write_training_progress_artifacts`](../../../../training/runner/seed_runtime.py#L744)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

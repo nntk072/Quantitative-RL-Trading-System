@@ -41,7 +41,7 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
         mask[NO_TRADE_ID] = 1.0
         if not self.trade_setup_actions or not 0 <= index < self._n_bars:
             return mask
-        raw = self._obs_features_arr[index, self._trade_setup_feature_indices]
+        raw = self._features_arr[index, self._trade_setup_feature_indices]
         active = np.isfinite(raw) & (raw > 0.0)
         mask[self._trade_setup_candidate_ids[active]] = 1.0
         return mask
@@ -76,9 +76,9 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
         """
         start_idx = self._session_seq_start()
         seq = self._obs_features_arr[start_idx : self.step_idx]
-        if self.mtf and self._m1_idx.size:
+        if (self.mtf or self.trade_setup_actions) and self._m1_idx.size:
             seq = seq[:, self._m1_idx]
-        elif self.mtf:
+        elif self.mtf or self.trade_setup_actions:
             seq = np.zeros((seq.shape[0], 1), dtype=np.float32)
             seq.fill(np.nan)
         elif not self._obs_columns:
@@ -224,6 +224,9 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
                     columns=cols,
                     include_validity=self.feature_validity_channels,
                 )
+                if not self.completed_htf_history_enabled:
+                    window.fill(0.0)
+                    mask.fill(0.0)
                 obs[seq_key] = window
                 obs[f"mask_{key}"] = mask
 

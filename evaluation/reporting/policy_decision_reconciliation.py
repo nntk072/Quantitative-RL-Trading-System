@@ -9,7 +9,7 @@ from typing import Any
 import pandas as pd
 
 from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CATEGORY_COUNT
-from trading.risk import RISK_BREACH_EVENT_SCHEMA_V1
+from trading.risk import RISK_BREACH_EVENT_SCHEMA_V1, RISK_BREACH_EVENT_SCHEMA_V2
 
 POLICY_DECISION_RECONCILIATION_SCHEMA = "policy_decision_reconciliation.v1"
 _DECISION_SCHEMA_V1 = "event_backtest_policy_decision.v1"
@@ -957,7 +957,10 @@ def reconcile_policy_decisions(
             if not isinstance(breach, Mapping):
                 report["incomplete_reasons"].append("invalid_rollout_breach_record")
                 continue
-            if breach.get("schema_version") != RISK_BREACH_EVENT_SCHEMA_V1:
+            if breach.get("schema_version") not in {
+                RISK_BREACH_EVENT_SCHEMA_V1,
+                RISK_BREACH_EVENT_SCHEMA_V2,
+            }:
                 report["incomplete_reasons"].append(
                     "unsupported_or_missing_rollout_breach_event_schema"
                 )
