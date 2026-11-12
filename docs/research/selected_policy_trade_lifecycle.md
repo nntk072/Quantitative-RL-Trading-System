@@ -3,7 +3,7 @@
 **Status: withdrawn historical performance evidence.** Seed-50 A4A/A4B 2M
 trade-outcome summaries are removed from the current research presentation.
 The tracked decision, fill, position, and excursion records remain available
-in [`evidence/research/selected_policy_trade_lifecycle/`](../../evidence/research/selected_policy_trade_lifecycle/)
+in `evidence/research/selected_policy_trade_lifecycle/`
 for provenance and reproducibility only. They are not a current policy
 comparison or confirmatory evidence.
 

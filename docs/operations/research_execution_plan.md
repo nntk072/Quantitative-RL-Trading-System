@@ -11,8 +11,8 @@ those outcomes are not evidence for the registered forthcoming 18-arm
 benchmark and must not be used to select its variants.
 
 The seed-50 A4A/A4B 2M performance outcomes are also withdrawn from current
-thesis/results presentation. Historical numerical and derived outcome details
-below remain only as archived provenance; they are not current benchmark
+performance-results presentation. Historical numerical and derived outcome
+details below remain only as archived provenance; they are not current benchmark
 evidence or model-selection results. Campaign identity, technical contracts,
 and raw ledgers remain for reproducibility.
 

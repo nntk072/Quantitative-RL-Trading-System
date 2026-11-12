@@ -6919,11 +6919,7 @@
       "type": "reference"
     },
     {
-      "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/entry_and_exit_attribution",
-        "result_registry.md",
-        "../operations/research_execution_plan.md"
-      ],
+      "links": [],
       "orphan_status": "in toctree",
       "path": "docs/reproduce/entry_and_exit_attribution.ipynb",
       "primary_navigation_owner": [],
@@ -7164,9 +7160,7 @@
       "type": "research"
     },
     {
-      "links": [
-        "../../evidence/research/entry_and_exit_attribution/"
-      ],
+      "links": [],
       "orphan_status": "in toctree",
       "path": "docs/research/entry_and_exit_attribution.md",
       "primary_navigation_owner": [],
@@ -7471,9 +7465,7 @@
       "type": "research"
     },
     {
-      "links": [
-        "../../evidence/research/selected_policy_trade_lifecycle/"
-      ],
+      "links": [],
       "orphan_status": "in toctree",
       "path": "docs/research/selected_policy_trade_lifecycle.md",
       "primary_navigation_owner": [],

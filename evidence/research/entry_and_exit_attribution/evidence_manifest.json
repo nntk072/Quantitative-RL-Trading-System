@@ -55,14 +55,16 @@
   "evidence_id": "entry_and_exit_attribution",
   "reproduction_notebook": "docs/reproduce/entry_and_exit_attribution.ipynb",
   "schema_version": 1,
-  "reproduction_notebook_sha256": "52627b4bc9ead5468ecab2d81a664b6fdf0ca4d94d912dce3e15bc4d60701da7",
+  "reproduction_notebook_sha256": "a58ef5f759f11f057cbd3749efd3605940d15f25f9e295c00b17e3bd733a3637",
   "generated_outputs": [
     {
-      "role": "monthly_entry_exit_attribution_figure",
+      "role": "withdrawn_historical_figure_provenance",
       "path": "evidence/research/entry_and_exit_attribution/monthly_entry_exit_attribution.png",
       "sha256": "aacc43e24bc69fc87bd56386011ced96069d1777b774ed50ea3fa50372931b55",
       "generator_path": "docs/reproduce/entry_and_exit_attribution.ipynb",
-      "generator_sha256": "52627b4bc9ead5468ecab2d81a664b6fdf0ca4d94d912dce3e15bc4d60701da7"
+      "generator_sha256": "a58ef5f759f11f057cbd3749efd3605940d15f25f9e295c00b17e3bd733a3637",
+      "historical_generator_sha256": "52627b4bc9ead5468ecab2d81a664b6fdf0ca4d94d912dce3e15bc4d60701da7",
+      "withdrawal_note": "The notebook emits only the withdrawal status; it does not generate this retained historical figure."
     }
   ],
   "status": "withdrawn_historical_result"
