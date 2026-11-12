@@ -49,32 +49,14 @@ These figures describe an exposed training-period prefix, not a full-year or
 test result. They do not show that a faster architecture improves trading
 performance.
 
-## Full-budget three-model screen
+## Historical 2M screen status
 
-A separate seed-42 screen trained the TCN control, multi-timeframe encoder, and
-multi-timeframe reasoning variants for a requested 2,000,000 steps each, using
-eight environments and the shared data bundle. The terminal controller marked
-all three arms failed because each breached the training maximum-loss guardrail.
-All report-period replays also failed to survive their full period. The 2026
-period was already inspected and is report-only; these results cannot select a
-variant or establish confirmatory performance.
-
-| Model | Training return | Training trades | Report-period return | Report-period max drawdown | Report-period trades | Survival |
-|---|---:|---:|---:|---:|---:|---|
-| TCN control | −10.75% | 620 | −9.83% | 11.93% | 231 | Failed training and report-period survival |
-| Multi-timeframe encoder | −9.90% | 1,091 | −12.08% | 14.00% | 124 | Failed training and report-period survival |
-| Multi-timeframe reasoning | −9.98% | 500 | −10.28% | 17.62% | 1,761 | Failed training and report-period survival |
-
-The reasoning model's training Sharpe was −1.283, profit factor 0.847, and
-expectancy −$19.95 per trade. Its report-period Sharpe was −0.672, profit
-factor 0.956, and expectancy −$5.84 per trade. All three arms had the same
-terminal training-gate reason, `max_loss_stopped_trading`. Six training/test
-equity-to-PnL checks reconciled with zero mismatches. This is one seed, and the
-test period is exposed; do not infer an architectural ranking from it.
-
-The generated run report, per-arm summaries, logs, and manifests remain in the
-local ignored `outputs/` tree and are intentionally not part of the published
-documentation.
+The prior seed-42, three-model 2M screen and its exposed report-period replays
+are withdrawn from current performance comparison. They used a superseded
+action contract and study setup, and must not be treated as a model ranking or
+as evidence for the registered forthcoming 18-arm benchmark. Its machine
+packet remains available for provenance and reproducibility, marked withdrawn
+in `evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json`.
 
 ## Conclusion
 

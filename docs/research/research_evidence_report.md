@@ -314,14 +314,12 @@ and −10.3679% for the control; both breached the account floor. Because those
 dates were already inspected, these outcomes are descriptive stress evidence,
 not holdout results.
 
-A separate one-seed, 2-million-step MTF architecture screen recorded all three
-variants failing their training survival gates and their full-period exposed
-test replays. Each reported training and test return was negative. This is a
-separate legacy setup-mask screen, not the selected 109-way
-trade-setup conditioning comparison, and it does not rank the architectures.
-The [semantic evidence packet](../../evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json)
-records the source report path and hash, its `final_report_only` role, and the
-previously inspected status of that interval.
+The prior one-seed, 2-million-step MTF architecture screen and exposed replays
+are withdrawn from current performance comparison. Its metric packet remains
+for provenance only and is explicitly marked withdrawn in the
+[semantic evidence packet](../../evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json).
+It must not be used to rank architectures or as evidence for the registered
+forthcoming 18-arm benchmark.
 
 ### 5.3 Data, feature, and model audits
 

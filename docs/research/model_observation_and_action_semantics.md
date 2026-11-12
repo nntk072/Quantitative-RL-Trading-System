@@ -113,11 +113,12 @@ counts, and a 109-element legacy setup mask under its historical action
 schema, which has 11 continuous action coordinates. This
 is a distinct overlay/action contract from the configured C/D
 `trade_setup_mask` policy; its 109-element width does not
-establish the selected setup-policy schema. The MTF reasoning screen itself
-had one seed and all three variants failed training survival and full-period
-exposed test survival; it is descriptive negative architecture evidence, not
-a ranking. Feature-level candidate source geometry is measured separately,
-but is absent from these recorded model observations and policy artifacts.
+establish the selected setup-policy schema. The MTF reasoning screen is
+withdrawn from current comparative evidence. Its provenance stub retains the
+run identity and action-contract description only; it does not support
+architecture selection or the registered forthcoming 18-arm benchmark.
+Feature-level candidate source geometry is measured separately, but is absent
+from these recorded model observations and policy artifacts.
 
 The older selected matched-policy artifacts record a single M1 `[60, 746]`
 stream and a 12-coordinate action schema. Their account observation vectors

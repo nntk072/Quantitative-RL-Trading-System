@@ -4,6 +4,12 @@ This page is the operational queue for the current research program. It records
 the last evidence-gate disposition and the conditions for any successor work;
 it is not a general architecture guide or a personal academic-submission plan.
 
+Legacy 2M reward, regime-normalization, and MTF architecture screen results
+are withdrawn from current performance comparison. Historical run identities,
+protocols, and provenance remain below where needed for reproducibility, but
+those outcomes are not evidence for the registered forthcoming 18-arm
+benchmark and must not be used to select its variants.
+
 ## Current gate disposition
 
 ### Feature missingness follow-up — implementation only

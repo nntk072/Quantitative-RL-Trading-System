@@ -16,32 +16,16 @@ execution assumptions, seed, and training budget.
 
 ## Observed outcomes
 
-| Period and measure | Control | Source-timeframe normalization | Change |
-|---|---:|---:|---:|
-| Training net return | −10.15% | −9.98% | +0.18 percentage points |
-| Training maximum drawdown | 36.69% | 31.13% | −5.55 percentage points |
-| Training Sharpe | −0.371 | −0.465 | Lower |
-| Training profit factor | 0.965 | 0.949 | Lower |
-| Training win rate | 42.79% | 41.64% | Lower |
-| Training expectancy per trade | −$9.15 | −$11.35 | Lower |
-| Training trades | 1,110 | 879 | 231 fewer |
-| Training survival | Failed | Failed | No change |
-| Report-only net return | −10.07% | −10.07% | Essentially unchanged |
-| Report-only maximum drawdown | 29.04% | 21.59% | −7.45 percentage points |
-| Report-only Sharpe | −0.495 | −0.576 | Lower |
-| Report-only profit factor | 0.947 | 0.929 | Lower |
-| Report-only win rate | 41.87% | 38.59% | Lower |
-| Report-only expectancy per trade | −$14.74 | −$17.27 | Lower |
-| Report-only trades | 683 | 583 | 100 fewer |
+The prior one-seed 2M screen and its exposed report-only replay are withdrawn
+from current performance comparison. The result table is removed because the
+screen used a superseded study setup; it must not be used to select a policy or
+as evidence for the registered forthcoming 18-arm benchmark. No performance
+conclusion is drawn here.
 
 ## Interpretation
 
-The treatment modestly reduced the training loss and drawdown, but worsened
-several trade-quality measures and did not survive the account loss limit. On
-the previously inspected report-only interval, net return was effectively
-unchanged while Sharpe, profit factor, win rate, and expectancy were worse.
-The result does not support promoting this normalization change as a trading
-improvement.
+The withdrawn result does not support a current conclusion about this
+normalization change.
 
 ## Limits
 

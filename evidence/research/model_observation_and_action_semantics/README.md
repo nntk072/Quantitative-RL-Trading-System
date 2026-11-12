@@ -41,10 +41,10 @@ It scanned the selected matched-policy campaign output and the current MTF
 architecture comparison output. It extracted recorded observation shapes,
 action schemas, checkpoint path/digest references, and SHA-256 values for the
 JSON evidence files; it did not load checkpoints.
-The separate [MTF architecture screen summary](mtf_architecture_screen.json)
-captures a one-seed, three-variant negative result with hashes for the source
-run report and run specification. Its test interval is exposed and its action
-contract is distinct from the selected trade-setup comparison.
+The separate [MTF architecture screen packet](mtf_architecture_screen.json)
+is a withdrawal stub retaining only run/source provenance and protocol identity.
+Its performance payload was removed from current tracked content; the screen
+is not current comparative evidence.
 
 The run records contain real, run-specific shapes. The MTF run log records
 M1 `[60, 160]` plus M3–D1 sequences with widths 71 and their configured window

@@ -142,27 +142,10 @@ identified; RQ4 confirmation remains unavailable until one is established.
 
 ## Observed research findings
 
-The matched seed-50, 2M-step reward screen compared PPO + DSR with PPO +
-log-equity growth on the 2025 training interval. Both reached the hard maximum
-loss floor before completing that interval. The 2026 replay was already
-exposed and is exploratory/report-only.
-
-| Policy | Split | Net return | Maximum drawdown | Sharpe | Profit factor | Win rate | Trades | Result |
-|---|---|---:|---:|---:|---:|---:|---:|---|
-| PPO + DSR | Training | -10.15% | 36.69% | -0.371 | 0.965 | 42.8% | 1,110 | Hard floor reached |
-| PPO + log-equity growth | Training | -10.18% | 33.66% | -0.336 | 0.962 | 41.0% | 847 | Hard floor reached |
-| PPO + DSR | Exposed report-only | -10.07% | 29.04% | -0.495 | 0.947 | — | 683 | Hard-floor stop |
-| PPO + log-equity growth | Exposed report-only | -10.16% | 30.67% | -0.400 | 0.941 | — | 512 | Hard-floor stop |
-
-These results reject both tested policies as sustainable candidates under this
-screen. They do not identify whether entry quality, exit behavior, regime
-change, reward alignment, or execution cost caused the decline. The matched
-regime-attribution report records the separate feature-normalization and
-regime-context findings, including their limits:
-[Regime attribution](regime_attribution.md).
-
-The practical lesson is to treat positive early-period equity as insufficient
-evidence. Candidate policies must survive the full training interval and
-report their full-path trade and risk behavior before any test-period result is
-interpreted. No result in this note establishes generalization or a fresh
-out-of-sample improvement.
+The prior seed-50, 2M-step reward screen and its exposed 2026 replay are
+withdrawn from current performance comparison. They used a superseded study
+setup and must not be treated as evidence for, or as a substitute for, the
+registered forthcoming 18-arm benchmark. The protocol and configuration
+definitions above remain for reproducibility; no performance conclusion is
+drawn here. The separately reported regime-normalization screen is also
+withdrawn; see [regime attribution](regime_context_comparison.md).

@@ -42,10 +42,10 @@
     "ENVIRONMENT_AND_COMPUTE_PROFILE.md": "bd2db60588112a4356a548c47d18487dbe3b80acaaf32d6899adca38cfd8d4c6",
     "EXPERIMENT_AND_ATTEMPT_LEDGER.jsonl": "fd0b951abca1ac6af9b545ecb47e4b43b48cbc5332d719ae7c1fa1c78291cf90",
     "EXPERIMENT_PROVENANCE_DAG.json": "8f2ba4a5d28dcff70fe459475d4f2eec997e07e90e6d822129053f286c8ea24c",
-    "FINAL_READINESS_REPORT.md": "6dfb4fd7e6dfe63fac76c1ea6aed17b914926940b4dd964e7b9f8d9773dd47c4",
+    "FINAL_READINESS_REPORT.md": "0435d5f615a05bc5d84cc837cad43e6b686f33a3002b23069e9dfa467cd3abd3",
     "FUNCTION_TEST_EVIDENCE_INDEX.csv": "6814b9473622bc9d49d42074d27d82387eba746e17f499086608ff18f4339edd",
     "KNOWN_LIMITATIONS.md": "c034f1f8c8ed9118fadab3081799066a05079041df3e3f21257e4224f1377cbe",
-    "MODEL_AND_BASELINE_CATALOG.md": "b4ae4cd1ca35ac45e8ce6da43c9550bb671cdf09abb835e46a52727f82a8eb8b",
+    "MODEL_AND_BASELINE_CATALOG.md": "a2e83a7aadc247c1d02306bbe76066eab21e1d2fd31c8d12a356d91b1a4715b3",
     "RAW_DATA_SHA256_MANIFEST.json": "27f7106d10c911b5a9e0b68b2e37d2c5e9e6afa1df1951abacb1dd36d51ad767",
     "README.md": "ec0e61fc8bd846ee7f944df87b48dea9547d58221c2674e5dd412b65532796e0",
     "REGENERATION_COMMANDS.md": "8bb2eb5e33c7c62d1e7ed36747cfc886d3931bcc2f193287e7bdc71788314a2e",
@@ -933,5 +933,9 @@
       "status": "incomplete",
       "summary": null
     }
+  },
+  "content_revision": {
+    "updated_at": "2026-11-12",
+    "reason": "Withdraw superseded legacy 2M comparison summaries from current tracked content; preserve source and run provenance without presenting those outcomes as current comparative evidence."
   }
 }
