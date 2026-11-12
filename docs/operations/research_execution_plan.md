@@ -213,19 +213,25 @@ learning; this does not repair upstream finite-zero imputation. Because
 requires its separate `reachable_r_valid` sequence feature, and the gate checks
 that it is present in the saved schema. The sequence-schema round-trip now
 preserves the channel layout in run manifests; qualification rejects a saved
-manifest that drops or mutates it. The run-manifest gate also requires all 108
-setup/timeframe/direction eligibility features in the policy sequence schema,
-so config flags alone cannot assert that the learner received those inputs.
-Architecture, seed count, and walk-forward count remain explicit. Enabling
-setup eligibility is prospective: the existing
+manifest that drops or mutates it. Setup eligibility is carried through the
+candidate-mask contract, not policy history. The qualification manifest must
+record the exact candidate IDs and timeframes separately from policy sequence
+columns, and reject candidate flags in those columns. The registered Gate II
+A/B/C ablation uses M1-only candidates for A and the same full candidate set
+for B/C; B/C differ in completed HTF history. These arms are explicitly
+checked by the static contract gate while the prospective survival profiles
+retain their full candidate-timeframe requirement. Architecture, seed count,
+and walk-forward count remain explicit. Enabling setup eligibility is
+prospective: the existing
 candidate census and profile-wide packets describe older resolved configurations
 and do not establish which setups are present in the survival overlay. Refresh
 the feature cache, candidate census, and relevant causality/availability
-evidence for the resolved survival config before qualification training. The
-feature-pipeline regression now builds all 108 setup flags from the survival
-overlay and checks their observation inclusion; it remains queued for the
-consolidated suite. The load-and-validate and schema regressions are included
-in the consolidated implementation suite and remain unrun. Encoder construction
+evidence for the resolved survival config before qualification training.
+Focused survival-gate and A/B/C observation-manifest regressions cover the
+candidate-mask contract. The feature-pipeline regression still needs to build
+all 108 setup flags from the resolved survival overlay and verify their mask
+availability; load-and-validate coverage and the consolidated implementation
+suite remain outstanding. Encoder construction
 derives sequence widths from the effective observation space; four standard
 single-stream encoders now have a widened-input regression selected in that
 suite, while the earlier four-encoder MTF inference check is bounded evidence

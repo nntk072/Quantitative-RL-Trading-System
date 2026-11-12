@@ -8,7 +8,11 @@ from typing import Any
 from omegaconf import OmegaConf
 
 from evaluation.reporting.run_manifest import build_sequence_feature_schema
+from simulation.environment.observations import HTF_BRANCHES
+from simulation.environment.trading_environment_factory import mtf_settings
 from training.artifacts.flags import strict_nonnegative_int
+
+POLICY_INPUT_SCHEMA_VERSION = "policy-input-streams-v1"
 
 
 def entry_funnel_by_split(
@@ -218,20 +222,123 @@ def observation_schema_manifest(env: Any) -> dict[str, Any] | None:
     result = to_dict()
     if not isinstance(result, dict):
         return None
+    policy_input_schema = effective_policy_input_schema_manifest(env)
+    result["effective_policy_input_schema"] = policy_input_schema
+    effective_history_enabled = bool(policy_input_schema["completed_htf_history_enabled"])
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
         result["regime_observation"] = regime_schema
     setup_schema = getattr(env, "trade_setup_observation_schema", None)
     if isinstance(setup_schema, dict):
-        result["trade_setup_observation"] = setup_schema
+        result["trade_setup_observation"] = {
+            **setup_schema,
+            "completed_htf_history_enabled": effective_history_enabled,
+        }
     candidate_schema = getattr(env, "candidate_geometry_observation_schema", None)
     if isinstance(candidate_schema, dict):
-        result["candidate_geometry_observation"] = candidate_schema
+        result["candidate_geometry_observation"] = {
+            **candidate_schema,
+            "completed_htf_history_enabled": effective_history_enabled,
+        }
     return result
 
 
+def effective_policy_input_schema_manifest(env: Any) -> dict[str, Any]:
+    """Describe the effective sequence streams actually exposed to a policy.
+
+    ``sequence_feature_schema`` retains the historical ordered source-column
+    record. This schema records which of those columns reach each policy stream.
+
+    Args:
+        env: Built environment whose observation streams are read.
+
+    Returns:
+        Versioned stream schema for the effective policy input.
+    """
+    columns = getattr(env, "_obs_columns", None)
+    if not isinstance(columns, (list, tuple)):
+        raise RuntimeError("training environment does not expose sequence feature columns")
+    mtf = bool(getattr(env, "mtf", False))
+    history_enabled = mtf and bool(getattr(env, "completed_htf_history_enabled", True))
+    return build_effective_policy_input_schema(
+        [str(column) for column in columns],
+        mtf=mtf,
+        trade_setup_actions=bool(getattr(env, "trade_setup_actions", False)),
+        completed_htf_history_enabled=history_enabled,
+        validity_channels=bool(getattr(env, "feature_validity_channels", False)),
+    )
+
+
+def build_effective_policy_input_schema(
+    columns: list[str] | tuple[str, ...],
+    *,
+    trade_setup_actions: bool,
+    completed_htf_history_enabled: bool,
+    validity_channels: bool,
+    mtf: bool | None = None,
+    runtime_arch: str | None = None,
+) -> dict[str, Any]:
+    """Build a versioned schema of policy-visible sequence streams.
+
+    Args:
+        columns: Historical ordered source columns from the sequence schema.
+        trade_setup_actions: Whether setup masks make the base sequence M1-only.
+        completed_htf_history_enabled: Whether those HTF streams contain history.
+        validity_channels: Whether each stream appends finite-value indicators.
+        mtf: Whether the runtime emits higher-timeframe observation streams.
+        runtime_arch: Runtime architecture used to resolve MTF when ``mtf`` is omitted.
+
+    Returns:
+        Versioned policy input schema with effective stream keys and columns.
+    """
+    if mtf is None:
+        if runtime_arch is None:
+            raise ValueError("mtf or runtime_arch is required for the policy input schema")
+        mtf, _ = mtf_settings({}, runtime_arch)
+    higher_timeframe_prefixes = tuple(prefix for _, prefix, _ in HTF_BRANCHES)
+    m1_only_sequence = mtf or trade_setup_actions
+    base_columns = [
+        column
+        for column in columns
+        if not m1_only_sequence or not str(column).startswith(higher_timeframe_prefixes)
+    ]
+    streams: list[dict[str, Any]] = [
+        {
+            "timeframe": "M1",
+            "sequence_key": "seq",
+            "mask_key": "seq_mask",
+            "columns": base_columns,
+            "history_available": True,
+        }
+    ]
+    if mtf:
+        for key, prefix, sequence_key in HTF_BRANCHES:
+            streams.append(
+                {
+                    "timeframe": key.upper(),
+                    "sequence_key": sequence_key,
+                    "mask_key": f"mask_{key}",
+                    "columns": [column for column in columns if str(column).startswith(prefix)],
+                    "history_available": bool(completed_htf_history_enabled),
+                }
+            )
+    return {
+        "version": POLICY_INPUT_SCHEMA_VERSION,
+        "mtf_enabled": bool(mtf),
+        "trade_setup_actions": bool(trade_setup_actions),
+        "m1_only_sequence": bool(m1_only_sequence),
+        "completed_htf_history_enabled": bool(mtf and completed_htf_history_enabled),
+        "validity_channels": bool(validity_channels),
+        "streams": streams,
+    }
+
+
 def sequence_feature_schema_manifest(env: Any) -> dict[str, Any]:
-    """Return ordered model sequence coordinates from the effective environment.
+    """Return the ordered source-column record retained for sequence compatibility.
+
+    This historical schema hashes the environment's full selected source-column
+    list. ``effective_policy_input_schema_manifest`` records the M1/HTF streams
+    and the columns each policy actually receives.
 
     Args:
         env: Environment whose state is read or updated.

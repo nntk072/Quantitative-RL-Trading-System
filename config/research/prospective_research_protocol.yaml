@@ -1,4 +1,4 @@
-schema_version: research-execution-protocol-v1
+schema_version: research-execution-protocol-v2
 
 questions:
   primary: >-
@@ -54,6 +54,10 @@ policy:
   policy_family: PPO
   default_n_envs: 8
   all_setup_timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
+  gate_ii_ablation_configs:
+    A: config/research/m1_opportunity_reference.yaml
+    B: config/research/mtf_shared_opportunities_m1_history.yaml
+    C: config/research/mtf_shared_opportunities_with_history.yaml
 
 replication:
   seeds: [42, 43, 44, 45, 46, 47]

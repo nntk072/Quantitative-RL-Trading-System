@@ -34,7 +34,9 @@ def _resolved(relative: str) -> dict[str, Any]:
     return cast(dict[str, Any], value)
 
 
-def _survival_errors(config: dict[str, Any]) -> list[str]:
+def _survival_errors(
+    config: dict[str, Any], setup_timeframes: tuple[str, ...] = TRADE_SETUP_TIMEFRAMES
+) -> list[str]:
     errors: list[str] = []
     env = config["env"]
     ftmo = config["ftmo"]
@@ -57,8 +59,8 @@ def _survival_errors(config: dict[str, Any]) -> list[str]:
         "undiscounted PPO": ppo["gamma"] == 1.0 and ppo["gae_lambda"] == 1.0,
         "eight env default": env["n_envs"] == 8,
         "setup actions": env["strategy_actions"] is True and env["trade_setup_actions"] is True,
-        "all setup timeframes": tuple(features["entry_ideas"]["timeframes"])
-        == TRADE_SETUP_TIMEFRAMES,
+        "setup timeframes": tuple(features["entry_ideas"]["timeframes"]) == setup_timeframes
+        and tuple(env["trade_setup_candidate_timeframes"]) == setup_timeframes,
     }
     errors.extend(name for name, passed in checks.items() if not passed)
     return errors
@@ -83,6 +85,36 @@ def verify(protocol_path: Path) -> dict[str, Any]:
     for role, config in configs.items():
         for error in _survival_errors(config):
             failures.append(f"{role}: {error}")
+
+    gate_ii = policy["gate_ii_ablation_configs"]
+    gate_ii_configs = {arm: _resolved(str(path)) for arm, path in gate_ii.items()}
+    for arm, config in gate_ii_configs.items():
+        expected = ("M1",) if arm == "A" else TRADE_SETUP_TIMEFRAMES
+        for error in _survival_errors(config, expected):
+            failures.append(f"Gate II {arm}: {error}")
+    a, b, c = (gate_ii_configs[arm] for arm in ("A", "B", "C"))
+    if tuple(b["env"]["trade_setup_candidate_timeframes"]) != tuple(
+        c["env"]["trade_setup_candidate_timeframes"]
+    ):
+        failures.append("Gate II B/C candidate opportunities differ")
+    if b["env"].get("completed_htf_history_enabled") is not False:
+        failures.append("Gate II B must disable completed HTF history")
+    if c["env"].get("completed_htf_history_enabled") is not True:
+        failures.append("Gate II C must enable completed HTF history")
+    if b["agent"]["arch"] != c["agent"]["arch"]:
+        failures.append("Gate II B/C encoder architecture differs")
+    if b["ppo"]["policy_distribution"] != c["ppo"]["policy_distribution"]:
+        failures.append("Gate II B/C policy distribution differs")
+    b_without_history = deepcopy(b)
+    c_without_history = deepcopy(c)
+    b_without_history["env"].pop("completed_htf_history_enabled", None)
+    c_without_history["env"].pop("completed_htf_history_enabled", None)
+    if b_without_history != c_without_history:
+        failures.append("Gate II B/C configs differ outside completed HTF history")
+    if tuple(a["env"]["trade_setup_candidate_timeframes"]) != ("M1",):
+        failures.append("Gate II A must use M1-only candidate opportunities")
+    if a["agent"]["arch"] != "tcn":
+        failures.append("Gate II A must use the M1-only TCN reference encoder")
 
     if _without_policy_intervention(configs["control"]) != _without_policy_intervention(
         configs["canonical"]
@@ -113,6 +145,7 @@ def verify(protocol_path: Path) -> dict[str, Any]:
             "full_tree_ci",
             "survival_qualification",
             "economic_superiority",
+            "Gate_II_scientific_authorization",
         ],
         "failures": failures,
         "protocol": str(protocol_path),

@@ -77,6 +77,29 @@ commands on the final tree, including new/edited `tests/` files (CI typechecks t
 
 Only **pytest** stays scoped at commit time.
 
+### Change-impact preflight before push
+
+Before pushing, inspect the complete diff and map each changed contract to its
+local gate. Do not rely on hosted CI to discover predictable failures that can
+be checked from the changed paths:
+
+- If a production import or dependency direction changed, run the applicable
+  architecture contract tests, including
+  `tests/architecture/test_dependency_rules.py::test_domain_fanout_is_limited_to_declared_composition_roots`.
+- If production source, API signatures, or documentation links changed, run
+  the generated API, usage, and documentation inventory checks:
+  `python -m tools.documentation.public_api --check`,
+  `python -m tools.documentation.api_usage --check`, and
+  `python -m tools.documentation.inventory --check`. Regenerate stale outputs
+  with the corresponding `--write` command, then rerun the checks.
+- If a scoped test or generated-artifact check fails, fix it and rerun that
+  exact check before commit/push. After a hosted failure, reproduce the failing
+  test or named gate locally when possible before replacing the pushed SHA.
+
+Record each selected command and result in the CI Operation Engineer handoff.
+The full-tree format/lint/type gates and relevant scoped pytest remain required
+regardless of this change-impact preflight.
+
 ### Choosing relevant tests
 
 - Prefer tests that cover the modules you touched (same package / mirror path under

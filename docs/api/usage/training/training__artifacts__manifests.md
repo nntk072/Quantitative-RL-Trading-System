@@ -8,7 +8,7 @@ This page contains 9 public callable records owned by `training.artifacts.manife
 
 **Purpose:** Return declared coordinate names and flags, never infer from width.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.action_schema_manifest` · **Source:** [training/artifacts/manifests.py:188](../../../../training/artifacts/manifests.py#L188)
+**Exact API:** {py:obj}`training.artifacts.manifests.action_schema_manifest` · **Source:** [training/artifacts/manifests.py:192](../../../../training/artifacts/manifests.py#L192)
 
 **Inputs and outputs:**
 
@@ -57,7 +57,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the action space width for logging.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.action_space_width` · **Source:** [training/artifacts/manifests.py:168](../../../../training/artifacts/manifests.py#L168)
+**Exact API:** {py:obj}`training.artifacts.manifests.action_space_width` · **Source:** [training/artifacts/manifests.py:172](../../../../training/artifacts/manifests.py#L172)
 
 **Inputs and outputs:**
 
@@ -98,7 +98,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build the training_log.json dict from run results.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.build_training_log` · **Source:** [training/artifacts/manifests.py:39](../../../../training/artifacts/manifests.py#L39)
+**Exact API:** {py:obj}`training.artifacts.manifests.build_training_log` · **Source:** [training/artifacts/manifests.py:43](../../../../training/artifacts/manifests.py#L43)
 
 **Inputs and outputs:**
 
@@ -160,7 +160,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build separately labeled train and report-only test entry funnels.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.entry_funnel_by_split` · **Source:** [training/artifacts/manifests.py:14](../../../../training/artifacts/manifests.py#L14)
+**Exact API:** {py:obj}`training.artifacts.manifests.entry_funnel_by_split` · **Source:** [training/artifacts/manifests.py:18](../../../../training/artifacts/manifests.py#L18)
 
 **Inputs and outputs:**
 
@@ -201,7 +201,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `build_training_log`](../../../../training/artifacts/manifests.py#L151)
+2. [production caller: `build_training_log`](../../../../training/artifacts/manifests.py#L155)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -232,7 +232,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return the account observation dimension from the env's observation space.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_account_dim` · **Source:** [training/artifacts/manifests.py:396](../../../../training/artifacts/manifests.py#L396)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_account_dim` · **Source:** [training/artifacts/manifests.py:503](../../../../training/artifacts/manifests.py#L503)
 
 **Inputs and outputs:**
 
@@ -273,7 +273,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return explicit account observation coordinate meanings.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_schema_manifest` · **Source:** [training/artifacts/manifests.py:205](../../../../training/artifacts/manifests.py#L205)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_schema_manifest` · **Source:** [training/artifacts/manifests.py:209](../../../../training/artifacts/manifests.py#L209)
 
 **Inputs and outputs:**
 
@@ -291,17 +291,15 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_training_observation_manifest_records_trade_setup_mask_schema`](../../../../tests/unit/models/test_trade_setup_observation_schema.py#L37)
+1. [test fixture: `test_training_observation_manifest_records_trade_setup_mask_schema`](../../../../tests/unit/models/test_trade_setup_observation_schema.py#L44)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_training_observation_manifest_records_trade_setup_mask_schema() -> None:
-    account_schema = SimpleNamespace(to_dict=lambda: {"version": "account-state-v1"})
-    env = SimpleNamespace(
-        observation_schema=account_schema,
-        regime_observation_schema=None,
-        trade_setup_observation_schema=trade_setup_observation_schema(),
+# … caller setup omitted …
+        trade_setup_actions=True,
+        completed_htf_history_enabled=True,
+        feature_validity_channels=False,
     )
 
     manifest = observation_schema_manifest(env)
@@ -309,6 +307,27 @@ def test_training_observation_manifest_records_trade_setup_mask_schema() -> None
     assert manifest is not None
     assert manifest["version"] == "account-state-v1"
     assert manifest["trade_setup_observation"] == trade_setup_observation_schema()
+    assert manifest["effective_policy_input_schema"]["version"] == "policy-input-streams-v1"
+```
+
+2. [test fixture: `test_effective_policy_input_manifest_records_a_bc_runtime_streams`](../../../../tests/unit/models/test_trade_setup_observation_schema.py#L114)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        trade_setup_actions=True,
+        completed_htf_history_enabled=history_enabled,
+        feature_validity_channels=True,
+    )
+
+    manifest = observation_schema_manifest(env)
+    assert manifest is not None
+    effective = manifest["effective_policy_input_schema"]
+
+    assert effective["completed_htf_history_enabled"] is expected_history
+    assert [stream["sequence_key"] for stream in effective["streams"]] == expected_keys
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -324,7 +343,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return every observation branch shape for the run manifest.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_space_shapes` · **Source:** [training/artifacts/manifests.py:414](../../../../training/artifacts/manifests.py#L414)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_space_shapes` · **Source:** [training/artifacts/manifests.py:521](../../../../training/artifacts/manifests.py#L521)
 
 **Inputs and outputs:**
 
@@ -363,9 +382,9 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Kind:** function · **Status:** stable · **Owner:** `training.artifacts.manifests`
 
-**Purpose:** Return ordered model sequence coordinates from the effective environment.
+**Purpose:** Return the ordered source-column record retained for sequence compatibility.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.sequence_feature_schema_manifest` · **Source:** [training/artifacts/manifests.py:233](../../../../training/artifacts/manifests.py#L233)
+**Exact API:** {py:obj}`training.artifacts.manifests.sequence_feature_schema_manifest` · **Source:** [training/artifacts/manifests.py:336](../../../../training/artifacts/manifests.py#L336)
 
 **Inputs and outputs:**
 
@@ -406,7 +425,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Persist the effective optimizer/reward/risk protocol for later reproduction.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.training_protocol_manifest` · **Source:** [training/artifacts/manifests.py:251](../../../../training/artifacts/manifests.py#L251)
+**Exact API:** {py:obj}`training.artifacts.manifests.training_protocol_manifest` · **Source:** [training/artifacts/manifests.py:358](../../../../training/artifacts/manifests.py#L358)
 
 **Inputs and outputs:**
 

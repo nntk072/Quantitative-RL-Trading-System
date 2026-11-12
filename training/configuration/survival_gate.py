@@ -19,6 +19,12 @@ from decisioning.observations import (
     OBSERVATION_SCHEMA_V2,
     build_observation_schema,
 )
+from decisioning.trade_setup import (
+    TRADE_SETUP_TIMEFRAMES,
+    candidate_geometry_observation_schema,
+    trade_setup_candidate,
+    trade_setup_observation_schema,
+)
 from evaluation.reporting.run_manifest import (
     SEQUENCE_FEATURE_VALIDITY_SCHEMA_VERSION,
     build_sequence_feature_schema,
@@ -26,6 +32,7 @@ from evaluation.reporting.run_manifest import (
     source_state,
 )
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
+from training.artifacts.manifests import build_effective_policy_input_schema
 from training.artifacts.walk_forward import build_walk_forward_identity, fold_identity_sha256
 
 MIN_SURVIVAL_SEEDS = 6
@@ -113,13 +120,11 @@ def _survival_timeframe_contract_error(cfg: Any) -> str | None:
     expected = {
         "data.timeframes": SURVIVAL_DATA_TIMEFRAMES,
         "features.htf_timeframes": SURVIVAL_HIGHER_TIMEFRAMES,
-        "features.entry_ideas.timeframes": SURVIVAL_DATA_TIMEFRAMES,
         "risk.target_timeframes": SURVIVAL_HIGHER_TIMEFRAMES,
     }
     actual = {
         "data.timeframes": data.get("timeframes"),
         "features.htf_timeframes": features.get("htf_timeframes"),
-        "features.entry_ideas.timeframes": entry_ideas.get("timeframes"),
         "risk.target_timeframes": risk.get("target_timeframes"),
     }
     invalid = []
@@ -129,9 +134,167 @@ def _survival_timeframe_contract_error(cfg: Any) -> str | None:
             continue
         if tuple(str(item).strip().upper() for item in value) != expected[key]:
             invalid.append(f"{key}={value!r} (expected {list(expected[key])!r})")
+    candidate_timeframes = _survival_candidate_timeframes(cfg)
+    if candidate_timeframes is None:
+        invalid.append(
+            "env.trade_setup_candidate_timeframes must be exactly M1 or the full timeframe menu"
+        )
+    else:
+        idea_timeframes = entry_ideas.get("timeframes")
+        if isinstance(idea_timeframes, (str, bytes, Mapping)) or not isinstance(
+            idea_timeframes, Iterable
+        ):
+            invalid.append(
+                "features.entry_ideas.timeframes must match env.trade_setup_candidate_timeframes"
+            )
+        else:
+            normalized_ideas = tuple(str(item).strip().upper() for item in idea_timeframes)
+            if normalized_ideas != candidate_timeframes:
+                invalid.append(
+                    "features.entry_ideas.timeframes must match "
+                    "env.trade_setup_candidate_timeframes"
+                )
     if invalid:
         return "survival qualification requires the full configured timeframe ladder: " + "; ".join(
             invalid
+        )
+    return None
+
+
+def _survival_candidate_timeframes(cfg: Any) -> tuple[str, ...] | None:
+    """Return the canonical A or B/C candidate scope from the environment config.
+
+    Args:
+        cfg: Resolved environment configuration.
+
+    Returns:
+        Canonical candidate timeframe scope, or ``None`` for unsupported values.
+    """
+    env = cfg.get("env", {}) if hasattr(cfg, "get") else {}
+    if not hasattr(env, "get"):
+        return None
+    raw = env.get("trade_setup_candidate_timeframes", SURVIVAL_DATA_TIMEFRAMES)
+    if isinstance(raw, (str, bytes, Mapping)) or not isinstance(raw, Iterable):
+        return None
+    values = tuple(str(value).strip().upper() for value in raw)
+    if not values or len(values) != len(set(values)):
+        return None
+    if values == ("M1",):
+        return ("M1",)
+    if values == TRADE_SETUP_TIMEFRAMES:
+        return TRADE_SETUP_TIMEFRAMES
+    return None
+
+
+def _survival_candidate_schema_error(
+    cfg: Any, observation_schema: Any, sequence_columns: list[str], runtime_arch: str
+) -> str | None:
+    """Match policy-facing candidate mask schemas to the configured arm.
+
+    Args:
+        cfg: Resolved environment configuration.
+        observation_schema: Observation schema recorded in the run manifest.
+        sequence_columns: Historical ordered source columns from the sequence schema.
+        runtime_arch: Validated architecture used to construct the training environment.
+
+    Returns:
+        Candidate schema mismatch explanation, or ``None`` when valid.
+    """
+    env = cfg.get("env", {}) if hasattr(cfg, "get") else {}
+    candidate_timeframes = _survival_candidate_timeframes(cfg)
+    if candidate_timeframes is None:
+        return "run manifest candidate schema has an unsupported candidate timeframe scope"
+    if not isinstance(observation_schema, dict):
+        return "run manifest lacks the configured candidate observation schema"
+    enabled = env.get("trade_setup_actions", False)
+    geometry_enabled = env.get("candidate_geometry_actions", False)
+    history_enabled = env.get("completed_htf_history_enabled", True)
+    if (
+        type(enabled) is not bool
+        or type(geometry_enabled) is not bool
+        or type(history_enabled) is not bool
+    ):
+        return "survival candidate observation settings must be boolean"
+    expected_policy_input_schema = build_effective_policy_input_schema(
+        sequence_columns,
+        trade_setup_actions=enabled,
+        completed_htf_history_enabled=history_enabled,
+        validity_channels=env.get("feature_validity_channels", False) is True,
+        runtime_arch=runtime_arch,
+    )
+    if observation_schema.get("effective_policy_input_schema") != expected_policy_input_schema:
+        return (
+            "run manifest effective policy input schema differs from the configured runtime streams"
+        )
+    effective_history_enabled = bool(expected_policy_input_schema["completed_htf_history_enabled"])
+
+    setup_schema = observation_schema.get("trade_setup_observation")
+    expected_setup_schema = (
+        trade_setup_observation_schema(
+            candidate_timeframes,
+            completed_htf_history_enabled=effective_history_enabled,
+        )
+        if enabled
+        else None
+    )
+    if setup_schema != expected_setup_schema:
+        return "run manifest trade-setup candidate mask schema differs from the configured candidate scope"
+
+    geometry_schema = observation_schema.get("candidate_geometry_observation")
+    expected_geometry_schema = (
+        candidate_geometry_observation_schema(
+            candidate_timeframes,
+            completed_htf_history_enabled=effective_history_enabled,
+        )
+        if geometry_enabled
+        else None
+    )
+    if geometry_schema != expected_geometry_schema:
+        return "run manifest candidate-geometry mask schema differs from the configured candidate scope"
+    return None
+
+
+def _survival_policy_sequence_schema_error(cfg: Any, columns: list[str]) -> str | None:
+    """Require setup eligibility to live in the mask or sequence, as configured.
+
+    Args:
+        cfg: Resolved environment configuration.
+        columns: Effective ordered sequence coordinates from the run manifest.
+
+    Returns:
+        Sequence contract mismatch explanation, or ``None`` when valid.
+    """
+    env = cfg.get("env", {}) if hasattr(cfg, "get") else {}
+    features = cfg.get("features", {}) if hasattr(cfg, "get") else {}
+    ideas = features.get("entry_ideas", {}) if hasattr(features, "get") else {}
+    raw_timeframes = ideas.get("timeframes", SURVIVAL_DATA_TIMEFRAMES)
+    idea_timeframes = {str(value).strip().upper() for value in raw_timeframes}
+    all_setup_columns = {column for _, column in trade_setup_candidate_feature_columns()}
+    if env.get("trade_setup_actions", False) is True:
+        leaked = all_setup_columns.intersection(columns)
+        if leaked:
+            return (
+                "run manifest policy sequence includes trade-setup eligibility features "
+                f"that belong in candidate masks ({len(leaked)} present)"
+            )
+        return None
+
+    expected_setup_columns = {
+        column
+        for candidate_id, column in trade_setup_candidate_feature_columns()
+        if trade_setup_candidate(int(candidate_id)).setup_timeframe in idea_timeframes
+    }
+    missing_setup_columns = expected_setup_columns.difference(columns)
+    if missing_setup_columns:
+        return (
+            "run manifest sequence schema omits configured timeframe-specific setup eligibility "
+            f"features ({len(missing_setup_columns)} missing)"
+        )
+    unexpected_setup_columns = (all_setup_columns - expected_setup_columns).intersection(columns)
+    if unexpected_setup_columns:
+        return (
+            "run manifest sequence schema includes setup eligibility features outside the "
+            f"configured candidate timeframe scope ({len(unexpected_setup_columns)} present)"
         )
     return None
 
@@ -362,13 +525,14 @@ def _validate_qualification_manifest(
         raise ValueError(
             "run manifest sequence feature schema does not include valid missingness channels"
         )
-    required_setup_columns = {column for _, column in trade_setup_candidate_feature_columns()}
-    missing_setup_columns = required_setup_columns.difference(columns)
-    if missing_setup_columns:
-        raise ValueError(
-            "run manifest sequence schema omits timeframe-specific setup eligibility "
-            f"features ({len(missing_setup_columns)} missing)"
-        )
+    candidate_schema_error = _survival_candidate_schema_error(
+        cfg, observation_schema, columns, str(args.arch)
+    )
+    if candidate_schema_error:
+        raise ValueError(candidate_schema_error)
+    sequence_contract_error = _survival_policy_sequence_schema_error(cfg, columns)
+    if sequence_contract_error:
+        raise ValueError(sequence_contract_error)
     if protocol.get("mvp_mode") is not False:
         raise ValueError("survival qualification used a capped MVP dataset")
     if protocol.get("locked_oos_selection_allowed") is not False:

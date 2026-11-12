@@ -9,8 +9,10 @@ from omegaconf import OmegaConf
 
 from configuration import load_config
 from decisioning.observations import OBSERVATION_SCHEMA_V2, build_observation_schema
+from decisioning.trade_setup import trade_setup_observation_schema
 from evaluation.reporting.run_manifest import build_sequence_feature_schema, file_sha256
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
+from training.artifacts.manifests import build_effective_policy_input_schema
 from training.artifacts.walk_forward import (
     build_walk_forward_identity,
     fold_identity_sha256,
@@ -18,6 +20,9 @@ from training.artifacts.walk_forward import (
 from training.configuration.survival_gate import (
     _complete_breach_free_path,
     _has_full_split_cap_conflict,
+    _survival_candidate_schema_error,
+    _survival_policy_sequence_schema_error,
+    _survival_timeframe_contract_error,
     build_survival_gate,
     survival_config_identity,
     validate_portfolio_data,
@@ -309,6 +314,160 @@ def test_survival_training_requires_the_full_timeframe_ladder(
     assert any("full configured timeframe ladder" in x for x in gate["failures"])
 
 
+@pytest.mark.parametrize(
+    ("candidate_timeframes", "idea_timeframes"),
+    [
+        (["M1"], ["M1"]),
+        (
+            ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"],
+            ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"],
+        ),
+    ],
+)
+def test_survival_timeframe_contract_allows_only_matched_a_or_bc_candidate_scope(
+    candidate_timeframes: list[str], idea_timeframes: list[str]
+) -> None:
+    cfg = _cfg()
+    cfg.env.trade_setup_candidate_timeframes = candidate_timeframes
+    cfg.features.entry_ideas.timeframes = idea_timeframes
+
+    assert _survival_timeframe_contract_error(cfg) is None
+
+
+def test_survival_timeframe_contract_rejects_partial_or_unmatched_candidate_scope() -> None:
+    cfg = _cfg()
+    cfg.env.trade_setup_candidate_timeframes = ["M1", "M5"]
+    cfg.features.entry_ideas.timeframes = ["M1", "M5"]
+    error = _survival_timeframe_contract_error(cfg)
+    assert error is not None
+    assert "exactly M1 or the full timeframe menu" in error
+
+    cfg.env.trade_setup_candidate_timeframes = ["M1"]
+    cfg.features.entry_ideas.timeframes = ["M1", "M5"]
+    error = _survival_timeframe_contract_error(cfg)
+    assert error is not None
+    assert "must match env.trade_setup_candidate_timeframes" in error
+
+    for invalid_timeframes in (
+        ["D1", "H4", "H1", "M30", "M15", "M10", "M5", "M3", "M1"],
+        ["M1", "M1"],
+        ["M1", "M2"],
+    ):
+        cfg.env.trade_setup_candidate_timeframes = invalid_timeframes
+        cfg.features.entry_ideas.timeframes = invalid_timeframes
+        error = _survival_timeframe_contract_error(cfg)
+        assert error is not None
+        assert "candidate_timeframes" in error
+
+    cfg.env.trade_setup_candidate_timeframes = [
+        "M1",
+        "M3",
+        "M5",
+        "M10",
+        "M15",
+        "M30",
+        "H1",
+        "H4",
+        "D1",
+    ]
+    cfg.features.entry_ideas.timeframes = ["D1", "H4", "H1", "M30", "M15", "M10", "M5", "M3", "M1"]
+    error = _survival_timeframe_contract_error(cfg)
+    assert error is not None
+    assert "must match env.trade_setup_candidate_timeframes" in error
+
+
+@pytest.mark.parametrize(
+    ("candidate_timeframes", "history_enabled", "config_arch", "runtime_arch"),
+    [
+        (["M1"], True, "tcn", "tcn"),
+        (
+            ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"],
+            False,
+            "mtf_reasoning",
+            "mtf_reasoning",
+        ),
+        (
+            ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"],
+            True,
+            "mtf_reasoning",
+            "mtf_reasoning",
+        ),
+        (
+            ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"],
+            False,
+            "tcn",
+            "mtf_reasoning",
+        ),
+    ],
+)
+def test_survival_candidate_mask_schema_matches_a_bc_scope_and_history(
+    candidate_timeframes: list[str],
+    history_enabled: bool,
+    config_arch: str,
+    runtime_arch: str,
+) -> None:
+    cfg = _cfg()
+    cfg["agent"] = {"arch": config_arch}
+    cfg.env.trade_setup_actions = True
+    cfg.env.trade_setup_candidate_timeframes = candidate_timeframes
+    cfg.env.completed_htf_history_enabled = history_enabled
+    mtf_enabled = runtime_arch == "mtf_reasoning"
+    effective_history_enabled = mtf_enabled and history_enabled
+    sequence_columns = ["close", "M3_close", "reachable_r", "reachable_r_valid"]
+    observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
+    observation_schema["trade_setup_observation"] = trade_setup_observation_schema(
+        candidate_timeframes, completed_htf_history_enabled=effective_history_enabled
+    )
+    observation_schema["effective_policy_input_schema"] = build_effective_policy_input_schema(
+        sequence_columns,
+        mtf=mtf_enabled,
+        trade_setup_actions=True,
+        completed_htf_history_enabled=effective_history_enabled,
+        validity_channels=True,
+    )
+
+    assert (
+        _survival_candidate_schema_error(cfg, observation_schema, sequence_columns, runtime_arch)
+        is None
+    )
+
+    wrong_ids_schema = json.loads(json.dumps(observation_schema))
+    wrong_ids_schema["trade_setup_observation"]["eligible_candidate_ids"].pop()
+    error = _survival_candidate_schema_error(cfg, wrong_ids_schema, sequence_columns, runtime_arch)
+    assert error is not None
+    assert "candidate mask schema" in error
+
+    wrong_stream_schema = json.loads(json.dumps(observation_schema))
+    wrong_stream_schema["effective_policy_input_schema"]["streams"].pop()
+    error = _survival_candidate_schema_error(
+        cfg, wrong_stream_schema, sequence_columns, runtime_arch
+    )
+    assert error is not None
+    assert "effective policy input schema" in error
+
+
+def test_survival_policy_sequence_schema_separates_candidate_masks() -> None:
+    cfg = _cfg()
+    cfg.env.trade_setup_actions = True
+    cfg.env.trade_setup_candidate_timeframes = ["M1"]
+    columns = ["reachable_r", "reachable_r_valid"]
+
+    assert _survival_policy_sequence_schema_error(cfg, columns) is None
+    leaked_setup_column = [*columns, "entry_idea_po3_M1_long"]
+    error = _survival_policy_sequence_schema_error(cfg, leaked_setup_column)
+    assert error is not None
+    assert "belong in candidate masks" in error
+
+    cfg.env.trade_setup_actions = False
+    cfg.env.trade_setup_candidate_timeframes = list(_cfg().features.entry_ideas.timeframes)
+    columns.extend(column for _, column in trade_setup_candidate_feature_columns())
+    assert _survival_policy_sequence_schema_error(cfg, columns) is None
+    columns.remove("entry_idea_po3_M1_long")
+    error = _survival_policy_sequence_schema_error(cfg, columns)
+    assert error is not None
+    assert "omits configured timeframe-specific setup eligibility" in error
+
+
 def test_survival_training_requires_setup_eligibility_features_enabled(tmp_path: Path) -> None:
     cfg = _cfg()
     cfg.features.entry_ideas.enabled = False
@@ -540,6 +699,15 @@ def test_passing_survival_gate_revalidates_seed_evidence_and_portfolio_data(
         checkpoint.write_bytes(f"checkpoint-{seed}".encode())
         config_path = seed_dir / "config.yaml"
         OmegaConf.save(survival_cfg, config_path)
+        sequence_columns = _survival_sequence_columns()
+        observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
+        observation_schema["effective_policy_input_schema"] = build_effective_policy_input_schema(
+            sequence_columns,
+            mtf=False,
+            trade_setup_actions=False,
+            completed_htf_history_enabled=False,
+            validity_channels=True,
+        )
         manifest = {
             "seed": seed,
             "artifact_paths": {"checkpoint": "model.zip"},
@@ -561,9 +729,9 @@ def test_passing_survival_gate_revalidates_seed_evidence_and_portfolio_data(
             "feature_cache": {"sha256": "feature-hash"},
             "source": source,
             "action_schema": {"schema": "action-v1"},
-            "observation_schema": build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict(),
+            "observation_schema": observation_schema,
             "sequence_feature_schema": build_sequence_feature_schema(
-                _survival_sequence_columns(), include_validity_channels=True
+                sequence_columns, include_validity_channels=True
             ),
         }
         (seed_dir / "run_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
@@ -665,6 +833,20 @@ def test_passing_survival_gate_revalidates_seed_evidence_and_portfolio_data(
             seeds=seeds,
         )
     mismatched_manifest_path.write_text(valid_manifest, encoding="utf-8")
+    unexpected_mask_manifest = json.loads(valid_manifest)
+    unexpected_mask_manifest["observation_schema"]["trade_setup_observation"] = (
+        trade_setup_observation_schema()
+    )
+    mismatched_manifest_path.write_text(json.dumps(unexpected_mask_manifest), encoding="utf-8")
+    with pytest.raises(SystemExit, match="candidate mask schema"):
+        build_survival_gate(
+            cfg=survival_cfg,
+            args=args,
+            run_dir=tmp_path / "qualification",
+            seed_results=seed_results,
+            seeds=seeds,
+        )
+    mismatched_manifest_path.write_text(valid_manifest, encoding="utf-8")
     values_only_manifest = json.loads(valid_manifest)
     values_only_manifest["sequence_feature_schema"] = build_sequence_feature_schema(
         _survival_sequence_columns()
@@ -697,6 +879,15 @@ def test_passing_survival_gate_revalidates_seed_evidence_and_portfolio_data(
     missing_setup_columns = [
         column for column in _survival_sequence_columns() if column != "entry_idea_po3_M1_long"
     ]
+    missing_setup_manifest["observation_schema"]["effective_policy_input_schema"] = (
+        build_effective_policy_input_schema(
+            missing_setup_columns,
+            mtf=False,
+            trade_setup_actions=False,
+            completed_htf_history_enabled=False,
+            validity_channels=True,
+        )
+    )
     missing_setup_manifest["sequence_feature_schema"] = build_sequence_feature_schema(
         missing_setup_columns,
         include_validity_channels=True,

@@ -23482,7 +23482,7 @@
       "name": "action_schema_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 188,
+      "source_line": 192,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23494,7 +23494,7 @@
       "name": "action_space_width",
       "numpy_style": false,
       "package": "training",
-      "source_line": 168,
+      "source_line": 172,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23530,7 +23530,7 @@
       "name": "build_training_log",
       "numpy_style": false,
       "package": "training",
-      "source_line": 39,
+      "source_line": 43,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23542,7 +23542,7 @@
       "name": "entry_funnel_by_split",
       "numpy_style": false,
       "package": "training",
-      "source_line": 14,
+      "source_line": 18,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23554,7 +23554,7 @@
       "name": "observation_account_dim",
       "numpy_style": false,
       "package": "training",
-      "source_line": 396,
+      "source_line": 503,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23566,7 +23566,7 @@
       "name": "observation_schema_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 205,
+      "source_line": 209,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23578,7 +23578,7 @@
       "name": "observation_space_shapes",
       "numpy_style": false,
       "package": "training",
-      "source_line": 414,
+      "source_line": 521,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23602,7 +23602,7 @@
       "name": "sequence_feature_schema_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 233,
+      "source_line": 336,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23614,7 +23614,7 @@
       "name": "training_protocol_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 251,
+      "source_line": 358,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -24190,7 +24190,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "training",
-      "source_line": 196,
+      "source_line": 204,
       "source_module": "training.configuration.research_protocol",
       "source_path": "training/configuration/research_protocol.py"
     },
@@ -24226,7 +24226,7 @@
       "name": "research_protocol_sha256",
       "numpy_style": false,
       "package": "training",
-      "source_line": 182,
+      "source_line": 190,
       "source_module": "training.configuration.research_protocol",
       "source_path": "training/configuration/research_protocol.py"
     },
@@ -24274,7 +24274,7 @@
       "name": "_complete_breach_free_path",
       "numpy_style": false,
       "package": "training",
-      "source_line": 277,
+      "source_line": 440,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24286,7 +24286,7 @@
       "name": "_data_identity",
       "numpy_style": false,
       "package": "training",
-      "source_line": 216,
+      "source_line": 379,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24298,7 +24298,7 @@
       "name": "_digest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 169,
+      "source_line": 332,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24310,7 +24310,7 @@
       "name": "_has_full_split_cap_conflict",
       "numpy_style": false,
       "package": "training",
-      "source_line": 259,
+      "source_line": 422,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24322,7 +24322,7 @@
       "name": "_has_training_abort_conflict",
       "numpy_style": false,
       "package": "training",
-      "source_line": 237,
+      "source_line": 400,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24334,7 +24334,7 @@
       "name": "_read_json",
       "numpy_style": false,
       "package": "training",
-      "source_line": 201,
+      "source_line": 364,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24346,7 +24346,31 @@
       "name": "_survival_account_contract_error",
       "numpy_style": false,
       "package": "training",
-      "source_line": 48,
+      "source_line": 55,
+      "source_module": "training.configuration.survival_gate",
+      "source_path": "training/configuration/survival_gate.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "training.configuration.survival_gate",
+      "kind": "function",
+      "name": "_survival_candidate_schema_error",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 189,
+      "source_module": "training.configuration.survival_gate",
+      "source_path": "training/configuration/survival_gate.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "training.configuration.survival_gate",
+      "kind": "function",
+      "name": "_survival_candidate_timeframes",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 164,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24358,7 +24382,19 @@
       "name": "_survival_observation_schema_error",
       "numpy_style": false,
       "package": "training",
-      "source_line": 139,
+      "source_line": 302,
+      "source_module": "training.configuration.survival_gate",
+      "source_path": "training/configuration/survival_gate.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "training.configuration.survival_gate",
+      "kind": "function",
+      "name": "_survival_policy_sequence_schema_error",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 257,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24370,7 +24406,7 @@
       "name": "_survival_timeframe_contract_error",
       "numpy_style": false,
       "package": "training",
-      "source_line": 92,
+      "source_line": 99,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },
@@ -24382,7 +24418,7 @@
       "name": "_validate_qualification_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 297,
+      "source_line": 460,
       "source_module": "training.configuration.survival_gate",
       "source_path": "training/configuration/survival_gate.py"
     },

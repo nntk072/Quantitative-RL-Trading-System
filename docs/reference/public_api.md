@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 448 |
-| private implementation | 969 |
+| private implementation | 972 |
 
 ## Public package exports
 
@@ -792,18 +792,18 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
 | `RUN_LOG_FILENAME` | value | [training.artifacts.logging](../../training/artifacts/logging.py#L8) | stable |
-| `action_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L188) | stable |
-| `action_space_width` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L168) | stable |
+| `action_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L192) | stable |
+| `action_space_width` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L172) | stable |
 | `aggregate_seed_results` | function | [training.artifacts.aggregation](../../training/artifacts/aggregation.py#L78) | stable |
 | `attach_run_log` | function | [training.artifacts.logging](../../training/artifacts/logging.py#L11) | stable |
-| `build_training_log` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L39) | stable |
-| `entry_funnel_by_split` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L14) | stable |
-| `observation_account_dim` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L396) | stable |
-| `observation_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L205) | stable |
-| `observation_space_shapes` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L414) | stable |
+| `build_training_log` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L43) | stable |
+| `entry_funnel_by_split` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L18) | stable |
+| `observation_account_dim` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L503) | stable |
+| `observation_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L209) | stable |
+| `observation_space_shapes` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L521) | stable |
 | `save_seed_artifacts` | function | [training.artifacts.aggregation](../../training/artifacts/aggregation.py#L29) | stable |
-| `sequence_feature_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L233) | stable |
-| `training_protocol_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L251) | stable |
+| `sequence_feature_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L336) | stable |
+| `training_protocol_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L358) | stable |
 | `write_evaluation_artifacts` | function | [training.artifacts.evaluation_result_writer](../../training/artifacts/evaluation_result_writer.py#L16) | stable |
 | `write_run_config_snapshot` | function | [training.artifacts.snapshots](../../training/artifacts/snapshots.py#L9) | stable |
 | `resolve_variant` | function | [training.configuration.variant_resolution](../../training/configuration/variant_resolution.py#L140) | stable |

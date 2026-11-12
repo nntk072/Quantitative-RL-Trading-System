@@ -1034,7 +1034,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_trade_setup_observation_schema_is_checkpoint_checked`](../../../../tests/unit/models/test_trade_setup_observation_schema.py#L20)
+1. [test fixture: `test_trade_setup_observation_schema_is_checkpoint_checked`](../../../../tests/unit/models/test_trade_setup_observation_schema.py#L21)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
