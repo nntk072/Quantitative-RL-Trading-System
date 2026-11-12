@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `training.artifacts.aggreg
 
 **Purpose:** Aggregate per-seed results into a multi-seed training_log.json.
 
-**Exact API:** {py:obj}`training.artifacts.aggregation.aggregate_seed_results` · **Source:** [training/artifacts/aggregation.py:73](../../../../training/artifacts/aggregation.py#L73)
+**Exact API:** {py:obj}`training.artifacts.aggregation.aggregate_seed_results` · **Source:** [training/artifacts/aggregation.py:78](../../../../training/artifacts/aggregation.py#L78)
 
 **Inputs and outputs:**
 
@@ -39,7 +39,7 @@ This page contains 2 public callable records owned by `training.artifacts.aggreg
 
 **Observed usage:**
 
-1. [test fixture: `test_training_aggregation_requires_explicit_boolean_gate_passes`](../../../../tests/unit/training/test_train_rl_decomposition.py#L81)
+1. [test fixture: `test_training_aggregation_requires_explicit_boolean_gate_passes`](../../../../tests/unit/training/test_train_rl_decomposition.py#L246)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -62,7 +62,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         test_bars=10,
         strategy="baseline",
         strategy_actions=False,
-        cfg=SimpleNamespace(env={}),
+        cfg=SimpleNamespace(env={}, evaluation={}),
         args=SimpleNamespace(allow_locked_oos_for_selection=False),
         run_dir=Path("."),
     )
@@ -95,9 +95,9 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   seed: Random seed used to make sampling reproducible.
   cfg: Run configuration used by this operation.
   train_result: Key-value data used for the train result.
-  test_result: Key-value data used for the test result.
+  test_result: Report-only result, or ``None`` when not evaluated.
   train_m: Train m used by the operation described above.
-  test_m: Test m used by the operation described above.
+  test_m: Test metrics, or ``None`` when not evaluated.
   ```
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.

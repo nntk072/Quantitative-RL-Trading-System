@@ -93,7 +93,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_build_comparison_table`](../../../../tests/unit/evaluation/test_plots_export.py#L145)
+1. [test fixture: `test_build_comparison_table`](../../../../tests/unit/evaluation/test_plots_export.py#L146)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -222,7 +222,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_build_summary_table`](../../../../tests/unit/evaluation/test_plots_export.py#L138)
+1. [test fixture: `test_build_summary_table`](../../../../tests/unit/evaluation/test_plots_export.py#L139)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -313,7 +313,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_save_metrics_json`](../../../../tests/unit/evaluation/test_plots_export.py#L153)
+1. [test fixture: `test_save_metrics_json`](../../../../tests/unit/evaluation/test_plots_export.py#L154)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -448,7 +448,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_build_comparison_table`](../../../../tests/unit/evaluation/test_plots_export.py#L145)
+1. [test fixture: `test_build_comparison_table`](../../../../tests/unit/evaluation/test_plots_export.py#L146)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -577,7 +577,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_build_summary_table`](../../../../tests/unit/evaluation/test_plots_export.py#L138)
+1. [test fixture: `test_build_summary_table`](../../../../tests/unit/evaluation/test_plots_export.py#L139)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -668,7 +668,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_save_metrics_json`](../../../../tests/unit/evaluation/test_plots_export.py#L153)
+1. [test fixture: `test_save_metrics_json`](../../../../tests/unit/evaluation/test_plots_export.py#L154)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

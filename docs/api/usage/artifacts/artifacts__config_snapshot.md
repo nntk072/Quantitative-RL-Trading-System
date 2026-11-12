@@ -27,15 +27,15 @@ This page contains 1 public callable records owned by `artifacts.config_snapshot
 
 **Observed usage:**
 
-1. [production caller: `save_run`](../../../../evaluation/reporting/run_artifact_writer.py#L907)
+1. [production caller: `save_run`](../../../../evaluation/reporting/run_artifact_writer.py#L916)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    log.info("Saving run artifacts to %s", run_dir)
-
-    daily_loss_limit, max_loss_limit, profit_target = _extract_ftmo_limits(cfg)
+    test_evaluated = test_result is not None and test_metrics is not None
+    if development_only and test_evaluated:
+        raise ValueError("development-only runs cannot write report-only test artifacts")
 
     if cfg is not None:
         write_config_snapshot(run_dir, cfg)

@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `market_data.loading.marke
 
 **Purpose:** Load, resample, clean, label and cache all symbols / timeframes.
 
-**Exact API:** {py:obj}`market_data.loading.market_data_ingestion.run_pipeline` · **Source:** [market_data/loading/market_data_ingestion.py:46](../../../../market_data/loading/market_data_ingestion.py#L46)
+**Exact API:** {py:obj}`market_data.loading.market_data_ingestion.run_pipeline` · **Source:** [market_data/loading/market_data_ingestion.py:47](../../../../market_data/loading/market_data_ingestion.py#L47)
 
 **Inputs and outputs:**
 
@@ -18,6 +18,7 @@ This page contains 2 public callable records owned by `market_data.loading.marke
   cfg: OmegaConf config (config/base/default.yaml).
   force: If True, ignore existing parquet cache and reprocess from CSV.
   datasets: Optional configured dataset names to process; None selects all datasets.
+  end_inclusive: Optional last local calendar date returned to the caller.
   ```
 
 - **Returns:**
@@ -33,7 +34,7 @@ This page contains 2 public callable records owned by `market_data.loading.marke
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = run_pipeline(cfg=..., force=..., datasets=...)
+result = run_pipeline(cfg=..., force=..., datasets=..., end_inclusive=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
@@ -51,7 +52,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Load, resample, clean, label and cache all symbols / timeframes.
 
-**Exact API:** {py:obj}`market_data.loading.market_data_ingestion.run_pipeline` · **Source:** [market_data/loading/market_data_ingestion.py:46](../../../../market_data/loading/market_data_ingestion.py#L46)
+**Exact API:** {py:obj}`market_data.loading.market_data_ingestion.run_pipeline` · **Source:** [market_data/loading/market_data_ingestion.py:47](../../../../market_data/loading/market_data_ingestion.py#L47)
 
 **Inputs and outputs:**
 
@@ -61,6 +62,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
   cfg: OmegaConf config (config/base/default.yaml).
   force: If True, ignore existing parquet cache and reprocess from CSV.
   datasets: Optional configured dataset names to process; None selects all datasets.
+  end_inclusive: Optional last local calendar date returned to the caller.
   ```
 
 - **Returns:**
@@ -76,7 +78,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = run_pipeline(cfg=..., force=..., datasets=...)
+result = run_pipeline(cfg=..., force=..., datasets=..., end_inclusive=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.

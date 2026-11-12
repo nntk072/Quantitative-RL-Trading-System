@@ -8,7 +8,7 @@ This page contains 9 public callable records owned by `training.artifacts.manife
 
 **Purpose:** Return declared coordinate names and flags, never infer from width.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.action_schema_manifest` · **Source:** [training/artifacts/manifests.py:160](../../../../training/artifacts/manifests.py#L160)
+**Exact API:** {py:obj}`training.artifacts.manifests.action_schema_manifest` · **Source:** [training/artifacts/manifests.py:188](../../../../training/artifacts/manifests.py#L188)
 
 **Inputs and outputs:**
 
@@ -57,7 +57,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the action space width for logging.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.action_space_width` · **Source:** [training/artifacts/manifests.py:140](../../../../training/artifacts/manifests.py#L140)
+**Exact API:** {py:obj}`training.artifacts.manifests.action_space_width` · **Source:** [training/artifacts/manifests.py:168](../../../../training/artifacts/manifests.py#L168)
 
 **Inputs and outputs:**
 
@@ -98,7 +98,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build the training_log.json dict from run results.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.build_training_log` · **Source:** [training/artifacts/manifests.py:38](../../../../training/artifacts/manifests.py#L38)
+**Exact API:** {py:obj}`training.artifacts.manifests.build_training_log` · **Source:** [training/artifacts/manifests.py:39](../../../../training/artifacts/manifests.py#L39)
 
 **Inputs and outputs:**
 
@@ -113,8 +113,8 @@ The input, output, and error contract above is the safe boundary for a caller. F
   timesteps: Numeric value used for the timesteps.
   train_bars: Market bar or price data used for build the training_log.json dict from run results.
   test_bars: Market bar or price data used for build the training_log.json dict from run results.
-  test_m: Test m used by the operation described above.
-  test_result: Key-value data used for the test result.
+  test_m: Test metrics, or ``None`` when report-only evaluation was not run.
+  test_result: Report-only result, or ``None`` when it was not evaluated.
   environment_reward_mode: Text or path value identifying the environment reward mode.
   equity_log_growth_scale: Numeric value used for the equity log growth scale.
   train_result: Key-value data used for the train result.
@@ -179,7 +179,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `aggregate_seed_results`](../../../../training/artifacts/aggregation.py#L182)
+1. [production caller: `aggregate_seed_results`](../../../../training/artifacts/aggregation.py#L200)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -194,21 +194,21 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         first.get("train_result"), first.get("test_result")
     )
 
-    aggregated["oos_role"] = (
-        "selection_acknowledged"
-        if getattr(args, "allow_locked_oos_for_selection", False)
-        else "final_report_only"
+    evaluation_cfg = getattr(cfg, "evaluation", None)
+    development_only = (
+        evaluation_cfg.get("development_only", False) is True
+        if evaluation_cfg is not None
 # … caller assertions omitted …
 ```
 
-2. [production caller: `build_training_log`](../../../../training/artifacts/manifests.py#L123)
+2. [production caller: `build_training_log`](../../../../training/artifacts/manifests.py#L151)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "test_fail_time": (
-            str(test_result["fail_time"]) if test_result.get("fail_time") is not None else None
+            if test_result is not None and test_result.get("fail_time") is not None
+            else None
         ),
         "timestamp": datetime.now().isoformat(),
     }
@@ -232,7 +232,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return the account observation dimension from the env's observation space.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_account_dim` · **Source:** [training/artifacts/manifests.py:368](../../../../training/artifacts/manifests.py#L368)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_account_dim` · **Source:** [training/artifacts/manifests.py:396](../../../../training/artifacts/manifests.py#L396)
 
 **Inputs and outputs:**
 
@@ -273,7 +273,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return explicit account observation coordinate meanings.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_schema_manifest` · **Source:** [training/artifacts/manifests.py:177](../../../../training/artifacts/manifests.py#L177)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_schema_manifest` · **Source:** [training/artifacts/manifests.py:205](../../../../training/artifacts/manifests.py#L205)
 
 **Inputs and outputs:**
 
@@ -324,7 +324,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return every observation branch shape for the run manifest.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.observation_space_shapes` · **Source:** [training/artifacts/manifests.py:386](../../../../training/artifacts/manifests.py#L386)
+**Exact API:** {py:obj}`training.artifacts.manifests.observation_space_shapes` · **Source:** [training/artifacts/manifests.py:414](../../../../training/artifacts/manifests.py#L414)
 
 **Inputs and outputs:**
 
@@ -365,7 +365,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return ordered model sequence coordinates from the effective environment.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.sequence_feature_schema_manifest` · **Source:** [training/artifacts/manifests.py:205](../../../../training/artifacts/manifests.py#L205)
+**Exact API:** {py:obj}`training.artifacts.manifests.sequence_feature_schema_manifest` · **Source:** [training/artifacts/manifests.py:233](../../../../training/artifacts/manifests.py#L233)
 
 **Inputs and outputs:**
 
@@ -406,7 +406,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Persist the effective optimizer/reward/risk protocol for later reproduction.
 
-**Exact API:** {py:obj}`training.artifacts.manifests.training_protocol_manifest` · **Source:** [training/artifacts/manifests.py:223](../../../../training/artifacts/manifests.py#L223)
+**Exact API:** {py:obj}`training.artifacts.manifests.training_protocol_manifest` · **Source:** [training/artifacts/manifests.py:251](../../../../training/artifacts/manifests.py#L251)
 
 **Inputs and outputs:**
 

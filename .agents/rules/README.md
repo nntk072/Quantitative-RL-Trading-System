@@ -18,6 +18,7 @@ Rules live here rather than in tool-specific folders. Entry points are root
 | [security-rules.md](security-rules.md) | Secret & input safety checklist | Always at commit; deep on sensitive code |
 | [development-workflow.md](development-workflow.md) | Research-first → plan → TDD → review → commit | On non-trivial features |
 | [agent-planning-implementation.md](agent-planning-implementation.md) | Consistent repository inspection, naming, implementation, verification, and handoff rules for every agent model; keep agent plans outside the repo | Always |
+| [agent-coordination.md](agent-coordination.md) | Subagent roles, file ownership, concurrency, research handoffs, CI boundaries, worktrees, and timed monitoring | When delegating |
 | [ci-verification.md](ci-verification.md) | **Blocking** full-tree `ruff` + `mypy .` (not path-scoped); scoped pytest before commit/push | On commit/push |
 | [triton-slurm.md](triton-slurm.md) | Use suitable existing GPU-node allocations for research computation when GPU-capable; CPU-only heavy work runs inside a properly sized CPU-node `srun` launched from persistent login tmux; heavy work never runs on normal login; inspect GPU/CPU/RAM; never use `srun --test-only` or `scancel`; preserve pending/active jobs | On Triton / GPU training |
 
@@ -27,6 +28,7 @@ Rules live here rather than in tool-specific folders. Entry points are root
 request
   ├─ ALWAYS: token-efficient-context-replies + RTK prefix (antigravity-rtk-rules)
   ├─ ALL tasks?               → agent-planning-implementation
+  ├─ delegating?              → agent-coordination + matching `.codex/agents/*.toml`
   ├─ running commands?        → token-efficient-shell (+ RTK)
   ├─ non-trivial feature?     → development-workflow
   │                             ├─ research/reuse first

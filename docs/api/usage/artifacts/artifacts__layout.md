@@ -491,7 +491,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     log.info("Saving run artifacts to %s", run_dir)
 
     daily_loss_limit, max_loss_limit, profit_target = _extract_ftmo_limits(cfg)
-
+    evaluation_cfg = getattr(cfg, "evaluation", None)
 # … caller assertions omitted …
 ```
 

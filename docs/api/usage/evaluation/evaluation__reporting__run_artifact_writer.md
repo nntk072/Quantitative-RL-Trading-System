@@ -80,7 +80,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_save_run_creates_files`](../../../../tests/unit/evaluation/test_plots_export.py#L689)
+2. [test fixture: `test_save_run_creates_files`](../../../../tests/unit/evaluation/test_plots_export.py#L690)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

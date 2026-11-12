@@ -8,7 +8,7 @@ This page contains 13 public callable records owned by `market_data.loading.tick
 
 **Purpose:** Sorted bid/ask lookup table backed by NumPy arrays.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook` · **Source:** [market_data/loading/ticks.py:476](../../../../market_data/loading/ticks.py#L476)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook` · **Source:** [market_data/loading/ticks.py:489](../../../../market_data/loading/ticks.py#L489)
 
 **Observed usage:**
 
@@ -76,7 +76,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Sorted bid/ask lookup table backed by NumPy arrays.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook` · **Source:** [market_data/loading/ticks.py:476](../../../../market_data/loading/ticks.py#L476)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook` · **Source:** [market_data/loading/ticks.py:489](../../../../market_data/loading/ticks.py#L489)
 
 **Observed usage:**
 
@@ -144,7 +144,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.build_tick_book` · **Source:** [market_data/loading/ticks.py:912](../../../../market_data/loading/ticks.py#L912)
+**Exact API:** {py:obj}`market_data.loading.ticks.build_tick_book` · **Source:** [market_data/loading/ticks.py:925](../../../../market_data/loading/ticks.py#L925)
 
 **Inputs and outputs:**
 
@@ -190,7 +190,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_build_tick_book_quantizes_executable_bid_ask`](../../../../tests/unit/market_data/test_ticks.py#L625)
+2. [test fixture: `test_build_tick_book_quantizes_executable_bid_ask`](../../../../tests/unit/market_data/test_ticks.py#L669)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -226,7 +226,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Yield recorded quotes in timestamp order within a half-open bar interval.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.bar_quotes` · **Source:** [market_data/loading/ticks.py:678](../../../../market_data/loading/ticks.py#L678)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.bar_quotes` · **Source:** [market_data/loading/ticks.py:691](../../../../market_data/loading/ticks.py#L691)
 
 **Inputs and outputs:**
 
@@ -245,7 +245,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes`](../../../../tests/unit/market_data/test_ticks.py#L894)
+1. [test fixture: `test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes`](../../../../tests/unit/market_data/test_ticks.py#L993)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -277,7 +277,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Fingerprint the ordered timestamp and quote arrays used for execution.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.content_sha256` · **Source:** [market_data/loading/ticks.py:641](../../../../market_data/loading/ticks.py#L641)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.content_sha256` · **Source:** [market_data/loading/ticks.py:654](../../../../market_data/loading/ticks.py#L654)
 
 **Inputs and outputs:**
 
@@ -316,7 +316,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return trigger kind, actual fill time, and delayed executable quote.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_event` · **Source:** [market_data/loading/ticks.py:737](../../../../market_data/loading/ticks.py#L737)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_event` · **Source:** [market_data/loading/ticks.py:750](../../../../market_data/loading/ticks.py#L750)
 
 **Inputs and outputs:**
 
@@ -363,7 +363,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert event is None
 ```
 
-2. [production caller: `delayed_exit_quote`](../../../../market_data/loading/ticks.py#L729)
+2. [production caller: `delayed_exit_quote`](../../../../market_data/loading/ticks.py#L742)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -397,7 +397,7 @@ def delayed_exit_quote(
 
 **Purpose:** Quote ``delay`` after the first tick that trades through SL or TP.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_quote` · **Source:** [market_data/loading/ticks.py:701](../../../../market_data/loading/ticks.py#L701)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.delayed_exit_quote` · **Source:** [market_data/loading/ticks.py:714](../../../../market_data/loading/ticks.py#L714)
 
 **Inputs and outputs:**
 
@@ -444,7 +444,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return the first quote at or after an execution arrival time.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.execution_quote_event_at` · **Source:** [market_data/loading/ticks.py:550](../../../../market_data/loading/ticks.py#L550)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.execution_quote_event_at` · **Source:** [market_data/loading/ticks.py:563](../../../../market_data/loading/ticks.py#L563)
 
 **Inputs and outputs:**
 
@@ -533,7 +533,7 @@ print(
 
 **Purpose:** Return the earliest source-ordered quote that crosses a limit.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.first_limit_execution_event` · **Source:** [market_data/loading/ticks.py:577](../../../../market_data/loading/ticks.py#L577)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.first_limit_execution_event` · **Source:** [market_data/loading/ticks.py:590](../../../../market_data/loading/ticks.py#L590)
 
 **Inputs and outputs:**
 
@@ -555,7 +555,7 @@ print(
 
 **Observed usage:**
 
-1. [production caller: `resolve_tick_limit_execution`](../../../../market_data/loading/ticks.py#L339)
+1. [production caller: `resolve_tick_limit_execution`](../../../../market_data/loading/ticks.py#L356)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -592,7 +592,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return whether any quote falls in the half-open interval [start, end).
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.has_ticks_between` · **Source:** [market_data/loading/ticks.py:661](../../../../market_data/loading/ticks.py#L661)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.has_ticks_between` · **Source:** [market_data/loading/ticks.py:674](../../../../market_data/loading/ticks.py#L674)
 
 **Inputs and outputs:**
 
@@ -635,7 +635,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return ``(bid, ask)`` for the first tick at or after *ts*.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.quote_at` · **Source:** [market_data/loading/ticks.py:504](../../../../market_data/loading/ticks.py#L504)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.quote_at` · **Source:** [market_data/loading/ticks.py:517](../../../../market_data/loading/ticks.py#L517)
 
 **Inputs and outputs:**
 
@@ -692,7 +692,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the first source-ordered quote at/after *ts* and its timestamp.
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.quote_event_at` · **Source:** [market_data/loading/ticks.py:523](../../../../market_data/loading/ticks.py#L523)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.quote_event_at` · **Source:** [market_data/loading/ticks.py:536](../../../../market_data/loading/ticks.py#L536)
 
 **Inputs and outputs:**
 
@@ -755,7 +755,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return a sub-book covering the half-open interval [start, end).
 
-**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.slice` · **Source:** [market_data/loading/ticks.py:801](../../../../market_data/loading/ticks.py#L801)
+**Exact API:** {py:obj}`market_data.loading.ticks.TickBook.slice` · **Source:** [market_data/loading/ticks.py:814](../../../../market_data/loading/ticks.py#L814)
 
 **Inputs and outputs:**
 
@@ -774,7 +774,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `ticks_covering`](../../../../market_data/loading/ticks.py#L837)
+1. [production caller: `build_tick_books`](../../../../market_data/loading/tick_book_pipeline.py#L149)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+            )
+            if end_inclusive is not None:
+                end = inclusive_date_exclusive_end(end_inclusive, str(cfg.data.tz))
+                if len(combined_book):
+                    start = pd.Timestamp(int(combined_book._ts[0]), unit="ns", tz="UTC")
+                    combined_book = combined_book.slice(start, end)
+            result[sym] = combined_book
+            log.info(
+                "TickBook ready: %s (%d ticks, %d partitions)", sym, len(combined_book), len(books)
+            )
+        elif sym not in result:
+# … caller assertions omitted …
+```
+
+2. [production caller: `ticks_covering`](../../../../market_data/loading/ticks.py#L850)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

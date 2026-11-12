@@ -1,0 +1,5 @@
+[agents]
+enabled = true
+# The cap excludes the coordinator: two spawned agents plus the root gives the
+# requested three-agent default. Reasoning is chosen at each spawn.
+max_concurrent_threads_per_session = 2

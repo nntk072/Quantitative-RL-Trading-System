@@ -15202,7 +15202,7 @@
       "name": "BAR_CACHE_VERSION",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 43,
+      "source_line": 44,
       "source_module": "market_data.loading.market_data_ingestion",
       "source_path": "market_data/loading/market_data_ingestion.py"
     },
@@ -15214,7 +15214,7 @@
       "name": "TickBook",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 476,
+      "source_line": 489,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15238,7 +15238,7 @@
       "name": "build_tick_books",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 20,
+      "source_line": 22,
       "source_module": "market_data.loading.tick_book_pipeline",
       "source_path": "market_data/loading/tick_book_pipeline.py"
     },
@@ -15250,7 +15250,7 @@
       "name": "get_split_config",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 98,
+      "source_line": 117,
       "source_module": "market_data.splits.definitions",
       "source_path": "market_data/splits/definitions.py"
     },
@@ -15274,7 +15274,7 @@
       "name": "make_train_mask",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 134,
+      "source_line": 153,
       "source_module": "market_data.splits.definitions",
       "source_path": "market_data/splits/definitions.py"
     },
@@ -15286,7 +15286,7 @@
       "name": "run_pipeline",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 46,
+      "source_line": 47,
       "source_module": "market_data.loading.market_data_ingestion",
       "source_path": "market_data/loading/market_data_ingestion.py"
     },
@@ -15730,7 +15730,7 @@
       "name": "BAR_CACHE_VERSION",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 43,
+      "source_line": 44,
       "source_module": "market_data.loading.market_data_ingestion",
       "source_path": "market_data/loading/market_data_ingestion.py"
     },
@@ -15742,7 +15742,7 @@
       "name": "TickBook",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 476,
+      "source_line": 489,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15766,7 +15766,7 @@
       "name": "build_tick_book",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 912,
+      "source_line": 925,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15778,7 +15778,7 @@
       "name": "build_tick_books",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 20,
+      "source_line": 22,
       "source_module": "market_data.loading.tick_book_pipeline",
       "source_path": "market_data/loading/tick_book_pipeline.py"
     },
@@ -15814,7 +15814,7 @@
       "name": "run_pipeline",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 46,
+      "source_line": 47,
       "source_module": "market_data.loading.market_data_ingestion",
       "source_path": "market_data/loading/market_data_ingestion.py"
     },
@@ -15862,7 +15862,7 @@
       "name": "TickBook.bar_quotes",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 678,
+      "source_line": 691,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15874,7 +15874,7 @@
       "name": "TickBook.content_sha256",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 641,
+      "source_line": 654,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15886,7 +15886,7 @@
       "name": "TickBook.delayed_exit_event",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 737,
+      "source_line": 750,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15898,7 +15898,7 @@
       "name": "TickBook.delayed_exit_quote",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 701,
+      "source_line": 714,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15910,7 +15910,7 @@
       "name": "TickBook.execution_quote_event_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 550,
+      "source_line": 563,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15922,7 +15922,7 @@
       "name": "TickBook.first_limit_execution_event",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 577,
+      "source_line": 590,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15934,7 +15934,7 @@
       "name": "TickBook.has_ticks_between",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 661,
+      "source_line": 674,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15946,7 +15946,7 @@
       "name": "TickBook.quote_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 504,
+      "source_line": 517,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15958,7 +15958,7 @@
       "name": "TickBook.quote_event_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 523,
+      "source_line": 536,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15970,7 +15970,7 @@
       "name": "TickBook.slice",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 801,
+      "source_line": 814,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15982,7 +15982,7 @@
       "name": "_ffill_inplace",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 462,
+      "source_line": 475,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16006,7 +16006,7 @@
       "name": "get_split_config",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 98,
+      "source_line": 117,
       "source_module": "market_data.splits.definitions",
       "source_path": "market_data/splits/definitions.py"
     },
@@ -16018,7 +16018,7 @@
       "name": "get_train_start_config",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 118,
+      "source_line": 137,
       "source_module": "market_data.splits.definitions",
       "source_path": "market_data/splits/definitions.py"
     },
@@ -16030,7 +16030,7 @@
       "name": "make_train_mask",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 134,
+      "source_line": 153,
       "source_module": "market_data.splits.definitions",
       "source_path": "market_data/splits/definitions.py"
     },
@@ -23470,7 +23470,7 @@
       "name": "action_schema_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 160,
+      "source_line": 188,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23482,7 +23482,7 @@
       "name": "action_space_width",
       "numpy_style": false,
       "package": "training",
-      "source_line": 140,
+      "source_line": 168,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23494,7 +23494,7 @@
       "name": "aggregate_seed_results",
       "numpy_style": false,
       "package": "training",
-      "source_line": 73,
+      "source_line": 78,
       "source_module": "training.artifacts.aggregation",
       "source_path": "training/artifacts/aggregation.py"
     },
@@ -23518,7 +23518,7 @@
       "name": "build_training_log",
       "numpy_style": false,
       "package": "training",
-      "source_line": 38,
+      "source_line": 39,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23542,7 +23542,7 @@
       "name": "observation_account_dim",
       "numpy_style": false,
       "package": "training",
-      "source_line": 368,
+      "source_line": 396,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23554,7 +23554,7 @@
       "name": "observation_schema_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 177,
+      "source_line": 205,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23566,7 +23566,7 @@
       "name": "observation_space_shapes",
       "numpy_style": false,
       "package": "training",
-      "source_line": 386,
+      "source_line": 414,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23590,7 +23590,7 @@
       "name": "sequence_feature_schema_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 205,
+      "source_line": 233,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -23602,7 +23602,7 @@
       "name": "training_protocol_manifest",
       "numpy_style": false,
       "package": "training",
-      "source_line": 223,
+      "source_line": 251,
       "source_module": "training.artifacts.manifests",
       "source_path": "training/artifacts/manifests.py"
     },
@@ -24898,7 +24898,7 @@
       "name": "_ema_policy",
       "numpy_style": false,
       "package": "training",
-      "source_line": 102,
+      "source_line": 103,
       "source_module": "training.runner.baselines",
       "source_path": "training/runner/baselines.py"
     },
@@ -24910,7 +24910,7 @@
       "name": "_macd_policy",
       "numpy_style": false,
       "package": "training",
-      "source_line": 50,
+      "source_line": 51,
       "source_module": "training.runner.baselines",
       "source_path": "training/runner/baselines.py"
     },
@@ -24922,7 +24922,7 @@
       "name": "_make_indexed_policy",
       "numpy_style": false,
       "package": "training",
-      "source_line": 62,
+      "source_line": 63,
       "source_module": "training.runner.baselines",
       "source_path": "training/runner/baselines.py"
     },
@@ -24934,7 +24934,7 @@
       "name": "_rsi_policy",
       "numpy_style": false,
       "package": "training",
-      "source_line": 118,
+      "source_line": 119,
       "source_module": "training.runner.baselines",
       "source_path": "training/runner/baselines.py"
     },
@@ -24955,10 +24955,22 @@
       "documented": true,
       "exported_from": "training.runner.data_stage",
       "kind": "function",
-      "name": "_prepare_training_data",
+      "name": "_clip_data_to_development_end",
       "numpy_style": false,
       "package": "training",
       "source_line": 52,
+      "source_module": "training.runner.data_stage",
+      "source_path": "training/runner/data_stage.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "training.runner.data_stage",
+      "kind": "function",
+      "name": "_prepare_training_data",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 77,
       "source_module": "training.runner.data_stage",
       "source_path": "training/runner/data_stage.py"
     },

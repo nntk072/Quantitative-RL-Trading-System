@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 448 |
-| private implementation | 968 |
+| private implementation | 969 |
 
 ## Public package exports
 
@@ -440,13 +440,13 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
-| `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L43) | stable |
-| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L476) | stable |
-| `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L20) | stable |
-| `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L98) | stable |
+| `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L44) | stable |
+| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L489) | stable |
+| `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L22) | stable |
+| `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L117) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L22) | stable |
-| `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L134) | stable |
-| `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L46) | stable |
+| `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L153) | stable |
+| `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L47) | stable |
 | `split_train_test` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L16) | stable |
 | `BAR_CACHE_MANIFEST_SCHEMA_VERSION` | value | [market_data.cache.bars](../../market_data/cache/bars.py#L19) | stable |
 | `BAR_CACHE_TRANSFORM_ID` | value | [market_data.cache.bars](../../market_data/cache/bars.py#L20) | stable |
@@ -471,26 +471,26 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `write_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L133) | stable |
 | `write_parquet_cache` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L184) | stable |
 | `write_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L119) | stable |
-| `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L43) | stable |
-| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L476) | stable |
-| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L912) | stable |
-| `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L20) | stable |
+| `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L44) | stable |
+| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L489) | stable |
+| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L925) | stable |
+| `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L22) | stable |
 | `iter_ticks_chunks` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L108) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L22) | stable |
-| `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L46) | stable |
-| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L678) | stable |
-| `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L641) | stable |
-| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L737) | stable |
-| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L701) | stable |
-| `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L550) | stable |
-| `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L577) | stable |
-| `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L661) | stable |
-| `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L504) | stable |
-| `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L523) | stable |
-| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L801) | stable |
-| `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L98) | stable |
-| `get_train_start_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L118) | stable |
-| `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L134) | stable |
+| `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L47) | stable |
+| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L691) | stable |
+| `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L654) | stable |
+| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L750) | stable |
+| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L714) | stable |
+| `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L563) | stable |
+| `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L590) | stable |
+| `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L674) | stable |
+| `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L517) | stable |
+| `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L536) | stable |
+| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L814) | stable |
+| `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L117) | stable |
+| `get_train_start_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L137) | stable |
+| `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L153) | stable |
 | `split_bars` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L77) | stable |
 | `split_train_test` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L16) | stable |
 | `add_session_id` | function | [market_data.transforms.sessions](../../market_data/transforms/sessions.py#L162) | stable |
@@ -791,18 +791,18 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
 | `RUN_LOG_FILENAME` | value | [training.artifacts.logging](../../training/artifacts/logging.py#L8) | stable |
-| `action_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L160) | stable |
-| `action_space_width` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L140) | stable |
-| `aggregate_seed_results` | function | [training.artifacts.aggregation](../../training/artifacts/aggregation.py#L73) | stable |
+| `action_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L188) | stable |
+| `action_space_width` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L168) | stable |
+| `aggregate_seed_results` | function | [training.artifacts.aggregation](../../training/artifacts/aggregation.py#L78) | stable |
 | `attach_run_log` | function | [training.artifacts.logging](../../training/artifacts/logging.py#L11) | stable |
-| `build_training_log` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L38) | stable |
+| `build_training_log` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L39) | stable |
 | `entry_funnel_by_split` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L14) | stable |
-| `observation_account_dim` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L368) | stable |
-| `observation_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L177) | stable |
-| `observation_space_shapes` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L386) | stable |
+| `observation_account_dim` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L396) | stable |
+| `observation_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L205) | stable |
+| `observation_space_shapes` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L414) | stable |
 | `save_seed_artifacts` | function | [training.artifacts.aggregation](../../training/artifacts/aggregation.py#L29) | stable |
-| `sequence_feature_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L205) | stable |
-| `training_protocol_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L223) | stable |
+| `sequence_feature_schema_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L233) | stable |
+| `training_protocol_manifest` | function | [training.artifacts.manifests](../../training/artifacts/manifests.py#L251) | stable |
 | `write_evaluation_artifacts` | function | [training.artifacts.evaluation_result_writer](../../training/artifacts/evaluation_result_writer.py#L16) | stable |
 | `write_run_config_snapshot` | function | [training.artifacts.snapshots](../../training/artifacts/snapshots.py#L9) | stable |
 | `resolve_variant` | function | [training.configuration.variant_resolution](../../training/configuration/variant_resolution.py#L140) | stable |

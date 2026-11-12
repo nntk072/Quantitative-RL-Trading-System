@@ -19,13 +19,14 @@ This page contains 1 public callable records owned by `training.artifacts.evalua
   seed: Random seed used to make sampling reproducible.
   completed_timesteps: Numeric value used for the completed timesteps.
   train_result: Key-value data used for the train result.
-  test_result: Key-value data used for the test result.
+  test_result: Report-only test result, or ``None`` when not evaluated.
   train_metrics: Train metrics used by the operation described above.
-  test_metrics: Test metrics used by the operation described above.
+  test_metrics: Test metrics, or ``None`` when not evaluated.
   train_gate: Key-value data used for the train gate.
   train_activity_gate: Key-value data used for the train activity gate.
   account_currency: Text or path value identifying the account currency.
   survival_objective: Whether this evaluation is part of survival qualification.
+  development_only: Whether the report-only split was intentionally excluded.
   training_completed: Whether learner fitting reached its requested endpoint.
   training_incomplete_reason: Reason provided when fitting stopped early.
   ```
@@ -37,7 +38,7 @@ This page contains 1 public callable records owned by `training.artifacts.evalua
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = write_evaluation_artifacts(run_dir=..., seed=..., completed_timesteps=..., train_result=..., test_result=..., train_metrics=..., test_metrics=..., train_gate=..., train_activity_gate=..., account_currency=..., survival_objective=..., training_completed=..., training_incomplete_reason=...)
+result = write_evaluation_artifacts(run_dir=..., seed=..., completed_timesteps=..., train_result=..., test_result=..., train_metrics=..., test_metrics=..., train_gate=..., train_activity_gate=..., account_currency=..., survival_objective=..., development_only=..., training_completed=..., training_incomplete_reason=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.

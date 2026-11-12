@@ -212,6 +212,7 @@ is read by every listed package.
 | `env.vector_shards` | `integer` | `0` | `simulation/environment and decisioning` |
 | `evaluation.annualization_convention` | `string` | `"252 sessions/year x 390 NY-session M1 bars/session"` | `evaluation` |
 | `evaluation.deterministic` | `boolean` | `false` | `evaluation` |
+| `evaluation.development_only` | `boolean` | `false` | `evaluation` |
 | `evaluation.periods_per_year` | `integer` | `98280` | `evaluation` |
 | `evaluation.trade_idea_plots.fvg_retest.enabled` | `boolean` | `true` | `evaluation` |
 | `evaluation.trade_idea_plots.fvg_retest.show_fvg` | `boolean` | `true` | `evaluation` |

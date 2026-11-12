@@ -96,7 +96,15 @@ def split_bars(
 
 
 def inclusive_date_exclusive_end(end_date: str, timezone: str | None) -> pd.Timestamp:
-    """Return the next local midnight after an inclusive calendar date."""
+    """Return the next local midnight after an inclusive calendar date.
+
+    Args:
+        end_date: Inclusive calendar date to convert to an exclusive boundary.
+        timezone: Optional timezone used to localize or convert the date.
+
+    Returns:
+        Timestamp for midnight after ``end_date`` in the requested timezone.
+    """
     boundary = pd.Timestamp(end_date)
     if timezone is not None:
         if boundary.tzinfo is None:

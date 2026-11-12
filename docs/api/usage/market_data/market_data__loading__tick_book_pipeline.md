@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `market_data.loading.tick_
 
 **Purpose:** Build (or load from cache) a ``TickBook`` for each selected symbol.
 
-**Exact API:** {py:obj}`market_data.loading.tick_book_pipeline.build_tick_books` · **Source:** [market_data/loading/tick_book_pipeline.py:20](../../../../market_data/loading/tick_book_pipeline.py#L20)
+**Exact API:** {py:obj}`market_data.loading.tick_book_pipeline.build_tick_books` · **Source:** [market_data/loading/tick_book_pipeline.py:22](../../../../market_data/loading/tick_book_pipeline.py#L22)
 
 **Inputs and outputs:**
 
@@ -19,6 +19,7 @@ This page contains 2 public callable records owned by `market_data.loading.tick_
   force: Whether to enable or require the force.
   symbols: Items supplied for the symbols, in input order.
   datasets: Items supplied for the datasets, in input order.
+  end_inclusive: Optional last local calendar date returned to the caller.
   ```
 
 - **Returns:**
@@ -34,7 +35,7 @@ This page contains 2 public callable records owned by `market_data.loading.tick_
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = build_tick_books(cfg=..., force=..., symbols=..., datasets=...)
+result = build_tick_books(cfg=..., force=..., symbols=..., datasets=..., end_inclusive=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
@@ -52,7 +53,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build (or load from cache) a ``TickBook`` for each selected symbol.
 
-**Exact API:** {py:obj}`market_data.loading.tick_book_pipeline.build_tick_books` · **Source:** [market_data/loading/tick_book_pipeline.py:20](../../../../market_data/loading/tick_book_pipeline.py#L20)
+**Exact API:** {py:obj}`market_data.loading.tick_book_pipeline.build_tick_books` · **Source:** [market_data/loading/tick_book_pipeline.py:22](../../../../market_data/loading/tick_book_pipeline.py#L22)
 
 **Inputs and outputs:**
 
@@ -63,6 +64,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
   force: Whether to enable or require the force.
   symbols: Items supplied for the symbols, in input order.
   datasets: Items supplied for the datasets, in input order.
+  end_inclusive: Optional last local calendar date returned to the caller.
   ```
 
 - **Returns:**
@@ -78,7 +80,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = build_tick_books(cfg=..., force=..., symbols=..., datasets=...)
+result = build_tick_books(cfg=..., force=..., symbols=..., datasets=..., end_inclusive=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.

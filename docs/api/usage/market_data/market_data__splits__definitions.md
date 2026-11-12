@@ -8,7 +8,7 @@ This page contains 8 public callable records owned by `market_data.splits.defini
 
 **Purpose:** Extract *train_end* / *test_start* from config with fallback defaults.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.get_split_config` · **Source:** [market_data/splits/definitions.py:98](../../../../market_data/splits/definitions.py#L98)
+**Exact API:** {py:obj}`market_data.splits.definitions.get_split_config` · **Source:** [market_data/splits/definitions.py:117](../../../../market_data/splits/definitions.py#L117)
 
 **Inputs and outputs:**
 
@@ -70,7 +70,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Boolean mask for the inclusive configured training date range.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.make_train_mask` · **Source:** [market_data/splits/definitions.py:134](../../../../market_data/splits/definitions.py#L134)
+**Exact API:** {py:obj}`market_data.splits.definitions.make_train_mask` · **Source:** [market_data/splits/definitions.py:153](../../../../market_data/splits/definitions.py#L153)
 
 **Inputs and outputs:**
 
@@ -201,7 +201,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Extract *train_end* / *test_start* from config with fallback defaults.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.get_split_config` · **Source:** [market_data/splits/definitions.py:98](../../../../market_data/splits/definitions.py#L98)
+**Exact API:** {py:obj}`market_data.splits.definitions.get_split_config` · **Source:** [market_data/splits/definitions.py:117](../../../../market_data/splits/definitions.py#L117)
 
 **Inputs and outputs:**
 
@@ -263,7 +263,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Read the optional first train date without changing legacy split config.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.get_train_start_config` · **Source:** [market_data/splits/definitions.py:118](../../../../market_data/splits/definitions.py#L118)
+**Exact API:** {py:obj}`market_data.splits.definitions.get_train_start_config` · **Source:** [market_data/splits/definitions.py:137](../../../../market_data/splits/definitions.py#L137)
 
 **Inputs and outputs:**
 
@@ -322,7 +322,7 @@ def _chart_feature_train_mask(cfg: Any, index: pd.DatetimeIndex) -> pd.Series:
 
 **Purpose:** Boolean mask for the inclusive configured training date range.
 
-**Exact API:** {py:obj}`market_data.splits.definitions.make_train_mask` · **Source:** [market_data/splits/definitions.py:134](../../../../market_data/splits/definitions.py#L134)
+**Exact API:** {py:obj}`market_data.splits.definitions.make_train_mask` · **Source:** [market_data/splits/definitions.py:153](../../../../market_data/splits/definitions.py#L153)
 
 **Inputs and outputs:**
 

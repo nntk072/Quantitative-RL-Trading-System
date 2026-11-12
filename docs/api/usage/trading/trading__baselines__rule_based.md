@@ -126,7 +126,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_macd_backtest_fills_within_bar_and_charts_render`](../../../../tests/unit/evaluation/test_plots_export.py#L573)
+1. [test fixture: `test_macd_backtest_fills_within_bar_and_charts_render`](../../../../tests/unit/evaluation/test_plots_export.py#L574)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

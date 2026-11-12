@@ -52,7 +52,18 @@ log = logging.getLogger(__name__)
 def _clip_data_to_development_end(
     data: dict[str, dict[str, pd.DataFrame]], *, train_end: str
 ) -> dict[str, dict[str, pd.DataFrame]]:
-    """Remove report-only rows before feature construction in development-only mode."""
+    """Remove report-only rows before feature construction in development-only mode.
+
+    Args:
+        data: Market bars grouped by symbol and timeframe.
+        train_end: Inclusive last calendar date to retain.
+
+    Returns:
+        Bars grouped by symbol and timeframe, clipped through ``train_end``.
+
+    Raises:
+        TypeError: If any bar frame does not have a ``DatetimeIndex``.
+    """
     clipped: dict[str, dict[str, pd.DataFrame]] = {}
     for symbol, timeframes in data.items():
         clipped[symbol] = {}

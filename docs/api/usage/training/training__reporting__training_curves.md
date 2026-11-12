@@ -43,7 +43,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `evaluate_test_split`](../../../../training/runner/seed_runtime.py#L758)
+2. [production caller: `_write_training_progress_artifacts`](../../../../training/runner/seed_runtime.py#L748)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -62,10 +62,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
             )
         except Exception as exc:
             log.warning("Training progress plots skipped: %s", exc)
-
-            # Final train/test replays use the configured policy action mode. Stochastic
-            # evaluations are reseeded so their sampled trajectories can be reproduced.
-# … caller assertions omitted …
 ```
 
 **Workflow context:**
