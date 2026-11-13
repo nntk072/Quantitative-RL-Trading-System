@@ -105,7 +105,7 @@ ruff==0.15.22
 setuptools==84.2.1
 six==1.17.0
 sortedcontainers==2.4.0
-soupsieve==2.10
+soupsieve==4.0
 stable-baselines3==2.9.0
 sympy==1.14.0
 tenacity==9.1.2
