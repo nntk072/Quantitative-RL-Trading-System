@@ -23,7 +23,7 @@ def test_worker_command_binds_one_gpu_from_shared_allocation() -> None:
     from compute.slurm.worker_dispatch import _parse_srun
 
     command = controller.worker_command(
-        ["bash", "scripts/research/frozen-launches/train_one_variant.sh"],
+        ["python", "-m", "training.runner.training", "--variant", "ladder_a0_flat"],
         node="gpuarm2",
         gpu_type="gh200",
         cpus=7,
@@ -78,20 +78,12 @@ def test_experiment_run_entrypoints_follow_current_layout() -> None:
 
     assert controller.experiment_run_data_inputs is execution.experiment_run_data_inputs
     assert controller.main is not execution.main
-    assert controller.TRAIN_ONE_VARIANT_SCRIPT == (
-        controller.ROOT / "scripts/research/frozen-launches/train_one_variant.sh"
-    )
-    assert controller.TRAIN_ONE_VARIANT_SCRIPT.is_file()
     assert controller.RESOURCE_SAMPLER_SCRIPT == (controller.ROOT / "compute/slurm/resources.py")
     assert controller.RESOURCE_SAMPLER_SCRIPT.is_file()
 
 
 def test_allocation_cache_prebuild_uses_python_module_not_optional_console_script() -> None:
-    wrappers = (
-        controller.ROOT
-        / "scripts/compute/slurm/experiment_runs/run_replacement_experiment_run_allocation.sh",
-        controller.ROOT / "scripts/compute/slurm/experiment_run_allocation_wrapper.sh",
-    )
+    wrappers = (controller.ROOT / "scripts/compute/slurm/experiment_run_allocation_wrapper.sh",)
     for wrapper in wrappers:
         content = wrapper.read_text(encoding="utf-8")
         assert "python -m market_data.commands.prebuild_experiment_run_cache" in content

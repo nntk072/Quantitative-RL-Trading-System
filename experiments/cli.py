@@ -83,7 +83,7 @@ def parse_variant_ablation_args(
         action="store_true",
         help=(
             "Acknowledge that locked OOS scores may be used for ranking variants. "
-            "Default treats OOS as final_report_only (T-03.2)."
+            "Default treats OOS as report-only evidence."
         ),
     )
     args = parser.parse_args(argv)
@@ -174,6 +174,7 @@ def main() -> None:
             "rebuild-named-cache",
             "variants",
             "catalog",
+            "research",
         ),
     )
     argv = sys.argv[1:]
@@ -187,6 +188,13 @@ def main() -> None:
         return
     if args.command == "catalog":
         status = run_variant_catalog_cli(rest)
+        if status:
+            raise SystemExit(status)
+        return
+    if args.command == "research":
+        from experiments.research.cli import main as research_main
+
+        status = research_main(rest)
         if status:
             raise SystemExit(status)
         return

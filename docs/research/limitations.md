@@ -16,7 +16,7 @@ whether a short session was scheduled or whether data are missing.
 
 The current research program has prior exposure to its 2026 reporting interval.
 Its outcomes are exploratory/report-only, as recorded in the
-[research execution plan](../operations/research_execution_plan.md). No rerun
+[research execution plan](workflow.md). No rerun
 on those dates can make them a fresh final holdout.
 
 ## Simulation and execution

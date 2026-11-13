@@ -17,8 +17,9 @@ silently interpreted differently by training and evaluation.
 - `config/base/default.yaml` supplies common defaults.
 - `config/experiments.yaml` describes the selectable experiment matrix.
 - `config/variants/` contains named model or strategy settings.
-- `config/experiment_runs/` contains frozen inputs for a specific comparison
-  or bounded run.
+- `config/research/experiments.yaml` defines active prospective research experiments.
+- `config/experiment_runs/` contains only maintained examples for the general run controller;
+  historical run definitions are archived as evidence.
 
 The resolved configuration is the effective input after defaults, experiment
 selection, and explicit overrides have been combined. Reports should describe

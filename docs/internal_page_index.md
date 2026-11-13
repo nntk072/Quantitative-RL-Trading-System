@@ -105,7 +105,7 @@ operations/DEPLOYMENT
 operations/README
 operations/RUNNING_COMMANDS
 operations/live-status
-operations/research_execution_plan
+research/workflow
 operations/triton
 reference/README
 reference/action_schemas

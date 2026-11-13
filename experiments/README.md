@@ -1,46 +1,41 @@
-# Experiments
+# Experiment framework
 
-`experiments/` resolves variant definitions and coordinates comparable runs,
-provenance, recovery, and evaluation handoff. A variant describes a configured
-model/run choice; an experiment comparison defines which factors differ and
-which outcomes answer the research question.
+`experiments/` connects reusable model configurations, scientific questions,
+execution, recovery, and provenance. It does not replace the implementations
+owned by data, features, simulation, training, or evaluation.
 
-| Area | Responsibility |
+| Module | Contract |
 |---|---|
-| `variants/` | Resolve selectable configurations and model/encoder identities. |
-| `campaigns/` | Coordinate run lifecycle and status. |
-| `runs/`, `provenance/` | Record run identities and input/source evidence. |
-| `orchestration/` | Manage multi-run workflow. |
-| `cli.py` | Experiment command surface. |
+| `research/catalog.py` | Validate component implementations, experiment variants, and named assemblies |
+| `research/workflow.py` | Freeze selected variants into source-bound execution bundles |
+| `research/execution.py` | Execute dependency-safe commands, resume compatible attempts, and hash outputs |
+| `research/reporting.py` | Normalize execution results into JSON, wide CSV, and long-form metrics |
+| `variants/` | Resolve model and configuration factors for training |
+| `runs/` | Durable training-run attempts, recovery, and checkpoint lineage |
+| `orchestration/` | Coordinate multi-run workflows |
+| `cli.py` | Public `qrl-experiment` command surface |
 
-Actual settings belong in configuration, not catalog prose. Do not edit a
-frozen run record to make it match current defaults. Comparisons must preserve
-their declared matched factors, split, seed, and execution assumptions.
+## Defining a study
 
-See the [experiment guide](../docs/modules/experiments.md),
-[generated catalog](../docs/model_variants.md), and
-[research validation protocol](../docs/research/validation_protocol.md).
+`config/research/experiments.yaml` is the single source for research
+component implementations and their uses. A component implementation may be
+referenced by multiple experiments. Within an experiment, variants select
+implementations and express local changes; an assembly selects compatible
+variants for one comparison or analysis.
 
-## Run lifecycle
+Adding an experiment does not require copying an implementation, adding another
+execution entry point, or building a new report parser. Runtime records retain
+the source revision, seed, component, variant, command, artifact, and digest.
 
-```mermaid
-flowchart LR
-    Matrix[Experiment matrix] --> Resolver[Variant resolution]
-    Resolver --> Identity[Run identity and manifest]
-    Identity --> Worker[Training attempt]
-    Worker --> Checkpoint[Checkpoint and diagnostics]
-    Checkpoint --> Evaluate[Evaluation handoff]
-    Evaluate --> Summary[Comparison result]
+```bash
+uv run qrl-experiment research catalog
+uv run qrl-experiment research catalog --component observations
+uv run qrl-experiment research freeze feature_inputs \
+  --assembly observation_and_candidate_evidence \
+  --output outputs/research/bundles/features.json
 ```
 
-Variant resolution turns named settings into an effective configuration.
-Orchestration assigns run identities and coordinates attempts; recovery checks
-that identity before resuming. Summaries should retain the arm, seed, data
-period, checkpoint, and evaluation protocol so a reader can distinguish
-matched comparisons from a loose collection of runs.
-
-Catalog labels explain research roles only. They do not override runtime YAML.
-Keep historical run records immutable and create a new run identity when an
-experimental factor changes. Focused tests are under
-`tests/unit/experiments/`; worker lifecycle tests also live with training and
-orchestration.
+See [research workflow](../docs/research/workflow.md) for execution, resume,
+comparison, and consolidation. Existing training-run recovery and research
+source-bound command execution have different responsibilities; both preserve
+the same scientific identities without rewriting historical evidence.

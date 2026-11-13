@@ -7,30 +7,24 @@ import yaml
 from experiments.runs.source_snapshot import experiment_run_data_inputs, sha256_file
 
 
-def test_replacement_experiment_run_pins_the_trade_setup_split_and_variants() -> None:
+def test_configured_experiment_run_resolves_its_variants_and_period_roles() -> None:
     root = Path(__file__).resolve().parents[3]
     experiment_run = yaml.safe_load(
-        (
-            root / "config/experiment_runs/replacement18_seed50_train2025_test2026_20261018.yaml"
-        ).read_text(encoding="utf-8")
+        (root / "config/experiment_runs/example.yaml").read_text(encoding="utf-8")
     )
     base = yaml.safe_load((root / "config/base/default.yaml").read_text(encoding="utf-8"))
+    variant_file = root / experiment_run["variant_file"]
     variants = [
         line.strip()
-        for line in (root / "config/experiment_runs/variant_list.txt")
-        .read_text(encoding="utf-8")
-        .splitlines()
+        for line in variant_file.read_text(encoding="utf-8").splitlines()
         if line.strip() and not line.lstrip().startswith("#")
     ]
 
-    assert experiment_run["split"] == base["data"]["split"]
-    assert experiment_run["split"] == {
-        "train_start": "2024-12-30",
-        "train_end": "2025-12-31",
-        "test_start": "2026-01-01",
-    }
     assert experiment_run["variants"] == variants
-    assert len(variants) == 18
+    assert len(variants) == len(set(variants)) == 2
+    assert experiment_run["split"]["train_end"] == base["data"]["split"]["train_end"]
+    assert experiment_run["split"]["test_start"] == base["data"]["split"]["test_start"]
+    assert experiment_run["evaluation"]["selection_allowed"] is False
 
 
 def test_experiment_run_data_identity_uses_split_bars_ticks_and_calendar(tmp_path: Path) -> None:

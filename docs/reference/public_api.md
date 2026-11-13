@@ -11,10 +11,10 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Classification | Exported names |
 |---|---:|
 | stable | 710 |
-| experimental | 0 |
+| experimental | 64 |
 | compatibility-only | 10 |
-| cross-package internal | 448 |
-| private implementation | 972 |
+| cross-package internal | 447 |
+| private implementation | 1032 |
 
 ## Public package exports
 
@@ -272,6 +272,70 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `render_batch_report` | function | [experiments.orchestration.weekly](../../experiments/orchestration/weekly.py#L105) | stable |
 | `render_weekly_report` | function | [experiments.orchestration.weekly](../../experiments/orchestration/weekly.py#L130) | stable |
 | `WeeklyOrchestrator.run_week` | method | [experiments.orchestration.weekly](../../experiments/orchestration/weekly.py#L175) | stable |
+| `CommandBundle` | class | [experiments.research.execution](../../experiments/research/execution.py#L48) | experimental |
+| `CommandSpec` | class | [experiments.research.execution](../../experiments/research/execution.py#L29) | experimental |
+| `ExperimentSpec` | class | [experiments.research.catalog](../../experiments/research/catalog.py#L52) | experimental |
+| `ResearchCatalog` | class | [experiments.research.catalog](../../experiments/research/catalog.py#L94) | experimental |
+| `VariantSpec` | class | [experiments.research.catalog](../../experiments/research/catalog.py#L23) | experimental |
+| `execute_command_bundle` | function | [experiments.research.execution](../../experiments/research/execution.py#L332) | experimental |
+| `load_research_catalog` | function | [experiments.research.catalog](../../experiments/research/catalog.py#L325) | experimental |
+| `DEFAULT_CATALOG` | value | [experiments.research.catalog](../../experiments/research/catalog.py#L19) | experimental |
+| `ExecutionSpec` | class | [experiments.research.catalog](../../experiments/research/catalog.py#L39) | experimental |
+| `ExperimentSpec` | class | [experiments.research.catalog](../../experiments/research/catalog.py#L52) | experimental |
+| `ExperimentSpec.variant` | method | [experiments.research.catalog](../../experiments/research/catalog.py#L78) | experimental |
+| `ExperimentSpec.variants_for_assembly` | method | [experiments.research.catalog](../../experiments/research/catalog.py#L63) | experimental |
+| `ResearchCatalog` | class | [experiments.research.catalog](../../experiments/research/catalog.py#L94) | experimental |
+| `ResearchCatalog.by_domain` | method | [experiments.research.catalog](../../experiments/research/catalog.py#L116) | experimental |
+| `ResearchCatalog.experiment` | method | [experiments.research.catalog](../../experiments/research/catalog.py#L102) | experimental |
+| `VariantSpec` | class | [experiments.research.catalog](../../experiments/research/catalog.py#L23) | experimental |
+| `load_research_catalog` | function | [experiments.research.catalog](../../experiments/research/catalog.py#L325) | experimental |
+| `build_command_group_bundle` | function | [experiments.research.command_group](../../experiments/research/command_group.py#L14) | experimental |
+| `build_compute_budget` | function | [experiments.research.compute_budget](../../experiments/research/compute_budget.py#L116) | experimental |
+| `CommandBundle` | class | [experiments.research.execution](../../experiments/research/execution.py#L48) | experimental |
+| `CommandResult` | class | [experiments.research.execution](../../experiments/research/execution.py#L59) | experimental |
+| `CommandSpec` | class | [experiments.research.execution](../../experiments/research/execution.py#L29) | experimental |
+| `bundle_from_payload` | function | [experiments.research.execution](../../experiments/research/execution.py#L161) | experimental |
+| `bundle_payload` | function | [experiments.research.execution](../../experiments/research/execution.py#L126) | experimental |
+| `execute_command_bundle` | function | [experiments.research.execution](../../experiments/research/execution.py#L332) | experimental |
+| `DEFAULT_HISTORY` | value | [experiments.research.history](../../experiments/research/history.py#L13) | experimental |
+| `HistoricalEvidence` | class | [experiments.research.history](../../experiments/research/history.py#L17) | experimental |
+| `load_history` | function | [experiments.research.history](../../experiments/research/history.py#L27) | experimental |
+| `render_markdown` | function | [experiments.research.history](../../experiments/research/history.py#L82) | experimental |
+| `build_portfolio_bundle` | function | [experiments.research.portfolio](../../experiments/research/portfolio.py#L77) | experimental |
+| `find_completed_run` | function | [experiments.research.portfolio](../../experiments/research/portfolio.py#L196) | experimental |
+| `summarize_portfolio_safety` | function | [experiments.research.portfolio](../../experiments/research/portfolio.py#L215) | experimental |
+| `EXPECTED_SEEDS` | value | [experiments.research.primary_comparison](../../experiments/research/primary_comparison.py#L13) | experimental |
+| `analyze_primary_payload` | function | [experiments.research.primary_comparison](../../experiments/research/primary_comparison.py#L154) | experimental |
+| `build_primary_payload` | function | [experiments.research.primary_comparison](../../experiments/research/primary_comparison.py#L105) | experimental |
+| `DEFAULT_READINESS` | value | [experiments.research.readiness](../../experiments/research/readiness.py#L19) | experimental |
+| `build_readiness` | function | [experiments.research.readiness](../../experiments/research/readiness.py#L235) | experimental |
+| `load_readiness_contract` | function | [experiments.research.readiness](../../experiments/research/readiness.py#L48) | experimental |
+| `record_review` | function | [experiments.research.readiness](../../experiments/research/readiness.py#L79) | experimental |
+| `assemble_release` | function | [experiments.research.release](../../experiments/research/release.py#L44) | experimental |
+| `build_repeatability_bundle` | function | [experiments.research.repeatability](../../experiments/research/repeatability.py#L32) | experimental |
+| `summarize_repeatability` | function | [experiments.research.repeatability](../../experiments/research/repeatability.py#L134) | experimental |
+| `ResultRow` | class | [experiments.research.reporting](../../experiments/research/reporting.py#L27) | experimental |
+| `consolidate_execution_manifests` | function | [experiments.research.reporting](../../experiments/research/reporting.py#L290) | experimental |
+| `consolidate_results` | function | [experiments.research.reporting](../../experiments/research/reporting.py#L311) | experimental |
+| `read_result_artifact` | function | [experiments.research.reporting](../../experiments/research/reporting.py#L80) | experimental |
+| `rows_from_execution_manifest` | function | [experiments.research.reporting](../../experiments/research/reporting.py#L176) | experimental |
+| `build_research_tables` | function | [experiments.research.reporting_tables](../../experiments/research/reporting_tables.py#L26) | experimental |
+| `build_exposed_report_bundle` | function | [experiments.research.robustness](../../experiments/research/robustness.py#L196) | experimental |
+| `build_robustness_bundle` | function | [experiments.research.robustness](../../experiments/research/robustness.py#L31) | experimental |
+| `summarize_robustness` | function | [experiments.research.robustness](../../experiments/research/robustness.py#L140) | experimental |
+| `PairedStatistics` | class | [experiments.research.statistics](../../experiments/research/statistics.py#L14) | experimental |
+| `PairedStatistics.positive` | method | [experiments.research.statistics](../../experiments/research/statistics.py#L24) | experimental |
+| `analyze_paired_seeds` | function | [experiments.research.statistics](../../experiments/research/statistics.py#L113) | experimental |
+| `exact_sign_flip_greater` | function | [experiments.research.statistics](../../experiments/research/statistics.py#L58) | experimental |
+| `paired_bootstrap_interval` | function | [experiments.research.statistics](../../experiments/research/statistics.py#L86) | experimental |
+| `paired_differences` | function | [experiments.research.statistics](../../experiments/research/statistics.py#L37) | experimental |
+| `DEFAULT_CATALOG` | value | [experiments.research.catalog](../../experiments/research/catalog.py#L19) | experimental |
+| `current_source_commit` | function | [experiments.research.workflow](../../experiments/research/workflow.py#L24) | experimental |
+| `execute_command_bundle` | function | [experiments.research.execution](../../experiments/research/execution.py#L332) | experimental |
+| `freeze_experiment` | function | [experiments.research.workflow](../../experiments/research/workflow.py#L49) | experimental |
+| `load_bundle` | function | [experiments.research.workflow](../../experiments/research/workflow.py#L161) | experimental |
+| `load_research_catalog` | function | [experiments.research.catalog](../../experiments/research/catalog.py#L325) | experimental |
+| `write_bundle` | function | [experiments.research.workflow](../../experiments/research/workflow.py#L150) | experimental |
 | `run_experiment` | function | [experiments.runs](../../experiments/runs/__init__.py#L6) | stable |
 
 ### `features`

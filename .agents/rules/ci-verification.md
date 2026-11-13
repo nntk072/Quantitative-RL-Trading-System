@@ -12,7 +12,7 @@ Two layers:
 | Layer | Who | Commands |
 |-------|-----|----------|
 | **Agent commit/push gate** | Any coding agent before `git commit` / `git push` | format + lint + mypy (full tree) + **scoped** pytest |
-| **Merge CI bar** | GitHub Actions named gates; Orchestra phase 9 | twelve named `./tools/check` gates plus `ci-success`; Orchestra runs `./tools/check full` |
+| **Merge CI bar** | GitHub Actions named gates; Orchestra verification role | twelve named `./tools/check` gates plus `ci-success`; Orchestra runs `./tools/check full` |
 
 Agents must **not** run `pytest tests/ -v` by default — it is too heavy. Prefer the
 smallest relevant test set for the change.

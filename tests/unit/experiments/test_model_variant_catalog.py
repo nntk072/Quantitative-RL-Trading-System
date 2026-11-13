@@ -177,7 +177,7 @@ def test_retired_variant_renders_as_historical_with_its_source(tmp_path: Path, m
                     "role": "candidate",
                     "description": "No longer selectable.",
                     "changed_factors": ["encoder"],
-                    "historical_sources": ["config/experiment_runs/18_variant_seed42_20m.yaml"],
+                    "historical_sources": ["config/experiment_runs/example.yaml"],
                 },
             ],
         }
@@ -218,7 +218,7 @@ def test_retired_variant_renders_as_historical_with_its_source(tmp_path: Path, m
     assert retired["status"] == "Historical"
     rendered = catalog.render_catalog(result)
     assert "| B | `retired_variant` | Historical |" in rendered
-    assert "../config/experiment_runs/18_variant_seed42_20m.yaml" in rendered
+    assert "../config/experiment_runs/example.yaml" in rendered
     assert "retired_variant` | Selectable" not in rendered
 
 

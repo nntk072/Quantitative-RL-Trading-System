@@ -175,7 +175,7 @@ seed, or simulator configuration does not establish generalization or live
 profitability.
 
 For the current period exposure and research-specific gate, see the
-[research execution plan](../operations/research_execution_plan.md). For the
+[research execution plan](workflow.md). For the
 implementation boundary between environment and backtest, see the
 [simulation guide](../modules/simulation.md) and
 [evaluation guide](../modules/evaluation.md).

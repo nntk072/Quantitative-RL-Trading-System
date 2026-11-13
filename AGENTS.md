@@ -1,299 +1,117 @@
-# Quantitative RL Trading System — Agent Guide
+# Quantitative RL Trading System — Contributor and Agent Guide
 
-Quantitative RL trading system. PPO/SAC agents learn entry/exit timing on US100/US500
-using structure-aware features (SMT divergence, PO3 state, liquidity sweeps, FVG zones).
+This repository provides configurable research, simulation, training, evaluation,
+and broker integration for reinforcement-learning trading policies on US100 and
+US500. The production packages define behavior; research configuration selects
+interventions. Do not duplicate behavior in experiment scripts.
 
-## Active research workflow
+## Project boundaries
 
-Use [`docs/operations/research_execution_plan.md`](docs/operations/research_execution_plan.md)
-as the operational queue for the active research program. It is a
-project-specific plan, not the architecture or documentation index. Use
-[Research](docs/research/README.md) for the framework's general research
-methodology and evidence. Older plans are references, not parallel work
-queues. Agent implementation plans and working notes belong outside the
-repository in `/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/`.
-Preserve the active plan's evidence gates and experiment-run safety constraints.
+| Package | Responsibility |
+|---|---|
+| `configuration/` | Load and validate effective configuration |
+| `market_data/` | Ingestion, time alignment, caching, and data identity |
+| `features/` | Causal indicators and structured market context |
+| `decisioning/` | Observation, action, and policy-provider contracts |
+| `trading/` | Broker-neutral account, orders, execution, and risk |
+| `simulation/` | Environment transitions and event-driven backtests |
+| `models/`, `learning/` | Model encoders, policy construction, and checkpoint adapters |
+| `training/`, `evaluation/` | Training, deterministic replay, and numerical reporting |
+| `experiments/` | Research catalog, experiment assemblies, execution, recovery, and results |
+| `artifacts/` | Atomic persistence, hashes, and provenance |
+| `compute/` | Hardware capabilities and scheduler adapters |
+| `live/`, `integrations/` | Live strategy runtime and broker-specific adapters |
+| `orchestra/` | Contributor orchestration and repository checks |
 
-## Build & Test
+The generated package dependency graph is
+[`docs/architecture/dependency_model.md`](docs/architecture/dependency_model.md).
+Follow the architecture tests when a diagram and source disagree.
+
+## Research extension contract
+
+The research catalog is `config/research/experiments.yaml`. A scientific
+experiment references reusable component implementations and optionally defines
+named assemblies of variants. Shared execution writes source-bound manifests.
+The consolidated research outputs are `results.json` (records),
+`results.csv` (wide form), and `metrics.csv` (one metric per observation).
+Do not create a new runner, report parser, or result schema for every experiment.
+
+Start with [research workflow](docs/research/workflow.md) for the command
+interface, [research methods](docs/research/README.md) for scientific
+interpretation, and [historical evidence](docs/research/historical_evidence.md)
+for the provenance of prior work. Historical material is not current evidence
+merely because it remains in the repository. Run configurations and frozen
+manifests, not report filenames, determine experimental identity.
+
+## Scientific invariants
+
+- Features must not incorporate future observations. Higher-timeframe features
+  only become available after the corresponding bar closes.
+- Normalization is fit on training data. Evaluation must not refit on holdouts.
+- Purged walk-forward partitions must preserve purge, embargo, and disjoint
+  evaluation periods.
+- Session flags are eligibility masks, not permission to drop historical bars.
+- `config/base/default.yaml` and validated overrides determine runtime settings.
+- Feature-cache identities include a content hash, not just a manual version.
+- Simulator and live broker risk contracts must remain compatible.
+- Locked out-of-sample evidence is for final reporting, never tuning.
+- Source, data, model, run, and artifact identities must be preserved across
+  retries and resume; failures and unknown outcomes cannot be silently recast
+  as successes.
+
+Refer to `docs/research/validation_protocol.md` and the prospective research
+protocol for the exact scientific constraints.
+
+## Verification
+
+Install the project dependencies with `uv sync --extra dev`. The canonical
+checks are defined in `tools/check` and run in
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ```bash
-uv sync                              # install deps
-qrl-data prepare                       # raw CSV → parquet → features
-qrl-train train --mvp   # smoke test (30 days)
-
-# Local (implementation): scoped checks only
-.venv/bin/ruff format --check <touched paths>  # ARM/GH200; use matching venv tools
-.venv/bin/ruff check <touched paths>
-.venv/bin/python -m pytest <relevant test files> -q
-
-# Agent commit/push gate — REQUIRED (do not skip)
-# Format/lint/types MUST be full-tree (`.`). Never substitute path-scoped mypy/ruff.
-.venv/bin/ruff format --check . # ARM/GH200; if needed: .venv/bin/ruff format .
-.venv/bin/ruff check .
-.venv/bin/python -m mypy .      # REQUIRED full tree — not mypy <touched paths>
-.venv/bin/python -m pytest <relevant test paths> -q # NOT tests/ -v — keep scoped
-
-# Full merge gate: GitHub CI / Orchestra phase 9 only (not agent default)
-# ./tools/check full
+./tools/check quality       # full-tree Ruff format, Ruff lint, and Mypy
+./tools/check architecture  # package and repository contracts
+./tools/check contracts     # cross-package behavioral contracts
+./tools/check unit          # deterministic unit tests
+./tools/check integration   # controlled integration tests
+./tools/check docs          # generated docs, API, examples, and Sphinx
+./tools/check full          # all required repository checks
 ```
 
-On ARM64/GH200, use the active `.venv/bin` tools for Ruff, Mypy, and pytest.
-Do not use `uv run` for these checks on ARM. The login-host `uv` may be an
-x86-64 executable and fail with `Exec format error` inside an ARM allocation.
-For Python tools, prefer `.venv/bin/python -m <tool>` so execution uses the
-matched interpreter directly. A copied environment can leave console-script
-shebangs pointing at a different checkout; if a wrapper fails this way, do not
-switch checkouts or reinstall packages just to work around it.
-Preserve the full-tree Ruff/Mypy requirements and scoped-pytest rule.
-For lock, export, and environment setup commands that require `uv`, provide a
-native ARM64 binary through `QRL_UV` when the login-home `uv` is x86-64; the
-canonical checks, setup helpers, and Make dependency gate honor that override.
+Run focused tests while developing, but require the full-tree quality checks
+and applicable CI jobs before calling a change complete. Do not bypass a failed
+check by relaxing Ruff/Mypy scope or rewriting assertions around a defect.
 
-Full rule: `.agents/rules/ci-verification.md` (all agents). Commit checklist:
-`.agents/rules/git-commit-rules.md`.
-Planning and implementation workflow for every agent model:
-`.agents/rules/agent-planning-implementation.md`.
+## Agent extension environment
 
-## Orchestra (`orchestra/`)
+The agent-specific infrastructure in `.agents/`, `.claude/`, and `.codex/`
+is intentionally retained for customers who want automated maintenance or new
+research components. These are adapters to shared repository contracts, not
+separate implementations of the trading system. Role names and delegation are
+defined in `.agents/rules/agent-coordination.md`.
 
-Multi-model CLI pipeline (triage → plan → implement → verify). Implementer agents run
-scoped tests only. Phase 9 delegates to the canonical repository gate (`./tools/check full`).
-Agent rules: `.agents/rules/ci-verification.md`.
+For implementation guidance see `.agents/rules/README.md`, CI and commit
+rules under `.agents/rules/`, and package maps under `.agents/domain_maps/`.
+Do not publish temporary agent task queues or scratch execution plans as
+product documentation.
 
-```bash
-orchestra doctor          # Tier-0 health (no inference)
-orchestra run "task"      # full pipeline
-```
+Compute scheduling is site-specific. Before using Triton/Slurm, read
+`.agents/rules/triton-slurm.md` and `docs/operations/triton.md`, inspect
+the active allocation, and respect the current user's resource authorization.
+Do not cancel or replace unrelated allocations, launch scheduler work from
+transient sessions, or infer available resources from static examples.
 
-## Architecture
+## Code and documentation style
 
-```
-configuration → market_data → features → simulation
-                                      ↙      ↑
-                         decisioning → learning ← models
-                                         ↓
-                              training → evaluation → artifacts
-                                   ↑          ↑
-                             experiments ─────┘
-                                  ↑
-                               compute
-live → integrations/mt5
-```
+Choose domain names that describe an observable behavior, contract, artifact,
+or scientific comparison. Avoid chronological labels such as `part_1`,
+`step_2`, or `version_3` unless an external protocol or persisted schema
+requires them. Keep compatibility names where removing them would invalidate
+historical checkpoints or records.
 
-| Domain | Entry File | Role |
-|--------|-----------|------|
-| configuration | `configuration/configuration_loader.py` | load, merge, and validate run configuration |
-| data | `market_data/loading/market_data_ingestion.py` | configured bar ingestion and cache production; ticks, transforms, and splits have dedicated `market_data/` owners |
-| features | `features/pipeline/feature_matrix_builder.py` | indicators + SMT + structure + PO3 → matrix |
-| trading | `trading/` | broker-neutral account, execution, order, risk, and strategy contracts |
-| decisioning | `decisioning/contracts.py` | versioned observation/action schemas and inference-provider contract |
-| envs | `simulation/environment/env.py` | Gymnasium environment transitions, observations, and reward |
-| backtest | `simulation/backtest/event_driven_backtest.py` | event-driven engine (fill, SL/TP, guardrails) |
-| models | `models/encoders/` | reusable neural architectures and encoder registry |
-| learning | `learning/rl/agent.py` | SB3 policy adapters, PPO/SAC construction, learner backends, and checkpoint loading |
-| train | `training/runner/training.py` | compose data, features, simulation, and learning into runs |
-| evaluation | `evaluation/rollout/episode_rollout.py` | backend-neutral episode rollout |
-| evaluation policy | `evaluation/rollout/trained_policy_rollout.py` | model/provider evaluation through TradingEnv |
-| reports | `evaluation/reporting/run_artifact_writer.py` | numerical report, plot, and artifact writing |
-| experiments | `experiments/cli.py`, `experiments/runs/execution.py` | variant and experiment run lifecycle, recovery, and provenance |
-| artifacts | `artifacts/` | shared identities, manifests, atomic storage, and registry |
-| compute | `compute/` | device capabilities, resource profiles, and Slurm adapters |
-| live | `live/runtime/strategy.py` | broker-neutral live and paper strategy runtime |
-| broker integration | `integrations/mt5/` | MetaTrader-specific data, broker, robot, and risk adapters |
-| orchestra | `orchestra/cli.py` | repository task orchestration and CI workflow |
-
-Full architecture map: `.agents/architecture.md`
-Domain-level context: `.agents/domain_maps/*.md`
-
-## Critical Invariants (DO NOT VIOLATE)
-
-1. **Causal features only** — no future data in any indicator. All HTF features
-   use `align_timeframes` with forward-fill (never backward).
-2. **Train-only normalization** — `rolling_zscore` fits on train_mask only.
-   Test rows use last known training statistics.
-3. **Purged walk-forward** — `purged_walk_forward()` yields **non-overlapping**
-   test folds; purge = `purge_bars + label_horizon`, embargo before each test.
-   Legacy overlapping stepper is `purged_walk_forward_legacy` (deprecated).
-4. **Session labels are eligibility flags** — never drop bars from feature
-   dataset based on session. `filter_session` is mask-only.
-5. **Config is single source of truth** — `config/base/default.yaml`.
-   All YAML keys are read via `cfg.<path>`. Adding a feature flag? Add YAML key first.
-6. **Cache versioning** — `FEATURE_CACHE_VERSION` plus **content hash**
-   (`feature_cache_path` / `.hash` sidecar in `features/pipeline/feature_cache_identity.py`). Hand-bump alone is not enough.
-7. **Live risk ≈ training risk** — `live_risk_overrides` must stay aligned with
-   `ftmo` dollar limits. Silent divergence is the failure mode.
-8. **Locked OOS is final report** — do not select architectures on the locked
-   holdout; see `docs/research/validation_protocol.md`.
-
-## Context Routing
-
-Task → read the matching domain map in `.agents/domain_maps/` first.
-Use code-review-graph MCP tools (`query_graph_tool`, `get_impact_radius_tool`)
-to narrow scope before reading source.
-
-## Rules
-
-All process rules: `.agents/rules/README.md`
-
-## Shared agent roles
-
-The canonical role names, responsibilities, ownership boundaries, delegation
-protocol, and concurrency defaults live in
-`.agents/rules/agent-coordination.md`. Read it before delegating or starting
-parallel agent work. Platform-specific profiles are adapters to that shared
-contract: Codex uses `.codex/agents/`, Claude Code uses `.claude/agents/`, and
-Antigravity uses `.agents/agents/`. Keep role identity and ownership consistent
-across all three; update the shared contract first when a role changes.
-
-<!-- code-review-graph MCP tools -->
-## MCP Tools: code-review-graph
-
-**This project has a knowledge graph. Start with the code-review-graph
-MCP tools to narrow scope, then read the source.** The graph is cheaper than scanning files and
-gives you structural context (callers, dependents, test coverage) that file search cannot.
-
-### When to use graph tools FIRST
-
-- **Exploring code**: `semantic_search_nodes_tool` or `query_graph_tool` instead of Grep
-- **Understanding impact**: `get_impact_radius_tool` instead of manually tracing imports
-- **Code review**: `detect_changes_tool` + `get_review_context_tool` instead of reading entire files
-- **Finding relationships**: `query_graph_tool` with callers_of/callees_of/imports_of/tests_for
-- **Architecture questions**: `get_architecture_overview_tool` + `list_communities_tool`
-
-### Verify in the source
-
-- Narrow scope with the graph, then read the source. Do not change code from graph output alone.
-- For any non-trivial change, read the implementation and the relevant tests before concluding.
-- Verify the exact source when touching behavior, database logic, migrations, retries, fallbacks,
-  recovery, or compatibility code.
-- When the graph and the source disagree, the source wins. The graph may be stale or may not
-  model that relationship.
-- An empty graph result can mean "not indexed" or "not statically visible", not "does not exist".
-
-### Key Tools
-
-| Tool | Use when |
-| ------ | ---------- |
-| `detect_changes_tool` | Reviewing code changes — gives risk-scored analysis |
-| `get_review_context_tool` | Need source snippets for review — token-efficient |
-| `get_impact_radius_tool` | Understanding blast radius of a change |
-| `get_affected_flows_tool` | Finding which execution paths are impacted |
-| `query_graph_tool` | Tracing callers, callees, imports, tests, dependencies |
-| `semantic_search_nodes_tool` | Finding functions/classes by name or keyword |
-| `get_architecture_overview_tool` | Understanding high-level codebase structure |
-| `refactor_tool` | Planning renames, finding dead code |
-
-### Workflow
-
-1. The graph auto-updates on file changes (via hooks).
-2. Use `detect_changes_tool` for code review.
-3. Use `get_affected_flows_tool` to understand impact.
-4. Use `query_graph_tool` pattern="tests_for" to check coverage.
-<!-- /code-review-graph MCP tools -->
-For node architecture, virtual environments, Lustre versus local storage,
-installation, and diagnostics, read the
-[Triton operations guide](docs/operations/triton.md). Use the full-tree Mypy
-gate even when staging the executable on node-local storage.
-
-## Triton (Aalto HPC)
-
-GPU training on Triton: see [`.agents/rules/triton-slurm.md`](.agents/rules/triton-slurm.md).
-Helpers: [`scripts/compute/slurm/`](scripts/compute/slurm/) (`status.sh`, `find_gpu_session.sh`, `attach_or_alloc.sh`).
-
-- **Reuse first:** if a GPU tmux/`srun` already exists, run train/eval/tests
-  there (`tmux send-keys`).
-- **GPU allocation:** standing user authorization permits necessary research
-  allocations. Reuse an existing allocation first; before a new one, inspect
-  every candidate node's live GPU availability, allocated/free CPUs, and
-  allocated/free host RAM. Never use `srun --test-only` or scheduler forecasts;
-  when a compatible GPU is idle, make one real bounded request from a named,
-  persistent login tmux session with `--immediate=60`. Never launch a new
-  `srun` directly from a transient Codex/SSH terminal. Stop polling after 60
-  seconds. Leave pending requests untouched and inspect alternatives without
-  creating an overlapping request.
-  Do not create short diagnostic jobs or fan out Slurm steps.
-- **Where computation runs:** use a suitable existing GPU-node allocation for
-  project computation whenever the workload can use a GPU. Never run training,
-  evaluation, feature construction, or other memory/CPU-intensive work directly
-  on the normal x86 login host or in login tmux. For CPU-only work, inspect a
-  candidate CPU node's live CPU/RAM availability, obtain any required allocation
-  approval, and launch one substantive bounded `srun` from a named persistent
-  login tmux session requesting enough CPUs and RAM. Run the workload inside
-  that CPU-node allocation; login tmux is only the launch/monitor shell.
-- **Cancellation:** never run `scancel`. Preserve active and pending
-  allocations; never pass `REPLACE=1`.
-- **Before alloc:** first check the user's current allocation and reuse it if
-  available; otherwise check `sinfo`/`squeue` for free GPU/CPU/RAM and apply the
-  partition and GPU-family guidance in `.agents/rules/triton-slurm.md`. The
-  user requires a per-node CPU, host-RAM, and GPU inventory before each real
-  allocation request. The agent must wait/poll for an eligible allocation for
-  no more than 60 seconds. For `srun`/`salloc`, pass Slurm's immediate timeout
-  (`--immediate=60`) where supported; never leave a blocking allocation command
-  waiting longer. For a submitted job, stop polling after 60 seconds.
-  This limits the agent's wait, not an allocation's runtime. Do not cancel a
-  pending request at the cutoff. Before considering an alternative, inspect
-  every candidate node's allocated and free CPUs, host RAM, and
-  configured/allocated GPU inventory. Do not use `srun --test-only`. An approved
-  successor behind an explicit
-  dependency starts its 60-second resource-wait clock only after the dependency
-  clears. MI210 is excluded for the current project research. Preserve the
-  cancellation approval rules for every existing or unrelated job.
-  The current experiment run has a user-set hard cap of **2 GH200 GPUs total**
-  across all active allocations, and at most 2 GH200s in any one request. This
-  is an aggregate cap: do not combine jobs or node requests whose GH200 counts
-  sum to more than 2 (for example, 1 on gpuarm1 plus 2 on gpuarm2, or 2 on
-  gpuarm1 plus 1 on gpuarm2). Prefer one GH200 on each of two nodes; if that
-  layout is unavailable, two GH200s on one eligible node are permitted within
-  the same aggregate cap. Do not queue a successor when one 12-hour, one-GH200
-  allocation is sufficient. If a shorter current allocation needs more time,
-  the user authorizes extension when Slurm permits or one one-GH200 successor
-  queued before it ends with a dependency that guarantees no overlap. Never run
-  more than one GH200 at a time for this task. This cap does not
-  apply to other GPU families. The
-  2026-10-16 V100 probe uses 1 V100 shared by 2 trainers;
-  `.venv-x86` cu130 is incompatible with V100, so use `.venv-v100` only after
-  checking `sm_70` support and a real CUDA operation. Match venv architecture
-  (`.venv` on GH200/aarch64, `.venv-x86` on H100/H200 x86_64). Login has no GPU
-  and not enough RAM for `n_envs=64`.
-- **Single-GH200 default for one task:** when one GH200 allocation with up to
-  12 hours can complete the task, use that one allocation for all of its
-  variants, plotting, and evaluation, running stages sequentially if needed.
-  Do not request another allocation when that is sufficient. If the current
-  allocation is shorter and needs more time, the user authorizes extension when
-  Slurm permits or one dependency-chained one-GH200 continuation before it ends;
-  never overlap GPUs. Use two GH200s only when the user directly asks for that
-  shape or approves it after a concrete resource estimate. The aggregate
-  two-GH200 cap above remains a ceiling, not a default.
-- **Never `scancel`** when a train finishes or for any other reason; keep the
-  GPU bash + tmux allocation available for subsequent work.
-- Login SSH for `ls` / `squeue` / `sinfo` / `tmux capture-pane` / inspect-only
-  `scripts/compute/slurm/*.sh`; never `srun` for those checks.
-- **Short-step monitor hard gate:** any job/step under 120 seconds counts as
-  short, including child steps inside a long allocation. Create zero new short
-  Slurm jobs/steps. Before launch/resume, inspect the full job/step topology,
-  including retries and fan-out; never use one `srun` per worker, variant,
-  retry, test, monitor, or node-local command. Run short work inside an existing
-  shell/allocation without another step. If unexpected early exits or steps
-  appear, stop submitting/retrying, preserve logs and allocation state, and
-  diagnose. Never cancel Slurm jobs or allocations. Follow the
-  detailed hard gate in `.agents/rules/triton-slurm.md`.
-- **Long-running work wait cadence:** before waiting on an active training,
-  evaluation, or allocation, estimate the current stage's remaining time from
-  measured throughput or prior stage durations and compare it with the live
-  Slurm time limit. When no independent work remains, schedule the next check
-  near the estimated stage completion, with enough margin to preserve outputs
-  before the allocation ends. Do not poll every few seconds or repeat
-  unchanged status checks. Use no more than 10 planned checks for one stable
-  stage; add an earlier check only for a likely failure, checkpoint boundary,
-  allocation transition, or explicit progress signal. Prefer an existing
-  supervisor/notification or wait-for-output mechanism where available. When
-  no independent work remains, make one measured completion estimate and wait
-  toward that window instead of spending tokens on repeated short polls or
-  unchanged status updates. This
-  does not change the separate 60-second maximum for waiting on a new allocation.
-- **Experiment run status updates:** when asked for experiment run status, or when a
-  meaningful experiment run transition/blocker occurs, run
-  `experiments/runs/status.py` and include its generated report
-  without manually rebuilding the tables. It reports all variants in ladder
-  order (`a0`, `a1`, `a2`, `a3`, then `a4a`, `a4b`); follow
-  `.agents/rules/triton-slurm.md`.
+Comments and docstrings should explain constraints, units, numerical
+assumptions, trade-offs, data lineage, or surprising behavior. Do not narrate
+what a clear statement of code already says. Prefer one maintained reference
+per concept, and link to it rather than copying entire explanations into
+multiple READMEs. Update code, test expectations, configuration, generated
+documentation, and public command examples together.

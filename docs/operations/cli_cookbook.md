@@ -23,5 +23,5 @@ flags may be provided by different console scripts in the active environment;
 the [CLI reference](../reference/cli.md) and `pyproject.toml` entry points own
 the current names. Research run execution and Triton scheduling have separate
 evidence/safety procedures: use the
-[research queue](research_execution_plan.md) and
+[research queue](../research/workflow.md) and
 [Triton guide](triton.md), not a copied generic command.

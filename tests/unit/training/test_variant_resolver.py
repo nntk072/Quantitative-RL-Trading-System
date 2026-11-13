@@ -25,8 +25,6 @@ from training.configuration.variant_resolution import (
 )
 from training.configuration.variant_risk_policy import load_variant_ftmo_config
 
-LAUNCHER = PROJECT_ROOT / "scripts" / "research" / "frozen-launches" / "train_one_variant.sh"
-
 
 def test_e_f_g_architectures_are_registered_for_variant_resolution() -> None:
     assert {
@@ -210,17 +208,19 @@ def test_resolver_rejects_gaussian_distribution_for_trade_setup_actions() -> Non
         resolve_variant("invalid_setup_distribution", experiments_path=experiments)
 
 
-def test_all_18_research_variants_build_features_from_the_active_split() -> None:
-    base_config = yaml.safe_load((PROJECT_ROOT / "config" / "base" / "default.yaml").read_text())
+def test_active_experiment_run_variants_build_features_from_current_split() -> None:
+    base_config = yaml.safe_load(
+        (PROJECT_ROOT / "config/base/default.yaml").read_text(encoding="utf-8")
+    )
     assert base_config["env"]["peak_trailing_dd_limit"] == 0.0
     experiment_run_names = [
         line.strip()
-        for line in (PROJECT_ROOT / "config" / "experiment_runs" / "variant_list.txt")
-        .read_text()
+        for line in (PROJECT_ROOT / "config/experiment_runs/variants.txt")
+        .read_text(encoding="utf-8")
         .splitlines()
         if line.strip()
     ]
-    assert len(experiment_run_names) == len(set(experiment_run_names)) == 18
+    assert len(experiment_run_names) == len(set(experiment_run_names)) == 2
     assert PREBUILT_FEATURE_CACHES == {}
     for name in experiment_run_names:
         resolved = resolve_variant(name)
@@ -415,30 +415,12 @@ def test_quarter_grid_pair_preserves_policy_and_shares_data_transform() -> None:
     assert quantized_control["data.cache_dir"].endswith("qgrid025_v1")
 
 
-def test_quarter_grid_experiment_run_uses_the_matched_pair_and_locked_split() -> None:
-    experiment_run = yaml.safe_load(
-        (
-            PROJECT_ROOT
-            / "config/experiment_runs/rq1_entry_fsm_pair_seed50_train2025_20261024_dd10pilot2m_stochastic_v1.yaml"
-        ).read_text(encoding="utf-8")
-    )
-    variant_file = PROJECT_ROOT / str(experiment_run["variant_file"])
-    listed = [line.strip() for line in variant_file.read_text(encoding="utf-8").splitlines()]
-
-    assert (
-        experiment_run["variants"]
-        == listed
-        == [
-            "ladder_a4b_entry_fsm_qgrid025",
-            "ladder_a4a_entry_fsm_hidden_qgrid025",
-        ]
-    )
-    assert experiment_run["timesteps"] == 2_000_000
-    assert experiment_run["split"] == {
-        "train_start": "2024-12-30",
-        "train_end": "2025-12-31",
-        "test_start": "2026-01-01",
-    }
+def test_quarter_grid_comparison_variants_share_the_active_registry() -> None:
+    names = {item["name"] for item in load_experiments()["variants"]}
+    pair = {"ladder_a4b_entry_fsm_qgrid025", "ladder_a4a_entry_fsm_hidden_qgrid025"}
+    assert pair <= names
+    for name in pair:
+        assert resolve_variant(name)["arch"] == "tcn"
 
 
 def test_consistency_table_covers_all_variants() -> None:
@@ -478,42 +460,18 @@ def test_dollar_band_q5_pair_differs_only_by_q5_objective() -> None:
     assert q5_on["constrained_rl.cost_discount_gamma"] == "1.0"
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX launcher requires Linux/WSL")
-def test_launcher_dry_run_prints_every_seed() -> None:
-    out_dir = tempfile.mkdtemp()
-    env = {
-        "PATH": "/usr/bin:/bin",
-        "VARIANT": "ablation_sac_agent",
-        "DRY_RUN": "1",
-        "OUT_DIR": out_dir,
-        "PYTHON": sys.executable,
-    }
-    proc = subprocess.run(
-        ["bash", str(LAUNCHER)], env=env, capture_output=True, text=True, check=False, timeout=120
-    )
-    assert proc.returncode == 0, proc.stderr
-    assert "algo=sac arch=gru" in proc.stdout
+def test_training_arguments_cover_every_registered_seed() -> None:
+    resolved = resolve_variant("ablation_sac_agent")
     for seed in (42, 43, 44, 45, 46):
-        assert f"ablation_sac_agent__seed{seed}" in proc.stdout
-    assert "--algo sac" in proc.stdout and "--arch gru" in proc.stdout
-    assert "execution.randomized_fill_latency_ms=30.0" not in proc.stdout
-    assert not any(Path(out_dir).glob("*.done"))  # dry run must not write markers
+        args = train_args(resolved, seed)
+        assert args[args.index("--seed") + 1] == str(seed)
+        assert args[args.index("--algo") + 1] == "sac"
+        assert args[args.index("--arch") + 1] == "gru"
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX launcher requires Linux/WSL")
-def test_launcher_refuses_vae_variant_without_vae_path() -> None:
-    env = {
-        "PATH": "/usr/bin:/bin",
-        "VARIANT": "ablation_conditional_narrative",
-        "DRY_RUN": "1",
-        "OUT_DIR": tempfile.mkdtemp(),
-        "PYTHON": sys.executable,
-    }
-    proc = subprocess.run(
-        ["bash", str(LAUNCHER)], env=env, capture_output=True, text=True, check=False, timeout=120
-    )
-    assert proc.returncode != 0
-    assert "VAE" in proc.stderr
+def test_variant_resolution_rejects_missing_vae_checkpoint() -> None:
+    with pytest.raises(VariantError, match="VAE"):
+        resolve_variant("ablation_conditional_narrative")
 
 
 def test_manifest_cli_writes_resolved_config() -> None:

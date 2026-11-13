@@ -1,4 +1,4 @@
-# Gate II A: M1 history and M1-only candidate opportunities.
+# M1-only reference for the candidate-history ablation.
 account:
   initial_balance: 100000.0
 

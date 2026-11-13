@@ -13,20 +13,18 @@ from experiments.runs import named_cache_rebuild as cache_builder
 
 
 @pytest.mark.unit
-def test_trade_setup_experiment_run_maps_all_18_variants_to_four_feature_caches() -> None:
+def test_active_experiment_run_variants_map_to_named_feature_caches() -> None:
     rows = cache_builder.plan()
     assert len(rows) == 4
     bindings = rows[0]["experiment_run_variant_cache_bindings"]
-    assert len(bindings) == 18
+    assert len(bindings) == 2
 
     counts: dict[str, int] = {}
     for cache_path in bindings.values():
         counts[cache_path] = counts.get(cache_path, 0) + 1
     assert counts == {
         "data/prebuilt_feature_cache/baseline.parquet": 1,
-        "data/prebuilt_feature_cache/baseline_strategy_actions.parquet": 5,
-        "data/prebuilt_feature_cache/idea1_po3_ifvg.parquet": 6,
-        "data/prebuilt_feature_cache/idea2_distribution.parquet": 6,
+        "data/prebuilt_feature_cache/baseline_strategy_actions.parquet": 1,
     }
 
 

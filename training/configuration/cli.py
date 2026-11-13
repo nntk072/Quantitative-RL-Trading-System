@@ -94,7 +94,7 @@ def parse_train_args() -> argparse.Namespace:
         "--strategy",
         choices=["baseline", "po3_ifvg", "distribution"],
         default="baseline",
-        help="RL strategy variant (Agent.md: Idea 1 = po3_ifvg, Idea 2 = distribution, Idea 3 = baseline).",
+        help="Trading-strategy overlay used by the RL environment.",
     )
     parser.add_argument(
         "--use-vae",
@@ -213,8 +213,7 @@ def load_merged_config(args: argparse.Namespace) -> DictConfig:
     cfg = load_config(None, config_path=config_path)
     selected_strategy = str(resolved["strategy"] if resolved is not None else args.strategy)
 
-    # Merge the selected strategy overlay exactly once. Baseline (Idea 3)
-    # leaves cfg untouched.
+    # Merge the selected strategy overlay exactly once; baseline leaves the base config unchanged.
     variant_path = strategy_overlay_path(selected_strategy)
     cfg = merge_strategy_config(cfg, selected_strategy)
     if variant_path is not None:

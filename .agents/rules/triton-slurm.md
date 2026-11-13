@@ -5,22 +5,23 @@ description: "Use for Triton Slurm allocation, compute-node work, training, eval
 
 # Triton / Slurm (GPU) — agent rules
 
-Triton cluster. **Canonical workdir:** `/scratch/work/nguyenl37/Quantitative-RL-Trading-System`.
+Triton is an optional deployment environment. Use the active user's verified checkout and allocation; historical paths and resource examples in this runbook are not defaults or standing authorization for a new installation.
 
 Helper scripts: [`scripts/compute/slurm/`](../../scripts/compute/slurm/) (`status.sh`, `find_gpu_session.sh`, `attach_or_alloc.sh`).
 
 ## WorkDir
 
-- All training, evaluation, and agent edits for this repository must use
-  `/scratch/work/nguyenl37/Quantitative-RL-Trading-System` (real scratch path).
-- Use this checkout's real scratch path for GPU commands; do not redirect work
-  to another historical Aalto checkout.
+- Set `QRL_WORKDIR` to the active, user-authorized repository checkout, and
+  verify it with `git rev-parse --show-toplevel` before running compute.
+- Do not substitute an archived checkout or a different contributor's scratch
+  directory for the active source-bound workspace.
 - Do **not** treat a WSL or laptop checkout as the live Triton tree.
 
 ## Slurm authorization, execution and preservation
 
-- The user has granted standing authorization for necessary research GPU work.
-  Reuse an existing allocation first. When none is available, inspect each
+- Request or verify explicit compute authorization for the current task;
+  published instructions do not grant cluster permissions. Reuse an allocation
+  only when the current user authorizes it. Before requesting compute, inspect each
   candidate node's live GPU inventory, CPU allocation/free count, and host RAM
   allocation/free amount using `squeue`, `sinfo`, and `scontrol show node`.
 - **Never use `srun --test-only`**, scheduler forecasts, or dry-run variants of
@@ -35,16 +36,12 @@ Helper scripts: [`scripts/compute/slurm/`](../../scripts/compute/slurm/) (`statu
 - **Never run `scancel`.** Preserve active and pending jobs and allocations,
   including when training ends or a request waits too long. Never use
   `REPLACE=1`. Only change this rule if the user explicitly revises it later.
-- Keep the research aggregate cap of 2 GH200 GPUs and budget of at most 12
-  GH200 GPU-hours per request. Do not exceed one GH200 per node for the
-  two-node layout.
-- For one task, default to one GH200 allocation. If one GH200 for up to 12
-  hours can finish the task, run all its variants and evaluation stages there;
-  do not request another allocation for that task. If the current allocation is
-  shorter and needs more time, the user authorizes extending it when Slurm
-  permits or queuing one 1-GH200 successor before it ends with a dependency
-  that prevents overlap. Never run more than one GH200 for this task at once.
-  Use two GPUs only when the user directly asks for or approves that shape.
+- Bound GPU count, RAM, CPU, wall time, and total GPU-hours by the currently
+  authorized task and observed live availability. Previous experiments' GH200
+  quantities are historical capacity examples, not a universal allocation cap.
+- Keep work within one appropriate allocation where practical. An extension,
+  queued successor, or concurrent allocation requires task-specific approval;
+  never infer approval from this documentation.
 
 Triton emails when many jobs last &lt; ~120s. Prefer one long shell (hours),
 never a burst of short diagnostic jobs.
@@ -157,7 +154,7 @@ automatically; inspect the trace and step topology first.
   when a persistent supervisor or direct child process can run it inside the
   existing allocation. Pack workers into the fewest long-lived steps required
   for GPU binding; do not turn each queue poll or retry into a step.
-- **Experiment run worker dispatch:** `experiment_run_controller.py --worker-nodes ...`
+- **Experiment run worker dispatch:** `qrl-experiment research execute`
   constructs one `srun --overlap` command per worker. It is allowed only when
   the allocation starts one persistent `experiment_run_worker_dispatch.py --manager`
   on each node and prepends `scripts/compute/slurm/worker_bin` to `PATH`, so
@@ -367,7 +364,7 @@ present the 18-trainer projection as a direct measurement.
 | Job | GPUs | Typical request | Why |
 |-----|------|-----------------|-----|
 | One model (one TCN / GRU / Transformer, 20M) | **1** | Example GH200: `--gpus=gh200:1 --mem=512G --cpus-per-task=48 --time=12:00:00` | GH200 example only; size CPU/RAM/time for the chosen family, partition, and measured workload. |
-| Six-run matrix (overlay then baseline, three archs) | **2 GH200** | `--gpus=gh200:2 --mem=900G --cpus-per-task=128 --time=6:00:00` | Historical GH200 shape only. The GH200 experiment run cap does not set V100/A100/H100/H200/B300 caps. Check [current matrix scripts](../../scripts/compute/slurm/experiment_runs/) before use. |
+| Six-run matrix (overlay then baseline, three archs) | **2 GH200** | `--gpus=gh200:2 --mem=900G --cpus-per-task=128 --time=6:00:00` | Historical GH200 shape only. The GH200 experiment run cap does not set V100/A100/H100/H200/B300 caps. Check [current matrix scripts](../../evidence/research/archive_2026/repository_history/scripts/compute/slurm/experiment_runs/) before use. |
 | 18-trainer full-split screen (experiment-run-specific) | **2 total, one per node** | GH200: `--nodes=2 --ntasks=2 --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G --time=6:00:00` | Current active allocation shape: 18 workers across two nodes (9/node), 5 CPUs/worker, `n_envs=64`, shared bundle. Keep this distinct from two GPUs on one node; recheck cgroup memory and controller placement before reuse. |
 | V100 throughput probe (2026-10-16 user-authorized) | **1 V100, 2 trainers** | Actual probe: `gpu35`, `--gres=gpu:v100:1 --mem=192G --cpus-per-task=16 --time=4:00:00` | One V100 shared by two matched throughput workers. Benchmark-only; not research evidence or a validated general V100 cap. |
 
@@ -451,7 +448,7 @@ approval requirement take precedence. Do not reproduce an old allocation shape
 without a fresh forecast and approval.
 
 The unified matrix launcher is
-[`scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh`](../../scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh).
+[`scripts/compute/slurm/run_research_bundle.sh`](../../scripts/compute/slurm/run_research_bundle.sh).
 Select the GPU family with `GPU_KIND=gh200|h100|h200` and the allocation shape
 with `MODE=1|2|3|4`:
 
@@ -463,12 +460,12 @@ with `MODE=1|2|3|4`:
 | 4 | 1 GPU on each of 2 nodes, 6h, 600G per node | 2 per node | 32 |
 
 The ordered subset can be selected with a whitespace-separated `VARIANTS`
-value; when omitted, all entries in `config/experiment_runs/variant_list.txt` are used.
+value; when omitted, all entries in `config/research/experiments.yaml` are used.
 The tmux entrypoint passes these options through:
 
 ```bash
 MODE=2 GPU_KIND=gh200 OUT_DIR=outputs/gpu_matrix_18_mode2 \
-  bash scripts/compute/slurm/experiment_runs/run_18variant_matrix_gh200_tmux.sh
+  bash scripts/compute/slurm/run_research_bundle.sh
 ```
 
 Each run keeps logs under `<OUT_DIR>/logs/`: `all.log` contains the combined
@@ -670,8 +667,8 @@ runtime profiling, process I/O symptoms, and reproducibility. Preserve
 current jobs and worktree changes.
 
 Before submitting a substantive shell to a GPU node, verify its entrypoint is
-native to that node. On the current GH200 login path, `/home/nguyenl37/.local/bin/uv`
-is an x86_64 executable and fails with `Exec format error` on aarch64 even after
+native to that node. A login-home `uv` binary built for x86_64
+fails with `Exec format error` on aarch64 even after
 the ARM64 venv is activated. On GH200, use the activated venv's `ruff` and
 `python -m pytest` directly; use the documented node-local staging procedure
 for full-tree Mypy. Do not submit a job whose first command can fail on an

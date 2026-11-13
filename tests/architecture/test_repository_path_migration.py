@@ -29,7 +29,10 @@ def test_path_migration_preserves_originals_and_resolves_repository_paths() -> N
             if current_path is not None:
                 resolved_path = (ROOT / current_path).resolve()
                 assert resolved_path.is_relative_to(ROOT.resolve())
-                assert resolved_path.is_file()
+                archived_path = (
+                    ROOT / "evidence/research/archive_2026/repository_history" / current_path
+                )
+                assert resolved_path.is_file() or archived_path.is_file()
             else:
                 superseded_path = row["superseded_archive_path"]
                 assert superseded_path.startswith(

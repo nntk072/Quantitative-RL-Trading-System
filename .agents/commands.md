@@ -33,7 +33,7 @@ Do not run `pytest tests/ -v` unless asked.
 ```
 
 Merge CI runs the named `./tools/check` gates plus the required-job aggregator.
-Orchestra phase 9 runs their serial equivalent with `./tools/check full`.
+The Orchestra verification role runs the serial equivalent with `./tools/check full`.
 
 ## Data Pipeline
 

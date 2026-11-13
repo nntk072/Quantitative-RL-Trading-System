@@ -6,7 +6,7 @@ schema remains available for existing records. New empirical findings should
 use `qrl.research_result_manifest.v2` and
 [`research_result_manifest_v2.schema.json`](../../schemas/research_result_manifest_v2.schema.json).
 
-Every v2 run identity contains the fields required by the research plan. A
+Every v2 run identity contains the fields required by the prospective research protocol. A
 known value is stored directly. An unavailable value must be represented as
 `{"status": "unknown", "reason": "..."}`; `null`, an omitted field, or an
 invented default is invalid. Draft and descriptive results may retain reasoned
@@ -14,7 +14,10 @@ unknowns. A frozen result rejects all unknown identity values and requires a
 freeze timestamp.
 
 The verifier checks schema shape, run/comparison/claim references, artifact
-paths within the repository, and SHA-256 values. It does not rehash raw data
+paths within the repository, and SHA-256 values. The executable research
+consolidator also verifies selected result artifacts against their recorded
+SHA-256 before reading metrics; a successful execution with a missing declared
+result is not accepted as completed evidence. It does not rehash raw data
 that is referenced only by an identity digest, and it does not claim that a
 historical result can be independently regenerated from a Git checkout.
 For artifacts moved out of the checkout, v2 permits `storage_scope` to name

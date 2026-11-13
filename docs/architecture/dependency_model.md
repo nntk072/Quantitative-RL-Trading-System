@@ -71,6 +71,7 @@ flowchart LR
     experiments -->|imports| artifacts
     experiments -->|imports| compute
     experiments -->|imports| configuration
+    experiments -->|imports| decisioning
     experiments -->|imports| evaluation
     experiments -->|imports| features
     experiments -->|imports| learning
@@ -100,7 +101,7 @@ flowchart LR
 | `learning` | `artifacts`, `compute`, `decisioning`, `market_data`, `models` |
 | `training` | `artifacts`, `compute`, `configuration`, `decisioning`, `evaluation`, `features`, `learning`, `market_data`, `models`, `simulation`, `trading` |
 | `evaluation` | `artifacts`, `configuration`, `decisioning`, `features`, `learning`, `market_data`, `simulation`, `trading` |
-| `experiments` | `artifacts`, `compute`, `configuration`, `evaluation`, `features`, `learning`, `market_data`, `models`, `training` |
+| `experiments` | `artifacts`, `compute`, `configuration`, `decisioning`, `evaluation`, `features`, `learning`, `market_data`, `models`, `training` |
 | `live` | `configuration`, `decisioning`, `features`, `trading` |
 | `integrations` | `features`, `live` |
 | `compute` | `artifacts` |

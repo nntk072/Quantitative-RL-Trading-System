@@ -60,8 +60,11 @@ def test_parse_experiment_run_worker_command() -> None:
             "--expected-cpus",
             "5,6",
             "--",
-            "bash",
-            "/repo/scripts/research/frozen-launches/train_one_variant.sh",
+            "/venv/bin/python",
+            "-m",
+            "training.runner.training",
+            "--variant",
+            "ladder_a0_flat",
         ]
     )
 
@@ -74,8 +77,11 @@ def test_parse_experiment_run_worker_command() -> None:
             "--expected-cpus",
             "5,6",
             "--",
-            "bash",
-            "/repo/scripts/research/frozen-launches/train_one_variant.sh",
+            "/venv/bin/python",
+            "-m",
+            "training.runner.training",
+            "--variant",
+            "ladder_a0_flat",
         ],
         "cpu_ids": [5, 6],
         "gpu_count": 1,

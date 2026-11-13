@@ -39,7 +39,7 @@ def test_runtime_tooling_uses_only_qrl_environment_names() -> None:
         ROOT / "tools/setup-venv-x86",
         ROOT / "tools/setup-venv-mi210",
         ROOT / "tools/setup-venv-v100",
-        ROOT / "scripts/compute/slurm/experiment_run_recovery_supervisor.sh",
+        ROOT / "scripts/compute/slurm/run_research_bundle.sh",
     )
     for path in runtime_tools:
         deprecated_prefix = "TH" + "ESIS_"

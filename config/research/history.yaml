@@ -1,0 +1,227 @@
+schema_version: 1
+entries:
+  market_data_input_integrity:
+    domain: data
+    path: evidence/research/market_data_input_integrity
+    disposition: retained_provenance
+    summary: Market-input identities, timestamp diagnostics, and reconstruction evidence.
+  market_data_quality:
+    domain: data
+    path: evidence/research/market_data_quality
+    disposition: retained_supporting_evidence
+    summary: Recorded market-data quality diagnostics.
+  pipeline_denominators:
+    domain: data
+    path: evidence/research/pipeline_denominators
+    disposition: retained_supporting_evidence
+    summary: Dataset, feature, candidate, and evaluation denominator records.
+  tick_quote_coverage:
+    domain: data
+    path: evidence/research/tick_quote_coverage
+    disposition: retained_supporting_evidence
+    summary: Tick and executable-quote coverage measurements.
+
+  feature_causality:
+    domain: features
+    path: evidence/research/feature_causality
+    disposition: retained_supporting_evidence
+    summary: Feature source, availability, missingness, and prefix-invariance evidence.
+  trade_setup_opportunity_census:
+    domain: features
+    path: evidence/research/trade_setup_opportunity_census
+    disposition: retained_supporting_evidence
+    summary: Candidate opportunity counts and event identities.
+  entry_idea_opportunity_counts:
+    domain: features
+    path: evidence/research/entry_idea_opportunity_counts
+    disposition: retained_supporting_evidence
+    summary: Aggregated entry-idea counts by family and timeframe.
+  entry_idea_context_previews:
+    domain: features
+    path: evidence/research/entry_idea_context_previews
+    disposition: exploratory
+    summary: Context previews for candidate interpretation.
+  candidate_event_cardinality:
+    domain: features
+    path: evidence/research/candidate_event_cardinality
+    disposition: retained_supporting_evidence
+    summary: Candidate identity cardinality and reuse measurements.
+  candidate_geometry_price_scale:
+    domain: features
+    path: evidence/research/candidate_geometry_price_scale
+    disposition: retained_supporting_evidence
+    summary: Price-scale geometry diagnostics.
+  candidate_geometry_support:
+    domain: features
+    path: evidence/research/candidate_geometry_support
+    disposition: retained_supporting_evidence
+    summary: Candidate-geometry source support and missingness.
+  candidate_proposals:
+    domain: features
+    path: evidence/research/candidate_proposals
+    disposition: retained_provenance
+    summary: Recorded candidate proposals.
+  candidate_proposal_ledger:
+    domain: features
+    path: evidence/research/candidate_proposal_ledger
+    disposition: retained_provenance
+    summary: Candidate proposal ledger and identities.
+  candidate_action_eligibility:
+    domain: features
+    path: evidence/research/candidate_action_eligibility
+    disposition: retained_supporting_evidence
+    summary: Candidate-to-action eligibility diagnostics.
+  candidate_action_linkage:
+    domain: features
+    path: evidence/research/candidate_action_linkage
+    disposition: retained_supporting_evidence
+    summary: Candidate/action linkage evidence.
+  candidate_validity_semantics:
+    domain: features
+    path: evidence/research/candidate_validity_semantics
+    disposition: retained_supporting_evidence
+    summary: Candidate validity and masking semantics.
+  fvg_timeframe_event_ledger:
+    domain: features
+    path: evidence/research/fvg_timeframe_event_ledger
+    disposition: retained_provenance
+    summary: Fair-value-gap event ledger by timeframe.
+  ifvg_timeframe_collision_ledger:
+    domain: features
+    path: evidence/research/ifvg_timeframe_collision_ledger
+    disposition: retained_provenance
+    summary: Inversion-gap timeframe collision records.
+  ifvg_zone_event_ledger:
+    domain: features
+    path: evidence/research/ifvg_zone_event_ledger
+    disposition: retained_provenance
+    summary: Inversion-gap zone event ledger.
+  order_block_zone_event_ledger:
+    domain: features
+    path: evidence/research/order_block_zone_event_ledger
+    disposition: retained_provenance
+    summary: Order-block zone event ledger.
+  standard_deviation_swing_legs:
+    domain: features
+    path: evidence/research/standard_deviation_swing_legs
+    disposition: retained_provenance
+    summary: Standard-deviation swing-leg measurements.
+  structural_order_geometry:
+    domain: features
+    path: evidence/research/structural_order_geometry
+    disposition: retained_supporting_evidence
+    summary: Structural order-geometry diagnostics.
+
+  model_observation_and_action_semantics:
+    domain: policy
+    path: evidence/research/model_observation_and_action_semantics
+    disposition: retained_supporting_evidence
+    summary: Observation/action architecture and schema evidence.
+  setup_conditioned_reasoning_replay:
+    domain: policy
+    path: evidence/research/setup_conditioned_reasoning_replay
+    disposition: exploratory_negative
+    summary: Historical setup-conditioned policy replay.
+  selected_checkpoint_train_replay:
+    domain: policy
+    path: evidence/research/selected_checkpoint_train_replay
+    disposition: retained_provenance
+    summary: Historical checkpoint replay and recoverability evidence.
+  historical_variant_screen_recoverability:
+    domain: policy
+    path: evidence/research/historical_variant_screen_recoverability
+    disposition: retained_provenance
+    summary: Recoverability audit for historical variant screens.
+  po3_setup_lifecycle:
+    domain: policy
+    path: evidence/research/po3_setup_lifecycle
+    disposition: exploratory
+    summary: Historical setup-lifecycle evidence.
+  failure_mechanisms:
+    domain: policy
+    path: evidence/research/failure_mechanisms
+    disposition: retained_supporting_evidence
+    summary: Recorded failure mechanisms and successor-policy rationale.
+  candidate_outcomes:
+    domain: policy
+    path: evidence/research/candidate_outcomes
+    disposition: historical_outcome_evidence
+    summary: Historical candidate outcomes retained for provenance, not model inputs.
+  candidate_outcomes_trade_through:
+    domain: policy
+    path: evidence/research/candidate_outcomes_trade_through
+    disposition: historical_outcome_evidence
+    summary: Trade-through candidate outcomes retained for provenance.
+  candidate_outcome_coverage:
+    domain: policy
+    path: evidence/research/candidate_outcome_coverage
+    disposition: retained_supporting_evidence
+    summary: Candidate-outcome coverage diagnostics.
+  candidate_holdout_exposure:
+    domain: policy
+    path: evidence/research/candidate_holdout_exposure
+    disposition: retained_provenance
+    summary: Historical holdout exposure inventory.
+
+  matched_setup_baselines:
+    domain: portfolio
+    path: evidence/research/matched_setup_baselines
+    disposition: retained_supporting_evidence
+    summary: Matched deterministic and always-no-trade baseline evidence.
+  matched_setup_baseline_cli:
+    domain: portfolio
+    path: evidence/research/matched_setup_baseline_cli
+    disposition: retained_supporting_evidence
+    summary: Baseline command-line reproduction evidence.
+  entry_and_exit_attribution:
+    domain: portfolio
+    path: evidence/research/entry_and_exit_attribution
+    disposition: withdrawn_performance_claim
+    summary: Historical performance attribution retained only for provenance.
+  selected_policy_trade_lifecycle:
+    domain: portfolio
+    path: evidence/research/selected_policy_trade_lifecycle
+    disposition: withdrawn_performance_claim
+    summary: Historical selected-policy performance evidence retained only for provenance.
+  performance:
+    domain: portfolio
+    path: evidence/research/performance
+    disposition: engineering_measurement
+    summary: Throughput and resource measurements, not economic evidence.
+
+  simulator_execution_parity:
+    domain: execution
+    path: evidence/research/simulator_execution_parity
+    disposition: retained_supporting_evidence
+    summary: Simulator/backtest execution and account-transition parity.
+  fill_quote_source_alignment:
+    domain: execution
+    path: evidence/research/fill_quote_source_alignment
+    disposition: retained_supporting_evidence
+    summary: Fill-to-quote source alignment diagnostics.
+  exit_action_semantics:
+    domain: execution
+    path: evidence/research/exit_action_semantics
+    disposition: exploratory
+    summary: Historical exit-action decoder and cohort evidence.
+
+  function_test_coverage:
+    domain: validation
+    path: evidence/research/function_test_coverage
+    disposition: engineering_evidence
+    summary: Function-to-test coverage inventory.
+  vae_input_validity:
+    domain: validation
+    path: evidence/research/vae_input_validity
+    disposition: engineering_evidence
+    summary: VAE input-contract validation.
+  historical_source_provenance:
+    domain: reporting
+    path: evidence/research/historical_source_provenance
+    disposition: immutable_provenance
+    summary: Preserved historical source snapshots and lineage.
+  releases:
+    domain: reporting
+    path: evidence/research/releases
+    disposition: immutable_release_evidence
+    summary: Historical release packets and manifests.

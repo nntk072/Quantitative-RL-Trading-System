@@ -1,11 +1,26 @@
 # Experiments function usage
 
-This guide contains 7 public callable records across 2 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+This guide contains 66 public callable records across 17 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
 
 ```{toctree}
 :maxdepth: 1
 :caption: Source modules
 
 experiments__orchestration__weekly
+experiments__research__catalog
+experiments__research__command_group
+experiments__research__compute_budget
+experiments__research__execution
+experiments__research__history
+experiments__research__portfolio
+experiments__research__primary_comparison
+experiments__research__readiness
+experiments__research__release
+experiments__research__repeatability
+experiments__research__reporting
+experiments__research__reporting_tables
+experiments__research__robustness
+experiments__research__statistics
+experiments__research__workflow
 experiments__runs
 ```

@@ -1,5 +1,5 @@
 {
-  "page_count": 377,
+  "page_count": 391,
   "pages": [
     {
       "links": [
@@ -43,7 +43,7 @@
         "tutorials/README.md",
         "how-to/README.md",
         "development/documentation_coverage.md",
-        "operations/research_execution_plan.md"
+        "research/workflow.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/README.md",
@@ -969,7 +969,7 @@
         "../../../../evaluation/reporting/evaluation_manifest.py#L89",
         "../../../../evaluation/reporting/evaluation_manifest.py#L74",
         "../../../../tests/unit/evaluation/test_evaluation_manifest.py#L32",
-        "../../../../evaluation/reanalysis/checkpoint_reanalysis.py#L1082"
+        "../../../../evaluation/reanalysis/checkpoint_reanalysis.py#L1102"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/evaluation/evaluation__reporting__evaluation_manifest.md",
@@ -1234,6 +1234,336 @@
       "section": "api",
       "status": "current",
       "title": "Experiments \u00b7 `orchestration.weekly`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/catalog.py#L52",
+        "../../../../experiments/research/catalog.py#L428",
+        "../../../../experiments/research/catalog.py#L94",
+        "../../../../experiments/research/catalog.py#L443",
+        "../../../../experiments/research/catalog.py#L23",
+        "../../../../experiments/research/catalog.py#L256",
+        "../../../../experiments/research/catalog.py#L325",
+        "../../../../tests/unit/experiments/test_experiment_run_policy_overrides.py#L92",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L36",
+        "../../../../experiments/research/catalog.py#L39",
+        "../../../../experiments/research/catalog.py#L302",
+        "../../../../experiments/research/catalog.py#L52",
+        "../../../../experiments/research/catalog.py#L428",
+        "../../../../experiments/research/catalog.py#L78",
+        "../../../../experiments/research/catalog.py#L76",
+        "../../../../experiments/research/portfolio.py#L112",
+        "../../../../experiments/research/catalog.py#L63",
+        "../../../../experiments/research/catalog.py#L94",
+        "../../../../experiments/research/catalog.py#L443",
+        "../../../../experiments/research/catalog.py#L116",
+        "../../../../experiments/research/cli.py#L217",
+        "../../../../experiments/research/catalog.py#L102",
+        "../../../../tests/unit/experiments/test_experiment_run_policy_overrides.py#L92",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L37",
+        "../../../../experiments/research/catalog.py#L23",
+        "../../../../experiments/research/catalog.py#L256",
+        "../../../../experiments/research/catalog.py#L325",
+        "../../../../tests/unit/experiments/test_experiment_run_policy_overrides.py#L92",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L36",
+        "../../../../experiments/research/catalog.py#L325",
+        "../../../../tests/unit/experiments/test_experiment_run_policy_overrides.py#L92",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L36"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__catalog.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.catalog`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/command_group.py#L14",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L41",
+        "../../../../tests/unit/experiments/test_research_composition.py#L71"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__command_group.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.command_group`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/compute_budget.py#L116",
+        "../../../../experiments/research/cli.py#L374"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__compute_budget.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.compute_budget`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/execution.py#L48",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L84",
+        "../../../../tests/unit/experiments/test_research_composition.py#L49",
+        "../../../../experiments/research/execution.py#L29",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L89",
+        "../../../../tests/unit/experiments/test_research_composition.py#L43",
+        "../../../../experiments/research/execution.py#L332",
+        "../../../../experiments/research/cli.py#L280",
+        "../../../../experiments/research/execution.py#L48",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L84",
+        "../../../../tests/unit/experiments/test_research_composition.py#L49",
+        "../../../../experiments/research/execution.py#L59",
+        "../../../../experiments/research/execution.py#L297",
+        "../../../../experiments/research/execution.py#L403",
+        "../../../../experiments/research/execution.py#L29",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L89",
+        "../../../../tests/unit/experiments/test_research_composition.py#L43",
+        "../../../../experiments/research/execution.py#L161",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L100",
+        "../../../../tests/unit/experiments/test_research_composition.py#L56",
+        "../../../../experiments/research/execution.py#L126",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L100",
+        "../../../../tests/unit/experiments/test_research_composition.py#L56",
+        "../../../../experiments/research/execution.py#L332",
+        "../../../../experiments/research/cli.py#L280",
+        "../../../../experiments/research/execution.py#L332",
+        "../../../../experiments/research/cli.py#L280"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__execution.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.execution`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/history.py#L17",
+        "../../../../experiments/research/history.py#L71",
+        "../../../../experiments/research/history.py#L27",
+        "../../../../experiments/research/cli.py#L296",
+        "../../../../experiments/research/history.py#L82",
+        "../../../../experiments/research/cli.py#L296"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__history.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.history`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/portfolio.py#L77",
+        "../../../../experiments/research/workflow.py#L116",
+        "../../../../experiments/research/portfolio.py#L196",
+        "../../../../experiments/research/portfolio.py#L229",
+        "../../../../experiments/research/portfolio.py#L215",
+        "../../../../experiments/research/cli.py#L337"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__portfolio.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.portfolio`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/primary_comparison.py#L154",
+        "../../../../experiments/research/cli.py#L354",
+        "../../../../experiments/research/primary_comparison.py#L105",
+        "../../../../experiments/research/cli.py#L353"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__primary_comparison.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.primary_comparison`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/readiness.py#L235",
+        "../../../../experiments/research/cli.py#L314",
+        "../../../../experiments/research/readiness.py#L48",
+        "../../../../experiments/research/cli.py#L315",
+        "../../../../experiments/research/readiness.py#L79",
+        "../../../../experiments/research/cli.py#L303"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__readiness.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.readiness`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/release.py#L44",
+        "../../../../experiments/research/cli.py#L390"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__release.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.release`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/repeatability.py#L32",
+        "../../../../experiments/research/workflow.py#L104",
+        "../../../../experiments/research/repeatability.py#L134",
+        "../../../../experiments/research/cli.py#L326"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__repeatability.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.repeatability`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/reporting.py#L27",
+        "../../../../tests/unit/experiments/test_research_composition.py#L132",
+        "../../../../experiments/research/reporting.py#L124",
+        "../../../../experiments/research/reporting.py#L290",
+        "../../../../tests/unit/experiments/test_research_component_registry.py#L125",
+        "../../../../tests/unit/experiments/test_research_result_integrity.py#L42",
+        "../../../../experiments/research/reporting.py#L311",
+        "../../../../tests/unit/experiments/test_research_composition.py#L114",
+        "../../../../tests/unit/experiments/test_research_composition.py#L145",
+        "../../../../experiments/research/reporting.py#L80",
+        "../../../../experiments/research/reporting.py#L246",
+        "../../../../experiments/research/reporting.py#L176",
+        "../../../../tests/unit/experiments/test_research_composition.py#L106",
+        "../../../../experiments/research/reporting.py#L306"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__reporting.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.reporting`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/reporting_tables.py#L26",
+        "../../../../tests/unit/experiments/test_research_composition.py#L121",
+        "../../../../experiments/research/cli.py#L364"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__reporting_tables.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.reporting_tables`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/robustness.py#L196",
+        "../../../../experiments/research/workflow.py#L139",
+        "../../../../experiments/research/robustness.py#L31",
+        "../../../../experiments/research/workflow.py#L127",
+        "../../../../experiments/research/robustness.py#L140",
+        "../../../../experiments/research/cli.py#L345"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__robustness.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.robustness`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/statistics.py#L14",
+        "../../../../experiments/research/statistics.py#L138",
+        "../../../../experiments/research/statistics.py#L24",
+        "../../../../experiments/research/primary_comparison.py#L180",
+        "../../../../experiments/research/statistics.py#L113",
+        "../../../../experiments/research/primary_comparison.py#L174",
+        "../../../../experiments/research/statistics.py#L58",
+        "../../../../experiments/research/statistics.py#L132",
+        "../../../../experiments/research/statistics.py#L86",
+        "../../../../experiments/research/statistics.py#L133",
+        "../../../../experiments/research/statistics.py#L37",
+        "../../../../experiments/research/statistics.py#L131"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__statistics.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.statistics`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../experiments/research/workflow.py#L24",
+        "../../../../experiments/research/workflow.py#L81",
+        "../../../../experiments/research/workflow.py#L49",
+        "../../../../experiments/research/cli.py#L265",
+        "../../../../experiments/research/workflow.py#L161",
+        "../../../../experiments/research/cli.py#L281",
+        "../../../../experiments/research/workflow.py#L150",
+        "../../../../experiments/research/cli.py#L276"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/experiments/experiments__research__workflow.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Experiments \u00b7 `research.workflow`",
       "type": "reference"
     },
     {
@@ -4895,7 +5225,7 @@
         "../modules/experiments",
         "../concepts/experiment_design",
         "../research/evaluation_methodology",
-        "../operations/research_execution_plan",
+        "../research/workflow",
         "../api/domains/workflows"
       ],
       "orphan_status": "in toctree",
@@ -5097,9 +5427,7 @@
     },
     {
       "links": [
-        "../concepts/experiment_design.md",
-        "../model_variants.md",
-        "../operations/triton.md"
+        "../research/workflow.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/run_experiment.md",
@@ -5738,13 +6066,13 @@
     },
     {
       "links": [
-        "research_execution_plan.md",
         "triton.md",
         "RUNNING_COMMANDS.md",
         "DEPLOYMENT.md",
         "hardware.md",
         "performance.md",
-        "cli_cookbook.md"
+        "cli_cookbook.md",
+        "../research/workflow.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/operations/README.md",
@@ -5774,7 +6102,7 @@
     {
       "links": [
         "../reference/cli.md",
-        "research_execution_plan.md",
+        "../research/workflow.md",
         "triton.md"
       ],
       "orphan_status": "in toctree",
@@ -5832,27 +6160,6 @@
       "section": "operations",
       "status": "operational",
       "title": "Performance engineering",
-      "type": "operations"
-    },
-    {
-      "links": [
-        "../research/survival_runtime_correctness_smoke_20261110.md",
-        "../research/pretraining_implementation_readiness_20261110.md",
-        "../research/validation_protocol.md",
-        "../research/entry_and_exit_attribution.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/entry_and_exit_attribution/README.md",
-        "../../evidence/research/releases/negative-evidence-readiness/RELEASE_MANIFEST.json",
-        "../../evidence/research/model_observation_and_action_semantics/decision_trace_availability_inventory.json",
-        "triton.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/operations/research_execution_plan.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "operations",
-      "status": "operational/current queue",
-      "title": "Active research execution plan",
       "type": "operations"
     },
     {
@@ -6344,6 +6651,70 @@
         "../../experiments/orchestration/weekly.py#L105",
         "../../experiments/orchestration/weekly.py#L130",
         "../../experiments/orchestration/weekly.py#L175",
+        "../../experiments/research/execution.py#L48",
+        "../../experiments/research/execution.py#L29",
+        "../../experiments/research/catalog.py#L52",
+        "../../experiments/research/catalog.py#L94",
+        "../../experiments/research/catalog.py#L23",
+        "../../experiments/research/execution.py#L332",
+        "../../experiments/research/catalog.py#L325",
+        "../../experiments/research/catalog.py#L19",
+        "../../experiments/research/catalog.py#L39",
+        "../../experiments/research/catalog.py#L52",
+        "../../experiments/research/catalog.py#L78",
+        "../../experiments/research/catalog.py#L63",
+        "../../experiments/research/catalog.py#L94",
+        "../../experiments/research/catalog.py#L116",
+        "../../experiments/research/catalog.py#L102",
+        "../../experiments/research/catalog.py#L23",
+        "../../experiments/research/catalog.py#L325",
+        "../../experiments/research/command_group.py#L14",
+        "../../experiments/research/compute_budget.py#L116",
+        "../../experiments/research/execution.py#L48",
+        "../../experiments/research/execution.py#L59",
+        "../../experiments/research/execution.py#L29",
+        "../../experiments/research/execution.py#L161",
+        "../../experiments/research/execution.py#L126",
+        "../../experiments/research/execution.py#L332",
+        "../../experiments/research/history.py#L13",
+        "../../experiments/research/history.py#L17",
+        "../../experiments/research/history.py#L27",
+        "../../experiments/research/history.py#L82",
+        "../../experiments/research/portfolio.py#L77",
+        "../../experiments/research/portfolio.py#L196",
+        "../../experiments/research/portfolio.py#L215",
+        "../../experiments/research/primary_comparison.py#L13",
+        "../../experiments/research/primary_comparison.py#L154",
+        "../../experiments/research/primary_comparison.py#L105",
+        "../../experiments/research/readiness.py#L19",
+        "../../experiments/research/readiness.py#L235",
+        "../../experiments/research/readiness.py#L48",
+        "../../experiments/research/readiness.py#L79",
+        "../../experiments/research/release.py#L44",
+        "../../experiments/research/repeatability.py#L32",
+        "../../experiments/research/repeatability.py#L134",
+        "../../experiments/research/reporting.py#L27",
+        "../../experiments/research/reporting.py#L290",
+        "../../experiments/research/reporting.py#L311",
+        "../../experiments/research/reporting.py#L80",
+        "../../experiments/research/reporting.py#L176",
+        "../../experiments/research/reporting_tables.py#L26",
+        "../../experiments/research/robustness.py#L196",
+        "../../experiments/research/robustness.py#L31",
+        "../../experiments/research/robustness.py#L140",
+        "../../experiments/research/statistics.py#L14",
+        "../../experiments/research/statistics.py#L24",
+        "../../experiments/research/statistics.py#L113",
+        "../../experiments/research/statistics.py#L58",
+        "../../experiments/research/statistics.py#L86",
+        "../../experiments/research/statistics.py#L37",
+        "../../experiments/research/catalog.py#L19",
+        "../../experiments/research/workflow.py#L24",
+        "../../experiments/research/execution.py#L332",
+        "../../experiments/research/workflow.py#L49",
+        "../../experiments/research/workflow.py#L161",
+        "../../experiments/research/catalog.py#L325",
+        "../../experiments/research/workflow.py#L150",
         "../../experiments/runs/__init__.py#L6",
         "../../features/pipeline/feature_cache_identity.py#L17",
         "../../features/contracts.py#L9",
@@ -7084,53 +7455,18 @@
     },
     {
       "links": [
-        "research_evidence_report.md",
-        "setup_conditioned_policy_replay",
-        "setup_conditioned_reasoning_benchmark_protocol",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/setup_conditioned_reasoning_replay/README.md",
-        "limitations",
-        "../reproduce/setup_conditioned_evidence",
-        "encoder_architecture_comparison",
-        "evaluation_methodology",
-        "limitations",
-        "../../evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json",
-        "model_observation_and_action_semantics",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/model_observation_and_action_semantics",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/releases/negative-evidence-readiness/MODEL_AND_BASELINE_CATALOG.md",
-        "sustainable_equity_growth",
-        "validation_protocol",
-        "limitations",
-        "entry_and_exit_attribution",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/entry_and_exit_attribution",
-        "selected_policy_trade_lifecycle",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/selected_policy_trade_lifecycle",
-        "fill_quote_availability",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/fill_quote_source_alignment",
-        "exit_action_semantics",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/exit_action_semantics",
-        "../reproduce/exit_action_semantics.ipynb",
-        "../concepts/execution_and_costs",
-        "evaluation_methodology",
-        "entry_idea_opportunity_counts",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/entry_idea_opportunity_counts/entry_idea_opportunity_counts.md",
-        "../reproduce/entry_idea_opportunity_counts.ipynb",
-        "regime_attribution",
-        "regime_context_comparison",
-        "order_block_and_multitimeframe_context",
-        "multitimeframe_data_alignment",
-        "feature_causality_and_availability",
-        "gh200_throughput_audit",
-        "survival_runtime_correctness_smoke_20261110",
-        "candidate_geometry_feature_contract",
-        "pretraining_implementation_readiness_20261110",
-        "result_identity_and_evidence",
-        "evaluation_methodology",
-        "validation_protocol",
-        "limitations",
-        "finding_card_template",
-        "references",
-        "negative_results",
-        "../operations/research_execution_plan.md"
+        "../../config/research/experiments.yaml",
+        "../../config/research/prospective_research_protocol.yaml",
+        "../../config/research/history.yaml",
+        "workflow.md",
+        "historical_evidence.md",
+        "feature_causality_and_availability.md",
+        "evaluation_methodology.md",
+        "validation_protocol.md",
+        "model_observation_and_action_semantics.md",
+        "mt5_ftmo_execution_fidelity.md",
+        "limitations.md",
+        "references.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/research/README.md",
@@ -7139,7 +7475,7 @@
       ],
       "section": "research",
       "status": "research status is stated on page",
-      "title": "Research results and methods",
+      "title": "Research methodology",
       "type": "research"
     },
     {
@@ -7267,7 +7603,19 @@
     },
     {
       "links": [
-        "../operations/research_execution_plan.md"
+        "../../config/research/history.yaml"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/historical_evidence.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Historical evidence",
+      "type": "research"
+    },
+    {
+      "links": [
+        "workflow.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/research/limitations.md",
@@ -7353,16 +7701,6 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Multi-timeframe market context and entry ideas",
-      "type": "research"
-    },
-    {
-      "links": [],
-      "orphan_status": "in toctree",
-      "path": "docs/research/pretraining_implementation_readiness_20261110.md",
-      "primary_navigation_owner": [],
-      "section": "research",
-      "status": "research status is stated on page",
-      "title": "Pretraining implementation readiness \u2014 2026-11-10",
       "type": "research"
     },
     {
@@ -7500,16 +7838,6 @@
       "type": "research"
     },
     {
-      "links": [],
-      "orphan_status": "in toctree",
-      "path": "docs/research/survival_runtime_correctness_smoke_20261110.md",
-      "primary_navigation_owner": [],
-      "section": "research",
-      "status": "research status is stated on page",
-      "title": "Survival runtime correctness smoke \u2014 2026-11-10",
-      "type": "research"
-    },
-    {
       "links": [
         "regime_context_comparison.md"
       ],
@@ -7523,7 +7851,7 @@
     },
     {
       "links": [
-        "../operations/research_execution_plan.md",
+        "workflow.md",
         "../modules/simulation.md",
         "../modules/evaluation.md"
       ],
@@ -7533,6 +7861,19 @@
       "section": "research",
       "status": "research status is stated on page",
       "title": "Validation protocol",
+      "type": "research"
+    },
+    {
+      "links": [
+        "../../config/research/experiments.yaml",
+        "../../config/research/history.yaml"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/research/workflow.md",
+      "primary_navigation_owner": [],
+      "section": "research",
+      "status": "research status is stated on page",
+      "title": "Research workflow",
       "type": "research"
     },
     {

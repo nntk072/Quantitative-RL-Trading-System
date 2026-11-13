@@ -511,6 +511,25 @@ def main() -> None:
             seed_sb3(action_rng_seed)
 
     cfg = _load_run_config(run_dir)
+    robustness_overrides: dict[str, float | int | str] = {}
+    if args.max_drawdown_mode is not None:
+        cfg.ftmo.max_drawdown_mode = args.max_drawdown_mode
+        robustness_overrides["ftmo.max_drawdown_mode"] = args.max_drawdown_mode
+    if args.max_tick_quote_wait_ms is not None:
+        if args.max_tick_quote_wait_ms < 0:
+            raise ValueError("--max-tick-quote-wait-ms cannot be negative")
+        cfg.execution.max_tick_quote_wait_ms = args.max_tick_quote_wait_ms
+        robustness_overrides["execution.max_tick_quote_wait_ms"] = args.max_tick_quote_wait_ms
+    if args.candidate_max_age_bars is not None:
+        if args.candidate_max_age_bars < 1:
+            raise ValueError("--candidate-max-age-bars must be positive")
+        cfg.env.candidate_max_age_bars = args.candidate_max_age_bars
+        robustness_overrides["env.candidate_max_age_bars"] = args.candidate_max_age_bars
+    if args.risk_band_max_usd is not None:
+        if args.risk_band_max_usd <= 0.0:
+            raise ValueError("--risk-band-max-usd must be positive")
+        cfg.env.risk_band_max_usd = args.risk_band_max_usd
+        robustness_overrides["env.risk_band_max_usd"] = args.risk_band_max_usd
     source_stop_menu = [
         str(value).upper() for value in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
     ]
@@ -1062,6 +1081,7 @@ def main() -> None:
             "trigger_quote_unchanged": True,
             "opposite_quote_side_unchanged": True,
         },
+        "robustness_overrides": robustness_overrides,
         "evaluation_risk_overrides": {
             "peak_eod_drawdown_policy_disabled": bool(args.disable_peak_eod_dd_policy),
             "effective_peak_eod_drawdown_limit_usd": float(

@@ -26,4 +26,4 @@ Keep provider-specific inference behind the provider interfaces and persistent
 task data behind the orchestra state/artifact boundary. Do not put trading
 metrics or research conclusions into orchestration status without a linked
 experiment artifact. Focused tests are under `tests/unit/orchestra/`; the
-configured phase-nine check exercises the integrated gate.
+configured verification check exercises the integrated gate.

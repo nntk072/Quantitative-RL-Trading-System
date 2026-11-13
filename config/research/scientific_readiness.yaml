@@ -1,0 +1,24 @@
+schema_version: 1
+
+required_experiments:
+  - research_contract
+  - data_integrity
+  - feature_inputs
+  - execution_contract
+
+common_reviews:
+  - dataset_identity
+  - feature_causality
+  - failure_mechanism
+  - matched_baseline
+  - baseline_information_set
+  - compute_budget
+  - protocol_freeze
+
+price_reviews:
+  - candidate_geometry_acceptance
+
+prohibited_states:
+  exposed_report_period_used_for_selection: true
+  candidate_realized_outcomes_used_as_policy_inputs: true
+  preregistered_thresholds_changed_post_hoc: true

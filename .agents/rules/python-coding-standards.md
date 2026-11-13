@@ -28,8 +28,9 @@ class SymbolConfig:
 
 
 ## Module structure
-- Module: 400 lines max; Function: 60 lines max; Commit: 500 changed lines max.
-- Split by concern, each with its own tests.
+- Split modules and functions when responsibilities or change boundaries are unclear, not at an arbitrary line count.
+- Prefer a complete, independently verifiable change over several fragmented commits. The size of the diff is not a reason to omit necessary code, documentation, or tests.
+- Extract shared behavior only when the new abstraction has a stable responsibility and is genuinely reused.
 
 ## Relations
 

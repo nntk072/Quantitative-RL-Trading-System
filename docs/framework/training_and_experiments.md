@@ -19,6 +19,6 @@ A variant is a resolved treatment, not a filename label. Its identity must prese
 
 Use the [run an experiment guide](../how-to/run_experiment) for the CLI workflow and the [experiment comparison tutorial](../learn/tutorials/advanced/experiment_comparison.ipynb) to inspect matched run records. The [training module guide](../modules/training) and [experiment module guide](../modules/experiments) explain package-specific options.
 
-A short training smoke checks configuration, environment construction, and artifact wiring. It does not establish policy quality. For research decisions, follow [experiment design](../concepts/experiment_design), [evaluation methodology](../research/evaluation_methodology), and the active [research execution plan](../operations/research_execution_plan).
+A short training smoke checks configuration, environment construction, and artifact wiring. It does not establish policy quality. For research decisions, follow [experiment design](../concepts/experiment_design), [evaluation methodology](../research/evaluation_methodology), and the active [research execution plan](../research/workflow).
 
 The curated [workflow API guide](../api/domains/workflows) links to generated training, experiment, and artifact references.

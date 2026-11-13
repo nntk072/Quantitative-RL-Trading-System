@@ -1,89 +1,57 @@
-# Research results and methods
+# Research methodology
 
-This section organizes results by research question, not run directories. Read each finding alongside its evidence packet, evaluation method, limitations, and reproduction status.
+The research framework separates scientific questions from their technical
+implementations. Each experiment references shared component implementations
+and selects variants through declarative configuration; named assemblies
+express a compatible set of variants without multiplying experiment scripts.
 
-The current end-to-end synthesis is the
-[research evidence report](research_evidence_report.md). It
-preserves the negative findings and makes the remaining scientific gates
-explicit; it is not a release verdict.
+The authoritative sources are
+[`config/research/experiments.yaml`](../../config/research/experiments.yaml)
+for executable definitions,
+[`config/research/prospective_research_protocol.yaml`](../../config/research/prospective_research_protocol.yaml)
+for prospective scientific constraints, and
+[`config/research/history.yaml`](../../config/research/history.yaml)
+for preserved historical evidence.
 
-## Policy architecture and decision structure
+## Reader guide
 
-| Finding | Status | Result class | Evidence and interpretation | Reproduction |
-| --- | --- | --- | --- | --- |
-| [Setup-conditioned replay](setup_conditioned_policy_replay) | Exploratory | Negative screen: both policies breach loss limits in the recorded 100k-step comparison | [Method/protocol](setup_conditioned_reasoning_benchmark_protocol); [tracked evidence](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/setup_conditioned_reasoning_replay/README.md); [limitations](limitations) | [R1 evidence explorer](../reproduce/setup_conditioned_evidence) |
-| [Encoder architecture comparison](encoder_architecture_comparison) | Engineering comparison | Bounded throughput and exploratory short policy pilot; prior MTF 2M screen withdrawn | [Methodology](evaluation_methodology); [limitations](limitations); [withdrawal stub](../../evidence/research/model_observation_and_action_semantics/mtf_architecture_screen.json) | No trading model selection or new training |
-| [Model observation and action semantics](model_observation_and_action_semantics) | Architecture audit | Source/configuration description; no economic claim | [Evidence packet](https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/model_observation_and_action_semantics); [model catalog](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/releases/negative-evidence-readiness/MODEL_AND_BASELINE_CATALOG.md) | Source inspection and existing run-specific manifests |
-| [Sustainable equity growth](sustainable_equity_growth) | Exploratory | Reward/risk behavior analysis | [Validation protocol](validation_protocol); [limitations](limitations) | R1 report; source per-arm outcome package is incomplete |
-| [Monthly entry and exit attribution](entry_and_exit_attribution) | Withdrawn historical analysis | Seed-50 A4A/A4B 2M monthly outcome comparison removed from current results | [Archived evidence packet](https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/entry_and_exit_attribution) | Reproduction artifacts retained for provenance only |
-| [Selected policy trade lifecycle](selected_policy_trade_lifecycle) | Withdrawn historical performance evidence | A4A/A4B 2M outcome summaries removed from current presentation; retained records are provenance/reproducibility only | [Archived evidence packet](https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/selected_policy_trade_lifecycle) | No current policy comparison or confirmatory claim |
+| Topic | Reference |
+|---|---|
+| Components, assemblies, execution, resume, metrics | [Research workflow](workflow.md) |
+| Existing evidence and withdrawn findings | [Historical evidence](historical_evidence.md) |
+| Data availability and causal semantics | [Feature causality](feature_causality_and_availability.md) |
+| Evaluation and matched comparisons | [Evaluation methodology](evaluation_methodology.md) |
+| Holdout protection and statistical validity | [Validation protocol](validation_protocol.md) |
+| Action and observation contracts | [Model semantics](model_observation_and_action_semantics.md) |
+| Execution simulation and broker behavior | [Execution fidelity](mt5_ftmo_execution_fidelity.md) |
+| What findings cannot support | [Limitations](limitations.md) |
+| Scholarly sources | [References](references.md) |
 
-## Execution semantics and costs
-
-| Finding | Status | Result class | Evidence and interpretation | Reproduction |
-| --- | --- | --- | --- | --- |
-| [Fill quote availability](fill_quote_availability) | Local source diagnostic | Selected recorded fills aligned to tick timestamp groups; not a fill-validity claim | [Concept-named evidence packet](https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/fill_quote_source_alignment) | Streamed analyzer and fixture test; source clock and tie chronology remain open |
-| [Exit-action semantics](exit_action_semantics) | Exploratory | Frozen decoder replay and selected common-entry cohort; no economic superiority claim | [Semantic evidence packet](https://github.com/nntk072/Quantitative-RL-Trading-System/tree/main/evidence/research/exit_action_semantics) | [R2 cohort recomputation](../reproduce/exit_action_semantics.ipynb); full replay inputs are incomplete |
-| [Execution and costs](../concepts/execution_and_costs) | Method | Fill, spread, latency, and slippage assumptions | [Evaluation methodology](evaluation_methodology) | See deterministic software trace and tick tutorial |
-| [Entry-idea opportunity counts](entry_idea_opportunity_counts) | Descriptive engineering measurement | Family and timeframe episode counts from a tracked aggregate export | [Tracked aggregate package](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/evidence/research/entry_idea_opportunity_counts/entry_idea_opportunity_counts.md) | [R2 aggregate recomputation](../reproduce/entry_idea_opportunity_counts.ipynb); source feature rows are absent |
-
-## Market representation and context
-
-- [Regime attribution](regime_attribution): exploratory attribution and its limits.
-- [Daily regime feature normalization](regime_context_comparison): matched comparison that did not establish improvement.
-- [Order block and multi-timeframe context](order_block_and_multitimeframe_context): definitions and engineering limits.
-- [Configured multi-timeframe data alignment](multitimeframe_data_alignment): exact native/M1 timestamp and OHLCV parity, separate spread differences, and unresolved schedule classification.
-- [Feature causality and availability](feature_causality_and_availability): source-function and setup-flag inventory with unassessed timing fields clearly marked.
-
-## Engineering performance
-
-Training throughput is an engineering measurement, not trading performance. See [GH200 throughput audit](gh200_throughput_audit) for measured rates, hardware conditions, and bottlenecks.
-
-The [survival runtime correctness smoke](survival_runtime_correctness_smoke_20261110)
-records a bounded synthetic check of the configured policy, checkpoint, and
-evaluation path. It is implementation evidence, not an economic result or
-scientific-training authorization.
-
-The [candidate-geometry feature contract](candidate_geometry_feature_contract)
-defines the causal formula, unit, source, decision-time availability, and
-missingness behavior for every model-facing geometry feature.
-
-The [pretraining implementation readiness report](pretraining_implementation_readiness_20261110)
-records the current-source contract, feature-evidence, and release gates. Its
-passing implementation checks do not authorize scientific training. Training
-authorization comes from the separate scientific-readiness manifest bound to
-the exact source and protocol; regenerate it after any source change.
-
-## Methods and claim boundaries
-
-- [Result identity and evidence](result_identity_and_evidence): versioned
-  finding/run identities, reasoned unknowns, and hash-verified artifact links.
-- [Evaluation methodology](evaluation_methodology)
-- [Validation protocol](validation_protocol)
-- [Limitations](limitations)
-- [Finding card template](finding_card_template)
-- [Reading list](references)
-- [Negative and inconclusive findings](negative_results)
-
-The [active research execution plan](../operations/research_execution_plan.md) is an operational queue, not evergreen methodology. Historical source lineage is summarized in the `evidence/research/historical_source_provenance/README.md` packet; archived run outputs remain checksum-preserved outside the repository.
+Results are observations linked to a reproducible execution, not names of
+report directories. Current consolidated outputs use `results.json`,
+`results.csv`, and `metrics.csv`. Historical source artifacts remain
+immutable; only their catalog descriptions and scientific interpretation
+may be rewritten.
 
 ```{toctree}
 :hidden:
 
-references
-negative_results
-exit_action_semantics
-entry_and_exit_attribution
-selected_policy_trade_lifecycle
-entry_idea_opportunity_counts
-multitimeframe_data_alignment
+workflow
+historical_evidence
+evaluation_methodology
+validation_protocol
 feature_causality_and_availability
-candidate_geometry_feature_contract
-survival_runtime_correctness_smoke_20261110
-pretraining_implementation_readiness_20261110
+multitimeframe_data_alignment
 model_observation_and_action_semantics
+candidate_geometry_feature_contract
 mt5_ftmo_execution_fidelity
-quote_coverage_sensitivity
-fill_quote_availability
 result_identity_and_evidence
+negative_results
+entry_and_exit_attribution
+entry_idea_opportunity_counts
+fill_quote_availability
+quote_coverage_sensitivity
+selected_policy_trade_lifecycle
+limitations
+references
 ```

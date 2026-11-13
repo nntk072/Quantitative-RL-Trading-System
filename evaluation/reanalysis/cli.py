@@ -148,6 +148,30 @@ def build_reanalysis_parser() -> argparse.ArgumentParser:
         help="Evaluation-only adverse price adjustment on the executed tick side.",
     )
     parser.add_argument(
+        "--max-drawdown-mode",
+        choices=("static", "eod", "intraday_trailing"),
+        default=None,
+        help="Evaluation-only maximum-loss mode override for robustness replay.",
+    )
+    parser.add_argument(
+        "--max-tick-quote-wait-ms",
+        type=int,
+        default=None,
+        help="Evaluation-only maximum quote wait in milliseconds.",
+    )
+    parser.add_argument(
+        "--candidate-max-age-bars",
+        type=int,
+        default=None,
+        help="Evaluation-only candidate age limit in bars.",
+    )
+    parser.add_argument(
+        "--risk-band-max-usd",
+        type=float,
+        default=None,
+        help="Evaluation-only dollar-band risk ceiling.",
+    )
+    parser.add_argument(
         "--disable-peak-eod-dd-policy",
         action="store_true",
         help=(

@@ -14,7 +14,7 @@ binary from the login home.
 Do not run the full CI gate during implementation. Do not use `pytest -m "not slow"`
 as a substitute when a targeted test file already exists.
 
-## Full CI gate (Orchestra phase 9)
+## Full CI gate (Orchestra verification)
 
 Orchestra delegates to the same full dispatcher as the named GitHub gates:
 

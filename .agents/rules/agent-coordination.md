@@ -198,7 +198,7 @@ inspect the changed paths, select and run applicable checks, inspect GitHub
 checks/workflows/jobs/logs, and prepare and create a commit when assigned.
 At commit time, run the required full-tree format/lint/type gates and scoped
 pytest. Do not run `./tools/check full` for every edit; use it only when
-explicitly requested, in Orchestra phase 9, or when reproducing a complete
+explicitly requested, during Orchestra verification, or when reproducing a complete
 hosted failure. If a CI failure is rooted in application code, delegate the
 specific fix to its owning specialist with the commit, workflow/run/job,
 failing step, evidence, acceptance check, and smallest reproduction; coordinate

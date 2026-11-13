@@ -8,6 +8,9 @@ account:
 compute:
   cudnn_benchmark: false
 
+evaluation:
+  development_only: true
+
 data:
   timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
 

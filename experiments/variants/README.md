@@ -1,30 +1,20 @@
-# Variant resolution and catalog
+# Training variant resolution
 
-Variant resolution combines a declared experiment entry with the appropriate
-configuration files and validates the result against supported algorithms,
-encoders, risk settings, and action/observation options.
+This package resolves model and configuration factors into validated training
+settings. It owns the configured model matrix and its available algorithms,
+encoders, risk controls, and observation/action options.
 
-Catalog metadata describes family, research question, comparison role, and
-changed factors. It must not duplicate hyperparameters or become another
-settings source. Resolved settings belong in configuration and frozen run
-records. A listed variant is selectable only when it exists in the configured
-matrix and its required configuration validates.
+This is distinct from the reusable **research component library** in
+[`config/research/experiments.yaml`](../../config/research/experiments.yaml).
+A research component is an implementation that a scientific experiment can
+reuse; a training variant is the effective configuration passed to a model
+runner. One experiment may select several training variants, and multiple
+experiments may select the same implementation without duplicating code.
 
-The generated [model and experiment catalog](../../docs/model_variants.md)
-must be checked after resolver or catalog metadata changes. See
-[`experiments/README.md`](../README.md).
+Neither catalog is a separate hyperparameter source. Effective settings,
+source identity, model identity, and resolved configuration are frozen into
+the run manifest. Preserve run provenance when changing how variants resolve.
 
-## UML module view
-
-```mermaid
-classDiagram
-    class CatalogModule
-    class VariantAblationRunnerModule
-    class ExperimentMatrix
-    class VariantConfig
-    class ResolvedVariant
-    CatalogModule ..> ExperimentMatrix : classifies comparison roles
-    VariantAblationRunnerModule ..> VariantConfig : reads selected definition
-    VariantConfig ..> ResolvedVariant : resolves through configuration
-    ResolvedVariant ..> ExperimentMatrix : must belong to configured matrix
-```
+The generated [model catalog](../../docs/model_variants.md) and
+[`tests/unit/experiments/`](../../tests/unit/experiments/) cover the public
+resolver and its compatibility contract.

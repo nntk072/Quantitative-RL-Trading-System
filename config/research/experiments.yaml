@@ -1,0 +1,343 @@
+schema_version: 1
+protocol: config/research/prospective_research_protocol.yaml
+
+domains:
+  validation: Source, protocol, software-contract, and reproducibility checks.
+  data: Market inputs, dataset identity, denominators, and quote coverage.
+  features: Causal feature construction, availability, missingness, and candidate support.
+  policy: Policy representation, survival qualification, and matched policy interventions.
+  portfolio: Portfolio-value continuation and the primary always-no-trade comparison.
+  execution: Fill, quote, latency, slippage, and broker-simulator sensitivity.
+  robustness: Account-rule, risk, regime, and policy sensitivity.
+  reporting: Result consolidation, exposed-period reporting, research outputs, and release evidence.
+
+components:
+  source:
+    variants:
+      static_contract:
+        command:
+          - "{python}"
+          - -m
+          - experiments.research.static_contract
+          - --output
+          - "{output_root}/{experiment_id}/{variant_id}.json"
+        artifact_roots:
+          - "{output_root}/{experiment_id}/{variant_id}.json"
+  protocol:
+    variants:
+      prospective_protocol:
+        command:
+          - "{python}"
+          - -m
+          - experiments.research.protocol_snapshot
+          - --output
+          - "{output_root}/{experiment_id}/{variant_id}.json"
+        artifact_roots:
+          - "{output_root}/{experiment_id}/{variant_id}.json"
+  data:
+    variants:
+      denominator_register:
+        command:
+          - "{python}"
+          - -m
+          - scripts.research.analysis.market_data.build_pipeline_denominator_register
+          - --out-dir
+          - "{output_root}/{experiment_id}/denominators"
+        artifact_roots:
+          - "{output_root}/{experiment_id}/denominators"
+  observations:
+    variants:
+      observation_validity:
+        command:
+          - "{python}"
+          - -m
+          - scripts.research.analysis.features.audit_observation_warmup_validity
+          - --config
+          - config/research/survival_trade_setup_mtf_conditioned.yaml
+          - --output-dir
+          - "{output_root}/{experiment_id}/{variant_id}"
+          - --cache-dir
+          - "{output_root}/cache/{experiment_id}/{variant_id}"
+        artifact_roots:
+          - "{output_root}/{experiment_id}/{variant_id}"
+  opportunities:
+    variants:
+      opportunity_census:
+        command:
+          - "{python}"
+          - -m
+          - scripts.research.analysis.features.entry_idea_opportunity_census
+          - --config
+          - config/research/survival_trade_setup_mtf_conditioned.yaml
+          - --output-dir
+          - "{output_root}/{experiment_id}/{variant_id}"
+        artifact_roots:
+          - "{output_root}/{experiment_id}/{variant_id}"
+  candidate_support:
+    variants:
+      candidate_geometry_support:
+        command:
+          - "{python}"
+          - -m
+          - scripts.research.analysis.features.candidate_geometry_support
+          - --config
+          - config/research/survival_trade_setup_candidate_geometry.yaml
+          - --output-dir
+          - "{output_root}/{experiment_id}/{variant_id}"
+        artifact_roots:
+          - "{output_root}/{experiment_id}/{variant_id}"
+  simulation:
+    variants:
+      simulator_accounting:
+        command:
+          - "{python}"
+          - -m
+          - pytest
+          - tests/unit/trading/test_guardrails.py
+          - tests/unit/trading/test_risk.py
+          - tests/unit/evaluation/test_account_state_trace_reconciliation.py
+          - tests/unit/evaluation/test_policy_decision_reconciliation.py
+          - tests/integration/backtest/test_account_transition_parity.py
+          - tests/integration/backtest/test_broker_quote_parity.py
+          - tests/integration/backtest/test_engine_execution_contract.py
+          - tests/integration/backtest/test_local_tick_action_trace.py
+          - -q
+
+experiments:
+  research_contract:
+    domain: validation
+    summary: Validate the prospective protocol and source-level implementation contract.
+    selection_role: prerequisite
+    execution:
+      kind: command_group
+      seeds: []
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 0
+      resource_lock: null
+    variants:
+      static_contract:
+        use: source.static_contract
+        role: prerequisite
+      prospective_protocol:
+        use: protocol.prospective_protocol
+        role: prerequisite
+    assemblies:
+      source_and_protocol: [static_contract, prospective_protocol]
+
+  data_integrity:
+    domain: data
+    summary: Rebuild current-source dataset identity, denominator, and quote-source evidence.
+    selection_role: prerequisite
+    execution:
+      kind: command_group
+      seeds: []
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 0
+      resource_lock: data_build_memory
+    variants:
+      denominator_register:
+        use: data.denominator_register
+        role: prerequisite
+  feature_inputs:
+    domain: features
+    summary: Rebuild model-input validity, opportunity, and candidate-geometry evidence.
+    selection_role: prerequisite
+    execution:
+      kind: command_group
+      seeds: []
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 0
+      resource_lock: feature_build_memory
+    variants:
+      observation_validity:
+        use: observations.observation_validity
+        role: prerequisite
+      opportunity_census:
+        use: opportunities.opportunity_census
+        role: prerequisite
+      candidate_geometry_support:
+        use: candidate_support.candidate_geometry_support
+        role: prerequisite
+    assemblies:
+      observation_and_candidate_evidence:
+        - observation_validity
+        - opportunity_census
+        - candidate_geometry_support
+
+  execution_contract:
+    domain: execution
+    summary: Validate account, risk, quote, and simulator parity before model execution.
+    selection_role: prerequisite
+    execution:
+      kind: command_group
+      seeds: []
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 0
+      resource_lock: null
+    variants:
+      simulator_accounting:
+        use: simulation.simulator_accounting
+        role: prerequisite
+  candidate_history:
+    domain: policy
+    summary: Separate M1-only opportunities, shared multi-timeframe opportunities, and completed higher-timeframe history.
+    selection_role: secondary_ablation
+    execution:
+      kind: survival_qualification
+      seeds: [42, 43, 44, 45, 46, 47]
+      walk_forward_splits: 5
+      purge_bars: 60
+      embargo_bars: 20
+      additional_timesteps: 0
+      resource_lock: gpu_training
+    variants:
+      m1_reference:
+        config: config/research/m1_opportunity_reference.yaml
+        architecture: tcn
+        role: reference
+      shared_opportunities:
+        config: config/research/mtf_shared_opportunities_m1_history.yaml
+        architecture: mtf_reasoning
+        role: treatment
+      completed_history:
+        config: config/research/mtf_shared_opportunities_with_history.yaml
+        architecture: mtf_reasoning
+        role: treatment
+
+  survival_policy:
+    domain: policy
+    summary: Qualify the registered setup-conditioned policy and its matched policy control before any portfolio optimization.
+    selection_role: primary_feasibility
+    execution:
+      kind: survival_qualification
+      seeds: [42, 43, 44, 45, 46, 47]
+      walk_forward_splits: 5
+      purge_bars: 60
+      embargo_bars: 20
+      additional_timesteps: 0
+      resource_lock: gpu_training
+    variants:
+      setup_conditioned:
+        config: config/research/survival_trade_setup_mtf_conditioned.yaml
+        architecture: mtf_reasoning
+        role: primary_candidate
+      hybrid_control:
+        config: config/research/survival_trade_setup_mtf_control.yaml
+        architecture: mtf_reasoning
+        role: matched_secondary_control
+      candidate_geometry:
+        config: config/research/survival_trade_setup_candidate_geometry.yaml
+        architecture: mtf_reasoning
+        role: secondary_challenger
+        authorization: price_training_authorized
+
+
+    assemblies:
+      setup_policy: [setup_conditioned]
+      hybrid_comparison: [hybrid_control]
+      geometry_challenger: [candidate_geometry]
+
+  checkpoint_repeatability:
+    domain: validation
+    summary: Reproduce each qualified checkpoint twice on the development split and require identical deterministic ledgers.
+    selection_role: prerequisite
+    execution:
+      kind: checkpoint_repeatability
+      seeds: [42, 43, 44, 45, 46, 47]
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 0
+      resource_lock: null
+    variants:
+      deterministic_replay:
+        role: prerequisite
+
+  portfolio_value:
+    domain: portfolio
+    summary: Continue every qualified primary checkpoint under the frozen log-equity-growth objective and compare it with always-no-trade.
+    selection_role: primary_selection
+    execution:
+      kind: checkpoint_continuation
+      seeds: [42, 43, 44, 45, 46, 47]
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 2000000
+      resource_lock: gpu_training
+    variants:
+      qualified_policy:
+        role: treatment
+        overrides:
+          - env.reward_mode=equity_log_growth
+      always_no_trade:
+        role: primary_control
+
+  account_robustness:
+    domain: robustness
+    summary: Replay the frozen finalist under the registered maximum-loss policies without retraining.
+    selection_role: secondary_diagnostic
+    execution:
+      kind: checkpoint_replay
+      seeds: [42, 43, 44, 45, 46, 47]
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 0
+      resource_lock: null
+    variants:
+      static:
+        role: reference
+        overrides: [ftmo.max_drawdown_mode=static]
+      end_of_day:
+        role: stress
+        overrides: [ftmo.max_drawdown_mode=eod]
+      intraday_trailing:
+        role: stress
+        overrides: [ftmo.max_drawdown_mode=intraday_trailing]
+
+  execution_robustness:
+    domain: execution
+    summary: Replay the frozen finalist under transaction-cost and missing-quote stresses.
+    selection_role: secondary_diagnostic
+    execution:
+      kind: checkpoint_replay
+      seeds: [42, 43, 44, 45, 46, 47]
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 0
+      resource_lock: null
+    variants:
+      recorded_costs:
+        role: reference
+      adverse_slippage:
+        role: stress
+        overrides: [evaluation.tick_fill_slippage_points=1.0]
+      quote_wait:
+        role: stress
+        overrides: [execution.max_tick_quote_wait_ms=250.0]
+
+  exposed_report:
+    domain: reporting
+    summary: Open the exposed 2026 interval exactly once after the finalist and robustness evidence are frozen.
+    selection_role: report_only
+    execution:
+      kind: report_only_replay
+      seeds: [42, 43, 44, 45, 46, 47]
+      walk_forward_splits: 0
+      purge_bars: 0
+      embargo_bars: 0
+      additional_timesteps: 0
+      resource_lock: null
+    variants:
+      frozen_finalist:
+        role: report_only

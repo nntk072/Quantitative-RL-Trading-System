@@ -32,10 +32,10 @@ Brief technical analysis of the problem and why your approach works.
 |------|---------|
 | path/to/new.py | What it does |
 
-## Implementation Steps
-1. Step one — specific action
-2. Step two — specific action
-3. ...
+## Implementation changes
+Describe the implementation activities by their actual domain responsibility and
+execution dependencies. Do not use opaque labels such as `Step 1`, `Part 2`,
+`Gate 3`, or arbitrary variant numbers; include exact code and artifact names.
 
 ## Tests to Add
 | Test | What it verifies |

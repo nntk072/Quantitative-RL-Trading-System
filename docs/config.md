@@ -15,7 +15,8 @@ settings used by a checkpoint.
 | `config/variants/` | Per-variant settings, including risk configuration. |
 | `config/experiments.yaml` | Selectable variant matrix and comparison definitions. |
 | `config/variant_catalog.yaml` | Classification metadata used to generate the reader-facing model catalog; it is not a runtime settings source. |
-| `config/research/` and `config/experiment_runs/` | Named research/run inputs that preserve explicit experiment identity. |
+| `config/research/experiments.yaml` | Active domain-oriented prospective research catalog. |
+| `config/experiment_runs/` | Small maintained examples for the general run controller; historical run definitions are archived as evidence. |
 
 The configuration schema rejects unknown or structurally incompatible
 settings. Add a new key to its owning configuration section and consumer,

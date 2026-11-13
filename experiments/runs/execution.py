@@ -126,17 +126,14 @@ from experiments.runs.state_store import (
 from experiments.runs.state_store import (
     validate_inputs as validate_inputs,
 )
+from training.configuration.variant_resolution import resolve_variant, train_args
 
-TRAIN_ONE_VARIANT_SCRIPT = (
-    ROOT / "scripts" / "research" / "frozen-launches" / "train_one_variant.sh"
-)
 RESOURCE_SAMPLER_SCRIPT = ROOT / "compute" / "slurm" / "resources.py"
 
 __all__ = [
     "DEFAULT_VARIANTS",
     "RESOURCE_SAMPLER_SCRIPT",
     "ROOT",
-    "TRAIN_ONE_VARIANT_SCRIPT",
     "action_space_matches_width",
     "archive_initial_checkpoints",
     "atomic_json",
@@ -1147,11 +1144,49 @@ def main() -> int:
                 ),
             },
         )
-        cmd = (
-            [str(args.test_worker), key]
-            if args.test_worker
-            else ["bash", str(TRAIN_ONE_VARIANT_SCRIPT)]
-        )
+        if args.test_worker:
+            cmd = [str(args.test_worker), key]
+        else:
+            resolved_variant = resolve_variant(
+                str(job["variant"]),
+                steps=int(args.timesteps),
+                seeds=[int(job["seed"])],
+                config_overrides=[
+                    line
+                    for line in experiment_run_config_override_lines(config_overrides).splitlines()
+                    if line
+                ],
+            )
+            atomic_json(
+                run_out / "resolved_config.json",
+                {
+                    **resolved_variant,
+                    "seed": int(job["seed"]),
+                    "train_args": train_args(resolved_variant, int(job["seed"])),
+                },
+            )
+            cmd = [
+                sys.executable,
+                "-u",
+                "-m",
+                "training.runner.training",
+                *train_args(resolved_variant, int(job["seed"])),
+                "--out",
+                str(run_out),
+            ]
+            if resume_checkpoint is not None:
+                cmd.extend(("--resume-checkpoint", str(resume_checkpoint)))
+            if args.fast_reports:
+                cmd.extend(
+                    (
+                        "output.report_profile=experiment_run_fast",
+                        "output.max_order_charts=0",
+                        "output.save_html=false",
+                    )
+                )
+            cmd.append(f"env.data_source={args.data_source}")
+            if evaluation.get("selection_allowed", False):
+                cmd.append("--allow-locked-oos-for-selection")
         if worker_nodes:
             cmd = worker_command(
                 cmd,
@@ -1188,10 +1223,7 @@ def main() -> int:
         if worker_node is not None:
             # Slurm assigns this step's GPU; it is logical device zero in the worker.
             env.pop("CUDA_VISIBLE_DEVICES", None)
-            env["EXPERIMENT_RUN_WORKER_PID_FILE"] = str(run_out / "worker_process.json")
         env.pop("RESUME_CHECKPOINT", None)
-        if resume_checkpoint is not None:
-            env["RESUME_CHECKPOINT"] = str(resume_checkpoint)
         handle = logpath.open("a", encoding="utf-8")
         handle.write(
             f"{utc()} START key={key} attempt={attempt} "
@@ -1203,6 +1235,11 @@ def main() -> int:
         proc = subprocess.Popen(
             cmd, cwd=ROOT, env=env, stdout=handle, stderr=subprocess.STDOUT, start_new_session=True
         )
+        if worker_node is not None:
+            atomic_json(
+                run_out / "worker_process.json",
+                {"hostname": worker_node, "pid": int(proc.pid)},
+            )
         job.update(status="running", pid=proc.pid, started=utc(), log=str(logpath))
         running[key] = (proc, handle, job)
         record(

@@ -1,4 +1,4 @@
-# Gate II B: M1 history with the same MTF opportunities and policy distribution as C.
+# Shared multi-timeframe opportunities without completed higher-timeframe history.
 account:
   initial_balance: 100000.0
 

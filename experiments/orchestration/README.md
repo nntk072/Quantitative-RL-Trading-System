@@ -12,4 +12,4 @@ written report.
 
 Focused tests are in `tests/unit/experiments/`. See the
 [experiment run guide](../../experiments/runs/README.md) and
-[research execution plan](../../docs/operations/research_execution_plan.md).
+[research execution plan](../../docs/research/workflow.md).

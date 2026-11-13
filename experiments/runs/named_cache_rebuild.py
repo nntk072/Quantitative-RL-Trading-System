@@ -65,7 +65,7 @@ VARIANTS = (
     "ladder_a0_flat_po3",
     "ladder_a0_flat_dist",
 )
-EXPERIMENT_RUN_VARIANTS_PATH = ROOT / "config" / "experiment_runs" / "variant_list.txt"
+EXPERIMENT_RUN_VARIANTS_PATH = ROOT / "config" / "experiment_runs" / "variants.txt"
 REQUIRED_EXISTING_CACHE_FILES = {
     name
     for cache_name in (
@@ -359,10 +359,8 @@ def plan() -> list[dict[str, Any]]:
         for line in EXPERIMENT_RUN_VARIANTS_PATH.read_text().splitlines()
         if line.strip()
     ]
-    if len(names) != 18 or len(names) != len(set(names)):
-        raise RuntimeError(
-            "the historical experiment run variant list must contain 18 unique variants"
-        )
+    if not names or len(names) != len(set(names)):
+        raise RuntimeError("the experiment-run variant list must contain unique variants")
     bindings: dict[str, str] = {}
     for name in names:
         resolved = resolve_variant(name, steps=100_000, seeds=[42])
@@ -370,8 +368,6 @@ def plan() -> list[dict[str, Any]]:
         if relative_cache_path not in relative_cache_paths:
             raise RuntimeError(f"{name} maps outside the four verified feature profiles")
         bindings[name] = relative_cache_path
-    if set(bindings.values()) != relative_cache_paths:
-        raise RuntimeError("not every prebuilt feature profile is referenced by the experiment run")
     rows[0]["experiment_run_variant_cache_bindings"] = bindings
     return rows
 

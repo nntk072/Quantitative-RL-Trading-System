@@ -53,7 +53,7 @@ Scoped checks while editing do not count. Do not invoke these checks through an
 architecture-mismatched `uv` executable.
 
 Do **not** run `pytest tests/ -v` before every commit — only the tests that cover
-this change. Full-suite pytest is GitHub CI / Orchestra phase 9.
+this change. Full-suite pytest is the GitHub CI and Orchestra verification responsibility.
 
 Never force-push to main/master without explicit approval.
 

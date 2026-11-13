@@ -1,37 +1,22 @@
-# Experiment-run lifecycle
+# Durable experiment runs
 
-`experiments/runs/` owns run identity, status, resume/recovery records, and
-handoff between resolved variants, training, evaluation, and summaries. It
-coordinates attempts; it does not change the scientific meaning of a variant
-or the simulator's execution rules.
+This package manages training-run identity, attempts, checkpoints, retry
+safety, resume, and status reporting. It does not define the scientific
+meaning of a variant or the simulator's execution rules.
 
-Before a run starts, the resolver and manifest should capture selected
-variants, seeds, data/cache identity, source revision, budget, and effective
-configuration. Recovery validates these fields and checkpoint lineage before
-resuming. A new scientific factor or changed resolved setting requires a new
-run identity; an infrastructure retry may remain within the same run only
-when its fingerprint is unchanged and attempt history is preserved.
+The run manifest binds the selected configuration to source revision, data
+and feature-cache identity, random seed, budget, and model settings. A retry
+may reuse the run identity only when its fingerprint is unchanged; a changed
+factor creates a different run. Recovery must validate checkpoint lineage
+and previously recorded artifacts before continuing.
 
-Focused tests are under `tests/unit/experiments/`; cross-package worker
-lifecycle checks are under training and integration suites. See the
-[experiment package guide](../README.md),
+`experiments/research/execution.py` separately manages source-bound
+research command bundles, including independent data and evaluation work.
+Those records are consolidated by
+`experiments/research/reporting.py` using explicit domain, experiment,
+component, variant, seed, command, and artifact identities. Neither engine
+should infer experimental meaning from a filename or directory suffix.
+
+See [experiment framework](../README.md),
 [reproducibility](../../docs/concepts/reproducibility.md), and
 [run an experiment](../../docs/how-to/run_experiment.md).
-
-## UML module view
-
-```mermaid
-classDiagram
-    class OrchestrationModule
-    class ExecutionModule
-    class StateStoreModule
-    class CheckpointsModule
-    class ArtifactValidationModule
-    class StatusModule
-    class ExperimentRunRecord
-    OrchestrationModule ..> ExecutionModule : controls lifecycle
-    ExecutionModule ..> StateStoreModule : records attempts
-    ExecutionModule ..> CheckpointsModule : validates lineage
-    ArtifactValidationModule ..> CheckpointsModule : checks artifacts
-    StatusModule ..> ExperimentRunRecord : reports state
-```

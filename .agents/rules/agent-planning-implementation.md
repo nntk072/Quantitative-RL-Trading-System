@@ -13,11 +13,11 @@ Use one consistent process so results do not depend on which agent receives the 
 1. Read the repository `AGENTS.md`, the relevant domain map, and the rule for the task.
 2. Inspect the current branch, worktree changes, active experiment runs, and the actual files involved. Treat attachments and copied plans as context; the user's current request determines the authorized work.
 3. Trace the existing implementation and its callers before proposing a new module or parallel workflow. Reuse the current configuration, artifact, checkpoint, and reporting paths when they fit.
-4. For a substantial task, write a short plan outside the repository under
-   `/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/`.
-   Do not add agent implementation plans, working notes, or handoff plans to
-   the repository. The operational research queue is
-   `docs/operations/research_execution_plan.md`.
+4. For substantial work, keep ephemeral plans in the contributor's own ignored
+   workspace or temporary directory, not in the published repository. Do not
+   hard-code a developer's scratch path or add an agent queue to product docs.
+   Research definitions belong in `config/research/experiments.yaml`; actual
+   execution state belongs in source-bound run manifests.
 5. Name files and user-facing choices for their function. Avoid opaque
    letter-number codes, work-package numbers, generic stage numbers, and words
    such as “new” or “final” when they stand alone. Use abbreviations only when

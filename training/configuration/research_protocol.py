@@ -10,7 +10,7 @@ from typing import Any
 
 from omegaconf import DictConfig, OmegaConf
 
-PROTOCOL_SCHEMA_VERSION = "research-execution-protocol-v2"
+PROTOCOL_SCHEMA_VERSION = 1
 EXPECTED_DEVELOPMENT = ("2024-12-30", "2025-12-31")
 EXPECTED_EXPOSED = ("2026-01-01", "2026-10-16")
 EXPECTED_SEEDS = (42, 43, 44, 45, 46, 47)
@@ -113,14 +113,17 @@ def validate_research_protocol(protocol: Mapping[str, Any]) -> None:
         path = policy.get(key)
         if not isinstance(path, str) or not path.startswith("config/research/"):
             raise ValueError(f"policy.{key} must identify a repository research config")
-    gate_ii = _mapping(policy.get("gate_ii_ablation_configs"), "policy.gate_ii_ablation_configs")
-    expected_gate_ii = {
-        "A": "config/research/m1_opportunity_reference.yaml",
-        "B": "config/research/mtf_shared_opportunities_m1_history.yaml",
-        "C": "config/research/mtf_shared_opportunities_with_history.yaml",
+    candidate_history = _mapping(
+        policy.get("candidate_history_ablation_configs"),
+        "policy.candidate_history_ablation_configs",
+    )
+    expected_candidate_history = {
+        "m1_reference": "config/research/m1_opportunity_reference.yaml",
+        "shared_opportunities": "config/research/mtf_shared_opportunities_m1_history.yaml",
+        "completed_history": "config/research/mtf_shared_opportunities_with_history.yaml",
     }
-    if dict(gate_ii) != expected_gate_ii:
-        raise ValueError("Gate II A/B/C config identities differ from the registered ablation")
+    if dict(candidate_history) != expected_candidate_history:
+        raise ValueError("candidate-history config identities differ from the registered ablation")
 
     replication = _mapping(protocol.get("replication"), "replication")
     seeds = tuple(replication.get("seeds", ()))
