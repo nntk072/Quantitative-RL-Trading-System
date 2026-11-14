@@ -67,11 +67,25 @@ class PhaseCritiqueMixin(PipelineMixinBase):
             except (RuntimeError, TimeoutError) as exc:
                 click.echo(f"  WARNING: {model.display_name} failed: {exc}", err=True)
                 self._record_model_call(
-                    model, prompt, str(exc), self.state.task_id, False, "critic"
+                    model,
+                    prompt,
+                    str(exc),
+                    self.state.task_id,
+                    False,
+                    "critic",
+                    session_name=session_name,
                 )
                 continue
             self.state.add_critic_output(model.display_name, output, session_name)
-            self._record_model_call(model, prompt, output, self.state.task_id, True, "critic")
+            self._record_model_call(
+                model,
+                prompt,
+                output,
+                self.state.task_id,
+                True,
+                "critic",
+                session_name=session_name,
+            )
             successes += 1
         if successes == 0:
             raise RuntimeError("All critics failed")

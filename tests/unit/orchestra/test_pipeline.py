@@ -66,6 +66,19 @@ def test_dry_run_reaches_done(tmp_path, monkeypatch) -> None:
     assert "## 9. Verification" in text
 
 
+def test_pipeline_uses_adaptive_counts_and_keeps_explicit_zero(tmp_path) -> None:
+    pipeline = Pipeline(workspace=tmp_path, dry_run=True)
+    pipeline.state = TaskState("adaptive", "task", pipeline.state_dir)
+    pipeline.state.data.update({"complexity": "medium", "tier": "T2"})
+
+    assert pipeline._effective_planner_count() == 1
+    assert pipeline._effective_critic_count() == 0
+    assert pipeline._effective_reviewer_count() == 1
+
+    pipeline.state.data["route"] = {"planner_count": 0}
+    assert pipeline._effective_planner_count() == 0
+
+
 def test_run_closes_tmux_when_finished(tmp_path, monkeypatch) -> None:
     pipeline = Pipeline(workspace=tmp_path, dry_run=False)
     closed: list[str | None] = []
@@ -635,7 +648,9 @@ def test_critique_records_success_after_another_critic_fails(tmp_path, monkeypat
     monkeypatch.setattr(
         pipeline,
         "_record_model_call",
-        lambda _model, _prompt, output, _task_id, success, _role: records.append((success, output)),
+        lambda _model, _prompt, output, _task_id, success, _role, **_kwargs: records.append(
+            (success, output)
+        ),
     )
 
     pipeline._phase_critique()

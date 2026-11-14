@@ -72,11 +72,25 @@ class PhasePlanningMixin(PipelineMixinBase):
             except (RuntimeError, TimeoutError) as exc:
                 click.echo(f"  WARNING: {model.display_name} failed: {exc}", err=True)
                 self._record_model_call(
-                    model, prompt, str(exc), self.state.task_id, False, "planner"
+                    model,
+                    prompt,
+                    str(exc),
+                    self.state.task_id,
+                    False,
+                    "planner",
+                    session_name=session_name,
                 )
                 continue
             self.state.add_planner_output(model.display_name, output, session_name)
-            self._record_model_call(model, prompt, output, self.state.task_id, True, "planner")
+            self._record_model_call(
+                model,
+                prompt,
+                output,
+                self.state.task_id,
+                True,
+                "planner",
+                session_name=session_name,
+            )
             click.echo(f"  {model.display_name}: {len(output)} chars received")
             successes += 1
         if successes == 0:

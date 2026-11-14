@@ -7,6 +7,10 @@ from orchestra.routing import (
     RouteUpdate,
     apply_soft_guards,
     apply_triage_bootstrap,
+    default_delegation_counts,
+    effective_critic_count,
+    effective_planner_count,
+    effective_reviewer_count,
     is_goto_allowed,
     merge_route,
     parse_route_from_text,
@@ -166,6 +170,25 @@ def test_triage_bootstrap_t0() -> None:
         tier="T0",
     )
     assert nxt is Phase.IMPLEMENTATION
+
+
+def test_adaptive_delegation_uses_small_team_for_routine_work() -> None:
+    assert default_delegation_counts({"complexity": "trivial", "tier": "T0"}) == (0, 0, 0)
+    assert default_delegation_counts({"complexity": "trivial", "tier": "T3"}) == (2, 1, 2)
+    assert default_delegation_counts({"complexity": "medium", "tier": "T2"}) == (1, 0, 1)
+    assert default_delegation_counts({"complexity": "complex", "tier": "T3"}) == (2, 1, 2)
+
+
+def test_adaptive_delegation_preserves_explicit_zero_overrides() -> None:
+    data = _data(
+        complexity="complex",
+        tier="T3",
+        route={"planner_count": 0, "critic_count": 0, "reviewer_count": 1},
+    )
+    assert default_delegation_counts(data) == (2, 1, 2)
+    assert effective_planner_count(data, 2) == 0
+    assert effective_critic_count(data, 1) == 0
+    assert effective_reviewer_count(data, 2) == 1
 
 
 def test_soft_guard_forces_implementation_before_report() -> None:

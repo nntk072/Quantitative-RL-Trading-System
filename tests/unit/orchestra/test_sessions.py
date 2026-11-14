@@ -303,6 +303,8 @@ def test_collect_success_kills_session(tmp_path) -> None:
     (run_dir / "output.log").write_text("review synthesis done\n")
     (run_dir / "exit_code").write_text("0")
     sm.collect(session, timeout=1, idle_timeout=0)
+    assert sm.session_elapsed(session) is not None
+    assert sm.session_history[-1]["success"] is True
     assert any(c[:3] == ["tmux", "kill-session", "-t"] and c[3] == session for c in calls)
 
 

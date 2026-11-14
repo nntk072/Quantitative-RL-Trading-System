@@ -77,7 +77,7 @@ requests==2.34.2
 rpds-py==2026.6.3
 setuptools==84.2.1
 six==1.17.0
-soupsieve==2.10
+soupsieve==4.1
 stable-baselines3==2.9.0
 sympy==1.14.0
 tenacity==9.1.2

@@ -17575,10 +17575,34 @@
       "documented": false,
       "exported_from": "orchestra.handoff",
       "kind": "value",
+      "name": "_CONTEXT_FILE_CAP",
+      "numpy_style": false,
+      "package": "orchestra",
+      "source_line": 17,
+      "source_module": "orchestra.handoff",
+      "source_path": "orchestra/handoff.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "orchestra.handoff",
+      "kind": "value",
+      "name": "_CONTEXT_HASH_BYTES",
+      "numpy_style": false,
+      "package": "orchestra",
+      "source_line": 18,
+      "source_module": "orchestra.handoff",
+      "source_path": "orchestra/handoff.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "orchestra.handoff",
+      "kind": "value",
       "name": "_DIFF_CAP",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 14,
+      "source_line": 15,
       "source_module": "orchestra.handoff",
       "source_path": "orchestra/handoff.py"
     },
@@ -17590,7 +17614,7 @@
       "name": "_PLAN_CAP",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 13,
+      "source_line": 14,
       "source_module": "orchestra.handoff",
       "source_path": "orchestra/handoff.py"
     },
@@ -17602,7 +17626,7 @@
       "name": "_TEST_LINES",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 15,
+      "source_line": 16,
       "source_module": "orchestra.handoff",
       "source_path": "orchestra/handoff.py"
     },
@@ -17614,7 +17638,7 @@
       "name": "_cap",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 71,
+      "source_line": 76,
       "source_module": "orchestra.handoff",
       "source_path": "orchestra/handoff.py"
     },
@@ -18022,7 +18046,7 @@
       "name": "_explicit_skip",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 269,
+      "source_line": 291,
       "source_module": "orchestra.routing",
       "source_path": "orchestra/routing.py"
     },
@@ -18034,7 +18058,7 @@
       "name": "_multi_plan",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 282,
+      "source_line": 304,
       "source_module": "orchestra.routing",
       "source_path": "orchestra/routing.py"
     },
@@ -18046,7 +18070,7 @@
       "name": "_multi_review",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 296,
+      "source_line": 318,
       "source_module": "orchestra.routing",
       "source_path": "orchestra/routing.py"
     },
@@ -18094,7 +18118,7 @@
       "name": "_DIFF_CHARS",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 42,
+      "source_line": 44,
       "source_module": "orchestra.task_orchestration",
       "source_path": "orchestra/task_orchestration.py"
     },
@@ -18106,7 +18130,7 @@
       "name": "_MAX_PHASE_STEPS",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 43,
+      "source_line": 45,
       "source_module": "orchestra.task_orchestration",
       "source_path": "orchestra/task_orchestration.py"
     },
@@ -18118,7 +18142,7 @@
       "name": "_cmd_tail",
       "numpy_style": false,
       "package": "orchestra",
-      "source_line": 46,
+      "source_line": 48,
       "source_module": "orchestra.task_orchestration",
       "source_path": "orchestra/task_orchestration.py"
     },

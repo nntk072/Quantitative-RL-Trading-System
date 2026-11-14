@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -27,6 +28,7 @@ from .phase_verification import PhaseVerificationMixin
 from .pipeline_base import PipelineMixinBase
 from .router import ModelRouter
 from .routing import (
+    default_delegation_counts,
     effective_critic_count,
     effective_planner_count,
     effective_reviewer_count,
@@ -73,9 +75,9 @@ class Pipeline(
     def __init__(
         self,
         workspace: Path = WORKSPACE,
-        planner_count: int = 3,
-        critic_count: int = 2,
-        reviewer_count: int = 2,
+        planner_count: int | None = None,
+        critic_count: int | None = None,
+        reviewer_count: int | None = None,
         dry_run: bool = False,
         max_fixes: int = 3,
         keep_alive: bool = False,
@@ -84,9 +86,9 @@ class Pipeline(
 
         Args:
             workspace: Workspace directory used for file and process operations.
-            planner_count: Number specifying the planner count for this operation.
-            critic_count: Number specifying the critic count for this operation.
-            reviewer_count: Number specifying the reviewer count for this operation.
+            planner_count: Optional explicit planner count; ``None`` uses adaptive defaults.
+            critic_count: Optional explicit critic count; ``None`` uses adaptive defaults.
+            reviewer_count: Optional explicit reviewer count; ``None`` uses adaptive defaults.
             dry_run: Whether to enable or require the dry run.
             max_fixes: Numeric value used for the max fixes.
             keep_alive: Whether to enable or require the keep alive.
@@ -139,6 +141,9 @@ class Pipeline(
         task_id: str | None = None,
         success: bool = True,
         role: str = "general",
+        elapsed_seconds: float | None = None,
+        retry_count: int = 0,
+        session_name: str | None = None,
     ) -> None:
         """Estimate tokens and record cost + quota for a model call.
 
@@ -149,11 +154,25 @@ class Pipeline(
             task_id: Task id used by the operation described above.
             success: Whether to enable or require the success.
             role: Text or path value identifying the role.
+            elapsed_seconds: Measured call wall time, when available.
+            retry_count: Number of previous attempts for this model call.
+            session_name: Session whose runtime should be attached when known.
         """
         model_name = model.display_name
         prompt_tokens = self.cost_tracker.estimate_tokens(prompt)
         completion_tokens = self.cost_tracker.estimate_tokens(output)
-        self.cost_tracker.record_usage(model_name, prompt_tokens, completion_tokens, task_id)
+        if elapsed_seconds is None and session_name is not None:
+            elapsed_seconds = self.sessions.session_elapsed(session_name)
+        self.cost_tracker.record_usage(
+            model_name,
+            prompt_tokens,
+            completion_tokens,
+            task_id,
+            role=role,
+            success=success,
+            elapsed_seconds=elapsed_seconds,
+            retry_count=retry_count,
+        )
         self.router.quota.record_usage(model_name, prompt_tokens + completion_tokens, model=model)
         if self._state is not None:
             self._state.record_performance(
@@ -235,6 +254,47 @@ class Pipeline(
                 tier=tier,
             )
         finally:
+            if self._state is not None:
+                verification = self._state.data.get("verification_result")
+                verify_mode = (self._state.data.get("route") or {}).get("verify_mode", "full")
+                validation_status = (
+                    "skipped"
+                    if verify_mode == "skip"
+                    else "not_run"
+                    if verification is None
+                    else "passed"
+                    if gate_passed(verification)
+                    else "failed"
+                )
+                self.cost_tracker.record_task_outcome(
+                    self._state.task_id,
+                    self._state.phase.value
+                    if self._state.phase in (Phase.DONE, Phase.FAILED, Phase.PARKED)
+                    else "interrupted",
+                    metadata={
+                        "task_input_sha256": hashlib.sha256(
+                            self._state.task_description.encode("utf-8")
+                        ).hexdigest(),
+                        "validation_status": validation_status,
+                        "delegation_policy": (
+                            "adaptive"
+                            if all(
+                                count is None
+                                for count in (
+                                    self.planner_count,
+                                    self.critic_count,
+                                    self.reviewer_count,
+                                )
+                            )
+                            else "explicit_counts"
+                        ),
+                        "delegation_counts": {
+                            "planners": self._effective_planner_count(),
+                            "critics": self._effective_critic_count(),
+                            "reviewers": self._effective_reviewer_count(),
+                        },
+                    },
+                )
             self._close_task_sessions()
 
     def _close_task_sessions(self) -> None:
@@ -287,9 +347,13 @@ class Pipeline(
             self.state.data["fix_loop_max"] = self.max_fixes
             self.state.data.setdefault("route", {})
             route = self.state.data["route"]
-            route.setdefault("planner_count", self.planner_count)
-            route.setdefault("critic_count", self.critic_count)
-            route.setdefault("reviewer_count", self.reviewer_count)
+            for key, value in (
+                ("planner_count", self.planner_count),
+                ("critic_count", self.critic_count),
+                ("reviewer_count", self.reviewer_count),
+            ):
+                if value is not None:
+                    route.setdefault(key, value)
             self.state.save()
             click.echo(f"Task ID: {task_id}")
             click.echo(f"Task: {task_description}")
@@ -432,7 +496,9 @@ class Pipeline(
         Returns:
             Numeric result returned by ``_effective_planner_count``.
         """
-        return effective_planner_count(self.state.data, self.planner_count)
+        planner, _critic, _reviewer = default_delegation_counts(self.state.data)
+        default = self.planner_count if self.planner_count is not None else planner
+        return effective_planner_count(self.state.data, default)
 
     def _effective_critic_count(self) -> int:
         """Process critic count.
@@ -440,7 +506,9 @@ class Pipeline(
         Returns:
             Numeric result returned by ``_effective_critic_count``.
         """
-        return effective_critic_count(self.state.data, self.critic_count)
+        _planner, critic, _reviewer = default_delegation_counts(self.state.data)
+        default = self.critic_count if self.critic_count is not None else critic
+        return effective_critic_count(self.state.data, default)
 
     def _effective_reviewer_count(self) -> int:
         """Process reviewer count.
@@ -448,7 +516,9 @@ class Pipeline(
         Returns:
             Numeric result returned by ``_effective_reviewer_count``.
         """
-        return effective_reviewer_count(self.state.data, self.reviewer_count)
+        _planner, _critic, reviewer = default_delegation_counts(self.state.data)
+        default = self.reviewer_count if self.reviewer_count is not None else reviewer
+        return effective_reviewer_count(self.state.data, default)
 
     def _phase_agent_output(self, phase: Phase) -> str:
         """Process agent output.
@@ -501,9 +571,9 @@ class Pipeline(
             completed,
             self.state.data,
             update,
-            planner_count=self.planner_count,
-            critic_count=self.critic_count,
-            reviewer_count=self.reviewer_count,
+            planner_count=self._effective_planner_count(),
+            critic_count=self._effective_critic_count(),
+            reviewer_count=self._effective_reviewer_count(),
             verification_passed=verification_passed,
             tier=self._task_tier(),
         )
@@ -524,36 +594,42 @@ class Pipeline(
         self.state.set_phase(phase)
         if phase is not Phase.REPORTING:
             self._snapshot(self._backup_slot(phase))
-        if phase == Phase.TRIAGE:
-            self._phase_triage()
+        history_start = len(self.sessions.session_history)
+        phase_started = time.monotonic()
+        try:
+            if phase == Phase.TRIAGE:
+                self._phase_triage()
+            elif phase == Phase.PLANNING:
+                self._phase_planning()
+            elif phase == Phase.CRITIQUE:
+                self._phase_critique()
+            elif phase == Phase.SYNTHESIS:
+                self._phase_synthesis()
+            elif phase == Phase.IMPLEMENTATION:
+                self._phase_implementation()
+            elif phase == Phase.REVIEW:
+                self._phase_review()
+            elif phase == Phase.REVIEW_SYNTHESIS:
+                self._phase_review_synthesis()
+            elif phase == Phase.FIXING:
+                self._phase_fixing()
+            elif phase == Phase.VERIFICATION:
+                return self._phase_verification()
+            elif phase == Phase.REPORTING:
+                self._phase_report()
             return None
-        if phase == Phase.PLANNING:
-            self._phase_planning()
-            return None
-        if phase == Phase.CRITIQUE:
-            self._phase_critique()
-            return None
-        if phase == Phase.SYNTHESIS:
-            self._phase_synthesis()
-            return None
-        if phase == Phase.IMPLEMENTATION:
-            self._phase_implementation()
-            return None
-        if phase == Phase.REVIEW:
-            self._phase_review()
-            return None
-        if phase == Phase.REVIEW_SYNTHESIS:
-            self._phase_review_synthesis()
-            return None
-        if phase == Phase.FIXING:
-            self._phase_fixing()
-            return None
-        if phase == Phase.VERIFICATION:
-            return self._phase_verification()
-        if phase == Phase.REPORTING:
-            self._phase_report()
-            return None
-        return None
+        finally:
+            calls = self.sessions.session_history[history_start:]
+            if calls:
+                elapsed = [item["elapsed_seconds"] for item in calls if "elapsed_seconds" in item]
+                self.cost_tracker.record_batch(
+                    self.state.task_id,
+                    phase.value,
+                    time.monotonic() - phase_started,
+                    [float(item) for item in elapsed],
+                    len(calls),
+                    sum(bool(item.get("success")) for item in calls),
+                )
 
     def _echo_cmd(self, model: Model, role: str | None = None) -> None:
         """Process cmd.
@@ -674,6 +750,7 @@ class Pipeline(
             retries = 0
             max_retries = 2
             while retries <= max_retries:
+                attempt_started = time.monotonic()
                 try:
                     session, output = self._invoke(
                         candidate,
@@ -698,6 +775,8 @@ class Pipeline(
                         self.state.task_id,
                         success=False,
                         role=role,
+                        elapsed_seconds=time.monotonic() - attempt_started,
+                        retry_count=idx + retries,
                     )
                     self.router.health.record_failure(
                         candidate,
@@ -737,6 +816,8 @@ class Pipeline(
                         self.state.task_id,
                         success=True,
                         role=role,
+                        elapsed_seconds=time.monotonic() - attempt_started,
+                        retry_count=idx + retries,
                     )
                     self.router.health.record_success(candidate)
                     if candidate.native_resume:

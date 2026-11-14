@@ -29,8 +29,8 @@ command_group = click.Group()
 )
 @click.option(
     "--planners",
-    default=3,
-    help="Number of parallel planners.",
+    default=None,
+    help="Override the adaptive planner count (zero disables planners).",
     type=int,
 )
 @click.option(
@@ -40,14 +40,14 @@ command_group = click.Group()
 )
 @click.option(
     "--reviewers",
-    default=2,
-    help="Number of reviewers.",
+    default=None,
+    help="Override the adaptive reviewer count (zero disables reviewers).",
     type=int,
 )
 @click.option(
     "--critics",
-    default=2,
-    help="Number of critics.",
+    default=None,
+    help="Override the adaptive critic count (zero disables critics).",
     type=int,
 )
 @click.option(
@@ -83,9 +83,9 @@ def run(
     task: str,
     complexity: str | None,
     tier: str | None,
-    planners: int,
-    reviewers: int,
-    critics: int,
+    planners: int | None,
+    reviewers: int | None,
+    critics: int | None,
     dry_run: bool,
     escalate: bool,
     max_fixes: int,

@@ -35,6 +35,7 @@ class SessionManager:
         self.workspace = workspace
         self.dry_run = dry_run
         self.active_sessions: dict[str, dict[str, Any]] = {}
+        self.session_history: list[dict[str, Any]] = []
         self.runs_dir = workspace / "outputs" / "orchestra" / "state" / "runs"
 
     @staticmethod
@@ -459,7 +460,32 @@ class SessionManager:
             "exit_file": str(exit_file),
             "job_file": str(job_file),
         }
+        self.session_history.append(
+            {
+                "session": session_name,
+                "role": role,
+                "started": self.active_sessions[session_name]["started"],
+            }
+        )
         return session_name
+
+    def session_elapsed(self, session_name: str) -> float | None:
+        """Return measured wall time for a completed session when available.
+
+        Args:
+            session_name: Name assigned to the model subprocess session.
+
+        Returns:
+            Elapsed seconds, or ``None`` if the session has no recorded duration.
+        """
+        return next(
+            (
+                float(item["elapsed_seconds"])
+                for item in reversed(self.session_history)
+                if item["session"] == session_name and item.get("elapsed_seconds") is not None
+            ),
+            None,
+        )
 
     def exit_code(self, session_name: str) -> int | None:
         """Return the agent exit code if the runner has finished, else None.
@@ -702,6 +728,15 @@ class SessionManager:
             succeeded = True
             return cleaned
         finally:
+            active = self.active_sessions.get(session_name, {})
+            started = active.get("started")
+            for item in reversed(self.session_history):
+                if item["session"] == session_name:
+                    item["elapsed_seconds"] = (
+                        max(0.0, time.time() - started) if started is not None else None
+                    )
+                    item["success"] = succeeded
+                    break
             if not (keep_alive and succeeded):
                 self.kill(session_name)
 

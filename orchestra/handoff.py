@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from dataclasses import asdict, dataclass, field
@@ -13,6 +14,8 @@ from .prompts import load_prompt
 _PLAN_CAP = 4000
 _DIFF_CAP = 8000
 _TEST_LINES = 40
+_CONTEXT_FILE_CAP = 64
+_CONTEXT_HASH_BYTES = 1_000_000
 
 
 @dataclass
@@ -32,6 +35,7 @@ class HandoffBundle:
     source_tmux: str = ""
     native_session_id: str | None = None
     resume_hint: str = ""
+    context_manifest: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the bundle fields into a JSON-compatible mapping.
@@ -65,6 +69,7 @@ class HandoffBundle:
             source_tmux=data.get("source_tmux", ""),
             native_session_id=data.get("native_session_id"),
             resume_hint=data.get("resume_hint", ""),
+            context_manifest=dict(data.get("context_manifest") or {}),
         )
 
 
@@ -146,6 +151,57 @@ def git_diff_excerpt(workspace: Path, limit: int = _DIFF_CAP) -> str:
     return _cap(result.stdout or "", limit)
 
 
+def build_context_manifest(workspace: Path) -> dict[str, Any]:
+    """Identify the bounded source context for a handoff without copying it.
+
+    Args:
+        workspace: Repository root whose revision and dirty paths are recorded.
+
+    Returns:
+        Revision, dirty state, and bounded file identities, or an empty mapping
+        when Git metadata cannot be read.
+    """
+    # shortcut: hash at most 64 small files, raise limits when large changesets need stronger identity.
+    try:
+        revision = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=workspace, text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        tracked = subprocess.check_output(
+            ["git", "diff", "--name-only", "HEAD", "-z"], cwd=workspace
+        )
+        untracked = subprocess.check_output(
+            ["git", "ls-files", "--others", "--exclude-standard", "-z"], cwd=workspace
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return {}
+
+    tracked_paths = {Path(item.decode(errors="replace")) for item in tracked.split(b"\0") if item}
+    untracked_paths = {
+        Path(item.decode(errors="replace")) for item in untracked.split(b"\0") if item
+    }
+    changed = sorted(tracked_paths | untracked_paths, key=lambda item: item.as_posix())
+    files: list[dict[str, str]] = []
+    for relative in changed[:_CONTEXT_FILE_CAP]:
+        entry = {
+            "path": relative.as_posix(),
+            "state": "untracked" if relative in untracked_paths else "modified",
+        }
+        path = workspace / relative
+        if not path.exists():
+            entry["state"] = "deleted"
+        elif (
+            path.is_file() and not path.is_symlink() and path.stat().st_size <= _CONTEXT_HASH_BYTES
+        ):
+            entry["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        files.append(entry)
+    return {
+        "revision": revision,
+        "dirty": bool(changed),
+        "files": files,
+        "omitted_files": max(0, len(changed) - len(files)),
+    }
+
+
 def build_handoff_bundle(
     state_data: dict[str, Any],
     workspace: Path,
@@ -186,6 +242,7 @@ def build_handoff_bundle(
         source_tmux=source_tmux,
         native_session_id=native_session_id or state_data.get("native_session_id"),
         resume_hint=resume_hint or f"Continue {state_data.get('phase', '')} without re-planning.",
+        context_manifest=build_context_manifest(workspace),
     )
 
 
@@ -231,6 +288,20 @@ def render_handoff_prompt(bundle: HandoffBundle) -> str:
     """
     template = load_prompt("handoff_continuation")
     open_items = "\n".join(f"- {item}" for item in bundle.open_items) or "- (none)"
+    context = bundle.context_manifest
+    context_text = ""
+    if context:
+        context_text = (
+            f"revision={context.get('revision', 'unknown')}; dirty={context.get('dirty', False)}\n"
+            + "\n".join(
+                f"- {item.get('path', '?')} [{item.get('state', 'unknown')}]"
+                + (f" sha256={item['sha256']}" if item.get("sha256") else "")
+                for item in context.get("files", [])
+            )
+        )
+        omitted = int(context.get("omitted_files", 0))
+        if omitted:
+            context_text += f"\n- {omitted} additional paths omitted"
     return (
         template.replace("{{goal}}", bundle.goal)
         .replace("{{phase}}", bundle.phase)
@@ -242,4 +313,5 @@ def render_handoff_prompt(bundle: HandoffBundle) -> str:
         .replace("{{last_test_tail}}", bundle.last_test_tail)
         .replace("{{open_items}}", open_items)
         .replace("{{source_model}}", bundle.source_model)
+        .replace("{{context_manifest}}", context_text or "(unavailable)")
     )

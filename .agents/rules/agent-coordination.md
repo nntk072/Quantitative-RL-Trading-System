@@ -69,6 +69,12 @@ only when their owned files and outputs are disjoint. Run QA and independent
 review after the relevant implementation is available; they may inspect the
 same source, but only the assigned writer may edit production files.
 
+Root-only execution is valid and preferred for small or dependency-sequential
+tasks. Delegate only when independent work is likely to shorten the critical
+path; there is no minimum agent count. Reuse the canonical role identities
+across tasks. Platform-specific profiles are adapters to this shared ownership
+contract and must not create duplicate roles.
+
 ## Responsibilities and file ownership
 
 | Role | Owns | May edit | Must not take over |
@@ -120,6 +126,9 @@ applicable `AGENTS.md`, domain map, and rules itself before editing. The
 coordinator shares verified findings and decisions so other agents do not
 repeat broad discovery. Keep handoffs to a concise summary: files/symbols
 checked, finding or patch, exact checks and outcomes, unresolved dependency.
+For resumptions, prefer a bounded manifest with repository revision, dirty
+paths, and hashes for small changed source files; use paths and artifact
+references for large details instead of copying conversations, source, or logs.
 
 ## Agent logs and handoff files
 

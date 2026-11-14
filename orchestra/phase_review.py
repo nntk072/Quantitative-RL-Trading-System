@@ -73,11 +73,25 @@ class PhaseReviewMixin(PipelineMixinBase):
             except (RuntimeError, TimeoutError) as exc:
                 click.echo(f"  WARNING: {model.display_name} failed: {exc}", err=True)
                 self._record_model_call(
-                    model, prompt, str(exc), self.state.task_id, False, "reviewer"
+                    model,
+                    prompt,
+                    str(exc),
+                    self.state.task_id,
+                    False,
+                    "reviewer",
+                    session_name=session_name,
                 )
                 continue
             self.state.add_reviewer_output(model.display_name, output, session_name)
-            self._record_model_call(model, prompt, output, self.state.task_id, True, "reviewer")
+            self._record_model_call(
+                model,
+                prompt,
+                output,
+                self.state.task_id,
+                True,
+                "reviewer",
+                session_name=session_name,
+            )
 
     def _phase_review_synthesis(self) -> None:
         """Phase 7: Synthesize multiple reviews into actionable report."""

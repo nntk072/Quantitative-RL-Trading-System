@@ -21,6 +21,11 @@ You are resuming work on an orchestra task. **Continue from where the previous a
 ## Diff excerpt
 {{diff_excerpt}}
 
+## Source context manifest
+{{context_manifest}}
+
+Treat the manifest revision and dirty-file hashes as context identity. Read the listed files from the shared workspace before editing; do not assume the excerpt is complete.
+
 ## Last test output (tail)
 {{last_test_tail}}
 

@@ -157,6 +157,9 @@ def cost(date: str | None, month: str | None) -> None:
         click.echo(f"  Prompt tokens:  {summary['prompt_tokens']:,}")
         click.echo(f"  Output tokens:  {summary['completion_tokens']:,}")
         click.echo(f"  Total cost:     ${summary['total_cost']:.6f}")
+        cached = summary["cached_prompt_tokens"]
+        click.echo(f"  Cached input:   {cached if cached is not None else 'unknown'}")
+        click.echo(f"  Retries:        {summary['retry_count']}")
         if summary["models"]:
             click.echo("\n  Per-model breakdown:")
             for model, info in summary["models"].items():
@@ -171,6 +174,9 @@ def cost(date: str | None, month: str | None) -> None:
         click.echo(f"  Prompt tokens:  {summary['prompt_tokens']:,}")
         click.echo(f"  Output tokens:  {summary['completion_tokens']:,}")
         click.echo(f"  Total cost:     ${summary['total_cost']:.6f}")
+        cached = summary["cached_prompt_tokens"]
+        click.echo(f"  Cached input:   {cached if cached is not None else 'unknown'}")
+        click.echo(f"  Retries:        {summary['retry_count']}")
     else:
         summary = tracker.get_daily_summary()
         click.echo(f"Cost Report: {summary['date']}")
@@ -179,6 +185,9 @@ def cost(date: str | None, month: str | None) -> None:
         click.echo(f"  Prompt tokens:  {summary['prompt_tokens']:,}")
         click.echo(f"  Output tokens:  {summary['completion_tokens']:,}")
         click.echo(f"  Total cost:     ${summary['total_cost']:.6f}")
+        cached = summary["cached_prompt_tokens"]
+        click.echo(f"  Cached input:   {cached if cached is not None else 'unknown'}")
+        click.echo(f"  Retries:        {summary['retry_count']}")
         if summary["models"]:
             click.echo("\n  Per-model breakdown:")
             for model, info in summary["models"].items():
@@ -210,6 +219,26 @@ def cost_task(task_id: str) -> None:
     click.echo(f"  Prompt tokens:    {task_cost['prompt_tokens']:,}")
     click.echo(f"  Output tokens:    {task_cost['completion_tokens']:,}")
     click.echo(f"  Total cost:       ${task_cost['total_cost']:.6f}")
+    click.echo(f"  Successful calls: {task_cost['successful_calls']}")
+    click.echo(
+        "  Cost source:      "
+        f"{task_cost['configured_cost_calls']} configured / "
+        f"{task_cost['fallback_cost_calls']} fallback estimates"
+    )
+    click.echo(f"  Token source:     {', '.join(task_cost['token_sources']) or 'unknown'}")
+    elapsed = task_cost["elapsed_seconds"]
+    cached = task_cost["cached_prompt_tokens"]
+    tool_calls = task_cost["tool_invocations"]
+    click.echo(f"  Call time:        {elapsed if elapsed is not None else 'unknown'}s")
+    click.echo(f"  Cached input:     {cached if cached is not None else 'unknown'}")
+    click.echo(f"  Tool invocations: {tool_calls if tool_calls is not None else 'unknown'}")
+    click.echo(f"  Retries:          {task_cost['retry_count']}")
+    click.echo(f"  Pipeline status:  {task_cost['pipeline_status'] or 'unknown'}")
+    metadata = task_cost["task_metadata"] or {}
+    if metadata:
+        click.echo(f"  Validation:       {metadata.get('validation_status', 'unknown')}")
+        click.echo(f"  Delegation mode:  {metadata.get('delegation_policy', 'unknown')}")
+        click.echo(f"  Delegation counts:{metadata.get('delegation_counts', {})}")
 
 
 @command_group.command()

@@ -266,6 +266,28 @@ def effective_reviewer_count(data: dict[str, Any], default: int) -> int:
     return default
 
 
+def default_delegation_counts(data: dict[str, Any]) -> tuple[int, int, int]:
+    """Choose a small default team from the triaged task complexity and tier.
+
+    Args:
+        data: Triage state containing task tier and complexity.
+
+    Returns:
+        Planner, critic, and reviewer counts in that order.
+
+    Explicit CLI and triage route counts still take precedence, including zero.
+    """
+    tier = str(data.get("tier") or "T2").upper()
+    complexity = str(data.get("complexity") or "medium").lower()
+    if tier == "T0":
+        return 0, 0, 0
+    if tier in {"T3", "T4"} or complexity == "complex":
+        return 2, 1, 2
+    if complexity == "trivial":
+        return 0, 0, 0
+    return 1, 0, 1
+
+
 def _explicit_skip(data: dict[str, Any]) -> frozenset[Phase]:
     """Process skip.
 
