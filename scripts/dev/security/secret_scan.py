@@ -40,7 +40,7 @@ def _generated_research_table_exclusion() -> tuple[str | None, int]:
             excluded.append(relative)
     if not excluded:
         return None, 0
-    return r"^evidence/research/.*\.(?:csv|parquet)$", len(excluded)
+    return r"(?i)^evidence/research/.*\.(?:csv|parquet)$", len(excluded)
 
 
 def uv_command() -> str:

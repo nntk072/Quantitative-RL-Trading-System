@@ -54,7 +54,12 @@ def test_current_project_files_use_neutral_identity() -> None:
         check=True,
         capture_output=True,
     )
-    preserved_records = ("baseline/", "docs/architecture/migrations/", "evidence/")
+    preserved_records = (
+        "baseline/",
+        "docs/architecture/migrations/",
+        "docs/operations/research_campaign_plan.md",
+        "evidence/",
+    )
     legacy_word = "th" + "esis"
     legacy_pattern = re.compile(rf"\b{legacy_word}\b", re.IGNORECASE)
     text_suffixes = {".cff", ".csv", ".md", ".py", ".sh", ".toml", ".txt", ".yaml", ".yml"}

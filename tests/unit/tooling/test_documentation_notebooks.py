@@ -61,6 +61,8 @@ def test_tier_a_notebook_over_runtime_limit_is_reported(
     original_import = importlib.import_module
 
     def import_module(name: str) -> object:
+        if name == "nbformat":
+            return SimpleNamespace(from_dict=lambda value: value)
         if name == "nbclient":
             return SimpleNamespace(NotebookClient=FastNotebookClient)
         return original_import(name)

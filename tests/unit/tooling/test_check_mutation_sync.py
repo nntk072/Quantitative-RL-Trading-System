@@ -26,6 +26,7 @@ def test_mutation_sync_keeps_documentation_dependencies(tmp_path: Path) -> None:
     uv.chmod(0o755)
 
     environment_vars = os.environ.copy()
+    environment_vars.pop("QRL_CHECK_NO_SYNC", None)
     environment_vars.update(
         {
             "QRL_PYTHON": str(python),

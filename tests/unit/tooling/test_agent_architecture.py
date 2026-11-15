@@ -95,6 +95,7 @@ def test_routing_rules_cover_known_unknown_and_sequential_work() -> None:
     extensions = (ROOT / ".agents/rules/extension-routing.md").read_text(encoding="utf-8")
     delegation = (ROOT / ".agents/rules/delegation.md").read_text(encoding="utf-8")
     effort = (ROOT / ".agents/rules/reasoning-effort.md").read_text(encoding="utf-8")
+    resources = (ROOT / ".agents/rules/triton-slurm.md").read_text(encoding="utf-8")
     assert "Known file or local text" in extensions
     assert "Code Review Graph" in extensions
     assert "Serena" in extensions and "Graphify" in extensions
@@ -105,3 +106,6 @@ def test_routing_rules_cover_known_unknown_and_sequential_work() -> None:
     assert "waits silently" in delegation
     assert "30 minutes" in delegation and "15 minutes" in delegation
     assert "XHigh" in effort and "High" in effort and "Medium" in effort
+    assert "Persistent tmux session cleanup" in resources
+    assert "shell prompt alone does not prove" in resources
+    assert "active allocations" in resources and "no child processes" in resources

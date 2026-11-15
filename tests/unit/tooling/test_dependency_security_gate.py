@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -75,15 +76,46 @@ def test_secret_scanner_uses_process_cpu_affinity(monkeypatch) -> None:
     assert _scanner_core_count() == 3
 
 
-def test_secret_scanner_excludes_generated_research_tables_only() -> None:
+def test_secret_scanner_excludes_generated_research_tables_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    evidence = tmp_path / "evidence/research"
+    evidence.mkdir(parents=True)
+    for filename in (
+        "candidate_actions.csv",
+        "nested/outcomes.parquet",
+        "upper.CSV",
+        "metadata.json",
+    ):
+        path = evidence / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("fixture", encoding="utf-8")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "evidence/research"], check=True)
+    monkeypatch.setattr("scripts.dev.security.secret_scan.ROOT", tmp_path)
+
     pattern, count = _generated_research_table_exclusion()
 
     assert pattern is not None
-    assert count > 0
+    assert count == 3
     assert re.fullmatch(pattern, "evidence/research/candidate_actions.csv")
     assert re.fullmatch(pattern, "evidence/research/nested/outcomes.parquet")
+    assert re.fullmatch(pattern, "evidence/research/upper.CSV")
     assert not re.fullmatch(pattern, "evidence/research/metadata.json")
     assert not re.fullmatch(pattern, "configuration/configuration_loader.py")
+
+
+def test_secret_scanner_has_no_exclusion_without_generated_tables(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    metadata = tmp_path / "evidence/research/metadata.json"
+    metadata.parent.mkdir(parents=True)
+    metadata.write_text("{}", encoding="utf-8")
+    subprocess.run(["git", "-C", str(tmp_path), "add", str(metadata)], check=True)
+    monkeypatch.setattr("scripts.dev.security.secret_scan.ROOT", tmp_path)
+
+    assert _generated_research_table_exclusion() == (None, 0)
 
 
 def test_empty_exception_file_is_valid(tmp_path: Path) -> None:

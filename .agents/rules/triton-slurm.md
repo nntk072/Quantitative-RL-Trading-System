@@ -376,7 +376,7 @@ present the 18-trainer projection as a direct measurement.
 | Job | GPUs | Typical request | Why |
 |-----|------|-----------------|-----|
 | One model (one TCN / GRU / Transformer, 20M) | **1** | Example GH200: `--gpus=gh200:1 --mem=512G --cpus-per-task=48 --time=12:00:00` | GH200 example only; size CPU/RAM/time for the chosen family, partition, and measured workload. |
-| Six-run matrix (overlay then baseline, three archs) | **2 GH200** | `--gpus=gh200:2 --mem=900G --cpus-per-task=128 --time=6:00:00` | Historical GH200 shape only. The GH200 experiment run cap does not set V100/A100/H100/H200/B300 caps. Check [current matrix scripts](../../scripts/compute/slurm/experiment_runs/) before use. |
+| Six-run matrix (overlay then baseline, three archs) | **2 GH200** | `--gpus=gh200:2 --mem=900G --cpus-per-task=128 --time=6:00:00` | Historical GH200 shape only. The GH200 experiment run cap does not set V100/A100/H100/H200/B300 caps. Check the [experiment-run documentation](../../docs/reference/experiment_runs.md) and registered configuration before use. |
 | 18-trainer full-split screen (experiment-run-specific) | **2 total, one per node** | GH200: `--nodes=2 --ntasks=2 --cpus-per-task=48 --gpus-per-node=gh200:1 --mem=512G --time=6:00:00` | Current active allocation shape: 18 workers across two nodes (9/node), 5 CPUs/worker, `n_envs=64`, shared bundle. Keep this distinct from two GPUs on one node; recheck cgroup memory and controller placement before reuse. |
 | V100 throughput probe (2026-10-16 user-authorized) | **1 V100, 2 trainers** | Actual probe: `gpu35`, `--gres=gpu:v100:1 --mem=192G --cpus-per-task=16 --time=4:00:00` | One V100 shared by two matched throughput workers. Benchmark-only; not research evidence or a validated general V100 cap. |
 
@@ -470,26 +470,10 @@ shape. Follow the current experiment-run documentation before starting work.
 | 3 | 1 GPU on each of 2 nodes, 6h, 900G per node | 2 per node | 64 |
 | 4 | 1 GPU on each of 2 nodes, 6h, 600G per node | 2 per node | 32 |
 
-The ordered subset can be selected with a whitespace-separated `VARIANTS`
-value; when omitted, all entries in `config/experiment_runs/variant_list.txt` are used.
-The tmux entrypoint passes these options through:
-
-```bash
-MODE=2 GPU_KIND=gh200 OUT_DIR=outputs/gpu_matrix_18_mode2 \
-  bash scripts/compute/slurm/experiment_runs/run_18variant_matrix_gh200_tmux.sh
-```
-
-Each run keeps logs under `<OUT_DIR>/logs/`: `all.log` contains the combined
-launcher and Slurm output, `orchestrator.log` contains the tmux wrapper output,
-and one `<variant>.log` file is written per trainer. Model artifacts and
-checkpoints remain under `<OUT_DIR>/<variant>/`.
-
-When the launcher is running inside an existing Slurm allocation, it checks
-the remaining allocation time before every batch. If fewer than 4.5 hours
-remain, it submits the unstarted variants with the same resource shape and
-the same output/checkpoint directory, then retires the old allocation after
-the replacement completes. A batch already in progress is never interrupted
-by this check.
+The old launcher, variant list, output layout, and continuation behavior have
+been retired. Do not use the historical commands or assume those paths exist;
+new runs must use the current registered experiment configuration and the
+documented run-artifact contract.
 
 These points were measured on Triton on 2026-10-08. Treat them as historical
 benchmark evidence only; they do not override the current research allocation
@@ -721,6 +705,17 @@ as a direct process in its allocation shell; do not create one Slurm step per
 test file or worker. A focused check expected to finish within 120 seconds may
 run on login only when it is demonstrably lightweight and the active workflow
 permits it. Record the allocation, command, and test summary in the task log.
+
+### Persistent tmux session cleanup
+
+Review `tmux list-sessions` at task start or finish when the session list has
+grown. Before retiring a session, inspect every pane's process tree and current
+Slurm jobs; a shell prompt alone does not prove that its allocation or task is
+finished. Keep sessions with running commands, active allocations, or uncertain
+ownership. Retire only sessions whose panes are idle and have no child processes
+or associated live jobs. Capture useful terminal output to the owning role's
+ignored `logs/agents/<role_name>/` directory before retiring it. Reuse a suitable
+existing session for new work, and preserve the session running the current task.
 
 ## Train + eval
 
