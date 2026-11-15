@@ -11,7 +11,7 @@ parameters:
     values: [gru, transformer]
   use_vae:
     # NOTE: qrl-train train raises NotImplementedError for
-    # --use-vae until the VAE pipeline exists (Master Roadmap Stage 6).
+    # --use-vae until the VAE pipeline exists.
     # Keep this at 0 until then; set to 1 once VAE lands.
     value: 0
   lr:

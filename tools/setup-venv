@@ -10,9 +10,9 @@ machine="$(uname -m)"
 case "$machine" in
   aarch64)
     cd "$REPO"
-    echo "Syncing $REPO/.venv (aarch64) ..."
-    "$UV_BIN" sync --extra dev
-    echo "Done. Activate with: source .venv/bin/activate"
+    echo "Syncing $REPO/.venv-arm (aarch64) ..."
+    UV_PROJECT_ENVIRONMENT="$REPO/.venv-arm" "$UV_BIN" sync --extra dev
+    echo "Done. Activate with: source .venv-arm/bin/activate"
     ;;
   x86_64)
     exec "$REPO/tools/setup-venv-x86"

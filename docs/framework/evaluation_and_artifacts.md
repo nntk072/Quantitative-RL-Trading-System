@@ -35,6 +35,6 @@ The curated [workflow API guide](../api/domains/workflows) links to the backend-
 
 An artifact manifest should identify the resolved configuration, source revision, data/cache identity, seed, evaluation protocol, and output files. Missing identity fields constrain what can be reproduced. Never infer a research result from a plot alone or treat a software trace as a strategy result.
 
-The [artifact reference](../reference/artifacts) describes storage formats, while [metrics](../reference/metrics) defines reported quantities. The [result registry](../reproduce/result_registry) states which findings can be regenerated and their evidence level. Reproduction levels distinguish an executable workflow from a result independently confirmed from complete source evidence.
+The [artifact reference](../reference/artifacts) describes storage formats, while [metrics](../reference/metrics) defines reported quantities. The [current research evidence status](../research/README) states which findings can be regenerated and their evidence level. Reproduction levels distinguish an executable workflow from a result independently confirmed from complete source evidence.
 
 See [Research](../research/README), [Reproduce](../reproduce/index), and the curated [workflow API guide](../api/domains/workflows), which links to generated evaluation and artifact references.

@@ -273,8 +273,8 @@ class DSRReward:
 class PnLReward:
     """Realized-PnL reward with soft daily-loss penalty from 1% of equity.
 
-    Used for Idea 1/2 trader-like training (``env.reward_mode: pnl``).
-    Baseline Idea 3 keeps :class:`DSRReward`.
+    Used when ``env.reward_mode`` is ``pnl``. The baseline reward mode uses
+    :class:`DSRReward` unless configuration selects another reward.
     """
 
     def __init__(

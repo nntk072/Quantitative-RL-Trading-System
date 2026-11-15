@@ -141,6 +141,8 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                         "order_type": "limit",
                         "reason": cancel_reason,
                         "decision_id": pending.get("decision_id", self._current_decision_id),
+                        "session_id": int(session_id),
+                        "decision_time": pending["decision_time"],
                         "trade_setup_candidate_id": (
                             None if selected_setup is None else int(selected_setup.candidate_id)
                         ),
@@ -258,6 +260,8 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                                 if is_limit_order
                                 else "entry_rejected_at_market_fill"
                             ),
+                            "session_id": int(session_id),
+                            "decision_time": pending["decision_time"],
                             "trade_setup_candidate_id": (
                                 None if selected_setup is None else int(selected_setup.candidate_id)
                             ),
@@ -355,7 +359,13 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                         "order_id": pending["order_id"],
                         "decision_id": pending.get("decision_id"),
                         "order_type": pending.get("order_type", "market"),
-                        "reason": "entry_blocked_before_fill",
+                        "reason": (
+                            "account_guardrail_before_scheduled_fill"
+                            if reason is not None
+                            else "entry_blocked_before_fill"
+                        ),
+                        "session_id": int(session_id),
+                        "decision_time": pending["decision_time"],
                         "trade_setup_candidate_id": (
                             None if selected_setup is None else int(selected_setup.candidate_id)
                         ),
@@ -383,6 +393,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                             selected.get("_selected_trade_setup_event_identity")
                         ),
                         "reason": "execution_blocked_before_scheduled_fill",
+                        "session_id": int(session_id),
                         "decision_time": pending["decision_time"],
                         "decision_bar_time": pending["decision_bar_time"],
                         "order_submission_time": pending["order_submission_time"],

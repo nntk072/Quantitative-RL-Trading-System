@@ -36,7 +36,7 @@ def test_build_audit_regeneration_command_supports_external_output_paths(
     command = shlex.split(captured["regeneration_command"])
     assert result == {"status": "captured"}
     assert command == [
-        ".venv/bin/python",
+        ".venv-arm/bin/python",
         "scripts/research/analysis/features/audit_observation_warmup_validity.py",
         "--config",
         "config/research/survival_trade_setup_mtf_conditioned.yaml",

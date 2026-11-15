@@ -1,4 +1,4 @@
-"""Idea 2 strategy: distribution after an opposing gap fails."""
+"""Distribution strategy for retracements after a failed opposing gap."""
 
 from __future__ import annotations
 
@@ -166,7 +166,7 @@ class DistributionStrategy(TradingStrategy):
         return self.previous_session_pd_eligible(row, direction)
 
     def entry_rejection_reason(self, *, direction: int, row: pd.Series) -> str:
-        """Return the explicit Idea 2 premium/discount rejection label.
+        """Return the premium/discount rejection label for this entry.
 
         Args:
             direction: Signed trade direction: 1 for long and -1 for short.
@@ -207,7 +207,7 @@ class DistributionStrategy(TradingStrategy):
         )
 
     def sl_reference(self, *, direction: int, row: FeatureRow | pd.Series) -> float | None:
-        """Long -> swept low, short -> swept high (Agent.md §14).
+        """Return the swept low for longs or swept high for shorts.
 
         Returns the raw reference level; the environment validates geometry
         against the entry price and rejects invalid stops.
@@ -217,7 +217,7 @@ class DistributionStrategy(TradingStrategy):
             row: Row index or record being processed.
 
         Returns:
-            Result of long -> swept low, short -> swept high (Agent.md §14).
+            Selected swept level for the trade direction.
         """
         col = "sweep_low_level" if direction == 1 else "sweep_high_level"
         level = float(row.get(col, np.nan))

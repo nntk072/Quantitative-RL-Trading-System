@@ -1,4 +1,4 @@
-"""Tests for strategy-mode environment (Agent.md §12, §27, §28, §29)."""
+"""Tests for the strategy-mode environment."""
 
 from __future__ import annotations
 
@@ -266,7 +266,7 @@ class TestStrategyObservation:
 
 class TestStrategyStructuralSL:
     def test_long_sl_at_manipulation_low(self) -> None:
-        """Idea 1 long: SL = manipulation_low (exact mode, Agent.md §27)."""
+        """PO3 long stop-loss uses the manipulation low in exact mode."""
         bars = _bars()
         feats = _features(bars)
         feats["po3_manipulation_low"] = np.full(len(bars), 95.0)

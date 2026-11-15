@@ -1,4 +1,4 @@
-"""Tests for PO3Reward (Agent.md §21, §30)."""
+"""Tests for PO3 strategy-alignment rewards."""
 
 from __future__ import annotations
 

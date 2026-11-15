@@ -245,19 +245,26 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `close_position`](../../../../trading/execution/broker.py#L242)
+2. [tutorial example: `execution-fills-costs · code cell 2`](../../../../docs/subjects/C_trading_risk_execution/examples/execution-fills-costs.ipynb)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        if position.size <= 1e-9:
-            position.size = 0.0
-            position.margin_used = 0.0
-        else:
-            position.margin_used = self.required_margin(position.entry_price, position.size)
-            self.mark_to_market(acc, position, quote)
-        return pnl, fill
+from trading.account.account_state import AccountState
+from trading.execution.broker import Broker
+from trading.execution.costs import CostModel
+
+account = AccountState(initial_balance=10_000.0)
+broker = Broker(contract_size=1.0, cost_model=CostModel(commission_per_lot=2.0))
+position = broker.open_position(account, (100.0, 101.0), lots=1.0, direction=1)
+assert position is not None and position.entry_price == 101.0
+assert account.balance == 9_998.0
+marked = broker.mark_to_market(account, position, (103.0, 104.0))
+assert marked == 2.0 and account.equity == 10_000.0
+pnl, fill = broker.close_position(account, position, (105.0, 106.0))
+assert (pnl, fill) == (2.0, 105.0)
+assert position.size == 0.0 and account.balance == 10_000.0
+print({"entry": 101.0, "exit": fill, "realized_close_pnl": pnl, "final_balance": account.balance})
 ```
 
 **Workflow context:**

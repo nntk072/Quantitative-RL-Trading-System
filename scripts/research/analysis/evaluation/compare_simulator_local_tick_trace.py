@@ -27,8 +27,8 @@ from simulation.environment.env import TradingEnv
 from trading.execution import COST_US100
 
 ROOT = repository_root(__file__)
-DEFAULT_TICKS = Path("data/training/US100.cash_202412300105_202610162349.csv")
-DEFAULT_BARS = Path("data/training/US100.cash_M1_202412300105_202610162349.csv")
+DEFAULT_TICKS = Path("data/US100.cash_202412300105_202610162349.csv")
+DEFAULT_BARS = Path("data/US100.cash_M1_202412300105_202610162349.csv")
 DEFAULT_ALIGNMENT = Path(
     "evidence/research/fill_quote_source_alignment/selected_campaign_fill_quote_alignment.json"
 )

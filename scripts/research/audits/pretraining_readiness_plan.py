@@ -31,7 +31,7 @@ class TaskSpec:
 
 @dataclass(frozen=True, slots=True)
 class BarrierSpec:
-    """Named aggregation of tasks corresponding to a V3 barrier."""
+    """Named collection of checks used to determine whether pretraining may start."""
 
     barrier_id: str
     description: str
@@ -248,7 +248,7 @@ def _parse_external_gates(root: Mapping[str, Any]) -> tuple[str, ...]:
 
 
 def load_plan(path: Path) -> ReadinessPlan:
-    """Load and validate the V3 pre-training execution DAG.
+    """Load and validate the pre-training readiness workflow.
 
     Args:
         path: YAML path containing the DAG.

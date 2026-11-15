@@ -35,12 +35,7 @@ from simulation.environment.trading_environment_factory import scheduled_session
 ROOT = repository_root(__file__)
 DEFAULT_CONFIG = ROOT / "config/research/trade_setup_mtf_reasoning_2m.yaml"
 DEFAULT_OUTPUT = ROOT / "evidence/research/feature_causality/observation_warmup_validity"
-DEFAULT_CACHE = Path(
-    "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/observation_warmup_cache"
-)
-RAW_MANIFEST = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-)
+RAW_MANIFEST = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
 SOURCE_PATHS = (
     "scripts/research/analysis/features/audit_observation_warmup_validity.py",
     "features/pipeline/feature_matrix_builder.py",
@@ -167,7 +162,7 @@ def build_audit(config_path: Path, output_dir: Path, cache_dir: Path) -> dict[st
     cfg = load_config(config_path=str(config_path))
     regeneration_command = shlex.join(
         [
-            ".venv/bin/python",
+            ".venv-arm/bin/python",
             str(Path(__file__).relative_to(ROOT)),
             "--config",
             str(config_path.relative_to(ROOT)),
@@ -351,7 +346,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE)
+    parser.add_argument("--cache-dir", type=Path, required=True)
     args = parser.parse_args(argv)
     config_path = args.config if args.config.is_absolute() else ROOT / args.config
     output_dir = args.output_dir if args.output_dir.is_absolute() else ROOT / args.output_dir

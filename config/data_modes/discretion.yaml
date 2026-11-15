@@ -1,11 +1,11 @@
 profile: discretion
 data:
-  cache_dir: cache/data_modes/discretion/train_test_2025_2026_qgrid025_v1
+  cache_dir: cache/train_test_2025_2026_qgrid025
   datasets:
     training:
-      raw_dir: data/discretion/training
+      raw_dir: data
     testing:
-      raw_dir: data/discretion/testing
+      raw_dir: data
   price_discretization:
     enabled: true
     increment: 0.25

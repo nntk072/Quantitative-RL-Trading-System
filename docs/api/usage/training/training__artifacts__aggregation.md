@@ -39,7 +39,7 @@ This page contains 2 public callable records owned by `training.artifacts.aggreg
 
 **Observed usage:**
 
-1. [test fixture: `test_training_aggregation_requires_explicit_boolean_gate_passes`](../../../../tests/unit/training/test_train_rl_decomposition.py#L246)
+1. [test fixture: `test_training_aggregation_requires_explicit_boolean_gate_passes`](../../../../tests/unit/training/test_train_rl_decomposition.py#L339)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -15,17 +15,7 @@ from typing import Any
 from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
-DEFAULT_FREEZE = Path(
-    "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/"
-    "research_evidence/selected_pair_freeze.json"
-)
-DEFAULT_ARCHIVE_ROOT = Path(
-    "/scratch/work/nguyenl37/Quantitative-RL-Trading-System-research-archive/outputs"
-)
-DEFAULT_REPORT = (
-    ROOT / "evidence/research/historical_variant_screen_recoverability/"
-    "selected_checkpoint_recoverability.json"
-)
+DEFAULT_ARCHIVE_ROOT = ROOT / "outputs"
 EXPECTED_SCHEMA = "aalto.rq1_selected_pair_freeze.v1"
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
@@ -60,7 +50,7 @@ def _run_path(archive_root: Path, source_run: str) -> Path:
 
 
 def build_report(
-    freeze_path: Path = DEFAULT_FREEZE,
+    freeze_path: Path,
     archive_root: Path = DEFAULT_ARCHIVE_ROOT,
 ) -> dict[str, Any]:
     """Hash only ZIP candidates matching each frozen variant and seed."""
@@ -177,9 +167,9 @@ def build_report(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--freeze", type=Path, default=DEFAULT_FREEZE)
+    parser.add_argument("--freeze", type=Path, required=True)
     parser.add_argument("--archive-root", type=Path, default=DEFAULT_ARCHIVE_ROOT)
-    parser.add_argument("--out", type=Path, default=DEFAULT_REPORT)
+    parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     output = args.out if args.out.is_absolute() else ROOT / args.out
     output = output.resolve()

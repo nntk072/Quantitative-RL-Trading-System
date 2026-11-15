@@ -127,16 +127,14 @@ from experiments.runs.state_store import (
     validate_inputs as validate_inputs,
 )
 
-TRAIN_ONE_VARIANT_SCRIPT = (
-    ROOT / "scripts" / "research" / "frozen-launches" / "train_one_variant.sh"
-)
+VARIANT_WORKER_MODULE = "experiments.runs.variant_worker"
 RESOURCE_SAMPLER_SCRIPT = ROOT / "compute" / "slurm" / "resources.py"
 
 __all__ = [
     "DEFAULT_VARIANTS",
     "RESOURCE_SAMPLER_SCRIPT",
     "ROOT",
-    "TRAIN_ONE_VARIANT_SCRIPT",
+    "VARIANT_WORKER_MODULE",
     "action_space_matches_width",
     "archive_initial_checkpoints",
     "atomic_json",
@@ -436,6 +434,8 @@ def main() -> int:
 
     evaluation: dict[str, Any] = {"locked_oos_role": "unspecified", "deterministic": False}
     config_overrides: dict[str, ExperimentRunOverride] = {}
+    family_selections: list[dict[str, Any]] = []
+    selected_variants: list[str] | None = None
     if args.experiment_run_spec:
         if any(
             value is not None
@@ -459,20 +459,56 @@ def main() -> int:
         if not isinstance(spec, dict):
             raise ValueError("experiment run spec must be a YAML mapping")
         spec_variants = spec.get("variants")
-        if not isinstance(spec_variants, list) or not spec_variants:
-            raise ValueError("experiment run spec must contain a nonempty variants list")
-        spec_variant_file = (
-            ROOT / str(spec.get("variant_file", "config/experiment_runs/variant_list.txt"))
-        ).resolve()
-        listed = [
-            line.strip()
-            for line in spec_variant_file.read_text(encoding="utf-8").splitlines()
-            if line.strip() and not line.lstrip().startswith("#")
-        ]
-        if listed != [str(name) for name in spec_variants]:
-            raise ValueError(
-                "experiment run spec variants do not match its authoritative variant file"
+        family_id = spec.get("variant_family")
+        family_ids = spec.get("comparison_families")
+        if family_id is not None and family_ids is not None:
+            raise ValueError("use either variant_family or comparison_families, not both")
+        if family_id is not None or family_ids is not None:
+            if family_id is not None:
+                if not isinstance(family_id, str) or not family_id.strip():
+                    raise ValueError("experiment run variant_family must be non-empty text")
+                family_ids = [family_id.strip()]
+            if (
+                not isinstance(family_ids, list)
+                or not family_ids
+                or any(not isinstance(item, str) or not item.strip() for item in family_ids)
+            ):
+                raise ValueError("comparison_families must be a nonempty list of family names")
+            normalized_family_ids = [str(item).strip() for item in family_ids]
+            if len(normalized_family_ids) != len(set(normalized_family_ids)):
+                raise ValueError("comparison_families must not contain duplicate names")
+            from experiments.variants.catalog import resolve_family
+
+            family_selections = [resolve_family(item) for item in normalized_family_ids]
+            selected_variants = list(
+                dict.fromkeys(
+                    str(arm["variant"]) for family in family_selections for arm in family["entries"]
+                )
             )
+            if spec_variants is not None and spec_variants != selected_variants:
+                raise ValueError(
+                    "experiment run variants must match the configured comparison family order"
+                )
+            if spec.get("variant_file") is not None:
+                raise ValueError("comparison families cannot be combined with variant_file")
+            args.variant_file = None
+        else:
+            if not isinstance(spec_variants, list) or not spec_variants:
+                raise ValueError("experiment run spec must contain variants or comparison families")
+            spec_variant_file = (
+                ROOT / str(spec.get("variant_file", "config/experiment_runs/variant_list.txt"))
+            ).resolve()
+            listed = [
+                line.strip()
+                for line in spec_variant_file.read_text(encoding="utf-8").splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            ]
+            if listed != [str(name) for name in spec_variants]:
+                raise ValueError(
+                    "experiment run spec variants do not match its authoritative variant file"
+                )
+            selected_variants = [str(name) for name in spec_variants]
+            args.variant_file = spec_variant_file
         evaluation = validate_experiment_run_evaluation(spec.get("evaluation", {}))
         profile_overrides = load_experiment_run_data_profile(spec.get("data_profile"))
         experiment_run_overrides = normalize_experiment_run_config_overrides(
@@ -486,7 +522,6 @@ def main() -> int:
         )
         if spec.get("split") != default_config["data"]["split"]:
             raise ValueError("experiment run split does not match the effective base configuration")
-        args.variant_file = spec_variant_file
         args.seeds = " ".join(str(seed) for seed in spec.get("seeds", []))
         args.timesteps = int(spec["timesteps"])
         args.data_source = str(spec.get("data_source", "frames"))
@@ -512,7 +547,7 @@ def main() -> int:
     )
     if worker_nodes and len(worker_nodes) > args.workers and not args.workers_auto:
         raise ValueError("worker count must be at least the number of worker nodes")
-    jobs = validate_inputs(args)
+    jobs = validate_inputs(args, selected_variants)
     initial_checkpoints: dict[str, dict[str, Any]] = {}
     if args.initial_checkpoints is not None:
         args.initial_checkpoints = args.initial_checkpoints.resolve()
@@ -543,7 +578,9 @@ def main() -> int:
                         .gpu_experiment_run(args.experiment_run_id)
                         .root
                     ),
-                    "variant_file": str(args.variant_file),
+                    "variant_file": str(args.variant_file) if args.variant_file else None,
+                    "variant_family": family_selections[0] if len(family_selections) == 1 else None,
+                    "comparison_families": family_selections,
                     "seeds": [int(seed) for seed in args.seeds.replace(",", " ").split()],
                     "steps_per_run": args.timesteps,
                     "runs": len(jobs),
@@ -733,6 +770,7 @@ def main() -> int:
     if missing_inputs and not args.test_worker:
         raise RuntimeError(f"configured market-data inputs missing: {missing_inputs}")
     identity = {
+        "comparison_families": family_selections,
         "jobs": [x["key"] for x in jobs],
         "steps": args.timesteps,
         "workers_requested": "auto" if args.workers_auto else args.workers,
@@ -946,6 +984,7 @@ def main() -> int:
             expected_source_hashes=source_hashes,
         )
         manifest = {
+            "experiment_run_id": args.experiment_run_id,
             "created": utc(),
             "hostname": socket.gethostname(),
             "job_id": os.getenv("SLURM_JOB_ID", "test"),
@@ -970,6 +1009,8 @@ def main() -> int:
             "worker_gpus_per_node": args.worker_gpus_per_node if worker_nodes else None,
             "gpu_binding": "least-loaded-map_gpu" if worker_nodes else None,
             "evaluation": evaluation,
+            "variant_family": family_selections[0] if len(family_selections) == 1 else None,
+            "comparison_families": family_selections,
             "initial_checkpoint_lineage": identity["initial_checkpoint_lineage"],
             "jobs": jobs,
             "resources": available_resources(),
@@ -1150,7 +1191,7 @@ def main() -> int:
         cmd = (
             [str(args.test_worker), key]
             if args.test_worker
-            else ["bash", str(TRAIN_ONE_VARIANT_SCRIPT)]
+            else [sys.executable, "-m", VARIANT_WORKER_MODULE]
         )
         if worker_nodes:
             cmd = worker_command(

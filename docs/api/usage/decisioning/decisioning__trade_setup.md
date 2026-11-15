@@ -174,7 +174,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L104)
+1. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L110)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -194,7 +194,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_trading_env_episode_end_cancellation_preserves_limit_setup_identity`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L356)
+2. [test fixture: `test_trading_env_episode_end_cancellation_preserves_limit_setup_identity`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L362)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -711,7 +711,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L99)
+1. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L105)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -731,7 +731,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_event_backtest_ifvg_limit_follows_zone_lifetime_after_retest_pulse`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L401)
+2. [test fixture: `test_event_backtest_ifvg_limit_follows_zone_lifetime_after_retest_pulse`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L407)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -782,7 +782,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L61)
+1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L67)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -802,7 +802,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L598)
+2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L604)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1098,7 +1098,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L60)
+1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L66)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1118,7 +1118,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L598)
+2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L604)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1265,7 +1265,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L59)
+1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L65)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1285,7 +1285,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L597)
+2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L603)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -18,14 +18,9 @@ from configuration.paths import repository_root
 from experiments.runs.source_snapshot import verify_experiment_run_source_snapshot
 
 ROOT = repository_root(__file__)
-ARCHIVE_ROOT = ROOT.parent / "Quantitative-RL-Trading-System-research-archive"
-DEFAULT_DAG = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/EXPERIMENT_PROVENANCE_DAG.json"
-)
-DEFAULT_OUTPUT = (
-    ROOT
-    / "evidence/research/releases/negative-evidence-readiness/PROVENANCE_BYTE_VERIFICATION.json"
-)
+ARCHIVE_ROOT = ROOT / "outputs" / "research_archive"
+DEFAULT_DAG = ROOT / "outputs" / "research" / "provenance_dag.json"
+DEFAULT_OUTPUT = ROOT / "outputs" / "research" / "provenance_byte_verification.json"
 HASH_LENGTH = 64
 GIT_COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 MAX_GIT_SOURCE_BLOB_BYTES = 32 * 1024 * 1024
@@ -53,14 +48,24 @@ def _resolve_path(value: Any, root: Path, archive_root: Path) -> tuple[Path | No
     relative = PurePosixPath(value)
     if relative.is_absolute() or ".." in relative.parts:
         return None, "path is absolute or contains traversal"
-    candidate = root / Path(*relative.parts)
-    resolved = candidate.resolve()
+    candidates = (
+        root / Path(*relative.parts),
+        archive_root / Path(*relative.parts),
+    )
+    safe_fallback: Path | None = None
     for allowed in (root.resolve(), archive_root.resolve()):
-        try:
-            resolved.relative_to(allowed)
-            return resolved, None
-        except ValueError:
-            continue
+        for candidate in candidates:
+            resolved = candidate.resolve()
+            try:
+                resolved.relative_to(allowed)
+            except ValueError:
+                continue
+            if resolved.is_file():
+                return resolved, None
+            if safe_fallback is None:
+                safe_fallback = resolved
+    if safe_fallback is not None:
+        return safe_fallback, None
     return None, "resolved path escapes approved roots"
 
 

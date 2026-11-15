@@ -239,7 +239,7 @@ def make_action_fn(
     PPO trains on ``TradingEnv``'s discrete action space, so the policy's
     integer action id is passed through unchanged; SAC trains on the
     continuous Box space and yields a float position-sizing fraction.
-    When ``strategy_actions`` is set (Idea 1 PO3 Box(4)), the full float32
+    When ``strategy_actions`` is set (PO3 strategy controls), the full float32
     vector is returned so eval matches training.
 
     A backend-neutral DecisionProvider follows the same rollout path after its

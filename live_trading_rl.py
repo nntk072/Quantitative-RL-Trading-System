@@ -1,4 +1,4 @@
-r"""RL live/paper trading entrypoint (Master Roadmap Stage 8).
+r"""RL live and paper trading entry point.
 
 Loads a trained SB3 PPO/SAC checkpoint and drives ``RLRobot`` against a live
 MT5 M1 feed.
@@ -12,7 +12,7 @@ Safeguards
   (``training.use_m1_only=false`` and ``training.primary_only=false``), a
   secondary ``MT5Data`` source is wired and fed each tick via
   ``update_bars(secondary_bars=...)`` so the live feature vector matches
-  training (Stage 8 Task 8.4). If the run was trained ``primary_only=True`` the
+  training. If the run was trained ``primary_only=True`` the
   secondary source is skipped on purpose — see ``_use_secondary_symbol``.
 
 Usage
@@ -166,7 +166,7 @@ def load_risk_overrides(cfg: Any) -> LiveRiskOverrides:
 
 def parse_args() -> argparse.Namespace:
     """CLI/env arguments for the RL live/paper entrypoint."""
-    parser = argparse.ArgumentParser(description="RL live/paper trading on MT5 (Stage 8)")
+    parser = argparse.ArgumentParser(description="RL live and paper trading on MT5")
     parser.add_argument(
         "--model",
         default=os.environ.get("RL_MODEL_PATH"),

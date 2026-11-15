@@ -38,6 +38,7 @@ def test_experiment_run_summary_reads_metrics_logs_and_legacy_gpu_samples(tmp_pa
         experiment_run_dir / "experiment_run.json",
         {
             "created": "2026-10-14T00:00:00+00:00",
+            "experiment_run_id": "history-input-study",
             "job_id": "1234",
             "git_sha": "abc",
             "fingerprint": "f" * 64,
@@ -50,6 +51,20 @@ def test_experiment_run_summary_reads_metrics_logs_and_legacy_gpu_samples(tmp_pa
             "evaluation": {
                 "locked_oos_role": "selection_acknowledged",
                 "locked_oos_exposure": "previously_inspected_holdout",
+            },
+            "variant_family": {
+                "id": "control_effect",
+                "domain": "data",
+                "title": "Control effect",
+                "comparison_type": "matched",
+                "entries": [
+                    {
+                        "variant": "variant",
+                        "label": "B",
+                        "role": "treatment",
+                        "changed_factors": ["history input"],
+                    }
+                ],
             },
             "jobs": [
                 {
@@ -124,6 +139,7 @@ def test_experiment_run_summary_reads_metrics_logs_and_legacy_gpu_samples(tmp_pa
     report = render_markdown(summary)
 
     job = summary["jobs"][0]
+    assert summary["experiment_run_id"] == "history-input-study"
     assert summary["gate_failure_count"] == 1
     assert summary["train_gate_failure_reason_counts"] == {"max_loss_stopped_trading": 1}
     assert summary["test_survived_low_activity_count"] == 1
@@ -143,6 +159,9 @@ def test_experiment_run_summary_reads_metrics_logs_and_legacy_gpu_samples(tmp_pa
     assert summary["training_episode_coverage_summary"]["telemetry_available_runs"] == 1
     assert summary["training_episode_coverage_summary"]["full_split_episode_count"] == 2
     assert job["test_replay_report_only"]["days_traded"] == 2
+    assert job["family_id"] == "control_effect"
+    assert job["arm_label"] == "B"
+    assert "control_effect:B" in report
     assert summary["resource_profiles"][0]["gpu_devices"][1]["mean_utilization_pct"] == 80
     assert "Train survival | Full-year episodes | Envs reached year end" in report
     assert "| variant | failed | 1 — training equity gate failed |" in report
@@ -273,3 +292,80 @@ def test_experiment_run_summary_writer_preserves_existing_artifacts(tmp_path: Pa
 
     assert json_path.read_text(encoding="utf-8") == "original-json"
     assert markdown_path.read_text(encoding="utf-8") == "original-markdown"
+
+
+def test_experiment_run_summary_writes_groupable_csv(tmp_path: Path) -> None:
+    stem = tmp_path / "reports" / "summary"
+    _write_summary_outputs(
+        {
+            "schema_version": 2,
+            "experiment_run_id": "history-input-study",
+            "experiment_run_git_sha": "a" * 40,
+            "experiment_run_fingerprint": "b" * 64,
+            "experiment_run_manifest_sha256": "c" * 64,
+            "data_identity_sha256": "d" * 64,
+            "data_source": "frames",
+            "requested_steps_per_variant": 2_000_000,
+            "n_envs": 8,
+            "evaluation_protocol": {"locked_oos_role": "report_only"},
+            "jobs": [
+                {
+                    "family_id": "data_history",
+                    "domain": "data",
+                    "family_title": "Historical inputs",
+                    "comparison_type": "matched",
+                    "variant": "history_arm",
+                    "arm_label": "B",
+                    "arm_role": "treatment",
+                    "changed_factors": ["history input"],
+                    "run_key": "history_arm__seed42",
+                    "seed": 42,
+                    "controller_status": "failed",
+                    "failure_reason": "risk limit reached",
+                    "train_metrics": {"total_pnl": -100.0},
+                    "test_metrics_report_only": None,
+                    "test_replay_report_only": {},
+                    "train_pnl_reconciliation": {"status": "verified"},
+                    "test_pnl_reconciliation": {"status": "unavailable"},
+                    "family_memberships": [
+                        {
+                            "family_id": "data_history",
+                            "domain": "data",
+                            "family_title": "Historical inputs",
+                            "comparison_type": "matched",
+                            "arm_label": "B",
+                            "arm_role": "treatment",
+                            "changed_factors": ["history input"],
+                        },
+                        {
+                            "family_id": "risk_controls",
+                            "domain": "trading",
+                            "family_title": "Risk controls",
+                            "comparison_type": "matched",
+                            "arm_label": "C",
+                            "arm_role": "treatment",
+                            "changed_factors": ["risk limit"],
+                        },
+                    ],
+                }
+            ],
+        },
+        stem,
+    )
+
+    with stem.with_suffix(".csv").open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.DictReader(stream))
+    assert len(rows) == 2
+    assert {row["domain"] for row in rows} == {"data", "trading"}
+    assert {row["family_id"] for row in rows} == {"data_history", "risk_controls"}
+    assert {row["changed_factors"] for row in rows} == {"history input", "risk limit"}
+    row = rows[0]
+    assert row["experiment_run_id"] == "history-input-study"
+    assert row["requested_steps_per_variant"] == "2000000"
+    assert row["n_envs"] == "8"
+    assert row["family_id"] == "data_history"
+    assert row["domain"] == "data"
+    assert row["changed_factors"] == "history input"
+    assert row["controller_status"] == "failed"
+    assert row["train_pnl"] == "-100.0"
+    assert json.loads(row["train_pnl_reconciliation"]) == {"status": "verified"}

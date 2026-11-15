@@ -6,7 +6,7 @@ proof that a supported kernel actually runs.
 
 | Platform | Python environment | Compute notes |
 |---|---|---|
-| ARM64 Triton GH200 | `.venv` | Use the ARM environment and validate CUDA with a real operation. Keep data and compute on the allocated node; login hosts are for inspection/launch only. |
+| ARM64 Triton GH200 | `.venv-arm` | Use the ARM environment and validate CUDA with a real operation. Keep data and compute on the allocated node; login hosts are for inspection/launch only. |
 | x86_64 Triton H100/H200 | `.venv-x86` | Use architecture-matched wheels; check device capability and package support. |
 | V100 | `.venv-v100` when configured | Verify `sm_70` support and execute a real CUDA operation; the documented `.venv-x86` cu130 build is incompatible. |
 | MI210 | `.venv-mi210` | Excluded from current project research policy; consult operations guidance before any non-research use. |

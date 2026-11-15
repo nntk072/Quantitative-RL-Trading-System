@@ -770,10 +770,7 @@ def build_census(
         ]
     )
     (output_dir / "README.md").write_text("\n".join(readme_lines), encoding="utf-8")
-    raw_manifest = (
-        ROOT
-        / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-    )
+    raw_manifest = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
     manifest_data = json.loads(raw_manifest.read_text(encoding="utf-8"))
     source_file_hashes: dict[str, str] = {}
     manifest_files = {entry["path"]: entry for entry in manifest_data["files"]}

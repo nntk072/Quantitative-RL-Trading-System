@@ -32,55 +32,56 @@ This page contains 4 public callable records owned by `features.pipeline.feature
 
 **Observed usage:**
 
-1. [production caller: `feature_cache_path`](../../../../features/pipeline/feature_cache_identity.py#L178)
+1. [test fixture: `test_pipeline_development_cutoff_excludes_later_bar_values`](../../../../tests/integration/test_pipeline_splits.py#L232)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def feature_cache_path(
-    cache_dir: Path | str,
-    symbol: str,
-    cfg: DictConfig | None,
-    primary: pd.DataFrame,
-    train_mask: pd.Series | None = None,
-    secondary: pd.DataFrame | None = None,
-    normalization_mode: str = "legacy_masked_window",
-    timeframe_bars: dict[str, pd.DataFrame] | None = None,
-    secondary_timeframe_bars: dict[str, pd.DataFrame] | None = None,
-) -> Path:
-    digest = feature_cache_content_hash(
-        cfg,
-        primary,
-        train_mask=train_mask,
-        secondary=secondary,
-        normalization_mode=normalization_mode,
-        timeframe_bars=timeframe_bars,
-        secondary_timeframe_bars=secondary_timeframe_bars,
-    )
-    return Path(cache_dir) / f"{symbol}_features_{FEATURE_CACHE_VERSION}_{digest}.parquet"
-```
+# … caller setup omitted …
+    assert frames[symbol]["M1"]["close"].tolist() == [100.0, 101.0]
+    assert frames[symbol]["M1"].index[-1] == pd.Timestamp("2025-12-31 23:59:59+03:00")
+    assert not any(value >= 900_001.0 for value in frames[symbol]["M1"]["close"])
+    assert not (tmp_path / "cache").exists()
 
-2. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L184)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-    expected_hash = feature_cache_content_hash(
-        cfg,
-        primary,
-        train_mask=train_mask,
-        secondary=secondary,
-        normalization_mode=normalization_mode,
-        timeframe_bars=timeframe_bars,
-        secondary_timeframe_bars=secondary_timeframe_bars,
+    first_key = feature_cache_content_hash(None, frames[symbol]["M1"])
+    testing_path = tmp_path / "testing" / names[symbol]
+    testing_path.write_text(
+        testing_path.read_text(encoding="utf-8").replace("900001.0", "900999.0"),
+        encoding="utf-8",
     )
-    normalization_window = (
-        int(cfg.features.zscore_window) if cfg is not None and "features" in cfg else 252
-    )
-    normalization_config_sha256 = _normalization_configuration_sha256(
-        cfg, mode=normalization_mode, window=normalization_window
 # … caller assertions omitted …
 ```
+
+2. [tutorial example: `cache-identity · code cell 2`](../../../../docs/subjects/A_data_features/examples/cache-identity.ipynb)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+import pandas as pd
+
+from features.pipeline.feature_cache_identity import feature_cache_content_hash
+
+idx = pd.date_range("2026-01-05", periods=3, freq="1min", tz="Etc/GMT-3")
+bars = pd.DataFrame(
+    {
+        "open": [1.0, 2.0, 3.0],
+        "high": [2.0, 3.0, 4.0],
+        "low": [0.0, 1.0, 2.0],
+        "close": [1.5, 2.5, 3.5],
+    },
+    index=idx,
+)
+h1 = feature_cache_content_hash(None, bars)
+h2 = feature_cache_content_hash(None, bars.copy())
+changed = bars.copy()
+changed.loc[idx[1], "close"] += 0.25
+h3 = feature_cache_content_hash(None, changed)
+assert h1 == h2
+assert h1 != h3
+(h1, h3)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -182,55 +183,56 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `feature_cache_path`](../../../../features/pipeline/feature_cache_identity.py#L178)
+1. [test fixture: `test_pipeline_development_cutoff_excludes_later_bar_values`](../../../../tests/integration/test_pipeline_splits.py#L232)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def feature_cache_path(
-    cache_dir: Path | str,
-    symbol: str,
-    cfg: DictConfig | None,
-    primary: pd.DataFrame,
-    train_mask: pd.Series | None = None,
-    secondary: pd.DataFrame | None = None,
-    normalization_mode: str = "legacy_masked_window",
-    timeframe_bars: dict[str, pd.DataFrame] | None = None,
-    secondary_timeframe_bars: dict[str, pd.DataFrame] | None = None,
-) -> Path:
-    digest = feature_cache_content_hash(
-        cfg,
-        primary,
-        train_mask=train_mask,
-        secondary=secondary,
-        normalization_mode=normalization_mode,
-        timeframe_bars=timeframe_bars,
-        secondary_timeframe_bars=secondary_timeframe_bars,
-    )
-    return Path(cache_dir) / f"{symbol}_features_{FEATURE_CACHE_VERSION}_{digest}.parquet"
-```
+# … caller setup omitted …
+    assert frames[symbol]["M1"]["close"].tolist() == [100.0, 101.0]
+    assert frames[symbol]["M1"].index[-1] == pd.Timestamp("2025-12-31 23:59:59+03:00")
+    assert not any(value >= 900_001.0 for value in frames[symbol]["M1"]["close"])
+    assert not (tmp_path / "cache").exists()
 
-2. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L184)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-    expected_hash = feature_cache_content_hash(
-        cfg,
-        primary,
-        train_mask=train_mask,
-        secondary=secondary,
-        normalization_mode=normalization_mode,
-        timeframe_bars=timeframe_bars,
-        secondary_timeframe_bars=secondary_timeframe_bars,
+    first_key = feature_cache_content_hash(None, frames[symbol]["M1"])
+    testing_path = tmp_path / "testing" / names[symbol]
+    testing_path.write_text(
+        testing_path.read_text(encoding="utf-8").replace("900001.0", "900999.0"),
+        encoding="utf-8",
     )
-    normalization_window = (
-        int(cfg.features.zscore_window) if cfg is not None and "features" in cfg else 252
-    )
-    normalization_config_sha256 = _normalization_configuration_sha256(
-        cfg, mode=normalization_mode, window=normalization_window
 # … caller assertions omitted …
 ```
+
+2. [tutorial example: `cache-identity · code cell 2`](../../../../docs/subjects/A_data_features/examples/cache-identity.ipynb)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+import pandas as pd
+
+from features.pipeline.feature_cache_identity import feature_cache_content_hash
+
+idx = pd.date_range("2026-01-05", periods=3, freq="1min", tz="Etc/GMT-3")
+bars = pd.DataFrame(
+    {
+        "open": [1.0, 2.0, 3.0],
+        "high": [2.0, 3.0, 4.0],
+        "low": [0.0, 1.0, 2.0],
+        "close": [1.5, 2.5, 3.5],
+    },
+    index=idx,
+)
+h1 = feature_cache_content_hash(None, bars)
+h2 = feature_cache_content_hash(None, bars.copy())
+changed = bars.copy()
+changed.loc[idx[1], "close"] += 0.25
+h3 = feature_cache_content_hash(None, changed)
+assert h1 == h2
+assert h1 != h3
+(h1, h3)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

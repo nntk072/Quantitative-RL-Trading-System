@@ -866,6 +866,7 @@ def test_policy_reconciliation_rejects_submitted_direction_mismatch() -> None:
 
 def test_policy_reconciliation_fails_closed_on_malformed_open_direction() -> None:
     events = _events()
+    events["direction"] = events["direction"].astype(object)
     events.loc[events["type"].eq("open"), "direction"] = "invalid"
 
     result = reconcile_policy_decisions(_decision(), events, [])
@@ -1017,8 +1018,8 @@ def test_policy_reconciliation_accepts_same_direction_position_hold() -> None:
     prior_decision = _decision().iloc[0:1].copy()
     prior_decision.loc[:, "decision_id"] = "d0"
     prior_decision.loc[:, "action"] = 1
-    prior_decision.loc[:, "trade_setup_candidate_id"] = None
-    prior_decision.loc[:, "trade_setup_eligible"] = None
+    prior_decision["trade_setup_candidate_id"] = None
+    prior_decision["trade_setup_eligible"] = None
     prior_decision.loc[:, "trade_setup_source_event_id"] = None
     prior_decision.loc[:, "trade_setup_source_event_identity_status"] = None
     decisions = pd.concat([prior_decision, decision], ignore_index=True)
@@ -1221,8 +1222,8 @@ def test_policy_reconciliation_accepts_matching_pending_order_hold() -> None:
     prior_decision = _decision().iloc[0:1].copy()
     prior_decision.loc[:, "decision_id"] = "d0"
     prior_decision.loc[:, "action"] = 1
-    prior_decision.loc[:, "trade_setup_candidate_id"] = None
-    prior_decision.loc[:, "trade_setup_eligible"] = None
+    prior_decision["trade_setup_candidate_id"] = None
+    prior_decision["trade_setup_eligible"] = None
     prior_decision.loc[:, "trade_setup_source_event_id"] = None
     prior_decision.loc[:, "trade_setup_source_event_identity_status"] = None
     decisions = pd.concat([prior_decision, decision], ignore_index=True)
@@ -1259,8 +1260,8 @@ def test_policy_reconciliation_rejects_pending_order_with_different_direction() 
     prior_decision = _decision().iloc[0:1].copy()
     prior_decision.loc[:, "decision_id"] = "d0"
     prior_decision.loc[:, "action"] = 1
-    prior_decision.loc[:, "trade_setup_candidate_id"] = None
-    prior_decision.loc[:, "trade_setup_eligible"] = None
+    prior_decision["trade_setup_candidate_id"] = None
+    prior_decision["trade_setup_eligible"] = None
     prior_decision.loc[:, "trade_setup_source_event_id"] = None
     prior_decision.loc[:, "trade_setup_source_event_identity_status"] = None
     decisions = pd.concat([prior_decision, decision], ignore_index=True)
@@ -1290,8 +1291,8 @@ def test_policy_reconciliation_rejects_pending_order_cancelled_before_decision()
     prior_decision = _decision().iloc[0:1].copy()
     prior_decision.loc[:, "decision_id"] = "d0"
     prior_decision.loc[:, "action"] = 1
-    prior_decision.loc[:, "trade_setup_candidate_id"] = None
-    prior_decision.loc[:, "trade_setup_eligible"] = None
+    prior_decision["trade_setup_candidate_id"] = None
+    prior_decision["trade_setup_eligible"] = None
     prior_decision.loc[:, "trade_setup_source_event_id"] = None
     prior_decision.loc[:, "trade_setup_source_event_identity_status"] = None
     decisions = pd.concat([prior_decision, decision], ignore_index=True)

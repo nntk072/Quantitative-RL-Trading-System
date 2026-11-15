@@ -11,8 +11,8 @@ from configuration.paths import repository_root
 
 _CONFIG_DIR = repository_root(__file__) / "config"
 _STRATEGY_CONFIGS = {
-    "po3_ifvg": _CONFIG_DIR / "2_po3_ifvg.yaml",
-    "distribution": _CONFIG_DIR / "3_distribution.yaml",
+    "po3_ifvg": _CONFIG_DIR / "strategies" / "po3_ifvg.yaml",
+    "distribution": _CONFIG_DIR / "strategies" / "distribution.yaml",
 }
 
 

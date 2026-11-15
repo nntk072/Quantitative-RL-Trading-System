@@ -1,7 +1,8 @@
 # Operations
 
-The [research execution plan](research_execution_plan.md) records the active
-research queue and its evidence gates.
+Research methods and evidence status live in the
+[research section](../research/README.md); study-specific decisions belong with
+their registered run configuration and artifacts.
 
 Operational guides describe supported environments and procedures. Agent
 allocation rules in `.agents/rules/` govern how coding agents use those
@@ -18,7 +19,6 @@ resources; this directory is the human-facing explanation.
 :maxdepth: 1
 :caption: Operations guides
 
-research_execution_plan
 triton
 RUNNING_COMMANDS
 DEPLOYMENT
@@ -26,6 +26,7 @@ live-status
 hardware
 performance
 cli_cookbook
+research_campaign_plan
 ```
 
 Check current command help and scheduler state before acting. Historical run

@@ -91,6 +91,7 @@ pytest_add_cli_args_test_selection = [
     "tests/unit/market_data/test_walkforward.py",
     "tests/unit/market_data/test_walkforward_properties.py",
     "tests/unit/features/test_alignment_properties.py",
+    "tests/unit/features/test_htf_alignment.py::test_empty_higher_timeframe_does_not_hide_later_timeframes",
     "tests/unit/features/test_htf_alignment.py::test_align_timeframes_completed_bar",
     "tests/unit/features/test_htf_alignment.py::test_align_timeframes_uses_explicit_close_times_for_short_final_bar",
 ]
@@ -209,7 +210,7 @@ files = [
     "live_trading_rl.py",
 ]
 strict = true
-exclude = "^(outputs|evidence|docs/_build)/"
+exclude = "^(outputs|evidence|docs/_build|logs)/"
 show_error_codes = true
 warn_unused_ignores = true
 warn_return_any = true

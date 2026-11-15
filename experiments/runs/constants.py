@@ -3,4 +3,4 @@
 from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
-DEFAULT_VARIANTS = ROOT / "scripts" / "variant_list.txt"
+DEFAULT_VARIANTS = ROOT / "config" / "experiment_runs" / "variant_list.txt"

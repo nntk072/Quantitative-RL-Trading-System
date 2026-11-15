@@ -28,7 +28,7 @@ architectures:
     title: Multi-timeframe encoder
     description: Encodes correlated observations from multiple timeframes.
   - id: mtf_empty_stream_masked_v1
-    title: Empty-stream-masked multi-timeframe encoder v1
+    title: Empty-stream-masked multi-timeframe encoder
     description: Preserves MTF weights while excluding timeframes with no valid rows.
   - id: mtf_reasoning
     title: Multi-timeframe reasoning encoder
@@ -45,6 +45,7 @@ architectures:
 
 families:
   - id: entry_execution_choice
+    domain: environment
     title: Policy-selected entry execution
     question: Does allowing the policy to choose resting limits change outcomes versus market entries?
     comparison_type: matched
@@ -61,6 +62,7 @@ families:
         changed_factors: [entry execution choice]
 
   - id: policy_ladder
+    domain: trading
     title: Core policy capability ladder
     question: What does each added trading-control capability change from the baseline?
     comparison_type: ladder
@@ -97,6 +99,7 @@ families:
         changed_factors: [entry-state machine, hidden entry state]
 
   - id: price_grid_a4b
+    domain: trading
     title: Quarter-point price grid with observed entry state
     question: Does quarter-point price discretization change the A4b policy result?
     comparison_type: matched
@@ -113,6 +116,7 @@ families:
         changed_factors: [quarter-point price grid]
 
   - id: price_grid_a4a
+    domain: trading
     title: Quarter-point price grid with hidden entry state
     question: Does quarter-point price discretization change the A4a policy result?
     comparison_type: matched
@@ -129,6 +133,7 @@ families:
         changed_factors: [quarter-point price grid]
 
   - id: dollar_band_q5
+    domain: trading
     title: Dollar-band risk constraint
     question: Does the learned Q5 constraint help with dollar-band risk sizing?
     comparison_type: matched
@@ -145,6 +150,7 @@ families:
         changed_factors: [Q5 constrained learning]
 
   - id: mtf_encoder
+    domain: representation
     title: Single-timeframe versus multi-timeframe encoder
     question: Does the multi-timeframe encoder improve on the matched TCN control?
     comparison_type: matched
@@ -161,6 +167,7 @@ families:
         changed_factors: [encoder architecture]
 
   - id: mtf_reasoning_models
+    domain: representation
     title: Core and setup-conditioned multi-timeframe PPO models
     question: How do the matched core TCN, multi-timeframe encoder, and setup-conditioned policies compare?
     comparison_type: matched
@@ -182,6 +189,7 @@ families:
         changed_factors: [multi-timeframe reasoning encoder, setup selection, setup-aware action distribution]
 
   - id: a4b_strategy_overlay
+    domain: trading
     title: A4b strategy overlays
     question: How do the configured strategy overlays behave under the A4b policy?
     comparison_type: descriptive
@@ -198,6 +206,7 @@ families:
         changed_factors: [distribution strategy]
 
   - id: po3_policy_ladder
+    domain: trading
     title: PO3 strategy capability ladder
     question: What does each added action capability change with the PO3 strategy?
     comparison_type: ladder
@@ -229,6 +238,7 @@ families:
         changed_factors: [entry-state machine]
 
   - id: distribution_policy_ladder
+    domain: trading
     title: Distribution strategy capability ladder
     question: What does each added action capability change with the distribution strategy?
     comparison_type: ladder
@@ -260,6 +270,7 @@ families:
         changed_factors: [entry-state machine]
 
   - id: entry_retest_control
+    domain: environment
     title: Entry retest setting
     question: What changes when the entry retest requirement is enabled?
     comparison_type: descriptive
@@ -271,6 +282,7 @@ families:
         changed_factors: [entry retest]
 
   - id: entry_candidate_age
+    domain: environment
     title: Entry candidate lifetime
     question: How does the configured candidate age affect entry behavior?
     comparison_type: descriptive
@@ -287,6 +299,7 @@ families:
         changed_factors: [candidate maximum age]
 
   - id: model_and_policy_ablations
+    domain: representation
     title: Existing model and policy ablations
     question: How do the recorded architecture and policy ablations differ from the reference?
     comparison_type: screening
@@ -333,6 +346,7 @@ families:
         changed_factors: [distribution strategy]
 
   - id: sustainable_growth_reward
+    domain: learning
     title: Sustainable growth reward objective
     question: Does log-equity growth reward improve on the DSR objective?
     comparison_type: matched
@@ -349,6 +363,7 @@ families:
         changed_factors: [reward objective]
 
   - id: regime_context
+    domain: representation
     title: Regime context
     question: Does the regime-conditioned TCN change results versus the TCN control?
     comparison_type: matched
@@ -365,6 +380,7 @@ families:
         changed_factors: [regime context]
 
   - id: log_growth_eod_drawdown
+    domain: learning
     title: EOD drawdown policy
     question: What changes when a 10,000 EOD trailing drawdown policy is enabled?
     comparison_type: matched
@@ -381,6 +397,7 @@ families:
         changed_factors: [EOD trailing drawdown policy]
 
   - id: log_growth_q5_constraint
+    domain: learning
     title: Log-growth Q5 constraint
     question: Does Q5 constrained learning change the log-growth PPO result?
     comparison_type: matched
@@ -397,6 +414,7 @@ families:
         changed_factors: [Q5 constrained learning]
 
   - id: log_growth_algorithm
+    domain: learning
     title: Log-growth policy algorithm
     question: Does SAC change the result relative to PPO under log-growth reward?
     comparison_type: matched

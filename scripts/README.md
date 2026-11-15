@@ -11,11 +11,11 @@ behavior, and write clearly identified outputs.
 |---|---|
 | `scripts/research/analysis/` | Canonical research analyses organized by feature, market-data, model, decisioning, evaluation, and evidence domain |
 | `scripts/research/audits/` | Release and protocol gates plus narrow verification commands |
-| `scripts/research/benchmarks/`, `strategy_checks/` | Focused performance and strategy diagnostics |
+| `scripts/research/benchmarks/` | Focused performance diagnostics |
 | `scripts/maintenance/` | Controlled data/cache and repository maintenance workflows |
 | `scripts/compute/slurm/` | Slurm wrappers and allocation-side command launchers |
 | `scripts/dev/` | Developer checks and repository-local support commands |
-| `scripts/train/` | Training entrypoints retained for compatibility or specialized workflows |
+| `scripts/train/` | Parameterized training entrypoints that resolve settings through configuration modules |
 
 Before running a script, inspect `--help`, its resolved input/output paths, and
 whether it reads or writes experiment evidence. Research scripts should record

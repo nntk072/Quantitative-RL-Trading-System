@@ -267,7 +267,7 @@ def build_report(input_path: Path, output_dir: Path) -> dict[str, Any]:
     csv_bytes = csv_stream.getvalue().encode("utf-8")
     json_bytes = (json.dumps(report, indent=2, sort_keys=True) + "\n").encode("utf-8")
     command = (
-        ".venv/bin/python scripts/research/analysis/features/summarize_observation_validity.py"
+        ".venv-arm/bin/python scripts/research/analysis/features/summarize_observation_validity.py"
     )
     if input_path.resolve() != DEFAULT_INPUT.resolve():
         command += f" --input {input_path.resolve()}"

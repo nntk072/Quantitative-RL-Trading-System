@@ -1,0 +1,97 @@
+{
+  "dataset_windows": {
+    "testing": {
+      "end_inclusive": "2026-10-16",
+      "period_role": "exposed report-only",
+      "start_inclusive": "2026-01-01"
+    },
+    "training": {
+      "end_inclusive": "2025-12-31",
+      "start_inclusive": "2024-12-30"
+    }
+  },
+  "raw_data_files": [
+    {
+      "path": "data/US100.cash_202412300105_202610162349.csv",
+      "size_bytes": 6345169212
+    },
+    {
+      "path": "data/US100.cash_D1_202412300000_202610160000.csv",
+      "size_bytes": 28282
+    },
+    {
+      "path": "data/US100.cash_H1_202412300100_202610162300.csv",
+      "size_bytes": 728311
+    },
+    {
+      "path": "data/US100.cash_H4_202412300000_202610162000.csv",
+      "size_bytes": 191698
+    },
+    {
+      "path": "data/US100.cash_M10_202412300100_202610162340.csv",
+      "size_bytes": 4287341
+    },
+    {
+      "path": "data/US100.cash_M15_202412300100_202610162345.csv",
+      "size_bytes": 2883224
+    },
+    {
+      "path": "data/US100.cash_M1_202412300105_202610162349.csv",
+      "size_bytes": 42077931
+    },
+    {
+      "path": "data/US100.cash_M30_202412300100_202610162330.csv",
+      "size_bytes": 1447422
+    },
+    {
+      "path": "data/US100.cash_M3_202412300103_202610162348.csv",
+      "size_bytes": 14138570
+    },
+    {
+      "path": "data/US100.cash_M5_202412300105_202610162345.csv",
+      "size_bytes": 8506586
+    },
+    {
+      "path": "data/US500.cash_202412300105_202610162349.csv",
+      "size_bytes": 1675150780
+    },
+    {
+      "path": "data/US500.cash_D1_202412300000_202610160000.csv",
+      "size_bytes": 25812
+    },
+    {
+      "path": "data/US500.cash_H1_202412300100_202610162300.csv",
+      "size_bytes": 668557
+    },
+    {
+      "path": "data/US500.cash_H4_202412300000_202610162000.csv",
+      "size_bytes": 176594
+    },
+    {
+      "path": "data/US500.cash_M10_202412300100_202610162340.csv",
+      "size_bytes": 3931081
+    },
+    {
+      "path": "data/US500.cash_M15_202412300100_202610162345.csv",
+      "size_bytes": 2646951
+    },
+    {
+      "path": "data/US500.cash_M1_202412300105_202610162349.csv",
+      "size_bytes": 38404762
+    },
+    {
+      "path": "data/US500.cash_M30_202412300100_202610162330.csv",
+      "size_bytes": 1330270
+    },
+    {
+      "path": "data/US500.cash_M3_202412300103_202610162348.csv",
+      "size_bytes": 12970192
+    },
+    {
+      "path": "data/US500.cash_M5_202412300105_202610162345.csv",
+      "size_bytes": 7792901
+    }
+  ],
+  "schema": "qrl.raw_source_inventory.v1",
+  "source_layout": "one full-period CSV per market-data export"
+}

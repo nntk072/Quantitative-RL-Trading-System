@@ -75,7 +75,7 @@ _REJECTION_COUNTERS: dict[str, str] = {
 def _previous_session_audit(
     strategy: object, row: FeatureRow | pd.Series, decision_close: float
 ) -> dict[str, Any]:
-    """Return the previous-session reference used by the Idea 2 entry gate.
+    """Return the previous-session level used by distribution entry checks.
 
     Args:
         strategy: Strategy used to select or evaluate trades.

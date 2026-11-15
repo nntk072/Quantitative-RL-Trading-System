@@ -150,4 +150,4 @@ def test_experiment_run_prebuild_uses_shared_variant_price_grid(
     assert "data.price_discretization.enabled=true" in overrides
     assert "data.price_discretization.increment=0.25" in overrides
     assert "data.price_discretization.rounding=nearest_half_away_from_zero" in overrides
-    assert "data.cache_dir=cache/train_test_2025_2026_qgrid025_v1" in overrides
+    assert "data.cache_dir=cache/train_test_2025_2026_qgrid025" in overrides

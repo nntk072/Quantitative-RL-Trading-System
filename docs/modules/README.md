@@ -47,6 +47,29 @@ are in [Reference](../reference/README.md). Human research findings are in
 [Research](../research/README.md). Operating instructions are in
 [Operations](../operations/triton.md).
 
+```{toctree}
+:hidden:
+
+artifacts
+compute
+configuration
+decisioning
+evaluation
+experiments
+features
+integrations
+learning
+live
+market_data
+models
+orchestra
+repository_layout
+simulation
+testing
+trading
+training
+```
+
 ## Documentation rules
 
 - Explain purpose, concepts, inputs, outputs, and assumptions before naming

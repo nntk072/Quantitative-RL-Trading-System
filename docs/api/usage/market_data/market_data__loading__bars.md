@@ -8,7 +8,7 @@ This page contains 3 public callable records owned by `market_data.loading.bars`
 
 **Purpose:** Parse a raw MT5 bar CSV into a DataFrame with a UTC-aware DatetimeIndex.
 
-**Exact API:** {py:obj}`market_data.loading.bars.load_bars` · **Source:** [market_data/loading/bars.py:22](../../../../market_data/loading/bars.py#L22)
+**Exact API:** {py:obj}`market_data.loading.bars.load_bars` · **Source:** [market_data/loading/bars.py:27](../../../../market_data/loading/bars.py#L27)
 
 **Inputs and outputs:**
 
@@ -16,6 +16,8 @@ This page contains 3 public callable records owned by `market_data.loading.bars`
 
   ```text
   path: Path to the input file or directory.
+  start_inclusive: Optional inclusive timestamp bound in the source's local clock.
+  end_exclusive: Optional exclusive timestamp bound in the source's local clock.
   ```
 
 - **Returns:**
@@ -77,7 +79,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Stream a raw MT5 tick CSV in bounded-size chunks.
 
-**Exact API:** {py:obj}`market_data.loading.bars.iter_ticks_chunks` · **Source:** [market_data/loading/bars.py:108](../../../../market_data/loading/bars.py#L108)
+**Exact API:** {py:obj}`market_data.loading.bars.iter_ticks_chunks` · **Source:** [market_data/loading/bars.py:127](../../../../market_data/loading/bars.py#L127)
 
 **Inputs and outputs:**
 
@@ -86,6 +88,8 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   ```text
   path: Path to the input file or directory.
   chunksize: Numeric value used for the chunksize.
+  start_inclusive: Optional inclusive timestamp bound in the source's local clock.
+  end_exclusive: Optional exclusive timestamp bound in the source's local clock.
   ```
 
 - **Yields:**
@@ -98,25 +102,46 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1020)
+1. [test fixture: `test_tick_chunk_parser_yields_only_development_rows`](../../../../tests/unit/market_data/test_ticks.py#L956)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    last_bid = np.nan
-    last_ask = np.nan
-    n_rows_total = 0
-    n_rows_kept = 0
+            ("2026.01.01", "00:00:00.000", 900_001.0, 900_001.6),
+        ],
+    )
 
-    for raw_chunk in iter_ticks_chunks(path, chunksize=chunksize):
-        n_rows_total += len(raw_chunk)
-        if diagnostics is not None:
-            diagnostics.source_rows_read += len(raw_chunk)
+    chunks = list(
+        iter_ticks_chunks(csv_path, chunksize=1, end_exclusive=pd.Timestamp("2026-01-01", tz="UTC"))
+    )
 
-        # Chunk-local datetime parse (bounded memory) — Etc/GMT-3 etc. are
-# … caller assertions omitted …
+    assert len(chunks) == 1
+    assert chunks[0]["bid"].tolist() == [100.0]
 ```
+
+2. [test fixture: `test_tick_chunk_parser_continues_until_start_date_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L974)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+            ("2026.01.01", "00:00:00.000", 101.0, 101.6),
+        ],
+    )
+
+    chunks = list(
+        iter_ticks_chunks(
+            csv_path,
+            chunksize=1,
+            start_inclusive=pd.Timestamp("2026-01-01"),
+        )
+    )
+
+    assert [row for chunk in chunks for row in chunk["bid"].tolist()] == [101.0]
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -129,7 +154,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Parse a raw MT5 bar CSV into a DataFrame with a UTC-aware DatetimeIndex.
 
-**Exact API:** {py:obj}`market_data.loading.bars.load_bars` · **Source:** [market_data/loading/bars.py:22](../../../../market_data/loading/bars.py#L22)
+**Exact API:** {py:obj}`market_data.loading.bars.load_bars` · **Source:** [market_data/loading/bars.py:27](../../../../market_data/loading/bars.py#L27)
 
 **Inputs and outputs:**
 
@@ -137,6 +162,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
   ```text
   path: Path to the input file or directory.
+  start_inclusive: Optional inclusive timestamp bound in the source's local clock.
+  end_exclusive: Optional exclusive timestamp bound in the source's local clock.
   ```
 
 - **Returns:**

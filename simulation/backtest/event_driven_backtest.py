@@ -1759,7 +1759,7 @@ def run_backtest(
         account_state_trace_rows.append(
             build_account_state_trace_row(
                 bar_index=i,
-                decision_time=bar_time,
+                decision_time=pd.Timestamp(bar_time) + bar_duration,
                 valuation_time=pd.Timestamp(bar_time) + bar_duration,
                 session_id=session,
                 breach_reason=(
@@ -1818,6 +1818,8 @@ def run_backtest(
                             "order_id": pending_order["order_id"],
                             "order_type": "limit",
                             "reason": block_reason,
+                            "session_id": int(session),
+                            "decision_time": pending_order["order_submission_time"],
                             "trade_setup_candidate_id": pending_order.get(
                                 "trade_setup_candidate_id"
                             ),
@@ -1919,6 +1921,8 @@ def run_backtest(
                                 "order_id": pending_order["order_id"],
                                 "order_type": "limit",
                                 "reason": "entry_rejected_at_limit_fill",
+                                "session_id": int(session),
+                                "decision_time": pending_order["order_submission_time"],
                                 "trade_setup_candidate_id": pending_order.get(
                                     "trade_setup_candidate_id"
                                 ),
@@ -1965,6 +1969,8 @@ def run_backtest(
                             "order_id": pending_order["order_id"],
                             "order_type": "limit",
                             "reason": "limit_ttl_expired",
+                            "session_id": int(session),
+                            "decision_time": pending_order["order_submission_time"],
                             "trade_setup_candidate_id": pending_order.get(
                                 "trade_setup_candidate_id"
                             ),
@@ -2020,6 +2026,8 @@ def run_backtest(
                             "decision_id": pending_order.get("decision_id"),
                             "order_id": pending_order["order_id"],
                             "reason": block_reason,
+                            "session_id": int(session),
+                            "decision_time": pending_order["order_submission_time"],
                             "trade_setup_candidate_id": pending_order.get(
                                 "trade_setup_candidate_id"
                             ),
@@ -2084,6 +2092,8 @@ def run_backtest(
                                 "decision_id": pending_order.get("decision_id"),
                                 "order_id": pending_order["order_id"],
                                 "reason": "entry_rejected_at_scheduled_fill",
+                                "session_id": int(session),
+                                "decision_time": pending_order["order_submission_time"],
                                 "trade_setup_candidate_id": pending_order.get(
                                     "trade_setup_candidate_id"
                                 ),
@@ -2533,6 +2543,8 @@ def run_backtest(
                 "decision_id": pending_order.get("decision_id"),
                 "order_id": pending_order["order_id"],
                 "order_type": pending_order.get("order_type", "market"),
+                "session_id": pending_order.get("session_id"),
+                "decision_time": pending_order.get("order_submission_time"),
                 "trade_setup_candidate_id": pending_order.get("trade_setup_candidate_id"),
                 **trade_setup_event_identity_record(
                     pending_order.get("trade_setup_event_identity")
@@ -2582,7 +2594,7 @@ def run_backtest(
         final_trace = account_state_trace_rows[-1]
         account_state_trace_rows[-1] = build_account_state_trace_row(
             bar_index=int(final_trace["backtest_bar_index"]),
-            decision_time=bar_times[-1],
+            decision_time=pd.Timestamp(bar_times[-1]) + bar_duration,
             valuation_time=state.equity_times[-1],
             session_id=(int(bars.iloc[-1]["session_id"]) if "session_id" in bars.columns else 0),
             breach_reason=str(final_trace.get("breach_reason", "")),

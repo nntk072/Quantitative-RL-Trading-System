@@ -2,8 +2,8 @@
 
 `market_data/` turns raw timestamped market inputs into aligned, chronological
 tables for feature construction and simulation. It owns loading, cleaning,
-timeframe resampling/alignment, sessions, and split boundaries; it does not
-define model features or choose trading actions.
+quality audits, timeframe resampling/alignment, sessions, and split boundaries;
+it does not define model features or choose trading actions.
 
 The main stages are:
 
@@ -13,7 +13,7 @@ source files -> load/normalize -> validate time/order -> resample/align
 ```
 
 The package is organized around loading pipelines, transformations, schemas,
-and command entry points. Timestamp timezone, completed-candle visibility,
+input-quality reports, and command entry points. Timestamp timezone, completed-candle visibility,
 missing-data handling, and split chronology are correctness contracts. A
 change to resampling or alignment requires leakage and boundary tests.
 

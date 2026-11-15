@@ -70,25 +70,36 @@ def test_artifact_id_is_stable_for_mapping_order() -> None:
     assert str(first) == f"dataset:{first.digest}"
 ```
 
-2. [production caller: `market_data_cache_id`](../../../../market_data/cache/identity.py#L23)
+2. [tutorial example: `artifacts-evidence-lineage · code cell 2`](../../../../docs/subjects/E_evaluation_research/examples/artifacts-evidence-lineage.ipynb)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def market_data_cache_id(
-    *, dataset_id: str, transform: str, config: Any, schema_version: int = 1
-) -> str:
-    return str(
-        artifact_id(
-            "market-data-cache",
-            {
-                "dataset_id": dataset_id,
-                "transform": transform,
-                "config": config,
-                "schema_version": schema_version,
-            },
-        )
-    )
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from artifacts.identity import artifact_id, file_sha256
+
+inputs = {"schema": "example-v1", "rows": 2}
+same_inputs = {"rows": 2, "schema": "example-v1"}
+identity = artifact_id("synthetic-ledger", inputs)
+assert identity == artifact_id("synthetic-ledger", same_inputs)
+assert identity != artifact_id("synthetic-ledger", {**inputs, "rows": 3})
+
+with TemporaryDirectory() as directory:
+    payload = Path(directory) / "ledger.csv"
+    payload.write_bytes(b"position,net_pnl\nA,4\nB,-1\n")
+    original_digest = file_sha256(payload)
+    lineage = {"artifact_id": str(identity), "sha256": original_digest}
+    assert file_sha256(payload) == lineage["sha256"]
+
+    payload.write_bytes(b"position,net_pnl\nA,4\nB,-2\n")
+    assert file_sha256(payload) != lineage["sha256"]
+    assert str(artifact_id("synthetic-ledger", inputs)) == lineage["artifact_id"]
+
+print("Semantic ID:", lineage["artifact_id"])
+print("Saved payload digest:", lineage["sha256"])
+print("A subsequent payload change was detected.")
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -140,7 +151,7 @@ def test_file_sha256_matches_standard_digest_for_empty_and_nonempty_files(
     assert file_sha256(empty) == hashlib.sha256(b"").hexdigest()
 ```
 
-2. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L40)
+2. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L45)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -155,8 +166,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert manifest["numerical_artifacts"] == [
         {"path": "training/metrics.json", "sha256": file_sha256(metrics_path)},
         {
-            "path": "training/policy_decisions.csv",
-            "sha256": file_sha256(policy_decisions_path),
+            "path": "training/evaluation_diagnostics.json",
+            "sha256": file_sha256(diagnostics_path),
 # … caller assertions omitted …
 ```
 

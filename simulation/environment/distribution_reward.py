@@ -1,4 +1,4 @@
-"""Idea 2 strategy-alignment reward (Agent.md §22).
+"""Distribution strategy-alignment reward.
 
 Event-based, never continuous: rewards the *entry* transition only when the
 distribution leg is already past the opposing-gap failure and the trade
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 
 class DistributionReward:
-    """Reward for a single position-entry event under the Idea 2 chain.
+    """Reward a single position-entry event under the distribution setup chain.
 
     Args:
         entry_bonus: Positive bonus for an entry on a distribution bar after the gap failed.

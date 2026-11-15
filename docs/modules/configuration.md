@@ -17,8 +17,11 @@ silently interpreted differently by training and evaluation.
 - `config/base/default.yaml` supplies common defaults.
 - `config/experiments.yaml` describes the selectable experiment matrix.
 - `config/variants/` contains named model or strategy settings.
-- `config/experiment_runs/` contains frozen inputs for a specific comparison
-  or bounded run.
+- `config/variant_catalog.yaml` groups arms by comparison question and research
+  domain.
+- A run specification selects one comparison family and supplies its run ID,
+  seeds, budget, data split, and evaluation role. Results are grouped by that
+  run ID and exported as one row per arm and seed.
 
 The resolved configuration is the effective input after defaults, experiment
 selection, and explicit overrides have been combined. Reports should describe

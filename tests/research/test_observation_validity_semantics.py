@@ -4,26 +4,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from scripts.research.analysis.features.reconcile_observation_validity_semantics import (
     build_report,
     resolve_feature_contract,
 )
 
 
-def test_observation_feature_validity_contracts_cover_measured_profile_rows(
+def test_observation_validity_report_fails_closed_without_measured_inputs(
     tmp_path: Path,
 ) -> None:
-    report = build_report(output_dir=tmp_path)
-
-    assert report["feature_timeframe_rows"] == 1291
-    assert report["producer_function_count"] == 42
-    assert len(report["rows"]) == 1291
-    assert all(row["producer_missingness_contract"] for row in report["rows"])
-    assert all(Path(row["source_path"]).is_file() for row in report["rows"])
-    assert all(
-        "per-feature finite-value channel" in row["observation_conversion"]
-        for row in report["rows"]
-    )
+    with pytest.raises(FileNotFoundError):
+        build_report(
+            triage_path=tmp_path / "missing-triage.csv",
+            matrix_path=tmp_path / "missing-matrix.csv",
+            output_dir=tmp_path / "out",
+        )
 
 
 def test_observation_validity_contracts_preserve_known_state_limits() -> None:

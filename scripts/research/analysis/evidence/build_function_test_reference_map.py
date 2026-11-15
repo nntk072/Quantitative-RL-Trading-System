@@ -626,7 +626,7 @@ correct. Test/source SHA-256 columns pin the exact bytes inspected for each
 static test reference. Rebuild it after source or test changes with:
 
 ```bash
-.venv/bin/python scripts/research/analysis/evidence/build_function_test_reference_map.py
+.venv-arm/bin/python scripts/research/analysis/evidence/build_function_test_reference_map.py
 ```
 
 Use the architecture-matched repository environment when running this command.

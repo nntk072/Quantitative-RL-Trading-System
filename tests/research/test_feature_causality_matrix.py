@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import csv
+from pathlib import Path
+
+import pytest
 from scripts.research.analysis.features.build_feature_causality_matrix import (
     FIELDS,
     UNASSESSED,
@@ -7,8 +11,84 @@ from scripts.research.analysis.features.build_feature_causality_matrix import (
 )
 
 
-def test_generated_matrix_lists_public_functions_and_all_setup_flags() -> None:
-    rows, summary = build_matrix()
+def _write_candidate_census(census_dir: Path) -> None:
+    census_dir.mkdir()
+    candidates = census_dir / "candidate_summary.csv"
+    identities = census_dir / "candidate_event_identity_summary.csv"
+    with candidates.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=(
+                "candidate_id",
+                "feature_column",
+                "support_status",
+                "idea",
+                "timeframe",
+                "active_m1_rows",
+            ),
+        )
+        writer.writeheader()
+        for index in range(108):
+            supported = index < 24
+            idea = (
+                ("standard_deviation", "po3", "ifvg_retest", "ifvg_unretested")[index % 4]
+                if supported
+                else ("fvg_retest", "ifvg_retest", "ifvg_unretested", "po3", "order_block")[
+                    (index - 24) % 5
+                ]
+            )
+            writer.writerow(
+                {
+                    "candidate_id": f"fixture-{index:03d}",
+                    "feature_column": f"entry_idea_{idea}_{index:03d}",
+                    "support_status": "supported" if supported else "unsupported",
+                    "idea": idea,
+                    "timeframe": "M1",
+                    "active_m1_rows": 2 if supported else 0,
+                }
+            )
+    with identities.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=(
+                "candidate_id",
+                "active_m1_rows",
+                "identified_source_event_rows",
+                "missing_source_event_time_rows",
+                "distinct_source_event_ids",
+                "identity_coverage_fraction",
+                "identified_identity_episode_starts",
+                "adjacent_active_identity_changes",
+                "distinct_ids_reused_across_active_episodes",
+            ),
+        )
+        writer.writeheader()
+        for index in range(108):
+            active = 2 if index < 24 else 0
+            writer.writerow(
+                {
+                    "candidate_id": f"fixture-{index:03d}",
+                    "active_m1_rows": active,
+                    "identified_source_event_rows": active,
+                    "missing_source_event_time_rows": 0,
+                    "distinct_source_event_ids": int(bool(active)),
+                    "identity_coverage_fraction": 1.0 if active else 0.0,
+                    "identified_identity_episode_starts": active,
+                    "adjacent_active_identity_changes": int(bool(active)),
+                    "distinct_ids_reused_across_active_episodes": 0,
+                }
+            )
+
+
+def test_feature_causality_matrix_requires_candidate_evidence(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="candidate census is required"):
+        build_matrix(tmp_path / "missing-census")
+
+
+def test_generated_matrix_lists_public_functions_and_all_setup_flags(tmp_path: Path) -> None:
+    census_dir = tmp_path / "census"
+    _write_candidate_census(census_dir)
+    rows, summary = build_matrix(census_dir)
 
     function_rows = [
         row for row in rows if row["record_type"] == "public_feature_function_candidate"
@@ -227,13 +307,13 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags() -> None:
     assert summary["unassessed_setup_flag_source_event_count"] == 0
     assert summary["reviewed_supported_setup_flag_source_event_count"] == 24
     assert summary["reviewed_inactive_setup_flag_source_event_count"] == 84
-    assert summary["active_candidate_rows"] == 488008
-    assert summary["identified_source_event_rows"] == 488008
+    assert summary["active_candidate_rows"] == 48
+    assert summary["identified_source_event_rows"] == 48
     assert summary["missing_source_event_time_rows"] == 0
-    assert summary["distinct_candidate_scoped_event_ids"] == 109391
-    assert summary["identified_identity_episode_starts"] == 115863
-    assert summary["adjacent_active_identity_changes"] == 13758
-    assert summary["distinct_ids_reused_across_active_episodes"] == 5719
+    assert summary["distinct_candidate_scoped_event_ids"] == 24
+    assert summary["identified_identity_episode_starts"] == 48
+    assert summary["adjacent_active_identity_changes"] == 24
+    assert summary["distinct_ids_reused_across_active_episodes"] == 0
     assert summary["row_weighted_identity_coverage_fraction"] == 1.0
     assert summary["candidate_identity_lifecycle_semantics"] == (
         "tuple and active-mask descriptive counters; not logical market-event cardinality"

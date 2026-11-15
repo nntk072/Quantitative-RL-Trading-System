@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 from omegaconf import DictConfig
 
+from market_data.loading.bars import UnorderedTickSourceError
 from market_data.loading.ticks import TICK_CACHE_VERSION, TickBook, build_tick_book
 from market_data.splits.definitions import inclusive_date_exclusive_end
 from market_data.transforms.price_grid import (
@@ -66,7 +67,8 @@ def build_tick_books(
         return result
 
     cache_dir = Path(cfg.data.cache_dir)
-    cache_dir.mkdir(parents=True, exist_ok=True)
+    if end_inclusive is None:
+        cache_dir.mkdir(parents=True, exist_ok=True)
 
     configured_sets = cfg.data.get("datasets")
     if configured_sets:
@@ -75,6 +77,8 @@ def build_tick_books(
                 str(name),
                 Path(str(spec.raw_dir)),
                 dict(spec.get("tick_files", {})),
+                spec.get("start_date"),
+                spec.get("end_date"),
             )
             for name, spec in configured_sets.items()
             if datasets is None or str(name) in datasets
@@ -91,13 +95,15 @@ def build_tick_books(
                 "all",
                 Path(str(cfg.data.raw_dir)),
                 dict(cfg.data.get("tick_files", {})),
+                None,
+                None,
             )
         ]
 
     grid_increment = configured_price_grid_increment(cfg)
     for sym in selected_symbols:
         books: list[TickBook] = []
-        for dataset_name, raw_dir, tick_files in tick_sources:
+        for dataset_name, raw_dir, tick_files, start_date, end_date in tick_sources:
             tick_file = tick_files.get(sym)
             if not tick_file:
                 log.warning("No %s tick file configured for %s", dataset_name, sym)
@@ -107,13 +113,25 @@ def build_tick_books(
                 log.warning("Tick file not found: %s", tick_path)
                 continue
             cache_scope = str(dataset_name) if configured_sets else ""
-            cache_p = (
-                cache_dir
-                / cache_scope
-                / tick_cache_filename(sym, grid_increment, TICK_CACHE_VERSION)
-            )
-            cache_p.parent.mkdir(parents=True, exist_ok=True)
+            cache_p = None
+            if end_inclusive is None:
+                cache_p = (
+                    cache_dir
+                    / cache_scope
+                    / tick_cache_filename(sym, grid_increment, TICK_CACHE_VERSION)
+                )
+                cache_p.parent.mkdir(parents=True, exist_ok=True)
             try:
+                source_end_date = end_date
+                if end_inclusive is not None and (
+                    source_end_date is None or str(end_inclusive) < str(source_end_date)
+                ):
+                    source_end_date = end_inclusive
+                source_end = (
+                    inclusive_date_exclusive_end(str(source_end_date), str(cfg.data.tz))
+                    if source_end_date is not None
+                    else None
+                )
                 book = build_tick_book(
                     path=tick_path,
                     tz=cfg.data.tz,
@@ -122,9 +140,15 @@ def build_tick_books(
                     cache_path=cache_p,
                     force=force,
                     price_grid_increment=grid_increment,
+                    start_inclusive=str(start_date) if start_date else None,
+                    end_exclusive=source_end,
+                    end_date_inclusive=str(source_end_date) if source_end_date else None,
+                    end_inclusive=end_inclusive,
                 )
-                if book is not None and len(book) > 0:
+                if book is not None and (len(book) > 0 or end_inclusive is not None):
                     books.append(book)
+            except UnorderedTickSourceError:
+                raise
             except Exception as exc:  # noqa: BLE001
                 log.warning("Failed to build TickBook for %s: %s", tick_path, exc)
                 result[sym] = None

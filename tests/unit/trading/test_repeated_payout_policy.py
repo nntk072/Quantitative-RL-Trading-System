@@ -249,6 +249,7 @@ def _repeated_env_stub(
     env._last_approved_risk_usd = 0.0
     env._last_execution_reserve_usd = 0.0
     env._payout_withdrawn_this_step = 0.0
+    env._minutes_per_step = 1.0
     return env
 
 

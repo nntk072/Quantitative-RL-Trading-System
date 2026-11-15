@@ -9,7 +9,13 @@ from tools.documentation.coverage import DIMENSIONS, build_coverage
 from tools.documentation.coverage import OUTPUT as COVERAGE_OUTPUT
 from tools.documentation.figures import validate as validate_figures
 from tools.documentation.function_docstrings import missing_docstrings
-from tools.documentation.inventory import OUTPUT, ROOT, build_inventory
+from tools.documentation.inventory import (
+    OUTPUT,
+    ROOT,
+    build_inventory,
+    page_status,
+    toctree_targets,
+)
 
 
 def test_documentation_inventory_is_current_and_has_no_orphan_pages() -> None:
@@ -19,6 +25,15 @@ def test_documentation_inventory_is_current_and_has_no_orphan_pages() -> None:
     report = json.loads(expected)
     assert report["page_count"] >= 100
     assert all(page["orphan_status"] == "in toctree" for page in report["pages"])
+
+
+def test_internal_execution_plan_is_not_published_as_documentation() -> None:
+    """The operational plan remains internal and outside visible navigation."""
+    campaign_plan = ROOT / "docs/operations/research_campaign_plan.md"
+    assert campaign_plan.is_file()
+    assert page_status(campaign_plan) == "operational"
+    assert campaign_plan not in toctree_targets(ROOT / "docs/index.md")
+    assert not (ROOT / "docs/operations/research_execution_plan.md").exists()
 
 
 def test_subject_coverage_snapshot_is_machine_readable_and_current() -> None:
@@ -49,7 +64,7 @@ def test_tutorial_notebooks_have_valid_tier_metadata_and_local_links() -> None:
         if validate_notebook(path)
     }
     assert failures == {}
-    assert len(notebook_paths()) == 19
+    assert len(notebook_paths()) == 47
 
 
 def test_notebook_runner_marks_only_cpu_tier_a_for_execution() -> None:

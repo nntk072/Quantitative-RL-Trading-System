@@ -36,12 +36,17 @@ def _db() -> sqlite3.Connection:
 def test_config_path_resolves_literal_path_join_and_constant() -> None:
     tree = mod.ast.parse('ROOT / "config" / "base" / "default.yaml"', mode="eval")
     assert mod._config_path(tree.body, {}) == "config/base/default.yaml"
-    literal = mod.ast.parse('"config/2_po3_ifvg.yaml"', mode="eval")
-    assert mod._config_path(literal.body, {}) == "config/2_po3_ifvg.yaml"
+    literal = mod.ast.parse('"config/strategies/po3_ifvg.yaml"', mode="eval")
+    assert mod._config_path(literal.body, {}) == "config/strategies/po3_ifvg.yaml"
     expr = mod.ast.parse("CONFIG", mode="eval")
-    assignment = mod.ast.parse('CONFIG = ROOT / "config" / "3_distribution.yaml"').body[0]
+    assignment = mod.ast.parse(
+        'CONFIG = ROOT / "config" / "strategies" / "distribution.yaml"'
+    ).body[0]
     assert isinstance(assignment, mod.ast.Assign)
-    assert mod._config_path(expr.body, {"CONFIG": assignment.value}) == "config/3_distribution.yaml"
+    assert (
+        mod._config_path(expr.body, {"CONFIG": assignment.value})
+        == "config/strategies/distribution.yaml"
+    )
 
 
 def test_config_path_rejects_non_config_text() -> None:
@@ -77,13 +82,31 @@ def test_registry_relations_extract_literal_mapping_and_constant() -> None:
     tree = mod.ast.parse(
         'ROOT = Path(".")\n'
         'QUALITY = ROOT / "config" / "quality_experiments.yaml"\n'
-        'STRATEGIES = {"distribution": ROOT / "config" / "3_distribution.yaml"}\n'
+        'STRATEGIES = {"distribution": ROOT / "config" / "strategies" / "distribution.yaml"}\n'
     )
     assignments = mod._module_assignments(tree)
     rels = mod._registry_relations("training/configuration/example.py", tree, assignments)
     keyed = {(r["relation_type"], r["config_path"], r["selector_or_key"]) for r in rels}
     assert ("CONFIG_CONSTANT", "config/quality_experiments.yaml", "QUALITY") in keyed
-    assert ("REGISTRY_ENTRY", "config/3_distribution.yaml", "distribution") in keyed
+    assert ("REGISTRY_ENTRY", "config/strategies/distribution.yaml", "distribution") in keyed
+
+
+def test_registry_relations_resolve_repository_root_paths() -> None:
+    tree = mod.ast.parse(
+        'CONFIG_DIR = repository_root(__file__) / "config"\n'
+        'STRATEGIES = {"distribution": CONFIG_DIR / "strategies" / "distribution.yaml"}\n'
+    )
+
+    relations = mod._registry_relations(
+        "training/configuration/strategy_overlays.py", tree, mod._module_assignments(tree)
+    )
+
+    assert any(
+        relation["relation_type"] == "REGISTRY_ENTRY"
+        and relation["config_path"] == "config/strategies/distribution.yaml"
+        and relation["selector_or_key"] == "distribution"
+        for relation in relations
+    )
 
 
 def test_function_default_config_path_resolves_constant() -> None:
@@ -99,7 +122,7 @@ def test_function_default_config_path_resolves_constant() -> None:
 
 def test_registry_relations_include_dynamic_selection_read() -> None:
     tree = mod.ast.parse(
-        'STRATEGIES = {"distribution": ROOT / "config" / "3_distribution.yaml"}\n'
+        'STRATEGIES = {"distribution": ROOT / "config" / "strategies" / "distribution.yaml"}\n'
         "def select(name):\n    return STRATEGIES[name]\n"
     )
     rels = mod._registry_relations(
@@ -107,7 +130,7 @@ def test_registry_relations_include_dynamic_selection_read() -> None:
     )
     selections = [r for r in rels if r["relation_type"] == "REGISTRY_SELECTION"]
     assert len(selections) == 1
-    assert selections[0]["config_path"] == "config/3_distribution.yaml"
+    assert selections[0]["config_path"] == "config/strategies/distribution.yaml"
     assert selections[0]["selector_or_key"] == "<dynamic>"
     assert selections[0]["source_symbol"] == "select"
 
@@ -365,12 +388,16 @@ def test_verify_critical_fails_unresolved_required_config(monkeypatch) -> None:
     monkeypatch.setattr(
         mod,
         "CRITICAL_CONFIG_POLICY",
-        {"config/3_distribution.yaml": {"directly_traceable", "indirectly_traceable"}},
+        {"config/strategies/distribution.yaml": {"directly_traceable", "indirectly_traceable"}},
     )
     cfg = {
-        "config_files": ["config/3_distribution.yaml"],
+        "config_files": ["config/strategies/distribution.yaml"],
         "reachability": {
-            "config/3_distribution.yaml": {"state": "unresolved", "evidence": [], "note": "missing"}
+            "config/strategies/distribution.yaml": {
+                "state": "unresolved",
+                "evidence": [],
+                "note": "missing",
+            }
         },
     }
     result = mod.verify_critical(c, cfg)
@@ -386,12 +413,12 @@ def test_verify_critical_allows_explicit_inactive_policy(monkeypatch) -> None:
     )
     monkeypatch.setattr(mod, "CRITICAL_SYMBOLS", ())
     monkeypatch.setattr(
-        mod, "CRITICAL_CONFIG_POLICY", {"config/1_baseline.yaml": {"tracked_but_inactive"}}
+        mod, "CRITICAL_CONFIG_POLICY", {"config/optional/disabled.yaml": {"tracked_but_inactive"}}
     )
     cfg = {
-        "config_files": ["config/1_baseline.yaml"],
+        "config_files": ["config/optional/disabled.yaml"],
         "reachability": {
-            "config/1_baseline.yaml": {
+            "config/optional/disabled.yaml": {
                 "state": "tracked_but_inactive",
                 "evidence": [],
                 "note": "intentional",

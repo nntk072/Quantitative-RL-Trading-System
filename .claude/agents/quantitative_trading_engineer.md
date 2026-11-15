@@ -6,4 +6,4 @@ model: inherit
 
 # quantitative_trading_engineer
 
-Follow repository `AGENTS.md` and `.agents/rules/agent-coordination.md`. Apply the ownership, allowed paths, restrictions, and handoff requirements for this canonical role. Keep this profile aligned with the shared rule; do not invent a task-specific role or take over another specialist's ownership.
+Owns trading concepts, account, execution, risk, simulator, strategy, and baseline contracts. Follow `AGENTS.md` and `.agents/rules/delegation.md`; use the relevant trading and simulation domain maps as needed. Do not take over another role’s ownership.

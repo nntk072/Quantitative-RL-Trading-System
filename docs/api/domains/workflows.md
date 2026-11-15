@@ -6,7 +6,7 @@ Training creates policy artifacts from a resolved experiment configuration; eval
 
 Resolve and persist configuration before execution. Bind data/cache identity, source revision, and seed to the run. Training artifacts should be marked incomplete until finalization has written required outputs and a manifest. Evaluation should validate the policy schema, use the declared split/protocol, and record the transition series from which metrics are computed. Experiment comparison should match budgets and evaluation conditions before making treatment claims.
 
-The package boundary separates run orchestration from scientific interpretation. A completed run is not automatically a successful result; a report should state evidence level, missing inputs, and limitations. The [result registry](../../reproduce/result_registry) tracks reproducibility status.
+The package boundary separates run orchestration from scientific interpretation. A completed run is not automatically a successful result; a report should state evidence level, missing inputs, and limitations. The [current research evidence status](../../research/README) tracks reproducibility status.
 
 ## Entry points
 

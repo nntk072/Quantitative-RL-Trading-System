@@ -56,4 +56,4 @@ choose a cost scenario after observing which one makes a result favorable.
 
 See [evaluation methodology](../research/evaluation_methodology.md),
 [execution costs](execution_and_costs.md), and
-[result registry](../reproduce/result_registry.md).
+[current evidence status](../research/README.md).

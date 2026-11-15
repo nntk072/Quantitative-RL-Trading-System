@@ -25,6 +25,9 @@
 ../development/supplementary_source_map
 ../modules/README
 ../decisions/README
+../how-to/README
+../MAINTAINING
+../security/dependency_security_status
 ```
 
 For system structure, see [Architecture](../architecture/README). Migration

@@ -52,13 +52,8 @@ def test_generated_data_and_runtime_paths_follow_repository_ignore_policy(
     subprocess.run(["git", "init", "--quiet"], cwd=isolated_repo, check=True)
 
     expected = [
-        ("data/normal/US100.cash.csv", True),
-        ("data/normal/training/US100.cash.csv", True),
-        ("data/normal/US100.cash_2024.csv", True),
-        ("data/discretion/US100.cash.csv", True),
-        ("data/discretion/testing/US100.cash.csv", True),
-        ("data/normal/README.md", False),
-        ("data/discretion/README.md", False),
+        ("data/US100.cash_2024.csv", True),
+        ("data/README.md", False),
         ("data/examples/sample.csv", False),
         ("data/unclassified.csv", True),
         ("cache/generated.parquet", True),

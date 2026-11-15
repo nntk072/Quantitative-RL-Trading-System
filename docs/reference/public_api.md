@@ -10,11 +10,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Classification | Exported names |
 |---|---:|
-| stable | 710 |
+| stable | 711 |
 | experimental | 0 |
 | compatibility-only | 10 |
-| cross-package internal | 448 |
-| private implementation | 974 |
+| cross-package internal | 462 |
+| private implementation | 989 |
 
 ## Public package exports
 
@@ -238,7 +238,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `print_report` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L88) | stable |
 | `save_metrics_json` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L336) | stable |
 | `save_run` | function | [evaluation.reporting.run_artifact_writer](../../evaluation/reporting/run_artifact_writer.py#L850) | stable |
-| `write_evaluation_manifest` | function | [evaluation.reporting.evaluation_manifest](../../evaluation/reporting/evaluation_manifest.py#L74) | stable |
+| `write_evaluation_manifest` | function | [evaluation.reporting.evaluation_manifest](../../evaluation/reporting/evaluation_manifest.py#L75) | stable |
 | `AlwaysNoTradePolicy` | class | [evaluation.rollout.random_eligible_setup](../../evaluation/rollout/random_eligible_setup.py#L207) | stable |
 | `AlwaysNoTradeRolloutModel` | class | [evaluation.rollout.random_eligible_setup](../../evaluation/rollout/random_eligible_setup.py#L252) | stable |
 | `RandomEligibleSetupPolicy` | class | [evaluation.rollout.random_eligible_setup](../../evaluation/rollout/random_eligible_setup.py#L17) | stable |
@@ -442,9 +442,9 @@ Compatibility names and experimental exports remain labeled explicitly.
 |---|---|---|---|
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L44) | stable |
 | `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L489) | stable |
-| `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L22) | stable |
+| `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L23) | stable |
 | `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L117) | stable |
-| `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L22) | stable |
+| `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L27) | stable |
 | `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L153) | stable |
 | `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L47) | stable |
 | `split_train_test` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L16) | stable |
@@ -459,24 +459,24 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `build_tick_cache_identity` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L35) | stable |
 | `cache_is_complete` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L42) | stable |
 | `file_sha256` | function | [artifacts.identity](../../artifacts/identity.py#L47) | stable |
-| `load_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L118) | stable |
+| `load_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L124) | stable |
 | `load_parquet_cache` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L131) | stable |
-| `load_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L100) | stable |
+| `load_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L106) | stable |
 | `mark_cache_complete` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L26) | stable |
 | `market_data_cache_id` | function | [market_data.cache.identity](../../market_data/cache/identity.py#L8) | stable |
 | `parquet_cache_is_complete` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L109) | stable |
 | `parquet_cache_manifest_path` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L54) | stable |
-| `tick_cache_is_complete` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L82) | stable |
+| `tick_cache_is_complete` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L88) | stable |
 | `tick_cache_manifest_path` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L23) | stable |
-| `write_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L133) | stable |
+| `write_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L139) | stable |
 | `write_parquet_cache` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L184) | stable |
-| `write_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L119) | stable |
+| `write_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L125) | stable |
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L44) | stable |
 | `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L489) | stable |
 | `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L925) | stable |
-| `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L22) | stable |
-| `iter_ticks_chunks` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L108) | stable |
-| `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L22) | stable |
+| `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L23) | stable |
+| `iter_ticks_chunks` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L127) | stable |
+| `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L27) | stable |
 | `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L47) | stable |
 | `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L691) | stable |
 | `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L654) | stable |
@@ -714,16 +714,17 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `FTMOGuardrails` | class | [trading.risk.guardrails](../../trading/risk/guardrails.py#L83) | stable |
 | `FTMOMidnightSnapshotUnavailable` | class | [trading.risk.ftmo_clock](../../trading/risk/ftmo_clock.py#L16) | stable |
 | `RISK_BREACH_EVENT_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L14) | stable |
-| `RISK_BREACH_EVENT_SCHEMA_V2` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L16) | stable |
-| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L18) | compatibility-only |
-| `RISK_DAILY_PNL_BASIS_SESSION_EQUITY` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L17) | stable |
+| `RISK_BREACH_EVENT_SCHEMA_V2` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L17) | stable |
+| `RISK_DAILY_PNL_BASIS_FTMO_MIDNIGHT` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L20) | stable |
+| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L19) | compatibility-only |
+| `RISK_DAILY_PNL_BASIS_SESSION_EQUITY` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L18) | stable |
 | `RISK_DECISION_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L13) | stable |
 | `RISK_STATE_SCHEMA_V1` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L12) | stable |
 | `RiskBudgetDecision` | class | [trading.risk.budget](../../trading/risk/budget.py#L9) | stable |
 | `RiskDailyPnlBasis` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L9) | stable |
-| `RiskDecision` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L59) | stable |
-| `RiskPolicy` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L82) | stable |
-| `RiskState` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L23) | stable |
+| `RiskDecision` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L60) | stable |
+| `RiskPolicy` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L83) | stable |
+| `RiskState` | class | [trading.risk.contracts](../../trading/risk/contracts.py#L24) | stable |
 | `adverse_position_loss_limit_usd` | function | [trading.risk.guardrails](../../trading/risk/guardrails.py#L49) | stable |
 | `approve_dynamic_risk` | function | [trading.risk.budget](../../trading/risk/budget.py#L36) | stable |
 | `breakeven_stop_price` | function | [trading.risk.stop_management](../../trading/risk/stop_management.py#L117) | stable |
@@ -738,8 +739,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `risk_budget_from_equity` | function | [trading.risk.budget](../../trading/risk/budget.py#L23) | stable |
 | `stop_loss_risk_usd` | function | [trading.risk.sizing](../../trading/risk/sizing.py#L13) | stable |
 | `tightened_breakeven_stop_price` | function | [trading.risk.stop_management](../../trading/risk/stop_management.py#L67) | stable |
-| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L18) | compatibility-only |
-| `RiskPolicy.decide` | method | [trading.risk.contracts](../../trading/risk/contracts.py#L85) | stable |
+| `RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES` | value | [trading.risk.contracts](../../trading/risk/contracts.py#L19) | compatibility-only |
+| `RiskPolicy.decide` | method | [trading.risk.contracts](../../trading/risk/contracts.py#L86) | stable |
 | `FTMOGuardrails.any_breach` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L316) | stable |
 | `FTMOGuardrails.breach_reason` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L327) | stable |
 | `FTMOGuardrails.check_daily` | method | [trading.risk.guardrails](../../trading/risk/guardrails.py#L229) | stable |

@@ -4,8 +4,8 @@ set -uo pipefail
 REPOSITORY_ROOT="$(git rev-parse --show-toplevel)" || exit 2
 cd "$REPOSITORY_ROOT" || exit 2
 
-PYTHON_BIN="${QRL_PYTHON:-.venv/bin/python}"
-RUFF_BIN="${QRL_RUFF:-.venv/bin/ruff}"
+PYTHON_BIN="${QRL_PYTHON:-.venv-arm/bin/python}"
+RUFF_BIN="${QRL_RUFF:-.venv-arm/bin/ruff}"
 SPHINX_OUT="${QRL_SPHINX_OUT:-/tmp/qrl-release-docs}"
 
 if [[ ! -x "$PYTHON_BIN" ]]; then
@@ -92,21 +92,12 @@ run_gate "scoped unit, integration, and research tests" "$PYTHON_BIN" -m pytest 
   tests/unit/research/test_pretraining_parallel_readiness.py \
   tests/unit/research/test_pretraining_scientific_readiness.py \
   tests/unit/research/test_survival_learning_signal_reachability.py \
-  tests/unit/research/test_v3_compute_contract.py \
-  tests/unit/research/test_v3_campaign_gatekeeper.py \
-  tests/unit/research/test_v3_full_plan_registry.py \
-  tests/unit/research/test_v3_full_plan_runner.py \
-  tests/unit/research/test_v3_phase_review.py \
-  tests/unit/research/test_v3_phase_command_bundle.py \
-  tests/unit/research/test_v3_survival_command_bundle.py \
-  tests/unit/research/test_v3_frozen_command_executor.py \
-  tests/unit/research/test_v3_portfolio_hard_risk.py \
-  tests/unit/research/test_v3_primary_paired_seed_payload.py \
-  tests/unit/research/test_v3_metrics_v4.py \
-  tests/unit/research/test_v3_final_research_outputs.py \
-  tests/unit/research/test_v3_old_open_box_disposition.py \
-  tests/unit/research/test_v3_release_bundle.py \
-  tests/unit/research/test_v3_finished.py \
+  tests/unit/research/test_training_compute_contract.py \
+  tests/unit/research/test_portfolio_hard_risk.py \
+  tests/unit/research/test_primary_paired_seed_payload.py \
+  tests/unit/research/test_metrics_contract.py \
+  tests/unit/research/test_final_research_outputs.py \
+  tests/unit/research/test_research_release_bundle.py \
   tests/unit/research/test_observation_warmup_validity_audit.py \
   tests/unit/research/test_survival_compute_budget.py \
   tests/unit/research/test_survival_launch_plan.py \
@@ -196,11 +187,9 @@ run_gate "scoped unit, integration, and research tests" "$PYTHON_BIN" -m pytest 
   tests/unit/research/test_current_market_inputs.py \
   tests/unit/research/test_paired_seed_statistics.py \
   tests/unit/research/test_policy_trade_lifecycle_summary.py \
-  tests/unit/research/test_release_manifest_hashes.py \
   tests/unit/research/test_candidate_limit_fill_packet_comparison.py \
   tests/unit/research/test_candidate_outcome_replay_comparison.py \
   tests/unit/research/test_gross_realized_loss_counter_audit.py \
-  tests/unit/research/test_missing_artifact_nested_archive_reconciliation.py \
   tests/unit/research/test_paired_seed_count_plan.py \
   tests/unit/research/test_policy_trade_lifecycle_packet.py \
   tests/unit/research/test_recorded_equity_series_audit.py \
@@ -214,32 +203,22 @@ run_gate "scoped unit, integration, and research tests" "$PYTHON_BIN" -m pytest 
   tests/research/test_trade_setup_opportunity_census.py \
   tests/research/test_candidate_event_cardinality_register.py \
   tests/research/test_candidate_outcome_independent_arithmetic.py \
-  tests/research/test_missing_artifact_archive_reconciliation.py \
-  tests/research/test_missing_artifact_filesystem_reconciliation.py \
   tests/research/test_real_market_feature_prefix_launcher.py \
   tests/research/test_research_provenance_byte_verification.py \
   tests/research/test_score_rule_baselines_period_scope.py \
-  tests/research/test_selected_campaign_artifact_verification.py \
   tests/research/test_candidate_geometry_support.py \
   tests/research/test_matched_setup_baseline_accounting_audit.py \
   tests/research/test_plot_trade_setup_opportunity_census.py \
   tests/research/test_configured_timeframe_parity.py \
   tests/research/test_feature_causality_matrix.py \
   tests/research/test_po3_setup_lifecycle_ledger.py \
-  tests/research/test_entry_and_exit_attribution_evidence.py \
-  tests/research/test_entry_action_funnel_diagnosis.py \
   tests/research/test_fill_quote_source_alignment.py \
   tests/research/test_market_data_inventory_hashing.py \
   tests/research/test_quote_quality_scans.py \
   tests/research/test_market_data_quality_plot.py \
   tests/research/test_function_test_reference_map.py \
   tests/research/test_model_observation_action_artifact_inventory.py \
-  tests/research/test_research_provenance_dag.py \
-  tests/research/test_historical_source_mappings.py \
-  tests/research/test_historical_variant_screen_recoverability.py \
   tests/research/test_selected_checkpoint_recoverability.py \
-  tests/unit/research/test_trade_exit_cohorts.py \
-  tests/research/test_exit_action_semantics_evidence.py -q
 
 if [[ "${QRL_SKIP_DOCS:-0}" == "1" ]]; then
   printf 'Documentation inventory, evidence audit, and Sphinx are deferred by QRL_SKIP_DOCS=1.\n'

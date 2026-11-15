@@ -1,4 +1,4 @@
-"""Headless tests for the RL live/paper robot (Master Roadmap Stage 8).
+"""Headless tests for the RL live/paper robot.
 
 Runs without MT5 or SB3: the bridge/robot are exercised with a stub model,
 a stub data source, and a recording trader. ``MetaTrader5`` (Windows-only)
@@ -337,7 +337,7 @@ def test_live_robot_does_not_replace_sizing_error_with_default_lot() -> None:
 
 
 def test_robot_feed_secondary_bars_for_smt() -> None:
-    """Stage 8 Task 8.4: a secondary data source must reach the adapter each
+    """A secondary data source must reach the adapter each
     cycle so SMT features are present in the live observation.
     """
     secondary = _make_bars(n=300, seed=99)

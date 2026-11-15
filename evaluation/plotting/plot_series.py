@@ -122,7 +122,8 @@ def drawdown_ylim(values: pd.Series, floor: float) -> tuple[float, float]:
     observed = float(np.nanmin(np.asarray(values, dtype=float))) if len(values) else 0.0
     if np.isnan(observed):
         observed = 0.0
-    return (min(float(floor), observed), 0.0)
+    lower = min(float(floor), observed)
+    return (-1.0 if lower == 0.0 else lower, 0.0)
 
 
 def apply_mpl_date_axis(ax: Any, tz: Any | None = None) -> None:

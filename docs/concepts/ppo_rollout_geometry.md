@@ -22,7 +22,7 @@ aggregate rollout size, batch size, and updates per rollout.
 
 Increasing environments changes more than speed: it changes how many episodes
 or market segments can be sampled concurrently and can affect resource use.
-The training configuration stage may cap environments unless a quality-run
+The training configuration may cap environments unless a quality comparison
 resource contract requires exact geometry. A comparison that changes this
 geometry should report it as a changed method.
 
@@ -44,4 +44,4 @@ For an experiment, capture at minimum:
 
 See [training](../framework/training_and_experiments.md),
 [run artifacts](../reference/artifacts.md), and the
-[GH200 throughput audit](../research/gh200_throughput_audit.md).
+[performance engineering](../operations/performance.md).

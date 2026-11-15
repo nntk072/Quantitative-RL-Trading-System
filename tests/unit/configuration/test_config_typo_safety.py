@@ -1,4 +1,4 @@
-"""Configuration loading typo-safety tests (Master Roadmap Stage 4)."""
+"""Configuration loading typo-safety tests ."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from configuration import load_config, merge_config_overlay
 
 _ROOT = Path(__file__).resolve().parents[3]
 _CONFIG_OVERLAYS = (
-    Path("config/2_po3_ifvg.yaml"),
-    Path("config/3_distribution.yaml"),
+    Path("config/strategies/po3_ifvg.yaml"),
+    Path("config/strategies/distribution.yaml"),
     *tuple(path.relative_to(_ROOT) for path in sorted((_ROOT / "config/features").rglob("*.yaml"))),
 )
 
@@ -97,8 +97,8 @@ def test_null_valued_leaf_override_is_allowed() -> None:
 
 
 def test_po3_ifvg_config_merges_and_sets_strategy() -> None:
-    """config/2_po3_ifvg.yaml enables the Idea 1 stack (Agent.md §10)."""
-    cfg = load_config(config_path="config/2_po3_ifvg.yaml")
+    """The PO3/IFVG overlay enables its configured strategy features."""
+    cfg = load_config(config_path="config/strategies/po3_ifvg.yaml")
     assert cfg.features.include_strategy_state is True
     assert cfg.env.strategy_actions is True
     assert cfg.strategy.name == "po3_ifvg"
@@ -108,8 +108,8 @@ def test_po3_ifvg_config_merges_and_sets_strategy() -> None:
 
 
 def test_idea2_config_merges_and_sets_strategy() -> None:
-    """config/3_distribution.yaml selects the distribution strategy."""
-    cfg = load_config(config_path="config/3_distribution.yaml")
+    """config/strategies/distribution.yaml selects the distribution strategy."""
+    cfg = load_config(config_path="config/strategies/distribution.yaml")
     assert cfg.features.include_strategy_state is True
     assert cfg.env.strategy_actions is True
     assert cfg.strategy.name == "distribution"

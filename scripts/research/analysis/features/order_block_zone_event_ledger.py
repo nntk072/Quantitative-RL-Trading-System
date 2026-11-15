@@ -23,9 +23,7 @@ from market_data.transforms.resample import TF, resample
 ROOT = repository_root(__file__)
 DEFAULT_CONFIG = ROOT / "config/research/trade_setup_mtf_reasoning_2m.yaml"
 DEFAULT_OUTPUT = ROOT / "evidence/research/order_block_zone_event_ledger"
-RAW_MANIFEST = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-)
+RAW_MANIFEST = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
 LEDGER_COLUMNS = [
     "timeframe",
     "confirmation_month",

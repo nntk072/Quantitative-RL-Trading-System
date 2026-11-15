@@ -1,11 +1,11 @@
 profile: normal
 data:
-  cache_dir: cache/data_modes/normal/train_test_2025_2026_v1
+  cache_dir: cache/train_test_2025_2026
   datasets:
     training:
-      raw_dir: data/normal/training
+      raw_dir: data
     testing:
-      raw_dir: data/normal/testing
+      raw_dir: data
   price_discretization:
     enabled: false
     increment: 0.25

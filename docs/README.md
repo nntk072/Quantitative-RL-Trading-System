@@ -64,6 +64,6 @@ settings must use GitHub Actions as the deployment source.
   matrix for concept, architecture, tutorial, reference, research, and
   troubleshooting coverage.
 
-The active experiment queue and period-role decisions are recorded in the
-[research execution plan](operations/research_execution_plan.md). That plan
-does not define the software architecture or project identity.
+Research methods, evidence status, and validity limits are documented in the
+[research section](research/README.md). Operational guides cover supported
+environments and maintained command workflows.

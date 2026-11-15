@@ -1,4 +1,4 @@
-"""Headless tests for the ``live_trading_rl.py`` entrypoint helpers (Stage 8).
+"""Headless tests for the ``live_trading_rl.py`` entrypoint helpers.
 
 Covers the pieces of the live entrypoint that can be verified without MT5 or a
 model checkpoint: SMT/secondary-symbol wiring decisions, live-risk extraction

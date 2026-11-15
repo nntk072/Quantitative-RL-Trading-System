@@ -7,7 +7,9 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
+from features.pipeline.feature_cache_identity import feature_cache_content_hash
 from market_data.loading import BAR_CACHE_VERSION, run_pipeline
+from market_data.loading.bars import load_bars
 
 
 def _write_m1(path: Path, date: str, time: str, open_price: float) -> None:
@@ -77,7 +79,99 @@ def test_pipeline_builds_independent_train_test_bar_caches(tmp_path: Path) -> No
         ).is_file()
 
 
-def test_pipeline_development_cutoff_excludes_later_bar_values(tmp_path: Path) -> None:
+def test_pipeline_selects_registered_date_windows_from_one_source(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    name = f"{symbol}_M1.csv"
+    source = tmp_path / "data" / name
+    m3_name = f"{symbol}_M3.csv"
+    m3_source = source.parent / m3_name
+    _write_m1(source, "2025.12.31", "23:58:00", 99.0)
+    with source.open("a", encoding="utf-8") as stream:
+        stream.write("2025.12.31\t23:59:00\t100\t101\t99\t100\t10\t0\t2\n")
+        stream.write("2026.01.01\t00:00:00\t200\t201\t199\t200\t10\t0\t2\n")
+        stream.write("2026.01.01\t00:01:00\t201\t202\t200\t201\t10\t0\t2\n")
+    _write_m1(m3_source, "2025.12.31", "23:54:00", 500.0)
+    with m3_source.open("a", encoding="utf-8") as stream:
+        stream.write("2025.12.31\t23:57:00\t501\t502\t500\t501\t10\t0\t2\n")
+        stream.write("2026.01.01\t00:00:00\t600\t601\t599\t600\t10\t0\t2\n")
+        stream.write("2026.01.01\t00:03:00\t601\t602\t600\t601\t10\t0\t2\n")
+
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "UTC",
+                "symbols": [symbol],
+                "timeframes": ["M1", "M3"],
+                "datasets": {
+                    "training": {
+                        "raw_dir": str(source.parent),
+                        "start_date": "2025-12-31",
+                        "end_date": "2025-12-31",
+                        "m1_files": {symbol: name},
+                        "timeframe_files": {"M3": {symbol: m3_name}},
+                    },
+                    "testing": {
+                        "raw_dir": str(source.parent),
+                        "start_date": "2026-01-01",
+                        "end_date": "2026-01-01",
+                        "m1_files": {symbol: name},
+                        "timeframe_files": {"M3": {symbol: m3_name}},
+                    },
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+
+    frames = run_pipeline(cfg)
+
+    assert frames[symbol]["M1"]["close"].tolist() == [99.0, 100.0, 200.0, 201.0]
+    assert frames[symbol]["M3"]["close"].tolist() == [500.0, 501.0, 600.0, 601.0]
+    for dataset, start, end in (
+        ("training", "2025-12-31", "2025-12-31"),
+        ("testing", "2026-01-01", "2026-01-01"),
+    ):
+        cache_path = tmp_path / "cache" / dataset / f"{symbol}_M1_{BAR_CACHE_VERSION}.parquet"
+        assert cache_path.is_file()
+        identity = json.loads(Path(f"{cache_path}.manifest.json").read_text(encoding="utf-8"))[
+            "identity"
+        ]["inputs"]
+        assert identity["start_inclusive"] == start
+        assert identity["end_inclusive"] == end
+
+
+def test_pipeline_rejects_reversed_registered_date_window(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    name = f"{symbol}_M1.csv"
+    _write_m1(tmp_path / "data" / name, "2026.01.01", "12:00:00", 100.0)
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "UTC",
+                "symbols": [symbol],
+                "timeframes": ["M1"],
+                "datasets": {
+                    "training": {
+                        "raw_dir": str(tmp_path / "data"),
+                        "start_date": "2026-01-02",
+                        "end_date": "2026-01-01",
+                        "m1_files": {symbol: name},
+                    }
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+
+    with pytest.raises(ValueError, match="start_date after end_date"):
+        run_pipeline(cfg)
+
+
+def test_pipeline_development_cutoff_excludes_later_bar_values(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     symbol = "US100.cash"
     names = {symbol: f"{symbol}_M1.csv"}
     for dataset, date, price in (
@@ -85,11 +179,17 @@ def test_pipeline_development_cutoff_excludes_later_bar_values(tmp_path: Path) -
         ("testing", "2026.01.01", 900_001.0),
     ):
         path = tmp_path / dataset / names[symbol]
-        _write_m1(path, date, "12:00:00", price)
-        with path.open("a", encoding="utf-8") as stream:
-            stream.write(
-                f"{date}\t12:01:00\t{price + 1}\t{price + 2}\t{price}\t{price + 1}\t10\t0\t2\n"
-            )
+        _write_m1(path, date, "23:59:58" if dataset == "training" else "00:00:00", price)
+        if dataset == "training":
+            with path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    f"{date}\t23:59:59\t{price + 1}\t{price + 2}\t{price}\t{price + 1}\t10\t0\t2\n"
+                )
+        else:
+            with path.open("a", encoding="utf-8") as stream:
+                stream.write(
+                    f"{date}\t00:00:01\t{price + 1}\t{price + 2}\t{price}\t{price + 1}\t10\t0\t2\n"
+                )
     cfg = OmegaConf.create(
         {
             "data": {
@@ -106,10 +206,125 @@ def test_pipeline_development_cutoff_excludes_later_bar_values(tmp_path: Path) -
         }
     )
 
+    def reject_full_source_hash(_path: Path) -> str:
+        raise AssertionError("development-only loading must not hash report-only source rows")
+
+    monkeypatch.setattr(
+        "market_data.loading.market_data_ingestion.file_sha256", reject_full_source_hash
+    )
+    monkeypatch.setattr(
+        "market_data.loading.market_data_ingestion.load_bar_cache",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("development-only loading must bypass full-span bar caches")
+        ),
+    )
+    bounded_parse = load_bars(
+        tmp_path / "testing" / names[symbol], end_exclusive=pd.Timestamp("2026-01-01")
+    )
+    assert bounded_parse.empty
     frames = run_pipeline(cfg, end_inclusive="2025-12-31")
 
     assert frames[symbol]["M1"]["close"].tolist() == [100.0, 101.0]
+    assert frames[symbol]["M1"].index[-1] == pd.Timestamp("2025-12-31 23:59:59+03:00")
     assert not any(value >= 900_001.0 for value in frames[symbol]["M1"]["close"])
+    assert not (tmp_path / "cache").exists()
+
+    first_key = feature_cache_content_hash(None, frames[symbol]["M1"])
+    testing_path = tmp_path / "testing" / names[symbol]
+    testing_path.write_text(
+        testing_path.read_text(encoding="utf-8").replace("900001.0", "900999.0"),
+        encoding="utf-8",
+    )
+    changed_frames = run_pipeline(cfg, end_inclusive="2025-12-31")
+
+    pd.testing.assert_frame_equal(frames[symbol]["M1"], changed_frames[symbol]["M1"])
+    assert feature_cache_content_hash(None, changed_frames[symbol]["M1"]) == first_key
+
+
+def test_pipeline_development_cutoff_bounds_native_timeframe_bars(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    m1_name = f"{symbol}_M1.csv"
+    m3_name = f"{symbol}_M3.csv"
+    for dataset, date, time, price in (
+        ("training", "2025.12.31", "23:57:00", 100.0),
+        ("testing", "2026.01.01", "00:00:00", 900_001.0),
+    ):
+        raw_dir = tmp_path / dataset
+        if dataset == "training":
+            _write_m1(raw_dir / m1_name, date, time, price)
+            m3_price = 700.0
+            _write_m1(raw_dir / m3_name, date, "23:54:00", m3_price)
+            with (raw_dir / m1_name).open("a", encoding="utf-8") as stream:
+                stream.write(
+                    f"{date}\t23:58:00\t{price + 1}\t{price + 2}\t{price}\t{price + 1}\t10\t0\t2\n"
+                )
+            with (raw_dir / m3_name).open("a", encoding="utf-8") as stream:
+                stream.write(
+                    f"{date}\t23:57:00\t{m3_price + 1}\t{m3_price + 2}\t{m3_price}\t"
+                    f"{m3_price + 1}\t10\t0\t2\n"
+                )
+        else:
+            _write_m1(raw_dir / m1_name, date, time, price)
+            _write_m1(raw_dir / m3_name, date, time, price)
+
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "Etc/GMT-3",
+                "symbols": [symbol],
+                "timeframes": ["M1", "M3"],
+                "datasets": {
+                    dataset: {
+                        "raw_dir": str(tmp_path / dataset),
+                        "m1_files": {symbol: m1_name},
+                        "timeframe_files": {"M3": {symbol: m3_name}},
+                    }
+                    for dataset in ("training", "testing")
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+
+    frames = run_pipeline(cfg, end_inclusive="2025-12-31")
+
+    assert frames[symbol]["M1"]["close"].tolist() == [100.0, 101.0]
+    assert frames[symbol]["M3"]["close"].tolist() == [700.0, 701.0]
+    assert frames[symbol]["M3"].index[-1] < pd.Timestamp("2026-01-01", tz="Etc/GMT-3")
+    assert not (tmp_path / "cache").exists()
+
+
+def test_pipeline_development_cutoff_rejects_missing_required_native_timeframe(
+    tmp_path: Path,
+) -> None:
+    symbol = "US100.cash"
+    m1_name = f"{symbol}_M1.csv"
+    raw_dir = tmp_path / "training"
+    _write_m1(raw_dir / m1_name, "2025.12.31", "12:00:00", 100.0)
+    with (raw_dir / m1_name).open("a", encoding="utf-8") as stream:
+        stream.write("2025.12.31\t12:01:00\t101\t102\t100\t101\t10\t0\t2\n")
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "Etc/GMT-3",
+                "symbols": [symbol],
+                "timeframes": ["M1", "M3"],
+                "require_native_timeframes": True,
+                "datasets": {
+                    "training": {
+                        "raw_dir": str(raw_dir),
+                        "m1_files": {symbol: m1_name},
+                    }
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+
+    with pytest.raises(FileNotFoundError, match="native M3 source.*required"):
+        run_pipeline(cfg, end_inclusive="2025-12-31")
 
 
 def test_pipeline_can_load_only_training_dataset(tmp_path: Path) -> None:

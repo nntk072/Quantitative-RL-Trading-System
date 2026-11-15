@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import replace
 from typing import Any
 
 import numpy as np
@@ -15,6 +16,7 @@ from decisioning.trade_setup import (
     trade_setup_center,
 )
 from evaluation.metrics.limit_execution_sensitivity import compare_limit_execution_sensitivity
+from evaluation.reporting.account_state_trace_reconciliation import reconcile_account_state_trace
 from evaluation.reporting.policy_decision_reconciliation import reconcile_policy_decisions
 from features.context.trade_setup_candidates import (
     trade_setup_candidate_event_time_fields,
@@ -24,7 +26,11 @@ from market_data.loading.ticks import TickBook, TickExecutionUnavailable
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
 from tests.unit.simulation.test_environment._account_fixtures import _make_bars, _make_features
-from trading.execution import FILL_COST_PROVENANCE_SCHEMA_VERSION, CostModel
+from trading.execution import (
+    FILL_COST_PROVENANCE_SCHEMA_VERSION,
+    TRADE_CASHFLOW_SCHEMA_VERSION,
+    CostModel,
+)
 from trading.strategies.baseline import BaselineStrategy
 
 Array = np.ndarray[Any, Any]
@@ -1640,3 +1646,207 @@ def test_trading_env_requires_tickbook_only_when_limit_choice_is_selected() -> N
     limit_action = _action(_trade_setup_schema(limit_env), candidate_id=candidate_id, limit=True)
     with pytest.raises(TickExecutionUnavailable, match="require TickBook"):
         limit_env.step(limit_action)
+
+
+def test_account_breach_limit_cancel_reconciles_with_session_identity() -> None:
+    bars, features, _, schema, candidate_id, limit_action = _backtest_inputs()
+    limit_action[schema.indices["limit_ttl_bars"]] = 1.0
+    no_trade = _action(schema, candidate_id=NO_TRADE_ID, limit=False)
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        strategy_actions=True,
+        trade_setup_actions=True,
+        agent_entry_execution=True,
+        tickbook=TickBook(np.array([], dtype=np.int64), np.array([]), np.array([])),
+        strategy=_SwingGeometryStrategy(),
+        cost_model=CostModel(spread_points=0.0, point_size=0.25, commission_per_lot=0.0),
+        tick_execution_required=False,
+        open_manipulation_bars=0,
+        block_overnight=False,
+        max_episode_steps=10,
+        guardrail_kwargs={
+            "daily_loss_limit_pct": 0.005,
+            "soft_daily_loss_limit_pct": 0.0,
+            "max_loss_limit_initial_pct": 0.5,
+            "risk_per_trade_limit_pct": 0.05,
+            "limit_value_mode": "percent_equity",
+        },
+    )
+    env.reset(seed=42)
+    env.step_idx = 1
+    env._ny_pos = int(np.searchsorted(env._ny_indices, env.step_idx))
+
+    # Seed a reconciled synthetic loss. Tighten the guardrail only after
+    # submission so the pending-order breach suffix is exercised deterministically.
+    env.account.close_trade(-100.0)
+    synthetic_position = {
+        "position_id": "synthetic-prior-loss",
+        "direction": 1,
+        "contract_size": 1.0,
+        "commission_per_lot": 0.0,
+        "session_id": 0,
+        "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
+    }
+    env.trade_log.extend(
+        [
+            {
+                "type": "open",
+                **synthetic_position,
+                "price": 100.0,
+                "lots": 1.0,
+                "entry_commission": 0.0,
+                "time": bars.index[0],
+            },
+            {
+                "type": "close",
+                **synthetic_position,
+                "pnl": -100.0,
+                "price": 0.0,
+                "entry_price": 100.0,
+                "size": 1.0,
+                "gross_price_pnl": -100.0,
+                "exit_commission": 0.0,
+                "entry_commission_allocated": 0.0,
+                "net_pnl": -100.0,
+                "position_net_pnl": -100.0,
+                "position_complete": True,
+                "time": bars.index[0] + pd.Timedelta(minutes=1),
+            },
+        ]
+    )
+
+    trace_rows: list[dict[str, Any]] = []
+    _, _, _, _, submit_info = env.step(limit_action)
+    trace_rows.append(submit_info["account_state_snapshot"])
+    submit = next(event for event in env.trade_log if event["type"] == "order_submit")
+    assert env._pending_entry_order is not None
+    assert submit["session_id"] == 0
+    assert submit["decision_bar_time"] < submit["decision_time"]
+
+    env.guardrails = replace(env.guardrails, daily_loss_limit_pct=0.0005)
+    _, _, _, _, breach_info = env.step(no_trade)
+    trace_rows.append(breach_info["account_state_snapshot"])
+
+    cancel = next(event for event in env.trade_log if event["type"] == "order_cancel")
+    assert cancel["reason"] == "account_failed_before_limit_fill"
+    assert cancel["session_id"] == submit["session_id"] == 0
+    assert cancel["decision_bar_time"] == submit["decision_bar_time"]
+    assert cancel["decision_time"] == submit["decision_time"]
+    assert env.breach_events[0]["trade_event_count"] == len(env.trade_log) - 1
+
+    trace = pd.DataFrame.from_records(trace_rows)
+    ledger = pd.DataFrame.from_records(env.trade_log)
+    matched = reconcile_account_state_trace(trace, ledger, breach_events=env.breach_events)
+    assert matched["status"] == "matched", {
+        "failures": matched["failures"],
+        "incomplete_reasons": matched["incomplete_reasons"],
+    }
+
+    cross_session_ledger = ledger.copy()
+    cancel_index = cross_session_ledger.index[cross_session_ledger["type"].eq("order_cancel")][0]
+    cross_session_ledger.loc[cancel_index, "session_id"] = 1
+    rejected = reconcile_account_state_trace(
+        trace, cross_session_ledger, breach_events=env.breach_events
+    )
+    assert "hard_breach_prefix_suffix_has_unexpected_events" in rejected["incomplete_reasons"]
+
+
+def test_account_breach_delayed_market_cancel_reconciles() -> None:
+    bars, features, _, schema, candidate_id, _ = _backtest_inputs()
+    market_action = _action(schema, candidate_id=candidate_id, limit=False)
+    no_trade = _action(schema, candidate_id=NO_TRADE_ID, limit=False)
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        strategy_actions=True,
+        trade_setup_actions=True,
+        agent_entry_execution=True,
+        fill_latency_bars=1,
+        strategy=_SwingGeometryStrategy(),
+        cost_model=CostModel(spread_points=0.0, point_size=0.25, commission_per_lot=0.0),
+        tick_execution_required=False,
+        open_manipulation_bars=0,
+        block_overnight=False,
+        episodic=False,
+        reward_mode="pnl",
+        max_episode_steps=10,
+        guardrail_kwargs={
+            "daily_loss_limit_pct": 0.005,
+            "soft_daily_loss_limit_pct": 0.0,
+            "max_loss_limit_initial_pct": 0.5,
+            "risk_per_trade_limit_pct": 0.05,
+            "limit_value_mode": "percent_equity",
+        },
+    )
+    env.reset(seed=42)
+    env.step_idx = 1
+    env._ny_pos = int(np.searchsorted(env._ny_indices, env.step_idx))
+
+    env.account.close_trade(-100.0)
+    synthetic_position = {
+        "position_id": "synthetic-prior-loss",
+        "direction": 1,
+        "contract_size": 1.0,
+        "commission_per_lot": 0.0,
+        "session_id": 0,
+        "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
+    }
+    env.trade_log.extend(
+        [
+            {
+                "type": "open",
+                **synthetic_position,
+                "price": 100.0,
+                "lots": 1.0,
+                "entry_commission": 0.0,
+                "time": bars.index[0],
+            },
+            {
+                "type": "close",
+                **synthetic_position,
+                "pnl": -100.0,
+                "price": 0.0,
+                "entry_price": 100.0,
+                "size": 1.0,
+                "gross_price_pnl": -100.0,
+                "exit_commission": 0.0,
+                "entry_commission_allocated": 0.0,
+                "net_pnl": -100.0,
+                "position_net_pnl": -100.0,
+                "position_complete": True,
+                "time": bars.index[0] + pd.Timedelta(minutes=1),
+            },
+        ]
+    )
+
+    trace_rows: list[dict[str, Any]] = []
+    _, _, _, _, submit_info = env.step(market_action)
+    trace_rows.append(submit_info["account_state_snapshot"])
+    submit = next(event for event in env.trade_log if event["type"] == "order_submit")
+    assert submit["order_type"] == "market"
+    assert env._pending_entry_order is not None
+
+    env.guardrails = replace(env.guardrails, daily_loss_limit_pct=0.0005)
+    _, _, terminated, _, breach_info = env.step(no_trade)
+    trace_rows.append(breach_info["account_state_snapshot"])
+
+    cancel = next(event for event in env.trade_log if event["type"] == "order_cancel")
+    assert terminated is False
+    assert 0 in env.breached_sessions
+    assert breach_info["account_state_snapshot"]["breach_reason"] == "daily_loss"
+    assert cancel["reason"] == "account_guardrail_before_scheduled_fill"
+    assert cancel["order_id"] == submit["order_id"]
+    assert env.breach_events[0]["trade_event_count"] == len(env.trade_log) - 1
+
+    matched = reconcile_account_state_trace(
+        pd.DataFrame.from_records(trace_rows),
+        pd.DataFrame.from_records(env.trade_log),
+        breach_events=env.breach_events,
+    )
+    assert matched["status"] == "matched", {
+        "failures": matched["failures"],
+        "incomplete_reasons": matched["incomplete_reasons"],
+    }

@@ -1,4 +1,4 @@
-"""Tests for DistributionReward and the Idea 2 respect gate."""
+"""Tests for the distribution entry-alignment reward."""
 
 from __future__ import annotations
 

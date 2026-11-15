@@ -243,11 +243,9 @@ def test_discrete_action_schema_is_the_fixed_twenty_choice_menu() -> None:
 
     assert schema.width == 20
     assert schema.key == "discrete-20"
-    assert schema.names[0] == "hold"
-    assert schema.names[-1] == "exit"
-    assert len(set(schema.names)) == 20
-    with pytest.raises(ValueError, match="requires 20 choices"):
-        build_discrete_trading_action_schema(n_actions=19)
+    assert schema.names == (
+        "hold",
+# … caller assertions omitted …
 ```
 
 2. [test fixture: `test_position_targets_emit_explicit_holds_exits_and_delayed_reversals`](../../../../tests/unit/evaluation/test_baseline_signal_actions.py#L19)
@@ -313,7 +311,7 @@ def test_decision_log_uses_action_schema_indices(flags: dict[str, bool]) -> None
     assert record["exit_u"] == pytest.approx(unit[schema.indices["exit"]])
 ```
 
-2. [test fixture: `test_action_schema_flag_combinations_have_unique_coordinates`](../../../../tests/unit/decisioning/test_trade_setup_properties.py#L87)
+2. [test fixture: `test_action_schema_flag_combinations_have_unique_coordinates`](../../../../tests/unit/decisioning/test_trade_setup_properties.py#L106)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -365,14 +363,15 @@ def test_discrete_action_schema_is_the_fixed_twenty_choice_menu() -> None:
 
     assert schema.width == 20
     assert schema.key == "discrete-20"
-    assert schema.names[0] == "hold"
-    assert schema.names[-1] == "exit"
-    assert len(set(schema.names)) == 20
-    with pytest.raises(ValueError, match="requires 20 choices"):
-        build_discrete_trading_action_schema(n_actions=19)
+    assert schema.names == (
+        "hold",
+        "enter_long_risk_low_rr_low",
+        "enter_long_risk_low_rr_mid",
+        "enter_long_risk_low_rr_high",
+# … caller assertions omitted …
 ```
 
-2. [test fixture: `test_action_schema_flag_combinations_keep_order_and_json_contract`](../../../../tests/unit/decisioning/test_trade_setup_properties.py#L140)
+2. [test fixture: `test_action_schema_flag_combinations_keep_order_and_json_contract`](../../../../tests/unit/decisioning/test_trade_setup_properties.py#L159)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -417,7 +416,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_action_schema_flag_combinations_keep_order_and_json_contract`](../../../../tests/unit/decisioning/test_trade_setup_properties.py#L137)
+1. [test fixture: `test_action_schema_flag_combinations_keep_order_and_json_contract`](../../../../tests/unit/decisioning/test_trade_setup_properties.py#L156)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

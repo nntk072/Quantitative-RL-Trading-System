@@ -320,18 +320,12 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(
-            "evidence/research/model_observation_and_action_semantics/"
-            "configured_trade_setup_mtf_contract.json"
-        ),
+        default=Path("outputs/research/configured_model_observation_action_contract.json"),
     )
     parser.add_argument(
         "--cache-root",
         type=Path,
-        default=Path(
-            "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/"
-            "model_observation_contract_cache"
-        ),
+        required=True,
     )
     options = parser.parse_args()
     report = build_report(

@@ -148,8 +148,8 @@ def main(report_path: Path = OUT) -> None:
         ROOT / "training/configuration/variant_resolution.py",
         VARIANT_FILE,
         ROOT / "config/base/default.yaml",
-        ROOT / "config/2_po3_ifvg.yaml",
-        ROOT / "config/3_distribution.yaml",
+        ROOT / "config/strategies/po3_ifvg.yaml",
+        ROOT / "config/strategies/distribution.yaml",
     ]
     source_paths.extend(
         ROOT / str(resolved["base_config"])

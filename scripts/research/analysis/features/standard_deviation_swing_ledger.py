@@ -300,10 +300,7 @@ def build_ledger(
     legs, groups, counts = _swing_leg_ledger(features, timeframes)
 
     resolved_config = OmegaConf.to_yaml(cfg, resolve=True)
-    raw_manifest = (
-        ROOT
-        / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-    )
+    raw_manifest = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
     manifest = json.loads(raw_manifest.read_text(encoding="utf-8"))
     manifest_files = {entry["path"]: entry for entry in manifest["files"]}
     training_input_hashes: dict[str, str] = {}
@@ -417,7 +414,7 @@ def build_ledger(
             "Reproduce on a compatible Triton allocation with the repository's active environment:",
             "",
             "```bash",
-            ".venv/bin/python -m scripts.research.analysis.features.standard_deviation_swing_ledger",
+            ".venv-arm/bin/python -m scripts.research.analysis.features.standard_deviation_swing_ledger",
             "```",
             "",
         ]

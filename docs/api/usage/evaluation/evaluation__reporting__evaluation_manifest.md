@@ -27,7 +27,7 @@ This page contains 2 public callable records owned by `evaluation.reporting.eval
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L52)
+1. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L61)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -42,22 +42,31 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         **manifest,
         "lineage": {},
     }
+
+    diagnostics_path.write_text(
+# … caller assertions omitted …
 ```
 
-2. [production caller: `write_evaluation_manifest`](../../../../evaluation/reporting/evaluation_manifest.py#L89)
+2. [test fixture: `test_evaluation_manifest_hash_changes_when_diagnostics_change`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L84)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def write_evaluation_manifest(
-    run_dir: Path,
-    *,
-    lineage: dict[str, Any] | None = None,
-) -> Path:
-    path = run_dir / "evaluation_manifest.json"
-    write_json_atomic(path, build_evaluation_manifest(run_dir, lineage=lineage), default=None)
-    return path
+def test_evaluation_manifest_hash_changes_when_diagnostics_change(tmp_path: Path) -> None:
+    training = tmp_path / "training"
+    training.mkdir()
+    diagnostics_path = training / "evaluation_diagnostics.json"
+    diagnostics_path.write_text('{"rows": 1}\n', encoding="utf-8")
+    before = build_evaluation_manifest(tmp_path)
+    diagnostics_path.write_text('{"rows": 2}\n', encoding="utf-8")
+
+    after = build_evaluation_manifest(tmp_path)
+
+    before_hash = next(
+# … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -70,7 +79,7 @@ def write_evaluation_manifest(
 
 **Purpose:** Atomically refresh the canonical evaluation provenance manifest.
 
-**Exact API:** {py:obj}`evaluation.reporting.evaluation_manifest.write_evaluation_manifest` · **Source:** [evaluation/reporting/evaluation_manifest.py:74](../../../../evaluation/reporting/evaluation_manifest.py#L74)
+**Exact API:** {py:obj}`evaluation.reporting.evaluation_manifest.write_evaluation_manifest` · **Source:** [evaluation/reporting/evaluation_manifest.py:75](../../../../evaluation/reporting/evaluation_manifest.py#L75)
 
 **Inputs and outputs:**
 
@@ -89,7 +98,7 @@ def write_evaluation_manifest(
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L32)
+1. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L37)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

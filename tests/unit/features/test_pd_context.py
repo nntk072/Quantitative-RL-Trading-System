@@ -375,7 +375,7 @@ class TestConfigYaml:
     def test_po3_ifvg_enables_pd_context(self) -> None:
         from configuration import load_config
 
-        cfg = load_config(config_path="config/2_po3_ifvg.yaml")
+        cfg = load_config(config_path="config/strategies/po3_ifvg.yaml")
         assert cfg.features.include_pd_context is True
         assert cfg.features.structure.enabled is True
 

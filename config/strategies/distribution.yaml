@@ -1,0 +1,53 @@
+# Distribution strategy using swing high and low references.
+# Merged over default.yaml.
+features:
+  include_strategy_state: true
+  po3_reference_mode: "htf_confirmed"
+  po3_reference_timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
+  po3_phase_mode: "reclaim_then_ifvg"
+  ifvg_mtf: {enabled: true, timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]}
+  include_pd_context: true
+  include_previous_session_pd: true
+  structure: {enabled: true, timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]}
+
+env:
+  strategy_actions: true
+  reward_mode: pnl
+  sl_buffer_pts: 1.0           # effective stop buffer; matches strategy.risk.sl_buffer_pts
+
+strategy:
+  name: "distribution"
+  variant_id: "distribution_prev_session_pd_mtf_v1"
+  session:
+    timezone: "Etc/GMT-3"
+  liquidity:
+    swing_period: 5
+    require_reclaim: true
+    max_age_bars: 120
+  ifvg:
+    enabled: true
+    max_age_bars: 50
+    close_through_threshold: 0.0
+    require_opposing_fvg: true
+  risk:
+    sl_mode: "exact"
+    sl_buffer_pts: 1.0
+    risk_frac_range: [0.0, 0.01]
+    rr_range: [1.5, 5.0]
+  tp:
+    mode: "agent"
+    allowed_targets:
+      - "rr"
+      - "buyside_liquidity"
+      - "sellside_liquidity"
+      - "previous_day_high_low"
+    invalid_target_policy: "rr_fallback"
+  entry:
+    mode: "confirmed_first_eligible"
+    enforce_gate: true
+    previous_session_pd_gate: true
+  reward:
+    entry_bonus: 0.01
+    sweep_penalty: 0.02
+    distribution_bonus: 0.005
+    strategy_weight: 0.01

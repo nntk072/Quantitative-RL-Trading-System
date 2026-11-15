@@ -210,7 +210,7 @@ def context_direction(self, row: pd.Series) -> int:
 
 **Kind:** method · **Status:** stable · **Owner:** `trading.strategies.distribution`
 
-**Purpose:** Return the explicit Idea 2 premium/discount rejection label.
+**Purpose:** Return the premium/discount rejection label for this entry.
 
 **Exact API:** {py:obj}`trading.strategies.distribution.DistributionStrategy.entry_rejection_reason` · **Source:** [trading/strategies/distribution.py:168](../../../../trading/strategies/distribution.py#L168)
 
@@ -372,7 +372,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Kind:** method · **Status:** stable · **Owner:** `trading.strategies.distribution`
 
-**Purpose:** Long -> swept low, short -> swept high (Agent.md §14).
+**Purpose:** Return the swept low for longs or swept high for shorts.
 
 **Exact API:** {py:obj}`trading.strategies.distribution.DistributionStrategy.sl_reference` · **Source:** [trading/strategies/distribution.py:209](../../../../trading/strategies/distribution.py#L209)
 
@@ -388,7 +388,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 - **Returns:**
 
   ```text
-  Result of long -> swept low, short -> swept high (Agent.md §14).
+  Selected swept level for the trade direction.
   ```
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.

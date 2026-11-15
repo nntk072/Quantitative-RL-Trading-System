@@ -616,7 +616,46 @@ def test_fixed_session_equity_daily_floor_counts_unrealized_loss() -> None:
     assert acc.canonical_daily_loss() == 0.0
 ```
 
-These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
+2. [tutorial example: `account-state-risk-prop-constraints · code cell 2`](../../../../docs/subjects/C_trading_risk_execution/examples/account-state-risk-prop-constraints.ipynb)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+from trading.account.account_state import AccountState
+from trading.risk.budget import approve_dynamic_risk
+from trading.risk.contracts import RiskDecision, RiskState
+
+account = AccountState(initial_balance=100_000.0)
+account.update_equity(-250.0)
+assert account.equity == 99_750.0
+assert account.daily_floor(5_000.0) == 95_000.0
+assert account.remaining_daily_capacity(5_000.0) == 4_750.0
+state = RiskState(
+    equity=account.equity,
+    daily_pnl=-250.0,
+    open_risk=0.0,
+    daily_loss_limit=5_000.0,
+    daily_pnl_basis="session_net_equity",
+)
+assert state.equity == account.equity
+approval = approve_dynamic_risk(
+    equity=account.equity,
+    risk_frac=0.01,
+    max_agent_risk_frac=0.01,
+    daily_capacity=4_750.0,
+    account_capacity=9_750.0,
+    execution_reserve_usd=25.0,
+)
+assert approval.approved_usd == 972.5
+assert RiskDecision(allowed=False, risk_amount=0.0, reason="capacity").risk_amount == 0.0
+print(
+    {
+        "equity": account.equity,
+        "daily_floor": account.daily_floor(5_000.0),
+        "approved_usd": approval.approved_usd,
+    }
+)
+```
 
 **Workflow context:**
 

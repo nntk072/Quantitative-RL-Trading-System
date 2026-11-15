@@ -932,6 +932,10 @@ def build_tick_book(
     chunksize: int = 2_000_000,
     price_grid_increment: float | None = None,
     diagnostics: TickBookBuildDiagnostics | None = None,
+    start_inclusive: str | None = None,
+    end_exclusive: pd.Timestamp | None = None,
+    end_date_inclusive: str | None = None,
+    end_inclusive: str | None = None,
 ) -> TickBook:
     """Load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
 
@@ -973,12 +977,30 @@ def build_tick_book(
         chunksize: Numeric value used for the chunksize.
         price_grid_increment: Price grid increment used by the operation described above.
         diagnostics: Optional mutable counter record populated during a raw-source build.
+        start_inclusive: Optional first local calendar date to include.
+        end_exclusive: Optional exclusive local timestamp bound.
+        end_date_inclusive: Optional last local calendar date represented by the cache.
+        end_inclusive: Optional last local calendar date to include; bypasses full-source caches.
 
     Returns:
         Result of load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
     """
     path = Path(path)
     cache_identity: dict[str, Any] | None = None
+    cutoff_end = end_exclusive
+    start_date = pd.Timestamp(start_inclusive).normalize() if start_inclusive else None
+    end_date = end_date_inclusive
+    if end_inclusive is not None:
+        end_date = end_inclusive
+        configured_end = pd.Timestamp(end_inclusive).normalize() + pd.DateOffset(days=1)
+        configured_end = configured_end.tz_localize(tz)
+        if cutoff_end is None or configured_end < cutoff_end:
+            cutoff_end = configured_end
+        cache_path = None
+    if start_date is not None:
+        start_date = start_date.tz_localize(tz)
+    if cutoff_end is not None and cutoff_end.tzinfo is None:
+        cutoff_end = cutoff_end.tz_localize(tz)
     if cache_path:
         if diagnostics is not None:
             raise ValueError("pass cache_path=None when collecting TickBook build diagnostics")
@@ -991,6 +1013,8 @@ def build_tick_book(
             session_end=session_end,
             price_grid_identity=price_grid_identity(price_grid_increment),
             cache_version=TICK_CACHE_VERSION,
+            start_inclusive=start_inclusive,
+            end_inclusive=end_date,
         )
         cached_frame = None if force else load_tick_cache(cache_path, cache_identity)
         if cached_frame is not None:
@@ -1017,11 +1041,7 @@ def build_tick_book(
     n_rows_total = 0
     n_rows_kept = 0
 
-    for raw_chunk in iter_ticks_chunks(path, chunksize=chunksize):
-        n_rows_total += len(raw_chunk)
-        if diagnostics is not None:
-            diagnostics.source_rows_read += len(raw_chunk)
-
+    for raw_chunk in iter_ticks_chunks(path, chunksize=chunksize, end_exclusive=cutoff_end):
         # Chunk-local datetime parse (bounded memory) — Etc/GMT-3 etc. are
         # fixed-offset zones (no DST), so tz_localize here is unambiguous
         # regardless of how the file happens to be chunked.  MT5 tick time
@@ -1031,6 +1051,10 @@ def build_tick_book(
             format="%Y.%m.%d %H:%M:%S.%f",
         )
         dt = dt.tz_localize(tz)
+
+        n_rows_total += len(raw_chunk)
+        if diagnostics is not None:
+            diagnostics.source_rows_read += len(raw_chunk)
 
         if start_t is not None and end_t is not None:
             t = dt.time
@@ -1043,9 +1067,10 @@ def build_tick_book(
         if diagnostics is not None:
             diagnostics.rows_after_session_filter += int(mask.sum())
 
+        dt = dt[mask]
         bid = raw_chunk["bid"].to_numpy(dtype=np.float64, copy=True)[mask]
         ask = raw_chunk["ask"].to_numpy(dtype=np.float64, copy=True)[mask]
-        ts_ns = dt.values.astype("int64")[mask]
+        ts_ns = dt.values.astype("int64")
 
         raw_bid_valid = np.isfinite(bid) & (bid > 0.0)
         raw_ask_valid = np.isfinite(ask) & (ask > 0.0)
@@ -1106,6 +1131,10 @@ def build_tick_book(
             bid = quantize_prices(bid, price_grid_increment)
             ask = quantize_prices(ask, price_grid_increment)
 
+        if start_date is not None:
+            valid &= dt >= start_date
+        if cutoff_end is not None:
+            valid &= dt < cutoff_end
         if not valid.all():
             bid, ask, ts_ns = bid[valid], ask[valid], ts_ns[valid]
 
@@ -1135,7 +1164,7 @@ def build_tick_book(
         order = np.argsort(ts_ns, kind="stable")
         ts_ns, bid, ask = ts_ns[order], bid[order], ask[order]
 
-    if cache_path and cache_identity is not None:
+    if cache_path and cache_identity is not None and len(ts_ns):
         write_tick_cache(
             cache_path,
             pd.DataFrame({"ts_ns": ts_ns, "bid": bid, "ask": ask}),

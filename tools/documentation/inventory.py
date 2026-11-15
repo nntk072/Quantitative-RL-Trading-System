@@ -177,10 +177,8 @@ def page_type(path: Path) -> str:
 def page_status(path: Path) -> str:
     """Classify operational and historical pages separately from current guides."""
     relative = path.relative_to(DOCS).as_posix()
-    if "migrations/" in relative or relative.startswith("internal_page_index"):
+    if "migrations/" in relative:
         return "historical/internal"
-    if relative.startswith("operations/research_execution_plan"):
-        return "operational/current queue"
     if relative.startswith("operations/"):
         return "operational"
     if relative.startswith("research/"):

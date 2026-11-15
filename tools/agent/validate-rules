@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Check agent-rule frontmatter and local Markdown links."""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+LINK = re.compile(r"\[[^\]]*\]\(([^)#]+)(?:#[^)]*)?\)")
+
+
+def main() -> int:
+    failures: list[str] = []
+    paths = [ROOT / "AGENTS.md", ROOT / ".github/copilot-instructions.md"]
+    paths.extend((ROOT / ".agents").rglob("*.md"))
+    paths.extend((ROOT / ".codex").rglob("*.md"))
+    paths.extend((ROOT / ".claude").rglob("*.md"))
+    paths = [path for path in paths if ".agents/skills" not in path.as_posix()]
+    for path in sorted(set(paths)):
+        text = path.read_text(encoding="utf-8")
+        relative = path.relative_to(ROOT)
+        if relative.parts[:2] == (".agents", "rules"):
+            if not text.startswith("---\n") or "\n---\n" not in text[4:]:
+                failures.append(f"{relative}: missing Markdown frontmatter")
+            elif not re.search(r"^trigger:\s*\S+", text, re.M) or not re.search(
+                r"^description:\s*.+", text, re.M
+            ):
+                failures.append(f"{relative}: frontmatter requires trigger and description")
+        for target in LINK.findall(text):
+            if "://" in target or target.startswith(("mailto:", "#")):
+                continue
+            resolved = (path.parent / target).resolve()
+            if not resolved.exists():
+                failures.append(f"{relative}: broken local link {target}")
+    if failures:
+        print("\n".join(failures), file=sys.stderr)
+        return 1
+    constitution = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    if not 4_000 <= (ROOT / "AGENTS.md").stat().st_size <= 7_000:
+        failures.append("AGENTS.md must remain a 4-7 KB repository constitution")
+    for invariant in ("Causality", "Train-only", "purged_walk_forward", "Locked OOS", "provenance"):
+        if invariant.casefold() not in constitution.casefold():
+            failures.append(f"AGENTS.md is missing global invariant: {invariant}")
+    for old_rule in (
+        "agent-coordination.md",
+        "agent-planning-implementation.md",
+        "development-workflow.md",
+        "token-efficient-context-replies.md",
+        "antigravity-rtk-rules.md",
+    ):
+        if (ROOT / ".agents/rules" / old_rule).stat().st_size > 700:
+            failures.append(f"{old_rule}: legacy rule must remain a short redirect")
+    if (
+        "always prefix"
+        in (ROOT / ".agents/rules/token-efficient-shell.md").read_text(encoding="utf-8").lower()
+    ):
+        failures.append("RTK must remain optional, not a global shell requirement")
+    if failures:
+        print("\n".join(failures), file=sys.stderr)
+        return 1
+    print(f"validated {len(set(paths))} agent-facing Markdown files")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

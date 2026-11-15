@@ -17,19 +17,18 @@ The verifier checks schema shape, run/comparison/claim references, artifact
 paths within the repository, and SHA-256 values. It does not rehash raw data
 that is referenced only by an identity digest, and it does not claim that a
 historical result can be independently regenerated from a Git checkout.
-For artifacts moved out of the checkout, v2 permits `storage_scope` to name
+For artifacts moved out of the source tree, v2 permits `storage_scope` to name
 the project research archive. The verifier resolves those relative paths only
-inside the sibling `Quantitative-RL-Trading-System-research-archive` root;
+inside `outputs/research_archive`;
 absolute paths and arbitrary external targets remain invalid.
 
 Run the verifier with automatic schema selection:
 
 ```bash
 python scripts/research/analysis/evidence/verify_result_manifest.py \
-  evidence/research/releases/negative-evidence-readiness/selected_pair_viability_manifest.json
+  <path-to-new-result-manifest.json>
 ```
 
-The selected seed-50 pair record remains a draft identity record but is
-classified `withdrawn_historical_result`. It preserves run/config/checkpoint
-identities and source hashes without current outcome metrics. Do not use it as
-a promotion, selection, or confirmation record.
+Historical run manifests were removed during the 2026-11-15 clean restart.
+Create a new manifest from the regenerated run artifacts; do not reconstruct or
+reuse the withdrawn historical result.

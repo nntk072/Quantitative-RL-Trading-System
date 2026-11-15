@@ -160,6 +160,10 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   chunksize: Numeric value used for the chunksize.
   price_grid_increment: Price grid increment used by the operation described above.
   diagnostics: Optional mutable counter record populated during a raw-source build.
+  start_inclusive: Optional first local calendar date to include.
+  end_exclusive: Optional exclusive local timestamp bound.
+  end_date_inclusive: Optional last local calendar date represented by the cache.
+  end_inclusive: Optional last local calendar date to include; bypasses full-source caches.
   ```
 
 - **Returns:**
@@ -170,7 +174,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_equal_timestamp_quote_uses_first_source_row_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L102)
+1. [test fixture: `test_equal_timestamp_quote_uses_first_source_row_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L104)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -190,7 +194,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_build_tick_book_quantizes_executable_bid_ask`](../../../../tests/unit/market_data/test_ticks.py#L669)
+2. [test fixture: `test_build_tick_book_quantizes_executable_bid_ask`](../../../../tests/unit/market_data/test_ticks.py#L671)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -245,7 +249,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes`](../../../../tests/unit/market_data/test_ticks.py#L993)
+1. [test fixture: `test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes`](../../../../tests/unit/market_data/test_ticks.py#L1205)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -289,7 +293,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_tickbook_content_hash_includes_stable_quote_order`](../../../../tests/unit/market_data/test_ticks.py#L61)
+1. [test fixture: `test_tickbook_content_hash_includes_stable_quote_order`](../../../../tests/unit/market_data/test_ticks.py#L63)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -301,6 +305,26 @@ def test_tickbook_content_hash_includes_stable_quote_order() -> None:
 
     assert book.content_sha256() == identical.content_sha256()
     assert book.content_sha256() != reordered.content_sha256()
+```
+
+2. [test fixture: `test_build_tick_books_development_cutoff_excludes_later_quotes`](../../../../tests/unit/market_data/test_ticks.py#L929)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    assert book is not None
+    assert len(book) == 2
+    assert book.quote_at(pd.Timestamp("2025-12-31T23:59:59.999Z")) == pytest.approx((100.5, 101.1))
+    assert book.quote_at(pd.Timestamp("2026-01-01", tz="UTC")) is None
+    assert not (tmp_path / "cache").exists()
+    first_hash = book.content_sha256()
+
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -653,7 +677,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_quote_at_exact_tick`](../../../../tests/unit/market_data/test_ticks.py#L49)
+1. [test fixture: `test_quote_at_exact_tick`](../../../../tests/unit/market_data/test_ticks.py#L51)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -668,7 +692,7 @@ def test_quote_at_exact_tick():
     assert ask == pytest.approx(101.1)
 ```
 
-2. [test fixture: `test_quote_at_before_first_tick_returns_none`](../../../../tests/unit/market_data/test_ticks.py#L123)
+2. [test fixture: `test_quote_at_before_first_tick_returns_none`](../../../../tests/unit/market_data/test_ticks.py#L125)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -710,7 +734,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_equal_timestamp_quote_uses_first_source_row_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L105)
+1. [test fixture: `test_equal_timestamp_quote_uses_first_source_row_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L107)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -730,7 +754,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_quote_at_after_last_tick_returns_none_instead_of_stale_quote`](../../../../tests/unit/market_data/test_ticks.py#L130)
+2. [test fixture: `test_quote_at_after_last_tick_returns_none_instead_of_stale_quote`](../../../../tests/unit/market_data/test_ticks.py#L132)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -774,7 +798,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `build_tick_books`](../../../../market_data/loading/tick_book_pipeline.py#L149)
+1. [production caller: `build_tick_books`](../../../../market_data/loading/tick_book_pipeline.py#L173)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

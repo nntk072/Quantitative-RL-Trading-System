@@ -41,6 +41,8 @@ def build_tick_cache_identity(
     session_end: str | None,
     price_grid_identity: str,
     cache_version: str,
+    start_inclusive: str | None = None,
+    end_inclusive: str | None = None,
 ) -> dict[str, Any]:
     """Identify source bytes and every setting that changes a TickBook.
 
@@ -52,6 +54,8 @@ def build_tick_cache_identity(
         session_end: Session end used by the operation described above.
         price_grid_identity: Text or path value identifying the price grid identity.
         cache_version: Text or path value identifying the cache version.
+        start_inclusive: Optional first local calendar date included in the cache.
+        end_inclusive: Optional last local calendar date included in the cache.
 
     Returns:
         Mapping from ``str`` keys to ``Any`` values.
@@ -65,6 +69,8 @@ def build_tick_cache_identity(
         "session_end": session_end,
         "price_grid_identity": price_grid_identity,
         "cache_version": cache_version,
+        "start_inclusive": start_inclusive,
+        "end_inclusive": end_inclusive,
     }
     return {
         "schema_version": TICK_CACHE_MANIFEST_SCHEMA_VERSION,

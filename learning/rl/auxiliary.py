@@ -1,4 +1,4 @@
-"""Chain E Step 0 — wire the (previously unused) auxiliary return-prediction head.
+"""Optional auxiliary return-prediction head for reinforcement learning.
 
 SB3 has no native support for extra loss terms, so instead of subclassing
 PPO/SAC's ``train()`` (fragile across versions), the auxiliary head and the

@@ -225,7 +225,7 @@ def compute_sl_tp_from_structure(
     rr_ratio: float,
     buffer_pts: float = 0.0,
 ) -> tuple[float, float]:
-    """Compute structural SL/TP for Idea 1/Idea 2 trades (Agent.md §14).
+    """Compute structural stop-loss and take-profit prices for a trade.
 
     Long: SL = structure_level - buffer. Short: SL = structure_level + buffer.
     ``buffer_pts=0.0`` implements the ``sl_mode: exact`` configuration;
@@ -298,7 +298,7 @@ def resolve_tp_target(
     target_mode: str,
     row: pd.Series,
 ) -> float:
-    """Resolve the take-profit price for a trade (Agent.md §15).
+    """Resolve the take-profit price for a trade.
 
     Supported modes: ``rr``, ``buyside_liquidity``, ``sellside_liquidity``,
     ``previous_day_high_low``. Structural targets that are NaN or on the

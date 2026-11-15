@@ -1,15 +1,15 @@
-# New research lineages for the RL Learning Quality Program.
-# This registry is deliberately separate from config/experiments.yaml; no
-# historical experiment run entry is altered or automatically launched.
+# Controlled learning-quality comparisons.
+# Entries are resolved only when a caller explicitly selects a registered ID.
 registry_version: 1
 development_control: ladder_a3_multi_tp
 status: implementation_in_progress
 locked_oos_policy: never_select_from_fresh_oos
-stages:
-  - id: q1_state
-    control: q0_control_a3
+families:
+  - id: account_state
+    domain: environment
+    control: account_state_baseline
     variants:
-      - id: q0_control_a3
+      - id: account_state_baseline
         parent: null
         status: control
         overrides:
@@ -24,89 +24,95 @@ stages:
           env.reward_mode: dsr
           agent.arch: tcn
           quality_diagnostics.enabled: true
-      - id: q1_state_v2
-        parent: q0_control_a3
+      - id: account_state_context
+        parent: account_state_baseline
         status: implemented_unit_tested
         overrides:
           env.observation_schema_version: account-state-v2
           quality_diagnostics.enabled: true
-  - id: q2_rollout
-    control: q1_state_v2
+  - id: rollout_geometry
+    domain: learning
+    control: account_state_context
     variants:
-      - id: q2_state_v2_nenv16
-        parent: q1_state_v2
+      - id: rollout_16_envs
+        parent: account_state_context
         status: implementation_unverified
         overrides: {env.n_envs: 16, ppo.n_steps: 512}
         resource_contract: {exact_n_envs: true, expected_n_envs: 16, aggregate_rollout_steps: 8192}
-      - id: q2_state_v2_nenv32
-        parent: q1_state_v2
+      - id: rollout_32_envs
+        parent: account_state_context
         status: implementation_unverified
         overrides: {env.n_envs: 32, ppo.n_steps: 256}
         resource_contract: {exact_n_envs: true, expected_n_envs: 32, aggregate_rollout_steps: 8192}
-      - id: q2_state_v2_nenv64
-        parent: q1_state_v2
+      - id: rollout_64_envs
+        parent: account_state_context
         status: implementation_unverified
         overrides: {env.n_envs: 64, ppo.n_steps: 128}
         resource_contract: {exact_n_envs: true, expected_n_envs: 64, aggregate_rollout_steps: 8192}
-  - id: q3_reward
-    control: q2_winner
+  - id: reward_objective
+    domain: learning
+    control: rollout_geometry_winner
     variants:
-      - id: q3a_rr_fixed500
-        parent: q2_winner
+      - id: reward_risk_500
+        parent: rollout_geometry_winner
         status: implementation_unverified
         overrides: {env.reward_mode: rr, env.risk_mode: fixed, env.fixed_risk_usd: 500}
-      - id: q3a_rr_fixed1000
-        parent: q2_winner
+      - id: reward_risk_1000
+        parent: rollout_geometry_winner
         status: implementation_unverified
         overrides: {env.reward_mode: rr, env.risk_mode: fixed, env.fixed_risk_usd: 1000}
-      - id: q3b_equity_delta_r_fixed500
-        parent: q2_winner
+      - id: reward_equity_delta_r_500
+        parent: rollout_geometry_winner
         status: implementation_unverified
         overrides:
           env.reward_mode: equity_delta_r
           env.risk_mode: fixed
           env.fixed_risk_usd: 500
-  - id: q4_action
-    control: q3_winner
+  - id: action_distribution
+    domain: learning
+    control: reward_objective_winner
     variants:
-      - id: q4a_semantic_heads
-        parent: q3_winner
+      - id: semantic_action_heads
+        parent: reward_objective_winner
         status: implementation_unverified
         overrides: {ppo.actor_arch: semantic_heads}
-      - id: q4b_hybrid_distribution
-        parent: q3_winner
+      - id: hybrid_action_distribution
+        parent: reward_objective_winner
         status: implementation_unverified
         overrides: {ppo.policy_distribution: hybrid_v1}
-  - id: q5_constraints
-    control: q4_winner
+  - id: risk_constraints
+    domain: trading
+    control: action_distribution_winner
     variants:
-      - id: q5_lagrangian
-        parent: q4_winner
+      - id: lagrangian_risk_constraints
+        parent: action_distribution_winner
         status: implemented_unit_tested
         overrides: {constrained_rl.enabled: true}
-  - id: q6_entry_fsm
-    control: q5_winner
+  - id: entry_lifecycle
+    domain: environment
+    control: risk_constraints_winner
     variants:
-      - id: q6_fsm_visible
-        parent: q5_winner
+      - id: visible_entry_lifecycle
+        parent: risk_constraints_winner
         status: implementation_unverified
         overrides: {env.entry_state_machine: true, env.entry_state_observation: true}
-      - id: q6_fsm_hidden
-        parent: q5_winner
+      - id: hidden_entry_lifecycle
+        parent: risk_constraints_winner
         status: implementation_unverified
         overrides: {env.entry_state_machine: true, env.entry_state_observation: false}
-      - id: q6_no_fsm_control
-        parent: q5_winner
+      - id: entry_lifecycle_disabled
+        parent: risk_constraints_winner
         status: implementation_unverified
         overrides: {env.entry_state_machine: false}
-  - id: q7_encoder
-    control: q6_winner
+  - id: encoder_architecture
+    domain: representation
+    control: entry_lifecycle_winner
     variants:
-      - id: q7_litetcn
-        parent: q6_winner
+      - id: lite_tcn_encoder
+        parent: entry_lifecycle_winner
         status: existing_encoder_implementation
         overrides: {agent.arch: lite_tcn}
-      - id: q7_tcn_control
-        parent: q6_winner
+      - id: tcn_encoder_control
+        parent: entry_lifecycle_winner
         status: control
         overrides: {agent.arch: tcn}

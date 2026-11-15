@@ -409,6 +409,16 @@ def build_summary(experiment_run_dir: Path) -> dict[str, Any]:
     if experiment_run is None or status is None:
         raise ValueError("experiment_run.json and reports/experiment_run_status.json are required")
 
+    families = experiment_run.get("comparison_families")
+    if not isinstance(families, list):
+        legacy_family = experiment_run.get("variant_family")
+        families = [legacy_family] if isinstance(legacy_family, dict) else []
+    families = [family for family in families if isinstance(family, dict)]
+    arms: dict[str, list[dict[str, Any]]] = {}
+    for family in families:
+        for arm in family.get("entries", []):
+            if isinstance(arm, dict):
+                arms.setdefault(str(arm.get("variant")), []).append(_family_metadata(family, arm))
     jobs: list[dict[str, Any]] = []
     for job in experiment_run.get("jobs", []):
         if not isinstance(job, dict):
@@ -417,11 +427,15 @@ def build_summary(experiment_run_dir: Path) -> dict[str, Any]:
         if not run_key:
             continue
         attempt_number = int(job.get("attempts", 0))
+        memberships = arms.get(str(job.get("variant")), [])
+        family_fields = memberships[0] if len(memberships) == 1 else {}
         if attempt_number <= 0:
             jobs.append(
                 {
                     "run_key": run_key,
                     "variant": job.get("variant"),
+                    **family_fields,
+                    "family_memberships": memberships,
                     "seed": job.get("seed"),
                     "controller_status": job.get("status"),
                     "exit_code": job.get("exit_code"),
@@ -473,6 +487,8 @@ def build_summary(experiment_run_dir: Path) -> dict[str, Any]:
         job_report = {
             "run_key": run_key,
             "variant": job.get("variant"),
+            **family_fields,
+            "family_memberships": memberships,
             "seed": job.get("seed"),
             "controller_status": job.get("status"),
             "exit_code": job.get("exit_code"),
@@ -579,9 +595,14 @@ def build_summary(experiment_run_dir: Path) -> dict[str, Any]:
         "schema_version": 2,
         "experiment_run_dir": str(experiment_run_dir),
         "experiment_run_created_utc": experiment_run.get("created"),
+        "experiment_run_id": experiment_run.get("experiment_run_id")
+        or Path(str(experiment_run_dir)).name,
         "experiment_run_job_id": experiment_run.get("job_id"),
         "experiment_run_git_sha": experiment_run.get("git_sha"),
         "experiment_run_fingerprint": experiment_run.get("fingerprint"),
+        "data_identity_sha256": hashlib.sha256(
+            json.dumps(experiment_run.get("data_inputs", {}), sort_keys=True).encode()
+        ).hexdigest(),
         "requested_steps_per_variant": experiment_run.get("timesteps"),
         "seed": homogeneous_seed,
         "seeds": declared_seeds,
@@ -592,6 +613,8 @@ def build_summary(experiment_run_dir: Path) -> dict[str, Any]:
         "worker_gpus_per_node": experiment_run.get("worker_gpus_per_node"),
         "worker_nodes": experiment_run.get("worker_nodes"),
         "evaluation_protocol": evaluation,
+        "variant_family": families[0] if len(families) == 1 else None,
+        "comparison_families": families,
         "controller_status_as_of_utc": status.get("timestamp"),
         "controller_status_counts": counts,
         "resource_profiles": _resource_profiles(experiment_run_dir),
@@ -646,9 +669,25 @@ def render_markdown(summary: dict[str, Any]) -> str:
     jobs = summary["jobs"]
     currencies = {job.get("account_currency") for job in jobs if job.get("account_currency")}
     pnl_label = next(iter(currencies)) if len(currencies) == 1 else "account currency"
+    families = summary.get("comparison_families") or (
+        [summary["variant_family"]] if isinstance(summary.get("variant_family"), dict) else []
+    )
+    if len(families) == 1:
+        study_label = (
+            f"**Study:** {families[0].get('title')} "
+            f"({families[0].get('domain')}; {families[0].get('id')})"
+        )
+    elif families:
+        study_label = "**Comparisons:** " + "; ".join(
+            f"{family.get('title')} ({family.get('domain')}; {family.get('id')})"
+            for family in families
+        )
+    else:
+        study_label = "**Study:** ungrouped run"
     lines = [
         "# Experiment run results snapshot",
         "",
+        study_label,
         f"**Controller status as of:** {summary.get('controller_status_as_of_utc')}",
         f"**Slurm job:** {summary.get('experiment_run_job_id')}  ",
         f"**Specification:** {summary.get('requested_steps_per_variant')} steps per variant; "
@@ -681,8 +720,8 @@ def render_markdown(summary: dict[str, Any]) -> str:
         "",
         f"PnL is in the account currency ({pnl_label}). `Survived / days` comes from the matching worker log.",
         "",
-        f"| Variant | Controller | Attempt / failure | Train survival | Full-year episodes | Envs reached year end | Train return | Train PnL ({pnl_label}) | Train trades | Test return | Test PnL ({pnl_label}) | Test max DD | Test Sharpe | Test PF | Test trades | Test survived / days | Evidence |",
-        "|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|",
+        f"| Comparison arms | Variant | Controller | Attempt / failure | Train survival | Full-year episodes | Envs reached year end | Train return | Train PnL ({pnl_label}) | Train trades | Test return | Test PnL ({pnl_label}) | Test max DD | Test Sharpe | Test PF | Test trades | Test survived / days | Evidence |",
+        "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|",
     ]
     for job in jobs:
         train = job.get("train_metrics") or {}
@@ -726,8 +765,16 @@ def render_markdown(summary: dict[str, Any]) -> str:
                     f"[train/test evaluation](../{run_artifact_dir}/evaluations/summary.md)"
                 )
         evidence = " · ".join(evidence_links) or "—"
+        comparison_arms = (
+            ", ".join(
+                f"{membership.get('family_id')}:{membership.get('arm_label')}"
+                for membership in job.get("family_memberships", [])
+            )
+            or "—"
+        )
         lines.append(
-            "| {variant} | {status} | {attempt_failure} | {gate} | {full_year} | {full_year_envs} | {tr} | {tpnl} | {tn} | {er} | {epnl} | {edd} | {esharpe} | {epf} | {en} | {survived} / {days} | {evidence} |".format(
+            "| {comparisons} | {variant} | {status} | {attempt_failure} | {gate} | {full_year} | {full_year_envs} | {tr} | {tpnl} | {tn} | {er} | {epnl} | {edd} | {esharpe} | {epf} | {en} | {survived} / {days} | {evidence} |".format(
+                comparisons=comparison_arms,
                 variant=job.get("variant") or job.get("run_key"),
                 status=job.get("controller_status", "—"),
                 attempt_failure=attempt_failure,
@@ -801,19 +848,20 @@ def render_markdown(summary: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _write_summary_outputs(summary: dict[str, Any], out_stem: Path) -> tuple[Path, Path]:
-    """Write a new report pair without replacing prior experiment run evidence.
+def _write_summary_outputs(summary: dict[str, Any], out_stem: Path) -> tuple[Path, Path, Path]:
+    """Write tabular and readable summaries without replacing prior run evidence.
 
     Args:
         summary: Key-value data used for the summary.
         out_stem: Text or path value identifying the out stem.
 
     Returns:
-        Path returned by ``_write_summary_outputs``.
+        Markdown, JSON, and CSV report paths.
     """
     json_path = out_stem.with_suffix(".json")
     markdown_path = out_stem.with_suffix(".md")
-    existing = [path for path in (json_path, markdown_path) if path.exists()]
+    csv_path = out_stem.with_suffix(".csv")
+    existing = [path for path in (json_path, markdown_path, csv_path) if path.exists()]
     if existing:
         raise FileExistsError(
             "refusing to overwrite experiment run summary artifact(s): "
@@ -822,7 +870,133 @@ def _write_summary_outputs(summary: dict[str, Any], out_stem: Path) -> tuple[Pat
     out_stem.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     markdown_path.write_text(render_markdown(summary), encoding="utf-8")
-    return markdown_path, json_path
+    columns = (
+        "experiment_run_id",
+        "experiment_run_git_sha",
+        "experiment_run_fingerprint",
+        "experiment_run_manifest_sha256",
+        "data_identity_sha256",
+        "data_source",
+        "requested_steps_per_variant",
+        "n_envs",
+        "evaluation_role",
+        "domain",
+        "family_id",
+        "family_title",
+        "comparison_type",
+        "variant",
+        "arm_label",
+        "arm_role",
+        "changed_factors",
+        "run_key",
+        "seed",
+        "controller_status",
+        "failure_reason",
+        "account_currency",
+        "train_return_pct",
+        "train_pnl",
+        "train_trades",
+        "test_return_pct",
+        "test_pnl",
+        "test_max_drawdown",
+        "test_sharpe",
+        "test_profit_factor",
+        "test_trades",
+        "test_survived_full_period",
+        "test_days_traded",
+        "test_days_total",
+        "train_pnl_reconciliation",
+        "test_pnl_reconciliation",
+        "evidence_sha256",
+    )
+    with csv_path.open("x", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=columns, extrasaction="ignore")
+        writer.writeheader()
+        for job in summary["jobs"]:
+            train = job.get("train_metrics") or {}
+            test = job.get("test_metrics_report_only") or {}
+            replay = job.get("test_replay_report_only") or {}
+            memberships = job.get("family_memberships")
+            if not isinstance(memberships, list) or not memberships:
+                memberships = [_family_metadata(None, None)]
+            for membership in memberships:
+                writer.writerow(
+                    {
+                        **job,
+                        **membership,
+                        "experiment_run_id": summary.get("experiment_run_id"),
+                        "experiment_run_git_sha": summary.get("experiment_run_git_sha"),
+                        "experiment_run_fingerprint": summary.get("experiment_run_fingerprint"),
+                        "experiment_run_manifest_sha256": summary.get(
+                            "experiment_run_manifest_sha256"
+                        ),
+                        "data_identity_sha256": summary.get("data_identity_sha256"),
+                        "data_source": summary.get("data_source"),
+                        "requested_steps_per_variant": summary.get("requested_steps_per_variant"),
+                        "n_envs": summary.get("n_envs"),
+                        "evaluation_role": summary.get("evaluation_protocol", {}).get(
+                            "locked_oos_role"
+                        ),
+                        "changed_factors": "; ".join(membership.get("changed_factors", [])),
+                        "evidence_sha256": json.dumps(
+                            job.get("evidence_sha256", {}), sort_keys=True, separators=(",", ":")
+                        ),
+                        "train_return_pct": train.get("total_return_pct"),
+                        "train_pnl": train.get("total_pnl"),
+                        "train_trades": train.get("n_trades"),
+                        "test_return_pct": test.get("total_return_pct"),
+                        "test_pnl": test.get("total_pnl"),
+                        "test_max_drawdown": test.get("max_drawdown"),
+                        "test_sharpe": test.get("sharpe"),
+                        "test_profit_factor": test.get("profit_factor"),
+                        "test_trades": test.get("n_trades"),
+                        "test_survived_full_period": replay.get("survived_full_period"),
+                        "test_days_traded": replay.get("days_traded"),
+                        "test_days_total": replay.get("days_total"),
+                        "train_pnl_reconciliation": json.dumps(
+                            job.get("train_pnl_reconciliation", {}),
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ),
+                        "test_pnl_reconciliation": json.dumps(
+                            job.get("test_pnl_reconciliation", {}),
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ),
+                    }
+                )
+    return markdown_path, json_path, csv_path
+
+
+def _family_metadata(family: Any, arm: Any) -> dict[str, Any]:
+    """Attach the declared study domain and treatment factors to a result row.
+
+    Args:
+        family: Registered comparison-family record, when available.
+        arm: Registered treatment-arm record, when available.
+
+    Returns:
+        Stable family, arm, and changed-factor metadata for the row.
+    """
+    if not isinstance(family, dict) or not isinstance(arm, dict):
+        return {
+            "family_id": None,
+            "domain": None,
+            "family_title": None,
+            "comparison_type": None,
+            "arm_label": None,
+            "arm_role": None,
+            "changed_factors": [],
+        }
+    return {
+        "family_id": family.get("id"),
+        "domain": family.get("domain"),
+        "family_title": family.get("title"),
+        "comparison_type": family.get("comparison_type"),
+        "arm_label": arm.get("label"),
+        "arm_role": arm.get("role"),
+        "changed_factors": arm.get("changed_factors", []),
+    }
 
 
 def main() -> int:
@@ -831,7 +1005,7 @@ def main() -> int:
     Returns:
         Numeric result returned by ``main``.
     """
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Summarize a multi-variant experiment run.")
     parser.add_argument("--experiment-run-dir", type=Path, required=True)
     parser.add_argument("--out-stem", type=Path, default=None)
     args = parser.parse_args()
@@ -840,9 +1014,10 @@ def main() -> int:
         "experiment_run_results_summary"
     )
     summary = build_summary(experiment_run_dir)
-    markdown_path, json_path = _write_summary_outputs(summary, out_stem)
+    markdown_path, json_path, csv_path = _write_summary_outputs(summary, out_stem)
     print(markdown_path)
     print(json_path)
+    print(csv_path)
     return 0
 
 

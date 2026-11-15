@@ -1,4 +1,4 @@
-"""RL-driven single-symbol trading robot (Master Roadmap Stage 8).
+"""RL-driven single-symbol trading robot for paper and live execution.
 
 Mirrors the MT5 robot contract established by ``CrossOverRobot`` and
 ``MultiSymbolRobot``: the robot owns a duck-typed ``TradingStrategy``
@@ -9,7 +9,7 @@ optional ``RiskManager``, and exposes a single ``trade()`` method that:
 2. sizes the position via ``RiskManager`` (refusing the entry when sizing fails),
 3. checks risk limits, and
 4. opens/closes positions through the ``Trader`` — or only logs the intended
-   order when ``paper_trading=True`` (dry run, the Stage 8 default).
+   order when ``paper_trading=True`` (dry run, the default).
 
 Signal semantics match ``RLStrategyAdapter.as_strategy``: ``BUY`` closes any
 open shorts and opens one long, ``SELL`` closes any open longs and opens one

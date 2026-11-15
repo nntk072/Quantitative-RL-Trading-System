@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 
 from scripts.research.analysis.evaluation.audit_gross_realized_loss_counter import (
+    _configured_session_map,
     audit_gross_realized_loss_counter,
 )
 
@@ -88,3 +89,54 @@ def test_audit_reconstructs_historical_gross_loss_from_raw_close_pnl(tmp_path: P
         "2025-03-06T17:02:00+00:00"
     )
     assert result["calendar_date_crossings_without_recorded_event"] == ["2025-03-07"]
+
+
+def test_session_map_selects_configured_dates_from_shared_source(tmp_path: Path) -> None:
+    (tmp_path / ".git").mkdir()
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    source_path = data_dir / "US100.cash_M1.csv"
+    source_path.write_text(
+        "<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\t<VOL>\t<SPREAD>\n"
+        "2025.01.01\t00:00:00\t100\t100\t100\t100\t1\t0\t0\n"
+        "2025.01.02\t00:00:00\t100\t100\t100\t100\t1\t0\t0\n"
+        "2026.01.01\t00:00:00\t100\t100\t100\t100\t1\t0\t0\n",
+        encoding="utf-8",
+    )
+    config = {
+        "data": {
+            "primary": "US100.cash",
+            "tz": "UTC",
+            "datasets": {
+                "training": {
+                    "raw_dir": "data",
+                    "m1_files": {"US100.cash": source_path.name},
+                    "start_date": "2025-01-01",
+                    "end_date": "2025-01-02",
+                }
+            },
+        }
+    }
+    manifest = {
+        "source_datasets": {
+            "train_bars": {
+                "rows": 2,
+                "start": "2025-01-01T00:00:00+00:00",
+                "end": "2025-01-02T00:00:00+00:00",
+                "sha256": "recorded-subset-hash",
+            }
+        }
+    }
+
+    session_map, report = _configured_session_map(
+        config,
+        manifest,
+        tmp_path / "run",
+        "training",
+    )
+
+    assert report["status"] == "verified"
+    assert report["source_row_count"] == 3
+    assert report["selected_source_row_count"] == 2
+    assert report["duplicate_timestamp_count_removed_by_clean"] == 0
+    assert session_map == {"2025-01-01": 0, "2025-01-02": 1}

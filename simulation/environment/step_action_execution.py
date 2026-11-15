@@ -176,6 +176,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                 "decision_bar_time": bar_time,
                 "decision_time": submission_time,
                 "order_submission_time": submission_time,
+                "session_id": int(session_id),
                 "limit_price": limit_price,
                 "limit_offset_atr": float(self._selected_limit_offset_atr),
                 "ttl_bars": int(self._selected_limit_ttl_bars),
@@ -368,6 +369,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             "entry_candidate": entry_candidate,
                             "decision_action": dict(self._decision_action),
                             "selected": {name: getattr(self, name) for name in selected_names},
+                            "session_id": int(session_id),
                         }
                         selected_setup = (
                             self._selected_trade_setup if self.trade_setup_actions else None
@@ -395,6 +397,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                                 "order_type": "market",
                                 "decision_id": self._current_decision_id,
                                 "direction": discrete_action,
+                                "session_id": int(session_id),
                                 **setup_identity,
                                 "primary_idea": (
                                     selected_setup.idea if selected_setup is not None else ""
@@ -450,6 +453,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                                 "order_type": "market",
                                 "decision_id": self._current_decision_id,
                                 "direction": discrete_action,
+                                "session_id": int(session_id),
                                 **market_setup_identity,
                                 "time": bar_time,
                                 "decision_time": order_submission_time,
@@ -492,6 +496,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                                     "order_id": order_id,
                                     "order_type": "market",
                                     "decision_id": self._current_decision_id,
+                                    "session_id": int(session_id),
                                     "reason": "entry_rejected_at_market_fill",
                                     **market_setup_identity,
                                     "order_submission_time": order_submission_time,

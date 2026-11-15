@@ -12,7 +12,7 @@ Two layers:
 | Layer | Who | Commands |
 |-------|-----|----------|
 | **Agent commit/push gate** | Any coding agent before `git commit` / `git push` | format + lint + mypy (full tree) + **scoped** pytest |
-| **Merge CI bar** | GitHub Actions named gates; Orchestra phase 9 | twelve named `./tools/check` gates plus `ci-success`; Orchestra runs `./tools/check full` |
+| **Merge CI bar** | GitHub Actions named gates; Orchestra verification phase | twelve named `./tools/check` gates plus `ci-success`; Orchestra runs `./tools/check full` |
 
 Agents must **not** run `pytest tests/ -v` by default — it is too heavy. Prefer the
 smallest relevant test set for the change.
@@ -20,8 +20,8 @@ smallest relevant test set for the change.
 ## Architecture-aware tool invocation
 
 Use tools built for the compute node. On ARM64/GH200, run Ruff, Mypy, and pytest
-directly from the active `.venv/bin` executables (`.venv/bin/ruff`,
-`.venv/bin/mypy`, and `.venv/bin/pytest`). Do not invoke these checks through
+directly from `.venv-arm/bin` (`.venv-arm/bin/ruff`, `.venv-arm/bin/mypy`, and
+`.venv-arm/bin/pytest`). Do not invoke these checks through
 `uv run` on ARM, even if a `uv` executable is available. On x86_64, use the
 `.venv-x86/bin` executables. The Triton login host may expose an x86-64 `uv`
 which fails with `Exec format error` on an ARM node. Verify `uname -m` and the
@@ -54,10 +54,10 @@ The venv setup helpers, `tools/uv-install`, and `make deps-check` honor the same
 fix and re-run; do not skip with `--no-verify` unless the user explicitly requests it.
 
 ```bash
-.venv/bin/ruff format --check .
-.venv/bin/ruff check .
-.venv/bin/mypy .
-.venv/bin/pytest <relevant test paths> -q
+.venv-arm/bin/ruff format --check .
+.venv-arm/bin/ruff check .
+.venv-arm/bin/mypy .
+.venv-arm/bin/pytest <relevant test paths> -q
 ```
 
 **Full tree is mandatory for format / lint / types.** At commit/push you MUST run
@@ -67,9 +67,9 @@ path-scoped commands.
 
 | Forbidden at commit/push | Required instead |
 |--------------------------|------------------|
-| `mypy <touched files>` | `.venv/bin/mypy .` on ARM; matching full-tree Mypy on other architectures |
-| `ruff check <touched paths>` only | `.venv/bin/ruff check .` on ARM; matching full-tree Ruff on other architectures |
-| `ruff format --check <touched paths>` only | `.venv/bin/ruff format --check .` on ARM; matching full-tree Ruff on other architectures |
+| `mypy <touched files>` | `.venv-arm/bin/mypy .` on ARM; matching full-tree Mypy on other architectures |
+| `ruff check <touched paths>` only | `.venv-arm/bin/ruff check .` on ARM; matching full-tree Ruff on other architectures |
+| `ruff format --check <touched paths>` only | `.venv-arm/bin/ruff format --check .` on ARM; matching full-tree Ruff on other architectures |
 
 Scoped ruff/mypy is allowed **only while editing** (see Local work below). A scoped
 pass earlier in the chat does **not** satisfy the commit gate — re-run the full-tree
@@ -77,12 +77,37 @@ commands on the final tree, including new/edited `tests/` files (CI typechecks t
 
 Only **pytest** stays scoped at commit time.
 
+### Start CI impact review before implementation
+
+When the CI Operation Engineer is assigned to a change or asked to advise,
+start the impact review before implementation begins. First inspect the base
+SHA, planned/changed paths, workflow triggers and conditions, runner/toolchain,
+and exact job commands. Give the owner a short path → hosted job → local command
+map before they edit; include generated outputs, architecture contracts,
+focused tests, and any hosted check that has no equivalent local command. The
+owner acknowledges the affected contracts and tests in the task handoff. Do
+not describe a check as covered merely because a nearby test or broad lint ran.
+
+Refresh the map whenever implementation adds paths or changes interfaces,
+dependencies, generated outputs, or test scope. Before commit, compare the
+complete final diff with the map and run the mapped local gates on that exact
+candidate, plus the mandatory full-tree quality gates. If a hosted job has
+environment-specific behavior or no faithful local equivalent, identify that
+gap before commit and choose the closest reproducible check; do not defer a
+known, reproducible check to hosted CI. Record the final path/job/command/result
+matrix in the CI Operation Engineer handoff. The goal is to catch predictable
+failures before commit, not to wait for a red hosted run and then repair it.
+
 ### Change-impact preflight before push
 
 Before pushing, inspect the complete diff and map each changed contract to its
 local gate. Do not rely on hosted CI to discover predictable failures that can
 be checked from the changed paths:
 
+- Inspect the applicable workflow definitions, including triggers, path
+  filters, job conditions, and exact local gate commands. Map every changed
+  path to each affected hosted job; do not infer coverage from a filename or a
+  neighboring targeted test alone.
 - If a production import or dependency direction changed, run the applicable
   architecture contract tests, including
   `tests/architecture/test_dependency_rules.py::test_domain_fanout_is_limited_to_declared_composition_roots`.
@@ -91,12 +116,15 @@ be checked from the changed paths:
   `python -m tools.documentation.public_api --check`,
   `python -m tools.documentation.api_usage --check`, and
   `python -m tools.documentation.inventory --check`. Regenerate stale outputs
-  with the corresponding `--write` command, then rerun the checks.
+  with the corresponding `--write` command, then rerun all three checks and
+  `./tools/check docs` so the complete generated-output closure and docs gate
+  are verified together.
 - If a scoped test or generated-artifact check fails, fix it and rerun that
   exact check before commit/push. After a hosted failure, reproduce the failing
   test or named gate locally when possible before replacing the pushed SHA.
 
-Record each selected command and result in the CI Operation Engineer handoff.
+Record the changed-path-to-workflow mapping and each selected command/result in
+the CI Operation Engineer handoff.
 The full-tree format/lint/type gates and relevant scoped pytest remain required
 regardless of this change-impact preflight.
 
@@ -116,7 +144,7 @@ regardless of this change-impact preflight.
 
 If `ruff format --check .` reports files that would be reformatted:
 
-1. Run the architecture-matched formatter, such as `.venv/bin/ruff format .` on ARM (or only the listed paths).
+1. Run the architecture-matched formatter, such as `.venv-arm/bin/ruff format .` on ARM (or only the listed paths).
 2. Re-run the architecture-matched `ruff format --check .` until it exits 0.
 3. Include the formatting diff in the commit (do not push unformatted code).
 
@@ -135,9 +163,9 @@ gate on the **final** tree you are about to commit.
 When the user asks only for format/lint/types before commit:
 
 ```bash
-.venv/bin/ruff format --check .
-.venv/bin/ruff check .
-.venv/bin/mypy .
+.venv-arm/bin/ruff format --check .
+.venv-arm/bin/ruff check .
+.venv-arm/bin/mypy .
 ```
 
 ## Local work (implementation)
@@ -146,9 +174,9 @@ While editing, prefer scoped checks only — do **not** run full-tree ruff/mypy 
 every edit:
 
 ```bash
-.venv/bin/ruff format --check <touched paths>
-.venv/bin/ruff check <touched paths>
-.venv/bin/pytest <relevant test files> -q
+.venv-arm/bin/ruff format --check <touched paths>
+.venv-arm/bin/ruff check <touched paths>
+.venv-arm/bin/pytest <relevant test files> -q
 ```
 
 When you are about to commit or push, stop using this section and switch to the
@@ -178,6 +206,6 @@ uses the same dispatcher sequentially:
 ## Relations
 
 - Pre-commit checklist: [git-commit-rules.md](git-commit-rules.md)
-- Feature workflow: [development-workflow.md](development-workflow.md)
+- Feature workflow: [core-execution.md](core-execution.md) and [validation-routing.md](validation-routing.md)
 - Agent index: [README.md](README.md)
 - Full gate: `.github/workflows/ci.yml`, `tools/check`, and Orchestra's adapter

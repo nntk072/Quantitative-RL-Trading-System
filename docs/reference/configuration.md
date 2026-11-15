@@ -88,9 +88,11 @@ is read by every listed package.
 | `costs.use_tick_execution` | `boolean` | `true` | `trading/execution` |
 | `data.bar_timestamp_convention` | `string` | `"open"` | `market_data/configuration` |
 | `data.cache_dir` | `string` | `"cache/train_test_2025_2026"` | `market_data/configuration` |
+| `data.datasets.testing.end_date` | `string` | `"${data.split.test_end}"` | `market_data/configuration` |
 | `data.datasets.testing.m1_files.US100.cash` | `string` | `"US100.cash_M1_202412300105_202610162349.csv"` | `market_data/configuration` |
 | `data.datasets.testing.m1_files.US500.cash` | `string` | `"US500.cash_M1_202412300105_202610162349.csv"` | `market_data/configuration` |
-| `data.datasets.testing.raw_dir` | `string` | `"data/testing"` | `market_data/configuration` |
+| `data.datasets.testing.raw_dir` | `string` | `"data"` | `market_data/configuration` |
+| `data.datasets.testing.start_date` | `string` | `"${data.split.test_start}"` | `market_data/configuration` |
 | `data.datasets.testing.tick_files.US100.cash` | `string` | `"US100.cash_202412300105_202610162349.csv"` | `market_data/configuration` |
 | `data.datasets.testing.tick_files.US500.cash` | `string` | `"US500.cash_202412300105_202610162349.csv"` | `market_data/configuration` |
 | `data.datasets.testing.timeframe_files.D1.US500.cash` | `string` | `"US500.cash_D1_202412300000_202610160000.csv"` | `market_data/configuration` |
@@ -108,9 +110,11 @@ is read by every listed package.
 | `data.datasets.testing.timeframe_files.M30.US500.cash` | `string` | `"US500.cash_M30_202412300100_202610162330.csv"` | `market_data/configuration` |
 | `data.datasets.testing.timeframe_files.M5.US100.cash` | `string` | `"US100.cash_M5_202412300105_202610162345.csv"` | `market_data/configuration` |
 | `data.datasets.testing.timeframe_files.M5.US500.cash` | `string` | `"US500.cash_M5_202412300105_202610162345.csv"` | `market_data/configuration` |
+| `data.datasets.training.end_date` | `string` | `"${data.split.train_end}"` | `market_data/configuration` |
 | `data.datasets.training.m1_files.US100.cash` | `string` | `"US100.cash_M1_202412300105_202610162349.csv"` | `market_data/configuration` |
 | `data.datasets.training.m1_files.US500.cash` | `string` | `"US500.cash_M1_202412300105_202610162349.csv"` | `market_data/configuration` |
-| `data.datasets.training.raw_dir` | `string` | `"data/training"` | `market_data/configuration` |
+| `data.datasets.training.raw_dir` | `string` | `"data"` | `market_data/configuration` |
+| `data.datasets.training.start_date` | `string` | `"${data.split.train_start}"` | `market_data/configuration` |
 | `data.datasets.training.tick_files.US100.cash` | `string` | `"US100.cash_202412300105_202610162349.csv"` | `market_data/configuration` |
 | `data.datasets.training.tick_files.US500.cash` | `string` | `"US500.cash_202412300105_202610162349.csv"` | `market_data/configuration` |
 | `data.datasets.training.timeframe_files.D1.US500.cash` | `string` | `"US500.cash_D1_202412300000_202610160000.csv"` | `market_data/configuration` |
@@ -138,6 +142,7 @@ is read by every listed package.
 | `data.require_native_timeframes` | `boolean` | `true` | `market_data/configuration` |
 | `data.secondary` | `string` | `"US500.cash"` | `market_data/configuration` |
 | `data.session_schedule_file` | `string` | `"config/ny_session_schedule.csv"` | `market_data/configuration` |
+| `data.split.test_end` | `string` | `"2026-10-16"` | `market_data/configuration` |
 | `data.split.test_start` | `string` | `"2026-01-01"` | `market_data/configuration` |
 | `data.split.train_end` | `string` | `"2025-12-31"` | `market_data/configuration` |
 | `data.split.train_start` | `string` | `"2024-12-30"` | `market_data/configuration` |

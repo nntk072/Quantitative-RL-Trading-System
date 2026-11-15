@@ -38,22 +38,26 @@ def test_atr_function(self, full_day_data: pd.DataFrame) -> None:
     assert atr_series.notna().sum() > 0
 ```
 
-2. [production caller: `detect_liquidity_sweeps`](../../../../features/context/liquidity.py#L132)
+2. [tutorial example: `technical-indicators · code cell 2`](../../../../docs/subjects/A_data_features/examples/technical-indicators.ipynb)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-    levels = structure_levels(bars, swing_period)
-    # Level known *before* the current bar (strict causality).
-    prev_sh = levels["last_swing_high"].shift(1).to_numpy(dtype=float)
-    prev_sl = levels["last_swing_low"].shift(1).to_numpy(dtype=float)
-    atr_arr = atr(bars, atr_period).to_numpy(dtype=float)
-    high = bars["high"].to_numpy(dtype=float)
-    low = bars["low"].to_numpy(dtype=float)
-    close = bars["close"].to_numpy(dtype=float)
+import pandas as pd
 
-    ev_h, rec_h, lv_h, age_h = _detect_side_sweeps(
-# … caller assertions omitted …
+from features.technical.indicators import atr, ema, rsi
+
+idx = pd.RangeIndex(12)
+close = pd.Series(
+    [10.0, 10.5, 10.2, 10.8, 11.0, 10.7, 11.3, 11.6, 11.2, 12.0, 12.3, 12.1], index=idx
+)
+full = ema(close, span=3)
+short = ema(close.iloc[:8], span=3)
+pd.testing.assert_series_equal(full.iloc[:8], short)
+assert rsi(close, period=3).index.equals(close.index)
+ohlc = pd.DataFrame({"high": close + 0.2, "low": close - 0.2, "close": close})
+assert atr(ohlc, period=3).index.equals(close.index)
+full.tail()
 ```
 
 **Workflow context:**
@@ -101,7 +105,7 @@ def _expected_htf_value(
     return float(eligible[col].iloc[-1])
 ```
 
-2. [test fixture: `test_htf_alignment_causal_open_time`](../../../../tests/unit/features/test_htf_alignment.py#L251)
+2. [test fixture: `test_htf_alignment_causal_open_time`](../../../../tests/unit/features/test_htf_alignment.py#L268)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

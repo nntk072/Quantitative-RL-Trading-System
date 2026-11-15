@@ -37,18 +37,18 @@ Never add secrets or `Co-authored-by` (auto-added).
 ```bash
 git status -sb
 git diff --stat
-.venv/bin/ruff format --check .       # ARM/GH200; use matching venv on other hosts
-.venv/bin/ruff check .
-.venv/bin/mypy .
-.venv/bin/pytest <relevant test paths> -q
+.venv-arm/bin/ruff format --check .   # ARM/GH200; use matching venv on other hosts
+.venv-arm/bin/ruff check .
+.venv-arm/bin/mypy .
+.venv-arm/bin/pytest <relevant test paths> -q
 ```
 
-If `ruff format --check .` fails: run `.venv/bin/ruff format .` on ARM/GH200
+If `ruff format --check .` fails: run `.venv-arm/bin/ruff format .` on ARM/GH200
 (or the architecture-matched formatter elsewhere), then re-run the gate. Do not
 push with format drift.
 
 **Do not** substitute path-scoped mypy/ruff for the full-tree commands above.
-`.venv/bin/mypy .` is required on ARM/GH200 (same full-tree scope on other hosts).
+`.venv-arm/bin/mypy .` is required on ARM/GH200 (same full-tree scope on other hosts).
 Scoped checks while editing do not count. Do not invoke these checks through an
 architecture-mismatched `uv` executable.
 

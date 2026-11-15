@@ -102,6 +102,10 @@ def test_stable_hash_returns_digest_for_unchanged_checkpoint(tmp_path: Path) -> 
     assert stable_sha256(candidate) == hashlib.sha256(b"checkpoint").hexdigest()
 
 
+def test_default_archive_root_is_repository_outputs() -> None:
+    assert audit.DEFAULT_ARCHIVE_ROOT == audit.ROOT / "outputs"
+
+
 def test_report_fails_closed_when_archive_root_is_missing(tmp_path: Path) -> None:
     freeze = _freeze(
         tmp_path / "freeze.json",

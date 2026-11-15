@@ -23,7 +23,7 @@ def _command(config: str, output: str, protocol: dict[str, Any]) -> list[str]:
     wf = replication["walk_forward"]
     policy = protocol["policy"]
     return [
-        ".venv/bin/python",
+        ".venv-arm/bin/python",
         "-m",
         "training.runner.training",
         "--config",

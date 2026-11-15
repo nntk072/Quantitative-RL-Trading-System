@@ -174,8 +174,8 @@ Separate the measured result from possible explanations; a single interval,
 seed, or simulator configuration does not establish generalization or live
 profitability.
 
-For the current period exposure and research-specific gate, see the
-[research execution plan](../operations/research_execution_plan.md). For the
+For period roles and study-specific decisions, use the registered run
+configuration and its artifact manifest. For the
 implementation boundary between environment and backtest, see the
 [simulation guide](../modules/simulation.md) and
 [evaluation guide](../modules/evaluation.md).

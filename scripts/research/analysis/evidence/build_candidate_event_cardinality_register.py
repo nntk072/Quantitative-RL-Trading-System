@@ -490,7 +490,7 @@ def main() -> None:
         "generator_sha256": sha256(Path(__file__).resolve()),
         "limitations": [
             "Producer event counts, feature scalar pulses, candidate identities, and eligibility contexts use different units and are not summed into one event count.",
-            "The generated v3 identity contract records exact source-time fields and scales for each candidate category; it does not assert that candidate-scoped IDs equal globally unique market source objects.",
+            "The generated identity contract records exact source-time fields and scales for each candidate category; it does not assert that candidate-scoped IDs equal globally unique market source objects.",
             "Candidate-scoped IDs can refer to the same source-time tuple across candidates or timeframes.",
             "Current generated matched-baseline decisions.csv exports are recognized as selected-setup traces; they do not reconstruct the earlier selected historical policy.",
             "No qualifying historical per-decision setup or price-geometry traces were found outside current matched-baseline outputs under the supplied roots; absence is scoped to those roots and recognized filenames.",
@@ -515,7 +515,7 @@ The selected profile supports 24 candidate tuples and disables 84. Across the
 24 supported tuples, the identity census has 488,008 active candidate-row
 occurrences and 109,391 candidate-scoped source-time IDs, with no missing
 required source times. The new `candidate_identity_contract.csv` is generated
-from the production v3 identity function and gives the ordered source-time
+from the production identity function and gives the ordered source-time
 fields and unit scales for all 108 categories, plus support and episode counts.
 Those IDs remain scoped to candidate category; the packet does not infer one
 global market-event ontology or deduplicate objects across candidate families
@@ -551,7 +551,7 @@ claim. Candidate price-geometry traces remain unavailable.
 Run from the repository root on a compatible project environment:
 
 ```bash
-.venv/bin/python scripts/research/analysis/evidence/build_candidate_event_cardinality_register.py
+.venv-arm/bin/python scripts/research/analysis/evidence/build_candidate_event_cardinality_register.py
 ```
 
 The generator verifies the source packets' `OUTPUT_SHA256SUMS` files before

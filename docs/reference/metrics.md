@@ -1,11 +1,10 @@
 # Evaluation metric definitions
 
-New canonical run summaries carry the definition identifier
-`qrl.performance_metrics.v4`. Historical v2 and v3 results retain their
-original schema and values. Annualized ratios still depend on the recorded
+Canonical run summaries carry the definition identifier
+`qrl.performance_metrics.v4`. Annualized ratios depend on the recorded
 `periods_per_year` input; the general array API defaults to hourly bars while
-the legacy pandas adapter defaults to 252 × 390 M1 bars. Preserve that basis
-with the run protocol when comparing or regenerating results.
+the pandas compatibility adapter defaults to 252 × 390 M1 bars. Preserve that
+basis with the run protocol when comparing or regenerating results.
 
 `evaluation.metrics.performance.compute_metrics` is the canonical aggregate
 performance implementation. It consumes a chronological positive-equity
@@ -43,7 +42,7 @@ appropriate for a particular evaluation.
 Daily chart helpers in `evaluation.plotting.plot_series` group by calendar
 date in the equity index's timezone. They describe an index-date view and do
 not establish the configured account session boundary or the simulator's
-guardrail accounting. They are not the source of the v3 daily-return metric.
+guardrail accounting. They are not the source of the canonical daily-return metric.
 
 ## Position metrics
 

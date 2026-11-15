@@ -31,7 +31,7 @@ from market_data.loading.ticks import TickBook, build_tick_book
 
 ROOT = repository_root(__file__)
 DEFAULT_QUALITY_REPORT = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/local_market_data_quality.json"
+    ROOT / "evidence/research/market_data_quality/local_market_data_quality.json"
 )
 DEFAULT_OUTPUT = ROOT / "evidence/research/selected_policy_trade_lifecycle/trade_excursions"
 

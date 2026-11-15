@@ -5,7 +5,7 @@
 #
 # Feature-flag variants assume the --features-csv was built with matching
 # build_features flags (e.g. include_pd_context). Strategy variants merge the
-# Idea 1/2 YAML overlays when constructing the env.
+# Strategy overlays are applied when constructing the environment.
 #
 # Ladder variants (A0-A4) add one architecture layer per row so marginal value
 # is directly measurable. `allow_agent_tp_mode` only takes effect when
@@ -130,7 +130,7 @@ variants:
     peak_trailing_dd_limit: 0.0
     risk_floor: 0.0005
     price_grid_increment: 0.25
-    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025_v1"
+    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025"
 
   - name: ladder_a4a_entry_fsm_hidden_qgrid025
     reward_mode: dsr
@@ -145,7 +145,7 @@ variants:
     peak_trailing_dd_limit: 0.0
     risk_floor: 0.0005
     price_grid_increment: 0.25
-    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025_v1"
+    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025"
 
   # New sizing family: same hidden-state A4a policy with learned dollar-band
   # risk selection; Q5 is the only difference between these two arms.
@@ -161,7 +161,7 @@ variants:
     entry_state_observation: false
     peak_trailing_dd_limit: 0.0
     price_grid_increment: 0.25
-    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025_v1"
+    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025"
     config_overrides:
       - "env.risk_mode=dollar_band"
       - "env.risk_band_max_usd=900"
@@ -181,7 +181,7 @@ variants:
     entry_state_observation: false
     peak_trailing_dd_limit: 0.0
     price_grid_increment: 0.25
-    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025_v1"
+    price_grid_cache_dir: "cache/train_test_2025_2026_qgrid025"
     config_overrides:
       - "env.risk_mode=dollar_band"
       - "env.risk_band_max_usd=900"

@@ -35,11 +35,11 @@ class TradingStrategy(ABC):
 
     manipulation_filter: str = "against"
 
-    #: Feature columns that must exist in the feature matrix (Agent.md §11).
+    #: Feature columns required by this strategy's feature checks.
     required_features: tuple[str, ...] = ()
 
     #: Raw price-level columns kept for execution/risk but excluded from the
-    #: model's normalised sequence observation (Agent.md §11).
+    #: model's normalized sequence observation.
     raw_columns: tuple[str, ...] = ()
 
     @abstractmethod

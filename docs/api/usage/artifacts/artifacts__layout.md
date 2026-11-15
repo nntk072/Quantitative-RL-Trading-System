@@ -1111,8 +1111,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     if experiment_run is None or status is None:
         raise ValueError("experiment_run.json and reports/experiment_run_status.json are required")
 
-    jobs: list[dict[str, Any]] = []
-    for job in experiment_run.get("jobs", []):
+    families = experiment_run.get("comparison_families")
+    if not isinstance(families, list):
 # … caller assertions omitted …
 ```
 
@@ -1207,7 +1207,7 @@ def recovery_checkpoint(self, value: str | Path) -> Path:
         ) from None
 ```
 
-2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L468)
+2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L482)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1457,7 +1457,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L470)
+2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L484)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

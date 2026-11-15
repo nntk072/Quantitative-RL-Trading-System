@@ -168,7 +168,7 @@ def main() -> int:
         ],
         "source_files": [
             "config/experiments.yaml",
-            "config/2_po3_ifvg.yaml",
+            "config/strategies/po3_ifvg.yaml",
             "config/features/full_po3_mtf.yaml",
             "config/base/default.yaml",
             "training/runner/training.py",

@@ -66,9 +66,7 @@ SOURCE_FILES = (
     "simulation/environment/diagnostics_runtime.py",
     "simulation/environment/step_action_execution.py",
 )
-DATA_MANIFEST = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-)
+DATA_MANIFEST = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
 
 
 def _sha256_file(path: Path) -> str:

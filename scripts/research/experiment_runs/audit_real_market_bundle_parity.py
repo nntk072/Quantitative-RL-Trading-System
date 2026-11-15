@@ -315,7 +315,7 @@ def main() -> int:
 
     variants = [
         line.strip()
-        for line in (ROOT / "scripts" / "variant_list.txt").read_text().splitlines()
+        for line in args.variant_file.read_text(encoding="utf-8").splitlines()
         if line.strip() and not line.lstrip().startswith("#")
     ]
     base_cfg = load_config(config_path="config/features/full_po3_mtf.yaml")

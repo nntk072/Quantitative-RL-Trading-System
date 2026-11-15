@@ -25,17 +25,11 @@ CRITICAL_CONFIG_POLICY: dict[str, set[str]] = {
     "config/base/default.yaml": {"directly_traceable", "indirectly_traceable"},
     "config/experiments.yaml": {"directly_traceable", "indirectly_traceable"},
     "config/quality_experiments.yaml": {"directly_traceable", "indirectly_traceable"},
-    "config/1_baseline.yaml": {"tracked_but_inactive"},
-    "config/2_po3_ifvg.yaml": {"directly_traceable", "indirectly_traceable"},
-    "config/3_distribution.yaml": {"directly_traceable", "indirectly_traceable"},
+    "config/strategies/po3_ifvg.yaml": {"directly_traceable", "indirectly_traceable"},
+    "config/strategies/distribution.yaml": {"directly_traceable", "indirectly_traceable"},
     "config/features/full_po3_mtf.yaml": {"directly_traceable", "indirectly_traceable"},
 }
-INACTIVE_CONFIG_EVIDENCE = {
-    "config/1_baseline.yaml": (
-        "The file documents that baseline is not auto-merged; training/configuration/cli.py "
-        "uses baseline as the default branch and leaves config/base/default.yaml untouched."
-    )
-}
+INACTIVE_CONFIG_EVIDENCE: dict[str, str] = {}
 CRITICAL_SYMBOLS = (
     ("configuration/configuration_loader.py", "load_config"),
     ("training/configuration/cli.py", "load_merged_config"),
@@ -273,6 +267,8 @@ def _string_parts(expr: ast.AST, assignments: dict[str, ast.AST]) -> list[str]:
         return _string_parts(expr.left, assignments) + _string_parts(expr.right, assignments)
     if isinstance(expr, ast.Call):
         name = _call_name(expr)
+        if name.endswith("repository_root"):
+            return ["."]
         if name.endswith("Path") and expr.args:
             return _string_parts(expr.args[0], assignments)
         if name.endswith("read_text") or name.endswith("open"):

@@ -1,3 +1,0 @@
-rq_mtf_control_tcn
-rq_mtf_treatment_mtf
-rq_mtf_treatment_reasoning

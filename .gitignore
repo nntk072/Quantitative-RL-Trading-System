@@ -167,25 +167,19 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
-# Generated data and runtime output directories. Source CSVs/notebooks outside
-# data remain visible to Git; examples under data/examples are versioned.
+# Raw market exports and generated runtime output stay outside Git; examples and
+# the data layout guide remain versioned.
 /logs/
 /data/*
-# Tracked examples and split-root README files only. Keep actual partition
-# contents ignored so a linked or materialized dataset cannot be staged by
-# accident.
+!/data/README.md
 !/data/examples/
 !/data/examples/**
-!/data/normal/
-/data/normal/*
-!/data/normal/README.md
-!/data/discretion/
-/data/discretion/*
-!/data/discretion/README.md
 
 # Derived caches and all generated runs, checkpoints, reports, and logs.
 /cache/
 /outputs/
+/agent-notes/.obsidian/workspace.json
+/agent-notes/.obsidian/workspace-mobile.json
 
 # Local corporate certificate (not reproducible outside this env)
 zscaler.crt

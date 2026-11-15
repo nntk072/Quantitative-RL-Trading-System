@@ -28,7 +28,7 @@ class StrategyInitializationMixin(RuntimeMixinBase):
         bars: pd.DataFrame | None,
         features: pd.DataFrame | None,
     ) -> None:
-        # Strategy semantics (Idea 1/2) vs. legacy behaviour (Idea 3 baseline).
+        # Strategy actions opt into setup-specific behavior; baseline stays unchanged.
         """Initialize strategy runtime.
 
         Args:

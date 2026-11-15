@@ -41,6 +41,7 @@ def _minimal_index(*, historical_source: str | None = None) -> dict[str, Any]:
         "families": [
             {
                 "id": "test_pair",
+                "domain": "representation",
                 "title": "Test comparison",
                 "question": "Does the treatment change the result?",
                 "comparison_type": "matched",
@@ -72,6 +73,36 @@ def test_catalog_covers_each_selectable_variant_with_resolved_settings() -> None
     assert mtf_treatment["resolved"]["arch"] == "mtf"
     assert mtf_treatment["resolved"]["reward_mode"] == "dsr"
     assert mtf_treatment["resolved"]["risk"]["risk_sizing_limit_usd"] == 900.0
+
+
+def test_comparison_family_resolves_only_currently_configured_arms() -> None:
+    family = catalog.resolve_family("mtf_encoder")
+
+    assert [arm["variant"] for arm in family["entries"]] == [
+        "rq_mtf_control_tcn",
+        "rq_mtf_treatment_mtf",
+    ]
+    assert family["comparison_type"] == "matched"
+    assert family["domain"] == "representation"
+
+
+def test_comparison_family_rejects_unknown_id() -> None:
+    with pytest.raises(catalog.CatalogError, match="unknown comparison family"):
+        catalog.resolve_family("not_a_comparison")
+
+
+def test_catalog_rejects_unknown_research_domain() -> None:
+    metadata = _minimal_index()
+    metadata["families"][0]["domain"] = "miscellaneous"
+
+    with pytest.raises(catalog.CatalogError, match="unsupported domain"):
+        catalog.validate_catalog_index(
+            metadata,
+            {"variants": [{"name": "current"}]},
+            root=Path("."),
+            architecture_ids=("tcn",),
+            algorithms=("ppo",),
+        )
 
 
 def test_encoder_ids_match_config_resolution_and_factory() -> None:
@@ -156,10 +187,14 @@ def test_historical_variant_requires_an_existing_frozen_source(tmp_path: Path) -
 
 
 def test_retired_variant_renders_as_historical_with_its_source(tmp_path: Path, monkeypatch) -> None:
+    historical_source = tmp_path / "config" / "experiment_runs" / "frozen_comparison.yaml"
+    historical_source.parent.mkdir(parents=True)
+    historical_source.write_text("experiment_run_id: frozen-comparison\n", encoding="utf-8")
     metadata = yaml.safe_load(catalog.CATALOG_PATH.read_text(encoding="utf-8"))
     metadata["families"] = [
         {
             "id": "historical_status_test",
+            "domain": "representation",
             "title": "Historical status test",
             "question": "Does the preserved historical variant remain selectable?",
             "comparison_type": "descriptive",
@@ -177,7 +212,7 @@ def test_retired_variant_renders_as_historical_with_its_source(tmp_path: Path, m
                     "role": "candidate",
                     "description": "No longer selectable.",
                     "changed_factors": ["encoder"],
-                    "historical_sources": ["config/experiment_runs/18_variant_seed42_20m.yaml"],
+                    "historical_sources": ["config/experiment_runs/frozen_comparison.yaml"],
                 },
             ],
         }
@@ -185,6 +220,12 @@ def test_retired_variant_renders_as_historical_with_its_source(tmp_path: Path, m
     index_path = tmp_path / "variant_catalog.yaml"
     index_path.write_text(yaml.safe_dump(metadata), encoding="utf-8")
     monkeypatch.setattr(catalog, "CATALOG_PATH", index_path)
+    validate = catalog.validate_catalog_index
+    monkeypatch.setattr(
+        catalog,
+        "validate_catalog_index",
+        lambda metadata, experiments: validate(metadata, experiments, root=tmp_path),
+    )
     monkeypatch.setattr(
         catalog,
         "load_experiments",
@@ -217,8 +258,9 @@ def test_retired_variant_renders_as_historical_with_its_source(tmp_path: Path, m
     retired = result["families"][0]["entries"][1]
     assert retired["status"] == "Historical"
     rendered = catalog.render_catalog(result)
+    assert "**Research domain:** `representation`" in rendered
     assert "| B | `retired_variant` | Historical |" in rendered
-    assert "../config/experiment_runs/18_variant_seed42_20m.yaml" in rendered
+    assert "../config/experiment_runs/frozen_comparison.yaml" in rendered
     assert "retired_variant` | Selectable" not in rendered
 
 

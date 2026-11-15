@@ -206,7 +206,7 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
         }
         current_breach = (
             self.breach_events[-1]
-            if self.breach_events and self.breach_events[-1].get("time") == bar_time
+            if self.breach_events and self.breach_events[-1].get("time") == decision_time
             else None
         )
         breach_reason = "" if current_breach is None else str(current_breach.get("reason", ""))

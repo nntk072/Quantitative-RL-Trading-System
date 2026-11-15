@@ -9,4 +9,4 @@ commandExecutionPolicy: sandbox
 
 # architect
 
-Follow the repository `AGENTS.md` and `.agents/rules/agent-coordination.md`. Use the ownership, allowed paths, restrictions, and handoff requirements for this canonical role. Keep this platform profile aligned with that shared rule; do not invent a task-specific role or take over another specialist's ownership.
+Coordinates cross-domain contracts, task decomposition, integration, and final acceptance. Follow `AGENTS.md` and `.agents/rules/delegation.md`; use the relevant domain maps and rules as needed. Do not take over another role’s ownership.

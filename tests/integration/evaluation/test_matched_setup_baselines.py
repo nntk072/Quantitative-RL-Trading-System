@@ -156,7 +156,7 @@ def test_tier0_baselines_share_resolved_inputs_but_separate_seeds(tmp_path: Path
         artifact_root=tmp_path,
         source_repository=ROOT,
         config_path=ROOT / "config/base/default.yaml",
-        protocol_path="docs/research/setup_conditioned_reasoning_benchmark_protocol.md",
+        protocol_path="docs/research/validation_protocol.md",
         regeneration_command="pytest tests/integration/evaluation/test_matched_setup_baselines.py",
         symbols=("SYNTHETIC",),
         timeframes=("M1",),
@@ -225,7 +225,7 @@ def test_tier0_baselines_can_persist_an_independent_subset(tmp_path: Path) -> No
         artifact_root=tmp_path,
         source_repository=ROOT,
         config_path=ROOT / "config/base/default.yaml",
-        protocol_path="docs/research/setup_conditioned_reasoning_benchmark_protocol.md",
+        protocol_path="docs/research/validation_protocol.md",
         regeneration_command="qrl-research-baseline --baselines always_no_trade",
         symbols=("SYNTHETIC",),
         timeframes=("M1",),
@@ -333,7 +333,7 @@ def test_matched_runner_accepts_deterministic_structure_rule_without_checkpoint(
         artifact_root=tmp_path,
         source_repository=ROOT,
         config_path=ROOT / "config/base/default.yaml",
-        protocol_path="docs/research/setup_conditioned_reasoning_benchmark_protocol.md",
+        protocol_path="docs/research/validation_protocol.md",
         regeneration_command=(
             "pytest tests/integration/evaluation/test_matched_setup_baselines.py"
         ),
@@ -633,7 +633,7 @@ def test_tier0_baseline_bundle_has_valid_manifest_and_hashed_artifacts(tmp_path:
     source_repository = tmp_path / "source"
     config_path = source_repository / "config.yaml"
     metric_path = source_repository / "evaluation/metrics/performance.py"
-    protocol_path = source_repository / "docs/operations/research_execution_plan.md"
+    protocol_path = source_repository / "docs/research/validation_protocol.md"
     config_path.parent.mkdir(parents=True)
     metric_path.parent.mkdir(parents=True)
     protocol_path.parent.mkdir(parents=True)
@@ -661,7 +661,7 @@ def test_tier0_baseline_bundle_has_valid_manifest_and_hashed_artifacts(tmp_path:
             artifact_root=tmp_path,
             source_repository=source_repository,
             config_path=config_path,
-            protocol_path="docs/operations/research_execution_plan.md",
+            protocol_path="docs/research/validation_protocol.md",
             regeneration_command="pytest tests/integration/evaluation/test_matched_setup_baselines.py",
             source_files={"existing_policy_checkpoint": checkpoint_path},
         )
@@ -676,7 +676,7 @@ def test_tier0_baseline_bundle_has_valid_manifest_and_hashed_artifacts(tmp_path:
         artifact_root=tmp_path,
         source_repository=source_repository,
         config_path=config_path,
-        protocol_path="docs/operations/research_execution_plan.md",
+        protocol_path="docs/research/validation_protocol.md",
         regeneration_command="pytest tests/integration/evaluation/test_matched_setup_baselines.py",
         symbols=("SYNTHETIC",),
         timeframes=("M1",),
@@ -728,7 +728,7 @@ def test_tier0_baseline_bundle_has_valid_manifest_and_hashed_artifacts(tmp_path:
         for artifact in run["artifacts"]
     )
     input_identity = json.loads((bundle_path / "input_identity.json").read_text(encoding="utf-8"))
-    assert input_identity["protocol_file"]["path"] == "docs/operations/research_execution_plan.md"
+    assert input_identity["protocol_file"]["path"] == "docs/research/validation_protocol.md"
     assert (
         input_identity["protocol_file"]["sha256"]
         == hashlib.sha256(protocol_path.read_bytes()).hexdigest()
@@ -747,7 +747,7 @@ def test_tier0_baseline_bundle_has_valid_manifest_and_hashed_artifacts(tmp_path:
             artifact_root=tmp_path,
             source_repository=source_repository,
             config_path=config_path,
-            protocol_path="docs/operations/research_execution_plan.md",
+            protocol_path="docs/research/validation_protocol.md",
             regeneration_command="pytest tests/integration/evaluation/test_matched_setup_baselines.py",
             source_files={"existing_policy_checkpoint": incorrect_checkpoint},
         )
@@ -763,7 +763,7 @@ def test_tier0_baseline_bundle_has_valid_manifest_and_hashed_artifacts(tmp_path:
             artifact_root=tmp_path,
             source_repository=source_repository,
             config_path=config_path,
-            protocol_path="docs/operations/research_execution_plan.md",
+            protocol_path="docs/research/validation_protocol.md",
             regeneration_command="pytest tests/integration/evaluation/test_matched_setup_baselines.py",
             symbols=("SYNTHETIC",),
             timeframes=("M1",),

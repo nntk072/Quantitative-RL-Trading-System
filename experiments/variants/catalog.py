@@ -23,6 +23,7 @@ CATALOG_PATH = PROJECT_ROOT / "config" / "variant_catalog.yaml"
 CATALOG_PAGE_PATH = PROJECT_ROOT / "docs" / "model_variants.md"
 _COMPARISON_TYPES = {"descriptive", "ladder", "matched", "screening"}
 _ROLES = {"candidate", "control", "reference", "rung", "treatment"}
+_DOMAINS = {"data", "environment", "learning", "representation", "trading"}
 
 
 class CatalogError(ValueError):
@@ -167,6 +168,9 @@ def _validate_family(family: Any) -> tuple[str, list[dict[str, Any]]]:
     if not isinstance(family, dict):
         raise CatalogError("every catalog family must be a mapping")
     family_id = _require_text(family.get("id"), "family id")
+    domain = _require_text(family.get("domain"), f"family {family_id} domain")
+    if domain not in _DOMAINS:
+        raise CatalogError(f"unsupported domain {domain!r} in family {family_id}")
     _require_text(family.get("title"), f"family {family_id} title")
     _require_text(family.get("question"), f"family {family_id} question")
     comparison_type = _require_text(
@@ -260,6 +264,34 @@ def build_catalog() -> dict[str, Any]:
         "architectures": architectures,
         "families": families,
     }
+
+
+def resolve_family(family_id: str) -> dict[str, Any]:
+    """Return a comparison family containing only currently runnable variants.
+
+    Args:
+        family_id: Identifier declared in the variant catalog.
+
+    Returns:
+        Family metadata with entries restricted to current experiment variants.
+    """
+    try:
+        metadata = yaml.safe_load(CATALOG_PATH.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise CatalogError(f"cannot read catalog metadata at {CATALOG_PATH}: {exc}") from exc
+    if not isinstance(metadata, dict):
+        raise CatalogError("catalog metadata must be a mapping")
+    experiments = load_experiments()
+    validate_catalog_index(metadata, experiments)
+    current_names = {str(row["name"]) for row in experiments["variants"]}
+    matches = [family for family in metadata["families"] if family.get("id") == family_id]
+    if len(matches) != 1:
+        raise CatalogError(f"unknown comparison family: {family_id}")
+    family = matches[0]
+    arms = [{**entry} for entry in family["entries"] if str(entry["variant"]) in current_names]
+    if not arms:
+        raise CatalogError(f"comparison family has no currently configured variants: {family_id}")
+    return {key: value for key, value in family.items() if key != "entries"} | {"entries": arms}
 
 
 def _markdown_cell(value: str) -> str:
@@ -358,6 +390,8 @@ def render_catalog(catalog: dict[str, Any]) -> str:
                 f"## {_markdown_cell(family['title'])}",
                 "",
                 f"**Family:** `{family_id}`",
+                "",
+                f"**Research domain:** `{family['domain']}`",
                 "",
                 f"**Research question:** {_markdown_cell(family['question'])}",
                 "",

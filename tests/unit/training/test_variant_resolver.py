@@ -25,7 +25,7 @@ from training.configuration.variant_resolution import (
 )
 from training.configuration.variant_risk_policy import load_variant_ftmo_config
 
-LAUNCHER = PROJECT_ROOT / "scripts" / "research" / "frozen-launches" / "train_one_variant.sh"
+WORKER_MODULE = "experiments.runs.variant_worker"
 
 
 def test_e_f_g_architectures_are_registered_for_variant_resolution() -> None:
@@ -412,33 +412,7 @@ def test_quarter_grid_pair_preserves_policy_and_shares_data_transform() -> None:
     assert quantized_control["data.price_discretization.enabled"] == "true"
     assert quantized_treatment["data.price_discretization.increment"] == "0.25"
     assert quantized_control["data.cache_dir"] == quantized_treatment["data.cache_dir"]
-    assert quantized_control["data.cache_dir"].endswith("qgrid025_v1")
-
-
-def test_quarter_grid_experiment_run_uses_the_matched_pair_and_locked_split() -> None:
-    experiment_run = yaml.safe_load(
-        (
-            PROJECT_ROOT
-            / "config/experiment_runs/rq1_entry_fsm_pair_seed50_train2025_20261024_dd10pilot2m_stochastic_v1.yaml"
-        ).read_text(encoding="utf-8")
-    )
-    variant_file = PROJECT_ROOT / str(experiment_run["variant_file"])
-    listed = [line.strip() for line in variant_file.read_text(encoding="utf-8").splitlines()]
-
-    assert (
-        experiment_run["variants"]
-        == listed
-        == [
-            "ladder_a4b_entry_fsm_qgrid025",
-            "ladder_a4a_entry_fsm_hidden_qgrid025",
-        ]
-    )
-    assert experiment_run["timesteps"] == 2_000_000
-    assert experiment_run["split"] == {
-        "train_start": "2024-12-30",
-        "train_end": "2025-12-31",
-        "test_start": "2026-01-01",
-    }
+    assert quantized_control["data.cache_dir"].endswith("qgrid025")
 
 
 def test_consistency_table_covers_all_variants() -> None:
@@ -489,7 +463,12 @@ def test_launcher_dry_run_prints_every_seed() -> None:
         "PYTHON": sys.executable,
     }
     proc = subprocess.run(
-        ["bash", str(LAUNCHER)], env=env, capture_output=True, text=True, check=False, timeout=120
+        [sys.executable, "-m", WORKER_MODULE],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
     )
     assert proc.returncode == 0, proc.stderr
     assert "algo=sac arch=gru" in proc.stdout
@@ -498,6 +477,15 @@ def test_launcher_dry_run_prints_every_seed() -> None:
     assert "--algo sac" in proc.stdout and "--arch gru" in proc.stdout
     assert "execution.randomized_fill_latency_ms=30.0" not in proc.stdout
     assert not any(Path(out_dir).glob("*.done"))  # dry run must not write markers
+
+
+def test_worker_preserves_spaces_inside_config_override_values() -> None:
+    from experiments.runs.variant_worker import _config_overrides
+
+    assert _config_overrides("report.label=matched control\nfeatures.enabled=true") == [
+        "report.label=matched control",
+        "features.enabled=true",
+    ]
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX launcher requires Linux/WSL")
@@ -510,7 +498,12 @@ def test_launcher_refuses_vae_variant_without_vae_path() -> None:
         "PYTHON": sys.executable,
     }
     proc = subprocess.run(
-        ["bash", str(LAUNCHER)], env=env, capture_output=True, text=True, check=False, timeout=120
+        [sys.executable, "-m", WORKER_MODULE],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
     )
     assert proc.returncode != 0
     assert "VAE" in proc.stderr

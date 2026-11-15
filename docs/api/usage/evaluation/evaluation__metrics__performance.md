@@ -346,7 +346,48 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `max_drawdown_stat`](../../../../evaluation/metrics/bootstrap.py#L236)
+1. [tutorial example: `evaluation-metrics-inference · code cell 2`](../../../../docs/subjects/E_evaluation_research/examples/evaluation-metrics-inference.ipynb)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+from math import isclose
+
+import numpy as np
+
+from evaluation.metrics.bootstrap import paired_metric_difference_ci
+from evaluation.metrics.performance import completed_position_trade_pnls, max_drawdown
+
+legs = [
+    {"position_id": "A", "type": "tp_partial_close", "net_pnl": 4, "position_complete": False},
+    {"position_id": "A", "type": "close", "net_pnl": 6, "position_complete": True},
+    {"position_id": "B", "type": "tp_partial_close", "net_pnl": -2, "position_complete": False},
+]
+pnls, realized_fills, open_positions = completed_position_trade_pnls(legs)
+assert (pnls, realized_fills, open_positions) == ([10], 3, 1)
+
+equity = [100, 120, 90, 110]
+drawdown = max_drawdown(equity)
+payout = 5
+economic_return = (equity[-1] + payout - equity[0]) / equity[0]
+assert isclose(drawdown, 0.25)
+assert isclose(economic_return, 0.15)
+
+treatment = np.array([0.03, 0.00, 0.04, 0.01])
+control = np.array([0.02, -0.01, 0.03, 0.00])
+interval = paired_metric_difference_ci(
+    treatment, control, np.mean, n_boot=32, rng_seed=42, block_len=2
+)
+assert all(isclose(value, 0.01) for value in interval.as_tuple())
+
+print(
+    f"Synthetic counts: {len(pnls)} completed, {realized_fills} realized fills, {open_positions} open"
+)
+print(f"Synthetic drawdown: {drawdown:.0%}, payout-aware return: {economic_return:.0%}")
+print(f"Synthetic paired return difference: {interval.estimate:.2%}")
+```
+
+2. [production caller: `max_drawdown_stat`](../../../../evaluation/metrics/bootstrap.py#L236)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -356,26 +397,6 @@ def max_drawdown_stat(equity: NDArray[np.float64]) -> float:
     if eq.size == 0:
         return float("nan")
     return max_drawdown(eq)
-```
-
-2. [production caller: `compute_metrics`](../../../../evaluation/metrics/performance.py#L686)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        # Callers may supply end-of-bar valuations without the opening capital.
-        # Preserve an explicitly included opening balance, otherwise count the
-        # first valuation's profit or loss in the return path and drawdown.
-    path = curve if curve[0] == initial_balance else np.concatenate(([initial_balance], curve))
-    returns = _bar_returns(path)
-    mdd = max_drawdown(path)
-    total_pnl = float(curve[-1] - initial_balance)
-    # ``curve`` may either include the initial balance or contain only
-    # end-of-bar valuations. ``returns`` always counts elapsed bar intervals,
-    # so use it as the annualisation duration in both representations.
-    years = returns.size / periods_per_year
-# … caller assertions omitted …
 ```
 
 **Workflow context:**
@@ -778,7 +799,48 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `max_drawdown_stat`](../../../../evaluation/metrics/bootstrap.py#L236)
+1. [tutorial example: `evaluation-metrics-inference · code cell 2`](../../../../docs/subjects/E_evaluation_research/examples/evaluation-metrics-inference.ipynb)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+from math import isclose
+
+import numpy as np
+
+from evaluation.metrics.bootstrap import paired_metric_difference_ci
+from evaluation.metrics.performance import completed_position_trade_pnls, max_drawdown
+
+legs = [
+    {"position_id": "A", "type": "tp_partial_close", "net_pnl": 4, "position_complete": False},
+    {"position_id": "A", "type": "close", "net_pnl": 6, "position_complete": True},
+    {"position_id": "B", "type": "tp_partial_close", "net_pnl": -2, "position_complete": False},
+]
+pnls, realized_fills, open_positions = completed_position_trade_pnls(legs)
+assert (pnls, realized_fills, open_positions) == ([10], 3, 1)
+
+equity = [100, 120, 90, 110]
+drawdown = max_drawdown(equity)
+payout = 5
+economic_return = (equity[-1] + payout - equity[0]) / equity[0]
+assert isclose(drawdown, 0.25)
+assert isclose(economic_return, 0.15)
+
+treatment = np.array([0.03, 0.00, 0.04, 0.01])
+control = np.array([0.02, -0.01, 0.03, 0.00])
+interval = paired_metric_difference_ci(
+    treatment, control, np.mean, n_boot=32, rng_seed=42, block_len=2
+)
+assert all(isclose(value, 0.01) for value in interval.as_tuple())
+
+print(
+    f"Synthetic counts: {len(pnls)} completed, {realized_fills} realized fills, {open_positions} open"
+)
+print(f"Synthetic drawdown: {drawdown:.0%}, payout-aware return: {economic_return:.0%}")
+print(f"Synthetic paired return difference: {interval.estimate:.2%}")
+```
+
+2. [production caller: `max_drawdown_stat`](../../../../evaluation/metrics/bootstrap.py#L236)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -788,26 +850,6 @@ def max_drawdown_stat(equity: NDArray[np.float64]) -> float:
     if eq.size == 0:
         return float("nan")
     return max_drawdown(eq)
-```
-
-2. [production caller: `compute_metrics`](../../../../evaluation/metrics/performance.py#L686)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        # Callers may supply end-of-bar valuations without the opening capital.
-        # Preserve an explicitly included opening balance, otherwise count the
-        # first valuation's profit or loss in the return path and drawdown.
-    path = curve if curve[0] == initial_balance else np.concatenate(([initial_balance], curve))
-    returns = _bar_returns(path)
-    mdd = max_drawdown(path)
-    total_pnl = float(curve[-1] - initial_balance)
-    # ``curve`` may either include the initial balance or contain only
-    # end-of-bar valuations. ``returns`` always counts elapsed bar intervals,
-    # so use it as the annualisation duration in both representations.
-    years = returns.size / periods_per_year
-# … caller assertions omitted …
 ```
 
 **Workflow context:**

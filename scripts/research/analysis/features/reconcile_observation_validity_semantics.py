@@ -590,7 +590,7 @@ def build_report(
         f"Triage SHA-256: `{report['triage_sha256']}`. Feature matrix SHA-256: "
         f"`{report['feature_matrix_sha256']}`. Analyzer SHA-256: `{report['analyzer_sha256']}`.\n\n"
         "Regenerate with:\n\n```bash\n"
-        ".venv/bin/python scripts/research/analysis/features/"
+        ".venv-arm/bin/python scripts/research/analysis/features/"
         "reconcile_observation_validity_semantics.py\n```\n"
     ).encode()
     output_dir.mkdir(parents=True, exist_ok=True)

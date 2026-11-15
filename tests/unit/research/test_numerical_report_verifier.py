@@ -526,9 +526,43 @@ def test_verify_split_reconciles_exported_raw_artifacts(tmp_path):
         "session_id",
         "reason",
         "equity",
+        "daily_loss",
+        "daily_pnl_basis",
         "fill_time",
     ]
     assert breach_events.empty
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected_error"),
+    [
+        ("daily_loss", float("nan"), "breach event daily_loss is not finite"),
+        ("daily_pnl_basis", "unknown_basis", "breach event daily_pnl_basis is unsupported"),
+    ],
+)
+def test_verify_split_rejects_invalid_v2_breach_event_contract(
+    tmp_path: Path, field: str, value: object, expected_error: str
+) -> None:
+    split_dir = _write_split(tmp_path)
+    event: dict[str, object] = {
+        "schema_version": "risk-breach-event-v2",
+        "time": "2025-01-01T00:02:00Z",
+        "detection_time": "2025-01-01T00:02:00Z",
+        "trade_event_count": 1,
+        "session_id": 1,
+        "reason": "daily_loss",
+        "equity": 95.0,
+        "daily_loss": 5.0,
+        "daily_pnl_basis": "session_net_equity",
+        "fill_time": None,
+    }
+    event[field] = value
+    events = pd.DataFrame([event])
+    events.to_csv(split_dir / "breach_events.csv", index=False)
+
+    errors = verify_split(split_dir, initial_balance=100.0, periods_per_year=10)
+
+    assert any(expected_error in error for error in errors)
 
 
 def test_verify_split_preserves_missing_breach_event_provenance(tmp_path: Path) -> None:

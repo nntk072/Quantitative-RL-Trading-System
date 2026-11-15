@@ -105,12 +105,18 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
             self._pending_entry_order = None
             selected = pending.get("selected", {})
             selected_setup = selected.get("_selected_trade_setup")
+            snapshot_session_id = info.get("account_state_snapshot", {}).get("session_id")
             self.trade_log.append(
                 {
                     "type": "order_cancel",
                     "decision_id": str(pending.get("decision_id", "")),
                     "order_id": pending.get("order_id"),
                     "order_type": pending.get("order_type", "market"),
+                    "session_id": (
+                        pending.get("session_id")
+                        if snapshot_session_id is None
+                        else snapshot_session_id
+                    ),
                     "trade_setup_candidate_id": (
                         None if selected_setup is None else int(selected_setup.candidate_id)
                     ),

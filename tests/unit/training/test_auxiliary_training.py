@@ -1,4 +1,4 @@
-"""Chain E Step 0 tests: auxiliary return-prediction head wiring.
+"""Tests for auxiliary return-prediction head wiring.
 
 Covers the pure window/target builder (alignment + causality + NaN
 filtering) and a light integration check that the callback attaches to a

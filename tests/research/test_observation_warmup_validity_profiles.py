@@ -100,7 +100,7 @@ def test_run_group_uses_resolved_config_without_yaml_round_trip(
         assert len(config_sha256) == 64
         assert cache_dir.is_dir()
         assert shlex.split(regeneration_command) == [
-            ".venv/bin/python",
+            ".venv-arm/bin/python",
             "scripts/research/analysis/features/audit_observation_warmup_validity_profiles.py",
             "--inventory",
             "inventory.json",

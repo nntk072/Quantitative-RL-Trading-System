@@ -1,6 +1,6 @@
 """Unit tests for scripts/report_g3.py dual-schema run-report reading.
 
-Master Roadmap Stage 3: report_g3 must read BOTH
+report_g3 must read BOTH
   - ``metrics.json`` (``in_sample`` / ``out_of_sample`` blocks) written by
     ``scripts/train_rl.py``, and
   - the flat ``training_log.json`` written by the canonical

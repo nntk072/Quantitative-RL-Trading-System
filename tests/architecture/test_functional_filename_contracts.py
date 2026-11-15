@@ -34,12 +34,6 @@ ACTIVE_NAMING_ROOTS = (
 ACTIVE_FILE_SUFFIXES = {".py", ".sh", ".yaml", ".yml", ".txt", ".md", ".json"}
 PHASE_ONLY_MARKER = re.compile(r"(?:^|_)(?:p\d+|wp\d*|phase[-_]?\d+)(?:_|\.|$)", re.IGNORECASE)
 
-# These files are versioned experiment run identities with functional descriptions,
-# not reusable source modules. Their identity is already consumed by evidence.
-HISTORICAL_EXPERIMENT_RUN_IDENTITIES = {
-    "config/experiment_runs/p6_entry_fsm_viability_seed50_train2025_20261021_scratch1.yaml",
-    "config/experiment_runs/variant_list_p6_entry_fsm.txt",
-}
 HISTORICAL_OUTPUT_ROOTS = ("docs/research/",)
 GENERATED_DOCUMENTATION_ROOTS = ("docs/_build/",)
 GENERIC_FILENAMES = {
@@ -85,8 +79,6 @@ def test_active_repository_files_use_functional_names() -> None:
                 continue
             relative = path.relative_to(ROOT).as_posix()
             if relative.startswith(HISTORICAL_OUTPUT_ROOTS + GENERATED_DOCUMENTATION_ROOTS):
-                continue
-            if relative in HISTORICAL_EXPERIMENT_RUN_IDENTITIES:
                 continue
             if PHASE_ONLY_MARKER.search(path.name):
                 violations.append(relative)

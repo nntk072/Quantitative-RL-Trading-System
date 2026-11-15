@@ -19,10 +19,6 @@ from artifacts.atomic import write_text_atomic
 from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
-DEFAULT_MANIFEST = (
-    ROOT
-    / "evidence/research/releases/negative-evidence-readiness/selected_pair_viability_manifest.json"
-)
 
 
 def _sha256(path: Path) -> str:
@@ -62,7 +58,9 @@ def refresh_repository_artifact_hashes(
 def main() -> int:
     """Refresh local hashes with ``--write`` or check them without mutation."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("manifest", nargs="?", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument(
+        "manifest", type=Path, help="versioned result manifest to verify or refresh"
+    )
     operation = parser.add_mutually_exclusive_group(required=True)
     operation.add_argument("--write", action="store_true")
     operation.add_argument("--check", action="store_true")

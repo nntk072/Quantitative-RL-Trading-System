@@ -240,7 +240,7 @@ is maintained in the market-data quality packet.
 Regenerate with:
 
 ```bash
-PYTHONPATH=. .venv/bin/python scripts/research/analysis/models/verify_configured_observation_action_contracts.py
+PYTHONPATH=. .venv-arm/bin/python scripts/research/analysis/models/verify_configured_observation_action_contracts.py
 ```
 """
     (OUTPUT / "README.md").write_text(readme, encoding="utf-8")

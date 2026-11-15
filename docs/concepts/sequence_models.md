@@ -35,7 +35,7 @@ normalization → validity masks → sequence window → encoder
 
 See [causality](causality.md),
 [multi-timeframe tutorial](../learn/tutorials/advanced/multi_timeframe_features.ipynb),
-and [architecture comparisons](../research/encoder_architecture_comparison.md).
+and the [model architecture reference](../reference/model_architectures.md).
 
 ## Comparing encoders fairly
 
@@ -45,6 +45,6 @@ factor. Record the resolved config and actual rollout geometry. Do not tune on
 the locked holdout. A throughput difference is an engineering result; a return
 difference needs a research protocol and uncertainty analysis.
 
-The historical encoder comparison is a bounded engineering and short-policy
-screen, not evidence that one architecture is economically superior. See its
-[status and limits](../research/encoder_architecture_comparison.md).
+Architecture comparisons must match the observation, action, training, and
+evaluation contracts; throughput alone does not establish better trading
+performance.

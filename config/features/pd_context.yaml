@@ -1,5 +1,5 @@
 # Session-conditional premium/discount context for full training runs.
-# Merge over default.yaml (or 2_po3_ifvg.yaml):
+# Merge over default.yaml (or po3_ifvg.yaml):
 #   uv run qrl-train train --config config/features/pd_context.yaml
 features:
   include_pd_context: true

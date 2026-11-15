@@ -4,8 +4,8 @@
 # Usage (inside a GPU shell or training script):
 #   source scripts/compute/slurm/activate_venv.sh
 #
-# aarch64 (GH200) -> $REPO/.venv
-# x86_64 MI210 (gpu-amd) -> ${MI210_VENV:-/scratch/work/nguyenl37/.venv-mi210}
+# aarch64 (GH200) -> $REPO/.venv-arm
+# x86_64 MI210 (gpu-amd) -> ${MI210_VENV:-$REPO/.venv-mi210}
 # other x86_64 (H100/H200, local, CI) -> ${X86_VENV:-$REPO/.venv-x86}
 #
 # Do not source the wrong-arch venv on login (Exec format error).
@@ -15,10 +15,10 @@ REPO="${TRITON_REPO:-$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-
 machine="$(uname -m)"
 
 if [[ "$machine" == "aarch64" ]]; then
-  venv="$REPO/.venv"
+  venv="$REPO/.venv-arm"
 elif [[ "$machine" == "x86_64" ]]; then
   if [[ "${SLURM_JOB_PARTITION:-}" == "gpu-amd" ]]; then
-    venv="${MI210_VENV:-/scratch/work/nguyenl37/.venv-mi210}"
+    venv="${MI210_VENV:-$REPO/.venv-mi210}"
   else
     venv="${X86_VENV:-$REPO/.venv-x86}"
   fi
@@ -35,7 +35,7 @@ if [[ ! -x "$venv/bin/python" ]]; then
       echo "ERROR: x86 venv not found at $venv — run: tools/setup-venv-x86" >&2
     fi
   else
-    echo "ERROR: aarch64 venv not found at $venv — run: uv sync (on aarch64)" >&2
+      echo "ERROR: aarch64 venv not found at $venv — run: tools/setup-venv (on aarch64)" >&2
   fi
   return 1 2>/dev/null || exit 1
 fi

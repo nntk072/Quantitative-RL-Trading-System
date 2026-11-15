@@ -1,4 +1,4 @@
-"""Idea 1 strategy-alignment reward (Agent.md §21).
+"""PO3 strategy-alignment reward.
 
 Event-based, never continuous: it rewards the *entry* transition when the
 bar is a liquidity sweep or a protected-swing confirmation in the trade
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 
 class PO3Reward:
-    """Reward for a single position-entry event under the Idea 1 chain.
+    """Reward a single position-entry event under the PO3 setup chain.
 
     Args:
         entry_bonus: Positive bonus for a sweep or protected-swing entry.
@@ -76,7 +76,7 @@ class PO3Reward:
 
         Only a position *transition* (``position_changed`` and a non-zero
         ``direction``) earns anything — a position that merely stays open is
-        never rewarded here (Agent.md §21).
+        never rewarded here.
 
         Args:
             position_changed: Whether to enable or require the position changed.

@@ -47,7 +47,7 @@ def parse_train_args() -> argparse.Namespace:
     parser.add_argument(
         "--quality-variant",
         default=None,
-        help="New staged variant from config/quality_experiments.yaml",
+        help="Registered learning-quality variant",
     )
     parser.add_argument("--mvp", action="store_true", help="MVP mode: first 30 days only")
     parser.add_argument("--force", action="store_true", help="Force data pipeline rerun")
@@ -94,7 +94,7 @@ def parse_train_args() -> argparse.Namespace:
         "--strategy",
         choices=["baseline", "po3_ifvg", "distribution"],
         default="baseline",
-        help="RL strategy variant (Agent.md: Idea 1 = po3_ifvg, Idea 2 = distribution, Idea 3 = baseline).",
+        help="Strategy variant: baseline, PO3/IFVG, or distribution.",
     )
     parser.add_argument(
         "--use-vae",
@@ -213,8 +213,7 @@ def load_merged_config(args: argparse.Namespace) -> DictConfig:
     cfg = load_config(None, config_path=config_path)
     selected_strategy = str(resolved["strategy"] if resolved is not None else args.strategy)
 
-    # Merge the selected strategy overlay exactly once. Baseline (Idea 3)
-    # leaves cfg untouched.
+    # Merge the selected strategy overlay exactly once. Baseline leaves cfg untouched.
     variant_path = strategy_overlay_path(selected_strategy)
     cfg = merge_strategy_config(cfg, selected_strategy)
     if variant_path is not None:
@@ -241,6 +240,6 @@ def load_merged_config(args: argparse.Namespace) -> DictConfig:
         from training.configuration.quality import apply_quality_variant
 
         cfg = apply_quality_variant(cfg, str(quality_variant))
-        log.info("Applied staged RL quality variant: %s", quality_variant)
+        log.info("Applied learning-quality variant: %s", quality_variant)
 
     return apply_overrides(cfg, args.overrides)

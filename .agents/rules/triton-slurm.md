@@ -7,7 +7,8 @@ description: "Use for Triton Slurm allocation, compute-node work, training, eval
 
 Triton cluster. **Canonical workdir:** `/scratch/work/nguyenl37/Quantitative-RL-Trading-System`.
 
-Helper scripts: [`scripts/compute/slurm/`](../../scripts/compute/slurm/) (`status.sh`, `find_gpu_session.sh`, `attach_or_alloc.sh`).
+Slurm operations and maintained entry points are documented in the
+[`compute/slurm` guide](../../compute/slurm/README.md).
 
 ## WorkDir
 
@@ -68,6 +69,14 @@ spending tokens on repeated short polls or unchanged status updates. Never cance
 pending jobs to simplify monitoring. This cadence applies after an allocation
 starts; the separate 60-second limit for waiting on a new allocation request
 still applies.
+
+For a stable task expected to run longer than 30 minutes, do not check more
+often than every 15 minutes. Prefer a 30-minute wait when the measured finish
+estimate is at least 30 minutes away; when the task should finish sooner, wait
+once for that estimated window and then verify. Do not emit repeated user-facing
+updates for unchanged state. If monitoring delegation is explicitly authorized,
+reuse the Resource Monitoring Engineer for timed checks rather than creating a
+task-named polling agent.
 
 ### Short-job / step monitor hard gate
 
@@ -378,7 +387,7 @@ preflight below. The six-run matrix's two-GH200 shape remains specific to that
 experiment run.
 
 Setup x86 env once on an x86 node: `tools/setup-venv-x86`. Inside any GPU
-shell: `source scripts/compute/slurm/activate_venv.sh` (picks `.venv` or `.venv-x86`).
+shell: `source scripts/compute/slurm/activate_venv.sh` (picks `.venv-arm` or `.venv-x86`).
 
 ### Time / mem / CPUs
 
@@ -450,10 +459,9 @@ above, per-node inventory, one-GH200-per-node experiment run shape, and explicit
 approval requirement take precedence. Do not reproduce an old allocation shape
 without a fresh forecast and approval.
 
-The unified matrix launcher is
-[`scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh`](../../scripts/compute/slurm/experiment_runs/run_18variant_matrix.sh).
-Select the GPU family with `GPU_KIND=gh200|h100|h200` and the allocation shape
-with `MODE=1|2|3|4`:
+The historical matrix launcher has been retired. The measurements below are
+records only; they do not describe a supported command or current allocation
+shape. Follow the current experiment-run documentation before starting work.
 
 | Mode | Allocation | Trainers | `n_envs` |
 | --- | --- | ---: | ---: |
@@ -534,7 +542,7 @@ PYTHONPATH=. .venv-x86/bin/python experiments/runs/status.py \
   --supervisor <persistent-tmux-session>
 ```
 
-Use `.venv/bin/python` instead on `aarch64` GPU nodes; keep the status query
+Use `.venv-arm/bin/python` instead on `aarch64` GPU nodes; keep the status query
 on the login node as it starts no computation or Slurm step.
 
 The `--job-id` and `--supervisor` options may be omitted when automatic
@@ -594,7 +602,7 @@ Use one reporting path for live progress and another for terminal results:
    them once with:
 
    ```bash
-   PYTHONPATH=. .venv/bin/python experiments/runs/reporting.py \
+   PYTHONPATH=. .venv-arm/bin/python experiments/runs/reporting.py \
      --experiment-run-dir outputs/experiment_runs/<experiment-run-id>
    ```
 
@@ -648,7 +656,7 @@ Use one reporting path for live progress and another for terminal results:
    interpretation in chat; do not reproduce the report's tables manually.
 
    ```bash
-   PYTHONPATH=. .venv/bin/python \
+   PYTHONPATH=. .venv-arm/bin/python \
      scripts/research/analysis/evaluation/report_variant_details.py \
      --experiment-run-dir outputs/experiment_runs/<experiment-run-id>
    ```
@@ -694,7 +702,7 @@ allocate extra Slurm steps merely to diagnose startup latency.
 Login-node SSH: `ls`, `cat`, `tmux capture-pane`, `squeue`, `sinfo`, edits,
 `grep`, log tails, inspect-only `scripts/compute/slurm/*.sh`.
 
-Never `source` the wrong-arch venv on login (`.venv` is aarch64-only). Use
+Never `source` the wrong-arch venv on login (`.venv-arm` is aarch64-only). Use
 `scripts/compute/slurm/activate_venv.sh` only inside the GPU bash.
 
 Use a suitable existing GPU-node allocation for research computation whenever the
@@ -705,6 +713,14 @@ host-RAM inventory, obtain any required approval, and run one substantive
 bounded `srun` from a named persistent login tmux session requesting enough
 CPUs and RAM. Execute the workload inside that CPU-node allocation; login tmux
 is only the launch/monitor shell. Preserve logs and outputs on scratch.
+
+Full repository test runs, coverage collection, mutation testing, and other
+multi-minute CPU validation must run inside a CPU-node Slurm allocation, not on
+the login host. Prefer one allocation and run the complete selected test command
+as a direct process in its allocation shell; do not create one Slurm step per
+test file or worker. A focused check expected to finish within 120 seconds may
+run on login only when it is demonstrably lightweight and the active workflow
+permits it. Record the allocation, command, and test summary in the task log.
 
 ## Train + eval
 

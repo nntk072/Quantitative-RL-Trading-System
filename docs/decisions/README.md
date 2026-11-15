@@ -12,3 +12,10 @@ Avoid creating a decision record for a temporary implementation task.
 Current records:
 
 - [PO3 and IFVG behavior decisions](po3_ifvg_decisions.md)
+
+```{toctree}
+:hidden:
+
+repository_standards
+po3_ifvg_decisions
+```

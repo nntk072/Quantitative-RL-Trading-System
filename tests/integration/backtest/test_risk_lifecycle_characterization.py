@@ -9,6 +9,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from evaluation.reporting.account_state_trace_reconciliation import (
+    reconcile_account_state_trace,
+)
 from market_data.loading.ticks import TickBook
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
@@ -897,7 +900,7 @@ def test_recovered_annual_loss_breach_blocks_environment_and_backtest_for_rollou
     assert len(result["breach_events"]) == 1
     assert result["breach_events"][0]["reason"] == expected_reason
     backtest_breach = result["breach_events"][0]
-    assert backtest_breach["time"] == bars.index[4]
+    assert backtest_breach["time"] == bars.index[4] + pd.Timedelta(minutes=1)
     assert backtest_breach["session_id"] == 0
     assert backtest_breach["reason"] == expected_reason
     assert backtest_breach["equity"] == pytest.approx(99_998.0)
@@ -981,6 +984,120 @@ def test_daily_loss_breach_fails_full_evaluation() -> None:
         )
     opens = result["trades"].loc[result["trades"]["type"] == "open"]
     assert len(opens) == 1
+
+
+def test_open_position_daily_breach_forced_close_reconciles_both_engines() -> None:
+    """Synthetic mark-to-market breach and forced-close suffix reconcile in both engines."""
+    bars = _bars(
+        (100.0, 100.0, 100.0, 98.0, 98.0, 100.0, 100.0),
+        (100.1, 100.1, 100.1, 98.1, 98.1, 100.1, 100.1),
+        (99.9, 99.9, 99.9, 97.9, 97.9, 99.9, 99.9),
+        session_ids=(0, 0, 0, 0, 0, 1, 1),
+    )
+    # Keep the next executable quote at the breached mark so liquidation
+    # cashflow reconciles to the same synthetic loss that triggered the floor.
+    bars.loc[bars.index[4], "open"] = 98.0
+    features = _features(bars.index, stop=90.0, target=110.0)
+    cost_model = _cost_model()
+    guardrails = _guardrails(max_loss_limit=50_000.0, daily_loss_limit=0.5)
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        initial_balance=100_000.0,
+        cost_model=cost_model,
+        guardrail_kwargs=guardrails,
+        risk_frac_range=(0.001, 0.001),
+        rr_ratio_range=(1.0, 1.0),
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        block_overnight=False,
+        episodic=False,
+    )
+    env.reset(seed=7)
+    env_trace_rows: list[dict[str, Any]] = []
+    actions = (1, 0, 0, 0, 1, 1)
+    for action in actions:
+        _, _, _, _, info = env.step(action)
+        env_trace_rows.append(info["account_state_snapshot"])
+
+    action_iter = iter(actions)
+    result = run_backtest(
+        bars,
+        features,
+        lambda _observation: next(action_iter, 0),
+        obs_window=1,
+        cost_model=cost_model,
+        initial_balance=100_000.0,
+        guardrail_kwargs=guardrails,
+        risk_frac=0.001,
+        rr_ratio=1.0,
+        use_structure_sl_tp=True,
+        swing_buffer_pts=0.0,
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        hold_on_zero=True,
+        block_overnight=False,
+    )
+
+    engine_records = (
+        (
+            "event_backtest",
+            result["account_state_trace"],
+            result["trades"],
+            result["breach_events"],
+        ),
+        (
+            "environment",
+            pd.DataFrame.from_records(env_trace_rows),
+            pd.DataFrame.from_records(env.trade_log),
+            env.breach_events,
+        ),
+    )
+    for engine_name, trace, ledger, breach_events in engine_records:
+        assert len(breach_events) == 1
+        breach = breach_events[0]
+        assert breach["schema_version"] == RISK_BREACH_EVENT_SCHEMA_V2
+        assert breach["reason"] == "daily_loss"
+        assert breach["daily_pnl_basis"] == "session_net_equity"
+        breach_snapshots = trace.loc[trace["breach_reason"].eq("daily_loss")]
+        assert len(breach_snapshots) == 1
+        breach_snapshot = breach_snapshots.iloc[0]
+        assert pd.Timestamp(breach["time"]) == pd.Timestamp(breach_snapshot["decision_time"])
+        assert pd.Timestamp(breach["detection_time"]) == pd.Timestamp(bars.index[4])
+        assert int(breach_snapshot["session_id"]) == 0
+        assert len(ledger.loc[ledger["type"].eq("open")]) == 1
+        forced_closes = ledger.loc[
+            ledger["type"].eq("forced_close") & ledger["reason"].eq("daily_loss")
+        ]
+        assert len(forced_closes) == 1
+        assert float(forced_closes.iloc[0]["pnl"]) == pytest.approx(-2.0)
+        assert float(breach["equity"]) == pytest.approx(99_998.0)
+        assert float(breach["daily_loss"]) == pytest.approx(2.0)
+        assert float(breach_snapshot["daily_floor_equity"]) == pytest.approx(99_999.5)
+        assert float(breach["equity"]) < float(breach_snapshot["daily_floor_equity"])
+        assert int(breach["trade_event_count"]) < int(trace.iloc[-1]["trade_event_count"])
+        assert float(breach_snapshot["balance"]) == pytest.approx(99_998.0)
+        assert float(breach_snapshot["equity"]) == pytest.approx(99_998.0)
+        reconciliation = reconcile_account_state_trace(
+            trace,
+            ledger,
+            breach_events=breach_events,
+        )
+        assert reconciliation["status"] == "matched", (
+            engine_name,
+            reconciliation["failures"],
+            reconciliation["incomplete_reasons"],
+        )
+        event_prefix = int(breach["trade_event_count"])
+        suffix = ledger.iloc[event_prefix:]
+        assert suffix["type"].eq("forced_close").sum() == 1
+        assert not suffix["type"].isin({"open", "order_fill"}).any()
+        assert trace.loc[trace["session_id"].eq(1), "trade_event_count"].max() == len(ledger)
 
 
 @pytest.mark.parametrize("randomized_fill_latency_ms", [0.0, 30.0])

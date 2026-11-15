@@ -326,7 +326,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--plan", type=Path, default=DEFAULT_PLAN)
     parser.add_argument("--run-root", type=Path)
-    parser.add_argument("--python", default=os.environ.get("QRL_PYTHON", ".venv/bin/python"))
+    parser.add_argument("--python", default=os.environ.get("QRL_PYTHON", ".venv-arm/bin/python"))
     parser.add_argument("--max-workers", type=int, default=3)
     parser.add_argument("--only", nargs="+")
     parser.add_argument("--plan-only", action="store_true")

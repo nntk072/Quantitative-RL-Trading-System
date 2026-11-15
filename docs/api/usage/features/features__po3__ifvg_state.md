@@ -6,7 +6,7 @@ This page contains 1 public callable records owned by `features.po3.ifvg_state`.
 
 **Kind:** function · **Status:** stable · **Owner:** `features.po3.ifvg_state`
 
-**Purpose:** Build the revised causal phase sequence for Idea 1/2.
+**Purpose:** Build causal PO3 and IFVG confirmation state.
 
 **Exact API:** {py:obj}`features.po3.ifvg_state.build_po3_ifvg_state` · **Source:** [features/po3/ifvg_state.py:9](../../../../features/po3/ifvg_state.py#L9)
 
@@ -18,7 +18,7 @@ This page contains 1 public callable records owned by `features.po3.ifvg_state`.
   bars: Market bars to process.
   sweeps: Tabular data used for the sweeps.
   ifvg_zones: Tabular data used for the ifvg zones.
-  max_ifvg_age_bars: Market bar or price data used for build the revised causal phase sequence for Idea 1/2.
+  max_ifvg_age_bars: Maximum number of bars to retain an IFVG confirmation.
   ```
 
 - **Returns:**

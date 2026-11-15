@@ -34,8 +34,7 @@ Separate input construction, environment stepping, policy forward/backward,
 rollout transfer, logging, and checkpoint writing. Measure environment steps
 per second and GPU utilization in the allocation; a GPU model does not prove
 that the GPU is the bottleneck. Compare the exact `n_envs`, rollout geometry,
-sequence size, and device path. See [performance engineering](../operations/performance.md)
-and the [throughput audit](../research/gh200_throughput_audit.md).
+sequence size, and device path. See [performance engineering](../operations/performance.md) and measure throughput in a suitable allocation.
 
 ## Checkpoint mismatch
 

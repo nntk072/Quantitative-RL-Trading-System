@@ -4,6 +4,14 @@ Use these terms consistently in documentation and reports.
 
 | Term | Meaning |
 |---|---|
+| Broker timezone | Configured local clock used to interpret broker bars and sessions. |
+| Feature-cache identity | Version plus content-derived digest used to decide whether a feature cache can be reused. |
+| Normalization state | Serialized training-only statistics applied to later feature rows. |
+| Prefix invariance | Appending later observations does not change earlier outputs. |
+| Quote | Timestamped bid/ask observation used for quote-time lookup. |
+| Session VWAP | Session-reset price average weighted by the source activity count. |
+| Training mask | Boolean row selector that defines which observations may fit state. |
+| Warm-up | Initial observations needed before a rolling or smoothed value is fully populated. |
 | M1 / M3 / M5 | One-, three-, or five-minute bar timeframe. A bar's final values are available only after it closes. |
 | Lower/higher timeframe | A timeframe shorter/longer than the policy's decision interval. Availability still follows source-bar close time. |
 | MDP | Markov decision process: state, action, transition, reward, and discount model used to formalize a sequential decision problem. |

@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""Report optional agent extension availability without model inference."""
+
+from __future__ import annotations
+
+import json
+import os
+import shutil
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def main() -> int:
+    try:
+        servers = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8")).get("mcpServers", {})
+    except (OSError, json.JSONDecodeError):
+        servers = {}
+    configured = {name.casefold() for name in servers}
+    checks = {
+        "Codex CLI": shutil.which("codex") is not None,
+        "Code Review Graph": os.access(ROOT / "tools/crgraph", os.X_OK)
+        and "code-review-graph" in configured,
+        "Serena": shutil.which("serena") is not None
+        or any("serena" in name for name in configured),
+        "Graphify": (ROOT / "outputs/maintenance/agent_tools/graphify").is_dir(),
+        "Obsidian app": any((ROOT / "outputs/maintenance/agent_tools/obsidian").glob("*.AppImage")),
+        "Obsidian MCP": any("obsidian" in name for name in configured),
+        "Ponytail skill": (ROOT / ".agents/skills/ponytail/SKILL.md").is_file(),
+        "Caveman Lite": (ROOT / ".agents/skills/caveman/SKILL.md").is_file(),
+        "Superpowers": (ROOT / ".agents/skills/using-superpowers/SKILL.md").is_file(),
+        "RTK": shutil.which("rtk") is not None,
+        "ast-grep": shutil.which("ast-grep") is not None,
+        "CodeQL": shutil.which("codeql") is not None,
+    }
+    for name, available in checks.items():
+        print(f"{name:<20} {'available' if available else 'unavailable'}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

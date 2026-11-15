@@ -1,4 +1,4 @@
-"""Tests for causal liquidity sweep and BOS detection (Agent.md §5, §19, §25)."""
+"""Tests for causal liquidity sweep and break-of-structure detection."""
 
 from __future__ import annotations
 
@@ -201,7 +201,7 @@ class TestBos:
 
 class TestCausality:
     def test_sweep_does_not_use_future_data(self) -> None:
-        """Agent.md §26 pattern: adding future bars must not change the past."""
+        """Adding future bars must not change previously computed values."""
         bars = make_bars(V_PATH)
         bars.loc[bars.index[12]] = {"open": 101.4, "high": 102.5, "low": 98.5, "close": 100.0}
         bars.loc[bars.index[13]] = {"open": 100.0, "high": 100.6, "low": 99.5, "close": 100.2}

@@ -64,7 +64,6 @@ def run_pipeline(
         Mapping from ``str`` keys to ``dict[str, pd.DataFrame]`` values.
     """
     cache_dir = Path(cfg.data.cache_dir)
-    cache_dir.mkdir(parents=True, exist_ok=True)
     tz = str(cfg.data.tz)
     ny_end = str(cfg.session.end)
     require_native_timeframes = bool(cfg.data.get("require_native_timeframes", False))
@@ -85,6 +84,8 @@ def run_pipeline(
                 Path(str(spec.raw_dir)),
                 spec.m1_files,
                 spec.get("timeframe_files", {}),
+                spec.get("start_date"),
+                spec.get("end_date"),
             )
             for name, spec in configured_sets.items()
             if datasets is None or str(name) in datasets
@@ -96,7 +97,7 @@ def run_pipeline(
     else:
         if datasets is not None and set(datasets) != {"all"}:
             raise ValueError("only the 'all' dataset is configured")
-        dataset_specs = [("all", Path(str(cfg.data.raw_dir)), cfg.data.m1_files, {})]
+        dataset_specs = [("all", Path(str(cfg.data.raw_dir)), cfg.data.m1_files, {}, None, None)]
 
     parts: dict[str, dict[str, list[pd.DataFrame]]] = {
         str(symbol): {str(tf): [] for tf in cfg.data.timeframes} for symbol in cfg.data.symbols
@@ -104,27 +105,47 @@ def run_pipeline(
     exclusive_end = (
         inclusive_date_exclusive_end(end_inclusive, tz) if end_inclusive is not None else None
     )
-    for dataset_name, root, m1_files, timeframe_files in dataset_specs:
+    if exclusive_end is None:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+    for dataset_name, root, m1_files, timeframe_files, start_date, end_date in dataset_specs:
         part_cache = cache_dir / dataset_name
-        part_cache.mkdir(parents=True, exist_ok=True)
+        if exclusive_end is None:
+            part_cache.mkdir(parents=True, exist_ok=True)
         for symbol in cfg.data.symbols:
             configured_m1 = timeframe_files.get("M1", {}).get(symbol)
             m1_path = root / str(configured_m1 or m1_files[symbol])
-            m1_raw = quantize_bar_prices(load_bars(m1_path), grid_increment)
-            source_hashes = {m1_path: file_sha256(m1_path)}
+            source_start = pd.Timestamp(str(start_date)).normalize() if start_date else None
+            configured_end = pd.Timestamp(str(end_date)).normalize() if end_date else None
+            if (
+                source_start is not None
+                and configured_end is not None
+                and source_start > configured_end
+            ):
+                raise ValueError(
+                    f"dataset {dataset_name!r} has start_date after end_date: "
+                    f"{source_start.date()} > {configured_end.date()}"
+                )
+            source_end_date = end_date
+            if end_inclusive is not None and (
+                source_end_date is None or str(end_inclusive) < str(source_end_date)
+            ):
+                source_end_date = end_inclusive
             raw_exclusive_end = (
-                pd.Timestamp(end_inclusive).normalize() + pd.DateOffset(days=1)
-                if end_inclusive is not None
+                pd.Timestamp(str(source_end_date)).normalize() + pd.DateOffset(days=1)
+                if source_end_date is not None
                 else None
             )
-            if raw_exclusive_end is not None:
-                m1_raw = m1_raw.loc[m1_raw.index < raw_exclusive_end]
-                if m1_raw.empty:
-                    for timeframe in cfg.data.timeframes:
-                        parts[str(symbol)][str(timeframe)].append(
-                            pd.DataFrame(index=pd.DatetimeIndex([], tz=tz, name="datetime"))
-                        )
-                    continue
+            m1_raw = quantize_bar_prices(
+                load_bars(m1_path, start_inclusive=source_start, end_exclusive=raw_exclusive_end),
+                grid_increment,
+            )
+            source_hashes = {} if exclusive_end is not None else {m1_path: file_sha256(m1_path)}
+            if m1_raw.empty:
+                for timeframe in cfg.data.timeframes:
+                    parts[str(symbol)][str(timeframe)].append(
+                        pd.DataFrame(index=pd.DatetimeIndex([], tz=tz, name="datetime"))
+                    )
+                continue
 
             def input_hash(path: Path) -> str:
                 """Return a memoized content hash for a source file.
@@ -146,17 +167,15 @@ def run_pipeline(
                 tf = str(tf)
                 cp = bar_cache_path(part_cache, str(symbol), tf, BAR_CACHE_VERSION)
                 native_file = timeframe_files.get(tf, {}).get(symbol)
-                if tf == "M1":
-                    source_path = m1_path
-                    source_identity = f"native:{input_hash(source_path)}{grid_identity}"
-                elif native_file:
+                cache_identity = None
+                source_path = m1_path
+                if tf != "M1" and native_file:
                     source_path = root / str(native_file)
                     if not source_path.is_file():
                         raise FileNotFoundError(
                             f"configured native {tf} source for {symbol} is missing: {source_path}"
                         )
-                    source_identity = f"native:{input_hash(source_path)}{grid_identity}"
-                else:
+                elif tf != "M1":
                     allowed_derived = [
                         str(value).upper() for value in derived_timeframes.get(symbol, [])
                     ]
@@ -165,32 +184,48 @@ def run_pipeline(
                             f"native {tf} source for {symbol} is required but not configured; "
                             "declare an intentional M1-derived timeframe explicitly to proceed"
                         )
-                    source_path = m1_path
-                    source_identity = (
-                        f"derived-from-M1:{input_hash(source_path)}:{tf}{grid_identity}"
+                if exclusive_end is None:
+                    if tf == "M1":
+                        source_identity = f"native:{input_hash(source_path)}{grid_identity}"
+                    elif native_file:
+                        source_identity = f"native:{input_hash(source_path)}{grid_identity}"
+                    else:
+                        source_identity = (
+                            f"derived-from-M1:{input_hash(source_path)}:{tf}{grid_identity}"
+                        )
+                    cache_identity = build_bar_cache_identity(
+                        dataset_id=dataset_name,
+                        symbol=str(symbol),
+                        timeframe=tf,
+                        source_identity=source_identity,
+                        timezone=tz,
+                        ny_session_end=ny_end,
+                        timestamp_convention=timestamp_convention,
+                        start_inclusive=str(start_date) if start_date else None,
+                        end_inclusive=str(source_end_date) if source_end_date else None,
+                        price_grid_identity=(
+                            price_grid_identity(grid_increment)
+                            if grid_increment is not None
+                            else None
+                        ),
                     )
-                cache_identity = build_bar_cache_identity(
-                    dataset_id=dataset_name,
-                    symbol=str(symbol),
-                    timeframe=tf,
-                    source_identity=source_identity,
-                    timezone=tz,
-                    ny_session_end=ny_end,
-                    timestamp_convention=timestamp_convention,
-                    price_grid_identity=(
-                        price_grid_identity(grid_increment) if grid_increment is not None else None
-                    ),
+                cached_frame = (
+                    None if force or cache_identity is None else load_bar_cache(cp, cache_identity)
                 )
-                cached_frame = None if force else load_bar_cache(cp, cache_identity)
                 if cached_frame is not None:
                     df = cached_frame
                 else:
                     if tf == "M1":
                         df = m1_full.copy()
                     elif native_file:
-                        tf_raw = quantize_bar_prices(load_bars(source_path), grid_increment)
-                        if raw_exclusive_end is not None:
-                            tf_raw = tf_raw.loc[tf_raw.index < raw_exclusive_end]
+                        tf_raw = quantize_bar_prices(
+                            load_bars(
+                                source_path,
+                                start_inclusive=source_start,
+                                end_exclusive=raw_exclusive_end,
+                            ),
+                            grid_increment,
+                        )
                         tf_clean = clean(tf_raw, tz=tz)
                         df = add_session_labels(tf_clean, tz=tz, ny_end=ny_end)
                         df = add_session_id(df)
@@ -203,6 +238,8 @@ def run_pipeline(
                         df = add_session_labels(tf_clean, tz=tz, ny_end=ny_end)
                         df = add_session_id(df)
                     if end_inclusive is None:
+                        if cache_identity is None:
+                            raise AssertionError("full-span bar processing requires cache identity")
                         write_bar_cache(cp, df, cache_identity)
                 if exclusive_end is not None:
                     df = df.loc[df.index < exclusive_end]

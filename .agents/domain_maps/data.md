@@ -19,12 +19,14 @@
 | `market_data/splits/definitions.py` | Train/test date-based split and training-mask contracts |
 | `market_data/splits/walkforward.py` | Purged, non-overlapping walk-forward split generation |
 | `market_data/contracts.py` | Logical dataset/event schema contracts |
+| `market_data/quality_audit.py` | Reusable source inventory and local market-data quality audit |
 
 ## Key Symbols
 
 | Symbol | File | Purpose |
 |--------|------|---------|
 | `run_pipeline()` | `market_data.loading` | Load, resample, clean, label, and cache configured bar datasets |
+| `build_report()` | `market_data.quality_audit` | Inspect configured source files and build a quality report |
 | `BAR_CACHE_VERSION` | `market_data.loading` | Bar-cache schema generation |
 | `bar_cache_path()` | `market_data.cache.bars` | Canonical versioned bar-cache path |
 | `build_tick_books()` | `market_data.loading` | Build/load configured TickBooks and join ordered tick partitions |
@@ -81,7 +83,7 @@
 1. **M1 is the policy sequence, not the only source** — policies can use supplied M3–D1 bars as native higher-timeframe context; M1 resampling is not a substitute for those source files.
 2. **Session labels are eligibility flags** — `filter_session` is mask-only, never drops feature bars
 3. **Locked OOS split** — `train_end` / `test_start` in `default.yaml` must not be overridden by variants
-4. **Semantic cache identity** — bar-cache reuse requires source identity plus partition, symbol/timeframe, timezone, NY session end, timestamp convention, and price-grid identity. Tick-cache reuse requires source bytes, timezone, session filter, and price-grid identity. Both parquet types and their atomic completion manifests are published together; incomplete or stale entries are rebuilt.
+4. **Semantic cache identity** — bar-cache reuse requires source identity plus date window, symbol/timeframe, timezone, NY session end, timestamp convention, and price-grid identity. Tick-cache reuse requires source bytes, date window, timezone, session filter, and price-grid identity. Both parquet types and their atomic completion manifests are published together; incomplete or stale entries are rebuilt.
 ## Change Map
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |

@@ -92,6 +92,12 @@ def test_max_and_daily_drawdown_scales() -> None:
     assert lo <= -10.0
 
 
+def test_drawdown_ylim_expands_zero_only_series() -> None:
+    lo, hi = drawdown_ylim(pd.Series([0.0, 0.0]), 0.0)
+
+    assert (lo, hi) == (-1.0, 0.0)
+
+
 def test_daily_drawdown_usd_is_fixed_dollars() -> None:
     idx = pd.date_range("2026-01-02 16:30", periods=4, freq="1h")
     eq = pd.Series([110_000.0, 108_000.0, 104_500.0, 106_000.0], index=idx)

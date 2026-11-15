@@ -10,7 +10,7 @@ def test_quality_gate_selects_the_architecture_matched_project_python() -> None:
     check = (ROOT / "tools/check").read_text(encoding="utf-8")
 
     assert "aarch64|arm64)" in check
-    assert '"$ROOT/.venv/bin/python"' in check
+    assert '"$ROOT/.venv-arm/bin/python"' in check
     assert '"$ROOT/.venv-x86/bin/python"' in check
     assert '"$PYTHON_BIN" -m "$@"' in check
     assert '"$PYTHON_BIN" -m build --outdir "$build_dir"' in check

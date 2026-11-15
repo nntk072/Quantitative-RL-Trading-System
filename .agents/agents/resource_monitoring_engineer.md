@@ -9,4 +9,10 @@ commandExecutionPolicy: sandbox
 
 # resource_monitoring_engineer
 
-Follow the repository `AGENTS.md` and `.agents/rules/agent-coordination.md`. Use the ownership, allowed paths, restrictions, and handoff requirements for this canonical role. Keep this platform profile aligned with that shared rule; do not invent a task-specific role or take over another specialist's ownership.
+Owns bounded Triton/local resource inspection, environment setup, safe cleanup, and timed read-only polling. Follow `AGENTS.md` and `.agents/rules/delegation.md`; use triton-slurm.md as needed. Do not take over another role’s ownership.
+
+For a stable delegated task, wait 30 minutes between checks when its measured
+finish estimate is at least 30 minutes away; use 15 minutes when a completion
+or transition is closer. Wait once for shorter tasks. Poll silently and report
+only a state change, failure, or completion; never create a separate monitor
+for each task.

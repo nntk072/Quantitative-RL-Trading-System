@@ -432,8 +432,8 @@ def test_idea_overlays_enable_synchronized_mtf_ifvg():
     """The revised Idea variants consume native M3-D1 IFVGs on the M1 PO3 clock."""
     base = OmegaConf.load("config/base/default.yaml")
     expected_ids = {
-        "config/2_po3_ifvg.yaml": "po3_confirmed_ifvg_htf_mtf_v1",
-        "config/3_distribution.yaml": "distribution_prev_session_pd_mtf_v1",
+        "config/strategies/po3_ifvg.yaml": "po3_confirmed_ifvg_htf_mtf_v1",
+        "config/strategies/distribution.yaml": "distribution_prev_session_pd_mtf_v1",
     }
     for path, variant_id in expected_ids.items():
         merged = OmegaConf.merge(base, OmegaConf.load(path))

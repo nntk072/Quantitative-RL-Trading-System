@@ -21,6 +21,9 @@ CRGRAPH_BIN=""
 if [[ -n "${CODE_REVIEW_GRAPH_BIN:-}" && -x "${CODE_REVIEW_GRAPH_BIN}" ]]; then
   CRGRAPH_BIN="${CODE_REVIEW_GRAPH_BIN}"
 fi
+if [[ -z "$CRGRAPH_BIN" && -x "$SCRIPT_DIR/outputs/maintenance/agent_tools/code-review-graph/bin/code-review-graph" ]]; then
+  CRGRAPH_BIN="$SCRIPT_DIR/outputs/maintenance/agent_tools/code-review-graph/bin/code-review-graph"
+fi
 if [[ -z "$CRGRAPH_BIN" && -n "${QRL_PYTHON:-}" ]]; then
   PROJECT_PYTHON="$QRL_PYTHON"
   candidate="$(dirname "$PROJECT_PYTHON")/code-review-graph"
@@ -31,8 +34,8 @@ fi
 if [[ -z "$CRGRAPH_BIN" ]] && command -v code-review-graph >/dev/null 2>&1; then
   CRGRAPH_BIN="$(command -v code-review-graph)"
 fi
-if [[ -z "$CRGRAPH_BIN" && -x "$SCRIPT_DIR/.venv/bin/code-review-graph" ]]; then
-  CRGRAPH_BIN="$SCRIPT_DIR/.venv/bin/code-review-graph"
+if [[ -z "$CRGRAPH_BIN" && -x "$SCRIPT_DIR/.venv-arm/bin/code-review-graph" ]]; then
+  CRGRAPH_BIN="$SCRIPT_DIR/.venv-arm/bin/code-review-graph"
 fi
 
 if [[ -z "$CRGRAPH_BIN" ]]; then

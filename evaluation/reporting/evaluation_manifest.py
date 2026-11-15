@@ -40,6 +40,7 @@ def build_evaluation_manifest(
     for partition in partitions:
         for filename in (
             "metrics.json",
+            "evaluation_diagnostics.json",
             "equity.csv",
             "trades.csv",
             "fills.csv",

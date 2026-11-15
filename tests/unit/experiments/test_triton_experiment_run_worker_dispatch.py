@@ -60,8 +60,9 @@ def test_parse_experiment_run_worker_command() -> None:
             "--expected-cpus",
             "5,6",
             "--",
-            "bash",
-            "/repo/scripts/research/frozen-launches/train_one_variant.sh",
+            "/venv/bin/python",
+            "-m",
+            "experiments.runs.variant_worker",
         ]
     )
 
@@ -74,8 +75,9 @@ def test_parse_experiment_run_worker_command() -> None:
             "--expected-cpus",
             "5,6",
             "--",
-            "bash",
-            "/repo/scripts/research/frozen-launches/train_one_variant.sh",
+            "/venv/bin/python",
+            "-m",
+            "experiments.runs.variant_worker",
         ],
         "cpu_ids": [5, 6],
         "gpu_count": 1,

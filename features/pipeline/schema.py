@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 
 # Raw price-level suffixes the environment must exclude from the model
-# sequence (Agent.md §11): the M1 convention is ``strategy.raw_columns``
+# sequence: the M1 convention is ``strategy.raw_columns``
 # (exact names, e.g. ``last_swing_high``). MTF blocks reuse the same stems
 # with a ``{TF}_`` prefix (``M5_last_swing_high``), so the env matches
 # ``{TF}_{stem}`` for every stem below. ATR-normalised distances

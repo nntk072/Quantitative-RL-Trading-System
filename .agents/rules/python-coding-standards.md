@@ -35,4 +35,4 @@ class SymbolConfig:
 
 - Activates: whenever writing or editing `.py` files, tests, or configs for tooling.
 - Enforced at commit time by [git-commit-rules.md](git-commit-rules.md) pre-commit checks.
-- Read slices follow [token-efficient-context-replies.md](token-efficient-context-replies.md); test runs follow [token-efficient-shell.md](token-efficient-shell.md).
+- Read slices follow [context-management.md](context-management.md); test runs follow [token-efficient-shell.md](token-efficient-shell.md).

@@ -55,20 +55,24 @@ def read_manifest(path: pathlib.Path) -> dict[str, Any]:
     return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
 
 
-def validate_inputs(args: argparse.Namespace) -> list[dict[str, Any]]:
+def validate_inputs(
+    args: argparse.Namespace, variants: list[str] | None = None
+) -> list[dict[str, Any]]:
     """Validate CLI variant, seed, and resource values and expand the job list.
 
     Args:
         args: Parsed command-line arguments for this operation.
+        variants: Optional explicit variant names; otherwise read the configured file.
 
     Returns:
-        Mapping from ``str`` keys to ``Any]`` values.
+        Validated worker specifications in the requested variant order.
     """
-    variants = [
-        v.strip()
-        for v in args.variant_file.read_text().splitlines()
-        if v.strip() and not v.lstrip().startswith("#")
-    ]
+    if variants is None:
+        variants = [
+            v.strip()
+            for v in args.variant_file.read_text().splitlines()
+            if v.strip() and not v.lstrip().startswith("#")
+        ]
     for variant in variants:
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", variant):
             raise ValueError(f"unsafe variant name: {variant}")

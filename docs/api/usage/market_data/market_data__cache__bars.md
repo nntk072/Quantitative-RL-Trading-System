@@ -165,7 +165,7 @@ def bar_cache_is_complete(cache_path: str | Path) -> bool:
 
 **Observed usage:**
 
-1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L147)
+1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L168)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -178,10 +178,10 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
                 tf = str(tf)
                 cp = bar_cache_path(part_cache, str(symbol), tf, BAR_CACHE_VERSION)
                 native_file = timeframe_files.get(tf, {}).get(symbol)
-                if tf == "M1":
-                    source_path = m1_path
-                    source_identity = f"native:{input_hash(source_path)}{grid_identity}"
-                elif native_file:
+                cache_identity = None
+                source_path = m1_path
+                if tf != "M1" and native_file:
+                    source_path = root / str(native_file)
 # … caller assertions omitted …
 ```
 
@@ -211,6 +211,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   ny_session_end: Text or path value identifying the ny session end.
   timestamp_convention: Text or path value identifying the timestamp convention.
   price_grid_identity: Price grid identity used by the operation described above.
+  start_inclusive: Optional first local calendar date included in the cache.
+  end_inclusive: Optional last local calendar date included in the cache.
   ```
 
 - **Returns:**
@@ -221,34 +223,38 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L172)
+1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L196)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+                        source_identity = f"native:{input_hash(source_path)}{grid_identity}"
+                    else:
+                        source_identity = (
+                            f"derived-from-M1:{input_hash(source_path)}:{tf}{grid_identity}"
                         )
-                    source_path = m1_path
-                    source_identity = (
-                        f"derived-from-M1:{input_hash(source_path)}:{tf}{grid_identity}"
+                    cache_identity = build_bar_cache_identity(
+                        dataset_id=dataset_name,
+                        symbol=str(symbol),
+                        timeframe=tf,
+                        source_identity=source_identity,
+                        timezone=tz,
+                        ny_session_end=ny_end,
+                        timestamp_convention=timestamp_convention,
+                        start_inclusive=str(start_date) if start_date else None,
+                        end_inclusive=str(source_end_date) if source_end_date else None,
+                        price_grid_identity=(
+                            price_grid_identity(grid_increment)
+                            if grid_increment is not None
+                            else None
+                        ),
                     )
-                cache_identity = build_bar_cache_identity(
-                    dataset_id=dataset_name,
-                    symbol=str(symbol),
-                    timeframe=tf,
-                    source_identity=source_identity,
-                    timezone=tz,
-                    ny_session_end=ny_end,
-                    timestamp_convention=timestamp_convention,
-                    price_grid_identity=(
-                        price_grid_identity(grid_increment) if grid_increment is not None else None
-                    ),
+                cached_frame = (
+                    None if force or cache_identity is None else load_bar_cache(cp, cache_identity)
                 )
-                cached_frame = None if force else load_bar_cache(cp, cache_identity)
                 if cached_frame is not None:
                     df = cached_frame
-                else:
-                    if tf == "M1":
 # … caller assertions omitted …
 ```
 
@@ -263,7 +269,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Load a complete cache only when its semantic identity and shape match.
 
-**Exact API:** {py:obj}`market_data.cache.bars.load_bar_cache` · **Source:** [market_data/cache/bars.py:118](../../../../market_data/cache/bars.py#L118)
+**Exact API:** {py:obj}`market_data.cache.bars.load_bar_cache` · **Source:** [market_data/cache/bars.py:124](../../../../market_data/cache/bars.py#L124)
 
 **Inputs and outputs:**
 
@@ -325,7 +331,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Atomically publish a parquet cache, then its completion manifest.
 
-**Exact API:** {py:obj}`market_data.cache.bars.write_bar_cache` · **Source:** [market_data/cache/bars.py:133](../../../../market_data/cache/bars.py#L133)
+**Exact API:** {py:obj}`market_data.cache.bars.write_bar_cache` · **Source:** [market_data/cache/bars.py:139](../../../../market_data/cache/bars.py#L139)
 
 **Inputs and outputs:**
 

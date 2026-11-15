@@ -14,6 +14,7 @@ DEFAULT_QUALITY_REGISTRY = repository_root(__file__) / "config" / "quality_exper
 _SELECTABLE_STATUSES = frozenset(
     {"control", "implemented_unit_tested", "existing_encoder_implementation"}
 )
+_RESEARCH_DOMAINS = frozenset({"data", "environment", "learning", "representation", "trading"})
 _MISSING = object()
 
 
@@ -47,8 +48,8 @@ def _validate_override_schema(registry: DictConfig) -> None:
     from configuration import load_config
 
     base = load_config()
-    for stage in registry.stages:
-        for variant in stage.variants:
+    for family in registry.families:
+        for variant in family.variants:
             overrides = variant.get("overrides", {})
             if not isinstance(overrides, DictConfig):
                 raise ValueError(f"quality variant {variant.id!r} overrides must be a map")
@@ -104,27 +105,28 @@ def _validate_override_schema(registry: DictConfig) -> None:
 
 
 def load_quality_registry(path: str | Path = DEFAULT_QUALITY_REGISTRY) -> DictConfig:
-    """Load and validate staged quality variants without touching historical experiments.
+    """Load and validate learning-quality comparison families.
 
     Args:
         path: Path to the input file or directory.
 
     Returns:
-        Result of load and validate staged quality variants without touching historical experiments.
+        Validated quality comparison registry.
     """
     loaded = OmegaConf.load(Path(path))
     if not isinstance(loaded, DictConfig):
         raise TypeError("quality registry root must be a mapping")
     registry = loaded
-    stages = registry.get("stages")
-    if not stages:
-        raise ValueError("quality registry requires at least one staged experiment")
+    families = registry.get("families")
+    if not families:
+        raise ValueError("quality registry requires at least one comparison family")
     variant_ids: set[str] = set()
-    for stage in stages:
-        stage_id = str(stage.get("id", ""))
-        variants = stage.get("variants")
-        if not stage_id or not variants:
-            raise ValueError("every quality stage requires an id and variants")
+    for family in families:
+        family_id = str(family.get("id", ""))
+        domain = str(family.get("domain", ""))
+        variants = family.get("variants")
+        if not family_id or not variants or domain not in _RESEARCH_DOMAINS:
+            raise ValueError("every quality family requires an id, research domain, and variants")
         for variant in variants:
             variant_id = str(variant.get("id", ""))
             if not variant_id or variant_id in variant_ids:
@@ -141,10 +143,10 @@ def load_quality_registry(path: str | Path = DEFAULT_QUALITY_REGISTRY) -> DictCo
             variant_ids.add(variant_id)
     if not registry.get("development_control"):
         raise ValueError("quality registry requires a development_control")
-    for stage in stages:
-        control = str(stage.get("control", ""))
+    for family in families:
+        control = str(family.get("control", ""))
         if control not in variant_ids and not control.endswith("_winner"):
-            raise ValueError(f"quality stage {stage.id!r} has unknown control {control!r}")
+            raise ValueError(f"quality family {family.id!r} has unknown control {control!r}")
     _validate_override_schema(registry)
     return registry
 
@@ -153,7 +155,7 @@ def get_quality_variant(
     variant_id: str,
     path: str | Path = DEFAULT_QUALITY_REGISTRY,
 ) -> tuple[str, DictConfig]:
-    """Return the owning stage and dot-key overrides for one registered variant.
+    """Return the owning comparison family and dot-key overrides for one registered variant.
 
     Args:
         variant_id: Text or path value identifying the variant id.
@@ -163,18 +165,18 @@ def get_quality_variant(
         Values returned by ``get_quality_variant``, in the declared order.
     """
     registry = load_quality_registry(path)
-    for stage in registry.stages:
-        for variant in stage.variants:
+    for family in registry.families:
+        for variant in family.variants:
             if str(variant.id) == variant_id:
                 overrides = variant.get("overrides", {})
                 if not isinstance(overrides, DictConfig):
                     raise ValueError(f"quality variant {variant_id!r} overrides must be a map")
-                return str(stage.id), overrides
+                return str(family.id), overrides
     raise KeyError(f"unknown quality variant: {variant_id}")
 
 
 def quality_variant_metadata(variant_id: str) -> dict[str, str | None]:
-    """Return stage, direct parent, and status for provenance records.
+    """Return comparison family, direct parent, and status for provenance records.
 
     Args:
         variant_id: Text or path value identifying the variant id.
@@ -183,13 +185,14 @@ def quality_variant_metadata(variant_id: str) -> dict[str, str | None]:
         Mapping from ``str`` keys to ``str | None`` values.
     """
     registry = load_quality_registry()
-    for stage in registry.stages:
-        for variant in stage.variants:
+    for family in registry.families:
+        for variant in family.variants:
             if str(variant.id) == variant_id:
                 parent = variant.get("parent")
                 return {
                     "id": variant_id,
-                    "stage": str(stage.id),
+                    "family": str(family.id),
+                    "domain": str(family.domain),
                     "parent": None if parent is None else str(parent),
                     "status": str(variant.get("status", "unspecified")),
                 }
@@ -206,8 +209,8 @@ def quality_variant_resource_contract(variant_id: str) -> dict[str, bool | int]:
         Whether quality variant resource contract meets the requested condition.
     """
     registry = load_quality_registry()
-    for stage in registry.stages:
-        for variant in stage.variants:
+    for family in registry.families:
+        for variant in family.variants:
             if str(variant.id) == variant_id:
                 contract = variant.get("resource_contract", {})
                 return {
@@ -224,7 +227,7 @@ def validate_quality_resource_shape(
     effective_n_envs: int,
     aggregate_rollout_steps: int,
 ) -> None:
-    """Fail closed when resource scaling or CLI overrides change a Q2 arm.
+    """Fail closed when resource scaling or CLI overrides change a rollout arm.
 
     Args:
         variant_id: Text or path value identifying the variant id.
@@ -265,7 +268,9 @@ def apply_quality_variant(cfg: DictConfig, variant_id: str) -> DictConfig:
         Result of apply a complete resolved parent lineage, refusing an unselected winner.
     """
     registry = load_quality_registry()
-    variants = {str(variant.id): variant for stage in registry.stages for variant in stage.variants}
+    variants = {
+        str(variant.id): variant for family in registry.families for variant in family.variants
+    }
     if variant_id not in variants:
         raise KeyError(f"unknown quality variant: {variant_id}")
     lineage: list[DictConfig] = []
@@ -275,13 +280,13 @@ def apply_quality_variant(cfg: DictConfig, variant_id: str) -> DictConfig:
         if variant is None:
             raise ValueError(
                 f"quality variant {variant_id!r} depends on unresolved parent {current!r}; "
-                "select the prior-stage winner before continuing"
+                "select the prior comparison winner before continuing"
             )
         parent = variant.get("parent")
         if parent is not None and str(parent).endswith("_winner"):
             raise ValueError(
                 f"quality variant {variant_id!r} depends on unresolved parent {parent!r}; "
-                "select the prior-stage winner before continuing"
+                "select the prior comparison winner before continuing"
             )
         status = str(variant.get("status", "unspecified"))
         if status not in _SELECTABLE_STATUSES:

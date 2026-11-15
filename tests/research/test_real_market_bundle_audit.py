@@ -57,7 +57,7 @@ def test_raw_input_hashes_fail_closed_when_configured_file_is_missing(
 def test_audit_source_inventory_includes_project_code_and_configs(tmp_path: Path) -> None:
     expected = (
         "config/experiment_runs/variant_list.txt",
-        "config/strategies/po3.yaml",
+        "config/strategies/po3_ifvg.yaml",
         "features/pipeline/feature_matrix_builder.py",
         "scripts/research/experiment_runs/audit_real_market_bundle_parity.py",
         "trading/strategies/po3_ifvg.py",

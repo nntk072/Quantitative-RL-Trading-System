@@ -33,9 +33,7 @@ from market_data.splits.definitions import make_train_mask
 ROOT = repository_root(__file__)
 DEFAULT_CONFIG = ROOT / "config/research/trade_setup_mtf_reasoning_2m.yaml"
 DEFAULT_OUTPUT = ROOT / "evidence/research/ifvg_zone_event_ledger"
-RAW_MANIFEST = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-)
+RAW_MANIFEST = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
 EVENT_COLUMNS = [
     "confirmation_bar",
     "confirmation_time_ns",

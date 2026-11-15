@@ -26,9 +26,32 @@ from evaluation.reporting.account_state_trace_reconciliation import (
 )
 from evaluation.reporting.cost_decomposition import decompose_fill_costs
 from evaluation.reporting.trade_event_export import _fill_events, _position_summaries
+from trading.risk import (
+    RISK_BREACH_EVENT_SCHEMA_V1,
+    RISK_BREACH_EVENT_SCHEMA_V2,
+    RISK_DAILY_PNL_BASIS_FTMO_MIDNIGHT,
+    RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES,
+    RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
+)
 
 _SPLITS = ("training", "testing")
 _ROOT = repository_root(__file__)
+_BREACH_EVENT_COLUMNS_V1 = (
+    "schema_version",
+    "time",
+    "detection_time",
+    "trade_event_count",
+    "session_id",
+    "reason",
+    "equity",
+    "fill_time",
+)
+_BREACH_EVENT_COLUMNS_V2 = (
+    *_BREACH_EVENT_COLUMNS_V1[:-1],
+    "daily_loss",
+    "daily_pnl_basis",
+    "fill_time",
+)
 _PARITY_COMPARISONS = {
     "equity",
     "trades",
@@ -508,45 +531,61 @@ def verify_split(
     if diagnostics["fail_time"] is not None and not isinstance(diagnostics["fail_time"], str):
         errors.append(f"{split_dir.name}: fail_time must be null or a string")
     hard_events = breach_events
-    if list(breach_events.columns) != [
-        "schema_version",
-        "time",
-        "detection_time",
-        "trade_event_count",
-        "session_id",
-        "reason",
-        "equity",
-        "fill_time",
-    ]:
+    breach_event_columns = tuple(breach_events.columns)
+    if breach_event_columns not in {_BREACH_EVENT_COLUMNS_V1, _BREACH_EVENT_COLUMNS_V2}:
         errors.append(f"{split_dir.name}: breach_events.csv has an unexpected schema")
-    elif breach_event_ledger_supplied is False and not breach_events.empty:
-        errors.append(
-            f"{split_dir.name}: breach_events.csv contains rows although no breach-event ledger "
-            "was supplied"
-        )
-    elif breach_event_ledger_supplied is True and not breach_events.empty:
-        if breach_events["session_id"].isna().any():
-            errors.append(f"{split_dir.name}: breach event is missing session_id")
-        if (
-            breach_events["reason"].isna().any()
-            or (breach_events["reason"].astype(str).str.len() == 0).any()
-        ):
-            errors.append(f"{split_dir.name}: breach event is missing reason")
-        event_equity = pd.to_numeric(breach_events["equity"], errors="coerce")
-        if event_equity.isna().any() or not event_equity.map(math.isfinite).all():
-            errors.append(f"{split_dir.name}: breach event equity is not finite")
-        scope_value = diagnostics.get("daily_loss_is_session_scoped")
-        if scope_value is not None and not isinstance(scope_value, bool):
-            errors.append("daily_loss_is_session_scoped must be a boolean when present")
-        hard_events = _hard_breach_events(
-            breach_events,
-            daily_loss_is_session_scoped=_daily_loss_is_session_scoped(diagnostics),
-        )
-        expected_fail_time = str(hard_events.iloc[0]["time"]) if not hard_events.empty else None
-        if diagnostics["fail_time"] != expected_fail_time:
-            errors.append(f"{split_dir.name}: fail_time differs from first hard breach event")
-    elif breach_event_ledger_supplied is True:
-        hard_events = breach_events
+    else:
+        expected_fail_time = None
+        if not breach_events.empty:
+            expected_schema = (
+                RISK_BREACH_EVENT_SCHEMA_V2
+                if breach_event_columns == _BREACH_EVENT_COLUMNS_V2
+                else RISK_BREACH_EVENT_SCHEMA_V1
+            )
+            if not breach_events["schema_version"].eq(expected_schema).all():
+                errors.append(
+                    f"{split_dir.name}: breach event schema_version disagrees with its columns"
+                )
+            if expected_schema == RISK_BREACH_EVENT_SCHEMA_V2:
+                daily_loss = pd.to_numeric(breach_events["daily_loss"], errors="coerce")
+                if daily_loss.isna().any() or not daily_loss.map(math.isfinite).all():
+                    errors.append(f"{split_dir.name}: breach event daily_loss is not finite")
+                allowed_bases = {
+                    RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
+                    RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES,
+                    RISK_DAILY_PNL_BASIS_FTMO_MIDNIGHT,
+                }
+                if not breach_events["daily_pnl_basis"].isin(allowed_bases).all():
+                    errors.append(f"{split_dir.name}: breach event daily_pnl_basis is unsupported")
+        if breach_event_ledger_supplied is False and not breach_events.empty:
+            errors.append(
+                f"{split_dir.name}: breach_events.csv contains rows although no breach-event "
+                "ledger was supplied"
+            )
+        if breach_event_ledger_supplied is True:
+            if not breach_events.empty:
+                if breach_events["session_id"].isna().any():
+                    errors.append(f"{split_dir.name}: breach event is missing session_id")
+                if (
+                    breach_events["reason"].isna().any()
+                    or (breach_events["reason"].astype(str).str.len() == 0).any()
+                ):
+                    errors.append(f"{split_dir.name}: breach event is missing reason")
+                event_equity = pd.to_numeric(breach_events["equity"], errors="coerce")
+                if event_equity.isna().any() or not event_equity.map(math.isfinite).all():
+                    errors.append(f"{split_dir.name}: breach event equity is not finite")
+                scope_value = diagnostics.get("daily_loss_is_session_scoped")
+                if scope_value is not None and not isinstance(scope_value, bool):
+                    errors.append("daily_loss_is_session_scoped must be a boolean when present")
+                hard_events = _hard_breach_events(
+                    breach_events,
+                    daily_loss_is_session_scoped=_daily_loss_is_session_scoped(diagnostics),
+                )
+                expected_fail_time = (
+                    str(hard_events.iloc[0]["time"]) if not hard_events.empty else None
+                )
+            if diagnostics["fail_time"] != expected_fail_time:
+                errors.append(f"{split_dir.name}: fail_time differs from first hard breach event")
     if breach_event_ledger_supplied is True:
         expected_survival = hard_events.empty and diagnostics["completed_data_split"]
         if diagnostics["survived_full_year"] != expected_survival:
@@ -814,7 +853,7 @@ def verify_split(
             errors.append(
                 f"{split_dir.name}: cost decomposition position count differs from diagnostics"
             )
-    v3_path_fields = {
+    newer_path_fields = {
         "daily_return_count",
         "daily_return_mean_pct",
         "daily_return_std_pct",
@@ -849,7 +888,7 @@ def verify_split(
             # metrics.json intentionally serializes trade-only statistics as
             # unavailable when there are no completed positions.
             expected_metric = None
-        if metric_version == "qrl.performance_metrics.v2" and key in v3_path_fields:
+        if metric_version == "qrl.performance_metrics.v2" and key in newer_path_fields:
             continue
         if metric_version in historical_metric_versions and key in v4_path_fields:
             continue

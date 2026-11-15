@@ -24,7 +24,7 @@ A registered encoder with no listed pair currently has no matrix variant.
 | `gru` | Gated Recurrent Unit | Recurrent encoder for ordered market observations. | ppo, sac | 3 |
 | `transformer` | Transformer encoder | Attention-based encoder for ordered market observations. | ppo | 1 |
 | `mtf` | Multi-timeframe encoder | Encodes correlated observations from multiple timeframes. | ppo | 1 |
-| `mtf_empty_stream_masked_v1` | Empty-stream-masked multi-timeframe encoder v1 | Preserves MTF weights while excluding timeframes with no valid rows. | — | 0 |
+| `mtf_empty_stream_masked_v1` | Empty-stream-masked multi-timeframe encoder | Preserves MTF weights while excluding timeframes with no valid rows. | — | 0 |
 | `mtf_reasoning` | Multi-timeframe reasoning encoder | Multi-timeframe encoder with cross-timeframe reasoning. | ppo | 1 |
 | `mtf_shared_tcn_reasoning` | Shared-TCN multi-timeframe reasoning | Shares temporal convolutional processing across timeframes. | — | 0 |
 | `mtf_m1_tcn_htf_lite_reasoning` | M1 TCN with lightweight higher-timeframe reasoning | Uses a dedicated M1 TCN and a compact higher-timeframe path. | — | 0 |
@@ -33,6 +33,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## Policy-selected entry execution
 
 **Family:** `entry_execution_choice`
+
+**Research domain:** `environment`
 
 **Research question:** Does allowing the policy to choose resting limits change outcomes versus market entries?
 
@@ -46,6 +48,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## Core policy capability ladder
 
 **Family:** `policy_ladder`
+
+**Research domain:** `trading`
 
 **Research question:** What does each added trading-control capability change from the baseline?
 
@@ -64,6 +68,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `price_grid_a4b`
 
+**Research domain:** `trading`
+
 **Research question:** Does quarter-point price discretization change the A4b policy result?
 
 **Comparison type:** `matched`
@@ -76,6 +82,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## Quarter-point price grid with hidden entry state
 
 **Family:** `price_grid_a4a`
+
+**Research domain:** `trading`
 
 **Research question:** Does quarter-point price discretization change the A4a policy result?
 
@@ -90,6 +98,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `dollar_band_q5`
 
+**Research domain:** `trading`
+
 **Research question:** Does the learned Q5 constraint help with dollar-band risk sizing?
 
 **Comparison type:** `matched`
@@ -103,6 +113,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `mtf_encoder`
 
+**Research domain:** `representation`
+
 **Research question:** Does the multi-timeframe encoder improve on the matched TCN control?
 
 **Comparison type:** `matched`
@@ -115,6 +127,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## Core and setup-conditioned multi-timeframe PPO models
 
 **Family:** `mtf_reasoning_models`
+
+**Research domain:** `representation`
 
 **Research question:** How do the matched core TCN, multi-timeframe encoder, and setup-conditioned policies compare?
 
@@ -130,6 +144,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `a4b_strategy_overlay`
 
+**Research domain:** `trading`
+
 **Research question:** How do the configured strategy overlays behave under the A4b policy?
 
 **Comparison type:** `descriptive`
@@ -142,6 +158,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## PO3 strategy capability ladder
 
 **Family:** `po3_policy_ladder`
+
+**Research domain:** `trading`
 
 **Research question:** What does each added action capability change with the PO3 strategy?
 
@@ -159,6 +177,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `distribution_policy_ladder`
 
+**Research domain:** `trading`
+
 **Research question:** What does each added action capability change with the distribution strategy?
 
 **Comparison type:** `ladder`
@@ -175,6 +195,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `entry_retest_control`
 
+**Research domain:** `environment`
+
 **Research question:** What changes when the entry retest requirement is enabled?
 
 **Comparison type:** `descriptive`
@@ -186,6 +208,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## Entry candidate lifetime
 
 **Family:** `entry_candidate_age`
+
+**Research domain:** `environment`
 
 **Research question:** How does the configured candidate age affect entry behavior?
 
@@ -199,6 +223,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## Existing model and policy ablations
 
 **Family:** `model_and_policy_ablations`
+
+**Research domain:** `representation`
 
 **Research question:** How do the recorded architecture and policy ablations differ from the reference?
 
@@ -219,6 +245,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `sustainable_growth_reward`
 
+**Research domain:** `learning`
+
 **Research question:** Does log-equity growth reward improve on the DSR objective?
 
 **Comparison type:** `matched`
@@ -231,6 +259,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## Regime context
 
 **Family:** `regime_context`
+
+**Research domain:** `representation`
 
 **Research question:** Does the regime-conditioned TCN change results versus the TCN control?
 
@@ -245,6 +275,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `log_growth_eod_drawdown`
 
+**Research domain:** `learning`
+
 **Research question:** What changes when a 10,000 EOD trailing drawdown policy is enabled?
 
 **Comparison type:** `matched`
@@ -258,6 +290,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 
 **Family:** `log_growth_q5_constraint`
 
+**Research domain:** `learning`
+
 **Research question:** Does Q5 constrained learning change the log-growth PPO result?
 
 **Comparison type:** `matched`
@@ -270,6 +304,8 @@ A registered encoder with no listed pair currently has no matrix variant.
 ## Log-growth policy algorithm
 
 **Family:** `log_growth_algorithm`
+
+**Research domain:** `learning`
 
 **Research question:** Does SAC change the result relative to PPO under log-growth reward?
 

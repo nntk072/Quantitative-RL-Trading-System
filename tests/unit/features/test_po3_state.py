@@ -1,4 +1,4 @@
-"""Tests for PO3 manipulation/distribution state and IFVG zones (Agent.md §6, §7)."""
+"""Tests for PO3 manipulation/distribution state and IFVG zones."""
 
 from __future__ import annotations
 

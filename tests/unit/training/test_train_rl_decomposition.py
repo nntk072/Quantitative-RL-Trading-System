@@ -10,7 +10,7 @@ import json
 import logging
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from unittest.mock import patch
 
 import numpy as np
@@ -35,9 +35,10 @@ from training.runner.reporting_runtime import (
     _peak_dd_policy_only_miss,
     finalize_training_run,
 )
+from training.runner.run_assets_stage import _prepare_run_assets
 from training.runner.seed import _setup_rngs
 from training.runner.seed_runtime import SeedRunner, _log_train_survival_status
-from training.runner.stages import TrainingConfigurationStage
+from training.runner.stages import TrainingConfigurationStage, TrainingDataStage
 from training.setup.environments import _training_episodic, cost_model
 from training.setup.model_state import _initialize_value_head
 
@@ -72,6 +73,98 @@ def test_development_only_runner_skips_report_only_replay(monkeypatch: pytest.Mo
 
     assert runner.run() == {"evaluation_scope": "dev"}
     assert calls == ["prepare", "train", "progress", "train_evaluation", "persist"]
+
+
+@pytest.mark.parametrize(
+    ("development_only", "expected_bundle_count"),
+    [(True, 1), (False, 2)],
+)
+def test_run_asset_preparation_respects_development_only_test_bundle_scope(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    development_only: bool,
+    expected_bundle_count: int,
+) -> None:
+    from omegaconf import OmegaConf
+
+    cfg = OmegaConf.create(
+        {
+            "evaluation": {"development_only": development_only},
+            "env": {"data_source": "bundle", "reward_mode": "survival"},
+        }
+    )
+    args = SimpleNamespace(
+        seeds=[],
+        seed=42,
+        resume_checkpoint=None,
+        algo="ppo",
+        arch="tcn",
+        reward="survival",
+        out=str(tmp_path / "runs"),
+        use_vae=False,
+        walk_forward=False,
+    )
+    bars = pd.DataFrame({"close": [100.0, 101.0]})
+    features = pd.DataFrame({"feature": [0.0, 1.0]})
+    calls: list[str] = []
+
+    def build_bundle(_cache_dir: Path, frame: pd.DataFrame, *_args: Any, **_kwargs: Any) -> Path:
+        split = "train" if frame is train_bars else "test"
+        calls.append(split)
+        return tmp_path / split
+
+    train_bars = bars.copy()
+    test_bars = bars.copy()
+    data_stage = TrainingDataStage(
+        primary_ticks=None,
+        primary_sym="US100",
+        cache_dir=tmp_path / "cache",
+        train_start=None,
+        train_end=None,
+        test_start=None,
+        schedule_path=tmp_path / "schedule.csv",
+        feature_columns=["feature"],
+        feat_cache=tmp_path / "features.parquet",
+        feature_normalization_state_path=tmp_path / "normalization.json",
+        train_bars=train_bars,
+        train_feat=features.copy(),
+        test_bars=test_bars,
+        test_feat=features.copy(),
+        train_sec=None,
+        test_sec=None,
+        vae_model=None,
+        env_vae=None,
+        pre_ny_by_date=None,
+        dataset_records={},
+    )
+    monkeypatch.setattr("training.runner.run_assets_stage.attach_run_log", lambda _path: None)
+    monkeypatch.setattr(
+        "training.runner.run_assets_stage.write_run_config_snapshot", lambda *_args: None
+    )
+    monkeypatch.setattr(
+        "training.runner.run_assets_stage.strategy_from_cfg",
+        lambda _cfg: (SimpleNamespace(raw_columns=["close"]), None),
+    )
+    monkeypatch.setattr("training.runner.run_assets_stage.ticks_covering", lambda *_args: None)
+    monkeypatch.setattr("training.runner.run_assets_stage._training_episodic", lambda _cfg: True)
+    monkeypatch.setattr("training.runner.run_assets_stage._dashboard_block", lambda _cfg: {})
+    monkeypatch.setattr("simulation.environment.bundles.build_env_bundle", build_bundle)
+
+    preparation = _prepare_run_assets(
+        TrainingConfigurationStage(args=args, cfg=cfg, device=None, lagrangian_cb=None),
+        data_stage,
+    )
+
+    assets = preparation.run_assets
+    assert calls == ["train", *(["test"] if not development_only else [])]
+    assert len(calls) == expected_bundle_count
+    assert assets.test_bar_count == len(test_bars)
+    if development_only:
+        assert assets.test_bundle_path is None
+        assert assets.test_eval_spec is None
+    else:
+        assert assets.test_bundle_path == tmp_path / "test"
+        assert assets.test_eval_spec is not None
 
 
 def test_development_only_training_log_does_not_fabricate_test_metrics() -> None:
@@ -495,6 +588,97 @@ def test_evaluation_artifacts_separate_train_and_report_only_test(tmp_path: Path
     assert "Peak-DD training policy: DISABLED" in summary
     assert "Hard-risk survival: FAIL" in summary
     assert json.loads((evaluation_dir / "summary.json").read_text())["training_admissible"] is False
+
+
+@pytest.mark.parametrize(
+    ("fail_time", "expected_fail_time"),
+    [
+        (pd.Timestamp("2026-11-12T09:30:00Z"), "2026-11-12 09:30:00+00:00"),
+        (None, None),
+        ("2026-11-12", "2026-11-12"),
+    ],
+)
+def test_evaluate_train_split_persists_json_safe_fail_time(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    fail_time: object,
+    expected_fail_time: str | None,
+) -> None:
+    metrics = SimpleNamespace(
+        n_trades=0,
+        total_pnl=0.0,
+        total_return_pct=0.0,
+        max_drawdown=0.0,
+        sharpe=0.0,
+        profit_factor=0.0,
+        win_rate=0.0,
+    )
+    train_result = {
+        "equity": pd.Series([100_000.0, 100_000.0]),
+        "trades": pd.DataFrame(),
+        "survived_full_year": True,
+        "completed_data_split": True,
+        "n_breach_sessions": 0,
+        "episode_end_reason": "data_end",
+        "fail_time": fail_time,
+        "n_sessions": 1,
+        "days_traded": 0,
+    }
+    cfg = SimpleNamespace(
+        account=SimpleNamespace(initial_balance=100_000.0, currency="USD"),
+        env={"reward_mode": "survival"},
+    )
+    preparation = SimpleNamespace(
+        configuration=SimpleNamespace(cfg=cfg),
+        run_assets=SimpleNamespace(train_eval_spec=None),
+        data=SimpleNamespace(
+            train_bars=pd.DataFrame(),
+            train_feat=pd.DataFrame(),
+            primary_ticks=None,
+        ),
+    )
+    runner = object.__new__(SeedRunner)
+    cast(Any, runner).context = SimpleNamespace(preparation=preparation)
+    runner.seed = 42
+    runner.final_eval_deterministic = True
+    runner.model = SimpleNamespace(num_timesteps=5)
+    cast(Any, runner).provider = object()
+    runner.seed_dir = tmp_path
+    runner.phase_timings_seconds = {}
+    runner.eval_common = {}
+    runner.test_result = None
+    runner.test_m = None
+
+    monkeypatch.setattr("training.runner.seed_runtime._setup_rngs", lambda _seed: None)
+    monkeypatch.setattr("training.runner.seed_runtime.ticks_covering", lambda _ticks, _bars: None)
+    monkeypatch.setattr(
+        "training.runner.seed_runtime._evaluate_final_split",
+        lambda *_args, **_kwargs: train_result,
+    )
+    monkeypatch.setattr(
+        "training.runner.seed_runtime.calculate_metrics", lambda *_args, **_kwargs: metrics
+    )
+    monkeypatch.setattr("training.runner.seed_runtime.evaluation_periods_per_year", lambda _cfg: 1)
+    monkeypatch.setattr("training.runner.seed_runtime._direction_summary", lambda _trades: {})
+    monkeypatch.setattr(
+        "training.runner.seed_runtime.assess_train_equity",
+        lambda *_args, **_kwargs: {"ok": True},
+    )
+    monkeypatch.setattr(
+        "training.runner.seed_runtime.assess_train_activity",
+        lambda _n_trades: {"status": "ACTIVE"},
+    )
+    monkeypatch.setattr(
+        "training.runner.seed_runtime._log_train_survival_status", lambda **_kwargs: None
+    )
+    monkeypatch.setattr(
+        "training.runner.seed_runtime.write_evaluation_artifacts", lambda **_kwargs: None
+    )
+
+    runner.evaluate_train_split()
+
+    persisted = json.loads((tmp_path / "train_path_outcome.json").read_text())
+    assert persisted["fail_time"] == expected_fail_time
 
 
 def test_development_only_evaluation_writes_no_report_only_artifacts(tmp_path: Path) -> None:
@@ -1142,12 +1326,12 @@ class TestBuildTrainingLog:
 
 
 class TestLoadMergedConfig:
-    """Tests for load_merged_config() override ordering (SL Phase 0.1)."""
+    """Tests for load_merged_config() override ordering."""
 
     def test_overrides_win_over_strategy_overlay(self) -> None:
-        """CLI overrides apply after the Idea 1 variant merge.
+        """CLI overrides apply after the strategy configuration merge.
 
-        ``config/2_po3_ifvg.yaml`` pins ``env.reward_mode: pnl``; an
+        ``config/strategies/po3_ifvg.yaml`` sets ``env.reward_mode: pnl``; an
         explicit ``env.reward_mode=rr`` override must survive the merge
         instead of being silently reverted to pnl.
         """
@@ -1199,7 +1383,7 @@ class TestLoadMergedConfig:
 
 
 class TestCostModel:
-    """Tests for cost_model() YAML wiring (SL Phase 0.5)."""
+    """Tests for cost_model() YAML wiring."""
 
     def test_cost_model_matches_default_yaml(self) -> None:
         from configuration import load_config

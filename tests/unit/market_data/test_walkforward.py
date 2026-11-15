@@ -62,6 +62,15 @@ def test_test_length_matches_expected() -> None:
         assert len(split.test_idx) == expected_test_len
 
 
+def test_single_fold_uses_the_requested_total_test_budget() -> None:
+    splits = list(purged_walk_forward(n=1000, n_splits=1, test_size=0.2))
+
+    assert len(splits) == 1
+    assert splits[0].fold == 0
+    assert splits[0].train_idx.tolist() == list(range(720))
+    assert splits[0].test_idx.tolist() == list(range(800, 1000))
+
+
 def test_empty_result_when_insufficient_data() -> None:
     """Too-small n yields no splits."""
     splits = list(purged_walk_forward(n=50, n_splits=5))

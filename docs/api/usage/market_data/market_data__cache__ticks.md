@@ -22,6 +22,8 @@ This page contains 5 public callable records owned by `market_data.cache.ticks`.
   session_end: Session end used by the operation described above.
   price_grid_identity: Text or path value identifying the price grid identity.
   cache_version: Text or path value identifying the cache version.
+  start_inclusive: Optional first local calendar date included in the cache.
+  end_inclusive: Optional last local calendar date included in the cache.
   ```
 
 - **Returns:**
@@ -32,13 +34,13 @@ This page contains 5 public callable records owned by `market_data.cache.ticks`.
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L986)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1008)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    cache_identity: dict[str, Any] | None = None
+        cutoff_end = cutoff_end.tz_localize(tz)
     if cache_path:
         if diagnostics is not None:
             raise ValueError("pass cache_path=None when collecting TickBook build diagnostics")
@@ -51,6 +53,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
             session_end=session_end,
             price_grid_identity=price_grid_identity(price_grid_increment),
             cache_version=TICK_CACHE_VERSION,
+            start_inclusive=start_inclusive,
+            end_inclusive=end_date,
         )
         cached_frame = None if force else load_tick_cache(cache_path, cache_identity)
         if cached_frame is not None:
@@ -71,7 +75,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Load a tick cache only when its semantic identity and timestamp order match.
 
-**Exact API:** {py:obj}`market_data.cache.ticks.load_tick_cache` · **Source:** [market_data/cache/ticks.py:100](../../../../market_data/cache/ticks.py#L100)
+**Exact API:** {py:obj}`market_data.cache.ticks.load_tick_cache` · **Source:** [market_data/cache/ticks.py:106](../../../../market_data/cache/ticks.py#L106)
 
 **Inputs and outputs:**
 
@@ -90,16 +94,16 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L995)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1019)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            session_start=session_start,
-            session_end=session_end,
             price_grid_identity=price_grid_identity(price_grid_increment),
             cache_version=TICK_CACHE_VERSION,
+            start_inclusive=start_inclusive,
+            end_inclusive=end_date,
         )
         cached_frame = None if force else load_tick_cache(cache_path, cache_identity)
         if cached_frame is not None:
@@ -121,7 +125,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Check that a tick parquet has its semantic completion manifest.
 
-**Exact API:** {py:obj}`market_data.cache.ticks.tick_cache_is_complete` · **Source:** [market_data/cache/ticks.py:82](../../../../market_data/cache/ticks.py#L82)
+**Exact API:** {py:obj}`market_data.cache.ticks.tick_cache_is_complete` · **Source:** [market_data/cache/ticks.py:88](../../../../market_data/cache/ticks.py#L88)
 
 **Inputs and outputs:**
 
@@ -188,7 +192,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `tick_cache_is_complete`](../../../../market_data/cache/ticks.py#L93)
+1. [production caller: `tick_cache_is_complete`](../../../../market_data/cache/ticks.py#L99)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -214,7 +218,7 @@ def tick_cache_is_complete(cache_path: str | Path) -> bool:
 
 **Purpose:** Atomically publish tick arrays and their semantic completion manifest.
 
-**Exact API:** {py:obj}`market_data.cache.ticks.write_tick_cache` · **Source:** [market_data/cache/ticks.py:119](../../../../market_data/cache/ticks.py#L119)
+**Exact API:** {py:obj}`market_data.cache.ticks.write_tick_cache` · **Source:** [market_data/cache/ticks.py:125](../../../../market_data/cache/ticks.py#L125)
 
 **Inputs and outputs:**
 
@@ -234,7 +238,7 @@ def tick_cache_is_complete(cache_path: str | Path) -> bool:
 
 **Observed usage:**
 
-1. [test fixture: `test_tick_cache_writer_rejects_empty_cache`](../../../../tests/unit/market_data/test_ticks.py#L1089)
+1. [test fixture: `test_tick_cache_writer_rejects_empty_cache`](../../../../tests/unit/market_data/test_ticks.py#L1301)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -255,7 +259,7 @@ def test_tick_cache_writer_rejects_empty_cache(tmp_path: Path) -> None:
     assert not cache_path.exists()
 ```
 
-2. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1139)
+2. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1168)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -265,7 +269,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         order = np.argsort(ts_ns, kind="stable")
         ts_ns, bid, ask = ts_ns[order], bid[order], ask[order]
 
-    if cache_path and cache_identity is not None:
+    if cache_path and cache_identity is not None and len(ts_ns):
         write_tick_cache(
             cache_path,
             pd.DataFrame({"ts_ns": ts_ns, "bid": bid, "ask": ask}),

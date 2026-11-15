@@ -71,3 +71,28 @@ def test_audit_partition_rejects_reordered_or_missing_rows(
 
     with pytest.raises(ValueError, match="ordered partition bytes"):
         AUDIT.audit_partition(source, training, testing)
+
+
+def test_layout_audit_accepts_one_source_and_rejects_split_copies(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(AUDIT, "ROOT", tmp_path)
+    monkeypatch.setattr(AUDIT.subprocess, "check_output", lambda *_args, **_kwargs: "source-sha")
+    for symbol in AUDIT.SYMBOLS:
+        source = tmp_path / "data" / f"{symbol}_M1_fixture.csv"
+        _write(source, [("2024.12.30", "01:05:00"), ("2026.10.16", "23:49:00")])
+
+    report = AUDIT.build_report()
+
+    assert report["schema"] == "qrl.single_source_date_window_audit.v1"
+    assert report["summary"]["duplicate_split_files"] == 0
+    assert report["exports"]["US100.cash_M1_fixture.csv"]["dataset_windows"]["training"] == {
+        "start_inclusive": "2024-12-30",
+        "end_inclusive": "2025-12-31",
+    }
+
+    duplicate = tmp_path / "data/training/US100.cash_M1_fixture.csv"
+    duplicate.parent.mkdir(parents=True)
+    duplicate.write_bytes(b"duplicate")
+    with pytest.raises(ValueError, match="duplicate raw partitions remain"):
+        AUDIT.build_report()

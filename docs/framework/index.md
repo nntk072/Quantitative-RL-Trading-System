@@ -24,4 +24,8 @@ live_and_infrastructure
 ../architecture/visual_index
 ../concepts/README
 ../reference/README
+../config
+../distributional_methodology
+../glossary
+../model_variants
 ```

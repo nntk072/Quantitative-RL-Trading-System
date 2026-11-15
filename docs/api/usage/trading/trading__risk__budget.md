@@ -71,19 +71,48 @@ def approve_dynamic_risk(
   Approved risk and the policy cap used to constrain it.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [tutorial example: `account-state-risk-prop-constraints · code cell 2`](../../../../docs/subjects/C_trading_risk_execution/examples/account-state-risk-prop-constraints.ipynb)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = approve_dynamic_risk(equity=..., risk_frac=..., max_agent_risk_frac=..., daily_capacity=..., account_capacity=..., execution_reserve_usd=...)
+from trading.account.account_state import AccountState
+from trading.risk.budget import approve_dynamic_risk
+from trading.risk.contracts import RiskDecision, RiskState
+
+account = AccountState(initial_balance=100_000.0)
+account.update_equity(-250.0)
+assert account.equity == 99_750.0
+assert account.daily_floor(5_000.0) == 95_000.0
+assert account.remaining_daily_capacity(5_000.0) == 4_750.0
+state = RiskState(
+    equity=account.equity,
+    daily_pnl=-250.0,
+    open_risk=0.0,
+    daily_loss_limit=5_000.0,
+    daily_pnl_basis="session_net_equity",
+)
+assert state.equity == account.equity
+approval = approve_dynamic_risk(
+    equity=account.equity,
+    risk_frac=0.01,
+    max_agent_risk_frac=0.01,
+    daily_capacity=4_750.0,
+    account_capacity=9_750.0,
+    execution_reserve_usd=25.0,
+)
+assert approval.approved_usd == 972.5
+assert RiskDecision(allowed=False, risk_amount=0.0, reason="capacity").risk_amount == 0.0
+print(
+    {
+        "equity": account.equity,
+        "daily_floor": account.daily_floor(5_000.0),
+        "approved_usd": approval.approved_usd,
+    }
+)
 ```
-
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
 **Workflow context:**
 

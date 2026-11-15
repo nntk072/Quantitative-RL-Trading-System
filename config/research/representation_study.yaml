@@ -1,0 +1,78 @@
+schema_version: representation-study-v2
+
+primary:
+  contrast: C_minus_B
+  metric: net_return_initial_equity_pct
+  survival_co_outcome: hard_risk_survival
+  selection_exposure: development
+  uncertainty: paired_seed_sign_flip_and_bootstrap
+  sign_flip_alternative: two-sided
+  bootstrap_draws: 10000
+  rng_seed: 42
+
+q0:
+  protocol_path: config/research/prospective_research_protocol.yaml
+  payload_schema: aalto.paired_seed_metrics.v2
+  question: survival_and_net_value_against_always_no_trade
+
+arms:
+  B:
+    config_path: config/research/mtf_shared_opportunities_m1_history.yaml
+    history_availability: masked
+  C:
+    config_path: config/research/mtf_shared_opportunities_with_history.yaml
+    history_availability: completed_htf
+
+replication:
+  seeds: [42, 43, 44, 45, 46, 47]
+  minimum_valid_pairs_for_inference: 6
+
+periods:
+  timezone: Etc/GMT-3
+  development:
+    start: '2024-12-30T00:00:00+03:00'
+    end_inclusive: '2025-12-31T23:59:00+03:00'
+  exposed_report_only:
+    start: '2026-01-01T00:00:00+03:00'
+    end_inclusive: '2026-10-16T23:59:00+03:00'
+    selectable: false
+
+outcomes:
+  valid_economic:
+    - completed_without_breach
+    - completed_after_hard_breach
+    - completed_after_liquidation
+  hard_risk_gate_consistency:
+    completed_without_breach: must_pass
+    completed_after_hard_breach: must_fail
+    completed_after_liquidation: preserve_observed_boolean
+  scientific_invalid_reasons:
+    - corrupt_ledger
+    - unreconstructable_equity
+    - missing_quote_provenance
+    - incomplete_evaluation
+
+matching:
+  equal_fields:
+    - dataset_sha256
+    - split_id
+    - features_sha256
+    - reward_sha256
+    - risk_sha256
+    - costs_sha256
+    - execution_sha256
+    - timesteps
+    - seed
+    - initial_capital
+    - model_settings_sha256
+    - evaluation_cohort_sha256
+    - decision_cohort_sha256
+    - evaluation_start
+    - evaluation_end
+    - candidate_opportunities_sha256
+    - legal_masks_sha256
+    - action_schema_sha256
+    - common_policy_contract_sha256
+    - source_identity_sha256
+  intervention_field: environment_sha256
+  history_field: history_availability

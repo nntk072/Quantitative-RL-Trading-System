@@ -21,6 +21,20 @@ See the [experiment guide](../docs/modules/experiments.md),
 [generated catalog](../docs/model_variants.md), and
 [research validation protocol](../docs/research/validation_protocol.md).
 
+Every comparison family declares one research domain so results can be combined
+by the question they answer:
+
+| Domain | What belongs there |
+|---|---|
+| `data` | Source coverage, feature availability, and input-history treatments. |
+| `environment` | Observation timing, candidate eligibility, and execution behavior. |
+| `trading` | Entry, exit, sizing, and account-risk controls. |
+| `representation` | Encoders and policy input representations. |
+| `learning` | Reward, optimizer, action distribution, and rollout design. |
+
+Do not force a comparison into a domain when it changes multiple unrelated
+factors. Describe the bundled factors in its family entry instead.
+
 ## Run lifecycle
 
 ```mermaid
@@ -33,11 +47,42 @@ flowchart LR
     Evaluate --> Summary[Comparison result]
 ```
 
-Variant resolution turns named settings into an effective configuration.
-Orchestration assigns run identities and coordinates attempts; recovery checks
-that identity before resuming. Summaries should retain the arm, seed, data
-period, checkpoint, and evaluation protocol so a reader can distinguish
-matched comparisons from a loose collection of runs.
+Declare comparisons once in `config/variant_catalog.yaml`, then reference one
+or more with `comparison_families` in a run specification. The controller runs
+the ordered union of their currently selectable arms and seeds under one run
+identity; an arm shared by comparisons is trained once and retains each
+comparison membership in the result. Use `variant_family` for a single-family
+specification. Explicit `variants` may be supplied only when they exactly match
+the catalog order.
+
+Every result summary includes a row-oriented CSV with one row per run and
+comparison membership. It records research domain, family, arm role, changed
+factors, seed, completion status, metrics, risk outcome, and ledger
+reconciliation. Shared arms produce a row in each family they serve. JSON
+preserves nested evidence and Markdown provides a readable view. All three are
+generated from the same validated run artifacts; the CSV is for grouping and
+analysis, not variant selection.
+
+```yaml
+experiment_run_id: mtf-history-comparison
+comparison_families: [mtf_encoder, policy_ladder]
+seeds: [42, 43, 44]
+timesteps: 2000000
+data_source: frames
+split: # Must match config/base/default.yaml exactly.
+  train_start: '2024-12-30'
+  train_end: '2025-12-31'
+  test_start: '2026-01-01'
+evaluation:
+  locked_oos_role: final_report_only
+  selection_allowed: false
+  deterministic: true
+```
+
+Families are resolved from the catalog at launch. Their catalog definitions and
+the run specification are included in the source snapshot and fingerprint, so
+changes invalidate resume unless the existing explicit override process is
+used.
 
 Catalog labels explain research roles only. They do not override runtime YAML.
 Keep historical run records immutable and create a new run identity when an

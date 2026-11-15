@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""Check role parity and native profile syntax across shipped adapters."""
+
+from __future__ import annotations
+
+import re
+import sys
+import tomllib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+EXPECTED = {
+    "architect",
+    "ci_operation_engineer",
+    "data_scientist_engineer",
+    "evidence_reporting_engineer",
+    "independent_reviewer",
+    "ml_engineer",
+    "qa_engineer",
+    "quantitative_trading_engineer",
+    "resource_monitoring_engineer",
+}
+
+
+def markdown_roles(directory: Path) -> set[str]:
+    roles: set[str] = set()
+    for path in directory.glob("*.md"):
+        text = path.read_text(encoding="utf-8")
+        if path.stat().st_size > 1_200:
+            raise ValueError(f"{path.relative_to(ROOT)}: platform adapter is not thin")
+        sections = text.split("---", 2)
+        if len(sections) != 3:
+            raise ValueError(f"{path.relative_to(ROOT)}: malformed frontmatter")
+        match = re.search(r"^name:\s*([^\n]+)", sections[1], re.M)
+        if match is None:
+            raise ValueError(f"{path.relative_to(ROOT)}: missing profile name")
+        role = match.group(1).strip()
+        if role in roles:
+            raise ValueError(f"{directory.name}: duplicate role {role}")
+        roles.add(role)
+        if ".agents/rules/delegation.md" not in text:
+            raise ValueError(f"{path.relative_to(ROOT)}: missing canonical delegation pointer")
+    return roles
+
+
+def main() -> int:
+    failures: list[str] = []
+    try:
+        shared = markdown_roles(ROOT / ".agents/agents")
+        claude = markdown_roles(ROOT / ".claude/agents")
+        codex: set[str] = set()
+        for path in (ROOT / ".codex/agents").glob("*.toml"):
+            profile = tomllib.loads(path.read_text(encoding="utf-8"))
+            role = profile["name"]
+            if role in codex:
+                failures.append(f"duplicate Codex role {role}")
+            codex.add(role)
+            if ".agents/rules/delegation.md" not in profile["developer_instructions"]:
+                failures.append(f"{path.relative_to(ROOT)}: missing canonical delegation pointer")
+            if "model" in profile or "model_reasoning_effort" in profile:
+                failures.append(f"{path.relative_to(ROOT)}: model and effort inherit by default")
+        for label, roles in (("shared", shared), ("Claude", claude), ("Codex", codex)):
+            if roles != EXPECTED:
+                failures.append(
+                    f"{label} roles differ: missing={sorted(EXPECTED - roles)} extra={sorted(roles - EXPECTED)}"
+                )
+        if shared != claude or shared != codex:
+            failures.append("platform role sets do not match")
+        config = tomllib.loads((ROOT / ".codex/config.toml").read_text(encoding="utf-8"))
+        if config.get("agents", {}).get("max_concurrent_threads_per_session") != 4:
+            failures.append("Codex worker ceiling must be four spawned agents plus coordinator")
+        if "default_subagent_reasoning_effort" in config.get("agents", {}):
+            failures.append("reasoning effort must be selected per assignment")
+        if (
+            "two spawned"
+            in (ROOT / ".agents/rules/delegation.md").read_text(encoding="utf-8").lower()
+        ):
+            failures.append("delegation rule retains obsolete two-worker cap")
+    except (OSError, KeyError, ValueError, IndexError) as exc:
+        failures.append(str(exc))
+    if failures:
+        print("\n".join(failures), file=sys.stderr)
+        return 1
+    print(f"validated {len(EXPECTED)} matching Codex, Claude, and shared roles")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

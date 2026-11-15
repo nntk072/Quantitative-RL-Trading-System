@@ -59,7 +59,7 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
             self._ny_manip_confirmed.add(session_id)
 
     def _arm_po3_confirm(self, session_id: int) -> None:
-        """Let Idea 1 use a side only after this session's manipulation ends.
+        """Allow PO3 entries only after this session's manipulation ends.
 
         Args:
             session_id: Numeric value used for the session id.

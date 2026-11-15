@@ -216,6 +216,23 @@ def test_align_timeframes_completed_bar():
     assert aligned.loc[t17, "H1_close"] == pytest.approx(hour_16_close)
 
 
+def test_empty_higher_timeframe_does_not_hide_later_timeframes() -> None:
+    from market_data.transforms.align import align_timeframes
+
+    m1_index = pd.date_range("2025-01-01 02:00", periods=3, freq="h", tz="UTC")
+    m1 = pd.DataFrame({"close": [10.0, 11.0, 12.0]}, index=m1_index)
+    h4_index = pd.date_range("2025-01-01 00:00", periods=3, freq="2h", tz="UTC")
+    h4 = pd.DataFrame({"close": [20.0, 21.0, 22.0]}, index=h4_index)
+    empty_h1 = pd.DataFrame(
+        {"close": pd.Series(dtype=float)},
+        index=pd.DatetimeIndex([], tz="UTC"),
+    )
+
+    aligned = align_timeframes(m1, {"H1": empty_h1, "H4": h4})
+
+    assert aligned["H4_close"].tolist() == [20.0, 20.0, 21.0]
+
+
 def test_align_timeframes_uses_explicit_close_times_for_short_final_bar() -> None:
     from market_data.transforms.align import align_timeframes
 

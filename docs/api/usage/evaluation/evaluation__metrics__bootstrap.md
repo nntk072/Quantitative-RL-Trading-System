@@ -190,20 +190,48 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   Values returned by ``as_tuple``, in the declared order.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [tutorial example: `evaluation-metrics-inference · code cell 2`](../../../../docs/subjects/E_evaluation_research/examples/evaluation-metrics-inference.ipynb)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = CI(...)
-result = instance.as_tuple()
+from math import isclose
+
+import numpy as np
+
+from evaluation.metrics.bootstrap import paired_metric_difference_ci
+from evaluation.metrics.performance import completed_position_trade_pnls, max_drawdown
+
+legs = [
+    {"position_id": "A", "type": "tp_partial_close", "net_pnl": 4, "position_complete": False},
+    {"position_id": "A", "type": "close", "net_pnl": 6, "position_complete": True},
+    {"position_id": "B", "type": "tp_partial_close", "net_pnl": -2, "position_complete": False},
+]
+pnls, realized_fills, open_positions = completed_position_trade_pnls(legs)
+assert (pnls, realized_fills, open_positions) == ([10], 3, 1)
+
+equity = [100, 120, 90, 110]
+drawdown = max_drawdown(equity)
+payout = 5
+economic_return = (equity[-1] + payout - equity[0]) / equity[0]
+assert isclose(drawdown, 0.25)
+assert isclose(economic_return, 0.15)
+
+treatment = np.array([0.03, 0.00, 0.04, 0.01])
+control = np.array([0.02, -0.01, 0.03, 0.00])
+interval = paired_metric_difference_ci(
+    treatment, control, np.mean, n_boot=32, rng_seed=42, block_len=2
+)
+assert all(isclose(value, 0.01) for value in interval.as_tuple())
+
+print(
+    f"Synthetic counts: {len(pnls)} completed, {realized_fills} realized fills, {open_positions} open"
+)
+print(f"Synthetic drawdown: {drawdown:.0%}, payout-aware return: {economic_return:.0%}")
+print(f"Synthetic paired return difference: {interval.estimate:.2%}")
 ```
-
-**Lifecycle context:** This callable participates in `CI`: A percentile confidence interval. Related public lifecycle methods: {py:obj}`evaluation.metrics.bootstrap.CI.as_tuple`
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
 **Workflow context:**
 

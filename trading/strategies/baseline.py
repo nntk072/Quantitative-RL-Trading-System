@@ -1,4 +1,4 @@
-"""Baseline (Idea 3) strategy: autonomous behaviour, unchanged."""
+"""Baseline strategy without structure-specific entry constraints."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from .strategy_contract import TradingStrategy
 
 
 class BaselineStrategy(TradingStrategy):
-    """Control-group strategy (Idea 3, P2).
+    """Control-group strategy without structure-specific entry constraints.
 
     Adds no gates, no structural stop references and no strategy features —
     the environment behaves exactly as before when this strategy is active.

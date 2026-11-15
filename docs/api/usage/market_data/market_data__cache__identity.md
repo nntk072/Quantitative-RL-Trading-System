@@ -29,13 +29,13 @@ This page contains 1 public callable records owned by `market_data.cache.identit
 
 **Observed usage:**
 
-1. [production caller: `build_bar_cache_identity`](../../../../market_data/cache/bars.py#L108)
+1. [production caller: `build_bar_cache_identity`](../../../../market_data/cache/bars.py#L114)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "price_grid_identity": price_grid_identity,
+        "end_inclusive": end_inclusive,
     }
     return {
         "schema_version": BAR_CACHE_MANIFEST_SCHEMA_VERSION,
@@ -50,13 +50,13 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     }
 ```
 
-2. [production caller: `build_tick_cache_identity`](../../../../market_data/cache/ticks.py#L72)
+2. [production caller: `build_tick_cache_identity`](../../../../market_data/cache/ticks.py#L78)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "cache_version": cache_version,
+        "end_inclusive": end_inclusive,
     }
     return {
         "schema_version": TICK_CACHE_MANIFEST_SCHEMA_VERSION,

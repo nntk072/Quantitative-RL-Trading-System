@@ -82,6 +82,7 @@ SUBPACKAGE_GUIDES = (
 )
 LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 INLINE_CODE = re.compile(r"`([^`]+)`")
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 SOURCE_ROOTS = (
     ".agents/",
     "artifacts/",
@@ -201,6 +202,26 @@ def maintained_markdown(root: Path) -> tuple[Path, ...]:
     return tuple(sorted(paths))
 
 
+def outside_fenced_code(lines: list[str]) -> tuple[tuple[int, str], ...]:
+    """Return source lines outside Markdown fenced code examples."""
+    visible: list[tuple[int, str]] = []
+    fence_char: str | None = None
+    fence_length = 0
+    for line_number, line in enumerate(lines, 1):
+        match = FENCE.match(line)
+        if fence_char is None:
+            if match:
+                marker = match.group(1)
+                fence_char, fence_length = marker[0], len(marker)
+            else:
+                visible.append((line_number, line))
+        elif match:
+            marker = match.group(1)
+            if marker[0] == fence_char and len(marker) >= fence_length:
+                fence_char, fence_length = None, 0
+    return tuple(visible)
+
+
 def broken_links(document: Path) -> list[tuple[int, str]]:
     """Find missing relative targets; external and fragment-only links are skipped."""
     failures: list[tuple[int, str]] = []
@@ -217,7 +238,7 @@ def broken_links(document: Path) -> list[tuple[int, str]]:
         ]
     else:
         source_lines = document.read_text(encoding="utf-8").splitlines()
-    for line_number, line in enumerate(source_lines, 1):
+    for line_number, line in outside_fenced_code(source_lines):
         for match in LINK.finditer(line):
             target = match.group(1).strip().split(maxsplit=1)[0].strip("<>")
             parsed = urlsplit(target)
@@ -240,7 +261,8 @@ def broken_links(document: Path) -> list[tuple[int, str]]:
 def missing_source_paths(document: Path) -> list[tuple[int, str]]:
     """Find stale, explicit source/config paths in maintained prose."""
     failures: list[tuple[int, str]] = []
-    for line_number, line in enumerate(document.read_text(encoding="utf-8").splitlines(), 1):
+    lines = document.read_text(encoding="utf-8").splitlines()
+    for line_number, line in outside_fenced_code(lines):
         for match in INLINE_CODE.finditer(line):
             token = match.group(1).strip().split(maxsplit=1)[0].rstrip(".,;)")
             token = token.split("::", maxsplit=1)[0]

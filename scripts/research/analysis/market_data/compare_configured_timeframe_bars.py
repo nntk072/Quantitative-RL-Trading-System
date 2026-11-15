@@ -35,9 +35,7 @@ RULES = {
     "D1": "1D",
 }
 OHLCV_COLUMNS = ("open", "high", "low", "close", "tickvol", "vol")
-DEFAULT_OUTPUT = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/configured_timeframe_parity.json"
-)
+DEFAULT_OUTPUT = ROOT / "evidence/research/market_data_quality/configured_timeframe_parity.json"
 
 
 def sha256_file(path: Path) -> str:

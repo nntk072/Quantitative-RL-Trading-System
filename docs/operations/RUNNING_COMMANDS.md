@@ -7,8 +7,8 @@ not guessed in documentation.
 
 ## Environment
 
-Use the Python environment matching the host architecture. On Triton, `.venv`
-is for ARM64/GH200 and `.venv-x86` is for x86_64. See the
+Use the Python environment matching the host architecture. On Triton, `.venv-arm`
+is for ARM64/GH200 and `.venv-x86` is the default for x86_64. See the
 [Triton operations guide](triton.md) for setup, storage, resource checks, and
 Slurm rules.
 

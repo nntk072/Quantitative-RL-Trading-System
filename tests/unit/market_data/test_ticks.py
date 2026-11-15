@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -11,6 +12,7 @@ from omegaconf import OmegaConf
 
 from market_data.cache.ticks import write_tick_cache
 from market_data.loading import build_tick_books
+from market_data.loading.bars import iter_ticks_chunks
 from market_data.loading.ticks import (
     TICK_CACHE_VERSION,
     TickBook,
@@ -798,7 +800,92 @@ def test_build_tick_books_uses_grid_specific_cache_and_quotes(tmp_path: Path) ->
     assert quote == pytest.approx((25633.75, 25634.0))
 
 
-def test_build_tick_books_development_cutoff_excludes_later_quotes(tmp_path: Path) -> None:
+def test_build_tick_books_selects_registered_windows_from_one_source(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    csv_path = tmp_path / f"{symbol}.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+            ("2026.01.01", "00:00:00.000", 200.0, 200.6),
+            ("2026.01.02", "00:00:00.000", 300.0, 300.6),
+        ],
+    )
+    cfg = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "symbols": [symbol],
+                "tz": "UTC",
+                "datasets": {
+                    "training": {
+                        "raw_dir": str(tmp_path),
+                        "tick_files": {symbol: csv_path.name},
+                        "start_date": "2025-12-31",
+                        "end_date": "2025-12-31",
+                    },
+                    "testing": {
+                        "raw_dir": str(tmp_path),
+                        "tick_files": {symbol: csv_path.name},
+                        "start_date": "2026-01-01",
+                        "end_date": "2026-01-01",
+                    },
+                },
+            },
+        }
+    )
+
+    books = build_tick_books(cfg)
+
+    book = books[symbol]
+    assert book is not None
+    assert len(book) == 2
+    assert book.quote_at(pd.Timestamp("2025-12-31T23:59:59Z")) == pytest.approx((100.0, 100.6))
+    assert book.quote_at(pd.Timestamp("2026-01-01T00:00:00Z")) == pytest.approx((200.0, 200.6))
+    assert book.quote_at(pd.Timestamp("2026-01-02T00:00:00Z")) is None
+    for dataset, start, end in (
+        ("training", "2025-12-31", "2025-12-31"),
+        ("testing", "2026-01-01", "2026-01-01"),
+    ):
+        cache_path = (
+            tmp_path / "cache" / dataset / tick_cache_filename(symbol, None, TICK_CACHE_VERSION)
+        )
+        identity = json.loads(Path(f"{cache_path}.manifest.json").read_text(encoding="utf-8"))[
+            "identity"
+        ]["inputs"]
+        assert identity["start_inclusive"] == start
+        assert identity["end_inclusive"] == end
+
+
+def test_build_tick_book_combines_date_and_session_filters(tmp_path: Path) -> None:
+    csv_path = tmp_path / "session_ticks.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2026.01.01", "16:29:59.000", 99.0, 99.6),
+            ("2026.01.01", "16:30:00.000", 100.0, 100.6),
+            ("2026.01.01", "17:00:01.000", 101.0, 101.6),
+        ],
+    )
+
+    book = build_tick_book(
+        csv_path,
+        tz="UTC",
+        session_start="16:30",
+        session_end="17:00",
+        start_inclusive="2026-01-01",
+        end_exclusive=pd.Timestamp("2026-01-02", tz="UTC"),
+        chunksize=1,
+    )
+
+    assert len(book) == 1
+    assert book.quote_at(pd.Timestamp("2026-01-01T16:30:00Z")) == pytest.approx((100.0, 100.6))
+
+
+def test_build_tick_books_development_cutoff_excludes_later_quotes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     symbol = "US100.cash"
     csv_path = tmp_path / f"{symbol}.csv"
     _write_tick_csv(
@@ -822,12 +909,76 @@ def test_build_tick_books_development_cutoff_excludes_later_quotes(tmp_path: Pat
         }
     )
 
+    def reject_full_source_hash(_path: Path) -> str:
+        raise AssertionError("development-only tick loading must not hash report-only rows")
+
+    monkeypatch.setattr("market_data.loading.ticks.file_sha256", reject_full_source_hash)
+    monkeypatch.setattr(
+        "market_data.loading.ticks.load_tick_cache",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("development-only loading must bypass full-span tick caches")
+        ),
+    )
     book = build_tick_books(cfg, end_inclusive="2025-12-31")[symbol]
 
     assert book is not None
     assert len(book) == 2
     assert book.quote_at(pd.Timestamp("2025-12-31T23:59:59.999Z")) == pytest.approx((100.5, 101.1))
     assert book.quote_at(pd.Timestamp("2026-01-01", tz="UTC")) is None
+    assert not (tmp_path / "cache").exists()
+    first_hash = book.content_sha256()
+
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+            ("2025.12.31", "23:59:59.999", 100.5, 101.1),
+            ("2026.01.01", "00:00:00.000", 900_999.0, 901_000.0),
+        ],
+    )
+    changed_book = build_tick_books(cfg, end_inclusive="2025-12-31")[symbol]
+
+    assert changed_book is not None
+    assert changed_book.content_sha256() == first_hash
+
+
+def test_tick_chunk_parser_yields_only_development_rows(tmp_path: Path) -> None:
+    csv_path = tmp_path / "bounded_ticks.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+            ("2026.01.01", "00:00:00.000", 900_001.0, 900_001.6),
+        ],
+    )
+
+    chunks = list(
+        iter_ticks_chunks(csv_path, chunksize=1, end_exclusive=pd.Timestamp("2026-01-01", tz="UTC"))
+    )
+
+    assert len(chunks) == 1
+    assert chunks[0]["bid"].tolist() == [100.0]
+
+
+def test_tick_chunk_parser_continues_until_start_date_across_chunks(tmp_path: Path) -> None:
+    csv_path = tmp_path / "start_bounded_ticks.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+            ("2026.01.01", "00:00:00.000", 101.0, 101.6),
+        ],
+    )
+
+    chunks = list(
+        iter_ticks_chunks(
+            csv_path,
+            chunksize=1,
+            start_inclusive=pd.Timestamp("2026-01-01"),
+        )
+    )
+
+    assert [row for chunk in chunks for row in chunk["bid"].tolist()] == [101.0]
 
 
 def test_build_tick_books_development_cutoff_before_first_quote_is_empty(tmp_path: Path) -> None:
@@ -851,6 +1002,67 @@ def test_build_tick_books_development_cutoff_before_first_quote_is_empty(tmp_pat
 
     assert book is not None
     assert len(book) == 0
+
+
+def test_build_tick_book_development_cutoff_rejects_unordered_source(tmp_path: Path) -> None:
+    csv_path = tmp_path / "unordered_ticks.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2026.01.01", "00:00:00.000", 900_001.0, 900_001.6),
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="chronologically ordered"):
+        build_tick_book(csv_path, end_inclusive="2025-12-31")
+
+
+def test_build_tick_books_development_cutoff_rejects_unordered_source(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    csv_path = tmp_path / f"{symbol}.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2026.01.01", "00:00:00.000", 900_001.0, 900_001.6),
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+        ],
+    )
+    cfg = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "raw_dir": str(tmp_path),
+                "cache_dir": str(tmp_path / "cache"),
+                "tick_files": {symbol: csv_path.name},
+                "symbols": [symbol],
+                "tz": "UTC",
+            },
+        }
+    )
+
+    with pytest.raises(ValueError, match="chronologically ordered"):
+        build_tick_books(cfg, end_inclusive="2025-12-31")
+
+
+def test_build_tick_books_development_cutoff_keeps_missing_optional_file_fallback(
+    tmp_path: Path,
+) -> None:
+    symbol = "US100.cash"
+    cfg = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "raw_dir": str(tmp_path),
+                "cache_dir": str(tmp_path / "cache"),
+                "tick_files": {},
+                "symbols": [symbol],
+                "tz": "UTC",
+            },
+        }
+    )
+
+    assert build_tick_books(cfg, end_inclusive="2025-12-31")[symbol] is None
 
 
 def test_build_tick_books_bypasses_legacy_tick_cache(tmp_path: Path):

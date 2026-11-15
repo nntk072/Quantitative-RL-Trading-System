@@ -119,7 +119,7 @@ def test_prague_midnight_resets_flat_account_without_session_transition() -> Non
     assert result["account"].session_start_balance == pytest.approx(100_001.0)
     trace = result["account_state_trace"]
     post_midnight = trace.loc[
-        pd.to_datetime(trace["decision_time"], utc=True) == pd.Timestamp("2026-01-08T23:00:00Z")
+        pd.to_datetime(trace["decision_time"], utc=True) == pd.Timestamp("2026-01-08T23:01:00Z")
     ]
     assert len(post_midnight) == 1
     assert float(post_midnight.iloc[0]["session_start_balance"]) == pytest.approx(100_001.0)

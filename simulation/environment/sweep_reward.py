@@ -300,7 +300,7 @@ class CompositeReward:
         self.sweep_weight = sweep_weight
         # Optional per-strategy alignment reward (PO3Reward, DistributionReward).
         # Weights are explicit config values; None disables the component so
-        # the baseline (Idea 3) is never affected (Agent.md §23, §36).
+        # configurations without a strategy reward are unaffected.
         self.strategy_reward = strategy_reward
         self.strategy_weight = strategy_weight
         # Persist DSR/PnL state across steps so EMA estimates accumulate.

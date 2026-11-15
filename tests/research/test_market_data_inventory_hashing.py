@@ -95,7 +95,14 @@ def test_manifest_uses_semantic_selected_campaign_match_fields(
     inventory_path = tmp_path / "inventory.json"
     inventory_path.write_text(
         json.dumps(
-            {"raw_data_files": [{"path": str(data_path), "size_bytes": data_path.stat().st_size}]}
+            {
+                "raw_data_files": [
+                    {"path": str(data_path), "size_bytes": data_path.stat().st_size}
+                ],
+                "dataset_windows": {
+                    "training": {"start_inclusive": "2024-12-30", "end_inclusive": "2025-12-31"}
+                },
+            }
         ),
         encoding="utf-8",
     )
@@ -136,3 +143,51 @@ def test_manifest_uses_semantic_selected_campaign_match_fields(
     assert report["selected_campaign_unique_data_file_matches"] == 1
     assert report["files"][0]["selected_campaign_hash_match"] is True
     assert "p6_campaign_hash_match" not in report["files"][0]
+
+
+def test_raw_data_identity_manifest_does_not_require_old_campaign_evidence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A clean source identity can be generated before any campaign exists."""
+    source_root = tmp_path / "repo"
+    data_path = source_root / "data" / "training.csv"
+    data_path.parent.mkdir(parents=True)
+    data_path.write_bytes(b"timestamp,close\n1,100\n")
+    inventory_path = tmp_path / "inventory.json"
+    inventory_path.write_text(
+        json.dumps(
+            {
+                "raw_data_files": [
+                    {"path": str(data_path), "size_bytes": data_path.stat().st_size}
+                ],
+                "dataset_windows": {
+                    "training": {
+                        "start_inclusive": "2024-12-30",
+                        "end_inclusive": "2025-12-31",
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "data_identity" / "raw_data_manifest.json"
+    monkeypatch.setattr(hash_local_data_inventory, "ROOT", source_root)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "hash_local_data_inventory.py",
+            "--inventory",
+            str(inventory_path),
+            "--output",
+            str(output_path),
+            "--write",
+        ],
+    )
+
+    assert hash_local_data_inventory.main() == 0
+    manifest = json.loads(output_path.read_text(encoding="utf-8"))
+    assert manifest["campaign_input_audit_path"] is None
+    assert manifest["campaign_input_audit_sha256"] is None
+    assert manifest["files"][0]["path"] == "data/training.csv"
+    assert manifest["files"][0]["selected_campaign_hash_match"] is None
+    assert manifest["dataset_windows"]["training"]["start_inclusive"] == "2024-12-30"

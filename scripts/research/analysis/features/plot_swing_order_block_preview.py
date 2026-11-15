@@ -1,7 +1,7 @@
 """Render a causal swing-level and order-block preview from M1 source bars.
 
 Example:
-    .venv/bin/python scripts/research/analysis/features/plot_swing_order_block_preview.py \
+    .venv-arm/bin/python scripts/research/analysis/features/plot_swing_order_block_preview.py \
         --bars data/US100.cash_M1_202412300105_202610162349.csv \
         --end 2025-12-31 --timeframe M1
 

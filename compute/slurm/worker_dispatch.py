@@ -309,7 +309,7 @@ def _launch(payload: dict[str, Any], results: Path) -> subprocess.Popen[bytes]:
             raise RuntimeError("GPU worker request resolved without a visible GPU")
         env["CUDA_VISIBLE_DEVICES"] = selected_device
         # The child sees the selected physical device as logical CUDA device zero.
-        # train_one_variant.sh re-exports GPU_ID, so pass the same Slurm-visible token.
+        # The canonical variant launcher re-exports GPU_ID; pass the Slurm-visible token.
         env["GPU_ID"] = selected_device
     else:
         env.pop("CUDA_VISIBLE_DEVICES", None)

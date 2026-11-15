@@ -3,7 +3,7 @@
 
 data:
   raw_dir: "data"                      # relative to project root
-  cache_dir: "cache/train_test_2025_2026" # independent per-split raw caches
+  cache_dir: "cache/train_test_2025_2026" # independent per-window caches
   price_discretization:
     enabled: false                      # optional experiment; raw source files stay unchanged
     increment: 0.25                     # .00/.25/.50/.75 price grid when enabled
@@ -24,11 +24,14 @@ data:
     train_start: "2024-12-30"          # first date used for policy training
     train_end: "2025-12-31"            # inclusive: in-sample ≤ this date
     test_start: "2026-01-01"           # inclusive: out-of-sample ≥ this date
-  # Independent raw inputs and caches. Earlier raw rows are retained for
-  # causal feature warmup; policy training starts on 2024-12-30.
+    test_end: "2026-10-16"             # inclusive: exposed report-only period end
+  # Logical windows share the full-period source files; each window has its
+  # own cache identity. Training starts on 2024-12-30.
   datasets:
     training:
-      raw_dir: "data/training"
+      raw_dir: "data"
+      start_date: ${data.split.train_start}
+      end_date: ${data.split.train_end}
       m1_files:
         US100.cash: "US100.cash_M1_202412300105_202610162349.csv"
         US500.cash: "US500.cash_M1_202412300105_202610162349.csv"
@@ -60,7 +63,9 @@ data:
         US100.cash: "US100.cash_202412300105_202610162349.csv"
         US500.cash: "US500.cash_202412300105_202610162349.csv"
     testing:
-      raw_dir: "data/testing"
+      raw_dir: "data"
+      start_date: ${data.split.test_start}
+      end_date: ${data.split.test_end}
       m1_files:
         US100.cash: "US100.cash_M1_202412300105_202610162349.csv"
         US500.cash: "US500.cash_M1_202412300105_202610162349.csv"
@@ -278,7 +283,7 @@ features:
   gap_reaction_buffer_enabled: true
   gap_reaction_buffer_fraction: 0.1 # body-close confirmation beyond a gap; used when enabled
   include_po3_full: false       # full HTF FVG -> LTF IFVG -> entry-trigger pipeline
-  include_strategy_state: false # Idea 1: sweeps + PO3 manip/distrib state + IFVG zones
+  include_strategy_state: false # Sweeps, PO3 state, and IFVG zones.
   po3_reference_mode: "m1_legacy" # Revised overlays opt into confirmed HTF pivots
   po3_reference_timeframes: ["M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
   po3_phase_mode: "legacy" # legacy or reclaim_then_ifvg
@@ -354,7 +359,7 @@ env:
   # null = full train-split year (last NY bar truncates; FTMO fail terminates).
   max_episode_steps: null
   reward_dsr_eta: 0.01                 # differential Sharpe damping
-  strategy_actions: false              # legacy Idea 1/2 trader Box action interface
+  strategy_actions: false              # Strategy-specific continuous action interface.
   trade_setup_actions: false           # canonical primary trade-setup choice and eligibility mask
   trade_setup_candidate_timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
   completed_htf_history_enabled: true  # MTF branches keep their shapes when history is ablated
@@ -458,7 +463,7 @@ ppo:
   gae_lambda: 0.95
   clip_range: 0.2
   ent_coef: 0.01
-  # Box overlay only. Discrete Idea 3 keeps ent_coef. Caps std in [e^min, e^max].
+  # Box overlay only. Discrete policies keep ent_coef. Caps std in [e^min, e^max].
   ent_coef_continuous: 0.001
   log_std_init: 0.0
   log_std_min: -0.7
@@ -479,7 +484,7 @@ constrained_rl:
   lambda_max: 100.0
   cost_discount_gamma: 1.0         # undiscounted over the complete chronological train year
 
-# Runtime provenance for staged quality experiments. The requested shape is
+# Runtime provenance for learning-quality comparisons. The requested shape is
 # recorded before hardware-aware scaling and compared with the effective shape.
 quality_execution:
   requested_n_envs: null
@@ -670,14 +675,14 @@ training:
     corr_floor: 0.3
     corr_windows: 3
 
-# Chain E Step 0 — auxiliary return-prediction head (opt-in).
+# Optional auxiliary return-prediction head.
 auxiliary:
   aux_weight: 0.0        # 0.0 = disabled (control); 0.1 = treatment arm
   prediction_horizon: 5  # bars ahead for the per-bar-return target
   lr: 0.0001             # auxiliary optimizer lr (head + encoder)
   grad_steps: 4          # gradient steps per rollout
-# Idea 1 / Idea 2 strategy semantics (Agent.md §10). All keys default to
-# the Idea 1 (PO3 + IFVG) values; config/3_distribution.yaml overrides.
+# Strategy-specific semantics. These defaults describe PO3/IFVG behavior;
+# the distribution overlay supplies its own values.
 strategy:
   name: "po3_ifvg"              # "baseline" | "po3_ifvg" | "distribution"
   variant_id: null

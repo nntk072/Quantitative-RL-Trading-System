@@ -2,11 +2,10 @@
   "mcpServers": {
     "code-review-graph": {
       "args": [
-        "code-review-graph",
         "serve"
       ],
-      "command": "uvx",
-      "cwd": "/home/nguyenl37/Aalto_MS_Thesis",
+      "command": "./tools/crgraph",
+      "cwd": ".",
       "type": "stdio"
     }
   }

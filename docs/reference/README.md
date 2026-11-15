@@ -44,6 +44,8 @@ research terms.
   encoders, and research comparisons.
 - [Configuration](../config.md): configuration ownership and resolution.
 
+- [Subject contracts](subjects/index.md): source-backed contracts for the subject guides.
+
 Schema pages describe current code contracts. Historical serialized names are
 identified as compatibility terms and are not endorsements of their wording.
 
@@ -68,4 +70,6 @@ feature_catalog
 risk_and_execution
 experiment_runs
 manifest_schemas
+checkpoint_compatibility
+subjects/index
 ```

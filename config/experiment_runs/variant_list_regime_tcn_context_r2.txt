@@ -1,2 +1,0 @@
-regime_d1_norm_tcn_control
-regime_d1_norm_tcn_regime

@@ -6,4 +6,4 @@ model: inherit
 
 # ci_operation_engineer
 
-Follow repository `AGENTS.md` and `.agents/rules/agent-coordination.md`. Apply the ownership, allowed paths, restrictions, and handoff requirements for this canonical role. Keep this profile aligned with the shared rule; do not invent a task-specific role or take over another specialist's ownership.
+Owns change-appropriate CI, hosted-check observation, source-failure routing, and commit-gate workflow when authorized. Follow `AGENTS.md` and `.agents/rules/delegation.md`; use ci-verification.md and git-commit-rules.md as needed. Do not take over another role’s ownership.

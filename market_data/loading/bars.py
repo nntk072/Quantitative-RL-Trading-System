@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from pathlib import Path
+from typing import cast
 
 import pandas as pd
 
@@ -19,7 +20,15 @@ _DAILY_BAR_COLS = ["date", "open", "high", "low", "close", "tickvol", "vol", "sp
 _TICK_COLS = ["date", "time", "bid", "ask", "last", "volume", "flags"]
 
 
-def load_bars(path: str | Path) -> pd.DataFrame:
+class UnorderedTickSourceError(ValueError):
+    """Raised when a cutoff-bounded tick source is not chronological."""
+
+
+def load_bars(
+    path: str | Path,
+    start_inclusive: pd.Timestamp | None = None,
+    end_exclusive: pd.Timestamp | None = None,
+) -> pd.DataFrame:
     """Parse a raw MT5 bar CSV into a DataFrame with a UTC-aware DatetimeIndex.
 
     The returned index name is ``datetime`` and the timezone is left as read
@@ -27,6 +36,8 @@ def load_bars(path: str | Path) -> pd.DataFrame:
 
     Args:
         path: Path to the input file or directory.
+        start_inclusive: Optional inclusive timestamp bound in the source's local clock.
+        end_exclusive: Optional exclusive timestamp bound in the source's local clock.
 
     Returns:
         DataFrame returned by ``load_bars``.
@@ -70,6 +81,14 @@ def load_bars(path: str | Path) -> pd.DataFrame:
     df = df.drop(columns=["date", "time"])
     df = df.set_index("datetime")
     df = df.sort_index()
+    if start_inclusive is not None:
+        if start_inclusive.tzinfo is not None:
+            start_inclusive = start_inclusive.tz_localize(None)
+        df = df.loc[df.index >= start_inclusive]
+    if end_exclusive is not None:
+        if end_exclusive.tzinfo is not None:
+            end_exclusive = end_exclusive.tz_localize(None)
+        df = df.loc[df.index < end_exclusive]
     return df
 
 
@@ -105,7 +124,12 @@ def load_ticks(path: str | Path) -> pd.DataFrame:
     return df
 
 
-def iter_ticks_chunks(path: str | Path, chunksize: int = 2_000_000) -> Iterator[pd.DataFrame]:
+def iter_ticks_chunks(
+    path: str | Path,
+    chunksize: int = 2_000_000,
+    start_inclusive: pd.Timestamp | None = None,
+    end_exclusive: pd.Timestamp | None = None,
+) -> Iterator[pd.DataFrame]:
     """Stream a raw MT5 tick CSV in bounded-size chunks.
 
     Only the ``date``, ``time``, ``bid``, ``ask`` columns are parsed —
@@ -119,6 +143,8 @@ def iter_ticks_chunks(path: str | Path, chunksize: int = 2_000_000) -> Iterator[
     Args:
         path: Path to the input file or directory.
         chunksize: Numeric value used for the chunksize.
+        start_inclusive: Optional inclusive timestamp bound in the source's local clock.
+        end_exclusive: Optional exclusive timestamp bound in the source's local clock.
 
     Yields:
         Raw ``DataFrame`` chunks with ``date``, ``time``, ``bid``, and ``ask``
@@ -137,4 +163,41 @@ def iter_ticks_chunks(path: str | Path, chunksize: int = 2_000_000) -> Iterator[
         chunksize=chunksize,
         engine="c",
     )
-    yield from reader
+    source_end = end_exclusive
+    source_start = start_inclusive
+    if source_start is not None and source_start.tzinfo is not None:
+        source_start = source_start.tz_localize(None)
+    if source_end is not None and source_end.tzinfo is not None:
+        source_end = source_end.tz_localize(None)
+    previous_timestamp: pd.Timestamp | None = None
+    for chunk in reader:
+        if source_start is None and source_end is None:
+            yield chunk
+            continue
+        timestamps = pd.to_datetime(
+            chunk["date"].to_numpy() + " " + chunk["time"].to_numpy(),
+            format="%Y.%m.%d %H:%M:%S.%f",
+        )
+        if not timestamps.is_monotonic_increasing or (
+            previous_timestamp is not None and timestamps[0] < previous_timestamp
+        ):
+            raise UnorderedTickSourceError(
+                "development-only tick input must be chronologically ordered"
+            )
+        previous_timestamp = cast(pd.Timestamp, timestamps[-1])
+        reached_cutoff = False
+        if source_end is not None:
+            in_scope_count = int(timestamps.searchsorted(source_end, side="left"))
+            reached_cutoff = in_scope_count < len(chunk)
+            chunk = chunk.iloc[:in_scope_count]
+            timestamps = timestamps[:in_scope_count]
+        if source_start is not None and not chunk.empty:
+            first_in_scope = int(timestamps.searchsorted(source_start, side="left"))
+            chunk = chunk.iloc[first_in_scope:]
+        if chunk.empty:
+            if reached_cutoff:
+                break
+            continue
+        yield chunk
+        if reached_cutoff:
+            break

@@ -198,7 +198,7 @@ def _row(**overrides: float) -> pd.Series:
 
 class TestComputeSlTpFromStructure:
     def test_long_exact_mode(self) -> None:
-        # Agent.md §27: manipulation_low = 100, entry = 105 -> SL = 100.
+        # The long stop uses the manipulation low.
         sl, tp = compute_sl_tp_from_structure(
             direction=1, entry_price=105.0, structure_level=100.0, rr_ratio=2.0, buffer_pts=0.0
         )
@@ -212,7 +212,7 @@ class TestComputeSlTpFromStructure:
         assert sl == 99.0
 
     def test_short_exact_mode(self) -> None:
-        # Agent.md §27: manipulation_high = 110, entry = 105 -> SL = 110.
+        # The short stop uses the manipulation high.
         sl, tp = compute_sl_tp_from_structure(
             direction=-1, entry_price=105.0, structure_level=110.0, rr_ratio=2.0, buffer_pts=0.0
         )

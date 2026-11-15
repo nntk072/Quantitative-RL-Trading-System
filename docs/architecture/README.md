@@ -49,3 +49,27 @@ account guardrails, and checkpoint schemas all affect reported results.
 Each substantial source package has a local `README.md` for its concepts,
 contracts, runtime behavior, configuration, tests, and extension points. The
 [module guide](../modules/README.md) provides the cross-package reading order.
+
+```{toctree}
+:hidden:
+
+context
+building_blocks
+dependency_model
+domain_model
+data_flow
+model_and_policy_architecture
+quality_attributes
+risks_and_technical_debt
+deployment
+cross_cutting_concerns
+runtime/README
+runtime/data_and_features
+runtime/environment_step
+runtime/evaluation
+runtime/experiment_run
+runtime/live_execution
+runtime/training
+migrations/README
+../architecture
+```

@@ -92,7 +92,40 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `smt_divergence`](../../../../features/context/smt.py#L33)
+1. [tutorial example: `swings-liquidity-smt-po3-fvg-ifvg · code cell 2`](../../../../docs/subjects/B_market_structure_setups/examples/swings-liquidity-smt-po3-fvg-ifvg.ipynb)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+import pandas as pd
+
+from features.po3.fvg_detection import FVGConfig, detect_fvg
+from features.technical.swings import detect_pivots
+
+idx = pd.date_range("2026-01-05 09:00", periods=8, freq="1min", tz="Etc/GMT-3")
+bars = pd.DataFrame(
+    {
+        "open": [9.0, 10.0, 12.0, 11.0, 9.0, 11.0, 12.0, 12.0],
+        "high": [10.0, 12.0, 13.0, 12.0, 11.0, 14.0, 15.0, 13.0],
+        "low": [8.0, 11.0, 12.0, 10.0, 8.0, 13.0, 14.0, 12.0],
+        "close": [9.0, 11.0, 12.5, 10.5, 9.0, 13.5, 14.5, 12.5],
+    },
+    index=idx,
+)
+pivots = detect_pivots(bars, left=1, right=1)
+assert pivots.loc[idx[3], "pivot_high_event"]
+assert pivots.loc[idx[3], "pivot_high_location"] == 2
+assert not pivots.loc[idx[2], "pivot_high_event"]
+fvgs = detect_fvg(bars, FVGConfig(min_imbalance_pts=1.0))
+assert fvgs.loc[idx[2], "fvg_bullish"] == 1
+assert fvgs.loc[idx[4], "fvg_bearish"] == 1
+(
+    pivots.loc[[idx[2], idx[3]], ["pivot_high_event", "pivot_high_location"]],
+    fvgs[["fvg_bullish", "fvg_bearish"]],
+)
+```
+
+2. [production caller: `smt_divergence`](../../../../features/context/smt.py#L33)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -105,26 +138,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     # must not count toward a fractal's left/right confirmation window.
     sec_piv = detect_pivots(secondary, left=swing_period, right=swing_period)
     primary_times_ns = pd.DatetimeIndex(primary.index).to_numpy(dtype="datetime64[ns]").view("i8")
-# … caller assertions omitted …
-```
-
-2. [production caller: `_pivot_references`](../../../../features/technical/htf_sweeps.py#L103)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-    bar_ends = bar_ends.loc[complete]
-    if tf.empty:
-        return []
-
-    config = TIMEFRAME_CONFIG[timeframe]
-    pivots = detect_pivots(tf, left=int(config["left"]), right=int(config["right"]))
-    refs: list[_PivotReference] = []
-    for side, event_col, price_col, loc_col in (
-        ("high", "pivot_high_event", "pivot_high_extreme", "pivot_high_location"),
-        ("low", "pivot_low_event", "pivot_low_extreme", "pivot_low_location"),
-    ):
 # … caller assertions omitted …
 ```
 

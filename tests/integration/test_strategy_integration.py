@@ -1,4 +1,4 @@
-"""End-to-end strategy pipeline test (Agent.md §31).
+"""End-to-end strategy pipeline test.
 
 Validates the full chain: OHLCV -> build_features (with the strategy-state
 block enabled) -> TradingEnv(strategy_actions=True) -> reset() -> step(),
@@ -40,8 +40,8 @@ def _sample_bars(n: int = 400) -> pd.DataFrame:
 
 
 def test_full_strategy_pipeline_runs() -> None:
-    """Agent.md §31: bars -> features -> env -> reset -> step."""
-    cfg = load_config(config_path="config/2_po3_ifvg.yaml")
+    """Bars flow through features, environment reset, and one transition."""
+    cfg = load_config(config_path="config/strategies/po3_ifvg.yaml")
     bars = _sample_bars()
     features = build_features(bars, cfg=cfg)
 

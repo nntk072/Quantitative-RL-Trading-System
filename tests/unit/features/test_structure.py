@@ -80,7 +80,7 @@ def test_structure_levels_record_swing_extremum_price() -> None:
 
 
 def test_structure_levels_are_causal() -> None:
-    """Adding future bars must not change past swing levels (Agent.md §26)."""
+    """Adding future bars must not change past swing levels."""
     idx = pd.date_range("2024-01-02 01:05", periods=20, freq="1min")
     rng = np.random.default_rng(7)
     close = 100 + np.cumsum(rng.normal(0, 0.2, 20))

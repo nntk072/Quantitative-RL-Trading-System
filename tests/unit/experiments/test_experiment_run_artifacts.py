@@ -23,7 +23,7 @@ def test_worker_command_binds_one_gpu_from_shared_allocation() -> None:
     from compute.slurm.worker_dispatch import _parse_srun
 
     command = controller.worker_command(
-        ["bash", "scripts/research/frozen-launches/train_one_variant.sh"],
+        [sys.executable, "-m", "experiments.runs.variant_worker"],
         node="gpuarm2",
         gpu_type="gh200",
         cpus=7,
@@ -78,24 +78,10 @@ def test_experiment_run_entrypoints_follow_current_layout() -> None:
 
     assert controller.experiment_run_data_inputs is execution.experiment_run_data_inputs
     assert controller.main is not execution.main
-    assert controller.TRAIN_ONE_VARIANT_SCRIPT == (
-        controller.ROOT / "scripts/research/frozen-launches/train_one_variant.sh"
-    )
-    assert controller.TRAIN_ONE_VARIANT_SCRIPT.is_file()
+    assert controller.VARIANT_WORKER_MODULE == "experiments.runs.variant_worker"
+    assert (controller.ROOT / "experiments/runs/variant_worker.py").is_file()
     assert controller.RESOURCE_SAMPLER_SCRIPT == (controller.ROOT / "compute/slurm/resources.py")
     assert controller.RESOURCE_SAMPLER_SCRIPT.is_file()
-
-
-def test_allocation_cache_prebuild_uses_python_module_not_optional_console_script() -> None:
-    wrappers = (
-        controller.ROOT
-        / "scripts/compute/slurm/experiment_runs/run_replacement_experiment_run_allocation.sh",
-        controller.ROOT / "scripts/compute/slurm/experiment_run_allocation_wrapper.sh",
-    )
-    for wrapper in wrappers:
-        content = wrapper.read_text(encoding="utf-8")
-        assert "python -m market_data.commands.prebuild_experiment_run_cache" in content
-        assert "qrl-data prebuild-experiment-run-cache" not in content
 
 
 def test_worker_step_envelope_must_cover_the_cpu_mask() -> None:
@@ -620,6 +606,7 @@ def test_experiment_run_source_files_include_untracked_runtime_modules(tmp_path:
     untracked = root / "configuration" / "runtime_module.py"
     decisioning = root / "decisioning" / "observations.py"
     learning = root / "learning" / "policy.py"
+    catalog = root / "config" / "variant_catalog.yaml"
     documentation = root / "docs" / "mutable_status.md"
     tracked.parent.mkdir()
     tracked.write_text("VALUE = 1\n", encoding="utf-8")
@@ -628,6 +615,8 @@ def test_experiment_run_source_files_include_untracked_runtime_modules(tmp_path:
     decisioning.write_text("VALUE = 3\n", encoding="utf-8")
     learning.parent.mkdir()
     learning.write_text("VALUE = 4\n", encoding="utf-8")
+    catalog.parent.mkdir(parents=True)
+    catalog.write_text("families: []\n", encoding="utf-8")
     documentation.parent.mkdir()
     documentation.write_text("status updates do not alter runtime identity\n", encoding="utf-8")
     subprocess.run(["git", "-C", str(root), "add", "configuration/tracked.py"], check=True)
@@ -639,7 +628,133 @@ def test_experiment_run_source_files_include_untracked_runtime_modules(tmp_path:
     assert untracked.resolve() in sources
     assert decisioning.resolve() in sources
     assert learning.resolve() in sources
+    assert catalog.resolve() in sources
     assert documentation.resolve() not in sources
+
+
+def test_comparison_family_dry_run_expands_every_arm_and_seed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from experiments.variants import catalog
+
+    root = tmp_path / "repo"
+    (root / "config" / "base").mkdir(parents=True)
+    run_specs = root / "config" / "experiment_runs"
+    run_specs.mkdir()
+    (root / "config" / "base" / "default.yaml").write_text(
+        "data:\n  split:\n    train_end: '2025-12-31'\n    test_start: '2026-01-01'\n",
+        encoding="utf-8",
+    )
+    (root / "config" / "experiments.yaml").write_text(
+        "variants:\n  - name: control\n  - name: treatment\n", encoding="utf-8"
+    )
+    spec_path = run_specs / "comparison.yaml"
+    spec_path.write_text(
+        "experiment_run_id: test_comparison\n"
+        "variant_family: test_comparison\n"
+        "seeds: [42, 43]\n"
+        "timesteps: 1000\n"
+        "split:\n  train_end: '2025-12-31'\n  test_start: '2026-01-01'\n"
+        "evaluation:\n  locked_oos_role: final_report_only\n  deterministic: true\n",
+        encoding="utf-8",
+    )
+    family = {
+        "id": "test_comparison",
+        "domain": "representation",
+        "title": "Matched history comparison",
+        "comparison_type": "matched",
+        "entries": [
+            {"variant": "control", "label": "Control", "role": "control"},
+            {"variant": "treatment", "label": "History", "role": "treatment"},
+        ],
+    }
+    monkeypatch.setattr(catalog, "resolve_family", lambda _family_id: family)
+    monkeypatch.setattr(controller, "ROOT", root)
+    monkeypatch.setattr(controller, "resolve_worker_nodes", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["experiment_run_controller.py", "--experiment-run-spec", str(spec_path), "--dry-run"],
+    )
+
+    assert controller.main() == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["runs"] == 4
+    assert output["total_timesteps"] == 4_000
+    assert output["variant_family"]["domain"] == "representation"
+    assert output["variant_file"] is None
+
+
+def test_comparison_families_share_one_run_and_deduplicate_arms(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from experiments.variants import catalog
+
+    root = tmp_path / "repo"
+    (root / "config" / "base").mkdir(parents=True)
+    run_specs = root / "config" / "experiment_runs"
+    run_specs.mkdir()
+    (root / "config" / "base" / "default.yaml").write_text(
+        "data:\n  split:\n    train_end: '2025-12-31'\n    test_start: '2026-01-01'\n",
+        encoding="utf-8",
+    )
+    (root / "config" / "experiments.yaml").write_text(
+        "variants:\n  - name: control\n  - name: data_treatment\n  - name: risk_treatment\n",
+        encoding="utf-8",
+    )
+    spec_path = run_specs / "combined_comparisons.yaml"
+    spec_path.write_text(
+        "experiment_run_id: combined_study\n"
+        "comparison_families: [data_effect, risk_effect]\n"
+        "seeds: [42, 43]\n"
+        "timesteps: 1000\n"
+        "split:\n  train_end: '2025-12-31'\n  test_start: '2026-01-01'\n"
+        "evaluation:\n  locked_oos_role: final_report_only\n  deterministic: true\n",
+        encoding="utf-8",
+    )
+    families = {
+        "data_effect": {
+            "id": "data_effect",
+            "domain": "data",
+            "title": "Data comparison",
+            "entries": [
+                {"variant": "control", "label": "A", "role": "control"},
+                {"variant": "data_treatment", "label": "B", "role": "treatment"},
+            ],
+        },
+        "risk_effect": {
+            "id": "risk_effect",
+            "domain": "trading",
+            "title": "Risk comparison",
+            "entries": [
+                {"variant": "control", "label": "A", "role": "control"},
+                {"variant": "risk_treatment", "label": "C", "role": "treatment"},
+            ],
+        },
+    }
+    monkeypatch.setattr(catalog, "resolve_family", lambda family_id: families[family_id])
+    monkeypatch.setattr(controller, "ROOT", root)
+    monkeypatch.setattr(controller, "resolve_worker_nodes", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "experiment_run_controller.py",
+            "--experiment-run-spec",
+            str(spec_path),
+            "--dry-run",
+        ],
+    )
+
+    assert controller.main() == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["runs"] == 6
+    assert output["total_timesteps"] == 6_000
+    assert output["variant_family"] is None
+    assert [family["id"] for family in output["comparison_families"]] == [
+        "data_effect",
+        "risk_effect",
+    ]
 
 
 def test_experiment_run_evaluation_requires_exposure_before_selection() -> None:

@@ -8,7 +8,7 @@ import hashlib
 import json
 import math
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -78,6 +78,15 @@ def _configured_session_map(
 
     try:
         tz = ZoneInfo(data_timezone)
+        start_date = (
+            date.fromisoformat(str(dataset["start_date"])) if dataset.get("start_date") else None
+        )
+        end_date = date.fromisoformat(str(dataset["end_date"])) if dataset.get("end_date") else None
+        if start_date is not None and end_date is not None and start_date > end_date:
+            return {}, {
+                "status": "mismatch",
+                "reason": "configured dataset date window is reversed",
+            }
         expected_key = "train_bars" if dataset_name == "training" else "test_bars"
         expected = manifest.get("source_datasets", {}).get(expected_key, {})
         expected_rows = expected.get("rows")
@@ -100,12 +109,18 @@ def _configured_session_map(
         first_timestamp: datetime | None = None
         last_timestamp: datetime | None = None
         source_row_count = 0
+        selected_source_row_count = 0
         for row in reader:
             if len(row) <= max(date_column, time_column):
                 return {}, {"status": "incomplete", "reason": "M1 source contains a short row"}
             source_row_count += 1
             raw_date, raw_time = row[date_column].strip(), row[time_column].strip()
             local_time = datetime.strptime(f"{raw_date} {raw_time}", "%Y.%m.%d %H:%M:%S")
+            if (start_date is not None and local_time.date() < start_date) or (
+                end_date is not None and local_time.date() > end_date
+            ):
+                continue
+            selected_source_row_count += 1
             timestamps.add((raw_date, raw_time))
             dates.add(local_time.date().isoformat())
             localized = local_time.replace(tzinfo=tz)
@@ -114,7 +129,7 @@ def _configured_session_map(
             )
             last_timestamp = localized if last_timestamp is None else max(last_timestamp, localized)
 
-    expected_unique_rows = expected_rows == source_row_count == len(timestamps)
+    expected_unique_rows = expected_rows == selected_source_row_count == len(timestamps)
     bounds_match = first_timestamp == expected_start and last_timestamp == expected_end
     if not expected_unique_rows or not bounds_match:
         return {}, {
@@ -122,6 +137,7 @@ def _configured_session_map(
             "source_path": source_path.as_posix(),
             "source_sha256": _sha256(source_path),
             "source_row_count": source_row_count,
+            "selected_source_row_count": selected_source_row_count,
             "unique_timestamp_count": len(timestamps),
             "expected_processed_bar_rows": expected_rows,
             "source_bounds": [
@@ -139,8 +155,9 @@ def _configured_session_map(
         "source_path": source_path.as_posix(),
         "source_sha256": _sha256(source_path),
         "source_row_count": source_row_count,
+        "selected_source_row_count": selected_source_row_count,
         "unique_timestamp_count": len(timestamps),
-        "duplicate_timestamp_count_removed_by_clean": source_row_count - len(timestamps),
+        "duplicate_timestamp_count_removed_by_clean": selected_source_row_count - len(timestamps),
         "source_date_count": len(ordered_dates),
         "first_session_date": ordered_dates[0],
         "last_session_date": ordered_dates[-1],

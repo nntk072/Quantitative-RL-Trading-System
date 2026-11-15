@@ -76,8 +76,8 @@ REQUIRED_EXISTING_CACHE_FILES = {
     for name in (cache_name, f"{cache_name}.hash")
 }
 STRATEGY_CONFIGS = {
-    "po3_ifvg": "config/2_po3_ifvg.yaml",
-    "distribution": "config/3_distribution.yaml",
+    "po3_ifvg": "config/strategies/po3_ifvg.yaml",
+    "distribution": "config/strategies/distribution.yaml",
 }
 
 

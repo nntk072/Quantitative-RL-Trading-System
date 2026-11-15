@@ -280,6 +280,8 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
                         "order_type": "limit",
                         "reason": cancel_reason,
                         "decision_id": pending_order["decision_id"],
+                        "session_id": int(session_id),
+                        "decision_time": pending_order["decision_time"],
                         "trade_setup_candidate_id": (
                             pending_order.get("selected", {})
                             .get("_selected_trade_setup")

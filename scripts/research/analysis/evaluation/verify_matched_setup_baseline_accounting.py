@@ -532,7 +532,7 @@ def write_packet(bundle_dir: Path, output_dir: Path) -> dict[str, Any]:
         + "\n".join(arm_lines)
         + "\n\nReproduce from the repository root inside a compatible Python environment:\n\n"
         "```bash\n"
-        ".venv/bin/python -m scripts.research.analysis.evaluation.verify_matched_setup_baseline_accounting \\\n"
+        ".venv-arm/bin/python -m scripts.research.analysis.evaluation.verify_matched_setup_baseline_accounting \\\n"
         f"  --bundle-dir {report['bundle_path']} \\\n"
         f"  --output-dir {output_dir.as_posix()}\n"
         "```\n",

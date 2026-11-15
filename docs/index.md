@@ -22,6 +22,12 @@ Start with the guided path from market data to evaluation.
 Understand data, features, trading, learning, and evaluation by subject.
 :::
 
+:::{grid-item-card} Browse subject guides
+:link: subjects/index
+:link-type: doc
+Read the data, feature, and other subject guides.
+:::
+
 :::{grid-item-card} Find the API
 :link: api/index
 :link-type: doc
@@ -83,6 +89,7 @@ flowchart LR
 :caption: Start here
 
 learn/index
+subjects/index
 framework/index
 api/index
 research/README
@@ -94,5 +101,7 @@ develop/index
 ```{toctree}
 :hidden:
 
-internal_page_index
+README
+tutorials/README
+how-to/README
 ```

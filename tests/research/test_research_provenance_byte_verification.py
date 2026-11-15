@@ -8,12 +8,40 @@ from pathlib import Path
 from typing import Any
 
 from scripts.research.analysis.evidence.verify_research_provenance_bytes import (
+    ARCHIVE_ROOT,
+    ROOT,
     verify_provenance_dag_bytes,
 )
 
 
 def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def test_default_archive_root_is_inside_canonical_repository() -> None:
+    assert ARCHIVE_ROOT == ROOT / "outputs" / "research_archive"
+
+
+def test_default_archive_root_resolves_historical_artifacts(tmp_path: Path) -> None:
+    archive_root = tmp_path / "outputs" / "research_archive"
+    artifact = archive_root / "historical_research_archive/README.md"
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text("fixture archive", encoding="utf-8")
+    dag = _write_dag(
+        tmp_path / "dag.json",
+        [
+            {
+                "id": "archive:readme",
+                "kind": "manifest",
+                "path": "historical_research_archive/README.md",
+                "sha256": _sha(artifact.read_bytes()),
+            }
+        ],
+    )
+
+    report = verify_provenance_dag_bytes(dag, root=tmp_path, archive_root=archive_root)
+
+    assert report["status"] == "verified"
 
 
 def _snapshot(root: Path) -> dict[str, Any]:

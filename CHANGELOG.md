@@ -3,7 +3,7 @@
 Changes that affect users, research reproducibility, public contracts, or
 maintainers are recorded here. Historical implementation details remain in
 Git history; current findings are indexed in the [research map](docs/research/README.md),
-and evidence moves are recorded in the [migration ledger](docs/architecture/migrations/research_evidence_moves.json).
+and compatibility history is summarized in the [migration guide](docs/architecture/migrations/README.md).
 
 ## Unreleased
 

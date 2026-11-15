@@ -7882,7 +7882,7 @@
       "name": "write_evaluation_manifest",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 74,
+      "source_line": 75,
       "source_module": "evaluation.reporting.evaluation_manifest",
       "source_path": "evaluation/reporting/evaluation_manifest.py"
     },
@@ -9994,7 +9994,7 @@
       "name": "RESOURCE_SAMPLER_SCRIPT",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 133,
+      "source_line": 131,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10018,7 +10018,7 @@
       "name": "STOP",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 181,
+      "source_line": 179,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10027,7 +10027,7 @@
       "documented": false,
       "exported_from": "experiments.runs.execution",
       "kind": "value",
-      "name": "TRAIN_ONE_VARIANT_SCRIPT",
+      "name": "VARIANT_WORKER_MODULE",
       "numpy_style": false,
       "package": "experiments",
       "source_line": 130,
@@ -10042,7 +10042,7 @@
       "name": "_CACHE_FILE_HASHES",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 182,
+      "source_line": 180,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10054,7 +10054,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 135,
+      "source_line": 133,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10186,7 +10186,7 @@
       "name": "experiment_run_config_override_lines",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 306,
+      "source_line": 304,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10258,7 +10258,7 @@
       "name": "load_experiment_run_data_profile",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 240,
+      "source_line": 238,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10270,7 +10270,7 @@
       "name": "main",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 365,
+      "source_line": 363,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10282,7 +10282,7 @@
       "name": "normalize_experiment_run_config_overrides",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 186,
+      "source_line": 184,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10378,7 +10378,7 @@
       "name": "signal_stop",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 327,
+      "source_line": 325,
       "source_module": "experiments.runs.execution",
       "source_path": "experiments/runs/execution.py"
     },
@@ -10675,6 +10675,18 @@
       "documented": true,
       "exported_from": "experiments.runs.reporting",
       "kind": "function",
+      "name": "_family_metadata",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 971,
+      "source_module": "experiments.runs.reporting",
+      "source_path": "experiments/runs/reporting.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "experiments.runs.reporting",
+      "kind": "function",
       "name": "_finite_metrics",
       "numpy_style": false,
       "package": "experiments",
@@ -10690,7 +10702,7 @@
       "name": "_fmt_money",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 625,
+      "source_line": 648,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -10702,7 +10714,7 @@
       "name": "_fmt_percent",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 611,
+      "source_line": 634,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -10786,7 +10798,7 @@
       "name": "_write_summary_outputs",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 804,
+      "source_line": 851,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -10804,6 +10816,42 @@
     },
     {
       "classification": "private implementation",
+      "documented": true,
+      "exported_from": "experiments.runs.variant_worker",
+      "kind": "function",
+      "name": "_config_overrides",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 29,
+      "source_module": "experiments.runs.variant_worker",
+      "source_path": "experiments/runs/variant_worker.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "experiments.runs.variant_worker",
+      "kind": "function",
+      "name": "_values",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 17,
+      "source_module": "experiments.runs.variant_worker",
+      "source_path": "experiments/runs/variant_worker.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "experiments.runs.variant_worker",
+      "kind": "function",
+      "name": "_worker_command",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 41,
+      "source_module": "experiments.runs.variant_worker",
+      "source_path": "experiments/runs/variant_worker.py"
+    },
+    {
+      "classification": "private implementation",
       "documented": false,
       "exported_from": "experiments.variants.catalog",
       "kind": "value",
@@ -10811,6 +10859,18 @@
       "numpy_style": false,
       "package": "experiments",
       "source_line": 24,
+      "source_module": "experiments.variants.catalog",
+      "source_path": "experiments/variants/catalog.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "experiments.variants.catalog",
+      "kind": "value",
+      "name": "_DOMAINS",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 26,
       "source_module": "experiments.variants.catalog",
       "source_path": "experiments/variants/catalog.py"
     },
@@ -10834,7 +10894,7 @@
       "name": "_history_links",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 295,
+      "source_line": 327,
       "source_module": "experiments.variants.catalog",
       "source_path": "experiments/variants/catalog.py"
     },
@@ -10846,7 +10906,7 @@
       "name": "_markdown_cell",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 265,
+      "source_line": 297,
       "source_module": "experiments.variants.catalog",
       "source_path": "experiments/variants/catalog.py"
     },
@@ -10858,7 +10918,7 @@
       "name": "_require_text",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 32,
+      "source_line": 33,
       "source_module": "experiments.variants.catalog",
       "source_path": "experiments/variants/catalog.py"
     },
@@ -10870,7 +10930,7 @@
       "name": "_risk_summary",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 277,
+      "source_line": 309,
       "source_module": "experiments.variants.catalog",
       "source_path": "experiments/variants/catalog.py"
     },
@@ -10882,7 +10942,7 @@
       "name": "_validate_family",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 158,
+      "source_line": 159,
       "source_module": "experiments.variants.catalog",
       "source_path": "experiments/variants/catalog.py"
     },
@@ -10894,7 +10954,7 @@
       "name": "_validate_historical_source",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 185,
+      "source_line": 189,
       "source_module": "experiments.variants.catalog",
       "source_path": "experiments/variants/catalog.py"
     },
@@ -15238,7 +15298,7 @@
       "name": "build_tick_books",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 22,
+      "source_line": 23,
       "source_module": "market_data.loading.tick_book_pipeline",
       "source_path": "market_data/loading/tick_book_pipeline.py"
     },
@@ -15262,7 +15322,7 @@
       "name": "load_bars",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 22,
+      "source_line": 27,
       "source_module": "market_data.loading.bars",
       "source_path": "market_data/loading/bars.py"
     },
@@ -15454,7 +15514,7 @@
       "name": "load_bar_cache",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 118,
+      "source_line": 124,
       "source_module": "market_data.cache.bars",
       "source_path": "market_data/cache/bars.py"
     },
@@ -15478,7 +15538,7 @@
       "name": "load_tick_cache",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 100,
+      "source_line": 106,
       "source_module": "market_data.cache.ticks",
       "source_path": "market_data/cache/ticks.py"
     },
@@ -15538,7 +15598,7 @@
       "name": "tick_cache_is_complete",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 82,
+      "source_line": 88,
       "source_module": "market_data.cache.ticks",
       "source_path": "market_data/cache/ticks.py"
     },
@@ -15562,7 +15622,7 @@
       "name": "write_bar_cache",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 133,
+      "source_line": 139,
       "source_module": "market_data.cache.bars",
       "source_path": "market_data/cache/bars.py"
     },
@@ -15586,7 +15646,7 @@
       "name": "write_tick_cache",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 119,
+      "source_line": 125,
       "source_module": "market_data.cache.ticks",
       "source_path": "market_data/cache/ticks.py"
     },
@@ -15778,7 +15838,7 @@
       "name": "build_tick_books",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 22,
+      "source_line": 23,
       "source_module": "market_data.loading.tick_book_pipeline",
       "source_path": "market_data/loading/tick_book_pipeline.py"
     },
@@ -15790,7 +15850,7 @@
       "name": "iter_ticks_chunks",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 108,
+      "source_line": 127,
       "source_module": "market_data.loading.bars",
       "source_path": "market_data/loading/bars.py"
     },
@@ -15802,7 +15862,7 @@
       "name": "load_bars",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 22,
+      "source_line": 27,
       "source_module": "market_data.loading.bars",
       "source_path": "market_data/loading/bars.py"
     },
@@ -15826,7 +15886,7 @@
       "name": "_BAR_COLS",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 17,
+      "source_line": 18,
       "source_module": "market_data.loading.bars",
       "source_path": "market_data/loading/bars.py"
     },
@@ -15838,7 +15898,7 @@
       "name": "_DAILY_BAR_COLS",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 18,
+      "source_line": 19,
       "source_module": "market_data.loading.bars",
       "source_path": "market_data/loading/bars.py"
     },
@@ -15850,7 +15910,7 @@
       "name": "_TICK_COLS",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 19,
+      "source_line": 20,
       "source_module": "market_data.loading.bars",
       "source_path": "market_data/loading/bars.py"
     },
@@ -15985,6 +16045,90 @@
       "source_line": 475,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.quality_audit",
+      "kind": "function",
+      "name": "_accumulate_period_quality",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 142,
+      "source_module": "market_data.quality_audit",
+      "source_path": "market_data/quality_audit.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.quality_audit",
+      "kind": "function",
+      "name": "_campaign_path_from_repository",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 565,
+      "source_module": "market_data.quality_audit",
+      "source_path": "market_data/quality_audit.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.quality_audit",
+      "kind": "function",
+      "name": "_merge_period_quality",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 164,
+      "source_module": "market_data.quality_audit",
+      "source_path": "market_data/quality_audit.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.quality_audit",
+      "kind": "function",
+      "name": "_parse_timestamp",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 69,
+      "source_module": "market_data.quality_audit",
+      "source_path": "market_data/quality_audit.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.quality_audit",
+      "kind": "function",
+      "name": "_period_labels",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 124,
+      "source_module": "market_data.quality_audit",
+      "source_path": "market_data/quality_audit.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.quality_audit",
+      "kind": "function",
+      "name": "_source_dimensions",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 88,
+      "source_module": "market_data.quality_audit",
+      "source_path": "market_data/quality_audit.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.quality_audit",
+      "kind": "function",
+      "name": "_timestamp_columns",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 52,
+      "source_module": "market_data.quality_audit",
+      "source_path": "market_data/quality_audit.py"
     },
     {
       "classification": "private implementation",
@@ -20098,7 +20242,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 529,
+      "source_line": 534,
       "source_module": "simulation.environment.step_action_execution",
       "source_path": "simulation/environment/step_action_execution.py"
     },
@@ -20122,7 +20266,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 398,
+      "source_line": 409,
       "source_module": "simulation.environment.step_constraints_runtime",
       "source_path": "simulation/environment/step_constraints_runtime.py"
     },
@@ -20146,7 +20290,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 197,
+      "source_line": 203,
       "source_module": "simulation.environment.step_end_runtime",
       "source_path": "simulation/environment/step_end_runtime.py"
     },
@@ -22306,7 +22450,19 @@
       "name": "RISK_BREACH_EVENT_SCHEMA_V2",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 16,
+      "source_line": 17,
+      "source_module": "trading.risk.contracts",
+      "source_path": "trading/risk/contracts.py"
+    },
+    {
+      "classification": "stable",
+      "documented": false,
+      "exported_from": "trading.risk",
+      "kind": "value",
+      "name": "RISK_DAILY_PNL_BASIS_FTMO_MIDNIGHT",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 20,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22318,7 +22474,7 @@
       "name": "RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 18,
+      "source_line": 19,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22330,7 +22486,7 @@
       "name": "RISK_DAILY_PNL_BASIS_SESSION_EQUITY",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 17,
+      "source_line": 18,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22390,7 +22546,7 @@
       "name": "RiskDecision",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 59,
+      "source_line": 60,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22402,7 +22558,7 @@
       "name": "RiskPolicy",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 82,
+      "source_line": 83,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22414,7 +22570,7 @@
       "name": "RiskState",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 23,
+      "source_line": 24,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22426,7 +22582,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 36,
+      "source_line": 37,
       "source_module": "trading.risk",
       "source_path": "trading/risk/__init__.py"
     },
@@ -22606,7 +22762,7 @@
       "name": "RISK_DAILY_PNL_BASIS_LEGACY_GROSS_LOSSES",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 18,
+      "source_line": 19,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22618,7 +22774,7 @@
       "name": "RISK_DAILY_PNL_BASIS_SESSION_EQUITY",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 17,
+      "source_line": 18,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22666,7 +22822,7 @@
       "name": "RiskDecision",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 59,
+      "source_line": 60,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22678,7 +22834,7 @@
       "name": "RiskPolicy",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 82,
+      "source_line": 83,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22690,7 +22846,7 @@
       "name": "RiskPolicy.decide",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 85,
+      "source_line": 86,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22702,7 +22858,7 @@
       "name": "RiskState",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 23,
+      "source_line": 24,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -22714,7 +22870,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 98,
+      "source_line": 99,
       "source_module": "trading.risk.contracts",
       "source_path": "trading/risk/contracts.py"
     },
@@ -24022,6 +24178,18 @@
       "name": "_MISSING",
       "numpy_style": false,
       "package": "training",
+      "source_line": 18,
+      "source_module": "training.configuration.quality",
+      "source_path": "training/configuration/quality.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "training.configuration.quality",
+      "kind": "value",
+      "name": "_RESEARCH_DOMAINS",
+      "numpy_style": false,
+      "package": "training",
       "source_line": 17,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
@@ -24046,7 +24214,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "training",
-      "source_line": 317,
+      "source_line": 322,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
     },
@@ -24058,7 +24226,7 @@
       "name": "_override_type_matches",
       "numpy_style": false,
       "package": "training",
-      "source_line": 20,
+      "source_line": 21,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
     },
@@ -24070,7 +24238,7 @@
       "name": "_validate_override_schema",
       "numpy_style": false,
       "package": "training",
-      "source_line": 41,
+      "source_line": 42,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
     },
@@ -24082,7 +24250,7 @@
       "name": "apply_quality_variant",
       "numpy_style": false,
       "package": "training",
-      "source_line": 257,
+      "source_line": 260,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
     },
@@ -24094,7 +24262,7 @@
       "name": "get_quality_variant",
       "numpy_style": false,
       "package": "training",
-      "source_line": 152,
+      "source_line": 154,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
     },
@@ -24106,7 +24274,7 @@
       "name": "load_quality_registry",
       "numpy_style": false,
       "package": "training",
-      "source_line": 106,
+      "source_line": 107,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
     },
@@ -24118,7 +24286,7 @@
       "name": "quality_variant_metadata",
       "numpy_style": false,
       "package": "training",
-      "source_line": 176,
+      "source_line": 178,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
     },
@@ -24130,7 +24298,7 @@
       "name": "quality_variant_resource_contract",
       "numpy_style": false,
       "package": "training",
-      "source_line": 199,
+      "source_line": 202,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
     },
@@ -24142,9 +24310,201 @@
       "name": "validate_quality_resource_shape",
       "numpy_style": false,
       "package": "training",
-      "source_line": 220,
+      "source_line": 223,
       "source_module": "training.configuration.quality",
       "source_path": "training/configuration/quality.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "DEVELOPMENT_PERIOD",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 22,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "EQUAL_FIELDS",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 39,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "EXPECTED_SEEDS",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 19,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "EXPECTED_TIMEFRAMES",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 17,
+      "source_module": "training.configuration.research_protocol",
+      "source_path": "training/configuration/research_protocol.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "EXPOSED_PERIOD",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 23,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "LOCAL_OFFSET",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 21,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "LOCAL_TIMEZONE",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 20,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "PAYLOAD_SCHEMA",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 18,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "SCIENTIFIC_INVALID_REASONS",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 31,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "STUDY_SCHEMA_VERSION",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 17,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "VALID_ECONOMIC_OUTCOMES",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 24,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 213,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "function",
+      "name": "_mapping",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 63,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "function",
+      "name": "load_representation_study",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 106,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "function",
+      "name": "parse_local_row_timestamp",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 78,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "training.configuration.representation_study",
+      "kind": "function",
+      "name": "validate_representation_study",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 123,
+      "source_module": "training.configuration.representation_study",
+      "source_path": "training/configuration/representation_study.py"
     },
     {
       "classification": "cross-package internal",

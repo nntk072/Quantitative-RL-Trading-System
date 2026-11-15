@@ -79,7 +79,7 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
             )
         # Model-facing observation frame: the strategy's raw price-level
         # columns stay in ``features`` for execution/risk but must not enter
-        # the normalised ``seq`` tensor (Agent.md §11). MTF blocks reuse the
+        # the normalized ``seq`` tensor. MTF blocks reuse the
         # same stems with a ``{TF}_`` prefix (e.g. ``M5_last_swing_high``),
         # matched via MTF_RAW_SUFFIXES so unnormalised HTF price magnitudes
         # never reach the encoder.

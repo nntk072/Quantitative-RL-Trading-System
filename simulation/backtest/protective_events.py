@@ -1056,7 +1056,7 @@ def process_protective_and_account_events(
         state.breach_events.append(
             {
                 "schema_version": RISK_BREACH_EVENT_SCHEMA_V2,
-                "time": bar_time,
+                "time": pd.Timestamp(bar_time) + bar_duration,
                 "detection_time": pd.Timestamp(bar_time) + bar_duration,
                 "trade_event_count": len(state.trade_log),
                 "session_id": session,

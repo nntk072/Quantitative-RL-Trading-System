@@ -926,6 +926,7 @@ class SeedRunner:
                     "days_traded": int(train_result.get("days_traded", 0)),
                 },
                 indent=2,
+                default=str,
             ),
         )
         write_text_atomic(

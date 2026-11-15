@@ -2,13 +2,13 @@
 
 Run from `{{workspace}}`. Cover **only** what you changed:
 
-- `.venv/bin/ruff format --check <touched paths>` on ARM/GH200
-- `.venv/bin/ruff check <touched paths>` on ARM/GH200
-- `.venv/bin/pytest <relevant test files> -q` on ARM/GH200 (use the matching
+- `.venv-arm/bin/ruff format --check <touched paths>` on ARM/GH200
+- `.venv-arm/bin/ruff check <touched paths>` on ARM/GH200
+- `.venv-arm/bin/pytest <relevant test files> -q` on ARM/GH200 (use the matching
   environment on other architectures)
 
-On ARM/GH200 use `.venv/bin/ruff`, `.venv/bin/mypy`, and
-`.venv/bin/pytest` directly. Do not run quality checks through an x86 `uv`
+On ARM/GH200 use `.venv-arm/bin/ruff`, `.venv-arm/bin/mypy`, and
+`.venv-arm/bin/pytest` directly. Do not run quality checks through an x86 `uv`
 binary from the login home.
 
 Do not run the full CI gate during implementation. Do not use `pytest -m "not slow"`

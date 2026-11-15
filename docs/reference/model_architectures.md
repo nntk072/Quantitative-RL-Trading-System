@@ -58,9 +58,9 @@ not sufficient.
 The default encoder is selected by `agent.arch`; per-encoder parameters live in
 `config/base/default.yaml` and experiment overlays. The generated
 [configuration reference](configuration.md) lists the actual defaults.
-Architecture-specific training benchmarks and their scope are recorded in the
-[encoder comparison](../research/encoder_architecture_comparison.md); those
-measurements do not establish comparative trading performance.
+Compare architectures under matched observation, action, optimization, and
+evaluation contracts. Engineering throughput alone does not establish
+comparative trading performance.
 
 Torch device and precision selection belongs to `compute/` and the training
 runtime, not to an encoder ID. Validate the exact observation schema, forward

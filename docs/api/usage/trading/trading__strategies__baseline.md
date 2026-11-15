@@ -6,7 +6,7 @@ This page contains 4 public callable records owned by `trading.strategies.baseli
 
 **Kind:** class · **Status:** stable · **Owner:** `trading.strategies.baseline`
 
-**Purpose:** Control-group strategy (Idea 3, P2).
+**Purpose:** Control-group strategy without structure-specific entry constraints.
 
 **Exact API:** {py:obj}`trading.strategies.baseline.BaselineStrategy` · **Source:** [trading/strategies/baseline.py:11](../../../../trading/strategies/baseline.py#L11)
 
@@ -20,7 +20,7 @@ Replace `...` with values that satisfy the input contract. This syntax guide is 
 instance = BaselineStrategy(...)
 ```
 
-**Lifecycle context:** Control-group strategy (Idea 3, P2).
+**Lifecycle context:** Control-group strategy without structure-specific entry constraints.
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
@@ -63,7 +63,7 @@ instance = BaselineStrategy(...)
 result = instance.sl_reference(direction=..., row=...)
 ```
 
-**Lifecycle context:** This callable participates in `BaselineStrategy`: Control-group strategy (Idea 3, P2). Related public lifecycle methods: {py:obj}`trading.strategies.baseline.BaselineStrategy.validate_entry`, {py:obj}`trading.strategies.baseline.BaselineStrategy.sl_reference`, {py:obj}`trading.strategies.baseline.BaselineStrategy.target_candidates`
+**Lifecycle context:** This callable participates in `BaselineStrategy`: Control-group strategy without structure-specific entry constraints. Related public lifecycle methods: {py:obj}`trading.strategies.baseline.BaselineStrategy.validate_entry`, {py:obj}`trading.strategies.baseline.BaselineStrategy.sl_reference`, {py:obj}`trading.strategies.baseline.BaselineStrategy.target_candidates`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
@@ -106,7 +106,7 @@ instance = BaselineStrategy(...)
 result = instance.target_candidates(direction=..., row=...)
 ```
 
-**Lifecycle context:** This callable participates in `BaselineStrategy`: Control-group strategy (Idea 3, P2). Related public lifecycle methods: {py:obj}`trading.strategies.baseline.BaselineStrategy.validate_entry`, {py:obj}`trading.strategies.baseline.BaselineStrategy.sl_reference`, {py:obj}`trading.strategies.baseline.BaselineStrategy.target_candidates`
+**Lifecycle context:** This callable participates in `BaselineStrategy`: Control-group strategy without structure-specific entry constraints. Related public lifecycle methods: {py:obj}`trading.strategies.baseline.BaselineStrategy.validate_entry`, {py:obj}`trading.strategies.baseline.BaselineStrategy.sl_reference`, {py:obj}`trading.strategies.baseline.BaselineStrategy.target_candidates`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 
@@ -149,7 +149,7 @@ instance = BaselineStrategy(...)
 result = instance.validate_entry(direction=..., row=...)
 ```
 
-**Lifecycle context:** This callable participates in `BaselineStrategy`: Control-group strategy (Idea 3, P2). Related public lifecycle methods: {py:obj}`trading.strategies.baseline.BaselineStrategy.validate_entry`, {py:obj}`trading.strategies.baseline.BaselineStrategy.sl_reference`, {py:obj}`trading.strategies.baseline.BaselineStrategy.target_candidates`
+**Lifecycle context:** This callable participates in `BaselineStrategy`: Control-group strategy without structure-specific entry constraints. Related public lifecycle methods: {py:obj}`trading.strategies.baseline.BaselineStrategy.validate_entry`, {py:obj}`trading.strategies.baseline.BaselineStrategy.sl_reference`, {py:obj}`trading.strategies.baseline.BaselineStrategy.target_candidates`
 
 The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
 

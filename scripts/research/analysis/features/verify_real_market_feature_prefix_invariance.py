@@ -67,26 +67,103 @@ def sha256_file(path: Path) -> str:
 AUDIT_SCRIPT_SHA256 = sha256_file(Path(__file__).resolve())
 
 
+def resolve_inclusive_max_timestamp(value: str, index: pd.Index, timezone: str) -> pd.Timestamp:
+    """Validate and resolve an inclusive max timestamp in the source timezone."""
+    cutoff = pd.Timestamp(value)
+    if cutoff.tzinfo is None or cutoff.utcoffset() is None:
+        raise ValueError("inclusive maximum timestamp must be timezone-aware")
+    try:
+        cutoff = cutoff.tz_convert(timezone)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"invalid source timezone for inclusive maximum timestamp: {timezone}"
+        ) from exc
+
+    source_index = cast(pd.DatetimeIndex, index)
+    if source_index.empty:
+        raise ValueError("cannot resolve inclusive maximum timestamp against an empty source")
+    if source_index.tz is None:
+        source_index = source_index.tz_localize(
+            timezone, ambiguous="infer", nonexistent="shift_forward"
+        )
+    else:
+        source_index = source_index.tz_convert(timezone)
+    if not source_index.is_monotonic_increasing:
+        raise ValueError("inclusive maximum timestamp requires an ordered source index")
+    if cutoff < source_index[0] or cutoff >= source_index[-1]:
+        raise ValueError(
+            f"inclusive maximum timestamp {cutoff.isoformat()} must be inside source data range "
+            f"[{source_index[0].isoformat()}, {source_index[-1].isoformat()})"
+        )
+    return cutoff
+
+
+def load_m1_source_index(path: Path) -> pd.DatetimeIndex:
+    """Read only raw DATE/TIME fields for validating a source cutoff."""
+    columns = pd.read_csv(path, sep="\t", nrows=0).columns
+    normalized = {str(column).strip().strip("<>").upper(): column for column in columns}
+    date_column = normalized.get("DATE")
+    if date_column is None:
+        raise ValueError(f"M1 source has no DATE column: {path}")
+    time_column = normalized.get("TIME")
+    selected = [date_column, *([time_column] if time_column is not None else [])]
+    timestamps = pd.read_csv(path, sep="\t", usecols=selected, dtype=str)
+    date_values = timestamps[date_column].astype(str)
+    if time_column is not None:
+        date_values = date_values + " " + timestamps[time_column].astype(str)
+    else:
+        date_values = date_values + " 00:00:00"
+    return pd.DatetimeIndex(pd.to_datetime(date_values, format="%Y.%m.%d %H:%M:%S", errors="raise"))
+
+
 def load_market_bars(
     cfg: Any,
     symbol: str,
     dataset_name: str = "training",
     raw_cache: dict[Path, pd.DataFrame] | None = None,
-    preprocessed_cache: dict[tuple[Path, str, str, float | None], pd.DataFrame] | None = None,
+    preprocessed_cache: dict[tuple[Path, str, str, float | None, str | None], pd.DataFrame]
+    | None = None,
     cache_metrics: dict[str, float | int] | None = None,
+    inclusive_max_timestamp: str | None = None,
 ) -> tuple[pd.DataFrame, Path]:
     source = configured_m1_path(cfg, symbol, dataset_name)
     tz = str(cfg.data.tz)
     ny_end = str(cfg.session.end)
     price_grid = configured_price_grid_increment(cfg)
-    cache_key = (source, tz, ny_end, price_grid)
+    cutoff = (
+        pd.Timestamp(inclusive_max_timestamp).tz_convert(tz)
+        if inclusive_max_timestamp is not None
+        else None
+    )
+    cache_key = (source, tz, ny_end, price_grid, cutoff.isoformat() if cutoff is not None else None)
     if preprocessed_cache is not None and cache_key in preprocessed_cache:
         if cache_metrics is not None:
             cache_metrics["preprocessed_cache_hits"] = (
                 int(cache_metrics.get("preprocessed_cache_hits", 0)) + 1
             )
         return preprocessed_cache[cache_key].copy(deep=True), source
-    if raw_cache is not None and source in raw_cache:
+    if cutoff is not None:
+        end_exclusive = cutoff.tz_localize(None) + pd.Timedelta(1, unit="ns")
+        load_started = time.perf_counter()
+        raw = load_bars(source, end_exclusive=end_exclusive)
+        if cache_metrics is not None:
+            cache_metrics["raw_loads"] = int(cache_metrics.get("raw_loads", 0)) + 1
+            cache_metrics["raw_load_seconds"] = (
+                float(cache_metrics.get("raw_load_seconds", 0.0))
+                + time.perf_counter()
+                - load_started
+            )
+        if raw.empty:
+            empty = raw.iloc[:0].copy()
+            if cast(pd.DatetimeIndex, empty.index).tz is None:
+                empty.index = cast(pd.DatetimeIndex, empty.index).tz_localize(
+                    tz, ambiguous="infer", nonexistent="shift_forward"
+                )
+            if preprocessed_cache is not None:
+                preprocessed_cache[cache_key] = empty
+                return empty.copy(deep=True), source
+            return empty, source
+    elif raw_cache is not None and source in raw_cache:
         raw = raw_cache[source]
     else:
         load_started = time.perf_counter()
@@ -122,18 +199,63 @@ def load_all_market_bars(
     cfg: Any,
     symbol: str,
     raw_cache: dict[Path, pd.DataFrame] | None = None,
-    preprocessed_cache: dict[tuple[Path, str, str, float | None], pd.DataFrame] | None = None,
+    preprocessed_cache: dict[tuple[Path, str, str, float | None, str | None], pd.DataFrame]
+    | None = None,
     cache_metrics: dict[str, float | int] | None = None,
+    inclusive_max_timestamp: str | None = None,
+    source_index_cache: dict[Path, pd.DatetimeIndex] | None = None,
 ) -> tuple[pd.DataFrame, list[Path], list[dict[str, Any]]]:
     """Load and join the configured training and testing M1 exports."""
+    if inclusive_max_timestamp is not None:
+        source_paths = [
+            configured_m1_path(cfg, symbol, dataset_name)
+            for dataset_name in ("training", "testing")
+        ]
+        indexes = source_index_cache if source_index_cache is not None else {}
+        for source in source_paths:
+            if source not in indexes:
+                load_started = time.perf_counter()
+                indexes[source] = load_m1_source_index(source)
+                if cache_metrics is not None:
+                    cache_metrics["raw_loads"] = int(cache_metrics.get("raw_loads", 0)) + 1
+                    cache_metrics["raw_load_seconds"] = (
+                        float(cache_metrics.get("raw_load_seconds", 0.0))
+                        + time.perf_counter()
+                        - load_started
+                    )
+        full_source_index = (
+            indexes[source_paths[0]]
+            .append([indexes[path] for path in source_paths[1:]])
+            .sort_values()
+        )
+        cutoff = resolve_inclusive_max_timestamp(
+            inclusive_max_timestamp, full_source_index, str(cfg.data.tz)
+        )
+        train_end, _ = get_split_config(cfg)
+        train_end_exclusive = pd.Timestamp(train_end).tz_localize(str(cfg.data.tz)) + pd.DateOffset(
+            days=1
+        )
+        if cutoff >= train_end_exclusive:
+            raise ValueError(
+                "inclusive maximum timestamp must not exceed the configured training end "
+                f"({train_end} in {cfg.data.tz})"
+            )
+        inclusive_max_timestamp = cutoff.isoformat()
+
     split_bars: list[pd.DataFrame] = []
     paths: list[Path] = []
     split_metadata: list[dict[str, Any]] = []
     for dataset_name in ("training", "testing"):
         bars, source = load_market_bars(
-            cfg, symbol, dataset_name, raw_cache, preprocessed_cache, cache_metrics
+            cfg,
+            symbol,
+            dataset_name,
+            raw_cache,
+            preprocessed_cache,
+            cache_metrics,
+            inclusive_max_timestamp,
         )
-        if bars.empty:
+        if bars.empty and inclusive_max_timestamp is None:
             raise ValueError(f"{dataset_name} M1 export is empty for {symbol}")
         split_bars.append(bars)
         paths.append(source)
@@ -142,14 +264,28 @@ def load_all_market_bars(
                 "dataset": dataset_name,
                 "path": str(source.relative_to(ROOT)),
                 "rows": len(bars),
-                "start": bars.index[0].isoformat(),
-                "end": bars.index[-1].isoformat(),
+                "start": bars.index[0].isoformat() if len(bars) else None,
+                "end": bars.index[-1].isoformat() if len(bars) else None,
             }
         )
 
     combined = pd.concat(split_bars).sort_index()
     if not combined.index.is_unique or not combined.index.is_monotonic_increasing:
         raise ValueError(f"training/testing M1 indexes overlap or are unordered for {symbol}")
+    if inclusive_max_timestamp is not None:
+        cutoff = pd.Timestamp(inclusive_max_timestamp)
+        if cutoff.tzinfo is None or cutoff.utcoffset() is None:
+            raise ValueError("inclusive maximum timestamp must be timezone-aware")
+        if combined.empty or combined.index.max() > cutoff:
+            raise ValueError(f"inclusive maximum timestamp was not enforced for {symbol}: {cutoff}")
+        for metadata, split in zip(split_metadata, split_bars, strict=True):
+            metadata.update(
+                {
+                    "rows": len(split),
+                    "start": split.index[0].isoformat() if len(split) else None,
+                    "end": split.index[-1].isoformat() if len(split) else None,
+                }
+            )
     return combined, paths, split_metadata
 
 
@@ -381,6 +517,10 @@ def main() -> int:
     )
     parser.add_argument("--cutoffs", nargs="+", default=list(DEFAULT_CUTOFFS))
     parser.add_argument(
+        "--max-timestamp",
+        help="optional inclusive, timezone-aware source-data cutoff applied before feature builds",
+    )
+    parser.add_argument(
         "--profile-group-shard",
         help="process one stable shard of effective feature-builder groups as INDEX/COUNT",
     )
@@ -437,7 +577,8 @@ def main() -> int:
     primary_symbol = str(cfg.data.primary)
     secondary_symbol = str(cfg.data.secondary)
     raw_cache: dict[Path, pd.DataFrame] = {}
-    preprocessed_cache: dict[tuple[Path, str, str, float | None], pd.DataFrame] = {}
+    preprocessed_cache: dict[tuple[Path, str, str, float | None, str | None], pd.DataFrame] = {}
+    source_index_cache: dict[Path, pd.DatetimeIndex] = {}
     cache_metrics: dict[str, float | int] = {
         "raw_loads": 0,
         "raw_load_seconds": 0.0,
@@ -458,10 +599,22 @@ def main() -> int:
         ):
             raise ValueError(f"profile {representative} uses different configured symbols")
         primary, primary_paths, primary_splits = load_all_market_bars(
-            group_cfg, primary_symbol, raw_cache, preprocessed_cache, cache_metrics
+            group_cfg,
+            primary_symbol,
+            raw_cache,
+            preprocessed_cache,
+            cache_metrics,
+            args.max_timestamp,
+            source_index_cache,
         )
         secondary, secondary_paths, secondary_splits = load_all_market_bars(
-            group_cfg, secondary_symbol, raw_cache, preprocessed_cache, cache_metrics
+            group_cfg,
+            secondary_symbol,
+            raw_cache,
+            preprocessed_cache,
+            cache_metrics,
+            args.max_timestamp,
+            source_index_cache,
         )
         input_load_seconds = time.perf_counter() - input_load_started
         input_paths.update(primary_paths)
@@ -469,6 +622,11 @@ def main() -> int:
         train_end, test_start = get_split_config(group_cfg)
         train_start = get_train_start_config(group_cfg)
         primary_index = cast(pd.DatetimeIndex, primary.index)
+        max_timestamp_cutoff = (
+            pd.Timestamp(args.max_timestamp).tz_convert(str(group_cfg.data.tz)).isoformat()
+            if args.max_timestamp is not None
+            else None
+        )
         cutoff_timestamps = resolve_cutoffs(args.cutoffs, primary_index)
         train_mask = configured_training_mask(primary_index, group_cfg)
         if first_profile_data is None:
@@ -479,6 +637,27 @@ def main() -> int:
                 "train_end": train_end,
                 "train_start": train_start,
                 "test_start": test_start,
+                "max_timestamp_cutoff": (
+                    {
+                        "value": max_timestamp_cutoff,
+                        "inclusive": True,
+                        "timezone": str(group_cfg.data.tz),
+                    }
+                    if max_timestamp_cutoff is not None
+                    else None
+                ),
+                "retained_input_bounds": {
+                    primary_symbol: {
+                        "rows": len(primary),
+                        "start": primary.index[0].isoformat(),
+                        "end": primary.index[-1].isoformat(),
+                    },
+                    secondary_symbol: {
+                        "rows": len(secondary),
+                        "start": secondary.index[0].isoformat(),
+                        "end": secondary.index[-1].isoformat(),
+                    },
+                },
             }
         feature_hash = feature_cache_content_hash(
             group_cfg, primary, train_mask=train_mask, secondary=secondary
@@ -550,6 +729,27 @@ def main() -> int:
                 "feature_profile": resolved.get("feature_profile"),
                 "price_grid_increment": grid_increment,
                 "fit_interval": {"train_start": train_start, "train_end": train_end},
+                "max_timestamp_cutoff": (
+                    {
+                        "value": max_timestamp_cutoff,
+                        "inclusive": True,
+                        "timezone": str(group_cfg.data.tz),
+                    }
+                    if max_timestamp_cutoff is not None
+                    else None
+                ),
+                "retained_input_bounds": {
+                    primary_symbol: {
+                        "rows": len(primary),
+                        "start": primary.index[0].isoformat(),
+                        "end": primary.index[-1].isoformat(),
+                    },
+                    secondary_symbol: {
+                        "rows": len(secondary),
+                        "start": secondary.index[0].isoformat(),
+                        "end": secondary.index[-1].isoformat(),
+                    },
+                },
                 "m1_input_sha256": configured_m1_input_hashes(group_cfg),
                 "session_schedule_file": str(schedule_value) if schedule_value else None,
                 "session_schedule_sha256": schedule_hash,
@@ -618,8 +818,8 @@ def main() -> int:
             ROOT / "training" / "configuration" / "strategy_overlays.py",
             ROOT / "training" / "configuration" / "variant_resolution.py",
             ROOT / "config" / "experiments.yaml",
-            ROOT / "config" / "2_po3_ifvg.yaml",
-            ROOT / "config" / "3_distribution.yaml",
+            ROOT / "config" / "strategies" / "po3_ifvg.yaml",
+            ROOT / "config" / "strategies" / "distribution.yaml",
             ROOT / "config" / "features" / "full_po3_mtf.yaml",
             args.variant_file.resolve() if inventory_path is None else inventory_path,
         )

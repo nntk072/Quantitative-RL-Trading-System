@@ -26,11 +26,9 @@ from market_data.loading.market_data_ingestion import run_pipeline
 from market_data.splits.definitions import make_train_mask
 
 ROOT = repository_root(__file__)
-DEFAULT_CONFIG = ROOT / "config/2_po3_ifvg.yaml"
+DEFAULT_CONFIG = ROOT / "config/strategies/po3_ifvg.yaml"
 DEFAULT_OUTPUT = ROOT / "evidence/research/po3_setup_lifecycle"
-RAW_MANIFEST = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-)
+RAW_MANIFEST = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
 STATE_COLUMNS = (
     "po3_setup_id",
     "po3_manipulation_direction",

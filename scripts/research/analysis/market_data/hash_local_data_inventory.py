@@ -16,13 +16,7 @@ from typing import Any
 from configuration.paths import repository_root
 
 ROOT = repository_root(__file__)
-RELEASE_DIR = ROOT / "evidence/research/releases/negative-evidence-readiness"
-DEFAULT_INVENTORY_PATH = (
-    Path("/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System")
-    / "local_market_data_inventory.json"
-)
-DEFAULT_OUTPUT_PATH = RELEASE_DIR / "RAW_DATA_SHA256_MANIFEST.json"
-DEFAULT_CAMPAIGN_AUDIT_PATH = RELEASE_DIR / "current_source_market_input_audit.json"
+DEFAULT_OUTPUT_PATH = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
 
 
 def _sha256(path: Path) -> tuple[str, int]:
@@ -111,14 +105,14 @@ def main() -> int:
     parser.add_argument(
         "--inventory",
         type=Path,
-        default=DEFAULT_INVENTORY_PATH,
+        required=True,
         help="local file inventory JSON; paths inside it resolve from the repository root",
     )
     parser.add_argument(
         "--campaign-audit",
         type=Path,
-        default=DEFAULT_CAMPAIGN_AUDIT_PATH,
-        help="current report containing selected-campaign observed input hashes",
+        default=None,
+        help="optional report containing selected-campaign observed input hashes",
     )
     parser.add_argument(
         "--output",
@@ -139,7 +133,11 @@ def main() -> int:
     if args.check and not args.output.is_file():
         raise FileNotFoundError(f"Cannot verify missing manifest: {args.output}")
     inventory = json.loads(args.inventory.read_text(encoding="utf-8"))
-    campaign_audit = json.loads(args.campaign_audit.read_text(encoding="utf-8"))
+    campaign_audit = (
+        json.loads(args.campaign_audit.read_text(encoding="utf-8"))
+        if args.campaign_audit is not None
+        else {"inputs": []}
+    )
     selected_campaign_hashes = {
         str(item["path"]): str(item["observed_sha256"])
         for item in campaign_audit["inputs"]
@@ -214,8 +212,13 @@ def main() -> int:
         "source_inventory": args.inventory.name,
         "source_inventory_path": _stable_path_identity(args.inventory),
         "source_inventory_sha256": _sha256(args.inventory)[0],
-        "campaign_input_audit_path": _stable_path_identity(args.campaign_audit),
-        "campaign_input_audit_sha256": _sha256(args.campaign_audit)[0],
+        "dataset_windows": inventory.get("dataset_windows", {}),
+        "campaign_input_audit_path": (
+            _stable_path_identity(args.campaign_audit) if args.campaign_audit is not None else None
+        ),
+        "campaign_input_audit_sha256": (
+            _sha256(args.campaign_audit)[0] if args.campaign_audit is not None else None
+        ),
         "inventory_file_count": len(files),
         "distinct_resolved_file_count": len(hashed_targets),
         "inventory_total_bytes": inventory_total_bytes,

@@ -15,7 +15,13 @@ settings used by a checkpoint.
 | `config/variants/` | Per-variant settings, including risk configuration. |
 | `config/experiments.yaml` | Selectable variant matrix and comparison definitions. |
 | `config/variant_catalog.yaml` | Classification metadata used to generate the reader-facing model catalog; it is not a runtime settings source. |
-| `config/research/` and `config/experiment_runs/` | Named research/run inputs that preserve explicit experiment identity. |
+| `config/research/` | Registered study contracts and research inputs. |
+| `config/experiment_runs/` | The compatibility variant list; new comparisons select a named family from `config/variant_catalog.yaml`. |
+
+One run specification groups a comparison family, its seed set, budget, data
+split, and evaluation role. The controller expands every family arm and seed
+under one run identity, and the result export writes one row per arm and seed.
+Do not create a separate launcher or report for each variant.
 
 The configuration schema rejects unknown or structurally incompatible
 settings. Add a new key to its owning configuration section and consumer,

@@ -76,6 +76,8 @@ def build_bar_cache_identity(
     ny_session_end: str,
     timestamp_convention: str,
     price_grid_identity: str | None,
+    start_inclusive: str | None = None,
+    end_inclusive: str | None = None,
 ) -> dict[str, Any]:
     """Describe every source and configuration input that changes cached bars.
 
@@ -88,6 +90,8 @@ def build_bar_cache_identity(
         ny_session_end: Text or path value identifying the ny session end.
         timestamp_convention: Text or path value identifying the timestamp convention.
         price_grid_identity: Price grid identity used by the operation described above.
+        start_inclusive: Optional first local calendar date included in the cache.
+        end_inclusive: Optional last local calendar date included in the cache.
 
     Returns:
         Mapping from ``str`` keys to ``Any`` values.
@@ -101,6 +105,8 @@ def build_bar_cache_identity(
         "ny_session_end": ny_session_end,
         "timestamp_convention": timestamp_convention,
         "price_grid_identity": price_grid_identity,
+        "start_inclusive": start_inclusive,
+        "end_inclusive": end_inclusive,
     }
     return {
         "schema_version": BAR_CACHE_MANIFEST_SCHEMA_VERSION,

@@ -52,6 +52,27 @@ def test_maintained_documentation_has_local_guides_and_resolving_links() -> None
     assert validate(ROOT) == []
 
 
+def test_documentation_link_checker_ignores_paths_in_fenced_examples(tmp_path: Path) -> None:
+    document = tmp_path / "guide.md"
+    document.write_text(
+        "Example: `<tests/example.py>`\n\n"
+        "```markdown\n[upstream](missing.md)\n`tests/example.py`\n```\n",
+        encoding="utf-8",
+    )
+
+    assert broken_links(document) == []
+    assert missing_source_paths(document) == []
+
+
+def test_documentation_link_checker_still_rejects_broken_maintained_links(
+    tmp_path: Path,
+) -> None:
+    document = tmp_path / "guide.md"
+    document.write_text("[missing](missing.md)\n", encoding="utf-8")
+
+    assert broken_links(document) == [(1, "missing.md")]
+
+
 def test_repository_documentation_entrypoints_and_site_configuration_exist() -> None:
     required = (
         "ARCHITECTURE.md",

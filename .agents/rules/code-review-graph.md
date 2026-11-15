@@ -1,17 +1,19 @@
 ---
-trigger: model_decision
-description: "Use for multi-file code review, impact analysis, or tracing callers and affected flows."
+trigger: manual
+description: "Project-local Code Review Graph installation and query reference."
 ---
 
 # Code-review-graph
 
 A structured review method: treat a change as a **graph** and walk it deliberately, reviewing by node priority — not by reading files top to bottom.
 
-## When to use
+## Invocation policy
 
-- Reviewing a diff, PR, or local change touching >1 file or shared symbols.
-- Assessing blast radius before/after an edit.
-- Skip for single-file typo/trim edits.
+Use this graph when code relationships are unknown or a change spans shared
+symbols. Known-file edits and simple local matches should use native tools.
+The canonical tool-selection and fallback policy is
+[`extension-routing.md`](extension-routing.md).
+
 
 ## 1. Build the node set (the diff)
 
@@ -54,11 +56,23 @@ Scoped searches only — no repo-wide dumps:
 ## Relations
 
 - Activates: reviewing a diff/PR/local change touching >1 file or shared symbols; skip for single-file typo edits.
-- Uses [token-efficient-context-replies.md](token-efficient-context-replies.md) read discipline and [token-efficient-shell.md](token-efficient-shell.md) git commands; findings feed [git-commit-rules.md](git-commit-rules.md) pre-commit checks.
+- Uses [context-management.md](context-management.md) read discipline and [token-efficient-shell.md](token-efficient-shell.md) git commands; findings feed [git-commit-rules.md](git-commit-rules.md) pre-commit checks.
 
 ## Graph trust and configuration dependency checks
 
 Use the persistent graph for navigation, blast-radius discovery, and candidate impact analysis. Verify important execution paths and configuration dependencies against source and tests before relying on a graph-only conclusion.
+
+### Bounded impact results
+
+Impact reports are capped. Treat `truncated: true`, omitted-node/edge counts, or a capped result summary as incomplete; an omitted relationship is not evidence that the dependency is absent. Increasing `--max-results` does not necessarily increase the rendered MCP/CLI result window. Start with a depth-1 impact query per changed file, then query specific callers, callees, tests, or flows for any remaining hot spots:
+
+```bash
+./tools/crgraph impact --files path/to/changed_file.py --depth 1 --max-results 1000 --repo "$PWD"
+```
+
+If the result is still truncated, split the changed-file set or narrow to individual symbols. Record the reported depth, counts, and truncation flag, and verify high-impact paths in source and tests. `unresolved_call_sites` is a separate limitation and must not be treated as proof of a missing relationship.
+
+For reviews of uncommitted code, verify that the graph updater or watcher has processed the changed files. `built_at_commit` identifies the Git base revision; by itself it does not prove that current working-tree edits are present in the index. If the hook state is unknown or stale, run `./tools/crgraph update --repo "$PWD"` once before querying. Recheck after relevant source edits instead of repeating the update before every query.
 
 Repository-owned quality commands:
 
@@ -77,7 +91,10 @@ A resolved `TESTED_BY` relationship means only that the recorded relation points
 
 `verify-critical` is fail-closed for critical configuration reachability. Each critical config has an allowed reachability state: direct load, evidence-backed indirect registry/default-parameter selection, or an explicitly documented inactive state. A tracked file alone is no longer sufficient.
 
-`config/1_baseline.yaml` is intentionally `tracked_but_inactive`: baseline training uses `config/base/default.yaml` and the baseline branch does not auto-merge the symmetry file. `config/3_distribution.yaml` and `config/quality_experiments.yaml` must remain traceable through their active strategy/quality registry paths.
+Baseline behavior is defined directly in `config/base/default.yaml`; the only
+strategy overlays are the active PO3/IFVG and distribution configurations.
+Those overlays and `config/quality_experiments.yaml` must remain traceable
+through their active strategy or quality registry paths.
 
 CALLS quality reports now include both global and research-critical-path resolution. Evidence-backed same-module, explicit-import/re-export, `self`/`cls`, and unique direct-base resolutions may be promoted to `internal_exact`. Generic container/file methods with unknown receivers remain dynamic rather than being matched to unrelated repository methods with the same short name.
 

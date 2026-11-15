@@ -65,33 +65,6 @@
       "rights": "project-authored"
     },
     {
-      "id": "setup-conditioned-replay-equity",
-      "kind": "image",
-      "source_page": "docs/research/setup_conditioned_policy_replay.md",
-      "asset": "docs/research/figures/setup_conditioned_policy_replay_equity.png",
-      "description": "Training-period equity curves for the hybrid control and setup-conditioned treatment in the recorded 100k-step negative screen.",
-      "provenance": "Generated research evidence; interpret with its linked evidence packet and limitations.",
-      "rights": "project-evidence"
-    },
-    {
-      "id": "h1-order-block-context-preview",
-      "kind": "image",
-      "source_page": "docs/research/order_block_and_multitimeframe_context.md",
-      "asset": "evidence/research/entry_idea_context_previews/h1_order_block.png",
-      "description": "Causal H1 order-block context preview for a selected historical timestamp; not a trade or performance result.",
-      "provenance": "Generated from the source bars and preserved metadata under evidence/research/entry_idea_context_previews/.",
-      "rights": "project-evidence"
-    },
-    {
-      "id": "h1-swing-retracement-context-preview",
-      "kind": "image",
-      "source_page": "docs/research/order_block_and_multitimeframe_context.md",
-      "asset": "evidence/research/entry_idea_context_previews/h1_swing_fibonacci_levels.png",
-      "description": "Causal H1 swing retracement context preview for a selected historical timestamp; not a trade or performance result.",
-      "provenance": "Generated from the source bars and preserved metadata under evidence/research/entry_idea_context_previews/.",
-      "rights": "project-evidence"
-    },
-    {
       "id": "trade-geometry",
       "kind": "image",
       "source_page": "docs/concepts/risk_and_account_limits.md",

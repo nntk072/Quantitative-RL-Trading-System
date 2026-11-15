@@ -136,7 +136,7 @@ class PO3IFVGStrategy(TradingStrategy):
         return self.entry_setup(row, direction)
 
     def sl_reference(self, *, direction: int, row: FeatureRow | pd.Series) -> float | None:
-        """Long -> manipulation low, short -> manipulation high (Agent.md §14).
+        """Return the manipulation low for longs or high for shorts.
 
         Returns the raw reference level; the environment validates geometry
         against the entry price and rejects invalid stops.
@@ -146,7 +146,7 @@ class PO3IFVGStrategy(TradingStrategy):
             row: Row index or record being processed.
 
         Returns:
-            Result of long -> manipulation low, short -> manipulation high (Agent.md §14).
+            Selected manipulation level for the trade direction.
         """
         col = "po3_manipulation_low" if direction == 1 else "po3_manipulation_high"
         level = float(row.get(col, np.nan))

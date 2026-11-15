@@ -189,6 +189,23 @@ def test_delayed_order_cancel_keeps_the_originating_decision_id() -> None:
     assert canceled["decision_id"] == submitted["decision_id"] == info["decision_id"]
 
 
+def test_episode_end_cancel_keeps_pending_session_when_snapshot_session_is_missing() -> None:
+    bars, features = _market_inputs()
+    bars = bars.drop(columns="session_id")
+    env = _trade_setup_env(bars, features, fill_latency_bars=1, max_steps=1)
+    env.reset(seed=7)
+    active_id = trade_setup_candidate_id("fvg_retest", "M5", 1)
+
+    _, _, _, truncated, info = env.step(_setup_action(env, active_id))
+
+    submitted = next(event for event in env.trade_log if event["type"] == "order_submit")
+    canceled = next(event for event in env.trade_log if event["type"] == "order_cancel")
+    assert truncated is True
+    assert info["account_state_snapshot"]["session_id"] is None
+    assert submitted["session_id"] == 0
+    assert canceled["session_id"] == submitted["session_id"]
+
+
 def test_delayed_entry_rejection_keeps_the_submitting_decision_id() -> None:
     bars, features = _market_inputs()
     env = _trade_setup_env(bars, features, fill_latency_bars=1, max_steps=2)

@@ -37,11 +37,9 @@ from market_data.transforms.resample import resample
 from market_data.transforms.session_schedule import scheduled_session_close_map
 
 ROOT = repository_root(__file__)
-DEFAULT_CONFIG = ROOT / "config/2_po3_ifvg.yaml"
+DEFAULT_CONFIG = ROOT / "config/strategies/po3_ifvg.yaml"
 DEFAULT_OUTPUT = ROOT / "evidence/research/ifvg_timeframe_collision_ledger"
-RAW_MANIFEST = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-)
+RAW_MANIFEST = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
 Timeframe = Literal["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
 TIMEFRAME_ORDER: tuple[Timeframe, ...] = ("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
 SUPPORTED_TIMEFRAMES = frozenset((*TIMEFRAME_ORDER, "M1"))

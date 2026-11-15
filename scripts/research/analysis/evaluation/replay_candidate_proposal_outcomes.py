@@ -35,9 +35,7 @@ DEFAULT_CONFIG = ROOT / "config/research/trade_setup_mtf_reasoning_2m.yaml"
 DEFAULT_PROPOSALS = ROOT / "evidence/research/candidate_proposals"
 DEFAULT_COVERAGE = ROOT / "evidence/research/tick_quote_coverage"
 DEFAULT_OUTPUT = ROOT / "evidence/research/candidate_outcomes"
-DATA_MANIFEST = (
-    ROOT / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-)
+DATA_MANIFEST = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
 OUTCOME_SOURCE_FILES = (
     "evaluation/candidate_execution.py",
     "evaluation/candidate_outcomes.py",

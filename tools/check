@@ -7,8 +7,8 @@ PYTHON_BIN="${QRL_PYTHON:-}"
 if [[ -z "$PYTHON_BIN" ]]; then
   case "$(uname -m)" in
     aarch64|arm64)
-      if [[ -x "$ROOT/.venv/bin/python" ]]; then
-        PYTHON_BIN="$ROOT/.venv/bin/python"
+      if [[ -x "$ROOT/.venv-arm/bin/python" ]]; then
+        PYTHON_BIN="$ROOT/.venv-arm/bin/python"
       fi
       ;;
     x86_64)
@@ -54,7 +54,7 @@ sync_mutation() {
       return 1
     fi
     UV_PROJECT_ENVIRONMENT="$(dirname "$(dirname "$PYTHON_BIN")")" \
-      "$UV_BIN" sync --extra dev --extra mutation
+      "$UV_BIN" sync --extra dev --extra docs --extra mutation
   fi
 }
 
@@ -114,10 +114,9 @@ run_graph_quality() {
   rm -f -- "$graph_index"
   GIT_INDEX_FILE="$graph_index" git read-tree HEAD
 
-  # The architecture refactor is often checked before its new modules are
-  # staged. Build the graph from the live source tree while keeping the user's
-  # real index untouched: remove deleted paths and intent-to-add new Python or
-  # shell sources only in this disposable index.
+  # Build the graph from the live source tree while keeping the user's real
+  # index untouched. Include current config files because reachability is
+  # checked against the disposable index as well as Python and shell sources.
   while IFS= read -r -d '' path; do
     if [[ ! -e "$path" && ! -L "$path" ]]; then
       GIT_INDEX_FILE="$graph_index" git update-index --force-remove -- "$path"
@@ -125,7 +124,9 @@ run_graph_quality() {
   done < <(GIT_INDEX_FILE="$graph_index" git ls-files -z)
   while IFS= read -r -d '' path; do
     case "$path" in
-      *.py|*.sh) GIT_INDEX_FILE="$graph_index" git add --intent-to-add -- "$path" ;;
+      *.py|*.sh|*.yaml|*.yml|*.toml)
+        GIT_INDEX_FILE="$graph_index" git add --intent-to-add -- "$path"
+        ;;
     esac
   done < <(GIT_INDEX_FILE="$graph_index" git ls-files --others --exclude-standard -z)
 

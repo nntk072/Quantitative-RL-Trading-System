@@ -30,7 +30,7 @@ This page contains 1 public callable records owned by `market_data.transforms.cl
 
 **Observed usage:**
 
-1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L142)
+1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

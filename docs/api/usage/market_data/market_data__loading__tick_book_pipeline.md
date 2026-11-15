@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `market_data.loading.tick_
 
 **Purpose:** Build (or load from cache) a ``TickBook`` for each selected symbol.
 
-**Exact API:** {py:obj}`market_data.loading.tick_book_pipeline.build_tick_books` · **Source:** [market_data/loading/tick_book_pipeline.py:22](../../../../market_data/loading/tick_book_pipeline.py#L22)
+**Exact API:** {py:obj}`market_data.loading.tick_book_pipeline.build_tick_books` · **Source:** [market_data/loading/tick_book_pipeline.py:23](../../../../market_data/loading/tick_book_pipeline.py#L23)
 
 **Inputs and outputs:**
 
@@ -53,7 +53,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Build (or load from cache) a ``TickBook`` for each selected symbol.
 
-**Exact API:** {py:obj}`market_data.loading.tick_book_pipeline.build_tick_books` · **Source:** [market_data/loading/tick_book_pipeline.py:22](../../../../market_data/loading/tick_book_pipeline.py#L22)
+**Exact API:** {py:obj}`market_data.loading.tick_book_pipeline.build_tick_books` · **Source:** [market_data/loading/tick_book_pipeline.py:23](../../../../market_data/loading/tick_book_pipeline.py#L23)
 
 **Inputs and outputs:**
 

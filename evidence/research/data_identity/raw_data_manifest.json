@@ -1,0 +1,208 @@
+{
+  "campaign_input_audit_path": null,
+  "campaign_input_audit_sha256": null,
+  "created_at_utc": "2026-11-15T05:15:05.691230+00:00",
+  "dataset_windows": {
+    "testing": {
+      "end_inclusive": "2026-10-16",
+      "period_role": "exposed report-only",
+      "start_inclusive": "2026-01-01"
+    },
+    "training": {
+      "end_inclusive": "2025-12-31",
+      "start_inclusive": "2024-12-30"
+    }
+  },
+  "distinct_resolved_file_count": 20,
+  "distinct_resolved_total_bytes": 8162556477,
+  "files": [
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T15:57:17+00:00",
+      "path": "data/US100.cash_202412300105_202610162349.csv",
+      "resolved_path": "data/US100.cash_202412300105_202610162349.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "e70a971fb84bf1c32083886eebbaa0691c2e122d9775394b87b644905d52afcb",
+      "size_bytes": 6345169212
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-18T19:23:02+00:00",
+      "path": "data/US100.cash_D1_202412300000_202610160000.csv",
+      "resolved_path": "data/US100.cash_D1_202412300000_202610160000.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "75153c50cde25e1ed7625c9c95dcfae1be8a9949adef8b8781f7ff809a895bc2",
+      "size_bytes": 28282
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:03:19+00:00",
+      "path": "data/US100.cash_H1_202412300100_202610162300.csv",
+      "resolved_path": "data/US100.cash_H1_202412300100_202610162300.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "c9e398bd45a3d2f6bb9e1991a4bac6a48d06b17afacc76da36b4c44529f48610",
+      "size_bytes": 728311
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:03:10+00:00",
+      "path": "data/US100.cash_H4_202412300000_202610162000.csv",
+      "resolved_path": "data/US100.cash_H4_202412300000_202610162000.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "9aa409187df685642350faae6f9652fe804befb5e569a0e00def4385506dfc51",
+      "size_bytes": 191698
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:03:18+00:00",
+      "path": "data/US100.cash_M10_202412300100_202610162340.csv",
+      "resolved_path": "data/US100.cash_M10_202412300100_202610162340.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "4fa1998033185ec06eac79343853bcb4128d1a22b45bd002426222c7d5b18eb9",
+      "size_bytes": 4287341
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:03:19+00:00",
+      "path": "data/US100.cash_M15_202412300100_202610162345.csv",
+      "resolved_path": "data/US100.cash_M15_202412300100_202610162345.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "b7c43a6beb51f12b8bf6ca81598539ec5829e25de851cc661c864c1355abe08f",
+      "size_bytes": 2883224
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:03:14+00:00",
+      "path": "data/US100.cash_M1_202412300105_202610162349.csv",
+      "resolved_path": "data/US100.cash_M1_202412300105_202610162349.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "4c46c6c9820cba15cea38487228d9c334467087b8bb109e3ffad7ca234d83f8c",
+      "size_bytes": 42077931
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:03:19+00:00",
+      "path": "data/US100.cash_M30_202412300100_202610162330.csv",
+      "resolved_path": "data/US100.cash_M30_202412300100_202610162330.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "250a746d65064190035d90ba99acf9f956cf4e2fd8e3fe6e97240518e60904b5",
+      "size_bytes": 1447422
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:03:17+00:00",
+      "path": "data/US100.cash_M3_202412300103_202610162348.csv",
+      "resolved_path": "data/US100.cash_M3_202412300103_202610162348.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "21c200a927db10622022dbf3f846c48f5f8eba0a4eb4cfc998d21d55bee40ac2",
+      "size_bytes": 14138570
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:03:18+00:00",
+      "path": "data/US100.cash_M5_202412300105_202610162345.csv",
+      "resolved_path": "data/US100.cash_M5_202412300105_202610162345.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "10ecf18c879731c716d1e569534eb0b1b7931b4d31b64da615ed31b20d40a319",
+      "size_bytes": 8506586
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:02:08+00:00",
+      "path": "data/US500.cash_202412300105_202610162349.csv",
+      "resolved_path": "data/US500.cash_202412300105_202610162349.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "0185a863f83118d1b0884e0fc7173a04b266767c9dcc941ee19a84b4a0986457",
+      "size_bytes": 1675150780
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T18:55:21+00:00",
+      "path": "data/US500.cash_D1_202412300000_202610160000.csv",
+      "resolved_path": "data/US500.cash_D1_202412300000_202610160000.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "6417bc90dde1d82c3a5f84761c9c01f0c2dffa7a77cb96e179fada98eea6374d",
+      "size_bytes": 25812
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:06:05+00:00",
+      "path": "data/US500.cash_H1_202412300100_202610162300.csv",
+      "resolved_path": "data/US500.cash_H1_202412300100_202610162300.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "a47cc8d9dd2f3926c470693a103d9842b7734c022c87d5b7dcd23aae74bfd076",
+      "size_bytes": 668557
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:06:05+00:00",
+      "path": "data/US500.cash_H4_202412300000_202610162000.csv",
+      "resolved_path": "data/US500.cash_H4_202412300000_202610162000.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "fafa6490194182054d731b11b20103532872914782a31fcb2e90f19217c445ac",
+      "size_bytes": 176594
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:06:04+00:00",
+      "path": "data/US500.cash_M10_202412300100_202610162340.csv",
+      "resolved_path": "data/US500.cash_M10_202412300100_202610162340.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "cdf77ea1c77758579616d458752cfbc0e1e08b5ab87fd5129d5bc9878c25a9c2",
+      "size_bytes": 3931081
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:06:04+00:00",
+      "path": "data/US500.cash_M15_202412300100_202610162345.csv",
+      "resolved_path": "data/US500.cash_M15_202412300100_202610162345.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "9997248e41e8481179dc404cc19585ccb930e26b42267fe8d139171655ae8624",
+      "size_bytes": 2646951
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:06:01+00:00",
+      "path": "data/US500.cash_M1_202412300105_202610162349.csv",
+      "resolved_path": "data/US500.cash_M1_202412300105_202610162349.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "e5929a798083b77ce631407132d4d2efeb658512d49bea296c578b3724a57b51",
+      "size_bytes": 38404762
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:06:05+00:00",
+      "path": "data/US500.cash_M30_202412300100_202610162330.csv",
+      "resolved_path": "data/US500.cash_M30_202412300100_202610162330.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "458e8b7e0e3b790fe1cd4cf6bf91f81ed00c29303952eba4149b36c618321677",
+      "size_bytes": 1330270
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:06:03+00:00",
+      "path": "data/US500.cash_M3_202412300103_202610162348.csv",
+      "resolved_path": "data/US500.cash_M3_202412300103_202610162348.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "9dbd4be0956b31bf810870959ac6ab8bc4bb5ae23201464c290f3b523e87877e",
+      "size_bytes": 12970192
+    },
+    {
+      "is_symlink": false,
+      "mtime_utc": "2026-10-17T16:06:03+00:00",
+      "path": "data/US500.cash_M5_202412300105_202610162345.csv",
+      "resolved_path": "data/US500.cash_M5_202412300105_202610162345.csv",
+      "selected_campaign_hash_match": null,
+      "sha256": "14d6a8222c16218cd0a75a883e33879931343ce4ac82b7b652efc6e846ddb2d6",
+      "size_bytes": 7792901
+    }
+  ],
+  "inventory_file_count": 20,
+  "inventory_total_bytes": 8162556477,
+  "schema": "qrl.local_raw_data_sha256_manifest.v1",
+  "scope_note": "Hashes and metadata only; raw data remain local and are not copied. This does not establish provider rights, license terms, or schedule correctness.",
+  "selected_campaign_unique_data_file_matches": 0,
+  "source_inventory": "raw_source_inventory.json",
+  "source_inventory_path": "evidence/research/data_identity/raw_source_inventory.json",
+  "source_inventory_sha256": "9e121d3d173a4d22038347aa451c341d13efad72ecfb23c4ce6af25e5d6ad24f"
+}

@@ -199,10 +199,12 @@ def validate_result_manifest(
 
     if verify_artifact_hashes:
         root = repo_root.resolve()
-        research_archive_root = root.parent / f"{root.name}-research-archive" if is_v2 else None
+        research_archive_root = root / "outputs" / "research_archive" if is_v2 else None
         for artifact in _artifact_records(manifest):
             relative = artifact["path"]
-            allow_archive = is_v2 and artifact.get("storage_scope") == "project_research_archive"
+            allow_archive = (
+                is_v2 and artifact.get("storage_scope", "repository") == "project_research_archive"
+            )
             path = _contained_path(
                 relative,
                 root,
@@ -217,9 +219,7 @@ def validate_result_manifest(
                 and research_archive_root is not None
                 and not research_archive_root.is_dir()
             ):
-                # Archive-scoped artifacts are intentionally external to a clean repository checkout.
-                # Verify their declared hash when the sibling archive is mounted; otherwise preserve
-                # the manifest reference without pretending the bytes were locally rehashed.
+                errors.append(f"research archive root is missing: {research_archive_root}")
                 continue
             if not path.is_file():
                 errors.append(f"artifact is missing or not a file: {relative}")

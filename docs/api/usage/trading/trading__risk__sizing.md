@@ -315,24 +315,35 @@ def test_compute_sl_tp_short() -> None:
     assert tp == 88.0  # 100 - 2*(106-100)
 ```
 
-2. [production caller: `compute_sl_tp_from_structure`](../../../../trading/risk/sizing.py#L251)
+2. [tutorial example: `stops-targets-multi-tp-exits · code cell 2`](../../../../docs/subjects/C_trading_risk_execution/examples/stops-targets-multi-tp-exits.ipynb)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def compute_sl_tp_from_structure(
-    *,
-    direction: int,
-    entry_price: float,
-    structure_level: float,
-    rr_ratio: float,
-    buffer_pts: float = 0.0,
-) -> tuple[float, float]:
-    if direction == 1:
-        return compute_sl_tp_long(entry_price, structure_level, buffer_pts, rr_ratio)
-    if direction == -1:
-        return compute_sl_tp_short(entry_price, structure_level, buffer_pts, rr_ratio)
-    raise ValueError(f"direction must be +1 or -1, got {direction}")
+from math import isclose
+
+from trading.orders.selection import decode_tp_fractions, decode_tp_selections, validate_tp_levels
+from trading.risk.sizing import compute_sl_tp_long, compute_sl_tp_short
+
+long_sl, long_tp = compute_sl_tp_long(100.0, 98.0, buffer_pts=1.0, rr_ratio=2.0)
+short_sl, short_tp = compute_sl_tp_short(100.0, 102.0, buffer_pts=1.0, rr_ratio=2.0)
+assert (long_sl, long_tp) == (97.0, 106.0)
+assert (short_sl, short_tp) == (103.0, 94.0)
+slots = decode_tp_selections(0, 1, 2, menu_size=3)
+assert slots == (0, 1, 2)
+assert decode_tp_selections(None, None, None, menu_size=3) == (None, None, 0)
+fractions = decode_tp_fractions(0.0, 0.0, slots)
+assert len(fractions) == 3 and isclose(sum(fractions), 1.0)
+assert validate_tp_levels(1, 100.0, long_sl, (102.0, 104.0, long_tp))
+assert not validate_tp_levels(1, 100.0, long_sl, (104.0, 102.0, long_tp))
+print(
+    {
+        "long": (long_sl, long_tp),
+        "short": (short_sl, short_tp),
+        "slots": slots,
+        "fractions": fractions,
+    }
+)
 ```
 
 **Workflow context:**

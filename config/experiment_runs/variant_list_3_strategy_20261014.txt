@@ -1,3 +1,0 @@
-ladder_a0_flat
-ladder_a0_flat_po3
-ladder_a0_flat_dist

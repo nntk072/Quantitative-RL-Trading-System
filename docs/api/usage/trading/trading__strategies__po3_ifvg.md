@@ -342,7 +342,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Kind:** method · **Status:** stable · **Owner:** `trading.strategies.po3_ifvg`
 
-**Purpose:** Long -> manipulation low, short -> manipulation high (Agent.md §14).
+**Purpose:** Return the manipulation low for longs or high for shorts.
 
 **Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.sl_reference` · **Source:** [trading/strategies/po3_ifvg.py:138](../../../../trading/strategies/po3_ifvg.py#L138)
 
@@ -358,7 +358,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 - **Returns:**
 
   ```text
-  Result of long -> manipulation low, short -> manipulation high (Agent.md §14).
+  Selected manipulation level for the trade direction.
   ```
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.

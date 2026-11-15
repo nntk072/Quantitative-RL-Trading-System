@@ -406,7 +406,7 @@ def detect_po3_entries(
             - entry_short: 1 if short entry signal
             - entry_trigger_type: Type of entry trigger that fired
     """
-    # Step 1: Detect HTF FVG
+    # Detect the higher-timeframe fair-value gap.
     htf = str(htf).upper()
     primary_tf = str(primary_tf).upper()
     timeframe_bars = timeframe_bars or {}
@@ -419,7 +419,7 @@ def detect_po3_entries(
         availability_times=availability_times.get(htf),
     )
 
-    # Step 2: Detect LTF IFVG confirmation
+    # Confirm the gap inversion on the lower timeframe.
     ltf_ifvg = detect_ltf_ifvg(
         m1_bars,
         primary_tf=primary_tf,
@@ -429,8 +429,8 @@ def detect_po3_entries(
         availability_times=availability_times.get(primary_tf),
     )
 
-    # Step 3: Generate entry triggers based on LTF IFVG
-    # Rename LTF IFVG columns to match expected format for detect_entry_trigger
+    # Generate entry triggers from the confirmed lower-timeframe inversion.
+    # Match the column names expected by detect_entry_trigger.
     ifvg_for_entry = ltf_ifvg.rename(
         columns={
             "ltf_ifvg_bullish_confirmed": "ifvg_bullish_confirmed",

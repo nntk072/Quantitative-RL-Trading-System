@@ -133,7 +133,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             self.breach_events.append(
                 {
                     "schema_version": RISK_BREACH_EVENT_SCHEMA_V2,
-                    "time": bar_time,
+                    "time": pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step),
                     "detection_time": detection_time,
                     "trade_event_count": breach_event_prefix,
                     "session_id": session_id,
@@ -149,7 +149,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
                 self.cycle_events.append(
                     {
                         "type": "cycle_failure",
-                        "time": bar_time,
+                        "time": self.breach_events[-1]["time"],
                         "cycle": int(self.cycle_count),
                         "outcome": "failure",
                         "reason": reason,

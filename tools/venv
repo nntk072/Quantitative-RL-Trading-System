@@ -5,18 +5,24 @@ set -euo pipefail
 # Also installs project CLI tools: rtk, code-review-graph.
 #
 # Usage:
-#   ./tools/venv                  # create .venv, install runtime deps (GPU torch)
-#   ./tools/venv --cpu            # create .venv, install runtime deps (CPU torch)
-#   ./tools/venv --dev            # create .venv, install runtime + dev deps (GPU)
-#   ./tools/venv --dev --cpu      # create .venv, install runtime + dev deps (CPU)
+#   ./tools/venv                  # create .venv-x86, install runtime deps (GPU torch)
+#   ./tools/venv --cpu            # create .venv-x86, install runtime deps (CPU torch)
+#   ./tools/venv --dev            # create .venv-x86, install runtime + dev deps (GPU)
+#   ./tools/venv --dev --cpu      # create .venv-x86, install runtime + dev deps (CPU)
 #   ./tools/venv --uv             # use uv instead of pip (GPU)
 #   ./tools/venv --uv --cpu       # use uv instead of pip (CPU)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$SCRIPT_DIR"
+ENV_DIR="$SCRIPT_DIR/.venv-x86"
 
-if [ -d .venv ]; then
-  rm -rf .venv
+if [[ "$(uname -m)" != "x86_64" ]]; then
+  echo "ERROR: tools/venv creates the x86_64 environment; use tools/setup-venv on ARM." >&2
+  exit 1
+fi
+
+if [ -d "$ENV_DIR" ]; then
+  rm -rf "$ENV_DIR"
 fi
 
 USE_UV=false
@@ -32,9 +38,9 @@ for arg in "$@"; do
 done
 
 if [ "$USE_UV" = true ]; then
-  echo "==> Creating .venv with uv ..."
-  uv venv --python 3.12
-  source .venv/bin/activate
+  echo "==> Creating .venv-x86 with uv ..."
+  uv venv --python 3.12 "$ENV_DIR"
+  source "$ENV_DIR/bin/activate"
   if [ "$EXTRA" = "dev" ]; then
     uv sync --extra dev
   else
@@ -44,9 +50,9 @@ if [ "$USE_UV" = true ]; then
   uv tool install rtk
   uv tool install code-review-graph
 else
-  echo "==> Creating .venv with python -m venv ..."
-  python3.12 -m venv .venv
-  source .venv/bin/activate
+  echo "==> Creating .venv-x86 with python -m venv ..."
+  python3.12 -m venv "$ENV_DIR"
+  source "$ENV_DIR/bin/activate"
   python -m pip install --upgrade pip
   if [ "$TORCH_DEVICE" = "cu130" ]; then
     echo "==> Installing CUDA 13.0 torch ..."
@@ -67,4 +73,4 @@ else
   pip install code-review-graph
 fi
 
-echo "==> done. Activate with: source .venv/bin/activate"
+echo "==> done. Activate with: source .venv-x86/bin/activate"

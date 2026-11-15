@@ -53,9 +53,7 @@ from market_data.splits.definitions import (
     split_train_test,
 )
 
-_DEFAULT_PROTOCOL = (
-    "evidence/research/releases/negative-evidence-readiness/RESEARCH_QUESTIONS_AND_METHODS.md"
-)
+_DEFAULT_PROTOCOL = "config/research/prospective_research_protocol.yaml"
 _DEFAULT_ARTIFACT_ROOT = "evidence/research/matched_setup_baselines"
 
 

@@ -21,7 +21,6 @@ qrl-train train --mvp
 The smoke path verifies software wiring and is not an economic result. Exact
 flags may be provided by different console scripts in the active environment;
 the [CLI reference](../reference/cli.md) and `pyproject.toml` entry points own
-the current names. Research run execution and Triton scheduling have separate
-evidence/safety procedures: use the
-[research queue](research_execution_plan.md) and
-[Triton guide](triton.md), not a copied generic command.
+the current names. Research comparisons must follow the registered protocol
+and preserve run provenance. Use the [research methods](../research/README.md)
+and the [Triton guide](triton.md), not a copied generic command.

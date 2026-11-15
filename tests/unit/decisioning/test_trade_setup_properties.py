@@ -35,9 +35,28 @@ def test_discrete_action_schema_is_the_fixed_twenty_choice_menu() -> None:
 
     assert schema.width == 20
     assert schema.key == "discrete-20"
-    assert schema.names[0] == "hold"
-    assert schema.names[-1] == "exit"
-    assert len(set(schema.names)) == 20
+    assert schema.names == (
+        "hold",
+        "enter_long_risk_low_rr_low",
+        "enter_long_risk_low_rr_mid",
+        "enter_long_risk_low_rr_high",
+        "enter_long_risk_mid_rr_low",
+        "enter_long_risk_mid_rr_mid",
+        "enter_long_risk_mid_rr_high",
+        "enter_long_risk_high_rr_low",
+        "enter_long_risk_high_rr_mid",
+        "enter_long_risk_high_rr_high",
+        "enter_short_risk_low_rr_low",
+        "enter_short_risk_low_rr_mid",
+        "enter_short_risk_low_rr_high",
+        "enter_short_risk_mid_rr_low",
+        "enter_short_risk_mid_rr_mid",
+        "enter_short_risk_mid_rr_high",
+        "enter_short_risk_high_rr_low",
+        "enter_short_risk_high_rr_mid",
+        "enter_short_risk_high_rr_high",
+        "exit",
+    )
     with pytest.raises(ValueError, match="requires 20 choices"):
         build_discrete_trading_action_schema(n_actions=19)
 

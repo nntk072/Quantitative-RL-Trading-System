@@ -156,20 +156,42 @@ def build_report() -> dict[str, Any]:
         if not sources:
             raise FileNotFoundError(f"no replacement exports found for {symbol}")
         for source in sources:
-            key = source.name
-            records[key] = audit_partition(
-                source,
-                ROOT / "data/training" / key,
-                ROOT / "data/testing" / key,
-            )
+            if not source.is_file():
+                raise FileNotFoundError(source)
+            duplicate_paths = [
+                ROOT / split / source.name for split in ("data/training", "data/testing")
+            ]
+            existing_duplicates = [path for path in duplicate_paths if path.exists()]
+            if existing_duplicates:
+                raise ValueError(
+                    f"duplicate raw partitions remain for {source.name}: {existing_duplicates}"
+                )
+            record = _scan(source)
+            record.pop("header")
+            record["dataset_windows"] = {
+                "training": {
+                    "start_inclusive": "2024-12-30",
+                    "end_inclusive": TRAIN_END.isoformat(),
+                },
+                "testing": {
+                    "start_inclusive": TEST_START.isoformat(),
+                    "end_inclusive": "2026-10-16",
+                    "period_role": "exposed report-only",
+                },
+            }
+            records[source.name] = record
 
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     script = Path(__file__).resolve()
+    try:
+        audit_script = script.relative_to(ROOT).as_posix()
+    except ValueError:
+        audit_script = script.as_posix()
     return {
-        "schema": "aalto.replacement_partition_integrity.v1",
+        "schema": "qrl.single_source_date_window_audit.v1",
         "created_at_utc": datetime.now(UTC).isoformat(),
         "repository_head": head,
-        "audit_script": script.relative_to(ROOT).as_posix(),
+        "audit_script": audit_script,
         "audit_script_sha256": hashlib.sha256(script.read_bytes()).hexdigest(),
         "runtime": {"python": platform.python_version(), "platform": platform.platform()},
         "source_identity": {
@@ -187,12 +209,11 @@ def build_report() -> dict[str, Any]:
         "exports": records,
         "summary": {
             "export_count": len(records),
-            "all_ordered_partitions_reconstruct_source": all(
-                record["ordered_partitions_reconstruct_source"] for record in records.values()
-            ),
+            "all_sources_are_single_files": all((source_root / name).is_file() for name in records),
+            "duplicate_split_files": 0,
         },
         "limitations": [
-            "The audit proves byte identity and ordered partition reconstruction, not feed authenticity, broker calendar validity, or permission to redistribute raw CSV data.",
+            "Configured date windows select rows from each full-period source; the manifest proves file identity, not feed authenticity, broker calendar validity, or permission to redistribute raw CSV data.",
             "The raw US100 D1 bar export is absent; the configured pipeline constructs US100 D1 from M1.",
         ],
     }

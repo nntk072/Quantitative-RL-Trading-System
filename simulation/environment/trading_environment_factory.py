@@ -144,7 +144,7 @@ def max_episode_steps(cfg: Any) -> int | None:
 def strategy_from_cfg(cfg: Any) -> tuple[Any, Any, float]:
     """Build (strategy, strategy_reward, strategy_weight) from merged config.
 
-    Baseline (Idea 3, P2) keeps the no-op strategy and no alignment reward
+    The baseline keeps the no-op strategy and no alignment reward
     unless ``env.strategy_actions`` is explicitly enabled by a variant config.
 
     Args:

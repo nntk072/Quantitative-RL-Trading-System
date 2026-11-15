@@ -7,11 +7,13 @@ import importlib
 import json
 import re
 from pathlib import Path
+from time import perf_counter
 from typing import Any, cast
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
 MAX_NOTEBOOK_BYTES = 300_000
+MAX_NOTEBOOK_SECONDS = 60.0
 PRIVATE_PATH = re.compile(r"(?:/scratch/work/nguyenl37|/home/nguyenl37|C:\\Users\\)", re.IGNORECASE)
 SECRET_HINT = re.compile(
     r"(?i)(api[_-]?key|password|secret|token)\s*[:=]\s*['\"]?[A-Za-z0-9_./+-]{16,}"
@@ -46,6 +48,9 @@ def validate_notebook(path: Path) -> list[str]:
         errors.append(f"{relative}: missing qrl.runtime metadata")
     if not isinstance(qrl.get("hardware"), str) or not qrl["hardware"].strip():
         errors.append(f"{relative}: missing qrl.hardware metadata")
+    for field in ("data", "subject", "owner"):
+        if not isinstance(qrl.get(field), str) or not qrl[field].strip():
+            errors.append(f"{relative}: missing qrl.{field} metadata")
     expected_mode = "force" if qrl.get("tier") == "A" else "off"
     actual_mode = metadata.get("mystnb", {}).get("execution_mode")
     if actual_mode != expected_mode:
@@ -90,22 +95,27 @@ def execute_tier_a(paths: tuple[Path, ...]) -> list[str]:
             source = cell.get("source", "")
             if isinstance(source, list):
                 cell["source"] = "".join(source)
+        started = perf_counter()
         try:
             executed = notebook_client(
                 cast(Any, nbformat.from_dict(notebook)),
-                timeout=120,
+                timeout=MAX_NOTEBOOK_SECONDS,
                 allow_errors=False,
                 resources={"metadata": {"path": str(ROOT)}},
             ).execute()
         except Exception as error:  # noqa: BLE001 - include kernel and cell failures in the report
             errors.append(f"{relative}: execution failed: {error}")
             continue
+        elapsed_seconds = perf_counter() - started
+        if elapsed_seconds > MAX_NOTEBOOK_SECONDS:
+            errors.append(f"{relative}: execution took {elapsed_seconds:.2f}s; limit is 60s")
+            continue
         if not any(
             cell.get("cell_type") == "code" and cell.get("outputs")
             for cell in executed.get("cells", [])
         ):
             errors.append(f"{relative}: execution generated no cell outputs")
-        print(f"Executed {relative}")
+        print(f"Executed {relative} ({elapsed_seconds:.2f}s)")
     return errors
 
 

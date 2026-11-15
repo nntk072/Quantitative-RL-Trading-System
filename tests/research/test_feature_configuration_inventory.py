@@ -62,18 +62,16 @@ def test_feature_configuration_inventory_covers_runtime_profile_sources(
     } <= profile_ids
 
 
-def test_feature_configuration_inventory_resolves_list_valued_run_override(
+def test_feature_configuration_inventory_preserves_base_list_configuration(
     inventory: dict[str, Any],
 ) -> None:
     profile = next(
-        profile
-        for profile in inventory["profiles"]
-        if profile["profile_id"]
-        == "experiment_run/regime_tcn_context_r2_seed50_train2025_2m_normal_mtf_context_20261026"
+        profile for profile in inventory["profiles"] if profile["profile_id"] == "base/default"
     )
 
-    assert profile["profile_kind"] == "experiment_run_spec"
+    assert profile["profile_kind"] == "base"
     assert profile["features"]["ema_periods"] == [9, 21, 50, 200]
+    assert load_profile_config("base/default").features.ema_periods == [9, 21, 50, 200]
 
 
 def test_legacy_distribution_profile_hash_includes_runtime_strategy_overlay(
@@ -90,4 +88,4 @@ def test_legacy_distribution_profile_hash_includes_runtime_strategy_overlay(
 
     assert hashlib.sha256(encoded).hexdigest() == profile["feature_config_sha256"]
     assert cfg.features.include_pd_context is True
-    assert profile["source_paths"][-1]["path"] == "config/3_distribution.yaml"
+    assert profile["source_paths"][-1]["path"] == "config/strategies/distribution.yaml"

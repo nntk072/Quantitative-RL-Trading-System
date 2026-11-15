@@ -20,11 +20,11 @@ explanation. A copied bitmap without a recorded source is not acceptable.
 | Evaluation transition record | `../framework/evaluation_and_artifacts.md` | Mermaid flow based on the rollout contract | Connects each transition to the ledger and run manifest. |
 | Environment step sequence | `../architecture/runtime/environment_step.md` Mermaid source | Existing project-authored diagram | Chronology is followed by an explicit explanation of fill timing. |
 
-## Binary research figures already tracked
+## Empirical figures
 
-| Asset | Owner/source | License/provenance status | Use |
-|---|---|---|---|
-| `docs/research/figures/setup_conditioned_policy_replay_equity.png` | Generated research evidence; source evidence packet is linked from its finding | Repository evidence asset; consult packet for inputs and limitations | Historical exploratory screen only; see the finding page and evidence status. |
+No result-specific research figures are currently registered. Generate future
+figures from verified run artifacts and register their provenance before
+publication.
 
 ## Supplementary archive exclusions
 

@@ -35,16 +35,6 @@ from configuration.paths import repository_root
 from market_data.transforms.price_grid import configured_price_grid_increment
 
 ROOT = repository_root(__file__)
-DEFAULT_INVENTORY = (
-    ROOT / "evidence/research/feature_causality/feature_configuration_inventory.json"
-)
-DEFAULT_OUTPUT = (
-    ROOT / "evidence/research/feature_causality/observation_warmup_validity_all_profiles"
-)
-DEFAULT_CACHE = Path(
-    "/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/"
-    "observation_warmup_cache_all_profiles"
-)
 AUDIT_SCRIPT = ROOT / "scripts/research/analysis/features/audit_observation_warmup_validity.py"
 SOURCE_PATHS = (
     Path(__file__).resolve(),
@@ -171,7 +161,7 @@ def _build_regeneration_command(
 
     return shlex.join(
         [
-            ".venv/bin/python",
+            ".venv-arm/bin/python",
             "scripts/research/analysis/features/audit_observation_warmup_validity_profiles.py",
             "--inventory",
             display_path(inventory_path),
@@ -446,9 +436,9 @@ def run_inventory(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--inventory", type=Path, default=DEFAULT_INVENTORY)
-    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE)
+    parser.add_argument("--inventory", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--cache-dir", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=4)
     args = parser.parse_args(argv)
     inventory = args.inventory if args.inventory.is_absolute() else ROOT / args.inventory

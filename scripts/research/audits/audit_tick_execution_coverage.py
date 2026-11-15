@@ -3,7 +3,7 @@
 
 This is an input-coverage audit, not a training or strategy-quality result. It
 loads the exact M1 cache used by ``run_pipeline``, checks it against a fresh M1
-rebuild, and compares each configured v3 TickBook cache with a fresh rebuild
+rebuild, and compares each configured TickBook cache with a fresh rebuild
 from the configured raw tick export. It then applies the same schedule helper
 used by the trainer for the explicit ``[0, latency_ms)`` execution scenario.
 """

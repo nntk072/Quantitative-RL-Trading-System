@@ -362,10 +362,7 @@ def build_report(
     output_dir.mkdir(parents=True, exist_ok=True)
     if any(output_dir.iterdir()):
         raise FileExistsError(f"refusing to overwrite existing evidence packet: {output_dir}")
-    data_manifest = (
-        ROOT
-        / "evidence/research/releases/negative-evidence-readiness/RAW_DATA_SHA256_MANIFEST.json"
-    )
+    data_manifest = ROOT / "evidence/research/data_identity/raw_data_manifest.json"
     manifest_data = json.loads(data_manifest.read_text(encoding="utf-8"))
     manifest_files = {entry["path"]: entry for entry in manifest_data["files"]}
     spec = cfg.data.datasets.training
@@ -512,7 +509,7 @@ def build_report(
         "uses its direct zone projection when available and otherwise mirrors "
         "the existing timeframe-specific FVG/IFVG context fallback. "
         "See `geometry_support.json` for training period, source hashes, and "
-        "output hash. Rebuild with `.venv/bin/python -m "
+        "output hash. Rebuild with `.venv-arm/bin/python -m "
         "scripts.research.analysis.features.candidate_geometry_support` from "
         "the repository root.\n",
         encoding="utf-8",

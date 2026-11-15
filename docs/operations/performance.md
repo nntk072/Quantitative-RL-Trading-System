@@ -32,12 +32,12 @@ same workload and report variability.
   and rollout sampling geometry. Keep fixed geometry when comparing research
   treatments.
 
-## GH200 evidence boundary
+## Record current measurements
 
-The [GH200 throughput audit](../research/gh200_throughput_audit.md) reports
-measured conditions and rates. It is an engineering benchmark, not a policy
-quality claim. Recheck the current node, software stack, and workload before
-reusing historical measurements.
+Use the architecture-matched environment and a current allocation. Record the
+workload, rollout geometry, device, CPU and memory use, evaluation cost, and
+checkpoint/report time. A measured run describes only that source, data, and
+resource setup; old throughput figures are not a forecast.
 
 For node-specific environment instructions, see the
 [hardware matrix](hardware.md) and [Triton guide](triton.md).

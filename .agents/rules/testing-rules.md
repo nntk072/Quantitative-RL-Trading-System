@@ -66,4 +66,4 @@ def test_expensive_deterministic_case(): ...
 ## Relations
 
 - Activates: any new feature, bug fix, or change to `features/`, `trading/`, `simulation/`, or environment logic.
-- Enforced at commit by [git-commit-rules.md](git-commit-rules.md); orchestrated by [development-workflow.md](development-workflow.md); test runs follow [token-efficient-shell.md](token-efficient-shell.md).
+- Enforced at commit by [git-commit-rules.md](git-commit-rules.md); orchestrated by [core-execution.md](core-execution.md) and [validation-routing.md](validation-routing.md); test runs follow [token-efficient-shell.md](token-efficient-shell.md).

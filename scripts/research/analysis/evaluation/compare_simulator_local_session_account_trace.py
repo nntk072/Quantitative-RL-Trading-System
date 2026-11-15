@@ -29,11 +29,11 @@ from simulation.environment.env import TradingEnv
 from trading.execution import COST_US100
 
 ROOT = repository_root(__file__)
-DEFAULT_BARS = Path("data/training/US100.cash_M1_202412300105_202610162349.csv")
+DEFAULT_BARS = Path("data/US100.cash_M1_202412300105_202610162349.csv")
 DEFAULT_PACKET = Path(
     "evidence/research/simulator_execution_parity/local_session_account_transition"
 )
-DEFAULT_TICKS = Path("data/training/US100.cash_202412300105_202610162349.csv")
+DEFAULT_TICKS = Path("data/US100.cash_202412300105_202610162349.csv")
 INITIAL_BALANCE = 50_000.0
 
 
@@ -790,10 +790,10 @@ clock, provider, or calendar claim is made.
 ## Reproduction
 
 ```bash
-.venv/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py
-.venv/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py --scenario both --ticks-csv data/training/US100.cash_202412300105_202610162349.csv
-.venv/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py --scenario all --ticks-csv data/training/US100.cash_202412300105_202610162349.csv
-.venv/bin/python scripts/research/analysis/evaluation/verify_simulator_local_session_account_trace.py evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_account_transition.json evidence/research/simulator_execution_parity/local_session_account_transition/daily_breach_full_evaluation_failure.json evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_max_loss_terminal.json
+.venv-arm/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py
+.venv-arm/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py --scenario both --ticks-csv data/US100.cash_202412300105_202610162349.csv
+.venv-arm/bin/python scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py --scenario all --ticks-csv data/US100.cash_202412300105_202610162349.csv
+.venv-arm/bin/python scripts/research/analysis/evaluation/verify_simulator_local_session_account_trace.py evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_account_transition.json evidence/research/simulator_execution_parity/local_session_account_transition/daily_breach_full_evaluation_failure.json evidence/research/simulator_execution_parity/local_session_account_transition/session_tick_max_loss_terminal.json
 ```
 """
     readme_path = packet_dir / "README.md"

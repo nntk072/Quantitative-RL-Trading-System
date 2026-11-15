@@ -1,5 +1,7 @@
 # Security hardening status
 
+
+> Historical snapshot: supporting run artifacts were removed during the 2026-11-15 clean restart. Treat reported measurements as historical, not current validation.
 **Updated:** 2026-11-10
 **Scope:** Current `main` checkout and the Linux runtime-plus-dev dependency set.
 
@@ -16,6 +18,6 @@
 
 The frozen Linux audit in the historical baseline found 121 finding records, 78 unique package/advisory pairs across 14 packages. Its original report is [`evidence/pip_audit_locked_linux_dev_20261021.json`](evidence/pip_audit_locked_linux_dev_20261021.json). That report is retained as the pre-remediation snapshot and does not describe the current lock.
 
-The historical agent implementation plan was moved outside the repository to
-`/scratch/work/nguyenl37/agent_plans/Quantitative-RL-Trading-System/docs/security/`.
-The current audit state and limitations are recorded above.
+The report is a historical snapshot from 2026-11-10. Its dependency, file, and
+test counts are not current gate evidence; rerun the dependency and security
+gates before relying on them.

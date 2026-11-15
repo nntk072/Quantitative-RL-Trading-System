@@ -1,7 +1,7 @@
-"""Phase 5 regression tests: baseline (Idea 3) behaviour remains explicit.
+"""Keep baseline behavior explicit in regression coverage.
 
 The strategy machinery was added as a strict *overlay*: when
-``strategy_actions=False`` (the default / Idea 3 baseline), the environment
+``strategy_actions=False`` (the default baseline), the environment
 keeps legacy discrete / 1-D action spaces, legacy DSR reward, swing-level
 SL/TP, and all observation columns. Entry eligibility follows the selected
 strategy and does not add a universal session-level breakout rule.
