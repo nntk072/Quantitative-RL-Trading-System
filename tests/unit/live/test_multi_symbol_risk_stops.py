@@ -21,6 +21,7 @@ for _name, _value in {
     "ORDER_TYPE_BUY": 0,
     "ORDER_TYPE_SELL": 1,
     "TRADE_RETCODE_DONE": 10009,
+    "TRADE_RETCODE_DONE_PARTIAL": 10010,
 }.items():
     if not hasattr(_mt5, _name):
         setattr(_mt5, _name, _value)
@@ -149,3 +150,97 @@ def test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardra
             risk_manager=RiskManager(),
             paper_trading=False,
         )
+
+
+@pytest.mark.parametrize("signal", [Signal.BUY, Signal.SELL])
+def test_multi_symbol_robot_closes_opposite_position_before_opening(
+    signal: Signal,
+) -> None:
+    opening_type = mt5.ORDER_TYPE_BUY if signal is Signal.BUY else mt5.ORDER_TYPE_SELL
+    closing_type = mt5.ORDER_TYPE_SELL if signal is Signal.BUY else mt5.ORDER_TYPE_BUY
+
+    class ReversingTrader(_Trader):
+        def __init__(self, *, close_completes: bool) -> None:
+            super().__init__()
+            self.open_position_type: int | None = closing_type
+            self.close_completes = close_completes
+            self.events: list[tuple[str, int]] = []
+
+        def open_position(
+            self, symbol: str, volume: float, position_type: int, *args: Any, **kwargs: Any
+        ):
+            self.events.append(("open", position_type))
+            return super().open_position(symbol, volume, position_type, *args, **kwargs)
+
+        def get_opened_positions(
+            self, _symbol: str | None = None, position_type: int | None = None, **_kwargs: Any
+        ) -> tuple[int, pd.DataFrame]:
+            return int(position_type == self.open_position_type), pd.DataFrame()
+
+        def close_positions(
+            self,
+            _robot_name: str,
+            _symbol: str | None = None,
+            position_type: int | None = None,
+            **_kwargs: Any,
+        ):
+            assert position_type is not None
+            self.events.append(("close", int(position_type)))
+            if self.close_completes:
+                self.open_position_type = None
+
+    trader = ReversingTrader(close_completes=True)
+    symbol = "US100.cash"
+    robot = MultiSymbolRobot(
+        symbol_manager=cast(Any, _Symbols()),
+        trader=trader,  # type: ignore[arg-type]
+        strategies=cast(Any, {symbol: _Strategy(symbol, signal)}),
+        risk_manager=_Risk(),  # type: ignore[arg-type]
+        paper_trading=False,
+    )
+
+    robot.trade_symbol(symbol)
+
+    assert trader.events == [("close", closing_type), ("open", opening_type)]
+
+
+@pytest.mark.parametrize("signal", [Signal.BUY, Signal.SELL])
+def test_multi_symbol_robot_does_not_reverse_while_close_is_incomplete(
+    signal: Signal,
+) -> None:
+    closing_type = mt5.ORDER_TYPE_SELL if signal is Signal.BUY else mt5.ORDER_TYPE_BUY
+
+    class ReversingTrader(_Trader):
+        def __init__(self) -> None:
+            super().__init__()
+            self.open_position_type: int | None = closing_type
+            self.closed = False
+
+        def get_opened_positions(
+            self, _symbol: str | None = None, position_type: int | None = None, **_kwargs: Any
+        ) -> tuple[int, pd.DataFrame]:
+            return int(position_type == self.open_position_type), pd.DataFrame()
+
+        def close_positions(
+            self,
+            _robot_name: str,
+            _symbol: str | None = None,
+            _position_type: int | None = None,
+            **_kwargs: Any,
+        ) -> None:
+            self.closed = True
+
+    trader = ReversingTrader()
+    symbol = "US100.cash"
+    robot = MultiSymbolRobot(
+        symbol_manager=cast(Any, _Symbols()),
+        trader=trader,  # type: ignore[arg-type]
+        strategies=cast(Any, {symbol: _Strategy(symbol, signal)}),
+        risk_manager=_Risk(),  # type: ignore[arg-type]
+        paper_trading=False,
+    )
+
+    robot.trade_symbol(symbol)
+
+    assert trader.closed
+    assert trader.open_calls == []

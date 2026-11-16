@@ -177,6 +177,18 @@ def test_volume_step_rounding_never_exceeds_cash_risk_budget(
     assert planned_risk <= 999.9
 
 
+def test_volume_step_is_counted_from_symbol_minimum(
+    mt5_risk_api: dict[str, Any],
+) -> None:
+    mt5_risk_api["info"].volume_min = 0.1
+    mt5_risk_api["info"].volume_step = 0.3
+    manager = RiskManager(risk_per_symbol=0.01, max_total_risk=0.02)
+
+    size = manager.calculate_position_size("US100.cash", stop_loss_pips=50.0, risk_amount=20.0)
+
+    assert size == pytest.approx(0.4)
+
+
 def test_aggregate_limit_uses_open_stop_risk_not_floating_profit(
     mt5_risk_api: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -1,4 +1,5 @@
 import math
+from decimal import Decimal
 from typing import Any
 
 import MetaTrader5 as mt5
@@ -375,7 +376,11 @@ class RiskManager:
 
                 # Round down so broker volume quantization cannot increase planned
                 # stop risk beyond the configured cash budget.
-            position_size = min(max_lot, math.floor(raw_size / lot_step) * lot_step)
+            capped_size = min(raw_size, max_lot)
+            min_volume = Decimal(str(min_lot))
+            volume_step = Decimal(str(lot_step))
+            steps = (Decimal(str(capped_size)) - min_volume) // volume_step
+            position_size = float(min_volume + steps * volume_step)
             if position_size < min_lot:
                 return 0.0
 

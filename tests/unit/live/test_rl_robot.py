@@ -49,6 +49,8 @@ if not hasattr(_mt5_stub, "ORDER_TYPE_SELL"):
     setattr(_mt5_stub, "ORDER_TYPE_SELL", 1)
 if not hasattr(_mt5_stub, "TRADE_RETCODE_DONE"):
     setattr(_mt5_stub, "TRADE_RETCODE_DONE", 10009)
+if not hasattr(_mt5_stub, "TRADE_RETCODE_DONE_PARTIAL"):
+    setattr(_mt5_stub, "TRADE_RETCODE_DONE_PARTIAL", 10010)
 if not hasattr(_mt5_stub, "account_info"):
     setattr(_mt5_stub, "account_info", lambda: SimpleNamespace(balance=100_000.0, equity=100_000.0))
 if not hasattr(_mt5_stub, "symbol_select"):
@@ -156,27 +158,45 @@ class _StubData(TradingData):
 class RecordingTrader(Trader):
     """Duck-typed Trader that records calls instead of touching MT5."""
 
-    def __init__(self, *, sells_open: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        buys_open: bool = False,
+        sells_open: bool = False,
+        close_completes: bool = True,
+    ) -> None:
         self.opened: list[tuple[Any, ...]] = []
         self.opened_stops: list[float | None] = []
         self.closed: list[tuple[Any, ...]] = []
         self.position_queries: list[tuple[Any, ...]] = []
+        self.buys_open = buys_open
         self.sells_open = sells_open
+        self.close_completes = close_completes
+        self.events: list[tuple[str, int]] = []
 
     def open_position(self, symbol, volume, position_type, comment, magic_number, sl=None, tp=None):
         import MetaTrader5 as mt5
 
         self.opened.append((symbol, volume, position_type))
+        self.events.append(("open", position_type))
         self.opened_stops.append(sl)
         return SimpleNamespace(order=1, volume=volume, price=1.0, retcode=mt5.TRADE_RETCODE_DONE)
 
     def close_positions(self, robot_name: str, symbol=None, position_type=None, *, magic_number):
         self.closed.append((symbol, position_type, magic_number))
+        self.events.append(("close", position_type))
+        if self.close_completes:
+            if position_type == 0:
+                self.buys_open = False
+            elif position_type == 1:
+                self.sells_open = False
 
     def get_opened_positions(self, symbol=None, position_type=None, *, magic_number=None):
         import MetaTrader5 as mt5
 
         self.position_queries.append((symbol, position_type, magic_number))
+        if self.buys_open and position_type == mt5.ORDER_TYPE_BUY:
+            return 1, pd.DataFrame()
         if self.sells_open and position_type == mt5.ORDER_TYPE_SELL:
             return 1, pd.DataFrame()
         return 0, pd.DataFrame()
@@ -221,11 +241,11 @@ def _make_robot(
     return robot, adapter
 
 
-def test_live_mode_places_buy_and_closes_opposite_sell(
+def test_live_mode_closes_opposite_sell_before_opening_buy(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """BUY signal with an open sell → open the long and close the short."""
+    """BUY signal closes an existing short before opening a long."""
     from integrations.mt5.domain import risk_manager as risk_manager_module
     from integrations.mt5.robot import rl_robot as rl_robot_module
 
@@ -250,8 +270,38 @@ def test_live_mode_places_buy_and_closes_opposite_sell(
     assert trader.opened[0][2] == mt5.ORDER_TYPE_BUY
     assert trader.opened_stops[0] == 50.1
     assert trader.closed == [("US100.cash", mt5.ORDER_TYPE_SELL, robot.magic_number)]
+    assert trader.events == [("close", mt5.ORDER_TYPE_SELL), ("open", mt5.ORDER_TYPE_BUY)]
     assert trader.position_queries
     assert all(query[2] == robot.magic_number for query in trader.position_queries)
+
+
+@pytest.mark.parametrize(
+    ("signal", "opposite_type"),
+    [("buy", 1), ("sell", 0)],
+)
+def test_live_robot_does_not_reverse_while_opposite_position_remains(
+    monkeypatch: pytest.MonkeyPatch,
+    signal: str,
+    opposite_type: int,
+) -> None:
+    from integrations.mt5.robot import rl_robot as rl_robot_module
+    from live.runtime.contracts import LiveSignal
+
+    current_mt5_stub = sys.modules["MetaTrader5"]
+    monkeypatch.setattr(rl_robot_module, "mt5", current_mt5_stub)
+    trader = RecordingTrader(
+        buys_open=opposite_type == current_mt5_stub.ORDER_TYPE_BUY,
+        sells_open=opposite_type == current_mt5_stub.ORDER_TYPE_SELL,
+        close_completes=False,
+    )
+    robot, _ = _make_robot(trader, paper_trading=False)
+    selected_signal = LiveSignal.BUY if signal == "buy" else LiveSignal.SELL
+    monkeypatch.setattr(robot.strategy, "signal", lambda: ("US100.cash", selected_signal))
+
+    robot.trade()
+
+    assert trader.closed == [("US100.cash", opposite_type, robot.magic_number)]
+    assert trader.opened == []
 
 
 def test_live_robot_does_not_open_when_position_query_fails(
